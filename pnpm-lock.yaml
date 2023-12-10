@@ -2635,8 +2635,8 @@ importers:
   packages/nest:
     dependencies:
       '@nestjs/common':
-        specifier: ^8.2.0
-        version: 8.4.7(reflect-metadata@0.1.13)(rxjs@7.8.1)
+        specifier: ^10.2.10
+        version: 10.2.10(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/stateless':
         specifier: ^0.22.0
         version: link:../stateless
@@ -3289,8 +3289,8 @@ importers:
   providers/bandwidth:
     dependencies:
       '@bandwidth/messaging':
-        specifier: ^4.1.1
-        version: 4.1.2
+        specifier: ^4.1.3
+        version: 4.1.3
       '@novu/stateless':
         specifier: ^0.22.0
         version: link:../../packages/stateless
@@ -3332,8 +3332,8 @@ importers:
   providers/braze:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       braze-api:
         specifier: ^2.5.6
         version: 2.5.6
@@ -3375,8 +3375,8 @@ importers:
   providers/bulk-sms:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.0
         version: 1.6.0
@@ -3629,8 +3629,8 @@ importers:
   providers/email-webhook:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.15.0
-        version: 0.15.0
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -3953,8 +3953,8 @@ importers:
   providers/generic-sms:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -3996,8 +3996,8 @@ importers:
   providers/getstream:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -4039,8 +4039,8 @@ importers:
   providers/grafana-on-call:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -4143,8 +4143,8 @@ importers:
   providers/infobip:
     dependencies:
       '@infobip-api/sdk':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.3.2
+        version: 0.3.2
       '@novu/stateless':
         specifier: ^0.22.0
         version: link:../../packages/stateless
@@ -4372,8 +4372,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       node-mailjet:
-        specifier: ^6.0.4
-        version: 6.0.4
+        specifier: ^6.0.5
+        version: 6.0.5
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -4470,7 +4470,7 @@ importers:
   providers/mandrill:
     dependencies:
       '@mailchimp/mailchimp_transactional':
-        specifier: ^1.0.46
+        specifier: ^1.0.50
         version: 1.0.50
       '@novu/stateless':
         specifier: ^0.22.0
@@ -4623,8 +4623,8 @@ importers:
   providers/messagebird:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       messagebird:
         specifier: ^4.0.1
         version: 4.0.1
@@ -4666,8 +4666,8 @@ importers:
   providers/ms-teams:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.7.2
-        version: 0.7.2
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -4999,8 +4999,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       plivo:
-        specifier: ^4.22.4
-        version: 4.44.0
+        specifier: ^4.60.1
+        version: 4.60.1
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: 1.0.2
@@ -5100,8 +5100,8 @@ importers:
         specifier: ^1.6.2
         version: 1.6.2
       postmark:
-        specifier: ^2.7.8
-        version: 2.9.5
+        specifier: ^4.0.2
+        version: 4.0.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: 1.0.2
@@ -5284,8 +5284,8 @@ importers:
         specifier: ^0.22.0
         version: link:../../packages/stateless
       resend:
-        specifier: ^0.11.0
-        version: 0.11.1
+        specifier: ^0.17.2
+        version: 0.17.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
@@ -5688,8 +5688,8 @@ importers:
   providers/sms-central:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.12.0
-        version: 0.12.0
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -6073,8 +6073,8 @@ importers:
   providers/zulip:
     dependencies:
       '@novu/stateless':
-        specifier: 0.16.3
-        version: 0.16.3
+        specifier: ^0.22.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -12109,12 +12109,12 @@ packages:
       '@babel/helper-validator-identifier': 7.22.20
       to-fast-properties: 2.0.0
 
-  /@bandwidth/messaging@4.1.2:
-    resolution: {integrity: sha512-9yfhcrl6UUCYI22JlYPo8vppZuC+KDX+FtYoKI+TsGPpjr1gKpEJTWfBsrSqfOfus91ce5b9eYjeoMsGvi657w==}
+  /@bandwidth/messaging@4.1.3:
+    resolution: {integrity: sha512-cc1qLocHGxxqV7YNGOBxt6VhO+iGLfZnIq2htMP/xCgGOHqCtOVqHlQs80AETIMNEClXapShvn4TQrakx2h1/A==}
     engines: {node: '>=10'}
     dependencies:
       '@apimatic/schema': 0.6.0
-      axios: 0.27.2
+      axios: 1.6.2
       detect-node: 2.1.0
       form-data: 3.0.1
       json-bigint: 1.0.0
@@ -14489,6 +14489,10 @@ packages:
     deprecated: This version has been deprecated and is no longer supported or maintained
     dev: false
 
+  /@hapi/hoek@9.3.0:
+    resolution: {integrity: sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==}
+    dev: false
+
   /@hapi/joi@16.1.8:
     resolution: {integrity: sha512-wAsVvTPe+FwSrsAurNt5vkg3zo+TblvC5Bb1zMVK6SJzZqw9UrJnexxR+76cpePmtUZKHAPxcQ2Bf7oVHyahhg==}
     deprecated: Switch to 'npm install joi'
@@ -14510,6 +14514,12 @@ packages:
     deprecated: This version has been deprecated and is no longer supported or maintained
     dependencies:
       '@hapi/hoek': 8.5.1
+    dev: false
+
+  /@hapi/topo@5.1.0:
+    resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
+    dependencies:
+      '@hapi/hoek': 9.3.0
     dev: false
 
   /@hookform/devtools@4.3.1(@types/react@17.0.62)(react-dom@17.0.1)(react@17.0.1):
@@ -14592,12 +14602,12 @@ packages:
       react: 17.0.1
     dev: false
 
-  /@infobip-api/sdk@0.2.0:
-    resolution: {integrity: sha512-I9C+MIMxoW/PProBSt6UIMqDE5cgVODno5o5JOlcjMbbFS2ou490e5zS0V44sH2z5W6BDhOGyT50FQetF8BeUQ==}
+  /@infobip-api/sdk@0.3.2:
+    resolution: {integrity: sha512-Jj/FSBWLvt7KLVsx1fZOfIoO68AtTvi/sEv0HEOMUehssuM7/AJSLeRerQNHtBMULBKrgYIRRAU4Y3QiwUbyOg==}
     engines: {node: '>=10'}
     dependencies:
-      axios: 0.26.1
-      form-data: 2.5.1
+      axios: 1.6.2
+      form-data: 4.0.0
     transitivePeerDependencies:
       - debug
     dev: false
@@ -16290,6 +16300,26 @@ packages:
       - webpack-cli
     dev: true
 
+  /@nestjs/common@10.2.10(reflect-metadata@0.1.13)(rxjs@7.8.1):
+    resolution: {integrity: sha512-fwAk931rjW8CNH2Mgwawq/7HWHH1dxkOLdcgs7U52ddLk8CtHXjejm1cbNahewlSbNhvlOl7y1STLHutE6sUqw==}
+    peerDependencies:
+      class-transformer: '*'
+      class-validator: '*'
+      reflect-metadata: ^0.1.12
+      rxjs: ^7.1.0
+    peerDependenciesMeta:
+      class-transformer:
+        optional: true
+      class-validator:
+        optional: true
+    dependencies:
+      iterare: 1.2.1
+      reflect-metadata: 0.1.13
+      rxjs: 7.8.1
+      tslib: 2.6.2
+      uid: 2.0.2
+    dev: false
+
   /@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1):
     resolution: {integrity: sha512-TCOJK2K4FDT3GxFfURjngnjBewS/hizKNFSLBXtX4TTQm0dVQOtESnnVdP14sEiPM6suuWlrGnXW9UDqItGWiQ==}
     peerDependencies:
@@ -16310,32 +16340,6 @@ packages:
       rxjs: 7.8.1
       tslib: 2.6.2
       uid: 2.0.2
-
-  /@nestjs/common@8.4.7(reflect-metadata@0.1.13)(rxjs@7.8.1):
-    resolution: {integrity: sha512-m/YsbcBal+gA5CFrDpqXqsSfylo+DIQrkFY3qhVIltsYRfu8ct8J9pqsTO6OPf3mvqdOpFGrV5sBjoyAzOBvsw==}
-    peerDependencies:
-      cache-manager: '*'
-      class-transformer: '*'
-      class-validator: '*'
-      reflect-metadata: ^0.1.12
-      rxjs: ^7.1.0
-    peerDependenciesMeta:
-      cache-manager:
-        optional: true
-      class-transformer:
-        optional: true
-      class-validator:
-        optional: true
-    dependencies:
-      axios: 0.27.2
-      iterare: 1.2.1
-      reflect-metadata: 0.1.13
-      rxjs: 7.8.1
-      tslib: 2.4.0
-      uuid: 8.3.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
 
   /@nestjs/core@10.2.2(@nestjs/common@10.2.2)(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1):
     resolution: {integrity: sha512-444gApiDCV63Gq7a3WgboNEPBYZt/UcozRhOKEl5FTAXWrZbDoz48e8RXOCFzST1Py0HKUnharMtpb28l7zgJw==}
@@ -16738,45 +16742,6 @@ packages:
       '@floating-ui/dom': 0.1.10
       vue: 3.2.47
       vue-resize: 2.0.0-alpha.1(vue@3.2.47)
-    dev: false
-
-  /@novu/stateless@0.12.0:
-    resolution: {integrity: sha512-2GVX07XtR3owk8Dg/66l+kyUvgYR5+uKMheiFCVRuTCqiDfVFww1G3ixIEs2FGIajtLfDdNyuH+PV25EoqmKVg==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
-  /@novu/stateless@0.15.0:
-    resolution: {integrity: sha512-NS7n34dlEB48EthLek0NWZXh+nJtbOUVkWdyprGF2f/WCCG/wT+yUtYLOauMffrySpnXEjY9zimyGgIWJQRl0g==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
-  /@novu/stateless@0.16.3:
-    resolution: {integrity: sha512-9wrqUluSaR9rCdDp4oUWFBwsk6OSM4P+yMaEtFGHrGmSPMcspnvXQaQoARKakuUpCXFvQlPPJq5+yaicv4o/hA==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    dev: false
-
-  /@novu/stateless@0.7.2:
-    resolution: {integrity: sha512-hZPVjtdckROXF4WpcpUJGigA+7Nfz1mM5dIHwuDfh6MZ6cRGOgjQVq2TKhiOjHcu2umcKORem4cuyz47KoSA5w==}
-    engines: {node: '>=10'}
-    dependencies:
-      axios: 0.26.1
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
-    transitivePeerDependencies:
-      - debug
     dev: false
 
   /@npmcli/arborist@5.3.0:
@@ -19808,8 +19773,8 @@ packages:
       react-dom: 17.0.1(react@17.0.1)
     dev: false
 
-  /@react-email/render@0.0.5:
-    resolution: {integrity: sha512-EE9mCvR3lXeZEJaldCEaEc4msCwPQwZfXbhuPVl3SpRsiHiMK0wNm2X39vVpqzCzxrm0wljCoLruT7Klp9DZAw==}
+  /@react-email/render@0.0.7:
+    resolution: {integrity: sha512-hMMhxk6TpOcDC5qnKzXPVJoVGEwfm+U5bGOPH+MyTTlx0F02RLQygcATBKsbP7aI/mvkmBAZoFbgPIHop7ovug==}
     engines: {node: '>=16.0.0'}
     dependencies:
       html-to-text: 9.0.3
@@ -20414,6 +20379,20 @@ packages:
     dependencies:
       '@sentry/types': 7.66.0
       tslib: 2.6.2
+    dev: false
+
+  /@sideway/address@4.1.4:
+    resolution: {integrity: sha512-7vwq+rOHVWjyXxVlR76Agnvhy8I9rpzjosTESvmhNeXOXdZZB15Fl+TI9x1SiHZH5Jv2wTGduSxFDIaq0m3DUw==}
+    dependencies:
+      '@hapi/hoek': 9.3.0
+    dev: false
+
+  /@sideway/formula@3.0.1:
+    resolution: {integrity: sha512-/poHZJJVjx3L+zVD6g9KgHfYnb443oi7wLu/XKojDviHy6HOEOA6z1Trk5aR1dGcmPenJEgb2sK2I80LeS3MIg==}
+    dev: false
+
+  /@sideway/pinpoint@2.0.0:
+    resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
     dev: false
 
   /@sigstore/bundle@1.1.0:
@@ -27861,14 +27840,6 @@ packages:
       - debug
     dev: false
 
-  /axios@0.25.0:
-    resolution: {integrity: sha512-cD8FOb0tRH3uuEe6+evtAbgJtfxr7ly3fQjYcMcuPlgkwVS9xboaVIpcDV+cYQe+yGykgwZCs1pzjntcGa6l5g==}
-    dependencies:
-      follow-redirects: 1.15.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
   /axios@0.26.1:
     resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
     dependencies:
@@ -27895,6 +27866,16 @@ packages:
     transitivePeerDependencies:
       - debug
     dev: true
+
+  /axios@1.4.0:
+    resolution: {integrity: sha512-S4XCWMEmzvo64T9GfvQDOXgYRDJ/wsSZc7Jvdgx5u1sd0JwsuPLqb3SYmusag+edF6ziyMensPVqLTSc1PiSEA==}
+    dependencies:
+      follow-redirects: 1.15.2
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+    dev: false
 
   /axios@1.6.0:
     resolution: {integrity: sha512-EZ1DYihju9pwVB+jg67ogm+Tmqc6JmhamRN6I4Zt8DfZu5lbcQGw3ozH9lFejSJgs/ibaef3A9PMXPLeefFGJg==}
@@ -32644,7 +32625,7 @@ packages:
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)
-      has: 1.0.4
+      has: 1.0.3
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -34099,6 +34080,7 @@ packages:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       mime-types: 2.1.35
+    dev: true
 
   /form-data@3.0.1:
     resolution: {integrity: sha512-RHkBKtLWUVwd7SqRIvCZMEvAMoGUp0XU+seQiZejj0COz3RI3hWP4sCv3gZWWLjJTd7rGwcsF5eKZGii0r/hbg==}
@@ -38056,6 +38038,16 @@ packages:
     engines: {node: '>= 0.6.0'}
     dev: false
 
+  /joi@17.11.0:
+    resolution: {integrity: sha512-NgB+lZLNoqISVy1rZocE9PZI36bL/77ie924Ri43yEvi9GUUMPeyVIr8KdFTMUlby1p0PBYMk9spIxEUQYqrJQ==}
+    dependencies:
+      '@hapi/hoek': 9.3.0
+      '@hapi/topo': 5.1.0
+      '@sideway/address': 4.1.4
+      '@sideway/formula': 3.0.1
+      '@sideway/pinpoint': 2.0.0
+    dev: false
+
   /join-component@1.1.0:
     resolution: {integrity: sha512-bF7vcQxbODoGK1imE2P9GS9aw4zD0Sd+Hni68IMZLj7zRnquH7dXUmMw9hDI5S/Jzt7q+IyTXN0rSg2GI0IKhQ==}
     dev: false
@@ -41204,11 +41196,11 @@ packages:
   /node-machine-id@1.1.12:
     resolution: {integrity: sha512-QNABxbrPa3qEIfrE6GOJ7BYIuignnJw7iQ2YPbc3Nla1HzRJjXzZOiikfF8m7eAMfichLt3M4VgLOetqgDmgGQ==}
 
-  /node-mailjet@6.0.4:
-    resolution: {integrity: sha512-gNWfbVnsH+KxkhfDLPA8OrQ2Q25OgyKp19C7DSJYmN2zNfqTKIXzhB9BZwgxZtErmPxz2Fp1NR18WPCmrJDuwg==}
+  /node-mailjet@6.0.5:
+    resolution: {integrity: sha512-upufsTkMyrDF7Z6OiJ4M4Yw4L6MkB0vOQB27W1V9q0CxxSA6e2xOJif3koPwwwgDELpbJNG7asZjKFdghtxUCw==}
     engines: {node: '>= 12.0.0', npm: '>= 6.9.0'}
     dependencies:
-      axios: 0.27.2
+      axios: 1.6.2
       json-bigint: 1.0.0
       url-join: 4.0.1
     transitivePeerDependencies:
@@ -43023,8 +43015,8 @@ packages:
       semver-compare: 1.0.0
     dev: true
 
-  /plivo@4.44.0:
-    resolution: {integrity: sha512-724oFGUime4jUlmFFHzYm4FCCoqxLTt4QMJkj9fwQ17FRdLs3TRRW7sjMYJMHuHI6TLiQw+cTkDTm/MmDs05Ng==}
+  /plivo@4.60.1:
+    resolution: {integrity: sha512-GkrgJ0lwJ7jjPcexGLEGey2vLf0dCZBPY7Es9kGVSQqqG5kiXSY4hrqwblqXyEanDip/j5vk+jMWvNd/uL0BUw==}
     dependencies:
       '@types/node': 14.18.42
       axios: 0.21.4
@@ -43032,6 +43024,7 @@ packages:
       build-url: 1.3.3
       form-data: 4.0.0
       https-proxy-agent: 5.0.1
+      joi: 17.11.0
       jsonwebtoken: 9.0.0
       lodash: 4.17.21
       querystring: 0.2.1
@@ -43906,10 +43899,10 @@ packages:
       picocolors: 1.0.0
       source-map-js: 1.0.2
 
-  /postmark@2.9.5:
-    resolution: {integrity: sha512-F27gc6wrxdn7GADodGpECoWez7FK2Pdach7A9ni5vVZiYz1YUY7T68nvVCzxrbWCjOS7ZujyclYlq1C0a4ar1w==}
+  /postmark@4.0.2:
+    resolution: {integrity: sha512-2zlCv+KVVQ0KoamXZHE7d+gXzLlr8tPE+PxQmtUaIZhbHzZAq4D6yH2b+ykhA8wYCc5ISodcx8U1aNLenXBs9g==}
     dependencies:
-      axios: 0.25.0
+      axios: 1.6.2
     transitivePeerDependencies:
       - debug
     dev: false
@@ -46367,11 +46360,12 @@ packages:
     dev: false
     optional: true
 
-  /resend@0.11.1:
-    resolution: {integrity: sha512-HntGZRVZ6dW5ngAC/fv+StNhMHuJjBT7ZBsmw0iZWN4t4cN5JS8w2Nrt7NtgnDbOfWSdxFm+maCS+f4OGLQyZA==}
+  /resend@0.17.2:
+    resolution: {integrity: sha512-lakm76u4MiIDeMF1s2tCmjtksOhwZOs4WcAXkA7aUTvl+63/h+0h6Q6WnkB8RGtj6GakUhQuUkiZshfXgtIrGw==}
     dependencies:
-      '@react-email/render': 0.0.5
-      axios: 0.27.2
+      '@react-email/render': 0.0.7
+      axios: 1.4.0
+      type-fest: 3.13.0
     transitivePeerDependencies:
       - debug
     dev: false
@@ -49658,10 +49652,6 @@ packages:
     resolution: {integrity: sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==}
     dev: false
 
-  /tslib@2.4.0:
-    resolution: {integrity: sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==}
-    dev: false
-
   /tslib@2.5.0:
     resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
 
@@ -49810,6 +49800,11 @@ packages:
   /type-fest@2.19.0:
     resolution: {integrity: sha512-RAH822pAdBgcNMAfWnCBU3CFZcfZ/i1eZjwFU/dsLKumyuuP3niueg2UAukXYF0E2AAoc82ZSSf9J0WQBinzHA==}
     engines: {node: '>=12.20'}
+
+  /type-fest@3.13.0:
+    resolution: {integrity: sha512-Gur3yQGM9qiLNs0KPP7LPgeRbio2QTt4xXouobMCarR0/wyW3F+F/+OWwshg3NG0Adon7uQfSZBpB46NfhoF1A==}
+    engines: {node: '>=14.16'}
+    dev: false
 
   /type-is@1.6.18:
     resolution: {integrity: sha512-TkRKr9sUTxEH8MdfuCSP7VizJyzRNMjj2J2do2Jr3Kym598JVdEksuzPQCnlFPW4ky9Q+iA+ma9BGm06XQBy8g==}
