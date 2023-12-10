@@ -4,7 +4,6 @@ import { useDisclosure } from '@mantine/hooks';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
-import { useIntercom } from 'react-use-intercom';
 import {
   CHANNELS_WITH_PRIMARY,
   CredentialsKeyEnum,
@@ -61,7 +60,6 @@ export function UpdateProviderSidebar({
   integrationId?: string;
   onClose: () => void;
 }) {
-  const { update } = useIntercom();
   const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
@@ -165,7 +163,6 @@ export function UpdateProviderSidebar({
       setSidebarState(SidebarStateEnum.NORMAL);
     }
     onClose();
-    update({ hideDefaultLauncher: false });
   };
 
   const updateAndSelectPrimaryIntegration = async (data: IConstructIntegrationDto) => {
