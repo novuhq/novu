@@ -46,24 +46,25 @@ export class FcmPushProvider implements IPushProvider {
   async sendMessage(
     options: IPushOptions
   ): Promise<ISendMessageSuccessResponse> {
-    delete (options.overrides as { deviceTokens?: string[] })?.deviceTokens;
+    const {
+      deviceTokens: _,
+      type,
+      android,
+      apns,
+      fcmOptions,
+      webPush: webpush,
+      data,
+      ...overridesData
+    } = (options.overrides as IPushOptions['overrides'] & {
+      deviceTokens?: string[];
+      webPush: { [key: string]: { [key: string]: string } | string };
+    }) || {};
 
-    const overridesData = options.overrides || ({} as any);
     const payload = this.cleanPayload(options.payload);
-
-    const androidData: AndroidConfig = overridesData.android;
-    const apnsData: ApnsConfig = overridesData.apns;
-    const fcmOptionsData: FcmOptions = overridesData.fcmOptions;
-    const webPushData: WebpushConfig = overridesData.webPush;
-    delete overridesData.android;
-    delete overridesData.apns;
-    delete overridesData.fcmOptions;
-    delete overridesData.webPush;
 
     let res;
 
-    if (overridesData?.type === 'data') {
-      delete (options.overrides as { type?: string })?.type;
+    if (type === 'data') {
       res = await this.messaging.sendMulticast({
         tokens: options.target,
         data: {
@@ -72,26 +73,24 @@ export class FcmPushProvider implements IPushProvider {
           body: options.content,
           message: options.content,
         },
-        ...(androidData ? { android: androidData } : {}),
-        ...(apnsData ? { apns: apnsData } : {}),
-        ...(fcmOptionsData ? { fcmOptions: fcmOptionsData } : {}),
-        ...(webPushData ? { webpush: webPushData } : {}),
+        android,
+        apns,
+        fcmOptions,
+        webpush,
       });
     } else {
-      const { data, ...overrides } = overridesData;
-
       res = await this.messaging.sendMulticast({
         tokens: options.target,
         notification: {
           title: options.title,
           body: options.content,
-          ...overrides,
+          ...overridesData,
         },
         data,
-        ...(androidData ? { android: androidData } : {}),
-        ...(apnsData ? { apns: apnsData } : {}),
-        ...(fcmOptionsData ? { fcmOptions: fcmOptionsData } : {}),
-        ...(webPushData ? { webpush: webPushData } : {}),
+        android,
+        apns,
+        fcmOptions,
+        webpush,
       });
     }
 
