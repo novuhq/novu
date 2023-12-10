@@ -93,7 +93,7 @@ export class SubscriberJobBound {
         _organization: command.organizationId,
         channels: template?.steps.map((step) => step.template?.type),
         source: command.payload.__source || 'api',
-        subscriberSource: _subscriberSource || 'undefined',
+        subscriberSource: _subscriberSource || null,
       }
     );
 
