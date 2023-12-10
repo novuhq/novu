@@ -54,7 +54,7 @@
     "@novu/notification-center": "^0.22.0",
     "@novu/shared": "^0.22.0",
     "@segment/analytics-next": "^1.48.0",
-    "@novu/shared-web": "^0.21.0",
+    "@novu/shared-web": "^0.22.0",
     "@sentry/react": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@storybook/addon-docs": "^7.4.2",
