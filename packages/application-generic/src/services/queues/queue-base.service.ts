@@ -12,14 +12,14 @@ import {
 const LOG_CONTEXT = 'QueueService';
 
 export class QueueBaseService {
-  public instance: BullMqService;
+  private instance: BullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;
   public queue: Queue;
 
   constructor(
     public readonly topic: JobTopicNameEnum,
-    public bullMqService: BullMqService
+    private bullMqService: BullMqService
   ) {
     this.instance = bullMqService;
   }
@@ -52,6 +52,26 @@ export class QueueBaseService {
 
   public async isPaused(): Promise<boolean> {
     return await this.instance.isQueuePaused();
+  }
+
+  public async getStatus() {
+    return await this.instance.getStatus();
+  }
+
+  public async getGroupsJobsCount() {
+    return await (this.instance.queue as any).getGroupsJobsCount();
+  }
+
+  public async getWaitingCount() {
+    return await this.instance.queue.getWaitingCount();
+  }
+
+  public async getDelayedCount() {
+    return await this.instance.queue.getDelayedCount();
+  }
+
+  public async getActiveCount() {
+    return await this.instance.queue.getActiveCount();
   }
 
   public async gracefulShutdown(): Promise<void> {

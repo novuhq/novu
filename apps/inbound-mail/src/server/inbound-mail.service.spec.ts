@@ -26,7 +26,7 @@ describe('Inbound Mail Service', () => {
       expect(inboundMailService).to.be.ok;
       expect(inboundMailService.inboundParseQueueService.DEFAULT_ATTEMPTS).to.equal(3);
       expect(inboundMailService.inboundParseQueueService.topic).to.equal('inbound-parse-mail');
-      expect(await inboundMailService.inboundParseQueueService.bullMqService.getStatus()).to.deep.equal({
+      expect(await inboundMailService.inboundParseQueueService.getStatus()).to.deep.equal({
         queueIsPaused: false,
         queueName: 'inbound-parse-mail',
         workerName: undefined,

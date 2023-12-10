@@ -35,7 +35,7 @@ describe('Standard Queue service', () => {
       );
       expect(standardQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(standardQueueService.topic).toEqual('standard');
-      expect(await standardQueueService.bullMqService.getStatus()).toEqual({
+      expect(await standardQueueService.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'standard',
         workerName: undefined,

@@ -237,9 +237,9 @@ export class SendMessageInApp extends SendMessageBase {
       groupId: command.organizationId,
     });
 
-    await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage',
-      {
+    await this.webSocketsQueueService.add({
+      name: 'sendMessage',
+      data: {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
@@ -247,12 +247,12 @@ export class SendMessageInApp extends SendMessageBase {
           messageId: message._id,
         },
       },
-      {
+      options: {
         removeOnComplete: true,
         removeOnFail: true,
       },
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
 
     const meta = CreateExecutionDetailsCommand.getExecutionLogMetadata();
     await this.executionLogQueueService.add({

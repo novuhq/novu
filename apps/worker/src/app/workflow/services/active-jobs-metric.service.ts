@@ -94,11 +94,11 @@ export class ActiveJobsMetricService {
 
         try {
           for (const queueService of this.tokenList) {
-            const waitCount = (queueService.instance.queue as any).getGroupsJobsCount
-              ? await (queueService.instance.queue as any).getGroupsJobsCount()
-              : await queueService.instance.queue.getWaitingCount();
-            const delayedCount = await queueService.instance.queue.getDelayedCount();
-            const activeCount = await queueService.instance.queue.getActiveCount();
+            const waitCount = queueService.getGroupsJobsCount
+              ? await queueService.getGroupsJobsCount()
+              : await queueService.getWaitingCount();
+            const delayedCount = await queueService.getDelayedCount();
+            const activeCount = await queueService.getActiveCount();
 
             Logger.verbose('Recording active, waiting, and delayed metrics');
 

@@ -36,7 +36,7 @@ describe('Workflow Queue service', () => {
       );
       expect(workflowQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(workflowQueueService.topic).toEqual('trigger-handler');
-      expect(await workflowQueueService.bullMqService.getStatus()).toEqual({
+      expect(await workflowQueueService.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'trigger-handler',
         workerName: undefined,

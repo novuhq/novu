@@ -36,7 +36,7 @@ describe('Inbound Parse Queue service', () => {
       );
       expect(inboundParseQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(inboundParseQueueService.topic).toEqual('inbound-parse-mail');
-      expect(await inboundParseQueueService.bullMqService.getStatus()).toEqual({
+      expect(await inboundParseQueueService.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'inbound-parse-mail',
         workerName: undefined,
