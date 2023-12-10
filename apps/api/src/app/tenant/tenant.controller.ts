@@ -22,7 +22,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { IJwtPayload } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, IJwtPayload } from '@novu/shared';
 import {
   UpdateTenant,
   UpdateTenantCommand,
@@ -50,7 +50,9 @@ import {
   CreateTenantResponseDto,
   CreateTenantRequestDto,
 } from './dtos';
+import { ThrottlerCategory } from '../rate-limiting/guards';
 
+@ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @Controller('/tenants')
 @ApiTags('Tenants')
 @UseInterceptors(ClassSerializerInterceptor)

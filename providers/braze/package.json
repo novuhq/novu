@@ -1,6 +1,6 @@
 {
   "name": "@novu/braze",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "A braze wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -29,7 +29,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@novu/stateless": "0.16.3",
+    "@novu/stateless": "^0.22.0",
     "braze-api": "^2.5.6"
   },
   "devDependencies": {

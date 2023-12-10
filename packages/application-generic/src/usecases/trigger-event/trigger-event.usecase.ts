@@ -47,13 +47,11 @@ export class TriggerEvent {
   constructor(
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
-    private subscriberRepository: SubscriberRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private mapTriggerRecipients: MapTriggerRecipients,
-    private subscriberProcessQueueService: SubscriberProcessQueueService,
     private triggerBroadcast: TriggerBroadcast,
     private triggerMulticast: TriggerMulticast
   ) {}
@@ -153,6 +151,17 @@ export class TriggerEvent {
           await this.triggerBroadcast.execute(
             TriggerBroadcastCommand.create({
               ...mappedCommand,
+              actor: actorProcessed,
+              template,
+            })
+          );
+          break;
+        }
+        default: {
+          await this.triggerMulticast.execute(
+            TriggerMulticastCommand.create({
+              addressingType: AddressingTypeEnum.MULTICAST,
+              ...(mappedCommand as TriggerMulticastCommand),
               actor: actorProcessed,
               template,
             })

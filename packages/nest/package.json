@@ -1,6 +1,6 @@
 {
   "name": "@novu/nest",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "A nestjs wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -35,8 +35,8 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@nestjs/common": "^8.2.0",
-    "@novu/stateless": "^0.21.0"
+    "@nestjs/common": "^10.2.10",
+    "@novu/stateless": "^0.22.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
