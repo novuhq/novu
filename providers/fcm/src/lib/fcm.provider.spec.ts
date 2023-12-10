@@ -332,3 +332,37 @@ test('should clean the payload for the FCM data message', async () => {
     data: cleanPayload,
   });
 });
+
+test('should trigger fcm multiple times with the same overrides', async () => {
+  const tokens = ['tester1', 'tester2'];
+  const overrides: IPushOptions['overrides'] = {
+    type: 'data',
+    data: { foo: 'bar' },
+  };
+
+  tokens.forEach(async (token) => {
+    await provider.sendMessage({
+      title: 'Test',
+      content: 'Test push',
+      target: [token],
+      payload: {
+        sound: 'test_sound',
+      },
+      overrides,
+      subscriber,
+      step,
+    });
+    expect(app.initializeApp).toHaveBeenCalledTimes(1);
+    expect(app.cert).toHaveBeenCalledTimes(1);
+    expect(spy).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalledWith({
+      tokens: [token],
+      data: {
+        title: 'Test',
+        body: 'Test push',
+        message: 'Test push',
+        sound: 'test_sound',
+      },
+    });
+  });
+});
