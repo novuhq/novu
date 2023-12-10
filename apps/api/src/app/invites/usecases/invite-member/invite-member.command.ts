@@ -7,5 +7,5 @@ export class InviteMemberCommand extends OrganizationCommand {
   readonly email: string;
 
   @IsDefined()
-  readonly role: MemberRoleEnum.ADMIN;
+  readonly role: 'admin';
 }
