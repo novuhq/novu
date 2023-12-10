@@ -63,8 +63,9 @@ describe('Inbound Mail Service', () => {
         _environmentId,
         _organizationId,
         _userId,
-      };
-      await inboundMailService.inboundParseQueueService.add(jobId, jobData, _organizationId);
+      } as any;
+
+      await inboundMailService.inboundParseQueueService.add({ name: jobId, data: jobData, groupId: _organizationId });
 
       expect(await inboundMailService.inboundParseQueueService.queue.getActiveCount()).to.equal(0);
       expect(await inboundMailService.inboundParseQueueService.queue.getWaitingCount()).to.equal(1);
@@ -92,7 +93,11 @@ describe('Inbound Mail Service', () => {
         _organizationId,
         _userId,
       };
-      await inboundMailService.inboundParseQueueService.addMinimalJob(jobId, jobData, _organizationId);
+      await inboundMailService.inboundParseQueueService.addMinimalJob({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await inboundMailService.inboundParseQueueService.queue.getActiveCount()).to.equal(0);
       expect(await inboundMailService.inboundParseQueueService.queue.getWaitingCount()).to.equal(1);
