@@ -590,6 +590,8 @@ describe('MapTriggerRecipientsUseCase', () => {
       ]);
       const result = await useCase.execute(command);
 
+      expect(result.length).to.equal(3);
+
       // We process first recipients that are not topics, so they will take precedence when deduplicating
       expect(result).to.include.deep.members([
         { ...firstRecipient, _subscriberSource: SubscriberSourceEnum.SINGLE },
