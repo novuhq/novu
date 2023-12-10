@@ -2,8 +2,10 @@ import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useClipboard } from '@mantine/hooks';
 
-import { Input, Switch, Check, Copy } from '@novu/design-system';
+import { Input, Switch, Check, Copy, Tooltip, colors, inputStyles } from '@novu/design-system';
 import type { IIntegratedProvider } from '../types';
+import { ActionIcon, Input as MantineInput } from '@mantine/core';
+import { useEnvController } from '../../../hooks';
 
 const CopyWrapper = styled.div`
   cursor: pointer;
@@ -17,7 +19,10 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
     control,
     formState: { errors },
   } = useFormContext();
+  const { environment } = useEnvController();
   const identifierClipboard = useClipboard({ timeout: 1000 });
+  const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
+  const environmentIdentifier = environment?.identifier ? environment.identifier : '';
 
   if (!provider) return null;
 
@@ -80,6 +85,47 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
           />
         )}
       />
+      <ParamContainer>
+        <MantineInput.Wrapper
+          label="Application Identifier"
+          description="The application identifier is a unique public key, used by the notification center to identify your Novu account."
+          styles={inputStyles}
+        >
+          <Input
+            readOnly
+            rightSection={
+              <Tooltip label={clipboardEnvironmentIdentifier.copied ? 'Copied!' : 'Copy Key'}>
+                <ActionIcon
+                  variant="transparent"
+                  data-test-id={'environment-id-copy'}
+                  onClick={() => clipboardEnvironmentIdentifier.copy(environmentIdentifier)}
+                >
+                  {clipboardEnvironmentIdentifier.copied ? (
+                    <Check
+                      style={{
+                        color: colors.B60,
+                      }}
+                    />
+                  ) : (
+                    <Copy
+                      style={{
+                        color: colors.B60,
+                      }}
+                    />
+                  )}
+                </ActionIcon>
+              </Tooltip>
+            }
+            value={environmentIdentifier}
+            data-test-id="environment-id"
+          />
+        </MantineInput.Wrapper>
+      </ParamContainer>
     </>
   );
 };
+
+const ParamContainer = styled.div`
+  max-width: 600px;
+  padding-bottom: 32px;
+`;
