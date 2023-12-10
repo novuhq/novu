@@ -119,7 +119,8 @@ export class SendMessageInApp extends SendMessageBase {
           content: step.template.content as string,
           cta: step.template.cta,
           userId: command.userId,
-        })
+        }),
+        this.initiateTranslations.bind(this)
       );
       content = compiled.content;
 

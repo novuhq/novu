@@ -215,7 +215,8 @@ export class SendMessageEmail extends SendMessageBase {
           organizationId: command.organizationId,
           userId: command.userId,
           ...payload,
-        })
+        }),
+        this.initiateTranslations.bind(this)
       ));
 
       if (this.storeContent()) {
