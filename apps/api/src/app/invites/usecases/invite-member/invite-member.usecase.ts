@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, Scope } from '@nestjs/common';
 import { OrganizationRepository, UserRepository, MemberRepository, IAddMemberData } from '@novu/dal';
-import { MemberStatusEnum } from '@novu/shared';
+import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
 import { AnalyticsService } from '@novu/application-generic';
 
@@ -52,7 +52,7 @@ export class InviteMember {
     }
 
     const memberPayload: IAddMemberData = {
-      roles: [command.role],
+      roles: [command.role as MemberRoleEnum],
       memberStatus: MemberStatusEnum.INVITED,
       invite: {
         token,
