@@ -21,14 +21,23 @@ export class CompileInAppTemplate extends CompileTemplateBase {
     super(organizationRepository, moduleRef);
   }
 
-  public async execute(command: CompileInAppTemplateCommand) {
+  public async execute(
+    command: CompileInAppTemplateCommand,
+    initiateTranslations?: (
+      environmentId: string,
+      organizationId,
+      locale: string
+    ) => Promise<void>
+  ) {
     const organization = await this.getOrganization(command.organizationId);
 
-    await this.initiateTranslations(
-      command.environmentId,
-      command.organizationId,
-      command.payload.subscriber?.locale || organization.defaultLocale
-    );
+    if (initiateTranslations) {
+      await initiateTranslations(
+        command.environmentId,
+        command.organizationId,
+        command.payload.subscriber?.locale || organization.defaultLocale
+      );
+    }
 
     const payload = command.payload || {};
 

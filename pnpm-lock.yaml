@@ -357,6 +357,9 @@ importers:
       helmet:
         specifier: ^6.0.1
         version: 6.1.4
+      i18next:
+        specifier: ^23.7.6
+        version: 23.7.6
       ioredis:
         specifier: 5.3.2
         version: 5.3.2

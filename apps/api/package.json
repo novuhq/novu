@@ -86,7 +86,8 @@
     "slugify": "^1.4.6",
     "swagger-ui-express": "^4.4.0",
     "twilio": "^4.14.1",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "i18next": "^23.7.6"
   },
   "devDependencies": {
     "@faker-js/faker": "^6.0.0",
