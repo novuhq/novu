@@ -83,9 +83,9 @@ export class SendMessageEmail extends SendMessageBase {
       });
     } catch (e) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
@@ -95,8 +95,8 @@ export class SendMessageEmail extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -115,9 +115,9 @@ export class SendMessageEmail extends SendMessageBase {
 
     if (!integration) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
@@ -133,8 +133,8 @@ export class SendMessageEmail extends SendMessageBase {
               }
             : {}),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -241,9 +241,9 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
@@ -254,8 +254,8 @@ export class SendMessageEmail extends SendMessageBase {
         isRetry: false,
         raw: this.storeContent() ? JSON.stringify(payload) : null,
       }),
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
 
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
       (attachment) =>
@@ -305,9 +305,9 @@ export class SendMessageEmail extends SendMessageBase {
   private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
     if (!command.step.replyCallback?.url) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: messageId,
@@ -317,8 +317,8 @@ export class SendMessageEmail extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return null;
     }
@@ -339,9 +339,9 @@ export class SendMessageEmail extends SendMessageBase {
           : DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION;
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: messageId,
@@ -351,8 +351,8 @@ export class SendMessageEmail extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return null;
     }
@@ -376,9 +376,9 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -388,8 +388,8 @@ export class SendMessageEmail extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -407,9 +407,9 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -419,8 +419,8 @@ export class SendMessageEmail extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -441,9 +441,9 @@ export class SendMessageEmail extends SendMessageBase {
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -454,8 +454,8 @@ export class SendMessageEmail extends SendMessageBase {
           isRetry: false,
           raw: JSON.stringify(result),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       Logger.verbose({ command }, 'Execution details of sending an email message have been stored', LOG_CONTEXT);
 
@@ -483,9 +483,9 @@ export class SendMessageEmail extends SendMessageBase {
       );
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -496,8 +496,8 @@ export class SendMessageEmail extends SendMessageBase {
           isRetry: false,
           raw: JSON.stringify(error),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -516,9 +516,9 @@ export class SendMessageEmail extends SendMessageBase {
       );
       if (!layoutOverride) {
         const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-        await this.executionLogQueueService.add(
-          metadata._id,
-          CreateExecutionDetailsCommand.create({
+        await this.executionLogQueueService.add({
+          name: metadata._id,
+          data: CreateExecutionDetailsCommand.create({
             ...metadata,
             ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
             detail: DetailEnum.LAYOUT_NOT_FOUND,
@@ -530,8 +530,8 @@ export class SendMessageEmail extends SendMessageBase {
               layoutIdentifier: overrideLayoutIdentifier,
             }),
           }),
-          command.organizationId
-        );
+          groupId: command.organizationId,
+        });
       }
 
       return layoutOverride?._id;

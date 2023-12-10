@@ -1,4 +1,4 @@
-import { JobTopicNameEnum } from '@novu/shared';
+import { IJobData, JobTopicNameEnum } from '@novu/shared';
 import { Logger } from '@nestjs/common';
 
 import {
@@ -66,56 +66,64 @@ export class QueueBaseService {
     );
   }
 
-  public async addMinimalJob(
-    id: string,
-    data?: any,
-    groupId?: string,
-    options: JobsOptions = {}
-  ) {
-    const jobData = data
+  public async addMinimalJob(params: IJobParams) {
+    const { name, groupId, data, options } = params;
+
+    const jobData: IJobData = data
       ? {
           _environmentId: data._environmentId,
-          _id: id,
+          _id: data._id,
           _organizationId: data._organizationId,
           _userId: data._userId,
         }
       : undefined;
 
-    await this.add(id, jobData, groupId, {
-      removeOnComplete: true,
-      removeOnFail: true,
-      ...options,
-    });
+    await this.instance.add(
+      name,
+      jobData,
+      {
+        removeOnComplete: true,
+        removeOnFail: true,
+        ...options,
+      },
+      groupId
+    );
   }
 
-  public async add(
-    name: string,
-    data?: any,
-    groupId?: string,
-    options: JobsOptions = {}
-  ) {
+  public async add(params: IJobParams) {
     const jobOptions = {
       removeOnComplete: true,
       removeOnFail: true,
-      ...options,
+      ...params.options,
     };
 
-    await this.instance.add(name, data, jobOptions, groupId);
+    await this.instance.add(
+      params.name,
+      params.data,
+      jobOptions,
+      params.groupId
+    );
   }
-  public async addBulk(
-    data: [
-      {
-        name: string;
-        data: any;
-        options: BulkJobOptions;
-        groupId?: string;
-      }
-    ]
-  ) {
+
+  public async addBulk(data: IBulkJobParams[]) {
     await this.instance.addBulk(data);
   }
 
   async onModuleDestroy(): Promise<void> {
     await this.gracefulShutdown();
   }
+}
+
+export interface IJobParams {
+  name: string;
+  data?: any;
+  groupId?: string;
+  options?: JobsOptions;
+}
+
+export interface IBulkJobParams {
+  name: string;
+  data: any;
+  groupId?: string;
+  options?: BulkJobOptions;
 }

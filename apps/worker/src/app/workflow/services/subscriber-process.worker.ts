@@ -14,6 +14,7 @@ import {
   BullMqService,
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
+import { IProcessSubscriberDataDto } from '@novu/application-generic/build/main/dtos/process-subscriber-job.dto';
 
 const LOG_CONTEXT = 'SubscriberProcessWorker';
 
@@ -29,7 +30,7 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService impl
   }
 
   public getWorkerProcessor() {
-    return async ({ data }: { data: SubscriberJobBoundCommand }) => {
+    return async ({ data }: { data: IProcessSubscriberDataDto }) => {
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;

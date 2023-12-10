@@ -69,7 +69,12 @@ describe('Standard Queue service', () => {
         _organizationId,
         _userId,
       };
-      await standardQueueService.add(jobId, jobData, _organizationId);
+
+      await standardQueueService.add({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await standardQueueService.queue.getActiveCount()).toEqual(0);
       expect(await standardQueueService.queue.getWaitingCount()).toEqual(1);
@@ -99,7 +104,12 @@ describe('Standard Queue service', () => {
         _organizationId,
         _userId,
       };
-      await standardQueueService.addMinimalJob(jobId, jobData, _organizationId);
+
+      await standardQueueService.addMinimalJob({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await standardQueueService.queue.getActiveCount()).toEqual(0);
       expect(await standardQueueService.queue.getWaitingCount()).toEqual(1);

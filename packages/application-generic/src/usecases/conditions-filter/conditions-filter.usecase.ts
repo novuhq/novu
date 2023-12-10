@@ -654,9 +654,9 @@ export class ConditionsFilter extends Filter {
       );
     } catch (e: any) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.PROCESSING_STEP_FILTER_ERROR,
@@ -666,8 +666,8 @@ export class ConditionsFilter extends Filter {
           isRetry: false,
           raw: JSON.stringify({ error: e?.message }),
         }),
-        organizationId
-      );
+        groupId: organizationId,
+      });
 
       return;
     }

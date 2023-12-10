@@ -32,8 +32,9 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   actor?: SubscriberEntity | undefined;
 
-  @IsDefined()
-  to: ISubscribersDefine[];
+  // @IsDefined()
+
+  // to: ISubscribersDefine[];
 
   @IsDefined()
   @IsMongoId()

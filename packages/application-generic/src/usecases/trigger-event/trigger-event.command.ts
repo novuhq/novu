@@ -6,10 +6,13 @@ import {
   ValidateIf,
   IsEnum,
 } from 'class-validator';
+
 import {
   AddressingTypeEnum,
-  ISubscribersDefine,
-  ITenantDefine,
+  TriggerRecipients,
+  TriggerRecipientsPayload,
+  TriggerRecipientSubscriber,
+  TriggerTenantContext,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../commands';
@@ -32,17 +35,17 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @ValidateIf((_, value) => typeof value !== 'string')
   @ValidateNested()
-  actor?: ISubscribersDefine | null;
+  actor?: TriggerRecipientSubscriber | null;
 
   @IsOptional()
   @ValidateIf((_, value) => typeof value !== 'string')
   @ValidateNested()
-  tenant?: ITenantDefine | null;
+  tenant?: TriggerTenantContext | null;
 }
 
 export class TriggerEventMulticastCommand extends TriggerEventBaseCommand {
   @IsDefined()
-  to: ISubscribersDefine[];
+  to: TriggerRecipientsPayload;
 
   @IsEnum(AddressingTypeEnum)
   addressingType: AddressingTypeEnum.MULTICAST;
