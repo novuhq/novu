@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
-import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiExcludeEndpoint } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateOrganizationDto } from './dtos/create-organization.dto';
@@ -127,6 +127,7 @@ export class OrganizationController {
 
   @Put('/members/:memberId/roles')
   @ExternalApiAccessible()
+  @ApiExcludeEndpoint()
   @Roles(MemberRoleEnum.ADMIN)
   @ApiResponse(MemberResponseDto)
   @ApiOperation({
