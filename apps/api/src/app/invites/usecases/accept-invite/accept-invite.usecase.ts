@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
 
 import { MemberEntity, OrganizationRepository, UserEntity, MemberRepository, UserRepository } from '@novu/dal';
-import { MemberStatusEnum } from '@novu/shared';
+import { MemberStatusEnum, CustomDataType } from '@novu/shared';
 import { Novu } from '@novu/node';
 import { AuthService } from '@novu/application-generic';
 
@@ -46,17 +46,17 @@ export class AcceptInvite {
       answerDate: new Date(),
     });
 
-    this.sendInviterAcceptedEmail(inviter, member);
+    this.sendInviterAcceptedEmail(inviter, member, member.config);
 
     return this.authService.generateUserToken(user);
   }
 
-  async sendInviterAcceptedEmail(inviter: UserEntity, member: MemberEntity) {
+  async sendInviterAcceptedEmail(inviter: UserEntity, member: MemberEntity, config?: CustomDataType) {
     if (!member.invite) return;
 
     try {
       if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
-        const novu = new Novu(process.env.NOVU_API_KEY);
+        const novu = new Novu(process.env.NOVU_API_KEY, config);
 
         await novu.trigger(process.env.NOVU_TEMPLATEID_INVITE_ACCEPTED || 'invite-accepted-dEQAsKD1E', {
           to: {

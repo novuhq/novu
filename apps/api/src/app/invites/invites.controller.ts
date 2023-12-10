@@ -79,6 +79,7 @@ export class InvitesController {
       organizationId: user.organizationId,
       email: body.email,
       role: body.role,
+      config: body.config,
     });
 
     await this.inviteMemberUsecase.execute(command);
@@ -99,6 +100,7 @@ export class InvitesController {
       userId: user._id,
       organizationId: user.organizationId,
       memberId: body.memberId,
+      config: body.config,
     });
 
     await this.resendInviteUsecase.execute(command);
@@ -120,6 +122,7 @@ export class InvitesController {
       userId: user._id,
       organizationId: user.organizationId,
       invitees: body.invitees,
+      config: body.config,
     });
 
     const response = await this.bulkInviteUsecase.execute(command);

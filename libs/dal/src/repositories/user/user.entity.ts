@@ -1,4 +1,4 @@
-import { AuthProviderEnum } from '@novu/shared';
+import { AuthProviderEnum, CustomDataType } from '@novu/shared';
 import { Exclude } from 'class-transformer';
 
 import { UserId } from './types';
@@ -31,6 +31,8 @@ export class UserEntity {
   lastName?: string | null;
 
   email?: string | null;
+
+  config?: CustomDataType;
 
   profilePicture?: string | null;
 

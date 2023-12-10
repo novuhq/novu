@@ -1,6 +1,5 @@
-import { IsEmail, IsEnum, IsNotEmpty } from 'class-validator';
-import { MemberRoleEnum } from '@novu/shared';
-
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
+import { CustomDataType, MemberRoleEnum } from '@novu/shared';
 export class InviteMemberDto {
   @IsEmail()
   @IsNotEmpty()
@@ -8,4 +7,6 @@ export class InviteMemberDto {
 
   @IsEnum(MemberRoleEnum)
   role: MemberRoleEnum;
+  @IsOptional()
+  config?: CustomDataType;
 }

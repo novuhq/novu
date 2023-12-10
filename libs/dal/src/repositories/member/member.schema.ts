@@ -31,6 +31,7 @@ const memberSchema = new Schema<MemberDBModel>(
       ref: 'Organization',
       index: true,
     },
+    config: Schema.Types.Mixed,
   },
   schemaOptions
 );
