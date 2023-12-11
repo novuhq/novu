@@ -86,26 +86,6 @@ export class TriggerMulticast {
   }
 
   @Instrument()
-  private async validateTransactionIdProperty(
-    transactionId: string,
-    environmentId: string
-  ): Promise<void> {
-    const found = (await this.jobRepository.findOne(
-      {
-        transactionId,
-        _environmentId: environmentId,
-      },
-      '_id'
-    )) as Pick<JobEntity, '_id'>;
-
-    if (found) {
-      throw new ApiException(
-        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
-      );
-    }
-  }
-
-  @Instrument()
   private async validateSubscriberIdProperty(
     to: ISubscribersSource[]
   ): Promise<boolean> {
@@ -151,6 +131,9 @@ export class TriggerMulticast {
     command: TriggerMulticastCommand
   ) {
     return subscribers.map((subscriber) => {
+      const { _subscriberSource, ...subscribersDefineParams } = subscriber;
+      const subscribersDefine: ISubscribersDefine = subscribersDefineParams;
+
       return {
         name: command.transactionId + subscriber.subscriberId,
         data: {
@@ -163,11 +146,9 @@ export class TriggerMulticast {
           overrides: command.overrides,
           tenant: command.tenant,
           ...(command.actor && { actor: command.actor }),
-          subscriber: {
-            subscriberId: subscriber.subscriberId,
-          } as ISubscribersDefine,
+          subscriber: subscribersDefine,
           templateId: command.template._id,
-          _subscriberSource: subscriber._subscriberSource,
+          _subscriberSource: _subscriberSource,
         },
         groupId: command.organizationId,
       };
