@@ -120,6 +120,7 @@ export class ApiService {
     return await this.httpClient.post(`/widgets/session/initialize`, {
       applicationIdentifier: appId,
       subscriberId: subscriberId,
+      hmacHash:hmacHash,
       firstName: firstName,
       lastName: lastName,
       email: email,
