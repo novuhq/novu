@@ -21,8 +21,10 @@ export class JwtAuthGuard extends AuthGuard(['jwt', 'headerapikey']) {
   getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions<any> {
     const request = context.switchToHttp().getRequest();
     const authorizationHeader = request.headers.authorization;
-    const authScheme = authorizationHeader.split(' ')[0];
+
+    const authScheme = authorizationHeader?.split(' ')[0] || 'None';
     request.authScheme = authScheme;
+    this.logger.assign({ authScheme });
 
     switch (authScheme) {
       case 'Bearer':
@@ -43,7 +45,9 @@ export class JwtAuthGuard extends AuthGuard(['jwt', 'headerapikey']) {
           defaultStrategy: 'headerapikey',
         };
       default:
-        throw new UnauthorizedException('Invalid auth scheme');
+        throw new UnauthorizedException(
+          `Invalid authentication scheme: "${authScheme}"`
+        );
     }
   }
 
@@ -54,13 +58,10 @@ export class JwtAuthGuard extends AuthGuard(['jwt', 'headerapikey']) {
     context: ExecutionContext,
     status?: any
   ): TUser {
-    const request = context.switchToHttp().getRequest();
-
     this.logger.assign({
       userId: user._id,
       environmentId: user.environmentId,
       organizationId: user.organizationId,
-      authScheme: request.authScheme,
     });
 
     /**
