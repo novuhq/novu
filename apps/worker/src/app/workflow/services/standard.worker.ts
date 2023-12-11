@@ -5,6 +5,7 @@ import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   BullMqService,
   getStandardWorkerOptions,
+  IStandardDataDto,
   Job,
   PinoLogger,
   StandardWorkerService,
@@ -25,7 +26,6 @@ import {
   HandleLastFailedJobCommand,
   HandleLastFailedJob,
 } from '../usecases';
-import { IStandardDataDto } from '@novu/application-generic/build/main/dtos/standard-job.dto';
 
 const LOG_CONTEXT = 'StandardWorker';
 

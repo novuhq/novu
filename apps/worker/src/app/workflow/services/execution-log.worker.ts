@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
   getExecutionLogWorkerOptions,
@@ -9,12 +9,11 @@ import {
   WorkerOptions,
   WorkerProcessor,
   CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
   BullMqService,
   WorkflowInMemoryProviderService,
+  IExecutionLogJobDataDto,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
-import { IExecutionLogJobDataDto } from '@novu/application-generic/build/main/dtos/execution-log-job.dto';
 const LOG_CONTEXT = 'ExecutionLogWorker';
 
 @Injectable()
