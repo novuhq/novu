@@ -12,7 +12,6 @@ import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/e
 import { Reflector } from '@nestjs/core';
 import { FeatureFlagCommand, GetIsApiRateLimitingEnabled } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, IJwtPayload } from '@novu/shared';
-import * as jwt from 'jsonwebtoken';
 import { ThrottlerCost, ThrottlerCategory } from './throttler.decorator';
 
 export enum RateLimitHeaderKeysEnum {
@@ -165,18 +164,17 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   private isAllowedAuthScheme(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    const authorization = req.headers[RateLimitHeaderKeysEnum.AUTHORIZATION.toLowerCase()];
-    if (!authorization) {
+    const authScheme = req.authScheme;
+    if (!authScheme) {
       return false;
     }
 
-    return ALLOWED_AUTH_SCHEMES.some((scheme) => req.authScheme === scheme);
+    return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
   }
 
   private getReqUser(context: ExecutionContext): IJwtPayload {
     const req = context.switchToHttp().getRequest();
-    const token = req.headers[RateLimitHeaderKeysEnum.AUTHORIZATION.toLowerCase()].split(' ')[1];
 
-    return jwt.decode(token);
+    return req.user;
   }
 }
