@@ -125,22 +125,27 @@ export class SubscriberJobBound {
       return;
     }
 
+    const createNotificationJobsCommand: CreateNotificationJobsCommand = {
+      environmentId,
+      identifier,
+      organizationId,
+      overrides: command.overrides,
+      payload: command.payload,
+      subscriber: subscriberProcessed,
+      template,
+      templateProviderIds,
+      to: subscriber,
+      transactionId: command.transactionId,
+      userId,
+      tenant,
+    };
+
+    if (actor) {
+      createNotificationJobsCommand.actor = actor;
+    }
+
     const notificationJobs = await this.createNotificationJobs.execute(
-      CreateNotificationJobsCommand.create({
-        environmentId,
-        identifier,
-        organizationId,
-        overrides: command.overrides,
-        payload: command.payload,
-        subscriber: subscriberProcessed,
-        template,
-        templateProviderIds,
-        to: subscriber,
-        transactionId: command.transactionId,
-        userId,
-        ...(actor && { actor }),
-        tenant,
-      })
+      CreateNotificationJobsCommand.create(createNotificationJobsCommand)
     );
 
     await this.storeSubscriberJobs.execute(

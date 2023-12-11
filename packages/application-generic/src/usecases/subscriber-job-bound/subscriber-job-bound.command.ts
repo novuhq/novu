@@ -32,14 +32,10 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @ValidateNested()
-  tenant?: ITenantDefine | null;
+  tenant?: ITenantDefine;
 
   @IsOptional()
-  actor?: SubscriberEntity | undefined;
-
-  // @IsDefined()
-
-  // to: ISubscribersDefine[];
+  actor?: SubscriberEntity;
 
   @IsDefined()
   @IsMongoId()

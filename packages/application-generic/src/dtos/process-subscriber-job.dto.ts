@@ -1,4 +1,8 @@
-import { ISubscribersDefine, ITenantDefine } from '@novu/shared';
+import {
+  ISubscribersDefine,
+  ITenantDefine,
+  SubscriberSourceEnum,
+} from '@novu/shared';
 import { SubscriberEntity } from '@novu/dal';
 
 import {
@@ -14,10 +18,11 @@ export interface IProcessSubscriberDataDto {
   identifier: string;
   payload: any;
   overrides: Record<string, Record<string, unknown>>;
-  tenant?: ITenantDefine | null;
+  tenant?: ITenantDefine;
   actor?: SubscriberEntity;
   subscriber: ISubscribersDefine;
   templateId: string;
+  _subscriberSource: SubscriberSourceEnum;
 }
 
 export interface IProcessSubscriberJobDto extends IJobParams {
