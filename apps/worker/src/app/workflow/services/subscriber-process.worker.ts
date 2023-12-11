@@ -19,7 +19,7 @@ import { IProcessSubscriberDataDto } from '@novu/application-generic/build/main/
 const LOG_CONTEXT = 'SubscriberProcessWorker';
 
 @Injectable()
-export class SubscriberProcessWorker extends SubscriberProcessWorkerService implements INovuWorker {
+export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
   constructor(
     private subscriberJobBoundUsecase: SubscriberJobBound,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService
