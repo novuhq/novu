@@ -540,6 +540,7 @@
     "Ratelimit",
     "stdev",
     "Stdev",
+    "headerapikey",
   ],
   "flagWords": [],
   "patterns": [
