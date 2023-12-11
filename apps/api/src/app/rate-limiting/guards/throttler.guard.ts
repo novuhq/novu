@@ -164,12 +164,12 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
   private isAllowedAuthScheme(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest();
-    const authScheme = req.authScheme;
-    if (!authScheme) {
+    const authorization = req.headers[RateLimitHeaderKeysEnum.AUTHORIZATION.toLowerCase()];
+    if (!authorization) {
       return false;
     }
 
-    return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
+    return ALLOWED_AUTH_SCHEMES.some((scheme) => req.authScheme === scheme);
   }
 
   private getReqUser(context: ExecutionContext): IJwtPayload {
