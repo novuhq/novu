@@ -15,7 +15,6 @@ import { CacheService } from '@novu/application-generic';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { createHash } from 'crypto';
-import * as jwt from 'jsonwebtoken';
 import { IJwtPayload } from '@novu/shared';
 
 const LOG_CONTEXT = 'IdempotencyInterceptor';
@@ -93,26 +92,22 @@ export class IdempotencyInterceptor implements NestInterceptor {
     return request.headers[HEADER_KEYS.IDEMPOTENCY_KEY.toLocaleLowerCase()];
   }
 
-  private getReqUser(context: ExecutionContext): IJwtPayload | null {
+  private getReqUser(context: ExecutionContext): IJwtPayload {
     const req = context.switchToHttp().getRequest();
-    if (req?.user?.organizationId) {
-      return req.user;
-    }
-    if (req.headers?.authorization?.length) {
-      const token = req.headers.authorization.split(' ')[1];
-      if (token) {
-        return jwt.decode(token);
-      }
-    }
 
-    return null;
+    return req.user;
   }
 
   private getCacheKey(context: ExecutionContext): string {
-    const { organizationId } = this.getReqUser(context) || {};
+    const user = this.getReqUser(context);
+    if (user === undefined) {
+      const message = 'Cannot build cache key without user';
+      Logger.error(message, LOG_CONTEXT);
+      throw new InternalServerErrorException(message);
+    }
     const env = process.env.NODE_ENV;
 
-    return `${env}-${organizationId}-${this.getIdempotencyKey(context)}`;
+    return `${env}-${user.organizationId}-${this.getIdempotencyKey(context)}`;
   }
 
   async setCache(

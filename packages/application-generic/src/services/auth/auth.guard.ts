@@ -1,54 +1,77 @@
 import {
   ExecutionContext,
-  forwardRef,
-  Inject,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard, IAuthModuleOptions } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
-import { AuthService } from './auth.service';
-import { Instrument } from '../../instrumentation';
+import { PinoLogger } from 'nestjs-pino';
+import { IJwtPayload } from '@novu/shared';
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard('jwt') {
+export class JwtAuthGuard extends AuthGuard(['jwt', 'headerapikey']) {
   private readonly reflector: Reflector;
 
-  constructor(
-    @Inject(forwardRef(() => AuthService)) private authService: AuthService
-  ) {
+  constructor(private logger: PinoLogger) {
     super();
     this.reflector = new Reflector();
   }
 
-  @Instrument()
-  async canActivate(context: ExecutionContext) {
+  getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions<any> {
+    Logger.log('JwtAuthGuard getAuthenticateOptions');
     const request = context.switchToHttp().getRequest();
     const authorizationHeader = request.headers.authorization;
+    const authScheme = authorizationHeader.split(' ')[0];
+    request.authScheme = authScheme;
 
-    if (authorizationHeader) {
-      const authScheme = authorizationHeader.split(' ')[0];
-      request.authScheme = authScheme;
+    switch (authScheme) {
+      case 'Bearer':
+        return {
+          session: false,
+          defaultStrategy: 'jwt',
+        };
+      case 'ApiKey':
+        const apiEnabled = this.reflector.get<boolean>(
+          'external_api_accessible',
+          context.getHandler()
+        );
+        if (!apiEnabled)
+          throw new UnauthorizedException('API endpoint not available');
+
+        return {
+          session: false,
+          defaultStrategy: 'headerapikey',
+        };
+      default:
+        throw new UnauthorizedException('Invalid auth scheme');
     }
+  }
 
-    if (authorizationHeader && authorizationHeader.includes('ApiKey')) {
-      const apiEnabled = this.reflector.get<boolean>(
-        'external_api_accessible',
-        context.getHandler()
-      );
-      if (!apiEnabled)
-        throw new UnauthorizedException('API endpoint not available');
+  handleRequest<TUser = IJwtPayload>(
+    err: any,
+    user: any,
+    info: any,
+    context: ExecutionContext,
+    status?: any
+  ): TUser {
+    const request = context.switchToHttp().getRequest();
+    Logger.log('JwtAuthGuard handleRequest');
 
-      const key = authorizationHeader.split(' ')[1];
+    this.logger.assign({
+      userId: user._id,
+      environmentId: user.environmentId,
+      organizationId: user.organizationId,
+      authScheme: request.authScheme,
+    });
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return this.authService.apiKeyAuthenticate(key).then<any>((result) => {
-        request.headers.authorization = `Bearer ${result}`;
+    /**
+     * This helps with sentry and other tools that need to know who the user is based on `id` property.
+     */
+    user.id = user._id;
+    user.username = (user.firstName || '').trim();
+    user.domain = user.email?.split('@')[1];
 
-        return true;
-      });
-    }
-
-    return super.canActivate(context);
+    return user;
   }
 }
