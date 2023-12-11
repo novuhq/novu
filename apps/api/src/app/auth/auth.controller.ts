@@ -14,7 +14,7 @@ import {
   UseGuards,
   UseInterceptors,
   Logger,
-  ExecutionContext,
+  Header,
 } from '@nestjs/common';
 import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
 import { JwtService } from '@nestjs/jwt';
@@ -90,6 +90,7 @@ export class AuthController {
 
   @Get('/refresh')
   @UseGuards(JwtAuthGuard)
+  @Header('Cache-Control', 'no-store')
   refreshToken(@UserSession() user: IJwtPayload) {
     if (!user || !user._id) throw new BadRequestException();
 
@@ -97,6 +98,7 @@ export class AuthController {
   }
 
   @Post('/register')
+  @Header('Cache-Control', 'no-store')
   async userRegistration(@Body() body: UserRegistrationBodyDto) {
     return await this.userRegisterUsecase.execute(
       UserRegisterCommand.create({
@@ -130,6 +132,7 @@ export class AuthController {
   }
 
   @Post('/login')
+  @Header('Cache-Control', 'no-store')
   async userLogin(@Body() body: LoginBodyDto) {
     return await this.loginUsecase.execute(
       LoginCommand.create({
@@ -142,6 +145,7 @@ export class AuthController {
   @Post('/organizations/:organizationId/switch')
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
+  @Header('Cache-Control', 'no-store')
   async organizationSwitch(
     @UserSession() user: IJwtPayload,
     @Param('organizationId') organizationId: string
@@ -155,6 +159,7 @@ export class AuthController {
   }
 
   @Post('/environments/:environmentId/switch')
+  @Header('Cache-Control', 'no-store')
   @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   async projectSwitch(
