@@ -11,7 +11,6 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
       { header: 'Authorization', prefix: 'ApiKey ' },
       true,
       (apikey: string, verified: (err: Error | null, user?: IJwtPayload | false) => void) => {
-        Logger.log('ApiKeyStrategy validate');
         this.authService.validateApiKey(apikey).then((user) => {
           if (!user) {
             return verified(null, false);
