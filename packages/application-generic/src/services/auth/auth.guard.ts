@@ -19,7 +19,6 @@ export class JwtAuthGuard extends AuthGuard(['jwt', 'headerapikey']) {
   }
 
   getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions<any> {
-    Logger.log('JwtAuthGuard getAuthenticateOptions');
     const request = context.switchToHttp().getRequest();
     const authorizationHeader = request.headers.authorization;
     const authScheme = authorizationHeader.split(' ')[0];
@@ -56,7 +55,6 @@ export class JwtAuthGuard extends AuthGuard(['jwt', 'headerapikey']) {
     status?: any
   ): TUser {
     const request = context.switchToHttp().getRequest();
-    Logger.log('JwtAuthGuard handleRequest');
 
     this.logger.assign({
       userId: user._id,
