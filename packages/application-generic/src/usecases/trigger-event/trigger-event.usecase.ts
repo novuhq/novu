@@ -84,8 +84,6 @@ export class TriggerEvent {
 
       this.logger.assign({
         transactionId: mappedCommand.transactionId,
-        environmentId: mappedCommand.environmentId,
-        organizationId: mappedCommand.organizationId,
       });
 
       const template = await this.getNotificationTemplateByTriggerIdentifier({
