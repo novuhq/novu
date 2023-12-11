@@ -18,8 +18,9 @@ import { EnvironmentsModule } from '../environments/environments.module';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { JwtAuthGuard } from './framework/auth.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
+import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 
-const AUTH_STRATEGIES: Provider[] = [];
+const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
 
 if (process.env.GITHUB_OAUTH_CLIENT_ID) {
   AUTH_STRATEGIES.push(GitHubStrategy);
@@ -42,16 +43,7 @@ if (process.env.GITHUB_OAUTH_CLIENT_ID) {
     EnvironmentsModule,
   ],
   controllers: [AuthController],
-  providers: [
-    JwtAuthGuard,
-    ...USE_CASES,
-    ...AUTH_STRATEGIES,
-    JwtStrategy,
-    AuthService,
-    RolesGuard,
-    JwtSubscriberStrategy,
-    RootEnvironmentGuard,
-  ],
+  providers: [JwtAuthGuard, ...USE_CASES, ...AUTH_STRATEGIES, AuthService, RolesGuard, RootEnvironmentGuard],
   exports: [RolesGuard, RootEnvironmentGuard, AuthService, ...USE_CASES, JwtAuthGuard],
 })
 export class AuthModule implements NestModule {
