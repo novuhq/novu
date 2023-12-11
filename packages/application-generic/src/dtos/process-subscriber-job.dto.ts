@@ -2,6 +2,7 @@ import {
   ISubscribersDefine,
   ITenantDefine,
   SubscriberSourceEnum,
+  TriggerRequestCategoryEnum,
 } from '@novu/shared';
 import { SubscriberEntity } from '@novu/dal';
 
@@ -23,6 +24,7 @@ export interface IProcessSubscriberDataDto {
   subscriber: ISubscribersDefine;
   templateId: string;
   _subscriberSource: SubscriberSourceEnum;
+  requestCategory: TriggerRequestCategoryEnum;
 }
 
 export interface IProcessSubscriberJobDto extends IJobParams {

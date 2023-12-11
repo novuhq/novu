@@ -147,6 +147,7 @@ export class TriggerMulticast {
           subscriber: subscribersDefine,
           templateId: command.template._id,
           _subscriberSource: _subscriberSource,
+          requestCategory: command.requestCategory,
         },
         groupId: command.organizationId,
       };

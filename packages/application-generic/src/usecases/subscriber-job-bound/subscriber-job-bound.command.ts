@@ -10,6 +10,7 @@ import {
   ISubscribersDefine,
   ITenantDefine,
   SubscriberSourceEnum,
+  TriggerRequestCategoryEnum,
 } from '@novu/shared';
 import { SubscriberEntity } from '@novu/dal';
 
@@ -47,4 +48,8 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   @IsEnum(SubscriberSourceEnum)
   _subscriberSource: SubscriberSourceEnum;
+
+  @IsDefined()
+  @IsEnum(TriggerRequestCategoryEnum)
+  requestCategory: TriggerRequestCategoryEnum;
 }

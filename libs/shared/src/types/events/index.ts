@@ -66,3 +66,8 @@ export enum AddressingTypeEnum {
   BROADCAST = 'broadcast',
   MULTICAST = 'multicast',
 }
+
+export enum TriggerRequestCategoryEnum {
+  SINGLE = 'single',
+  BULK = 'bulk',
+}

@@ -1,8 +1,8 @@
 import {
   AddressingTypeEnum,
-  TriggerRecipients,
   TriggerRecipientsPayload,
   TriggerRecipientSubscriber,
+  TriggerRequestCategoryEnum,
   TriggerTenantContext,
 } from '@novu/shared';
 import {
@@ -31,6 +31,7 @@ export type IWorkflowDataDto = {
   transactionId: string;
   actor?: TriggerRecipientSubscriber | null;
   tenant?: TriggerTenantContext | null;
+  requestCategory: TriggerRequestCategoryEnum;
 } & Addressing;
 
 export interface IWorkflowJobDto extends IJobParams {

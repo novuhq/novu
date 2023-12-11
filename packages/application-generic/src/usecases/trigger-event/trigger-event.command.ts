@@ -9,9 +9,9 @@ import {
 
 import {
   AddressingTypeEnum,
-  TriggerRecipients,
   TriggerRecipientsPayload,
   TriggerRecipientSubscriber,
+  TriggerRequestCategoryEnum,
   TriggerTenantContext,
 } from '@novu/shared';
 
@@ -41,6 +41,10 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @ValidateIf((_, value) => typeof value !== 'string')
   @ValidateNested()
   tenant?: TriggerTenantContext | null;
+
+  @IsDefined()
+  @IsEnum(TriggerRequestCategoryEnum)
+  requestCategory: TriggerRequestCategoryEnum;
 }
 
 export class TriggerEventMulticastCommand extends TriggerEventBaseCommand {
