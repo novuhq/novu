@@ -157,6 +157,17 @@ export class TriggerEvent {
           );
           break;
         }
+        default: {
+          await this.triggerMulticast.execute(
+            TriggerMulticastCommand.create({
+              addressingType: AddressingTypeEnum.MULTICAST,
+              ...(mappedCommand as TriggerMulticastCommand),
+              actor: actorProcessed,
+              template,
+            })
+          );
+          break;
+        }
       }
     } catch (e) {
       Logger.error(

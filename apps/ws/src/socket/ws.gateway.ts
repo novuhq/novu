@@ -1,17 +1,20 @@
 const nr = require('newrelic');
+import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
-import { Server, Socket } from 'socket.io';
 
 import { ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import { IDestroy } from '@novu/application-generic';
 
 import { SubscriberOnlineService } from '../shared/subscriber-online';
 
 const LOG_CONTEXT = 'WSGateway';
 
 @WebSocketGateway()
-export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDestroy {
+  private isShutdown = false;
+
   constructor(private jwtService: JwtService, private subscriberOnlineService: SubscriberOnlineService) {}
 
   @WebSocketServer()
@@ -82,7 +85,18 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  /*
+   * This method is called when a client disconnects from the server.
+   * * When a shutdown is in progress, we opt out of updating the subscriber status,
+   * assuming that when the current instance goes down, another instance will take its place and handle the subscriber status update.
+   */
   private async processDisconnectionRequest(connection: Socket) {
+    if (!this.isShutdown) {
+      await this.handlerSubscriberDisconnection(connection);
+    }
+  }
+
+  private async handlerSubscriberDisconnection(connection: Socket) {
     const token = this.extractToken(connection);
 
     if (!token || token === 'null') {
@@ -96,6 +110,12 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     const activeConnections = await this.getActiveConnections(connection, subscriber._id);
     await this.subscriberOnlineService.handleDisconnection(subscriber, activeConnections);
+  }
+
+  private async getActiveConnections(socket: Socket, subscriberId: string) {
+    const activeSockets = await socket.in(subscriberId).fetchSockets();
+
+    return activeSockets.length;
   }
 
   private async processConnectionRequest(connection: Socket) {
@@ -129,9 +149,29 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect {
     socket.disconnect();
   }
 
-  private async getActiveConnections(socket: Socket, subscriberId: string) {
-    const activeSockets = await socket.in(subscriberId).fetchSockets();
+  async gracefulShutdown(): Promise<void> {
+    try {
+      if (!this.server) {
+        Logger.error('WS server was not initialized while executing shutdown', LOG_CONTEXT);
 
-    return activeSockets.length;
+        return;
+      }
+
+      Logger.log('Closing WS server for incoming new connections', LOG_CONTEXT);
+      this.server.close();
+
+      Logger.log('Disconnecting active sockets connections', LOG_CONTEXT);
+      this.server.sockets.disconnectSockets();
+    } catch (e) {
+      Logger.error(e, 'Unexpected exception was thrown while graceful shut down was executed', LOG_CONTEXT);
+      throw e;
+    } finally {
+      Logger.log(`Graceful shutdown down has finished`, LOG_CONTEXT);
+    }
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    this.isShutdown = true;
+    await this.gracefulShutdown();
   }
 }

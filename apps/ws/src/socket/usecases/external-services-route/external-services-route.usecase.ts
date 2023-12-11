@@ -60,12 +60,6 @@ export class ExternalServicesRoute {
       return;
     }
 
-    const connection = await this.connectionExist(command);
-
-    if (!connection) {
-      return;
-    }
-
     let unreadCount = this.extractCount(command.payload?.unreadCount);
 
     if (unreadCount === undefined) {
@@ -88,12 +82,6 @@ export class ExternalServicesRoute {
 
   private async sendUnseenCountChange(command: ExternalServicesRouteCommand) {
     if (!command._environmentId) {
-      return;
-    }
-
-    const connection = await this.connectionExist(command);
-
-    if (!connection) {
       return;
     }
 

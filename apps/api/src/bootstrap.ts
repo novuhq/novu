@@ -126,7 +126,6 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     await app.listen(process.env.PORT);
   }
 
-  // Starts listening for shutdown hooks
   app.enableShutdownHooks();
 
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
@@ -143,7 +142,7 @@ const corsOptionsDelegate = function (req, callback) {
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
-  if (['dev', 'test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url) || isBlueprintRoute(req.url)) {
+  if (['test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url) || isBlueprintRoute(req.url)) {
     corsOptions.origin = '*';
   } else {
     corsOptions.origin = [process.env.FRONT_BASE_URL];

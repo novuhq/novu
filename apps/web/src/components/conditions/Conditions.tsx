@@ -246,7 +246,7 @@ export function Conditions({
               on: defaultOnFilter,
             } as IFieldFilterPart);
           }}
-          icon={<ConditionPlus />}
+          icon={<ConditionPlus style={{ color: colorScheme === 'dark' ? colors.white : colors.gradientMiddle }} />}
           disabled={isReadonly}
           data-test-id="add-new-condition"
         >
