@@ -56,7 +56,7 @@ export function DigestDemoFlow({
             zoomOnScroll={false}
             zoomOnPinch={false}
             panOnDrag={false}
-            panOnScroll={false}
+            panOnScroll
             preventScrolling={false}
           />
         )}

@@ -318,6 +318,7 @@ export function FlowEditor({
             minZoom={minZoom}
             maxZoom={maxZoom}
             defaultZoom={defaultZoom}
+            panOnScroll
             {...restProps}
           >
             {withControls && <Controls />}
