@@ -13,14 +13,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import {
-  ApiConflictResponse,
-  ApiExcludeController,
-  ApiNoContentResponse,
-  ApiNotFoundResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { ApiRateLimitCategoryEnum, IJwtPayload } from '@novu/shared';
 import {
@@ -35,7 +28,13 @@ import {
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import {
+  ApiCommonResponses,
+  ApiResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiConflictResponse,
+} from '../shared/framework/response.decorator';
 import { DeleteTenantCommand } from './usecases/delete-tenant/delete-tenant.command';
 import { DeleteTenant } from './usecases/delete-tenant/delete-tenant.usecase';
 import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-response.decorator';
@@ -53,6 +52,7 @@ import {
 import { ThrottlerCategory } from '../rate-limiting/guards';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
+@ApiCommonResponses()
 @Controller('/tenants')
 @ApiTags('Tenants')
 @UseInterceptors(ClassSerializerInterceptor)
