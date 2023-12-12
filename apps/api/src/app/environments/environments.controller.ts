@@ -28,8 +28,9 @@ import { RegenerateApiKeys } from './usecases/regenerate-api-keys/regenerate-api
 import { UpdateEnvironmentCommand } from './usecases/update-environment/update-environment.command';
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 
+@ApiCommonResponses()
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
