@@ -16,7 +16,7 @@ import { GitHubStrategy } from './services/passport/github.strategy';
 import { OrganizationModule } from '../organization/organization.module';
 import { EnvironmentsModule } from '../environments/environments.module';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
-import { JwtAuthGuard } from './framework/auth.guard';
+import { UserAuthGuard } from './framework/user.auth.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 
@@ -43,8 +43,8 @@ if (process.env.GITHUB_OAUTH_CLIENT_ID) {
     EnvironmentsModule,
   ],
   controllers: [AuthController],
-  providers: [JwtAuthGuard, ...USE_CASES, ...AUTH_STRATEGIES, AuthService, RolesGuard, RootEnvironmentGuard],
-  exports: [RolesGuard, RootEnvironmentGuard, AuthService, ...USE_CASES, JwtAuthGuard],
+  providers: [UserAuthGuard, ...USE_CASES, ...AUTH_STRATEGIES, AuthService, RolesGuard, RootEnvironmentGuard],
+  exports: [RolesGuard, RootEnvironmentGuard, AuthService, ...USE_CASES, UserAuthGuard],
 })
 export class AuthModule implements NestModule {
   public configure(consumer: MiddlewareConsumer) {

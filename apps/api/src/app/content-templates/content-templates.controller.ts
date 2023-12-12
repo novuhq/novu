@@ -1,12 +1,12 @@
 import { Body, Controller, Post, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { IEmailBlock, IJwtPayload, MessageTemplateContentType } from '@novu/shared';
-import { CompileEmailTemplate, CompileEmailTemplateCommand, JwtAuthGuard } from '@novu/application-generic';
+import { CompileEmailTemplate, CompileEmailTemplateCommand, UserAuthGuard } from '@novu/application-generic';
 
 import { UserSession } from '../shared/framework/user.decorator';
 
 @Controller('/content-templates')
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiExcludeController()
 export class ContentTemplatesController {
   constructor(private compileEmailTemplateUsecase: CompileEmailTemplate) {}

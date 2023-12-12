@@ -19,7 +19,7 @@ type SentryUser = {
 type HandledUser = (IJwtPayload & SentryUser) | false;
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard([
+export class UserAuthGuard extends AuthGuard([
   PassportStrategyEnum.JWT,
   PassportStrategyEnum.HEADER_API_KEY,
 ]) {
