@@ -52,7 +52,7 @@ jobs:
         working-directory: cloud-infra/terraform/novu/aws
         id: terraform
         run: |
-          echo "queue_workers_services=$(terraform output -json queue_workers_services | jq -r .)" >> $GITHUB_OUTPUT
+          echo "queue_workers_services=$(terraform output -json queue_workers_services | jq -r tostring .)" >> $GITHUB_OUTPUT
           echo "ecs_cluster=$(terraform output -json worker_ecs_cluster | jq -r .)" >> $GITHUB_OUTPUT
           echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_OUTPUT
 
