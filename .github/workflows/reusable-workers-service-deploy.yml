@@ -28,6 +28,7 @@ jobs:
     outputs:
       services_to_deploy: ${{ steps.terraform.outputs.queue_workers_services }}
       ecs_cluster: ${{ steps.terraform.outputs.ecs_cluster }}
+      aws_region: ${{ steps.terraform.outputs.aws_region }}
     steps:
       - run: echo "Deploying ${{ inputs.service_name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
       - name: Checkout cloud infra
@@ -78,7 +79,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.aws_region }}
+          aws-region: ${{ needs.infrastructure_data.outputs.aws_region }}
 
       - name: Download task definition
         run: |
@@ -90,7 +91,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: ${{ env.ecs_container_name }}
+          container-name: ${{ matrix.worker.container_name }}
           image: ${{ inputs.docker_image }}
 
       - name: Deploy to Amazon ECS service
