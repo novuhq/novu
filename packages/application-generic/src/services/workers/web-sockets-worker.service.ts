@@ -1,14 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 
 import { WorkerBaseService } from './index';
+import { BullMqService } from '../bull-mq';
 
 const LOG_CONTEXT = 'WebSocketsWorkerService';
 
-@Injectable()
 export class WebSocketsWorkerService extends WorkerBaseService {
-  constructor() {
-    super(JobTopicNameEnum.WEB_SOCKETS);
-    Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
+  constructor(public bullMqService: BullMqService) {
+    super(JobTopicNameEnum.WEB_SOCKETS, bullMqService);
   }
 }

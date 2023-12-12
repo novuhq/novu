@@ -22,8 +22,9 @@ import { DeleteFeedCommand } from './usecases/delete-feed/delete-feed.command';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FeedResponseDto } from './dto/feed-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 
+@ApiCommonResponses()
 @Controller('/feeds')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)

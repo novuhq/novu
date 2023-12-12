@@ -1,5 +1,5 @@
 import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
 
 import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
@@ -17,8 +17,9 @@ import { GetActivityCommand } from './usecases/get-activity/get-activity.command
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
 
+@ApiCommonResponses()
 @Controller('/notifications')
 @ApiTags('Notification')
 export class NotificationsController {

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
@@ -10,14 +10,21 @@ import {
   storage,
   Store,
   WorkerOptions,
+  INovuWorker,
+  BullMqService,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
 const LOG_CONTEXT = 'SubscriberProcessWorker';
 
 @Injectable()
 export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
-  constructor(private subscriberJobBoundUsecase: SubscriberJobBound) {
-    super();
+  constructor(
+    private subscriberJobBoundUsecase: SubscriberJobBound,
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {
+    super(new BullMqService(workflowInMemoryProviderService));
+
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
