@@ -69,7 +69,7 @@ jobs:
       deployments: write
     strategy:
       matrix:
-        worker: ${{needs.infrastructure_data.outputs.services_to_deploy}}
+        worker: ${{fromJson(needs.infrastructure_data.outputs.services_to_deploy)}}
     steps:
       - run: echo "Deploying ${{ matrix.name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
 
