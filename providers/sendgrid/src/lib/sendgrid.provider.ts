@@ -79,7 +79,7 @@ export class SendgridEmailProvider implements IEmailProvider {
 
     const attachments = options.attachments?.map(
       (attachment: IAttachmentOptions) => {
-        const attachmentJson: Partial<AttachmentJSON> = {
+        const attachmentJson: AttachmentJSON = {
           content: attachment.file.toString('base64'),
           filename: attachment.name,
           type: attachment.mime,
@@ -93,7 +93,7 @@ export class SendgridEmailProvider implements IEmailProvider {
           attachmentJson.disposition = attachment?.disposition;
         }
 
-        return attachmentJson as AttachmentJSON;
+        return attachmentJson;
       }
     );
 
