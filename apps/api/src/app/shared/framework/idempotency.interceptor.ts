@@ -101,7 +101,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
   private getCacheKey(context: ExecutionContext): string {
     const user = this.getReqUser(context);
     if (user === undefined) {
-      const message = 'Cannot build cache key without user';
+      const message = 'Cannot build idempotency cache key without user';
       Logger.error(message, LOG_CONTEXT);
       throw new InternalServerErrorException(message);
     }
