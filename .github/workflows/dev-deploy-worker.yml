@@ -67,7 +67,6 @@ jobs:
     secrets: inherit
     with:
       environment: Development
-      cluster_name: worker
       terraform_workspace: novu-dev
       # This is a workaround to an issue with matrix outputs
       docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
