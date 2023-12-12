@@ -4,7 +4,7 @@ import { buildMaximumApiRateLimitKey, CachedEntity } from '@novu/application-gen
 import { ApiRateLimitCategoryEnum, ApiServiceLevelEnum, IApiRateLimitMaximum } from '@novu/shared';
 import { GetApiRateLimitMaximumCommand } from './get-api-rate-limit-maximum.command';
 import { GetApiRateLimitServiceMaximumConfig } from '../get-api-rate-limit-service-maximum-config';
-import { GetApiRateLimitMaximumDto } from './get-api-rate-limit-maximum.dto';
+import { ApiServiceLevel, CUSTOM_API_SERVICE_LEVEL, GetApiRateLimitMaximumDto } from './get-api-rate-limit-maximum.dto';
 
 const LOG_CONTEXT = 'GetApiRateLimit';
 
@@ -49,9 +49,9 @@ export class GetApiRateLimitMaximum {
     }
 
     let apiRateLimits: IApiRateLimitMaximum;
-    let apiServiceLevel: ApiServiceLevelEnum;
+    let apiServiceLevel: ApiServiceLevel;
     if (environment.apiRateLimits) {
-      apiServiceLevel = ApiServiceLevelEnum.CUSTOM;
+      apiServiceLevel = CUSTOM_API_SERVICE_LEVEL;
       apiRateLimits = environment.apiRateLimits;
     } else {
       const organization = await this.organizationRepository.findOne({ _id: _organizationId });
