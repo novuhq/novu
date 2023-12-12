@@ -11,8 +11,8 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
 import { FeatureFlagCommand, GetIsApiRateLimitingEnabled } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, IJwtPayload } from '@novu/shared';
 import * as jwt from 'jsonwebtoken';
+import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, ApiServiceLevelEnum, IJwtPayload } from '@novu/shared';
 import { ThrottlerCost, ThrottlerCategory } from './throttler.decorator';
 
 export enum RateLimitHeaderKeysEnum {
@@ -113,7 +113,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const { organizationId, environmentId } = this.getReqUser(context);
 
-    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm } =
+    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, apiServiceLevel } =
       await this.evaluateApiRateLimit.execute(
         EvaluateApiRateLimitCommand.create({
           organizationId,
@@ -130,7 +130,15 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     res.header(RateLimitHeaderKeysEnum.RATE_LIMIT_RESET, secondsToReset);
     res.header(
       RateLimitHeaderKeysEnum.RATE_LIMIT_POLICY,
-      this.createPolicyHeader(limit, windowDuration, burstLimit, algorithm, apiRateLimitCategory, apiRateLimitCost)
+      this.createPolicyHeader(
+        limit,
+        windowDuration,
+        burstLimit,
+        algorithm,
+        apiRateLimitCategory,
+        apiRateLimitCost,
+        apiServiceLevel
+      )
     );
 
     if (success) {
@@ -147,7 +155,8 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     burstLimit: number,
     algorithm: string,
     apiRateLimitCategory: ApiRateLimitCategoryEnum,
-    apiRateLimitCost: ApiRateLimitCostEnum
+    apiRateLimitCost: ApiRateLimitCostEnum,
+    apiServiceLevel: ApiServiceLevelEnum
   ): string {
     const policyMap = {
       w: windowDuration,
@@ -155,6 +164,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       comment: `"${algorithm}"`,
       category: `"${apiRateLimitCategory}"`,
       cost: `"${apiRateLimitCost}"`,
+      serviceLevel: `"${apiServiceLevel}"`,
     };
     const policy = Object.entries(policyMap).reduce((acc, [key, value]) => {
       return `${acc};${key}=${value}`;
