@@ -63,7 +63,7 @@ jobs:
 
   # Temporary for the migration phase
   deploy_general_worker:
-    needs: build_prod_image
+    needs: build_dev_worker
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
     with:
