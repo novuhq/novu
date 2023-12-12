@@ -32,7 +32,7 @@ jobs:
       environment: Production
       service_name: webhook
       terraform_workspace: novu-prod-eu
-      docker_image: ${{ needs.publish_docker_image_webhook.outputs.docker_image }}
+      docker_image: ${{ needs.publish_docker_image_webhook.outputs.docker_image_ee }}
 
   deploy_prod_webhook_us:
     needs:
