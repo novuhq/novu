@@ -33,13 +33,7 @@ export class DigestFilterStepsTimed {
       }
 
       const metadata = step.metadata as IDigestTimedMetadata | undefined;
-      const hasDelayedTimedDigest = await this.hasDelayedTimedDigest(
-        command,
-        metadata
-      );
-      if (hasDelayedTimedDigest) {
-        return steps;
-      }
+      await this.hasDelayedTimedDigest(command, metadata);
 
       steps.push(step);
     }
