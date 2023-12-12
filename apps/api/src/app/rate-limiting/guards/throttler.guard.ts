@@ -11,21 +11,12 @@ import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nes
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
 import { FeatureFlagCommand, GetIsApiRateLimitingEnabled } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, IJwtPayload } from '@novu/shared';
+import { ApiAuthSchemeEnum, ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, IJwtPayload } from '@novu/shared';
 import { ThrottlerCost, ThrottlerCategory } from './throttler.decorator';
-
-export enum RateLimitHeaderKeysEnum {
-  RATE_LIMIT_REMAINING = 'RateLimit-Remaining',
-  RATE_LIMIT_LIMIT = 'RateLimit-Limit',
-  RATE_LIMIT_RESET = 'RateLimit-Reset',
-  RATE_LIMIT_POLICY = 'RateLimit-Policy',
-  RETRY_AFTER = 'Retry-After',
-  USER_AGENT = 'User-Agent',
-  AUTHORIZATION = 'Authorization',
-}
+import { HttpRequestHeaderKeysEnum, HttpResponseHeaderKeysEnum } from '../../shared/framework/types';
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
-export const ALLOWED_AUTH_SCHEMES = ['ApiKey'];
+export const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];
 
 const defaultApiRateLimitCategory = ApiRateLimitCategoryEnum.GLOBAL;
 const defaultApiRateLimitCost = ApiRateLimitCostEnum.SINGLE;
@@ -97,7 +88,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     // Return early if the current user agent should be ignored.
     if (Array.isArray(ignoreUserAgents)) {
       for (const pattern of ignoreUserAgents) {
-        if (pattern.test(req.headers[RateLimitHeaderKeysEnum.USER_AGENT.toLowerCase()])) {
+        if (pattern.test(req.headers[HttpRequestHeaderKeysEnum.AUTHORIZATION.toLowerCase()])) {
           return true;
         }
       }
@@ -124,18 +115,18 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const secondsToReset = Math.max(Math.ceil((reset - Date.now()) / 1e3), 0);
 
-    res.header(RateLimitHeaderKeysEnum.RATE_LIMIT_REMAINING, remaining);
-    res.header(RateLimitHeaderKeysEnum.RATE_LIMIT_LIMIT, limit);
-    res.header(RateLimitHeaderKeysEnum.RATE_LIMIT_RESET, secondsToReset);
+    res.header(HttpResponseHeaderKeysEnum.RATELIMIT_REMAINING, remaining);
+    res.header(HttpResponseHeaderKeysEnum.RATELIMIT_LIMIT, limit);
+    res.header(HttpResponseHeaderKeysEnum.RATELIMIT_RESET, secondsToReset);
     res.header(
-      RateLimitHeaderKeysEnum.RATE_LIMIT_POLICY,
+      HttpResponseHeaderKeysEnum.RATELIMIT_POLICY,
       this.createPolicyHeader(limit, windowDuration, burstLimit, algorithm, apiRateLimitCategory, apiRateLimitCost)
     );
 
     if (success) {
       return true;
     } else {
-      res.header(RateLimitHeaderKeysEnum.RETRY_AFTER, secondsToReset);
+      res.header(HttpResponseHeaderKeysEnum.RETRY_AFTER, secondsToReset);
       throw new ThrottlerException(THROTTLED_EXCEPTION_MESSAGE);
     }
   }

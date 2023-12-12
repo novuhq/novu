@@ -3,7 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import * as passport from 'passport';
 
-import { AuthProviderEnum } from '@novu/shared';
+import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
 import { AuthService } from '@novu/application-generic';
 
 import { RolesGuard } from './framework/roles.guard';
@@ -32,7 +32,7 @@ if (process.env.GITHUB_OAUTH_CLIENT_ID) {
     SharedModule,
     UserModule,
     PassportModule.register({
-      defaultStrategy: 'jwt',
+      defaultStrategy: PassportStrategyEnum.JWT,
     }),
     JwtModule.register({
       secretOrKeyProvider: () => process.env.JWT_SECRET as string,

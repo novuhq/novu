@@ -1,12 +1,15 @@
 import {
   ExecutionContext,
   Injectable,
-  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthGuard, IAuthModuleOptions } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
-import { IJwtPayload } from '@novu/shared';
+import {
+  ApiAuthSchemeEnum,
+  IJwtPayload,
+  PassportStrategyEnum,
+} from '@novu/shared';
 
 type SentryUser = {
   id: string;
@@ -16,7 +19,10 @@ type SentryUser = {
 type HandledUser = (IJwtPayload & SentryUser) | false;
 
 @Injectable()
-export class JwtAuthGuard extends AuthGuard(['jwt', 'headerapikey']) {
+export class JwtAuthGuard extends AuthGuard([
+  PassportStrategyEnum.JWT,
+  PassportStrategyEnum.HEADER_API_KEY,
+]) {
   constructor(private readonly reflector: Reflector) {
     super();
   }
@@ -29,12 +35,12 @@ export class JwtAuthGuard extends AuthGuard(['jwt', 'headerapikey']) {
     request.authScheme = authScheme;
 
     switch (authScheme) {
-      case 'Bearer':
+      case ApiAuthSchemeEnum.BEARER:
         return {
           session: false,
-          defaultStrategy: 'jwt',
+          defaultStrategy: PassportStrategyEnum.JWT,
         };
-      case 'ApiKey':
+      case ApiAuthSchemeEnum.API_KEY:
         const apiEnabled = this.reflector.get<boolean>(
           'external_api_accessible',
           context.getHandler()
@@ -44,7 +50,7 @@ export class JwtAuthGuard extends AuthGuard(['jwt', 'headerapikey']) {
 
         return {
           session: false,
-          defaultStrategy: 'headerapikey',
+          defaultStrategy: PassportStrategyEnum.HEADER_API_KEY,
         };
       default:
         throw new UnauthorizedException(
