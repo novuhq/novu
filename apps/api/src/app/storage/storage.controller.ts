@@ -7,8 +7,9 @@ import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UploadUrlResponse } from './dtos/upload-url-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 
+@ApiCommonResponses()
 @Controller('/storage')
 @ApiTags('Storage')
 @UseInterceptors(ClassSerializerInterceptor)

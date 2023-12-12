@@ -540,6 +540,7 @@
     "Ratelimit",
     "stdev",
     "Stdev",
+    "openapi",
   ],
   "flagWords": [],
   "patterns": [

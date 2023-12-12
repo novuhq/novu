@@ -8,8 +8,9 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { GetMxRecord } from './usecases/get-mx-record/get-mx-record.usecase';
 import { GetMxRecordCommand } from './usecases/get-mx-record/get-mx-record.command';
 import { GetMxRecordResponseDto } from './dtos/get-mx-record.dto';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 
+@ApiCommonResponses()
 @Controller('/inbound-parse')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)
