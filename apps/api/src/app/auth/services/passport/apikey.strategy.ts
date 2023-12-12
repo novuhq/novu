@@ -1,6 +1,6 @@
 import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import { PassportStrategy } from '@nestjs/passport';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { AuthService } from '@novu/application-generic';
 import { IJwtPayload } from '@novu/shared';
 
@@ -11,13 +11,16 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
       { header: 'Authorization', prefix: 'ApiKey ' },
       true,
       (apikey: string, verified: (err: Error | null, user?: IJwtPayload | false) => void) => {
-        this.authService.validateApiKey(apikey).then((user) => {
-          if (!user) {
-            return verified(null, false);
-          }
+        this.authService
+          .validateApiKey(apikey)
+          .then((user) => {
+            if (!user) {
+              return verified(null, false);
+            }
 
-          return verified(null, user);
-        });
+            return verified(null, user);
+          })
+          .catch(verified);
       }
     );
   }
