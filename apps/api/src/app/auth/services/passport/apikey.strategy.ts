@@ -20,7 +20,7 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
 
             return verified(null, user);
           })
-          .catch(verified);
+          .catch((err) => verified(err, false));
       }
     );
   }
