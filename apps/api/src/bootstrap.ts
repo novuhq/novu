@@ -9,7 +9,6 @@ import * as compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
@@ -20,6 +19,7 @@ import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guar
 import { validateEnv } from './config/env-validator';
 
 import * as packageJson from '../package.json';
+import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/workflows', '/v1/layouts'];
 
@@ -92,31 +92,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.use(compression());
 
-  const options = new DocumentBuilder()
-    .setTitle('Novu API')
-    .setDescription('Open API Specification for Novu API')
-    .setVersion('1.0')
-    .addTag('Events')
-    .addTag('Subscribers')
-    .addTag('Topics')
-    .addTag('Notification')
-    .addTag('Integrations')
-    .addTag('Layouts')
-    .addTag('Workflows')
-    .addTag('Notification Templates')
-    .addTag('Workflow groups')
-    .addTag('Changes')
-    .addTag('Environments')
-    .addTag('Inbound Parse')
-    .addTag('Feeds')
-    .addTag('Tenants')
-    .addTag('Messages')
-    .addTag('Organizations')
-    .addTag('Execution Details')
-    .build();
-  const document = SwaggerModule.createDocument(app, options);
-
-  SwaggerModule.setup('api', app, document);
+  setupSwagger(app);
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 

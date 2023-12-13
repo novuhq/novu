@@ -1,0 +1,18 @@
+name: Validate OpenAPI
+
+description: Validates the OpenAPI from the API
+
+runs:
+  using: composite
+
+  steps:
+    - uses: mansagroup/nrwl-nx-action@v3
+      env:
+        PORT: '1336'
+      with:
+        targets: lint:openapi
+        projects: '@novu/api'
+        
+    - name: Kill port for api 1336 for unit tests
+      shell: bash
+      run: sudo kill -9 $(sudo lsof -t -i:1336)

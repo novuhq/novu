@@ -33,8 +33,10 @@ import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.comm
 import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { ThrottlerCost } from '../rate-limiting/guards';
+import { ApiCommonResponses } from '../shared/framework/response.decorator';
 
 @UseInterceptors(ClassSerializerInterceptor)
+@ApiCommonResponses()
 @Controller('/invites')
 @ApiTags('Invites')
 @ApiExcludeController()
