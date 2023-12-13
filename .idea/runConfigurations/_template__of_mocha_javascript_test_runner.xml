@@ -10,7 +10,7 @@
       <env name="TS_NODE_COMPILER_OPTIONS" value="{&quot;strictNullChecks&quot;: false}" />
     </envs>
     <ui />
-    <extra-mocha-options>--timeout 10000 --require ts-node/register --exit --file e2e/setup.ts</extra-mocha-options>
+    <extra-mocha-options>--timeout 30000 --require ts-node/register --exit --file e2e/setup.ts</extra-mocha-options>
     <test-kind>DIRECTORY</test-kind>
     <test-directory />
     <recursive>false</recursive>
