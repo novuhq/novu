@@ -12,8 +12,6 @@ export class GetSubscribers {
       _organizationId: command.organizationId,
     };
 
-    const totalCount = await this.subscriberRepository.count(query);
-
     const data = await this.subscriberRepository.find(query, '', {
       limit: command.limit,
       skip: command.page * command.limit,
