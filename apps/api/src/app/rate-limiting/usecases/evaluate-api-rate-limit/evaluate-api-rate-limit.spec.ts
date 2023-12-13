@@ -5,7 +5,6 @@ import {
   ApiRateLimitAlgorithmEnum,
   ApiRateLimitCategoryEnum,
   ApiRateLimitCostEnum,
-  ApiServiceLevelEnum,
   IApiRateLimitAlgorithm,
   IApiRateLimitCost,
 } from '@novu/shared';
@@ -23,7 +22,6 @@ const mockApiRateLimitAlgorithm: IApiRateLimitAlgorithm = {
   [ApiRateLimitAlgorithmEnum.WINDOW_DURATION]: 2,
 };
 const mockApiRateLimitCost = ApiRateLimitCostEnum.SINGLE;
-const mockApiServiceLevel = ApiServiceLevelEnum.FREE;
 const mockCost = 1;
 const mockApiRateLimitCostConfig: Partial<IApiRateLimitCost> = {
   [mockApiRateLimitCost]: mockCost,
@@ -61,9 +59,7 @@ describe('EvaluateApiRateLimit', async () => {
     getApiRateLimitCostConfig = moduleRef.get<GetApiRateLimitCostConfig>(GetApiRateLimitCostConfig);
     evaluateTokenBucketRateLimit = moduleRef.get<EvaluateTokenBucketRateLimit>(EvaluateTokenBucketRateLimit);
 
-    getApiRateLimitMaximumStub = sinon
-      .stub(getApiRateLimitMaximum, 'execute')
-      .resolves([mockMaxLimit, mockApiServiceLevel]);
+    getApiRateLimitMaximumStub = sinon.stub(getApiRateLimitMaximum, 'execute').resolves(mockMaxLimit);
     getApiRateLimitAlgorithmConfigStub = sinon
       .stub(getApiRateLimitAlgorithmConfig, 'default')
       .value(mockApiRateLimitAlgorithm);

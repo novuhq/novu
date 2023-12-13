@@ -103,7 +103,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const { organizationId, environmentId } = this.getReqUser(context);
 
-    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, apiServiceLevel } =
+    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm } =
       await this.evaluateApiRateLimit.execute(
         EvaluateApiRateLimitCommand.create({
           organizationId,
@@ -120,15 +120,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_RESET, secondsToReset);
     res.header(
       HttpResponseHeaderKeysEnum.RATELIMIT_POLICY,
-      this.createPolicyHeader(
-        limit,
-        windowDuration,
-        burstLimit,
-        algorithm,
-        apiRateLimitCategory,
-        apiRateLimitCost,
-        apiServiceLevel
-      )
+      this.createPolicyHeader(limit, windowDuration, burstLimit, algorithm, apiRateLimitCategory, apiRateLimitCost)
     );
 
     if (success) {
@@ -145,8 +137,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     burstLimit: number,
     algorithm: string,
     apiRateLimitCategory: ApiRateLimitCategoryEnum,
-    apiRateLimitCost: ApiRateLimitCostEnum,
-    apiServiceLevel: ApiServiceLevelEnum
+    apiRateLimitCost: ApiRateLimitCostEnum
   ): string {
     const policyMap = {
       w: windowDuration,
@@ -154,7 +145,6 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       comment: `"${algorithm}"`,
       category: `"${apiRateLimitCategory}"`,
       cost: `"${apiRateLimitCost}"`,
-      serviceLevel: `"${apiServiceLevel}"`,
     };
     const policy = Object.entries(policyMap).reduce((acc, [key, value]) => {
       return `${acc};${key}=${value}`;

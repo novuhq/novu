@@ -89,10 +89,6 @@ describe('API Rate Limiting', () => {
         { name: 'comment', expectedRegex: `comment="[a-zA-Z ]*"` },
         { name: 'category', expectedRegex: `category="(${Object.values(ApiRateLimitCategoryEnum).join('|')})"` },
         { name: 'cost', expectedRegex: `cost="(${Object.values(ApiRateLimitCostEnum).join('|')})"` },
-        {
-          name: 'serviceLevel',
-          expectedRegex: `serviceLevel="(${Object.values(ApiServiceLevelEnum).join('|')})"`,
-        },
       ];
 
       testParams.forEach(({ name, expectedRegex }) => {
