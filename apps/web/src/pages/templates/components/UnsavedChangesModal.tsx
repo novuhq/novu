@@ -16,9 +16,13 @@ export function UnsavedChangesModal({
     <>
       <Modal
         opened={isOpen}
+        withinPortal
         overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
         overlayOpacity={0.7}
         styles={{
+          root: {
+            zIndex: 201, // because the editor sidebar has z-index 200
+          },
           modal: {
             backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
           },

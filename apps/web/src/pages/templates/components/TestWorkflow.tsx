@@ -4,17 +4,17 @@ import { useForm } from '@mantine/form';
 import { useMutation } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import * as capitalize from 'lodash.capitalize';
-
+import { useDisclosure } from '@mantine/hooks';
 import { IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, colors, inputStyles } from '@novu/design-system';
+
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
 import { testTrigger } from '../../../api/notification-templates';
 import { ExecutionDetailsModalWrapper } from './ExecutionDetailsModalWrapper';
-import { useDisclosure } from '@mantine/hooks';
-import { SubPageWrapper } from './SubPageWrapper';
 import { TriggerSegmentControl } from './TriggerSegmentControl';
+import { WorkflowSidebar } from './WorkflowSidebar';
 
 const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
   const subsVars = getSubscriberValue(
@@ -114,13 +114,12 @@ export function TestWorkflow({ trigger }) {
 
   return (
     <>
-      <SubPageWrapper title="Trigger">
+      <WorkflowSidebar title="Trigger">
         <Text color={colors.B60} mt={-16}>
           Test trigger as if you sent it from your API or implement it by copy/pasting it into the codebase of your
           application.
         </Text>
         <TriggerSegmentControl />
-
         <JsonInput
           data-test-id="test-trigger-to-param"
           formatOnBlur
@@ -164,7 +163,7 @@ export function TestWorkflow({ trigger }) {
             validationError="Invalid JSON"
           />
         ))}
-        <Group position="right" mt={'auto'}>
+        <Group position="right" mt={'auto'} mb={24}>
           <div data-test-id="test-workflow-btn">
             <Button
               sx={{
@@ -183,7 +182,7 @@ export function TestWorkflow({ trigger }) {
             </Button>
           </div>
         </Group>
-      </SubPageWrapper>
+      </WorkflowSidebar>
       <ExecutionDetailsModalWrapper
         transactionId={transactionId}
         isOpen={executionModalOpened}

@@ -4,6 +4,7 @@ import {
   ICacheService,
   splitKey,
 } from './cache.service';
+import * as sinon from 'sinon';
 
 import { CacheInMemoryProviderService } from '../in-memory-provider';
 import { MockCacheService } from './cache-service.mock';
@@ -171,6 +172,31 @@ describe('cache-service', function () {
     expect(res1).toEqual('random data');
     expect(res2).toEqual(undefined);
     expect(res3).toEqual(undefined);
+  });
+
+  it('should invoke the SADD method correctly', async function () {
+    const key = '123:456';
+    const data = [1, 2, 3];
+    const res = await cacheService.sadd(key, ...data);
+    const res2 = await cacheService.sadd(key, ...data);
+
+    expect(res).toEqual(3);
+    expect(res2).toEqual(0);
+  });
+
+  it('should invoke the EVAL function correctly', async function () {
+    const dataString = JSON.stringify({ array: [1, 2, 3] });
+    const evalMock = sinon.mock().resolves(dataString);
+    cacheService = MockCacheService.createClient({ eval: evalMock });
+
+    const script = 'return redis.call("get", KEYS[1])';
+    const key = '123:456';
+    const args = ['arg1', 'arg2'];
+    cacheService.set(key, dataString);
+    const res = await cacheService.eval(script, [key], args);
+
+    expect(res).toEqual(dataString);
+    expect(evalMock.calledWith(script, 1, key, 'arg1', 'arg2')).toEqual(true);
   });
 
   describe('splitKey', () => {

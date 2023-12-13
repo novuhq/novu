@@ -67,7 +67,7 @@ describe('Create Workflow - /workflows (POST)', async () => {
   it('should create email template', async function () {
     const defaultMessageIsActive = true;
 
-    const testTemplate: Partial<CreateWorkflowRequestDto> = {
+    const templateRequestPayload: Partial<CreateWorkflowRequestDto> = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -96,36 +96,72 @@ describe('Create Workflow - /workflows (POST)', async () => {
               ],
             },
           ],
+          variants: [
+            {
+              template: {
+                name: 'Better Message Template',
+                subject: 'Better subject',
+                preheader: 'Better pre header',
+                content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample of Better text block' }],
+                type: StepTypeEnum.EMAIL,
+              },
+              active: defaultMessageIsActive,
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: FieldLogicalOperatorEnum.AND,
+                  children: [
+                    {
+                      on: FilterPartTypeEnum.TENANT,
+                      field: 'name',
+                      value: 'Titans',
+                      operator: FieldOperatorEnum.EQUAL,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
       ],
     };
 
-    const { body } = await session.testAgent.post(`/v1/workflows`).send(testTemplate);
+    const { body } = await session.testAgent.post(`/v1/workflows`).send(templateRequestPayload);
 
     expect(body.data).to.be.ok;
-    const template: INotificationTemplate = body.data;
+    const templateRequestResult: INotificationTemplate = body.data;
 
-    expect(template._notificationGroupId).to.equal(testTemplate.notificationGroupId);
-    const message = template.steps[0];
-    const filters = message?.filters ? message?.filters[0] : null;
+    expect(templateRequestResult._notificationGroupId).to.equal(templateRequestPayload.notificationGroupId);
+    const message = templateRequestResult.steps[0];
 
-    const messageTest = testTemplate?.steps ? testTemplate?.steps[0] : null;
-    const filtersTest = messageTest?.filters ? messageTest.filters[0] : null;
+    const messageRequest = templateRequestPayload?.steps ? templateRequestPayload?.steps[0] : null;
+    const filtersTest = messageRequest?.filters ? messageRequest.filters[0] : null;
 
     const children: IFieldFilterPart = filtersTest?.children[0] as IFieldFilterPart;
 
-    expect(message?.template?.name).to.equal(`${messageTest?.template?.name}`);
+    expect(message?.template?.name).to.equal(`${messageRequest?.template?.name}`);
     expect(message?.template?.active).to.equal(defaultMessageIsActive);
-    expect(message?.template?.subject).to.equal(`${messageTest?.template?.subject}`);
-    expect(message?.template?.preheader).to.equal(`${messageTest?.template?.preheader}`);
+    expect(message?.template?.subject).to.equal(`${messageRequest?.template?.subject}`);
+    expect(message?.template?.preheader).to.equal(`${messageRequest?.template?.preheader}`);
+
+    const filters = message?.filters ? message?.filters[0] : null;
     expect(filters?.type).to.equal(filtersTest?.type);
     expect(filters?.children.length).to.equal(filtersTest?.children?.length);
+
     expect(children.value).to.equal(children.value);
     expect(children.operator).to.equal(children.operator);
-    expect(template.tags[0]).to.equal('test-tag');
+    expect(templateRequestResult.tags[0]).to.equal('test-tag');
 
-    if (Array.isArray(message?.template?.content) && Array.isArray(messageTest?.template?.content)) {
-      expect(message?.template?.content[0].type).to.equal(messageTest?.template?.content[0].type);
+    const variantRequest = messageRequest?.variants ? messageRequest?.variants[0] : null;
+    const variantResult = templateRequestResult.steps[0]?.variants ? templateRequestResult.steps[0]?.variants[0] : null;
+    expect(variantResult?.template?.name).to.equal(variantRequest?.template?.name);
+    expect(variantResult?.template?.active).to.equal(variantRequest?.active);
+    expect(variantResult?.template?.subject).to.equal(variantRequest?.template?.subject);
+    expect(variantResult?.template?.preheader).to.equal(variantRequest?.template?.preheader);
+
+    if (Array.isArray(message?.template?.content) && Array.isArray(messageRequest?.template?.content)) {
+      expect(message?.template?.content[0].type).to.equal(messageRequest?.template?.content[0].type);
     } else {
       throw new Error('content must be an array');
     }
@@ -136,7 +172,10 @@ describe('Create Workflow - /workflows (POST)', async () => {
     });
     await session.testAgent.post(`/v1/changes/${change?._id}/apply`);
 
-    change = await changeRepository.findOne({ _environmentId: session.environment._id, _entityId: template._id });
+    change = await changeRepository.findOne({
+      _environmentId: session.environment._id,
+      _entityId: templateRequestResult._id,
+    });
     await session.testAgent.post(`/v1/changes/${change?._id}/apply`);
 
     const prodEnv = await getProductionEnvironment();
@@ -145,17 +184,17 @@ describe('Create Workflow - /workflows (POST)', async () => {
 
     const prodVersionNotification = await notificationTemplateRepository.findOne({
       _environmentId: prodEnv._id,
-      _parentId: template._id,
+      _parentId: templateRequestResult._id,
     });
 
-    expect(prodVersionNotification?.tags[0]).to.equal(template.tags[0]);
-    expect(prodVersionNotification?.steps.length).to.equal(template.steps.length);
-    expect(prodVersionNotification?.triggers[0].type).to.equal(template.triggers[0].type);
-    expect(prodVersionNotification?.triggers[0].identifier).to.equal(template.triggers[0].identifier);
-    expect(prodVersionNotification?.active).to.equal(template.active);
-    expect(prodVersionNotification?.draft).to.equal(template.draft);
-    expect(prodVersionNotification?.name).to.equal(template.name);
-    expect(prodVersionNotification?.description).to.equal(template.description);
+    expect(prodVersionNotification?.tags[0]).to.equal(templateRequestResult.tags[0]);
+    expect(prodVersionNotification?.steps.length).to.equal(templateRequestResult.steps.length);
+    expect(prodVersionNotification?.triggers[0].type).to.equal(templateRequestResult.triggers[0].type);
+    expect(prodVersionNotification?.triggers[0].identifier).to.equal(templateRequestResult.triggers[0].identifier);
+    expect(prodVersionNotification?.active).to.equal(templateRequestResult.active);
+    expect(prodVersionNotification?.draft).to.equal(templateRequestResult.draft);
+    expect(prodVersionNotification?.name).to.equal(templateRequestResult.name);
+    expect(prodVersionNotification?.description).to.equal(templateRequestResult.description);
 
     const prodVersionMessage = await messageTemplateRepository.findOne({
       _environmentId: prodEnv._id,
@@ -167,6 +206,17 @@ describe('Create Workflow - /workflows (POST)', async () => {
     expect(message?.template?.type).to.equal(prodVersionMessage?.type);
     expect(message?.template?.content).to.deep.equal(prodVersionMessage?.content);
     expect(message?.template?.active).to.equal(prodVersionMessage?.active);
+
+    const prodVersionVariant = await messageTemplateRepository.findOne({
+      _environmentId: prodEnv._id,
+      _parentId: variantResult._templateId,
+    });
+
+    expect(variantResult?.template?.name).to.equal(prodVersionVariant?.name);
+    expect(variantResult?.template?.subject).to.equal(prodVersionVariant?.subject);
+    expect(variantResult?.template?.type).to.equal(prodVersionVariant?.type);
+    expect(variantResult?.template?.content).to.deep.equal(prodVersionVariant?.content);
+    expect(variantResult?.template?.active).to.equal(prodVersionVariant?.active);
   });
 
   it('should create a valid notification', async () => {

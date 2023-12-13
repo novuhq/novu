@@ -30,3 +30,4 @@ export * from './lib/feeds/feeds.interface';
 export * from './lib/topics/topic.interface';
 export * from './lib/integrations/integrations.interface';
 export * from './lib/messages/messages.interface';
+export { defaultRetryCondition } from './lib/retry';

@@ -20,12 +20,12 @@ import {
   EventsDistributedLockService,
   ExecutionLogQueueService,
 } from '../../services';
-import { DigestFilterSteps } from '../digest-filter-steps';
 import {
   DetailEnum,
   CreateExecutionDetailsCommand,
 } from '../create-execution-details';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { getNestedValue } from '../../utils/object';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -54,10 +54,7 @@ export class MergeOrCreateDigest {
 
     const digestMeta = job.digest as IDigestBaseMetadata | undefined;
     const digestKey = digestMeta?.digestKey;
-    const digestValue = DigestFilterSteps.getNestedValue(
-      job.payload,
-      digestKey
-    );
+    const digestValue = getNestedValue(job.payload, digestKey);
 
     const digestAction = await this.shouldDelayDigestOrMergeWithLock(
       job,

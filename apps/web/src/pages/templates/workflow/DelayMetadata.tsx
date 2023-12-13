@@ -8,24 +8,27 @@ import { When } from '../../../components/utils/When';
 import { IntervalRadios } from './IntervalRadios';
 import { LabelWithTooltip } from './LabelWithTooltip';
 import { StepSettings } from './SideBar/StepSettings';
+import { useStepFormPath } from '../hooks/useStepFormPath';
 
-export const DelayMetadata = ({ control, index }) => {
+export const DelayMetadata = () => {
   const { readonly } = useEnvController();
   const {
+    control,
     formState: { errors, isSubmitted },
     watch,
     trigger,
   } = useFormContext();
-  const type = watch(`steps.${index}.delayMetadata.type`);
+  const stepFormPath = useStepFormPath();
+  const type = watch(`${stepFormPath}.delayMetadata.type`);
   const showErrors = isSubmitted && errors?.steps;
 
   return (
     <>
-      <StepSettings index={index} />
+      <StepSettings />
       <Controller
         control={control}
         defaultValue={DelayTypeEnum.REGULAR}
-        name={`steps.${index}.delayMetadata.type`}
+        name={`${stepFormPath}.delayMetadata.type`}
         render={({ field }) => {
           return (
             <SegmentedControl
@@ -41,7 +44,7 @@ export const DelayMetadata = ({ control, index }) => {
               ]}
               onChange={async (segmentValue) => {
                 field.onChange(segmentValue);
-                await trigger(`steps.${index}.delayMetadata`);
+                await trigger(`${stepFormPath}.delayMetadata`);
               }}
               data-test-id="delay-type"
             />
@@ -49,11 +52,11 @@ export const DelayMetadata = ({ control, index }) => {
         }}
       />
       <When truthy={type === DelayTypeEnum.REGULAR}>
-        <Grid>
+        <Grid m={0}>
           <Grid.Col span={4}>
             <Controller
               control={control}
-              name={`steps.${index}.delayMetadata.${DelayTypeEnum.REGULAR}.amount`}
+              name={`${stepFormPath}.delayMetadata.${DelayTypeEnum.REGULAR}.amount`}
               defaultValue=""
               render={({ field, fieldState }) => {
                 return (
@@ -88,7 +91,7 @@ export const DelayMetadata = ({ control, index }) => {
           <Grid.Col span={8} mt={20}>
             <IntervalRadios
               control={control}
-              name={`steps.${index}.delayMetadata.${DelayTypeEnum.REGULAR}.unit`}
+              name={`${stepFormPath}.delayMetadata.${DelayTypeEnum.REGULAR}.unit`}
               showErrors={showErrors}
             />
           </Grid.Col>
@@ -98,7 +101,7 @@ export const DelayMetadata = ({ control, index }) => {
       <When truthy={type === DelayTypeEnum.SCHEDULED}>
         <Controller
           control={control}
-          name={`steps.${index}.delayMetadata.${DelayTypeEnum.SCHEDULED}.delayPath`}
+          name={`${stepFormPath}.delayMetadata.${DelayTypeEnum.SCHEDULED}.delayPath`}
           defaultValue=""
           render={({ field, fieldState }) => {
             return (

@@ -5,12 +5,14 @@ import {
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
+  InboundParseQueueService,
   ReadinessService,
   StandardQueueService,
   SubscriberProcessQueueService,
   WebSocketsQueueService,
   WorkflowQueueService,
   ExecutionLogQueueService,
+  WorkflowInMemoryProviderService,
 } from '../services';
 import {
   GetIsApiRateLimitingEnabled,
@@ -71,17 +73,6 @@ export const cacheInMemoryProviderService = {
   },
 };
 
-export const bullMqService = {
-  provide: BullMqService,
-  useFactory: async (): Promise<BullMqService> => {
-    const service = new BullMqService();
-
-    await service.initialize();
-
-    return service;
-  },
-};
-
 export const cacheService = {
   provide: CacheService,
   useFactory: async (): Promise<CacheService> => {
@@ -120,30 +111,4 @@ export const distributedLockService = {
 
     return service;
   },
-};
-
-export const bullMqTokenList = {
-  provide: 'BULLMQ_LIST',
-  useFactory: (
-    standardQueueService: StandardQueueService,
-    webSocketsQueueService: WebSocketsQueueService,
-    workflowQueueService: WorkflowQueueService,
-    subscriberProcessQueueService: SubscriberProcessQueueService,
-    executionLogQueueService: ExecutionLogQueueService
-  ) => {
-    return [
-      standardQueueService,
-      webSocketsQueueService,
-      workflowQueueService,
-      subscriberProcessQueueService,
-      executionLogQueueService,
-    ];
-  },
-  inject: [
-    StandardQueueService,
-    WebSocketsQueueService,
-    WorkflowQueueService,
-    SubscriberProcessQueueService,
-    ExecutionLogQueueService,
-  ],
 };
