@@ -1,5 +1,10 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository, IDelayOrDigestJobResult } from '@novu/dal';
+import {
+  JobEntity,
+  JobRepository,
+  IDelayOrDigestJobResult,
+  NotificationRepository,
+} from '@novu/dal';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -37,7 +42,8 @@ export class MergeOrCreateDigest {
     private eventsDistributedLockService: EventsDistributedLockService,
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => ExecutionLogQueueService))
-    private executionLogQueueService: ExecutionLogQueueService
+    private executionLogQueueService: ExecutionLogQueueService,
+    private notificationRepository: NotificationRepository
   ) {}
 
   @InstrumentUsecase()
@@ -62,7 +68,11 @@ export class MergeOrCreateDigest {
 
     switch (digestAction.digestResult) {
       case DigestCreationResultEnum.MERGED:
-        return await this.processMergedDigest(job, digestAction.activeDigestId);
+        return await this.processMergedDigest(
+          job,
+          digestAction.activeDigestId,
+          digestAction.activeNotificationId
+        );
       case DigestCreationResultEnum.SKIPPED:
         return await this.processSkippedDigest(job);
       case DigestCreationResultEnum.CREATED:
@@ -90,28 +100,41 @@ export class MergeOrCreateDigest {
   @Instrument()
   private async processMergedDigest(
     job: JobEntity,
-    activeDigestId: string
+    activeDigestId: string,
+    activeNotificationId: string
   ): Promise<DigestCreationResultEnum> {
-    await this.jobRepository.update(
-      {
-        _environmentId: job._environmentId,
-        _id: job._id,
-      },
-      {
-        $set: {
-          status: JobStatusEnum.MERGED,
-          _mergedDigestId: activeDigestId,
+    await Promise.all([
+      this.jobRepository.update(
+        {
+          _environmentId: job._environmentId,
+          _id: job._id,
         },
-      }
-    );
-
-    await this.jobRepository.updateAllChildJobStatus(
-      job,
-      JobStatusEnum.MERGED,
-      activeDigestId
-    );
-
-    await this.digestMergedExecutionDetails(job);
+        {
+          $set: {
+            status: JobStatusEnum.MERGED,
+            _mergedDigestId: activeDigestId,
+          },
+        }
+      ),
+      this.jobRepository.updateAllChildJobStatus(
+        job,
+        JobStatusEnum.MERGED,
+        activeDigestId
+      ),
+      this.digestMergedExecutionDetails(job),
+      this.notificationRepository.update(
+        {
+          _environmentId: job._environmentId,
+          _id: job._notificationId,
+        },
+        {
+          $set: {
+            _digestedNotificationId: activeNotificationId,
+            expireAt: job.expireAt,
+          },
+        }
+      ),
+    ]);
 
     return DigestCreationResultEnum.MERGED;
   }
