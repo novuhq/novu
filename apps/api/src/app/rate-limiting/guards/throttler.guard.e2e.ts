@@ -91,7 +91,7 @@ describe('API Rate Limiting', () => {
         { name: 'cost', expectedRegex: `cost="(${Object.values(ApiRateLimitCostEnum).join('|')})"` },
         {
           name: 'serviceLevel',
-          expectedRegex: `serviceLevel="(${Object.values(ApiServiceLevelEnum).join('|')})"`,
+          expectedRegex: `serviceLevel="[a-zA-Z]*"`,
         },
       ];
 
