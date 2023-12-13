@@ -199,7 +199,7 @@ export class AuthService {
       user,
       error,
       key, // In the future, roles/scopes will be assigned to the API Key.
-    } = await this.getApiKeyUser(apiKey);
+    } = await this.getApiKeyUser({ apiKey });
 
     if (error) throw new UnauthorizedException(error);
 
@@ -384,7 +384,7 @@ export class AuthService {
         apiKey: apiKey,
       }),
   })
-  private async getApiKeyUser(apiKey: string): Promise<{
+  private async getApiKeyUser({ apiKey }: { apiKey: string }): Promise<{
     environment?: EnvironmentEntity;
     user?: UserEntity;
     key?: IApiKey;
