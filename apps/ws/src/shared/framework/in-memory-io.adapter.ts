@@ -1,10 +1,8 @@
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { ServerOptions } from 'socket.io';
-import Redis from 'ioredis';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { getRedisPrefix } from '@novu/shared';
 import { WebSocketsInMemoryProviderService } from '@novu/application-generic';
-import { ConnectionOptions } from 'tls';
 
 export class InMemoryIoAdapter extends IoAdapter {
   private webSocketsInMemoryProviderService: WebSocketsInMemoryProviderService;
@@ -25,7 +23,6 @@ export class InMemoryIoAdapter extends IoAdapter {
      *  TODO: Might not be needed to connect as we are checking it is initialized already.
      * await Promise.all([pubClient?.connect(), subClient?.connect()]);
      */
-
     this.adapterConstructor = createAdapter(pubClient, subClient);
   }
 
