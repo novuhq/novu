@@ -20,6 +20,7 @@ import { validateEnv } from './config/env-validator';
 
 import * as packageJson from '../package.json';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
+import { HttpRequestHeaderKeysEnum } from '../dist/src/app/shared/framework/types';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/workflows', '/v1/layouts'];
 
@@ -109,12 +110,12 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   return app;
 }
 
-const corsOptionsDelegate = function (req, callback) {
-  const corsOptions = {
+const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = function (req, callback) {
+  const corsOptions: Parameters<typeof callback>[1] = {
     origin: false as boolean | string | string[],
     preflightContinue: false,
     maxAge: 86400,
-    allowedHeaders: ['Content-Type', 'Authorization', 'sentry-trace'],
+    allowedHeaders: Object.values(HttpRequestHeaderKeysEnum),
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
@@ -126,7 +127,7 @@ const corsOptionsDelegate = function (req, callback) {
       corsOptions.origin.push(process.env.WIDGET_BASE_URL);
     }
   }
-  callback(null, corsOptions);
+  callback(null as unknown as Error, corsOptions);
 };
 
 function isWidgetRoute(url: string) {
