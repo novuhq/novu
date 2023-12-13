@@ -20,7 +20,7 @@ import { validateEnv } from './config/env-validator';
 
 import * as packageJson from '../package.json';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
-import { HttpRequestHeaderKeysEnum } from '../dist/src/app/shared/framework/types';
+import { HttpRequestHeaderKeysEnum } from './app/shared/framework/types';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/workflows', '/v1/layouts'];
 
