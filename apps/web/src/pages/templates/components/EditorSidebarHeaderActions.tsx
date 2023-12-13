@@ -63,9 +63,6 @@ export const EditorSidebarHeaderActions = () => {
   const conditions = isNewVariantCreationUrl ? [] : watch(`${stepFormPath}.filters`);
   const formPathName = watch(`${stepFormPath}.name`);
   const name = isNewVariantCreationUrl ? `V${variantsCount + 1} ${formPathName}` : formPathName;
-
-  const PlusIcon = isUnderVariantsListPath ? ConditionsFile : ConditionPlus;
-  const ConditionsIcon = isUnderVariantsListPath ? ConditionsFile : Condition;
   const hasNoFilters = (filters && filters?.length === 0) || !filters || isNewVariantCreationUrl;
   const isDelayedStep = DELAYED_STEPS.includes(channel as StepTypeEnum);
   const isAddVariantActionAvailable = (isUnderTheStepPath || isUnderVariantsListPath) && !isDelayedStep;
@@ -137,7 +134,7 @@ export const EditorSidebarHeaderActions = () => {
           <ActionButton
             tooltip={`${conditionAction} ${isUnderVariantsListPath ? 'group' : ''} conditions`}
             onClick={() => setConditionsOpened(true)}
-            Icon={PlusIcon}
+            Icon={ConditionPlus}
             data-test-id="editor-sidebar-add-conditions"
           />
         </When>
@@ -146,7 +143,7 @@ export const EditorSidebarHeaderActions = () => {
             tooltip={`${conditionAction} ${isUnderVariantsListPath ? 'group' : ''} conditions`}
             text={`${filters?.length ?? ''}`}
             onClick={() => setConditionsOpened(true)}
-            Icon={ConditionsIcon}
+            Icon={Condition}
             data-test-id="editor-sidebar-edit-conditions"
           />
         </When>
