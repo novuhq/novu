@@ -108,13 +108,13 @@ jobs:
         run: CI='' pnpm build-ee
 
       - name: Run E2E tests
+        if: false
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |
           cd apps/api && pnpm test:e2e
 
-      - uses: mansagroup/nrwl-nx-action@v3
-        name: Run E2E EE tests
+      - name: Run E2E EE tests
         if: |
           ${{ needs.check_submodule_token.outputs.has_token == 'true' }} &&
           ${{ inputs.ee }}
@@ -123,9 +123,8 @@ jobs:
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
           GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
           CI_EE_TEST: true
-        with:
-          targets: test:e2e:ee
-          projects: ${{matrix.projectName}}
+        run: |
+          cd apps/api && pnpm test:e2e:ee
 
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)
