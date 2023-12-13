@@ -49,14 +49,14 @@ import {
 } from './usecases';
 import { LayoutId } from './types';
 
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 
 @ApiCommonResponses()
 @Controller('/layouts')
 @ApiTags('Layouts')
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 export class LayoutsController {
   constructor(
     private createLayoutUseCase: CreateLayoutUseCase,

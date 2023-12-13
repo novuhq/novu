@@ -2,7 +2,7 @@ import { ClassSerializerInterceptor, Controller, Get, UseGuards, UseInterceptors
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { IJwtPayload } from '@novu/shared';
 
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetMxRecord } from './usecases/get-mx-record/get-mx-record.usecase';
@@ -13,7 +13,7 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 @ApiCommonResponses()
 @Controller('/inbound-parse')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiTags('Inbound Parse')
 export class InboundParseController {
   constructor(private getMxRecordUsecase: GetMxRecord) {}

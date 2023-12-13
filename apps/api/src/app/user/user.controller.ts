@@ -13,7 +13,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { GetMyProfileUsecase } from './usecases/get-my-profile/get-my-profile.usecase';
 import { GetMyProfileCommand } from './usecases/get-my-profile/get-my-profile.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { UpdateOnBoardingCommand } from './usecases/update-on-boarding/update-on-boarding.command';
 import { UpdateOnBoardingUsecase } from './usecases/update-on-boarding/update-on-boarding.usecase';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -31,7 +31,7 @@ import { UpdateOnBoardingTourCommand } from './usecases/update-on-boarding-tour/
 @Controller('/users')
 @ApiTags('Users')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiExcludeController()
 export class UsersController {
   constructor(

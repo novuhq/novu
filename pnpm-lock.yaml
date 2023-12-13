@@ -381,6 +381,9 @@ importers:
       passport-github2:
         specifier: ^0.1.12
         version: 0.1.12
+      passport-headerapikey:
+        specifier: ^1.2.2
+        version: 1.2.2
       passport-jwt:
         specifier: ^4.0.0
         version: 4.0.1
@@ -37169,7 +37172,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      ts-node: 10.9.1(@types/node@16.11.7)(typescript@4.9.5)
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -42789,6 +42792,13 @@ packages:
     engines: {node: '>= 0.8.0'}
     dependencies:
       passport-oauth2: 1.7.0
+    dev: false
+
+  /passport-headerapikey@1.2.2:
+    resolution: {integrity: sha512-4BvVJRrWsNJPrd3UoZfcnnl4zvUWYKEtfYkoDsaOKBsrWHYmzTApCjs7qUbncOLexE9ul0IRiYBFfBG0y9IVQA==}
+    dependencies:
+      lodash: 4.17.21
+      passport-strategy: 1.0.0
     dev: false
 
   /passport-jwt@4.0.1:
