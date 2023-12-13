@@ -65,15 +65,11 @@ runs:
       shell: bash
       run: pnpm install --frozen-lockfile
 
-    - name: 🛟 Install submodules dependencies
-      shell: bash
-      if: ${{ inputs.submodules == 'true' }}
-      run: cd enterprise && pnpm install --frozen-lockfile
 
     - name: Link submodules
       shell: bash
       if: ${{ inputs.submodules == 'true' }}
-      run: pnpm link:submodules
+      run: pnpm symlink:submodules
   
     - name: Install wait-on plugin
       shell: bash
