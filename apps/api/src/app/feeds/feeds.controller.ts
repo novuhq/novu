@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { CreateFeed } from './usecases/create-feed/create-feed.usecase';
 import { CreateFeedCommand } from './usecases/create-feed/create-feed.command';
 import { CreateFeedRequestDto } from './dto/create-feed-request.dto';
@@ -27,7 +27,7 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 @ApiCommonResponses()
 @Controller('/feeds')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiTags('Feeds')
 export class FeedsController {
   constructor(

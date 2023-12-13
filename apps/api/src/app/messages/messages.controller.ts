@@ -1,6 +1,6 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
@@ -33,7 +33,7 @@ export class MessagesController {
 
   @Get('')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiOkResponse({
     type: ActivitiesResponseDto,
   })
@@ -65,7 +65,7 @@ export class MessagesController {
 
   @Delete('/:messageId')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiResponse(DeleteMessageResponseDto)
   @ApiOperation({
     summary: 'Delete message',
@@ -88,7 +88,7 @@ export class MessagesController {
   @Delete('/transaction/:transactionId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiNoContentResponse()
   @ApiOperation({
     summary: 'Delete messages by transactionId',
