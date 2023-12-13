@@ -35,8 +35,4 @@ export type EvaluateApiRateLimitResponseDto = {
    * The cost of the request.
    */
   cost: number;
-  /**
-   * The API service level used to evaluate the request.
-   */
-  apiServiceLevel: string;
 };
