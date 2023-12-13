@@ -9,7 +9,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { IBulkInviteResponse, IGetInviteResponseDto, IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import {
+  ApiRateLimitCostEnum,
+  IBulkInviteResponse,
+  IGetInviteResponseDto,
+  IJwtPayload,
+  MemberRoleEnum,
+} from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
 import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
@@ -26,8 +32,11 @@ import { ResendInviteDto } from './dtos/resend-invite.dto';
 import { ResendInviteCommand } from './usecases/resend-invite/resend-invite.command';
 import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ThrottlerCost } from '../rate-limiting/guards';
+import { ApiCommonResponses } from '../shared/framework/response.decorator';
 
 @UseInterceptors(ClassSerializerInterceptor)
+@ApiCommonResponses()
 @Controller('/invites')
 @ApiTags('Invites')
 @ApiExcludeController()
@@ -71,7 +80,7 @@ export class InvitesController {
       userId: user._id,
       organizationId: user.organizationId,
       email: body.email,
-      role: body.role,
+      role: MemberRoleEnum.ADMIN,
     });
 
     await this.inviteMemberUsecase.execute(command);
@@ -101,6 +110,7 @@ export class InvitesController {
     };
   }
 
+  @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
   @UseGuards(AuthGuard('jwt'))
   @Roles(MemberRoleEnum.ADMIN)

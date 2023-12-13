@@ -4,15 +4,14 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IDigestBaseMetadata,
-  IDigestRegularMetadata,
   StepTypeEnum,
 } from '@novu/shared';
 import {
-  DigestFilterSteps,
   DetailEnum,
   CreateExecutionDetailsCommand,
   Instrument,
   ExecutionLogQueueService,
+  getNestedValue,
 } from '@novu/application-generic';
 
 import { PlatformException } from '../../../../shared/utils';
@@ -23,30 +22,12 @@ const LOG_CONTEXT = 'GetDigestEvents';
 export abstract class GetDigestEvents {
   constructor(protected jobRepository: JobRepository, private executionLogQueueService: ExecutionLogQueueService) {}
 
-  protected getJobDigest(job: JobEntity): {
-    digestMeta: IDigestBaseMetadata | undefined;
-    digestKey: string | undefined;
-    digestValue: string | undefined;
-  } {
-    const digestMeta = job.digest as IDigestRegularMetadata | undefined;
-    const digestKey = digestMeta?.digestKey;
-    const digestValue = DigestFilterSteps.getNestedValue(job.payload, digestKey);
-
-    return {
-      digestKey,
-      digestMeta,
-      digestValue,
-    };
-  }
-
   @Instrument()
   protected async filterJobs(currentJob: JobEntity, transactionId: string, jobs: JobEntity[]) {
     const digestMeta = currentJob?.digest as IDigestBaseMetadata | undefined;
-    const batchValue = currentJob?.payload
-      ? DigestFilterSteps.getNestedValue(currentJob.payload, digestMeta?.digestKey)
-      : undefined;
+    const batchValue = currentJob?.payload ? getNestedValue(currentJob.payload, digestMeta?.digestKey) : undefined;
     const filteredJobs = jobs.filter((job) => {
-      return DigestFilterSteps.getNestedValue(job.payload, digestMeta?.digestKey) === batchValue;
+      return getNestedValue(job.payload, digestMeta?.digestKey) === batchValue;
     });
 
     const currentTrigger = (await this.jobRepository.findOne(

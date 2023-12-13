@@ -17,6 +17,7 @@ import {
 import {
   ISubscribersDefine,
   ITopic,
+  SubscriberSourceEnum,
   TopicId,
   TopicKey,
   TopicName,
@@ -70,7 +71,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       const command = buildCommand(session, transactionId, subscriberId);
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([{ subscriberId }]);
+      expect(result).to.be.eql([{ subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE }]);
     });
 
     it('should map properly a single subscriber defined payload', async () => {
@@ -88,7 +89,7 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([{ ...recipient }]);
+      expect(result).to.be.eql([{ ...recipient, _subscriberSource: SubscriberSourceEnum.SINGLE }]);
     });
 
     it('should only process the subscriber id and the subscriber recipients and ignore topics', async () => {
@@ -150,7 +151,10 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([{ subscriberId: singleSubscriberId }, { ...singleSubscribersDefine }]);
+      expect(result).to.be.eql([
+        { subscriberId: singleSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+        { ...singleSubscribersDefine, _subscriberSource: SubscriberSourceEnum.SINGLE },
+      ]);
     });
 
     it('should map properly multiple duplicated recipients of different types and deduplicate them', async () => {
@@ -182,7 +186,10 @@ describe('MapTriggerRecipientsUseCase', () => {
       ]);
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([{ subscriberId: firstSubscriberId }, { subscriberId: secondSubscriberId }]);
+      expect(result).to.be.eql([
+        { subscriberId: firstSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+        { subscriberId: secondSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+      ]);
     });
   });
 
@@ -216,7 +223,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       const command = buildCommand(session, transactionId, subscriberId);
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([{ subscriberId }]);
+      expect(result).to.be.eql([{ subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE }]);
     });
 
     it('should map properly a single subscriber defined payload', async () => {
@@ -234,7 +241,7 @@ describe('MapTriggerRecipientsUseCase', () => {
 
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([{ ...recipient }]);
+      expect(result).to.be.eql([{ ...recipient, _subscriberSource: SubscriberSourceEnum.SINGLE }]);
     });
 
     it('should map properly a single topic', async () => {
@@ -261,8 +268,8 @@ describe('MapTriggerRecipientsUseCase', () => {
       const result = await useCase.execute(command);
 
       expect(result).to.include.deep.members([
-        { subscriberId: firstSubscriber.subscriberId },
-        { subscriberId: secondSubscriber.subscriberId },
+        { subscriberId: firstSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+        { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
       ]);
     });
 
@@ -350,11 +357,11 @@ describe('MapTriggerRecipientsUseCase', () => {
       const result = await useCase.execute(command);
 
       expect(result).to.include.deep.members([
-        { subscriberId: singleSubscriberId },
-        { ...singleSubscribersDefine },
-        { subscriberId: firstSubscriber.subscriberId },
-        { subscriberId: secondSubscriber.subscriberId },
-        { subscriberId: thirdSubscriber.subscriberId },
+        { subscriberId: singleSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+        { ...singleSubscribersDefine, _subscriberSource: SubscriberSourceEnum.SINGLE },
+        { subscriberId: firstSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+        { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+        { subscriberId: thirdSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
       ]);
     });
 
@@ -387,7 +394,10 @@ describe('MapTriggerRecipientsUseCase', () => {
       ]);
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([{ subscriberId: firstSubscriberId }, { subscriberId: secondSubscriberId }]);
+      expect(result).to.be.eql([
+        { subscriberId: firstSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+        { subscriberId: secondSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+      ]);
     });
 
     it('should map properly multiple duplicated recipients of different types and deduplicate them but with different order', async () => {
@@ -421,7 +431,10 @@ describe('MapTriggerRecipientsUseCase', () => {
       ]);
       const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([{ ...firstRecipient }, { ...secondRecipient }]);
+      expect(result).to.be.eql([
+        { ...firstRecipient, _subscriberSource: SubscriberSourceEnum.SINGLE },
+        { ...secondRecipient, _subscriberSource: SubscriberSourceEnum.SINGLE },
+      ]);
     });
 
     it('should map properly multiple topics and deduplicate them', async () => {
@@ -500,10 +513,10 @@ describe('MapTriggerRecipientsUseCase', () => {
       const result = await useCase.execute(command);
 
       expect(result).to.include.deep.members([
-        { subscriberId: firstSubscriber.subscriberId },
-        { subscriberId: fourthSubscriber.subscriberId },
-        { subscriberId: secondSubscriber.subscriberId },
-        { subscriberId: thirdSubscriber.subscriberId },
+        { subscriberId: firstSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+        { subscriberId: fourthSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+        { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+        { subscriberId: thirdSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
       ]);
     });
 
@@ -519,14 +532,14 @@ describe('MapTriggerRecipientsUseCase', () => {
       const thirdSubscriber = await subscribersService.createSubscriber();
 
       const firstRecipient: ISubscribersDefine = {
-        subscriberId: firstSubscriber._id,
+        subscriberId: firstSubscriber.subscriberId,
         firstName: 'Test Name',
         lastName: 'Last of name',
         email: 'test@email.novu',
       };
 
       const secondRecipient: ISubscribersDefine = {
-        subscriberId: secondSubscriber._id,
+        subscriberId: secondSubscriber.subscriberId,
         firstName: 'Test Name',
         lastName: 'Last of name',
         email: 'test@email.novu',
@@ -569,19 +582,21 @@ describe('MapTriggerRecipientsUseCase', () => {
       const command = buildCommand(session, transactionId, [
         secondTopicRecipient,
         firstRecipient,
-        firstSubscriber._id,
-        secondSubscriber._id,
+        firstSubscriber.subscriberId,
+        secondSubscriber.subscriberId,
         firstTopicRecipient,
         secondRecipient,
-        thirdSubscriber._id,
+        thirdSubscriber.subscriberId,
       ]);
       const result = await useCase.execute(command);
 
-      // We process first recipients that are not topics so they will take precedence when deduplicating
+      expect(result.length).to.equal(3);
+
+      // We process first recipients that are not topics, so they will take precedence when deduplicating
       expect(result).to.include.deep.members([
-        { ...firstRecipient },
-        { subscriberId: secondSubscriber.subscriberId },
-        { subscriberId: thirdSubscriber.subscriberId },
+        { ...firstRecipient, _subscriberSource: SubscriberSourceEnum.SINGLE },
+        { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+        { subscriberId: thirdSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
       ]);
     });
   });

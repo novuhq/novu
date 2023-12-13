@@ -519,6 +519,15 @@ export const grafanaOnCallConfig: IConfigCredentials[] = [
   },
 ];
 
+export const getstreamConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,
@@ -618,7 +627,7 @@ export const apnsConfig: IConfigCredentials[] = [
     key: CredentialsKeyEnum.Secure,
     displayName: 'Production',
     type: 'switch',
-    required: true,
+    required: false,
   },
 
   ...pushConfigBase,

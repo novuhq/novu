@@ -12,17 +12,16 @@ import {
 const LOG_CONTEXT = 'QueueService';
 
 export class QueueBaseService {
-  private instance: BullMqService;
+  public instance: BullMqService;
 
   public readonly DEFAULT_ATTEMPTS = 3;
   public queue: Queue;
 
-  constructor(public readonly topic: JobTopicNameEnum) {
-    this.instance = new BullMqService();
-  }
-
-  public get bullMqService(): BullMqService {
-    return this.instance;
+  constructor(
+    public readonly topic: JobTopicNameEnum,
+    public bullMqService: BullMqService
+  ) {
+    this.instance = bullMqService;
   }
 
   public createQueue(overrideOptions?: QueueOptions): void {
@@ -65,10 +64,6 @@ export class QueueBaseService {
       `Shutting down the ${this.topic} queue service has finished`,
       LOG_CONTEXT
     );
-  }
-
-  async onModuleDestroy(): Promise<void> {
-    await this.gracefulShutdown();
   }
 
   public async addMinimalJob(
@@ -118,5 +113,9 @@ export class QueueBaseService {
     ]
   ) {
     await this.instance.addBulk(data);
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    await this.gracefulShutdown();
   }
 }

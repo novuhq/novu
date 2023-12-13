@@ -6,9 +6,10 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { JwtAuthGuard } from '../auth/framework/auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetExecutionDetails, GetExecutionDetailsCommand } from './usecases/get-execution-details';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { ExecutionDetailsRequestDto } from './dtos/execution-details-request.dto';
 
+@ApiCommonResponses()
 @Controller('/execution-details')
 @UseInterceptors(ClassSerializerInterceptor)
 @UseGuards(JwtAuthGuard)

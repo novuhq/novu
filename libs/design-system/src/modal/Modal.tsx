@@ -3,11 +3,12 @@ import React, { ReactNode } from 'react';
 import useStyles from './Modal.styles';
 import { colors, shadows } from '../config';
 
-interface IModalProps extends JSX.ElementChildrenAttribute {
+interface IModalProps extends ModalProps {
   opened: boolean;
   title: ReactNode | string;
   onClose: () => void;
   size?: 'lg' | 'xl' | 'md';
+  zIndex?: number;
 }
 
 export function Modal({ children, ...props }: IModalProps) {

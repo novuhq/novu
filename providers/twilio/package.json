@@ -1,6 +1,6 @@
 {
   "name": "@novu/twilio",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "A twilio wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -44,8 +44,8 @@
     "access": "public"
   },
   "dependencies": {
-    "@novu/stateless": "^0.21.0",
-    "twilio": "^4.14.1"
+    "@novu/stateless": "^0.22.0",
+    "twilio": "^4.19.3"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
