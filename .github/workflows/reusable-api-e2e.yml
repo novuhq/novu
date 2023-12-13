@@ -63,7 +63,7 @@ jobs:
         name: Checkout with submodules
         if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && contains (inputs.job-name,'-ee') }}
         with:
-          submodules: true
+          submodules: ${{ inputs.ee }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       # else checkout without submodules if the token is not provided
@@ -74,7 +74,7 @@ jobs:
       - uses: ./.github/actions/setup-project
         name: Setup project
         with:
-          submodules: true
+          submodules: ${{ inputs.ee }}
 
       - uses: ./.github/actions/setup-redis-cluster
         name: Setup redis cluster
