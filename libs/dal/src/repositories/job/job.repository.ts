@@ -242,7 +242,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
 
     return {
       activeDigestId: delayedDigestJob._id,
-      activeNotificationId: delayedDigestJob._notificationId,
+      activeNotificationId: delayedDigestJob._notificationId?.toString(),
       digestResult: DigestCreationResultEnum.MERGED,
     };
   }
