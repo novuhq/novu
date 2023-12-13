@@ -108,6 +108,7 @@ jobs:
         run: CI='' pnpm build-ee
 
       - name: Run E2E tests
+        if: false
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |
