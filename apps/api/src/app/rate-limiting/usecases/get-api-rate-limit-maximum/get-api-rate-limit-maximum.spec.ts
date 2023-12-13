@@ -9,7 +9,6 @@ import { GetApiRateLimitMaximum, GetApiRateLimitMaximumCommand } from './index';
 import { SharedModule } from '../../../shared/shared.module';
 import { GetApiRateLimitServiceMaximumConfig } from '../get-api-rate-limit-service-maximum-config';
 import { RateLimitingModule } from '../../rate-limiting.module';
-import { CUSTOM_API_SERVICE_LEVEL } from './get-api-rate-limit-maximum.dto';
 
 const mockDefaultApiRateLimits = {
   [ApiServiceLevelEnum.FREE]: {
@@ -112,7 +111,7 @@ describe('GetApiRateLimitMaximum', async () => {
         })
       );
 
-      expect(apiServiceLevel).to.equal(CUSTOM_API_SERVICE_LEVEL);
+      expect(apiServiceLevel).to.equal(ApiServiceLevelEnum.CUSTOM);
     });
   });
 

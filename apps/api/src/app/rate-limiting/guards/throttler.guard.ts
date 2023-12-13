@@ -146,7 +146,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     algorithm: string,
     apiRateLimitCategory: ApiRateLimitCategoryEnum,
     apiRateLimitCost: ApiRateLimitCostEnum,
-    apiServiceLevel: string
+    apiServiceLevel: ApiServiceLevelEnum
   ): string {
     const policyMap = {
       w: windowDuration,

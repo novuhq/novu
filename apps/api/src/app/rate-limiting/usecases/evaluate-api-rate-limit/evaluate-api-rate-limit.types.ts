@@ -1,3 +1,5 @@
+import { ApiServiceLevelEnum } from '@novu/shared';
+
 export type EvaluateApiRateLimitResponseDto = {
   /**
    * Whether the request may pass(true) or exceeded the limit(false)
@@ -38,5 +40,5 @@ export type EvaluateApiRateLimitResponseDto = {
   /**
    * The API service level used to evaluate the request.
    */
-  apiServiceLevel: string;
+  apiServiceLevel: ApiServiceLevelEnum;
 };
