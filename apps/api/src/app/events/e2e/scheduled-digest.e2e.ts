@@ -82,7 +82,7 @@ describe('Trigger event - Scheduled Digest Mode - /v1/events/trigger (POST)', fu
 
     const handler = await session.awaitRunningJobs(template?._id, false, 1);
 
-    await handler.runDelayedImmediatly();
+    await handler.runDelayedImmediately();
     await session.awaitRunningJobs(template?._id);
 
     const jobs = await jobRepository.find({

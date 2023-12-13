@@ -95,7 +95,7 @@ export class JobsService {
           }
         }
       },
-      runDelayedImmediatly: async () => {
+      runDelayedImmediately: async () => {
         const delayedJobs = await this.standardQueue.getDelayed();
 
         if (delayedJobs.length === 1) {
