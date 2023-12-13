@@ -18,6 +18,8 @@ type SentryUser = {
 };
 type HandledUser = (IJwtPayload & SentryUser) | false;
 
+const NONE_AUTH_SCHEME = 'None';
+
 @Injectable()
 export class UserAuthGuard extends AuthGuard([
   PassportStrategyEnum.JWT,
@@ -31,7 +33,7 @@ export class UserAuthGuard extends AuthGuard([
     const request = context.switchToHttp().getRequest();
     const authorizationHeader = request.headers.authorization;
 
-    const authScheme = authorizationHeader?.split(' ')[0] || 'None';
+    const authScheme = authorizationHeader?.split(' ')[0] || NONE_AUTH_SCHEME;
     request.authScheme = authScheme;
 
     switch (authScheme) {
@@ -52,6 +54,8 @@ export class UserAuthGuard extends AuthGuard([
           session: false,
           defaultStrategy: PassportStrategyEnum.HEADER_API_KEY,
         };
+      case NONE_AUTH_SCHEME:
+        throw new UnauthorizedException('Missing authorization header');
       default:
         throw new UnauthorizedException(
           `Invalid authentication scheme: "${authScheme}"`
