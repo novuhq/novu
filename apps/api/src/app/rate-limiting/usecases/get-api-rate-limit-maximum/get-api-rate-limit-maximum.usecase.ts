@@ -4,6 +4,7 @@ import { buildMaximumApiRateLimitKey, CachedEntity } from '@novu/application-gen
 import { ApiRateLimitCategoryEnum, ApiServiceLevelEnum, IApiRateLimitMaximum } from '@novu/shared';
 import { GetApiRateLimitMaximumCommand } from './get-api-rate-limit-maximum.command';
 import { GetApiRateLimitServiceMaximumConfig } from '../get-api-rate-limit-service-maximum-config';
+import { GetApiRateLimitMaximumDto } from './get-api-rate-limit-maximum.dto';
 
 const LOG_CONTEXT = 'GetApiRateLimit';
 
@@ -15,7 +16,7 @@ export class GetApiRateLimitMaximum {
     private getDefaultApiRateLimits: GetApiRateLimitServiceMaximumConfig
   ) {}
 
-  async execute(command: GetApiRateLimitMaximumCommand): Promise<number> {
+  async execute(command: GetApiRateLimitMaximumCommand): Promise<GetApiRateLimitMaximumDto> {
     return await this.getApiRateLimit({
       apiRateLimitCategory: command.apiRateLimitCategory,
       _environmentId: command.environmentId,
@@ -38,7 +39,7 @@ export class GetApiRateLimitMaximum {
     apiRateLimitCategory: ApiRateLimitCategoryEnum;
     _environmentId: string;
     _organizationId: string;
-  }): Promise<number> {
+  }): Promise<GetApiRateLimitMaximumDto> {
     const environment = await this.environmentRepository.findOne({ _id: _environmentId });
 
     if (!environment) {
@@ -48,7 +49,9 @@ export class GetApiRateLimitMaximum {
     }
 
     let apiRateLimits: IApiRateLimitMaximum;
+    let apiServiceLevel: ApiServiceLevelEnum;
     if (environment.apiRateLimits) {
+      apiServiceLevel = ApiServiceLevelEnum.CUSTOM;
       apiRateLimits = environment.apiRateLimits;
     } else {
       const organization = await this.organizationRepository.findOne({ _id: _organizationId });
@@ -60,15 +63,16 @@ export class GetApiRateLimitMaximum {
       }
 
       if (organization.apiServiceLevel) {
-        apiRateLimits = this.getDefaultApiRateLimits.default[organization.apiServiceLevel];
+        apiServiceLevel = organization.apiServiceLevel;
       } else {
         // TODO: NV-3067 - Remove this once all organizations have a service level
-        apiRateLimits = this.getDefaultApiRateLimits.default[ApiServiceLevelEnum.UNLIMITED];
+        apiServiceLevel = ApiServiceLevelEnum.UNLIMITED;
       }
+      apiRateLimits = this.getDefaultApiRateLimits.default[apiServiceLevel];
     }
 
     const apiRateLimit = apiRateLimits[apiRateLimitCategory];
 
-    return apiRateLimit;
+    return [apiRateLimit, apiServiceLevel];
   }
 }

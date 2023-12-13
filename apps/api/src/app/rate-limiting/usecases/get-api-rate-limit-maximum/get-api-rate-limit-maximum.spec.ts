@@ -91,7 +91,7 @@ describe('GetApiRateLimitMaximum', async () => {
     });
 
     it('should return api rate limit for the category set on environment', async () => {
-      const rateLimit = await useCase.execute(
+      const [rateLimit] = await useCase.execute(
         GetApiRateLimitMaximumCommand.create({
           organizationId: session.organization._id,
           environmentId: session.environment._id,
@@ -100,6 +100,18 @@ describe('GetApiRateLimitMaximum', async () => {
       );
 
       expect(rateLimit).to.equal(mockGlobalLimit);
+    });
+
+    it('should return api service level of CUSTOM', async () => {
+      const [, apiServiceLevel] = await useCase.execute(
+        GetApiRateLimitMaximumCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          apiRateLimitCategory: mockApiRateLimitCategory,
+        })
+      );
+
+      expect(apiServiceLevel).to.equal(ApiServiceLevelEnum.CUSTOM);
     });
   });
 
@@ -112,39 +124,78 @@ describe('GetApiRateLimitMaximum', async () => {
       });
     });
 
-    it('should return default api rate limit for the organizations apiServiceLevel when apiServiceLevel IS set on organization', async () => {
+    describe('Organization DOES have api service level specified', () => {
       const mockApiServiceLevel = ApiServiceLevelEnum.FREE;
-      findOneOrganizationStub.resolves({
-        apiServiceLevel: mockApiServiceLevel,
+
+      beforeEach(() => {
+        findOneOrganizationStub.resolves({
+          apiServiceLevel: mockApiServiceLevel,
+        });
       });
-      const defaultApiRateLimit = mockDefaultApiRateLimits[mockApiServiceLevel][mockApiRateLimitCategory];
 
-      const rateLimit = await useCase.execute(
-        GetApiRateLimitMaximumCommand.create({
-          organizationId: session.organization._id,
-          environmentId: session.environment._id,
-          apiRateLimitCategory: mockApiRateLimitCategory,
-        })
-      );
+      it('should return default api rate limit for the organizations apiServiceLevel when apiServiceLevel IS set on organization', async () => {
+        const defaultApiRateLimit = mockDefaultApiRateLimits[mockApiServiceLevel][mockApiRateLimitCategory];
 
-      expect(rateLimit).to.equal(defaultApiRateLimit);
+        const [rateLimit] = await useCase.execute(
+          GetApiRateLimitMaximumCommand.create({
+            organizationId: session.organization._id,
+            environmentId: session.environment._id,
+            apiRateLimitCategory: mockApiRateLimitCategory,
+          })
+        );
+
+        expect(rateLimit).to.equal(defaultApiRateLimit);
+      });
+
+      it('should return the api service level set on organization when apiServiceLevel IS set on organization', async () => {
+        const mockApiServiceLevel = ApiServiceLevelEnum.FREE;
+
+        const [, apiServiceLevel] = await useCase.execute(
+          GetApiRateLimitMaximumCommand.create({
+            organizationId: session.organization._id,
+            environmentId: session.environment._id,
+            apiRateLimitCategory: mockApiRateLimitCategory,
+          })
+        );
+
+        expect(apiServiceLevel).to.equal(mockApiServiceLevel);
+      });
     });
 
-    it('should return default api rate limit for the UNLIMITED serice level when apiServiceLevel IS NOT set on organization', async () => {
-      findOneOrganizationStub.resolves({
-        apiServiceLevel: undefined,
+    describe('Organization DOES NOT have api service level specified', () => {
+      beforeEach(() => {
+        findOneOrganizationStub.resolves({
+          apiServiceLevel: undefined,
+        });
       });
-      const defaultApiRateLimit = mockDefaultApiRateLimits[ApiServiceLevelEnum.UNLIMITED][mockApiRateLimitCategory];
 
-      const rateLimit = await useCase.execute(
-        GetApiRateLimitMaximumCommand.create({
-          organizationId: session.organization._id,
-          environmentId: session.environment._id,
-          apiRateLimitCategory: mockApiRateLimitCategory,
-        })
-      );
+      it('should return default api rate limit for the UNLIMITED service level when apiServiceLevel IS NOT set on organization', async () => {
+        const defaultApiRateLimit = mockDefaultApiRateLimits[ApiServiceLevelEnum.UNLIMITED][mockApiRateLimitCategory];
 
-      expect(rateLimit).to.equal(defaultApiRateLimit);
+        const [rateLimit] = await useCase.execute(
+          GetApiRateLimitMaximumCommand.create({
+            organizationId: session.organization._id,
+            environmentId: session.environment._id,
+            apiRateLimitCategory: mockApiRateLimitCategory,
+          })
+        );
+
+        expect(rateLimit).to.equal(defaultApiRateLimit);
+      });
+
+      it('should return the default api service level of UNLIMITED when apiServiceLevel IS NOT set on organization', async () => {
+        const defaultApiServiceLevel = ApiServiceLevelEnum.UNLIMITED;
+
+        const [, apiServiceLevel] = await useCase.execute(
+          GetApiRateLimitMaximumCommand.create({
+            organizationId: session.organization._id,
+            environmentId: session.environment._id,
+            apiRateLimitCategory: mockApiRateLimitCategory,
+          })
+        );
+
+        expect(apiServiceLevel).to.equal(defaultApiServiceLevel);
+      });
     });
 
     it('should throw an error when the organization is not found', async () => {
@@ -155,7 +206,7 @@ describe('GetApiRateLimitMaximum', async () => {
           GetApiRateLimitMaximumCommand.create({
             organizationId: session.organization._id,
             environmentId: session.environment._id,
-            apiRateLimitCategory: mockApiRateLimitCategory,
+            apiRateLimitCategory: ApiRateLimitCategoryEnum.GLOBAL,
           })
         );
         throw new Error('Should not reach here');
