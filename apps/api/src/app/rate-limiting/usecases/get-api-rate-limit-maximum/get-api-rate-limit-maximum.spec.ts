@@ -207,7 +207,7 @@ describe('GetApiRateLimitMaximum', async () => {
           GetApiRateLimitMaximumCommand.create({
             organizationId: session.organization._id,
             environmentId: session.environment._id,
-            apiRateLimitCategory: mockApiRateLimitCategory,
+            apiRateLimitCategory: ApiRateLimitCategoryEnum.GLOBAL,
           })
         );
         throw new Error('Should not reach here');
