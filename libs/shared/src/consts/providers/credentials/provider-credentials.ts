@@ -627,7 +627,7 @@ export const apnsConfig: IConfigCredentials[] = [
     key: CredentialsKeyEnum.Secure,
     displayName: 'Production',
     type: 'switch',
-    required: true,
+    required: false,
   },
 
   ...pushConfigBase,

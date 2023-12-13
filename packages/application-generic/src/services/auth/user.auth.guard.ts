@@ -67,7 +67,7 @@ export class UserAuthGuard extends AuthGuard([
     status?: any
   ): TUser {
     let handledUser: HandledUser;
-    if (user !== false) {
+    if (typeof user === 'object') {
       /**
        * This helps with sentry and other tools that need to know who the user is based on `id` property.
        */
