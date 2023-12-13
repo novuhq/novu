@@ -96,7 +96,7 @@ jobs:
         run: CI='' pnpm build:api
 
       - name: Build Submodules
-        if: ${{ needs.check_submodule_token.outputs.has_token != 'true' }}
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' }}
         run: CI='' pnpm build:ee
 
       - name: Run E2E tests
@@ -107,7 +107,7 @@ jobs:
 
       - uses: mansagroup/nrwl-nx-action@v3
         name: Run E2E EE tests
-        if: ${{ inputs.test-e2e-ee-affected == 'true' &&  contains (inputs.job-name,'-ee')  }}
+        if: true
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
