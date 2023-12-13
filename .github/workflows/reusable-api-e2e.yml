@@ -97,7 +97,7 @@ jobs:
 
       - name: Build Submodules
         if: ${{ needs.check_submodule_token.outputs.has_token == 'true' }}
-        run: CI='' pnpm build:ee
+        run: CI='' pnpm build-ee
 
       - name: Run E2E tests
         env:
