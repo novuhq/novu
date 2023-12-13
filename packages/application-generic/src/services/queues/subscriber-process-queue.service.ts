@@ -4,7 +4,6 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { QueueBaseService } from './queue-base.service';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
-import { AuthService } from '../auth';
 
 @Injectable()
 export class SubscriberProcessQueueService extends QueueBaseService {

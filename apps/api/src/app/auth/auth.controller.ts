@@ -17,7 +17,6 @@ import {
   Header,
 } from '@nestjs/common';
 import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
-import { JwtService } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
 import { IJwtPayload } from '@novu/shared';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
@@ -53,7 +52,6 @@ import { ApiCommonResponses } from '../shared/framework/response.decorator';
 export class AuthController {
   constructor(
     private userRepository: UserRepository,
-    private jwtService: JwtService,
     private authService: AuthService,
     private userRegisterUsecase: UserRegister,
     private loginUsecase: Login,
