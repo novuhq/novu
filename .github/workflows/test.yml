@@ -91,7 +91,6 @@ jobs:
             echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)" >> $GITHUB_OUTPUT
           fi
           
-
       - name: Get base affected
         id: get-base-projects-arrays
         run: |
