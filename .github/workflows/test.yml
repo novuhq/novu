@@ -159,7 +159,7 @@ jobs:
     name: Unit Test Packages
     runs-on: ubuntu-latest
     needs: [get-affected]
-    if: ${{ fromJson(needs.get-affected.outputs.test-packages)[0] }}
+    if: ${{ fromJson(needs.get-affected.outputs.filtered_packages)[0] }}
     timeout-minutes: 80
     permissions:
       contents: read
@@ -168,7 +168,7 @@ jobs:
       id-token: write
     steps:
       - name: Display Test Packages
-        run: echo '${{ needs.get-affected.outputs.test-packages }}'
+        run: echo '${{ needs.get-affected.outputs.filtered_packages }}'
 
       - name: Checkout Code
         uses: actions/checkout@v3
