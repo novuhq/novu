@@ -1,18 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 
-import { INovuWorker } from '../readiness';
 import { WorkerBaseService } from './worker-base.service';
+import { BullMqService } from '../bull-mq';
 
 const LOG_CONTEXT = 'SubscriberProcessWorkerService';
 
-@Injectable()
-export class SubscriberProcessWorkerService
-  extends WorkerBaseService
-  implements INovuWorker
-{
-  constructor() {
-    super(JobTopicNameEnum.PROCESS_SUBSCRIBER);
-    Logger.log(`Worker ${this.topic} instantiated`, LOG_CONTEXT);
+export class SubscriberProcessWorkerService extends WorkerBaseService {
+  constructor(private bullMqService: BullMqService) {
+    super(JobTopicNameEnum.PROCESS_SUBSCRIBER, bullMqService);
   }
 }

@@ -46,8 +46,6 @@ export const INTERCOM_APP_ID = window._env_.REACT_APP_INTERCOM_APP_ID || process
 
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WEB);
 
-export const LOGROCKET_ID = (window._env_.REACT_APP_LOGROCKET_ID || process.env.REACT_APP_LOGROCKET_ID) ?? '';
-
 export const WEBHOOK_URL = isCypress
   ? window._env_.REACT_APP_WEBHOOK_URL || process.env.REACT_APP_WEBHOOK_URL || 'http://localhost:1341'
   : window._env_.REACT_APP_WEBHOOK_URL || process.env.REACT_APP_WEBHOOK_URL || 'http://localhost:3003';
@@ -65,3 +63,5 @@ export const IS_TEMPLATE_STORE_ENABLED = isCypress
 export const IS_MULTI_TENANCY_ENABLED = isCypress
   ? window._env_.IS_MULTI_TENANCY_ENABLED || process.env.IS_MULTI_TENANCY_ENABLED || 'true'
   : window._env_.IS_MULTI_TENANCY_ENABLED || process.env.IS_MULTI_TENANCY_ENABLED || 'false';
+
+export const IS_EU_ENV = (ENV === 'production' || ENV === 'prod') && API_ROOT.includes('eu.api.novu.co');

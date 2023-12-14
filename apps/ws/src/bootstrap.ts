@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import { BullMqService } from '@novu/application-generic';
 import { version } from '../package.json';
 import { getErrorInterceptor, Logger } from '@novu/application-generic';
+import { prepareAppInfra, startAppInfra } from './socket/services';
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({
@@ -27,6 +28,8 @@ export async function bootstrap() {
   app.useLogger(app.get(Logger));
   app.flushLogs();
 
+  await prepareAppInfra(app);
+
   app.useGlobalInterceptors(getErrorInterceptor());
 
   app.setGlobalPrefix(CONTEXT_PATH);
@@ -41,6 +44,16 @@ export async function bootstrap() {
   });
 
   app.useWebSocketAdapter(redisIoAdapter);
+
+  app.enableShutdownHooks();
+
+  await app.init();
+
+  try {
+    await startAppInfra(app);
+  } catch (e) {
+    process.exit(1);
+  }
 
   await app.listen(process.env.PORT as string);
 }

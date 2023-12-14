@@ -1,7 +1,7 @@
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional } from 'class-validator';
 
-import { NotificationTemplateCustomData } from '@novu/shared';
+import { INotificationTemplate, NotificationTemplateCustomData, TriggerTypeEnum } from '@novu/shared';
 
 import { NotificationStep } from '../../shared/dtos/notification-step';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
@@ -30,7 +30,7 @@ class NotificationTriggerVariable {
 
 class NotificationTrigger {
   @ApiProperty()
-  type: 'event';
+  type: TriggerTypeEnum;
 
   @ApiProperty()
   identifier: string;
@@ -47,7 +47,7 @@ class NotificationTrigger {
 }
 
 @ApiExtraModels(NotificationGroup)
-export class WorkflowResponse {
+export class WorkflowResponse implements INotificationTemplate {
   @ApiPropertyOptional()
   _id?: string;
 

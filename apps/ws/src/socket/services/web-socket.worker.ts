@@ -2,10 +2,11 @@ const nr = require('newrelic');
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
+  BullMqService,
   getWebSocketWorkerOptions,
-  INovuWorker,
   WebSocketsWorkerService,
   WorkerOptions,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
 import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases/external-services-route';
@@ -14,9 +15,12 @@ import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 const LOG_CONTEXT = 'WebSocketWorker';
 
 @Injectable()
-export class WebSocketWorker extends WebSocketsWorkerService implements INovuWorker {
-  constructor(private externalServicesRoute: ExternalServicesRoute) {
-    super();
+export class WebSocketWorker extends WebSocketsWorkerService {
+  constructor(
+    private externalServicesRoute: ExternalServicesRoute,
+    private workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {
+    super(new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
   }
@@ -50,8 +54,8 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
               .then(resolve)
               .catch((error) => {
                 Logger.error(
-                  'Unexpected exception occurred while handling external services route ',
                   error,
+                  'Unexpected exception occurred while handling external services route ',
                   LOG_CONTEXT
                 );
 

@@ -13,24 +13,25 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { GetMyProfileUsecase } from './usecases/get-my-profile/get-my-profile.usecase';
 import { GetMyProfileCommand } from './usecases/get-my-profile/get-my-profile.dto';
 import { UserResponseDto } from './dtos/user-response.dto';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { UpdateOnBoardingCommand } from './usecases/update-on-boarding/update-on-boarding.command';
 import { UpdateOnBoardingUsecase } from './usecases/update-on-boarding/update-on-boarding.usecase';
-import { ApiExcludeController, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserOnboardingRequestDto } from './dtos/user-onboarding-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ChangeProfileEmailDto } from './dtos/change-profile-email.dto';
 import { UpdateProfileEmail } from './usecases/update-profile-email/update-profile-email.usecase';
 import { UpdateProfileEmailCommand } from './usecases/update-profile-email/update-profile-email.command';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
 import { UserOnboardingTourRequestDto } from './dtos/user-onboarding-tour-request.dto';
 import { UpdateOnBoardingTourUsecase } from './usecases/update-on-boarding-tour/update-on-boarding-tour.usecase';
 import { UpdateOnBoardingTourCommand } from './usecases/update-on-boarding-tour/update-on-boarding-tour.command';
 
+@ApiCommonResponses()
 @Controller('/users')
 @ApiTags('Users')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiExcludeController()
 export class UsersController {
   constructor(

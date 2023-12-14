@@ -31,7 +31,7 @@ jobs:
       ee: ${{ contains (matrix.name,'-ee') }}
     secrets: inherit
 
-  deploy_dev_worker:
+  build_dev_worker:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -61,96 +61,32 @@ jobs:
           docker_name: ${{ matrix.name }}
           bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
-      - name: Checkout cloud infra
-        if: ${{ contains (matrix.name,'-ee') }}
-        uses: actions/checkout@master
-        with:
-          repository: novuhq/cloud-infra
-          token: ${{ secrets.GH_PACKAGES }}
-          path: cloud-infra
+  # Temporary for the migration phase
+  deploy_general_worker:
+    needs: build_dev_worker
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    secrets: inherit
+    with:
+      environment: Development
+      service_name: worker
+      terraform_workspace: novu-dev
+      # This is a workaround to an issue with matrix outputs
+      docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
 
-      - name: Configure AWS credentials
-        if: ${{ contains (matrix.name,'-ee') }}
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-2
-
-      - name: Terraform setup
-        uses: hashicorp/setup-terraform@v1
-        if: ${{ contains (matrix.name,'-ee') }}
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          terraform_version: 1.5.5
-          terraform_wrapper: false
-
-      - name: Terraform Init
-        if: ${{ contains (matrix.name,'-ee') }}
-        working-directory: cloud-infra/terraform/novu
-        run: terraform init
-
-      - name: Terraform get output
-        working-directory: cloud-infra/terraform/novu
-        if: ${{ contains (matrix.name,'-ee') }}
-        id: terraform
-        run: |
-          echo "worker_ecs_container_name=$(terraform output -json worker_ecs_container_name | jq -r .)" >> $GITHUB_ENV
-          echo "worker_ecs_service=$(terraform output -json worker_ecs_service | jq -r .)" >> $GITHUB_ENV
-          echo "worker_ecs_cluster=$(terraform output -json worker_ecs_cluster | jq -r .)" >> $GITHUB_ENV
-          echo "worker_task_name=$(terraform output -json worker_task_name | jq -r .)" >> $GITHUB_ENV
-
-      - name: Download task definition
-        if: ${{ contains (matrix.name,'-ee') }}
-        run: |
-          aws ecs describe-task-definition --task-definition ${{ env.worker_task_name }} \
-          --query taskDefinition > task-definition.json
-
-      - name: Render Amazon ECS task definition
-        if: ${{ contains (matrix.name,'-ee') }}
-        id: render-web-container
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-definition.json
-          container-name: ${{ env.worker_ecs_container_name }}
-          image: ${{ steps.docker_build.outputs.image }}
-
-      - name: Deploy to Amazon ECS service
-        if: ${{ contains (matrix.name,'-ee') }}
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
-          service: ${{ env.worker_ecs_service }}
-          cluster: ${{ env.worker_ecs_cluster }}
-          wait-for-service-stability: true
-
-      - name: get-npm-version
-        id: package-version
-        if: ${{ contains (matrix.name,'-ee') }}
-        uses: martinbeentjes/npm-get-version-action@main
-        with:
-          path: apps/worker
-
-      - name: Create Sentry release
-        if: ${{ contains (matrix.name,'-ee') }}
-        uses: getsentry/action-release@v1
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: novu-r9
-          SENTRY_PROJECT: worker
-        with:
-          version: ${{ steps.package-version.outputs.current-version}}
-          environment: dev
-          version_prefix: v
-          sourcemaps: apps/worker/dist
-          ignore_empty: true
-          ignore_missing: true
-          url_prefix: "~"
+  deploy_dev_workers:
+    needs: deploy_general_worker
+    uses: ./.github/workflows/reusable-workers-service-deploy.yml
+    secrets: inherit
+    with:
+      environment: Development
+      terraform_workspace: novu-dev
+      # This is a workaround to an issue with matrix outputs
+      docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
 
   newrelic:
     runs-on: ubuntu-latest
     name: New Relic Deploy
-    needs: deploy_dev_worker
+    needs: deploy_dev_workers
     environment: Development
     steps:
       # This step builds a var with the release tag value to use later

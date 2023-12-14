@@ -24,7 +24,6 @@ describe('Inbound Mail Service', () => {
 
     it('should be initialised properly', async () => {
       expect(inboundMailService).to.be.ok;
-      expect(inboundMailService).to.have.all.keys('inboundParseQueue');
       expect(inboundMailService.inboundParseQueueService.DEFAULT_ATTEMPTS).to.equal(3);
       expect(inboundMailService.inboundParseQueueService.topic).to.equal('inbound-parse-mail');
       expect(await inboundMailService.inboundParseQueueService.bullMqService.getStatus()).to.deep.equal({

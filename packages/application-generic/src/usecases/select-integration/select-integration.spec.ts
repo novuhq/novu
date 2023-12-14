@@ -1,15 +1,26 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import {
+  EnvironmentRepository,
+  ExecutionDetailsRepository,
   IntegrationEntity,
   IntegrationRepository,
+  JobRepository,
+  SubscriberRepository,
   TenantRepository,
+  MessageRepository,
 } from '@novu/dal';
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilter } from '../conditions-filter';
+import { CompileTemplate } from '../compile-template';
+import {
+  BullMqService,
+  ExecutionLogQueueService,
+  WorkflowInMemoryProviderService,
+} from '../../services';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -81,14 +92,26 @@ jest.mock('../get-decrypted-integrations', () => ({
 
 describe('select integration', function () {
   let useCase: SelectIntegration;
-  let integrationRepository: IntegrationRepository;
+  const integrationRepository: IntegrationRepository =
+    new IntegrationRepository();
+  const executionDetailsRepository: ExecutionDetailsRepository =
+    new ExecutionDetailsRepository();
 
   beforeEach(async function () {
+    // @ts-ignore
     useCase = new SelectIntegration(
-      new IntegrationRepository() as any,
-      // @ts-ignore
-      new GetDecryptedIntegrations(),
-      new ConditionsFilter(),
+      integrationRepository,
+      new GetDecryptedIntegrations(integrationRepository),
+      new ConditionsFilter(
+        new SubscriberRepository(),
+        new MessageRepository(),
+        executionDetailsRepository,
+        new JobRepository(),
+        new TenantRepository(),
+        new EnvironmentRepository(),
+        new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
+        new CompileTemplate()
+      ),
       new TenantRepository()
     );
     jest.clearAllMocks();

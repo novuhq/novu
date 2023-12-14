@@ -310,15 +310,15 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('notification-template-submit-btn').click();
 
     cy.getByTestId('get-snippet-btn').click();
-    cy.getByTestId('step-page-wrapper').should('be.visible');
-    cy.getByTestId('step-page-wrapper').getByTestId('trigger-code-snippet').contains('test-sms-notification-title');
-    cy.getByTestId('step-page-wrapper')
+    cy.getByTestId('workflow-sidebar').should('be.visible');
+    cy.getByTestId('workflow-sidebar').getByTestId('trigger-code-snippet').contains('test-sms-notification-title');
+    cy.getByTestId('workflow-sidebar')
       .getByTestId('trigger-code-snippet')
       .contains("import { Novu } from '@novu/node'");
 
-    cy.getByTestId('step-page-wrapper').getByTestId('trigger-code-snippet').contains('taskName');
+    cy.getByTestId('workflow-sidebar').getByTestId('trigger-code-snippet').contains('taskName');
 
-    cy.getByTestId('step-page-wrapper').getByTestId('trigger-code-snippet').contains('firstName');
+    cy.getByTestId('workflow-sidebar').getByTestId('trigger-code-snippet').contains('firstName');
   });
 
   it('should save HTML template email', function () {

@@ -5,7 +5,7 @@ import { useActiveIntegrations } from './useActiveIntegrations';
 import { useIntegrationLimit } from './useIntegrationLimit';
 type UseHasActiveIntegrationsProps = {
   filterByEnv?: boolean;
-  channelType: ChannelTypeEnum;
+  channelType?: ChannelTypeEnum;
 };
 
 export function useHasActiveIntegrations({ filterByEnv = true, channelType }: UseHasActiveIntegrationsProps) {
@@ -15,6 +15,10 @@ export function useHasActiveIntegrations({ filterByEnv = true, channelType }: Us
   const { isLimitReached: isSmsLimitReached } = useIntegrationLimit(ChannelTypeEnum.SMS);
 
   const isChannelStep = useMemo(() => {
+    if (!channelType) {
+      return false;
+    }
+
     return [
       ChannelTypeEnum.IN_APP,
       ChannelTypeEnum.EMAIL,

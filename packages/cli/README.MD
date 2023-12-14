@@ -28,7 +28,7 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
   <a href="https://discord.novu.co">Join Our Discord</a>
     ·
-    <a href="https://github.com/orgs/novuhq/projects/2">Roadmap</a>
+    <a href="https://roadmap.novu.co/">Roadmap</a>
     ·
     <a href="https://twitter.com/novuhq">X</a>
   </p>
@@ -77,7 +77,7 @@ await novu.trigger('<TRIGGER_NAME>', {
     name: 'Hello World',
     organization: {
       logo: 'https://happycorp.com/logo.png',
-    },
+    }
   },
 });
 ```
