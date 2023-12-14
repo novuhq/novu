@@ -1,11 +1,11 @@
 repo_name: novuhq/novu
-report_id: 2fee0506349ea3435116ced5eb0ed869
+report_id: f0c223c32f02bca51514815426c04814
 repo_type: Public
-timestamp: '2023-11-09T15:16:30+00:00'
-requested_by: michaldziuba03
+timestamp: '2023-12-14T09:38:43+00:00'
+requested_by: rifont
 provider: github
 branch: next
-detected_tools_count: 273
+detected_tools_count: 294
 tools:
 - name: Handlebars.js
   description: Minimal Templating on Steroids
@@ -45,7 +45,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Languages
   image_url: https://img.stackshare.io/service/989/ruby.png
-  detection_source: packages/application-generic/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Smarty
@@ -77,7 +77,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Javascript MVC Frameworks
   image_url: https://img.stackshare.io/service/3745/cb8U-gL6_400x400.jpg
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -91,10 +91,10 @@ tools:
   category: Libraries
   sub_category: JavaScript Framework Components
   image_url: https://img.stackshare.io/service/6112/12101536.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
 - name: Autoprefixer
   description: PostCSS plugin to parse CSS and add vendor prefixes to CSS rules
   website_url: https://github.com/postcss/autoprefixer
@@ -115,7 +115,7 @@ tools:
   category: Libraries
   sub_category: Javascript Utilities & Libraries
   image_url: https://img.stackshare.io/service/3866/_GD1-XrU_400x400.jpg
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2022-04-03 13:55:54.000000000 Z
@@ -129,7 +129,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Microframeworks (Backend)
   image_url: https://img.stackshare.io/service/1163/hashtag.png
-  detection_source: apps/ws/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-08-29 08:09:51.000000000 Z
 - name: Less
@@ -142,8 +142,8 @@ tools:
   category: Languages & Frameworks
   sub_category: CSS Pre-processors / Extensions
   image_url: https://img.stackshare.io/service/1170/default_957cbc0168b4d37265e264469c888f776e57f42c.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: NestJS
@@ -157,8 +157,8 @@ tools:
   category: Languages & Frameworks
   sub_category: Frameworks (Full Stack)
   image_url: https://img.stackshare.io/service/8747/4zsOyxko_400x400.jpg
-  detection_source_url: apps/api/package.json
-  detection_source: packages/nest/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Node.js
@@ -170,7 +170,7 @@ tools:
   category: Languages & Frameworks
   sub_category: Frameworks (Full Stack)
   image_url: https://img.stackshare.io/service/1011/n1JRsFeB_400x400.png
-  detection_source: providers/zulip/package.json
+  detection_source: ".devcontainer/Dockerfile"
   last_updated_by: Dima Grossman
   last_updated_on: 2021-10-17 16:51:18.000000000 Z
 - name: React
@@ -183,8 +183,8 @@ tools:
   category: Libraries
   sub_category: Javascript UI Libraries
   image_url: https://img.stackshare.io/service/1020/OYIaJ1KK.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/.storybook/preview.jsx
   last_updated_by: ainouzgali
   last_updated_on: 2022-02-02 06:42:42.000000000 Z
 - name: React Router
@@ -197,10 +197,10 @@ tools:
   category: Libraries
   sub_category: JavaScript Framework Components
   image_url: https://img.stackshare.io/service/3350/8261421.png
-  detection_source_url: apps/web/package.json
-  detection_source: libs/design-system/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: RxJS
   description: The Reactive Extensions for JavaScript
   website_url: http://reactivex.io/rxjs/
@@ -210,8 +210,8 @@ tools:
   category: Languages & Frameworks
   sub_category: Concurrency Frameworks
   image_url: https://img.stackshare.io/service/1796/984368.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Storybook
@@ -223,7 +223,7 @@ tools:
   category: Libraries
   sub_category: JavaScript Framework Components
   image_url: https://img.stackshare.io/service/9240/sOct-Txm_400x400.png
-  detection_source: packages/notification-center/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-18 14:57:01.000000000 Z
 - name: Vue.js
@@ -236,7 +236,7 @@ tools:
   category: Libraries
   sub_category: Javascript MVC Frameworks
   image_url: https://img.stackshare.io/service/3837/paeckCWC.png
-  detection_source_url: packages/notification-center-vue/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-vue/package.json
   detection_source: packages/notification-center-vue/package.json
   last_updated_by: Paweł
   last_updated_on: 2022-11-22 15:31:25.000000000 Z
@@ -249,8 +249,31 @@ tools:
   sub_category: Cloud Storage
   image_url: https://img.stackshare.io/service/2099/azureStorage.png
   detection_source: packages/application-generic/package.json
-  last_updated_by: praxter11
-  last_updated_on: 2023-10-30 16:48:49.000000000 Z
+  last_updated_by: Paweł
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
+- name: Bull
+  description: Premium Queue package for handling jobs and messages in NodeJS
+  website_url: https://github.com/OptimalBits/bull
+  open_source: true
+  hosted_saas: true
+  category: Data Stores
+  sub_category: Background Processing
+  image_url: https://img.stackshare.io/service/9146/bull-logo.png
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2021-11-07 20:14:11.000000000 Z
+- name: BullMQ
+  description: A library that implements a fast and robust queue system
+  website_url: https://github.com/taskforcesh/bullmq
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Data Stores
+  sub_category: Message Queue
+  image_url: https://img.stackshare.io/service/25280/default_d1dbf45c67d448a8a16413d63d3c21cdca003fb8.png
+  detection_source: libs/testing/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Firebase
   description: The Realtime App Platform
   website_url: https://firebase.google.com/
@@ -262,6 +285,17 @@ tools:
   detection_source: providers/fcm/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-01 07:35:34.000000000 Z
+- name: MongoDB
+  description: The database for giant ideas
+  website_url: http://www.mongodb.com/
+  open_source: true
+  hosted_saas: false
+  category: Data Stores
+  sub_category: Databases
+  image_url: https://img.stackshare.io/service/1030/leaf-360x360.png
+  detection_source: ".devcontainer/docker-compose.yml"
+  last_updated_by: Dima Grossman
+  last_updated_on: 2021-12-23 12:19:08.000000000 Z
 - name: Mongoose
   description: MongoDB object modeling designed to work in an asynchronous environment
   website_url: http://mongoosejs.com/
@@ -272,8 +306,8 @@ tools:
   category: Data Stores
   sub_category: Object Document Mapper (ODM)
   image_url: https://img.stackshare.io/service/1231/0TXzZU7W_400x400.jpg
-  detection_source_url: libs/dal/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-05 14:14:32.000000000 Z
 - name: Redis
@@ -285,9 +319,9 @@ tools:
   category: Data Stores
   sub_category: In-Memory Databases
   image_url: https://img.stackshare.io/service/1031/default_cbce472cd134adc6688572f999e9122b9657d4ba.png
-  detection_source: docker/local/development/redis-sentinel/Dockerfile
-  last_updated_by: Midka
-  last_updated_on: 2022-06-14 09:50:58.000000000 Z
+  detection_source: docker/local/deployment/docker-compose.yml
+  last_updated_by: Paweł
+  last_updated_on: 2023-04-18 08:43:08.000000000 Z
 - name: Socket.IO
   description: Realtime application framework (Node.JS server)
   website_url: http://socket.io/
@@ -297,10 +331,21 @@ tools:
   category: Application Hosting
   sub_category: Realtime Backend / API
   image_url: https://img.stackshare.io/service/1161/vI0ZZlhZ_400x400.png
-  detection_source_url: apps/ws/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/ws/package.json
+  detection_source: apps/widget/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-08-30 20:07:30.000000000 Z
+- name: pgvector
+  description: Open-source vector similarity search for Postgres
+  website_url: https://github.com/pgvector/pgvector/
+  open_source: false
+  hosted_saas: false
+  category: Data Stores
+  sub_category: Database Tools
+  image_url: https://img.stackshare.io/service/109221/default_b888cdf5617d936aa6aacf130911906955508639.png
+  detection_source: apps/web/public/robots.txt
+  last_updated_by: Dima Grossman
+  last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Babel
   description: Use next generation JavaScript, today.
   website_url: http://babeljs.io/
@@ -310,9 +355,9 @@ tools:
   category: Build, Test, Deploy
   sub_category: JavaScript Compilers
   image_url: https://img.stackshare.io/service/2739/-1wfGjNw.png
-  detection_source: providers/termii/package.json
-  last_updated_by: Zac Clifton
-  last_updated_on: 2023-01-26 23:14:08.000000000 Z
+  detection_source: apps/web/.babelrc
+  last_updated_by: Paweł
+  last_updated_on: 2023-10-17 10:41:20.000000000 Z
 - name: Chai
   description: A BDD / TDD assertion library
   website_url: http://chaijs.com/
@@ -323,8 +368,8 @@ tools:
   category: Build, Test, Deploy
   sub_category: Javascript Testing Framework
   image_url: https://img.stackshare.io/service/1725/chai.png
-  detection_source_url: apps/api/package.json
-  detection_source: apps/ws/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Codecov
@@ -335,7 +380,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Code Coverage
   image_url: https://img.stackshare.io/service/2673/Codecov_Mark_Circle_Pink.png
-  detection_source: providers/twilio/package.json
+  detection_source: packages/application-generic/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2022-09-21 12:50:36.000000000 Z
 - name: Cypress
@@ -349,8 +394,8 @@ tools:
   category: Build, Test, Deploy
   sub_category: Javascript Testing Framework
   image_url: https://img.stackshare.io/service/9231/default_66c5c1a197dcd0232e41e4ab6299d119b4e165b3.png
-  detection_source_url: apps/web/package.json
-  detection_source: libs/design-system/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 16:29:14.000000000 Z
 - name: Docker
@@ -372,7 +417,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Container Tools
   image_url: https://img.stackshare.io/service/3136/docker-compose.png
-  detection_source: docker/local/deployment/docker-compose.yml
+  detection_source: ".devcontainer/docker-compose.yml"
   last_updated_by: Dima Grossman
   last_updated_on: 2021-12-22 17:45:24.000000000 Z
 - name: Dotenv
@@ -384,7 +429,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Server Configuration and Automation
   image_url: https://img.stackshare.io/service/8067/default_90dcb1286af7685c68df319c764b80704df1155b.png
-  detection_source: packages/cli/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: ESLint
@@ -396,7 +441,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Code Review
   image_url: https://img.stackshare.io/service/3337/Q4L7Jncy.jpg
-  detection_source: providers/mandrill/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Git
@@ -416,7 +461,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Continuous Integration
   image_url: https://img.stackshare.io/service/11563/actions.png
-  detection_source: ".github/workflows/test.yml"
+  detection_source: ".github/workflows/codeql-analysis.yml"
   last_updated_by: Dima Grossman
   last_updated_on: 2022-07-04 14:19:00.000000000 Z
 - name: Jasmine
@@ -440,8 +485,8 @@ tools:
   category: Build, Test, Deploy
   sub_category: Javascript Testing Framework
   image_url: https://img.stackshare.io/service/830/jest.png
-  detection_source_url: apps/webhook/package.json
-  detection_source: providers/zulip/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/webhook/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Karma
@@ -454,7 +499,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Browser Testing
   image_url: https://img.stackshare.io/service/1420/TidYGd6a.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -482,10 +527,10 @@ tools:
   category: Build, Test, Deploy
   sub_category: Javascript Testing Framework
   image_url: https://img.stackshare.io/service/832/mocha.png
-  detection_source_url: apps/api/package.json
-  detection_source: providers/fcm/package.json
-  last_updated_by: Ayush Shukla
-  last_updated_on: 2023-10-16 06:13:54.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-13 10:31:58.000000000 Z
 - name: New Relic
   description: New Relic is the industry’s largest and most comprehensive cloud-based
     observability platform.
@@ -495,7 +540,7 @@ tools:
   category: Monitoring
   sub_category: Performance Monitoring
   image_url: https://img.stackshare.io/service/103/default_193410db3a7e419c7b436961bf41d733c7346b59.png
-  detection_source: apps/ws/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-01 09:31:14.000000000 Z
 - name: Octokit
@@ -519,8 +564,8 @@ tools:
   category: Build, Test, Deploy
   sub_category: Code Review
   image_url: https://img.stackshare.io/service/7035/default_66f265943abed56bcdbfca1c866a4261b1fbb063.jpg
-  detection_source_url: apps/inbound-mail/package.json
-  detection_source: providers/zulip/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/inbound-mail/package.json
+  detection_source: apps/inbound-mail/package.json
   last_updated_by: p-fernandez
   last_updated_on: 2023-03-07 17:39:14.000000000 Z
 - name: Rollbar
@@ -542,7 +587,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Package Managers
   image_url: https://img.stackshare.io/service/12795/5jL6-BA5_400x400.jpeg
-  detection_source: packages/application-generic/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Sentry
@@ -553,7 +598,7 @@ tools:
   category: Monitoring
   sub_category: Exception Monitoring
   image_url: https://img.stackshare.io/service/191/default_9262326592c97828a2a4299dec085a3674dd05f4.png
-  detection_source: packages/application-generic/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-03-06 10:06:53.000000000 Z
 - name: SinonJS
@@ -565,8 +610,8 @@ tools:
   category: Build, Test, Deploy
   sub_category: Javascript Testing Framework
   image_url: https://img.stackshare.io/service/3509/logo.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/application-generic/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: davidsoderberg
   last_updated_on: 2022-07-01 14:15:33.000000000 Z
 - name: SuperTest
@@ -579,10 +624,22 @@ tools:
   category: Build, Test, Deploy
   sub_category: Javascript Testing Framework
   image_url: https://img.stackshare.io/no-img-open-source.png
-  detection_source_url: apps/webhook/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/webhook/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
+- name: Vite
+  description: Native-ESM powered web dev build tool
+  website_url: https://vitejs.dev/
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: JS Build Tools / JS Task Runners
+  image_url: https://img.stackshare.io/service/21547/default_1aeac791cde11ff66cc0b20dcc6144eeb185c905.png
+  detection_source: libs/design-system/package.json
+  last_updated_by: David Söderberg
+  last_updated_on: 2023-10-16 11:12:02.000000000 Z
 - name: Webpack
   description: A bundler for javascript and friends
   website_url: http://webpack.js.org
@@ -593,8 +650,8 @@ tools:
   category: Build, Test, Deploy
   sub_category: JS Build Tools / JS Task Runners
   image_url: https://img.stackshare.io/service/1682/IMG_4636.PNG
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/webpack.config.js
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/api/webpack.config.js
   last_updated_by: Dima Grossman
   last_updated_on: 2022-12-20 14:40:51.000000000 Z
 - name: nodemon
@@ -607,10 +664,10 @@ tools:
   category: Monitoring
   sub_category: node.js Application Monitoring
   image_url: https://img.stackshare.io/service/5577/preview.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/cli/package.json
-  last_updated_by: Richard Fontein
-  last_updated_on: 2023-11-07 14:59:01.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-13 10:31:58.000000000 Z
 - name: npm
   description: The package manager for JavaScript.
   website_url: https://www.npmjs.com/
@@ -619,7 +676,7 @@ tools:
   category: Build, Test, Deploy
   sub_category: Front End Package Manager
   image_url: https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png
-  detection_source: providers/zulip/package.json
+  detection_source: packages/application-generic/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2022-09-21 12:50:36.000000000 Z
 - name: pnpm
@@ -645,6 +702,29 @@ tools:
   detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-04-25 08:33:49.000000000 Z
+- name: Google App Engine
+  description: Build web applications on the same scalable systems that power Google
+    applications
+  website_url: https://developers.google.com/appengine
+  open_source: false
+  hosted_saas: true
+  category: Application Hosting
+  sub_category: Platform as a Service
+  image_url: https://img.stackshare.io/service/139/s01TMTGn.png
+  detection_source: ".devcontainer/docker-compose.yml"
+  last_updated_by: Dima Grossman
+  last_updated_on: 2021-12-22 17:45:24.000000000 Z
+- name: IronWorker
+  description: High-Scale Async Task Processing
+  website_url: http://www.iron.io/worker
+  open_source: false
+  hosted_saas: false
+  category: Application Hosting
+  sub_category: Serverless / Task Processing
+  image_url: https://img.stackshare.io/service/2221/default_ff2de42167808184b0a4ec1075adb5bcb0aa3206.jpg
+  detection_source: docker/local/deployment/docker-compose.yml
+  last_updated_by: Paweł
+  last_updated_on: 2023-11-28 13:28:22.000000000 Z
 - name: Chartio
   description: A powerful Business Intelligence tool anyone can use
   website_url: https://chartio.com
@@ -656,17 +736,53 @@ tools:
   detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
-- name: LogRocket
-  description: Modern Frontend Monitoring and Product Analytics
-  website_url: https://logrocket.com/
+- name: EmailJS
+  description: Send email directly from JavaScript
+  website_url: https://www.emailjs.com
   open_source: false
   hosted_saas: true
-  category: Application Utilities
-  sub_category: User Feedback as a Service
-  image_url: https://img.stackshare.io/service/6063/logo_bg.png
-  detection_source: apps/web/package.json
-  last_updated_by: Zac Clifton
-  last_updated_on: 2023-01-25 18:33:44.000000000 Z
+  category: Communications
+  sub_category: Email API
+  image_url: https://img.stackshare.io/service/6209/default_082f0619f4d49a25f75896e370cc67c9a3f0a4fe.jpg
+  detection_source: providers/emailjs/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2022-03-30 12:40:42.000000000 Z
+- name: Mailtrap
+  description: "Email Delivery Platform that delivers just in time.\L Great for businesses
+    and individuals. "
+  website_url: https://mailtrap.io/
+  open_source: false
+  hosted_saas: true
+  category: Communications
+  sub_category: Transactional Email
+  image_url: https://img.stackshare.io/service/506/default_90b9223bcfa6e98d383d5ba72188a149d74b8a2f.png
+  detection_source: providers/mailtrap/package.json
+  last_updated_by: Michał Dziuba
+  last_updated_on: 2023-10-02 17:56:51.000000000 Z
+- name: MessageBird
+  description: Making business communications feel as natural as communicating with
+    friends.
+  website_url: https://www.messagebird.com/
+  open_source: false
+  hosted_saas: true
+  category: Communications
+  sub_category: Voice and SMS
+  image_url: https://img.stackshare.io/service/3963/319915-3e31123c8391e49a0f03b69030a6b671-medium_jpg.jpg
+  detection_source: providers/messagebird/package.json
+  last_updated_by: Ayush Shukla
+  last_updated_on: 2023-10-28 13:06:35.000000000 Z
+- name: Mixpanel
+  description: Powerful, self-serve product analytics to help you convert, engage,
+    and retain more users
+  website_url: https://mixpanel.com
+  open_source: false
+  hosted_saas: true
+  category: Analytics
+  sub_category: General Analytics
+  image_url: https://img.stackshare.io/service/60/default_a3830bd6c50dcc059aaf3aaf287131b64e0957e2.png
+  detection_source: packages/application-generic/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-09-07 14:59:55.000000000 Z
 - name: Netlify
   description: Build, deploy and host your static site or app with a drag and drop
     interface and automatic delpoys from GitHub or Bitbucket
@@ -676,9 +792,32 @@ tools:
   category: Application Utilities
   sub_category: Static Web Hosting
   image_url: https://img.stackshare.io/service/2748/default_5dfbb146cf22182bca88c7d07f2515a5888fc12a.jpg
-  detection_source: packages/notification-center/netlify.toml
+  detection_source: apps/web/netlify.toml
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
+- name: Ora
+  description: Agile task management and visual team collaboration, Ora is your team’s
+    command center with kanban, chat and timers!
+  website_url: https://ora.pm/
+  open_source: false
+  hosted_saas: true
+  category: Collaboration
+  sub_category: Project Management
+  image_url: https://img.stackshare.io/service/6925/preview.png
+  detection_source: package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2021-08-25 07:01:32.000000000 Z
+- name: Plivo
+  description: API platform to build Voice &amp; SMS Applications
+  website_url: https://www.plivo.com/
+  open_source: false
+  hosted_saas: true
+  category: Communications
+  sub_category: Voice and SMS
+  image_url: https://img.stackshare.io/service/131/PjSy9eTC_400x400.png
+  detection_source: providers/plivo/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-05 15:05:55.000000000 Z
 - name: Poli
   description: 'An easy-to-use SQL reporting application '
   website_url: https://github.com/shzlw/poli
@@ -688,9 +827,20 @@ tools:
   category: Analytics
   sub_category: Business Intelligence
   image_url: https://img.stackshare.io/service/11232/no-img-open-source.png
-  detection_source: apps/widget/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
+- name: Postmark
+  description: Email delivery for web apps - done right.
+  website_url: http://postmarkapp.com
+  open_source: false
+  hosted_saas: true
+  category: Communications
+  sub_category: Transactional Email
+  image_url: https://img.stackshare.io/service/45/default_e14042211227a4ae0040d034737714ba677b5a57.jpg
+  detection_source: providers/postmark/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-05 15:05:55.000000000 Z
 - name: SweepWidget
   description: Run engaging giveaways to grow your email list, increase social media
     followers, boost website traffic and generate qualified leads
@@ -702,7 +852,7 @@ tools:
   image_url: https://img.stackshare.io/service/11972/ZdACEP0z_400x400.jpg
   detection_source: docker/local/deployment/docker-compose.yml
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:15:09.000000000 Z
+  last_updated_on: 2023-11-28 13:28:22.000000000 Z
 - name: Twilio
   description: Bring voice and messaging to your web and mobile applications.
   website_url: http://www.twilio.com
@@ -711,9 +861,64 @@ tools:
   category: Communications
   sub_category: Voice and SMS
   image_url: https://img.stackshare.io/service/130/VrwpNfjh_400x400.png
-  detection_source: providers/twilio/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-08-02 11:13:43.000000000 Z
+- name: Alpine Linux
+  description: Security-oriented, lightweight Linux distribution based on musl libc
+    and busybox
+  website_url: https://www.alpinelinux.org/
+  open_source: false
+  hosted_saas: false
+  category: Languages & Frameworks
+  sub_category: Operating Systems
+  image_url: https://img.stackshare.io/service/6429/alpine_linux.png
+  detection_source: docker/local/deployment/docker-compose.yml
+  last_updated_by: David Söderberg
+  last_updated_on: 2023-01-23 15:08:36.000000000 Z
+- name: Apiary
+  description: Integrated API documentation, prototyping and testing
+  website_url: http://apiary.io/
+  open_source: false
+  hosted_saas: false
+  category: Application Utilities
+  sub_category: Documentation as a Service & Tools
+  image_url: https://img.stackshare.io/service/272/7b176017eab2903a23d914460b6dd600.jpeg
+  detection_source: docker/local/deployment/docker-compose.yml
+  last_updated_by: Dima Grossman
+  last_updated_on: 2021-12-20 13:12:31.000000000 Z
+- name: Bluebird
+  description: A full featured promise library with unmatched performance
+  website_url: https://github.com/petkaantonov/bluebird/
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: Javascript Utilities & Libraries
+  image_url: https://img.stackshare.io/service/11991/bb.png
+  detection_source: apps/inbound-mail/package.json
+  last_updated_by: Gosha
+  last_updated_on: 2023-01-18 16:36:57.000000000 Z
+- name: HTML
+  description: Hypertext Markup Language for creating web pages.
+  website_url: http://
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/2270/no-img-open-source.png
+  detection_source: apps/web/.storybook/preview-head.html
+  last_updated_by: Paweł
+  last_updated_on: 2023-03-06 13:25:53.000000000 Z
+- name: LangChain
+  description: Build AI apps with LLMs through composability
+  website_url: https://github.com/hwchase17/langchain
+  open_source: true
+  hosted_saas: false
+  category: Communications
+  sub_category: Large Language Model Tools
+  image_url: https://img.stackshare.io/service/48790/default_5b6c6b73f1ff3775c85d2a1ba954cb87e30cbf13.jpg
+  detection_source: apps/web/public/robots.txt
+  last_updated_by: Dima Grossman
+  last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Lerna
   description: A tool for managing JavaScript projects
   website_url: https://lerna.js.org/
@@ -724,7 +929,7 @@ tools:
   category: Libraries
   sub_category: Javascript Utilities & Libraries
   image_url: https://img.stackshare.io/service/6207/OwqAUSQi_400x400.jpg
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Paweł
   last_updated_on: 2023-04-11 16:38:49.000000000 Z
@@ -737,10 +942,21 @@ tools:
   category: Libraries
   sub_category: Javascript Utilities & Libraries
   image_url: https://img.stackshare.io/service/2438/lodash.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/stateless/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
+- name: MailerSend
+  description: Transactional email service that delivers
+  website_url: https://www.mailersend.com/
+  open_source: false
+  hosted_saas: false
+  category: Communications
+  sub_category: Transactional Email
+  image_url: https://img.stackshare.io/service/25369/default_51d0d185f2a6f77d17d707c2532801eae697a947.png
+  detection_source: providers/mailersend/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2022-03-30 12:40:42.000000000 Z
 - name: Moment.js
   description: A JavaScript date library for parsing, validating, manipulating, and
     formatting dates
@@ -752,7 +968,7 @@ tools:
   category: Libraries
   sub_category: Javascript Utilities & Libraries
   image_url: https://img.stackshare.io/service/3643/Xrtdc94q_400x400.png
-  detection_source_url: providers/maqsam/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/providers/maqsam/package.json
   detection_source: providers/maqsam/package.json
   last_updated_by: Adrian Toro
   last_updated_on: 2023-03-28 22:37:18.000000000 Z
@@ -763,7 +979,7 @@ tools:
   open_source: false
   hosted_saas: false
   image_url: https://img.stackshare.io/service/3519/3wgIDj3j_normal.png
-  detection_source: docker/local/development/docker-compose.yml
+  detection_source: ".devcontainer/Dockerfile"
   last_updated_by: Dima Grossman
   last_updated_on: 2021-12-22 17:45:24.000000000 Z
 - name: Nodemailer
@@ -774,9 +990,32 @@ tools:
   category: Communications
   sub_category: Transactional Email
   image_url: https://img.stackshare.io/service/2862/qr2-jCLr.jpg
-  detection_source: providers/outlook365/package.json
+  detection_source: providers/nodemailer/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2022-04-15 11:02:59.000000000 Z
+- name: Passport
+  description: Simple, unobtrusive authentication for Node.js
+  website_url: http://passportjs.org/
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Application Utilities
+  sub_category: User Management and Authentication
+  image_url: https://ucarecdn.com/8f3cac0e-b146-4f0f-878c-680a6671d804/
+  detection_source: apps/api/package.json
+  last_updated_by: Richard Fontein
+  last_updated_on: 2023-12-13 22:34:26.000000000 Z
+- name: Resend
+  description: Email API for developers using React
+  website_url: https://resend.com/
+  open_source: false
+  hosted_saas: false
+  category: Communications
+  sub_category: Transactional Email
+  image_url: https://img.stackshare.io/service/101735/default_a7342137a6cb7205553d5a24fe27eb8b75f2c24a.jpg
+  detection_source: providers/resend/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-05 15:05:55.000000000 Z
 - name: Shell
   description: A shell is a text-based terminal, used for manipulating programs and
     files. Shell scripts typically manage program execution.
@@ -787,6 +1026,24 @@ tools:
   sub_category: Languages
   image_url: https://img.stackshare.io/service/4631/default_c2062d40130562bdc836c13dbca02d318205a962.png
   detection_source: Repo Metadata
+- name: Winston
+  description: a multi-transport async logging library for node.js
+  website_url: https://github.com/winstonjs/winston
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/6668/9682013.png
+  detection_source: apps/inbound-mail/package.json
+  last_updated_by: p-fernandez
+  last_updated_on: 2023-09-06 13:54:57.000000000 Z
+- name: Zod
+  description: TypeScript-first schema validation
+  website_url: https://zod.dev/
+  open_source: false
+  hosted_saas: false
+  image_url: https://img.stackshare.io/service/48521/default_eea961e4c374e68a1c7eb5bbc9e4a39920890342.png
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: auto
   description: Making the Car buying process easier
   website_url: http://autoportal.com/
@@ -799,24 +1056,24 @@ tools:
 - name: axios
   description: Promise based HTTP client for the browser and node.js
   website_url: https://github.com/mzabriskie/axios
-  version: 1.3.3
+  version: 1.6.2
   license: MIT
   open_source: true
   hosted_saas: false
   category: Libraries
   sub_category: Javascript Utilities & Libraries
   image_url: https://img.stackshare.io/no-img-open-source.png
-  detection_source_url: apps/api/package.json
-  detection_source: providers/zulip/package.json
-  last_updated_by: p-fernandez
-  last_updated_on: 2023-02-14 16:48:51.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-04 18:26:18.000000000 Z
 - name: chalk
   description: terminal colors
   website_url: https://github.com/chalk/chalk
   open_source: false
   hosted_saas: false
   image_url: https://img.stackshare.io/service/8072/13122722.png
-  detection_source: packages/cli/package.json
+  detection_source: package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2022-08-20 10:04:19.000000000 Z
 - name: date-fns
@@ -828,7 +1085,7 @@ tools:
   category: Libraries
   sub_category: Javascript Utilities & Libraries
   image_url: https://img.stackshare.io/service/10865/default_5551fb8853689f607a2bc0d5a09355d5a3d52bf0.png
-  detection_source: providers/maqsam/package.json
+  detection_source: apps/api/package.json
   last_updated_by: venarius
   last_updated_on: 2022-08-25 12:14:57.000000000 Z
 - name: husky
@@ -836,7 +1093,7 @@ tools:
   open_source: false
   hosted_saas: false
   image_url: https://img.stackshare.io/service/9527/5502029.jpeg
-  detection_source: package.json
+  detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: lint-staged
@@ -866,7 +1123,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16162/default_77b54a203c743d16eddb6b6390cba17218454fa0.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -880,10 +1137,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16010/default_af9df0bc9fa88191d2fe609204c5bd7599c1a797.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
 - name: "@angular/cli"
   description: CLI tool for Angular
   package_url: https://www.npmjs.com/@angular/cli
@@ -894,7 +1151,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16000/default_976847109ccfe67d00b33d9ff71329b6e82f5f89.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -908,7 +1165,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15913/default_ac622bc364a601d766b9a6f6039f191492f54d65.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -922,7 +1179,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15917/default_4040fefea2f98006727f63d042275b96a275ab2d.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -936,7 +1193,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15927/default_e0a4fb1126d7400f419f0931cf1669947a5bc552.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -950,7 +1207,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15944/default_8b5680d4e916298d08363c291a0d6e34c07ceb15.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -964,7 +1221,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15921/default_54b691c123fc8979741e800e4dcd3936c0f3b246.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -978,7 +1235,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15933/default_b45165a5d30e541ab11711a34a78209b3e8ed7fd.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -992,7 +1249,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15965/default_8b5680d4e916298d08363c291a0d6e34c07ceb15.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -1006,10 +1263,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16306/default_f130429ee56156823c8c6e94da6fb7aa07f07ba5.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
 - name: "@babel/plugin-transform-runtime"
   description: Externalise references to helpers and builtins
   package_url: https://www.npmjs.com/@babel/plugin-transform-runtime
@@ -1020,8 +1277,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15952/default_4040fefea2f98006727f63d042275b96a275ab2d.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 12:31:11.000000000 Z
 - name: "@babel/polyfill"
@@ -1034,8 +1291,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16039/default_b8a893285867e41b5fc4a7631d8fc2da834d778c.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 12:31:11.000000000 Z
 - name: "@babel/preset-env"
@@ -1048,10 +1305,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15819/default_98aa227f51aa9d787815ec3fd98d0ab2bfebbb91.png
-  detection_source_url: apps/web/package.json
-  detection_source: providers/termii/package.json
-  last_updated_by: David Söderberg
-  last_updated_on: 2023-10-23 16:29:14.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: "@babel/preset-react"
   description: Babel preset for all React plugins
   package_url: https://www.npmjs.com/@babel/preset-react
@@ -1062,10 +1319,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15890/default_6743ba96cf149a3c3c68a185199f9705d6eff80e.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: "@babel/preset-typescript"
   description: Babel preset for TypeScript
   package_url: https://www.npmjs.com/@babel/preset-typescript
@@ -1076,8 +1333,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16084/default_d4e765f8a43dcfd232c8b9ee9732058bc27c727a.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Paweł
   last_updated_on: 2023-10-27 10:22:50.000000000 Z
 - name: "@babel/runtime"
@@ -1090,8 +1347,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15934/default_54b691c123fc8979741e800e4dcd3936c0f3b246.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 12:31:11.000000000 Z
 - name: "@commitlint/cli"
@@ -1104,8 +1361,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16059/default_5fd43aeff4d6a935abc13737de01a0355210499d.png
-  detection_source_url: libs/embed/package.json
-  detection_source: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
+  detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-28 12:44:59.000000000 Z
 - name: "@commitlint/config-angular"
@@ -1118,7 +1375,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16924/default_7fe969828600a90e84607bfa2a19979e53a0579d.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-17 17:27:51.000000000 Z
@@ -1132,10 +1389,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16092/default_8725384794b44fe56f31da1d21ae759cf07be7a5.png
-  detection_source_url: libs/embed/package.json
-  detection_source: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
+  detection_source: libs/embed/package.json
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
 - name: "@emotion/styled"
   description: Styled API for emotion
   package_url: https://www.npmjs.com/@emotion/styled
@@ -1146,10 +1403,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16702/default_4b738bf1758d38dddd276589bbea47fca5a990df.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
 - name: "@fortawesome/fontawesome-svg-core"
   description: The iconic font, CSS, and SVG framework
   package_url: https://www.npmjs.com/@fortawesome/fontawesome-svg-core
@@ -1160,7 +1417,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16644/default_50c9ed1615a25628505ab53def64d82450ced26b.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
   last_updated_by: Paweł
   last_updated_on: 2023-05-16 23:15:37.000000000 Z
@@ -1174,7 +1431,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18157/default_63cbe387694d6d77dde61448de98c6bd2a9b18de.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-18 14:22:13.000000000 Z
@@ -1188,7 +1445,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16683/default_6dad4e42e12d47cc6edfbdea036dae12f91abebb.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
   last_updated_by: Paweł
   last_updated_on: 2023-05-16 23:15:37.000000000 Z
@@ -1202,10 +1459,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16936/default_277303773c2bdb575ee8f4bfe869f0a33d6755b2.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: "@google-cloud/storage"
   description: Cloud Storage Client Library for Node.js
   package_url: https://www.npmjs.com/@google-cloud/storage
@@ -1216,8 +1473,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17753/default_2a0f136cfb588dd9053268b73a18a953e8d65590.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/application-generic/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Longfeng Lian
   last_updated_on: 2022-08-02 13:35:46.000000000 Z
 - name: "@istanbuljs/nyc-config-typescript"
@@ -1230,10 +1487,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17448/default_feeb5f9682b10b4223ce6e22e98c891d2c0e3851.png
-  detection_source_url: packages/application-generic/package.json
-  detection_source: providers/zulip/package.json
-  last_updated_by: renovate[bot]
-  last_updated_on: 2023-06-14 14:39:15.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/application-generic/package.json
+  detection_source: packages/application-generic/package.json
+  last_updated_by: Richard Fontein
+  last_updated_on: 2023-12-02 09:12:52.000000000 Z
 - name: "@nestjs/common"
   description: Nest - modern
   package_url: https://www.npmjs.com/@nestjs/common
@@ -1244,10 +1501,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16950/default_ebf16e0c8af5e95030933d9e01479224b6665289.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/nest/package.json
-  last_updated_by: Dima Grossman
-  last_updated_on: 2023-08-30 12:32:40.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Richard Fontein
+  last_updated_on: 2023-12-05 07:16:27.000000000 Z
 - name: "@nestjs/core"
   description: Nest - modern, fast, powerful node.js web framework
   package_url: https://www.npmjs.com/@nestjs/core
@@ -1258,10 +1515,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17223/default_48f040bdc5f6c639c70bf350f8b8158ede27286c.png
-  detection_source_url: apps/api/package.json
-  detection_source: apps/ws/package.json
-  last_updated_by: Dima Grossman
-  last_updated_on: 2023-08-30 12:32:40.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Richard Fontein
+  last_updated_on: 2023-12-05 07:16:27.000000000 Z
 - name: "@nestjs/testing"
   description: Nest - modern
   package_url: https://www.npmjs.com/@nestjs/testing
@@ -1272,10 +1529,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17855/default_dc034f75f103514d23b4d1a7fe578415d63216ee.png
-  detection_source_url: apps/api/package.json
-  detection_source: apps/ws/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-13 10:31:58.000000000 Z
 - name: "@rollup/plugin-node-resolve"
   description: Locate and bundle third-party dependencies in node_modules
   package_url: https://www.npmjs.com/@rollup/plugin-node-resolve
@@ -1286,7 +1543,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17836/default_abcc2eea82e62d338a749f334647866df76198b8.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-04-25 08:33:49.000000000 Z
@@ -1300,10 +1557,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18428/default_9499465ee49aaffadf126149b962e9838bc4a993.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/application-generic/package.json
-  last_updated_by: Richard Fontein
-  last_updated_on: 2023-11-07 14:59:01.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-13 10:31:58.000000000 Z
 - name: "@storybook/addon-actions"
   description: Action Logger addon for storybook
   package_url: https://www.npmjs.com/@storybook/addon-actions
@@ -1314,10 +1571,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16126/default_73326c44fbfa7369fd17573edb113e5d849468bc.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
 - name: "@storybook/addon-docs"
   description: Superior documentation for your components
   package_url: https://www.npmjs.com/@storybook/addon-docs
@@ -1328,8 +1585,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17835/default_abcc2eea82e62d338a749f334647866df76198b8.png
-  detection_source_url: apps/web/package.json
-  detection_source: libs/design-system/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Ayush Shukla
   last_updated_on: 2023-10-14 11:53:41.000000000 Z
 - name: "@storybook/addon-links"
@@ -1342,8 +1599,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16204/default_41f04716a804e853d5c38a5b81ee0ea8a842ad82.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Ayush Shukla
   last_updated_on: 2023-10-14 11:53:41.000000000 Z
 - name: "@storybook/react"
@@ -1357,10 +1614,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16042/default_72d4237e6719b7d75d0307bf8b5718584fdc3425.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: "@storybook/theming"
   description: Core Storybook Components
   package_url: https://www.npmjs.com/@storybook/theming
@@ -1371,8 +1628,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17754/default_8cfeb169319d5cc646c1e13f8a10e7d7e7430d7c.png
-  detection_source_url: apps/web/package.json
-  detection_source: libs/design-system/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Ayush Shukla
   last_updated_on: 2023-10-14 11:53:41.000000000 Z
 - name: "@testing-library/jest-dom"
@@ -1385,10 +1642,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17424/default_1cdcda15ebb7caed879f8340bc212b44c4ec9dac.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
 - name: "@testing-library/react"
   description: Simple and complete React DOM testing utilities that encourage good
     testing practices
@@ -1400,10 +1657,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16549/default_d522554c6a41cb28d922d6d3ad32ad4afa0e3bb5.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: "@testing-library/react-hooks"
   description: Simple and complete React hooks testing utilities that encourage good
     testing practices
@@ -1415,7 +1672,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17877/default_d41d3b5a213e129d6ea411e77eecb13f54b6aea5.png
-  detection_source_url: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center/package.json
   detection_source: packages/notification-center/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-18 14:57:01.000000000 Z
@@ -1429,8 +1686,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17144/default_9746cbb559e39df4afd8298f9a252dff8519e646.png
-  detection_source_url: libs/dal/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: renovate[bot]
   last_updated_on: 2023-02-02 08:53:24.000000000 Z
 - name: "@types/bluebird"
@@ -1443,8 +1700,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16458/default_4e3259350c525d1d859fa80a938000081d7c9db8.png
-  detection_source_url: libs/dal/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: renovate[bot]
   last_updated_on: 2023-02-02 08:53:24.000000000 Z
 - name: "@types/chai"
@@ -1457,8 +1714,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15922/default_e0a4fb1126d7400f419f0931cf1669947a5bc552.png
-  detection_source_url: apps/api/package.json
-  detection_source: apps/ws/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Ayush Shukla
   last_updated_on: 2023-10-16 06:13:54.000000000 Z
 - name: "@types/express"
@@ -1471,8 +1728,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16100/default_d947c1690e032a288145c7e2491999eab3ea8ede.png
-  detection_source_url: apps/api/package.json
-  detection_source: apps/ws/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Ayush Shukla
   last_updated_on: 2023-10-16 06:13:54.000000000 Z
 - name: "@types/inquirer"
@@ -1485,8 +1742,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16530/default_d522554c6a41cb28d922d6d3ad32ad4afa0e3bb5.png
-  detection_source_url: package.json
-  detection_source: packages/cli/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
+  detection_source: package.json
   last_updated_by: renovate[bot]
   last_updated_on: 2023-11-06 10:30:50.000000000 Z
 - name: "@types/jasmine"
@@ -1499,7 +1756,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15924/default_ac622bc364a601d766b9a6f6039f191492f54d65.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-25 09:16:22.000000000 Z
@@ -1513,8 +1770,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15840/default_004658cda9b38934f2871435e9dc15608c86e8be.png
-  detection_source_url: apps/web/package.json
-  detection_source: providers/zulip/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-07-25 06:31:23.000000000 Z
 - name: "@types/jsonwebtoken"
@@ -1527,7 +1784,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16959/default_caea01ce44a5fd1bb200d8fc0f8f2a1695b4e569.png
-  detection_source_url: apps/ws/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/ws/package.json
   detection_source: apps/ws/package.json
   last_updated_by: Ayush Shukla
   last_updated_on: 2023-10-16 06:13:54.000000000 Z
@@ -1541,10 +1798,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18297/default_678ce8b19e8cee1dde03f165f62525a2c9d0c034.png
-  detection_source_url: packages/node/package.json
-  detection_source: packages/stateless/package.json
-  last_updated_by: renovate[bot]
-  last_updated_on: 2023-06-14 14:39:15.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/node/package.json
+  detection_source: packages/node/package.json
+  last_updated_by: Michał Dziuba
+  last_updated_on: 2023-12-01 12:22:23.000000000 Z
 - name: "@types/mocha"
   description: TypeScript definitions for mocha
   package_url: https://www.npmjs.com/@types/mocha
@@ -1555,10 +1812,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15893/default_1d65e37e65b7f80761374f0202776043277d505d.png
-  detection_source_url: apps/api/package.json
-  detection_source: providers/fcm/package.json
-  last_updated_by: Ayush Shukla
-  last_updated_on: 2023-10-16 06:13:54.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-13 10:31:58.000000000 Z
 - name: "@types/node"
   description: TypeScript definitions for Node.js
   package_url: https://www.npmjs.com/@types/node
@@ -1569,10 +1826,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15809/default_5e5e8ac63beda29f31f1844df64d4b8247570a66.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/stateless/package.json
-  last_updated_by: Richard Fontein
-  last_updated_on: 2023-11-07 14:59:01.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-13 10:31:58.000000000 Z
 - name: "@types/react"
   description: TypeScript definitions for React
   package_url: https://www.npmjs.com/@types/react
@@ -1583,10 +1840,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15894/default_1d65e37e65b7f80761374f0202776043277d505d.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: "@types/react-dom"
   description: TypeScript definitions for React
   package_url: https://www.npmjs.com/@types/react-dom
@@ -1597,10 +1854,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15946/default_54b691c123fc8979741e800e4dcd3936c0f3b246.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: "@types/react-router-dom"
   description: TypeScript definitions for React Router
   package_url: https://www.npmjs.com/@types/react-router-dom
@@ -1611,7 +1868,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16557/default_d522554c6a41cb28d922d6d3ad32ad4afa0e3bb5.png
-  detection_source_url: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/widget/package.json
   detection_source: apps/widget/package.json
   last_updated_by: Paweł
   last_updated_on: 2023-10-27 10:22:50.000000000 Z
@@ -1625,8 +1882,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16151/default_ac04a744873b460c4ef30a7450ed0c83223640ab.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/application-generic/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Ayush Shukla
   last_updated_on: 2023-10-16 06:13:54.000000000 Z
 - name: "@types/socket.io"
@@ -1639,7 +1896,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17219/default_747c790463912ea0e3a85597146d9c13d6a53db9.png
-  detection_source_url: apps/ws/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/ws/package.json
   detection_source: apps/ws/package.json
   last_updated_by: Ayush Shukla
   last_updated_on: 2023-10-16 06:13:54.000000000 Z
@@ -1653,10 +1910,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16805/default_31a4e0e11d348225088320f3a5c5ea6fa49c27ad.png
-  detection_source_url: apps/api/package.json
-  detection_source: apps/ws/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-13 10:31:58.000000000 Z
 - name: "@types/uuid"
   description: TypeScript definitions for uuid
   package_url: https://www.npmjs.com/@types/uuid
@@ -1667,10 +1924,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16257/default_ab17554b7e80af3d234b14168ed61e75d43f8eee.png
-  detection_source_url: providers/firetext/package.json
-  detection_source: providers/firetext/package.json
-  last_updated_by: renovate[bot]
-  last_updated_on: 2023-05-29 14:25:20.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/node/package.json
+  detection_source: packages/node/package.json
+  last_updated_by: Michał Dziuba
+  last_updated_on: 2023-12-01 12:22:23.000000000 Z
 - name: "@typescript-eslint/eslint-plugin"
   description: TypeScript plugin for ESLint
   package_url: https://www.npmjs.com/@typescript-eslint/eslint-plugin
@@ -1681,7 +1938,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15982/default_8b5680d4e916298d08363c291a0d6e34c07ceb15.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: renovate[bot]
   last_updated_on: 2023-11-06 10:30:50.000000000 Z
@@ -1695,8 +1952,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15980/default_732016a20524708efe7a4c77497fe9bfeea19ba6.png
-  detection_source_url: libs/dal/package.json
-  detection_source: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: renovate[bot]
   last_updated_on: 2023-02-02 08:53:24.000000000 Z
 - name: "@vue/eslint-config-prettier"
@@ -1709,7 +1966,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16824/default_dc62f5e9b636403c2d19676924f5b6b881abcac8.png
-  detection_source_url: packages/notification-center-vue/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-vue/package.json
   detection_source: packages/notification-center-vue/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-04-25 13:37:52.000000000 Z
@@ -1723,7 +1980,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18076/image.png
-  detection_source_url: packages/notification-center-vue/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-vue/package.json
   detection_source: packages/notification-center-vue/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-04-25 13:37:52.000000000 Z
@@ -1737,8 +1994,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16681/default_9012166d3e51cea5db6b4e69c80ace1c50b7509d.png
-  detection_source_url: libs/dal/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: acorn
@@ -1751,10 +2008,24 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16344/default_9ae0e75ed749aca83d89f7e1ccb309be2bfc610e.png
-  detection_source_url: libs/design-system/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/design-system/package.json
+  detection_source: libs/design-system/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-16 11:12:02.000000000 Z
+- name: antd
+  description: An enterprise-class UI design language and React components implementation
+  package_url: https://www.npmjs.com/antd
+  version: 4.10.0
+  license: MIT
+  open_source: true
+  hosted_saas: false
+  category: Libraries
+  sub_category: npm Packages
+  image_url: https://img.stackshare.io/package/16201/default_b4f5b6f31c5ab1ffee4bacf20842cd41a8f2658d.png
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: apollo-boost
   description: The easiest way to get started with Apollo Client
   package_url: https://www.npmjs.com/apollo-boost
@@ -1765,8 +2036,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17935/default_c741d08ac1035482640dcd4a57c59231d0ce4858.png
-  detection_source_url: libs/dal/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: Renovate Bot
   last_updated_on: 2022-01-20 11:24:37.000000000 Z
 - name: archiver
@@ -1779,7 +2050,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16407/default_4cc3f31b8c64a6268fc123f0965a09d1b11180af.png
-  detection_source_url: libs/dal/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
   detection_source: libs/dal/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
@@ -1793,8 +2064,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15851/default_a2f722724df977d0f7752839e5d8845ab41f69d5.png
-  detection_source_url: libs/dal/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
   vulnerabilities:
@@ -1814,7 +2085,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16018/default_7a88bebb451873cc63bd99007de5bd3bb8ef85de.png
-  detection_source_url: libs/dal/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
   detection_source: libs/dal/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-08-02 11:13:43.000000000 Z
@@ -1835,7 +2106,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15800/default_4acafe585186b4157fa23322ae7ca89e24b5cdef.png
-  detection_source_url: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center/package.json
   detection_source: packages/notification-center/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 12:31:11.000000000 Z
@@ -1849,8 +2120,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16208/default_180418c6fa6cdb8f7a3500f84a8fedb884fcb3fa.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 12:31:11.000000000 Z
 - name: bcrypt
@@ -1863,24 +2134,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16526/default_0a704f5fac0bffcf529c9a61658d0b9ddbf7504e.png
-  detection_source_url: apps/api/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
-- name: bluebird
-  description: Full featured Promises/A+ implementation with exceptionally good performance
-  package_url: https://www.npmjs.com/bluebird
-  version: 2.9.30
-  license: MIT
-  open_source: true
-  hosted_saas: false
-  category: Libraries
-  sub_category: npm Packages
-  image_url: https://img.stackshare.io/package/15866/default_01b1499f31f2eff6ed744a57b056e181400df5b2.png
-  detection_source_url: apps/inbound-mail/package.json
-  detection_source: libs/dal/package.json
-  last_updated_by: Gosha
-  last_updated_on: 2023-01-18 16:36:57.000000000 Z
 - name: body-parser
   description: Node.js body parsing middleware
   package_url: https://www.npmjs.com/body-parser
@@ -1891,8 +2148,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15906/default_7c39a83d4acd952df89b1ebfdb94c8646324fbf1.png
-  detection_source_url: apps/api/package.json
-  detection_source: apps/worker/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2022-06-06 10:43:43.000000000 Z
 - name: chroma-js
@@ -1905,7 +2162,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17775/default_65e03f67ad735337587d736d5fbc87b538eccdf7.png
-  detection_source_url: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/widget/package.json
   detection_source: apps/widget/package.json
   last_updated_by: ainouzgali
   last_updated_on: 2022-03-30 12:11:18.000000000 Z
@@ -1920,8 +2177,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17651/default_eb9caf7d7fb4d231f7e3b04a8c1fbef6fcd9fd73.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/application-generic/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-11-07 14:59:01.000000000 Z
 - name: class-validator
@@ -1935,8 +2192,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17583/default_661ab15cb9ea1663765f3e16ee70a1d2d50118d1.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/application-generic/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-01-13 11:50:13.000000000 Z
 - name: colors
@@ -1949,7 +2206,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15908/default_7c39a83d4acd952df89b1ebfdb94c8646324fbf1.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2022-07-04 15:56:18.000000000 Z
@@ -1963,7 +2220,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15829/default_50135978d26eba7c09093ceb23b96d522898e4eb.png
-  detection_source_url: packages/cli/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/cli/package.json
   detection_source: packages/cli/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2022-03-30 14:41:37.000000000 Z
@@ -1977,7 +2234,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16008/default_f8be85789693a9901dbcfa43c135c60525ae49a1.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-01 07:35:34.000000000 Z
@@ -1991,10 +2248,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16187/default_9a7a7dcd69c12c746dc4000dc4d1b75758079c9f.png
-  detection_source_url: apps/api/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
   detection_source: apps/api/package.json
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
 - name: compression-webpack-plugin
   description: Prepare compressed versions of assets to serve them with Content-Encoding
   package_url: https://www.npmjs.com/compression-webpack-plugin
@@ -2005,10 +2262,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16347/default_17385ab3aa01d4c295c08d4a9736140df691c5e9.png
-  detection_source_url: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center/package.json
   detection_source: packages/notification-center/package.json
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
 - name: concurrently
   description: Run commands concurrently
   package_url: https://www.npmjs.com/concurrently
@@ -2019,7 +2276,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16041/default_5fd43aeff4d6a935abc13737de01a0355210499d.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: Gosha
   last_updated_on: 2022-01-24 13:12:18.000000000 Z
@@ -2034,7 +2291,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16988/default_32f63a11ae9faad5eff3053ff1a1600fde8a525b.png
-  detection_source_url: packages/cli/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/cli/package.json
   detection_source: packages/cli/package.json
   last_updated_by: Gosha
   last_updated_on: 2022-08-25 11:44:30.000000000 Z
@@ -2048,8 +2305,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16454/default_aa91da3cee4d961f0eea8ca5de77f399ec7ec794.png
-  detection_source_url: package.json
-  detection_source: packages/application-generic/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
+  detection_source: package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-08-25 07:01:32.000000000 Z
 - name: cross-env
@@ -2062,10 +2319,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15828/default_14fd11531839d935f920b6d55bd6f3528c890ad7.png
-  detection_source_url: apps/api/package.json
-  detection_source: package.json
-  last_updated_by: Richard Fontein
-  last_updated_on: 2023-11-07 14:59:01.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-13 10:31:58.000000000 Z
 - name: cross-fetch
   description: Universal WHATWG Fetch API for Node
   package_url: https://www.npmjs.com/cross-fetch
@@ -2076,8 +2333,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17537/default_1922051267fa78212ab6eb1238cdf6aab8771493.png
-  detection_source_url: libs/dal/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: Biswajeet Das
   last_updated_on: 2022-06-18 17:00:46.000000000 Z
   vulnerabilities:
@@ -2097,7 +2354,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16069/default_5fd43aeff4d6a935abc13737de01a0355210499d.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-01 07:35:34.000000000 Z
@@ -2111,7 +2368,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16840/default_5c6919c5e02b8e6c83f3a2b23db5b6962e3caca0.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: raikasdev
   last_updated_on: 2022-12-15 17:16:22.000000000 Z
@@ -2125,7 +2382,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16949/default_caea01ce44a5fd1bb200d8fc0f8f2a1695b4e569.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-10-15 12:03:23.000000000 Z
@@ -2139,7 +2396,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15879/default_0b10af8ca19c215f781dc07442e75bdc831089d0.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Gosha
   last_updated_on: 2023-10-24 11:26:56.000000000 Z
@@ -2153,7 +2410,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16302/default_97104dc50154593d2dde1d791400955934c9c715.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Gosha
   last_updated_on: 2023-10-24 11:26:56.000000000 Z
@@ -2167,8 +2424,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18548/default_0998c3a5bd64540d478b8f189bd9d22c3c17b6a0.png
-  detection_source_url: apps/web/package.json
-  detection_source: libs/design-system/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 16:29:14.000000000 Z
 - name: eslint-plugin-eslint-comments
@@ -2181,8 +2438,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17716/default_9693d58c90f5c726ee648423687212d2a94266da.png
-  detection_source_url: package.json
-  detection_source: providers/mandrill/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
+  detection_source: package.json
   last_updated_by: Gosha
   last_updated_on: 2023-10-24 11:26:56.000000000 Z
 - name: eslint-plugin-import
@@ -2195,7 +2452,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15806/default_98aa227f51aa9d787815ec3fd98d0ab2bfebbb91.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Gosha
   last_updated_on: 2023-10-24 11:26:56.000000000 Z
@@ -2209,7 +2466,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15845/default_6743ba96cf149a3c3c68a185199f9705d6eff80e.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Gosha
   last_updated_on: 2023-10-24 11:26:56.000000000 Z
@@ -2223,7 +2480,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15896/default_6e6e1d6bb189c8bb26c6410618bd597979578f39.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Gosha
   last_updated_on: 2023-10-24 11:26:56.000000000 Z
@@ -2237,7 +2494,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15885/default_1d65e37e65b7f80761374f0202776043277d505d.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Gosha
   last_updated_on: 2023-10-24 11:26:56.000000000 Z
@@ -2251,7 +2508,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15817/default_14fd11531839d935f920b6d55bd6f3528c890ad7.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Gosha
   last_updated_on: 2023-10-24 11:26:56.000000000 Z
@@ -2265,10 +2522,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16149/default_1f3a2fc7d882e29a43394ecdf491b8989ea3f0fa.png
-  detection_source_url: apps/web/package.json
-  detection_source: package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: eslint-plugin-vue
   description: Official ESLint plugin for Vue.js
   package_url: https://www.npmjs.com/eslint-plugin-vue
@@ -2279,7 +2536,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15950/default_f49d4c116f8ea0155f4d92673b084378bba02760.png
-  detection_source_url: packages/notification-center-vue/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-vue/package.json
   detection_source: packages/notification-center-vue/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-04-25 13:37:52.000000000 Z
@@ -2293,8 +2550,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16246/default_dc80ff0a17bac19253430a4f0f586714841116db.png
-  detection_source_url: libs/dal/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-08-02 11:13:43.000000000 Z
 - name: execa
@@ -2307,7 +2564,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16132/default_3d197518f6bb529bfcc1b685e2cefbdfe83ff108.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2022-08-20 10:04:19.000000000 Z
@@ -2321,7 +2578,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16161/default_77b54a203c743d16eddb6b6390cba17218454fa0.png
-  detection_source_url: apps/inbound-mail/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/inbound-mail/package.json
   detection_source: apps/inbound-mail/package.json
   last_updated_by: Gosha
   last_updated_on: 2023-01-18 16:36:57.000000000 Z
@@ -2342,7 +2599,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16762/default_6dc099b12d47e378ae121fb53c336fe5d8f0ffc8.png
-  detection_source_url: providers/firetext/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/providers/firetext/package.json
   detection_source: providers/firetext/package.json
   last_updated_by: Nick Prinsloo
   last_updated_on: 2022-10-06 21:29:32.000000000 Z
@@ -2356,7 +2613,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17151/default_21a9522c66101ebad0e63609af74acb35fe29a0a.png
-  detection_source_url: providers/fcm/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/providers/fcm/package.json
   detection_source: providers/fcm/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-01 07:35:34.000000000 Z
@@ -2370,7 +2627,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16415/default_aa91da3cee4d961f0eea8ca5de77f399ec7ec794.png
-  detection_source_url: providers/mailgun/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/providers/mailgun/package.json
   detection_source: providers/mailgun/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-09-23 11:11:53.000000000 Z
@@ -2385,8 +2642,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15836/default_b71c906aeda030a5e2f1fe40bf12a93be52404ab.png
-  detection_source_url: libs/dal/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: get-port
@@ -2399,7 +2656,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16732/default_ee69dab268e6a52104564fd4259549f5b48a25d4.png
-  detection_source_url: packages/cli/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/cli/package.json
   detection_source: packages/cli/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2022-02-27 11:10:44.000000000 Z
@@ -2413,8 +2670,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15967/default_732016a20524708efe7a4c77497fe9bfeea19ba6.png
-  detection_source_url: packages/nest/package.json
-  detection_source: providers/twilio/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/nest/package.json
+  detection_source: packages/nest/package.json
   last_updated_by: williamsgqdev
   last_updated_on: 2022-05-25 16:11:45.000000000 Z
 - name: globby
@@ -2427,7 +2684,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16159/default_1f3a2fc7d882e29a43394ecdf491b8989ea3f0fa.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-10-15 16:39:46.000000000 Z
@@ -2441,7 +2698,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16842/default_d7dbced92f420888f118516ac7144afed4acf9ca.png
-  detection_source_url: libs/dal/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
   detection_source: libs/dal/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
@@ -2456,8 +2713,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16013/default_f8be85789693a9901dbcfa43c135c60525ae49a1.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/stateless/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: hat
@@ -2470,7 +2727,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18457/default_1ee30bb84bfc1558e9a2c7e21dfb728addee0444.png
-  detection_source_url: apps/api/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
   detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
@@ -2484,8 +2741,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16584/default_7be6bee773ad8b04cf2fb7e9ff82f5d7ba648dfd.png
-  detection_source_url: apps/api/package.json
-  detection_source: apps/ws/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2022-11-30 07:38:58.000000000 Z
 - name: html-to-text
@@ -2498,7 +2755,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18417/default_866295ec9b57ad977c956d0fed2e144aaca6c4a0.png
-  detection_source_url: apps/inbound-mail/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/inbound-mail/package.json
   detection_source: apps/inbound-mail/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-08-14 10:57:53.000000000 Z
@@ -2512,8 +2769,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15841/default_5e5e8ac63beda29f31f1844df64d4b8247570a66.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 16:29:14.000000000 Z
 - name: http-server
@@ -2526,8 +2783,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16118/default_f905d9556a0330de59b502a579c1f5c4be2b48bf.png
-  detection_source_url: apps/web/package.json
-  detection_source: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 16:29:14.000000000 Z
 - name: inquirer
@@ -2540,8 +2797,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15911/default_4dc9671df0093fd7061f6455afdf054e6cc9dacb.png
-  detection_source_url: package.json
-  detection_source: packages/cli/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
+  detection_source: package.json
   last_updated_by: renovate[bot]
   last_updated_on: 2023-11-06 10:30:50.000000000 Z
 - name: ioredis
@@ -2554,8 +2811,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16522/default_4e3259350c525d1d859fa80a938000081d7c9db8.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/application-generic/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: renovate[bot]
   last_updated_on: 2023-04-21 09:34:16.000000000 Z
 - name: jasmine-core
@@ -2568,7 +2825,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15905/default_3af1504b6f77c55205ba630fe08c472f43b95f6e.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -2582,7 +2839,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16848/default_1b078765f7b7ae4ccce598a7251eb06451511e5e.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: renovate[bot]
   last_updated_on: 2023-06-14 14:39:15.000000000 Z
@@ -2596,8 +2853,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18413/default_867ef7396016341fd213fa568d6de11cc98fefff.png
-  detection_source_url: packages/headless/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/headless/package.json
+  detection_source: packages/headless/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 12:31:11.000000000 Z
 - name: jsonfile
@@ -2610,8 +2867,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16381/default_92302d1bbf4c0f67b862869662b4f69002c94aad.png
-  detection_source_url: libs/dal/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/dal/package.json
+  detection_source: libs/dal/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-07-25 06:31:23.000000000 Z
 - name: jsonwebtoken
@@ -2624,8 +2881,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16155/default_77b54a203c743d16eddb6b6390cba17218454fa0.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/application-generic/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Cxxshyy
   last_updated_on: 2023-01-04 15:41:15.000000000 Z
 - name: jwt-decode
@@ -2638,8 +2895,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17395/default_2cd7ed1c123f2fca074a6f4b16c4e73d5bfe82be.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/cli/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: karma-chrome-launcher
@@ -2652,7 +2909,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15860/default_6743ba96cf149a3c3c68a185199f9705d6eff80e.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -2666,7 +2923,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15951/default_b45165a5d30e541ab11711a34a78209b3e8ed7fd.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -2680,7 +2937,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15886/default_7c39a83d4acd952df89b1ebfdb94c8646324fbf1.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -2694,7 +2951,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15999/default_7a465bc85b23fd837cbc038fd1d504632c41a884.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -2708,8 +2965,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15989/default_8b5680d4e916298d08363c291a0d6e34c07ceb15.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Ayush Shukla
   last_updated_on: 2023-10-14 11:53:41.000000000 Z
 - name: listr
@@ -2722,7 +2979,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17782/default_99a4718ac3f2beccb28962b727b0a38010c9b496.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2022-08-20 10:04:19.000000000 Z
@@ -2736,7 +2993,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17229/default_48f040bdc5f6c639c70bf350f8b8158ede27286c.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
   last_updated_by: Ayush Shukla
   last_updated_on: 2023-10-14 11:53:41.000000000 Z
@@ -2750,7 +3007,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16436/default_aa91da3cee4d961f0eea8ca5de77f399ec7ec794.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
@@ -2764,8 +3021,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16539/default_50be6a65e5f7390c20dda2f19371abc1271db012.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Nikita Grossman
   last_updated_on: 2023-02-17 11:00:13.000000000 Z
 - name: lodash.debounce
@@ -2778,8 +3035,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16481/default_73c88a18b684e01cbdbf945631a40a44aff5a777.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Nikita Grossman
   last_updated_on: 2023-02-17 11:00:13.000000000 Z
 - name: lodash.get
@@ -2792,8 +3049,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16377/default_b5c8f3c8e46d368f74a982d06d7f13291fe651ea.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/stateless/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Nikita Grossman
   last_updated_on: 2023-02-17 11:00:13.000000000 Z
 - name: lodash.isequal
@@ -2806,7 +3063,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16523/default_28df1e698b81279fa78b702212cd6185de706683.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
   last_updated_by: Nikita Grossman
   last_updated_on: 2023-02-17 11:00:13.000000000 Z
@@ -2820,10 +3077,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16314/default_c47f6a56d74fae4d4404d77067b2fa35da6f1924.png
-  detection_source_url: packages/node/package.json
-  detection_source: packages/stateless/package.json
-  last_updated_by: Dima Grossman
-  last_updated_on: 2022-04-03 13:55:54.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/node/package.json
+  detection_source: packages/node/package.json
+  last_updated_by: Michał Dziuba
+  last_updated_on: 2023-12-01 12:22:23.000000000 Z
 - name: lodash.set
   description: The lodash method `_.set` exported as a module
   package_url: https://www.npmjs.com/lodash.set
@@ -2834,7 +3091,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16998/default_3823aba25646a3f105cc15ee9df24fdf78972314.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
   last_updated_by: Nikita Grossman
   last_updated_on: 2023-02-17 11:00:13.000000000 Z
@@ -2848,7 +3105,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17273/default_b2015e9577d171c4c3f12c3c8d253c01fe63ba8d.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Gosha
   last_updated_on: 2023-10-24 11:26:56.000000000 Z
@@ -2862,7 +3119,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16181/default_1f3a2fc7d882e29a43394ecdf491b8989ea3f0fa.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Zac Clifton
   last_updated_on: 2023-02-21 11:45:02.000000000 Z
@@ -2876,7 +3133,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15847/default_4479dbac220be99e50e724b2df6cf415241d71fd.png
-  detection_source_url: providers/maqsam/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/providers/maqsam/package.json
   detection_source: providers/maqsam/package.json
   last_updated_by: Adrian Toro
   last_updated_on: 2023-03-28 22:37:18.000000000 Z
@@ -2890,7 +3147,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17208/default_183829c5079b84333a720d8590a328efc043ba0e.png
-  detection_source_url: apps/api/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
   detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
@@ -2911,7 +3168,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16261/default_9924e5da1d50ea01e52b48e4fae4b1347af5e4ff.png
-  detection_source_url: packages/cli/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/cli/package.json
   detection_source: packages/cli/package.json
   last_updated_by: Gosha
   last_updated_on: 2022-02-08 12:23:22.000000000 Z
@@ -2925,8 +3182,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18745/default_a0c218dcb961fccae1cb03e431692daad86f7866.png
-  detection_source_url: apps/api/package.json
-  detection_source: apps/ws/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-01 09:31:14.000000000 Z
 - name: ng-packagr
@@ -2939,7 +3196,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16114/default_73326c44fbfa7369fd17573edb113e5d849468bc.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
@@ -2953,10 +3210,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16036/default_5fd43aeff4d6a935abc13737de01a0355210499d.png
-  detection_source_url: providers/mailgun/package.json
-  detection_source: providers/mailgun/package.json
-  last_updated_by: Dima Grossman
-  last_updated_on: 2021-09-23 11:11:53.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/node/package.json
+  detection_source: packages/node/package.json
+  last_updated_by: Michał Dziuba
+  last_updated_on: 2023-12-01 12:22:23.000000000 Z
 - name: node-fetch
   description: A light-weight module that brings window.fetch to node.js
   package_url: https://www.npmjs.com/node-fetch
@@ -2967,10 +3224,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15978/default_f49d4c116f8ea0155f4d92673b084378bba02760.png
-  detection_source_url: packages/application-generic/package.json
-  detection_source: providers/termii/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/application-generic/package.json
+  detection_source: packages/application-generic/package.json
   last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_on: 2023-11-28 13:18:54.000000000 Z
 - name: npm-run-all
   description: A CLI tool to run multiple npm-scripts in parallel or sequential
   package_url: https://www.npmjs.com/npm-run-all
@@ -2981,8 +3238,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15926/default_b45165a5d30e541ab11711a34a78209b3e8ed7fd.png
-  detection_source_url: packages/application-generic/package.json
-  detection_source: providers/zulip/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/application-generic/package.json
+  detection_source: packages/application-generic/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2022-09-21 12:50:36.000000000 Z
 - name: nyc
@@ -2995,8 +3252,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15837/default_1d65e37e65b7f80761374f0202776043277d505d.png
-  detection_source_url: packages/application-generic/package.json
-  detection_source: providers/zulip/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/application-generic/package.json
+  detection_source: packages/application-generic/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2022-09-21 12:50:36.000000000 Z
 - name: open
@@ -3009,38 +3266,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16245/default_5dfc1810d0882ab844578a326bb8bf19e45e7227.png
-  detection_source_url: packages/cli/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/cli/package.json
   detection_source: packages/cli/package.json
   last_updated_by: Gosha
   last_updated_on: 2022-02-10 09:59:54.000000000 Z
-- name: ora
-  description: Elegant terminal spinner
-  package_url: https://www.npmjs.com/ora
-  version: 5.4.1
-  license: MIT
-  open_source: true
-  hosted_saas: false
-  category: Libraries
-  sub_category: npm Packages
-  image_url: https://img.stackshare.io/package/15937/default_ac622bc364a601d766b9a6f6039f191492f54d65.png
-  detection_source_url: package.json
-  detection_source: packages/cli/package.json
-  last_updated_by: Dima Grossman
-  last_updated_on: 2021-08-25 07:01:32.000000000 Z
-- name: passport
-  description: Simple, unobtrusive authentication for Node.js
-  package_url: https://www.npmjs.com/passport
-  version: 0.6.0
-  license: MIT
-  open_source: true
-  hosted_saas: false
-  category: Libraries
-  sub_category: npm Packages
-  image_url: https://img.stackshare.io/package/16304/default_1baba0e6ece19a38adfb211f686c83c781ff703a.png
-  detection_source_url: apps/api/package.json
-  detection_source: apps/api/package.json
-  last_updated_by: Dima Grossman
-  last_updated_on: 2023-08-29 08:09:51.000000000 Z
 - name: passport-jwt
   description: Passport authentication strategy using JSON Web Tokens
   package_url: https://www.npmjs.com/passport-jwt
@@ -3051,10 +3280,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18238/default_d0bdfc944c04fa7e84198f9a2784cc716a3d91a3.png
-  detection_source_url: apps/api/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
   detection_source: apps/api/package.json
-  last_updated_by: Dima Grossman
-  last_updated_on: 2023-08-29 08:09:51.000000000 Z
+  last_updated_by: Richard Fontein
+  last_updated_on: 2023-12-13 22:34:26.000000000 Z
 - name: passport-oauth2
   description: OAuth 2.0 authentication strategy for Passport
   package_url: https://www.npmjs.com/passport-oauth2
@@ -3065,10 +3294,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17962/default_72dbba22ca96f25f78f55f8ea5393222efca5494.png
-  detection_source_url: apps/api/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
   detection_source: apps/api/package.json
-  last_updated_by: Gosha
-  last_updated_on: 2023-10-29 09:23:58.000000000 Z
+  last_updated_by: Richard Fontein
+  last_updated_on: 2023-12-13 22:34:26.000000000 Z
 - name: pino-pretty
   description: Prettifier for Pino log lines
   package_url: https://www.npmjs.com/pino-pretty
@@ -3079,7 +3308,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18639/default_f02e96cdbc1c3cf01dabe59b227d3b3961e56b72.png
-  detection_source_url: packages/application-generic/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/application-generic/package.json
   detection_source: packages/application-generic/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-08-30 12:32:40.000000000 Z
@@ -3093,8 +3322,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16665/default_ee69dab268e6a52104564fd4259549f5b48a25d4.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: process
@@ -3107,7 +3336,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17866/default_99a4718ac3f2beccb28962b727b0a38010c9b496.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-10-15 09:52:03.000000000 Z
@@ -3121,7 +3350,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16207/default_41f04716a804e853d5c38a5b81ee0ea8a842ad82.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
@@ -3135,7 +3364,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16125/default_def3edb85d7fbd20200a5cd7d0a1679e31bc8b3d.png
-  detection_source_url: providers/burst-sms/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/providers/burst-sms/package.json
   detection_source: providers/burst-sms/package.json
   last_updated_by: dlmcauslan
   last_updated_on: 2022-11-23 22:58:31.000000000 Z
@@ -3149,10 +3378,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18432/default_090197a87d306c919c7dbc09bfedd02e3b061236.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: react-app-rewired
   description: Tweak the create-react-app webpack config
   package_url: https://www.npmjs.com/react-app-rewired
@@ -3163,10 +3392,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18317/default_f1e168ebe0f124084b9a0acbe78bc5cdba7b4575.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: react-color
   description: A Collection of Color Pickers from Sketch
   package_url: https://www.npmjs.com/react-color
@@ -3177,10 +3406,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16955/default_665377899254fe85c1cf6bf7f15e24c4180a76ac.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: react-custom-scrollbars
   description: React scrollbars component
   package_url: https://www.npmjs.com/react-custom-scrollbars
@@ -3191,10 +3420,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18040/image.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: react-dom
   description: React package for working with the DOM
   package_url: https://www.npmjs.com/react-dom
@@ -3205,10 +3434,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15808/default_14fd11531839d935f920b6d55bd6f3528c890ad7.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: react-error-overlay
   description: An overlay for displaying stack frames
   package_url: https://www.npmjs.com/react-error-overlay
@@ -3219,10 +3448,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17066/default_d17bbf7e4f3b102e29ff09c01b8165e7ba600319.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: react-is
   description: Brand checking of React Elements
   package_url: https://www.npmjs.com/react-is
@@ -3233,10 +3462,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17829/default_2a0f136cfb588dd9053268b73a18a953e8d65590.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: react-router-dom
   description: DOM bindings for React Router
   package_url: https://www.npmjs.com/react-router-dom
@@ -3247,10 +3476,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16025/default_e25d1fbb04a118c79fb444294461417342bd03bf.png
-  detection_source_url: apps/web/package.json
-  detection_source: libs/design-system/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: react-scripts
   description: Configuration and scripts for Create React App
   package_url: https://www.npmjs.com/react-scripts
@@ -3261,10 +3490,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15985/default_8b5680d4e916298d08363c291a0d6e34c07ceb15.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: react-syntax-highlighter
   description: Syntax highlighting component for react with prismjs or highlightjs
     ast using inline styles
@@ -3276,10 +3505,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17323/default_78541a280e8cac42279d6c363e71e5b8f462e962.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: react-table
   description: Hooks for building lightweight
   package_url: https://www.npmjs.com/react-table
@@ -3290,10 +3519,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17860/default_b760b4f955878b0055c02bde0608c2f01e7d4f4f.png
-  detection_source_url: apps/web/package.json
-  detection_source: libs/design-system/package.json
-  last_updated_by: Paweł
-  last_updated_on: 2023-10-27 10:22:50.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-12 12:40:03.000000000 Z
 - name: reflect-metadata
   description: Polyfill for Metadata Reflection API
   package_url: https://www.npmjs.com/reflect-metadata
@@ -3304,8 +3533,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16019/default_7a88bebb451873cc63bd99007de5bd3bb8ef85de.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/application-generic/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: replace-in-file
@@ -3318,7 +3547,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16434/default_d73092129e1cde5ea9f47f22e2d7c3db7bd6da8d.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-02-10 16:54:43.000000000 Z
@@ -3332,8 +3561,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15807/default_db4a7791d2f1174547374b9b587bc10fec088a5a.png
-  detection_source_url: apps/api/package.json
-  detection_source: providers/zulip/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Gosha
   last_updated_on: 2022-08-22 18:13:50.000000000 Z
 - name: rollup-plugin-commonjs
@@ -3346,7 +3575,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15873/default_0b10af8ca19c215f781dc07442e75bdc831089d0.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-28 12:44:59.000000000 Z
@@ -3360,7 +3589,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16108/default_def3edb85d7fbd20200a5cd7d0a1679e31bc8b3d.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-04-25 08:33:49.000000000 Z
@@ -3374,7 +3603,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16230/default_180418c6fa6cdb8f7a3500f84a8fedb884fcb3fa.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-04-25 08:33:49.000000000 Z
@@ -3388,7 +3617,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16078/default_c7b204838197013798409fa2b4dafce450edc7fb.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-04-25 08:33:49.000000000 Z
@@ -3402,7 +3631,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16076/default_d4e765f8a43dcfd232c8b9ee9732058bc27c727a.png
-  detection_source_url: libs/embed/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/embed/package.json
   detection_source: libs/embed/package.json
   last_updated_by: renovate[bot]
   last_updated_on: 2023-06-14 14:39:15.000000000 Z
@@ -3416,7 +3645,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17508/default_1d2902e8f9c84259702671591379572493b9009b.png
-  detection_source_url: apps/api/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
   detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
@@ -3430,8 +3659,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15897/default_1d65e37e65b7f80761374f0202776043277d505d.png
-  detection_source_url: apps/inbound-mail/package.json
-  detection_source: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/inbound-mail/package.json
+  detection_source: apps/inbound-mail/package.json
   last_updated_by: Gosha
   last_updated_on: 2023-01-22 12:14:48.000000000 Z
 - name: shortid
@@ -3444,8 +3673,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16368/default_92302d1bbf4c0f67b862869662b4f69002c94aad.png
-  detection_source_url: apps/api/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: slugify
@@ -3458,8 +3687,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17389/default_33c3173e7d0e91f7cea0eab9883ca83b157bd4a5.png
-  detection_source_url: apps/api/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: socket.io-client
@@ -3472,8 +3701,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16164/default_ac04a744873b460c4ef30a7450ed0c83223640ab.png
-  detection_source_url: apps/widget/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/widget/package.json
+  detection_source: apps/widget/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-08-30 20:07:30.000000000 Z
 - name: tar
@@ -3486,7 +3715,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16466/default_fc6e1fc17e404d936593b5b901d67abb3386daa3.png
-  detection_source_url: package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/package.json
   detection_source: package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-08-25 07:01:32.000000000 Z
@@ -3500,7 +3729,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16143/default_def3edb85d7fbd20200a5cd7d0a1679e31bc8b3d.png
-  detection_source_url: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center/package.json
   detection_source: packages/notification-center/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-18 14:57:01.000000000 Z
@@ -3515,8 +3744,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15864/default_6743ba96cf149a3c3c68a185199f9705d6eff80e.png
-  detection_source_url: apps/inbound-mail/package.json
-  detection_source: providers/zulip/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/inbound-mail/package.json
+  detection_source: apps/inbound-mail/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-01-17 10:33:28.000000000 Z
 - name: ts-loader
@@ -3529,10 +3758,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15938/default_e0a4fb1126d7400f419f0931cf1669947a5bc552.png
-  detection_source_url: apps/api/package.json
-  detection_source: packages/notification-center/package.json
-  last_updated_by: renovate[bot]
-  last_updated_on: 2023-02-05 17:06:16.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Richard Fontein
+  last_updated_on: 2023-12-13 22:34:26.000000000 Z
 - name: ts-node
   description: TypeScript execution environment and REPL for node.js
   package_url: https://www.npmjs.com/ts-node
@@ -3543,10 +3772,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15830/default_6743ba96cf149a3c3c68a185199f9705d6eff80e.png
-  detection_source_url: apps/api/package.json
-  detection_source: providers/zulip/package.json
-  last_updated_by: Richard Fontein
-  last_updated_on: 2023-11-07 14:59:01.000000000 Z
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
+  last_updated_by: Dima Grossman
+  last_updated_on: 2023-12-13 10:31:58.000000000 Z
 - name: tsconfig-paths
   description: Load node modules according to tsconfig paths
   package_url: https://www.npmjs.com/tsconfig-paths
@@ -3557,8 +3786,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/16810/default_55e3ea76a7929df1b71c5ea0c9b4130cc87323a4.png
-  detection_source_url: apps/api/package.json
-  detection_source: libs/testing/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-07-25 06:31:23.000000000 Z
 - name: tslib
@@ -3571,8 +3800,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15853/default_97d4687bd07ff1bb963fd566c84e7cbf7c73bbee.png
-  detection_source_url: libs/design-system/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/design-system/package.json
+  detection_source: libs/design-system/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-17 06:37:38.000000000 Z
 - name: typedoc
@@ -3585,8 +3814,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15983/default_8b5680d4e916298d08363c291a0d6e34c07ceb15.png
-  detection_source_url: packages/client/package.json
-  detection_source: providers/twilio/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/client/package.json
+  detection_source: packages/client/package.json
   last_updated_by: renovate[bot]
   last_updated_on: 2023-06-14 14:39:15.000000000 Z
 - name: uniqid
@@ -3599,7 +3828,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/17929/default_e0b07170ab7d7ea66954ff35fdeaae5255c4c0aa.png
-  detection_source_url: apps/web/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
   detection_source: apps/web/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
@@ -3613,8 +3842,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15858/default_a2f722724df977d0f7752839e5d8845ab41f69d5.png
-  detection_source_url: libs/design-system/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/design-system/package.json
+  detection_source: libs/design-system/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-16 11:12:02.000000000 Z
 - name: uuid
@@ -3627,10 +3856,30 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15916/default_e0a4fb1126d7400f419f0931cf1669947a5bc552.png
-  detection_source_url: apps/api/package.json
-  detection_source: providers/ms-teams/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/api/package.json
+  detection_source: apps/api/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
+- name: vite
+  description: Native-ESM powered web dev build tool
+  package_url: https://www.npmjs.com/vite
+  version: 4.4.5
+  open_source: false
+  hosted_saas: false
+  category: Build, Test, Deploy
+  sub_category: Package Managers
+  image_url: https://img.stackshare.io/package/npm/image.png
+  detection_source_url: https://github.com/novuhq/novu/blob/next/libs/design-system/package.json
+  detection_source: libs/design-system/package.json
+  last_updated_by: David Söderberg
+  last_updated_on: 2023-10-19 07:35:06.000000000 Z
+  vulnerabilities:
+  - name: Vite XSS vulnerability in `server.transformIndexHtml` via URL payload
+    cve_id: CVE-2023-49293
+    cve_url: https://github.com/advisories/GHSA-92r3-m2mg-pj97
+    detected_date: Dec 6
+    severity: moderate
+    first_patched: 4.4.12
 - name: vue
   description: Vue
   package_url: https://www.npmjs.com/vue
@@ -3641,7 +3890,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15844/default_b71c906aeda030a5e2f1fe40bf12a93be52404ab.png
-  detection_source_url: packages/notification-center-vue/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-vue/package.json
   detection_source: packages/notification-center-vue/package.json
   last_updated_by: Paweł
   last_updated_on: 2022-11-22 15:31:25.000000000 Z
@@ -3656,8 +3905,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/18680/default_796854034d0fb722b81b1d885cb3ab88a613d5fb.png
-  detection_source_url: apps/widget/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/widget/package.json
+  detection_source: apps/widget/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: webpack-bundle-analyzer
@@ -3671,8 +3920,8 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15991/default_cbd6c289400672b291755183817e9dd6abe1a612.png
-  detection_source_url: apps/web/package.json
-  detection_source: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 16:29:14.000000000 Z
 - name: webpack-cli
@@ -3685,7 +3934,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15826/default_14fd11531839d935f920b6d55bd6f3528c890ad7.png
-  detection_source_url: packages/notification-center/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center/package.json
   detection_source: packages/notification-center/package.json
   last_updated_by: Dima Grossman
   last_updated_on: 2023-09-18 14:57:01.000000000 Z
@@ -3699,24 +3948,10 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15821/default_64690bc3e49bcee57094e51a7a26c620c48dbd82.png
-  detection_source_url: apps/web/package.json
-  detection_source: apps/widget/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/apps/web/package.json
+  detection_source: apps/web/package.json
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-23 16:29:14.000000000 Z
-- name: winston
-  description: A logger for just about everything
-  package_url: https://www.npmjs.com/winston
-  version: 3.9.0
-  license: MIT
-  open_source: true
-  hosted_saas: false
-  category: Libraries
-  sub_category: npm Packages
-  image_url: https://img.stackshare.io/package/16003/default_261820f5687b4c88a3e8f95c71b5e8dccd34c1d7.png
-  detection_source_url: apps/inbound-mail/package.json
-  detection_source: apps/inbound-mail/package.json
-  last_updated_by: p-fernandez
-  last_updated_on: 2023-09-06 13:54:57.000000000 Z
 - name: zone.js
   description: Zones for JavaScript
   package_url: https://www.npmjs.com/zone.js
@@ -3727,7 +3962,7 @@ tools:
   category: Libraries
   sub_category: npm Packages
   image_url: https://img.stackshare.io/package/15915/default_59a1b5716eefa3750c20936c3d53ff13a6390ee1.png
-  detection_source_url: packages/notification-center-angular/package.json
+  detection_source_url: https://github.com/novuhq/novu/blob/next/packages/notification-center-angular/package.json
   detection_source: packages/notification-center-angular/package.json
   last_updated_by: Richard Fontein
   last_updated_on: 2023-10-12 17:32:08.000000000 Z
