@@ -160,18 +160,39 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - run: echo '${{ needs.get-affected.outputs.test-packages }}'
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-project
+      - name: Display Test Packages
+        run: echo '${{ needs.get-affected.outputs.test-packages }}'
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Project
+        uses: ./.github/actions/setup-project
         with:
           slim: 'true'
-      - uses: ./.github/actions/setup-redis-cluster
-      - uses: mansagroup/nrwl-nx-action@v3
+
+      - name: Setup Redis Cluster
+        uses: ./.github/actions/setup-redis-cluster
+
+      - name: Filter Projects Containing '-ee'
+        run: |
+          # Retrieve the list of projects
+          projects_list="${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}"
+          
+          # Filter projects that contain '-ee' using grep and exclude them
+          filtered_projects=$(echo "$projects_list" | tr ',' '\n' | grep -v '\-ee' | tr '\n' ',' | sed 's/,$//')
+          
+          # Store the filtered projects in an environment variable
+          echo "::set-env name=FILTERED_PROJECTS::$filtered_projects"
+
+      - name: Run Test with Filtered Projects
+        uses: mansagroup/nrwl-nx-action@v3
         env:
           LOGGING_LEVEL: 'info'
         with:
           targets: lint,build,test
-          projects: ${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}
+          projects: ${{ env.FILTERED_PROJECTS }}
+
 
   test_libs:
     name: Unit Test Libs
