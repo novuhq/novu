@@ -102,11 +102,9 @@ export function NotificationCenterWidget(props: INotificationCenterWidgetProps) 
         if (data.value.preferenceFilter) {
           setPreferenceFilter(() => data.value.preferenceFilter);
         }
-        
         if (data.value.showUserPreferences) {
           setShowUserPreferences(data.value.showUserPreferences);
         }
-        
         setFrameInitialized(true);
       }
 
