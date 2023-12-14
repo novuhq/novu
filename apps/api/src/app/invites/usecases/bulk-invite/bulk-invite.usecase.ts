@@ -25,7 +25,7 @@ export class BulkInvite {
         await this.inviteMemberUsecase.execute(
           InviteMemberCommand.create({
             email: invitee.email,
-            role: invitee.role || MemberRoleEnum.MEMBER,
+            role: MemberRoleEnum.ADMIN,
             organizationId: command.organizationId,
             userId: command.userId,
           })

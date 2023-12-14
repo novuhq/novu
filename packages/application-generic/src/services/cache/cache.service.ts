@@ -23,6 +23,12 @@ export interface ICacheService {
   keys(pattern?: string);
   getStatus();
   cacheEnabled();
+  sadd(key: string, ...members: (string | number | Buffer)[]): Promise<number>;
+  eval<TData = unknown>(
+    script: string,
+    keys: string[],
+    args: (string | number | Buffer)[]
+  ): Promise<TData>;
 }
 
 export type CachingConfig = {
@@ -218,6 +224,26 @@ export class CacheService implements ICacheService {
     const seconds = options?.ttl || this.cacheTtl;
 
     return addJitter(seconds, this.TTL_VARIANT_PERCENTAGE);
+  }
+
+  public async sadd(
+    key: string,
+    ...members: (string | number | Buffer)[]
+  ): Promise<number> {
+    return this.client?.sadd(key, ...members);
+  }
+
+  public async eval<TData = unknown>(
+    script: string,
+    keys: string[],
+    args: (string | number | Buffer)[]
+  ): Promise<TData> {
+    return this.client?.eval(
+      script,
+      keys.length,
+      ...keys,
+      ...args
+    ) as Promise<TData>;
   }
 }
 

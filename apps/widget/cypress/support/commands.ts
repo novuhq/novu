@@ -64,15 +64,15 @@ Cypress.Commands.add(
 Cypress.Commands.add('initializeSession', function (settings = {} as IInitializeSessionSetting, templateOverride?) {
   return cy.initializeOrganization({}, templateOverride).then(function (session: any) {
     cy.log('Session created');
-    cy.log(`Organization id: ${session.organization._id}`);
-    cy.log(`App id: ${session.environment.identifier}`);
-    cy.log(`Widget initialized: ${session.subscriberId}`);
+    cy.log(`Organization id: ${session?.organization?._id || undefined}`);
+    cy.log(`App id: ${session?.environment?.identifier || undefined}`);
+    cy.log(`Widget initialized: ${session?.subscriberId || undefined}`);
 
     let encryptedHmacHash: string | undefined;
 
-    if (settings.hmacEncryption) {
+    if (settings?.hmacEncryption) {
       cy.task('enableEnvironmentHmac', {
-        environment: session.environment,
+        environment: session?.environment,
       });
 
       encryptedHmacHash = createHmacHash(session);
@@ -81,11 +81,11 @@ Cypress.Commands.add('initializeSession', function (settings = {} as IInitialize
     return settings?.shell
       ? cy
           .initializeShellSession({
-            subscriberId: session.subscriberId,
-            identifier: session.environment.identifier,
+            subscriberId: session?.subscriberId,
+            identifier: session?.environment?.identifier,
             encryptedHmacHash: encryptedHmacHash,
-            tabs: settings.tabs,
-            stores: settings.stores,
+            tabs: settings?.tabs,
+            stores: settings?.stores,
           })
           .then((subscriber) => ({
             ...session,
@@ -94,15 +94,15 @@ Cypress.Commands.add('initializeSession', function (settings = {} as IInitialize
       : cy.initializeWidget({
           session: session,
           encryptedHmacHash: encryptedHmacHash,
-          theme: settings.theme,
-          i18n: settings.i18n,
-          preferenceFilter: settings.preferenceFilter,
+          theme: settings?.theme,
+          i18n: settings?.i18n,
+          preferenceFilter: settings?.preferenceFilter,
         });
   });
 });
 
 Cypress.Commands.add('initializeWidget', ({ session, encryptedHmacHash, theme, i18n, preferenceFilter }) => {
-  const URL = `/${session.environment.identifier}`;
+  const URL = `/${session?.environment?.identifier || undefined}`;
   return cy.visit(URL, { log: false }).then(() =>
     cy
       .window({ log: false })
@@ -110,7 +110,7 @@ Cypress.Commands.add('initializeWidget', ({ session, encryptedHmacHash, theme, i
       .then(() => {
         return cy.window({ log: false }).then((w) => {
           const user = {
-            subscriberId: session.subscriberId,
+            subscriberId: session?.subscriberId,
             firstName: faker.name.firstName(),
             lastName: faker.name.lastName(),
             email: faker.internet.email(),
@@ -121,7 +121,7 @@ Cypress.Commands.add('initializeWidget', ({ session, encryptedHmacHash, theme, i
             data: {
               type: 'INIT_IFRAME',
               value: {
-                clientId: session.environment.identifier,
+                clientId: session?.environment?.identifier,
                 data: user,
                 theme,
                 i18n,
@@ -157,5 +157,5 @@ Cypress.Commands.add('forceVisit', (url: string) => {
 });
 
 function createHmacHash(session: any) {
-  return createHmac('sha256', session.environment.apiKeys[0].key).update(session.subscriberId).digest('hex');
+  return createHmac('sha256', session?.environment?.apiKeys[0]?.key).update(session?.subscriberId).digest('hex');
 }

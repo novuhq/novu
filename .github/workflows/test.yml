@@ -43,7 +43,7 @@ jobs:
       # Get current branch name
       - name: Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v5.2
+        uses: tj-actions/branch-names@v7.0.7
       # Get base branch name to compare with. Base branch on a PR, "main" branch on pushing.
       - name: Get base branch name
         id: get-base-branch-name
@@ -231,8 +231,8 @@ jobs:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
 
-  validate_swagger:
-    name: Validate Swagger
+  validate_openapi:
+    name: Validate OpenAPI
     runs-on: ubuntu-latest
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
@@ -250,4 +250,4 @@ jobs:
         with:
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
-      - uses: ./.github/actions/validate-swagger
+      - uses: ./.github/actions/validate-openapi

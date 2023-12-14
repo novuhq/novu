@@ -76,6 +76,7 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
+
   deploy_prod_worker_eu:
     needs: build_prod_image
     uses: ./.github/workflows/reusable-app-service-deploy.yml

@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Group, Center, Box } from '@mantine/core';
+import { useDisclosure } from '@mantine/hooks';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
-import { useIntercom } from 'react-use-intercom';
 import {
   CHANNELS_WITH_PRIMARY,
   CredentialsKeyEnum,
@@ -12,11 +12,10 @@ import {
   IConstructIntegrationDto,
   ICredentialsDto,
   InAppProviderIdEnum,
-  NOVU_PROVIDERS,
   SmsProviderIdEnum,
 } from '@novu/shared';
-
 import { Button, colors, Sidebar, Text } from '@novu/design-system';
+
 import { useProviders } from '../../useProviders';
 import type { IIntegratedProvider } from '../../types';
 import { IntegrationInput } from '../IntegrationInput';
@@ -37,8 +36,7 @@ import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions, IConditions } from '../../../../components/conditions';
-import { useDisclosure } from '@mantine/hooks';
-import { HEADER_HEIGHT } from '../../../../components/layout/constants';
+import { defaultIntegrationConditionsProps } from '../../constants';
 
 interface IProviderForm {
   name: string;
@@ -62,7 +60,6 @@ export function UpdateProviderSidebar({
   integrationId?: string;
   onClose: () => void;
 }) {
-  const { update } = useIntercom();
   const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
@@ -166,7 +163,6 @@ export function UpdateProviderSidebar({
       setSidebarState(SidebarStateEnum.NORMAL);
     }
     onClose();
-    update({ hideDefaultLauncher: false });
   };
 
   const updateAndSelectPrimaryIntegration = async (data: IConstructIntegrationDto) => {
@@ -241,8 +237,9 @@ export function UpdateProviderSidebar({
         conditions={conditions}
         name={name}
         isOpened={conditionsFormOpened}
-        setConditions={updateConditions}
+        updateConditions={updateConditions}
         onClose={closeConditionsForm}
+        {...defaultIntegrationConditionsProps}
       />
     );
   }
@@ -254,7 +251,6 @@ export function UpdateProviderSidebar({
     return (
       <FormProvider {...methods}>
         <Sidebar
-          headerHeight={HEADER_HEIGHT}
           isOpened={isSidebarOpened}
           isLoading={areProvidersLoading || areEnvironmentsLoading}
           onClose={onSidebarClose}
@@ -293,7 +289,6 @@ export function UpdateProviderSidebar({
   return (
     <FormProvider {...methods}>
       <Sidebar
-        headerHeight={HEADER_HEIGHT}
         isOpened={isSidebarOpened}
         isLoading={areProvidersLoading || areEnvironmentsLoading}
         isExpanded={sidebarState === SidebarStateEnum.EXPANDED}

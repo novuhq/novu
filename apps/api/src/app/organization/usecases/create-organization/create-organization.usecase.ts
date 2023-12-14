@@ -1,6 +1,6 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
-import { ApiServiceLevelTypeEnum, MemberRoleEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, MemberRoleEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
@@ -36,7 +36,7 @@ export class CreateOrganization {
     const createdOrganization = await this.organizationRepository.create({
       logo: command.logo,
       name: command.name,
-      apiServiceLevel: ApiServiceLevelTypeEnum.FREE,
+      apiServiceLevel: ApiServiceLevelEnum.FREE,
     });
 
     await this.addMemberUsecase.execute(

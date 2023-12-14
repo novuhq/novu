@@ -14,7 +14,7 @@ import {
   UseGuards,
   UseInterceptors,
   Logger,
-  ExecutionContext,
+  Header,
 } from '@nestjs/common';
 import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
 import { JwtService } from '@nestjs/jwt';
@@ -27,7 +27,7 @@ import { Login } from './usecases/login/login.usecase';
 import { LoginBodyDto } from './dtos/login.dto';
 import { LoginCommand } from './usecases/login/login.command';
 import { UserSession } from '../shared/framework/user.decorator';
-import { JwtAuthGuard } from './framework/auth.guard';
+import { UserAuthGuard } from './framework/user.auth.guard';
 import { PasswordResetRequestCommand } from './usecases/password-reset-request/password-reset-request.command';
 import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
@@ -43,7 +43,9 @@ import {
   SwitchOrganization,
   SwitchOrganizationCommand,
 } from '@novu/application-generic';
+import { ApiCommonResponses } from '../shared/framework/response.decorator';
 
+@ApiCommonResponses()
 @Controller('/auth')
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiTags('Auth')
@@ -89,7 +91,8 @@ export class AuthController {
   }
 
   @Get('/refresh')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
+  @Header('Cache-Control', 'no-store')
   refreshToken(@UserSession() user: IJwtPayload) {
     if (!user || !user._id) throw new BadRequestException();
 
@@ -97,6 +100,7 @@ export class AuthController {
   }
 
   @Post('/register')
+  @Header('Cache-Control', 'no-store')
   async userRegistration(@Body() body: UserRegistrationBodyDto) {
     return await this.userRegisterUsecase.execute(
       UserRegisterCommand.create({
@@ -130,6 +134,7 @@ export class AuthController {
   }
 
   @Post('/login')
+  @Header('Cache-Control', 'no-store')
   async userLogin(@Body() body: LoginBodyDto) {
     return await this.loginUsecase.execute(
       LoginCommand.create({
@@ -140,8 +145,9 @@ export class AuthController {
   }
 
   @Post('/organizations/:organizationId/switch')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @HttpCode(200)
+  @Header('Cache-Control', 'no-store')
   async organizationSwitch(
     @UserSession() user: IJwtPayload,
     @Param('organizationId') organizationId: string
@@ -155,7 +161,8 @@ export class AuthController {
   }
 
   @Post('/environments/:environmentId/switch')
-  @UseGuards(JwtAuthGuard)
+  @Header('Cache-Control', 'no-store')
+  @UseGuards(UserAuthGuard)
   @HttpCode(200)
   async projectSwitch(
     @UserSession() user: IJwtPayload,

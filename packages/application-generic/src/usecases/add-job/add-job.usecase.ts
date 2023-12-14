@@ -160,6 +160,10 @@ export class AddJob {
       );
     }
 
+    await this.queueJob(job, delay);
+  }
+
+  public async queueJob(job: JobEntity, delay: number) {
     Logger.verbose(`Adding Job ${job._id} to Queue`, LOG_CONTEXT);
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
     const options: JobsOptions = {
@@ -188,7 +192,7 @@ export class AddJob {
     await this.standardQueueService.addMinimalJob(
       job._id,
       jobData,
-      command.organizationId,
+      job._organizationId,
       options
     );
 

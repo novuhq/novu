@@ -16,8 +16,8 @@ describe('Debugging - test trigger', function () {
     cy.wait('@notification-templates');
 
     cy.getByTestId('node-triggerSelector').click({ force: true });
-    cy.getByTestId('step-page-wrapper').should('be.visible');
-    cy.getByTestId('step-page-wrapper').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
+    cy.getByTestId('workflow-sidebar').should('be.visible');
+    cy.getByTestId('workflow-sidebar').getByTestId('test-trigger-to-param').contains(`"subscriberId": "${userId}"`);
   });
 
   it('should not test trigger on error ', function () {
@@ -26,12 +26,12 @@ describe('Debugging - test trigger', function () {
     cy.waitForNetworkIdle(500);
     cy.getByTestId('node-triggerSelector').click({ force: true });
 
-    cy.getByTestId('step-page-wrapper').should('be.visible');
-    cy.getByTestId('step-page-wrapper').getByTestId('test-trigger-to-param').type('{backspace}');
-    cy.getByTestId('step-page-wrapper').getByTestId('test-trigger-payload-param').click();
-    cy.getByTestId('step-page-wrapper').getByTestId('test-trigger-btn').should('be.disabled');
-    cy.getByTestId('step-page-wrapper').should('be.visible');
-    cy.getByTestId('step-page-wrapper')
+    cy.getByTestId('workflow-sidebar').should('be.visible');
+    cy.getByTestId('workflow-sidebar').getByTestId('test-trigger-to-param').type('{backspace}');
+    cy.getByTestId('workflow-sidebar').getByTestId('test-trigger-payload-param').click();
+    cy.getByTestId('workflow-sidebar').getByTestId('test-trigger-btn').should('be.disabled');
+    cy.getByTestId('workflow-sidebar').should('be.visible');
+    cy.getByTestId('workflow-sidebar')
       .getByTestId('test-trigger-to-param')
       .should('have.class', 'mantine-JsonInput-invalid');
   });
