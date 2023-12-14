@@ -94,13 +94,8 @@ jobs:
       - name: Get base affected
         id: get-base-projects-arrays
         run: |
-          # Retrieve the list of projects
           project_packages="${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}"
-
-          # Filter projects that contain '-ee' using grep and exclude them
           tmp_filtered_packages=$(echo "project_packages" | tr ',' '\n' | grep -v '\-ee' | tr '\n' ',' | sed 's/,$//')
-
-          # Store the filtered projects in an environment variable
           echo "filtered_packages=tmp_filtered_packages" >> $GITHUB_ENV
 
   test_web:
