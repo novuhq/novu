@@ -183,8 +183,7 @@ jobs:
           filtered_projects=$(echo "$projects_list" | tr ',' '\n' | grep -v '\-ee' | tr '\n' ',' | sed 's/,$//')
           
           # Store the filtered projects in an environment variable
-          echo "::set-env name=FILTERED_PROJECTS::$filtered_projects"
-
+          echo "FILTERED_PROJECTS=$filtered_projects" >> $GITHUB_ENV
       - name: Run Test with Filtered Projects
         uses: mansagroup/nrwl-nx-action@v3
         env:
