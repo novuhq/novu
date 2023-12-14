@@ -34,7 +34,6 @@ jobs:
       test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
       test-packages: ${{ steps.get-projects-arrays.outputs.test-packages }}
       test-libs: ${{ steps.get-projects-arrays.outputs.test-libs }}
-      filtered_packages: ${{ steps.get-base-projects-arrays.outputs.filtered_packages }}
     permissions:
       contents: read
       packages: write
@@ -90,12 +89,6 @@ jobs:
             echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)" >> $GITHUB_OUTPUT
           fi
-          
-      - name: Get base affected
-        id: get-base-projects-arrays
-        run: |
-          filtered_packages=$(echo "${{steps.get-projects-arrays.outputs.test-packages}}" | jq -r '.[] | select(. | test("ee-") | not)' | jq -s -r 'join(",")')
-          echo "filtered_packages=$filtered_packages" >> $GITHUB_ENV
 
   test_web:
     name: Test Web Cypress
@@ -168,7 +161,7 @@ jobs:
       id-token: write
     steps:
       - name: Display Test Packages
-        run: echo '${{ needs.get-affected.outputs.filtered_packages }}'
+        run: echo '${{ needs.get-affected.outputs.test-packages }}'
 
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -187,8 +180,7 @@ jobs:
           LOGGING_LEVEL: 'info'
         with:
           targets: lint,build,test
-          projects: ${{join(fromJson(needs.get-affected.outputs.filtered_packages), ',')}}
-
+          projects: ${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}
 
   test_libs:
     name: Unit Test Libs
