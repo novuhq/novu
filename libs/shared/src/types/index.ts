@@ -19,3 +19,4 @@ export * from './notification-templates';
 export * from './web-sockets';
 export * from './workflow-override';
 export * from './rate-limiting';
+export * from './auth';

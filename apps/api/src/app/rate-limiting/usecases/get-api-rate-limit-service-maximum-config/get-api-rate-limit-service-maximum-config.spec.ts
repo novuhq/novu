@@ -22,7 +22,7 @@ describe('GetApiRateLimitServiceMaximumConfig', () => {
   let invalidateCacheService: InvalidateCacheService;
   let cacheService: CacheService;
 
-  let invalidateQueryStub: sinon.SinonStub;
+  let invalidateByKeyStub: sinon.SinonStub;
   let cacheServiceIsEnabledStub: sinon.SinonStub;
   let moduleRef: TestingModule;
 
@@ -35,14 +35,14 @@ describe('GetApiRateLimitServiceMaximumConfig', () => {
     invalidateCacheService = moduleRef.get(InvalidateCacheService);
     cacheService = moduleRef.get<CacheService>(CacheService);
 
-    invalidateQueryStub = sinon.stub(invalidateCacheService, 'invalidateQuery').resolves();
+    invalidateByKeyStub = sinon.stub(invalidateCacheService, 'invalidateByKey').resolves();
     cacheServiceIsEnabledStub = sinon.stub(cacheService, 'cacheEnabled').returns(true);
 
     await moduleRef.init();
   });
 
   afterEach(() => {
-    invalidateQueryStub.reset();
+    invalidateByKeyStub.reset();
   });
 
   it('should load the default API rate limits on module init', () => {
@@ -62,7 +62,7 @@ describe('GetApiRateLimitServiceMaximumConfig', () => {
     cacheServiceIsEnabledStub.returns(false);
     await useCase.loadDefault();
 
-    expect(invalidateQueryStub.callCount).to.equal(0);
+    expect(invalidateByKeyStub.callCount).to.equal(0);
   });
 
   it('should NOT invalidate the cache when loading defaults and the config HAS NOT changed between loads', async () => {
@@ -70,7 +70,7 @@ describe('GetApiRateLimitServiceMaximumConfig', () => {
     await useCase.loadDefault();
     await useCase.loadDefault();
 
-    expect(invalidateQueryStub.callCount).to.equal(0);
+    expect(invalidateByKeyStub.callCount).to.equal(0);
   });
 
   it('should invalidate the cache when loading defaults and the config HAS changed between loads', async () => {
@@ -82,6 +82,6 @@ describe('GetApiRateLimitServiceMaximumConfig', () => {
     await useCase.loadDefault();
     delete process.env[mockEnvVarName]; // cleanup
 
-    expect(invalidateQueryStub.callCount).to.equal(1);
+    expect(invalidateByKeyStub.callCount).to.equal(1);
   });
 });

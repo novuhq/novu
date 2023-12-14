@@ -538,6 +538,10 @@
     "Krakend",
     "ratelimit",
     "Ratelimit",
+    "stdev",
+    "Stdev",
+    "openapi",
+    "headerapikey",
   ],
   "flagWords": [],
   "patterns": [

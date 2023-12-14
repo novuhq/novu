@@ -69,6 +69,7 @@ export class SubscriberJobBound {
       actor,
       tenant,
       identifier,
+      _subscriberSource,
     } = command;
 
     const template = await this.getNotificationTemplate({
@@ -92,6 +93,7 @@ export class SubscriberJobBound {
         _organization: command.organizationId,
         channels: template?.steps.map((step) => step.template?.type),
         source: command.payload.__source || 'api',
+        subscriberSource: _subscriberSource || null,
       }
     );
 
