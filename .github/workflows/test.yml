@@ -94,7 +94,7 @@ jobs:
       - name: Get base affected
         id: get-base-projects-arrays
         run: |
-          filtered_packages=$(echo "${{steps.get-projects-arrays.outputs.test-packages}}" | jq -r '.[] | select(. | test("-ee") | not)' | jq -s -r 'join(",")')
+          filtered_packages=$(echo "${{steps.get-projects-arrays.outputs.test-packages}}" | jq -r '.[] | select(. | test("ee-") | not)' | jq -s -r 'join(",")')
           echo "filtered_packages=$filtered_packages" >> $GITHUB_ENV
 
   test_web:
