@@ -11,15 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import {
-  ApiConflictResponse,
-  ApiNoContentResponse,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum, ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
 
 import {
@@ -52,16 +44,24 @@ import {
   RenameTopicCommand,
   RenameTopicUseCase,
 } from './use-cases';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import {
+  ApiCommonResponses,
+  ApiResponse,
+  ApiConflictResponse,
+  ApiNoContentResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+} from '../shared/framework/response.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
+@ApiCommonResponses()
 @Controller('/topics')
 @ApiTags('Topics')
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 export class TopicsController {
   constructor(
     private addSubscribersUseCase: AddSubscribersUseCase,
