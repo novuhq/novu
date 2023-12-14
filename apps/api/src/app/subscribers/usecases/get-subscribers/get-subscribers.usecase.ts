@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
-import { GetSubscribersCommand } from './get-subscriber.command';
+import { GetSubscribersCommand } from './get-subscribers.command';
 
 @Injectable()
 export class GetSubscribers {
