@@ -1,21 +1,21 @@
 import { Body, Controller, Logger, Post, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { IEmailBlock, IJwtPayload, IMessageCTA, MessageTemplateContentType } from '@novu/shared';
 import {
   ApiException,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   CompileInAppTemplate,
   CompileInAppTemplateCommand,
-  JwtAuthGuard,
+  UserAuthGuard,
 } from '@novu/application-generic';
 import * as i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
+import { IEmailBlock, IJwtPayload, MessageTemplateContentType, IMessageCTA } from '@novu/shared';
 
 import { UserSession } from '../shared/framework/user.decorator';
 
 @Controller('/content-templates')
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiExcludeController()
 export class ContentTemplatesController {
   constructor(
