@@ -4,8 +4,13 @@ import {
   IsOptional,
   ValidateNested,
   IsMongoId,
+  IsEnum,
 } from 'class-validator';
-import { ISubscribersDefine, ITenantDefine } from '@novu/shared';
+import {
+  ISubscribersDefine,
+  ITenantDefine,
+  SubscriberSourceEnum,
+} from '@novu/shared';
 import { SubscriberEntity } from '@novu/dal';
 
 import { EnvironmentWithUserCommand } from '../../commands';
@@ -41,4 +46,8 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   subscriber: ISubscribersDefine;
+
+  @IsDefined()
+  @IsEnum(SubscriberSourceEnum)
+  _subscriberSource: SubscriberSourceEnum;
 }

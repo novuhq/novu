@@ -9,7 +9,6 @@ import * as compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
@@ -20,6 +19,8 @@ import { SubscriberRouteGuard } from './app/auth/framework/subscriber-route.guar
 import { validateEnv } from './config/env-validator';
 
 import * as packageJson from '../package.json';
+import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
+import { HttpRequestHeaderKeysEnum } from './app/shared/framework/types';
 
 const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/workflows', '/v1/layouts'];
 
@@ -92,31 +93,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   app.use(compression());
 
-  const options = new DocumentBuilder()
-    .setTitle('Novu API')
-    .setDescription('Open API Specification for Novu API')
-    .setVersion('1.0')
-    .addTag('Events')
-    .addTag('Subscribers')
-    .addTag('Topics')
-    .addTag('Notification')
-    .addTag('Integrations')
-    .addTag('Layouts')
-    .addTag('Workflows')
-    .addTag('Notification Templates')
-    .addTag('Workflow groups')
-    .addTag('Changes')
-    .addTag('Environments')
-    .addTag('Inbound Parse')
-    .addTag('Feeds')
-    .addTag('Tenants')
-    .addTag('Messages')
-    .addTag('Organizations')
-    .addTag('Execution Details')
-    .build();
-  const document = SwaggerModule.createDocument(app, options);
-
-  SwaggerModule.setup('api', app, document);
+  setupSwagger(app);
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 
@@ -126,7 +103,6 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
     await app.listen(process.env.PORT);
   }
 
-  // Starts listening for shutdown hooks
   app.enableShutdownHooks();
 
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
@@ -134,16 +110,16 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   return app;
 }
 
-const corsOptionsDelegate = function (req, callback) {
-  const corsOptions = {
+const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = function (req, callback) {
+  const corsOptions: Parameters<typeof callback>[1] = {
     origin: false as boolean | string | string[],
     preflightContinue: false,
     maxAge: 86400,
-    allowedHeaders: ['Content-Type', 'Authorization', 'sentry-trace'],
+    allowedHeaders: Object.values(HttpRequestHeaderKeysEnum),
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
-  if (['dev', 'test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url) || isBlueprintRoute(req.url)) {
+  if (['test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url) || isBlueprintRoute(req.url)) {
     corsOptions.origin = '*';
   } else {
     corsOptions.origin = [process.env.FRONT_BASE_URL];
@@ -151,7 +127,7 @@ const corsOptionsDelegate = function (req, callback) {
       corsOptions.origin.push(process.env.WIDGET_BASE_URL);
     }
   }
-  callback(null, corsOptions);
+  callback(null as unknown as Error, corsOptions);
 };
 
 function isWidgetRoute(url: string) {
