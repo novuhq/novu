@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -47,7 +47,7 @@ import { UpdateWorkflowOverrideById } from './usecases/update-workflow-override-
 @ApiCommonResponses()
 @Controller('/workflow-overrides')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiTags('Workflows-Overrides')
 export class WorkflowOverridesController {
   constructor(
