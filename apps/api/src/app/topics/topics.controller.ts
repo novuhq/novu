@@ -44,7 +44,7 @@ import {
   RenameTopicCommand,
   RenameTopicUseCase,
 } from './use-cases';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import {
@@ -61,7 +61,7 @@ import { ThrottlerCategory } from '../rate-limiting/guards';
 @ApiCommonResponses()
 @Controller('/topics')
 @ApiTags('Topics')
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 export class TopicsController {
   constructor(
     private addSubscribersUseCase: AddSubscribersUseCase,
