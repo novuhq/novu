@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiRateLimitCostEnum, IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ApplyChange, ApplyChangeCommand } from './usecases';
 import { GetChanges } from './usecases/get-changes/get-changes.usecase';
 import { GetChangesCommand } from './usecases/get-changes/get-changes.command';
@@ -31,7 +31,7 @@ import { ThrottlerCost } from '../rate-limiting/guards';
 @ApiCommonResponses()
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiTags('Changes')
 export class ChangesController {
   constructor(

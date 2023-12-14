@@ -6,7 +6,7 @@ import {
   Dropdown,
   IDropdownProps,
   ConditionPlus,
-  ConditionsFile,
+  Condition,
   DotsHorizontal,
   NoConditions,
   PencilOutlined,
@@ -124,7 +124,7 @@ export const WorkflowNodeActions = ({
     : conditionsCount > 0
     ? VARIANT_TYPE_TO_EDIT_CONDITIONS[nodeType]
     : VARIANT_TYPE_TO_ADD_CONDITIONS[nodeType];
-  const conditionsIcon = isReadOnly || conditionsCount > 0 ? ConditionsFile : ConditionPlus;
+  const conditionsIcon = isReadOnly || conditionsCount > 0 ? Condition : ConditionPlus;
   const isShowConditions = onAddConditions && (!isReadOnly || (isReadOnly && conditionsCount > 0));
 
   return (

@@ -304,7 +304,7 @@ export class UserSession {
     unfinishedJobs = 0,
     organizationId = this.organization._id
   ) {
-    await this.jobsService.awaitRunningJobs({
+    return await this.jobsService.awaitRunningJobs({
       templateId,
       organizationId,
       delay,
