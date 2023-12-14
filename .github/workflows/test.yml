@@ -94,9 +94,8 @@ jobs:
       - name: Get base affected
         id: get-base-projects-arrays
         run: |
-          project_packages="${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}"
-          tmp_filtered_packages=$(echo "project_packages" | tr ',' '\n' | grep -v '\-ee' | tr '\n' ',' | sed 's/,$//')
-          echo "filtered_packages=tmp_filtered_packages" >> $GITHUB_ENV
+          filtered_packages=$(echo "${{steps.get-projects-arrays.outputs.test-packages}}" | jq -r '.[] | select(. | test("-ee") | not)' | jq -s -r 'join(",")')
+          echo "filtered_packages=$filtered_packages" >> $GITHUB_ENV
 
   test_web:
     name: Test Web Cypress
