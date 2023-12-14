@@ -4,6 +4,7 @@
   "private": false,
   "main": "dist/index.js",
   "scripts": {
+    "build": "echo 'skip build in the ci'",
     "build-ee-skip": "node_modules/.bin/tsc -p tsconfig.json",
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"

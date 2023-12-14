@@ -6,6 +6,7 @@
   "scripts": {
     "afterinstall": "pnpm build",
     "prebuild": "rimraf dist",
+    "build": "echo 'skip build in the ci'",
     "build-ee-skip": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "precommit": "lint-staged",

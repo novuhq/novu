@@ -13,6 +13,7 @@
   ],
   "scripts": {
     "prebuild": "rimraf dist",
+    "build": "echo 'skip build in the ci'",
     "build-ee-skip": "npm run build:esm && npm run build:types",
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
     "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
