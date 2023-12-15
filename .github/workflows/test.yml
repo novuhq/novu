@@ -174,7 +174,7 @@ jobs:
       - name: Setup Redis Cluster
         uses: ./.github/actions/setup-redis-cluster
 
-      - name: Run Test with Filtered Projects
+      - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@v3
         env:
           LOGGING_LEVEL: 'info'
