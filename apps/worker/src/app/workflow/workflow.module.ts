@@ -55,6 +55,7 @@ import {
 
 import { SharedModule } from '../shared/shared.module';
 import { ACTIVE_WORKERS } from '../../config/worker-init.config';
+import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 
 const REPOSITORIES = [JobRepository];
 
@@ -105,6 +106,7 @@ const USE_CASES = [
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
+  InboundEmailParse,
 ];
 
 const PROVIDERS: Provider[] = [];
