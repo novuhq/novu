@@ -1,12 +1,12 @@
 {
-  "name": "@novu/ee-dal",
+  "name": "@novu/enterprise-dal",
   "version": "0.22.0",
   "description": "",
   "private": true,
   "scripts": {
     "afterinstall": "pnpm build",
     "prebuild": "rimraf dist",
-    "build-ee-skip": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
+    "build": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "precommit": "lint-staged",
     "lint": "eslint src",
@@ -31,7 +31,7 @@
     "typescript": "4.9.5"
   },
   "peerDependencies": {
-    "@nestjs/common": "^10.2.2"
+    "@nestjs/common": ">=9.3.x"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

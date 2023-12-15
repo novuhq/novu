@@ -11,9 +11,10 @@
   "dependencies": {
     "@nestjs/swagger": "^7.1.8",
     "@novu/application-generic": "^0.22.0",
-    "@novu/ee-dal": "^0.22.0",
+    "@novu/enterprise-dal": "^0.22.0",
     "@novu/shared": "^0.22.0",
     "class-validator": "^0.14.0",
+    "class-transformer": "^0.5.1",
     "shortid": "^2.2.16",
     "slugify": "^1.4.6"
   },
@@ -32,9 +33,9 @@
     "typescript": "4.9.5"
   },
   "peerDependencies": {
-    "@nestjs/common": "^10.2.2",
+    "@nestjs/common": ">=9.3.x",
     "@nestjs/platform-express": "^10.2.2",
-    "@nestjs/jwt": "^10.2.0",
+    "@nestjs/jwt": ">=9",
     "@novu/dal": "^0.22.0"
   }
 }
