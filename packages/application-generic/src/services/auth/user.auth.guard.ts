@@ -11,6 +11,7 @@ import {
   PassportStrategyEnum,
 } from '@novu/shared';
 import { Instrument } from '../../instrumentation';
+import { Observable } from 'rxjs';
 
 type SentryUser = {
   id: string;
@@ -31,7 +32,9 @@ export class UserAuthGuard extends AuthGuard([
   }
 
   @Instrument()
-  canActivate(context: ExecutionContext) {
+  canActivate(
+    context: ExecutionContext
+  ): boolean | Promise<boolean> | Observable<boolean> {
     return super.canActivate(context);
   }
 
