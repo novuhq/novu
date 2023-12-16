@@ -10,7 +10,7 @@ import {
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
-import { FeatureFlagCommand, GetIsApiRateLimitingEnabled } from '@novu/application-generic';
+import { FeatureFlagCommand, GetIsApiRateLimitingEnabled, Instrument } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, ApiAuthSchemeEnum, IJwtPayload } from '@novu/shared';
 import { ThrottlerCost, ThrottlerCategory } from './throttler.decorator';
 import { HttpRequestHeaderKeysEnum, HttpResponseHeaderKeysEnum } from '../../shared/framework/types';
@@ -41,6 +41,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
   /**
    * Thin wrapper around the ThrottlerGuard's canActivate method.
    */
+  @Instrument()
   async intercept(context: ExecutionContext, next: CallHandler) {
     try {
       await this.canActivate(context);
@@ -88,7 +89,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     // Return early if the current user agent should be ignored.
     if (Array.isArray(ignoreUserAgents)) {
       for (const pattern of ignoreUserAgents) {
-        if (pattern.test(req.headers[HttpRequestHeaderKeysEnum.AUTHORIZATION.toLowerCase()])) {
+        if (pattern.test(req.headers[HttpRequestHeaderKeysEnum.USER_AGENT.toLowerCase()])) {
           return true;
         }
       }
@@ -130,6 +131,15 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
         apiServiceLevel
       )
     );
+    res.rateLimitPolicy = {
+      limit,
+      windowDuration,
+      burstLimit,
+      algorithm,
+      apiRateLimitCategory,
+      apiRateLimitCost,
+      apiServiceLevel,
+    };
 
     if (success) {
       return true;

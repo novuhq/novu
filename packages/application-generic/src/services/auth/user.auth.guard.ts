@@ -10,6 +10,7 @@ import {
   IJwtPayload,
   PassportStrategyEnum,
 } from '@novu/shared';
+import { Instrument } from '../../instrumentation';
 
 type SentryUser = {
   id: string;
@@ -27,6 +28,11 @@ export class UserAuthGuard extends AuthGuard([
 ]) {
   constructor(private readonly reflector: Reflector) {
     super();
+  }
+
+  @Instrument()
+  canActivate(context: ExecutionContext) {
+    return super.canActivate(context);
   }
 
   getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions<any> {
