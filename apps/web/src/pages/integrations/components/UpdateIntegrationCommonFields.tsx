@@ -2,8 +2,10 @@ import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useClipboard } from '@mantine/hooks';
 
-import { Input, Switch, Check, Copy } from '@novu/design-system';
+import { Input, Switch, Check, Copy, Tooltip, inputStyles } from '@novu/design-system';
 import type { IIntegratedProvider } from '../types';
+import { Input as MantineInput } from '@mantine/core';
+import { useEnvController } from '../../../hooks';
 
 const CopyWrapper = styled.div`
   cursor: pointer;
@@ -12,12 +14,21 @@ const CopyWrapper = styled.div`
   }
 `;
 
-export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegratedProvider | null }) => {
+export const UpdateIntegrationCommonFields = ({
+  provider,
+  isNovuInAppProvider = false,
+}: {
+  provider: IIntegratedProvider | null;
+  isNovuInAppProvider: boolean;
+}) => {
   const {
     control,
     formState: { errors },
   } = useFormContext();
+  const { environment } = useEnvController();
   const identifierClipboard = useClipboard({ timeout: 1000 });
+  const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
+  const environmentIdentifier = environment?.identifier ? environment.identifier : '';
 
   if (!provider) return null;
 
@@ -80,6 +91,26 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
           />
         )}
       />
+      {isNovuInAppProvider && (
+        <MantineInput.Wrapper
+          label="Application Identifier"
+          description="The application identifier is a unique public key used by the notification center to identify your Novu account."
+          styles={inputStyles}
+        >
+          <Input
+            readOnly
+            rightSection={
+              <Tooltip label={clipboardEnvironmentIdentifier.copied ? 'Copied!' : 'Copy Key'}>
+                <CopyWrapper onClick={() => clipboardEnvironmentIdentifier.copy(environmentIdentifier)}>
+                  {clipboardEnvironmentIdentifier.copied ? <Check /> : <Copy />}
+                </CopyWrapper>
+              </Tooltip>
+            }
+            value={environmentIdentifier}
+            data-test-id="environment-id"
+          />
+        </MantineInput.Wrapper>
+      )}
     </>
   );
 };
