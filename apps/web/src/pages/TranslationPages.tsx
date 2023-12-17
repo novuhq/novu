@@ -1,7 +1,10 @@
 import { IS_DOCKER_HOSTED } from '../config';
+import { useIsTranslationManagerEnabled } from '../hooks';
 
 export const TranslationRoutes = () => {
-  if (IS_DOCKER_HOSTED) {
+  const isTranslationManagerEnabled = useIsTranslationManagerEnabled();
+
+  if (IS_DOCKER_HOSTED && !isTranslationManagerEnabled) {
     return null;
   }
 
