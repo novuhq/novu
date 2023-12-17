@@ -18,6 +18,13 @@ export {
   ScanStream,
 };
 
+type IConfigOptions = IRedisConfigOptions | IProviderClusterConfigOptions;
+
+export interface IProviderConfiguration {
+  envOptions?: IEnvironmentConfigOptions;
+  options?: IConfigOptions;
+}
+
 export type InMemoryProviderClient = Redis | Cluster | undefined;
 
 export enum InMemoryProviderEnum {

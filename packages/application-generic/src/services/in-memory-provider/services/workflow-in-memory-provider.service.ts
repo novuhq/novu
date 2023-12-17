@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 
-import { InMemoryProviderService } from './in-memory-provider.service';
+import { InMemoryProviderService } from '../services/in-memory-provider.service';
 import {
   getClusterProvider,
   getSingleInstanceProvider,
@@ -10,15 +10,15 @@ import {
   IProviders,
   IRedisProviderConfig,
   isProviderAllowed,
-} from './providers';
+} from '../providers';
 import {
   InMemoryProviderEnum,
   InMemoryProviderClient,
   IProviderClusterConfigOptions,
   IEnvironmentConfigOptions,
-} from './types';
+} from '../shared/types';
 
-import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
+import { GetIsInMemoryClusterModeEnabled } from '../../../usecases';
 
 const LOG_CONTEXT = 'WorkflowInMemoryProviderService';
 

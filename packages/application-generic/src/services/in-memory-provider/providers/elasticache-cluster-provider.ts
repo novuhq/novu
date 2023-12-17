@@ -3,7 +3,7 @@ import { Logger } from '@nestjs/common';
 
 export { Cluster, ClusterOptions };
 
-import { convertStringValues } from './variable-mappers';
+import { convertStringValues } from '../shared/variable-mappers';
 
 import {
   Cluster,
@@ -12,7 +12,7 @@ import {
   IEnvironmentConfigOptions,
   IProviderClusterConfigOptions,
   Redis,
-} from '../types';
+} from '../shared/types';
 
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
