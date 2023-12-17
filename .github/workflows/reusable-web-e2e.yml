@@ -76,7 +76,9 @@ jobs:
           targets: lint,build
           projects: '@novu/api,@novu/worker'
 
-
+      - name: Build Submodules
+        if: ${{ inputs.ee }}
+        run: CI='' pnpm build-ee
 
       - uses: ./.github/actions/start-localstack
       - uses: ./.github/actions/setup-redis-cluster
@@ -94,6 +96,7 @@ jobs:
           REACT_APP_WS_URL: http://localhost:1340
           REACT_APP_WEBHOOK_URL: http://localhost:1341
           REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.TEST_LAUNCH_DARKLY_CLIENT_SIDE_ID }}
+          IS_CI_EE_TEST: ${{ inputs.ee }}
         run: pnpm start:static:build &
 
       - name: Start WS

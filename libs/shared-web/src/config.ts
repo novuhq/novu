@@ -70,3 +70,7 @@ export const IS_MULTI_TENANCY_ENABLED = isCypress
 export const IS_TRANSLATION_MANAGER_ENABLED = isCypress
   ? window._env_.IS_TRANSLATION_MANAGER_ENABLED || process.env.IS_TRANSLATION_MANAGER_ENABLED || 'true'
   : window._env_.IS_TRANSLATION_MANAGER_ENABLED || process.env.IS_TRANSLATION_MANAGER_ENABLED || 'false';
+
+export const IS_CI_EE_TEST = isCypress
+  ? window._env_.IS_CI_EE_TEST || process.env.IS_CI_EE_TEST || 'true'
+  : window._env_.IS_CI_EE_TEST || process.env.IS_CI_EE_TEST || 'false';
