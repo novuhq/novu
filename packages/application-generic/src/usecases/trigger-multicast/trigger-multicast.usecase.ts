@@ -30,7 +30,7 @@ import { TriggerMulticastCommand } from './trigger-multicast.command';
 import { MapTriggerRecipientsCommand } from '../map-trigger-recipients';
 
 const LOG_CONTEXT = 'TriggerMulticastUseCase';
-const QUEUE_CHUNK_SIZE = 100;
+const QUEUE_CHUNK_SIZE = process.env.QUEUE_CHUNK_SIZE ?? 100;
 
 @Injectable()
 export class TriggerMulticast {

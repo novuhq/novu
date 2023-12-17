@@ -30,7 +30,7 @@ import { SubscriberProcessQueueService } from '../../services/queues/subscriber-
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
 
 const LOG_CONTEXT = 'TriggerBroadcastUseCase';
-const QUEUE_CHUNK_SIZE = 100;
+const QUEUE_CHUNK_SIZE = process.env.QUEUE_CHUNK_SIZE ?? 100;
 
 @Injectable()
 export class TriggerBroadcast {

@@ -93,6 +93,7 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      QUEUE_CHUNK_SIZE: ${QUEUE_CHUNK_SIZE}
   ws:
     image: 'ghcr.io/novuhq/novu/ws:0.22.0'
     depends_on:
