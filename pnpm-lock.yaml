@@ -1771,7 +1771,7 @@ importers:
       '@novu/dal':
         specifier: ^0.22.0
         version: link:../../../libs/dal
-      '@novu/ee-dal':
+      '@novu/enterprise-dal':
         specifier: ^0.22.0
         version: link:../libs/dal
       '@novu/shared':
@@ -25447,12 +25447,6 @@ packages:
       '@types/node': 14.18.42
     dev: true
 
-  /@types/jsonwebtoken@9.0.2:
-    resolution: {integrity: sha512-drE6uz7QBKq1fYqqoFKTDRdFCPHd5TCub75BM+D+cMx7NU9hUz7SESLfC2fSCXVFMO5Yj8sOWHuGqPgjc+fz0Q==}
-    dependencies:
-      '@types/node': 14.18.42
-    dev: false
-
   /@types/jsonwebtoken@9.0.5:
     resolution: {integrity: sha512-VRLSGzik+Unrup6BsouBeHsf4d1hOEgYWTm/7Nmw1sXoN1+tRly/Gy/po3yeahnP4jfnQWWAhQAqcNfH7ngOkA==}
     dependencies:
@@ -26039,7 +26033,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@eslint-community/regexpp': 4.5.0
+      '@eslint-community/regexpp': 4.9.1
       '@typescript-eslint/parser': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
       '@typescript-eslint/scope-manager': 5.58.0
       '@typescript-eslint/type-utils': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
@@ -39031,7 +39025,7 @@ packages:
     engines: {node: '>=14'}
     dependencies:
       '@types/express': 4.17.17
-      '@types/jsonwebtoken': 9.0.2
+      '@types/jsonwebtoken': 9.0.5
       debug: 4.3.4(supports-color@8.1.1)
       jose: 4.13.1
       limiter: 1.1.5
@@ -51552,8 +51546,8 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       eslint: 8.38.0
       eslint-scope: 7.2.2
-      eslint-visitor-keys: 3.4.0
-      espree: 9.5.1
+      eslint-visitor-keys: 3.4.3
+      espree: 9.6.1
       esquery: 1.5.0
       lodash: 4.17.21
       semver: 7.5.4
