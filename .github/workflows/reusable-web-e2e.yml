@@ -58,7 +58,7 @@ jobs:
         id: setup-project
         with:
           cypress: true
-          ee: ${{ inputs.ee }}
+          submodules: ${{ inputs.ee }}
 
       - name: Build web
         run: CI='' pnpm build:web
