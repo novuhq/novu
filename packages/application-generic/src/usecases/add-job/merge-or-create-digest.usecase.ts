@@ -60,7 +60,8 @@ export class MergeOrCreateDigest {
       job,
       digestKey,
       digestValue,
-      digestMeta
+      digestMeta,
+      command.filtered
     );
 
     switch (digestAction.digestResult) {
@@ -172,7 +173,8 @@ export class MergeOrCreateDigest {
     job: JobEntity,
     digestKey?: string,
     digestValue?: string | number,
-    digestMeta?: any
+    digestMeta?: any,
+    filtered?: boolean
   ): Promise<IDelayOrDigestJobResult> {
     const TTL = 1500;
     const resourceKey = this.getLockKey(job, digestKey, digestValue);
@@ -182,7 +184,8 @@ export class MergeOrCreateDigest {
         job,
         digestKey,
         digestValue,
-        digestMeta
+        digestMeta,
+        filtered
       );
 
     const result =
