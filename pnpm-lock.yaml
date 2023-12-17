@@ -695,6 +695,9 @@ importers:
       '@novu/design-system':
         specifier: ^0.22.0
         version: link:../../libs/design-system
+      '@novu/ee-translation-web':
+        specifier: ^0.22.0
+        version: link:../../enterprise/packages/translation-web
       '@novu/notification-center':
         specifier: ^0.22.0
         version: link:../../packages/notification-center
