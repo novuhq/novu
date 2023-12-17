@@ -91,6 +91,7 @@ export const getRedisInstance = (): Redis | undefined => {
 
   const options = {
     ...configOptions,
+    maxRetriesPerRequest: null,
     /*
      *  Disabled in Prod as affects performance
      */

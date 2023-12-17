@@ -29,7 +29,7 @@ export const TenantsList = ({
 
   return (
     <>
-      <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
+      <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         <Toolbar onAddTenantClick={onAddTenantClick} tenantLoading={loading} />
       </Container>
       <When truthy={loadingPhase}>

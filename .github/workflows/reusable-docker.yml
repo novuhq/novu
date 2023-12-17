@@ -40,6 +40,13 @@ on:
       env_tag:
         required: false
         type: string
+    outputs:
+      docker_image:
+        description: 'The image that was built'
+        value: ${{ jobs.reusable_docker.outputs.docker_image }}
+      docker_image_ee:
+        description: 'The enterprise image that was built'
+        value: ${{ jobs.reusable_docker.outputs.docker_image_ee }}
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -48,8 +55,8 @@ jobs:
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
     outputs:
-      docker_image: ${{ steps.build-image.outputs.IMAGE }}
-      docker_image_ee: ${{ steps.build-image.outputs.IMAGE_EE }}
+      docker_image: ${{ steps.save-image-to-output.outputs.IMAGE }}
+      docker_image_ee: ${{ steps.save-image-to-output.outputs.IMAGE_EE }}
     permissions:
       contents: read
       packages: write
@@ -115,7 +122,7 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
 
       - name: Save image to output
-        if: ${{ !contains(matrix.name,'-ee') }}
+        id: save-image-to-output
         env:
           REGISTRY_OWNER: novuhq
           DOCKER_NAME: ${{ matrix.name }}

@@ -21,8 +21,14 @@ import {
   UpdateSubscriber,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiOperation, ApiTags, ApiNoContentResponse, ApiParam } from '@nestjs/swagger';
-import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
+import { ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
+import {
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCostEnum,
+  ButtonTypeEnum,
+  ChatProviderIdEnum,
+  IJwtPayload,
+} from '@novu/shared';
 import { MessageEntity, PreferenceLevelEnum } from '@novu/dal';
 
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
@@ -69,7 +75,7 @@ import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-respons
 import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse, ApiNoContentResponse } from '../shared/framework/response.decorator';
 import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
 import { OAuthHandlerEnum } from './types';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
@@ -90,7 +96,10 @@ import {
   UpdateSubscriberGlobalPreferencesCommand,
 } from './usecases/update-subscriber-global-preferences';
 import { GetSubscriberPreferencesByLevelParams } from './params';
+import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 
+@ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
+@ApiCommonResponses()
 @Controller('/subscribers')
 @ApiTags('Subscribers')
 export class SubscribersController {
@@ -190,6 +199,7 @@ export class SubscribersController {
     );
   }
 
+  @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
   @ExternalApiAccessible()
   @UseGuards(JwtAuthGuard)

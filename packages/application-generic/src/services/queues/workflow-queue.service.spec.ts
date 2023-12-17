@@ -1,13 +1,17 @@
 import { Test } from '@nestjs/testing';
 
 import { WorkflowQueueService } from './workflow-queue.service';
+import { BullMqService } from '../bull-mq';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 let workflowQueueService: WorkflowQueueService;
 
 describe('Workflow Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      workflowQueueService = new WorkflowQueueService();
+      workflowQueueService = new WorkflowQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await workflowQueueService.queue.obliterate();
     });
 
@@ -123,7 +127,9 @@ describe('Workflow Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      workflowQueueService = new WorkflowQueueService();
+      workflowQueueService = new WorkflowQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await workflowQueueService.queue.obliterate();
     });
 
