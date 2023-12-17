@@ -109,7 +109,7 @@ export class InboundEmailParse {
       _subscriberId: subscriber._id,
     });
 
-    return { transactionId, template, notification, subscriber, environment, job, message };
+    return { template, notification, subscriber, environment, job, message };
   }
 }
 
