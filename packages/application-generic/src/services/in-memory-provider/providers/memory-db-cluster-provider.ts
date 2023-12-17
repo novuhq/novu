@@ -128,13 +128,18 @@ export const getMemoryDbCluster = (
     enableAutoPipelining: enableAutoPipelining ?? false,
     enableOfflineQueue: false,
     redisOptions: {
+      maxRetriesPerRequest: null,
       tls,
       connectTimeout: 10000,
+
       ...(password && { password }),
       ...(username && { username }),
     },
-    scaleReads: 'slave',
     showFriendlyErrorStack,
+    clusterRetryStrategy: (times: number) => {
+      return Math.max(Math.min(Math.exp(times), 20000), 1000);
+    },
+    scaleReads: 'master',
     slotsRefreshTimeout: 10000,
   };
 

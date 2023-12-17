@@ -27,7 +27,6 @@ import {
   SignUpOriginEnum,
 } from '@novu/shared';
 
-import { PinoLogger } from '../../logging';
 import { AnalyticsService } from '../analytics.service';
 import { ApiException } from '../../utils/exceptions';
 import { Instrument } from '../../instrumentation';
@@ -42,7 +41,6 @@ import {
 } from '../../usecases/switch-organization';
 import {
   buildAuthServiceKey,
-  buildEnvironmentByApiKey,
   buildSubscriberKey,
   buildUserKey,
   CachedEntity,
@@ -52,7 +50,6 @@ import { normalizeEmail } from '../../utils/email-normalization';
 @Injectable()
 export class AuthService {
   constructor(
-    private logger: PinoLogger,
     private userRepository: UserRepository,
     private subscriberRepository: SubscriberRepository,
     private createUserUsecase: CreateUser,
@@ -67,7 +64,7 @@ export class AuthService {
     private switchEnvironmentUsecase: SwitchEnvironment
   ) {}
 
-  async authenticate(
+  public async authenticate(
     authProvider: AuthProviderEnum,
     accessToken: string,
     refreshToken: string,
@@ -177,7 +174,7 @@ export class AuthService {
     return user;
   }
 
-  async refreshToken(userId: string) {
+  public async refreshToken(userId: string) {
     const user = await this.getUser({ _id: userId });
     if (!user) throw new UnauthorizedException('User not found');
 
@@ -185,7 +182,7 @@ export class AuthService {
   }
 
   @Instrument()
-  async isAuthenticatedForOrganization(
+  public async isAuthenticatedForOrganization(
     userId: string,
     organizationId: string
   ): Promise<boolean> {
@@ -196,32 +193,30 @@ export class AuthService {
   }
 
   @Instrument()
-  async apiKeyAuthenticate(apiKey: string) {
-    const { environment, user, key, error } = await this.getUserData({
-      apiKey,
-    });
+  public async validateApiKey(apiKey: string): Promise<IJwtPayload> {
+    const {
+      environment,
+      user,
+      error,
+      key, // In the future, roles/scopes will be assigned to the API Key.
+    } = await this.getApiKeyUser({ apiKey });
 
     if (error) throw new UnauthorizedException(error);
-    if (!environment) throw new UnauthorizedException('API Key not found');
-    if (!user) throw new UnauthorizedException('User not found');
 
-    this.logger.assign({
-      userId: user._id,
-      environmentId: environment._id,
+    return {
+      _id: user._id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      profilePicture: user.profilePicture,
+      roles: [MemberRoleEnum.ADMIN],
       organizationId: environment._organizationId,
-    });
-
-    if (!key) throw new UnauthorizedException('API Key not found');
-
-    return await this.getApiSignedToken(
-      user,
-      environment._organizationId,
-      environment._id,
-      key.key
-    );
+      environmentId: environment._id,
+      exp: 0,
+    };
   }
 
-  async getSubscriberWidgetToken(
+  public async getSubscriberWidgetToken(
     subscriber: SubscriberEntity
   ): Promise<string> {
     return this.jwtService.sign(
@@ -242,33 +237,7 @@ export class AuthService {
     );
   }
 
-  async getApiSignedToken(
-    user: UserEntity,
-    organizationId: string,
-    environmentId: string,
-    apiKey: string
-  ): Promise<string> {
-    return this.jwtService.sign(
-      {
-        _id: user._id,
-        firstName: 'API Request',
-        lastName: null,
-        email: user.email,
-        profilePicture: null,
-        organizationId,
-        roles: [MemberRoleEnum.ADMIN],
-        apiKey,
-        environmentId,
-      },
-      {
-        expiresIn: '1 day',
-        issuer: 'novu_api',
-        audience: 'api_token',
-      }
-    );
-  }
-
-  async generateUserToken(user: UserEntity) {
+  public async generateUserToken(user: UserEntity) {
     const userActiveOrganizations =
       await this.organizationRepository.findUserActiveOrganizations(user._id);
 
@@ -312,7 +281,7 @@ export class AuthService {
     return this.getSignedToken(user);
   }
 
-  async getSignedToken(
+  public async getSignedToken(
     user: UserEntity,
     organizationId?: string,
     member?: MemberEntity,
@@ -342,7 +311,7 @@ export class AuthService {
   }
 
   @Instrument()
-  async validateUser(payload: IJwtPayload): Promise<UserEntity> {
+  public async validateUser(payload: IJwtPayload): Promise<UserEntity> {
     // We run these in parallel to speed up the query time
     const userPromise = this.getUser({ _id: payload._id });
     const isMemberPromise = payload.organizationId
@@ -353,14 +322,14 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('User not found');
     if (payload.organizationId && !isMember) {
       throw new UnauthorizedException(
-        `No authorized for organization ${payload.organizationId}`
+        `Not authorized for organization ${payload.organizationId}`
       );
     }
 
     return user;
   }
 
-  async validateSubscriber(
+  public async validateSubscriber(
     payload: ISubscriberJwt
   ): Promise<SubscriberEntity | null> {
     return await this.getSubscriber({
@@ -369,15 +338,7 @@ export class AuthService {
     });
   }
 
-  async decodeJwt<T>(token: string) {
-    return this.jwtService.decode(token) as T;
-  }
-
-  async verifyJwt(jwt: string) {
-    return this.jwtService.verify(jwt);
-  }
-
-  async isRootEnvironment(payload: IJwtPayload): Promise<boolean> {
+  public async isRootEnvironment(payload: IJwtPayload): Promise<boolean> {
     const environment = await this.environmentRepository.findOne({
       _id: payload.environmentId,
     });
@@ -395,17 +356,6 @@ export class AuthService {
   })
   private async getUser({ _id }: { _id: string }) {
     return await this.userRepository.findById(_id);
-  }
-
-  @Instrument()
-  @CachedEntity({
-    builder: ({ apiKey }: { apiKey: string }) =>
-      buildEnvironmentByApiKey({
-        apiKey: apiKey,
-      }),
-  })
-  private async getEnvironment({ apiKey }: { apiKey: string }) {
-    return await this.environmentRepository.findByApiKey(apiKey);
   }
 
   @CachedEntity({
@@ -434,7 +384,7 @@ export class AuthService {
         apiKey: apiKey,
       }),
   })
-  private async getUserData({ apiKey }: { apiKey: string }): Promise<{
+  private async getApiKeyUser({ apiKey }: { apiKey: string }): Promise<{
     environment?: EnvironmentEntity;
     user?: UserEntity;
     key?: IApiKey;

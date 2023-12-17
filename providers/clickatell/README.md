@@ -8,12 +8,12 @@ A ClickatellSmsProvider sms provider library for [@novu/node](https://github.com
 import { ClickatellSmsProvider } from '@novu/clickatell';
 
 // one way sms integration
-const provider = new TwilioSmsProvider({
+const provider = new ClickatellSmsProvider({
   apiKey: process.env.CLICKATELL_API_KEY,
 });
 
 // two way sms integration
-const provider = new TwilioSmsProvider({
+const provider = new ClickatellSmsProvider({
   apiKey: process.env.CLICKATELL_API_KEY,
   isTwoWayIntegration: true
 });

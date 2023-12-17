@@ -10,8 +10,8 @@ import {
   DetailEnum,
   CreateExecutionDetailsCommand,
   Instrument,
-  getNestedValue,
   ExecutionLogQueueService,
+  getNestedValue,
 } from '@novu/application-generic';
 
 import { PlatformException } from '../../../../shared/utils';

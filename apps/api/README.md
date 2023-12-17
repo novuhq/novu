@@ -15,7 +15,15 @@ A RESTful API for accessing the Novu platform, built using [NestJS](https://nest
 
 The Novu API utilizes the [`@nestjs/swagger`](https://github.com/nestjs/swagger) package to generate up-to-date OpenAPI specifications.
 
-A web interface to browse the available endpoints is available at [api.novu.co/api](https://api.novu.co/api). An OpenAPI specification can be retrieved at [api.novu.co/api-json](https://api.novu.co/api-json).
+A web interface to browse the published endpoints is available during local development at [localhost:3000/openapi](https://localhost:3000/openapi). An OpenAPI specification can be retrieved at [api.novu.co/openapi.yaml](https://api.novu.co/openapi.yaml).
+
+To maintain consistency and quality of OpenAPI documentation, Novu uses [Spectral](https://github.com/stoplightio/spectral) to validate the OpenAPI specification and enforce style. The OpenAPI specification is run through a Github action on pull request, and call also be run locally after starting the API with:
+
+```bash
+$ npm run lint:openapi
+```
+
+The command will return warnings and errors that must be fixed before the Github action will pass. These fixes are created by making changes through the `@nestjs/swagger` decorators.
 
 ## Running the API
 

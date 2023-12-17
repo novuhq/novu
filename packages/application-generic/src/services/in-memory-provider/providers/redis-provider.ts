@@ -100,6 +100,7 @@ export const getRedisInstance = (
   const { showFriendlyErrorStack } = options || {};
 
   const redisOptions = {
+    maxRetriesPerRequest: null,
     ...configRest,
     showFriendlyErrorStack,
   };
