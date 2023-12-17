@@ -31,6 +31,7 @@ jobs:
       test-e2e: ${{ steps.get-projects-arrays.outputs.test-e2e }}
       test-e2e-ee: ${{ steps.get-projects-arrays.outputs.test-e2e-ee }}
       test-cypress: ${{ steps.get-projects-arrays.outputs.test-cypress }}
+      test-cypress-ee: ${{ steps.get-projects-arrays.outputs.test-cypress-ee }}
       test-providers: ${{ steps.get-projects-arrays.outputs.test-providers }}
       test-packages: ${{ steps.get-projects-arrays.outputs.test-packages }}
       test-libs: ${{ steps.get-projects-arrays.outputs.test-libs }}
@@ -76,6 +77,7 @@ jobs:
             echo "test-e2e=$(pnpm run get-affected test:e2e --all | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee --all | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-cypress=$(pnpm run get-affected cypress:run --all | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-cypress-ee=$(pnpm run get-affected cypress:run:ee --all | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-providers=$(pnpm run get-affected test --all providers | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-packages=$(pnpm run get-affected test --all packages | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test --all libs | tail -n +5)" >> $GITHUB_OUTPUT
@@ -85,6 +87,7 @@ jobs:
             echo "test-e2e=$(pnpm run get-affected test:e2e origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-e2e-ee=$(pnpm run get-affected test:e2e:ee origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-cypress=$(pnpm run get-affected cypress:run origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
+            echo "test-cypress-ee=$(pnpm run get-affected cypress:run:ee origin/${{steps.get-base-branch-name.outputs.branch}} | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-providers=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} providers | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-packages=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} packages | tail -n +5)" >> $GITHUB_OUTPUT
             echo "test-libs=$(pnpm run get-affected test origin/${{steps.get-base-branch-name.outputs.branch}} libs | tail -n +5)" >> $GITHUB_OUTPUT
@@ -93,8 +96,14 @@ jobs:
   test_web:
     name: Test Web Cypress
     needs: [get-affected]
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
+    strategy:
+      # The order is important for ee to be first, otherwise outputs not work correctly
+      matrix:
+        name: ['novu/web-ee', 'novu/web']    
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') || contains(fromJson(needs.get-affected.outputs.test-cypress-ee), '@novu/web') }}
     uses: ./.github/workflows/reusable-web-e2e.yml
+    with:
+      ee: ${{ contains (matrix.name,'-ee') }}
     secrets: inherit
 
   test_widget:

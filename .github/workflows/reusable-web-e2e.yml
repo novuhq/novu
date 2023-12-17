@@ -58,6 +58,7 @@ jobs:
         id: setup-project
         with:
           cypress: true
+          ee: ${{ inputs.ee }}
 
       - name: Build web
         run: CI='' pnpm build:web
@@ -123,6 +124,25 @@ jobs:
           parallel: false
           install: false
           config-file: cypress.config.ts
+
+      - name: Cypress run EE e2e
+        if: ${{ inputs.ee }}
+        uses: cypress-io/github-action@v6
+        env:
+          NODE_ENV: test
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
+          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
+          CYPRESS_IS_CI: true
+        with:
+          working-directory: apps/web
+          browser: "${{ env.BROWSER_PATH }}"
+          record: false
+          parallel: false
+          install: false
+          config-file: cypress.config.ts
+          spec: "cypress/tests/**/*.*-ee.{js,jsx,ts,tsx}"
 
       - uses: actions/upload-artifact@v3
         if: failure()
