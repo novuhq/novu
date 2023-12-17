@@ -8,6 +8,7 @@
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false react-app-rewired --max_old_space_size=4096 build",
     "precommit": "lint-staged",
     "docker:build": "docker buildx build -f ./Dockerfile -t novu-web ./../..",
+    "docker:build:depot": "depot build -f ./Dockerfile -t novu-web ./../.. --load",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
     "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
     "start:static:build": "pnpm envsetup:docker && http-server build -p 4200 --proxy http://localhost:4200?",
