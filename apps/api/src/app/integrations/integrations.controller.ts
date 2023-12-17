@@ -15,7 +15,7 @@ import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
 import { CalculateLimitNovuIntegration, CalculateLimitNovuIntegrationCommand } from '@novu/application-generic';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
@@ -49,7 +49,7 @@ import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-pr
 @ApiCommonResponses()
 @Controller('/integrations')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiTags('Integrations')
 export class IntegrationsController {
   constructor(

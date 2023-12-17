@@ -15,7 +15,7 @@ import { CreateNotificationGroup } from './usecases/create-notification-group/cr
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateNotificationGroupCommand } from './usecases/create-notification-group/create-notification-group.command';
 import { CreateNotificationGroupRequestDto } from './dtos/create-notification-group-request.dto';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { GetNotificationGroups } from './usecases/get-notification-groups/get-notification-groups.usecase';
 import { GetNotificationGroupsCommand } from './usecases/get-notification-groups/get-notification-groups.command';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -33,7 +33,7 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 @ApiCommonResponses()
 @Controller('/notification-groups')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiTags('Workflow groups')
 export class NotificationGroupsController {
   constructor(

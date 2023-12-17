@@ -1,3 +1,5 @@
+# cSpell:disable
+
 # Spectral is a flexible JSON/YAML linter and validator, which can be used for OpenAPI, AsyncAPI, or any other purpose.
 # To run Spectral locally:
 # > pnpm lint:openapi

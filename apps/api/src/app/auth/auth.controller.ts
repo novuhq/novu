@@ -27,7 +27,7 @@ import { Login } from './usecases/login/login.usecase';
 import { LoginBodyDto } from './dtos/login.dto';
 import { LoginCommand } from './usecases/login/login.command';
 import { UserSession } from '../shared/framework/user.decorator';
-import { JwtAuthGuard } from './framework/auth.guard';
+import { UserAuthGuard } from './framework/user.auth.guard';
 import { PasswordResetRequestCommand } from './usecases/password-reset-request/password-reset-request.command';
 import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
@@ -91,7 +91,7 @@ export class AuthController {
   }
 
   @Get('/refresh')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Header('Cache-Control', 'no-store')
   refreshToken(@UserSession() user: IJwtPayload) {
     if (!user || !user._id) throw new BadRequestException();
@@ -145,7 +145,7 @@ export class AuthController {
   }
 
   @Post('/organizations/:organizationId/switch')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   async organizationSwitch(
@@ -162,7 +162,7 @@ export class AuthController {
 
   @Post('/environments/:environmentId/switch')
   @Header('Cache-Control', 'no-store')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @HttpCode(200)
   async projectSwitch(
     @UserSession() user: IJwtPayload,
