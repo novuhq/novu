@@ -40,6 +40,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
+        with:
+          submodules: true
 
       - name: Build
         run: CI='' pnpm build:web
