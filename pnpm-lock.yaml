@@ -2167,7 +2167,7 @@ importers:
         specifier: ^0.22.0
         version: link:../../providers/infobip
       '@novu/isend-sms':
-        specifier: ^0.16.3
+        specifier: ^0.22.0
         version: link:../../providers/isend-sms
       '@novu/kannel':
         specifier: ^0.22.0
@@ -28073,7 +28073,7 @@ packages:
       '@babel/core': 7.23.2
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/babel__core': 7.20.3
+      '@types/babel__core': 7.20.0
       babel-plugin-istanbul: 6.1.1
       babel-preset-jest: 27.5.1(@babel/core@7.23.2)
       chalk: 4.1.2
@@ -46825,11 +46825,11 @@ packages:
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
-      '@babel/code-frame': 7.22.13
+      '@babel/code-frame': 7.21.4
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.22.0
+      terser: 5.16.9
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
