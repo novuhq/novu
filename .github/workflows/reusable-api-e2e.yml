@@ -105,7 +105,7 @@ jobs:
         if: |
           ${{ needs.check_submodule_token.outputs.has_token == 'true' }} &&
           ${{ inputs.ee }}
-        run: CI='' pnpm build-ee
+        run: CI='' pnpm build-ee --skip-nx-cache
 
       - name: Run E2E tests
         if: false
