@@ -4,13 +4,7 @@ const { useBabelRc, override } = require('customize-cra');
 function overrideConfig(config, env) {
   const plugins = [...config.plugins /* new BundleAnalyzerPlugin() */];
 
-  return {
-    ...config,
-    plugins,
-    externals: {
-      '@novu/ee-translation-web': "require('@novu/ee-translation-web')",
-    },
-  };
+  return { ...config, plugins };
 }
 
 module.exports = override(useBabelRc(), overrideConfig);
