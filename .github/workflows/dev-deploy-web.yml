@@ -38,7 +38,13 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      # checkout with submodules if token is provided
       - uses: actions/checkout@v3
+        name: Checkout with submodules
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
       - uses: ./.github/actions/setup-project
         with:
           submodules: true
