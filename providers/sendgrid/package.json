@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.22.0",
-    "@sendgrid/mail": "^7.7.0"
+    "@sendgrid/mail": "^8.1.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
