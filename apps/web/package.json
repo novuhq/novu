@@ -55,7 +55,6 @@
     "@novu/shared": "^0.22.0",
     "@segment/analytics-next": "^1.48.0",
     "@novu/shared-web": "^0.22.0",
-    "@novu/ee-translation-web": "^0.22.0",
     "@sentry/react": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@storybook/addon-docs": "^7.4.2",
@@ -120,6 +119,9 @@
     "web-vitals": "^1.0.1",
     "webpack-dev-server": "4.11.1",
     "zod": "^3.22.4"
+  },
+  "optionalDependencies": {
+    "@novu/ee-translation-web": "^0.22.0"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",
