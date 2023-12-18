@@ -21,7 +21,7 @@
     "class-transformer": "^0.5.1",
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",
-    "multer": "^1.4.4"
+    "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
