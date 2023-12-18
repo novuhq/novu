@@ -114,6 +114,11 @@ jobs:
         run: |
           cd apps/api && pnpm test:e2e
 
+      - name: test links
+        run: |
+          pnpm i
+          cd apps/api/node_modules/@novu/ee-translation && ls -la
+
       - name: Run E2E EE tests
         if: |
           ${{ needs.check_submodule_token.outputs.has_token == 'true' }} &&
