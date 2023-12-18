@@ -101,23 +101,11 @@ jobs:
       - name: Build API
         run: CI='' pnpm build:api --skip-nx-cache
 
-      - name: Build Submodules
-        if: |
-          ${{ needs.check_submodule_token.outputs.has_token == 'true' }} &&
-          ${{ inputs.ee }}
-        run: CI='' pnpm build-ee --skip-nx-cache
-
       - name: Run E2E tests
-        if: false
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |
           cd apps/api && pnpm test:e2e
-
-      - name: test links
-        run: |
-          pnpm i
-          cd apps/api/node_modules/@novu/ee-translation && ls -la
 
       - name: Run E2E EE tests
         if: |
