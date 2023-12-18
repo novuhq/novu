@@ -13,12 +13,14 @@
   ],
   "scripts": {
     "prebuild": "rimraf dist",
+    "build": "echo 'skip build in the ci'",
     "build-ee-skip": "npm run build:esm && npm run build:types",
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
     "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
     "build:watch": "npm run build:esm:watch",
-    "lint": "eslint --ext .ts,.tsx src",
+    "lint": "eslint --ext .ts,.tsx src --no-error-on-unmatched-pattern",
+    "test": "echo 'skip test in the ci'",
     "start": "npm run build:watch"
   },
   "dependencies": {

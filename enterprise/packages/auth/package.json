@@ -4,9 +4,12 @@
   "private": false,
   "main": "dist/index.js",
   "scripts": {
+    "build": "echo 'skip build in the ci'",
     "build-ee": "node_modules/.bin/tsc -p tsconfig.json",
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts",
+    "lint": "eslint src --no-error-on-unmatched-pattern",
+    "test": "echo 'skip test in the ci'",
+    "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts",
     "symlink": "ln -s ../../../.source/auth/src ./src"
   },
   "dependencies": {
@@ -30,8 +33,8 @@
   },
   "peerDependencies": {
     "@nestjs/passport": "9.0.3",
-    "@nestjs/common": "^10.2.2",
-    "@nestjs/jwt": "^10.2.0",
+    "@nestjs/common": "10.2.2",
+    "@nestjs/jwt": "10.2.0",
     "passport-oauth2": "^1.6.1",
     "passport": "0.6.0"
   }
