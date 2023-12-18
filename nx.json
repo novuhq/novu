@@ -33,10 +33,5 @@
   },
   "affected": {
     "defaultBase": "main"
-  },
-  "targetDefaults": {
-    "build-ee": {
-      "dependsOn": ["^build-ee"]
-    }
   }
 }
