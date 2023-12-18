@@ -6,6 +6,6 @@ describe('Translations Group Page', function () {
   it('should display translations group page', function () {
     cy.visit('/translations');
 
-    cy.getByTestId('translations-title').should('have.text', 'Translations');
+    cy.getByTestId('translation-title').should('have.text', 'Translations');
   });
 });
