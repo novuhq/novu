@@ -90,7 +90,7 @@ export const IntegrationsList = ({
     <PageContainer title="Integrations">
       <PageHeader title="Integrations Store" />
       <When truthy={hasIntegrations}>
-        <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
+        <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
           <IntegrationsListToolbar onAddProviderClick={onAddProviderClick} areIntegrationsLoading={isLoading} />
         </Container>
       </When>
