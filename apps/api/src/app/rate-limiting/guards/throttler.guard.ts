@@ -8,6 +8,7 @@ import {
   ThrottlerStorage,
 } from '@nestjs/throttler';
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
 import { FeatureFlagCommand, GetIsApiRateLimitingEnabled, Instrument } from '@novu/application-generic';
@@ -41,8 +42,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
   /**
    * Thin wrapper around the ThrottlerGuard's canActivate method.
    */
-  @Instrument()
-  async intercept(context: ExecutionContext, next: CallHandler) {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     try {
       await this.canActivate(context);
 
@@ -50,6 +50,11 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     } catch (error) {
       throw error;
     }
+  }
+
+  @Instrument()
+  canActivate(context: ExecutionContext): Promise<boolean> {
+    return super.canActivate(context);
   }
 
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
