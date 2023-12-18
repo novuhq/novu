@@ -20,7 +20,8 @@
     "class-validator": "^0.14.0",
     "class-transformer": "^0.5.1",
     "shortid": "^2.2.16",
-    "slugify": "^1.4.6"
+    "slugify": "^1.4.6",
+    "multer": "^1.4.4"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
