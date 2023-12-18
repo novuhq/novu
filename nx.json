@@ -5,7 +5,7 @@
     "default": {
       "runner": "@nrwl/nx-cloud",
       "options": {
-        "cacheableOperations": ["build", "test", "lint", "package", "prepare", "build-ee"],
+        "cacheableOperations": ["build", "test", "lint", "package", "prepare"],
         "canTrackAnalytics": false,
         "accessToken": "N2EyNDhhMGUtYmJkNS00YzQ5LTg5NDYtODg5ZmE2NDE5YWNmfHJlYWQtd3JpdGU="
       }
@@ -15,6 +15,7 @@
     "build": [
       {
         "target": "build",
+        "inputs": ["!{projectRoot}/enterprise/**/*"],
         "projects": "dependencies"
       }
     ],

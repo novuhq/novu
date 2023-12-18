@@ -4,8 +4,8 @@
   "private": false,
   "main": "dist/index.js",
   "scripts": {
-    "build": "echo 'skip build in the ci'",
-    "build-ee": "node_modules/.bin/tsc -p tsconfig.json",
+    "build": "node ./check-ee.mjs",
+    "build:esm": "node_modules/.bin/tsc -p tsconfig.json",
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "lint": "eslint src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
