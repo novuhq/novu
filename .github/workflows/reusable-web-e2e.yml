@@ -58,6 +58,7 @@ jobs:
         id: setup-project
         with:
           cypress: true
+          submodules: true
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
