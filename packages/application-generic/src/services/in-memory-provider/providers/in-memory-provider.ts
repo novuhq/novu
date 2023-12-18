@@ -1,20 +1,17 @@
+import { Logger } from '@nestjs/common';
+import { setTimeout } from 'timers/promises';
+
 import {
   Cluster,
   ClusterOptions,
-  IEnvironmentConfigOptions,
   InMemoryProviderClient,
+  InMemoryProviderConfig,
   InMemoryProviderEnum,
-  IProviderClusterConfigOptions,
   IProviderConfiguration,
-  IRedisConfigOptions,
   Redis,
   RedisOptions,
   ScanStream,
 } from '../shared/types';
-import { IRedisProviderConfig } from './redis-provider';
-import { InMemoryProviderConfig } from './providers';
-import { setTimeout } from 'timers/promises';
-import { Logger } from '@nestjs/common';
 
 interface IInMemoryProvider {
   validateConfig(config: IProviderConfiguration): boolean;
@@ -49,6 +46,8 @@ export abstract class InMemoryProvider implements IInMemoryProvider {
     this.initialize();
 
     this.setupEvents();
+
+    // todo - check if delayUntilReadiness is needed to be recreated
   }
 
   abstract initialize(): boolean;
@@ -243,5 +242,16 @@ export abstract class InMemoryProvider implements IInMemoryProvider {
    */
   public async onApplicationShutdown(signal): Promise<void> {
     await this.shutdown();
+  }
+
+  /*
+   * This method was designed to send the instance to the distributed lock service during initialization.
+   */
+  getClient(): InMemoryProviderClient {
+    return this.client;
+  }
+
+  getConfig(): InMemoryProviderConfig {
+    return this.config;
   }
 }

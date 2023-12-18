@@ -4,12 +4,8 @@ import { Test } from '@nestjs/testing';
 
 import { UpdateSubscriber } from './update-subscriber.usecase';
 import { UpdateSubscriberCommand } from './update-subscriber.command';
-import {
-  CacheService,
-  CacheInMemoryProviderService,
-  InvalidateCacheService,
-  InMemoryProviderEnum,
-} from '../../services';
+import { CacheService, InvalidateCacheService } from '../../services';
+import { CacheInMemoryProviderService } from '../../services/in-memory-provider/services/cache-in-memory-provider.service';
 
 const cacheInMemoryProviderService = {
   provide: CacheInMemoryProviderService,

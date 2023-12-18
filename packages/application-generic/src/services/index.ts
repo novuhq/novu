@@ -1,4 +1,4 @@
-export * from './in-memory-provider';
+export * from './in-memory-provider/services';
 export * from './launch-darkly.service';
 export * from './feature-flags.service';
 export * from './cache';

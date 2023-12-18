@@ -5,14 +5,9 @@ import { SubscriberRepository } from '@novu/dal';
 import { CreateSubscriber } from './create-subscriber.usecase';
 import { CreateSubscriberCommand } from './create-subscriber.command';
 
-import {
-  CacheService,
-  CacheInMemoryProviderService,
-  InMemoryProviderEnum,
-  InMemoryProviderService,
-  InvalidateCacheService,
-} from '../../services';
+import { CacheService, InvalidateCacheService } from '../../services';
 import { UpdateSubscriber } from '../update-subscriber';
+import { CacheInMemoryProviderService } from '../../services/in-memory-provider/services/cache-in-memory-provider.service';
 
 const cacheInMemoryProviderService = {
   provide: CacheInMemoryProviderService,
