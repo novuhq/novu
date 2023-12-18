@@ -44,7 +44,7 @@ jobs:
           submodules: true
 
       - name: Build
-        run: CI='' pnpm build:web
+        run: CI='' pnpm build:web --skip-nx-cache
 
       - name: Create env file
         working-directory: apps/web
