@@ -2166,6 +2166,9 @@ importers:
       '@novu/infobip':
         specifier: ^0.22.0
         version: link:../../providers/infobip
+      '@novu/isend-sms':
+        specifier: ^0.16.3
+        version: link:../../providers/isend-sms
       '@novu/kannel':
         specifier: ^0.22.0
         version: link:../../providers/kannel
@@ -4115,6 +4118,49 @@ importers:
       typedoc:
         specifier: ^0.24.0
         version: 0.24.6(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  providers/isend-sms:
+    dependencies:
+      '@novu/stateless':
+        specifier: 0.16.3
+        version: 0.16.3
+      axios:
+        specifier: ^1.6.0
+        version: 1.6.2
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ~1.0.1
+        version: 1.0.2(nyc@15.1.0)
+      '@types/jest':
+        specifier: ~27.5.2
+        version: 27.5.2
+      cspell:
+        specifier: ~6.19.2
+        version: 6.19.2
+      jest:
+        specifier: ~27.5.1
+        version: 27.5.1(ts-node@10.9.1)
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      nyc:
+        specifier: ~15.1.0
+        version: 15.1.0
+      prettier:
+        specifier: ~2.8.0
+        version: 2.8.7
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      ts-jest:
+        specifier: ~27.1.5
+        version: 27.1.5(@babel/core@7.23.2)(@types/jest@27.5.2)(jest@27.5.1)(typescript@4.9.5)
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
       typescript:
         specifier: 4.9.5
         version: 4.9.5
@@ -16686,6 +16732,15 @@ packages:
       vue-resize: 2.0.0-alpha.1(vue@3.2.47)
     dev: false
 
+  /@novu/stateless@0.16.3:
+    resolution: {integrity: sha512-9wrqUluSaR9rCdDp4oUWFBwsk6OSM4P+yMaEtFGHrGmSPMcspnvXQaQoARKakuUpCXFvQlPPJq5+yaicv4o/hA==}
+    engines: {node: '>=10'}
+    dependencies:
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
+    dev: false
+
   /@npmcli/arborist@5.3.0:
     resolution: {integrity: sha512-+rZ9zgL1lnbl8Xbb1NQdMjveOMwj4lIYfcDtyJHHi5x4X8jtR6m8SXooJMZy5vmFVZ8w7A2Bnd/oX9eTuU8w5A==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
@@ -28018,7 +28073,7 @@ packages:
       '@babel/core': 7.23.2
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/babel__core': 7.20.0
+      '@types/babel__core': 7.20.3
       babel-plugin-istanbul: 6.1.1
       babel-preset-jest: 27.5.1(@babel/core@7.23.2)
       chalk: 4.1.2
@@ -32715,7 +32770,7 @@ packages:
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)
-      has: 1.0.3
+      has: 1.0.4
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -37168,7 +37223,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1(@types/node@16.11.7)(typescript@4.9.5)
+      ts-node: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -46770,11 +46825,11 @@ packages:
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
-      '@babel/code-frame': 7.21.4
+      '@babel/code-frame': 7.22.13
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.16.9
+      terser: 5.22.0
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):

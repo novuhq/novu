@@ -55,6 +55,7 @@
     "@novu/bandwidth": "^0.22.0",
     "@novu/braze": "^0.22.0",
     "@novu/bulk-sms": "^0.22.0",
+    "@novu/isend-sms": "^0.16.3",
     "@novu/burst-sms": "^0.22.0",
     "@novu/clickatell": "^0.22.0",
     "@novu/clicksend": "^0.22.0",
