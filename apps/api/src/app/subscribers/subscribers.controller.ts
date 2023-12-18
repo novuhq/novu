@@ -445,7 +445,8 @@ export class SubscribersController {
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
-    @Query() query: GetInAppNotificationsFeedForSubscriberDto
+    @Query() query: GetInAppNotificationsFeedForSubscriberDto,
+    @Body() template: GetInAppNotificationsFeedForSubscriberDto['template']
   ): Promise<PaginatedResponseDto<MessageResponseDto>> {
     let feedsQuery: string[] | undefined;
     if (query.feedIdentifier) {
@@ -461,6 +462,7 @@ export class SubscribersController {
       query: { seen: query.seen, read: query.read },
       limit: query.limit != null ? parseInt(query.limit) : 10,
       payload: query.payload,
+      template: template,
     });
 
     return await this.getNotificationsFeedUsecase.execute(command);

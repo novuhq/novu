@@ -7,7 +7,13 @@ import {
   CachedEntity,
   CachedQuery,
 } from '@novu/application-generic';
-import { MessageRepository, SubscriberEntity, SubscriberRepository } from '@novu/dal';
+import {
+  MessageEntity,
+  MessageRepository,
+  NotificationTemplateEntity,
+  SubscriberEntity,
+  SubscriberRepository,
+} from '@novu/dal';
 
 import { GetNotificationsFeedCommand } from './get-notifications-feed.command';
 import { MessagesResponseDto } from '../../dtos/message-response.dto';
@@ -79,6 +85,9 @@ export class GetNotificationsFeed {
     for (const message of feed) {
       if (message._actorId && message.actor?.type === ActorTypeEnum.USER) {
         message.actor.data = this.processUserAvatar(message.actorSubscriber);
+      }
+      if (command.template) {
+        message.template = command.template;
       }
     }
 

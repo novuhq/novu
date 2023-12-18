@@ -1,5 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { PaginationRequestDto } from '../../shared/dtos/pagination-request';
+import { NotificationTemplateEntity } from '@novu/dal';
+// import { NotificationTemplateEntity } from 'libs/dal/dist/repositories/notification-template';
 
 const LIMIT = {
   DEFAULT: 10,
@@ -34,4 +36,7 @@ export class GetInAppNotificationsFeedForSubscriberDto extends PaginationRequest
     example: 'btoa(JSON.stringify({ foo: 123 })) results in base64 encoded string like eyJmb28iOjEyM30=',
   })
   payload?: string;
+
+  @ApiPropertyOptional({ required: false, type: 'object' })
+  template?: NotificationTemplateEntity;
 }
