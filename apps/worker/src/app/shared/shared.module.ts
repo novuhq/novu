@@ -1,27 +1,27 @@
 import { Module } from '@nestjs/common';
 import {
+  ChangeRepository,
   DalService,
-  UserRepository,
-  OrganizationRepository,
   EnvironmentRepository,
   ExecutionDetailsRepository,
-  NotificationTemplateRepository,
-  SubscriberRepository,
-  NotificationRepository,
-  MessageRepository,
-  NotificationGroupRepository,
-  MessageTemplateRepository,
-  MemberRepository,
+  FeedRepository,
+  IntegrationRepository,
+  JobRepository,
   LayoutRepository,
   LogRepository,
-  IntegrationRepository,
-  ChangeRepository,
-  JobRepository,
-  FeedRepository,
+  MemberRepository,
+  MessageRepository,
+  MessageTemplateRepository,
+  NotificationGroupRepository,
+  NotificationRepository,
+  NotificationTemplateRepository,
+  OrganizationRepository,
   SubscriberPreferenceRepository,
+  SubscriberRepository,
+  TenantRepository,
   TopicRepository,
   TopicSubscribersRepository,
-  TenantRepository,
+  UserRepository,
   WorkflowOverrideRepository,
 } from '@novu/dal';
 import {
@@ -33,29 +33,31 @@ import {
   createNestLoggingModuleOptions,
   CreateNotificationJobs,
   CreateSubscriber,
+  CreateTenant,
   DalServiceHealthIndicator,
   DigestFilterSteps,
-  DigestFilterStepsBackoff,
-  DigestFilterStepsRegular,
-  DigestFilterStepsTimed,
   distributedLockService,
   EventsDistributedLockService,
   featureFlagsService,
+  GetTenant,
+  getUseMergedDigestId,
   InvalidateCacheService,
   LoggerModule,
+  MetricsModule,
   ProcessSubscriber,
+  ProcessTenant,
+  QueuesModule,
   StorageHelperService,
   storageService,
   UpdateSubscriber,
   UpdateTenant,
-  GetTenant,
-  CreateTenant,
-  ProcessTenant,
-  getUseMergedDigestId,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
 import { CreateLog } from './logs';
+import { JobTopicNameEnum } from '@novu/shared';
+import { ActiveJobsMetricService } from '../workflow/services';
+import { UNIQUE_WORKER_DEPENDENCIES } from '../../config/worker-init.config';
 
 const DAL_MODELS = [
   UserRepository,
@@ -105,9 +107,6 @@ const PROVIDERS = [
   dalService,
   DalServiceHealthIndicator,
   DigestFilterSteps,
-  DigestFilterStepsBackoff,
-  DigestFilterStepsRegular,
-  DigestFilterStepsTimed,
   distributedLockService,
   EventsDistributedLockService,
   featureFlagsService,
@@ -122,10 +121,17 @@ const PROVIDERS = [
   CreateTenant,
   ProcessTenant,
   ...DAL_MODELS,
+  ActiveJobsMetricService,
 ];
 
 @Module({
   imports: [
+    MetricsModule,
+    QueuesModule.forRoot(
+      UNIQUE_WORKER_DEPENDENCIES.length
+        ? [JobTopicNameEnum.ACTIVE_JOBS_METRIC, ...UNIQUE_WORKER_DEPENDENCIES]
+        : undefined
+    ),
     LoggerModule.forRoot(
       createNestLoggingModuleOptions({
         serviceName: packageJson.name,
@@ -134,6 +140,6 @@ const PROVIDERS = [
     ),
   ],
   providers: [...PROVIDERS],
-  exports: [...PROVIDERS, LoggerModule],
+  exports: [...PROVIDERS, LoggerModule, QueuesModule],
 })
 export class SharedModule {}

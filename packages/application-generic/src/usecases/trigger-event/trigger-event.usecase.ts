@@ -7,7 +7,6 @@ import {
   JobRepository,
   NotificationTemplateRepository,
   SubscriberEntity,
-  SubscriberRepository,
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
@@ -32,7 +31,6 @@ import {
 import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-recipients.use-case';
-import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import {
@@ -47,13 +45,11 @@ export class TriggerEvent {
   constructor(
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
-    private subscriberRepository: SubscriberRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private mapTriggerRecipients: MapTriggerRecipients,
-    private subscriberProcessQueueService: SubscriberProcessQueueService,
     private triggerBroadcast: TriggerBroadcast,
     private triggerMulticast: TriggerMulticast
   ) {}
@@ -64,7 +60,7 @@ export class TriggerEvent {
       const mappedCommand = {
         ...command,
         tenant: this.mapTenant(command.tenant),
-        actor: this.mapTriggerRecipients.mapSubscriber(command.actor),
+        actor: this.mapTriggerRecipients.mapActor(command.actor),
       };
 
       Logger.debug(mappedCommand.actor);
@@ -153,6 +149,17 @@ export class TriggerEvent {
           await this.triggerBroadcast.execute(
             TriggerBroadcastCommand.create({
               ...mappedCommand,
+              actor: actorProcessed,
+              template,
+            })
+          );
+          break;
+        }
+        default: {
+          await this.triggerMulticast.execute(
+            TriggerMulticastCommand.create({
+              addressingType: AddressingTypeEnum.MULTICAST,
+              ...(mappedCommand as TriggerMulticastCommand),
               actor: actorProcessed,
               template,
             })
