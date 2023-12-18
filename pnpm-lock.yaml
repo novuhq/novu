@@ -695,9 +695,6 @@ importers:
       '@novu/design-system':
         specifier: ^0.22.0
         version: link:../../libs/design-system
-      '@novu/ee-translation-web':
-        specifier: ^0.22.0
-        version: link:../../enterprise/packages/translation-web
       '@novu/notification-center':
         specifier: ^0.22.0
         version: link:../../packages/notification-center
@@ -902,6 +899,10 @@ importers:
       zod:
         specifier: ^3.22.4
         version: 3.22.4
+    optionalDependencies:
+      '@novu/ee-translation-web':
+        specifier: ^0.22.0
+        version: link:../../enterprise/packages/translation-web
     devDependencies:
       '@babel/polyfill':
         specifier: ^7.12.1
@@ -13699,7 +13700,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.23.2
+      '@babel/runtime': 7.21.0
       '@emotion/babel-plugin': 11.10.6
       '@emotion/is-prop-valid': 1.2.0
       '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
@@ -26038,7 +26039,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@eslint-community/regexpp': 4.9.1
+      '@eslint-community/regexpp': 4.5.0
       '@typescript-eslint/parser': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
       '@typescript-eslint/scope-manager': 5.58.0
       '@typescript-eslint/type-utils': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
