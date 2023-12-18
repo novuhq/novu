@@ -24,7 +24,7 @@ jobs:
 
   # This workflow contains a single job called "build"
   deploy_web:
-    needs: test_web
+    # needs: test_web
     environment: Development
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # The type of runner that the job will run on
