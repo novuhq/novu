@@ -29,7 +29,14 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v3
+        name: Checkout with submodules
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
       - uses: ./.github/actions/setup-project
+        with:
+          submodules: true
 
       # Runs a single command using the runners shell
       - name: Build
