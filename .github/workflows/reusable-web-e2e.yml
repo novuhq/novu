@@ -59,10 +59,16 @@ jobs:
         with:
           cypress: true
 
+      - name: Build web
+        run: CI='' pnpm build:web
+
+      - name: Lint web
+        run: cd ./apps/web && pnpm lint
+
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint,build
-          projects: '@novu/web,@novu/api,@novu/worker'
+          projects: '@novu/api,@novu/worker'
 
       - uses: ./.github/actions/start-localstack
       - uses: ./.github/actions/setup-redis-cluster
