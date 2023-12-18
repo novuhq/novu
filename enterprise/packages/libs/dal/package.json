@@ -13,7 +13,7 @@
     "lint": "eslint src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
     "lint:fix": "pnpm lint -- --fix",
-    "symlink": "ln -s ../../../.source/libs/dal/src ./src"
+    "symlink": "ln -s ../../../../.source/libs/dal/src ./src"
   },
   "author": "",
   "license": "ISC",
