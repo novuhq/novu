@@ -60,10 +60,6 @@ jobs:
           cypress: true
           submodules: ${{ inputs.ee }}
 
-      - name: Build Submodules
-        if: ${{ inputs.ee }}
-        run: CI='' pnpm build-ee
-
       - name: Build web
         run: CI='' pnpm build:web
 
@@ -75,10 +71,6 @@ jobs:
         with:
           targets: lint,build
           projects: '@novu/api,@novu/worker'
-
-      - name: Build Submodules
-        if: ${{ inputs.ee }}
-        run: CI='' pnpm build-ee
 
       - uses: ./.github/actions/start-localstack
       - uses: ./.github/actions/setup-redis-cluster
