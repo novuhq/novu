@@ -99,7 +99,7 @@ jobs:
 
         # Runs a single command using the runners shell
       - name: Build API
-        run: CI='' pnpm build:api
+        run: CI='' pnpm build:api --skip-nx-cache
 
       - name: Build Submodules
         if: |
