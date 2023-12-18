@@ -182,8 +182,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     job: JobEntity,
     digestKey?: string,
     digestValue?: string | number,
-    digestMeta?: IDigestRegularMetadata,
-    filtered = false
+    digestMeta?: IDigestRegularMetadata
   ): Promise<IDelayOrDigestJobResult> {
     const isBackoff = job.digest?.type === DigestTypeEnum.BACKOFF || (job.digest as IDigestRegularMetadata)?.backoff;
     if (isBackoff) {
@@ -206,27 +205,6 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
           digestResult: DigestCreationResultEnum.SKIPPED,
         };
       }
-    }
-
-    if (filtered) {
-      await this._model.updateOne(
-        {
-          _environmentId: job._environmentId,
-          _templateId: job._templateId,
-          _subscriberId: job._subscriberId,
-          _id: job._id,
-        },
-        {
-          $set: {
-            status: JobStatusEnum.DELAYED,
-          },
-        }
-      );
-
-      return {
-        activeDigestId: job._id,
-        digestResult: DigestCreationResultEnum.CREATED,
-      };
     }
 
     const delayedDigestJob = await this._model.findOne(
