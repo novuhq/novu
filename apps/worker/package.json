@@ -35,6 +35,7 @@
     "@novu/shared": "^0.22.0",
     "@novu/stateless": "^0.22.0",
     "@novu/testing": "^0.22.0",
+    "@novu/ee-translation": "^0.22.0",
     "@sentry/node": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.13.0",
