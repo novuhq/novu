@@ -127,6 +127,6 @@ export class ExternalServicesRoute {
       return;
     }
 
-    return !!(await this.wsGateway.server.sockets.in(command.userId).fetchSockets()).length;
+    return !!(await this.wsGateway.server.in(command.userId).fetchSockets()).length;
   }
 }

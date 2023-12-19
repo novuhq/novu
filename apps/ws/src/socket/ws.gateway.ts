@@ -124,9 +124,9 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   }
 
   private async getActiveConnections(socket: Socket, subscriberId: string) {
-    const activeSockets = await socket.in(subscriberId).fetchSockets();
+    const activeSockets = await this.server?.in(subscriberId).fetchSockets();
 
-    return activeSockets.length;
+    return activeSockets?.length || 0;
   }
 
   private async processConnectionRequest(connection: Socket) {
