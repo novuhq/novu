@@ -51,7 +51,7 @@ export const BackOffFields = () => {
               return <Switch data-test-id="backoff-switch" checked={field.value === true} onChange={field.onChange} />;
             }}
           />
-          <Text ml={10} sx={{ color: colors.B60 }}>
+          <Text ml={10} color={colors.B60}>
             Only frequent events
           </Text>
         </Group>

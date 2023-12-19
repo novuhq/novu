@@ -39,6 +39,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
