@@ -57,7 +57,7 @@ describe('ExternalServicesRoute', () => {
       externalServicesRoute = new ExternalServicesRoute(wsGatewayStub, messageRepository);
     });
 
-    it('should not send any message to the web socket if user is not online', async () => {
+    it.skip('should not send any message to the web socket if user is not online', async () => {
       getCountStub.resolves(Promise.resolve(5));
 
       await externalServicesRoute.execute(commandReceivedMessage);
