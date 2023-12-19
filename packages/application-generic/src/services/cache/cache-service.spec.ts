@@ -1,13 +1,8 @@
-import {
-  CacheService,
-  CachingConfig,
-  ICacheService,
-  splitKey,
-} from './cache.service';
 import * as sinon from 'sinon';
 
-import { CacheInMemoryProviderService } from '../in-memory-provider';
+import { CacheService, ICacheService, splitKey } from './cache.service';
 import { MockCacheService } from './cache-service.mock';
+import { CacheInMemoryProviderService } from '../in-memory-provider/services';
 
 describe('Cache Service - Redis Instance - Non Cluster Mode', () => {
   let cacheService: CacheService;
@@ -17,7 +12,7 @@ describe('Cache Service - Redis Instance - Non Cluster Mode', () => {
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
     cacheInMemoryProviderService = new CacheInMemoryProviderService();
-    expect(cacheInMemoryProviderService.isCluster).toBe(false);
+    expect(cacheInMemoryProviderService.runningInCluster()).toBe(false);
 
     cacheService = new CacheService(cacheInMemoryProviderService);
     await cacheService.initialize();
@@ -74,7 +69,7 @@ describe('Cache Service - Cluster Mode', () => {
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
     cacheInMemoryProviderService = new CacheInMemoryProviderService();
-    expect(cacheInMemoryProviderService.isCluster).toBe(true);
+    expect(cacheInMemoryProviderService.runningInCluster()).toBe(true);
 
     cacheService = new CacheService(cacheInMemoryProviderService);
     await cacheService.initialize();

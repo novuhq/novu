@@ -2,10 +2,8 @@ import Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
 import { Injectable, Logger } from '@nestjs/common';
 
-import {
-  InMemoryProviderClient,
-  CacheInMemoryProviderService,
-} from '../in-memory-provider';
+import { CacheInMemoryProviderService } from '../in-memory-provider/services';
+import { InMemoryProviderClient } from '../in-memory-provider/shared/types';
 
 const LOG_CONTEXT = 'DistributedLock';
 

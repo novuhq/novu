@@ -1,14 +1,9 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
+import { CacheInMemoryProviderService } from '../in-memory-provider/services';
 
 import { DistributedLockService } from './distributed-lock.service';
-import { FeatureFlagsService } from '../feature-flags.service';
-import {
-  InMemoryProviderClient,
-  InMemoryProviderEnum,
-  CacheInMemoryProviderService,
-} from '../in-memory-provider';
 
 const originalRedisCacheServiceHost = (process.env.REDIS_CACHE_SERVICE_HOST =
   process.env.REDIS_CACHE_SERVICE_HOST ?? 'localhost');
@@ -298,10 +293,9 @@ describe('Distributed Lock Service', () => {
       process.env.REDIS_CLUSTER_SERVICE_PORTS = '';
 
       cacheInMemoryProviderService = new CacheInMemoryProviderService();
-      expect(
-        cacheInMemoryProviderService.inMemoryProviderService
-          .inMemoryProviderConfig.host
-      ).toEqual('localhost');
+      expect(cacheInMemoryProviderService.getConfig().host).toEqual(
+        'localhost'
+      );
       distributedLockService = new DistributedLockService(undefined);
       // If no initializing the service is like the client is not properly set
     });

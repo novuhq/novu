@@ -1,12 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 
 import { QUERY_PREFIX } from './key-builders';
+
+import { addJitter } from '../../resilience';
+import { CacheInMemoryProviderService } from '../in-memory-provider/services';
 import {
-  CacheInMemoryProviderService,
   InMemoryProviderClient,
   Pipeline,
-} from '../in-memory-provider';
-import { addJitter } from '../../resilience';
+} from '../in-memory-provider/shared/types';
 
 const LOG_CONTEXT = 'CacheService';
 
@@ -48,7 +49,7 @@ export class CacheService implements ICacheService {
 
     await this.cacheInMemoryProviderService.initialize();
 
-    this.cacheTtl = this.cacheInMemoryProviderService.getTtl();
+    this.cacheTtl = this.cacheInMemoryProviderService.getConfig().ttl;
   }
 
   public get client(): InMemoryProviderClient {
@@ -56,7 +57,7 @@ export class CacheService implements ICacheService {
   }
 
   public getStatus(): string {
-    return this.cacheInMemoryProviderService.getClientStatus();
+    return this.cacheInMemoryProviderService.getClientStatus() as string;
   }
 
   public getTtl(): number {
@@ -123,8 +124,7 @@ export class CacheService implements ICacheService {
       pipeline.sadd(credentials, query);
       pipeline.expire(
         credentials,
-        this.cacheInMemoryProviderService.getTtl() +
-          this.getTtlInSeconds(options)
+        this.cacheTtl + this.getTtlInSeconds(options)
       );
 
       pipeline.set(key, value, 'EX', this.getTtlInSeconds(options));

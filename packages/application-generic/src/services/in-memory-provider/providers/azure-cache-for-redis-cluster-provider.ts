@@ -71,13 +71,15 @@ export class AzureCacheForRedisProvider extends InMemoryProvider {
     };
 
     Logger.log(
-      `Initializing Azure Cache For Redis Cluster Provider with ${instances?.length} instances and auto-pipelining as ${enableAutoPipelining}`
+      `Initializing Azure Cache For Redis Cluster Provider with ${instances?.length} ` +
+        `instances and auto-pipelining as ${enableAutoPipelining}`
     );
 
     this.client = new Redis.Cluster(instances, clusterOptions);
 
     return true;
   }
+
   getProviderId(): InMemoryProviderEnum {
     return this.providerId;
   }
@@ -93,12 +95,12 @@ export class AzureCacheForRedisProvider extends InMemoryProvider {
     this.client.status === this.CLIENT_READY;
 
   validateConfig(): boolean {
-    const validateConnections = !!this.config.host && !!this.config.port;
+    const validateAddress = !!this.config.host && !!this.config.port;
 
     const validateInstances =
       this.config.instances && this.config.instances.length > 0;
 
-    return validateConnections && validateInstances;
+    return validateAddress && validateInstances;
   }
 
   getAzureCacheForRedisClusterProviderConfig = (

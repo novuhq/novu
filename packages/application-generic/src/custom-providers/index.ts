@@ -1,13 +1,11 @@
 import {
   AnalyticsService,
   BullMqService,
-  CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
   ExecutionLogQueueService,
   FeatureFlagsService,
   InboundParseQueueService,
-  ReadinessService,
   StandardQueueService,
   SubscriberProcessQueueService,
   WebSocketsQueueService,
@@ -18,6 +16,7 @@ import {
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,
 } from '../usecases';
+import { CacheInMemoryProviderService } from '../services';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
