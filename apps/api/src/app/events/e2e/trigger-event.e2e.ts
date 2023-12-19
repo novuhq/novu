@@ -450,6 +450,177 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(executionDetails.length).to.equal(0);
     });
 
+    it('should digest events with filters', async function () {
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: FieldOperatorEnum.IS_DEFINED,
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.SMS,
+            content: 'total digested: {{step.total_count}}',
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            exclude: false,
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            exclude: false,
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.SMS,
+      });
+
+      expect(messagesAfter.length).to.equal(1);
+      expect(messagesAfter && messagesAfter[0].content).to.include('total digested: 2');
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DIGEST,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails.length).to.equal(0);
+    });
+
+    it('should not aggregate a filtered digest into a non filtered digest', async function () {
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: FieldOperatorEnum.IS_DEFINED,
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.SMS,
+            content: 'total digested: {{step.total_count}}',
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            exclude: false,
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {},
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.SMS,
+      });
+
+      expect(messagesAfter.length).to.equal(2);
+      expect(messagesAfter && messagesAfter[0].content).to.include('total digested: 1');
+      expect(messagesAfter && messagesAfter[1].content).to.include('total digested: 0');
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DIGEST,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails.length).to.equal(1);
+    });
+
     it('should not filter delay step', async function () {
       const firstStepUuid = uuid();
       template = await session.createTemplate({

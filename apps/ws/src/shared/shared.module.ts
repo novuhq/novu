@@ -11,7 +11,12 @@ import {
   MessageRepository,
   MemberRepository,
 } from '@novu/dal';
-import { AnalyticsService, DalServiceHealthIndicator, QueuesModule } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  DalServiceHealthIndicator,
+  WebSocketsInMemoryProviderService,
+  QueuesModule,
+} from '@novu/application-generic';
 
 import { SubscriberOnlineService } from './subscriber-online';
 import { JobTopicNameEnum } from '@novu/shared';
@@ -47,7 +52,14 @@ const analyticsService = {
   },
 };
 
-const PROVIDERS = [analyticsService, dalService, DalServiceHealthIndicator, SubscriberOnlineService, ...DAL_MODELS];
+const PROVIDERS = [
+  analyticsService,
+  dalService,
+  DalServiceHealthIndicator,
+  SubscriberOnlineService,
+  WebSocketsInMemoryProviderService,
+  ...DAL_MODELS,
+];
 
 @Module({
   imports: [

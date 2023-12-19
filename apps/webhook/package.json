@@ -8,7 +8,8 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | docker build --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | docker buildx build --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook",
+    "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook --load",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "npm run start:dev",
     "start:dev": "cross-env TZ=UTC nest start --watch",
