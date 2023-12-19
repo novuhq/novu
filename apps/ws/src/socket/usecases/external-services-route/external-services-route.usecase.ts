@@ -17,6 +17,8 @@ export class ExternalServicesRoute {
     const isOnline = await this.connectionExist(command);
 
     if (!isOnline) {
+      Logger.log(`Connection does not exist, ignoring command for ${command.userId}`, LOG_CONTEXT);
+
       return;
     }
 
@@ -37,10 +39,10 @@ export class ExternalServicesRoute {
     const { message, messageId } = command.payload || {};
     // TODO: Retro-compatibility for a bit just in case stalled messages
     if (message) {
-      Logger.verbose('Sending full message in the payload', LOG_CONTEXT);
+      Logger.log('Sending full message in the payload', LOG_CONTEXT);
       await this.wsGateway.sendMessage(command.userId, command.event, command.payload);
     } else if (messageId) {
-      Logger.verbose('Sending messageId in the payload, we need to retrieve the full message', LOG_CONTEXT);
+      Logger.log(`Sending messageId: ${messageId} in the payload, we need to retrieve the full message`, LOG_CONTEXT);
       const storedMessage = await this.messageRepository.findOne({
         _id: messageId,
         _environmentId: command._environmentId,
