@@ -58,11 +58,13 @@ jobs:
         id: setup-project
         with:
           cypress: true
+          submodules: true
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint,build
           projects: '@novu/web,@novu/api,@novu/worker'
+          args: --skip-nx-cache
 
       - uses: ./.github/actions/start-localstack
       - uses: ./.github/actions/setup-redis-cluster
@@ -100,6 +102,25 @@ jobs:
           chrome-version: "stable"
       - run: |
           echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
+
+      - name: Cypress run EE e2e
+        if: ${{ inputs.ee }}
+        uses: cypress-io/github-action@v6
+        env:
+          NODE_ENV: test
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
+          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
+          CYPRESS_IS_CI: true
+        with:
+          working-directory: apps/web
+          browser: "${{ env.BROWSER_PATH }}"
+          record: false
+          parallel: false
+          install: false
+          config-file: cypress.config.ts
+          spec: "cypress/tests/**/*.*-ee.{js,jsx,ts,tsx}"
 
       - name: Cypress run e2e
         uses: cypress-io/github-action@v6
