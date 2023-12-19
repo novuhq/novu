@@ -541,6 +541,7 @@
     "stdev",
     "Stdev",
     "openapi",
+    "headerapikey",
   ],
   "flagWords": [],
   "patterns": [

@@ -4,6 +4,8 @@ import { WithRequired, testHttpHeaderEnumValidity } from './utils.types';
 export enum HttpRequestHeaderKeysEnum {
   AUTHORIZATION = 'Authorization',
   USER_AGENT = 'User-Agent',
+  CONTENT_TYPE = 'Content-Type',
+  SENTRY_TRACE = 'Sentry-Trace',
 }
 testHttpHeaderEnumValidity(HttpRequestHeaderKeysEnum);
 

@@ -19,7 +19,7 @@ import { GetApiKeys } from './usecases/get-api-keys/get-api-keys.usecase';
 import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environment';
 import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
 import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiKey } from '../shared/dtos/api-key';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
@@ -33,7 +33,7 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 @ApiCommonResponses()
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiTags('Environments')
 export class EnvironmentsController {
   constructor(
