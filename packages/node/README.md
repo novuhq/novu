@@ -619,7 +619,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.bulkTrigger([
+await novu.events.bulkTrigger([
   {
     name: "workflowIdentifier_1",
     to: "subscriberId_1",
@@ -666,7 +666,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.broadcast("workflowIdentifier", {
+await novu.events.broadcast("workflowIdentifier", {
   payload: {
     customKey: "customValue",
     customKey1: {
@@ -689,7 +689,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.cancel("transactionId");
+await novu.events.cancel("transactionId");
 ```
 
 ### Messages
