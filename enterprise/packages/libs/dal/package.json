@@ -6,13 +6,14 @@
   "scripts": {
     "afterinstall": "pnpm build",
     "prebuild": "rimraf dist",
-    "build": "echo 'skip build in the ci'",
-    "build-ee-skip": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
+    "build": "node ./check-ee.mjs",
+    "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.build.json",
     "build:watch": "cross-env node_modules/.bin/tsc -p tsconfig.build.json -w --preserveWatchOutput",
     "precommit": "lint-staged",
     "lint": "eslint src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
-    "lint:fix": "pnpm lint -- --fix"
+    "lint:fix": "pnpm lint -- --fix",
+    "symlink": "ln -s ../../../../.source/libs/dal/src ./src"
   },
   "author": "",
   "license": "ISC",

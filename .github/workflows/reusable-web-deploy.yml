@@ -56,9 +56,15 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
+        name: Checkout with submodules
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
+          submodules: true
 
       - name: Create env file
         working-directory: apps/web

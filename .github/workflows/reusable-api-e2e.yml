@@ -99,16 +99,9 @@ jobs:
 
         # Runs a single command using the runners shell
       - name: Build API
-        run: CI='' pnpm build:api
-
-      - name: Build Submodules
-        if: |
-          ${{ needs.check_submodule_token.outputs.has_token == 'true' }} &&
-          ${{ inputs.ee }}
-        run: CI='' pnpm build-ee
+        run: CI='' pnpm build:api --skip-nx-cache
 
       - name: Run E2E tests
-        if: false
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |

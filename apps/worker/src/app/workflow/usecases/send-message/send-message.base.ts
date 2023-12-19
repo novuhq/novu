@@ -1,3 +1,6 @@
+import * as i18next from 'i18next';
+import { ModuleRef } from '@nestjs/core';
+import { Logger } from '@nestjs/common';
 import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -20,6 +23,7 @@ import {
 
 import { SendMessageType } from './send-message-type.usecase';
 import { CreateLog } from '../../../shared/logs';
+import { PlatformException } from '../../../shared/utils';
 import { SendMessageCommand } from './send-message.command';
 
 export abstract class SendMessageBase extends SendMessageType {
@@ -31,7 +35,8 @@ export abstract class SendMessageBase extends SendMessageType {
     protected subscriberRepository: SubscriberRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
-    protected selectVariant: SelectVariant
+    protected selectVariant: SelectVariant,
+    protected moduleRef: ModuleRef
   ) {
     super(messageRepository, createLogUsecase, executionLogQueueService);
   }
@@ -141,5 +146,28 @@ export abstract class SendMessageBase extends SendMessageType {
     }
 
     return messageTemplate;
+  }
+
+  protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
+    try {
+      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+        if (!require('@novu/ee-translation')?.TranslationsService) {
+          throw new PlatformException('Translation module is not loaded');
+        }
+        const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
+        const { namespaces, resources } = await service.getTranslationsList(environmentId, organizationId);
+
+        await i18next.init({
+          resources,
+          ns: namespaces,
+          defaultNS: false,
+          nsSeparator: '.',
+          lng: locale || 'en',
+          compatibilityJSON: 'v2',
+        });
+      }
+    } catch (e) {
+      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+    }
   }
 }
