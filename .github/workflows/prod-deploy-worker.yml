@@ -130,7 +130,7 @@ jobs:
   newrelic:
     runs-on: ubuntu-latest
     name: New Relic Deploy
-    needs: deploy_prod_worker_us
+    needs: deploy_prod_workers_us
     environment: Production
     steps:
       # This step builds a var with the release tag value to use later
