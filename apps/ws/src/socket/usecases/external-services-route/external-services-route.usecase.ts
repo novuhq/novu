@@ -84,6 +84,8 @@ export class ExternalServicesRoute {
 
   private async sendUnseenCountChange(command: ExternalServicesRouteCommand) {
     if (!command._environmentId) {
+      Logger.warn('No environmentId found, unable to send unseen count', LOG_CONTEXT);
+
       return;
     }
 

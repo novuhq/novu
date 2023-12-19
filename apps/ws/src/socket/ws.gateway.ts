@@ -165,6 +165,8 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
       return;
     }
 
+    Logger.log(`Sending event ${event} message to ${userId}`, LOG_CONTEXT);
+
     this.server.to(userId).emit(event, data);
   }
 
