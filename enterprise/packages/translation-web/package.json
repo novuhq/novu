@@ -5,6 +5,7 @@
   "repository": "https://github.com/novuhq/novu",
   "license": "ISC",
   "author": "",
+  "private": true,
   "sideEffects": false,
   "module": "dist/esm/index.js",
   "types": "dist/types/index.d.ts",

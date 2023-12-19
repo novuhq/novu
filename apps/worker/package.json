@@ -35,7 +35,6 @@
     "@novu/shared": "^0.22.0",
     "@novu/stateless": "^0.22.0",
     "@novu/testing": "^0.22.0",
-    "@novu/ee-translation": "^0.22.0",
     "@sentry/node": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.13.0",
@@ -83,6 +82,9 @@
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
     "typescript": "4.9.5"
+  },
+  "optionalDependencies": {
+    "@novu/ee-translation": "^0.22.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

@@ -285,12 +285,6 @@ importers:
       '@novu/dal':
         specifier: ^0.22.0
         version: link:../../libs/dal
-      '@novu/ee-auth':
-        specifier: ^0.22.0
-        version: link:../../enterprise/packages/auth
-      '@novu/ee-translation':
-        specifier: ^0.22.0
-        version: link:../../enterprise/packages/translation
       '@novu/node':
         specifier: ^0.22.0
         version: link:../../packages/node
@@ -432,6 +426,13 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
+    optionalDependencies:
+      '@novu/ee-auth':
+        specifier: ^0.22.0
+        version: link:../../enterprise/packages/auth
+      '@novu/ee-translation':
+        specifier: ^0.22.0
+        version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
@@ -1344,9 +1345,6 @@ importers:
       '@novu/dal':
         specifier: ^0.22.0
         version: link:../../libs/dal
-      '@novu/ee-translation':
-        specifier: ^0.22.0
-        version: link:../../enterprise/packages/translation
       '@novu/shared':
         specifier: ^0.22.0
         version: link:../../libs/shared
@@ -1428,6 +1426,10 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
+    optionalDependencies:
+      '@novu/ee-translation':
+        specifier: ^0.22.0
+        version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
