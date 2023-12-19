@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { addMilliseconds } from 'date-fns';
+import { addMilliseconds, addMonths } from 'date-fns';
 import {
   JobEntity,
   JobStatusEnum,
@@ -185,7 +185,7 @@ export class CreateNotificationJobs {
        * If the user has entered an incorrect negative delay,
        * we'll accept it as a temporary solution to enable printing error execution details later in the process when a job is available.
        */
-      return Date.now();
+      return addMonths(Date.now(), 1);
     }
   }
 }
