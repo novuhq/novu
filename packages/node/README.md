@@ -1161,9 +1161,8 @@ import { Novu } from '@novu/node';
 const novu = new Novu('<NOVU_API_KEY>');
 
 const executionDetailsParams = {
-  page: 0, //optional
-  pageSize: 20,
-  key: "topicKey"
+  subscriberId: 'subscriberId_123',
+  notificationId: 'notificationid_abcd
 }
 
 // get execution details
