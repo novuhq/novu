@@ -105,9 +105,9 @@ describe('Workflow Queue service', () => {
         _userId,
       };
 
-      await workflowQueueService.addMinimalJob({
+      await workflowQueueService.add({
         name: jobId,
-        data: jobData,
+        data: jobData as any,
         groupId: _organizationId,
       });
 

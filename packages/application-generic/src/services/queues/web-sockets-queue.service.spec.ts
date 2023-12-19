@@ -94,9 +94,9 @@ describe('WebSockets Queue service', () => {
         _userId,
       };
 
-      await webSocketsQueueService.addMinimalJob({
+      await webSocketsQueueService.add({
         name: jobId,
-        data: jobData,
+        data: jobData as any,
         groupId: _organizationId,
       });
 

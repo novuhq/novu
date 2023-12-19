@@ -93,9 +93,9 @@ describe('Inbound Mail Service', () => {
         _organizationId,
         _userId,
       };
-      await inboundMailService.inboundParseQueueService.addMinimalJob({
+      await inboundMailService.inboundParseQueueService.add({
         name: jobId,
-        data: jobData,
+        data: jobData as any,
         groupId: _organizationId,
       });
 

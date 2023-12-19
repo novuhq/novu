@@ -103,7 +103,7 @@ describe('Inbound Parse Queue service', () => {
         messageId: '123',
       };
 
-      await inboundParseQueueService.addMinimalJob({
+      await inboundParseQueueService.add({
         name: jobId,
         data: jobData as any,
         groupId: _organizationId,

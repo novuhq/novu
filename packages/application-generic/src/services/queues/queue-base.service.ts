@@ -86,30 +86,6 @@ export class QueueBaseService {
     );
   }
 
-  public async addMinimalJob(params: IJobParams) {
-    const { name, groupId, data, options } = params;
-
-    const jobData: IJobData = data
-      ? {
-          _environmentId: data._environmentId,
-          _id: data._id,
-          _organizationId: data._organizationId,
-          _userId: data._userId,
-        }
-      : undefined;
-
-    await this.instance.add(
-      name,
-      jobData,
-      {
-        removeOnComplete: true,
-        removeOnFail: true,
-        ...options,
-      },
-      groupId
-    );
-  }
-
   public async add(params: IJobParams) {
     const jobOptions = {
       removeOnComplete: true,
