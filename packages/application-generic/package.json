@@ -133,7 +133,7 @@
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
     "rrule": "^2.7.2",
-    "rxjs": "7.8.1"
+    "rxjs": "7.8.1",
     "@nestjs/passport": "^10.0.1",
     "jsonwebtoken": "9.0.0",
     "i18next": "^23.7.6"
