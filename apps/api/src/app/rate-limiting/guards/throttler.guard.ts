@@ -42,7 +42,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
   /**
    * Thin wrapper around the ThrottlerGuard's canActivate method.
    */
-  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
+  async intercept(context: ExecutionContext, next: CallHandler) {
     try {
       await this.canActivate(context);
 
