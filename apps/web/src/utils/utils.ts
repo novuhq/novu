@@ -1,7 +1,3 @@
-export function isBrowser() {
-  return typeof window !== 'undefined';
-}
-
 export function formatNumber(num: number, digits: number) {
   const lookup = [
     { value: 1, symbol: '' },

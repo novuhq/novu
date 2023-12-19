@@ -256,14 +256,14 @@ importers:
         specifier: ~2.0.0
         version: 2.0.0(@nestjs/common@10.2.2)(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/common':
-        specifier: ^10.2.2
+        specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core':
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/jwt':
-        specifier: ^10.1.0
-        version: 10.1.0(@nestjs/common@10.2.2)
+        specifier: 10.2.0
+        version: 10.2.0(@nestjs/common@10.2.2)
       '@nestjs/passport':
         specifier: ^10.0.1
         version: 10.0.1(@nestjs/common@10.2.2)(passport@0.6.0)
@@ -357,6 +357,9 @@ importers:
       helmet:
         specifier: ^6.0.1
         version: 6.1.4
+      i18next:
+        specifier: ^23.7.6
+        version: 23.7.11
       ioredis:
         specifier: 5.3.2
         version: 5.3.2
@@ -423,6 +426,13 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
+    optionalDependencies:
+      '@novu/ee-auth':
+        specifier: ^0.22.0
+        version: link:../../enterprise/packages/auth
+      '@novu/ee-translation':
+        specifier: ^0.22.0
+        version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
@@ -609,8 +619,8 @@ importers:
   apps/web:
     dependencies:
       '@ant-design/icons':
-        specifier: ^4.6.2
-        version: 4.8.0(react-dom@17.0.2)(react@17.0.2)
+        specifier: 4.6.2
+        version: 4.6.2(react-dom@17.0.2)(react@17.0.2)
       '@babel/plugin-proposal-optional-chaining':
         specifier: ^7.20.7
         version: 7.21.0(@babel/core@7.23.2)
@@ -692,6 +702,9 @@ importers:
       '@novu/shared':
         specifier: ^0.22.0
         version: link:../../libs/shared
+      '@novu/shared-web':
+        specifier: ^0.22.0
+        version: link:../../libs/shared-web
       '@segment/analytics-next':
         specifier: ^1.48.0
         version: 1.51.3
@@ -842,6 +855,9 @@ importers:
       react-is:
         specifier: ^18.2.0
         version: 18.2.0
+      react-joyride:
+        specifier: ^2.5.3
+        version: 2.5.3(react-dom@17.0.2)(react@17.0.2)
       react-password-strength-bar:
         specifier: ^0.4.1
         version: 0.4.1(react-dom@17.0.2)(react@17.0.2)
@@ -884,6 +900,10 @@ importers:
       zod:
         specifier: ^3.22.4
         version: 3.22.4
+    optionalDependencies:
+      '@novu/ee-translation-web':
+        specifier: ^0.22.0
+        version: link:../../enterprise/packages/translation-web
     devDependencies:
       '@babel/polyfill':
         specifier: ^7.12.1
@@ -969,9 +989,6 @@ importers:
       react-error-overlay:
         specifier: 6.0.11
         version: 6.0.11
-      react-joyride:
-        specifier: ^2.5.3
-        version: 2.5.3(react-dom@17.0.2)(react@17.0.2)
       react-scripts:
         specifier: ^5.0.1
         version: 5.0.1(@babel/plugin-syntax-flow@7.22.5)(@babel/plugin-transform-react-jsx@7.22.15)(@swc/core@1.3.49)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)(react@17.0.2)(ts-node@10.9.1)(typescript@4.9.5)
@@ -991,7 +1008,7 @@ importers:
         specifier: ~2.0.0
         version: 2.0.0(@nestjs/common@10.2.2)(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/common':
-        specifier: ^10.2.2
+        specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core':
         specifier: ^10.2.2
@@ -1172,10 +1189,10 @@ importers:
         specifier: ^4.1.2
         version: 4.2.2
       react:
-        specifier: 17.0.2
+        specifier: ^17.0.1
         version: 17.0.2
       react-dom:
-        specifier: 17.0.2
+        specifier: ^17.0.1
         version: 17.0.2(react@17.0.2)
       react-infinite-scroll-component:
         specifier: ^6.0.0
@@ -1308,7 +1325,7 @@ importers:
         specifier: ~2.0.0
         version: 2.0.0(@nestjs/common@10.2.2)(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/common':
-        specifier: ^10.2.2
+        specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core':
         specifier: ^10.2.2
@@ -1373,6 +1390,9 @@ importers:
       helmet:
         specifier: ^6.0.1
         version: 6.1.4
+      i18next:
+        specifier: ^23.7.6
+        version: 23.7.11
       inline-css:
         specifier: ^4.0.2
         version: 4.0.2
@@ -1406,6 +1426,10 @@ importers:
       uuid:
         specifier: ^8.3.2
         version: 8.3.2
+    optionalDependencies:
+      '@novu/ee-translation':
+        specifier: ^0.22.0
+        version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
         specifier: ^6.0.0
@@ -1477,14 +1501,14 @@ importers:
         specifier: ^4.3.1
         version: 4.11.2
       '@nestjs/common':
-        specifier: ^10.2.2
+        specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core':
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/jwt':
-        specifier: ^10.1.0
-        version: 10.1.0(@nestjs/common@10.2.2)
+        specifier: 10.2.0
+        version: 10.2.0(@nestjs/common@10.2.2)
       '@nestjs/platform-express':
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)
@@ -1625,6 +1649,274 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
+  enterprise/packages/auth:
+    dependencies:
+      '@nestjs/common':
+        specifier: 10.2.2
+        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@nestjs/jwt':
+        specifier: 10.2.0
+        version: 10.2.0(@nestjs/common@10.2.2)
+      '@nestjs/passport':
+        specifier: 9.0.3
+        version: 9.0.3(@nestjs/common@10.2.2)(passport@0.6.0)
+      '@novu/application-generic':
+        specifier: ^0.22.0
+        version: link:../../../packages/application-generic
+      '@novu/dal':
+        specifier: ^0.22.0
+        version: link:../../../libs/dal
+      '@novu/shared':
+        specifier: ^0.22.0
+        version: link:../../../libs/shared
+      passport:
+        specifier: 0.6.0
+        version: 0.6.0
+      passport-google-oauth:
+        specifier: ^2.0.0
+        version: 2.0.0
+      passport-oauth2:
+        specifier: ^1.6.1
+        version: 1.7.0
+    devDependencies:
+      '@types/chai':
+        specifier: ^4.2.11
+        version: 4.3.4
+      '@types/mocha':
+        specifier: ^8.0.1
+        version: 8.2.3
+      '@types/node':
+        specifier: ^14.6.0
+        version: 14.18.42
+      '@types/sinon':
+        specifier: ^9.0.0
+        version: 9.0.11
+      chai:
+        specifier: ^4.2.0
+        version: 4.3.7
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      mocha:
+        specifier: ^8.1.1
+        version: 8.4.0
+      nodemon:
+        specifier: ^2.0.3
+        version: 2.0.22
+      sinon:
+        specifier: ^9.2.4
+        version: 9.2.4
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  enterprise/packages/libs/dal:
+    dependencies:
+      '@nestjs/common':
+        specifier: 10.2.2
+        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@novu/dal':
+        specifier: ^0.22.0
+        version: link:../../../../libs/dal
+      '@novu/shared':
+        specifier: ^0.22.0
+        version: link:../../../../libs/shared
+      mongoose:
+        specifier: ^7.5.0
+        version: 7.5.2
+      mongoose-delete:
+        specifier: ^1.0.1
+        version: 1.0.1(mongoose@7.5.2)
+      rimraf:
+        specifier: ^3.0.2
+        version: 3.0.2
+    devDependencies:
+      '@types/node':
+        specifier: ^14.6.0
+        version: 14.18.42
+      '@typescript-eslint/parser':
+        specifier: ^4.14.2
+        version: 4.33.0(eslint@7.32.0)(typescript@4.9.5)
+      eslint-plugin-prettier:
+        specifier: ^4.2.1
+        version: 4.2.1(eslint-config-prettier@8.8.0)(eslint@7.32.0)(prettier@2.8.7)
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      tsconfig-paths:
+        specifier: ~4.1.0
+        version: 4.1.2
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  enterprise/packages/translation:
+    dependencies:
+      '@nestjs/common':
+        specifier: 10.2.2
+        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@nestjs/jwt':
+        specifier: 10.2.0
+        version: 10.2.0(@nestjs/common@10.2.2)
+      '@nestjs/platform-express':
+        specifier: ^10.2.2
+        version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)
+      '@nestjs/swagger':
+        specifier: ^7.1.8
+        version: 7.1.9(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
+      '@novu/application-generic':
+        specifier: ^0.22.0
+        version: link:../../../packages/application-generic
+      '@novu/dal':
+        specifier: ^0.22.0
+        version: link:../../../libs/dal
+      '@novu/ee-dal':
+        specifier: ^0.22.0
+        version: link:../libs/dal
+      '@novu/shared':
+        specifier: ^0.22.0
+        version: link:../../../libs/shared
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.14.0
+        version: 0.14.0
+      multer:
+        specifier: ^1.4.5-lts.1
+        version: 1.4.5-lts.1
+      shortid:
+        specifier: ^2.2.16
+        version: 2.2.16
+      slugify:
+        specifier: ^1.4.6
+        version: 1.6.6
+    devDependencies:
+      '@types/chai':
+        specifier: ^4.2.11
+        version: 4.3.4
+      '@types/mocha':
+        specifier: ^8.0.1
+        version: 8.2.3
+      '@types/multer':
+        specifier: ^1.4.10
+        version: 1.4.11
+      '@types/node':
+        specifier: ^14.6.0
+        version: 14.18.42
+      '@types/sinon':
+        specifier: ^9.0.0
+        version: 9.0.11
+      chai:
+        specifier: ^4.2.0
+        version: 4.3.7
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      mocha:
+        specifier: ^8.1.1
+        version: 8.4.0
+      nodemon:
+        specifier: ^2.0.3
+        version: 2.0.22
+      sinon:
+        specifier: ^9.2.4
+        version: 9.2.4
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  enterprise/packages/translation-web:
+    dependencies:
+      '@emotion/css':
+        specifier: ^11.10.5
+        version: 11.10.6
+      '@emotion/react':
+        specifier: ^11.7.1
+        version: 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@emotion/styled':
+        specifier: ^11.6.0
+        version: 11.10.6(@emotion/react@11.10.6)(@types/react@17.0.62)(react@17.0.2)
+      '@mantine/core':
+        specifier: ^5.7.1
+        version: 5.10.5(@emotion/react@11.10.6)(@mantine/hooks@5.10.5)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
+      '@mantine/hooks':
+        specifier: ^5.7.1
+        version: 5.10.5(react@17.0.2)
+      '@mantine/prism':
+        specifier: ^5.7.1
+        version: 5.10.5(@mantine/core@5.10.5)(@mantine/hooks@5.10.5)(react-dom@17.0.2)(react@17.0.2)
+      '@novu/client':
+        specifier: 0.22.0
+        version: link:../../../packages/client
+      '@novu/design-system':
+        specifier: 0.22.0
+        version: link:../../../libs/design-system
+      '@novu/shared':
+        specifier: 0.22.0
+        version: link:../../../libs/shared
+      '@novu/shared-web':
+        specifier: 0.22.0
+        version: link:../../../libs/shared-web
+      '@tanstack/react-query':
+        specifier: ^4.20.4
+        version: 4.29.1(react-dom@17.0.2)(react@17.0.2)
+      axios:
+        specifier: ^1.4.0
+        version: 1.6.2
+      date-fns:
+        specifier: ^2.29.2
+        version: 2.29.3
+      eslint:
+        specifier: ^8.33.0
+        version: 8.51.0
+      eslint-plugin-react-hooks:
+        specifier: ^4.4.0
+        version: 4.6.0(eslint@8.51.0)
+      react-hook-form:
+        specifier: 7.43.9
+        version: 7.43.9(react@17.0.2)
+      react-router-dom:
+        specifier: 6.2.2
+        version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
+      slugify:
+        specifier: ^1.4.6
+        version: 1.6.6
+      tslib:
+        specifier: ^2.3.1
+        version: 2.6.2
+    devDependencies:
+      '@types/node':
+        specifier: ^18.11.12
+        version: 18.18.5
+      '@types/react':
+        specifier: ^17.0.0
+        version: 17.0.62
+      '@types/react-dom':
+        specifier: ^17.0.0
+        version: 17.0.20
+      react:
+        specifier: ^17.0.1
+        version: 17.0.2
+      react-dom:
+        specifier: ^17.0.1
+        version: 17.0.2(react@17.0.2)
+      rimraf:
+        specifier: ^3.0.2
+        version: 3.0.2
+      ts-loader:
+        specifier: ~9.4.0
+        version: 9.4.2(typescript@4.9.5)(webpack@5.78.0)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
   libs/dal:
     dependencies:
       '@aws-sdk/client-s3':
@@ -1755,11 +2047,32 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(@mantine/core@5.10.5)(@mantine/hooks@5.10.5)(react-dom@17.0.2)(react@17.0.2)
       '@novu/client':
-        specifier: ^0.22.0
+        specifier: 0.22.0
         version: link:../../packages/client
       '@novu/shared':
-        specifier: ^0.22.0
+        specifier: 0.22.0
         version: link:../shared
+      '@novu/shared-web':
+        specifier: 0.22.0
+        version: link:../shared-web
+      '@segment/analytics-next':
+        specifier: 1.59.0
+        version: 1.59.0
+      '@sentry/react':
+        specifier: ^7.40.0
+        version: 7.47.0(react@17.0.2)
+      '@tanstack/react-query':
+        specifier: ^4.20.4
+        version: 4.29.1(react-dom@17.0.2)(react@17.0.2)
+      axios:
+        specifier: ^1.3.3
+        version: 1.6.2
+      jwt-decode:
+        specifier: ^3.1.2
+        version: 3.1.2
+      react-helmet-async:
+        specifier: ^1.3.0
+        version: 1.3.0(react-dom@17.0.2)(react@17.0.2)
       react-hook-form:
         specifier: 7.43.9
         version: 7.43.9(react@17.0.2)
@@ -1965,6 +2278,58 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
+  libs/shared-web:
+    dependencies:
+      '@mantine/hooks':
+        specifier: ^5.7.1
+        version: 5.10.5(react@17.0.2)
+      '@novu/shared':
+        specifier: 0.22.0
+        version: link:../shared
+      '@segment/analytics-next':
+        specifier: 1.59.0
+        version: 1.59.0
+      '@sentry/react':
+        specifier: ^7.40.0
+        version: 7.47.0(react@17.0.2)
+      '@tanstack/react-query':
+        specifier: ^4.20.4
+        version: 4.29.1(react-dom@17.0.2)(react@17.0.2)
+      axios:
+        specifier: ^1.6.0
+        version: 1.6.2
+      jwt-decode:
+        specifier: ^3.1.2
+        version: 3.1.2
+      react-router-dom:
+        specifier: 6.2.2
+        version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
+      tslib:
+        specifier: ^2.3.1
+        version: 2.6.2
+    devDependencies:
+      '@types/node':
+        specifier: ^18.11.12
+        version: 18.18.5
+      '@types/react':
+        specifier: ^17.0.0
+        version: 17.0.62
+      '@types/react-dom':
+        specifier: ^17.0.0
+        version: 17.0.20
+      react:
+        specifier: ^17.0.1
+        version: 17.0.2
+      react-dom:
+        specifier: ^17.0.1
+        version: 17.0.2(react@17.0.2)
+      rimraf:
+        specifier: ^3.0.2
+        version: 3.0.2
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
   libs/testing:
     dependencies:
       '@faker-js/faker':
@@ -2080,14 +2445,14 @@ importers:
         specifier: ^6.2.3
         version: 6.9.5
       '@nestjs/common':
-        specifier: '>=10'
+        specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core':
         specifier: '>=10'
         version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/jwt':
-        specifier: ^10.1.0
-        version: 10.1.0(@nestjs/common@10.2.2)
+        specifier: 10.2.0
+        version: 10.2.0(@nestjs/common@10.2.2)
       '@nestjs/passport':
         specifier: ^10.0.1
         version: 10.0.1(@nestjs/common@10.2.2)(passport@0.6.0)
@@ -2310,6 +2675,9 @@ importers:
       handlebars:
         specifier: ^4.7.7
         version: 4.7.7
+      i18next:
+        specifier: ^23.7.6
+        version: 23.7.11
       ioredis:
         specifier: ^5.2.4
         version: 5.3.1
@@ -2337,6 +2705,9 @@ importers:
       pino-pretty:
         specifier: ^9.4.0
         version: 9.4.0
+      recursive-diff:
+        specifier: ^1.0.8
+        version: 1.0.9
       redlock:
         specifier: 4.2.0
         version: 4.2.0
@@ -2559,8 +2930,8 @@ importers:
   packages/nest:
     dependencies:
       '@nestjs/common':
-        specifier: ^10.2.10
-        version: 10.2.10(reflect-metadata@0.1.13)(rxjs@7.8.1)
+        specifier: 10.2.2
+        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/stateless':
         specifier: ^0.22.0
         version: link:../stateless
@@ -6477,6 +6848,22 @@ packages:
     resolution: {integrity: sha512-EB0iwlKDGpG93hW8f85CTJTs4SvMX7tt5ceupvhALp1IF44SeUFOMhKUOYqpsoYWQKAOuTRDMqn75rEaKDp0Xw==}
     dev: false
 
+  /@ant-design/icons@4.6.2(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-QsBG2BxBYU/rxr2eb8b2cZ4rPKAPBpzAR+0v6rrZLp/lnyvflLH3tw1vregK+M7aJauGWjIGNdFmUfpAOtw25A==}
+    engines: {node: '>=8'}
+    peerDependencies:
+      react: '>=16.0.0'
+    dependencies:
+      '@ant-design/colors': 6.0.0
+      '@ant-design/icons-svg': 4.2.1
+      '@babel/runtime': 7.23.2
+      classnames: 2.3.2
+      rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+    transitivePeerDependencies:
+      - react-dom
+    dev: false
+
   /@ant-design/icons@4.8.0(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-T89P2jG2vM7OJ0IfGx2+9FC5sQjtTzRSz+mCHTXkFn/ELZc2YpfStmYHmqzq2Jx55J0F7+O6i5/ZKFSVNWCKNg==}
     engines: {node: '>=8'}
@@ -6498,7 +6885,7 @@ packages:
     peerDependencies:
       react: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       json2mq: 0.2.0
       lodash: 4.17.21
@@ -6848,7 +7235,7 @@ packages:
       '@smithy/util-utf8': 2.0.0
       '@smithy/util-waiter': 2.0.3
       fast-xml-parser: 4.2.5
-      tslib: 2.5.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - '@aws-sdk/signature-v4-crt'
       - aws-crt
@@ -7783,7 +8170,7 @@ packages:
       '@smithy/protocol-http': 2.0.3
       '@smithy/smithy-client': 2.0.3
       '@smithy/types': 2.2.0
-      tslib: 2.5.0
+      tslib: 2.6.2
     transitivePeerDependencies:
       - '@aws-sdk/signature-v4-crt'
     dev: false
@@ -13996,7 +14383,7 @@ packages:
     dependencies:
       ajv: 6.12.6
       debug: 4.3.4(supports-color@8.1.1)
-      espree: 9.5.1
+      espree: 9.6.1
       globals: 13.23.0
       ignore: 5.2.4
       import-fresh: 3.3.0
@@ -14218,7 +14605,7 @@ packages:
 
   /@gilbarbara/deep-equal@0.1.2:
     resolution: {integrity: sha512-jk+qzItoEb0D0xSSmrKDDzf9sheQj/BAPxlgNxgmOaA3mxpUa6ndJLYGZKsJnIVEQSD8zcTbyILz7I0HcnBCRA==}
-    dev: true
+    dev: false
 
   /@godaddy/terminus@4.11.2:
     resolution: {integrity: sha512-e/kbOWpGKME42eltM/wXM3RxSUOrfureZxEd6Dt6NXyFoJ7E8lnmm7znXydJsL3B7ky4HRFZI+eHrep54NZbeQ==}
@@ -16242,26 +16629,6 @@ packages:
       - webpack-cli
     dev: true
 
-  /@nestjs/common@10.2.10(reflect-metadata@0.1.13)(rxjs@7.8.1):
-    resolution: {integrity: sha512-fwAk931rjW8CNH2Mgwawq/7HWHH1dxkOLdcgs7U52ddLk8CtHXjejm1cbNahewlSbNhvlOl7y1STLHutE6sUqw==}
-    peerDependencies:
-      class-transformer: '*'
-      class-validator: '*'
-      reflect-metadata: ^0.1.12
-      rxjs: ^7.1.0
-    peerDependenciesMeta:
-      class-transformer:
-        optional: true
-      class-validator:
-        optional: true
-    dependencies:
-      iterare: 1.2.1
-      reflect-metadata: 0.1.13
-      rxjs: 7.8.1
-      tslib: 2.6.2
-      uid: 2.0.2
-    dev: false
-
   /@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1):
     resolution: {integrity: sha512-TCOJK2K4FDT3GxFfURjngnjBewS/hizKNFSLBXtX4TTQm0dVQOtESnnVdP14sEiPM6suuWlrGnXW9UDqItGWiQ==}
     peerDependencies:
@@ -16363,14 +16730,14 @@ packages:
     dev: false
     optional: true
 
-  /@nestjs/jwt@10.1.0(@nestjs/common@10.2.2):
-    resolution: {integrity: sha512-iLwCGS25ybUxGS7i5j/Mwuyzvp/WxJftHlm8aLEBv5GV92apz6L1QVjxLdZrqXbzo++C8gdJauhzil8qitY+6w==}
+  /@nestjs/jwt@10.2.0(@nestjs/common@10.2.2):
+    resolution: {integrity: sha512-x8cG90SURkEiLOehNaN2aRlotxT0KZESUliOPKKnjWiyJOcWurkF3w345WOX0P4MgFzUjGoZ1Sy0aZnxeihT0g==}
     peerDependencies:
       '@nestjs/common': ^8.0.0 || ^9.0.0 || ^10.0.0
     dependencies:
       '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@types/jsonwebtoken': 9.0.2
-      jsonwebtoken: 9.0.0
+      '@types/jsonwebtoken': 9.0.5
+      jsonwebtoken: 9.0.2
     dev: false
 
   /@nestjs/mapped-types@2.0.2(@nestjs/common@10.2.2)(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13):
@@ -16396,6 +16763,16 @@ packages:
     resolution: {integrity: sha512-hS22LeNj0LByS9toBPkpKyZhyKAXoHACLS1EQrjbAJJEQjhocOskVGwcMwvMlz+ohN+VU804/nMF1Zlya4+TiQ==}
     peerDependencies:
       '@nestjs/common': ^8.0.0 || ^9.0.0 || ^10.0.0
+      passport: ^0.4.0 || ^0.5.0 || ^0.6.0
+    dependencies:
+      '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      passport: 0.6.0
+    dev: false
+
+  /@nestjs/passport@9.0.3(@nestjs/common@10.2.2)(passport@0.6.0):
+    resolution: {integrity: sha512-HplSJaimEAz1IOZEu+pdJHHJhQyBOPAYWXYHfAPQvRqWtw4FJF1VXl1Qtk9dcXQX1eKytDtH+qBzNQc19GWNEg==}
+    peerDependencies:
+      '@nestjs/common': ^8.0.0 || ^9.0.0
       passport: ^0.4.0 || ^0.5.0 || ^0.6.0
     dependencies:
       '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
@@ -19058,7 +19435,7 @@ packages:
     peerDependencies:
       react: ^16.8 || ^17.0
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@radix-ui/number': 0.1.0
       '@radix-ui/primitive': 0.1.0
       '@radix-ui/react-compose-refs': 0.1.0(react@17.0.2)
@@ -19993,6 +20370,14 @@ packages:
       tslib: 2.6.2
     dev: false
 
+  /@segment/analytics-core@1.3.2:
+    resolution: {integrity: sha512-NpeBCfOyMdO2/BDKfhCUNHcEwxg88N2iTnswBoEMh38rtsQ03TWLVYwgiTakPjNQFezdKkR6jq3JhQ3WWgq67g==}
+    dependencies:
+      '@lukeed/uuid': 2.0.1
+      dset: 3.1.2
+      tslib: 2.6.2
+    dev: false
+
   /@segment/analytics-next@1.51.3:
     resolution: {integrity: sha512-c22GDz6rrhliIsgtLQjEcRiZdqb70+0hEyfTI6YpRXZzEXBwdJybO5ZCD7NRlVFHf/qXp1qcjHuQ5xyOGr2lJg==}
     dependencies:
@@ -20006,6 +20391,25 @@ packages:
       node-fetch: 2.6.9
       spark-md5: 3.0.2
       tslib: 2.5.0
+      unfetch: 4.2.0
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+    dev: false
+
+  /@segment/analytics-next@1.59.0:
+    resolution: {integrity: sha512-1DE95SSJ6pS1t8tshoo5B2qOrzM4ede1JIxXoaiCG475xG5h2bVMXWoKayZ2Hh3vU9te3ZFV/kOMkS32vLDaUA==}
+    dependencies:
+      '@lukeed/uuid': 2.0.1
+      '@segment/analytics-core': 1.3.2
+      '@segment/analytics.js-video-plugins': 0.2.1
+      '@segment/facade': 3.4.10
+      '@segment/tsub': 2.0.0
+      dset: 3.1.2
+      js-cookie: 3.0.1
+      node-fetch: 2.7.0
+      spark-md5: 3.0.2
+      tslib: 2.6.2
       unfetch: 4.2.0
     transitivePeerDependencies:
       - encoding
@@ -20046,6 +20450,18 @@ packages:
 
   /@segment/tsub@1.0.1:
     resolution: {integrity: sha512-rUpvlj/rRfOolk5rjwyrsbl0qzGLsaYgFNEiOSrwrWDryDPq1ZGdo+3Eb+E8+EC0yZOAO4F1DjJfLtaSifpx7w==}
+    hasBin: true
+    dependencies:
+      '@stdlib/math-base-special-ldexp': 0.0.5
+      dlv: 1.1.3
+      dset: 3.1.2
+      tiny-hashes: 1.0.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
+  /@segment/tsub@2.0.0:
+    resolution: {integrity: sha512-NzkBK8GwPsyQ74AceLjENbUoaFrObnzEKOX4ko2wZDuIyK+DnDm3B//8xZYI2LCKt+wUD55l6ygfjCoVs8RMWw==}
     hasBin: true
     dependencies:
       '@stdlib/math-base-special-ldexp': 0.0.5
@@ -25042,6 +25458,12 @@ packages:
       '@types/node': 14.18.42
     dev: false
 
+  /@types/jsonwebtoken@9.0.5:
+    resolution: {integrity: sha512-VRLSGzik+Unrup6BsouBeHsf4d1hOEgYWTm/7Nmw1sXoN1+tRly/Gy/po3yeahnP4jfnQWWAhQAqcNfH7ngOkA==}
+    dependencies:
+      '@types/node': 14.18.42
+    dev: false
+
   /@types/linkify-it@3.0.2:
     resolution: {integrity: sha512-HZQYqbiFVWufzCwexrvh694SOim8z2d+xJl5UNamcvQFejLY/2YUtzXHYi3cHdI7PMlS8ejH2slRAOJQ32aNbA==}
     requiresBuild: true
@@ -25118,8 +25540,18 @@ packages:
     resolution: {integrity: sha512-NaHL0+0lLNhX6d9rs+NSt97WH/gIlRHmszXbQ/8/MV/eVcFNdeJ/GYhrFuUc8K7WuPhRhTSdMkCp8VMzhUq85w==}
     dev: true
 
+  /@types/mocha@8.2.3:
+    resolution: {integrity: sha512-ekGvFhFgrc2zYQoX4JeZPmVzZxw6Dtllga7iGHzfbYIYkAMUx/sAFP2GdFpLff+vdHXu5fl7WX9AT+TtqYcsyw==}
+    dev: true
+
   /@types/ms@0.7.31:
     resolution: {integrity: sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==}
+
+  /@types/multer@1.4.11:
+    resolution: {integrity: sha512-svK240gr6LVWvv3YGyhLlA+6LRRWA4mnGIU7RcNmgjBYFl6665wcXrRfxGp5tEPVHUNm5FMcmq7too9bxCwX/w==}
+    dependencies:
+      '@types/express': 4.17.17
+    dev: true
 
   /@types/newrelic@9.13.0:
     resolution: {integrity: sha512-Dj2fh+1SvR9KIZmk/ZcrzHmfF1f/2vSsIlYvKD49KtPcxRBKOWFRP9wyHtq+B6YCqIv+fHN97NtgJiq7OJaRzw==}
@@ -25988,6 +26420,10 @@ packages:
 
   /@tyriar/fibonacci-heap@2.0.9:
     resolution: {integrity: sha512-bYuSNomfn4hu2tPiDN+JZtnzCpSpbJ/PNeulmocDy3xN2X5OkJL65zo6rPZp65cPPhLF9vfT/dgE+RtFRCSxOA==}
+
+  /@ungap/promise-all-settled@1.1.2:
+    resolution: {integrity: sha512-sL/cEvJWAnClXw0wHk85/2L0G6Sj8UB0Ctc1TEMbKSsmpRosqhwj9gWgFRZSrBr2f9tiXISwNhCPmlfqUqyb9Q==}
+    dev: true
 
   /@upstash/core-analytics@0.0.6:
     resolution: {integrity: sha512-cpPSR0XJAJs4Ddz9nq3tINlPS5aLfWVCqhhtHnXt4p7qr5+/Znlt1Es736poB/9rnl1hAHrOsOvVj46NEXcVqA==}
@@ -28184,7 +28620,7 @@ packages:
     resolution: {integrity: sha512-Cg7TFGpIr01vOQNODXOOaGz2NpCU5gl8x1qJFbb6hbZxR7XrcE2vtbAsTAbJ7/xwJtUuJEw8K8Zr/AE0LHlesg==}
     engines: {node: '>=10', npm: '>=6'}
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       cosmiconfig: 7.1.0
       resolve: 1.22.2
 
@@ -29334,6 +29770,21 @@ packages:
       fsevents: 1.2.13
     transitivePeerDependencies:
       - supports-color
+    dev: true
+
+  /chokidar@3.5.1:
+    resolution: {integrity: sha512-9+s+Od+W0VJJzawDma/gvBNQqkTiqYTWLuZoyAsivsI4AaWTCzHG06/TMjsf1cYe9Cb97UCEhjz7HvnPk2p/tw==}
+    engines: {node: '>= 8.10.0'}
+    dependencies:
+      anymatch: 3.1.3
+      braces: 3.0.2
+      glob-parent: 5.1.2
+      is-binary-path: 2.1.0
+      is-glob: 4.0.3
+      normalize-path: 3.0.0
+      readdirp: 3.5.0
+    optionalDependencies:
+      fsevents: 2.3.3
     dev: true
 
   /chokidar@3.5.3:
@@ -31326,6 +31777,19 @@ packages:
       ms: 2.1.3
       supports-color: 8.1.1
 
+  /debug@4.3.1(supports-color@8.1.1):
+    resolution: {integrity: sha512-doEwdvm4PCeK4K3RQN2ZC2BYUBaxwLARCqZmMjtF8a51J2Rb0xpVloFRnCODwqjpwnAoao4pelN8l3RJdv3gRQ==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+    dependencies:
+      ms: 2.1.2
+      supports-color: 8.1.1
+    dev: true
+
   /debug@4.3.3:
     resolution: {integrity: sha512-/zxw5+vh1Tfv+4Qn7a5nsbcJKPaSvCDhojn6FEl9vupwK2VCSDtEiEtqr8DFtzYFOdz63LBkxec7DYuc2jon6Q==}
     engines: {node: '>=6.0'}
@@ -32802,6 +33266,23 @@ packages:
       semver: 6.3.1
     dev: true
 
+  /eslint-plugin-prettier@4.2.1(eslint-config-prettier@8.8.0)(eslint@7.32.0)(prettier@2.8.7):
+    resolution: {integrity: sha512-f/0rXLXUt0oFYs8ra4w49wYZBG5GKZpAYsJSm6rnYL5uVDjd+zowwMwVZHnAjf4edNrKpCDYfXDgmRE/Ak7QyQ==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      eslint: '>=7.28.0'
+      eslint-config-prettier: '*'
+      prettier: '>=2.0.0'
+    peerDependenciesMeta:
+      eslint-config-prettier:
+        optional: true
+    dependencies:
+      eslint: 7.32.0
+      eslint-config-prettier: 8.8.0(eslint@8.38.0)
+      prettier: 2.8.7
+      prettier-linter-helpers: 1.0.0
+    dev: true
+
   /eslint-plugin-prettier@4.2.1(eslint-config-prettier@8.8.0)(eslint@8.38.0)(prettier@2.8.7):
     resolution: {integrity: sha512-f/0rXLXUt0oFYs8ra4w49wYZBG5GKZpAYsJSm6rnYL5uVDjd+zowwMwVZHnAjf4edNrKpCDYfXDgmRE/Ak7QyQ==}
     engines: {node: '>=12.0.0'}
@@ -33179,7 +33660,7 @@ packages:
     dependencies:
       acorn: 8.10.0
       acorn-jsx: 5.3.2(acorn@8.10.0)
-      eslint-visitor-keys: 3.4.0
+      eslint-visitor-keys: 3.4.3
     dev: true
 
   /espree@9.6.1:
@@ -33369,7 +33850,7 @@ packages:
 
   /exenv@1.2.2:
     resolution: {integrity: sha512-Z+ktTxTwv9ILfgKCk32OX3n/doe+OcLTRtqK9pcL+JsP3J1/VW8Uvl4ZjLlKqeW4rzK4oesDOGMEMRIZqtP4Iw==}
-    dev: true
+    dev: false
 
   /exit@0.1.2:
     resolution: {integrity: sha512-Zk/eNKV2zbjpKzrsQ+n1G6poVbErQxJ0LBOJXaKZ1EViLzH+hrLu9cdXI4zw9dBQJslwBEpbQ2P1oS7nDxs6jQ==}
@@ -35179,6 +35660,11 @@ packages:
     dev: false
     optional: true
 
+  /growl@1.10.5:
+    resolution: {integrity: sha512-qBr4OuELkhPenW6goKVXiv47US3clb3/IbuWF9KNKEijAy9oeHxU9IgzjvJhHkUzhaj7rOUD7+YGWqUjLp5oSA==}
+    engines: {node: '>=4.x'}
+    dev: true
+
   /gtoken@5.3.2:
     resolution: {integrity: sha512-gkvEKREW7dXWF8NV8pVrKfW7WqReAmjjkMBh6lNCCGOM4ucS0r0YyXXl0r/9Yj8wcW/32ISkfc8h5mPTDbtifQ==}
     engines: {node: '>=10'}
@@ -35856,6 +36342,12 @@ packages:
       - supports-color
     dev: true
 
+  /i18next@23.7.11:
+    resolution: {integrity: sha512-A/vOkw8vY99YHU9A1Td3I1dcTiYaPnwBWzrpVzfXUXSYgogK3cmBcmop/0cnXPc6QpUWIyqaugKNxRUEZVk9Nw==}
+    dependencies:
+      '@babel/runtime': 7.23.2
+    dev: false
+
   /iconv-lite@0.4.24:
     resolution: {integrity: sha512-v3MXnZAcvnywkTUEZomIActle7RXXeedOR31wwl7VlyoXO4Qi9arvSenNQWne1TcRwhCL1HwLI21bEqdpj8/rA==}
     engines: {node: '>=0.10.0'}
@@ -36531,11 +37023,11 @@ packages:
 
   /is-lite@0.8.2:
     resolution: {integrity: sha512-JZfH47qTsslwaAsqbMI3Q6HNNjUuq6Cmzzww50TdP5Esb6e1y2sK2UAaZZuzfAzpoI2AkxoPQapZdlDuP6Vlsw==}
-    dev: true
+    dev: false
 
   /is-lite@0.9.2:
     resolution: {integrity: sha512-qZuxbaEiKLOKhX4sbHLfhFN9iA3YciuZLb37/DfXCpWnz8p7qNL2lwkpxYMXfjlS8eEEjpULPZxAUI8N6FYvYQ==}
-    dev: true
+    dev: false
 
   /is-lower-case@1.1.3:
     resolution: {integrity: sha512-+5A1e/WJpLLXZEDlgz4G//WYSHyQBD32qa4Jd3Lw06qQlv3fJHnp3YIHjTQSGzHMgzmVKz2ZP3rBxTHkPw/lxA==}
@@ -38184,6 +38676,13 @@ packages:
       argparse: 1.0.10
       esprima: 4.0.1
 
+  /js-yaml@4.0.0:
+    resolution: {integrity: sha512-pqon0s+4ScYUvX30wxQi3PogGFAlUyH0awepWvwkj4jD4v+ova3RiYw8bmA6x2rDrEaj8i/oWKoRxpVNW+Re8Q==}
+    hasBin: true
+    dependencies:
+      argparse: 2.0.1
+    dev: true
+
   /js-yaml@4.1.0:
     resolution: {integrity: sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==}
     hasBin: true
@@ -39348,6 +39847,13 @@ packages:
     engines: {node: '>=0.10.0'}
     dependencies:
       chalk: 1.1.3
+    dev: true
+
+  /log-symbols@4.0.0:
+    resolution: {integrity: sha512-FN8JBzLx6CzeMrB0tg6pqlGU1wCrXW+ZXGH481kfsBqer0hToTIiHdjH4Mq8xJUbvATujKCvaREGWpGUionraA==}
+    engines: {node: '>=10'}
+    dependencies:
+      chalk: 4.1.2
     dev: true
 
   /log-symbols@4.1.0:
@@ -40721,6 +41227,38 @@ packages:
       yargs-unparser: 2.0.0
     dev: true
 
+  /mocha@8.4.0:
+    resolution: {integrity: sha512-hJaO0mwDXmZS4ghXsvPVriOhsxQ7ofcpQdm8dE+jISUOKopitvnXFQmpRR7jd2K6VBG6E26gU3IAbXXGIbu4sQ==}
+    engines: {node: '>= 10.12.0'}
+    hasBin: true
+    dependencies:
+      '@ungap/promise-all-settled': 1.1.2
+      ansi-colors: 4.1.1
+      browser-stdout: 1.3.1
+      chokidar: 3.5.1
+      debug: 4.3.1(supports-color@8.1.1)
+      diff: 5.0.0
+      escape-string-regexp: 4.0.0
+      find-up: 5.0.0
+      glob: 7.1.6
+      growl: 1.10.5
+      he: 1.2.0
+      js-yaml: 4.0.0
+      log-symbols: 4.0.0
+      minimatch: 3.1.2
+      ms: 2.1.3
+      nanoid: 3.3.6
+      serialize-javascript: 5.0.1
+      strip-json-comments: 3.1.1
+      supports-color: 8.1.1
+      which: 2.0.2
+      wide-align: 1.1.3
+      workerpool: 6.1.0
+      yargs: 16.2.0
+      yargs-parser: 20.2.4
+      yargs-unparser: 2.0.0
+    dev: true
+
   /modify-values@1.0.1:
     resolution: {integrity: sha512-xV2bxeN6F7oYjZWTe/YPAy6MN2M+sL4u/Rlm2AHCIVGfo2p1yGmBHQ6vHehl4bRTZBdHu3TSkWdYgkwpYzAGSw==}
     engines: {node: '>=0.10.0'}
@@ -40874,6 +41412,19 @@ packages:
       object-assign: 4.1.1
       type-is: 1.6.18
       xtend: 4.0.2
+
+  /multer@1.4.5-lts.1:
+    resolution: {integrity: sha512-ywPWvcDMeH+z9gQq5qYHCCy+ethsk4goepZ45GLD63fOu0YcNecQxi64nDs3qluZB+murG3/D4dJ7+dGctcCQQ==}
+    engines: {node: '>= 6.0.0'}
+    dependencies:
+      append-field: 1.0.0
+      busboy: 1.6.0
+      concat-stream: 1.6.2
+      mkdirp: 0.5.6
+      object-assign: 4.1.1
+      type-is: 1.6.18
+      xtend: 4.0.2
+    dev: false
 
   /multicast-dns@7.2.5:
     resolution: {integrity: sha512-2eznPJP8z2BFLX50tf0LuODrpINqP1RVIm/CObbTcBRITQgmC/TjcREF1NeTBzIcR5XO/ukWo+YHOjBbFwIupg==}
@@ -41370,6 +41921,23 @@ packages:
     resolution: {integrity: sha512-qHw7dOiU5UKNnQpXktdgQ1d3OFgRAekuvbJLcdG5dnEo/GtcTHRYM7+UfJARdOFU9WUQO8OiIamgWPmiSFHYAA==}
     engines: {node: '>=6.0.0'}
     dev: false
+
+  /nodemon@2.0.22:
+    resolution: {integrity: sha512-B8YqaKMmyuCO7BowF1Z1/mkPqLk6cs/l63Ojtd6otKjMx47Dq1utxfRxcavH1I7VSaL8n5BUaoutadnsX3AAVQ==}
+    engines: {node: '>=8.10.0'}
+    hasBin: true
+    dependencies:
+      chokidar: 3.5.3
+      debug: 3.2.7(supports-color@5.5.0)
+      ignore-by-default: 1.0.1
+      minimatch: 3.1.2
+      pstree.remy: 1.1.8
+      semver: 5.7.2
+      simple-update-notifier: 1.1.0
+      supports-color: 5.5.0
+      touch: 3.1.0
+      undefsafe: 2.0.5
+    dev: true
 
   /nodemon@3.0.1:
     resolution: {integrity: sha512-g9AZ7HmkhQkqXkRc20w+ZfQ73cHLbE8hnPbtaFbFtCumZsjyMhKk9LajQ07U5Ux28lvFjZ5X7HvWR1xzU8jHVw==}
@@ -42790,6 +43358,27 @@ packages:
       passport-oauth2: 1.7.0
     dev: false
 
+  /passport-google-oauth1@1.0.0:
+    resolution: {integrity: sha512-qpCEhuflJgYrdg5zZIpAq/K3gTqa1CtHjbubsEsidIdpBPLkEVq6tB1I8kBNcH89RdSiYbnKpCBXAZXX/dtx1Q==}
+    dependencies:
+      passport-oauth1: 1.3.0
+    dev: false
+
+  /passport-google-oauth20@2.0.0:
+    resolution: {integrity: sha512-KSk6IJ15RoxuGq7D1UKK/8qKhNfzbLeLrG3gkLZ7p4A6DBCcv7xpyQwuXtWdpyR0+E0mwkpjY1VfPOhxQrKzdQ==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      passport-oauth2: 1.7.0
+    dev: false
+
+  /passport-google-oauth@2.0.0:
+    resolution: {integrity: sha512-JKxZpBx6wBQXX1/a1s7VmdBgwOugohH+IxCy84aPTZNq/iIPX6u7Mqov1zY7MKRz3niFPol0KJz8zPLBoHKtYA==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      passport-google-oauth1: 1.0.0
+      passport-google-oauth20: 2.0.0
+    dev: false
+
   /passport-headerapikey@1.2.2:
     resolution: {integrity: sha512-4BvVJRrWsNJPrd3UoZfcnnl4zvUWYKEtfYkoDsaOKBsrWHYmzTApCjs7qUbncOLexE9ul0IRiYBFfBG0y9IVQA==}
     dependencies:
@@ -42802,6 +43391,15 @@ packages:
     dependencies:
       jsonwebtoken: 9.0.0
       passport-strategy: 1.0.0
+    dev: false
+
+  /passport-oauth1@1.3.0:
+    resolution: {integrity: sha512-8T/nX4gwKTw0PjxP1xfD0QhrydQNakzeOpZ6M5Uqdgz9/a/Ag62RmJxnZQ4LkbdXGrRehQHIAHNAu11rCP46Sw==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      oauth: 0.9.15
+      passport-strategy: 1.0.0
+      utils-merge: 1.0.1
     dev: false
 
   /passport-oauth2@1.7.0:
@@ -42945,7 +43543,7 @@ packages:
     dev: false
 
   /pause@0.0.1:
-    resolution: {integrity: sha512-KG8UEiEVkR3wGEb4m5yZkVCzigAD+cVEJck2CzYZO37ZGJfctvVptVO192MwrtPhzONn6go8ylnOdMhKqi4nfg==}
+    resolution: {integrity: sha1-HUCLP9t2kjuVQ9lvtMnf1TXZy10=}
     dev: false
 
   /peberminta@0.8.0:
@@ -43217,7 +43815,7 @@ packages:
   /popper.js@1.16.1:
     resolution: {integrity: sha512-Wb4p1J4zyFTbM+u6WuO4XstYx4Ky9Cewe4DWrel7B0w6VVICvPwdOpotjzcf6eD8TsckVnIMNONQyPIUFOUbCQ==}
     deprecated: You can find the new Popper v2 at @popperjs/core, this package is dedicated to the legacy v1
-    dev: true
+    dev: false
 
   /portfinder@1.0.32:
     resolution: {integrity: sha512-on2ZJVVDXRADWE6jnQaX0ioEylzgBpQk8r55NE4wjXW1ZxO+BgDlY6DXwj20i0V8eB4SenDQ00WEaxfiIQPcxg==}
@@ -44609,7 +45207,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       array-tree-filter: 2.1.0
       classnames: 2.3.2
       rc-select: 14.1.17(react-dom@17.0.2)(react@17.0.2)
@@ -44625,7 +45223,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
@@ -44637,7 +45235,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -44652,7 +45250,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@rc-component/portal': 1.1.1(react-dom@17.0.2)(react@17.0.2)
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
@@ -44667,7 +45265,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@rc-component/portal': 1.1.1(react-dom@17.0.2)(react@17.0.2)
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
@@ -44682,7 +45280,7 @@ packages:
       react: '>=16.11.0'
       react-dom: '>=16.11.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-trigger: 5.3.4(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -44697,7 +45295,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       async-validator: 4.2.5
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -44710,7 +45308,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@rc-component/portal': 1.1.1(react-dom@17.0.2)(react@17.0.2)
       classnames: 2.3.2
       rc-dialog: 9.0.2(react-dom@17.0.2)(react@17.0.2)
@@ -44726,7 +45324,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -44739,7 +45337,7 @@ packages:
       react: '>=16.0.0'
       react-dom: '>=16.0.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -44752,7 +45350,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-menu: 9.8.4(react-dom@17.0.2)(react@17.0.2)
       rc-textarea: 0.4.7(react-dom@17.0.2)(react@17.0.2)
@@ -44768,7 +45366,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-overflow: 1.3.0(react-dom@17.0.2)(react@17.0.2)
@@ -44784,7 +45382,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -44798,7 +45396,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -44826,7 +45424,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
@@ -44839,7 +45437,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       date-fns: 2.29.3
       dayjs: 1.11.9
@@ -44857,7 +45455,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -44871,7 +45469,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -44884,7 +45482,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -44898,7 +45496,7 @@ packages:
       react: '>=16.0.0'
       react-dom: '>=16.0.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -44913,7 +45511,7 @@ packages:
       react: '*'
       react-dom: '*'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-overflow: 1.3.0(react-dom@17.0.2)(react@17.0.2)
@@ -44931,7 +45529,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -44946,7 +45544,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -44959,7 +45557,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -44973,7 +45571,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-resize-observer: 1.3.1(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -44989,7 +45587,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-dropdown: 4.0.1(react-dom@17.0.2)(react@17.0.2)
       rc-menu: 9.8.4(react-dom@17.0.2)(react@17.0.2)
@@ -45006,7 +45604,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-resize-observer: 1.3.1(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -45021,7 +45619,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-trigger: 5.3.4(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -45034,7 +45632,7 @@ packages:
       react: '*'
       react-dom: '*'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-select: 14.1.17(react-dom@17.0.2)(react@17.0.2)
       rc-tree: 5.7.3(react-dom@17.0.2)(react@17.0.2)
@@ -45050,7 +45648,7 @@ packages:
       react: '*'
       react-dom: '*'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
@@ -45066,7 +45664,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-align: 4.0.15(react-dom@17.0.2)(react@17.0.2)
       rc-motion: 2.6.3(react-dom@17.0.2)(react@17.0.2)
@@ -45081,7 +45679,7 @@ packages:
       react: '>=16.9.0'
       react-dom: '>=16.9.0'
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       classnames: 2.3.2
       rc-util: 5.29.3(react-dom@17.0.2)(react@17.0.2)
       react: 17.0.2
@@ -45374,7 +45972,7 @@ packages:
       react-dom: 17.0.2(react@17.0.2)
       react-proptype-conditional-require: 1.0.4
       tree-changes: 0.9.3
-    dev: true
+    dev: false
 
   /react-flow-renderer@10.3.17(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-bywiqVErlh5kCDqw3x0an5Ur3mT9j9CwJsDwmhmz4i1IgYM1a0SPqqEhClvjX+s5pU4nHjmVaGXWK96pwsiGcQ==}
@@ -45488,7 +46086,7 @@ packages:
       scroll: 3.0.1
       scrollparent: 2.0.1
       tree-changes: 0.9.3
-    dev: true
+    dev: false
 
   /react-password-strength-bar@0.4.1(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-2NvYz4IUU8k7KDZgsXKoJWreKCZLKGaqF5QhIVhc09OsPBFXFMh0BeghNkBIRkaxLeI7/xjivknDCYfluBCXKA==}
@@ -45517,7 +46115,7 @@ packages:
 
   /react-proptype-conditional-require@1.0.4:
     resolution: {integrity: sha512-nopsRn7KnGgazBe2c3H2+Kf+Csp6PGDRLiBkYEDMKY8o/EIgft/WnIm/OnAKTawZiLnJXHAqhpFBddvs6NiXlw==}
-    dev: true
+    dev: false
 
   /react-refresh@0.11.0:
     resolution: {integrity: sha512-F27qZr8uUqwhWZboondsPx8tnC3Ct3SxZA3V5WyEvujRyyNv0VYPhoBg1gZ8/MV5tubQp76Trw8lTv9hzRBa+A==}
@@ -45905,7 +46503,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       react: 17.0.2
       use-composed-ref: 1.3.0(react@17.0.2)
       use-latest: 1.2.1(@types/react@17.0.62)(react@17.0.2)
@@ -46156,6 +46754,13 @@ packages:
       readable-stream: 2.3.8
     transitivePeerDependencies:
       - supports-color
+    dev: true
+
+  /readdirp@3.5.0:
+    resolution: {integrity: sha512-cMhu7c/8rdhkHXWsY+osBhfSy0JikwpHK/5+imo+LpeasTF8ouErHrlYkwT0++njiyuDvc7OFY5T3ukvZ8qmFQ==}
+    engines: {node: '>=8.10.0'}
+    dependencies:
+      picomatch: 2.3.1
     dev: true
 
   /readdirp@3.6.0:
@@ -47110,11 +47715,11 @@ packages:
 
   /scroll@3.0.1:
     resolution: {integrity: sha512-pz7y517OVls1maEzlirKO5nPYle9AXsFzTMNJrRGmT951mzpIBy7sNHOg5o/0MQd/NqliCiWnAi0kZneMPFLcg==}
-    dev: true
+    dev: false
 
   /scrollparent@2.0.1:
     resolution: {integrity: sha512-HSdN78VMvFCSGCkh0oYX/tY4R3P1DW61f8+TeZZ4j2VLgfwvw0bpRSOv4PCVKisktIwbzHCfZsx+rLbbDBqIBA==}
-    dev: true
+    dev: false
 
   /secure-compare@3.0.1:
     resolution: {integrity: sha512-AckIIV90rPDcBcglUwXPF3kg0P0qmPsPXAj6BBEENQE1p5yA1xfmDJzfi1Tappj37Pv2mVbKpL3Z1T+Nn7k1Qw==}
@@ -47258,6 +47863,12 @@ packages:
 
   /serialize-javascript@4.0.0:
     resolution: {integrity: sha512-GaNA54380uFefWghODBWEGisLZFj00nS5ACs6yHa9nLqlLpVLO8ChDGeKRjZnV4Nh4n0Qi7nhYZD/9fCPzEqkw==}
+    dependencies:
+      randombytes: 2.1.0
+    dev: true
+
+  /serialize-javascript@5.0.1:
+    resolution: {integrity: sha512-SaaNal9imEO737H2c05Og0/8LUXG7EnsZyMa8MzkmuHoELfT6txuj0cMqRj6zfPKnmQ1yasR4PCJc8x+M4JSPA==}
     dependencies:
       randombytes: 2.1.0
     dev: true
@@ -47458,6 +48069,13 @@ packages:
     dependencies:
       is-arrayish: 0.3.2
     dev: false
+
+  /simple-update-notifier@1.1.0:
+    resolution: {integrity: sha512-VpsrsJSUcJEseSbMHkrsrAVSdvVS5I96Qo1QAQ4FxQ9wXFcB+pjj7FB7/us9+GcgfW4ziHtYMc1J0PLczb55mg==}
+    engines: {node: '>=8.10.0'}
+    dependencies:
+      semver: 7.5.4
+    dev: true
 
   /simple-update-notifier@2.0.0:
     resolution: {integrity: sha512-a2B9Y0KlNXl9u/vsW6sTIu9vGEpfKu2wRV6l1H3XEas/0gUIzGzBoP/IouTcUQbm9JWZLH3COxyn03TYlFax6w==}
@@ -49355,7 +49973,7 @@ packages:
     dependencies:
       '@gilbarbara/deep-equal': 0.1.2
       is-lite: 0.8.2
-    dev: true
+    dev: false
 
   /tree-kill@1.2.2:
     resolution: {integrity: sha512-L0Orpi8qGpRG//Nd+H90vFB+3iHnue1zSSGmNOOCh1GLJ7rUKVwV2HvijphGQS2UmhUZewS9VgvxYIdgr+fG1A==}
@@ -51681,6 +52299,12 @@ packages:
       isexe: 2.0.0
     dev: true
 
+  /wide-align@1.1.3:
+    resolution: {integrity: sha512-QGkOQc8XL6Bt5PwnsExKBPuMKBxnGxWWW3fU55Xt4feHozMUhdUMaBCk290qpm/wG5u/RSKzwdAC4i51YigihA==}
+    dependencies:
+      string-width: 2.1.1
+    dev: true
+
   /wide-align@1.1.5:
     resolution: {integrity: sha512-eDMORYaPNZ4sQIuuYPDHdQvf4gyCF9rEEV/yPxGfwPkRodwEgiMUUXTx/dex+Me0wxx53S+NgUHaP7y3MGlDmg==}
     dependencies:
@@ -51915,6 +52539,10 @@ packages:
     dependencies:
       '@types/trusted-types': 2.0.3
       workbox-core: 6.5.4
+    dev: true
+
+  /workerpool@6.1.0:
+    resolution: {integrity: sha512-toV7q9rWNYha963Pl/qyeZ6wG+3nnsyvolaNUS8+R5Wtw6qJPTxIlOP1ZSvcGhEJw+l3HMMmtiNo9Gl61G4GVg==}
     dev: true
 
   /workerpool@6.2.1:
