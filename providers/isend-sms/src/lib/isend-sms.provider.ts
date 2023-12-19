@@ -4,7 +4,7 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-import Axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 
 export interface ISendSmsData {
   user_id: number;
@@ -43,7 +43,7 @@ export class ISendSmsProvider implements ISmsProvider {
       contentType?: ISendSmsData['sms_type'];
     }
   ) {
-    this.Instance = Axios.create({
+    this.Instance = axios.create({
       baseURL: 'https://send.com.ly/',
       headers: {
         Accept: 'application/json',
