@@ -447,7 +447,7 @@ const ActionWrapper = styled.div<{ showGroupError?: boolean }>`
   border-top-right-radius: 7px;
   border-top-left-radius: 7px;
   background: ${({ theme, showGroupError }) =>
-    showGroupError && theme.colorScheme === 'dark' ? `${colors.errorGradient}, ${colors.B17}` : colors.transparent};
+    showGroupError && theme.colorScheme === 'dark' ? `${colors.errorGradient}, ${colors.B17}` : 'transparent'};
 `;
 
 const ActionTopWrapper = styled(ActionWrapper)`

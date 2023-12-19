@@ -33,6 +33,7 @@ export class QueueNextJob {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
+          job,
         })
       );
 
