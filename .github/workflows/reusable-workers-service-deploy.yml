@@ -13,6 +13,13 @@ on:
       docker_image:
         required: true
         type: string
+      sentry_project:
+        required: false
+        type: string
+      deploy_sentry_release:
+        required: false
+        default: false
+        type: boolean
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -101,3 +108,27 @@ jobs:
           service: ${{ matrix.worker.service }}
           cluster: ${{ needs.infrastructure_data.outputs.ecs_cluster }}
           wait-for-service-stability: true
+
+      - uses: actions/checkout@v3
+        if: ${{ inputs.deploy_sentry_release }}
+
+      - name: get-npm-version
+        if: ${{ inputs.deploy_sentry_release }}
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@main
+        with:
+          path: apps/${{ inputs.sentry_project }}
+
+      - name: Create Sentry release
+        if: ${{ inputs.deploy_sentry_release }}
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: novu-r9
+          SENTRY_PROJECT: ${{ inputs.sentry_project }}
+        with:
+          version: ${{ steps.package-version.outputs.current-version}}
+          version_prefix: v
+          environment: prod
+          ignore_empty: true
+          ignore_missing: true

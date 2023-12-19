@@ -1,8 +1,7 @@
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { IsDefined, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { Document } from 'mongoose';
-
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../commands';
 
 export interface IItem extends Pick<Document, '_id'> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

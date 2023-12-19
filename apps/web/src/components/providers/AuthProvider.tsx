@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { IOrganizationEntity, IUserEntity, IJwtPayload } from '@novu/shared';
-import { useAuthController } from '../../hooks';
+import { useAuthController, useFeatureFlags } from '../../hooks';
 
 type UserContext = {
   token: string | null;
@@ -26,6 +26,7 @@ export const useAuthContext = (): UserContext => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { token, setToken, user, organization, logout, jwtPayload, organizations } = useAuthController();
+  useFeatureFlags(organization);
 
   return (
     <AuthContext.Provider

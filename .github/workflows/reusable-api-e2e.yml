@@ -27,6 +27,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   check_submodule_token:
+    if: ${{ inputs.ee }}
     name: Check if the secret exists or not.
     runs-on: ubuntu-latest
     outputs:
@@ -60,33 +61,45 @@ jobs:
     steps:
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
-        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && contains (inputs.job-name,'-ee') }}
+        name: Checkout with submodules
+        if: |
+          ${{ needs.check_submodule_token.outputs.has_token == 'true' }} &&
+          ${{ inputs.ee }}
         with:
           submodules: ${{ inputs.ee }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
+
       # else checkout without submodules if the token is not provided
       - uses: actions/checkout@v3
+        name: Checkout
         if: ${{ needs.check_submodule_token.outputs.has_token != 'true' || !contains (inputs.job-name,'-ee') }}
+
       - uses: ./.github/actions/setup-project
+        name: Setup project
+        with:
+          submodules: ${{ inputs.ee && needs.check_submodule_token.outputs.has_token == 'true' }}
+
       - uses: ./.github/actions/setup-redis-cluster
+        name: Setup redis cluster
+
       - uses: mansagroup/nrwl-nx-action@v3
+        name: Run Lint
         with:
           targets: lint
           projects: '@novu/api'
 
       - uses: ./.github/actions/start-localstack
+        name: Start localstack
+
 
       - uses: ./.github/actions/run-worker
+        name: Run worker
         with:
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
         # Runs a single command using the runners shell
       - name: Build API
-        run: CI='' pnpm build:api
-
-      - name: Build Submodules
-        if: ${{ needs.check_submodule_token.outputs.has_token != 'true' }}
-        run: CI='' pnpm build:submodules
+        run: CI='' pnpm build:api --skip-nx-cache
 
       - name: Run E2E tests
         env:
@@ -94,17 +107,17 @@ jobs:
         run: |
           cd apps/api && pnpm test:e2e
 
-      - uses: mansagroup/nrwl-nx-action@v3
-        name: Run E2E EE tests
-        if: ${{ inputs.test-e2e-ee-affected == 'true' &&  contains (inputs.job-name,'-ee')  }}
+      - name: Run E2E EE tests
+        if: |
+          ${{ needs.check_submodule_token.outputs.has_token == 'true' }} &&
+          ${{ inputs.ee }}
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
           GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
           CI_EE_TEST: true
-        with:
-          targets: test:e2e:ee
-          projects: ${{matrix.projectName}}
+        run: |
+          cd apps/api && pnpm test:e2e:ee
 
       - name: Kill port for worker 1342 for unit tests
         run: sudo kill -9 $(sudo lsof -t -i:1342)

@@ -152,6 +152,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Environments](#environments)
 - [Layouts](#layouts)
 - [Integrations](#integrations)
+- [Organizations](#organizations)
 
 
 ### Subscribers
@@ -274,6 +275,11 @@ await novu.subscribers.setCredentials("subscriberId", "fcm", {
 await novu.subscribers.setCredentials("subscriberId", "slack", {
   webhookUrl: ["webhookUrl"]
 })
+
+// update slack weebhook for a subscriberId with selected integration
+await novu.subscribers.setCredentials("subscriberId","slack",{
+  webhookUrl: ["webhookUrl"]
+},"identifier_slack")
 ```
 
 - #### Delete provider credentials
@@ -1130,4 +1136,92 @@ await novu.notificationTemplates.getAll({
   page: 0, // optional
   limit: 20 // optional
 })
+```
+
+### Organizations
+
+- #### List all organizations
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.list();
+```
+
+- #### Create new organization
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.create({ name: 'New Organization' });
+```
+
+- #### Rename organization
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.rename({ name: 'Renamed Organization' });
+```
+
+- #### Get current organization details
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.getCurrent();
+```
+
+- #### Remove member from organization
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.removeMember('memberId');
+```
+
+- #### Update organization member role
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.updateMemberRole('memberId', {
+  role: 'admin';
+});
+```
+
+- #### Get all members of organization
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.getMembers();
+```
+
+- #### Update organization branding details
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.updateBranding({
+      logo: 'https://s3.us-east-1.amazonaws.com/bucket/image.jpeg',
+      color: '#000000',
+      fontFamily: 'Lato',
+    };);
 ```

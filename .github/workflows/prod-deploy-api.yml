@@ -36,10 +36,15 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
 
       - name: build api
-        run: pnpm build:api
+        run: pnpm build:api --skip-nx-cache
 
       - name: Setup Depot
         uses: depot/setup-action@v1
