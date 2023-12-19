@@ -2,10 +2,11 @@ const nr = require('newrelic');
 import { Injectable, Logger } from '@nestjs/common';
 
 import {
+  BullMqService,
   getWebSocketWorkerOptions,
-  INovuWorker,
   WebSocketsWorkerService,
   WorkerOptions,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
 import { ExternalServicesRoute, ExternalServicesRouteCommand } from '../usecases/external-services-route';
@@ -14,9 +15,12 @@ import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 const LOG_CONTEXT = 'WebSocketWorker';
 
 @Injectable()
-export class WebSocketWorker extends WebSocketsWorkerService implements INovuWorker {
-  constructor(private externalServicesRoute: ExternalServicesRoute) {
-    super();
+export class WebSocketWorker extends WebSocketsWorkerService {
+  constructor(
+    private externalServicesRoute: ExternalServicesRoute,
+    private workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {
+    super(new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
   }
@@ -27,10 +31,7 @@ export class WebSocketWorker extends WebSocketsWorkerService implements INovuWor
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
-        Logger.verbose(
-          `Job ${job.id} / ${job.data.event} is being processed in the MemoryDB instance WebSocketWorker`,
-          LOG_CONTEXT
-        );
+        Logger.log(`Job ${job.id} / ${job.data.event} is being processed WebSocketWorker`, LOG_CONTEXT);
 
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.WS_SOCKET_QUEUE,

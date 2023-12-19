@@ -22,6 +22,7 @@ type JobEntityPopulated = JobEntity & {
 export interface IDelayOrDigestJobResult {
   digestResult: DigestCreationResultEnum;
   activeDigestId?: string;
+  activeNotificationId?: string;
 }
 
 export class JobRepository extends BaseRepository<JobDBModel, JobEntity, EnforceEnvOrOrgIds> {
@@ -215,7 +216,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
         _subscriberId: this.convertStringToObjectId(job._subscriberId),
         ...(digestKey && { [`payload.${digestKey}`]: digestValue }),
       },
-      '_id'
+      '_id _notificationId'
     );
 
     if (!delayedDigestJob) {
@@ -241,6 +242,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
 
     return {
       activeDigestId: delayedDigestJob._id,
+      activeNotificationId: delayedDigestJob._notificationId?.toString(),
       digestResult: DigestCreationResultEnum.MERGED,
     };
   }

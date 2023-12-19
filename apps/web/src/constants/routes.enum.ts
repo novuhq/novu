@@ -33,4 +33,5 @@ export enum ROUTES {
   ABOUT = '/about',
   CONTACT = '/contact',
   BRAND = '/brand',
+  TRANSLATIONS = '/translations',
 }
