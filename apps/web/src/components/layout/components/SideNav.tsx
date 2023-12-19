@@ -106,7 +106,7 @@ export function SideNav({}: Props) {
     },
     {
       condition: isTranslationManagerEnabled,
-      icon: <Translation />,
+      icon: <Translation width={20} height={20} />,
       link: ROUTES.TRANSLATIONS,
       label: 'Translations',
       testId: 'side-nav-translations-link',
