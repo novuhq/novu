@@ -131,6 +131,7 @@ export function createNestLoggingModuleOptions(
           organizationId: req?.user?.organizationId || null,
         },
         authScheme: req?.authScheme,
+        rateLimitPolicy: res?.rateLimitPolicy,
       }),
     },
   };
