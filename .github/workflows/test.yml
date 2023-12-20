@@ -160,13 +160,22 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - run: echo '${{ needs.get-affected.outputs.test-packages }}'
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-project
+      - name: Display Test Packages
+        run: echo '${{ needs.get-affected.outputs.test-packages }}'
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Project
+        uses: ./.github/actions/setup-project
         with:
           slim: 'true'
-      - uses: ./.github/actions/setup-redis-cluster
-      - uses: mansagroup/nrwl-nx-action@v3
+
+      - name: Setup Redis Cluster
+        uses: ./.github/actions/setup-redis-cluster
+
+      - name: Run Lint, Build, Test
+        uses: mansagroup/nrwl-nx-action@v3
         env:
           LOGGING_LEVEL: 'info'
         with:

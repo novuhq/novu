@@ -4,6 +4,17 @@
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "private": true,
+  "license": "ISC",
+  "author": "",
+  "sideEffects": false,
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist/cjs",
+    "dist/esm",
+    "dist/types"
+  ],
   "scripts": {
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
@@ -21,16 +32,28 @@
     "cypress:open": "cross-env NODE_ENV=test cypress open",
     "cypress:run": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component"
   },
-  "author": "",
-  "license": "ISC",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.js",
-  "files": [
-    "dist/cjs",
-    "dist/esm",
-    "dist/types"
-  ],
-  "sideEffects": false,
+  "dependencies": {
+    "@cypress/react": "^7.0.3",
+    "@cypress/webpack-preprocessor": "^6.0.0",
+    "@emotion/css": "^11.10.5",
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
+    "@mantine/core": "^5.7.1",
+    "@mantine/hooks": "^5.7.1",
+    "@mantine/notifications": "^5.7.1",
+    "@novu/client": "0.22.0",
+    "@novu/shared": "0.22.0",
+    "@novu/shared-web": "0.22.0",
+    "@segment/analytics-next": "1.59.0",
+    "@sentry/react": "^7.40.0",
+    "@tanstack/react-query": "^4.20.4",
+    "axios": "^1.3.3",
+    "jwt-decode": "^3.1.2",
+    "react-helmet-async": "^1.3.0",
+    "react-hook-form": "7.43.9",
+    "react-table": "^7.8.0",
+    "tslib": "^2.3.1"
+  },
   "devDependencies": {
     "@storybook/addon-actions": "^7.5.0",
     "@storybook/addon-docs": "^7.4.2",
@@ -58,23 +81,7 @@
     "vite-plugin-dts": "^3.6.0"
   },
   "peerDependencies": {
-    "react": ">=16.8.0",
-    "react-dom": ">=16.8.0",
-    "react-router-dom": "6.2.2"
-  },
-  "dependencies": {
-    "@cypress/react": "^7.0.3",
-    "@cypress/webpack-preprocessor": "^6.0.0",
-    "@emotion/css": "^11.10.5",
-    "@emotion/react": "^11.7.1",
-    "@emotion/styled": "^11.6.0",
-    "@mantine/core": "^5.7.1",
-    "@mantine/hooks": "^5.7.1",
-    "@mantine/notifications": "^5.7.1",
-    "@novu/client": "^0.22.0",
-    "@novu/shared": "^0.22.0",
-    "react-hook-form": "7.43.9",
-    "react-table": "^7.8.0",
-    "tslib": "^2.3.1"
+    "react": "^16.8.0 || ^17.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0"
   }
 }

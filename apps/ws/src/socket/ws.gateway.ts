@@ -21,6 +21,8 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   server: Server | null;
 
   async handleDisconnect(connection: Socket) {
+    Logger.log(`New disconnect received from ${connection.id}`, LOG_CONTEXT);
+
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const _this = this;
 
@@ -44,6 +46,8 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   }
 
   async handleConnection(connection: Socket) {
+    Logger.log(`New connection received from ${connection.id}`, LOG_CONTEXT);
+
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const _this = this;
 
@@ -93,6 +97,8 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   private async processDisconnectionRequest(connection: Socket) {
     if (!this.isShutdown) {
       await this.handlerSubscriberDisconnection(connection);
+    } else {
+      Logger.log(`Skipped disconnect due to shutdown flag for connection ${connection.id}`, LOG_CONTEXT);
     }
   }
 
@@ -109,28 +115,45 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
     }
 
     const activeConnections = await this.getActiveConnections(connection, subscriber._id);
+
+    Logger.log(
+      `Disconnect request received from ${subscriber._id}. Active connections: ${activeConnections}`,
+      LOG_CONTEXT
+    );
     await this.subscriberOnlineService.handleDisconnection(subscriber, activeConnections);
   }
 
   private async getActiveConnections(socket: Socket, subscriberId: string) {
-    const activeSockets = await socket.in(subscriberId).fetchSockets();
+    const activeSockets = await this.server?.in(subscriberId).fetchSockets();
 
-    return activeSockets.length;
+    return activeSockets?.length || 0;
   }
 
   private async processConnectionRequest(connection: Socket) {
     const token = this.extractToken(connection);
 
     if (!token || token === 'null') {
+      Logger.warn(`No token was found during counnection process for ${connection.id}`, LOG_CONTEXT);
+
       return this.disconnect(connection);
     }
 
     const subscriber = await this.getSubscriber(token);
     if (!subscriber) {
+      Logger.warn(`No subscriber was found for specified token ${connection.id}`, LOG_CONTEXT);
+
       return this.disconnect(connection);
     }
 
+    Logger.log(
+      `Connection request received from ${subscriber._id} external id: ${subscriber.subscriberId}`,
+      LOG_CONTEXT
+    );
+
     await connection.join(subscriber._id);
+
+    Logger.log(`Connection request accepted for ${subscriber._id}`, LOG_CONTEXT);
+
     await this.subscriberOnlineService.handleConnection(subscriber);
   }
 
@@ -141,6 +164,8 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
 
       return;
     }
+
+    Logger.log(`Sending event ${event} message to ${userId}`, LOG_CONTEXT);
 
     this.server.to(userId).emit(event, data);
   }

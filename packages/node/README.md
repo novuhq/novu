@@ -152,7 +152,9 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Environments](#environments)
 - [Layouts](#layouts)
 - [Integrations](#integrations)
-
+- [Organizations](#organizations)
+- [Inbound Parse](#inbound-parse)
+- [Execution Details](#execution-details)
 
 ### Subscribers
 
@@ -170,6 +172,7 @@ await novu.subscribers.list(page,limit)
 ```
 
 - #### Identify (create) a new subscriber
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -191,6 +194,7 @@ await novu.subscribers.identify("subscriberId", {
 
 
 - #### Bulk create subscribers
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -229,6 +233,7 @@ await novu.subscribers.identify([
 
 
 - #### Get a single subscriber
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -260,6 +265,7 @@ await novu.subscribers.update("subscriberId",{
 ```
 
 - #### Update provider credentials
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -274,9 +280,15 @@ await novu.subscribers.setCredentials("subscriberId", "fcm", {
 await novu.subscribers.setCredentials("subscriberId", "slack", {
   webhookUrl: ["webhookUrl"]
 })
+
+// update slack weebhook for a subscriberId with selected integration
+await novu.subscribers.setCredentials("subscriberId", "slack", {
+  webhookUrl: ["webhookUrl"]
+ }, "slack_identifier" )
 ```
 
 - #### Delete provider credentials
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -311,6 +323,7 @@ await novu.subscribers.updateOnlineStatus("subscriberId", false)
 ```
 
 - #### Get subscriber preference for all workflows
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -320,6 +333,7 @@ await novu.subscribers.getPreference("subscriberId")
 ```
 
 - #### Get subscriber global preference
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -330,6 +344,7 @@ await novu.subscribers.getGlobalPreference("subscriberId" )
 
 
 - #### Get subscriber preference by level
+
 ```ts
 import { Novu, PreferenceLevelEnum } from '@novu/node';
 
@@ -340,7 +355,9 @@ await novu.subscribers.getPreferenceByLevel("subscriberId", PreferenceLevelEnum.
 // Get template level preference
 await novu.subscribers.getPreferenceByLevel("subscriberId", PreferenceLevelEnum.TEMPLATE)
 ```
+
 - #### Update subscriber preference for a workflow
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -365,6 +382,7 @@ await novu.subscribers.updatePreference("subscriberId", "workflowId", {
 ```
 
 - #### Update subscriber preference globally
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -406,6 +424,7 @@ await novu.subscribers.getNotificationsFeed("subscriberId", params);
 ```
 
 - #### Get seen/unseen in-app messages (notifications) count
+
 ```ts
 import { Novu } from '@novu/node';
 
@@ -479,7 +498,7 @@ import { Novu } from '@novu/node';
 const novu = new Novu('<NOVU_API_KEY>');
 
 // trigger to existing subscribers
-await novu.subscribers.trigger("workflowIdentifier", {
+await novu.events.trigger("workflowIdentifier", {
   to: "subscriberId",
   payload: {
     customKey: "customValue",
@@ -502,7 +521,7 @@ await novu.subscribers.trigger("workflowIdentifier", {
 });
 
 // create new subscriber inline with trigger
-await novu.subscribers.trigger("workflowIdentifier", {
+await novu.events.trigger("workflowIdentifier", {
   to: {
     subscriberId: "1",
     firstName: "Pawan",
@@ -530,7 +549,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.trigger("workflowIdentifier", {
+await novu.events.trigger("workflowIdentifier", {
   to: [ "subscriberId1" , "subscriberId2" ],
   payload: {},
   overrides:{} ,
@@ -540,7 +559,7 @@ await novu.subscribers.trigger("workflowIdentifier", {
 
 
 // create new subscribers inline with trigger
-await novu.subscribers.trigger("workflowIdentifier", {
+await novu.events.trigger("workflowIdentifier", {
   to: [
     {
       subscriberId: "1",
@@ -577,6 +596,7 @@ await novu.subscribers.trigger("workflowIdentifier", {
 ```
 
 - #### Trigger to a topic
+
 ```ts
 import { Novu, TriggerRecipientsTypeEnum } from '@novu/node';
 
@@ -599,7 +619,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.bulkTrigger([
+await novu.events.bulkTrigger([
   {
     name: "workflowIdentifier_1",
     to: "subscriberId_1",
@@ -646,7 +666,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.broadcast("workflowIdentifier", {
+await novu.events.broadcast("workflowIdentifier", {
   payload: {
     customKey: "customValue",
     customKey1: {
@@ -669,8 +689,9 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.subscribers.cancel("transactionId");
+await novu.events.cancel("transactionId");
 ```
+
 ### Messages
 
 - #### List all messages 
@@ -1130,4 +1151,119 @@ await novu.notificationTemplates.getAll({
   page: 0, // optional
   limit: 20 // optional
 })
+```
+
+### Organizations
+
+- #### List all organizations
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.list();
+```
+
+- #### Create new organization
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.create({ name: 'New Organization' });
+```
+
+- #### Rename organization
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.rename({ name: 'Renamed Organization' });
+```
+
+- #### Get current organization details
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.getCurrent();
+```
+
+- #### Remove member from organization
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.removeMember('memberId');
+```
+
+- #### Update organization member role
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.updateMemberRole('memberId', {
+  role: 'admin';
+});
+```
+
+- #### Get all members of organization
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.getMembers();
+```
+
+- #### Update organization branding details
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.organizations.updateBranding({
+  logo: 'https://s3.us-east-1.amazonaws.com/bucket/image.jpeg',
+  color: '#000000',
+  fontFamily: 'Lato',
+});
+```
+
+
+### Inbound Parse
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+// Validate the mx record setup for the inbound parse functionality 
+await novu.inboundParse.getMxStatus()
+```
+
+### Execution Details
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+const executionDetailsParams = {
+  subscriberId: 'subscriberId_123',
+  notificationId: 'notificationid_abcd'
+}
+
+// get execution details
+await novu.executionDetails.get(executionDetailsParams)
 ```
