@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node';
 import { OrganizationRepository, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { IEmailOptions } from '@novu/stateless';
-
+import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService } from '../../services/analytics.service';
 import { InstrumentUsecase } from '../../instrumentation';
 import { MailFactory } from '../../factories/mail/mail.factory';
@@ -26,7 +26,8 @@ export class SendTestEmail {
     private organizationRepository: OrganizationRepository,
     private selectIntegration: SelectIntegration,
     private analyticsService: AnalyticsService,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected moduleRef: ModuleRef
   ) {}
 
   @InstrumentUsecase()

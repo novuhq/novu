@@ -60,14 +60,16 @@ const isQueueEntry = (queueName: string): queueName is JobTopicNameEnum => {
 };
 
 export const workersToProcess =
-  process.env.ACTIVE_WORKERS?.split(',').map((queue) => {
-    const queueName = queue.trim();
-    if (!isQueueEntry(queueName)) {
-      throw new Error(`Invalid queue name ${queueName}`);
-    }
+  process.env.ACTIVE_WORKERS?.split(',')
+    .filter((i) => !!i)
+    .map((queue) => {
+      const queueName = queue.trim();
+      if (!isQueueEntry(queueName)) {
+        throw new Error(`Invalid queue name ${queueName}`);
+      }
 
-    return queueName;
-  }) || [];
+      return queueName;
+    }) || [];
 
 const WORKER_DEPENDENCIES: JobTopicNameEnum[] = workersToProcess.reduce((history, worker) => {
   const workerDependencies: JobTopicNameEnum[] = WORKER_MAPPING[worker]?.queueDependencies || [];

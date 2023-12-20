@@ -30,7 +30,7 @@ export class Changes extends WithHttp implements IChanges {
    */
   async applyMany(changeIds: string[]) {
     return await this.http.post(`/changes/bulk/apply`, {
-      ChangeIDs: changeIds,
+      changeIds,
     });
   }
 }

@@ -13,15 +13,14 @@ import {
   ChangeEntityTypeEnum,
   INotificationTemplateStep,
   INotificationTrigger,
-  IStepVariant,
   TriggerTypeEnum,
+  IStepVariant,
 } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, CreateChange, CreateChangeCommand } from '@novu/application-generic';
 
 import { CreateNotificationTemplateCommand, NotificationStepVariant } from './create-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
-import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 /**

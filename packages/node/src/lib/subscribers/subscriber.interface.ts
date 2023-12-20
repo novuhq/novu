@@ -25,7 +25,8 @@ export interface ISubscribers {
   setCredentials(
     subscriberId: string,
     providerId: string,
-    credentials: IChannelCredentials
+    credentials: IChannelCredentials,
+    integrationIdentifier?: string
   );
   deleteCredentials(subscriberId: string, providerId: string);
   /**

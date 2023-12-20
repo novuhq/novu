@@ -5,9 +5,10 @@
   "scripts": {
     "start": "cross-env PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
-    "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 react-app-rewired --max_old_space_size=4096 build",
+    "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false react-app-rewired --max_old_space_size=4096 build",
     "precommit": "lint-staged",
     "docker:build": "docker buildx build -f ./Dockerfile -t novu-web ./../..",
+    "docker:build:depot": "depot build -f ./Dockerfile -t novu-web ./../.. --load",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
     "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
     "start:static:build": "pnpm envsetup:docker && http-server build -p 4200 --proxy http://localhost:4200?",
@@ -21,10 +22,11 @@
     "storybook": "storybook dev -p 6006 -s public",
     "build-storybook": "storybook build -s public",
     "lint": "eslint src",
-    "lint:fix": "pnpm lint -- --fix"
+    "lint:fix": "pnpm lint -- --fix",
+    "link:submodules": "pnpm link ../../enterprise/packages/translation-web"
   },
   "dependencies": {
-    "@ant-design/icons": "^4.6.2",
+    "@ant-design/icons": "4.6.2",
     "@babel/plugin-proposal-optional-chaining": "^7.20.7",
     "@babel/plugin-transform-react-display-name": "^7.18.6",
     "@babel/plugin-transform-runtime": "^7.23.2",
@@ -53,6 +55,7 @@
     "@novu/notification-center": "^0.22.0",
     "@novu/shared": "^0.22.0",
     "@segment/analytics-next": "^1.48.0",
+    "@novu/shared-web": "^0.22.0",
     "@sentry/react": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@storybook/addon-docs": "^7.4.2",
@@ -107,6 +110,7 @@
     "react-syntax-highlighter": "^15.4.3",
     "react-table": "^7.8.0",
     "react-use-intercom": "^2.0.0",
+    "react-joyride": "^2.5.3",
     "rimraf": "^3.0.2",
     "slugify": "^1.4.6",
     "storybook-dark-mode": "^3.0.1",
@@ -116,6 +120,9 @@
     "web-vitals": "^1.0.1",
     "webpack-dev-server": "4.11.1",
     "zod": "^3.22.4"
+  },
+  "optionalDependencies": {
+    "@novu/ee-translation-web": "^0.22.0"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",
@@ -147,7 +154,6 @@
     "nodemon": "^3.0.1",
     "react-app-rewired": "^2.2.1",
     "react-error-overlay": "6.0.11",
-    "react-joyride": "^2.5.3",
     "react-scripts": "^5.0.1",
     "storybook": "^7.4.2",
     "typescript": "4.9.5",

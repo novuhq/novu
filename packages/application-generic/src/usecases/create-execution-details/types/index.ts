@@ -33,6 +33,7 @@ export enum DetailEnum {
   WEBHOOK_FILTER_FAILED_RETRY = 'Webhook filter failed, retry will be executed',
   WEBHOOK_FILTER_FAILED_LAST_RETRY = 'Failed to get response from remote webhook filter on last retry',
   DIGEST_MERGED = 'Digest was merged with other digest',
+  DIGEST_SKIPPED = 'Digest was skipped, first backoff event',
   DELAY_FINISHED = 'Delay is finished',
   PUSH_MISSING_DEVICE_TOKENS = 'Subscriber credentials is missing the tokens for sending a push notification message',
   VARIANT_CHOSEN = 'Variant was chosen by the provided condition criteria',

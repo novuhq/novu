@@ -1,15 +1,15 @@
 import './config';
 import 'newrelic';
+import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
-import { RedisIoAdapter } from './shared/framework/redis.adapter';
+import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
 
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
-import helmet from 'helmet';
-import { BullMqService } from '@novu/application-generic';
+import { InMemoryIoAdapter } from './shared/framework/in-memory-io.adapter';
+
 import { version } from '../package.json';
-import { getErrorInterceptor, Logger } from '@novu/application-generic';
 import { prepareAppInfra, startAppInfra } from './socket/services';
 
 if (process.env.SENTRY_DSN) {
@@ -23,7 +23,9 @@ if (process.env.SENTRY_DSN) {
 export async function bootstrap() {
   BullMqService.haveProInstalled();
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
-  const redisIoAdapter = new RedisIoAdapter(app);
+
+  const inMemoryAdapter = new InMemoryIoAdapter(app);
+  await inMemoryAdapter.connectToInMemoryCluster();
 
   app.useLogger(app.get(Logger));
   app.flushLogs();
@@ -43,7 +45,7 @@ export async function bootstrap() {
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   });
 
-  app.useWebSocketAdapter(redisIoAdapter);
+  app.useWebSocketAdapter(inMemoryAdapter);
 
   app.enableShutdownHooks();
 

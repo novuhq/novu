@@ -8,3 +8,6 @@ packages:
   - 'libs/*'
   # exclude packages that are inside test directories
   - '!**/test/**'
+  # all packages in enterprise modules
+  - 'enterprise/packages/*'
+  - 'enterprise/packages/libs/*'

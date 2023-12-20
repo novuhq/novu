@@ -7,4 +7,5 @@ export { GetIsInMemoryClusterModeEnabled } from './get-is-in-memory-cluster-mode
 export { GetIsApiRateLimitingEnabled } from './get-is-api-rate-limiting-enabled.use-case';
 export { GetIsTemplateStoreEnabled } from './get-is-template-store-enabled.use-case';
 export { GetIsTopicNotificationEnabled } from './get-is-topic-notification-enabled.use-case';
+export { GetIsTranslationManagerEnabled } from './get-is-translation-manager-enabled.use-case';
 export { GetUseMergedDigestId } from './get-use-merged-digest-id.use-case';
