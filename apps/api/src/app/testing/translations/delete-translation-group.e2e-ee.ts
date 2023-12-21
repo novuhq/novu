@@ -21,7 +21,7 @@ describe('Delete a Transaltion group - /translations/group/:id (Delete)', async 
     };
 
     const { body } = await session.testAgent.post('/v1/translations/groups').send(createTranslationGroup);
-    const newTranslationGroupdId = body.data._id;
+    const newTranslationGroupId = body.data._id;
     const { body: translationGroupList } = await session.testAgent.get('/v1/translations/groups').send();
     expect(translationGroupList.data.length).to.equal(1);
     expect(translationGroupList.data[0].name).to.equal('test');
