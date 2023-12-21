@@ -5,7 +5,7 @@ import {
 } from './workflow-override.interface';
 import { WithHttp } from '../novu.interface';
 
-export class WorkflowGroups extends WithHttp implements IWorkflowOverrides {
+export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
   /**
    * @param {string} overrideId - overrideId of the workflow-override to update
    * @param {IWorkflowOverrideUpdatePayload} data - All the additional parameters to update a worflow-override
