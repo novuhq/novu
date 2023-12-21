@@ -51,10 +51,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
    */
   async getWorkflowOverride(workflowId: string, tenantId: string) {
     return await this.http.get(
-      `/workflow-overrides/workflows/${workflowId}/tenants/${tenantId}`,
-      {
-        params: { workflowId, tenantId },
-      }
+      `/workflow-overrides/workflows/${workflowId}/tenants/${tenantId}`
     );
   }
 
