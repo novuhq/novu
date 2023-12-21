@@ -11,7 +11,7 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { CacheService } from '@novu/application-generic';
+import { CacheService, Instrument } from '@novu/application-generic';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { createHash } from 'crypto';
@@ -34,6 +34,7 @@ enum ReqStatusEnum {
 export class IdempotencyInterceptor implements NestInterceptor {
   constructor(private readonly cacheService: CacheService) {}
 
+  @Instrument()
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
     const idempotencyKey = this.getIdempotencyKey(context);
