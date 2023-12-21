@@ -138,7 +138,7 @@ export const ChangesTable = ({
     <Table
       data-test-id={dataTestId}
       loading={loading}
-      data={changes ? changes.slice().reverse() : []}
+      data={changes || []}
       columns={columns}
       pagination={{
         pageSize: pageSize,

@@ -63,7 +63,8 @@ export class ChangeRepository extends BaseRepository<ChangeDBModel, ChangeEntity
     })
       .skip(skip)
       .limit(limit)
-      .populate('user', userSelect);
+      .populate('user', userSelect)
+      .sort({ _id: -1 });
 
     return { totalCount: totalItemsCount, data: this.mapEntities(items) as ChangeEntityPopulated[] };
   }
