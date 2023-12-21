@@ -3,7 +3,8 @@ import 'newrelic';
 import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
-import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
+import { BullMqService, getErrorInterceptor, Logger, getOTELSDK } from '@novu/application-generic';
+import * as packageJson from '../package.json';
 
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
@@ -19,9 +20,11 @@ if (process.env.SENTRY_DSN) {
     release: `v${version}`,
   });
 }
+const otelSDK = getOTELSDK(packageJson.name);
 
 export async function bootstrap() {
   BullMqService.haveProInstalled();
+  await otelSDK.start();
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   const inMemoryAdapter = new InMemoryIoAdapter(app);
@@ -59,3 +62,13 @@ export async function bootstrap() {
 
   await app.listen(process.env.PORT as string);
 }
+
+process.on('SIGTERM', () => {
+  otelSDK
+    .shutdown()
+    .then(
+      () => console.log('SDK shut down successfully'),
+      (err) => console.log('Error shutting down SDK', err)
+    )
+    .finally(() => process.exit(0));
+});

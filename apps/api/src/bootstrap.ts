@@ -9,7 +9,7 @@ import * as compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
-import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
+import { BullMqService, getErrorInterceptor, Logger as PinoLogger, getOTELSDK } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
 import { AppModule } from './app.module';
@@ -39,9 +39,11 @@ if (process.env.SENTRY_DSN) {
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
+const otelSDK = getOTELSDK(packageJson.name);
 
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
+  await otelSDK.start();
 
   let app: INestApplication;
   if (expressApp) {
@@ -137,3 +139,13 @@ function isWidgetRoute(url: string) {
 function isBlueprintRoute(url: string) {
   return url.startsWith('/v1/blueprints');
 }
+
+process.on('SIGTERM', () => {
+  otelSDK
+    .shutdown()
+    .then(
+      () => console.log('SDK shut down successfully'),
+      (err) => console.log('Error shutting down SDK', err)
+    )
+    .finally(() => process.exit(0));
+});
