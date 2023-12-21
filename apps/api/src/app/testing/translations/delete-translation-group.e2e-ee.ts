@@ -35,7 +35,7 @@ describe('Delete a Transaltion group - /translations/group/:id (Delete)', async 
     expect(translationGroupListAfterDelete.data.length).to.equal(0);
   });
 
-  it('should delete also delete the translations of the group', async function () {
+  it('should also delete the translations of the group', async function () {
     const createTranslationGroup = {
       name: 'test',
       identifier: 'test',
