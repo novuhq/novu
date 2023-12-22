@@ -2,6 +2,9 @@ import { UserSession } from '@novu/testing';
 import { CacheService } from '@novu/application-generic';
 import { expect } from 'chai';
 import { HttpResponseHeaderKeysEnum } from '../src/app/shared/framework/types';
+
+process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
+
 describe('Idempotency Test', async () => {
   let session: UserSession;
   const path = '/v1/testing/idempotency';

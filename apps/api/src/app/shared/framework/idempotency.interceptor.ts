@@ -11,7 +11,7 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { CacheService, Instrument } from '@novu/application-generic';
+import { CacheService, FeatureFlagCommand, GetIsApiIdempotencyEnabled, Instrument } from '@novu/application-generic';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { createHash } from 'crypto';
@@ -30,18 +30,40 @@ enum ReqStatusEnum {
   ERROR = 'error',
 }
 
+const ALLOWED_METHODS = ['post', 'patch'];
+
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
-  constructor(private readonly cacheService: CacheService) {}
+  constructor(
+    private readonly cacheService: CacheService,
+    private getIsApiIdempotencyEnabled: GetIsApiIdempotencyEnabled
+  ) {}
+
+  protected async isEnabled(context: ExecutionContext): Promise<boolean> {
+    const user = this.getReqUser(context);
+    const { organizationId, environmentId, _id } = user;
+
+    const isEnabled = await this.getIsApiIdempotencyEnabled.execute(
+      FeatureFlagCommand.create({
+        environmentId,
+        organizationId,
+        userId: _id,
+      })
+    );
+
+    return isEnabled;
+  }
 
   @Instrument()
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
+    const isAllowedMethod = ALLOWED_METHODS.includes(request.method.toLowerCase());
     const idempotencyKey = this.getIdempotencyKey(context);
-    const isEnabled = process.env.IS_API_IDEMPOTENCY_ENABLED == 'true';
-    if (!isEnabled || !idempotencyKey || !['post', 'patch'].includes(request.method.toLowerCase())) {
+    const isEnabled = await this.isEnabled(context);
+    if (!idempotencyKey || !isAllowedMethod || !isEnabled) {
       return next.handle();
     }
+
     if (idempotencyKey?.length > 255) {
       return throwError(
         () =>
