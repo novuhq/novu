@@ -19,6 +19,7 @@ export function getOTELSDK(serviceName: string) {
     }),
     spanProcessor: new BatchSpanProcessor(new JaegerExporter()),
     contextManager: new AsyncLocalStorageContextManager(),
+    serviceName: serviceName,
     textMapPropagator: new CompositePropagator({
       propagators: [
         new JaegerPropagator(),
