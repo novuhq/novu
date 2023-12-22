@@ -49,12 +49,17 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
    * @param {string} workflowId - workflowId
    * @param {string} tenantId - tenantId
    */
-  async getWorkflowOverride(workflowId: string, tenantId: string) {
+  async getWorkflowOverrideByTenant(workflowId: string, tenantId: string) {
     return await this.http.get(
       `/workflow-overrides/workflows/${workflowId}/tenants/${tenantId}`
     );
   }
 
+  /**
+   * @param {string} overrideId - workflowId
+   * @param {string} tenantId - tenantId
+   * @param {IWorkflowOverrideUpdatePayload} data - All the additional paramters to update workflow override
+   */
   async updateWorkflowOverride(
     overrideId: string,
     tenantId: string,
@@ -68,6 +73,10 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
     );
   }
 
+  /**
+   *
+   * @param {string} overrideId - overrideID of the workflow
+   */
   async delete(overrideId: string) {
     return await this.http.delete(`/workflow-overrides/${overrideId}`);
   }

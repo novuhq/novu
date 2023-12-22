@@ -132,7 +132,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
   test('should fetch the workflow-overide with the given tenant id', async () => {
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.workflowoverrides.getWorkflowOverride(
+    await novu.workflowoverrides.getWorkflowOverrideByTenant(
       'WORKFLOW_ID',
       'TENANT_ID'
     );
