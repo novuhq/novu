@@ -155,6 +155,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Organizations](#organizations)
 - [Inbound Parse](#inbound-parse)
 - [Execution Details](#execution-details)
+- [Workflow Overrides](#workflow-override)
 
 ### Subscribers
 
@@ -1266,4 +1267,93 @@ const executionDetailsParams = {
 
 // get execution details
 await novu.executionDetails.get(executionDetailsParams)
+```
+
+### Workflow Overrides
+
+- #### create new workflow override
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.workflowoverrides.create({
+  workflowId: 'workdflowId_123',
+  tenantId: 'tenantID_123',
+  active: false,
+})
+```
+
+- #### get all workflow overrides
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.workflowoverrides.getWorkflowOverrides();
+```
+
+- #### get all workflow overrides from the 3rd page and with a limit of 20
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.workflowoverrides.getWorkflowOverrides(3,20)
+```
+
+- #### get workflow override by overrideId
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.workflowoverrides.getworkflowOverrideById('overrideId_123');
+```
+
+- #### get workflow override by tenant
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.workflowoverrides.getWorkflowOverrideByTenant(
+      'workflowId_123',
+      'tenantId_123'
+    );
+```
+
+- #### Update workflow override
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.workflowoverrides.updateWorkflowOverride(
+      'overrideId_123',
+      'tenantId_123',
+      {
+        active: false,
+      }
+    );
+```
+
+- #### Update workflow override by tenantId
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.workflowoverrides.updateWorkflowOverrideById('OVERRIDE_ID', {
+      active: false,
+    });
+```
+
+- #### Delete workflow override
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu('<NOVU_API_KEY>');
+
+await novu.workflowoverrides.delete('overrideId_123');
 ```
