@@ -2717,6 +2717,9 @@ importers:
       rrule:
         specifier: ^2.7.2
         version: 2.7.2
+      rxjs:
+        specifier: 7.8.1
+        version: 7.8.1
     optionalDependencies:
       '@taskforcesh/bullmq-pro':
         specifier: 5.1.14

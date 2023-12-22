@@ -30,7 +30,7 @@ jobs:
       netlify_site_id: 20a64bdd-1934-4284-875f-862410c69a3b
     secrets: inherit
 
-   deploy_widget_us:
+  deploy_widget_us:
     needs:
       - test_widget
       - deploy_widget_eu
