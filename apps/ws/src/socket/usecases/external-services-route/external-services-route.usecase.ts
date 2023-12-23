@@ -19,7 +19,7 @@ export class ExternalServicesRoute {
     if (!isOnline) {
       Logger.log(`Connection does not exist, ignoring command for ${command.userId}`, LOG_CONTEXT);
 
-      // return;
+      return;
     }
 
     if (command.event === WebSocketEventEnum.RECEIVED) {
