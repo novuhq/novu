@@ -1,48 +1,21 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { NotificationTemplateRepository } from '@novu/dal';
-import { GetWorkflowVariablesCommand } from './get-workflow-variables.command';
-import { ApiException } from '../../../shared/exceptions/api.exception';
+import { Injectable, Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { SystemVariablesWithTypes, TemplateVariableTypeEnum } from '@novu/shared';
-import { set, get } from 'lodash';
+import { SystemVariablesWithTypes } from '@novu/shared';
 import { buildVariablesKey, CachedEntity } from '@novu/application-generic';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { GetWorkflowVariablesCommand } from './get-workflow-variables.command';
 
 @Injectable()
 export class GetWorkflowVariables {
-  constructor(private notificationTemplateRepository: NotificationTemplateRepository, private moduleRef: ModuleRef) {}
+  constructor(private moduleRef: ModuleRef) {}
 
   async execute(command: GetWorkflowVariablesCommand) {
-    const { workflowId, environmentId, organizationId } = command;
-    const workflow = await this.notificationTemplateRepository.findById(workflowId, environmentId);
-    if (!workflow) {
-      throw new NotFoundException(`Workflow with id ${workflowId} not found`);
-    }
-    const variableTypeHumanize = {
-      [TemplateVariableTypeEnum.STRING]: 'string',
-      [TemplateVariableTypeEnum.ARRAY]: 'array',
-      [TemplateVariableTypeEnum.BOOLEAN]: 'boolean',
-    };
+    const { environmentId, organizationId } = command;
 
-    const variables = workflow?.triggers[0].variables;
-
-    const stepVariables: Record<string, any> = {};
-    variables
-      .filter((variable) => variable?.type !== TemplateVariableTypeEnum.ARRAY)
-      .forEach((variable) => {
-        set(stepVariables, variable.name, variable.type && variableTypeHumanize[variable.type]);
-      });
-    variables
-      .filter((variable) => variable?.type === TemplateVariableTypeEnum.ARRAY)
-      .forEach((variable) => {
-        set(stepVariables, variable.name, [get(stepVariables, variable.name, [])]);
-      });
-
-    const variablesWithTypes = await this.fetchVariables({
+    return await this.fetchVariables({
       _environmentId: environmentId,
       _organizationId: organizationId,
     });
-
-    return { ...variablesWithTypes, variables: stepVariables };
   }
 
   @CachedEntity({
@@ -59,7 +32,7 @@ export class GetWorkflowVariables {
     _environmentId: string;
     _organizationId: string;
   }) {
-    let translationVariables = [];
+    let translationVariables = {};
 
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {

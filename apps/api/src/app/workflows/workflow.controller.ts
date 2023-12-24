@@ -16,7 +16,12 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
-import { ChangeWorkflowStatusRequestDto, CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from './dto';
+import {
+  ChangeWorkflowStatusRequestDto,
+  CreateWorkflowRequestDto,
+  UpdateWorkflowRequestDto,
+  VariablesResponseDto,
+} from './dto';
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
 import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
@@ -127,6 +132,23 @@ export class WorkflowController {
     );
   }
 
+  @Get('/variables')
+  @ApiResponse(VariablesResponseDto)
+  @ApiOperation({
+    summary: 'Get available variables',
+    description: 'Get the variables that can be used in the workflow',
+  })
+  @ExternalApiAccessible()
+  getWorkflowVariables(@UserSession() user: IJwtPayload): Promise<VariablesResponseDto> {
+    return this.getWorkflowVariablesUsecase.execute(
+      GetWorkflowVariablesCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+      })
+    );
+  }
+
   @Get('/:workflowId')
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
@@ -147,25 +169,6 @@ export class WorkflowController {
       })
     );
   }
-
-  @Get('/:workflowId/variables')
-  @ApiResponse(WorkflowResponse)
-  @ApiOperation({
-    summary: 'Get workflow variables',
-    description: 'Get workflow variables',
-  })
-  @ExternalApiAccessible()
-  getWorkflowVariables(@UserSession() user: IJwtPayload, @Param('workflowId') workflowId: string) {
-    return this.getWorkflowVariablesUsecase.execute(
-      GetWorkflowVariablesCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        workflowId,
-      })
-    );
-  }
-
   @Post('')
   @ExternalApiAccessible()
   @UseGuards(RootEnvironmentGuard)
