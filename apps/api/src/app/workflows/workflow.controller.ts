@@ -36,6 +36,8 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
 import { ApiOkResponse } from '../shared/framework/response.decorator';
+import { GetWorkflowVariables } from './usecases/get-workflow-variables/get-workflow-variables.usecase';
+import { GetWorkflowVariablesCommand } from './usecases/get-workflow-variables/get-workflow-variables.command';
 
 @ApiCommonResponses()
 @Controller('/workflows')
@@ -47,6 +49,7 @@ export class WorkflowController {
     private getWorkflowsUsecase: GetNotificationTemplates,
     private createWorkflowUsecase: CreateNotificationTemplate,
     private getWorkflowUsecase: GetNotificationTemplate,
+    private getWorkflowVariablesUsecase: GetWorkflowVariables,
     private updateWorkflowByIdUsecase: UpdateNotificationTemplate,
     private deleteWorkflowByIdUsecase: DeleteNotificationTemplate,
     private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus
@@ -141,6 +144,24 @@ export class WorkflowController {
         organizationId: user.organizationId,
         userId: user._id,
         templateId: workflowId,
+      })
+    );
+  }
+
+  @Get('/:workflowId/variables')
+  @ApiResponse(WorkflowResponse)
+  @ApiOperation({
+    summary: 'Get workflow variables',
+    description: 'Get workflow variables',
+  })
+  @ExternalApiAccessible()
+  getWorkflowVariables(@UserSession() user: IJwtPayload, @Param('workflowId') workflowId: string) {
+    return this.getWorkflowVariablesUsecase.execute(
+      GetWorkflowVariablesCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        workflowId,
       })
     );
   }
