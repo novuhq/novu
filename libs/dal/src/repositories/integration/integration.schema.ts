@@ -58,6 +58,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       imageUrl: Schema.Types.String,
       state: Schema.Types.String,
       externalLink: Schema.Types.String,
+      useChatProviderWebhookUrl: Schema.Types.Boolean,
     },
     active: {
       type: Schema.Types.Boolean,

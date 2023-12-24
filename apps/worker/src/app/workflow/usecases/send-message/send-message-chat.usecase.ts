@@ -170,7 +170,11 @@ export class SendMessageChat extends SendMessageBase {
       },
     });
 
-    const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+    let chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+    if (integration?.credentials.useChatProviderWebhookUrl && integration?.credentials.webhookUrl !== '') {
+      chatWebhookUrl = integration.credentials.webhookUrl;
+    }
+
     const channelSpecification = subscriberChannel.credentials?.channel;
 
     if (!chatWebhookUrl) {

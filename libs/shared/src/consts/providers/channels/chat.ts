@@ -1,5 +1,14 @@
-import { IConfigCredentials, IProviderConfig } from '../provider.interface';
-import { grafanaOnCallConfig, slackConfig, getstreamConfig } from '../credentials';
+import { IProviderConfig } from '../provider.interface';
+import {
+  grafanaOnCallConfig,
+  slackConfig,
+  getstreamConfig,
+  disordConfig,
+  matterMostConfig,
+  msTeamsConfig,
+  zulipConfig,
+  ryverConfig,
+} from '../credentials';
 
 import { ChatProviderIdEnum } from '../provider.enum';
 
@@ -18,7 +27,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.Discord,
     displayName: 'Discord',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: disordConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/chat/discord',
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
   },
@@ -34,7 +43,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.MsTeams,
     displayName: 'MSTeams',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: msTeamsConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/chat/ms-teams',
     logoFileName: { light: 'msteams.svg', dark: 'msteams.svg' },
   },
@@ -42,7 +51,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.Mattermost,
     displayName: 'Mattermost',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: matterMostConfig,
     docReference: 'https://developers.mattermost.com/integrate/webhooks/incoming/',
     logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
   },
@@ -50,7 +59,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.Ryver,
     displayName: 'Ryver',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: ryverConfig,
     docReference: 'https://api.ryver.com/ryvrest_api_examples.html#create-chat-message',
     logoFileName: { light: 'ryver.png', dark: 'ryver.png' },
   },
@@ -58,7 +67,7 @@ export const chatProviders: IProviderConfig[] = [
     id: ChatProviderIdEnum.Zulip,
     displayName: 'Zulip',
     channel: ChannelTypeEnum.CHAT,
-    credentials: [] as IConfigCredentials[],
+    credentials: zulipConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/chat/zulip',
     logoFileName: { light: 'zulip.svg', dark: 'zulip.svg' },
   },

@@ -28,6 +28,23 @@ const smsConfigBase: IConfigCredentials[] = [
 
 const pushConfigBase: IConfigCredentials[] = [];
 
+const chatConfigBase: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.WebhookUrl,
+    displayName: 'Webhook URL',
+    description: 'Provider level webhook url for all subscribers',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.useChatProviderWebhookUrl,
+    displayName: 'Use Provider Webhook URL',
+    description: 'Use provider webhook url for all subscribers',
+    type: 'boolean',
+    required: false,
+  },
+];
+
 export const mailJsConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -478,7 +495,18 @@ export const slackConfig: IConfigCredentials[] = [
     type: 'switch',
     required: false,
   },
+  ...chatConfigBase,
 ];
+
+export const disordConfig: IConfigCredentials[] = [...chatConfigBase];
+
+export const msTeamsConfig: IConfigCredentials[] = [...chatConfigBase];
+
+export const matterMostConfig: IConfigCredentials[] = [...chatConfigBase];
+
+export const ryverConfig: IConfigCredentials[] = [...chatConfigBase];
+
+export const zulipConfig: IConfigCredentials[] = [...chatConfigBase];
 
 export const grafanaOnCallConfig: IConfigCredentials[] = [
   {
