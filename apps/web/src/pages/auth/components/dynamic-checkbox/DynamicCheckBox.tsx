@@ -2,10 +2,10 @@ import React, { SVGProps, useState } from 'react';
 import { CheckboxProps } from '@mantine/core';
 import styled from '@emotion/styled';
 
-import { colors, Checkbox } from '@novu/design-system';
+import { colors, Checkbox, Tooltip } from '@novu/design-system';
 import { ProductUseCasesEnum } from '@novu/shared';
 
-import useStyles from './DynamicCheckBox.styles';
+import { checkboxStyles, tooltipStyles } from './DynamicCheckBox.styles';
 
 interface IDynamicCheckBoxProps extends CheckboxProps {
   Icon: (props: Omit<SVGProps<SVGSVGElement>, 'ref'>) => JSX.Element;
@@ -13,7 +13,8 @@ interface IDynamicCheckBoxProps extends CheckboxProps {
 }
 
 export function DynamicCheckBox({ Icon, type, ...props }: IDynamicCheckBoxProps) {
-  const { classes } = useStyles();
+  const { classes: checkboxClasses } = checkboxStyles();
+  const { classes: tooltipClasses } = tooltipStyles();
   const [isHovered, setIsHovered] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
 
@@ -26,27 +27,29 @@ export function DynamicCheckBox({ Icon, type, ...props }: IDynamicCheckBoxProps)
   };
 
   return (
-    <Container
-      checked={isChecked}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      data-test-id={`check-box-container${type ? `-${type}` : ''}`}
-    >
-      <UnselectedIcon
-        as={Icon}
-        ishovered={isHovered}
-        ischecked={isChecked}
-        data-test-id={`unselectedIcon${type ? `-${type}` : ''}`}
-      />
-      <Checkbox
+    <Tooltip multiline width={280} label={tooltipLabel[type]} classNames={tooltipClasses}>
+      <Container
         checked={isChecked}
-        className="innerCheckbox"
-        classNames={classes}
-        label={props.label}
-        onChange={handleCheckboxChange}
-        data-test-id={`check-box${type ? `-${type}` : ''}`}
-      />
-    </Container>
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        data-test-id={`check-box-container${type ? `-${type}` : ''}`}
+      >
+        <UnselectedIcon
+          as={Icon}
+          ishovered={isHovered}
+          ischecked={isChecked}
+          data-test-id={`unselectedIcon${type ? `-${type}` : ''}`}
+        />
+        <Checkbox
+          checked={isChecked}
+          className="innerCheckbox"
+          classNames={checkboxClasses}
+          label={props.label}
+          onChange={handleCheckboxChange}
+          data-test-id={`check-box${type ? `-${type}` : ''}`}
+        />
+      </Container>
+    </Tooltip>
   );
 }
 
@@ -88,3 +91,15 @@ const Container = styled.div<{ checked: boolean }>`
     );
   }};
 `;
+
+const tooltipLabel = {
+  [ProductUseCasesEnum.IN_APP]:
+    'Utilise Novu’s pre-built customisable in-app component. Or opt for the headless library to create your own in-app notification center',
+  [ProductUseCasesEnum.MULTI_CHANNEL]:
+    'Notify subscribers using a wide range of channels:In-App, Email, Chat, Push, and SMS.',
+  [ProductUseCasesEnum.DIGEST]: 'Digest collects multiple trigger events, aggregates them into a single message.',
+  [ProductUseCasesEnum.DELAY]:
+    'The delay action awaits a specified amount of time before moving on to trigger the following steps of the workflow.',
+  [ProductUseCasesEnum.TRANSLATION]:
+    'Upload translations to use them as variables or in the autosuggest for the editor.',
+};

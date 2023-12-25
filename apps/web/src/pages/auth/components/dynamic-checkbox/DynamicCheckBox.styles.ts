@@ -1,7 +1,7 @@
 import { createStyles } from '@mantine/core';
 import { colors } from '@novu/design-system';
 
-export default createStyles((theme, _params, getRef) => {
+export const checkboxStyles = createStyles((theme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';
 
   return {
@@ -25,6 +25,18 @@ export default createStyles((theme, _params, getRef) => {
       fontSize: '14px',
       fontWeight: 'bold',
       color: dark ? colors.B60 : colors.B60,
+    },
+  };
+});
+
+export const tooltipStyles = createStyles((theme, _params, getRef) => {
+  const dark = theme.colorScheme === 'dark';
+
+  return {
+    tooltip: {
+      background: dark ? colors.B20 : colors.B98,
+      color: colors.B60,
+      fontSize: '14px',
     },
   };
 });
