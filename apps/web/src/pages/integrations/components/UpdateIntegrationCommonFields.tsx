@@ -21,7 +21,7 @@ export const UpdateIntegrationCommonFields = ({
   provider: IIntegratedProvider | null;
   isNovuInAppProvider: boolean;
 }) => {
-    const {
+  const {
     control,
     formState: { errors },
   } = useFormContext();
