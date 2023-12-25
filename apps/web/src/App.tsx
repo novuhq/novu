@@ -23,7 +23,7 @@ import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
-import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
+import QuestionnairePage from './pages/auth/QuestionnairePage';
 import { ENV, LAUNCH_DARKLY_CLIENT_SIDE_ID, SENTRY_DSN, CONTEXT_PATH } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
@@ -130,7 +130,7 @@ function App() {
                 <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
                 <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
                 <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
-                <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} />
+                <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
                 <Route
                   path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
                   element={

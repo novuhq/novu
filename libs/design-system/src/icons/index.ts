@@ -91,6 +91,7 @@ export { Conditions } from './general/Conditions';
 export { Logout } from './general/Logout';
 export { InviteMembers } from './general/InviteMembers';
 export { Translation } from './general/Translation';
+export { MultiChannel } from './general/MultiChannel';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
