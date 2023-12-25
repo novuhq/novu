@@ -1,6 +1,6 @@
 import { MemberRepository, OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { ApiServiceLevelEnum, MemberRoleEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, ICreateOrganizationDto, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
 import { expect } from 'chai';
 
 describe('Create Organization - /organizations (POST)', async () => {
@@ -54,6 +54,27 @@ describe('Create Organization - /organizations (POST)', async () => {
       const dbOrganization = await organizationRepository.findById(body.data._id);
 
       expect(dbOrganization?.apiServiceLevel).to.eq(ApiServiceLevelEnum.FREE);
+    });
+
+    it('should create organization with questionnaire data', async () => {
+      const testOrganization: ICreateOrganizationDto = {
+        name: 'Org Name',
+        jobTitle: JobTitleEnum.PRODUCT_MANAGER,
+        productUseCases: {
+          in_app: true,
+          multi_channel: true,
+        },
+        domain: 'org.com',
+      };
+
+      const { body } = await session.testAgent.post('/v1/organizations').send(testOrganization).expect(201);
+      const dbOrganization = await organizationRepository.findById(body.data._id);
+
+      expect(dbOrganization?.name).to.eq(testOrganization.name);
+      expect(dbOrganization?.jobTitle).to.eq(testOrganization.jobTitle);
+      expect(dbOrganization?.domain).to.eq(testOrganization.domain);
+      expect(dbOrganization?.productUseCases?.in_app).to.eq(testOrganization.productUseCases?.in_app);
+      expect(dbOrganization?.productUseCases?.multi_channel).to.eq(testOrganization.productUseCases?.multi_channel);
     });
   });
 });

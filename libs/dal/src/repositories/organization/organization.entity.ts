@@ -1,4 +1,4 @@
-import { ApiServiceLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, ProductUseCases } from '@novu/shared';
 
 export class OrganizationEntity {
   _id: string;
@@ -20,7 +20,14 @@ export class OrganizationEntity {
   };
 
   partnerConfigurations?: IPartnerConfiguration[];
+
   defaultLocale?: string;
+
+  jobTitle: string;
+
+  domain?: string;
+
+  productUseCases?: ProductUseCases;
 }
 
 export type OrganizationDBModel = OrganizationEntity;

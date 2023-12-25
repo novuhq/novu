@@ -37,6 +37,9 @@ export class CreateOrganization {
       logo: command.logo,
       name: command.name,
       apiServiceLevel: ApiServiceLevelEnum.FREE,
+      jobTitle: command.jobTitle,
+      domain: command.domain,
+      productUseCases: command.productUseCases,
     });
 
     await this.addMemberUsecase.execute(
