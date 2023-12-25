@@ -94,7 +94,7 @@ const Container = styled.div<{ checked: boolean }>`
 
 const tooltipLabel = {
   [ProductUseCasesEnum.IN_APP]:
-    'Utilise Novu’s pre-built customisable in-app component. Or opt for the headless library to create your own in-app notification center',
+    'Utilize Novu’s pre-built customizable in-app component. Or opt for the headless library to create your own in-app notification center',
   [ProductUseCasesEnum.MULTI_CHANNEL]:
     'Notify subscribers using a wide range of channels:In-App, Email, Chat, Push, and SMS.',
   [ProductUseCasesEnum.DIGEST]: 'Digest collects multiple trigger events, aggregates them into a single message.',
