@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   NotificationStepEntity,
   SubscriberRepository,
@@ -47,7 +49,8 @@ export class SendMessageChat extends SendMessageBase {
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
-    protected executionLogQueueService: ExecutionLogQueueService
+    protected executionLogQueueService: ExecutionLogQueueService,
+    protected moduleRef: ModuleRef
   ) {
     super(
       messageRepository,
@@ -56,7 +59,8 @@ export class SendMessageChat extends SendMessageBase {
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
-      selectVariant
+      selectVariant,
+      moduleRef
     );
   }
 
@@ -69,6 +73,7 @@ export class SendMessageChat extends SendMessageBase {
     if (!step?.template) throw new PlatformException('Chat channel template not found');
 
     const { subscriber } = command.compileContext;
+    await this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale);
 
     const template = await this.processVariants(command);
 

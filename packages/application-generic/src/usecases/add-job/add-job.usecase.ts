@@ -75,7 +75,7 @@ export class AddJob {
       Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
 
       digestCreationResult = await this.mergeOrCreateDigestUsecase.execute(
-        MergeOrCreateDigestCommand.create({ job })
+        MergeOrCreateDigestCommand.create({ job, filtered: command.filtered })
       );
 
       if (digestCreationResult === DigestCreationResultEnum.MERGED) {

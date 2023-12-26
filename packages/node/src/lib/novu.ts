@@ -13,6 +13,10 @@ import { Topics } from './topics/topics';
 import { Integrations } from './integrations/integrations';
 import { Messages } from './messages/messages';
 import { Tenants } from './tenants/tenants';
+import { ExecutionDetails } from './execution-details/execution-details';
+import { InboundParse } from './inbound-parse/inbound-parse';
+import { Organizations } from './organizations/organizations';
+
 import { makeRetryable } from './retry';
 
 export class Novu extends EventEmitter {
@@ -30,6 +34,9 @@ export class Novu extends EventEmitter {
   readonly integrations: Integrations;
   readonly messages: Messages;
   readonly tenants: Tenants;
+  readonly executionDetails: ExecutionDetails;
+  readonly inboundParse: InboundParse;
+  readonly organizations: Organizations;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -59,6 +66,9 @@ export class Novu extends EventEmitter {
     this.integrations = new Integrations(this.http);
     this.messages = new Messages(this.http);
     this.tenants = new Tenants(this.http);
+    this.executionDetails = new ExecutionDetails(this.http);
+    this.inboundParse = new InboundParse(this.http);
+    this.organizations = new Organizations(this.http);
 
     this.trigger = this.events.trigger;
     this.bulkTrigger = this.events.bulkTrigger;

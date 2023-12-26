@@ -267,6 +267,20 @@ export class UserSession {
     return this.organization;
   }
 
+  async switchToProdEnvironment() {
+    const prodEnvironment = await this.environmentService.getProductionEnvironment(this.organization._id);
+    if (prodEnvironment) {
+      await this.switchEnvironment(prodEnvironment._id);
+    }
+  }
+
+  async switchToDevEnvironment() {
+    const devEnvironment = await this.environmentService.getDevelopmentEnvironment(this.organization._id);
+    if (devEnvironment) {
+      await this.switchEnvironment(devEnvironment._id);
+    }
+  }
+
   async switchEnvironment(environmentId: string) {
     const environment = await this.environmentService.getEnvironment(environmentId);
 
@@ -304,7 +318,7 @@ export class UserSession {
     unfinishedJobs = 0,
     organizationId = this.organization._id
   ) {
-    await this.jobsService.awaitRunningJobs({
+    return await this.jobsService.awaitRunningJobs({
       templateId,
       organizationId,
       delay,

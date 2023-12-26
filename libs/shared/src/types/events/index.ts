@@ -17,6 +17,8 @@ export interface IAttachmentOptions {
   file: Buffer;
   name?: string;
   channels?: ChannelTypeEnum[];
+  cid?: string;
+  disposition?: string;
 }
 
 export interface IEmailOptions {

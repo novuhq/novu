@@ -4,10 +4,10 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
-import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { UpdateChange } from '../../../change/usecases/update-change/update-change';
 import { UpdateChangeCommand } from '../../../change/usecases/update-change/update-change.command';
 import { UpdateMessageTemplate } from '../update-message-template/update-message-template.usecase';
+import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
 
 @Injectable()
 export class CreateMessageTemplate {

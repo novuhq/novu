@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
-import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import {
   AddressingTypeEnum,
@@ -24,12 +24,13 @@ import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
+import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
+@ApiCommonResponses()
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -45,7 +46,7 @@ export class EventsController {
   ) {}
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Post('/trigger')
   @ApiResponse(TriggerEventResponseDto, 201)
   @ApiOperation({
@@ -81,7 +82,7 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/bulk')
   @ApiResponse(TriggerEventResponseDto, 201, true)
@@ -107,7 +108,7 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/broadcast')
   @ApiResponse(TriggerEventResponseDto)
@@ -137,7 +138,7 @@ export class EventsController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Post('/test/email')
   @ApiExcludeEndpoint()
   async testEmailMessage(@UserSession() user: IJwtPayload, @Body() body: TestSendEmailRequestDto): Promise<void> {
@@ -158,7 +159,7 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Delete('/trigger/:transactionId')
   @ApiOkResponse({
     type: DataBooleanDto,
