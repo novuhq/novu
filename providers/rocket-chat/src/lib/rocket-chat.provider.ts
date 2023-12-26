@@ -23,18 +23,12 @@ export class RocketChatChatProvider implements IChatProvider {
     options: IChatOptions
   ): Promise<ISendMessageSuccessResponse> {
     const roomId = options.channel;
-    let payload = {
+    const payload = {
       message: {
         rid: roomId,
         msg: options.content,
       },
     };
-    try {
-      // take whatever json payload client enters (this is for optional params)
-      payload = JSON.parse(options.content);
-      payload.message.rid = roomId;
-    } catch (err) {}
-
     const headers = {
       'x-auth-token': this.config.token,
       'x-user-id': this.config.user,
