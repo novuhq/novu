@@ -50,7 +50,7 @@ describe('test use of novus node package - Changes class', () => {
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/changes/bulk/apply', {
-      ChangeIDs: ['changeID', 'change2ID'],
+      changeIds: ['changeID', 'change2ID'],
     });
   });
 });

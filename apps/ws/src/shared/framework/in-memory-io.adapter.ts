@@ -3,6 +3,7 @@ import { ServerOptions } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { getRedisPrefix } from '@novu/shared';
 import { WebSocketsInMemoryProviderService } from '@novu/application-generic';
+import { Logger } from '@nestjs/common';
 
 export class InMemoryIoAdapter extends IoAdapter {
   private webSocketsInMemoryProviderService: WebSocketsInMemoryProviderService;
@@ -13,16 +14,19 @@ export class InMemoryIoAdapter extends IoAdapter {
     const keyPrefix = getRedisPrefix() ? `socket.io#${getRedisPrefix()}` : 'socket.io';
 
     this.webSocketsInMemoryProviderService = new WebSocketsInMemoryProviderService();
-
-    await this.webSocketsInMemoryProviderService.initialize();
-
     const pubClient = this.webSocketsInMemoryProviderService.getClient();
     const subClient = pubClient?.duplicate();
 
+    await this.webSocketsInMemoryProviderService.initialize();
+
     /*
      *  TODO: Might not be needed to connect as we are checking it is initialized already.
-     * await Promise.all([pubClient?.connect(), subClient?.connect()]);
+     *
      */
+
+    Logger.log(`PubClient status: ${pubClient?.status}`, 'InMemoryIoAdapter');
+    Logger.log(`SubClient status: ${subClient?.status}`, 'InMemoryIoAdapter');
+
     this.adapterConstructor = createAdapter(pubClient, subClient);
   }
 

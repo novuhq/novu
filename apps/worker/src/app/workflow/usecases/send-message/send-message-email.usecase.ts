@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -52,7 +54,8 @@ export class SendMessageEmail extends SendMessageBase {
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
-    protected selectVariant: SelectVariant
+    protected selectVariant: SelectVariant,
+    protected moduleRef: ModuleRef
   ) {
     super(
       messageRepository,
@@ -61,7 +64,8 @@ export class SendMessageEmail extends SendMessageBase {
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
-      selectVariant
+      selectVariant,
+      moduleRef
     );
   }
 
@@ -211,7 +215,8 @@ export class SendMessageEmail extends SendMessageBase {
           organizationId: command.organizationId,
           userId: command.userId,
           ...payload,
-        })
+        }),
+        this.initiateTranslations.bind(this)
       ));
 
       if (this.storeContent()) {

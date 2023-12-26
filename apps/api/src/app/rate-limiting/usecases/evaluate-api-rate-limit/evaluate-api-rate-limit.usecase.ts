@@ -20,7 +20,7 @@ export class EvaluateApiRateLimit {
 
   @InstrumentUsecase()
   async execute(command: EvaluateApiRateLimitCommand): Promise<EvaluateApiRateLimitResponseDto> {
-    const maxLimitPerSecond = await this.getApiRateLimitMaximum.execute(
+    const [maxLimitPerSecond, apiServiceLevel] = await this.getApiRateLimitMaximum.execute(
       GetApiRateLimitMaximumCommand.create({
         apiRateLimitCategory: command.apiRateLimitCategory,
         environmentId: command.environmentId,
@@ -60,6 +60,7 @@ export class EvaluateApiRateLimit {
       refillRate,
       algorithm: this.evaluateTokenBucketRateLimit.algorithm,
       cost,
+      apiServiceLevel,
     };
   }
 

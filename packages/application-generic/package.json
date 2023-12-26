@@ -33,14 +33,16 @@
     "node": ">=10"
   },
   "peerDependencies": {
-    "@nestjs/common": ">=10",
+    "@nestjs/common": "10.2.2",
     "@nestjs/core": ">=10",
-    "@nestjs/jwt": "^10.1.0",
+    "@nestjs/jwt": "10.2.0",
     "@nestjs/swagger": ">=6",
     "@nestjs/terminus": ">=10",
     "@nestjs/testing": ">=10",
+    "@nestjs/passport": "^10.0.1",
     "newrelic": "^9",
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "jsonwebtoken": "9.0.0"
   },
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "^3.382.0",
@@ -120,7 +122,6 @@
     "date-fns": "^2.29.2",
     "handlebars": "^4.7.7",
     "ioredis": "^5.2.4",
-    "jsonwebtoken": "9.0.0",
     "launchdarkly-node-server-sdk": "^7.0.1",
     "lodash": "^4.17.15",
     "mixpanel": "^0.17.0",
@@ -128,9 +129,14 @@
     "node-fetch": "^3.2.10",
     "pino-http": "^8.3.3",
     "pino-pretty": "^9.4.0",
+    "recursive-diff": "^1.0.8",
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
-    "rrule": "^2.7.2"
+    "rrule": "^2.7.2",
+    "rxjs": "7.8.1",
+    "@nestjs/passport": "^10.0.1",
+    "jsonwebtoken": "9.0.0",
+    "i18next": "^23.7.6"
   },
   "optionalDependencies": {
     "@taskforcesh/bullmq-pro": "5.1.14"
