@@ -21,3 +21,7 @@ export class IStandardDataDto {
 export interface IStandardJobDto extends IJobParams {
   data?: IStandardDataDto;
 }
+
+export interface IStandardBulkJobDto extends IJobParams {
+  data: IStandardDataDto;
+}

@@ -190,7 +190,7 @@ export class AddJob {
       LOG_CONTEXT
     );
 
-    await this.standardQueueService.addMinimalJob({
+    await this.standardQueueService.add({
       name: job._id,
       data: jobData,
       groupId: job._organizationId,

@@ -105,7 +105,7 @@ describe('Standard Queue service', () => {
         _userId,
       };
 
-      await standardQueueService.addMinimalJob({
+      await standardQueueService.add({
         name: jobId,
         data: jobData,
         groupId: _organizationId,
