@@ -41,5 +41,4 @@ export interface ICredentials {
   imageUrl?: string;
   state?: string;
   externalLink?: string;
-  roomId?: string;
 }

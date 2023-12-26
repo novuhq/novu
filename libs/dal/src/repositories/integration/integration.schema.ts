@@ -58,7 +58,6 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       imageUrl: Schema.Types.String,
       state: Schema.Types.String,
       externalLink: Schema.Types.String,
-      roomId: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,

@@ -196,9 +196,4 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   externalLink?: string;
-
-  @ApiPropertyOptional()
-  @IsString()
-  @IsOptional()
-  roomId?: string;
 }

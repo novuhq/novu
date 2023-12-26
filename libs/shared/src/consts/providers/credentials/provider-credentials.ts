@@ -1035,11 +1035,4 @@ export const rocketChatConfig: IConfigCredentials[] = [
     type: 'text',
     required: true,
   },
-  {
-    key: CredentialsKeyEnum.roomId,
-    displayName: 'Room Id',
-    description: 'Your Room ID',
-    type: 'text',
-    required: true,
-  },
 ];

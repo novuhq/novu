@@ -16,28 +16,28 @@ export class RocketChatChatProvider implements IChatProvider {
       token?: string;
       user?: string;
       idPath?: string;
-      roomId?: string;
     }
   ) {}
 
   async sendMessage(
     options: IChatOptions
   ): Promise<ISendMessageSuccessResponse> {
+    const roomId = options.channel;
     let payload = {
       message: {
-        rid: this.config.roomId,
+        rid: roomId,
         msg: options.content,
       },
     };
     try {
       // take whatever json payload client enters (this is for optional params)
       payload = JSON.parse(options.content);
-      payload.message.rid = this.config.roomId;
+      payload.message.rid = roomId;
     } catch (err) {}
 
     const headers = {
       'x-auth-token': this.config.token,
-      'x-user-id': this.config.idPath,
+      'x-user-id': this.config.user,
       'Content-Type': 'application/json',
     };
     const baseURL = `${options.webhookUrl.toString()}/api/v1/chat.sendMessage`;
