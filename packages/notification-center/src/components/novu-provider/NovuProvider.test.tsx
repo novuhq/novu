@@ -516,7 +516,7 @@ describe('NovuProvider', () => {
       });
     });
 
-    fireEvent.scroll(document.querySelectorAll('.infinite-scroll-component')[0], { target: { scrollY: 1000 } });
+    fireEvent.scroll(document.querySelectorAll('.nc-notifications-list')[0], { target: { scrollY: 1000 } });
 
     await waitFor(() => {
       expect(mockServiceInstance.getNotificationsList).toBeCalledTimes(2);
