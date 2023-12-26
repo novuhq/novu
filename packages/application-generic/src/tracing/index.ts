@@ -15,7 +15,8 @@ export {
 } from 'nestjs-otel';
 export { Counter } from '@opentelemetry/api';
 
-export const otelModule = OpenTelemetryModule.forRoot({
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const OtelModule = OpenTelemetryModule.forRoot({
   metrics: {
     hostMetrics: true,
     apiMetrics: {

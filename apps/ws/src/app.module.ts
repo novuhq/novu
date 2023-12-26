@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { createNestLoggingModuleOptions, LoggerModule, otelModule } from '@novu/application-generic';
+import { createNestLoggingModuleOptions, LoggerModule, OtelModule } from '@novu/application-generic';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -14,7 +14,7 @@ const packageJson = require('../package.json');
 const modules = [
   SharedModule,
   HealthModule,
-  otelModule,
+  OtelModule,
   SocketModule,
   LoggerModule.forRoot(
     createNestLoggingModuleOptions({
