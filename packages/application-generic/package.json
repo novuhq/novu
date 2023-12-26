@@ -113,6 +113,7 @@
     "@novu/twilio": "^0.22.0",
     "@novu/zulip": "^0.22.0",
     "@novu/nexmo": "^0.22.0",
+    "@novu/rocket-chat": "^0.16.3",
     "@sentry/node": "^7.12.1",
     "analytics-node": "^6.2.0",
     "axios": "^1.6.2",

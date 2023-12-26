@@ -43,6 +43,7 @@ export enum CredentialsKeyEnum {
   imageUrl = 'imageUrl',
   state = 'state',
   externalLink = 'externalLink',
+  roomId = 'roomId',
 }
 
 export enum EmailProviderIdEnum {
@@ -107,6 +108,7 @@ export enum ChatProviderIdEnum {
   Zulip = 'zulip',
   GrafanaOnCall = 'grafana-on-call',
   GetStream = 'getstream',
+  RocketChat = 'rocket-chat',
 }
 
 export enum PushProviderIdEnum {

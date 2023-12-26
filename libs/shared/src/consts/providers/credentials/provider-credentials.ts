@@ -1019,3 +1019,27 @@ export const azureSmsConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const rocketChatConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Personal Access Token (x-auth-token)',
+    description: 'Personal Access Token of your user',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'User id (x-user-id)',
+    description: 'Your User id',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.roomId,
+    displayName: 'Room Id',
+    description: 'Your Room ID',
+    type: 'text',
+    required: true,
+  },
+];
