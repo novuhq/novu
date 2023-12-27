@@ -18,8 +18,8 @@ if (process.env.SENTRY_DSN) {
 const otelSDK = initializeOtelSdk(packageJson.name);
 
 export async function bootstrap(): Promise<INestApplication> {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
   await otelSDK.start();
+  const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   app.useLogger(app.get(Logger));
   app.flushLogs();
