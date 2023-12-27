@@ -1,8 +1,16 @@
 const { useBabelRc, override } = require('customize-cra');
+const { DefinePlugin } = require('webpack');
+const { version } = require('./package.json');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 function overrideConfig(config, env) {
-  const plugins = [...config.plugins /* new BundleAnalyzerPlugin() */];
+  const plugins = [
+    ...config.plugins,
+    new DefinePlugin({
+      'process.env.NOVU_VERSION': JSON.stringify(version),
+    }),
+    /* new BundleAnalyzerPlugin() */
+  ];
 
   return {
     ...config,
@@ -15,4 +23,5 @@ function overrideConfig(config, env) {
   };
 }
 
+// eslint-disable-next-line react-hooks/rules-of-hooks
 module.exports = override(useBabelRc(), overrideConfig);
