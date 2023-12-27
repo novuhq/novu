@@ -12,7 +12,8 @@ import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 
-export function getOTELSDK(serviceName: string) {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function initializeOtelSdk(serviceName: string) {
   return new NodeSDK({
     metricReader: new PrometheusExporter({
       port: 9464,

@@ -2,7 +2,7 @@ import './config';
 import { INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
-import { getErrorInterceptor, Logger, getOTELSDK } from '@novu/application-generic';
+import { getErrorInterceptor, Logger, initializeOtelSdk } from '@novu/application-generic';
 import * as packageJson from '../package.json';
 
 import { AppModule } from './app.module';
@@ -15,7 +15,7 @@ if (process.env.SENTRY_DSN) {
   });
 }
 
-const otelSDK = getOTELSDK(packageJson.name);
+const otelSDK = initializeOtelSdk(packageJson.name);
 
 export async function bootstrap(): Promise<INestApplication> {
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

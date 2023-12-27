@@ -3,7 +3,7 @@ import 'newrelic';
 import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
-import { BullMqService, getErrorInterceptor, Logger, getOTELSDK } from '@novu/application-generic';
+import { BullMqService, getErrorInterceptor, Logger, initializeOtelSdk } from '@novu/application-generic';
 import * as packageJson from '../package.json';
 
 import { AppModule } from './app.module';
@@ -20,7 +20,7 @@ if (process.env.SENTRY_DSN) {
     release: `v${version}`,
   });
 }
-const otelSDK = getOTELSDK(packageJson.name);
+const otelSDK = initializeOtelSdk(packageJson.name);
 
 export async function bootstrap() {
   BullMqService.haveProInstalled();
