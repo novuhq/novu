@@ -18,11 +18,11 @@ import {
   Input,
   Select,
   Bell,
-  DelayAction,
   Digest,
   Translation,
   MultiChannel,
   inputStyles,
+  Timer,
 } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
@@ -31,9 +31,7 @@ import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 
-type Props = {};
-
-export function QuestionnaireForm({}: Props) {
+export function QuestionnaireForm() {
   const [loading, setLoading] = useState<boolean>();
 
   const navigate = useNavigate();
@@ -48,7 +46,6 @@ export function QuestionnaireForm({}: Props) {
   >((data: ICreateOrganizationDto) => api.post(`/v1/organizations`, data));
 
   const {
-    register,
     handleSubmit,
     formState: { errors },
     control,
@@ -108,17 +105,15 @@ export function QuestionnaireForm({}: Props) {
       <Controller
         name="jobTitle"
         control={control}
+        rules={{
+          required: 'Required - Job title',
+        }}
         render={({ field }) => {
           return (
             <Select
               label="Job title"
               data-test-id="questionnaire-job-title"
-              required
               error={errors.jobTitle?.message}
-              {...register('jobTitle', {
-                required: 'Please input your job title',
-              })}
-              getCreateLabel={(newOrganization) => <div>+ Add "{newOrganization}"</div>}
               {...field}
               allowDeselect={false}
               placeholder="Select an option"
@@ -130,30 +125,48 @@ export function QuestionnaireForm({}: Props) {
           );
         }}
       />
-      <Input
-        label="Company name"
-        error={errors.organizationName?.message}
-        {...register('organizationName', {
-          required: 'Please input your app name',
-        })}
-        required
-        placeholder="Enter your company name"
-        data-test-id="questionnaire-company-name"
-        mt={32}
+
+      <Controller
+        name="organizationName"
+        control={control}
+        rules={{
+          required: 'Required - Company name',
+        }}
+        render={({ field }) => {
+          return (
+            <Input
+              label="Company name"
+              {...field}
+              error={errors.organizationName?.message}
+              placeholder="Enter your company name"
+              data-test-id="questionnaire-company-name"
+              mt={32}
+            />
+          );
+        }}
       />
-      <Input
-        label="Company domain"
-        {...register('domain')}
-        placeholder="my-company.com"
-        data-test-id="questionnaire-company-domain"
-        mt={32}
+
+      <Controller
+        name="domain"
+        control={control}
+        render={({ field }) => {
+          return (
+            <Input
+              label="Company domain"
+              {...field}
+              placeholder="my-company.com"
+              data-test-id="questionnaire-company-domain"
+              mt={32}
+            />
+          );
+        }}
       />
 
       <Controller
         name="productUseCases"
         control={control}
         rules={{
-          required: 'Please provide your use-case',
+          required: 'Required - Product use-case',
         }}
         render={({ field, fieldState }) => {
           function handleCheckboxChange(e, channelType) {
@@ -166,7 +179,6 @@ export function QuestionnaireForm({}: Props) {
             <MantineInput.Wrapper
               label="What do you plan to use Novu for?"
               styles={inputStyles}
-              required
               error={fieldState.error?.message}
               mt={32}
             >
@@ -202,7 +214,7 @@ const checkBoxData = [
   { type: ProductUseCasesEnum.IN_APP, icon: Bell, label: 'In-app' },
   { type: ProductUseCasesEnum.MULTI_CHANNEL, icon: MultiChannel, label: 'Multi-channel' },
   { type: ProductUseCasesEnum.DIGEST, icon: Digest, label: 'Digest' },
-  { type: ProductUseCasesEnum.DELAY, icon: DelayAction, label: 'Delay' },
+  { type: ProductUseCasesEnum.DELAY, icon: Timer, label: 'Delay' },
   { type: ProductUseCasesEnum.TRANSLATION, icon: Translation, label: 'Translate' },
 ];
 
