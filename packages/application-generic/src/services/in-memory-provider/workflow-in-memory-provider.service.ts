@@ -1,60 +1,96 @@
 import { Logger } from '@nestjs/common';
 
 import { InMemoryProviderService } from './in-memory-provider.service';
-import { InMemoryProviderEnum, InMemoryProviderClient } from './types';
+import {
+  getClusterProvider,
+  getSingleInstanceProvider,
+  IProviderCluster,
+  IProviderRedis,
+} from './providers';
+import {
+  InMemoryProviderEnum,
+  InMemoryProviderClient,
+  IProviderClusterConfigOptions,
+} from './types';
 
 import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
-
 const LOG_CONTEXT = 'WorkflowInMemoryProviderService';
 
 export class WorkflowInMemoryProviderService {
   public inMemoryProviderService: InMemoryProviderService;
   public isCluster: boolean;
   private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled;
+  private loadedProvider: IProviderCluster | IProviderRedis;
 
   constructor() {
     this.getIsInMemoryClusterModeEnabled =
       new GetIsInMemoryClusterModeEnabled();
 
-    const provider = this.selectProvider();
     this.isCluster = this.isClusterMode();
+    this.loadedProvider = this.selectProvider();
 
     this.inMemoryProviderService = new InMemoryProviderService(
-      provider,
-      this.isCluster,
-      false
+      this.loadedProvider,
+      this.loadedProvider.getConfig(this.getWorkflowConfigOptions()),
+      this.isCluster
     );
+  }
+
+  private getWorkflowConfigOptions(): IProviderClusterConfigOptions {
+    /*
+     *  Disabled in Prod as affects performance
+     */
+    const showFriendlyErrorStack = process.env.NODE_ENV !== 'production';
+
+    return {
+      showFriendlyErrorStack,
+    };
   }
 
   /**
    * Rules for the provider selection:
    * - For our self hosted users we assume all of them have a single node Redis
-   * instance.
+   * instance. Only if they have set up the Cluster mode and the right config
+   * will execute a different provider.
    * - For Novu we will use MemoryDB. We fallback to a Redis Cluster configuration
-   * if MemoryDB not configured properly. That's happening in the provider
-   * mapping in the /in-memory-provider/providers/index.ts
+   * if MemoryDB not configured properly. If Redis Cluster is wrong too, we will
+   * fall back to Redis single instance.
    */
-  private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_DOCKER_HOSTED) {
-      return InMemoryProviderEnum.REDIS;
+  private selectProvider(): IProviderCluster | IProviderRedis {
+    if (this.isClusterMode()) {
+      const providerIds = [
+        InMemoryProviderEnum.MEMORY_DB,
+        InMemoryProviderEnum.REDIS_CLUSTER,
+      ];
+
+      let selectedProvider = undefined;
+      for (const providerId of providerIds) {
+        const clusterProvider = getClusterProvider(providerId);
+        const clusterProviderConfig = clusterProvider.getConfig(
+          this.getWorkflowConfigOptions()
+        );
+
+        if (clusterProvider.validate(clusterProviderConfig)) {
+          selectedProvider = clusterProvider;
+          break;
+        }
+      }
+
+      if (selectedProvider) {
+        return selectedProvider;
+      }
     }
 
-    return InMemoryProviderEnum.MEMORY_DB;
-  }
-
-  private descriptiveLogMessage(message) {
-    return `[Provider: ${this.selectProvider()}] ${message}`;
+    return getSingleInstanceProvider();
   }
 
   private isClusterMode(): boolean {
     const isClusterModeEnabled = this.getIsInMemoryClusterModeEnabled.execute();
 
     Logger.log(
-      this.descriptiveLogMessage(
-        `Cluster mode ${
-          isClusterModeEnabled ? 'is' : 'is not'
-        } enabled for ${LOG_CONTEXT}`
-      ),
+      `Cluster mode ${
+        isClusterModeEnabled ? 'is' : 'is not'
+      } enabled for ${LOG_CONTEXT}`,
       LOG_CONTEXT
     );
 
@@ -74,10 +110,7 @@ export class WorkflowInMemoryProviderService {
   }
 
   public providerInUseIsInClusterMode(): boolean {
-    const providerConfigured =
-      this.inMemoryProviderService.getProvider.configured;
-
-    return this.isCluster || providerConfigured !== InMemoryProviderEnum.REDIS;
+    return this.loadedProvider.provider !== InMemoryProviderEnum.REDIS;
   }
 
   public async shutdown(): Promise<void> {

@@ -1,9 +1,12 @@
-import Redis, { RedisOptions, ScanStream } from 'ioredis';
-import { ConnectionOptions } from 'tls';
-
-export { Redis, RedisOptions, ScanStream };
-
 import { convertStringValues } from './variable-mappers';
+
+import {
+  ConnectionOptions,
+  IRedisConfigOptions,
+  Redis,
+  RedisOptions,
+  ScanStream,
+} from '../types';
 
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
@@ -34,14 +37,17 @@ export interface IRedisProviderConfig {
   host?: string;
   keepAlive: number;
   keyPrefix: string;
-  password?: string;
   username?: string;
+  options?: IRedisConfigOptions;
+  password?: string;
   port?: number;
   tls?: ConnectionOptions;
   ttl: number;
 }
 
-export const getRedisProviderConfig = (): IRedisProviderConfig => {
+export const getRedisProviderConfig = (
+  options?: IRedisConfigOptions
+): IRedisProviderConfig => {
   const redisConfig: IRedisConfig = {
     db: convertStringValues(process.env.REDIS_DB_INDEX),
     host: convertStringValues(process.env.REDIS_HOST),
@@ -83,31 +89,32 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
     keyPrefix,
     ttl,
     tls,
+    ...(options && { options }),
   };
 };
 
-export const getRedisInstance = (): Redis | undefined => {
-  const { port, host, ...configOptions } = getRedisProviderConfig();
+export const getRedisInstance = (
+  config: IRedisProviderConfig
+): Redis | undefined => {
+  const { port, host, options, ...configRest } = config;
+  const { showFriendlyErrorStack } = options || {};
 
-  const options = {
-    ...configOptions,
+  const redisOptions = {
     maxRetriesPerRequest: null,
-    /*
-     *  Disabled in Prod as affects performance
-     */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
+    ...configRest,
+    showFriendlyErrorStack,
   };
 
   if (port && host) {
-    return new Redis(port, host, options);
+    return new Redis(port, host, redisOptions);
   }
 
   return undefined;
 };
 
-export const validateRedisProviderConfig = (): boolean => {
-  const config = getRedisProviderConfig();
-
+export const validateRedisProviderConfig = (
+  config: IRedisProviderConfig
+): boolean => {
   return !!config.host && !!config.port;
 };
 

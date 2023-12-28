@@ -2,8 +2,15 @@ import { Logger } from '@nestjs/common';
 
 import { InMemoryProviderService } from './in-memory-provider.service';
 import {
+  getClusterProvider,
+  getSingleInstanceProvider,
+  IProviderCluster,
+  IProviderRedis,
+} from './providers';
+import {
   InMemoryProviderEnum,
   InMemoryProviderClient,
+  IProviderClusterConfigOptions,
   ScanStream,
 } from './types';
 
@@ -15,53 +22,80 @@ export class CacheInMemoryProviderService {
   public inMemoryProviderService: InMemoryProviderService;
   public isCluster: boolean;
   private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled;
+  private loadedProvider: IProviderCluster | IProviderRedis;
 
   constructor() {
     this.getIsInMemoryClusterModeEnabled =
       new GetIsInMemoryClusterModeEnabled();
-
-    const provider = this.selectProvider();
     this.isCluster = this.isClusterMode();
 
-    const enableAutoPipelining =
-      process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
+    this.loadedProvider = this.selectProvider();
 
     this.inMemoryProviderService = new InMemoryProviderService(
-      provider,
-      this.isCluster,
-      enableAutoPipelining
+      this.loadedProvider,
+      this.loadedProvider.getConfig(this.getCacheConfigOptions()),
+      this.isCluster
     );
+  }
+
+  private getCacheConfigOptions(): IProviderClusterConfigOptions {
+    const enableAutoPipelining =
+      process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
+    /*
+     *  Disabled in Prod as affects performance
+     */
+    const showFriendlyErrorStack = process.env.NODE_ENV !== 'production';
+
+    return {
+      enableAutoPipelining,
+      showFriendlyErrorStack,
+    };
   }
 
   /**
    * Rules for the provider selection:
    * - For our self hosted users we assume all of them have a single node Redis
-   * instance.
+   * instance. Only if they have set up the Cluster mode and the right config
+   * will execute a different provider.
    * - For Novu we will use Elasticache. We fallback to a Redis Cluster configuration
-   * if Elasticache not configured properly. That's happening in the provider
-   * mapping in the /in-memory-provider/providers/index.ts
+   * if Elasticache not configured properly. If Redis Cluster is wrong too, we will
+   * fall back to Redis single instance.
    */
-  private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_DOCKER_HOSTED) {
-      return InMemoryProviderEnum.REDIS;
+  private selectProvider(): IProviderCluster | IProviderRedis {
+    if (this.isClusterMode()) {
+      const providerIds = [
+        InMemoryProviderEnum.ELASTICACHE,
+        InMemoryProviderEnum.REDIS_CLUSTER,
+      ];
+
+      let selectedProvider = undefined;
+      for (const providerId of providerIds) {
+        const clusterProvider = getClusterProvider(providerId);
+        const clusterProviderConfig = clusterProvider.getConfig(
+          this.getCacheConfigOptions()
+        );
+
+        if (clusterProvider.validate(clusterProviderConfig)) {
+          selectedProvider = clusterProvider;
+          break;
+        }
+      }
+
+      if (selectedProvider) {
+        return selectedProvider;
+      }
     }
 
-    return InMemoryProviderEnum.ELASTICACHE;
-  }
-
-  private descriptiveLogMessage(message) {
-    return `[Provider: ${this.selectProvider()}] ${message}`;
+    return getSingleInstanceProvider();
   }
 
   private isClusterMode(): boolean {
     const isClusterModeEnabled = this.getIsInMemoryClusterModeEnabled.execute();
 
     Logger.log(
-      this.descriptiveLogMessage(
-        `Cluster mode ${
-          isClusterModeEnabled ? 'IS' : 'IS NOT'
-        } enabled for ${LOG_CONTEXT}`
-      ),
+      `Cluster mode ${
+        isClusterModeEnabled ? 'IS' : 'IS NOT'
+      } enabled for ${LOG_CONTEXT}`,
       LOG_CONTEXT
     );
 
@@ -93,10 +127,7 @@ export class CacheInMemoryProviderService {
   }
 
   public providerInUseIsInClusterMode(): boolean {
-    const providerConfigured =
-      this.inMemoryProviderService.getProvider.configured;
-
-    return this.isCluster || providerConfigured !== InMemoryProviderEnum.REDIS;
+    return this.loadedProvider.provider !== InMemoryProviderEnum.REDIS;
   }
 
   public async shutdown(): Promise<void> {

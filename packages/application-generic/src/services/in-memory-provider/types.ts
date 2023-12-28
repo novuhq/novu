@@ -1,13 +1,22 @@
-import {
+import Redis, {
   ChainableCommander,
   Cluster,
+  ClusterNode,
   ClusterOptions,
-  Redis,
   RedisOptions,
   ScanStream,
 } from 'ioredis';
+import { ConnectionOptions } from 'tls';
 
-export { Cluster, ClusterOptions, Redis, RedisOptions, ScanStream };
+export {
+  Cluster,
+  ClusterNode,
+  ClusterOptions,
+  ConnectionOptions,
+  Redis,
+  RedisOptions,
+  ScanStream,
+};
 
 export type InMemoryProviderClient = Redis | Cluster | undefined;
 
@@ -20,3 +29,12 @@ export enum InMemoryProviderEnum {
 }
 
 export type Pipeline = ChainableCommander;
+
+export interface IProviderClusterConfigOptions {
+  enableAutoPipelining?: boolean;
+  showFriendlyErrorStack?: boolean;
+}
+
+export interface IRedisConfigOptions {
+  showFriendlyErrorStack?: boolean;
+}
