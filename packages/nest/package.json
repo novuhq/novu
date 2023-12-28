@@ -35,7 +35,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@nestjs/common": "^10.2.10",
+    "@nestjs/common": "10.2.2",
     "@novu/stateless": "^0.22.0"
   },
   "devDependencies": {

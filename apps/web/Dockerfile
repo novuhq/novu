@@ -16,6 +16,8 @@ COPY libs/testing ./libs/testing
 COPY packages/client ./packages/client
 COPY libs/shared ./libs/shared
 COPY libs/design-system ./libs/design-system
+COPY libs/shared-web ./libs/shared-web
+
 COPY packages/notification-center ./packages/notification-center
 COPY packages/stateless ./packages/stateless
 COPY packages/node ./packages/node

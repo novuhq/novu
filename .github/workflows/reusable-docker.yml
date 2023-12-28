@@ -67,10 +67,14 @@ jobs:
         name: [ '${{ inputs.package_name }}-ee', '${{ inputs.package_name }}' ]
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
+          submodules: ${{ contains (matrix.name,'-ee') }}
 
       - name: Setup Depot
         uses: depot/setup-action@v1

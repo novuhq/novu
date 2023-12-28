@@ -2,10 +2,10 @@ import { ReactNode, useEffect, useState } from 'react';
 import { MantineProvider, Global, ColorSchemeProvider, ColorScheme, MantineTheme } from '@mantine/core';
 import { NotificationsProvider } from '@mantine/notifications';
 import { useColorScheme } from '@mantine/hooks';
+import { useLocalThemePreference } from '@novu/shared-web';
 
 import { mantineConfig } from './config/theme.config';
 import { colors, shadows } from './config';
-import { useLocalThemePreference } from './hooks';
 import { ChevronDown } from './icons';
 
 const accordionStyles = (theme: MantineTheme) => ({

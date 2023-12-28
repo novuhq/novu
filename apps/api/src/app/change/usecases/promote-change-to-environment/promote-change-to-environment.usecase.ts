@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { applyDiff } from 'recursive-diff';
@@ -10,6 +10,8 @@ import { PromoteNotificationTemplateChange } from '../promote-notification-templ
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
 import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
+import { ModuleRef } from '@nestjs/core';
+import { PromoteTranslationChange } from '../promote-translation-change/promote-translation-change.usecase';
 
 @Injectable()
 export class PromoteChangeToEnvironment {
@@ -21,7 +23,9 @@ export class PromoteChangeToEnvironment {
     private promoteNotificationTemplateChange: PromoteNotificationTemplateChange,
     private promoteMessageTemplateChange: PromoteMessageTemplateChange,
     private promoteNotificationGroupChange: PromoteNotificationGroupChange,
-    private promoteFeedChange: PromoteFeedChange
+    private promoteFeedChange: PromoteFeedChange,
+    private promoteTranslationChange: PromoteTranslationChange,
+    private moduleRef: ModuleRef
   ) {}
 
   async execute(command: PromoteChangeToEnvironmentCommand) {
@@ -60,6 +64,24 @@ export class PromoteChangeToEnvironment {
       case ChangeEntityTypeEnum.LAYOUT:
       case ChangeEntityTypeEnum.DEFAULT_LAYOUT:
         await this.promoteLayoutChange.execute(typeCommand);
+        break;
+      case ChangeEntityTypeEnum.TRANSLATION:
+        await this.promoteTranslationChange.execute(typeCommand);
+        break;
+      case ChangeEntityTypeEnum.TRANSLATION_GROUP:
+        try {
+          if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+            if (!require('@novu/ee-translation')?.PromoteTranslationGroupChange) {
+              throw new BadRequestException('Translation module is not loaded');
+            }
+            const usecase = this.moduleRef.get(require('@novu/ee-translation')?.PromoteTranslationGroupChange, {
+              strict: false,
+            });
+            await usecase.execute(typeCommand);
+          }
+        } catch (e) {
+          Logger.error(e, `Unexpected error while importing enterprise modules`, 'PromoteChangeToEnvironment');
+        }
         break;
       default:
         Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);

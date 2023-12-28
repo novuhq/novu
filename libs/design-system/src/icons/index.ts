@@ -90,6 +90,7 @@ export { Variant } from './general/Variant';
 export { Conditions } from './general/Conditions';
 export { Logout } from './general/Logout';
 export { InviteMembers } from './general/InviteMembers';
+export { Translation } from './general/Translation';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
@@ -148,6 +149,7 @@ export { CodeGradient } from './gradient/CodeGradient';
 export { DisconnectGradient } from './gradient/DisconnectGradient';
 export { BoltOutlinedGradient } from './gradient/BoltOutlinedGradient';
 export { FilterOutlined } from './gradient/FilterOutlined';
+export { TerminalGradient } from './gradient/TerminalGradient';
 
 export { GitHub } from './social/GitHub';
 export { Google } from './social/Google';
