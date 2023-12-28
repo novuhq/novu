@@ -1,6 +1,6 @@
-import { ApiServiceLevelEnum, ProductUseCases } from '@novu/shared';
+import { ApiServiceLevelEnum, IOrganizationEntity, ProductUseCases } from '@novu/shared';
 
-export class OrganizationEntity {
+export class OrganizationEntity implements IOrganizationEntity {
   _id: string;
 
   name: string;
@@ -10,7 +10,7 @@ export class OrganizationEntity {
   // TODO: NV-3067 - Remove optional once all organizations have a service level
   apiServiceLevel?: ApiServiceLevelEnum;
 
-  branding: {
+  branding?: {
     fontFamily?: string;
     fontColor?: string;
     contentBackground?: string;
@@ -28,6 +28,10 @@ export class OrganizationEntity {
   domain?: string;
 
   productUseCases?: ProductUseCases;
+
+  createdAt: string;
+
+  updatedAt: string;
 }
 
 export type OrganizationDBModel = OrganizationEntity;
