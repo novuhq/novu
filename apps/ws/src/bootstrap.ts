@@ -24,7 +24,9 @@ const otelSDK = initializeOtelSdk(packageJson.name);
 
 export async function bootstrap() {
   BullMqService.haveProInstalled();
-  await otelSDK.start();
+  if (process.env.ENABLE_OTEL_SDK === 'true') {
+    await otelSDK.start();
+  }
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
 
   const inMemoryAdapter = new InMemoryIoAdapter(app);

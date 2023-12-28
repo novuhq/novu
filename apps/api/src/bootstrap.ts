@@ -43,7 +43,9 @@ const otelSDK = initializeOtelSdk(packageJson.name);
 
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
-  await otelSDK.start();
+  if (process.env.ENABLE_OTEL_SDK === 'true') {
+    await otelSDK.start();
+  }
 
   let app: INestApplication;
   if (expressApp) {
