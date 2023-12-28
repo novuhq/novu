@@ -13,7 +13,6 @@ import {
   AnalyticsService,
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
-  CacheService,
   InvalidateCacheService,
 } from '@novu/application-generic';
 
@@ -39,7 +38,6 @@ import { DeleteMessageTemplateCommand } from '../../../message-template/usecases
 @Injectable()
 export class UpdateNotificationTemplate {
   constructor(
-    private cacheService: CacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private createMessageTemplate: CreateMessageTemplate,
     private updateMessageTemplate: UpdateMessageTemplate,

@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
-import { CacheInMemoryProviderService } from '../in-memory-provider/services';
+import {
+  CacheInMemoryProviderService,
+  DistributedLockProviderService,
+} from '../in-memory-provider/services';
 
 import { DistributedLockService } from './distributed-lock.service';
 
@@ -33,18 +36,18 @@ describe('Distributed Lock Service', () => {
   });
 
   describe('In-memory provider service set', () => {
-    let cacheInMemoryProviderService: CacheInMemoryProviderService;
+    let distributedLockProviderService: DistributedLockProviderService;
     let distributedLockService: DistributedLockService;
 
     beforeEach(async () => {
-      cacheInMemoryProviderService = new CacheInMemoryProviderService();
+      distributedLockProviderService = new DistributedLockProviderService();
 
-      await cacheInMemoryProviderService.initialize();
+      await distributedLockProviderService.initialize();
 
-      expect(cacheInMemoryProviderService.getClientStatus()).toEqual('ready');
+      expect(distributedLockProviderService.getClientStatus()).toEqual('ready');
 
       distributedLockService = new DistributedLockService(
-        cacheInMemoryProviderService
+        distributedLockProviderService
       );
       await distributedLockService.initialize();
     });

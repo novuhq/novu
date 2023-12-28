@@ -2,6 +2,7 @@ import {
   AnalyticsService,
   BullMqService,
   CacheService,
+  DistributedLockProviderService,
   DistributedLockService,
   ExecutionLogQueueService,
   FeatureFlagsService,
@@ -71,6 +72,13 @@ export const cacheInMemoryProviderService = {
   },
 };
 
+export const distributedLockMemoryProviderService = {
+  provide: DistributedLockProviderService,
+  useFactory: (): DistributedLockProviderService => {
+    return new DistributedLockProviderService();
+  },
+};
+
 export const bullMqService = {
   provide: BullMqService,
   useFactory: async (): Promise<BullMqService> => {
@@ -109,11 +117,11 @@ export const analyticsService = {
 export const distributedLockService = {
   provide: DistributedLockService,
   useFactory: async (): Promise<DistributedLockService> => {
-    const factoryCacheInMemoryProviderService =
-      cacheInMemoryProviderService.useFactory();
+    const factoryDistributedLockMemoryProviderService =
+      distributedLockMemoryProviderService.useFactory();
 
     const service = new DistributedLockService(
-      factoryCacheInMemoryProviderService
+      factoryDistributedLockMemoryProviderService
     );
 
     await service.initialize();

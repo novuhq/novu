@@ -2,7 +2,7 @@ import Redlock from 'redlock';
 import { setTimeout } from 'timers/promises';
 import { Injectable, Logger } from '@nestjs/common';
 
-import { CacheInMemoryProviderService } from '../in-memory-provider/services';
+import { DistributedLockProviderService } from '../in-memory-provider/services';
 import { InMemoryProviderClient } from '../in-memory-provider/shared/types';
 
 const LOG_CONTEXT = 'DistributedLock';
@@ -20,12 +20,12 @@ export class DistributedLockService {
   public shuttingDown = false;
 
   constructor(
-    private cacheInMemoryProviderService: CacheInMemoryProviderService
+    private distributedLockProviderService: DistributedLockProviderService
   ) {}
 
   async initialize(): Promise<void> {
-    await this.cacheInMemoryProviderService.initialize();
-    this.startup(this.cacheInMemoryProviderService.getClient());
+    await this.distributedLockProviderService.initialize();
+    this.startup(this.distributedLockProviderService.getClient());
   }
 
   public startup(
@@ -102,7 +102,7 @@ export class DistributedLockService {
         } finally {
           this.shuttingDown = false;
           this.distributedLock = undefined;
-          await this.cacheInMemoryProviderService.shutdown();
+          await this.distributedLockProviderService.shutdown();
           Logger.verbose('Redlock shutdown', LOG_CONTEXT);
         }
       }

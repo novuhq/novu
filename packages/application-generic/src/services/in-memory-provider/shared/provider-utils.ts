@@ -1,6 +1,8 @@
 import { InMemoryProviderEnum } from './types';
 
-export const isInMemoryProvider = (providerId: string): boolean => {
+export const isInMemoryProvider = (
+  providerId: string
+): providerId is InMemoryProviderEnum => {
   const values = Object.values(InMemoryProviderEnum);
 
   return values.includes(providerId as unknown as InMemoryProviderEnum);

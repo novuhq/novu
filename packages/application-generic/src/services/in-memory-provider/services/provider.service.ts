@@ -29,7 +29,6 @@ export abstract class ProviderService {
     // todo - check if there a reason not inject this `get is cluster mode enabled`
     this.getIsInMemoryClusterModeEnabled =
       new GetIsInMemoryClusterModeEnabled();
-    this.setProviderId();
 
     this.initializeProvider();
   }
@@ -46,35 +45,31 @@ export abstract class ProviderService {
   private initializeProvider(): void {
     this.clusterVerification();
 
+    const config = this.getConfigOptions();
+
+    if (isInMemoryProvider(config.envOptions?.providerId)) {
+      this.providerId = config.envOptions?.providerId;
+    }
+
     switch (this.providerId) {
       case InMemoryProviderEnum.REDIS: {
-        this.provider = new RedisProvider({
-          ...this.getConfigOptions(),
-        });
+        this.provider = new RedisProvider(config);
         break;
       }
       case InMemoryProviderEnum.REDIS_CLUSTER: {
-        this.provider = new RedisClusterProvider({
-          ...this.getConfigOptions(),
-        });
+        this.provider = new RedisClusterProvider(config);
         break;
       }
       case InMemoryProviderEnum.AZURE_CACHE_FOR_REDIS: {
-        this.provider = new AzureCacheForRedisProvider({
-          ...this.getConfigOptions(),
-        });
+        this.provider = new AzureCacheForRedisProvider(config);
         break;
       }
       case InMemoryProviderEnum.ELASTI_CACHE: {
-        this.provider = new ElastiCacheClusterProvider({
-          ...this.getConfigOptions(),
-        });
+        this.provider = new ElastiCacheClusterProvider(config);
         break;
       }
       case InMemoryProviderEnum.MEMORY_DB: {
-        this.provider = new MemoryDbClusterProvider({
-          ...this.getConfigOptions(),
-        });
+        this.provider = new MemoryDbClusterProvider(config);
         break;
       }
       default: {
@@ -84,12 +79,10 @@ export abstract class ProviderService {
           );
         }
 
-        // for community fallback to single redis instance
+        // community edition - allow to fall back to single redis instance
         this.providerId = InMemoryProviderEnum.REDIS;
 
-        this.provider = new RedisProvider({
-          ...this.getConfigOptions(),
-        });
+        this.provider = new RedisProvider(config);
       }
     }
   }
@@ -102,30 +95,6 @@ export abstract class ProviderService {
         `Tried to initialized cluster provider ${this.providerId} while cluster mode is not enabled.`
       );
     }
-  }
-
-  setProviderId(providerId?: InMemoryProviderEnum) {
-    const clientProviderId = providerId;
-
-    if (clientProviderId) {
-      this.providerId = clientProviderId;
-
-      return;
-    }
-
-    this.providerId = this.processProviderId(process.env.CACHE_PROVIDER_ID);
-  }
-
-  private processProviderId(providerId?: string): InMemoryProviderEnum | null {
-    if (!providerId) {
-      return null;
-    }
-
-    if (isInMemoryProvider(providerId)) {
-      return providerId as InMemoryProviderEnum;
-    }
-
-    return null;
   }
 
   private isClusterModeEnabled(): boolean {

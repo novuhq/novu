@@ -1,8 +1,8 @@
 import { ProviderService } from './provider.service';
 import { IProviderConfiguration } from '../shared/types';
 
-export class CacheInMemoryProviderService extends ProviderService {
-  LOG_CONTEXT = 'CacheInMemoryProviderService';
+export class DistributedLockProviderService extends ProviderService {
+  LOG_CONTEXT = 'DistributedLockProviderService';
 
   protected getConfigOptions(): IProviderConfiguration {
     const baseOptions = super.getConfigOptions();
@@ -10,11 +10,11 @@ export class CacheInMemoryProviderService extends ProviderService {
     const enableAutoPipelining =
       process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
 
-    const providerId = process.env.CACHE_PROVIDER_ID;
-    const host = process.env.CACHE_PROVIDER_HOST;
-    const password = process.env.CACHE_PROVIDER_PASSWORD;
-    const ports = process.env.CACHE_PROVIDER_PORTS;
-    const username = process.env.CACHE_PROVIDER_USERNAME;
+    const providerId = process.env.DISTRIBUTED_LOCK_PROVIDER_ID;
+    const host = process.env.DISTRIBUTED_LOCK_PROVIDER_HOST;
+    const password = process.env.DISTRIBUTED_LOCK_PROVIDER_PASSWORD;
+    const ports = process.env.DISTRIBUTED_LOCK_PROVIDER_PORTS;
+    const username = process.env.DISTRIBUTED_LOCK_PROVIDER_USERNAME;
 
     const processEnvOptions = {
       providerId,
