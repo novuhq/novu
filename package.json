@@ -40,6 +40,8 @@
     "start:docker:widget": "cross-env nx run-many --target=start:docker --projects=@novu/widget",
     "docker:build": "pnpm -r --if-present --parallel docker:build",
     "build": "nx run-many --target=build --all",
+    "build-ee": "nx run-many --target=build-ee --all",
+    "build:with-ee": "pnpm build && pnpm build-ee",
     "prebuild": "nx run-many --target=prebuild --all",
     "build:api": "nx build @novu/api",
     "build:worker": "nx build @novu/worker",
@@ -66,10 +68,8 @@
     "jarvis": "node scripts/jarvis.js",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
     "get-affected": "node scripts/print-affected-array.mjs",
-    "install:with-submodules": "pnpm install && pnpm install:submodules && pnpm link:submodules",
-    "build:submodules": "nx run-many --target=ee-build --all",
-    "install:submodules": "cd enterprise && pnpm install",
-    "link:submodules": "nx run-many --target=link:submodules --all"
+    "symlink:submodules": "nx run-many --target=symlink --all",
+    "install:with-ee": "pnpm install && pnpm symlink:submodules"
   },
   "devDependencies": {
     "@auto-it/npm": "^10.36.5",

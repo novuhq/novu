@@ -38,7 +38,12 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1

@@ -1,5 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -52,7 +54,8 @@ export class SendMessagePush extends SendMessageBase {
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
-    protected selectVariant: SelectVariant
+    protected selectVariant: SelectVariant,
+    protected moduleRef: ModuleRef
   ) {
     super(
       messageRepository,
@@ -61,7 +64,8 @@ export class SendMessagePush extends SendMessageBase {
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
-      selectVariant
+      selectVariant,
+      moduleRef
     );
   }
 
@@ -75,6 +79,7 @@ export class SendMessagePush extends SendMessageBase {
     const { subscriber, step: stepData } = command.compileContext;
 
     const template = await this.processVariants(command);
+    await this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale);
 
     if (template) {
       step.template = template;
