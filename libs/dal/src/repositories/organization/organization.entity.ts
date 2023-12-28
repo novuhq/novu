@@ -23,7 +23,7 @@ export class OrganizationEntity {
 
   defaultLocale?: string;
 
-  jobTitle: string;
+  jobTitle?: string;
 
   domain?: string;
 
