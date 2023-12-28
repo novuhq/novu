@@ -47,6 +47,8 @@ import {
   validateRedisClusterProviderConfig,
 } from './redis-cluster-provider';
 
+export { IRedisProviderConfig };
+
 export type InMemoryProviderConfig =
   | IAzureCacheForRedisClusterProviderConfig
   | IElasticacheClusterProviderConfig
@@ -56,30 +58,38 @@ export type InMemoryProviderConfig =
 
 interface IProviderInMemory {
   isClientReady: (string) => boolean;
+  isCluster: boolean;
   provider: InMemoryProviderEnum;
 }
 
 export interface IProviderRedis extends IProviderInMemory {
   getClient: (config: IRedisProviderConfig) => Redis | undefined;
-  getConfig: (options?: IRedisConfigOptions) => IRedisProviderConfig;
+  getConfig: (
+    envOptions?: any,
+    options?: IRedisConfigOptions
+  ) => IRedisProviderConfig;
   validate: (config: IRedisProviderConfig) => boolean;
 }
 
 export interface IProviderCluster extends IProviderInMemory {
   getClient: (config: InMemoryProviderConfig) => Cluster | undefined;
   getConfig: (
+    envOptions?: any,
     options?: IProviderClusterConfigOptions
   ) => InMemoryProviderConfig;
   validate: (config: InMemoryProviderConfig) => boolean;
 }
 
+export type IProviders = IProviderRedis | IProviderCluster;
+
 const LOG_CONTEXT = 'InMemoryProviderService/Providers';
 
-const providers = {
+const providers: Record<InMemoryProviderEnum, IProviders> = {
   [InMemoryProviderEnum.AZURE_CACHE_FOR_REDIS]: {
     getClient: getAzureCacheForRedisCluster,
     getConfig: getAzureCacheForRedisClusterProviderConfig,
     isClientReady: isAzureCacheForRedisClientReady,
+    isCluster: true,
     provider: InMemoryProviderEnum.AZURE_CACHE_FOR_REDIS,
     validate: validateAzureCacheForRedisClusterProviderConfig,
   },
@@ -87,6 +97,7 @@ const providers = {
     getClient: getElasticacheCluster,
     getConfig: getElasticacheClusterProviderConfig,
     isClientReady: isElasticacheClientReady,
+    isCluster: true,
     provider: InMemoryProviderEnum.ELASTICACHE,
     validate: validateElasticacheClusterProviderConfig,
   },
@@ -94,6 +105,7 @@ const providers = {
     getClient: getMemoryDbCluster,
     getConfig: getMemoryDbClusterProviderConfig,
     isClientReady: isMemoryDbClientReady,
+    isCluster: true,
     provider: InMemoryProviderEnum.MEMORY_DB,
     validate: validateMemoryDbClusterProviderConfig,
   },
@@ -101,6 +113,7 @@ const providers = {
     getClient: getRedisInstance,
     getConfig: getRedisProviderConfig,
     isClientReady: isRedisClientReady,
+    isCluster: false,
     provider: InMemoryProviderEnum.REDIS,
     validate: validateRedisProviderConfig,
   },
@@ -108,21 +121,34 @@ const providers = {
     getClient: getRedisCluster,
     getConfig: getRedisClusterProviderConfig,
     isClientReady: isRedisClusterClientReady,
+    isCluster: true,
     provider: InMemoryProviderEnum.REDIS_CLUSTER,
     validate: validateRedisClusterProviderConfig,
   },
 };
 
-export const getSingleInstanceProvider = (): IProviderRedis => {
-  return providers[InMemoryProviderEnum.REDIS];
+export const getProvider = <T>(providerId: InMemoryProviderEnum): T => {
+  return providers[providerId] as T;
 };
 
-export const getClusterProvider = (providerId): IProviderCluster => {
+export const getSingleInstanceProvider = (): IProviderRedis => {
+  return getProvider<IProviderRedis>(InMemoryProviderEnum.REDIS);
+};
+
+export const getClusterProvider = (
+  providerId: InMemoryProviderEnum
+): IProviderCluster => {
   if (providerId === InMemoryProviderEnum.REDIS) {
     const message = `Provider ${providerId} is not available in Cluster Mode`;
     Logger.error(message, LOG_CONTEXT);
     throw new PlatformException(message);
   }
 
-  return providers[providerId];
+  return getProvider<IProviderCluster>(providerId);
+};
+
+export const isProviderAllowed = (providerId: string): boolean => {
+  const values = Object.values(InMemoryProviderEnum);
+
+  return values.includes(providerId as unknown as InMemoryProviderEnum);
 };

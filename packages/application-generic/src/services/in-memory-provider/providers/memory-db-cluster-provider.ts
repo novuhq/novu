@@ -7,6 +7,7 @@ import {
   Cluster,
   ClusterNode,
   ClusterOptions,
+  IEnvironmentConfigOptions,
   IProviderClusterConfigOptions,
   Redis,
 } from '../types';
@@ -48,18 +49,35 @@ export interface IMemoryDbClusterProviderConfig {
 }
 
 export const getMemoryDbClusterProviderConfig = (
+  envOptions?: IEnvironmentConfigOptions,
   options?: IProviderClusterConfigOptions
 ): IMemoryDbClusterProviderConfig => {
-  const redisClusterConfig: IMemoryDbClusterConfig = {
-    host: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_HOST),
-    port: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_PORT),
+  let redisClusterConfig: Partial<IMemoryDbClusterConfig>;
+
+  if (envOptions) {
+    redisClusterConfig = {
+      host: convertStringValues(envOptions.host),
+      password: convertStringValues(envOptions.password),
+      port: convertStringValues(envOptions.ports),
+      username: convertStringValues(envOptions.username),
+    };
+  } else {
+    redisClusterConfig = {
+      host: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_HOST),
+      password: convertStringValues(
+        process.env.MEMORY_DB_CLUSTER_SERVICE_PASSWORD
+      ),
+
+      port: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_PORT),
+      username: convertStringValues(
+        process.env.MEMORY_DB_CLUSTER_SERVICE_USERNAME
+      ),
+    };
+  }
+
+  redisClusterConfig = {
+    ...redisClusterConfig,
     ttl: convertStringValues(process.env.MEMORY_DB_CLUSTER_SERVICE_TTL),
-    username: convertStringValues(
-      process.env.MEMORY_DB_CLUSTER_SERVICE_USERNAME
-    ),
-    password: convertStringValues(
-      process.env.MEMORY_DB_CLUSTER_SERVICE_PASSWORD
-    ),
     connectTimeout: convertStringValues(
       process.env.MEMORY_DB_CLUSTER_SERVICE_CONNECTION_TIMEOUT
     ),

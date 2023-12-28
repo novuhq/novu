@@ -2,6 +2,7 @@ import { convertStringValues } from './variable-mappers';
 
 import {
   ConnectionOptions,
+  IEnvironmentConfigOptions,
   IRedisConfigOptions,
   Redis,
   RedisOptions,
@@ -28,6 +29,7 @@ interface IRedisConfig {
   port?: string;
   tls?: ConnectionOptions;
   ttl?: string;
+  username?: string;
 }
 
 export interface IRedisProviderConfig {
@@ -46,14 +48,31 @@ export interface IRedisProviderConfig {
 }
 
 export const getRedisProviderConfig = (
+  envOptions?: IEnvironmentConfigOptions,
   options?: IRedisConfigOptions
 ): IRedisProviderConfig => {
-  const redisConfig: IRedisConfig = {
+  let redisConfig: Partial<IRedisConfig>;
+
+  if (envOptions) {
+    redisConfig = {
+      host: convertStringValues(envOptions.host),
+      password: convertStringValues(envOptions.password),
+      port: convertStringValues(envOptions.ports),
+      username: convertStringValues(envOptions.username),
+    };
+  } else {
+    redisConfig = {
+      host: convertStringValues(process.env.REDIS_HOST),
+      password: convertStringValues(process.env.REDIS_PASSWORD),
+      port: convertStringValues(process.env.REDIS_PORT),
+      username: convertStringValues(process.env.REDIS_USERNAME),
+    };
+  }
+
+  redisConfig = {
+    ...redisConfig,
     db: convertStringValues(process.env.REDIS_DB_INDEX),
-    host: convertStringValues(process.env.REDIS_HOST),
-    port: convertStringValues(process.env.REDIS_PORT),
     ttl: convertStringValues(process.env.REDIS_TTL),
-    password: convertStringValues(process.env.REDIS_PASSWORD),
     connectTimeout: convertStringValues(process.env.REDIS_CONNECT_TIMEOUT),
     keepAlive: convertStringValues(process.env.REDIS_KEEP_ALIVE),
     family: convertStringValues(process.env.REDIS_FAMILY),
@@ -65,6 +84,7 @@ export const getRedisProviderConfig = (
   const port = redisConfig.port ? Number(redisConfig.port) : DEFAULT_PORT;
   const host = redisConfig.host || DEFAULT_HOST;
   const password = redisConfig.password;
+  const username = redisConfig.username;
   const connectTimeout = redisConfig.connectTimeout
     ? Number(redisConfig.connectTimeout)
     : DEFAULT_CONNECT_TIMEOUT;
@@ -83,6 +103,7 @@ export const getRedisProviderConfig = (
     host,
     port,
     password,
+    username,
     connectTimeout,
     family,
     keepAlive,

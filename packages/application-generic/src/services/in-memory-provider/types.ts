@@ -38,3 +38,11 @@ export interface IProviderClusterConfigOptions {
 export interface IRedisConfigOptions {
   showFriendlyErrorStack?: boolean;
 }
+
+export interface IEnvironmentConfigOptions {
+  host: string;
+  ports: string;
+  providerId?: string;
+  username?: string;
+  password?: string;
+}

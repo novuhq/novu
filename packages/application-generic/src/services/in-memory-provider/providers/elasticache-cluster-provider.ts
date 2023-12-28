@@ -9,6 +9,7 @@ import {
   Cluster,
   ClusterNode,
   ClusterOptions,
+  IEnvironmentConfigOptions,
   IProviderClusterConfigOptions,
   Redis,
 } from '../types';
@@ -31,6 +32,7 @@ interface IElasticacheClusterConfig {
   port?: string;
   tls?: ConnectionOptions;
   ttl?: string;
+  username?: string;
 }
 
 export interface IElasticacheClusterProviderConfig {
@@ -45,16 +47,34 @@ export interface IElasticacheClusterProviderConfig {
   port?: number;
   tls?: ConnectionOptions;
   ttl: number;
+  username?: string;
 }
 
 export const getElasticacheClusterProviderConfig = (
+  envOptions?: IEnvironmentConfigOptions,
   options?: IProviderClusterConfigOptions
 ): IElasticacheClusterProviderConfig => {
-  const redisClusterConfig: IElasticacheClusterConfig = {
-    host: convertStringValues(process.env.ELASTICACHE_CLUSTER_SERVICE_HOST),
-    port: convertStringValues(process.env.ELASTICACHE_CLUSTER_SERVICE_PORT),
+  let redisClusterConfig: Partial<IElasticacheClusterConfig>;
+
+  if (envOptions) {
+    redisClusterConfig = {
+      host: convertStringValues(envOptions.host),
+      password: convertStringValues(envOptions.password),
+      port: convertStringValues(envOptions.ports),
+      username: convertStringValues(envOptions.username),
+    };
+  } else {
+    redisClusterConfig = {
+      host: convertStringValues(process.env.ELASTICACHE_CLUSTER_SERVICE_HOST),
+      password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
+      port: convertStringValues(process.env.ELASTICACHE_CLUSTER_SERVICE_PORT),
+      username: convertStringValues(process.env.REDIS_CLUSTER_USERNAME),
+    };
+  }
+
+  redisClusterConfig = {
+    ...redisClusterConfig,
     ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
-    password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
     connectTimeout: convertStringValues(
       process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT
     ),
@@ -75,6 +95,7 @@ export const getElasticacheClusterProviderConfig = (
     ? Number(redisClusterConfig.port)
     : undefined;
   const password = redisClusterConfig.password;
+  const username = redisClusterConfig.username;
   const connectTimeout = redisClusterConfig.connectTimeout
     ? Number(redisClusterConfig.connectTimeout)
     : DEFAULT_CONNECT_TIMEOUT;
@@ -96,6 +117,7 @@ export const getElasticacheClusterProviderConfig = (
     port,
     instances,
     password,
+    username,
     connectTimeout,
     family,
     keepAlive,

@@ -4,4 +4,7 @@ export {
   InMemoryProviderConfig,
   IProviderCluster,
   IProviderRedis,
+  IProviders,
+  IRedisProviderConfig,
+  isProviderAllowed,
 } from './providers';

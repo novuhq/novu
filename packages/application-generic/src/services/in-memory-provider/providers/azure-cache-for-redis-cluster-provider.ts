@@ -7,6 +7,7 @@ import {
   Cluster,
   ClusterNode,
   ClusterOptions,
+  IEnvironmentConfigOptions,
   IProviderClusterConfigOptions,
   Redis,
 } from '../types';
@@ -48,22 +49,38 @@ export interface IAzureCacheForRedisClusterProviderConfig {
 }
 
 export const getAzureCacheForRedisClusterProviderConfig = (
+  envOptions?: IEnvironmentConfigOptions,
   options?: IProviderClusterConfigOptions
 ): IAzureCacheForRedisClusterProviderConfig => {
-  const redisClusterConfig: IAzureCacheForRedisClusterConfig = {
-    host: convertStringValues(
-      process.env.AZURE_CACHE_FOR_REDIS_CLUSTER_SERVICE_HOST
-    ),
-    port: convertStringValues(
-      process.env.AZURE_CACHE_FOR_REDIS_CLUSTER_SERVICE_PORT
-    ),
+  let redisClusterConfig: Partial<IAzureCacheForRedisClusterConfig>;
+
+  if (envOptions) {
+    redisClusterConfig = {
+      host: convertStringValues(envOptions.host),
+      password: convertStringValues(envOptions.password),
+      port: convertStringValues(envOptions.ports),
+      username: convertStringValues(envOptions.username),
+    };
+  } else {
+    redisClusterConfig = {
+      host: convertStringValues(
+        process.env.AZURE_CACHE_FOR_REDIS_CLUSTER_SERVICE_HOST
+      ),
+      password: convertStringValues(
+        process.env.AZURE_CACHE_FOR_REDIS_CLUSTER_SERVICE_PASSWORD
+      ),
+      port: convertStringValues(
+        process.env.AZURE_CACHE_FOR_REDIS_CLUSTER_SERVICE_PORT
+      ),
+      username: convertStringValues(
+        process.env.AZURE_CACHE_FOR_REDIS_CLUSTER_SERVICE_USERNAME
+      ),
+    };
+  }
+
+  redisClusterConfig = {
+    ...redisClusterConfig,
     ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
-    username: convertStringValues(
-      process.env.AZURE_CACHE_FOR_REDIS_CLUSTER_SERVICE_USERNAME
-    ),
-    password: convertStringValues(
-      process.env.AZURE_CACHE_FOR_REDIS_CLUSTER_SERVICE_PASSWORD
-    ),
     connectTimeout: convertStringValues(
       process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT
     ),

@@ -4,10 +4,15 @@ import { InMemoryProviderService } from './in-memory-provider.service';
 import {
   getClusterProvider,
   getSingleInstanceProvider,
+  InMemoryProviderConfig,
   IProviderCluster,
   IProviderRedis,
+  IProviders,
+  IRedisProviderConfig,
+  isProviderAllowed,
 } from './providers';
 import {
+  IEnvironmentConfigOptions,
   InMemoryProviderEnum,
   InMemoryProviderClient,
   IProviderClusterConfigOptions,
@@ -27,13 +32,14 @@ export class CacheInMemoryProviderService {
   constructor() {
     this.getIsInMemoryClusterModeEnabled =
       new GetIsInMemoryClusterModeEnabled();
-    this.isCluster = this.isClusterMode();
 
-    this.loadedProvider = this.selectProvider();
+    const { provider, config } = this.selectProvider();
+    this.loadedProvider = provider;
+    this.isCluster = this.loadedProvider.isCluster;
 
     this.inMemoryProviderService = new InMemoryProviderService(
       this.loadedProvider,
-      this.loadedProvider.getConfig(this.getCacheConfigOptions()),
+      config,
       this.isCluster
     );
   }
@@ -52,6 +58,54 @@ export class CacheInMemoryProviderService {
     };
   }
 
+  private getCacheProvider(): IEnvironmentConfigOptions {
+    const providerId = process.env.CACHE_PROVIDER_ID;
+    const host = process.env.CACHE_HOST;
+    const password = process.env.CACHE_PASSWORD;
+    const ports = process.env.CACHE_PORTS;
+    const username = process.env.CACHE_USERNAME;
+
+    return {
+      providerId,
+      host,
+      password,
+      ports,
+      username,
+    };
+  }
+
+  /**
+   * New way of selecting provider with priority to select through environment variables
+   * and fallback to the previous way retro compatible
+   */
+  private selectProvider(): {
+    provider: IProviders;
+    config: InMemoryProviderConfig;
+  } {
+    const { providerId, host, password, ports, username } =
+      this.getCacheProvider();
+
+    if (isProviderAllowed(providerId)) {
+      const envProvider = getClusterProvider(
+        providerId as InMemoryProviderEnum
+      );
+
+      const envProviderConfig = envProvider.getConfig(
+        { host, ports, username, password },
+        this.getCacheConfigOptions()
+      );
+
+      if (envProvider.validate(envProviderConfig)) {
+        return {
+          provider: envProvider,
+          config: envProviderConfig,
+        };
+      }
+    }
+
+    return this.selectProviderRetroCompatible();
+  }
+
   /**
    * Rules for the provider selection:
    * - For our self hosted users we assume all of them have a single node Redis
@@ -61,7 +115,10 @@ export class CacheInMemoryProviderService {
    * if Elasticache not configured properly. If Redis Cluster is wrong too, we will
    * fall back to Redis single instance.
    */
-  private selectProvider(): IProviderCluster | IProviderRedis {
+  private selectProviderRetroCompatible(): {
+    provider: IProviders;
+    config: IRedisProviderConfig | InMemoryProviderConfig;
+  } {
     if (this.isClusterMode()) {
       const providerIds = [
         InMemoryProviderEnum.ELASTICACHE,
@@ -69,24 +126,35 @@ export class CacheInMemoryProviderService {
       ];
 
       let selectedProvider = undefined;
+      let selectedProviderConfig = undefined;
       for (const providerId of providerIds) {
         const clusterProvider = getClusterProvider(providerId);
         const clusterProviderConfig = clusterProvider.getConfig(
+          undefined,
           this.getCacheConfigOptions()
         );
 
         if (clusterProvider.validate(clusterProviderConfig)) {
           selectedProvider = clusterProvider;
+          selectedProviderConfig = clusterProviderConfig;
           break;
         }
       }
 
       if (selectedProvider) {
-        return selectedProvider;
+        return {
+          provider: selectedProvider,
+          config: selectedProviderConfig,
+        };
       }
     }
 
-    return getSingleInstanceProvider();
+    const singleInstance = getSingleInstanceProvider();
+
+    return {
+      provider: singleInstance,
+      config: singleInstance.getConfig(undefined, this.getCacheConfigOptions()),
+    };
   }
 
   private isClusterMode(): boolean {
