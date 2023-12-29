@@ -54,10 +54,6 @@ export class AnalyticsService {
         traits.productUseCases = organization.productUseCases;
       }
 
-      if (organization.jobTitle) {
-        traits.jobTitle = organization.jobTitle;
-      }
-
       this.segment.group({
         userId: user._id as any,
         groupId: organizationId,

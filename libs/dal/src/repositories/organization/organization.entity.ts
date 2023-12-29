@@ -23,8 +23,6 @@ export class OrganizationEntity implements IOrganizationEntity {
 
   defaultLocale?: string;
 
-  jobTitle?: string;
-
   domain?: string;
 
   productUseCases?: ProductUseCases;

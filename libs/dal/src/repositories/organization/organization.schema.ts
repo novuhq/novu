@@ -37,7 +37,6 @@ const organizationSchema = new Schema<OrganizationDBModel>(
       select: false,
     },
     defaultLocale: Schema.Types.String,
-    jobTitle: Schema.Types.String,
     domain: Schema.Types.String,
     productUseCases: {
       delay: {

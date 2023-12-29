@@ -1,7 +1,4 @@
 import { ApiServiceLevelEnum } from '../../types';
-import { IUserEntity } from '../user';
-import { MemberRoleEnum } from './member.enum';
-import { IMemberInvite, MemberStatusEnum } from './member.interface';
 import { ProductUseCases } from '../../dto';
 
 export interface IOrganizationEntity {
@@ -17,7 +14,6 @@ export interface IOrganizationEntity {
     direction?: 'ltr' | 'rtl';
   };
   defaultLocale?: string;
-  jobTitle?: string;
   domain?: string;
   productUseCases?: ProductUseCases;
   createdAt: string;
