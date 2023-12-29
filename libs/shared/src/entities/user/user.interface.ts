@@ -1,3 +1,5 @@
+import { JobTitleEnum } from '../../types';
+
 export interface IServicesHashes {
   intercom?: string;
 }
@@ -11,4 +13,5 @@ export interface IUserEntity {
   showOnBoarding?: boolean;
   showOnBoardingTour?: number;
   servicesHashes?: IServicesHashes;
+  jobTitle?: JobTitleEnum;
 }

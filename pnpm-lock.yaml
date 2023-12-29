@@ -1265,7 +1265,7 @@ importers:
         specifier: ^12.0.0
         version: 12.20.55
       '@types/react':
-        specifier: 17.0.62
+        specifier: ^17.0.0
         version: 17.0.62
       '@types/react-dom':
         specifier: 17.0.20
@@ -3318,7 +3318,7 @@ importers:
         specifier: ^0.22.0
         version: link:../../../notification-center
       '@types/react':
-        specifier: ^17.0.1
+        specifier: ^17.0.0
         version: 17.0.62
       react:
         specifier: ^17.0.1
@@ -13702,7 +13702,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.23.2
+      '@babel/runtime': 7.21.0
       '@emotion/babel-plugin': 11.10.6
       '@emotion/is-prop-valid': 1.2.0
       '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
@@ -26069,7 +26069,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@eslint-community/regexpp': 4.9.1
+      '@eslint-community/regexpp': 4.5.0
       '@typescript-eslint/parser': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
       '@typescript-eslint/scope-manager': 5.58.0
       '@typescript-eslint/type-utils': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
@@ -50268,7 +50268,7 @@ packages:
       chalk: 4.1.2
       enhanced-resolve: 5.15.0
       micromatch: 4.0.5
-      semver: 7.5.4
+      semver: 7.5.2
       typescript: 4.9.5
       webpack: 5.82.1(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
     dev: true
