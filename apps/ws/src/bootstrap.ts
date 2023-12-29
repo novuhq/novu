@@ -24,7 +24,7 @@ const otelSDK = initializeOtelSdk(packageJson.name);
 
 export async function bootstrap() {
   BullMqService.haveProInstalled();
-  if (process.env.ENABLE_OTEL_SDK === 'true') {
+  if (process.env.ENABLE_OTEL === 'true') {
     await otelSDK.start();
   }
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
