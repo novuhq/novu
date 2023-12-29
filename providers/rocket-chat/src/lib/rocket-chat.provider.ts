@@ -15,7 +15,6 @@ export class RocketChatChatProvider implements IChatProvider {
     private config: {
       token?: string;
       user?: string;
-      idPath?: string;
     }
   ) {}
 
