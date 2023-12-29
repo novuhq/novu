@@ -9,6 +9,10 @@ export class RocketChatChatHandler extends BaseChatHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    this.provider = new RocketChatChatProvider(credentials);
+    const config: { token: string; user: string } = {
+      token: credentials.token as string,
+      user: credentials.user as string,
+    };
+    this.provider = new RocketChatChatProvider(config);
   }
 }

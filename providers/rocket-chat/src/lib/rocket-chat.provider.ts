@@ -13,8 +13,8 @@ export class RocketChatChatProvider implements IChatProvider {
 
   constructor(
     private config: {
-      token?: string;
-      user?: string;
+      token: string;
+      user: string;
     }
   ) {}
 
