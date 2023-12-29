@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Delete a Transaltion group - /translations/group/:id (Delete)', async () => {
+describe('Delete a Translation group - /translations/group/:id (Delete)', async () => {
   let session: UserSession;
 
   beforeEach(async () => {
