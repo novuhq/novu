@@ -6,7 +6,7 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 
-export class RocketChatChatProvider implements IChatProvider {
+export class RocketChatProvider implements IChatProvider {
   id = 'rocket-chat';
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   private axiosInstance = axios.create();
