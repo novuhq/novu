@@ -37,6 +37,29 @@ const organizationSchema = new Schema<OrganizationDBModel>(
       select: false,
     },
     defaultLocale: Schema.Types.String,
+    domain: Schema.Types.String,
+    productUseCases: {
+      delay: {
+        type: Schema.Types.Boolean,
+        default: false,
+      },
+      translation: {
+        type: Schema.Types.Boolean,
+        default: false,
+      },
+      digest: {
+        type: Schema.Types.Boolean,
+        default: false,
+      },
+      multi_channel: {
+        type: Schema.Types.Boolean,
+        default: false,
+      },
+      in_app: {
+        type: Schema.Types.Boolean,
+        default: false,
+      },
+    },
   },
   schemaOptions
 );
