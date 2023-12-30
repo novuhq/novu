@@ -2598,7 +2598,7 @@ importers:
         specifier: ^0.22.0
         version: link:../../providers/resend
       '@novu/rocket-chat':
-        specifier: ^0.16.3
+        specifier: ^0.22.0
         version: link:../../providers/rocket-chat
       '@novu/ryver':
         specifier: ^0.22.0
