@@ -42,8 +42,10 @@ const mockSession: ISession = {
 const mockOrganization: IOrganizationEntity = {
   _id: '_id',
   name: 'mock organization',
-  members: [],
+  createdAt: '2023-12-27T13:17:06.309Z',
+  updatedAt: '2023-12-27T13:17:06.409Z',
 };
+
 const mockUnseenCount = { count: 1 };
 const mockNotification: IMessage = {
   _id: notificationId,
