@@ -24,6 +24,8 @@ describe('test use of novus node package - ExecutionDetails class', () => {
     await novu.executionDetails.get({ notificationId, subscriberId });
 
     expect(mockedAxios.get).toHaveBeenCalled();
-    expect(mockedAxios.get).toHaveBeenCalledWith('/execution-details');
+    expect(mockedAxios.get).toHaveBeenCalledWith('/execution-details', {
+      params: { notificationId: '12345678', subscriberId: '987654321' },
+    });
   });
 });
