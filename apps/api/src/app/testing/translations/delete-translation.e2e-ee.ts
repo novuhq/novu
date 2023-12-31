@@ -62,6 +62,21 @@ describe('Delete a Translation - /translations/group/:id/locale/:locale (Delete)
     expect(translationData._groupId).to.equal(newTranslationGroupId);
     expect(translationData.translations).to.equal(JSON.stringify(file));
 
+    await session.applyChanges({
+      enabled: false,
+    });
+    await session.switchToProdEnvironment();
+
+    const { body: translationProd } = await session.testAgent
+      .get(`/v1/translations/groups/${createTranslationGroup.identifier}/locales/${createTranslationGroup.locales[0]}`)
+      .send();
+
+    const translationProdData = translationProd.data;
+    expect(translationProdData.isoLanguage).to.equal(createTranslationGroup.locales[0]);
+    expect(translationProdData.translations).to.equal(JSON.stringify(file));
+
+    await session.switchToDevEnvironment();
+
     await session.testAgent
       .delete(
         `/v1/translations/groups/${createTranslationGroup.identifier}/locales/${createTranslationGroup.locales[0]}`
@@ -78,5 +93,19 @@ describe('Delete a Translation - /translations/group/:id/locale/:locale (Delete)
     expect(translationDataAfterDelete._groupId).to.equal(newTranslationGroupId);
     expect(translationDataAfterDelete.translations).to.not.exist;
     expect(translationDataAfterDelete.fileName).to.not.exist;
+
+    await session.applyChanges({
+      enabled: false,
+    });
+
+    await session.switchToProdEnvironment();
+
+    const { body: translationProdAfterDelete } = await session.testAgent
+      .get(`/v1/translations/groups/${createTranslationGroup.identifier}/locales/${createTranslationGroup.locales[0]}`)
+      .send();
+
+    const translationProdDataAfterDelete = translationProdAfterDelete.data;
+    expect(translationProdDataAfterDelete.isoLanguage).to.equal(createTranslationGroup.locales[0]);
+    expect(translationProdDataAfterDelete.translations).to.not.exist;
   });
 });
