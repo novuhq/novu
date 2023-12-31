@@ -17,12 +17,12 @@ import {
   Button,
   Input,
   Select,
-  Bell,
   Digest,
   Translation,
   MultiChannel,
   inputStyles,
-  Timer,
+  HalfClock,
+  RingingBell,
 } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
@@ -121,6 +121,7 @@ export function QuestionnaireForm() {
                 label: jobTitleToLabelMapper[item],
                 value: item,
               }))}
+              required
             />
           );
         }}
@@ -141,6 +142,7 @@ export function QuestionnaireForm() {
               placeholder="Enter your company name"
               data-test-id="questionnaire-company-name"
               mt={32}
+              required
             />
           );
         }}
@@ -181,6 +183,7 @@ export function QuestionnaireForm() {
               styles={inputStyles}
               error={fieldState.error?.message}
               mt={32}
+              required
             >
               <Group
                 mt={8}
@@ -211,10 +214,10 @@ export function QuestionnaireForm() {
 }
 
 const checkBoxData = [
-  { type: ProductUseCasesEnum.IN_APP, icon: Bell, label: 'In-app' },
+  { type: ProductUseCasesEnum.IN_APP, icon: RingingBell, label: 'In-app' },
   { type: ProductUseCasesEnum.MULTI_CHANNEL, icon: MultiChannel, label: 'Multi-channel' },
   { type: ProductUseCasesEnum.DIGEST, icon: Digest, label: 'Digest' },
-  { type: ProductUseCasesEnum.DELAY, icon: Timer, label: 'Delay' },
+  { type: ProductUseCasesEnum.DELAY, icon: HalfClock, label: 'Delay' },
   { type: ProductUseCasesEnum.TRANSLATION, icon: Translation, label: 'Translate' },
 ];
 

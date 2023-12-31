@@ -20,6 +20,7 @@ export const checkboxStyles = createStyles((theme, _params, getRef) => {
         border: 'transparent',
       },
     },
+
     label: {
       paddingLeft: 4,
       fontSize: '14px',
@@ -34,8 +35,8 @@ export const tooltipStyles = createStyles((theme, _params, getRef) => {
 
   return {
     tooltip: {
-      background: dark ? colors.B20 : colors.B98,
-      color: colors.B60,
+      background: dark ? colors.B20 : colors.white,
+      color: dark ? colors.B80 : colors.B60,
       fontSize: '14px',
     },
   };

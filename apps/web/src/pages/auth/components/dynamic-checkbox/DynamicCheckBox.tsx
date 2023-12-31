@@ -59,7 +59,7 @@ const UnselectedIcon = styled.svg<{ ishovered: boolean; ischecked: boolean }>`
   width: 20px;
   opacity: ${({ ishovered, ischecked }) => (ishovered || ischecked ? 0 : 1)};
   transition: opacity 0.5s ease;
-  color: ${colors.B60};
+  color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B60 : colors.B70)};
 `;
 
 const Container = styled.div<{ checked: boolean }>`
@@ -70,13 +70,16 @@ const Container = styled.div<{ checked: boolean }>`
   background: transparent;
 
   &:hover {
-    background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.B85)};
+    background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.white)};
   }
 
   &:hover .innerCheckbox {
     input {
-      border: 1px solid white;
-      transition: border 0.3s ease;
+      border: 1px solid ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B15)};
+    }
+
+    label {
+      color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B15)};
     }
   }
 
@@ -85,7 +88,7 @@ const Container = styled.div<{ checked: boolean }>`
       checked &&
       `  
         label {
-          color: ${theme.colorScheme === 'dark' ? colors.white : colors.B40};
+          color: ${theme.colorScheme === 'dark' ? colors.white : colors.B15};
         }
       `
     );

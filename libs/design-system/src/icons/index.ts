@@ -91,6 +91,8 @@ export { Logout } from './general/Logout';
 export { InviteMembers } from './general/InviteMembers';
 export { Translation } from './general/Translation';
 export { MultiChannel } from './general/MultiChannel';
+export { HalfClock } from './general/HalfClock';
+export { RingingBell } from './general/RingingBell';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
