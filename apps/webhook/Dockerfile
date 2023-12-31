@@ -1,4 +1,4 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as dev_base
+FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine as dev_base
 ENV NX_DAEMON=false
 
 RUN npm i pm2 -g

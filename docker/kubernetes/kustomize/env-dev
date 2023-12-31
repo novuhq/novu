@@ -13,7 +13,7 @@ REDIS_CACHE_SERVICE_HOST=novu-redis-dev
 REDIS_CACHE_SERVICE_PORT=6379
 
 # AWS
-S3_LOCAL_STACK=http://localhost:4566
+S3_LOCAL_STACK=http://127.0.0.1:4566
 S3_BUCKET_NAME=novu-local
 S3_REGION=us-east-1
 AWS_ACCESS_KEY_ID=test
@@ -25,13 +25,13 @@ REDIS_PORT=6379
 WS_PORT=3002
 
 # Root URL
-REACT_APP_API_URL=http://localhost:3000
-REACT_APP_WS_URL=http://localhost:3002
-API_ROOT_URL=http://localhost:3000
+REACT_APP_API_URL=http://127.0.0.1:3000
+REACT_APP_WS_URL=http://127.0.0.1:3002
+API_ROOT_URL=http://127.0.0.1:3000
 DISABLE_USER_REGISTRATION=false
 FRONT_BASE_URL=http://client:4200
-WIDGET_EMBED_PATH=http://localhost:4701/embed.umd.min.js
-WIDGET_URL=http://localhost:4500
+WIDGET_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js
+WIDGET_URL=http://127.0.0.1:4500
 
 # Context Paths
 # Only needed for setups with reverse-proxies
