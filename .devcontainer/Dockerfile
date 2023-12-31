@@ -1,5 +1,5 @@
 # [Choice] Node.js version (use -bullseye variants on local arm64/Apple Silicon): 16, 14, 12, 16-bullseye, 14-bullseye, 12-bullseye, 16-buster, 14-buster, 12-buster
-ARG VARIANT=16-bullseye
+ARG VARIANT=20-bullseye
 FROM mcr.microsoft.com/vscode/devcontainers/javascript-node:0-${VARIANT}
 
 # Install MongoDB command line tools if on buster and x86_64 (arm64 not supported)
@@ -23,6 +23,3 @@ RUN . /etc/os-release \
 
 # [Optional] Uncomment if you want to install more global node modules
 RUN su node -c "npm install -g pnpm@8.9.0"
-
-
-

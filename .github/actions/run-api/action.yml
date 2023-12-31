@@ -24,4 +24,4 @@ runs:
 
     - name: Wait on API
       shell: bash
-      run: wait-on --timeout=180000 http://localhost:1336/v1/health-check
+      run: wait-on --timeout=180000 http://127.0.0.1:1336/v1/health-check
