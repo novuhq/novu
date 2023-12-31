@@ -1,12 +1,12 @@
 import {
   BLUEPRINT_IDENTIFIER,
+  buildCommonEnvironmentKey,
   buildCommonKey,
   buildKeyById,
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
   OrgScopePrefixEnum,
-  prefixWrapper,
   ServiceConfigIdentifierEnum,
 } from './shared';
 
@@ -23,6 +23,19 @@ const buildSubscriberKey = ({
     environmentId: _environmentId,
     identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
     identifier: subscriberId,
+  });
+
+const buildVariablesKey = ({
+  _environmentId,
+  _organizationId,
+}: {
+  _environmentId: string;
+  _organizationId: string;
+}): string =>
+  buildCommonEnvironmentKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.WORKFLOW_VARIABLES,
+    environmentId: _environmentId,
   });
 
 const buildUserKey = ({ _id }: { _id: string }): string =>
@@ -145,4 +158,5 @@ export {
   buildMaximumApiRateLimitKey,
   buildEvaluateApiRateLimitKey,
   buildServiceConfigApiRateLimitMaximumKey,
+  buildVariablesKey,
 };
