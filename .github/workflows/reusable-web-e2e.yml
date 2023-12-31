@@ -76,9 +76,9 @@ jobs:
       - name: Start Client
         working-directory: apps/web
         env:
-          REACT_APP_API_URL: http://localhost:1336
-          REACT_APP_WS_URL: http://localhost:1340
-          REACT_APP_WEBHOOK_URL: http://localhost:1341
+          REACT_APP_API_URL: http://127.0.0.1:1336
+          REACT_APP_WS_URL: http://127.0.0.1:1340
+          REACT_APP_WEBHOOK_URL: http://127.0.0.1:1341
           REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.TEST_LAUNCH_DARKLY_CLIENT_SIDE_ID }}
         run: pnpm start:static:build &
 
@@ -87,7 +87,7 @@ jobs:
           cd apps/ws && pnpm start:test &
 
       - name: Wait on Services
-        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:4200
+        run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check http://127.0.0.1:4200/
 
       # run cypress install only when cache was not hit
       - name: Cypress install

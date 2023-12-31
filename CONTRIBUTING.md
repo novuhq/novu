@@ -20,8 +20,8 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 
 ### Requirements
 
-- Node.js v16.14.0 
-  - To install Node.js v16.14.0 through NVM (Node Version Manager), follow these steps:
+- Node.js  v20.8.1 (LTS)
+  - To install Node.js  v20.8.1 (LTS) through NVM (Node Version Manager), follow these steps:
     1. Open your terminal.
 
     2. Install NVM if you haven't already. You can install NVM by following the instructions at [NVM GitHub](https://github.com/nvm-sh/nvm).
@@ -30,14 +30,14 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
        
 
         ```bash
-        nvm install 16.14.0
+        nvm install 20.8.1
                  
-        node -v # output: v16.14.0
+        node -v # output: v20.8.1
         ```
-     5. You can set Node.js v16.14.0 as your default version with the following command:
+     5. You can set Node.js v20.8.1 as your default version with the following command:
 
         ```bash
-        nvm alias default 16
+        nvm alias default 20
 
         ```
 

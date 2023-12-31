@@ -1265,7 +1265,7 @@ importers:
         specifier: ^12.0.0
         version: 12.20.55
       '@types/react':
-        specifier: 17.0.62
+        specifier: ^17.0.0
         version: 17.0.62
       '@types/react-dom':
         specifier: 17.0.20
@@ -3321,7 +3321,7 @@ importers:
         specifier: ^0.22.0
         version: link:../../../notification-center
       '@types/react':
-        specifier: ^17.0.1
+        specifier: ^17.0.0
         version: 17.0.62
       react:
         specifier: ^17.0.1
@@ -26115,7 +26115,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@eslint-community/regexpp': 4.9.1
+      '@eslint-community/regexpp': 4.5.0
       '@typescript-eslint/parser': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
       '@typescript-eslint/scope-manager': 5.58.0
       '@typescript-eslint/type-utils': 5.58.0(eslint@8.51.0)(typescript@4.9.5)

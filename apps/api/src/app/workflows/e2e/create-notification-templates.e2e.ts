@@ -547,8 +547,8 @@ describe('Create Notification template from blueprint - /notification-templates 
     await session.testAgent.post(`/v1/workflows`).send({ ...blueprint });
     const newWorkflowChanges = (await session.testAgent.get(`/v1/changes?promoted=false`)).body.data;
     expect(newWorkflowChanges.length).to.equal(2);
-    expect(newWorkflowChanges[0].type).to.equal(ChangeEntityTypeEnum.NOTIFICATION_GROUP);
-    expect(newWorkflowChanges[1].type).to.equal(ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE);
+    expect(newWorkflowChanges[0].type).to.equal(ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE);
+    expect(newWorkflowChanges[1].type).to.equal(ChangeEntityTypeEnum.NOTIFICATION_GROUP);
   });
 
   async function getProductionEnvironment() {

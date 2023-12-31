@@ -11,7 +11,7 @@
     "docker:build:depot": "depot build -f ./Dockerfile -t novu-web ./../.. --load",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
     "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
-    "start:static:build": "pnpm envsetup:docker && http-server build -p 4200 --proxy http://localhost:4200?",
+    "start:static:build": "pnpm envsetup:docker && http-server build -p 4200 --proxy http://127.0.0.1:4200?",
     "start:docker": "pnpm build && pnpm start:static:build",
     "start:dev": "pnpm start",
     "cypress:run": "cross-env NODE_ENV=test cypress run",

@@ -11,14 +11,14 @@ if (process.env.ENVIRONMENT === 'production') {
   ResourcesConstants = {
     API_URL: '',
     IFRAME_URL: process.env.WIDGET_URL || 'https://dev.widget.novu.co',
-    WWW_URL: process.env.WIDGET_URL || 'http://localhost:3500',
+    WWW_URL: process.env.WIDGET_URL || 'http://127.0.0.1:3500',
     SENTRY_DSN: '',
   };
 } else {
   ResourcesConstants = {
     API_URL: '',
-    IFRAME_URL: process.env.WIDGET_URL || 'http://localhost:3500',
-    WWW_URL: process.env.WIDGET_URL || 'http://localhost:3500',
+    IFRAME_URL: process.env.WIDGET_URL || 'http://127.0.0.1:3500',
+    WWW_URL: process.env.WIDGET_URL || 'http://127.0.0.1:3500',
     SENTRY_DSN: '',
   };
 }
