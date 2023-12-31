@@ -38,6 +38,7 @@ export const tooltipStyles = createStyles((theme, _params, getRef) => {
       background: dark ? colors.B20 : colors.white,
       color: dark ? colors.B80 : colors.B60,
       fontSize: '14px',
+      boxShadow: dark ? 'none' : '0px 5px 15px 0px #2644800D',
     },
   };
 });
