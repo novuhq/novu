@@ -10,7 +10,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { checkingForCronJob } from '../../shared/utils';
 
 const LOG_CONTEXT = 'ActiveJobMetricService';
-const METRIC_JOB_ID = 'metric-job';
+const METRIC_JOB_ID = 'metrics-job';
 
 @Injectable()
 export class ActiveJobsMetricService {
