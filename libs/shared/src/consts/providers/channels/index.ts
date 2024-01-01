@@ -3,3 +3,4 @@ export * from './sms';
 export * from './chat';
 export * from './push';
 export * from './in-app';
+export * from './voice';

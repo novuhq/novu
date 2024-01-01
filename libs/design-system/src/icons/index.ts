@@ -10,6 +10,14 @@ export { CurlyBrackets } from './general/CurlyBrackets';
 
 export {
   /** @deprecated - Use https://react-icons.github.io/react-icons/icons/md/ for names with "Icon" instead of "Md" */
+  Voice,
+} from './general/Voice';
+export {
+  /** @deprecated - Use https://react-icons.github.io/react-icons/icons/md/ for names with "Icon" instead of "Md" */
+  VoiceFilled,
+} from './general/VoiceFilled';
+export {
+  /** @deprecated - Use https://react-icons.github.io/react-icons/icons/md/ for names with "Icon" instead of "Md" */
   ActiveLabel,
 } from './general/ActiveLabel';
 export {

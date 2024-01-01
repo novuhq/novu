@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient } from '@novu/design-system';
+import { Bell, Chat, DigestGradient, Mail, Mobile, Sms, TimerGradient, Voice } from '@novu/design-system';
 
 export enum TemplateAnalyticsEnum {
   CREATE_TEMPLATE_CLICK = 'Create Template Click - [Templates]',
@@ -53,6 +53,7 @@ export const stepNames: Record<StepTypeEnum | ChannelTypeEnum, string> = {
   in_app: 'In-App',
   sms: 'SMS',
   push: 'Push',
+  voice: 'Voice',
   digest: 'Digest',
   delay: 'Delay',
   trigger: 'Trigger',
@@ -64,6 +65,7 @@ export const stepIcon: Record<StepTypeEnum | ChannelTypeEnum, (...args: any[]) =
   in_app: Bell,
   sms: Sms,
   push: Mobile,
+  voice: Voice,
   digest: DigestGradient,
   delay: TimerGradient,
   trigger: () => <></>,

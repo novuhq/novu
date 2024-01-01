@@ -14,6 +14,7 @@ export const CHANNEL_TYPE_TO_ICON_NAME = {
   [ChannelTypeEnum.PUSH]: 'mobile',
   [ChannelTypeEnum.CHAT]: 'paper-plane',
   [ChannelTypeEnum.IN_APP]: 'bell',
+  [ChannelTypeEnum.VOICE]: 'phone',
 };
 
 export const defaultIntegrationConditionsProps = {

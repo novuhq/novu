@@ -6,6 +6,7 @@ export * from './ArrowLeft';
 export * from './Trash';
 export * from './Read';
 export * from './channels/Sms';
+export * from './channels/Voice';
 export * from './channels/Mail';
 export * from './channels/Mobile';
 export * from './channels/Chat';

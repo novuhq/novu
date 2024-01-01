@@ -14,6 +14,7 @@ import {
   Sms,
   InApp,
   Timer,
+  Voice,
 } from '@novu/design-system';
 import { When } from '../../../components/utils/When';
 
@@ -31,6 +32,8 @@ const TypeIcon = ({ type }: { type: StepTypeEnum }) => {
       return <Mobile width={22} height={22} />;
     case StepTypeEnum.IN_APP:
       return <InApp width={22} height={22} />;
+    case StepTypeEnum.VOICE:
+      return <Voice width={22} height={22} />;
     case StepTypeEnum.DIGEST:
       return (
         <div style={{ zoom: 0.65, width: 28, marginLeft: 4 }}>

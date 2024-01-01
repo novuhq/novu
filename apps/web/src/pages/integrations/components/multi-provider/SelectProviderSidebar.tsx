@@ -67,6 +67,7 @@ export function SelectProviderSidebar({
       [ChannelTypeEnum.PUSH]: filterSearch(providersList[ChannelTypeEnum.PUSH], search),
       [ChannelTypeEnum.IN_APP]: filterSearch(providersList[ChannelTypeEnum.IN_APP], search),
       [ChannelTypeEnum.CHAT]: filterSearch(providersList[ChannelTypeEnum.CHAT], search),
+      [ChannelTypeEnum.VOICE]: filterSearch(providersList[ChannelTypeEnum.VOICE], search),
     });
   }, 500);
 

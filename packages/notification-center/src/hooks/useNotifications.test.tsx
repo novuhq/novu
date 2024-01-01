@@ -89,6 +89,7 @@ const mockUserPreferenceSetting: IUserPreferenceSettings = {
       in_app: true,
       chat: true,
       push: true,
+      voice: true,
     },
   },
 };

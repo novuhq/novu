@@ -11,6 +11,7 @@ import { DigestMetadata } from '../workflow/DigestMetadata';
 import { DelayMetadata } from '../workflow/DelayMetadata';
 import { useStepIndex } from '../hooks/useStepIndex';
 import { useNavigateFromEditor } from '../hooks/useNavigateFromEditor';
+import { TemplateVoiceEditor } from './voice-editor/TemplateVoiceEditor';
 
 export const ChannelStepEditor = () => {
   const { channel } = useParams<{
@@ -46,6 +47,7 @@ export const ChannelStepEditor = () => {
         {channel === StepTypeEnum.SMS && <TemplateSMSEditor />}
         {channel === StepTypeEnum.PUSH && <TemplatePushEditor />}
         {channel === StepTypeEnum.CHAT && <TemplateChatEditor />}
+        {channel === StepTypeEnum.VOICE && <TemplateVoiceEditor />}
         {channel === StepTypeEnum.DIGEST && <DigestMetadata />}
         {channel === StepTypeEnum.DELAY && <DelayMetadata />}
       </StepEditorSidebar>

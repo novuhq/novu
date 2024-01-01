@@ -2,6 +2,7 @@ import { ColorScheme } from '@mantine/core';
 import {
   ChannelTypeEnum,
   chatProviders,
+  voiceProviders,
   EmailProviderIdEnum,
   emailProviders,
   inAppProviders,
@@ -34,6 +35,7 @@ export const initialProvidersList = {
   [ChannelTypeEnum.PUSH]: mapStructure(pushProviders),
   [ChannelTypeEnum.IN_APP]: mapStructure(inAppProviders),
   [ChannelTypeEnum.CHAT]: mapStructure(chatProviders),
+  [ChannelTypeEnum.VOICE]: mapStructure(voiceProviders),
 };
 
 export const getLogoFileName = (id, schema: ColorScheme): string => {

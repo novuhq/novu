@@ -66,6 +66,7 @@
     "@novu/discord": "^0.23.1",
     "@novu/email-webhook": "^0.23.1",
     "@novu/emailjs": "^0.23.1",
+    "@novu/twilio-voice": "^0.23.1",
     "@novu/expo": "^0.23.1",
     "@novu/fcm": "^0.23.1",
     "@novu/firetext": "^0.23.1",

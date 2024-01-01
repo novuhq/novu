@@ -114,6 +114,10 @@ export enum ChatProviderIdEnum {
   RocketChat = 'rocket-chat',
 }
 
+export enum VoiceProviderIdEnum {
+  Twilio = 'twilio-voice',
+}
+
 export enum PushProviderIdEnum {
   FCM = 'fcm',
   APNS = 'apns',
@@ -133,4 +137,5 @@ export type ProvidersIdEnum =
   | SmsProviderIdEnum
   | PushProviderIdEnum
   | InAppProviderIdEnum
-  | ChatProviderIdEnum;
+  | ChatProviderIdEnum
+  | VoiceProviderIdEnum;

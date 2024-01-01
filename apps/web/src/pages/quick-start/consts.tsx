@@ -2,7 +2,7 @@ import React, { Dispatch } from 'react';
 import { Stack } from '@mantine/core';
 import { NavigateFunction } from 'react-router-dom';
 import { ChannelTypeEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
-import { Bell, Chat, Mail, Mobile, Sms } from '@novu/design-system';
+import { Bell, Chat, Mail, Mobile, Sms, Voice } from '@novu/design-system';
 
 import { ROUTES } from '../../constants/routes.enum';
 import { WIDGET_EMBED_PATH } from '../../config';
@@ -336,6 +336,16 @@ export const quickStartChannels: IQuickStartChannelConfiguration[] = [
     displayName: 'SMS',
     type: ChannelTypeEnum.SMS,
     description: 'Connect to a SMS provider to start sending SMS programmatically',
+    clickHandler: (options) => {
+      options.setClickedChannel({ open: true, channelType: options.channelType });
+    },
+  },
+  {
+    Icon: Voice,
+    title: 'Voice',
+    displayName: 'Voice',
+    type: ChannelTypeEnum.VOICE,
+    description: 'Connect to a Voice provider to start making one way Voice calls programmatically',
     clickHandler: (options) => {
       options.setClickedChannel({ open: true, channelType: options.channelType });
     },

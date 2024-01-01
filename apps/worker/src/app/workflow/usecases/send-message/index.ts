@@ -6,4 +6,5 @@ export { SendMessageEmail } from './send-message-email.usecase';
 export { SendMessageInApp } from './send-message-in-app.usecase';
 export { SendMessagePush } from './send-message-push.usecase';
 export { SendMessageSms } from './send-message-sms.usecase';
+export { SendMessageVoice } from './send-message-voice.usecase';
 export * from './digest';

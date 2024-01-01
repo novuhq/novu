@@ -6,6 +6,7 @@ import {
   ProvidersIdEnum,
   PushProviderIdEnum,
   SmsProviderIdEnum,
+  VoiceProviderIdEnum,
 } from '@novu/shared';
 
 import type { IIntegratedProvider } from '../../types';
@@ -18,6 +19,7 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
     ChatProviderIdEnum.Mattermost,
     ChatProviderIdEnum.GrafanaOnCall,
   ],
+  [ChannelTypeEnum.VOICE]: [VoiceProviderIdEnum.Twilio],
   [ChannelTypeEnum.EMAIL]: [
     EmailProviderIdEnum.SendGrid,
     EmailProviderIdEnum.Mailjet,

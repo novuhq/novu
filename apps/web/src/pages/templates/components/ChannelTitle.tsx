@@ -1,6 +1,6 @@
 import { Group } from '@mantine/core';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Chat, DigestGradient, InApp, Mail, Mobile, Sms, TimerGradient } from '@novu/design-system';
+import { Chat, DigestGradient, InApp, Mail, Mobile, Sms, TimerGradient, Voice } from '@novu/design-system';
 
 export const ChannelTitle = ({
   channel,
@@ -47,6 +47,14 @@ export const ChannelTitle = ({
     return (
       <Group align="center" spacing={spacing}>
         <Sms color={color} /> <span>SMS</span>
+      </Group>
+    );
+  }
+
+  if (channel === StepTypeEnum.VOICE || channel === ChannelTypeEnum.VOICE) {
+    return (
+      <Group align="center" spacing={spacing}>
+        <Voice color={color} /> <span>Voice</span>
       </Group>
     );
   }

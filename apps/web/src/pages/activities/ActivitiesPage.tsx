@@ -109,6 +109,7 @@ export function ActivitiesPage() {
                     { value: ChannelTypeEnum.EMAIL, label: 'Email' },
                     { value: ChannelTypeEnum.IN_APP, label: 'In-App' },
                     { value: ChannelTypeEnum.PUSH, label: 'Push' },
+                    { value: ChannelTypeEnum.VOICE, label: 'Voice' },
                   ]}
                   data-test-id="activities-filter"
                   value={field.value}
