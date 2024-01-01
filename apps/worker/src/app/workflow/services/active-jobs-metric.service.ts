@@ -29,7 +29,7 @@ export class ActiveJobsMetricService {
       });
 
       this.activeJobsMetricWorkerService.worker.on('failed', async (job, error) => {
-        Logger.error('Metric Completed Job failed', LOG_CONTEXT, error);
+        Logger.error(error, 'Metric Completed Job failed', LOG_CONTEXT);
       });
 
       this.addToQueueIfMetricJobExists();
