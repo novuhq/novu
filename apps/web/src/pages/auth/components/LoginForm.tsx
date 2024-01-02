@@ -1,20 +1,18 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import styled from '@emotion/styled';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
-import { Divider, Button as MantineButton, Center } from '@mantine/core';
+import { Center } from '@mantine/core';
+
+import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
 
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { api } from '../../../api/api.client';
-import { PasswordInput, Button, colors, Input, Text, GitHub } from '@novu/design-system';
-import { IS_DOCKER_HOSTED } from '../../../config';
 import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
-import { buildGithubLink, buildGoogleLink, buildVercelGithubLink } from './gitHubUtils';
 import { ROUTES } from '../../../constants/routes.enum';
-import { When } from '../../../components/utils/When';
+import { OAuth } from './OAuth';
 
 type LoginFormProps = {
   invitationToken?: string;
@@ -38,10 +36,6 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
   const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : ROUTES.AUTH_SIGNUP;
   const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : ROUTES.AUTH_RESET_REQUEST;
-  const githubLink = isFromVercel
-    ? buildVercelGithubLink({ code, next, configurationId })
-    : buildGithubLink({ invitationToken });
-  const googleLink = buildGoogleLink({ invitationToken });
 
   const {
     register,
@@ -96,39 +90,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
 
   return (
     <>
-      <When truthy={!IS_DOCKER_HOSTED}>
-        <>
-          <OAuth>
-            <GoogleButton
-              component="a"
-              href={githubLink}
-              my={30}
-              variant="white"
-              fullWidth
-              radius="md"
-              leftIcon={<GitHub />}
-              sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px', marginRight: 10 }}
-              data-test-id="github-button"
-            >
-              Sign In with GitHub
-            </GoogleButton>
-            {/*      <GoogleButton
-              component="a"
-              href={googleLink}
-              my={30}
-              variant="white"
-              fullWidth
-              radius="md"
-              leftIcon={<Google />}
-              data-test-id="google-button"
-              sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px', marginLeft: 10 }}
-            >
-              Sign In with Google
-            </GoogleButton>*/}
-          </OAuth>
-          <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
-        </>
-      </When>
+      <OAuth />
       <form noValidate onSubmit={handleSubmit(onLogin)}>
         <Input
           error={errors.email?.message || emailServerError}
@@ -189,23 +151,3 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     </>
   );
 }
-
-const OAuth = styled.div`
-  display: flex;
-  justify-content: space-between;
-`;
-
-const GoogleButton = styled(MantineButton)<{
-  component: 'a';
-  my: number;
-  href: string;
-  variant: 'white';
-  fullWidth: boolean;
-  radius: 'md';
-  leftIcon: any;
-  sx: any;
-}>`
-  :hover {
-    color: ${colors.B40};
-  }
-`;
