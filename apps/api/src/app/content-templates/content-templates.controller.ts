@@ -1,4 +1,4 @@
-import { Body, Controller, Logger, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Logger, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import {
   ApiException,
@@ -6,6 +6,9 @@ import {
   CompileEmailTemplateCommand,
   CompileInAppTemplate,
   CompileInAppTemplateCommand,
+  CompileStepTemplate,
+  CompileStepTemplateCommand,
+  CompileTemplate,
   UserAuthGuard,
 } from '@novu/application-generic';
 import * as i18next from 'i18next';
@@ -21,6 +24,7 @@ export class ContentTemplatesController {
   constructor(
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     private compileInAppTemplate: CompileInAppTemplate,
+    private compileStepTemplate: CompileStepTemplate,
     private moduleRef: ModuleRef
   ) {}
 
@@ -63,6 +67,56 @@ export class ContentTemplatesController {
         content,
         payload,
         cta,
+      }),
+      this.initiateTranslations.bind(this)
+    );
+  }
+  // TODO: refactor this to use params and single endpoint to manage all the channels
+  @Post('/preview/sms')
+  public previewSms(@UserSession() user: IJwtPayload, @Body('content') content: string, @Body('payload') payload: any) {
+    return this.compileStepTemplate.execute(
+      CompileStepTemplateCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        content,
+        payload,
+      }),
+      this.initiateTranslations.bind(this)
+    );
+  }
+
+  @Post('/preview/chat')
+  public previewChat(
+    @UserSession() user: IJwtPayload,
+    @Body('content') content: string,
+    @Body('payload') payload: any
+  ) {
+    return this.compileStepTemplate.execute(
+      CompileStepTemplateCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        content,
+        payload,
+      }),
+      this.initiateTranslations.bind(this)
+    );
+  }
+
+  @Post('/preview/push')
+  public previewPush(
+    @UserSession() user: IJwtPayload,
+    @Body('content') content: string,
+    @Body('payload') payload: any
+  ) {
+    return this.compileStepTemplate.execute(
+      CompileStepTemplateCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        content,
+        payload,
       }),
       this.initiateTranslations.bind(this)
     );
