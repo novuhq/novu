@@ -1,12 +1,8 @@
-import Analytics from 'analytics-node';
+import { Analytics } from '@segment/analytics-node';
 import { Logger } from '@nestjs/common';
 import * as Mixpanel from 'mixpanel';
 
 import { IOrganizationEntity } from '@novu/shared';
-
-// Due to problematic analytics-node types, we need to use require
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const AnalyticsClass = require('analytics-node');
 
 interface IUser {
   _id?: string | null;
@@ -26,8 +22,9 @@ export class AnalyticsService {
 
   async initialize() {
     if (this.segmentToken) {
-      this.segment = new AnalyticsClass(this.segmentToken, {
-        flushAt: this.batchSize,
+      this.segment = new Analytics({
+        writeKey: this.segmentToken,
+        maxEventsInBatch: this.batchSize,
       });
     }
 
