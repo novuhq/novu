@@ -1,8 +1,11 @@
+import './CustomCodeEditor.css';
 import { Editor } from '@monaco-editor/react';
-import { Card } from '@mantine/core';
-import { useRef } from 'react';
-import { HandlebarHelpers, SystemVariablesWithTypes } from '@novu/shared';
+import { Card, Loader } from '@mantine/core';
+import { useCallback, useRef } from 'react';
+import { HandlebarHelpers } from '@novu/shared';
 import { colors } from '@novu/design-system';
+import { getWorkflowVariables } from '../../../api/notification-templates';
+import { useQuery } from '@tanstack/react-query';
 
 export const CustomCodeEditor = ({
   onChange,
@@ -13,93 +16,154 @@ export const CustomCodeEditor = ({
   value?: string;
   height?: string;
 }) => {
-  const editorRef = useRef<any>(null);
-  const monacoRef = useRef<any>(null);
-  const decoratorsRef = useRef<any>(null);
+  const { data: variables, isLoading: isLoadingVariables } = useQuery(['getVariables'], () => getWorkflowVariables(), {
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+  });
+
+  if (isLoadingVariables) {
+    return (
+      <Card withBorder sx={styledCard}>
+        <Loader />
+      </Card>
+    );
+  }
 
   return (
     <Card withBorder sx={styledCard}>
-      <Editor
-        height={height}
-        onChange={(newValue) => {
-          if (!onChange) {
-            return;
-          }
-          onChange(newValue);
-        }}
-        defaultLanguage="handlebars"
-        defaultValue={value}
-        theme="vs-dark"
-        onMount={(editor, monaco) => {
-          const decorators = editor.createDecorationsCollection([]);
+      <CustomCodeEditorBase variables={variables} onChange={onChange} value={value} height={height} />
+    </Card>
+  );
+};
 
-          monaco.languages.registerCompletionItemProvider('handlebars', {
-            triggerCharacters: ['{', '.'],
-            provideCompletionItems: function (model, position) {
-              const word = model.getWordUntilPosition(position);
-              const range = {
-                startLineNumber: position.lineNumber,
-                endLineNumber: position.lineNumber,
-                startColumn: word.startColumn,
-                endColumn: word.endColumn,
-              };
+const CustomCodeEditorBase = ({
+  onChange,
+  value,
+  height = '300px',
+  variables,
+}: {
+  onChange?: (string) => void;
+  value?: string;
+  height?: string;
+  variables: any;
+}) => {
+  const editorRef = useRef<any>(null);
+  const monacoRef = useRef<any>(null);
+  const decoratorsRef = useRef<any>(null);
+  const getSuggestions = useCallback(
+    (monaco, range) => {
+      const systemVars = Object.keys(variables)
+        .map((key) => {
+          const subVariables = variables[key];
 
-              const systemVars = Object.keys(SystemVariablesWithTypes)
-                .map((name) => {
-                  const type = SystemVariablesWithTypes[name];
-                  if (typeof type === 'object') {
-                    return Object.keys(type).map((subName) => {
-                      return {
-                        label: `${name}.${subName}`,
-                        kind: monaco.languages.CompletionItemKind.Variable,
-                        documentation: type[subName],
-                        insertText: `${name}.${subName}`,
-                        range: range,
-                      };
-                    });
-                  }
-
+          return Object.keys(subVariables)
+            .map((name) => {
+              const type = subVariables[name];
+              if (typeof type === 'object') {
+                return Object.keys(type).map((subName) => {
                   return {
-                    label: name,
+                    label: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
                     kind: monaco.languages.CompletionItemKind.Variable,
-                    documentation: type,
-                    insertText: name,
+                    detail: type[subName],
+                    insertText: `${name}.${subName}`,
                     range: range,
                   };
-                })
-                .flat();
-
-              const suggestions = [
-                ...Object.keys(HandlebarHelpers).map((name) => ({
-                  label: name,
-                  kind: monaco.languages.CompletionItemKind.Function,
-                  documentation: HandlebarHelpers[name].description,
-                  insertText: name,
-                  range: range,
-                })),
-                ...systemVars,
-              ];
+                });
+              }
 
               return {
-                suggestions: suggestions.filter((suggestion) => suggestion.label.includes(word.word)),
+                label: `${key === 'translations' ? 'i18n ' : ''}${name}`,
+                kind: monaco.languages.CompletionItemKind.Variable,
+                detail: type,
+                insertText: name,
+                range: range,
               };
-            },
-          });
+            })
+            .flat();
+        })
+        .flat();
 
-          decoratorsRef.current = decorators;
-          editorRef.current = editor;
-          monacoRef.current = monaco;
-        }}
-        options={{
-          minimap: {
-            enabled: false,
+      return [
+        ...Object.keys(HandlebarHelpers).map((name) => ({
+          label: name,
+          kind: monaco.languages.CompletionItemKind.Function,
+          detail: HandlebarHelpers[name].description,
+          insertText: name,
+          range: range,
+        })),
+        ...systemVars,
+      ];
+    },
+    [variables]
+  );
+
+  return (
+    <Editor
+      height={height}
+      onChange={(newValue) => {
+        if (!onChange) {
+          return;
+        }
+        onChange(newValue);
+      }}
+      defaultLanguage="handlebars"
+      defaultValue={value}
+      theme="vs-dark"
+      onMount={(editor, monaco) => {
+        const decorators = editor.createDecorationsCollection([]);
+
+        monaco.languages.registerCompletionItemProvider('handlebars', {
+          triggerCharacters: ['{', '.'],
+          provideCompletionItems: function (model, position) {
+            const word = model.getWordUntilPosition(position);
+            const range = {
+              startLineNumber: position.lineNumber,
+              endLineNumber: position.lineNumber,
+              startColumn: word.startColumn,
+              endColumn: word.endColumn,
+            };
+
+            const suggestions = getSuggestions(monaco, range);
+
+            return {
+              suggestions: suggestions,
+            };
           },
-          // workaround from: https://github.com/microsoft/monaco-editor/issues/2093
-          accessibilitySupport: 'off',
-          glyphMargin: true,
-        }}
-      />
-    </Card>
+        });
+
+        monaco.editor.defineTheme('novu-dark', {
+          base: 'vs-dark',
+          inherit: true,
+          rules: [],
+          colors: {
+            'editor.background': colors.B20,
+            'editor.lineHighlightBackground': colors.B30,
+            'editorSuggestWidget.background': colors.B30,
+            'editorSuggestWidget.foreground': colors.B60,
+            'editorSuggestWidget.selectedBackground': colors.B60,
+            'editorSuggestWidget.highlightForeground': colors.B60,
+          },
+        });
+
+        monaco.editor.setTheme('novu-dark');
+
+        decoratorsRef.current = decorators;
+        editorRef.current = editor;
+        monacoRef.current = monaco;
+      }}
+      options={{
+        minimap: {
+          enabled: false,
+        },
+        // workaround from: https://github.com/microsoft/monaco-editor/issues/2093
+        accessibilitySupport: 'off',
+        glyphMargin: true,
+        renderLineHighlight: 'all',
+        fontSize: 14,
+        lineHeight: 20,
+      }}
+    />
   );
 };
 
