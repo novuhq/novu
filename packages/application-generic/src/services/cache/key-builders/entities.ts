@@ -9,6 +9,7 @@ import {
   prefixWrapper,
   ServiceConfigIdentifierEnum,
 } from './shared';
+import { EncryptedSecret } from '@novu/shared';
 
 const buildSubscriberKey = ({
   subscriberId,
@@ -80,7 +81,7 @@ const buildGroupedBlueprintsKey = (): string =>
     identifier: BLUEPRINT_IDENTIFIER,
   });
 
-const buildAuthServiceKey = ({ apiKey }: { apiKey: string }): string =>
+const buildAuthServiceKey = ({ apiKey }: { apiKey: EncryptedSecret }): string =>
   buildKeyById({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.AUTH_SERVICE,

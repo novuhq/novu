@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import * as hat from 'hat';
+import { encryptApiKey } from '@novu/application-generic';
 
 const API_KEY_GENERATION_MAX_RETRIES = 3;
 
@@ -14,8 +15,7 @@ export class GenerateUniqueApiKey {
     let isApiKeyUsed = true;
     while (isApiKeyUsed) {
       apiKey = this.generateApiKey();
-      const environment = await this.environmentRepository.findByApiKey(apiKey);
-      isApiKeyUsed = environment ? true : false;
+      isApiKeyUsed = await this.validateIsApiKeyUsed(apiKey);
       count += 1;
 
       if (count === API_KEY_GENERATION_MAX_RETRIES) {
@@ -25,6 +25,18 @@ export class GenerateUniqueApiKey {
     }
 
     return apiKey as string;
+  }
+
+  private async validateIsApiKeyUsed(apiKey: string) {
+    const encryptedApiKey = encryptApiKey(apiKey);
+
+    // backward compatibility - update to `findByApiKey` after encrypt-api-keys-migration run
+    const environment = await this.environmentRepository.findByApiKeyBackwardCompatibility({
+      decryptedKey: apiKey,
+      encryptedKey: encryptedApiKey,
+    });
+
+    return !!environment;
   }
 
   /**

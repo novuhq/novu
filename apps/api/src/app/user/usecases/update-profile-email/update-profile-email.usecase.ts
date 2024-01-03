@@ -1,7 +1,13 @@
 import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 
 import { UserRepository } from '@novu/dal';
-import { AnalyticsService, buildAuthServiceKey, buildUserKey, InvalidateCacheService } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  buildAuthServiceKey,
+  buildUserKey,
+  encryptApiKey,
+  InvalidateCacheService,
+} from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
 
 import { UpdateProfileEmailCommand } from './update-profile-email.command';
@@ -40,9 +46,13 @@ export class UpdateProfileEmail {
     });
 
     const apiKeys = await this.environmentRepository.getApiKeys(command.environmentId);
+
+    // backward compatibility - remove encryption once encrypt-api-keys-migration executed
+    const encryptedApiKey = encryptApiKey(apiKeys[0].key);
+
     await this.invalidateCache.invalidateByKey({
       key: buildAuthServiceKey({
-        apiKey: apiKeys[0].key,
+        apiKey: encryptedApiKey,
       }),
     });
 

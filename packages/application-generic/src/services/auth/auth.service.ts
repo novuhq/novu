@@ -17,10 +17,10 @@ import {
   UserEntity,
   UserRepository,
   EnvironmentEntity,
-  IApiKey,
 } from '@novu/dal';
 import {
   AuthProviderEnum,
+  EncryptedSecret,
   IJwtPayload,
   ISubscriberJwt,
   MemberRoleEnum,
@@ -46,6 +46,7 @@ import {
   CachedEntity,
 } from '../cache';
 import { normalizeEmail } from '../../utils/email-normalization';
+import { encryptApiKey } from '../../encryption';
 
 @Injectable()
 export class AuthService {
@@ -194,12 +195,12 @@ export class AuthService {
 
   @Instrument()
   public async validateApiKey(apiKey: string): Promise<IJwtPayload> {
-    const {
-      environment,
-      user,
-      error,
-      key, // In the future, roles/scopes will be assigned to the API Key.
-    } = await this.getApiKeyUser({ apiKey });
+    const encryptedApiKey = encryptApiKey(apiKey);
+
+    const { environment, user, error } = await this.getApiKeyUser({
+      decryptedKey: apiKey,
+      apiKey: encryptedApiKey,
+    });
 
     if (error) throw new UnauthorizedException(error);
 
@@ -379,23 +380,55 @@ export class AuthService {
   }
 
   @CachedEntity({
-    builder: ({ apiKey }: { apiKey: string }) =>
+    builder: ({
+      decryptedKey,
+      apiKey,
+    }: {
+      decryptedKey: string;
+      apiKey: EncryptedSecret;
+    }) =>
       buildAuthServiceKey({
         apiKey: apiKey,
       }),
   })
-  private async getApiKeyUser({ apiKey }: { apiKey: string }): Promise<{
+  private async getApiKeyUser({
+    decryptedKey,
+    apiKey,
+  }: {
+    decryptedKey: string;
+    apiKey: EncryptedSecret;
+  }): Promise<{
     environment?: EnvironmentEntity;
     user?: UserEntity;
-    key?: IApiKey;
     error?: string;
   }> {
-    const environment = await this.environmentRepository.findByApiKey(apiKey);
+    /*
+     * backward compatibility - after encrypt-api-keys-migration execution:
+     * * update `findByApiKeyBackwardCompatibility` to `findByApiKey`
+     * * remove decryptedKey param from getApiKeyUser function input
+     * * remove decryptedKey param from CachedEntity decorator input
+     */
+    const environment =
+      await this.environmentRepository.findByApiKeyBackwardCompatibility({
+        decryptedKey,
+        encryptedKey: apiKey,
+      });
+
     if (!environment) {
-      return { error: 'API Key not found' };
+      return { error: 'Environment not found' };
     }
 
-    const key = environment.apiKeys.find((i) => i.key === apiKey);
+    let key = environment.apiKeys.find((i) => i.key === apiKey);
+
+    if (!key) {
+      /*
+       * backward compatibility - delete after encrypt-api-keys-migration execution
+       * find by decrypted key if key not found, because of backward compatibility
+       * use-case: findByApiKeyBackwardCompatibility found by decrypted key, so we need to validate by decrypted key
+       */
+      key = environment.apiKeys.find((i) => i.key === decryptedKey);
+    }
+
     if (!key) {
       return { error: 'API Key not found' };
     }
@@ -405,6 +438,6 @@ export class AuthService {
       return { error: 'User not found' };
     }
 
-    return { environment, user, key };
+    return { environment, user };
   }
 }

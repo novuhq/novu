@@ -1,4 +1,4 @@
-import { IApiRateLimitMaximum } from '@novu/shared';
+import { EncryptedSecret, IApiRateLimitMaximum } from '@novu/shared';
 import { BaseRepository } from '../base-repository';
 import { IApiKey, EnvironmentEntity, EnvironmentDBModel } from './environment.entity';
 import { Environment } from './environment.schema';
@@ -35,7 +35,7 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
     });
   }
 
-  async addApiKey(environmentId: string, key: string, userId: string) {
+  async addApiKey(environmentId: string, key: EncryptedSecret, userId: string) {
     return await this.update(
       {
         _id: environmentId,
@@ -51,9 +51,22 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
     );
   }
 
-  async findByApiKey(key: string) {
+  async findByApiKey(key: EncryptedSecret) {
     return await this.findOne({
       'apiKeys.key': key,
+    });
+  }
+
+  // backward compatibility - delete findByApiKeyBackwardCompatibility and use findByApiKey instead once encrypt-api-keys-migration executed
+  async findByApiKeyBackwardCompatibility({
+    decryptedKey,
+    encryptedKey,
+  }: {
+    decryptedKey: string;
+    encryptedKey: EncryptedSecret;
+  }) {
+    return await this.findOne({
+      'apiKeys.key': { $in: [decryptedKey, encryptedKey] },
     });
   }
 
@@ -69,7 +82,7 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
     return environment.apiKeys;
   }
 
-  async updateApiKey(environmentId: string, key: string, userId: string) {
+  async updateApiKey(environmentId: string, key: EncryptedSecret, userId: string) {
     await this.update(
       {
         _id: environmentId,
