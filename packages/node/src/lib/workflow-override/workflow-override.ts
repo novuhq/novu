@@ -66,7 +66,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
     data: IWorkflowOverrideUpdatePayload
   ) {
     return await this.http.put(
-      `/workflow-overrides/workflows/${overrideId}/tenants/${tenantId}`,
+      `/workflow-overrides/workflows/${workflowId}/tenants/${tenantId}`,
       {
         ...data,
       }
