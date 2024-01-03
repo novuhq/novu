@@ -64,13 +64,3 @@ export async function bootstrap() {
 
   await app.listen(process.env.PORT as string);
 }
-
-process.on('SIGTERM', () => {
-  otelSDK
-    .shutdown()
-    .then(
-      () => console.log('SDK shut down successfully'),
-      (err) => console.log('Error shutting down SDK', err)
-    )
-    .finally(() => process.exit(0));
-});
