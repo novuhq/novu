@@ -62,11 +62,9 @@ jobs:
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
         name: Checkout with submodules
-        if: |
-          ${{ needs.check_submodule_token.outputs.has_token == 'true' }} &&
-          ${{ inputs.ee }}
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
         with:
-          submodules: ${{ inputs.ee }}
+          submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       # else checkout without submodules if the token is not provided
@@ -108,9 +106,7 @@ jobs:
           cd apps/api && pnpm test:e2e
 
       - name: Run E2E EE tests
-        if: |
-          ${{ needs.check_submodule_token.outputs.has_token == 'true' }} &&
-          ${{ inputs.ee }}
+        if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
           GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}

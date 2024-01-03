@@ -17,7 +17,7 @@ Cypress.Commands.add('openWidget', (settings = {}) => {
 Cypress.Commands.add(
   'initializeShellSession',
   ({ subscriberId, identifier, encryptedHmacHash, tabs, stores }: IInitializeShellSessionSettings) => {
-    cy.visit('http://localhost:4700/cypress/test-shell', { log: false });
+    cy.visit('http://127.0.0.1:4700/cypress/test-shell', { log: false });
 
     return cy
       .window()
