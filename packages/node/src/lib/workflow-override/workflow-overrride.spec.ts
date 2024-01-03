@@ -107,7 +107,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
     );
   });
 
-  test('should delete the specified override id', async () => {
+  test('should delete the workflow override by specified override id', async () => {
     mockedAxios.post.mockResolvedValue({});
 
     await novu.workflowoverrides.delete('OVERRIDE_ID1');
