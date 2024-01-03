@@ -91,7 +91,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
     mockedAxios.post.mockResolvedValue({});
 
     await novu.workflowoverrides.updateWorkflowOverride(
-      'OVERRIDE_ID',
+      'WORKFLOW_ID',
       'TENANT_ID',
       {
         active: false,
