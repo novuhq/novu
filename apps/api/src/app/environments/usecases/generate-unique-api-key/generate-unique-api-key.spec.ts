@@ -12,7 +12,8 @@ let generateApiKeyStub;
 let findByApiKeyStub;
 describe('Generate Unique Api Key', () => {
   beforeEach(() => {
-    findByApiKeyStub = sinon.stub(environmentRepository, 'findByApiKey');
+    // backward compatibility - update `findByApiKeyBackwardCompatibility` to `findByApiKey` after encrypt-api-keys-migration execution
+    findByApiKeyStub = sinon.stub(environmentRepository, 'findByApiKeyBackwardCompatibility');
     generateApiKeyStub = sinon.stub(generateUniqueApiKey, 'generateApiKey' as any);
   });
 
