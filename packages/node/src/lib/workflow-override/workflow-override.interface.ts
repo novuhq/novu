@@ -2,14 +2,11 @@ import { IPreferenceChannels, WorkflowOverrideId } from '@novu/shared';
 
 export interface IWorkflowOverrides {
   create(data: IWorkflowOverridePayload);
-  getWorkflowOverrides(page?: number, limit?: number);
-  getworkflowOverrideById(overrideId: string);
-  getWorkflowOverrideByTenant(workflowId: string, tenantId: string);
-  updateWorkflowOverrideById(
-    overrideId: string,
-    data: IWorkflowOverrideUpdatePayload
-  );
-  updateWorkflowOverride(
+  list(page?: number, limit?: number);
+  getOneById(overrideId: string);
+  getOneByTenantIdandWorkflowId(workflowId: string, tenantId: string);
+  updateOneById(overrideId: string, data: IWorkflowOverrideUpdatePayload);
+  updateOneByTenantIdandWorkflowId(
     overrideId: string,
     tenantId: string,
     data: IWorkflowOverrideUpdatePayload

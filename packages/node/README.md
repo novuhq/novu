@@ -1290,7 +1290,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.workflowoverrides.getWorkflowOverrides();
+await novu.workflowoverrides.list();
 ```
 
 - #### get all workflow overrides from the 3rd page and with a limit of 20
@@ -1299,7 +1299,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.workflowoverrides.getWorkflowOverrides(3,20)
+await novu.workflowoverrides.list(3,20)
 ```
 
 - #### get workflow override by overrideId
@@ -1308,7 +1308,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.workflowoverrides.getworkflowOverrideById('overrideId_123');
+await novu.workflowoverrides.getOneById('overrideId_123');
 ```
 
 - #### get workflow override by tenant
@@ -1317,7 +1317,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.workflowoverrides.getWorkflowOverrideByTenant(
+await novu.workflowoverrides.getOneByTenantIdandWorkflowId(
       'workflowId_123',
       'tenantId_123'
     );
@@ -1329,7 +1329,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.workflowoverrides.updateWorkflowOverride(
+await novu.workflowoverrides.updateOneByTenantIdandWorkflowId(
       'overrideId_123',
       'tenantId_123',
       {
@@ -1344,7 +1344,7 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.workflowoverrides.updateWorkflowOverrideById('OVERRIDE_ID', {
+await novu.workflowoverrides.updateOneById('OVERRIDE_ID', {
       active: false,
     });
 ```

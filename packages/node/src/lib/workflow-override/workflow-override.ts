@@ -10,7 +10,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
    * @param {string} overrideId - overrideId of the workflow-override to update
    * @param {IWorkflowOverrideUpdatePayload} data - All the additional parameters to update a worflow-override
    */
-  async updateWorkflowOverrideById(
+  async updateOneById(
     overrideId: string,
     data: IWorkflowOverrideUpdatePayload
   ) {
@@ -31,7 +31,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
   /**
    * @param {string} overrideId - overrideId of the workflow
    */
-  async getworkflowOverrideById(overrideId: string) {
+  async getOneById(overrideId: string) {
     return await this.http.get(`/workflow-overrides/${overrideId}`);
   }
 
@@ -39,7 +39,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
    * @param {number} page - Page number to fetch
    * @param {number} limit - Number of results to fetch in one page
    */
-  async getWorkflowOverrides(page = 0, limit = 10) {
+  async list(page = 0, limit = 10) {
     return await this.http.get(`/workflow-overrides`, {
       params: { page, limit },
     });
@@ -49,7 +49,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
    * @param {string} workflowId - workflowId
    * @param {string} tenantId - tenantId
    */
-  async getWorkflowOverrideByTenant(workflowId: string, tenantId: string) {
+  async getOneByTenantIdandWorkflowId(workflowId: string, tenantId: string) {
     return await this.http.get(
       `/workflow-overrides/workflows/${workflowId}/tenants/${tenantId}`
     );
@@ -60,7 +60,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
    * @param {string} tenantId - tenantId
    * @param {IWorkflowOverrideUpdatePayload} data - All the additional paramters to update workflow override
    */
-  async updateWorkflowOverride(
+  async updateOneByTenantIdandWorkflowId(
     workflowId: string,
     tenantId: string,
     data: IWorkflowOverrideUpdatePayload
