@@ -26,7 +26,13 @@ describe('test use of novus node package - Changes class', () => {
     await novu.changes.get({ page, limit, promoted });
 
     expect(mockedAxios.get).toHaveBeenCalled();
-    expect(mockedAxios.get).toHaveBeenCalledWith('/changes');
+    expect(mockedAxios.get).toHaveBeenCalledWith('/changes', {
+      params: {
+        limit: 20,
+        page: 1,
+        promoted: false,
+      },
+    });
   });
 
   test('should get count of changes correctly', async () => {
