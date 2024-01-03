@@ -100,7 +100,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
 
     expect(mockedAxios.put).toHaveBeenCalled();
     expect(mockedAxios.put).toHaveBeenCalledWith(
-      '/workflow-overrides/workflows/OVERRIDE_ID/tenants/TENANT_ID',
+      '/workflow-overrides/workflows/WORKFLOW_ID/tenants/TENANT_ID',
       {
         active: false,
       }
