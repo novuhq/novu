@@ -24,3 +24,20 @@
   .highlight {
   color: #fff !important;
 }
+
+.markerWarningText {
+  color: #eaa900 !important;
+}
+
+.markerWiggledLine {
+  background-image: url('/public/warning-underline.png');
+  background-repeat: repeat-x;
+  background-position-x: center;
+  background-position-y: 1.1em;
+}
+
+.markerGlyphWarning {
+  background-image: url('/public/warning.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+}
