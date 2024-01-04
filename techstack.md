@@ -184,7 +184,7 @@ Full tech stack [here](/techstack.md)
 # Tech Stack File
 ![](https://img.stackshare.io/repo.svg "repo") [novuhq/novu](https://github.com/novuhq/novu)![](https://img.stackshare.io/public_badge.svg "public")
 <br/><br/>
-|294<br/>Tools used|12/14/23 <br/>Report generated|
+|299<br/>Tools used|01/04/24 <br/>Report generated|
 |------|------|
 </div>
 
@@ -992,9 +992,9 @@ Full tech stack [here](/techstack.md)
 </table>
 
 
-## <img src='https://img.stackshare.io/group.svg' /> Open source packages (200)</h2>
+## <img src='https://img.stackshare.io/group.svg' /> Open source packages (205)</h2>
 
-## <img width='24' height='24' src='https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png'/> npm (200)
+## <img width='24' height='24' src='https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png'/> npm (205)
 
 |NAME|VERSION|LAST UPDATED|LAST UPDATED BY|LICENSE|VULNERABILITIES|
 |:------|:------|:------|:------|:------|:------|
@@ -1071,6 +1071,7 @@ Full tech stack [here](/techstack.md)
 |[babel-plugin-import](https://www.npmjs.com/babel-plugin-import)|v1.13.3|10/23/23|David Söderberg |MIT|N/A|
 |[bcrypt](https://www.npmjs.com/bcrypt)|v5.0.0|11/07/21|Dima Grossman |MIT|N/A|
 |[body-parser](https://www.npmjs.com/body-parser)|v1.20.0|06/06/22|Dima Grossman |MIT|N/A|
+|[chalk](https://www.npmjs.com/chalk)|v4.1.2|08/20/22|Dima Grossman |MIT|N/A|
 |[chroma-js](https://www.npmjs.com/chroma-js)|v2.4.2|03/30/22|ainouzgali |BSD-3-Clause,Apache-2.0|N/A|
 |[class-transformer](https://www.npmjs.com/class-transformer)|v0.5.1|11/07/23|Richard Fontein |MIT|N/A|
 |[class-validator](https://www.npmjs.com/class-validator)|v0.14.0|01/13/23|Dima Grossman |MIT|N/A|
@@ -1115,6 +1116,7 @@ Full tech stack [here](/techstack.md)
 |[html-to-text](https://www.npmjs.com/html-to-text)|v9.0.5|08/14/23|Dima Grossman |MIT|N/A|
 |[html-webpack-plugin](https://www.npmjs.com/html-webpack-plugin)|v5.5.3|10/23/23|David Söderberg |MIT|N/A|
 |[http-server](https://www.npmjs.com/http-server)|v0.13.0|10/23/23|David Söderberg |MIT|N/A|
+|[husky](https://www.npmjs.com/husky)|v1.0.1|11/07/21|Dima Grossman |MIT|N/A|
 |[inquirer](https://www.npmjs.com/inquirer)|v8.2.6|11/06/23|renovate[bot] |MIT|N/A|
 |[ioredis](https://www.npmjs.com/ioredis)|v5.3.2|04/21/23|renovate[bot] |MIT|N/A|
 |[jasmine-core](https://www.npmjs.com/jasmine-core)|v4.6.0|10/12/23|Richard Fontein |MIT|N/A|
@@ -1128,6 +1130,7 @@ Full tech stack [here](/techstack.md)
 |[karma-jasmine](https://www.npmjs.com/karma-jasmine)|v5.1.0|10/12/23|Richard Fontein |MIT|N/A|
 |[karma-jasmine-html-reporter](https://www.npmjs.com/karma-jasmine-html-reporter)|v2.1.0|10/12/23|Richard Fontein |MIT|N/A|
 |[less-loader](https://www.npmjs.com/less-loader)|v4.1.0|10/14/23|Ayush Shukla |MIT|N/A|
+|[lint-staged](https://www.npmjs.com/lint-staged)|v10.5.4|10/24/23|Gosha |MIT|N/A|
 |[listr](https://www.npmjs.com/listr)|v0.14.3|08/20/22|Dima Grossman |MIT|N/A|
 |[localforage](https://www.npmjs.com/localforage)|v1.10.0|10/14/23|Ayush Shukla |Apache-2.0|N/A|
 |[lodash.camelcase](https://www.npmjs.com/lodash.camelcase)|v4.3.0|11/07/21|Dima Grossman |MIT|N/A|
@@ -1176,6 +1179,7 @@ Full tech stack [here](/techstack.md)
 |[rollup-plugin-terser](https://www.npmjs.com/rollup-plugin-terser)|v7.0.2|04/25/23|Dima Grossman |MIT|N/A|
 |[rollup-plugin-typescript2](https://www.npmjs.com/rollup-plugin-typescript2)|v0.34.1|06/14/23|renovate[bot] |MIT|N/A|
 |[sanitize-html](https://www.npmjs.com/sanitize-html)|v2.4.0|11/07/21|Dima Grossman |MIT|N/A|
+|[semantic-release](https://www.npmjs.com/semantic-release)|v19.0.3|08/09/22|Longfeng Lian |MIT|N/A|
 |[shelljs](https://www.npmjs.com/shelljs)|v0.8.5|01/22/23|Gosha |BSD-3-Clause|N/A|
 |[shortid](https://www.npmjs.com/shortid)|v2.2.16|11/07/21|Dima Grossman |MIT|N/A|
 |[slugify](https://www.npmjs.com/slugify)|v1.4.6|11/07/21|Dima Grossman |MIT|N/A|
@@ -1197,6 +1201,7 @@ Full tech stack [here](/techstack.md)
 |[webpack-bundle-analyzer](https://www.npmjs.com/webpack-bundle-analyzer)|v4.9.0|10/23/23|David Söderberg |MIT|N/A|
 |[webpack-cli](https://www.npmjs.com/webpack-cli)|v5.1.4|09/18/23|Dima Grossman |MIT|N/A|
 |[webpack-dev-server](https://www.npmjs.com/webpack-dev-server)|v4.11.1|10/23/23|David Söderberg |MIT|N/A|
+|[winston](https://www.npmjs.com/winston)|v3.9.0|09/06/23|p-fernandez |MIT|N/A|
 |[zone.js](https://www.npmjs.com/zone.js)|v0.13.0|10/12/23|Richard Fontein |MIT|N/A|
 
 <br/>
