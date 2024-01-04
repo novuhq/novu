@@ -11,7 +11,7 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
     "start": "pnpm start:dev",
-    "start:dev": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://localhost:4701/embed.umd.min.js NOVU_API_ADDRESS=http://localhost:3000 NOVU_CLIENT_LOGIN=http://localhost:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon init",
+    "start:dev": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon init",
     "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nodemon init",
     "start:debug": "cross-env TZ=UTC nodemon --config nodemon-debug.json",
     "start:prod": "cross-env TZ=UTC node dist/index.js"
@@ -22,7 +22,6 @@
     "novu": "./dist/index.js"
   },
   "devDependencies": {
-    "@types/analytics-node": "^3.1.9",
     "@types/configstore": "^5.0.1",
     "@types/inquirer": "^8.2.0",
     "@types/mocha": "10.0.2",
@@ -32,7 +31,7 @@
   },
   "dependencies": {
     "@novu/shared": "^0.22.0",
-    "analytics-node": "^6.2.0",
+    "@segment/analytics-node": "^1.1.4",
     "axios": "^1.6.2",
     "chalk": "4.1.2",
     "commander": "^9.0.0",

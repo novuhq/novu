@@ -114,7 +114,7 @@
     "@novu/zulip": "^0.22.0",
     "@novu/nexmo": "^0.22.0",
     "@sentry/node": "^7.12.1",
-    "analytics-node": "^6.2.0",
+    "@segment/analytics-node": "^1.1.4",
     "axios": "^1.6.2",
     "bullmq": "^3.10.2",
     "class-transformer": "^0.5.1",
@@ -143,7 +143,6 @@
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@types/analytics-node": "^3.1.9",
     "@types/jest": "29.5.2",
     "@types/newrelic": "^9",
     "@types/sinon": "^9.0.0",

@@ -71,13 +71,16 @@ export class OrganizationController {
     @UserSession() user: IJwtPayload,
     @Body() body: CreateOrganizationDto
   ): Promise<OrganizationEntity> {
-    const command = CreateOrganizationCommand.create({
-      userId: user._id,
-      logo: body.logo,
-      name: body.name,
-    });
-
-    return await this.createOrganizationUsecase.execute(command);
+    return await this.createOrganizationUsecase.execute(
+      CreateOrganizationCommand.create({
+        userId: user._id,
+        logo: body.logo,
+        name: body.name,
+        jobTitle: body.jobTitle,
+        domain: body.domain,
+        productUseCases: body.productUseCases,
+      })
+    );
   }
 
   @Get('/')
