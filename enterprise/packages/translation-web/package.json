@@ -42,7 +42,9 @@
     "eslint": "^8.33.0",
     "eslint-plugin-react-hooks": "^4.4.0",
     "tslib": "^2.3.1",
-    "@mantine/prism": "^5.7.1"
+    "@mantine/prism": "^5.7.1",
+    "@handlebars/parser": "^2.1.0",
+    "monaco-editor": "^0.45.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.12",

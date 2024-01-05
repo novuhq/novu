@@ -1,11 +1,13 @@
 import './CustomCodeEditor.css';
-import { Editor } from '@monaco-editor/react';
+import { Editor, Monaco } from '@monaco-editor/react';
 import { Card, Loader } from '@mantine/core';
 import { useCallback, useRef } from 'react';
 import { HandlebarHelpers } from '@novu/shared';
 import { colors } from '@novu/design-system';
 import { getWorkflowVariables } from '../../../api/notification-templates';
 import { useQuery } from '@tanstack/react-query';
+import { editor as NEditor } from 'monaco-editor';
+import { createTranslationMarks } from './createTranslationMarks';
 
 export const CustomCodeEditor = ({
   onChange,
@@ -48,9 +50,9 @@ const CustomCodeEditorBase = ({
   height?: string;
   variables: any;
 }) => {
-  const editorRef = useRef<any>(null);
-  const monacoRef = useRef<any>(null);
-  const decoratorsRef = useRef<any>(null);
+  const editorRef = useRef<NEditor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<Monaco | null>(null);
+  const decoratorsRef = useRef<NEditor.IEditorDecorationsCollection | null>(null);
   const getSuggestions = useCallback(
     (monaco, range) => {
       const systemVars = Object.keys(variables)
@@ -106,6 +108,8 @@ const CustomCodeEditorBase = ({
           return;
         }
         onChange(newValue);
+        const decorators = createTranslationMarks(newValue, variables);
+        decoratorsRef.current?.set(decorators);
       }}
       defaultLanguage="handlebars"
       defaultValue={value}
