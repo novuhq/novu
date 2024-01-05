@@ -1,20 +1,8 @@
 import { OpenTelemetryModule } from 'nestjs-otel';
+
 export * from './tracing';
-
-export {
-  TraceService,
-  MetricService,
-  OtelInstanceCounter,
-  OtelUpDownCounter,
-  OtelHistogram,
-  OtelObservableGauge,
-  OtelObservableCounter,
-  OtelObservableUpDownCounter,
-  OtelCounter,
-  Span,
-} from 'nestjs-otel';
+export * from './otel-wrapper';
 export { Counter } from '@opentelemetry/api';
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const OtelModule = OpenTelemetryModule.forRoot({
   metrics: {
