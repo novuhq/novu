@@ -1,7 +1,7 @@
 import './CustomCodeEditor.css';
 import { Editor, Monaco } from '@monaco-editor/react';
-import { Card, Loader } from '@mantine/core';
-import { useCallback, useRef } from 'react';
+import { Card, Loader, useMantineColorScheme } from '@mantine/core';
+import { useCallback, useEffect, useRef } from 'react';
 import { HandlebarHelpers } from '@novu/shared';
 import { colors } from '@novu/design-system';
 import { getWorkflowVariables } from '../../../api/notification-templates';
@@ -24,6 +24,9 @@ export const CustomCodeEditor = ({
     refetchInterval: false,
   });
 
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+
   if (isLoadingVariables) {
     return (
       <Card withBorder sx={styledCard}>
@@ -34,7 +37,7 @@ export const CustomCodeEditor = ({
 
   return (
     <Card withBorder sx={styledCard}>
-      <CustomCodeEditorBase variables={variables} onChange={onChange} value={value} height={height} />
+      <CustomCodeEditorBase isDark={isDark} variables={variables} onChange={onChange} value={value} height={height} />
     </Card>
   );
 };
@@ -44,15 +47,25 @@ const CustomCodeEditorBase = ({
   value,
   height = '300px',
   variables,
+  isDark,
 }: {
   onChange?: (string) => void;
   value?: string;
   height?: string;
   variables: any;
+  isDark: boolean;
 }) => {
   const editorRef = useRef<NEditor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const decoratorsRef = useRef<NEditor.IEditorDecorationsCollection | null>(null);
+
+  useEffect(() => {
+    if (monacoRef.current === null) {
+      return;
+    }
+    monacoRef.current.editor.setTheme(isDark ? 'novu-dark' : 'novu');
+  }, [isDark]);
+
   const getSuggestions = useCallback(
     (monaco, range) => {
       const systemVars = Object.keys(variables)
@@ -113,7 +126,7 @@ const CustomCodeEditorBase = ({
       }}
       defaultLanguage="handlebars"
       defaultValue={value}
-      theme="vs-dark"
+      theme={isDark ? 'vs-dark' : 'vs'}
       onMount={(editor, monaco) => {
         const decorators = editor.createDecorationsCollection([]);
 
@@ -136,6 +149,7 @@ const CustomCodeEditorBase = ({
           },
         });
 
+        const themeName = isDark ? 'novu-dark' : 'novu';
         monaco.editor.defineTheme('novu-dark', {
           base: 'vs-dark',
           inherit: true,
@@ -150,7 +164,21 @@ const CustomCodeEditorBase = ({
           },
         });
 
-        monaco.editor.setTheme('novu-dark');
+        monaco.editor.defineTheme('novu', {
+          base: 'vs',
+          inherit: true,
+          rules: [],
+          colors: {
+            'editor.background': colors.white,
+            'editor.lineHighlightBackground': colors.B98,
+            'editorSuggestWidget.background': colors.white,
+            'editorSuggestWidget.foreground': colors.B98,
+            'editorSuggestWidget.selectedBackground': colors.B98,
+            'editorSuggestWidget.highlightForeground': colors.B98,
+          },
+        });
+
+        monaco.editor.setTheme(themeName);
 
         decoratorsRef.current = decorators;
         editorRef.current = editor;
@@ -167,6 +195,7 @@ const CustomCodeEditorBase = ({
         fontSize: 14,
         lineHeight: 20,
       }}
+      className={isDark ? 'custom-code-editor-dark' : 'custom-code-editor'}
     />
   );
 };
