@@ -108,6 +108,9 @@ export class AuthController {
         lastName: body.lastName,
         organizationName: body.organizationName,
         origin: body.origin,
+        jobTitle: body.jobTitle,
+        domain: body.domain,
+        productUseCases: body.productUseCases,
       })
     );
   }

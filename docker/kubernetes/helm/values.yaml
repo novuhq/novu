@@ -1570,10 +1570,10 @@ web:
 
   ## @param web.apiExternalEndpoint The external endpoint of the API
   ##
-  apiExternalEndpoint: http://localhost:3000
+  apiExternalEndpoint: http://127.0.0.1:3000
 
   ## @param web.wsExternalEndpoint The external websocket endpoint of the API
-  wsExternalEndpoint: ws://localhost:3002
+  wsExternalEndpoint: ws://127.0.0.1:3002
 
 ## @section Persistence Parameters
 ##
