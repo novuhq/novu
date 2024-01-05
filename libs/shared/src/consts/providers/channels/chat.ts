@@ -76,6 +76,6 @@ export const chatProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.CHAT,
     credentials: rocketChatConfig,
     docReference: 'https://developer.rocket.chat/reference/api/rest-api/endpoints',
-    logoFileName: { light: 'rocketchat.svg', dark: 'rocketchat.svg' },
+    logoFileName: { light: 'rocket-chat.svg', dark: 'rocket-chat.svg' },
   },
 ];
