@@ -104,7 +104,7 @@ runs:
 
         echo "Run image"
         docker run --network=host --name worker -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-        docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1342/v1/health-check | grep 'ok'
+        docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1342/v1/health-check | grep 'ok'
 
         echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 

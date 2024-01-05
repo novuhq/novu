@@ -500,6 +500,8 @@
     "nextjs",
     "vanillajs",
     "errmsg",
+    "devcontainer",
+    "INITDB",
     "springboot",
     "errmsg",
     "shelljs",
@@ -542,6 +544,7 @@
     "Stdev",
     "openapi",
     "headerapikey",
+    "isend"
   ],
   "flagWords": [],
   "patterns": [
