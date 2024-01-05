@@ -374,6 +374,33 @@ export const bulkSmsConfig: IConfigCredentials[] = [
   },
 ];
 
+export const iSendSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'API Token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Default Sender ID',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.ContentType,
+    displayName: 'Content Type',
+    type: 'dropdown',
+    required: false,
+    value: null,
+    dropdown: [
+      { name: 'Default', value: null },
+      { name: 'Unicode', value: 'unicode' },
+      { name: 'Plain', value: 'plain' },
+    ],
+  },
+];
+
 export const clickatellConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
