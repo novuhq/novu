@@ -5,9 +5,15 @@ import {
   ButtonTypeEnum,
   MessageActionStatusEnum,
   ISubscribersDefine,
+  PreferenceLevelEnum,
 } from '@novu/shared';
 
-export { ISubscriberPayload, ButtonTypeEnum, MessageActionStatusEnum };
+export {
+  ISubscriberPayload,
+  ButtonTypeEnum,
+  MessageActionStatusEnum,
+  PreferenceLevelEnum,
+};
 
 export interface ISubscribers {
   list(page: number, limit: number);
@@ -19,7 +25,8 @@ export interface ISubscribers {
   setCredentials(
     subscriberId: string,
     providerId: string,
-    credentials: IChannelCredentials
+    credentials: IChannelCredentials,
+    integrationIdentifier?: string
   );
   deleteCredentials(subscriberId: string, providerId: string);
   /**
@@ -28,10 +35,16 @@ export interface ISubscribers {
   unsetCredentials(subscriberId: string, providerId: string);
   updateOnlineStatus(subscriberId: string, online: boolean);
   getPreference(subscriberId: string);
+  getGlobalPreference(subscriberId: string);
+  getPreferenceByLevel(subscriberId: string, level: PreferenceLevelEnum);
   updatePreference(
     subscriberId: string,
     templateId: string,
     data: IUpdateSubscriberPreferencePayload
+  );
+  updateGlobalPreference(
+    subscriberId: string,
+    data: IUpdateSubscriberGlobalPreferencePayload
   );
   getNotificationsFeed(
     subscriberId: string,
@@ -60,6 +73,14 @@ export interface IUpdateSubscriberPreferencePayload {
     type: ChannelTypeEnum;
     enabled: boolean;
   };
+  enabled?: boolean;
+}
+
+export interface IUpdateSubscriberGlobalPreferencePayload {
+  preferences?: {
+    type: ChannelTypeEnum;
+    enabled: boolean;
+  }[];
   enabled?: boolean;
 }
 export interface IGetSubscriberNotificationFeedParams {

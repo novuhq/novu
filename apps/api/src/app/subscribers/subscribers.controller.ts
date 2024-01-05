@@ -21,27 +21,35 @@ import {
   UpdateSubscriber,
   UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiOperation, ApiTags, ApiNoContentResponse } from '@nestjs/swagger';
-import { ButtonTypeEnum, ChatProviderIdEnum, IJwtPayload } from '@novu/shared';
-import { MessageEntity } from '@novu/dal';
+import { ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
+import {
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCostEnum,
+  ButtonTypeEnum,
+  ChatProviderIdEnum,
+  IJwtPayload,
+} from '@novu/shared';
+import { MessageEntity, PreferenceLevelEnum } from '@novu/dal';
 
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   BulkSubscriberCreateDto,
   CreateSubscriberRequestDto,
   DeleteSubscriberResponseDto,
+  GetSubscriberPreferencesResponseDto,
   SubscriberResponseDto,
   UpdateSubscriberChannelRequestDto,
+  UpdateSubscriberGlobalPreferencesRequestDto,
   UpdateSubscriberRequestDto,
 } from './dtos';
 import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
-import { GetPreferencesCommand } from './usecases/get-preferences/get-preferences.command';
-import { GetPreferences } from './usecases/get-preferences/get-preferences.usecase';
+import { GetPreferencesByLevelCommand } from './usecases/get-preferences-by-level/get-preferences-by-level.command';
+import { GetPreferencesByLevel } from './usecases/get-preferences-by-level/get-preferences-by-level.usecase';
 import { UpdatePreference } from './usecases/update-preference/update-preference.usecase';
 import { UpdateSubscriberPreferenceCommand } from './usecases/update-subscriber-preference';
 import { UpdateSubscriberPreferenceResponseDto } from '../widgets/dtos/update-subscriber-preference-response.dto';
@@ -67,7 +75,7 @@ import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-respons
 import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse, ApiNoContentResponse } from '../shared/framework/response.decorator';
 import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
 import { OAuthHandlerEnum } from './types';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
@@ -83,7 +91,15 @@ import { MarkAllMessagesAs } from '../widgets/usecases/mark-all-messages-as/mark
 import { MarkAllMessageAsRequestDto } from './dtos/mark-all-messages-as-request.dto';
 import { BulkCreateSubscribers } from './usecases/bulk-create-subscribers/bulk-create-subscribers.usecase';
 import { BulkCreateSubscribersCommand } from './usecases/bulk-create-subscribers';
+import {
+  UpdateSubscriberGlobalPreferences,
+  UpdateSubscriberGlobalPreferencesCommand,
+} from './usecases/update-subscriber-global-preferences';
+import { GetSubscriberPreferencesByLevelParams } from './params';
+import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 
+@ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
+@ApiCommonResponses()
 @Controller('/subscribers')
 @ApiTags('Subscribers')
 export class SubscribersController {
@@ -95,8 +111,9 @@ export class SubscribersController {
     private removeSubscriberUsecase: RemoveSubscriber,
     private getSubscriberUseCase: GetSubscriber,
     private getSubscribersUsecase: GetSubscribers,
-    private getPreferenceUsecase: GetPreferences,
+    private getPreferenceUsecase: GetPreferencesByLevel,
     private updatePreferenceUsecase: UpdatePreference,
+    private updateGlobalPreferenceUsecase: UpdateSubscriberGlobalPreferences,
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
@@ -110,7 +127,7 @@ export class SubscribersController {
 
   @Get('')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiOkPaginatedResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Get subscribers',
@@ -132,7 +149,7 @@ export class SubscribersController {
 
   @Get('/:subscriberId')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Get subscriber',
@@ -153,7 +170,7 @@ export class SubscribersController {
 
   @Post('/')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiResponse(SubscriberResponseDto, 201)
   @ApiOperation({
     summary: 'Create subscriber',
@@ -182,9 +199,10 @@ export class SubscribersController {
     );
   }
 
+  @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiOperation({
     summary: 'Bulk create subscribers',
     description: `
@@ -204,7 +222,7 @@ export class SubscribersController {
 
   @Put('/:subscriberId')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber',
@@ -233,7 +251,7 @@ export class SubscribersController {
 
   @Put('/:subscriberId/credentials')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber credentials',
@@ -259,7 +277,7 @@ export class SubscribersController {
 
   @Delete('/:subscriberId/credentials/:providerId')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -283,7 +301,7 @@ export class SubscribersController {
 
   @Patch('/:subscriberId/online-status')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber online status',
@@ -306,7 +324,7 @@ export class SubscribersController {
 
   @Delete('/:subscriberId')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiResponse(DeleteSubscriberResponseDto)
   @ApiOperation({
     summary: 'Delete subscriber',
@@ -327,7 +345,7 @@ export class SubscribersController {
 
   @Get('/:subscriberId/preferences')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiResponse(UpdateSubscriberPreferenceResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get subscriber preferences',
@@ -336,10 +354,34 @@ export class SubscribersController {
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string
   ): Promise<UpdateSubscriberPreferenceResponseDto[]> {
-    const command = GetPreferencesCommand.create({
+    const command = GetPreferencesByLevelCommand.create({
       organizationId: user.organizationId,
       subscriberId: subscriberId,
       environmentId: user.environmentId,
+      level: PreferenceLevelEnum.TEMPLATE,
+    });
+
+    return (await this.getPreferenceUsecase.execute(command)) as UpdateSubscriberPreferenceResponseDto[];
+  }
+
+  @Get('/:subscriberId/preferences/:level')
+  @ExternalApiAccessible()
+  @UseGuards(UserAuthGuard)
+  @ApiResponse(GetSubscriberPreferencesResponseDto, 200, true)
+  @ApiOperation({
+    summary: 'Get subscriber preferences by level',
+  })
+  @ApiParam({ name: 'subscriberId', type: String, required: true })
+  @ApiParam({ name: 'level', type: String, required: true })
+  async getSubscriberPreferenceByLevel(
+    @UserSession() user: IJwtPayload,
+    @Param() { level, subscriberId }: GetSubscriberPreferencesByLevelParams
+  ): Promise<GetSubscriberPreferencesResponseDto[]> {
+    const command = GetPreferencesByLevelCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: subscriberId,
+      environmentId: user.environmentId,
+      level: level,
     });
 
     return await this.getPreferenceUsecase.execute(command);
@@ -347,7 +389,7 @@ export class SubscribersController {
 
   @Patch('/:subscriberId/preferences/:templateId')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiResponse(UpdateSubscriberPreferenceResponseDto)
   @ApiOperation({
     summary: 'Update subscriber preference',
@@ -370,8 +412,31 @@ export class SubscribersController {
     return await this.updatePreferenceUsecase.execute(command);
   }
 
+  @Patch('/:subscriberId/preferences')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
+  @ApiResponse(UpdateSubscriberPreferenceResponseDto)
+  @ApiOperation({
+    summary: 'Update subscriber global preferences',
+  })
+  async updateSubscriberGlobalPreferences(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateSubscriberGlobalPreferencesRequestDto
+  ) {
+    const command = UpdateSubscriberGlobalPreferencesCommand.create({
+      organizationId: user.organizationId,
+      subscriberId: subscriberId,
+      environmentId: user.environmentId,
+      enabled: body.enabled,
+      preferences: body.preferences,
+    });
+
+    return await this.updateGlobalPreferenceUsecase.execute(command);
+  }
+
+  @ExternalApiAccessible()
+  @UseGuards(UserAuthGuard)
   @Get('/:subscriberId/notifications/feed')
   @ApiOperation({
     summary: 'Get in-app notification feed for a particular subscriber',
@@ -402,7 +467,7 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Get('/:subscriberId/notifications/unseen')
   @ApiResponse(UnseenCountResponse)
   @ApiOperation({
@@ -438,7 +503,7 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Post('/:subscriberId/messages/markAs')
   @ApiOperation({
     summary: 'Mark a subscriber feed message as seen',
@@ -466,7 +531,7 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Post('/:subscriberId/messages/mark-all')
   @ApiOperation({
     summary:
@@ -491,7 +556,7 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Post('/:subscriberId/messages/:messageId/actions/:type')
   @ApiOperation({
     summary: 'Mark message action as seen',

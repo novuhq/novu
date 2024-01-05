@@ -6,7 +6,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { Table, Text, withCellLoading, IExtendedColumn } from '../../design-system';
+import { Table, Text, withCellLoading, IExtendedColumn } from '@novu/design-system';
 import { useIntegrations } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
 import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
@@ -90,7 +90,7 @@ export const IntegrationsList = ({
     <PageContainer title="Integrations">
       <PageHeader title="Integrations Store" />
       <When truthy={hasIntegrations}>
-        <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
+        <Container fluid sx={{ padding: '0 24px 8px 30px' }}>
           <IntegrationsListToolbar onAddProviderClick={onAddProviderClick} areIntegrationsLoading={isLoading} />
         </Container>
       </When>

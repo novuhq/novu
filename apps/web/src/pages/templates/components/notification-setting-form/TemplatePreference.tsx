@@ -3,7 +3,7 @@ import { Group, Input, InputWrapperProps, Text } from '@mantine/core';
 import { useFormContext, Controller } from 'react-hook-form';
 
 import { useEnvController } from '../../../../hooks';
-import { Checkbox, colors, Switch } from '../../../../design-system';
+import { Checkbox, colors, Switch } from '@novu/design-system';
 import type { IForm } from '../formTypes';
 import { LabelWithTooltip } from '../../workflow/LabelWithTooltip';
 import { ChannelTitle } from '../ChannelTitle';
@@ -49,6 +49,7 @@ export function ChannelPreference() {
                     borderRadius: 8,
                   }}
                   position="apart"
+                  key={key}
                 >
                   <Text>{<ChannelTitle channel={key as ChannelTypeEnum} />}</Text>
                   <div>
@@ -76,7 +77,7 @@ export function CriticalPreference() {
   return (
     <Controller
       name="critical"
-      defaultValue={false}
+      defaultValue={true}
       control={control}
       render={({ field }) => {
         return (

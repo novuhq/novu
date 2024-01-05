@@ -7,9 +7,12 @@ import {
   ICheckIntegrationResponse,
   CheckIntegrationResponseEnum,
   IEmailEventBody,
+  IAttachmentOptions,
 } from '@novu/stateless';
 
 import { MailDataRequired, MailService } from '@sendgrid/mail';
+
+type AttachmentJSON = MailDataRequired['attachments'][0];
 
 export class SendgridEmailProvider implements IEmailProvider {
   id = 'sendgrid';
@@ -65,10 +68,39 @@ export class SendgridEmailProvider implements IEmailProvider {
   }
 
   private createMailData(options: IEmailOptions) {
+    const dynamicTemplateData = options.customData?.dynamicTemplateData;
+    const templateId = options.customData?.templateId as unknown as string;
+    /*
+     * deleted below values from customData to avoid passing them
+     * in customArgs because customArgs has max limit of 10,000 bytes
+     */
+    delete options.customData?.dynamicTemplateData;
+    delete options.customData?.templateId;
+
+    const attachments = options.attachments?.map(
+      (attachment: IAttachmentOptions) => {
+        const attachmentJson: AttachmentJSON = {
+          content: attachment.file.toString('base64'),
+          filename: attachment.name,
+          type: attachment.mime,
+        };
+
+        if (attachment?.cid) {
+          attachmentJson.contentId = attachment?.cid;
+        }
+
+        if (attachment?.disposition) {
+          attachmentJson.disposition = attachment?.disposition;
+        }
+
+        return attachmentJson;
+      }
+    );
+
     const mailData: Partial<MailDataRequired> = {
       from: {
         email: options.from || this.config.from,
-        name: this.config.senderName,
+        name: options.senderName || this.config.senderName,
       },
       ...this.getIpPoolObject(options),
       to: options.to.map((email) => ({ email })),
@@ -86,13 +118,16 @@ export class SendgridEmailProvider implements IEmailProvider {
         novuSubscriberId: options.notificationDetails?.subscriberId,
         ...options.customData,
       },
-      attachments: options.attachments?.map((attachment) => {
-        return {
-          content: attachment.file.toString('base64'),
-          filename: attachment.name,
-          type: attachment.mime,
-        };
-      }),
+      attachments: attachments,
+      personalizations: [
+        {
+          to: options.to.map((email) => ({ email })),
+          cc: options.cc?.map((ccItem) => ({ email: ccItem })),
+          bcc: options.bcc?.map((bccItem) => ({ email: bccItem })),
+          dynamicTemplateData: dynamicTemplateData,
+        },
+      ],
+      templateId: templateId,
     };
 
     if (options.replyTo) {

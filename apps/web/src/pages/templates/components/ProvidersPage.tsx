@@ -2,21 +2,18 @@ import { useState } from 'react';
 import { Center, Loader, ScrollArea } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { colors } from '../../../design-system';
-import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
+import { colors } from '@novu/design-system';
 import type { IIntegratedProvider } from '../../integrations/types';
 import { useProviders } from '../../integrations/useProviders';
 import { ListProviders } from './ListProviders';
-import { SubPageWrapper } from './SubPageWrapper';
 import { WorkflowSettingsTabs } from './WorkflowSettingsTabs';
-import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
+import { WorkflowSidebar } from './WorkflowSidebar';
 
 export function ProvidersPage() {
   const { emailProviders, smsProvider, chatProvider, pushProvider, inAppProvider, isLoading } = useProviders();
   const [configureChannel, setConfigureChannel] = useState<ChannelTypeEnum | undefined>(undefined);
   const [provider, setProvider] = useState<IIntegratedProvider | null>(null);
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
 
   const onIntegrationModalClose = () => {
     setProvider(null);
@@ -33,13 +30,7 @@ export function ProvidersPage() {
 
   return (
     <>
-      <SubPageWrapper
-        title="Workflow Settings"
-        style={{
-          display: 'flex',
-          flexFlow: 'column',
-        }}
-      >
+      <WorkflowSidebar title="Workflow Settings">
         <WorkflowSettingsTabs />
         <ScrollArea h="calc(100vh - 220px)" offsetScrollbars mr={-12}>
           <ListProviders
@@ -73,22 +64,13 @@ export function ProvidersPage() {
             providers={smsProvider}
           />
         </ScrollArea>
-      </SubPageWrapper>
-      {isMultiProviderConfigurationEnabled ? (
-        <IntegrationsListModal
-          isOpen={configureChannel !== undefined}
-          selectedProvider={provider}
-          onClose={onIntegrationModalClose}
-          scrollTo={configureChannel}
-        />
-      ) : (
-        <IntegrationsStoreModal
-          selectedProvider={provider}
-          openIntegration={configureChannel !== undefined}
-          closeIntegration={onIntegrationModalClose}
-          scrollTo={configureChannel}
-        />
-      )}
+      </WorkflowSidebar>
+      <IntegrationsListModal
+        isOpen={configureChannel !== undefined}
+        selectedProvider={provider}
+        onClose={onIntegrationModalClose}
+        scrollTo={configureChannel}
+      />
     </>
   );
 }

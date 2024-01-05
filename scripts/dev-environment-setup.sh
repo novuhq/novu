@@ -261,7 +261,7 @@ check_nvm () {
 }
 
 install_node () {
-    NODE_JS_VERSION="v16.15.1"
+    NODE_JS_VERSION="v20.8.1"
 
     SKIP="$(check_nvm)"
 
@@ -318,7 +318,7 @@ install_nvm () {
 
 # PNPM is the package manager used in Novu's monorepo
 install_pnpm () {
-    PNPM_VERSION="7.28.0"
+    PNPM_VERSION="8.9.0"
     TEST_PNPM_CMD=$(execute_command_without_error_print "pnpm --version")
     if [[ -z "$TEST_PNPM_CMD" ]] || [[ "$TEST_PNPM_CMD" == "zsh: command not found: pnpm" ]]; then
          installing_dependency "PNPM $PNPM_VERSION"
@@ -512,4 +512,3 @@ install_os_dependencies () {
 install_os_dependencies
 clone_monorepo
 refresh_shell
-

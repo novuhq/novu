@@ -110,11 +110,14 @@ export class NotificationRepository extends BaseRepository<
             $nin: [StepTypeEnum.TRIGGER],
           },
         },
-        select: 'createdAt digest payload overrides to tenant providerId step status type updatedAt',
+        select: 'createdAt digest payload overrides to tenant actorId providerId step status type updatedAt',
         populate: [
           {
             path: 'executionDetails',
             select: 'createdAt detail isRetry isTest providerId raw source status updatedAt webhookStatus',
+            options: {
+              sort: { createdAt: 1 },
+            },
           },
           {
             path: 'step',

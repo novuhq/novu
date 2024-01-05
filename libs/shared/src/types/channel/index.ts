@@ -17,7 +17,7 @@ export enum StepTypeEnum {
   DELAY = 'delay',
 }
 
-export const STEP_TYPE_TO_CHANNEL_TYPE = new Map<StepTypeEnum, ChannelTypeEnum>([
+export const STEP_TYPE_TO_CHANNEL_TYPE = new Map<StepTypeEnum | string, ChannelTypeEnum>([
   [StepTypeEnum.IN_APP, ChannelTypeEnum.IN_APP],
   [StepTypeEnum.EMAIL, ChannelTypeEnum.EMAIL],
   [StepTypeEnum.SMS, ChannelTypeEnum.SMS],
@@ -52,3 +52,4 @@ export enum SystemAvatarIconEnum {
 }
 
 export const CHANNELS_WITH_PRIMARY = [ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS];
+export const DELAYED_STEPS = [StepTypeEnum.DELAY, StepTypeEnum.DIGEST];

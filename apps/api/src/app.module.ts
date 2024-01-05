@@ -31,12 +31,21 @@ import { TopicsModule } from './app/topics/topics.module';
 import { InboundParseModule } from './app/inbound-parse/inbound-parse.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { TenantModule } from './app/tenant/tenant.module';
+import { IdempotencyInterceptor } from './app/shared/framework/idempotency.interceptor';
+import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overrides.module';
+import { ApiRateLimitInterceptor } from './app/rate-limiting/guards';
+import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   try {
-    if (process.env.NOVU_MANAGED_SERVICE === 'true' || process.env.CI_EE_TEST === 'true') {
-      modules.push(require('@novu/ee-auth')?.EEAuthModule);
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (require('@novu/ee-auth')?.EEAuthModule) {
+        modules.push(require('@novu/ee-auth')?.EEAuthModule);
+      }
+      if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
+        modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
+      }
     }
   } catch (e) {
     Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
@@ -72,13 +81,24 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   TopicsModule,
   BlueprintModule,
   TenantModule,
+  WorkflowOverridesModule,
+  RateLimitingModule,
 ];
 
 const enterpriseModules = enterpriseImports();
 
 const modules = baseModules.concat(enterpriseModules);
 
-const providers: Provider[] = [];
+const providers: Provider[] = [
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: ApiRateLimitInterceptor,
+  },
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: IdempotencyInterceptor,
+  },
+];
 
 if (process.env.SENTRY_DSN) {
   modules.push(RavenModule);

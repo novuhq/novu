@@ -4,7 +4,33 @@ import { format } from 'date-fns';
 import { HandlebarHelpersEnum } from '@novu/shared';
 
 import { CompileTemplateCommand } from './compile-template.command';
+import * as i18next from 'i18next';
 
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.I18N,
+  function (key, { hash, data, fn }) {
+    const options = {
+      ...data.root.i18next,
+      ...hash,
+      returnObjects: false,
+    };
+
+    const replace = (options.replace = {
+      // eslint-disable-next-line
+      // @ts-ignore
+      ...this,
+      ...options.replace,
+      ...hash,
+    });
+    delete replace.i18next; // may creep in if this === data.root
+
+    if (fn) {
+      options.defaultValue = fn(replace);
+    }
+
+    return i18next.t(key, options);
+  }
+);
 Handlebars.registerHelper(
   HandlebarHelpersEnum.EQUALS,
   function (arg1, arg2, options) {
@@ -102,6 +128,31 @@ Handlebars.registerHelper(
 
       return _x < _y ? -1 : _x > _y ? 1 : 0;
     });
+  }
+);
+
+// based on: https://gist.github.com/DennyLoko/61882bc72176ca74a0f2
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.NUMBERFORMAT,
+  function (number, options) {
+    if (isNaN(number)) {
+      return number;
+    }
+
+    const decimalLength = options.hash.decimalLength || 2;
+    const thousandsSep = options.hash.thousandsSep || ',';
+    const decimalSep = options.hash.decimalSep || '.';
+
+    const value = parseFloat(number);
+
+    const re = '\\d(?=(\\d{3})+' + (decimalLength > 0 ? '\\D' : '$') + ')';
+
+    const num = value.toFixed(Math.max(0, ~~decimalLength));
+
+    return (decimalSep ? num.replace('.', decimalSep) : num).replace(
+      new RegExp(re, 'g'),
+      '$&' + thousandsSep
+    );
   }
 );
 

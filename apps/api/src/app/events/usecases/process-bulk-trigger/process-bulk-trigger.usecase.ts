@@ -1,24 +1,25 @@
 import { Injectable } from '@nestjs/common';
+import { AddressingTypeEnum, TriggerEventStatusEnum } from '@novu/shared';
+
 import { ProcessBulkTriggerCommand } from './process-bulk-trigger.command';
+
 import { TriggerEventResponseDto } from '../../dtos';
-import { MapTriggerRecipients } from '../map-trigger-recipients';
-import { ParseEventRequestCommand } from '../parse-event-request/parse-event-request.command';
 import { ParseEventRequest } from '../parse-event-request/parse-event-request.usecase';
+import { ParseEventRequestMulticastCommand } from '../parse-event-request/parse-event-request.command';
 
 @Injectable()
 export class ProcessBulkTrigger {
-  constructor(private parseEventRequest: ParseEventRequest, private mapTriggerRecipients: MapTriggerRecipients) {}
+  constructor(private parseEventRequest: ParseEventRequest) {}
 
   async execute(command: ProcessBulkTriggerCommand) {
     const results: TriggerEventResponseDto[] = [];
 
     for (const event of command.events) {
       let result: TriggerEventResponseDto;
-      const mappedTenant = event.tenant ? this.parseEventRequest.mapTenant(event.tenant) : null;
 
       try {
         result = (await this.parseEventRequest.execute(
-          ParseEventRequestCommand.create({
+          ParseEventRequestMulticastCommand.create({
             userId: command.userId,
             environmentId: command.environmentId,
             organizationId: command.organizationId,
@@ -27,8 +28,9 @@ export class ProcessBulkTrigger {
             overrides: event.overrides || {},
             to: event.to,
             actor: event.actor,
-            tenant: mappedTenant,
+            tenant: event.tenant,
             transactionId: event.transactionId,
+            addressingType: AddressingTypeEnum.MULTICAST,
           })
         )) as unknown as TriggerEventResponseDto;
       } catch (e) {
@@ -40,9 +42,9 @@ export class ProcessBulkTrigger {
         }
 
         result = {
-          status: 'error',
-          error: error,
           acknowledged: true,
+          status: TriggerEventStatusEnum.ERROR,
+          error,
         };
       }
 

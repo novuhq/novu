@@ -1,4 +1,3 @@
-[submodule "enterprise/packages"]
-	path = enterprise/packages
+[submodule "enterprise"]
+	path = .source
 	url = git@github.com:novuhq/packages-enterprise.git
-	branch = next

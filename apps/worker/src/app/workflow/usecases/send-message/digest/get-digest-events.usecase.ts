@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JobRepository, JobEntity } from '@novu/dal';
 import {
   ExecutionDetailsSourceEnum,
@@ -7,27 +7,27 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import {
-  DigestFilterSteps,
   DetailEnum,
-  CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   Instrument,
+  ExecutionLogQueueService,
+  getNestedValue,
 } from '@novu/application-generic';
 
 import { PlatformException } from '../../../../shared/utils';
 
+const LOG_CONTEXT = 'GetDigestEvents';
+
 @Injectable()
 export abstract class GetDigestEvents {
-  constructor(protected jobRepository: JobRepository, private createExecutionDetails: CreateExecutionDetails) {}
+  constructor(protected jobRepository: JobRepository, private executionLogQueueService: ExecutionLogQueueService) {}
 
   @Instrument()
   protected async filterJobs(currentJob: JobEntity, transactionId: string, jobs: JobEntity[]) {
     const digestMeta = currentJob?.digest as IDigestBaseMetadata | undefined;
-    const batchValue = currentJob?.payload
-      ? DigestFilterSteps.getNestedValue(currentJob.payload, digestMeta?.digestKey)
-      : undefined;
+    const batchValue = currentJob?.payload ? getNestedValue(currentJob.payload, digestMeta?.digestKey) : undefined;
     const filteredJobs = jobs.filter((job) => {
-      return DigestFilterSteps.getNestedValue(job.payload, digestMeta?.digestKey) === batchValue;
+      return getNestedValue(job.payload, digestMeta?.digestKey) === batchValue;
     });
 
     const currentTrigger = (await this.jobRepository.findOne(
@@ -41,35 +41,29 @@ export abstract class GetDigestEvents {
     )) as Pick<JobEntity, '_id'>;
 
     if (!currentTrigger) {
-      this.createExecutionDetails.execute(
+      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
+      await this.executionLogQueueService.add(
+        metadata._id,
         CreateExecutionDetailsCommand.create({
+          ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
           detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        })
+        }),
+        currentJob._organizationId
       );
-      throw new PlatformException('Trigger job is not found');
+      const message = `Trigger job for jobId ${currentJob._id} is not found`;
+      Logger.error(message, LOG_CONTEXT);
+      throw new PlatformException(message);
     }
 
     const events = [
       currentJob.payload,
       ...filteredJobs.filter((job) => job._id !== currentTrigger._id).map((job) => job.payload),
     ];
-
-    this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
-        detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: false,
-        raw: JSON.stringify(events),
-      })
-    );
 
     return events;
   }

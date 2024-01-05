@@ -1,6 +1,6 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
-import { MemberRoleEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
@@ -30,15 +30,20 @@ export class CreateOrganization {
   ) {}
 
   async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
-    const organization = new OrganizationEntity();
-
-    organization.logo = command.logo;
-    organization.name = command.name;
-
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new ApiException('User not found');
 
-    const createdOrganization = await this.organizationRepository.create(organization);
+    const createdOrganization = await this.organizationRepository.create({
+      logo: command.logo,
+      name: command.name,
+      apiServiceLevel: ApiServiceLevelEnum.FREE,
+      domain: command.domain,
+      productUseCases: command.productUseCases,
+    });
+
+    if (command.jobTitle) {
+      await this.updateJobTitle(user, command.jobTitle);
+    }
 
     await this.addMemberUsecase.execute(
       AddMemberCommand.create({
@@ -95,5 +100,20 @@ export class CreateOrganization {
     );
 
     return organizationAfterChanges as OrganizationEntity;
+  }
+
+  private async updateJobTitle(user, jobTitle: JobTitleEnum) {
+    await this.userRepository.update(
+      {
+        _id: user._id,
+      },
+      {
+        $set: {
+          jobTitle: jobTitle,
+        },
+      }
+    );
+
+    this.analyticsService.setValue(user._id, 'jobTitle', jobTitle);
   }
 }

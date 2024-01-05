@@ -78,6 +78,7 @@ export class ProcessSubscriber {
         avatar: subscriberPayload?.avatar,
         locale: subscriberPayload?.locale,
         subscriber: subscriber ?? undefined,
+        data: subscriberPayload?.data,
       })
     );
   }

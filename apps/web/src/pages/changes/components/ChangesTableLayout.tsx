@@ -6,8 +6,7 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import { useEffect } from 'react';
 import { showNotification } from '@mantine/notifications';
 
-import { IExtendedColumn, Table } from '../../../design-system/table/Table';
-import { Button, colors, Text, withCellLoading } from '../../../design-system';
+import { IExtendedColumn, Table, Button, colors, Text, withCellLoading } from '@novu/design-system';
 import { promoteChange } from '../../../api/changes';
 import { QueryKeys } from '../../../api/query.keys';
 
@@ -76,6 +75,12 @@ export const ChangesTable = ({
             )}
             {type === ChangeEntityTypeEnum.DEFAULT_LAYOUT && (
               <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Default Layout Change</Text>
+            )}
+            {type === ChangeEntityTypeEnum.TRANSLATION_GROUP && (
+              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Translation Group Change</Text>
+            )}
+            {type === ChangeEntityTypeEnum.TRANSLATION && (
+              <Text color={colorScheme === 'dark' ? colors.B40 : colors.B70}>Translation Change</Text>
             )}
             {previousDefaultLayout && (
               <Text data-test-id="previous-default-layout-content" rows={1} mt={5}>

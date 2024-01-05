@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
 import { ProductLead, ProductLeadVariants } from '../../../components/utils/ProductLead';
-import { Translate } from '../../../design-system/icons';
+import { Translate } from '@novu/design-system';
 
 export const TranslateProductLead = ({ id, style = {} }: { id: string; style?: CSSProperties }) => {
   return (
@@ -10,7 +10,7 @@ export const TranslateProductLead = ({ id, style = {} }: { id: string; style?: C
       title="Translation management"
       // eslint-disable-next-line max-len
       text="Translate your notification content to multiple languages using a connection with a preferred i18n localization provider."
-      variant={ProductLeadVariants.DEFAULT}
+      variant={ProductLeadVariants.COLUMN}
       style={style}
     />
   );

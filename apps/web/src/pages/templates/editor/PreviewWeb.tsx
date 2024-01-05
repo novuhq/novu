@@ -1,6 +1,6 @@
 import { Center, createStyles, Group, Loader } from '@mantine/core';
 import { format } from 'date-fns';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 import { PreviewDateIcon } from './PreviewDateIcon';
 import { PreviewUserIcon } from './PreviewUserIcon';
 import Frame from 'react-frame-component';
@@ -75,7 +75,7 @@ export const PreviewWeb = ({
   loading = false,
 }: {
   integration: any;
-  subject: string;
+  subject?: string;
   content: string;
   loading?: boolean;
 }) => {

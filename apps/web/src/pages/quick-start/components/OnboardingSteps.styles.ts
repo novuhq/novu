@@ -1,5 +1,5 @@
 import { createStyles } from '@mantine/core';
-import { colors, shadows, Text } from '../../../design-system';
+import { colors, shadows, Text } from '@novu/design-system';
 import styled from '@emotion/styled';
 
 export default createStyles((theme, _params, getRef) => {

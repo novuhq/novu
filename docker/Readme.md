@@ -1,6 +1,6 @@
 Docker is the easiest way to get started with self-hosted Novu,
 however if you want to set up the system on docker for local development look [here](local/Readme.md)
-or if you want to deploy Novu to Kubernetes check [here](kubernetes/Readme.md)
+or if you want to deploy Novu to Kubernetes using Helm check [here](kubernetes/helm/Readme.md) or using Kustomize check [here](kubernetes/helm/Readme.md).
 
 ## Before you begin
 
@@ -29,7 +29,7 @@ cp .env.example ./local/deployment/.env
 docker-compose -f ./local/deployment/docker-compose.yml up
 ```
 
-Now visit [http://localhost:4200](http://localhost:4200) to start using Novu.
+Now visit [http://127.0.0.1:4200](http://127.0.0.1:4200) to start using Novu.
 
 ### Securing your setup
 

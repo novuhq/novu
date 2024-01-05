@@ -8,8 +8,19 @@ import { useClipboard } from '@mantine/hooks';
 
 import { getTemplateVariables, ITemplateVariable, isReservedVariableName, LayoutId } from '@novu/shared';
 
-import { ArrowLeft, Check, Copy } from '../../../design-system/icons';
-import { Button, Checkbox, colors, Input, Text, LoadingOverlay, shadows, Tooltip } from '../../../design-system';
+import {
+  ArrowLeft,
+  Check,
+  Copy,
+  Button,
+  Checkbox,
+  colors,
+  Input,
+  Text,
+  LoadingOverlay,
+  shadows,
+  Tooltip,
+} from '@novu/design-system';
 import { useEnvController, useLayoutsEditor, usePrompt } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
@@ -275,7 +286,6 @@ export function LayoutEditor({
             }}
           >
             <VariablesManagement
-              index={0}
               openVariablesModal={() => {
                 setModalOpen(true);
               }}
@@ -331,7 +341,7 @@ export function LayoutEditor({
         centered
         overflow="inside"
       >
-        <VariableManager index={0} variablesArray={variablesArray} path="" control={control} />
+        <VariableManager variablesArray={variablesArray} path="" control={control} />
         <Group position="right">
           <Button
             data-test-id="close-var-manager-modal"

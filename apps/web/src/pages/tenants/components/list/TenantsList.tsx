@@ -3,9 +3,7 @@ import { Container } from '@mantine/core';
 import { Row } from 'react-table';
 import { ITenantEntity } from '@novu/shared';
 
-import { Table } from '../../../../design-system';
-import PageContainer from '../../../../components/layout/components/PageContainer';
-import { When } from '../../../../components/utils/When';
+import { Table, When } from '@novu/design-system';
 import { columns } from './columns';
 import { useTenants } from '../../../../hooks/useTenants';
 import { Toolbar } from './ToolBar';
@@ -31,7 +29,7 @@ export const TenantsList = ({
 
   return (
     <>
-      <Container fluid sx={{ padding: '0 30px 8px 30px' }}>
+      <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         <Toolbar onAddTenantClick={onAddTenantClick} tenantLoading={loading} />
       </Container>
       <When truthy={loadingPhase}>

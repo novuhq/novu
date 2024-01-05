@@ -26,7 +26,7 @@ jobs:
         run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
       - uses: actions/setup-node@v3
         with:
-          node-version: '16.15.1'
+          node-version: '20.8.1'
 
       - name: Login to docker
         env:
@@ -125,4 +125,3 @@ jobs:
           docker pull ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$DOCKER_VERSION
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$DOCKER_VERSION
-

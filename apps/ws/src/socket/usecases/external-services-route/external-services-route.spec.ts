@@ -27,11 +27,9 @@ const createWsGatewayStub = (result) => {
   return {
     sendMessage: sinon.stub(),
     server: {
-      sockets: {
-        in: sinon.stub().returns({
-          fetchSockets: sinon.stub().resolves(result),
-        }),
-      },
+      in: sinon.stub().returns({
+        fetchSockets: sinon.stub().resolves(result),
+      }),
     },
   } as WSGateway;
 };
@@ -39,17 +37,17 @@ const createWsGatewayStub = (result) => {
 describe('ExternalServicesRoute', () => {
   let externalServicesRoute: ExternalServicesRoute;
   let wsGatewayStub;
-  let findByIdStub: sinon.Stub;
+  let findOneStub: sinon.Stub;
   let getCountStub: sinon.Stub;
   const messageRepository = new MessageRepository();
 
   beforeEach(() => {
-    findByIdStub = sinon.stub(MessageRepository.prototype, 'findById');
+    findOneStub = sinon.stub(MessageRepository.prototype, 'findOne');
     getCountStub = sinon.stub(MessageRepository.prototype, 'getCount');
   });
 
   afterEach(() => {
-    findByIdStub.restore();
+    findOneStub.restore();
     getCountStub.restore();
   });
 
@@ -64,8 +62,8 @@ describe('ExternalServicesRoute', () => {
 
       await externalServicesRoute.execute(commandReceivedMessage);
 
-      sinon.assert.calledOnceWithExactly(wsGatewayStub.server.sockets.in, userId);
-      sinon.assert.calledOnceWithExactly(wsGatewayStub.server.sockets.in(userId).fetchSockets);
+      sinon.assert.calledOnceWithExactly(wsGatewayStub.server.in, userId);
+      sinon.assert.calledOnceWithExactly(wsGatewayStub.server.in(userId).fetchSockets);
       sinon.assert.notCalled(wsGatewayStub.sendMessage);
     });
   });
@@ -74,7 +72,7 @@ describe('ExternalServicesRoute', () => {
     beforeEach(() => {
       wsGatewayStub = createWsGatewayStub([{ id: 'socket-id' }]);
       externalServicesRoute = new ExternalServicesRoute(wsGatewayStub, messageRepository);
-      findByIdStub.resolves(Promise.resolve({ _id: messageId }));
+      findOneStub.resolves(Promise.resolve({ _id: messageId }));
     });
 
     it('should send message, unseen count and unread count change when event is received', async () => {

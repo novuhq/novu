@@ -166,7 +166,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       subscriberId: foundSubscriber.subscriberId,
     };
 
-    await this.subscriber.delete(requestQuery);
+    return await this.subscriber.delete(requestQuery);
   }
 
   async findDeleted(query: SubscriberQuery) {

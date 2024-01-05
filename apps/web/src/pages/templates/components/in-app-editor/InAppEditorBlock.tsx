@@ -1,55 +1,47 @@
-import { Control, Controller, useWatch } from 'react-hook-form';
-
+import { useEffect, useState } from 'react';
+import { Controller, useFormContext, useWatch } from 'react-hook-form';
+import { IMessageAction, MessageActionStatusEnum } from '@novu/shared';
 import { InAppWidgetPreview } from './preview/InAppWidgetPreview';
 import type { IForm } from '../formTypes';
-import { useEffect, useState } from 'react';
 import { EmailCustomCodeEditor } from '../email-editor/EmailCustomCodeEditor';
-import { When } from '../../../../components/utils/When';
-import Handlebars from 'handlebars/dist/handlebars';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
+import { colors, errorMessage } from '@novu/design-system';
+import { useMutation } from '@tanstack/react-query';
+import { previewInApp } from '../../../../api/content-templates';
+import { Center, Loader } from '@mantine/core';
 
 export function InAppEditorBlock({
-  control,
-  index,
   readonly,
   preview = false,
   payload = '{}',
 }: {
-  control: Control<IForm>;
-  index: number;
   readonly: boolean;
   preview?: boolean;
   payload?: string;
 }) {
+  const { control } = useFormContext();
+  const path = useStepFormPath();
   const enableAvatar = useWatch({
-    name: `steps.${index}.template.enableAvatar` as any,
+    name: `${path}.template.enableAvatar` as any,
     control,
   });
 
+  if (preview) {
+    return <ContentRender readonly={readonly} payload={payload} />;
+  }
+
   return (
     <Controller
-      name={`steps.${index}.template.cta.action`}
-      defaultValue=""
+      name={`${path}.template.cta.action`}
+      defaultValue={{} as IMessageAction}
       data-test-id="in-app-content-form-item"
       control={control}
       render={({ field }) => {
         const { ref, ...fieldRefs } = field;
 
         return (
-          <InAppWidgetPreview
-            {...fieldRefs}
-            preview={preview}
-            readonly={readonly}
-            enableAvatar={!!enableAvatar}
-            index={index}
-          >
-            <>
-              <When truthy={!preview}>
-                <ContentContainerController control={control} index={index} />
-              </When>
-              <When truthy={preview}>
-                <ContentRender control={control} payload={payload} index={index} />
-              </When>
-            </>
+          <InAppWidgetPreview {...fieldRefs} readonly={readonly} enableAvatar={!!enableAvatar}>
+            <ContentContainerController />
           </InAppWidgetPreview>
         );
       }}
@@ -57,27 +49,85 @@ export function InAppEditorBlock({
   );
 }
 
-const ContentRender = ({ index, control, payload }) => {
+const ContentRender = ({ payload, readonly }: { payload: string; readonly: boolean }) => {
+  const { control } = useFormContext<IForm>();
+  const path = useStepFormPath();
   const content = useWatch({
-    name: `steps.${index}.template.content`,
+    name: `${path}.template.content`,
     control,
   });
+  const cta = useWatch({
+    name: `${path}.template.cta`,
+    control,
+  });
+  const enableAvatar = useWatch({
+    name: `${path}.template.enableAvatar` as any,
+    control,
+  });
+
+  const [buttons, setButtons] = useState<any[]>([]);
+  const { isLoading, mutateAsync } = useMutation(previewInApp);
   const [compiledContent, setCompiledContent] = useState('');
 
-  useEffect(() => {
-    try {
-      const template = Handlebars.compile(content);
-      setCompiledContent(template(JSON.parse(payload)));
-    } catch (e) {}
-  }, [content, payload]);
+  const parseContent = (args: { content?: string | any; payload: any; cta: any }) => {
+    mutateAsync({
+      ...args,
+      payload: JSON.parse(args.payload),
+    })
+      .then((result: { content: string; ctaButtons: any[] }) => {
+        setCompiledContent(result.content);
+        setButtons(result.ctaButtons);
 
-  return <span data-test-id="in-app-content-preview" dangerouslySetInnerHTML={{ __html: compiledContent }} />;
+        return result;
+      })
+      .catch((e: any) => {
+        errorMessage(e?.message || 'Un-expected error occurred');
+      });
+  };
+
+  useEffect(() => {
+    parseContent({
+      content,
+      payload,
+      cta,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compiledContent, payload, cta]);
+
+  if (isLoading) {
+    return (
+      <div>
+        <Center>
+          <Loader color={colors.B70} mb={20} mt={20} size={32} />
+        </Center>
+      </div>
+    );
+  }
+
+  return (
+    <InAppWidgetPreview
+      preview={true}
+      readonly={readonly}
+      enableAvatar={!!enableAvatar}
+      value={{
+        status: MessageActionStatusEnum.PENDING,
+        buttons: buttons,
+        result: {},
+      }}
+      onChange={() => {}}
+    >
+      <span data-test-id="in-app-content-preview" dangerouslySetInnerHTML={{ __html: compiledContent }} />
+    </InAppWidgetPreview>
+  );
 };
 
-function ContentContainerController({ control, index }: { control: Control<IForm>; index: number }) {
+function ContentContainerController() {
+  const { control } = useFormContext<IForm>();
+  const path = useStepFormPath();
+
   return (
     <Controller
-      name={`steps.${index}.template.content` as any}
+      name={`${path}.template.content` as any}
       defaultValue=""
       data-test-id="in-app-content-form-item"
       control={control}

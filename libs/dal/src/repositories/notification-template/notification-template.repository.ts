@@ -40,7 +40,9 @@ export class NotificationTemplateRepository extends BaseRepository<
       _environmentId: environmentId,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template');
+    const item = await this.MongooseModel.findOne(requestQuery)
+      .populate('steps.template')
+      .populate('steps.variants.template');
 
     return this.mapEntity(item);
   }
@@ -163,6 +165,7 @@ export class NotificationTemplateRepository extends BaseRepository<
       .limit(limit)
       .populate({ path: 'notificationGroup' })
       .populate('steps.template', { type: 1 })
+      .select('-steps.variants') // Excludes Variants from the list
       .lean();
 
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
@@ -183,7 +186,8 @@ export class NotificationTemplateRepository extends BaseRepository<
   async delete(query: NotificationTemplateQuery) {
     const item = await this.findOne({ _id: query._id, _environmentId: query._environmentId });
     if (!item) throw new DalException(`Could not find workflow with id ${query._id}`);
-    await this.notificationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
+
+    return await this.notificationTemplate.delete({ _id: item._id, _environmentId: item._environmentId });
   }
 
   async findDeleted(query: NotificationTemplateQuery): Promise<NotificationTemplateEntity> {

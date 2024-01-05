@@ -33,7 +33,7 @@ class Mailin extends events.EventEmitter {
     super();
 
     this.configuration = {
-      host: '0.0.0.0',
+      host: '127.0.0.1',
       port: 2500,
       tmp: '.tmp',
       disableWebhook: true,
@@ -54,7 +54,7 @@ class Mailin extends events.EventEmitter {
     this._smtp = null;
   }
 
-  public start(options: object, callback: (err?) => void) {
+  public async start(options: object, callback: (err?) => void) {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const _this = this;
 
@@ -446,6 +446,8 @@ class Mailin extends events.EventEmitter {
       onMailFrom: onMailFrom,
       onRcptTo: onRcptTo,
     });
+
+    await inboundMailService.start();
 
     const server = new SMTPServer(smtpOptions);
 

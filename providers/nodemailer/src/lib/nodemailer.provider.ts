@@ -44,6 +44,7 @@ export class NodemailerProvider implements IEmailProvider {
     const tls: ConnectionOptions = this.getTlsOptions();
 
     const smtpTransportOptions: SMTPTransport.Options = {
+      name: this.config.host,
       host: this.config.host,
       port: this.config.port,
       secure: this.config.secure,
@@ -125,7 +126,7 @@ export class NodemailerProvider implements IEmailProvider {
     const sendMailOptions: SendMailOptions = {
       from: {
         address: options.from || this.config.from,
-        name: this.config.senderName || '',
+        name: options.senderName || this.config.senderName || '',
       },
       to: options.to,
       subject: options.subject,

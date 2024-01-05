@@ -3,7 +3,6 @@ import { Group, Center, Box } from '@mantine/core';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
-import { useIntercom } from 'react-use-intercom';
 import { useClipboard, useDisclosure } from '@mantine/hooks';
 import {
   CHANNELS_WITH_PRIMARY,
@@ -15,9 +14,8 @@ import {
   InAppProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
+import { Button, colors, Input, Sidebar, Text, Check, Copy } from '@novu/design-system';
 
-import { Button, colors, Input, Sidebar, Text } from '../../../../design-system';
-import { Check, Copy } from '../../../../design-system/icons';
 import { useProviders } from '../../useProviders';
 import type { IIntegratedProvider } from '../../types';
 import { IntegrationInput } from '../IntegrationInput';
@@ -39,6 +37,7 @@ import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationM
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions, IConditions } from '../../../../components/conditions';
 import { useWebhookSupportStatus } from '../../../../api/hooks';
+import { defaultIntegrationConditionsProps } from '../../constants';
 
 interface IProviderForm {
   name: string;
@@ -62,7 +61,6 @@ export function UpdateProviderSidebar({
   integrationId?: string;
   onClose: () => void;
 }) {
-  const { update } = useIntercom();
   const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
   const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
@@ -177,7 +175,6 @@ export function UpdateProviderSidebar({
       setSidebarState(SidebarStateEnum.NORMAL);
     }
     onClose();
-    update({ hideDefaultLauncher: false });
   };
 
   const updateAndSelectPrimaryIntegration = async (data: IConstructIntegrationDto) => {
@@ -252,8 +249,9 @@ export function UpdateProviderSidebar({
         conditions={conditions}
         name={name}
         isOpened={conditionsFormOpened}
-        setConditions={updateConditions}
+        updateConditions={updateConditions}
         onClose={closeConditionsForm}
+        {...defaultIntegrationConditionsProps}
       />
     );
   }

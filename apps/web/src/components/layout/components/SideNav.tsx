@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '../../../constants/routes.enum';
-import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
+import { colors, NavMenu, SegmentedControl, shadows, Translation } from '@novu/design-system';
 import {
   Activity,
   Bolt,
@@ -24,8 +24,8 @@ import {
   Repeat,
   Settings,
   Team,
-} from '../../../design-system/icons';
-import { useEnvController, useIsMultiTenancyEnabled } from '../../../hooks';
+} from '@novu/design-system';
+import { useEnvController, useIsMultiTenancyEnabled, useIsTranslationManagerEnabled } from '../../../hooks';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
@@ -63,6 +63,7 @@ export function SideNav({}: Props) {
   const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
   const isMultiTenancyEnabled = useIsMultiTenancyEnabled();
+  const isTranslationManagerEnabled = useIsTranslationManagerEnabled();
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -102,6 +103,13 @@ export function SideNav({}: Props) {
       link: ROUTES.SUBSCRIBERS,
       label: 'Subscribers',
       testId: 'side-nav-subscribers-link',
+    },
+    {
+      condition: isTranslationManagerEnabled,
+      icon: <Translation width={20} height={20} />,
+      link: ROUTES.TRANSLATIONS,
+      label: 'Translations',
+      testId: 'side-nav-translations-link',
     },
     {
       icon: <Brand />,

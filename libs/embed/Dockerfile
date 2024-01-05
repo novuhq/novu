@@ -1,8 +1,8 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine
+FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine
 
 WORKDIR /usr/src/app
 
-RUN npm install -g pnpm@7.33.4 --loglevel notice --force
+RUN npm install -g pnpm@8.9.0 --loglevel notice --force
 
 COPY .npmrc .
 COPY package.json .

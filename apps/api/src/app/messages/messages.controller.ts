@@ -1,26 +1,39 @@
-import { Controller, Delete, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { RemoveMessage, RemoveMessageCommand } from './usecases/remove-message';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { IJwtPayload } from '@novu/shared';
-import { ApiTags, ApiOkResponse, ApiOperation, ApiQuery, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 import { DeleteMessageResponseDto } from './dtos/delete-message-response.dto';
 import { ActivitiesResponseDto } from '../notifications/dtos/activities-response.dto';
 import { GetMessages, GetMessagesCommand } from './usecases/get-messages';
 import { MessagesResponseDto } from '../widgets/dtos/message-response.dto';
 import { DeleteMessageParams } from './params/delete-message.param';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import {
+  ApiCommonResponses,
+  ApiResponse,
+  ApiNoContentResponse,
+  ApiOkResponse,
+} from '../shared/framework/response.decorator';
 import { GetMessagesRequestDto } from './dtos/get-messages-requests.dto';
+import { RemoveMessagesByTransactionId } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.usecase';
+import { RemoveMessagesByTransactionIdCommand } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.command';
+import { DeleteMessageByTransactionIdRequestDto } from './dtos/remove-messages-by-transactionId-request.dto';
 
+@ApiCommonResponses()
 @Controller('/messages')
 @ApiTags('Messages')
 export class MessagesController {
-  constructor(private removeMessage: RemoveMessage, private getMessagesUsecase: GetMessages) {}
+  constructor(
+    private removeMessage: RemoveMessage,
+    private getMessagesUsecase: GetMessages,
+    private removeMessagesByTransactionId: RemoveMessagesByTransactionId
+  ) {}
 
   @Get('')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiOkResponse({
     type: ActivitiesResponseDto,
   })
@@ -52,7 +65,7 @@ export class MessagesController {
 
   @Delete('/:messageId')
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @ApiResponse(DeleteMessageResponseDto)
   @ApiOperation({
     summary: 'Delete message',
@@ -68,6 +81,31 @@ export class MessagesController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         messageId,
+      })
+    );
+  }
+
+  @Delete('/transaction/:transactionId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ExternalApiAccessible()
+  @UseGuards(UserAuthGuard)
+  @ApiNoContentResponse()
+  @ApiOperation({
+    summary: 'Delete messages by transactionId',
+    description: 'Deletes messages entity from the Novu platform using TransactionId of message',
+  })
+  @ApiParam({ name: 'transactionId', type: String, required: true })
+  async deleteMessagesByTransactionId(
+    @UserSession() user: IJwtPayload,
+    @Param() { transactionId }: { transactionId: string },
+    @Query() query: DeleteMessageByTransactionIdRequestDto
+  ) {
+    return await this.removeMessagesByTransactionId.execute(
+      RemoveMessagesByTransactionIdCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        transactionId: transactionId,
+        channel: query.channel,
       })
     );
   }

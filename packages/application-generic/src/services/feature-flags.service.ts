@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { Instrument } from '../instrumentation';
 
 import { LaunchDarklyService } from './launch-darkly.service';
 
@@ -112,6 +113,7 @@ export class FeatureFlagsService {
    *  - Default value with the value provided by Novu's environment variable if set
    *  - Default value with the value provided by the hardcoded fallback
    */
+  @Instrument()
   public async get<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T,

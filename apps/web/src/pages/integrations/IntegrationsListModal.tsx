@@ -3,8 +3,7 @@ import { Group, Modal, ActionIcon, createStyles, MantineTheme } from '@mantine/c
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { useKeyDown } from '../../hooks';
-import { colors } from '../../design-system';
-import { Close } from '../../design-system/icons';
+import { colors, Close } from '@novu/design-system';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from './constants';
 import type { IIntegratedProvider, ITableIntegration } from './types';

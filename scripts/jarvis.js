@@ -32,7 +32,6 @@ const API_AND_WORKER_ONLY = 'API & Worker only';
 const API_TESTS = 'API tests';
 const API_E2E_TESTS = 'API E2E tests';
 const API_INTEGRATION_TESTS = 'API integration tests';
-const DOCS = 'Docs';
 const DEV_ENVIRONMENT_SETUP = 'Development environment setup';
 const WEB_PROJECT_AND_WIDGET = 'Web project and Widget app';
 const WEB_PROJECT = 'Web project (Web, API, Worker, WS)';
@@ -59,7 +58,7 @@ async function setupRunner() {
       type: 'list',
       name: 'runConfiguration',
       message: 'What section of the project you want to run?',
-      choices: [WEB_PROJECT, WEB_PROJECT_AND_WIDGET, API_AND_WORKER_ONLY, DOCS],
+      choices: [WEB_PROJECT, WEB_PROJECT_AND_WIDGET, API_AND_WORKER_ONLY],
       when(answers) {
         return answers.action === RUN_PROJECT;
       },
@@ -121,10 +120,10 @@ async function setupRunner() {
       console.log(`
         Everything is running 🎊
 
-        Web: http://localhost:4200
-        Widget: http://localhost:4500
-        API: http://localhost:3000
-        Worker: http://localhost:3004
+        Web: http://127.0.0.1:4200
+        Widget: http://127.0.0.1:4500
+        API: http://127.0.0.1:3000
+        Worker: http://127.0.0.1:3004
       `);
     } else if (answers.runConfiguration === WEB_PROJECT) {
       try {
@@ -154,32 +153,14 @@ async function setupRunner() {
         console.log(`
           Everything is running 🎊
         
-          Web: http://localhost:4200
-          API: http://localhost:3000
-          WS: http://localhost:3002
-          Worker: http://localhost:3004
+          Web: http://127.0.0.1:4200
+          API: http://127.0.0.1:3000
+          WS: http://127.0.0.1:3002
+          Worker: http://127.0.0.1:3004
         `);
       } catch (e) {
         console.error(`Failed to spin up the project ❌`, e);
       }
-    } else if (answers.runConfiguration === DOCS) {
-      const spinner = ora('Building docs...').start();
-      shell.exec('npm run start:docs', { async: true });
-
-      await waitPort({
-        host: 'localhost',
-        port: 4040,
-      });
-
-      spinner.stop();
-      // eslint-disable-next-line no-console
-      console.clear();
-      // eslint-disable-next-line no-console
-      console.log(`
-        Everything is running 🎊
-
-        Docs: http://localhost:4040
-      `);
     } else if (answers.runConfiguration === API_AND_WORKER_ONLY) {
       shell.exec('nx run-many --target=build --projects=@novu/api,@novu/worker');
       shell.exec('npm run start:api', { async: true });
@@ -197,8 +178,8 @@ async function setupRunner() {
       console.log(`
         Everything is running 🎊
 
-        API: http://localhost:3000
-        Worker: http://localhost:3004
+        API: http://127.0.0.1:3000
+        Worker: http://127.0.0.1:3004
       `);
     } else if (answers.runApiConfiguration === API_INTEGRATION_TESTS) {
       shell.exec('nx run-many --target=build --projects=@novu/api,@novu/worker');

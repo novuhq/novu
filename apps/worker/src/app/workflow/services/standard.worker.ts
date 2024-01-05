@@ -1,19 +1,16 @@
 const nr = require('newrelic');
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { IJobData, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  IJobData,
-  ObservabilityBackgroundTransactionEnum,
-} from '@novu/shared';
-import {
-  INovuWorker,
+  BullMqService,
+  getStandardWorkerOptions,
   Job,
   PinoLogger,
   StandardWorkerService,
   storage,
   Store,
   WorkerOptions,
+  WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 
 import {
@@ -31,22 +28,20 @@ import {
 const LOG_CONTEXT = 'StandardWorker';
 
 @Injectable()
-export class StandardWorker extends StandardWorkerService implements INovuWorker {
+export class StandardWorker extends StandardWorkerService {
   constructor(
     private handleLastFailedJob: HandleLastFailedJob,
     private runJob: RunJob,
     @Inject(forwardRef(() => SetJobAsCompleted)) private setJobAsCompleted: SetJobAsCompleted,
     @Inject(forwardRef(() => SetJobAsFailed)) private setJobAsFailed: SetJobAsFailed,
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
-    private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy
+    private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
+    @Inject(forwardRef(() => WorkflowInMemoryProviderService))
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
   ) {
-    super();
+    super(new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
-
-    this.worker.on('completed', async (job: Job<IJobData, void, string>): Promise<void> => {
-      await this.jobHasCompleted(job);
-    });
 
     this.worker.on('failed', async (job: Job<IJobData, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
@@ -55,8 +50,7 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
 
   private getWorkerOptions(): WorkerOptions {
     return {
-      lockDuration: 90000,
-      concurrency: 200,
+      ...getStandardWorkerOptions(),
       settings: {
         backoffStrategy: this.getBackoffStrategies(),
       },
@@ -93,6 +87,8 @@ export class StandardWorker extends StandardWorkerService implements INovuWorker
   private getWorkerProcessor() {
     return async ({ data }: { data: IJobData | any }) => {
       const minimalJobData = this.extractMinimalJobData(data);
+
+      Logger.verbose(`Job ${minimalJobData.jobId} is being processed in the new instance standard worker`, LOG_CONTEXT);
 
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias

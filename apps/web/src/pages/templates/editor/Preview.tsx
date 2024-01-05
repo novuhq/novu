@@ -6,45 +6,45 @@ import type { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 
 import { previewEmail } from '../../../api/content-templates';
 import { When } from '../../../components/utils/When';
-import { Button, colors } from '../../../design-system';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
+import { Button, colors, inputStyles } from '@novu/design-system';
 import { useProcessVariables } from '../../../hooks';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 import { errorMessage } from '../../../utils/notifications';
-import { useActiveIntegrations, useIsMultiProviderConfigurationEnabled } from '../../../hooks';
+import { useActiveIntegrations } from '../../../hooks';
+import { useStepFormPath } from '../hooks/useStepFormPath';
+import type { IForm } from '../components/formTypes';
 
-export const Preview = ({ activeStep, view }: { activeStep: number; view: string }) => {
-  const { control } = useFormContext();
+export const Preview = ({ view }: { view: string }) => {
+  const { control } = useFormContext<IForm>();
+  const path = useStepFormPath();
 
   const subject = useWatch({
-    name: `steps.${activeStep}.template.subject`,
+    name: `${path}.template.subject`,
     control,
   });
   const contentType = useWatch({
-    name: `steps.${activeStep}.template.contentType`,
+    name: `${path}.template.contentType`,
     control,
   });
   const htmlContent = useWatch({
-    name: `steps.${activeStep}.template.htmlContent`,
+    name: `${path}.template.htmlContent`,
     control,
   });
   const editorContent = useWatch({
-    name: `steps.${activeStep}.template.content`,
+    name: `${path}.template.content`,
     control,
   });
-
   const variables = useWatch({
-    name: `steps.${activeStep}.template.variables`,
+    name: `${path}.template.variables`,
     control,
   });
   const layoutId = useWatch({
-    name: `steps.${activeStep}.template.layoutId`,
+    name: `${path}.template.layoutId`,
     control,
   });
 
   const { integrations = [] } = useActiveIntegrations();
-  const isMultiProviderConfigEnabled = useIsMultiProviderConfigurationEnabled();
   const [integration, setIntegration]: any = useState(null);
   const [parsedSubject, setParsedSubject] = useState(subject);
   const [content, setContent] = useState<string>('<html><head></head><body><div></div></body></html>');
@@ -57,10 +57,10 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
   }, [processedVariables, setPayloadValue]);
 
   const parseContent = (args: {
-    contentType: MessageTemplateContentType;
-    content: string | IEmailBlock[];
+    contentType?: MessageTemplateContentType;
+    content?: string | IEmailBlock[];
     payload: any;
-    layoutId: string;
+    layoutId?: string;
   }) => {
     mutateAsync({
       ...args,
@@ -93,12 +93,8 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
     if (integrations.length === 0) {
       return;
     }
-    setIntegration(
-      integrations.find((item) =>
-        isMultiProviderConfigEnabled ? item.channel === 'email' && item.primary : item.channel === 'email'
-      ) || null
-    );
-  }, [isMultiProviderConfigEnabled, integrations, setIntegration]);
+    setIntegration(integrations.find((item) => item.channel === 'email' && item.primary) || null);
+  }, [integrations, setIntegration]);
 
   return (
     <>

@@ -34,6 +34,7 @@ import { JA } from './languages/ja';
 import { KA } from './languages/ka';
 import { KK } from './languages/kk';
 import { KM } from './languages/km';
+import { KN } from './languages/kn';
 import { KO } from './languages/ko';
 import { KU } from './languages/ku';
 import { LO } from './languages/lo';
@@ -123,6 +124,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
   ka: KA,
   kk: KK,
   km: KM,
+  kn: KN,
   ko: KO,
   ku: KU,
   lo: LO,
@@ -169,7 +171,7 @@ export const TRANSLATIONS: Record<I18NLanguage, ITranslationEntry> = {
  * - For French use "fr"
  *
  * Any new language should also be added to the documentation
- * https://docs.novu.co/notification-center/react/react-components#customize-the-ui-language
+ * https://docs.novu.co/notification-center/client/react/customization#customize-the-ui-language
  */
 export type I18NLanguage =
   | 'af'
@@ -209,6 +211,7 @@ export type I18NLanguage =
   | 'ka'
   | 'kk'
   | 'km'
+  | 'kn'
   | 'ko'
   | 'ku'
   | 'lo'

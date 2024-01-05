@@ -24,7 +24,7 @@ export class Outlook365Provider implements IEmailProvider {
       host: 'smtp.office365.com',
       port: 587,
       requireTLS: true,
-      connectionTImeout: 30000,
+      connectionTimeout: 30000,
       auth: {
         user: this.config.from,
         pass: this.config.password,
@@ -70,7 +70,10 @@ export class Outlook365Provider implements IEmailProvider {
 
   private createMailData(options: IEmailOptions): SendMailOptions {
     const sendMailOptions: SendMailOptions = {
-      from: this.config.from,
+      from: {
+        address: options.from || this.config.from,
+        name: options.senderName || this.config.senderName,
+      },
       to: options.to,
       subject: options.subject,
       html: options.html,

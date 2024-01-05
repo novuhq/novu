@@ -1,4 +1,4 @@
-FROM node:16-alpine3.16
+FROM node:20-alpine3.16
 
 ARG BULL_MQ_PRO_TOKEN
 ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
@@ -6,7 +6,7 @@ ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
 
-RUN npm install -g pnpm@7.33.4 --loglevel notice
+RUN npm install -g pnpm@8.9.0 --loglevel notice
 RUN npm i pm2 -g
 
 COPY .npmrc .

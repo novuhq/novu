@@ -28,9 +28,9 @@ The ultimate service for managing multi-channel notifications with a single API.
     ·
   <a href="https://discord.novu.co">Join Our Discord</a>
     ·
-    <a href="https://github.com/orgs/novuhq/projects/2">Roadmap</a>
+    <a href="https://roadmap.novu.co/">Roadmap</a>
     ·
-    <a href="https://twitter.com/novuhq">Twitter</a>
+    <a href="https://twitter.com/novuhq">X</a>
   </p>
   
 ## ⭐️ Why
@@ -77,7 +77,7 @@ await novu.trigger('<TRIGGER_NAME>', {
     name: 'Hello World',
     organization: {
       logo: 'https://happycorp.com/logo.png',
-    },
+    }
   },
 });
 ```
@@ -89,7 +89,7 @@ Using the Novu API and admin panel you can easily add real-time notification cen
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://github.com/iampearceman/Design-assets/blob/main/Untitled%20design%20(8).gif?raw=true">
   
-  Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
+  Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/introduction)
 
 </div>
 
@@ -140,7 +140,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 In-App
 
-- [x] [Novu](https://docs.novu.co/notification-center/getting-started)
+- [x] [Novu](https://docs.novu.co/notification-center/introduction)
 - [ ] MagicBell
 
 #### Other (Coming Soon...)

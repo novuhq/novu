@@ -10,17 +10,18 @@ export { VerifyPayloadService } from './verify-payload.service';
 export { EventsDistributedLockService } from './events-distributed-lock.service';
 export * from './calculate-delay';
 export * from './storage';
+export * from './metrics';
 export * from './distributed-lock';
 export {
   BullMqConnectionOptions,
   BullMqService,
   Job,
   JobsOptions,
+  Processor,
   Queue,
   QueueBaseOptions,
   QueueOptions,
   Worker,
   WorkerOptions,
-  OldInstanceBullMqService,
 } from './bull-mq';
 export * from './auth';
