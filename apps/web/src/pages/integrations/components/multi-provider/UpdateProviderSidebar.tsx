@@ -378,6 +378,7 @@ export function UpdateProviderSidebar({
                     {webhookUrlClipboard.copied ? <Check /> : <Copy />}
                   </CopyWrapper>
                 }
+                data-test-id="provider-webhook-url"
               />
             </InputWrapper>
           )}
