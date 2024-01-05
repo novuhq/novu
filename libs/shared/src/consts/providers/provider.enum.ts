@@ -44,6 +44,7 @@ export enum CredentialsKeyEnum {
   imageUrl = 'imageUrl',
   state = 'state',
   externalLink = 'externalLink',
+  useChatProviderWebhookUrl = 'useChatProviderWebhookUrl',
 }
 
 export enum EmailProviderIdEnum {

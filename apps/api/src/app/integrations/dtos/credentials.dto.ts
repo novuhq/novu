@@ -196,4 +196,10 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   externalLink?: string;
+
+  @ApiPropertyOptional()
+  @TransformToBoolean()
+  @IsBoolean()
+  @IsOptional()
+  useChatProviderWebhookUrl?: boolean;
 }
