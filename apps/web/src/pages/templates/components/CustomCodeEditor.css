@@ -1,20 +1,36 @@
-.monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused {
+.custom-code-editor-dark .monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused {
   color: #fff !important;
 }
 
-.monaco-editor .suggest-widget .monaco-list .monaco-list-row:hover {
+.custom-code-editor-dark .monaco-editor .suggest-widget .monaco-list .monaco-list-row:hover {
   background-color: #828299 !important;
 }
 
-.monaco-editor .suggest-widget .monaco-list .monaco-list-row:not(.focused) > .contents > .main .monaco-icon-label {
+.custom-code-editor-dark
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row:not(.focused)
+  > .contents
+  > .main
+  .monaco-icon-label {
   color: #fff !important;
 }
 
-.monaco-editor .suggest-widget .monaco-list .monaco-list-row > .contents > .main .monaco-highlighted-label .highlight {
+.custom-code-editor-dark
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row
+  > .contents
+  > .main
+  .monaco-highlighted-label
+  .highlight {
   color: #fff !important;
 }
 
-.monaco-editor
+.custom-code-editor-dark
+  .monaco-editor
   .suggest-widget
   .monaco-list
   .monaco-list-row.focused
@@ -23,6 +39,45 @@
   .monaco-highlighted-label
   .highlight {
   color: #fff !important;
+}
+
+.custom-code-editor
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row.focused
+  > .contents
+  > .main
+  .monaco-highlighted-label
+  .highlight {
+  color: #525266 !important;
+}
+
+.custom-code-editor
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row
+  > .contents
+  > .main
+  .monaco-highlighted-label
+  .highlight {
+  color: #525266 !important;
+}
+
+.custom-code-editor
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row:not(.focused)
+  > .contents
+  > .main
+  .monaco-icon-label {
+  color: #525266 !important;
+}
+
+.custom-code-editor .monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused {
+  color: #525266 !important;
 }
 
 .markerWarningText {
