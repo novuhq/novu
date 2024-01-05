@@ -53,6 +53,9 @@ export class UserRegister {
         CreateOrganizationCommand.create({
           name: command.organizationName,
           userId: user._id,
+          jobTitle: command.jobTitle,
+          domain: command.domain,
+          productUseCases: command.productUseCases,
         })
       );
     }

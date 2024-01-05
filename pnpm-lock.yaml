@@ -1265,7 +1265,7 @@ importers:
         specifier: ^12.0.0
         version: 12.20.55
       '@types/react':
-        specifier: 17.0.62
+        specifier: ^17.0.0
         version: 17.0.62
       '@types/react-dom':
         specifier: 17.0.20
@@ -2651,12 +2651,12 @@ importers:
       '@novu/zulip':
         specifier: ^0.22.0
         version: link:../../providers/zulip
+      '@segment/analytics-node':
+        specifier: ^1.1.4
+        version: 1.1.4
       '@sentry/node':
         specifier: ^7.12.1
         version: 7.47.0
-      analytics-node:
-        specifier: ^6.2.0
-        version: 6.2.0
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -2728,9 +2728,6 @@ importers:
       '@istanbuljs/nyc-config-typescript':
         specifier: ^1.0.1
         version: 1.0.2(nyc@15.1.0)
-      '@types/analytics-node':
-        specifier: ^3.1.9
-        version: 3.1.11
       '@types/jest':
         specifier: 29.5.2
         version: 29.5.2
@@ -2788,9 +2785,9 @@ importers:
       '@novu/shared':
         specifier: ^0.22.0
         version: link:../../libs/shared
-      analytics-node:
-        specifier: ^6.2.0
-        version: 6.2.0
+      '@segment/analytics-node':
+        specifier: ^1.1.4
+        version: 1.1.4
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -2831,9 +2828,6 @@ importers:
         specifier: ^9.0.0
         version: 9.0.0
     devDependencies:
-      '@types/analytics-node':
-        specifier: ^3.1.9
-        version: 3.1.11
       '@types/configstore':
         specifier: ^5.0.1
         version: 5.0.1
@@ -3318,7 +3312,7 @@ importers:
         specifier: ^0.22.0
         version: link:../../../notification-center
       '@types/react':
-        specifier: ^17.0.1
+        specifier: ^17.0.0
         version: 17.0.62
       react:
         specifier: ^17.0.1
@@ -13702,7 +13696,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.23.2
+      '@babel/runtime': 7.21.0
       '@emotion/babel-plugin': 11.10.6
       '@emotion/is-prop-valid': 1.2.0
       '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
@@ -20375,6 +20369,19 @@ packages:
       tslib: 2.6.2
     dev: false
 
+  /@segment/analytics-core@1.4.0:
+    resolution: {integrity: sha512-rLUv5Se0iDccykxY8bWUuoZT4gg8fNW00zMPqkJN+ONfj5/P1eaGQgygq2EHlR9j20a7tNtp5Y9bZ4rLzViIXQ==}
+    dependencies:
+      '@lukeed/uuid': 2.0.1
+      '@segment/analytics-generic-utils': 1.1.0
+      dset: 3.1.2
+      tslib: 2.6.2
+    dev: false
+
+  /@segment/analytics-generic-utils@1.1.0:
+    resolution: {integrity: sha512-nOgmbfsKD0jFzH3df+PtjLq3qTspdcFpIy/F5ziho5qiE+QATM8wY9TpvCNBbcHr2f3OGzT6SgjJLFlmM5Yb+w==}
+    dev: false
+
   /@segment/analytics-next@1.51.3:
     resolution: {integrity: sha512-c22GDz6rrhliIsgtLQjEcRiZdqb70+0hEyfTI6YpRXZzEXBwdJybO5ZCD7NRlVFHf/qXp1qcjHuQ5xyOGr2lJg==}
     dependencies:
@@ -20413,6 +20420,20 @@ packages:
       - supports-color
     dev: false
 
+  /@segment/analytics-node@1.1.4:
+    resolution: {integrity: sha512-yfhWjos0VKrueIhL7NwwaKJTMmDTDPMeNA9nmCZbbIppxWfgfUdqhkSOktQKTUdxLHOygTwuldvayjuftBsRBA==}
+    engines: {node: '>=14'}
+    dependencies:
+      '@lukeed/uuid': 2.0.1
+      '@segment/analytics-core': 1.4.0
+      '@segment/analytics-generic-utils': 1.1.0
+      buffer: 6.0.3
+      node-fetch: 2.7.0
+      tslib: 2.6.2
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
   /@segment/analytics.js-video-plugins@0.2.1:
     resolution: {integrity: sha512-lZwCyEXT4aaHBLNK433okEKdxGAuyrVmop4BpQqQSJuRz0DglPZgd9B/XjiiWs1UyOankg2aNYMN3VcS8t4eSQ==}
     dependencies:
@@ -20436,13 +20457,6 @@ packages:
 
   /@segment/isodate@1.0.3:
     resolution: {integrity: sha512-BtanDuvJqnACFkeeYje7pWULVv8RgZaqKHWwGFnL/g/TH/CcZjkIVTfGDp/MAxmilYHUkrX70SqwnYSTNEaN7A==}
-    dev: false
-
-  /@segment/loosely-validate-event@2.0.0:
-    resolution: {integrity: sha512-ZMCSfztDBqwotkl848ODgVcAmN4OItEWDCkshcKz0/W6gGSQayuuCtWV/MlodFivAZD793d6UgANd6wCXUfrIw==}
-    dependencies:
-      component-type: 1.2.1
-      join-component: 1.1.0
     dev: false
 
   /@segment/tsub@1.0.1:
@@ -24933,10 +24947,6 @@ packages:
       minimatch: 9.0.3
     dev: true
 
-  /@types/analytics-node@3.1.11:
-    resolution: {integrity: sha512-CNQVFhaEwL5dEzzV+OtJxt5psRQKJ+XHd0eokdPOM432tpDd4vgB6FzYRCDhDo8uxH0JPXlF6BVA9sbJPpUuug==}
-    dev: true
-
   /@types/argparse@1.0.38:
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
     dev: true
@@ -26069,7 +26079,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@eslint-community/regexpp': 4.9.1
+      '@eslint-community/regexpp': 4.5.0
       '@typescript-eslint/parser': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
       '@typescript-eslint/scope-manager': 5.58.0
       '@typescript-eslint/type-utils': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
@@ -27526,22 +27536,6 @@ packages:
       require-from-string: 2.0.2
       uri-js: 4.4.1
 
-  /analytics-node@6.2.0:
-    resolution: {integrity: sha512-NLU4tCHlWt0tzEaFQL7NIoWhq2KmQSmz0JvyS2lYn6fc4fEjTMSabhJUx8H1r5995FX8fE3rZ15uIHU6u+ovlQ==}
-    engines: {node: '>=4'}
-    dependencies:
-      '@segment/loosely-validate-event': 2.0.0
-      axios: 0.27.2
-      axios-retry: 3.2.0
-      lodash.isstring: 4.0.1
-      md5: 2.3.0
-      ms: 2.1.3
-      remove-trailing-slash: 0.1.1
-      uuid: 8.3.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
   /ansi-align@3.0.1:
     resolution: {integrity: sha512-IOfwwBF5iczOjp/WeY4YxyjqAFMQoZufdQWDd19SEExbVLNXqvpzSJ/M7Za4/sCPmQ0+GRquoA7bGcINcxew6w==}
     dependencies:
@@ -28373,12 +28367,6 @@ packages:
     engines: {node: '>=4'}
     dev: true
 
-  /axios-retry@3.2.0:
-    resolution: {integrity: sha512-RK2cLMgIsAQBDhlIsJR5dOhODPigvel18XUv1dDXW+4k1FzebyfRk+C+orot6WPZOYFKSfhLwHPwVmTVOODQ5w==}
-    dependencies:
-      is-retry-allowed: 1.2.0
-    dev: false
-
   /axios-retry@3.9.1:
     resolution: {integrity: sha512-8PJDLJv7qTTMMwdnbMvrLYuvB47M81wRtxQmEdV5w4rgbTXTt+vtPkXwajOfOdSyv/wZICJOC+/UhXH4aQ/R+w==}
     dependencies:
@@ -28398,15 +28386,6 @@ packages:
     resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
     dependencies:
       follow-redirects: 1.15.2
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
-  /axios@0.27.2:
-    resolution: {integrity: sha512-t+yRIyySRTp/wua5xEr+z1q60QmLq8ABsS5O9Me1AsE5dfKqgnCFzwiCZZ/cGNd1lq4/7akDWMxdhVlucjmnOQ==}
-    dependencies:
-      follow-redirects: 1.15.2
-      form-data: 4.0.0
     transitivePeerDependencies:
       - debug
     dev: false
@@ -30315,10 +30294,6 @@ packages:
 
   /component-emitter@1.3.0:
     resolution: {integrity: sha512-Rd3se6QB+sO1TwqZjscQrurpEPIfO0/yYnSin6Q/rD3mOutHvUrCAhJub3r90uNb+SESBuE0QYoB90YdfatsRg==}
-
-  /component-type@1.2.1:
-    resolution: {integrity: sha512-Kgy+2+Uwr75vAi6ChWXgHuLvd+QLD7ssgpaRq2zCvt80ptvAfMc/hijcJxXkBa2wMlEZcJvC2H8Ubo+A9ATHIg==}
-    dev: false
 
   /compress-commons@4.1.1:
     resolution: {integrity: sha512-QLdDLCKNV2dtoTorqgxngQCMA+gWXkM/Nwu7FpeBhk/RdkzimqC3jueb/FDmaZeXh+uby1jkBqE3xArsLBE5wQ==}
@@ -33221,7 +33196,7 @@ packages:
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)
-      has: 1.0.3
+      has: 1.0.4
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -33299,7 +33274,7 @@ packages:
       damerau-levenshtein: 1.0.8
       emoji-regex: 9.2.2
       eslint: 8.51.0
-      has: 1.0.3
+      has: 1.0.4
       jsx-ast-utils: 3.3.3
       language-tags: 1.0.5
       minimatch: 3.1.2
@@ -37202,11 +37177,6 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
-  /is-retry-allowed@1.2.0:
-    resolution: {integrity: sha512-RUbUeKwvm3XG2VYamhJL1xFktgjvPzL0Hq8C+6yrWIswDy3BIXGqCxhxkc30N9jqK311gVU137K8Ei55/zVJRg==}
-    engines: {node: '>=0.10.0'}
-    dev: false
-
   /is-retry-allowed@2.2.0:
     resolution: {integrity: sha512-XVm7LOeLpTW4jV19QSH38vkswxoLud8sQ57YwJVTPWdiaI9I8keEhGFpBlslyVsgdQy4Opg8QOLb8YRgsyZiQg==}
     engines: {node: '>=10'}
@@ -38673,10 +38643,6 @@ packages:
       '@sideway/address': 4.1.4
       '@sideway/formula': 3.0.1
       '@sideway/pinpoint': 2.0.0
-    dev: false
-
-  /join-component@1.1.0:
-    resolution: {integrity: sha512-bF7vcQxbODoGK1imE2P9GS9aw4zD0Sd+Hni68IMZLj7zRnquH7dXUmMw9hDI5S/Jzt7q+IyTXN0rSg2GI0IKhQ==}
     dev: false
 
   /jose@4.13.1:
@@ -47074,10 +47040,6 @@ packages:
     resolution: {integrity: sha512-/hS+Y0u3aOfIETiaiirUFwDBDzmXPvO+jAfKTitUngIPzdKc6Z0LoFjM/CK5PL4C+eKwHohlHAb6H0VFfmmUsw==}
     dev: true
 
-  /remove-trailing-slash@0.1.1:
-    resolution: {integrity: sha512-o4S4Qh6L2jpnCy83ysZDau+VORNvnFw07CKSAymkd6ICNVEPisMyzlc00KlvvicsxKck94SEwhDnMNdICzO+tA==}
-    dev: false
-
   /renderkid@2.0.7:
     resolution: {integrity: sha512-oCcFyxaMrKsKcTY59qnCAtmDVSLfPbrv6A3tVbPdFMMrv5jaK10V6m40cKsoPNhAqN6rmHW9sswW4o3ruSrwUQ==}
     dependencies:
@@ -50268,7 +50230,7 @@ packages:
       chalk: 4.1.2
       enhanced-resolve: 5.15.0
       micromatch: 4.0.5
-      semver: 7.5.4
+      semver: 7.5.2
       typescript: 4.9.5
       webpack: 5.82.1(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
     dev: true

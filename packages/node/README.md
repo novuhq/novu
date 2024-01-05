@@ -965,8 +965,14 @@ import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
+const changesParams = {
+  page: 1, //optional
+  limit: 20, // optional
+  promoted: false // required
+}
+
 // get all changes
-await novu.changes.get()
+await novu.changes.get(changesParams)
 
 // get changes count
 await novu.changes.getCount()

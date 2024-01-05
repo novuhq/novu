@@ -24,9 +24,9 @@ runs:
         do
           sleep 1
           [[ counter -eq $max_retry ]] && echo "Failed!" && exit 1
-          aws --endpoint-url=http://localhost:4566 s3 ls
+          aws --endpoint-url=http://127.0.0.1:4566 s3 ls
           echo "Trying again. Try #$counter"
           ((counter++))
         done
         docker-compose -f docker-compose.localstack.yml logs --tail="all"
-        aws --endpoint-url=http://localhost:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
+        aws --endpoint-url=http://127.0.0.1:4566 --cli-connect-timeout 600 s3 mb s3://novu-test

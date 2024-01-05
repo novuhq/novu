@@ -65,7 +65,6 @@ export { IframeLogo } from './general/IframeLogo';
 export { Star } from './general/Star';
 export { StarEmpty } from './general/StarEmpty';
 export { NovuLogo } from './general/NovuLogo';
-export { DelayAction } from './general/DelayAction';
 export { DigestAction } from './general/DigestAction';
 export { InAppFilled } from './general/InAppFilled';
 export { EmailFilled } from './general/EmailFilled';
@@ -91,6 +90,9 @@ export { Conditions } from './general/Conditions';
 export { Logout } from './general/Logout';
 export { InviteMembers } from './general/InviteMembers';
 export { Translation } from './general/Translation';
+export { MultiChannel } from './general/MultiChannel';
+export { HalfClock } from './general/HalfClock';
+export { RingingBell } from './general/RingingBell';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';
@@ -150,6 +152,7 @@ export { DisconnectGradient } from './gradient/DisconnectGradient';
 export { BoltOutlinedGradient } from './gradient/BoltOutlinedGradient';
 export { FilterOutlined } from './gradient/FilterOutlined';
 export { TerminalGradient } from './gradient/TerminalGradient';
+export { DelayAction } from './gradient/DelayAction';
 
 export { GitHub } from './social/GitHub';
 export { Google } from './social/Google';
