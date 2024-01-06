@@ -20,7 +20,6 @@ import {
 } from '@novu/dal';
 import {
   AuthProviderEnum,
-  EncryptedSecret,
   IJwtPayload,
   ISubscriberJwt,
   MemberRoleEnum,
@@ -195,11 +194,8 @@ export class AuthService {
 
   @Instrument()
   public async validateApiKey(apiKey: string): Promise<IJwtPayload> {
-    const encryptedApiKey = encryptApiKey(apiKey);
-
     const { environment, user, error } = await this.getApiKeyUser({
-      decryptedKey: apiKey,
-      apiKey: encryptedApiKey,
+      apiKey,
     });
 
     if (error) throw new UnauthorizedException(error);
@@ -380,45 +376,33 @@ export class AuthService {
   }
 
   @CachedEntity({
-    builder: ({
-      decryptedKey,
-      apiKey,
-    }: {
-      decryptedKey: string;
-      apiKey: EncryptedSecret;
-    }) =>
+    builder: ({ apiKey }: { apiKey: string }) =>
       buildAuthServiceKey({
         apiKey: apiKey,
       }),
   })
-  private async getApiKeyUser({
-    decryptedKey,
-    apiKey,
-  }: {
-    decryptedKey: string;
-    apiKey: EncryptedSecret;
-  }): Promise<{
+  private async getApiKeyUser({ apiKey }: { apiKey: string }): Promise<{
     environment?: EnvironmentEntity;
     user?: UserEntity;
     error?: string;
   }> {
+    const encryptedApiKey = encryptApiKey(apiKey);
+
     /*
      * backward compatibility - after encrypt-api-keys-migration execution:
      * * update `findByApiKeyBackwardCompatibility` to `findByApiKey`
-     * * remove decryptedKey param from getApiKeyUser function input
-     * * remove decryptedKey param from CachedEntity decorator input
      */
     const environment =
       await this.environmentRepository.findByApiKeyBackwardCompatibility({
-        decryptedKey,
-        encryptedKey: apiKey,
+        decryptedKey: apiKey,
+        encryptedKey: encryptedApiKey,
       });
 
     if (!environment) {
       return { error: 'Environment not found' };
     }
 
-    let key = environment.apiKeys.find((i) => i.key === apiKey);
+    let key = environment.apiKeys.find((i) => i.key === encryptedApiKey);
 
     if (!key) {
       /*
@@ -426,7 +410,7 @@ export class AuthService {
        * find by decrypted key if key not found, because of backward compatibility
        * use-case: findByApiKeyBackwardCompatibility found by decrypted key, so we need to validate by decrypted key
        */
-      key = environment.apiKeys.find((i) => i.key === decryptedKey);
+      key = environment.apiKeys.find((i) => i.key === apiKey);
     }
 
     if (!key) {

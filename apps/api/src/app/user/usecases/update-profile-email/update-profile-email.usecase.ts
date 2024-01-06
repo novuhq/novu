@@ -5,7 +5,7 @@ import {
   AnalyticsService,
   buildAuthServiceKey,
   buildUserKey,
-  encryptApiKey,
+  decryptApiKey,
   InvalidateCacheService,
 } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
@@ -47,12 +47,11 @@ export class UpdateProfileEmail {
 
     const apiKeys = await this.environmentRepository.getApiKeys(command.environmentId);
 
-    // backward compatibility - remove encryption once encrypt-api-keys-migration executed
-    const encryptedApiKey = encryptApiKey(apiKeys[0].key);
+    const decryptedApiKey = decryptApiKey(apiKeys[0].key);
 
     await this.invalidateCache.invalidateByKey({
       key: buildAuthServiceKey({
-        apiKey: encryptedApiKey,
+        apiKey: decryptedApiKey,
       }),
     });
 
