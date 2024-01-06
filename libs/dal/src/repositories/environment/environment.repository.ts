@@ -51,23 +51,19 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
     );
   }
 
-  async findByApiKey(key: EncryptedSecret) {
+  async findByApiKey(hash: string) {
     return await this.findOne({
-      'apiKeys.key': key,
+      'apiKeys.hash': hash,
     });
   }
 
-  // backward compatibility - delete findByApiKeyBackwardCompatibility and use findByApiKey instead once encrypt-api-keys-migration executed
-  async findByApiKeyBackwardCompatibility({
-    decryptedKey,
-    encryptedKey,
-  }: {
-    decryptedKey: string;
-    encryptedKey: EncryptedSecret;
-  }) {
-    return await this.findOne({
-      'apiKeys.key': { $in: [decryptedKey, encryptedKey] },
-    });
+  /*
+   * backward compatibility -
+   * * delete findByApiKeyBackwardCompatibility
+   * * use findByApiKey instead once encrypt-api-keys-migration executed
+   */
+  async findByApiKeyBackwardCompatibility({ key, hash }: { key: string; hash: string }) {
+    return await this.findOne({ $or: [{ 'apiKeys.key': key }, { 'apiKeys.hash': hash }] });
   }
 
   async getApiKeys(environmentId: string): Promise<IApiKey[]> {
@@ -82,7 +78,7 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
     return environment.apiKeys;
   }
 
-  async updateApiKey(environmentId: string, key: EncryptedSecret, userId: string) {
+  async updateApiKey(environmentId: string, key: EncryptedSecret, userId: string, hash?: string) {
     await this.update(
       {
         _id: environmentId,
@@ -93,6 +89,7 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
             {
               key,
               _userId: userId,
+              hash,
             },
           ],
         },

@@ -1,7 +1,8 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { EnvironmentRepository } from '@novu/dal';
 import * as hat from 'hat';
-import { encryptApiKey } from '@novu/application-generic';
+import { createHash } from 'crypto';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+
+import { EnvironmentRepository } from '@novu/dal';
 
 const API_KEY_GENERATION_MAX_RETRIES = 3;
 
@@ -28,12 +29,12 @@ export class GenerateUniqueApiKey {
   }
 
   private async validateIsApiKeyUsed(apiKey: string) {
-    const encryptedApiKey = encryptApiKey(apiKey);
+    const hashedApiKey = createHash('sha256').update(apiKey).digest('hex');
 
     // backward compatibility - update to `findByApiKey` after encrypt-api-keys-migration run
     const environment = await this.environmentRepository.findByApiKeyBackwardCompatibility({
-      decryptedKey: apiKey,
-      encryptedKey: encryptedApiKey,
+      key: apiKey,
+      hash: hashedApiKey,
     });
 
     return !!environment;

@@ -6,8 +6,13 @@ import type { OrganizationId } from '../organization';
 import type { ChangePropsValueType } from '../../types/helpers';
 
 export interface IApiKey {
-  // backward compatibility - remove `string` type after encrypt-api-keys-migration run
+  /*
+   * backward compatibility -
+   * remove `string` type after encrypt-api-keys-migration run
+   * remove the optional from hash
+   */
   key: EncryptedSecret | string;
+  hash?: string;
   _userId: string;
 }
 

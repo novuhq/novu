@@ -1,6 +1,7 @@
 import { EnvironmentRepository, IApiKey } from '@novu/dal';
 import { encryptSecret } from '@novu/application-generic';
 import { EncryptedSecret } from '@novu/shared';
+import { createHash } from 'crypto';
 
 export async function encryptApiKeysMigration() {
   // eslint-disable-next-line no-console
@@ -46,7 +47,10 @@ export async function encryptApiKeysMigration() {
 
 export function encryptApiKeysWithGuard(apiKeys: IApiKey[]): IEncryptedApiKey[] {
   return apiKeys.map((apiKey: IApiKey) => {
+    const hashedApiKey = createHash('sha256').update(apiKey.key).digest('hex');
+
     const encryptedApiKey: IEncryptedApiKey = {
+      hash: apiKey?.hash ? apiKey?.hash : hashedApiKey,
       key: isEncrypted(apiKey.key) ? apiKey.key : encryptSecret(apiKey.key),
       _userId: apiKey._userId,
     };
@@ -62,4 +66,5 @@ function isEncrypted(apiKey: string): apiKey is EncryptedSecret {
 export interface IEncryptedApiKey {
   key: EncryptedSecret;
   _userId: string;
+  hash: string;
 }

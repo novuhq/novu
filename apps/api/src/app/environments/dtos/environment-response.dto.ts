@@ -23,4 +23,5 @@ export class EnvironmentResponseDto {
 export interface IApiKeyDto {
   key: string;
   _userId: string;
+  hash?: string;
 }

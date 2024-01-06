@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { Injectable } from '@nestjs/common';
+import { createHash } from 'crypto';
 
 import { EnvironmentRepository } from '@novu/dal';
 import { encryptApiKey } from '@novu/application-generic';
@@ -21,7 +22,9 @@ export class CreateEnvironment {
   ) {}
 
   async execute(command: CreateEnvironmentCommand) {
-    const encryptedKey = encryptApiKey(await this.generateUniqueApiKey.execute());
+    const key = await this.generateUniqueApiKey.execute();
+    const encryptedKey = encryptApiKey(key);
+    const hashedApiKey = createHash('sha256').update(key).digest('hex');
 
     const environment = await this.environmentRepository.create({
       _organizationId: command.organizationId,
@@ -32,6 +35,7 @@ export class CreateEnvironment {
         {
           key: encryptedKey,
           _userId: command.userId,
+          hash: hashedApiKey,
         },
       ],
     });

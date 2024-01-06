@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import {
   forwardRef,
   Inject,
@@ -45,7 +46,6 @@ import {
   CachedEntity,
 } from '../cache';
 import { normalizeEmail } from '../../utils/email-normalization';
-import { encryptApiKey } from '../../encryption';
 
 @Injectable()
 export class AuthService {
@@ -386,7 +386,7 @@ export class AuthService {
     user?: UserEntity;
     error?: string;
   }> {
-    const encryptedApiKey = encryptApiKey(apiKey);
+    const hashedApiKey = createHash('sha256').update(apiKey).digest('hex');
 
     /*
      * backward compatibility - after encrypt-api-keys-migration execution:
@@ -394,15 +394,15 @@ export class AuthService {
      */
     const environment =
       await this.environmentRepository.findByApiKeyBackwardCompatibility({
-        decryptedKey: apiKey,
-        encryptedKey: encryptedApiKey,
+        key: apiKey,
+        hash: hashedApiKey,
       });
 
     if (!environment) {
       return { error: 'Environment not found' };
     }
 
-    let key = environment.apiKeys.find((i) => i.key === encryptedApiKey);
+    let key = environment.apiKeys.find((i) => i.hash === hashedApiKey);
 
     if (!key) {
       /*

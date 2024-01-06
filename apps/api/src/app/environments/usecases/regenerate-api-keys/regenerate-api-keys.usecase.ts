@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { Injectable } from '@nestjs/common';
 
 import { EnvironmentRepository } from '@novu/dal';
@@ -24,11 +25,13 @@ export class RegenerateApiKeys {
 
     const key = await this.generateUniqueApiKey.execute();
     const encryptedApiKey = encryptApiKey(key);
+    const hashedApiKey = createHash('sha256').update(key).digest('hex');
 
     const environments = await this.environmentRepository.updateApiKey(
       command.environmentId,
       encryptedApiKey,
-      command.userId
+      command.userId,
+      hashedApiKey
     );
 
     return environments.map((item) => {
