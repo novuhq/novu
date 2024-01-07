@@ -337,7 +337,7 @@ export class HeadlessService {
         WebSocketEventEnum.RECEIVED,
         (data?: { message: IMessage }) => {
           if (data?.message) {
-            this.queryClient.removeQueries(NOTIFICATIONS_QUERY_KEY, {
+            this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
               exact: false,
             });
             listener(data.message);
@@ -365,9 +365,6 @@ export class HeadlessService {
         WebSocketEventEnum.UNSEEN,
         (data?: { unseenCount: number }) => {
           if (Number.isInteger(data?.unseenCount)) {
-            this.queryClient.removeQueries(NOTIFICATIONS_QUERY_KEY, {
-              exact: false,
-            });
             this.queryClient.setQueryData<{ count: number }>(
               UNSEEN_COUNT_QUERY_KEY,
               (oldData) => ({ count: data?.unseenCount ?? oldData.count })
@@ -397,9 +394,6 @@ export class HeadlessService {
         WebSocketEventEnum.UNREAD,
         (data?: { unreadCount: number }) => {
           if (Number.isInteger(data?.unreadCount)) {
-            this.queryClient.removeQueries(NOTIFICATIONS_QUERY_KEY, {
-              exact: false,
-            });
             this.queryClient.setQueryData<{ count: number }>(
               UNREAD_COUNT_QUERY_KEY,
               (oldData) => ({ count: data?.unreadCount ?? oldData.count })
@@ -789,7 +783,7 @@ export class HeadlessService {
       options: {
         mutationFn: (variables) => this.api.removeMessage(variables.messageId),
         onSuccess: (data) => {
-          this.queryClient.removeQueries(NOTIFICATIONS_QUERY_KEY, {
+          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
             exact: false,
           });
         },
@@ -982,7 +976,7 @@ export class HeadlessService {
         mutationFn: (variables) =>
           this.api.removeAllMessages(variables?.feedId),
         onSuccess: (data) => {
-          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
+          this.queryClient.removeQueries(NOTIFICATIONS_QUERY_KEY, {
             exact: false,
           });
         },
