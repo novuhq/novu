@@ -36,7 +36,7 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
     if (isAutoSuggestionTrigger) {
       const checkAutoSuggestionsTrigger = () => {
         const data = content;
-        const result = getCaretCoordinatesAndAchorOffset(ref.current);
+        const result = getCaretCoordinatesAndAnchorOffset(ref.current);
         if (!result?.anchorOffset || !data) return;
 
         const characters = checkPreviousChar(data, result?.anchorOffset);
@@ -77,7 +77,7 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
     return undefined;
   };
 
-  const getCaretCoordinatesAndAchorOffset = (element) => {
+  const getCaretCoordinatesAndAnchorOffset = (element) => {
     const selection = document.getSelection();
     const caretRange = selection?.getRangeAt(0);
     const caretRect = caretRange?.getBoundingClientRect();
