@@ -1284,31 +1284,29 @@ import { Novu } from '@novu/node';
 const novu = new Novu('<NOVU_API_KEY>');
 
 await novu.workflowoverrides.create({
-  workflowId: 'workdflowId_123',
-  tenantId: 'tenantID_123',
+  workflowId: '8329rufivdsnvs9u334',
+  tenantId: 'wvnq340i2jfwqv392',
   active: false,
+  preferenceSettings: {
+    email: false,
+    sms: false,
+    in_app: false,
+    chat: true,
+    push: false,
+  }
 })
 ```
 
-- #### get all workflow overrides
+- #### List all workflow overrides
 ```ts
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.workflowoverrides.list();
+await novu.workflowoverrides.list(3,10);
 ```
 
-- #### get all workflow overrides from the 3rd page and with a limit of 20
-```ts
-import { Novu } from '@novu/node';
-
-const novu = new Novu('<NOVU_API_KEY>');
-
-await novu.workflowoverrides.list(3,20)
-```
-
-- #### get workflow override by overrideId
+- #### Get workflow override by id
 ```ts
 import { Novu } from '@novu/node';
 
@@ -1317,42 +1315,35 @@ const novu = new Novu('<NOVU_API_KEY>');
 await novu.workflowoverrides.getOneById('overrideId_123');
 ```
 
-- #### get workflow override by tenant
+- #### Get workflow override by tenant and workflow ids
 ```ts
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.workflowoverrides.getOneByTenantIdandWorkflowId(
-      'workflowId_123',
-      'tenantId_123'
-    );
+await novu.workflowoverrides.getOneByTenantIdandWorkflowId('workflowId_123','tenantId_123');
 ```
 
-- #### Update workflow override
+- #### Update workflow override by tenant and workflow ids
 ```ts
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.workflowoverrides.updateOneByTenantIdandWorkflowId(
-      'overrideId_123',
-      'tenantId_123',
-      {
-        active: false,
-      }
-    );
+await novu.workflowoverrides.updateOneByTenantIdandWorkflowId('overrideId_123','tenantId_123',{
+  active: false,
+});
 ```
 
-- #### Update workflow override by tenantId
+- #### Update workflow override by id
 ```ts
 import { Novu } from '@novu/node';
 
 const novu = new Novu('<NOVU_API_KEY>');
 
-await novu.workflowoverrides.updateOneById('OVERRIDE_ID', {
-      active: false,
-    });
+await novu.workflowoverrides.updateOneById('OVERRIDE_ID',{
+  active: false,
+});
 ```
 
 - #### Delete workflow override
