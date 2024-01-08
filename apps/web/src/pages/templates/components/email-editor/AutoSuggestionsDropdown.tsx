@@ -117,5 +117,4 @@ const VariableRow = styled.div`
     opacity: 0.8;
     background: ${colors.B30};
   }
-  pointerevents: 'auto';
 `;
