@@ -155,7 +155,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [Organizations](#organizations)
 - [Inbound Parse](#inbound-parse)
 - [Execution Details](#execution-details)
-- [Workflow Overrides](#workflow-override)
+- [Workflow Overrides](#workflow-overrides)
 
 ### Subscribers
 
