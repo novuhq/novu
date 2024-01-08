@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
   getExecutionLogWorkerOptions,
@@ -9,9 +9,9 @@ import {
   WorkerOptions,
   WorkerProcessor,
   CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
   BullMqService,
   WorkflowInMemoryProviderService,
+  IExecutionLogJobDataDto,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 const LOG_CONTEXT = 'ExecutionLogWorker';
@@ -31,7 +31,7 @@ export class ExecutionLogWorker extends ExecutionLogWorkerService {
   }
 
   private getWorkerProcessor(): WorkerProcessor {
-    return async ({ data }: { data: CreateExecutionDetailsCommand }) => {
+    return async ({ data }: { data: IExecutionLogJobDataDto }) => {
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
