@@ -545,7 +545,8 @@
     "openapi",
     "headerapikey",
     "isend",
-    "Otel"
+    "Otel",
+    "opentelemetry"
   ],
   "flagWords": [],
   "patterns": [
