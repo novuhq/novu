@@ -53,6 +53,15 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   STRIPE_API_KEY: str({
     default: undefined,
   }),
+  NOTIFICATION_RETENTION_DAYS: num({
+    default: 30,
+  }),
+  MESSAGE_GENERIC_RETENTION_DAYS: num({
+    default: 30,
+  }),
+  MESSAGE_IN_APP_RETENTION_DAYS: num({
+    default: 365,
+  }),
 };
 
 if (process.env.STORAGE_SERVICE === 'AZURE') {
