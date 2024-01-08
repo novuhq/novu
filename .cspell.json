@@ -544,7 +544,8 @@
     "Stdev",
     "openapi",
     "headerapikey",
-    "isend"
+    "isend",
+    "Otel"
   ],
   "flagWords": [],
   "patterns": [
