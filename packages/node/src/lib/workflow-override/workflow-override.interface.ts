@@ -7,7 +7,7 @@ export interface IWorkflowOverrides {
   getOneByTenantIdandWorkflowId(workflowId: string, tenantId: string);
   updateOneById(overrideId: string, data: IWorkflowOverrideUpdatePayload);
   updateOneByTenantIdandWorkflowId(
-    overrideId: string,
+    workflowId: string,
     tenantId: string,
     data: IWorkflowOverrideUpdatePayload
   );
