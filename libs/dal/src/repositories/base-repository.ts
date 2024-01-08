@@ -20,6 +20,18 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return new Types.ObjectId().toString();
   }
 
+  public static isMongoId(id: string) {
+    const libValidation = Types.ObjectId.isValid(id);
+
+    if (!libValidation) {
+      return false;
+    }
+
+    const castValidation = id === new Types.ObjectId(id).toString();
+
+    return castValidation;
+  }
+
   protected convertObjectIdToString(value: Types.ObjectId): string {
     return value.toString();
   }
