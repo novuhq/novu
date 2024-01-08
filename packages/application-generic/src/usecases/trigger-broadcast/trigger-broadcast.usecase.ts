@@ -11,7 +11,6 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  ISubscribersDefine,
   ProvidersIdEnum,
   SubscriberSourceEnum,
 } from '@novu/shared';
@@ -28,6 +27,7 @@ import { ProcessTenant } from '../process-tenant';
 import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-recipients.use-case';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
+import { IProcessSubscriberBulkJobDto } from '../../dtos';
 
 const LOG_CONTEXT = 'TriggerBroadcastUseCase';
 const QUEUE_CHUNK_SIZE = 100;
@@ -140,7 +140,7 @@ export class TriggerBroadcast {
   private mapSubscribersToJobs(
     subscribers: { subscriberId: string }[],
     command: TriggerBroadcastCommand
-  ) {
+  ): IProcessSubscriberBulkJobDto[] {
     return subscribers.map((subscriber) => {
       return {
         name: command.transactionId + subscriber.subscriberId,
@@ -157,6 +157,7 @@ export class TriggerBroadcast {
           subscriber,
           templateId: command.template._id,
           _subscriberSource: SubscriberSourceEnum.BROADCAST,
+          requestCategory: command.requestCategory,
         },
         groupId: command.organizationId,
       };

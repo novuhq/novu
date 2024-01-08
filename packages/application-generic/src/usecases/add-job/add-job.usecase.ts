@@ -137,9 +137,10 @@ export class AddJob {
     }
 
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.STEP_QUEUED,
@@ -148,8 +149,8 @@ export class AddJob {
         isTest: false,
         isRetry: false,
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
 
     const delay = command.filtered ? 0 : digestAmount ?? delayAmount;
 
@@ -189,12 +190,12 @@ export class AddJob {
       LOG_CONTEXT
     );
 
-    await this.standardQueueService.addMinimalJob(
-      job._id,
-      jobData,
-      job._organizationId,
-      options
-    );
+    await this.standardQueueService.add({
+      name: job._id,
+      data: jobData,
+      groupId: job._organizationId,
+      options: options,
+    });
 
     if (delay) {
       const logMessage =
@@ -206,9 +207,9 @@ export class AddJob {
 
       Logger.verbose(logMessage, LOG_CONTEXT);
       const meta = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        meta._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: meta._id,
+        data: CreateExecutionDetailsCommand.create({
           ...meta,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail:
@@ -221,8 +222,8 @@ export class AddJob {
           isRetry: false,
           raw: JSON.stringify({ delay }),
         }),
-        job._organizationId
-      );
+        groupId: job._organizationId,
+      });
     }
   }
 

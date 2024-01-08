@@ -39,9 +39,7 @@ describe('Job metrics Queue service', () => {
       );
       expect(activeJobsMetricQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(activeJobsMetricQueueService.topic).toEqual('metric-active-jobs');
-      expect(
-        await activeJobsMetricQueueService.bullMqService.getStatus()
-      ).toEqual({
+      expect(await activeJobsMetricQueueService.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'metric-active-jobs',
         workerName: undefined,

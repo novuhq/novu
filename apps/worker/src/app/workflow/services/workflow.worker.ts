@@ -12,6 +12,7 @@ import {
   WorkerProcessor,
   BullMqService,
   WorkflowInMemoryProviderService,
+  IWorkflowDataDto,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
@@ -33,7 +34,7 @@ export class WorkflowWorker extends WorkflowWorkerService {
   }
 
   private getWorkerProcessor(): WorkerProcessor {
-    return async ({ data }: { data: TriggerEventCommand }) => {
+    return async ({ data }: { data: IWorkflowDataDto }) => {
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
