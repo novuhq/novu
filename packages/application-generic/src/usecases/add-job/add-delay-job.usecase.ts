@@ -57,9 +57,9 @@ export class AddDelayJob {
     } catch (error: any) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
 
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.DELAY_MISCONFIGURATION,
@@ -69,8 +69,8 @@ export class AddDelayJob {
           isRetry: false,
           raw: JSON.stringify({ error: error.message }),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       await this.jobRepository.updateStatus(
         command.environmentId,

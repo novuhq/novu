@@ -70,6 +70,7 @@ export class SubscriberJobBound {
       tenant,
       identifier,
       _subscriberSource,
+      requestCategory,
     } = command;
 
     const template = await this.getNotificationTemplate({
@@ -94,6 +95,7 @@ export class SubscriberJobBound {
         channels: template?.steps.map((step) => step.template?.type),
         source: command.payload.__source || 'api',
         subscriberSource: _subscriberSource || null,
+        requestCategory: requestCategory || null,
       }
     );
 
@@ -125,22 +127,27 @@ export class SubscriberJobBound {
       return;
     }
 
+    const createNotificationJobsCommand: CreateNotificationJobsCommand = {
+      environmentId,
+      identifier,
+      organizationId,
+      overrides: command.overrides,
+      payload: command.payload,
+      subscriber: subscriberProcessed,
+      template,
+      templateProviderIds,
+      to: subscriber,
+      transactionId: command.transactionId,
+      userId,
+      tenant,
+    };
+
+    if (actor) {
+      createNotificationJobsCommand.actor = actor;
+    }
+
     const notificationJobs = await this.createNotificationJobs.execute(
-      CreateNotificationJobsCommand.create({
-        environmentId,
-        identifier,
-        organizationId,
-        overrides: command.overrides,
-        payload: command.payload,
-        subscriber: subscriberProcessed,
-        template,
-        templateProviderIds,
-        to: subscriber,
-        transactionId: command.transactionId,
-        userId,
-        ...(actor && { actor }),
-        tenant,
-      })
+      CreateNotificationJobsCommand.create(createNotificationJobsCommand)
     );
 
     await this.storeSubscriberJobs.execute(

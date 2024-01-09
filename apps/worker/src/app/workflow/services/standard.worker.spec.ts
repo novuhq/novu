@@ -205,7 +205,7 @@ describe('Standard Worker', () => {
       _userId: jobCreated._userId,
     };
 
-    await standardQueueService.addMinimalJob(jobCreated._id, jobData, '0');
+    await standardQueueService.add({ name: jobCreated._id, data: jobData, groupId: '0' });
 
     await jobsService.awaitRunningJobs({
       templateId: _templateId,
@@ -268,7 +268,7 @@ describe('Standard Worker', () => {
       _userId: jobCreated._userId,
     };
 
-    await standardQueueService.addMinimalJob(jobCreated._id, jobData, '0');
+    await standardQueueService.add({ name: jobCreated._id, data: jobData, groupId: '0' });
 
     await jobsService.awaitRunningJobs({
       templateId: _templateId,

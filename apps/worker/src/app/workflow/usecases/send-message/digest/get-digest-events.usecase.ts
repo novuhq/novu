@@ -42,9 +42,9 @@ export abstract class GetDigestEvents {
 
     if (!currentTrigger) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
           detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
@@ -53,8 +53,8 @@ export abstract class GetDigestEvents {
           isTest: false,
           isRetry: false,
         }),
-        currentJob._organizationId
-      );
+        groupId: currentJob._organizationId,
+      });
       const message = `Trigger job for jobId ${currentJob._id} is not found`;
       Logger.error(message, LOG_CONTEXT);
       throw new PlatformException(message);
