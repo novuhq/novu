@@ -28,7 +28,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
 
     mockedAxios.get.mockResolvedValue(mockedResponse);
 
-    const result = await novu.workflowoverrides.list();
+    const result = await novu.workflowOverrides.list();
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith('/workflow-overrides', {
       params: {
@@ -51,7 +51,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
 
     mockedAxios.get.mockResolvedValue(mockedResponse);
 
-    const result = await novu.workflowoverrides.list(2);
+    const result = await novu.workflowOverrides.list(2);
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith('/workflow-overrides', {
@@ -75,7 +75,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
 
     mockedAxios.get.mockResolvedValue(mockedResponse);
 
-    const result = await novu.workflowoverrides.list(0, 15);
+    const result = await novu.workflowOverrides.list(0, 15);
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith('/workflow-overrides', {
@@ -99,7 +99,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
 
     mockedAxios.get.mockResolvedValue(mockedResponse);
 
-    const result = await novu.workflowoverrides.list(3, 20);
+    const result = await novu.workflowOverrides.list(3, 20);
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith('/workflow-overrides', {
@@ -128,7 +128,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
     };
     mockedAxios.post.mockResolvedValue(mockedResponse);
 
-    const result = await novu.workflowoverrides.create({
+    const result = await novu.workflowOverrides.create({
       workflowId: '8329rufivdsnvs9u334',
       tenantId: 'wvnq340i2jfwqv392',
       active: false,
@@ -175,11 +175,11 @@ describe('test use of novus node package - Workflow overrride class', () => {
     mockedAxios.put.mockResolvedValue(mockedResponse);
 
     const result =
-      await novu.workflowoverrides.updateOneByTenantIdandWorkflowId(
+      await novu.workflowOverrides.updateOneByTenantIdandWorkflowId(
         'WORKFLOW_ID',
         'TENANT_ID',
         {
-          active: false,
+          active: true,
         }
       );
 
@@ -187,21 +187,34 @@ describe('test use of novus node package - Workflow overrride class', () => {
     expect(mockedAxios.put).toHaveBeenCalledWith(
       '/workflow-overrides/workflows/WORKFLOW_ID/tenants/TENANT_ID',
       {
-        active: false,
+        active: true,
       }
     );
     expect(result).toBe(mockedResponse);
   });
 
   test('should delete the workflow override by specified override id', async () => {
-    const mockedResponse = false;
+    const mockedResponse = true;
     mockedAxios.delete.mockResolvedValue(mockedResponse);
 
-    const result = await novu.workflowoverrides.delete('OVERRIDE_ID1');
+    await novu.workflowOverrides.create({
+      workflowId: '8329rufivdsnvs9u334',
+      tenantId: 'wvnq340i2jfwqv392',
+      active: false,
+      preferenceSettings: {
+        email: false,
+        sms: false,
+        in_app: false,
+        chat: true,
+        push: false,
+      },
+    });
+
+    const result = await novu.workflowOverrides.delete('8329rufivdsnvs9u334');
 
     expect(mockedAxios.delete).toHaveBeenCalled();
     expect(mockedAxios.delete).toHaveBeenCalledWith(
-      '/workflow-overrides/OVERRIDE_ID1'
+      `/workflow-overrides/8329rufivdsnvs9u334`
     );
 
     expect(result).toBe(mockedResponse);
@@ -224,7 +237,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
     };
     mockedAxios.get.mockResolvedValue(mockedResponse);
 
-    const result = await novu.workflowoverrides.getOneById('OVERRIDE_ID');
+    const result = await novu.workflowOverrides.getOneById('OVERRIDE_ID');
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith(
@@ -250,7 +263,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
     };
     mockedAxios.get.mockResolvedValue(mockedResponse);
 
-    const result = await novu.workflowoverrides.getOneByTenantIdandWorkflowId(
+    const result = await novu.workflowOverrides.getOneByTenantIdandWorkflowId(
       'WORKFLOW_ID',
       'TENANT_ID'
     );
@@ -279,7 +292,7 @@ describe('test use of novus node package - Workflow overrride class', () => {
     };
     mockedAxios.put.mockResolvedValue(mockedResponse);
 
-    const result = await novu.workflowoverrides.updateOneById('OVERRIDE_ID', {
+    const result = await novu.workflowOverrides.updateOneById('OVERRIDE_ID', {
       active: false,
     });
 

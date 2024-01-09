@@ -56,7 +56,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
   }
 
   /**
-   * @param {string} overrideId - workflowId
+   * @param {string} workflowId - workflowId
    * @param {string} tenantId - tenantId
    * @param {IWorkflowOverrideUpdatePayload} data - All the additional paramters to update workflow override
    */

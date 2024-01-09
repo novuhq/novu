@@ -38,7 +38,7 @@ export class Novu extends EventEmitter {
   readonly executionDetails: ExecutionDetails;
   readonly inboundParse: InboundParse;
   readonly organizations: Organizations;
-  readonly workflowoverrides: WorkflowOverrides;
+  readonly workflowOverrides: WorkflowOverrides;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -71,7 +71,7 @@ export class Novu extends EventEmitter {
     this.executionDetails = new ExecutionDetails(this.http);
     this.inboundParse = new InboundParse(this.http);
     this.organizations = new Organizations(this.http);
-    this.workflowoverrides = new WorkflowOverrides(this.http);
+    this.workflowOverrides = new WorkflowOverrides(this.http);
 
     this.trigger = this.events.trigger;
     this.bulkTrigger = this.events.bulkTrigger;
