@@ -80,9 +80,9 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!integration) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
@@ -91,8 +91,8 @@ export class SendMessageInApp extends SendMessageBase {
           isTest: false,
           isRetry: false,
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return;
     }
@@ -212,9 +212,9 @@ export class SendMessageInApp extends SendMessageBase {
     if (!message) throw new PlatformException('Message not found');
 
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         ...metadata,
         messageId: message._id,
@@ -225,12 +225,12 @@ export class SendMessageInApp extends SendMessageBase {
         isTest: false,
         isRetry: false,
       }),
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
 
-    await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage',
-      {
+    await this.webSocketsQueueService.add({
+      name: 'sendMessage',
+      data: {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
@@ -238,17 +238,17 @@ export class SendMessageInApp extends SendMessageBase {
           messageId: message._id,
         },
       },
-      {
+      options: {
         removeOnComplete: true,
         removeOnFail: true,
       },
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
 
     const meta = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      meta._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: meta._id,
+      data: CreateExecutionDetailsCommand.create({
         ...meta,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         messageId: message._id,
@@ -259,7 +259,7 @@ export class SendMessageInApp extends SendMessageBase {
         isTest: false,
         isRetry: false,
       }),
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
   }
 }

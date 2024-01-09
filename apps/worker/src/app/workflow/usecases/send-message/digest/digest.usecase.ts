@@ -57,9 +57,9 @@ export class Digest extends SendMessageType {
     const events = await getEvents(command, currentJob);
     const nextJobs = await this.getJobsToUpdate(command);
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
         detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
@@ -69,8 +69,8 @@ export class Digest extends SendMessageType {
         isRetry: false,
         raw: JSON.stringify(events),
       }),
-      currentJob._organizationId
-    );
+      groupId: currentJob._organizationId,
+    });
 
     await this.jobRepository.update(
       {

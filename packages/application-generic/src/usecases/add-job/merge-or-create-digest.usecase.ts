@@ -205,9 +205,9 @@ export class MergeOrCreateDigest {
 
   private async digestMergedExecutionDetails(job: JobEntity): Promise<void> {
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.DIGEST_MERGED,
@@ -216,17 +216,17 @@ export class MergeOrCreateDigest {
         isTest: false,
         isRetry: false,
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
   }
   private async digestSkippedExecutionDetails(
     job: JobEntity,
     filtered: boolean
   ): Promise<void> {
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: filtered ? DetailEnum.FILTER_STEPS : DetailEnum.DIGEST_SKIPPED,
@@ -235,7 +235,7 @@ export class MergeOrCreateDigest {
         isTest: false,
         isRetry: false,
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
   }
 }

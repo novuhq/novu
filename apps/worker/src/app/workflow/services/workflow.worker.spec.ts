@@ -69,9 +69,9 @@ describe('Workflow Worker', () => {
       _environmentId,
       _organizationId,
       _userId,
-    };
+    } as any;
 
-    await workflowQueueService.add(jobId, jobData, _organizationId);
+    await workflowQueueService.add({ name: jobId, data: jobData, groupId: _organizationId });
 
     expect(await workflowQueueService.queue.getActiveCount()).to.equal(1);
     expect(await workflowQueueService.queue.getWaitingCount()).to.equal(0);

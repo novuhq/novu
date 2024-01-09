@@ -41,9 +41,9 @@ export class HandleLastFailedJob {
       throw new PlatformException(message);
     }
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.WEBHOOK_FILTER_FAILED_LAST_RETRY,
@@ -53,8 +53,8 @@ export class HandleLastFailedJob {
         isRetry: true,
         raw: JSON.stringify({ message: JSON.parse(error.message).message }),
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
 
     if (!job?.step?.shouldStopOnFail) {
       await this.queueNextJob.execute(

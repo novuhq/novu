@@ -213,9 +213,9 @@ export class SendMessagePush extends SendMessageBase {
 
   private async sendNotificationError(job: JobEntity): Promise<void> {
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.NOTIFICATION_ERROR,
@@ -224,8 +224,8 @@ export class SendMessagePush extends SendMessageBase {
         isTest: false,
         isRetry: false,
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
   }
 
   private async sendPushMissingDeviceTokensError(job: JobEntity, channel: IChannelSettings): Promise<void> {
@@ -260,9 +260,9 @@ export class SendMessagePush extends SendMessageBase {
     // We avoid to throw the errors to be able to execute all actions in the loop
     try {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           ...metadata,
           detail,
@@ -274,8 +274,8 @@ export class SendMessagePush extends SendMessageBase {
           ...(contextData?.messageId && { messageId: contextData.messageId }),
           ...(contextData?.raw && { raw: contextData.raw }),
         }),
-        job._organizationId
-      );
+        groupId: job._organizationId,
+      });
     } catch (error) {}
   }
 
@@ -304,9 +304,9 @@ export class SendMessagePush extends SendMessageBase {
       });
 
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           messageId: message._id,
@@ -317,8 +317,8 @@ export class SendMessagePush extends SendMessageBase {
           isRetry: false,
           raw: JSON.stringify({ result, deviceToken }),
         }),
-        command.organizationId
-      );
+        groupId: command.organizationId,
+      });
 
       return true;
     } catch (e) {
@@ -367,9 +367,9 @@ export class SendMessagePush extends SendMessageBase {
     });
 
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: `${DetailEnum.MESSAGE_CREATED}: ${integration.providerId}`,
@@ -380,8 +380,8 @@ export class SendMessagePush extends SendMessageBase {
         isRetry: false,
         raw: this.storeContent() ? JSON.stringify(content) : null,
       }),
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
 
     return message;
   }
