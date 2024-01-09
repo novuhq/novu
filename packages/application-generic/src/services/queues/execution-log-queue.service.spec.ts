@@ -39,7 +39,7 @@ describe('Execution Log Queue service', () => {
       );
       expect(executionLogQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(executionLogQueueService.topic).toEqual('execution-logs');
-      expect(await executionLogQueueService.bullMqService.getStatus()).toEqual({
+      expect(await executionLogQueueService.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'execution-logs',
         workerName: undefined,
