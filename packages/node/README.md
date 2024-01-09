@@ -1277,7 +1277,7 @@ await novu.executionDetails.get(executionDetailsParams)
 
 ### Workflow Overrides
 
-- #### create new workflow override
+- #### Create new workflow override
 ```ts
 import { Novu } from '@novu/node';
 
