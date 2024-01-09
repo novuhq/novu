@@ -1190,7 +1190,7 @@ describe('Integrations List Page', function () {
       .invoke('val')
       .then((val) => {
         expect(val).match(
-          /^http:\/\/localhost:\d{4}\/webhooks\/organizations\/\w{1,}\/environments\/\w{1,}\/email\/\w{1,}/
+          /^http:\/\/(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|localhost):\d{4}\/webhooks\/organizations\/\w{1,}\/environments\/\w{1,}\/email\/\w{1,}/
         );
       });
   });
@@ -1220,7 +1220,7 @@ describe('Integrations List Page', function () {
       .invoke('val')
       .then((val) => {
         expect(val).match(
-          /^http:\/\/localhost:\d{4}\/webhooks\/organizations\/\w{1,}\/environments\/\w{1,}\/sms\/\w{1,}/
+          /^http:\/\/(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|localhost):\d{4}\/webhooks\/organizations\/\w{1,}\/environments\/\w{1,}\/sms\/\w{1,}/
         );
       });
   });
