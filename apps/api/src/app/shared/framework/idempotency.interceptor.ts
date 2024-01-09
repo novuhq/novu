@@ -15,14 +15,12 @@ import { CacheService, FeatureFlagCommand, GetIsApiIdempotencyEnabled, Instrumen
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { createHash } from 'crypto';
-import { IJwtPayload } from '@novu/shared';
+import { ApiAuthSchemeEnum, IJwtPayload } from '@novu/shared';
 import { HttpResponseHeaderKeysEnum } from './types';
 
 const LOG_CONTEXT = 'IdempotencyInterceptor';
 const IDEMPOTENCY_CACHE_TTL = 60 * 60 * 24; //24h
 const IDEMPOTENCY_PROGRESS_TTL = 60 * 5; //5min
-
-const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
 
 enum ReqStatusEnum {
   PROGRESS = 'in-progress',
@@ -30,6 +28,8 @@ enum ReqStatusEnum {
   ERROR = 'error',
 }
 
+export const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
+export const ALLOWED_AUTH_SCHEMES = [ApiAuthSchemeEnum.API_KEY];
 const ALLOWED_METHODS = ['post', 'patch'];
 
 @Injectable()
@@ -40,6 +40,11 @@ export class IdempotencyInterceptor implements NestInterceptor {
   ) {}
 
   protected async isEnabled(context: ExecutionContext): Promise<boolean> {
+    const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
+    if (!isAllowedAuthScheme) {
+      return true;
+    }
+
     const user = this.getReqUser(context);
     const { organizationId, environmentId, _id } = user;
 
@@ -111,8 +116,16 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
   private getReqUser(context: ExecutionContext): IJwtPayload {
     const req = context.switchToHttp().getRequest();
+    Logger.log(`req.user: ${JSON.stringify(req.user)}`, LOG_CONTEXT);
 
     return req.user;
+  }
+
+  private isAllowedAuthScheme(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest();
+    const authScheme = req.authScheme;
+
+    return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
   }
 
   private getCacheKey(context: ExecutionContext): string {
@@ -180,7 +193,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const parsed = JSON.parse(data);
     if (parsed.status === ReqStatusEnum.PROGRESS) {
       // api call is in progress, so client need to handle this case
-      Logger.error(`previous api call in progress rejecting the request. key:${idempotencyKey}`, LOG_CONTEXT);
+      Logger.verbose(`previous api call in progress rejecting the request. key: "${idempotencyKey}"`, LOG_CONTEXT);
       this.setHeaders(context.switchToHttp().getResponse(), {
         [HttpResponseHeaderKeysEnum.RETRY_AFTER]: `1`,
         [HttpResponseHeaderKeysEnum.LINK]: DOCS_LINK,
@@ -192,7 +205,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     }
     if (bodyHash !== parsed.bodyHash) {
       //different body sent than before
-      Logger.error(`idempotency key is being reused for different bodies. key:${idempotencyKey}`, LOG_CONTEXT);
+      Logger.verbose(`idempotency key is being reused for different bodies. key: "${idempotencyKey}"`, LOG_CONTEXT);
       this.setHeaders(context.switchToHttp().getResponse(), {
         [HttpResponseHeaderKeysEnum.LINK]: DOCS_LINK,
       });
@@ -205,7 +218,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
     //already seen the request return cached response
     if (parsed.status === ReqStatusEnum.ERROR) {
-      Logger.error(`returning cached error response. key:${idempotencyKey}`, LOG_CONTEXT);
+      Logger.verbose(`returning cached error response. key: "${idempotencyKey}"`, LOG_CONTEXT);
 
       throw this.buildError(parsed.data);
     }
@@ -232,7 +245,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
           { status: ReqStatusEnum.SUCCESS, bodyHash, statusCode: statusCode, data: response },
           IDEMPOTENCY_CACHE_TTL
         );
-        Logger.verbose(`cached the success response for idempotency key:${idempotencyKey}`, LOG_CONTEXT);
+        Logger.verbose(`cached the success response for idempotency key: "${idempotencyKey}"`, LOG_CONTEXT);
         this.setHeaders(httpResponse, { [HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]: idempotencyKey });
 
         return response;
@@ -251,7 +264,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
           },
           IDEMPOTENCY_CACHE_TTL
         ).catch(() => {});
-        Logger.verbose(`cached the error response for idempotency key:${idempotencyKey}`, LOG_CONTEXT);
+        Logger.verbose(`cached the error response for idempotency key: "${idempotencyKey}"`, LOG_CONTEXT);
         this.setHeaders(context.switchToHttp().getResponse(), {
           [HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]: idempotencyKey,
         });

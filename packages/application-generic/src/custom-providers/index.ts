@@ -15,6 +15,7 @@ import {
   WorkflowInMemoryProviderService,
 } from '../services';
 import {
+  GetIsApiIdempotencyEnabled,
   GetIsApiRateLimitingEnabled,
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,
@@ -60,6 +61,18 @@ export const getIsApiRateLimitingEnabled = {
     featureFlagsServiceItem: FeatureFlagsService
   ): Promise<GetIsApiRateLimitingEnabled> => {
     const useCase = new GetIsApiRateLimitingEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
+export const getIsApiIdempotencyEnabled = {
+  provide: GetIsApiIdempotencyEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsApiIdempotencyEnabled> => {
+    const useCase = new GetIsApiIdempotencyEnabled(featureFlagsServiceItem);
 
     return useCase;
   },
