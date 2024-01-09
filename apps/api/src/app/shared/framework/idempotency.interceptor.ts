@@ -116,7 +116,6 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
   private getReqUser(context: ExecutionContext): IJwtPayload {
     const req = context.switchToHttp().getRequest();
-    Logger.log(`req.user: ${JSON.stringify(req.user)}`, LOG_CONTEXT);
 
     return req.user;
   }
