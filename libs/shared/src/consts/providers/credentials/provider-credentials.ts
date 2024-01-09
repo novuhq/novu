@@ -1073,3 +1073,13 @@ export const brevoSmsConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const smsmodeConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

@@ -99,6 +99,7 @@ export enum SmsProviderIdEnum {
   Simpletexting = 'simpletexting',
   AzureSms = 'azure-sms',
   BrevoSms = 'brevo-sms',
+  Smsmode = 'smsmode',
 }
 
 export enum ChatProviderIdEnum {

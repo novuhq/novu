@@ -26,3 +26,4 @@ export * from './bulk-sms.handler';
 export * from './nexmo.handler';
 export * from './isend-sms.handler';
 export * from './brevo-sms.handler';
+export * from './smsmode.handler';

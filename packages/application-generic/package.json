@@ -115,6 +115,7 @@
     "@novu/zulip": "^0.22.0",
     "@novu/nexmo": "^0.22.0",
     "@novu/brevo-sms": "^0.22.0",
+    "@novu/smsmode": "^0.22.0",
     "@novu/rocket-chat": "^0.22.0",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.40.2",
