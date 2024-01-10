@@ -116,8 +116,8 @@ describe('test use of novus node package - Workflow overrride class', () => {
       _id: '_id',
       _organizationId: '_organizationId',
       _environmentId: '_environmentId',
-      _workflowId: '8329rufivdsnvs9u334',
-      _tenantId: 'wvnq340i2jfwqv392',
+      _workflowId: 'workflow_id_123',
+      _tenantId: 'tenant_id_abc',
       active: false,
       preferenceSettings: {},
       deleted: true,
@@ -129,8 +129,8 @@ describe('test use of novus node package - Workflow overrride class', () => {
     mockedAxios.post.mockResolvedValue(mockedResponse);
 
     const result = await novu.workflowOverrides.create({
-      workflowId: '8329rufivdsnvs9u334',
-      tenantId: 'wvnq340i2jfwqv392',
+      workflowId: 'workflow_id_123',
+      tenantId: 'tenant_id_abc',
       active: false,
       preferenceSettings: {
         email: false,
@@ -143,8 +143,8 @@ describe('test use of novus node package - Workflow overrride class', () => {
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/workflow-overrides', {
-      workflowId: '8329rufivdsnvs9u334',
-      tenantId: 'wvnq340i2jfwqv392',
+      workflowId: 'workflow_id_123',
+      tenantId: 'tenant_id_abc',
       active: false,
       preferenceSettings: {
         email: false,
@@ -198,8 +198,8 @@ describe('test use of novus node package - Workflow overrride class', () => {
     mockedAxios.delete.mockResolvedValue(mockedResponse);
 
     await novu.workflowOverrides.create({
-      workflowId: '8329rufivdsnvs9u334',
-      tenantId: 'wvnq340i2jfwqv392',
+      workflowId: 'workflow_id_123',
+      tenantId: 'tenant_id_abc',
       active: false,
       preferenceSettings: {
         email: false,
@@ -210,11 +210,11 @@ describe('test use of novus node package - Workflow overrride class', () => {
       },
     });
 
-    const result = await novu.workflowOverrides.delete('8329rufivdsnvs9u334');
+    const result = await novu.workflowOverrides.delete('workflow_id_123');
 
     expect(mockedAxios.delete).toHaveBeenCalled();
     expect(mockedAxios.delete).toHaveBeenCalledWith(
-      `/workflow-overrides/8329rufivdsnvs9u334`
+      `/workflow-overrides/workflow_id_123`
     );
 
     expect(result).toBe(mockedResponse);

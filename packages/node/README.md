@@ -1329,8 +1329,8 @@ import { Novu } from '@novu/node';
 const novu = new Novu('<NOVU_API_KEY>');
 
 await novu.workflowOverrides.create({
-  workflowId: '8329rufivdsnvs9u334',
-  tenantId: 'wvnq340i2jfwqv392',
+  workflowId: 'workflow_id_123',
+  tenantId: 'tenant_id_abc',
   active: false,
   preferenceSettings: {
     email: false,

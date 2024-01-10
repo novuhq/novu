@@ -8,7 +8,7 @@ import { WithHttp } from '../novu.interface';
 export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
   /**
    * @param {string} overrideId - overrideId of the workflow-override to update
-   * @param {IWorkflowOverrideUpdatePayload} data - All the additional parameters to update a worflow-override
+   * @param {IWorkflowOverrideUpdatePayload} data - All the additional parameters to update a workflow-override
    */
   async updateOneById(
     overrideId: string,
@@ -58,7 +58,7 @@ export class WorkflowOverrides extends WithHttp implements IWorkflowOverrides {
   /**
    * @param {string} workflowId - workflowId
    * @param {string} tenantId - tenantId
-   * @param {IWorkflowOverrideUpdatePayload} data - All the additional paramters to update workflow override
+   * @param {IWorkflowOverrideUpdatePayload} data - All the additional parameters to update workflow override
    */
   async updateOneByTenantIdandWorkflowId(
     workflowId: string,
