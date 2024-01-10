@@ -206,23 +206,7 @@ export class UpdateNotificationTemplate {
           throw new PlatformException('Translation module is not loaded');
         }
         const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
-        for (const step of notificationTemplateWithStepTemplate.steps) {
-          if (
-            ![StepTypeEnum.CHAT, StepTypeEnum.EMAIL, StepTypeEnum.IN_APP, StepTypeEnum.PUSH, StepTypeEnum.SMS].includes(
-              step.template?.type as StepTypeEnum
-            ) ||
-            !step.template?.content
-          ) {
-            continue;
-          }
-          await service.createTranslationAnalytics(
-            step.template?.content,
-            notificationTemplateWithStepTemplate._environmentId,
-            notificationTemplateWithStepTemplate._organizationId,
-            notificationTemplateWithStepTemplate._id,
-            notificationTemplateWithStepTemplate._creatorId
-          );
-        }
+        await service.createTranslationAnalytics(notificationTemplateWithStepTemplate);
       }
     } catch (e) {
       Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
