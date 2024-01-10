@@ -6,6 +6,16 @@ on:
   workflow_dispatch:
 
 jobs:
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Production
+      environment_short: prod
+    secrets: inherit
+
   test_ws:
     strategy:
       matrix:
@@ -23,6 +33,7 @@ jobs:
     environment: Production
     needs:
       - test_ws
+      - get_version
     strategy:
       matrix:
         name: [ 'novu/ws-ee', 'novu/ws' ]
@@ -52,6 +63,7 @@ jobs:
           REGISTRY_OWNER: novuhq
           DOCKER_NAME: ${{matrix.name}}
           IMAGE_TAG: ${{ github.sha }}
+          SEMVER_IMAGE_TAG: ${{ needs.get_version.outputs.current_tag }}-prod
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
@@ -59,9 +71,9 @@ jobs:
           docker build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG -f apps/ws/Dockerfile .
           docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1340/v1/health-check | grep 'ok'
-          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
+          docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:SEMVER_IMAGE_TAG
           docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
-          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:SEMVER_IMAGE_TAG
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT

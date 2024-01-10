@@ -1,0 +1,87 @@
+name: Get version for applications
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      environment_short:
+        required: true
+        type: string
+    outputs:
+      env_tag:
+        description: 'The new version'
+        value: ${{ jobs.get_version.outputs.new_version }}
+      current_tag:
+        description: 'The current version'
+        value: ${{ jobs.get_version.outputs.current_version }}
+      sha:
+        description: 'The current sha of the code'
+        value: ${{ jobs.get_version.outputs.sha }}
+      sha_short:
+        description: 'The current sha short of the code'
+        value: ${{ jobs.get_version.outputs.sha_short }}
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  get_version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    outputs:
+      sha: ${{ steps.determine_bump.outputs.sha }}
+      sha_short: ${{ steps.determine_bump.outputs.sha_short }}
+      new_version: ${{ steps.determine_bump.outputs.new_version }}
+      current_version: ${{ steps.determine_bump.outputs.current_version }}
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/github-script@v7
+        id: get_pr_data
+        with:
+          script: |
+            return (
+              await github.rest.repos.listPullRequestsAssociatedWithCommit({
+                commit_sha: context.sha,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              })
+            ).data[0];
+
+      - name: Pull Request data
+        id: show-pr-data
+        run: |
+          echo "Pull request number: ${{ fromJson(steps.get_pr_data.outputs.result).number }}"
+          echo "Pull request title: ${{ fromJson(steps.get_pr_data.outputs.result).title }}"
+          echo "pr_number=${{ fromJson(steps.get_pr_data.outputs.result).number }}" >> $GITHUB_OUTPUT
+          echo "pr_title=${{ fromJson(steps.get_pr_data.outputs.result).title }}" >> $GITHUB_OUTPUT
+
+      - name: Get latest tag
+        id: previoustag
+        run: |
+          tag=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "tag=$tag" >> $GITHUB_OUTPUT
+
+      - name: Get LABELS
+        id: get-labels
+        env:
+          PR_NUMBER: ${{ steps.show-pr-data.outputs.pr_number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "The Pull request Number for labels getting is ${{ env.PR_NUMBER }}"
+          gh api -H "Accept: application/vnd.github+json" /repos/ras-devops/novu/issues/${{ env.PR_NUMBER }}/labels | jq '[.[].name]' > /tmp/label_list
+
+      - name: Semantic Custom Version Bumping
+        uses: ras-devops/determine-version-bump@v1.0.10
+        id: determine_bump
+        with:
+          current_version: ${{ steps.previoustag.outputs.tag }}
+          list_labels_file_patch: /tmp/label_list
