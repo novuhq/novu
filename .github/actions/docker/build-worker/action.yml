@@ -29,6 +29,9 @@ outputs:
   image:
     description: 'The image that was built'
     value: ${{ steps.build-image.outputs.IMAGE }}
+  image_semver_tag:
+    description: 'The image that was built with SemVer Tag'
+    value: ${{ steps.docker-semver-tag.outputs.IMAGE_SEMVER_TAG }}
 
 runs:
   using: composite
@@ -110,6 +113,7 @@ runs:
 
     - name: Optionally tag docker image
       if: ${{ inputs.tag }}
+      id: docker-semver-tag
       shell: bash
       env:
         REGISTRY_OWNER: novuhq
@@ -117,6 +121,7 @@ runs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:${{ inputs.tag }}
+        echo "IMAGE_SEMVER_TAG=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:${{ inputs.tag }}" >> $GITHUB_OUTPUT
 
     - name: Push PR tag image
       if: ${{ inputs.push == 'true' }}

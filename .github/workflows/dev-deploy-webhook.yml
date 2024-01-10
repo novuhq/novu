@@ -16,12 +16,22 @@ on:
       - 'libs/shared/**'
 
 jobs:
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Development
+      environment_short: dev
+    secrets: inherit
+
   test_webhook:
     uses: ./.github/workflows/reusable-webhook-e2e.yml
 
   publish_docker_image_webhook:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
-    needs: test_webhook
+    needs: [test_webhook, get_version]
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Development
@@ -30,7 +40,7 @@ jobs:
       test_port: 1341
       health_check: true
       local_tag: novu-webhook
-      env_tag: dev
+      env_tag: ${{ needs.get_version.outputs.env_tag }}
       depot_project_id: f88777ff6m
     secrets: inherit
 
@@ -44,3 +54,13 @@ jobs:
       service_name: webhook
       terraform_workspace: novu-dev
       docker_image: ${{ needs.publish_docker_image_webhook.outputs.docker_image_ee }}
+
+  push_git_tag:
+    needs: [deploy_dev_webhook, get_version]
+    uses: ./.github/workflows/push-git-tag.yml
+    permissions:
+      contents: write
+    with:
+      environment: Development
+      environment_short: dev
+      custom_tag: ${{ needs.get_version.outputs.env_tag }}

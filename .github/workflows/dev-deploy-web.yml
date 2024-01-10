@@ -16,6 +16,16 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Development
+      environment_short: dev
+    secrets: inherit
+
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
     with:
@@ -42,7 +52,7 @@ jobs:
     secrets: inherit
 
   publish_docker_image_web:
-    needs: test_web
+    needs: [test_web, get_version]
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-docker.yml
     with:
@@ -50,6 +60,16 @@ jobs:
       package_name: novu/web
       project_path: apps/web
       local_tag: novu-web
-      env_tag: dev
+      env_tag: ${{ needs.get_version.outputs.env_tag }}
       depot_project_id: f88777ff6m
     secrets: inherit
+
+  push_git_tag:
+    needs: [publish_docker_image_web, get_version]
+    uses: ./.github/workflows/push-git-tag.yml
+    permissions:
+      contents: write
+    with:
+      environment: Development
+      environment_short: dev
+      custom_tag: ${{ needs.get_version.outputs.env_tag }}
