@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
 
@@ -15,13 +15,15 @@ import {
   INotificationTrigger,
   TriggerTypeEnum,
   IStepVariant,
+  StepTypeEnum,
 } from '@novu/shared';
-import { AnalyticsService, CreateChange, CreateChangeCommand } from '@novu/application-generic';
+import { AnalyticsService, CreateChange, CreateChangeCommand, PlatformException } from '@novu/application-generic';
 
 import { CreateNotificationTemplateCommand, NotificationStepVariant } from './create-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { ModuleRef } from '@nestjs/core';
 
 /**
  * DEPRECATED:
@@ -36,7 +38,8 @@ export class CreateNotificationTemplate {
     private notificationGroupRepository: NotificationGroupRepository,
     private feedRepository: FeedRepository,
     private createChange: CreateChange,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    protected moduleRef: ModuleRef
   ) {}
 
   async execute(usecaseCommand: CreateNotificationTemplateCommand) {
@@ -59,6 +62,34 @@ export class CreateNotificationTemplate {
     const storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
 
     await this.createWorkflowChange(command, storedWorkflow, parentChangeId);
+
+    try {
+      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+        if (!require('@novu/ee-translation')?.TranslationsService) {
+          throw new PlatformException('Translation module is not loaded');
+        }
+        const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
+        for (const step of storedWorkflow.steps) {
+          if (
+            ![StepTypeEnum.CHAT, StepTypeEnum.EMAIL, StepTypeEnum.IN_APP, StepTypeEnum.PUSH, StepTypeEnum.SMS].includes(
+              step.template?.type as StepTypeEnum
+            ) ||
+            !step.template?.content
+          ) {
+            continue;
+          }
+          await service.createTranslationAnalytics(
+            step.template?.content,
+            storedWorkflow._environmentId,
+            storedWorkflow._organizationId,
+            storedWorkflow._id,
+            storedWorkflow._creatorId
+          );
+        }
+      }
+    } catch (e) {
+      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+    }
 
     return storedWorkflow;
   }
