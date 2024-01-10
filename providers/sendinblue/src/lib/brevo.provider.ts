@@ -1,4 +1,5 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { ProxyAgent } from 'proxy-agent';
+import 'cross-fetch';
 
 import {
   ChannelTypeEnum,
@@ -11,10 +12,16 @@ import {
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
 
+declare global {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  interface RequestInit {
+    agent: ProxyAgent;
+  }
+}
+
 export class BrevoEmailProvider implements IEmailProvider {
   id = 'sendinblue';
   channelType = ChannelTypeEnum.EMAIL as ChannelTypeEnum.EMAIL;
-  private axiosInstance: AxiosInstance;
   public readonly BASE_URL = 'https://api.brevo.com/v3';
 
   constructor(
@@ -23,11 +30,7 @@ export class BrevoEmailProvider implements IEmailProvider {
       from: string;
       senderName: string;
     }
-  ) {
-    this.axiosInstance = axios.create({
-      baseURL: this.BASE_URL,
-    });
-  }
+  ) {}
 
   async sendMessage(
     options: IEmailOptions
@@ -62,23 +65,21 @@ export class BrevoEmailProvider implements IEmailProvider {
       };
     }
 
-    const emailOptions: AxiosRequestConfig = {
-      url: '/smtp/email',
+    const response = await fetch(`${this.BASE_URL}/smtp/email`, {
       method: 'POST',
       headers: {
         'api-key': this.config.apiKey,
         'Content-Type': 'application/json',
         Accept: 'application/json',
       },
-      data: JSON.stringify(email),
-    };
+      agent: new ProxyAgent(),
+      body: JSON.stringify(email),
+    });
 
-    const response = await this.axiosInstance.request<{ messageId: string }>(
-      emailOptions
-    );
+    const body: { messageId: string } = await response.json();
 
     return {
-      id: response?.data.messageId,
+      id: body.messageId,
       date: new Date().toISOString(),
     };
   }
