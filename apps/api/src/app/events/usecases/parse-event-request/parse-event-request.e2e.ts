@@ -4,7 +4,7 @@ import { v4 as uuid } from 'uuid';
 
 import { SubscribersService, UserSession } from '@novu/testing';
 import { NotificationTemplateEntity, SubscriberRepository } from '@novu/dal';
-import { AddressingTypeEnum, TriggerRecipients } from '@novu/shared';
+import { AddressingTypeEnum, TriggerRecipients, TriggerRequestCategoryEnum } from '@novu/shared';
 
 import { SharedModule } from '../../../shared/shared.module';
 import { EventsModule } from '../../events.module';
@@ -68,5 +68,6 @@ const buildCommand = (
     payload: {},
     overrides: {},
     addressingType: AddressingTypeEnum.MULTICAST,
+    requestCategory: TriggerRequestCategoryEnum.SINGLE,
   });
 };

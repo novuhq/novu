@@ -1,10 +1,4 @@
-import {
-  BullMqService,
-  InboundParseQueueService,
-  QueueBaseOptions,
-  WorkflowInMemoryProviderService,
-} from '@novu/application-generic';
-import { JobTopicNameEnum } from '@novu/shared';
+import { InboundParseQueueService, WorkflowInMemoryProviderService } from '@novu/application-generic';
 
 export class InboundMailService {
   public inboundParseQueueService: InboundParseQueueService;

@@ -14,9 +14,9 @@ export class WebhookFilterBackoffStrategy {
 
     try {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
           detail: DetailEnum.WEBHOOK_FILTER_FAILED_RETRY,
@@ -26,8 +26,8 @@ export class WebhookFilterBackoffStrategy {
           isRetry: true,
           raw: JSON.stringify({ message: JSON.parse(error?.message).message, attempt: attemptsMade }),
         }),
-        job._organizationId
-      );
+        groupId: job._organizationId,
+      });
     } catch (anotherError) {
       Logger.error(
         anotherError,

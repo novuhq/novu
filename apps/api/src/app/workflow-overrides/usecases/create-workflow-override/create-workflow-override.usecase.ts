@@ -23,6 +23,7 @@ export class CreateWorkflowOverride {
     const { tenant, workflow } = await this.extractEntities(command);
 
     return await this.workflowOverrideRepository.create({
+      _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       _tenantId: tenant._id,
       _workflowId: workflow._id,
