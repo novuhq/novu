@@ -5,9 +5,8 @@ import { objectToEqual } from './objectToEqual';
 import { dateIsValid } from './dateIsValid';
 
 const mockConfig = {
-  apiKey:
-    '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',
-  from: 'Valophis',
+  apiKey: 'ABCDE',
+  from: 'My Company',
 };
 
 fetch.enableMocks();
@@ -18,7 +17,7 @@ expect.extend({
 });
 
 const mockNovuMessage: ISmsOptions = {
-  from: 'Valophis',
+  from: 'My Company',
   to: '+33623456789',
   content: 'SMS content',
 };
