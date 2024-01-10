@@ -546,7 +546,8 @@
     "openapi",
     "headerapikey",
     "INITDB",
-    "isend"
+    "isend",
+    "Idand"
   ],
   "flagWords": [],
   "patterns": [
