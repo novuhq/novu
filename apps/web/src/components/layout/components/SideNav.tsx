@@ -104,7 +104,7 @@ export function SideNav({}: Props) {
       condition: !readonly && showOnBoarding,
       icon: <CheckCircleOutlined />,
       link: getStartedRoute ?? ROUTES.GET_STARTED,
-      rightSide: <VisibilityOff handleClick={handleClick} />,
+      rightSide: { component: <VisibilityOff handleClick={handleClick} />, displayOnHover: true },
       testId: 'side-nav-quickstart-link',
     },
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
