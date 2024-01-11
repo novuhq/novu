@@ -547,7 +547,9 @@
     "headerapikey",
     "INITDB",
     "isend",
-    "Idand"
+    "Idand",
+    "previoustag",
+    "mathieudutour"
   ],
   "flagWords": [],
   "patterns": [
