@@ -106,7 +106,7 @@ export class IntegrationsController {
     );
   }
 
-  @Get('/webhook/provider/:providerId/status')
+  @Get('/webhook/provider/:providerOrIntegrationId/status')
   @ApiOkResponse({
     type: Boolean,
     description: 'The status of the webhook for the provider requested',
@@ -119,13 +119,13 @@ export class IntegrationsController {
   @ExternalApiAccessible()
   async getWebhookSupportStatus(
     @UserSession() user: IJwtPayload,
-    @Param('providerId') providerId: string
+    @Param('providerOrIntegrationId') providerOrIntegrationId: string
   ): Promise<boolean> {
     return await this.getWebhookSupportStatusUsecase.execute(
       GetWebhookSupportStatusCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        providerId: providerId,
+        providerOrIntegrationId,
         userId: user._id,
       })
     );

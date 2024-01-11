@@ -547,7 +547,10 @@
     "headerapikey",
     "isend",
     "Otel",
-    "opentelemetry"
+    "opentelemetry",
+    "INITDB",
+    "isend",
+    "Idand"
   ],
   "flagWords": [],
   "patterns": [
