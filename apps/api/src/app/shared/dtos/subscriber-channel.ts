@@ -45,7 +45,7 @@ export class ChannelCredentials {
 export class SubscriberChannel {
   @ApiProperty({
     enum: { ...ChatProviderIdEnum, ...PushProviderIdEnum },
-    description: 'The provider identifier for the credentials',
+    description: 'The Integration Identifier for the credentials',
   })
   providerId: ChatProviderIdEnum | PushProviderIdEnum;
 

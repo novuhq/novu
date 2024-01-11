@@ -59,17 +59,17 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
         name="identifier"
         defaultValue={''}
         rules={{
-          required: 'Required - Provider identifier',
+          required: 'Required - Integration Identifier',
           pattern: {
             value: /^[A-Za-z0-9_-]+$/,
-            message: 'Provider identifier must contains only alphabetical, numeric, dash or underscore characters',
+            message: 'Integration Identifier must contains only alphabetical, numeric, dash or underscore characters',
           },
         }}
         render={({ field }) => (
           <Input
             {...field}
             required
-            label="Provider identifier"
+            label="Integration Identifier"
             error={errors.identifier?.message}
             rightSection={
               <CopyWrapper onClick={() => identifierClipboard.copy(field.value)}>
