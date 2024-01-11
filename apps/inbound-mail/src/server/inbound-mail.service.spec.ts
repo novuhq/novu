@@ -1,5 +1,7 @@
 import { expect } from 'chai';
 
+import { IInboundParseDataDto } from '@novu/application-generic';
+
 import { InboundMailService } from './inbound-mail.service';
 
 let inboundMailService: InboundMailService;
@@ -26,7 +28,7 @@ describe('Inbound Mail Service', () => {
       expect(inboundMailService).to.be.ok;
       expect(inboundMailService.inboundParseQueueService.DEFAULT_ATTEMPTS).to.equal(3);
       expect(inboundMailService.inboundParseQueueService.topic).to.equal('inbound-parse-mail');
-      expect(await inboundMailService.inboundParseQueueService.bullMqService.getStatus()).to.deep.equal({
+      expect(await inboundMailService.inboundParseQueueService.getStatus()).to.deep.equal({
         queueIsPaused: false,
         queueName: 'inbound-parse-mail',
         workerName: undefined,
@@ -54,17 +56,19 @@ describe('Inbound Mail Service', () => {
 
     it('should add a job in the queue', async () => {
       const jobId = 'inbound-mail-parse-job-id';
-      const _environmentId = 'inbound-mail-parse-environment-id';
+      const html = '<>Hello World</>';
+      const text = 'text';
       const _organizationId = 'inbound-mail-parse-organization-id';
-      const _userId = 'inbound-mail-parse-user-id';
       const jobData = {
-        _id: jobId,
-        test: 'inbound-mail-parse-job-data',
-        _environmentId,
-        _organizationId,
-        _userId,
+        html: html,
+        text: text,
       };
-      await inboundMailService.inboundParseQueueService.add(jobId, jobData, _organizationId);
+
+      await inboundMailService.inboundParseQueueService.add({
+        name: jobId,
+        data: jobData as IInboundParseDataDto,
+        groupId: _organizationId,
+      });
 
       expect(await inboundMailService.inboundParseQueueService.queue.getActiveCount()).to.equal(0);
       expect(await inboundMailService.inboundParseQueueService.queue.getWaitingCount()).to.equal(1);
@@ -76,39 +80,6 @@ describe('Inbound Mail Service', () => {
         id: '1',
         name: jobId,
         data: jobData,
-        attemptsMade: 0,
-      });
-    });
-
-    it('should add a minimal job in the queue', async () => {
-      const jobId = 'inbound-parse-mail-job-id-2';
-      const _environmentId = 'inbound-parse-mail-environment-id';
-      const _organizationId = 'inbound-parse-mail-organization-id';
-      const _userId = 'inbound-parse-mail-user-id';
-      const jobData = {
-        _id: jobId,
-        test: 'inbound-parse-mail-job-data-2',
-        _environmentId,
-        _organizationId,
-        _userId,
-      };
-      await inboundMailService.inboundParseQueueService.addMinimalJob(jobId, jobData, _organizationId);
-
-      expect(await inboundMailService.inboundParseQueueService.queue.getActiveCount()).to.equal(0);
-      expect(await inboundMailService.inboundParseQueueService.queue.getWaitingCount()).to.equal(1);
-
-      const inboundParseQueueServiceQueueJobs = await inboundMailService.inboundParseQueueService.queue.getJobs();
-      expect(inboundParseQueueServiceQueueJobs.length).to.equal(1);
-      const [inboundParseQueueServiceQueueJob] = inboundParseQueueServiceQueueJobs;
-      expect(inboundParseQueueServiceQueueJob).to.deep.include({
-        id: '2',
-        name: jobId,
-        data: {
-          _id: jobId,
-          _environmentId,
-          _organizationId,
-          _userId,
-        },
         attemptsMade: 0,
       });
     });

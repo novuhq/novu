@@ -25,9 +25,9 @@ export class SendMessageDelay extends SendMessageType {
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.DELAY_FINISHED,
@@ -36,7 +36,7 @@ export class SendMessageDelay extends SendMessageType {
         isTest: false,
         isRetry: false,
       }),
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
   }
 }

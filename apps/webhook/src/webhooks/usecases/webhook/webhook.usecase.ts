@@ -1,8 +1,21 @@
-import { Inject, Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository, MemberRepository, MessageRepository } from '@novu/dal';
-import { ChannelTypeEnum } from '@novu/shared';
+import { Injectable, Logger, NotFoundException, Scope } from '@nestjs/common';
+import {
+  IntegrationEntity,
+  IntegrationQuery,
+  IntegrationRepository,
+  MemberRepository,
+  MessageRepository,
+} from '@novu/dal';
+import { ChannelTypeEnum, providers } from '@novu/shared';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
-import { AnalyticsService, IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  ApiException,
+  IMailHandler,
+  ISmsHandler,
+  MailFactory,
+  SmsFactory,
+} from '@novu/application-generic';
 
 import { WebhookCommand } from './webhook.command';
 
@@ -26,44 +39,51 @@ export class Webhook {
   ) {}
 
   async execute(command: WebhookCommand): Promise<IWebhookResult[]> {
-    const providerId = command.providerId;
+    const providerOrIntegrationId = command.providerOrIntegrationId;
+    const isProviderId = !!providers.find((el) => el.id === providerOrIntegrationId);
     const channel: ChannelTypeEnum = command.type === 'email' ? ChannelTypeEnum.EMAIL : ChannelTypeEnum.SMS;
 
-    const integration: IntegrationEntity = await this.integrationRepository.findOne({
+    const query: IntegrationQuery = {
+      ...(isProviderId
+        ? { providerId: providerOrIntegrationId, credentials: { $exists: true }, channel }
+        : { _id: providerOrIntegrationId }),
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      providerId,
-      channel,
-    });
+    };
+
+    const integration: IntegrationEntity = await this.integrationRepository.findOne(query);
+    if (!integration) {
+      throw new NotFoundException(`Integration for ${providerOrIntegrationId} was not found`);
+    }
+
+    const hasNoCredentials = !integration.credentials || Object.keys(integration.credentials).length === 0;
+    if (hasNoCredentials) {
+      throw new ApiException(`Integration ${integration._id} doesn't have credentials set up`);
+    }
 
     const member = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-
     if (member) {
       this.analyticsService.track('[Webhook] - Provider Webhook called', member._userId, {
         _organization: command.organizationId,
         _environmentId: command.environmentId,
-        providerId,
+        providerId: integration.providerId,
         channel,
       });
     }
 
-    if (!integration) {
-      throw new NotFoundException(`Integration for ${providerId} was not found`);
-    }
-
-    this.createProvider(integration, providerId, command.type);
+    this.createProvider(integration, command.type);
 
     if (!this.provider.getMessageId || !this.provider.parseEventBody) {
-      throw new NotFoundException(`Provider with ${providerId} can not handle webhooks`);
+      throw new NotFoundException(`Provider with ${integration.providerId} can not handle webhooks`);
     }
 
-    const events = await this.parseEvents(command, channel);
+    const events = await this.parseEvents(command, integration.providerId, channel);
 
     if (member) {
       this.analyticsService.track('[Webhook] - Provider Webhook events parsed', member._userId, {
         _organization: command.organizationId,
         _environmentId: command.environmentId,
-        providerId,
+        providerId: integration.providerId,
         channel,
         events,
       });
@@ -72,14 +92,18 @@ export class Webhook {
     return events;
   }
 
-  private async parseEvents(command: WebhookCommand, channel: ChannelTypeEnum): Promise<IWebhookResult[]> {
+  private async parseEvents(
+    command: WebhookCommand,
+    providerId: string,
+    channel: ChannelTypeEnum
+  ): Promise<IWebhookResult[]> {
     const body = command.body;
     const messageIdentifiers: string[] = this.provider.getMessageId(body);
 
     const events: IWebhookResult[] = [];
 
     for (const messageIdentifier of messageIdentifiers) {
-      const event = await this.parseEvent(messageIdentifier, command, channel);
+      const event = await this.parseEvent(messageIdentifier, command, providerId, channel);
 
       if (event === undefined) {
         continue;
@@ -92,8 +116,9 @@ export class Webhook {
   }
 
   private async parseEvent(
-    messageIdentifier,
+    messageIdentifier: string,
     command: WebhookCommand,
+    providerId: string,
     channel: ChannelTypeEnum
   ): Promise<IWebhookResult | undefined> {
     const message = await this.messageRepository.findOne({
@@ -126,7 +151,10 @@ export class Webhook {
      */
     await this.createExecutionDetails.execute({
       message,
-      webhook: command,
+      webhook: {
+        ...command,
+        providerId: providerId,
+      },
       webhookEvent: parsedEvent,
       channel,
     });
@@ -134,7 +162,7 @@ export class Webhook {
     return parsedEvent;
   }
 
-  private getHandler(integration, type: WebhookTypes): ISmsHandler | IMailHandler | null {
+  private getHandler(integration: IntegrationEntity, type: WebhookTypes): ISmsHandler | IMailHandler | null {
     switch (type) {
       case 'sms':
         return this.smsFactory.getHandler(integration);
@@ -143,10 +171,10 @@ export class Webhook {
     }
   }
 
-  private createProvider(integration: IntegrationEntity, providerId: string, type: 'sms' | 'email') {
+  private createProvider(integration: IntegrationEntity, type: 'sms' | 'email') {
     const handler = this.getHandler(integration, type);
     if (!handler) {
-      throw new NotFoundException(`Handler for integration of ${providerId} was not found`);
+      throw new NotFoundException(`Handler for integration of ${integration.providerId} was not found`);
     }
     handler.buildProvider(integration.credentials);
 
