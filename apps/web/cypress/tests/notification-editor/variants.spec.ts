@@ -870,7 +870,10 @@ describe('Workflow Editor - Variants', function () {
       cy.contains('Delete').click();
 
       // submit ("Apply conditions") should be disabled
-      cy.getByTestId('apply-conditions-btn').should('be.disabled');
+      cy.getByTestId('apply-conditions-btn').should('be.disabled').click({ force: true });
+
+      // tooltip should warn the user
+      cy.get('div[role="tooltip"]').contains('At least one condition is required');
     });
   });
 
