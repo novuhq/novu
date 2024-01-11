@@ -9,9 +9,6 @@ export const OtelModule = OpenTelemetryModule.forRoot({
     hostMetrics: true,
     apiMetrics: {
       enable: true,
-      defaultAttributes: {
-        custom: 'label',
-      },
       ignoreRoutes: ['/favicon.ico', '/v1/health-check'],
       //Records metrics for all URLs, even undefined ones
       ignoreUndefinedRoutes: true,
