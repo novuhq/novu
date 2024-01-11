@@ -57,6 +57,7 @@ novuhq/novu is built on the following main stack:
 - [MessageBird](https://www.messagebird.com/) – Voice and SMS
 - [rollup](http://rollupjs.org/) – JS Build Tools / JS Task Runners
 - [Shell](https://en.wikipedia.org/wiki/Shell_script) – Shells
+- [i18next](https://www.i18next.com/) – Translation Service
 - [axios](https://github.com/mzabriskie/axios) – Javascript Utilities & Libraries
 - [nodemon](http://nodemon.io/) – node.js Application Monitoring
 - [Ant Design](https://ant.design) – JavaScript Framework Components
@@ -79,9 +80,8 @@ novuhq/novu is built on the following main stack:
 - [Vite](https://vitejs.dev/) – JS Build Tools / JS Task Runners
 - [BullMQ](https://github.com/taskforcesh/bullmq) – Message Queue
 - [MailerSend](https://www.mailersend.com/) – Transactional Email
-- [LangChain](https://github.com/hwchase17/langchain) – Large Language Model Tools
+- [Embeddinghub](https://github.com/featureform/embeddinghub) – Databases
 - [Resend](https://resend.com/) – Transactional Email
-- [pgvector](https://github.com/pgvector/pgvector/) – Database Tools
 - [Docker](https://www.docker.com/) – Virtual Machine Platforms & Containers
 - [Mailtrap](https://mailtrap.io/) – Transactional Email
 
@@ -147,6 +147,7 @@ novuhq/novu is built on the following main stack:
 - <img width='25' height='25' src='https://img.stackshare.io/service/3963/319915-3e31123c8391e49a0f03b69030a6b671-medium_jpg.jpg' alt='MessageBird'/> [MessageBird](https://www.messagebird.com/) – Voice and SMS
 - <img width='25' height='25' src='https://img.stackshare.io/service/4423/zE8RTn9E_400x400.jpg' alt='rollup'/> [rollup](http://rollupjs.org/) – JS Build Tools / JS Task Runners
 - <img width='25' height='25' src='https://img.stackshare.io/service/4631/default_c2062d40130562bdc836c13dbca02d318205a962.png' alt='Shell'/> [Shell](https://en.wikipedia.org/wiki/Shell_script) – Shells
+- <img width='25' height='25' src='https://img.stackshare.io/service/4747/default_82286a88bf01c80539ebd1d6dbea1b25df8af16d.png' alt='i18next'/> [i18next](https://www.i18next.com/) – Translation Service
 - <img width='25' height='25' src='https://img.stackshare.io/no-img-open-source.png' alt='axios'/> [axios](https://github.com/mzabriskie/axios) – Javascript Utilities & Libraries
 - <img width='25' height='25' src='https://img.stackshare.io/service/5577/preview.png' alt='nodemon'/> [nodemon](http://nodemon.io/) – node.js Application Monitoring
 - <img width='25' height='25' src='https://img.stackshare.io/service/6112/12101536.png' alt='Ant Design'/> [Ant Design](https://ant.design) – JavaScript Framework Components
@@ -169,9 +170,8 @@ novuhq/novu is built on the following main stack:
 - <img width='25' height='25' src='https://img.stackshare.io/service/21547/default_1aeac791cde11ff66cc0b20dcc6144eeb185c905.png' alt='Vite'/> [Vite](https://vitejs.dev/) – JS Build Tools / JS Task Runners
 - <img width='25' height='25' src='https://img.stackshare.io/service/25280/default_d1dbf45c67d448a8a16413d63d3c21cdca003fb8.png' alt='BullMQ'/> [BullMQ](https://github.com/taskforcesh/bullmq) – Message Queue
 - <img width='25' height='25' src='https://img.stackshare.io/service/25369/default_51d0d185f2a6f77d17d707c2532801eae697a947.png' alt='MailerSend'/> [MailerSend](https://www.mailersend.com/) – Transactional Email
-- <img width='25' height='25' src='https://img.stackshare.io/service/48790/default_5b6c6b73f1ff3775c85d2a1ba954cb87e30cbf13.jpg' alt='LangChain'/> [LangChain](https://github.com/hwchase17/langchain) – Large Language Model Tools
+- <img width='25' height='25' src='https://img.stackshare.io/service/40073/default_6e9804848ad33ae57302fd5188fd62fda0ef6377.jpg' alt='Embeddinghub'/> [Embeddinghub](https://github.com/featureform/embeddinghub) – Databases
 - <img width='25' height='25' src='https://img.stackshare.io/service/101735/default_a7342137a6cb7205553d5a24fe27eb8b75f2c24a.jpg' alt='Resend'/> [Resend](https://resend.com/) – Transactional Email
-- <img width='25' height='25' src='https://img.stackshare.io/service/109221/default_b888cdf5617d936aa6aacf130911906955508639.png' alt='pgvector'/> [pgvector](https://github.com/pgvector/pgvector/) – Database Tools
 - <img width='25' height='25' src='https://img.stackshare.io/service/586/n4u37v9t_400x400.png' alt='Docker'/> [Docker](https://www.docker.com/) – Virtual Machine Platforms & Containers
 - <img width='25' height='25' src='https://img.stackshare.io/service/506/default_90b9223bcfa6e98d383d5ba72188a149d74b8a2f.png' alt='Mailtrap'/> [Mailtrap](https://mailtrap.io/) – Transactional Email
 
@@ -184,7 +184,7 @@ Full tech stack [here](/techstack.md)
 # Tech Stack File
 ![](https://img.stackshare.io/repo.svg "repo") [novuhq/novu](https://github.com/novuhq/novu)![](https://img.stackshare.io/public_badge.svg "public")
 <br/><br/>
-|299<br/>Tools used|01/05/24 <br/>Report generated|
+|302<br/>Tools used|01/11/24 <br/>Report generated|
 |------|------|
 </div>
 
@@ -304,7 +304,7 @@ Full tech stack [here](/techstack.md)
   <br>
   <sub><a href="http://nodejs.org/">Node.js</a></sub>
   <br>
-  <sub></sub>
+  <sub>v20.8.1</sub>
 </td>
 
 </tr>
@@ -379,6 +379,14 @@ Full tech stack [here](/techstack.md)
 </td>
 
 <td align='center'>
+  <img width='36' height='36' src='https://img.stackshare.io/service/40073/default_6e9804848ad33ae57302fd5188fd62fda0ef6377.jpg' alt='Embeddinghub'>
+  <br>
+  <sub><a href="https://github.com/featureform/embeddinghub">Embeddinghub</a></sub>
+  <br>
+  <sub></sub>
+</td>
+
+<td align='center'>
   <img width='36' height='36' src='https://img.stackshare.io/service/116/cZLxNFZS.jpg' alt='Firebase'>
   <br>
   <sub><a href="https://firebase.google.com/">Firebase</a></sub>
@@ -410,22 +418,14 @@ Full tech stack [here](/techstack.md)
   <sub></sub>
 </td>
 
-<td align='center'>
+</tr>
+<tr>
+  <td align='center'>
   <img width='36' height='36' src='https://img.stackshare.io/service/1161/vI0ZZlhZ_400x400.png' alt='Socket.IO'>
   <br>
   <sub><a href="http://socket.io/">Socket.IO</a></sub>
   <br>
   <sub>v4.7.2</sub>
-</td>
-
-</tr>
-<tr>
-  <td align='center'>
-  <img width='36' height='36' src='https://img.stackshare.io/service/109221/default_b888cdf5617d936aa6aacf130911906955508639.png' alt='pgvector'>
-  <br>
-  <sub><a href="https://github.com/pgvector/pgvector/">pgvector</a></sub>
-  <br>
-  <sub></sub>
 </td>
 
 </tr>
@@ -798,7 +798,7 @@ Full tech stack [here](/techstack.md)
 </tr>
 </table>
 
-## Other (23)
+## Other (22)
 <table><tr>
   <td align='center'>
   <img width='36' height='36' src='https://img.stackshare.io/service/6429/alpine_linux.png' alt='Alpine Linux'>
@@ -820,22 +820,6 @@ Full tech stack [here](/techstack.md)
   <img width='36' height='36' src='https://img.stackshare.io/service/11991/bb.png' alt='Bluebird'>
   <br>
   <sub><a href="https://github.com/petkaantonov/bluebird/">Bluebird</a></sub>
-  <br>
-  <sub></sub>
-</td>
-
-<td align='center'>
-  <img width='36' height='36' src='https://img.stackshare.io/service/2270/no-img-open-source.png' alt='HTML'>
-  <br>
-  <sub><a href="http://">HTML</a></sub>
-  <br>
-  <sub></sub>
-</td>
-
-<td align='center'>
-  <img width='36' height='36' src='https://img.stackshare.io/service/48790/default_5b6c6b73f1ff3775c85d2a1ba954cb87e30cbf13.jpg' alt='LangChain'>
-  <br>
-  <sub><a href="https://github.com/hwchase17/langchain">LangChain</a></sub>
   <br>
   <sub></sub>
 </td>
@@ -864,9 +848,7 @@ Full tech stack [here](/techstack.md)
   <sub></sub>
 </td>
 
-</tr>
-<tr>
-  <td align='center'>
+<td align='center'>
   <img width='36' height='36' src='https://img.stackshare.io/service/3643/Xrtdc94q_400x400.png' alt='Moment.js'>
   <br>
   <sub><a href="http://momentjs.com/">Moment.js</a></sub>
@@ -882,7 +864,9 @@ Full tech stack [here](/techstack.md)
   <sub></sub>
 </td>
 
-<td align='center'>
+</tr>
+<tr>
+  <td align='center'>
   <img width='36' height='36' src='https://img.stackshare.io/service/2862/qr2-jCLr.jpg' alt='Nodemailer'>
   <br>
   <sub><a href="http://www.nodemailer.com/">Nodemailer</a></sub>
@@ -930,9 +914,7 @@ Full tech stack [here](/techstack.md)
   <sub></sub>
 </td>
 
-</tr>
-<tr>
-  <td align='center'>
+<td align='center'>
   <img width='36' height='36' src='https://img.stackshare.io/service/2634/quvIzEn2_normal.jpg' alt='auto'>
   <br>
   <sub><a href="http://autoportal.com/">auto</a></sub>
@@ -948,7 +930,9 @@ Full tech stack [here](/techstack.md)
   <sub>v1.6.2</sub>
 </td>
 
-<td align='center'>
+</tr>
+<tr>
+  <td align='center'>
   <img width='36' height='36' src='https://img.stackshare.io/service/8072/13122722.png' alt='chalk'>
   <br>
   <sub><a href="https://github.com/chalk/chalk">chalk</a></sub>
@@ -973,6 +957,14 @@ Full tech stack [here](/techstack.md)
 </td>
 
 <td align='center'>
+  <img width='36' height='36' src='https://img.stackshare.io/service/4747/default_82286a88bf01c80539ebd1d6dbea1b25df8af16d.png' alt='i18next'>
+  <br>
+  <sub><a href="https://www.i18next.com/">i18next</a></sub>
+  <br>
+  <sub></sub>
+</td>
+
+<td align='center'>
   <img width='36' height='36' src='https://img.stackshare.io/service/10577/11071.jpeg' alt='lint-staged'>
   <br>
   <sub><a href="https://github.com/okonet/lint-staged">lint-staged</a></sub>
@@ -992,9 +984,9 @@ Full tech stack [here](/techstack.md)
 </table>
 
 
-## <img src='https://img.stackshare.io/group.svg' /> Open source packages (205)</h2>
+## <img src='https://img.stackshare.io/group.svg' /> Open source packages (209)</h2>
 
-## <img width='24' height='24' src='https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png'/> npm (205)
+## <img width='24' height='24' src='https://img.stackshare.io/service/1120/lejvzrnlpb308aftn31u.png'/> npm (209)
 
 |NAME|VERSION|LAST UPDATED|LAST UPDATED BY|LICENSE|VULNERABILITIES|
 |:------|:------|:------|:------|:------|:------|
@@ -1008,8 +1000,8 @@ Full tech stack [here](/techstack.md)
 |[@angular/platform-browser](https://www.npmjs.com/@angular/platform-browser)|v16.2.0|10/12/23|Richard Fontein |MIT|N/A|
 |[@angular/platform-browser-dynamic](https://www.npmjs.com/@angular/platform-browser-dynamic)|v16.2.0|10/12/23|Richard Fontein |MIT|N/A|
 |[@angular/router](https://www.npmjs.com/@angular/router)|v16.2.0|10/12/23|Richard Fontein |MIT|N/A|
-|[@babel/plugin-proposal-optional-chaining](https://www.npmjs.com/@babel/plugin-proposal-optional-chaining)|v7.20.7|11/28/23|Paweł |MIT|N/A|
-|[@babel/plugin-transform-runtime](https://www.npmjs.com/@babel/plugin-transform-runtime)|v7.23.2|10/23/23|David Söderberg |MIT|N/A|
+|[@babel/plugin-proposal-optional-chaining](https://www.npmjs.com/@babel/plugin-proposal-optional-chaining)|v7.20.7|12/18/23|David Söderberg |MIT|N/A|
+|[@babel/plugin-transform-runtime](https://www.npmjs.com/@babel/plugin-transform-runtime)|v7.23.2|12/18/23|David Söderberg |MIT|N/A|
 |[@babel/polyfill](https://www.npmjs.com/@babel/polyfill)|v7.12.1|10/23/23|David Söderberg |MIT|N/A|
 |[@babel/preset-env](https://www.npmjs.com/@babel/preset-env)|v7.23.2|12/12/23|Dima Grossman |MIT|N/A|
 |[@babel/preset-react](https://www.npmjs.com/@babel/preset-react)|v7.13.13|12/12/23|Dima Grossman |MIT|N/A|
@@ -1018,21 +1010,21 @@ Full tech stack [here](/techstack.md)
 |[@commitlint/cli](https://www.npmjs.com/@commitlint/cli)|v17.0.0|09/28/23|Dima Grossman |MIT|N/A|
 |[@commitlint/config-angular](https://www.npmjs.com/@commitlint/config-angular)|v17.0.0|10/17/23|Richard Fontein |MIT|N/A|
 |[@commitlint/config-conventional](https://www.npmjs.com/@commitlint/config-conventional)|v17.0.0|11/28/23|Paweł |MIT|N/A|
-|[@emotion/styled](https://www.npmjs.com/@emotion/styled)|v11.6.0|11/28/23|Paweł |MIT|N/A|
+|[@emotion/styled](https://www.npmjs.com/@emotion/styled)|v11.6.0|12/18/23|David Söderberg |MIT|N/A|
 |[@fortawesome/fontawesome-svg-core](https://www.npmjs.com/@fortawesome/fontawesome-svg-core)|v6.4.0|05/16/23|Paweł |MIT|N/A|
-|[@fortawesome/free-regular-svg-icons](https://www.npmjs.com/@fortawesome/free-regular-svg-icons)|v6.4.0|09/18/23|Dima Grossman |CC-BY-4.0,MIT|N/A|
-|[@fortawesome/free-solid-svg-icons](https://www.npmjs.com/@fortawesome/free-solid-svg-icons)|v6.4.0|05/16/23|Paweł |CC-BY-4.0,MIT|N/A|
+|[@fortawesome/free-regular-svg-icons](https://www.npmjs.com/@fortawesome/free-regular-svg-icons)|v6.4.0|11/10/23|David Söderberg |CC-BY-4.0,MIT|N/A|
+|[@fortawesome/free-solid-svg-icons](https://www.npmjs.com/@fortawesome/free-solid-svg-icons)|v6.4.0|11/10/23|David Söderberg |CC-BY-4.0,MIT|N/A|
 |[@fortawesome/react-fontawesome](https://www.npmjs.com/@fortawesome/react-fontawesome)|v0.2.0|12/12/23|Dima Grossman |MIT|N/A|
 |[@google-cloud/storage](https://www.npmjs.com/@google-cloud/storage)|v6.2.3|08/02/22|Longfeng Lian |Apache-2.0|N/A|
 |[@istanbuljs/nyc-config-typescript](https://www.npmjs.com/@istanbuljs/nyc-config-typescript)|v1.0.1|12/02/23|Richard Fontein |ISC|N/A|
-|[@nestjs/common](https://www.npmjs.com/@nestjs/common)|v10.2.2|12/05/23|Richard Fontein |MIT|N/A|
-|[@nestjs/core](https://www.npmjs.com/@nestjs/core)|v10.2.2|12/05/23|Richard Fontein |MIT|N/A|
-|[@nestjs/testing](https://www.npmjs.com/@nestjs/testing)|v10.2.2|12/13/23|Dima Grossman |MIT|N/A|
+|[@nestjs/common](https://www.npmjs.com/@nestjs/common)|v10.2.2|12/14/23|Gosha |MIT|N/A|
+|[@nestjs/core](https://www.npmjs.com/@nestjs/core)|v10.2.2|12/14/23|Gosha |MIT|N/A|
+|[@nestjs/testing](https://www.npmjs.com/@nestjs/testing)|v10.2.2|12/14/23|Gosha |MIT|N/A|
 |[@rollup/plugin-node-resolve](https://www.npmjs.com/@rollup/plugin-node-resolve)|v6.0.0|04/25/23|Dima Grossman |MIT|N/A|
-|[@sentry/node](https://www.npmjs.com/@sentry/node)|v7.40.0|12/13/23|Dima Grossman |MIT|N/A|
-|[@storybook/addon-actions](https://www.npmjs.com/@storybook/addon-actions)|v7.4.2|11/28/23|Paweł |MIT|N/A|
+|[@sentry/node](https://www.npmjs.com/@sentry/node)|v7.40.0|12/18/23|Dima Grossman |MIT|N/A|
+|[@storybook/addon-actions](https://www.npmjs.com/@storybook/addon-actions)|v7.4.2|12/18/23|David Söderberg |MIT|N/A|
 |[@storybook/addon-docs](https://www.npmjs.com/@storybook/addon-docs)|v7.4.2|10/14/23|Ayush Shukla |MIT|N/A|
-|[@storybook/addon-links](https://www.npmjs.com/@storybook/addon-links)|v7.4.2|10/14/23|Ayush Shukla |MIT|N/A|
+|[@storybook/addon-links](https://www.npmjs.com/@storybook/addon-links)|v7.4.2|11/08/23|David Söderberg |MIT|N/A|
 |[@storybook/react](https://www.npmjs.com/@storybook/react)|v7.4.2|12/12/23|Dima Grossman |MIT|N/A|
 |[@storybook/theming](https://www.npmjs.com/@storybook/theming)|v7.4.2|10/14/23|Ayush Shukla |MIT|N/A|
 |[@testing-library/jest-dom](https://www.npmjs.com/@testing-library/jest-dom)|v4.2.4|11/28/23|Paweł |MIT|N/A|
@@ -1051,13 +1043,13 @@ Full tech stack [here](/techstack.md)
 |[@types/node](https://www.npmjs.com/@types/node)|v14.6.0|12/13/23|Dima Grossman |MIT|N/A|
 |[@types/react](https://www.npmjs.com/@types/react)|v17.0.0|12/12/23|Dima Grossman |MIT|N/A|
 |[@types/react-dom](https://www.npmjs.com/@types/react-dom)|v17.0.0|12/12/23|Dima Grossman |MIT|N/A|
-|[@types/react-router-dom](https://www.npmjs.com/@types/react-router-dom)|v5.1.7|10/27/23|Paweł |MIT|N/A|
+|[@types/react-router-dom](https://www.npmjs.com/@types/react-router-dom)|v5.1.7|12/25/23|Gosha |MIT|N/A|
 |[@types/sinon](https://www.npmjs.com/@types/sinon)|v9.0.0|10/16/23|Ayush Shukla |MIT|N/A|
 |[@types/socket.io](https://www.npmjs.com/@types/socket.io)|v3.0.2|10/16/23|Ayush Shukla |MIT|N/A|
 |[@types/supertest](https://www.npmjs.com/@types/supertest)|v2.0.8|12/13/23|Dima Grossman |MIT|N/A|
 |[@types/uuid](https://www.npmjs.com/@types/uuid)|v8.3.4|12/01/23|Michał Dziuba |MIT|N/A|
 |[@typescript-eslint/eslint-plugin](https://www.npmjs.com/@typescript-eslint/eslint-plugin)|v5.50.0|11/06/23|renovate[bot] |MIT|N/A|
-|[@typescript-eslint/parser](https://www.npmjs.com/@typescript-eslint/parser)|v4.14.2|02/02/23|renovate[bot] |BSD-2-Clause|N/A|
+|[@typescript-eslint/parser](https://www.npmjs.com/@typescript-eslint/parser)|v4.14.2|12/18/23|David Söderberg |BSD-2-Clause|N/A|
 |[@vue/eslint-config-prettier](https://www.npmjs.com/@vue/eslint-config-prettier)|v7.0.0|04/25/23|Dima Grossman |MIT|N/A|
 |[@vue/eslint-config-typescript](https://www.npmjs.com/@vue/eslint-config-typescript)|v11.0.0|04/25/23|Dima Grossman |MIT|N/A|
 |[JSONStream](https://www.npmjs.com/JSONStream)|v1.3.5|11/07/21|Dima Grossman |MIT,Apache-2.0|N/A|
@@ -1071,9 +1063,10 @@ Full tech stack [here](/techstack.md)
 |[babel-plugin-import](https://www.npmjs.com/babel-plugin-import)|v1.13.3|10/23/23|David Söderberg |MIT|N/A|
 |[bcrypt](https://www.npmjs.com/bcrypt)|v5.0.0|11/07/21|Dima Grossman |MIT|N/A|
 |[body-parser](https://www.npmjs.com/body-parser)|v1.20.0|06/06/22|Dima Grossman |MIT|N/A|
+|[bullmq](https://www.npmjs.com/bullmq)|v3.10.2|03/29/23|Dima Grossman |N/A|N/A|
 |[chalk](https://www.npmjs.com/chalk)|v4.1.2|08/20/22|Dima Grossman |MIT|N/A|
 |[chroma-js](https://www.npmjs.com/chroma-js)|v2.4.2|03/30/22|ainouzgali |BSD-3-Clause,Apache-2.0|N/A|
-|[class-transformer](https://www.npmjs.com/class-transformer)|v0.5.1|11/07/23|Richard Fontein |MIT|N/A|
+|[class-transformer](https://www.npmjs.com/class-transformer)|v0.5.1|12/19/23|Paweł |MIT|N/A|
 |[class-validator](https://www.npmjs.com/class-validator)|v0.14.0|01/13/23|Dima Grossman |MIT|N/A|
 |[colors](https://www.npmjs.com/colors)|v1.4.0|07/04/22|Dima Grossman |MIT|N/A|
 |[commander](https://www.npmjs.com/commander)|v9.0.0|03/30/22|Dima Grossman |MIT|N/A|
@@ -1090,11 +1083,11 @@ Full tech stack [here](/techstack.md)
 |[detect-port](https://www.npmjs.com/detect-port)|v1.3.0|10/15/23|Dima Grossman |MIT|N/A|
 |[eslint-config-prettier](https://www.npmjs.com/eslint-config-prettier)|v8.6.0|10/24/23|Gosha |MIT|N/A|
 |[eslint-import-resolver-webpack](https://www.npmjs.com/eslint-import-resolver-webpack)|v0.13.7|10/24/23|Gosha |MIT|N/A|
-|[eslint-plugin-cypress](https://www.npmjs.com/eslint-plugin-cypress)|v2.15.1|10/23/23|David Söderberg |MIT|N/A|
+|[eslint-plugin-cypress](https://www.npmjs.com/eslint-plugin-cypress)|v2.15.1|11/08/23|David Söderberg |MIT|N/A|
 |[eslint-plugin-eslint-comments](https://www.npmjs.com/eslint-plugin-eslint-comments)|v3.2.0|10/24/23|Gosha |MIT|N/A|
 |[eslint-plugin-import](https://www.npmjs.com/eslint-plugin-import)|v2.28.1|10/24/23|Gosha |MIT|N/A|
 |[eslint-plugin-jsx-a11y](https://www.npmjs.com/eslint-plugin-jsx-a11y)|v6.5.1|10/24/23|Gosha |MIT|N/A|
-|[eslint-plugin-prettier](https://www.npmjs.com/eslint-plugin-prettier)|v4.2.1|10/24/23|Gosha |MIT|N/A|
+|[eslint-plugin-prettier](https://www.npmjs.com/eslint-plugin-prettier)|v4.2.1|12/18/23|David Söderberg |MIT|N/A|
 |[eslint-plugin-promise](https://www.npmjs.com/eslint-plugin-promise)|v4.3.1|10/24/23|Gosha |ISC|N/A|
 |[eslint-plugin-react](https://www.npmjs.com/eslint-plugin-react)|v7.32.2|10/24/23|Gosha |MIT|N/A|
 |[eslint-plugin-react-hooks](https://www.npmjs.com/eslint-plugin-react-hooks)|v4.4.0|12/12/23|Dima Grossman |MIT|N/A|
@@ -1114,7 +1107,7 @@ Full tech stack [here](/techstack.md)
 |[hat](https://www.npmjs.com/hat)|v0.0.3|11/07/21|Dima Grossman |MIT,X11|N/A|
 |[helmet](https://www.npmjs.com/helmet)|v6.0.1|11/30/22|Dima Grossman |MIT|N/A|
 |[html-to-text](https://www.npmjs.com/html-to-text)|v9.0.5|08/14/23|Dima Grossman |MIT|N/A|
-|[html-webpack-plugin](https://www.npmjs.com/html-webpack-plugin)|v5.5.3|10/23/23|David Söderberg |MIT|N/A|
+|[html-webpack-plugin](https://www.npmjs.com/html-webpack-plugin)|v5.5.3|12/18/23|David Söderberg |MIT|N/A|
 |[http-server](https://www.npmjs.com/http-server)|v0.13.0|10/23/23|David Söderberg |MIT|N/A|
 |[husky](https://www.npmjs.com/husky)|v1.0.1|11/07/21|Dima Grossman |MIT|N/A|
 |[inquirer](https://www.npmjs.com/inquirer)|v8.2.6|11/06/23|renovate[bot] |MIT|N/A|
@@ -1124,12 +1117,12 @@ Full tech stack [here](/techstack.md)
 |[jest-environment-jsdom](https://www.npmjs.com/jest-environment-jsdom)|v29.3.1|10/23/23|David Söderberg |MIT|N/A|
 |[jsonfile](https://www.npmjs.com/jsonfile)|v6.0.1|07/25/23|Dima Grossman |MIT|N/A|
 |[jsonwebtoken](https://www.npmjs.com/jsonwebtoken)|v9.0.0|01/04/23|Cxxshyy |MIT|N/A|
-|[jwt-decode](https://www.npmjs.com/jwt-decode)|v3.1.2|11/07/21|Dima Grossman |MIT|N/A|
+|[jwt-decode](https://www.npmjs.com/jwt-decode)|v3.1.2|11/10/23|David Söderberg |MIT|N/A|
 |[karma-chrome-launcher](https://www.npmjs.com/karma-chrome-launcher)|v3.2.0|10/12/23|Richard Fontein |MIT|N/A|
 |[karma-coverage](https://www.npmjs.com/karma-coverage)|v2.2.0|10/12/23|Richard Fontein |MIT|N/A|
 |[karma-jasmine](https://www.npmjs.com/karma-jasmine)|v5.1.0|10/12/23|Richard Fontein |MIT|N/A|
 |[karma-jasmine-html-reporter](https://www.npmjs.com/karma-jasmine-html-reporter)|v2.1.0|10/12/23|Richard Fontein |MIT|N/A|
-|[less-loader](https://www.npmjs.com/less-loader)|v4.1.0|10/14/23|Ayush Shukla |MIT|N/A|
+|[less-loader](https://www.npmjs.com/less-loader)|v4.1.0|12/01/23|Paweł |MIT|N/A|
 |[lint-staged](https://www.npmjs.com/lint-staged)|v10.5.4|10/24/23|Gosha |MIT|N/A|
 |[listr](https://www.npmjs.com/listr)|v0.14.3|08/20/22|Dima Grossman |MIT|N/A|
 |[localforage](https://www.npmjs.com/localforage)|v1.10.0|10/14/23|Ayush Shukla |Apache-2.0|N/A|
@@ -1143,17 +1136,19 @@ Full tech stack [here](/techstack.md)
 |[markdownlint-cli](https://www.npmjs.com/markdownlint-cli)|v0.33.0|10/24/23|Gosha |MIT|N/A|
 |[meow](https://www.npmjs.com/meow)|v10.1.3|02/21/23|Zac Clifton |MIT|N/A|
 |[moment](https://www.npmjs.com/moment)|v2.29.4|03/28/23|Adrian Toro |MIT|N/A|
+|[multer](https://www.npmjs.com/multer)|v1.4.5|12/18/23|Dima Grossman |MIT|N/A|
 |[nanoid](https://www.npmjs.com/nanoid)|v3.1.20|11/07/21|Dima Grossman |MIT|[CVE-2021-23566](https://github.com/advisories/GHSA-qrpm-p2h7-hrv2) (Moderate)|
 |[ncp](https://www.npmjs.com/ncp)|v2.0.0|02/08/22|Gosha |MIT|N/A|
 |[newrelic](https://www.npmjs.com/newrelic)|v9.15.0|09/01/23|Dima Grossman |Apache-2.0|N/A|
 |[ng-packagr](https://www.npmjs.com/ng-packagr)|v16.2.0|10/12/23|Richard Fontein |MIT|N/A|
 |[nock](https://www.npmjs.com/nock)|v13.1.3|12/01/23|Michał Dziuba |MIT|N/A|
-|[node-fetch](https://www.npmjs.com/node-fetch)|v3.2.10|11/28/23|Paweł |MIT|N/A|
-|[npm-run-all](https://www.npmjs.com/npm-run-all)|v4.1.5|09/21/22|David Söderberg |MIT|N/A|
+|[node-fetch](https://www.npmjs.com/node-fetch)|v3.2.10|01/02/24|Dima Grossman |MIT|N/A|
+|[npm-run-all](https://www.npmjs.com/npm-run-all)|v4.1.5|12/08/23|David Söderberg |MIT|N/A|
 |[nyc](https://www.npmjs.com/nyc)|v15.1.0|09/21/22|David Söderberg |ISC|N/A|
 |[open](https://www.npmjs.com/open)|v8.4.0|02/10/22|Gosha |MIT|N/A|
+|[passport-google-oauth](https://www.npmjs.com/passport-google-oauth)|v2.0.0|12/13/23|Gosha |MIT|N/A|
 |[passport-jwt](https://www.npmjs.com/passport-jwt)|v4.0.0|12/13/23|Richard Fontein |MIT|N/A|
-|[passport-oauth2](https://www.npmjs.com/passport-oauth2)|v1.6.1|12/13/23|Richard Fontein |MIT|N/A|
+|[passport-oauth2](https://www.npmjs.com/passport-oauth2)|v1.6.1|12/19/23|Paweł |MIT|N/A|
 |[pino-pretty](https://www.npmjs.com/pino-pretty)|v9.4.0|08/30/23|Dima Grossman |MIT|N/A|
 |[polished](https://www.npmjs.com/polished)|v4.1.3|11/07/21|Dima Grossman |MIT|N/A|
 |[process](https://www.npmjs.com/process)|v0.11.10|10/15/23|Dima Grossman |MIT|N/A|
@@ -1164,6 +1159,7 @@ Full tech stack [here](/techstack.md)
 |[react-color](https://www.npmjs.com/react-color)|v2.19.3|12/12/23|Dima Grossman |MIT|N/A|
 |[react-custom-scrollbars](https://www.npmjs.com/react-custom-scrollbars)|v4.2.1|12/12/23|Dima Grossman |MIT|N/A|
 |[react-dom](https://www.npmjs.com/react-dom)|v17.0.1|12/12/23|Dima Grossman |MIT|N/A|
+|[react-error-boundary](https://www.npmjs.com/react-error-boundary)|v3.1.4|12/12/23|Dima Grossman |N/A|N/A|
 |[react-error-overlay](https://www.npmjs.com/react-error-overlay)|v6.0.11|12/12/23|Dima Grossman |MIT|N/A|
 |[react-is](https://www.npmjs.com/react-is)|v18.2.0|12/12/23|Dima Grossman |MIT|N/A|
 |[react-router-dom](https://www.npmjs.com/react-router-dom)|v6.2.2|12/12/23|Dima Grossman |MIT|N/A|
@@ -1171,7 +1167,7 @@ Full tech stack [here](/techstack.md)
 |[react-syntax-highlighter](https://www.npmjs.com/react-syntax-highlighter)|v15.4.3|12/12/23|Dima Grossman |MIT|N/A|
 |[react-table](https://www.npmjs.com/react-table)|v7.8.0|12/12/23|Dima Grossman |MIT|N/A|
 |[reflect-metadata](https://www.npmjs.com/reflect-metadata)|v0.1.13|11/07/21|Dima Grossman |Apache-2.0|N/A|
-|[replace-in-file](https://www.npmjs.com/replace-in-file)|v3.4.2|02/10/23|Dima Grossman |MIT|N/A|
+|[replace-in-file](https://www.npmjs.com/replace-in-file)|v3.4.2|12/01/23|Paweł |MIT|N/A|
 |[rimraf](https://www.npmjs.com/rimraf)|v3.0.2|08/22/22|Gosha |ISC|N/A|
 |[rollup-plugin-commonjs](https://www.npmjs.com/rollup-plugin-commonjs)|v10.1.0|09/28/23|Dima Grossman |MIT|N/A|
 |[rollup-plugin-json](https://www.npmjs.com/rollup-plugin-json)|v4.0.0|04/25/23|Dima Grossman |MIT|N/A|
@@ -1183,24 +1179,24 @@ Full tech stack [here](/techstack.md)
 |[shelljs](https://www.npmjs.com/shelljs)|v0.8.5|01/22/23|Gosha |BSD-3-Clause|N/A|
 |[shortid](https://www.npmjs.com/shortid)|v2.2.16|11/07/21|Dima Grossman |MIT|N/A|
 |[slugify](https://www.npmjs.com/slugify)|v1.4.6|11/07/21|Dima Grossman |MIT|N/A|
-|[socket.io-client](https://www.npmjs.com/socket.io-client)|v4.7.2|08/30/23|Dima Grossman |MIT|N/A|
+|[socket.io-client](https://www.npmjs.com/socket.io-client)|v4.7.2|12/01/23|Paweł |MIT|N/A|
 |[tar](https://www.npmjs.com/tar)|v6.1.11|08/25/21|Dima Grossman |ISC|N/A|
 |[terser-webpack-plugin](https://www.npmjs.com/terser-webpack-plugin)|v5.3.9|09/18/23|Dima Grossman |MIT|N/A|
 |[ts-jest](https://www.npmjs.com/ts-jest)|v27.0.7|01/17/23|Dima Grossman |MIT|N/A|
 |[ts-loader](https://www.npmjs.com/ts-loader)|v9.4.0|12/13/23|Richard Fontein |MIT|N/A|
 |[ts-node](https://www.npmjs.com/ts-node)|v10.9.1|12/13/23|Dima Grossman |MIT|N/A|
 |[tsconfig-paths](https://www.npmjs.com/tsconfig-paths)|v4.1.0|07/25/23|Dima Grossman |MIT|N/A|
-|[tslib](https://www.npmjs.com/tslib)|v2.3.1|10/17/23|David Söderberg |0BSD|N/A|
+|[tslib](https://www.npmjs.com/tslib)|v2.3.1|12/15/23|David Söderberg |0BSD|N/A|
 |[typedoc](https://www.npmjs.com/typedoc)|v0.24.0|06/14/23|renovate[bot] |Apache-2.0|N/A|
 |[uniqid](https://www.npmjs.com/uniqid)|v5.3.0|11/07/21|Dima Grossman |MIT|N/A|
 |[url-loader](https://www.npmjs.com/url-loader)|v4.1.1|10/16/23|David Söderberg |MIT|N/A|
-|[uuid](https://www.npmjs.com/uuid)|v8.3.2|11/07/21|Dima Grossman |MIT|N/A|
+|[uuid](https://www.npmjs.com/uuid)|v8.3.2|12/08/23|David Söderberg |MIT|N/A|
 |[vite](https://www.npmjs.com/vite)|v4.4.5|10/19/23|David Söderberg |N/A|[CVE-2023-49293](https://github.com/advisories/GHSA-92r3-m2mg-pj97) (Moderate)|
 |[vue](https://www.npmjs.com/vue)|v3.2.45|11/22/22|Paweł |MIT|N/A|
-|[webfontloader](https://www.npmjs.com/webfontloader)|v1.6.28|11/07/21|Dima Grossman |Apache-2.0|N/A|
-|[webpack-bundle-analyzer](https://www.npmjs.com/webpack-bundle-analyzer)|v4.9.0|10/23/23|David Söderberg |MIT|N/A|
+|[webfontloader](https://www.npmjs.com/webfontloader)|v1.6.28|12/01/23|Paweł |Apache-2.0|N/A|
+|[webpack-bundle-analyzer](https://www.npmjs.com/webpack-bundle-analyzer)|v4.9.0|11/08/23|David Söderberg |MIT|N/A|
 |[webpack-cli](https://www.npmjs.com/webpack-cli)|v5.1.4|09/18/23|Dima Grossman |MIT|N/A|
-|[webpack-dev-server](https://www.npmjs.com/webpack-dev-server)|v4.11.1|10/23/23|David Söderberg |MIT|N/A|
+|[webpack-dev-server](https://www.npmjs.com/webpack-dev-server)|v4.11.1|11/08/23|David Söderberg |MIT|N/A|
 |[winston](https://www.npmjs.com/winston)|v3.9.0|09/06/23|p-fernandez |MIT|N/A|
 |[zone.js](https://www.npmjs.com/zone.js)|v0.13.0|10/12/23|Richard Fontein |MIT|N/A|
 
