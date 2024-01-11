@@ -69,7 +69,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
           <Input
             {...field}
             required
-            label="Provider identifier"
+            label="Integration identifier"
             error={errors.identifier?.message}
             rightSection={
               <CopyWrapper onClick={() => identifierClipboard.copy(field.value)}>

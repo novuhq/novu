@@ -1,10 +1,12 @@
 import styled from '@emotion/styled';
-import { Skeleton, useMantineColorScheme } from '@mantine/core';
+import { createStyles, CSSObject, MantineTheme, Skeleton, useMantineColorScheme } from '@mantine/core';
 import { useState } from 'react';
 
-import { colors, IExtendedCellProps, Popover, Text, Star } from '@novu/design-system';
+import { colors, IExtendedCellProps, Popover, Text, Star, Tooltip } from '@novu/design-system';
 import type { ITableIntegration } from '../types';
 import { ChannelTypeEnum } from '@novu/shared';
+import { CopyButton } from '../../activities/components/CopyButton';
+import { useClipboard } from '@mantine/hooks';
 
 const CellHolder = styled.div`
   display: flex;
@@ -54,9 +56,18 @@ const Description = styled(Text)`
   line-height: 20px;
 `;
 
+const CopyBtn = styled(CopyButton)`
+      display: 'none',
+      visibility: 'hidden',
+      position: 'relative',
+      top: '2px',
+      marginLeft: '8px',
+   `;
+
 export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedCellProps<ITableIntegration>) => {
   const { colorScheme } = useMantineColorScheme();
   const [isPopoverOpened, setPopoverOpened] = useState(false);
+  const { copy } = useClipboard();
 
   if (isLoading) {
     return (
@@ -104,7 +115,14 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
             <Free>Test Provider</Free>
           )}
         </NameHolder>
-        {original.identifier && <Identifier>Provider identifier: {original.identifier}</Identifier>}
+        {original.identifier && (
+          <Tooltip label={'Integration Identifier'}>
+            <Identifier>
+              {original.identifier}
+              <CopyBtn onCopy={() => copy(original.identifier)} />
+            </Identifier>
+          </Tooltip>
+        )}
       </DetailsHolder>
     </CellHolder>
   );
