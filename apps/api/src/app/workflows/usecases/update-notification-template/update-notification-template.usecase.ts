@@ -1,5 +1,5 @@
 // eslint-ignore max-len
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   ChangeRepository,
   NotificationGroupRepository,
@@ -8,7 +8,7 @@ import {
   NotificationTemplateRepository,
   StepVariantEntity,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, StepTypeEnum } from '@novu/shared';
 import {
   AnalyticsService,
   buildNotificationTemplateIdentifierKey,
@@ -17,6 +17,7 @@ import {
   CreateChangeCommand,
   CacheService,
   InvalidateCacheService,
+  PlatformException,
 } from '@novu/application-generic';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
@@ -31,6 +32,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { NotificationStep, NotificationStepVariant } from '../create-notification-template';
 import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
 import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
+import { ModuleRef } from '@nestjs/core';
 
 /**
  * DEPRECATED:
@@ -49,7 +51,8 @@ export class UpdateNotificationTemplate {
     private analyticsService: AnalyticsService,
     private invalidateCache: InvalidateCacheService,
     private notificationGroupRepository: NotificationGroupRepository,
-    private deleteMessageTemplate: DeleteMessageTemplate
+    private deleteMessageTemplate: DeleteMessageTemplate,
+    protected moduleRef: ModuleRef
   ) {}
 
   async execute(command: UpdateNotificationTemplateCommand): Promise<NotificationTemplateEntity> {
@@ -196,6 +199,18 @@ export class UpdateNotificationTemplate {
       channels: command.steps?.map((i) => i.template?.type),
       critical: command.critical,
     });
+
+    try {
+      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+        if (!require('@novu/ee-translation')?.TranslationsService) {
+          throw new PlatformException('Translation module is not loaded');
+        }
+        const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
+        await service.createTranslationAnalytics(notificationTemplateWithStepTemplate);
+      }
+    } catch (e) {
+      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+    }
 
     return notificationTemplateWithStepTemplate;
   }
