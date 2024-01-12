@@ -76,31 +76,28 @@ describe('Edit translation - /translations/groups/:identifier/locales/:locale (P
 
     await session.switchToDevEnvironment();
 
+    const editedFileName = 'edited.json';
+    const editedFileText = {
+      key1: 'value1',
+      key2: 'value2',
+      key3: 'value3',
+    };
+
     const { body: editTranslationBody } = await session.testAgent
       .patch(
         `/v1/translations/groups/${createTranslationGroup.identifier}/locales/${createTranslationGroup.locales[0]}`
       )
       .send({
-        translation: JSON.stringify({
-          key1: 'value1',
-          key2: 'value2',
-          key3: 'value3',
-        }),
-        fileName: 'edited.json',
+        translation: JSON.stringify(editedFileText),
+        fileName: editedFileName,
       });
 
     const editTranslation = editTranslationBody.data;
 
     expect(editTranslation.isoLanguage).to.equal(createTranslationGroup.locales[0]);
     expect(editTranslation._groupId).to.equal(newTranslationGroupId);
-    expect(editTranslation.translations).to.equal(
-      JSON.stringify({
-        key1: 'value1',
-        key2: 'value2',
-        key3: 'value3',
-      })
-    );
-    expect(editTranslation.fileName).to.equal('edited.json');
+    expect(editTranslation.translations).to.equal(JSON.stringify(editedFileText));
+    expect(editTranslation.fileName).to.equal(editedFileName);
 
     await session.applyChanges({
       enabled: false,
@@ -115,13 +112,7 @@ describe('Edit translation - /translations/groups/:identifier/locales/:locale (P
 
     expect(editTranslationProd.isoLanguage).to.equal(createTranslationGroup.locales[0]);
 
-    expect(editTranslationProd.fileName).to.equal('edited.json');
-    expect(editTranslationProd.translations).to.equal(
-      JSON.stringify({
-        key1: 'value1',
-        key2: 'value2',
-        key3: 'value3',
-      })
-    );
+    expect(editTranslationProd.fileName).to.equal(editedFileName);
+    expect(editTranslationProd.translations).to.equal(JSON.stringify(editedFileText));
   });
 });
