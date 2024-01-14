@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Group, Center, Box } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 import styled from '@emotion/styled';
 import slugify from 'slugify';
 import { Controller, FormProvider, useForm, useWatch } from 'react-hook-form';
+import { useClipboard, useDisclosure } from '@mantine/hooks';
 import {
   CHANNELS_WITH_PRIMARY,
   CredentialsKeyEnum,
@@ -14,7 +14,7 @@ import {
   InAppProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
-import { Button, colors, Sidebar, Text } from '@novu/design-system';
+import { Button, colors, Input, Sidebar, Text, Check, Copy } from '@novu/design-system';
 
 import { useProviders } from '../../useProviders';
 import type { IIntegratedProvider } from '../../types';
@@ -36,6 +36,7 @@ import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions, IConditions } from '../../../../components/conditions';
+import { useWebhookSupportStatus } from '../../../../api/hooks';
 import { defaultIntegrationConditionsProps } from '../../constants';
 
 interface IProviderForm {
@@ -61,16 +62,27 @@ export function UpdateProviderSidebar({
   onClose: () => void;
 }) {
   const { isLoading: areEnvironmentsLoading } = useFetchEnvironments();
-  const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(null);
   const [sidebarState, setSidebarState] = useState<SidebarStateEnum>(SidebarStateEnum.NORMAL);
   const [framework, setFramework] = useState<FrameworkEnum | null>(null);
   const { providers, isLoading: areProvidersLoading } = useProviders();
+  const [selectedProvider, setSelectedProvider] = useState<IIntegratedProvider | null>(() => {
+    const provider = providers.find((el) => el.integrationId === integrationId);
+
+    return provider ?? null;
+  });
   const isNovuInAppProvider = selectedProvider?.providerId === InAppProviderIdEnum.Novu;
   const { openModal: openSelectPrimaryIntegrationModal, SelectPrimaryIntegrationModal } =
     useSelectPrimaryIntegrationModal();
   const [conditionsFormOpened, { close: closeConditionsForm, open: openConditionsForm }] = useDisclosure(false);
+  const webhookUrlClipboard = useClipboard({ timeout: 1000 });
 
   const { updateIntegration, isLoadingUpdate } = useUpdateIntegration(selectedProvider?.integrationId || '');
+
+  const { isWebhookEnabled, webhookUrl } = useWebhookSupportStatus({
+    hasCredentials: selectedProvider?.hasCredentials,
+    integrationId: selectedProvider?.integrationId,
+    channel: selectedProvider?.channel,
+  });
 
   const methods = useForm<IProviderForm>({
     shouldUseNativeValidation: false,
@@ -355,6 +367,21 @@ export function UpdateProviderSidebar({
               />
             </InputWrapper>
           ))}
+          {isWebhookEnabled && (
+            <InputWrapper>
+              <Input
+                label="Webhook URL"
+                value={webhookUrl}
+                readOnly
+                rightSection={
+                  <CopyWrapper onClick={() => webhookUrlClipboard.copy(webhookUrl)}>
+                    {webhookUrlClipboard.copied ? <Check /> : <Copy />}
+                  </CopyWrapper>
+                }
+                data-test-id="provider-webhook-url"
+              />
+            </InputWrapper>
+          )}
           <ShareableUrl provider={selectedProvider?.providerId} hmacEnabled={!!hmacEnabled} />
           {isNovuInAppProvider && <NovuInAppFrameworks onFrameworkClick={onFrameworkClickCallback} />}
         </When>
@@ -390,4 +417,11 @@ const Free = styled.span`
   font-size: 14px;
   min-width: fit-content;
   margin-left: -4px;
+`;
+
+const CopyWrapper = styled.div`
+  cursor: pointer;
+  &:hover {
+    opacity: 0.8;
+  }
 `;

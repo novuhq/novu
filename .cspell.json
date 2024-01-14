@@ -3,6 +3,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "cacheable",
     "Springboot",
     "tmproj",
     "hgignore",
@@ -544,7 +545,9 @@
     "Stdev",
     "openapi",
     "headerapikey",
-    "isend"
+    "INITDB",
+    "isend",
+    "Idand"
   ],
   "flagWords": [],
   "patterns": [

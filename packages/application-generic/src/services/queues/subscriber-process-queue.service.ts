@@ -4,6 +4,10 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { QueueBaseService } from './queue-base.service';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import {
+  IProcessSubscriberBulkJobDto,
+  IProcessSubscriberJobDto,
+} from '../../dtos/process-subscriber-job.dto';
 
 @Injectable()
 export class SubscriberProcessQueueService extends QueueBaseService {
@@ -20,5 +24,13 @@ export class SubscriberProcessQueueService extends QueueBaseService {
     Logger.log(`Creating queue ${this.topic}`, this.LOG_CONTEXT);
 
     this.createQueue();
+  }
+
+  public async add(data: IProcessSubscriberJobDto) {
+    return await super.add(data);
+  }
+
+  public async addBulk(data: IProcessSubscriberBulkJobDto[]) {
+    return await super.addBulk(data);
   }
 }

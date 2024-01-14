@@ -55,16 +55,21 @@ export class ActiveJobsMetricService {
         if (!exists) {
           Logger.debug(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
 
-          return await this.activeJobsMetricQueueService.add(METRIC_JOB_ID, undefined, '', {
-            jobId: METRIC_JOB_ID,
-            repeatJobKey: METRIC_JOB_ID,
-            repeat: {
-              immediately: true,
-              pattern: '* * * * * *',
+          return await this.activeJobsMetricQueueService.add({
+            name: METRIC_JOB_ID,
+            data: undefined,
+            groupId: '',
+            options: {
+              jobId: METRIC_JOB_ID,
+              repeatJobKey: METRIC_JOB_ID,
+              repeat: {
+                immediately: true,
+                pattern: '* * * * * *',
+              },
+              removeOnFail: true,
+              removeOnComplete: true,
+              attempts: 1,
             },
-            removeOnFail: true,
-            removeOnComplete: true,
-            attempts: 1,
           });
         }
 
@@ -89,11 +94,11 @@ export class ActiveJobsMetricService {
 
         try {
           for (const queueService of this.tokenList) {
-            const waitCount = (queueService.instance.queue as any).getGroupsJobsCount
-              ? await (queueService.instance.queue as any).getGroupsJobsCount()
-              : await queueService.instance.queue.getWaitingCount();
-            const delayedCount = await queueService.instance.queue.getDelayedCount();
-            const activeCount = await queueService.instance.queue.getActiveCount();
+            const waitCount = queueService.getGroupsJobsCount
+              ? await queueService.getGroupsJobsCount()
+              : await queueService.getWaitingCount();
+            const delayedCount = await queueService.getDelayedCount();
+            const activeCount = await queueService.getActiveCount();
 
             Logger.verbose('Recording active, waiting, and delayed metrics');
 

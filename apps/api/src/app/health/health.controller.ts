@@ -4,7 +4,6 @@ import { HealthCheck, HealthCheckResult, HealthCheckService, HealthIndicatorFunc
 import {
   CacheServiceHealthIndicator,
   DalServiceHealthIndicator,
-  StandardQueueServiceHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '@novu/application-generic';
 

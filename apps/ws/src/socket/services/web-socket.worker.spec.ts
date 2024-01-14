@@ -2,7 +2,8 @@ import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 
-import { WebSocketsQueueService, WorkflowInMemoryProviderService } from '@novu/application-generic';
+import { IWebSocketDataDto, WebSocketsQueueService, WorkflowInMemoryProviderService } from '@novu/application-generic';
+import { WebSocketEventEnum } from '@novu/shared';
 
 import { WebSocketWorker } from './web-socket.worker';
 
@@ -61,14 +62,13 @@ describe('WebSocket Worker', () => {
     const _organizationId = 'web-socket-queue-organization-id';
     const _userId = 'web-socket-queue-user-id';
     const jobData = {
-      _id: jobId,
-      test: 'web-socket-queue-job-data',
+      event: WebSocketEventEnum.RECEIVED,
       _environmentId,
       _organizationId,
-      _userId,
-    };
+      userId: _userId,
+    } as IWebSocketDataDto;
 
-    await webSocketsQueueService.add(jobId, jobData, _organizationId);
+    await webSocketsQueueService.add({ name: jobId, data: jobData, groupId: _organizationId });
 
     expect(await webSocketsQueueService.queue.getActiveCount()).to.equal(1);
     expect(await webSocketsQueueService.queue.getWaitingCount()).to.equal(0);

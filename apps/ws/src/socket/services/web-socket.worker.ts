@@ -4,6 +4,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   BullMqService,
   getWebSocketWorkerOptions,
+  IWebSocketDataDto,
   WebSocketsWorkerService,
   WorkerOptions,
   WorkflowInMemoryProviderService,
@@ -38,14 +39,16 @@ export class WebSocketWorker extends WebSocketsWorkerService {
           'WS Service',
           function () {
             const transaction = nr.getTransaction();
+            const { data: jobData } = job;
+            const data: IWebSocketDataDto = jobData;
 
             _this.externalServicesRoute
               .execute(
                 ExternalServicesRouteCommand.create({
-                  userId: job.data.userId,
-                  event: job.data.event,
-                  payload: job.data.payload,
-                  _environmentId: job.data._environmentId,
+                  userId: data.userId,
+                  event: data.event,
+                  payload: data.payload,
+                  _environmentId: data._environmentId,
                 })
               )
               .then(resolve)
