@@ -545,7 +545,9 @@
     "Stdev",
     "openapi",
     "headerapikey",
-    "isend"
+    "INITDB",
+    "isend",
+    "Idand"
   ],
   "flagWords": [],
   "patterns": [
