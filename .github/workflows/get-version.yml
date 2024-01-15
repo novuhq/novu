@@ -80,7 +80,7 @@ jobs:
           gh api -H "Accept: application/vnd.github+json" /repos/ras-devops/novu/issues/${{ env.PR_NUMBER }}/labels | jq '[.[].name]' > /tmp/label_list
 
       - name: Semantic Custom Version Bumping
-        uses: ras-devops/determine-version-bump@v1.0.10
+        uses: novuhq/semver-tag-action@v0.0.1
         id: determine_bump
         with:
           current_version: ${{ steps.previoustag.outputs.tag }}
