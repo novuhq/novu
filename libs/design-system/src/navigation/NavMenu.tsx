@@ -1,7 +1,8 @@
 import React, { ReactNode, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { Group, Transition } from '@mantine/core';
+import { Group, Transition, Popover } from '@mantine/core';
 import useStyles from './NavMenu.styles';
+import usePopoverStyles from './NavLinkPopover.styles';
 
 interface INavMenuProps {
   menuItems: {
@@ -11,18 +12,24 @@ interface INavMenuProps {
     testId?: string;
     rightSide?: ReactNode | { component: ReactNode; displayOnHover: boolean };
     condition?: boolean;
+    tooltipLabel?: string;
   }[];
 }
 
 export function NavMenu({ menuItems }: INavMenuProps) {
   const { classes } = useStyles();
+  const { classes: popoverClasses } = usePopoverStyles();
+  const [popoverOpened, setPopoverOpened] = useState(false);
+
   const [isHovered, setIsHovered] = useState<string>(null);
 
   return (
     <div>
       {menuItems
         .filter(({ condition = true }) => condition)
-        .map(({ icon, link, label, testId, rightSide }) => {
+        .map(({ icon, link, label, testId, rightSide, tooltipLabel }) => {
+          const withOnHover = (rightSide as { component: ReactNode; displayOnHover: boolean })?.displayOnHover || false;
+
           return (
             <NavLink
               key={link}
@@ -36,7 +43,17 @@ export function NavMenu({ menuItems }: INavMenuProps) {
                 <div className={classes.linkIcon}>{icon}</div>
                 <div className={classes.linkLabel}>{label}</div>
               </Group>
-              {rightSideSection({ rightSide: rightSide, isHover: isHovered === link })}
+              {!withOnHover && rightSide}
+
+              {withOnHover &&
+                rightSideWithHover({
+                  rightSide: rightSide,
+                  isHover: isHovered === link,
+                  tooltipLabel: tooltipLabel,
+                  popoverClasses: popoverClasses,
+                  popoverOpened: popoverOpened,
+                  setPopoverOpened: setPopoverOpened,
+                })}
             </NavLink>
           );
         })}
@@ -44,24 +61,46 @@ export function NavMenu({ menuItems }: INavMenuProps) {
   );
 }
 
-const rightSideSection = ({
+const rightSideWithHover = ({
   rightSide,
   isHover,
+  tooltipLabel,
+  popoverClasses,
+  popoverOpened,
+  setPopoverOpened,
 }: {
   rightSide?: ReactNode | { component: ReactNode; displayOnHover: boolean };
   isHover: boolean;
+  tooltipLabel: string;
+  popoverClasses: { dropdown: string; arrow: string };
+  popoverOpened: boolean;
+  setPopoverOpened: (value: boolean) => void;
 }) => {
-  const withOnHover = (rightSide as { component: ReactNode; displayOnHover: boolean })?.displayOnHover || false;
-
-  if (!withOnHover) {
-    return rightSide;
-  }
-
-  const onHoverWithTransaction = (rightSide as { component: ReactNode; displayOnHover: boolean })?.component || false;
+  const component = (rightSide as { component: ReactNode; displayOnHover: boolean })?.component || null;
 
   return (
     <Transition mounted={isHover} transition="fade" duration={400} timingFunction="ease">
-      {(styles) => <div style={styles}>{onHoverWithTransaction}</div>}
+      {(styles) => (
+        <div onMouseEnter={() => setPopoverOpened(true)} onMouseLeave={() => setPopoverOpened(false)}>
+          <Popover
+            opened={popoverOpened}
+            onClose={() => setPopoverOpened(false)}
+            classNames={popoverClasses}
+            withArrow
+            withinPortal={true}
+            transitionDuration={250}
+            position="top"
+            radius="md"
+          >
+            <Popover.Target>
+              <div style={styles}>{component}</div>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <div style={{ maxWidth: '190px' }}>{tooltipLabel}</div>
+            </Popover.Dropdown>
+          </Popover>
+        </div>
+      )}
     </Transition>
   );
 };

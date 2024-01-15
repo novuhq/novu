@@ -107,6 +107,7 @@ export function SideNav({}: Props) {
       link: getStartedRoute ?? ROUTES.GET_STARTED,
       rightSide: { component: <VisibilityOff handleClick={handleClick} />, displayOnHover: true },
       testId: 'side-nav-quickstart-link',
+      tooltipLabel: 'Hide this page from menu',
     },
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
     {
