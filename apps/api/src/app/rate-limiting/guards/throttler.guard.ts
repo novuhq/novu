@@ -8,9 +8,10 @@ import {
   ThrottlerStorage,
 } from '@nestjs/throttler';
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
+import { Observable } from 'rxjs';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
-import { FeatureFlagCommand, GetIsApiRateLimitingEnabled } from '@novu/application-generic';
+import { FeatureFlagCommand, GetIsApiRateLimitingEnabled, Instrument } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, ApiAuthSchemeEnum, IJwtPayload } from '@novu/shared';
 import { ThrottlerCost, ThrottlerCategory } from './throttler.decorator';
 import { HttpRequestHeaderKeysEnum, HttpResponseHeaderKeysEnum } from '../../shared/framework/types';
@@ -51,6 +52,11 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     }
   }
 
+  @Instrument()
+  canActivate(context: ExecutionContext): Promise<boolean> {
+    return super.canActivate(context);
+  }
+
   protected async shouldSkip(context: ExecutionContext): Promise<boolean> {
     const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
     if (!isAllowedAuthScheme) {
@@ -88,7 +94,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     // Return early if the current user agent should be ignored.
     if (Array.isArray(ignoreUserAgents)) {
       for (const pattern of ignoreUserAgents) {
-        if (pattern.test(req.headers[HttpRequestHeaderKeysEnum.AUTHORIZATION.toLowerCase()])) {
+        if (pattern.test(req.headers[HttpRequestHeaderKeysEnum.USER_AGENT.toLowerCase()])) {
           return true;
         }
       }
@@ -103,7 +109,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const { organizationId, environmentId } = this.getReqUser(context);
 
-    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm } =
+    const { success, limit, remaining, reset, windowDuration, burstLimit, algorithm, apiServiceLevel } =
       await this.evaluateApiRateLimit.execute(
         EvaluateApiRateLimitCommand.create({
           organizationId,
@@ -120,8 +126,25 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     res.header(HttpResponseHeaderKeysEnum.RATELIMIT_RESET, secondsToReset);
     res.header(
       HttpResponseHeaderKeysEnum.RATELIMIT_POLICY,
-      this.createPolicyHeader(limit, windowDuration, burstLimit, algorithm, apiRateLimitCategory, apiRateLimitCost)
+      this.createPolicyHeader(
+        limit,
+        windowDuration,
+        burstLimit,
+        algorithm,
+        apiRateLimitCategory,
+        apiRateLimitCost,
+        apiServiceLevel
+      )
     );
+    res.rateLimitPolicy = {
+      limit,
+      windowDuration,
+      burstLimit,
+      algorithm,
+      apiRateLimitCategory,
+      apiRateLimitCost,
+      apiServiceLevel,
+    };
 
     if (success) {
       return true;
@@ -137,7 +160,8 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     burstLimit: number,
     algorithm: string,
     apiRateLimitCategory: ApiRateLimitCategoryEnum,
-    apiRateLimitCost: ApiRateLimitCostEnum
+    apiRateLimitCost: ApiRateLimitCostEnum,
+    apiServiceLevel: string
   ): string {
     const policyMap = {
       w: windowDuration,
@@ -145,6 +169,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
       comment: `"${algorithm}"`,
       category: `"${apiRateLimitCategory}"`,
       cost: `"${apiRateLimitCost}"`,
+      serviceLevel: `"${apiServiceLevel}"`,
     };
     const policy = Object.entries(policyMap).reduce((acc, [key, value]) => {
       return `${acc};${key}=${value}`;

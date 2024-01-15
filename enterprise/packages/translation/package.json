@@ -1,7 +1,7 @@
 {
   "name": "@novu/ee-translation",
   "version": "0.22.0",
-  "private": false,
+  "private": true,
   "main": "dist/index.js",
   "scripts": {
     "build": "node ./check-ee.mjs",

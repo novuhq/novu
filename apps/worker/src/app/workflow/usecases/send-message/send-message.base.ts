@@ -75,9 +75,9 @@ export abstract class SendMessageBase extends SendMessageType {
 
   protected async sendErrorHandlebars(job: JobEntity, error: string) {
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
@@ -87,15 +87,15 @@ export abstract class SendMessageBase extends SendMessageType {
         isRetry: false,
         raw: JSON.stringify({ error }),
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
   }
 
   protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
     const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
+    await this.executionLogQueueService.add({
+      name: metadata._id,
+      data: CreateExecutionDetailsCommand.create({
         ...metadata,
         ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
         detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
@@ -111,8 +111,8 @@ export abstract class SendMessageBase extends SendMessageType {
           _id: integration?._id,
         }),
       }),
-      job._organizationId
-    );
+      groupId: job._organizationId,
+    });
   }
 
   protected async processVariants(command: SendMessageCommand): Promise<IMessageTemplate> {
@@ -129,9 +129,9 @@ export abstract class SendMessageBase extends SendMessageType {
 
     if (conditions) {
       const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
+      await this.executionLogQueueService.add({
+        name: metadata._id,
+        data: CreateExecutionDetailsCommand.create({
           ...metadata,
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.VARIANT_CHOSEN,
@@ -141,8 +141,8 @@ export abstract class SendMessageBase extends SendMessageType {
           isRetry: false,
           raw: JSON.stringify({ conditions }),
         }),
-        command.job._organizationId
-      );
+        groupId: command.job._organizationId,
+      });
     }
 
     return messageTemplate;

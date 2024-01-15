@@ -13,7 +13,7 @@ services:
       - "${TMPDIR:-/tmp/localstack}:/tmp/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
     healthcheck:
-      test: "bash -c 'AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://localhost:4566 s3 ls'"
+      test: "bash -c 'AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://127.0.0.1:4566 s3 ls'"
       retries: 5
       interval: 10s
   mongo:
@@ -25,7 +25,7 @@ services:
     volumes:
       - "${TMPDIR:-/tmp/mongo}:/db/data"
     healthcheck:
-      test: "bash -c 'mongo --host localhost:27017 --eval \"printjson(rs.status())\"'"
+      test: "bash -c 'mongo --host 127.0.0.1:27017 --eval \"printjson(rs.status())\"'"
       retries: 5
       interval: 10s
 

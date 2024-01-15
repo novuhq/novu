@@ -374,6 +374,33 @@ export const bulkSmsConfig: IConfigCredentials[] = [
   },
 ];
 
+export const iSendSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'API Token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Default Sender ID',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.ContentType,
+    displayName: 'Content Type',
+    type: 'dropdown',
+    required: false,
+    value: null,
+    dropdown: [
+      { name: 'Default', value: null },
+      { name: 'Unicode', value: 'unicode' },
+      { name: 'Plain', value: 'plain' },
+    ],
+  },
+];
+
 export const clickatellConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -1018,4 +1045,21 @@ export const azureSmsConfig: IConfigCredentials[] = [
     required: true,
   },
   ...smsConfigBase,
+];
+
+export const rocketChatConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Personal Access Token (x-auth-token)',
+    description: 'Personal Access Token of your user',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'User id (x-user-id)',
+    description: 'Your User id',
+    type: 'text',
+    required: true,
+  },
 ];

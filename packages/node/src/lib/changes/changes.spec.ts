@@ -17,12 +17,18 @@ describe('test use of novus node package - Changes class', () => {
   });
 
   test('should get changes correctly', async () => {
+    const page = 1;
+    const limit = 20;
+    const promoted = false;
+
     mockedAxios.post.mockResolvedValue({});
 
-    await novu.changes.get();
+    await novu.changes.get({ page, limit, promoted });
 
     expect(mockedAxios.get).toHaveBeenCalled();
-    expect(mockedAxios.get).toHaveBeenCalledWith('/changes');
+    expect(mockedAxios.get).toHaveBeenCalledWith('/changes', {
+      params: { limit: 20, page: 1, promoted: false },
+    });
   });
 
   test('should get count of changes correctly', async () => {
@@ -50,7 +56,7 @@ describe('test use of novus node package - Changes class', () => {
 
     expect(mockedAxios.post).toHaveBeenCalled();
     expect(mockedAxios.post).toHaveBeenCalledWith('/changes/bulk/apply', {
-      ChangeIDs: ['changeID', 'change2ID'],
+      changeIds: ['changeID', 'change2ID'],
     });
   });
 });
