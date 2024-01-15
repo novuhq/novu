@@ -9,7 +9,7 @@ import * as compression from 'compression';
 import { NestFactory, Reflector } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
-import { BullMqService, getErrorInterceptor, Logger as PinoLogger, initializeOtelSdk } from '@novu/application-generic';
+import { BullMqService, getErrorInterceptor, Logger as PinoLogger } from '@novu/application-generic';
 import { ExpressAdapter } from '@nestjs/platform-express';
 
 import { AppModule } from './app.module';
@@ -39,13 +39,9 @@ if (process.env.SENTRY_DSN) {
 
 // Validate the ENV variables after launching SENTRY, so missing variables will report to sentry
 validateEnv();
-const otelSDK = initializeOtelSdk(packageJson.name);
 
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
-  if (process.env.ENABLE_OTEL === 'true') {
-    await otelSDK.start();
-  }
 
   let app: INestApplication;
   if (expressApp) {

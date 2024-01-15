@@ -1,7 +1,7 @@
 import {
   CompositePropagator,
-  W3CTraceContextPropagator,
   W3CBaggagePropagator,
+  W3CTraceContextPropagator,
 } from '@opentelemetry/core';
 import { BatchSpanProcessor } from '@opentelemetry/sdk-trace-base';
 import { JaegerExporter } from '@opentelemetry/exporter-jaeger';
@@ -14,7 +14,7 @@ import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-ho
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function initializeOtelSdk(serviceName: string) {
-  const instance = new NodeSDK({
+  return new NodeSDK({
     metricReader: new PrometheusExporter({
       port: 9464,
     }),
@@ -34,15 +34,4 @@ export function initializeOtelSdk(serviceName: string) {
     }),
     instrumentations: [getNodeAutoInstrumentations()],
   });
-  process.on('SIGTERM', () => {
-    instance
-      .shutdown()
-      .then(
-        () => console.log('SDK shut down successfully'),
-        (err) => console.log('Error shutting down SDK', err)
-      )
-      .finally(() => process.exit(0));
-  });
-
-  return instance;
 }
