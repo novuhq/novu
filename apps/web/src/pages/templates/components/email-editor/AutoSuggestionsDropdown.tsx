@@ -39,7 +39,7 @@ export function AutoSuggestionsDropdown({
                   label: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
 
                   detail: type[subName],
-                  insertText: `${name}.${subName}`,
+                  insertText: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
                 };
               });
             }
@@ -47,7 +47,7 @@ export function AutoSuggestionsDropdown({
             return {
               label: `${key === 'translations' ? 'i18n ' : ''}${name}`,
               detail: type,
-              insertText: name,
+              insertText: `${key === 'translations' ? 'i18n ' : ''}${name}`,
             };
           })
           .flat();
