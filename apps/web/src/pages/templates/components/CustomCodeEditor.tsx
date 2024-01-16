@@ -81,7 +81,7 @@ const CustomCodeEditorBase = ({
                     label: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
                     kind: monaco.languages.CompletionItemKind.Variable,
                     detail: type[subName],
-                    insertText: `${name}.${subName}`,
+                    insertText: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
                     range: range,
                   };
                 });
@@ -91,7 +91,7 @@ const CustomCodeEditorBase = ({
                 label: `${key === 'translations' ? 'i18n ' : ''}${name}`,
                 kind: monaco.languages.CompletionItemKind.Variable,
                 detail: type,
-                insertText: name,
+                insertText: `${key === 'translations' ? 'i18n ' : ''}${name}`,
                 range: range,
               };
             })
