@@ -31,9 +31,6 @@ export class ExecutionLogRoute {
       })
     );
 
-    // eslint-disable-next-line no-console
-    Logger.log('isEnabled', isEnabled, LOG_CONTEXT);
-
     switch (isEnabled) {
       case true: {
         const metadata =
