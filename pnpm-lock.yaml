@@ -2319,6 +2319,9 @@ importers:
       jwt-decode:
         specifier: ^3.1.2
         version: 3.1.2
+      launchdarkly-react-client-sdk:
+        specifier: ^3.0.6
+        version: 3.0.6(react-dom@17.0.2)(react@17.0.2)
       react-router-dom:
         specifier: 6.2.2
         version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
@@ -37813,7 +37816,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1(@types/node@16.11.7)(typescript@4.9.5)
+      ts-node: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
     transitivePeerDependencies:
       - bufferutil
       - canvas
