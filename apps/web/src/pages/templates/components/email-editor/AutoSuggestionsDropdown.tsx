@@ -1,6 +1,7 @@
 import styled from '@emotion/styled';
-import { ScrollArea, Skeleton } from '@mantine/core';
+import { ScrollArea } from '@mantine/core';
 import { colors, shadows } from '@novu/design-system';
+import { HandlebarHelpers } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { getWorkflowVariables } from '../../../../api/notification-templates';
@@ -54,10 +55,19 @@ export function AutoSuggestionsDropdown({
       })
       .flat();
 
+    const allVars = [
+      ...Object.keys(HandlebarHelpers).map((name) => ({
+        label: name,
+        detail: HandlebarHelpers[name].description,
+        insertText: name,
+      })),
+      ...systemVars,
+    ];
+
     if (variableQuery) {
-      return systemVars.filter((variable) => variable.label.toLowerCase().includes(variableQuery.toLowerCase()));
+      return allVars.filter((variable) => variable.label.toLowerCase().includes(variableQuery.toLowerCase()));
     } else {
-      return systemVars;
+      return allVars;
     }
   }, [variableQuery, variables]);
 
@@ -71,7 +81,7 @@ export function AutoSuggestionsDropdown({
       left={autoSuggestionsCoordinates.left}
       onClick={(e) => e.stopPropagation()}
     >
-      <ScrollArea w="100%" h="100%" offsetScrollbars>
+      <ScrollArea w="100%" h="250px" offsetScrollbars>
         {variablesList.map((variable) => (
           <VariableRow
             key={variable.label}
@@ -106,13 +116,12 @@ const Container = styled.div<{ top: number; left: number }>`
 const VariableRow = styled.div`
   display: flex;
   padding: 10px;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
+  justify-content: space-between;
+  align-items: center;
   gap: 10px;
-  align-self: stretch;
   color: #b18cff;
   cursor: pointer;
+
   &:hover {
     opacity: 0.8;
     background: ${colors.B30};
