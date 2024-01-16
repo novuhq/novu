@@ -13,7 +13,7 @@ export class GetIsExecutionLogQueueEnabled extends GetFeatureFlag {
       value,
       fallbackValue
     );
-    const key = FeatureFlagsKeysEnum.IS_API_IDEMPOTENCY_ENABLED;
+    const key = FeatureFlagsKeysEnum.IS_API_EXECUTION_LOG_QUEUE_ENABLED;
 
     const command = this.buildCommand(key, defaultValue, featureFlagCommand);
 
