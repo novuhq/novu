@@ -10,3 +10,4 @@ export { GetIsTemplateStoreEnabled } from './get-is-template-store-enabled.use-c
 export { GetIsTopicNotificationEnabled } from './get-is-topic-notification-enabled.use-case';
 export { GetIsTranslationManagerEnabled } from './get-is-translation-manager-enabled.use-case';
 export { GetUseMergedDigestId } from './get-use-merged-digest-id.use-case';
+export { GetIsExecutionLogQueueEnabled } from './get-is-execution-log-queue-enabled.use-case';

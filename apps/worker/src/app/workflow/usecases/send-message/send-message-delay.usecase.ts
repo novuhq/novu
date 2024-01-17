@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MessageRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import {
-  InstrumentUsecase,
-  DetailEnum,
-  CreateExecutionDetailsCommand,
-  ExecutionLogQueueService,
-} from '@novu/application-generic';
+import { InstrumentUsecase, DetailEnum, ExecutionLogRoute, ExecutionLogRouteCommand } from '@novu/application-generic';
 
 import { SendMessageType } from './send-message-type.usecase';
 import { CreateLog } from '../../../shared/logs';
@@ -17,26 +12,22 @@ export class SendMessageDelay extends SendMessageType {
   constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected executionLogQueueService: ExecutionLogQueueService
+    protected executionLogRoute: ExecutionLogRoute
   ) {
-    super(messageRepository, createLogUsecase, executionLogQueueService);
+    super(messageRepository, createLogUsecase, executionLogRoute);
   }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.DELAY_FINISHED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      }),
-      groupId: command.organizationId,
-    });
+      })
+    );
   }
 }
