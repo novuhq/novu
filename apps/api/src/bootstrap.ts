@@ -45,9 +45,12 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
 
   let app: INestApplication;
   if (expressApp) {
-    app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
+    app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), {
+      bodyParser: false,
+      rawBody: true,
+    });
   } else {
-    app = await NestFactory.create(AppModule, { bufferLogs: true });
+    app = await NestFactory.create(AppModule, { bufferLogs: true, bodyParser: false, rawBody: true });
   }
 
   app.useLogger(app.get(PinoLogger));
@@ -88,8 +91,18 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
 
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
+  const rawBodyBuffer = (req, res, buffer, encoding) => {
+    if (!req.headers['stripe-signature']) {
+      return;
+    }
+
+    if (buffer && buffer.length) {
+      req.rawBody = Buffer.from(buffer);
+    }
+  };
+
+  app.use(bodyParser.json({ verify: rawBodyBuffer }));
+  app.use(bodyParser.urlencoded({ extended: true, verify: rawBodyBuffer }));
 
   app.use(compression());
 
