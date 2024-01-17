@@ -37,7 +37,7 @@ describe('checkIsVariantEmpty', () => {
     expect(result).to.be.false;
   });
 
-  it('should return false for a variant with non-empty children in filters', () => {
+  it('should return false for a variant with one or more non-empty child in filters', () => {
     const variantWithNonEmptyChildren: NotificationStepVariant = {
       filters: [testFilter, { children: [] } as unknown as MessageFilter],
     };
@@ -45,9 +45,9 @@ describe('checkIsVariantEmpty', () => {
     expect(result).to.be.false;
   });
 
-  it('should return false for a variant with undefined filters', () => {
+  it('should return true for a variant with undefined filters', () => {
     const variantWithUndefinedFilters: NotificationStepVariant = {};
     const result = checkIsVariantEmpty(variantWithUndefinedFilters);
-    expect(result).to.be.false;
+    expect(result).to.be.true;
   });
 });
