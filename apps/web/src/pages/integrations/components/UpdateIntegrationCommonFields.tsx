@@ -2,13 +2,20 @@ import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useClipboard } from '@mantine/hooks';
 
-import { Input, Switch, Check, Copy } from '@novu/design-system';
+import { Input, Switch, Check, Copy, colors } from '@novu/design-system';
 import type { IIntegratedProvider } from '../types';
 
 const CopyWrapper = styled.div`
   cursor: pointer;
   &:hover {
     opacity: 0.8;
+  }
+  margin-left: 1px;
+`;
+
+const IdentifierInput = styled.input`
+  &:hover {
+    color: ${colors.white};
   }
 `;
 
@@ -59,14 +66,14 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
         name="identifier"
         defaultValue={''}
         rules={{
-          required: 'Required - Provider identifier',
+          required: 'Required - Integration identifier',
           pattern: {
             value: /^[A-Za-z0-9_-]+$/,
             message: 'Provider identifier must contains only alphabetical, numeric, dash or underscore characters',
           },
         }}
         render={({ field }) => (
-          <Input
+          <IdentifierInput
             {...field}
             required
             label="Integration identifier"
