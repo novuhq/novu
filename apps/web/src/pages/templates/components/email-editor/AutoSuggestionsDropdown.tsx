@@ -5,6 +5,7 @@ import { HandlebarHelpers } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { getWorkflowVariables } from '../../../../api/notification-templates';
+import { getTextToInsert } from '../CustomCodeEditor';
 
 type AutoSuggestionsDropdownProps = {
   autoSuggestionsCoordinates: {
@@ -38,9 +39,8 @@ export function AutoSuggestionsDropdown({
               return Object.keys(type).map((subName) => {
                 return {
                   label: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
-
                   detail: type[subName],
-                  insertText: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
+                  insertText: getTextToInsert(`${name}.${subName}`, key),
                 };
               });
             }
@@ -48,7 +48,7 @@ export function AutoSuggestionsDropdown({
             return {
               label: `${key === 'translations' ? 'i18n ' : ''}${name}`,
               detail: type,
-              insertText: `${key === 'translations' ? 'i18n ' : ''}${name}`,
+              insertText: getTextToInsert(name, key),
             };
           })
           .flat();
