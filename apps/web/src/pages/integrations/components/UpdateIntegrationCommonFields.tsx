@@ -13,7 +13,7 @@ const CopyWrapper = styled.div`
   margin-left: 1px;
 `;
 
-const IdentifierInput = styled.input`
+const IntegrationIdentifier = styled.input`
   &:hover {
     color: ${colors.white};
   }
@@ -73,7 +73,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
           },
         }}
         render={({ field }) => (
-          <IdentifierInput
+          <IntegrationIdentifier
             {...field}
             required
             label="Integration identifier"
