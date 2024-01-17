@@ -150,4 +150,4 @@ jobs:
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
           docker run --network=host --name $LOCAL_TAG -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:$TEST_PORT/v1/health-check | grep 'ok'
+          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:$TEST_PORT/v1/health-check | grep 'ok'

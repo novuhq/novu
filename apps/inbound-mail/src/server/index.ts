@@ -33,7 +33,7 @@ class Mailin extends events.EventEmitter {
     super();
 
     this.configuration = {
-      host: '0.0.0.0',
+      host: '127.0.0.1',
       port: 2500,
       tmp: '.tmp',
       disableWebhook: true,
@@ -364,7 +364,11 @@ class Mailin extends events.EventEmitter {
         const username: string = parts[0];
         const environmentId = username.split('-nv-e=').at(-1);
 
-        inboundMailService.inboundParseQueueService.add(finalizedMessage.messageId, finalizedMessage, environmentId);
+        inboundMailService.inboundParseQueueService.add({
+          name: finalizedMessage.messageId,
+          data: finalizedMessage,
+          groupId: environmentId,
+        });
 
         return resolve();
       });

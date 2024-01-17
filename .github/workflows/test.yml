@@ -198,6 +198,7 @@ jobs:
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
 
   test_api:
+    name: Test API
     needs: [get-affected]
     strategy:
       # The order is important for ee to be first, otherwise outputs not work correctly

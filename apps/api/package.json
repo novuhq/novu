@@ -20,7 +20,7 @@
     "start:build": "TZ=UTC node dist/main.js",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "lint:openapi": "spectral lint http://localhost:${PORT:-3000}/openapi.yaml",
+    "lint:openapi": "spectral lint http://127.0.0.1:${PORT:-3000}/openapi.yaml",
     "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
     "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e.ts",
     "test:e2e:ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e-ee.ts",

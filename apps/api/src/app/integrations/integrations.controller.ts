@@ -12,7 +12,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
-import { CalculateLimitNovuIntegration, CalculateLimitNovuIntegrationCommand } from '@novu/application-generic';
+import {
+  CalculateLimitNovuIntegration,
+  CalculateLimitNovuIntegrationCommand,
+  OtelSpan,
+} from '@novu/application-generic';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { UserAuthGuard } from '../auth/framework/user.auth.guard';
@@ -106,7 +110,7 @@ export class IntegrationsController {
     );
   }
 
-  @Get('/webhook/provider/:providerId/status')
+  @Get('/webhook/provider/:providerOrIntegrationId/status')
   @ApiOkResponse({
     type: Boolean,
     description: 'The status of the webhook for the provider requested',
@@ -119,13 +123,13 @@ export class IntegrationsController {
   @ExternalApiAccessible()
   async getWebhookSupportStatus(
     @UserSession() user: IJwtPayload,
-    @Param('providerId') providerId: string
+    @Param('providerOrIntegrationId') providerOrIntegrationId: string
   ): Promise<boolean> {
     return await this.getWebhookSupportStatusUsecase.execute(
       GetWebhookSupportStatusCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
-        providerId: providerId,
+        providerOrIntegrationId,
         userId: user._id,
       })
     );
@@ -253,6 +257,7 @@ export class IntegrationsController {
 
   @Get('/:channelType/limit')
   @ApiExcludeEndpoint()
+  @OtelSpan()
   async getProviderLimit(
     @UserSession() user: IJwtPayload,
     @Param('channelType') channelType: ChannelTypeEnum
