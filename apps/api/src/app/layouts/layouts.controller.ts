@@ -24,7 +24,7 @@ import {
   ApiOkResponse,
 } from '../shared/framework/response.decorator';
 import { IJwtPayload } from '@novu/shared';
-import { GetLayoutCommand, GetLayoutUseCase } from '@novu/application-generic';
+import { GetLayoutCommand, GetLayoutUseCase, OtelSpan } from '@novu/application-generic';
 
 import {
   CreateLayoutRequestDto,
@@ -71,6 +71,7 @@ export class LayoutsController {
   @ExternalApiAccessible()
   @ApiResponse(CreateLayoutResponseDto, 201)
   @ApiOperation({ summary: 'Layout creation', description: 'Create a layout' })
+  @OtelSpan()
   async createLayout(
     @UserSession() user: IJwtPayload,
     @Body() body: CreateLayoutRequestDto

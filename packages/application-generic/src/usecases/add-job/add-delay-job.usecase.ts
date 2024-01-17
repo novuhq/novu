@@ -1,4 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
+
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import {
   ExecutionDetailsSourceEnum,
@@ -8,15 +9,13 @@ import {
 
 import { ApiException } from '../../utils/exceptions';
 import { AddJobCommand } from './add-job.command';
-import {
-  CalculateDelayService,
-  ExecutionLogQueueService,
-} from '../../services';
+import { CalculateDelayService } from '../../services';
 import { InstrumentUsecase } from '../../instrumentation';
+import { DetailEnum } from '../create-execution-details';
 import {
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-} from '../create-execution-details';
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
+} from '../execution-log-route';
 
 @Injectable()
 export class AddDelayJob {
@@ -24,8 +23,8 @@ export class AddDelayJob {
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => CalculateDelayService))
     private calculateDelayService: CalculateDelayService,
-    @Inject(forwardRef(() => ExecutionLogQueueService))
-    private executionLogQueueService: ExecutionLogQueueService
+    @Inject(forwardRef(() => ExecutionLogRoute))
+    private executionLogRoute: ExecutionLogRoute
   ) {}
 
   @InstrumentUsecase()
@@ -55,22 +54,17 @@ export class AddDelayJob {
         JobStatusEnum.DELAYED
       );
     } catch (error: any) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-
-      await this.executionLogQueueService.add({
-        name: metadata._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.DELAY_MISCONFIGURATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({ error: error.message }),
-        }),
-        groupId: command.organizationId,
-      });
+        })
+      );
 
       await this.jobRepository.updateStatus(
         command.environmentId,
