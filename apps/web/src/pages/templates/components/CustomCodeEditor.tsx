@@ -130,8 +130,8 @@ const CustomCodeEditorBase = ({
       onMount={(editor, monaco) => {
         const decorators = editor.createDecorationsCollection([]);
 
-        monaco.languages.registerCompletionItemProvider('handlebars', {
-          triggerCharacters: ['{', '.'],
+        const handle = monaco.languages.registerCompletionItemProvider('handlebars', {
+          triggerCharacters: ['{'],
           provideCompletionItems: function (model, position) {
             const word = model.getWordUntilPosition(position);
             const range = {
@@ -183,6 +183,7 @@ const CustomCodeEditorBase = ({
         decoratorsRef.current = decorators;
         editorRef.current = editor;
         monacoRef.current = monaco;
+        editor.onDidDispose(() => handle?.dispose());
       }}
       options={{
         minimap: {
