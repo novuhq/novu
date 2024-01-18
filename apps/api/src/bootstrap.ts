@@ -91,15 +91,17 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
 
-  const rawBodyBuffer = (req, res, buffer, encoding) => {
-    if (!req.headers['stripe-signature']) {
-      return;
-    }
+  let rawBodyBuffer: undefined | (() => void) = undefined;
 
-    if (buffer && buffer.length) {
-      req.rawBody = Buffer.from(buffer);
+  try {
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (require('@novu/ee-billing')?.rawBodyBuffer) {
+        rawBodyBuffer = require('@novu/ee-billing')?.rawBodyBuffer;
+      }
     }
-  };
+  } catch (e) {
+    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  }
 
   app.use(bodyParser.json({ verify: rawBodyBuffer }));
   app.use(bodyParser.urlencoded({ extended: true, verify: rawBodyBuffer }));
