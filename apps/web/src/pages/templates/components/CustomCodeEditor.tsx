@@ -9,6 +9,13 @@ import { useQuery } from '@tanstack/react-query';
 import { editor as NEditor } from 'monaco-editor';
 import { createTranslationMarks } from './createTranslationMarks';
 
+export const getTextToInsert = (text, key) => {
+  if (key === 'translations') {
+    return `i18n "${text}"`;
+  }
+
+  return text;
+};
 export const CustomCodeEditor = ({
   onChange,
   value,
@@ -81,7 +88,7 @@ const CustomCodeEditorBase = ({
                     label: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
                     kind: monaco.languages.CompletionItemKind.Variable,
                     detail: type[subName],
-                    insertText: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
+                    insertText: getTextToInsert(`${name}.${subName}`, key),
                     range: range,
                   };
                 });
@@ -91,7 +98,7 @@ const CustomCodeEditorBase = ({
                 label: `${key === 'translations' ? 'i18n ' : ''}${name}`,
                 kind: monaco.languages.CompletionItemKind.Variable,
                 detail: type,
-                insertText: `${key === 'translations' ? 'i18n ' : ''}${name}`,
+                insertText: getTextToInsert(name, key),
                 range: range,
               };
             })
