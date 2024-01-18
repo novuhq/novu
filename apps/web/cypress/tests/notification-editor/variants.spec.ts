@@ -841,6 +841,40 @@ describe('Workflow Editor - Variants', function () {
       cy.wait('@getWorkflow');
       cy.getByTestId('variants-count').should('not.exist');
     });
+
+    it('should not allow removing all conditions from a variant', function () {
+      createWorkflow('Test Removing All Conditions');
+
+      dragAndDrop('inApp');
+      editChannel('inApp');
+      fillEditorContent('inApp');
+      goBack();
+
+      showStepActions('inApp');
+      addVariantActionClick('inApp');
+      addConditions();
+
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      cy.reload();
+      cy.wait('@getWorkflow');
+
+      // edit the variant condition
+      cy.getByTestId('editor-sidebar-edit-conditions').click();
+
+      // open conditions row menu
+      cy.getByTestId('conditions-row-btn').click();
+
+      // delete the condition
+      cy.contains('Delete').click();
+
+      // submit ("Apply conditions") should be disabled
+      cy.getByTestId('apply-conditions-btn').should('be.disabled').click({ force: true });
+
+      // tooltip should warn the user
+      cy.get('div[role="tooltip"]').contains('At least one condition is required');
+    });
   });
 
   describe('Variants List Errors', function () {
