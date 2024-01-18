@@ -10,7 +10,7 @@ const testFilter: MessageFilter = {
 
 describe('checkIsVariantEmpty', () => {
   it('should return true for an empty variant', () => {
-    const emptyVariant: NotificationStepVariant = { filters: [] };
+    const emptyVariant: NotificationStepVariant = {};
     const result = checkIsVariantEmpty(emptyVariant);
     expect(result).to.be.true;
   });
