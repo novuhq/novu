@@ -20,11 +20,12 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
       corsOptions.origin.push(process.env.WIDGET_BASE_URL);
     }
 
-    if (
+    const shouldDisableCorsForPreviewUrls =
       process.env.PR_PREVIEW_ROOT_URL &&
       process.env.NODE_ENV === 'dev' &&
-      host.includes(process.env.PR_PREVIEW_ROOT_URL)
-    ) {
+      host.includes(process.env.PR_PREVIEW_ROOT_URL);
+
+    if (shouldDisableCorsForPreviewUrls) {
       corsOptions.origin.push('*');
     }
   }

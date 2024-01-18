@@ -24,10 +24,10 @@ describe('CORS Configuration', () => {
     });
   });
 
-  for (const environment of ['dev', 'production']) {
+  (['dev', 'production'] as const).forEach((environment) => {
     describe(environment + ' Environment CORS Configuration', () => {
       beforeEach(() => {
-        process.env.NODE_ENV = environment as 'dev' | 'production';
+        process.env.NODE_ENV = environment;
 
         process.env.FRONT_BASE_URL = 'https://test.com';
         process.env.WIDGET_BASE_URL = 'https://widget.com';
@@ -86,5 +86,5 @@ describe('CORS Configuration', () => {
         });
       }
     });
-  }
+  });
 });
