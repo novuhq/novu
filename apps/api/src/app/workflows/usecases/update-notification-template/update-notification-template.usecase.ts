@@ -31,6 +31,7 @@ import { ApiException } from '../../../shared/exceptions/api.exception';
 import { NotificationStep, NotificationStepVariant } from '../create-notification-template';
 import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
 import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
+import { checkIsVariantEmpty } from '../../utils';
 
 /**
  * DEPRECATED:
@@ -204,7 +205,7 @@ export class UpdateNotificationTemplate {
     const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];
 
     for (const variant of variants) {
-      if (!variant.filters?.length) {
+      if (checkIsVariantEmpty(variant)) {
         throw new ApiException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
       }
     }
