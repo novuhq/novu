@@ -38,567 +38,409 @@ describe('MapTriggerRecipientsUseCase', () => {
   let topicSubscribersRepository: TopicSubscribersRepository;
   let useCase: MapTriggerRecipients;
 
-  describe('When feature disabled', () => {
-    before(async () => {
-      const featureFlagsService = new FeatureFlagsService();
-      await featureFlagsService.initialize();
+  before(async () => {
+    process.env.LAUNCH_DARKLY_SDK_KEY = '';
 
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
+    const moduleRef = await Test.createTestingModule({
+      imports: [SharedModule, EventsModule],
+      providers: [MapTriggerRecipients, GetTopicSubscribersUseCase],
+    }).compile();
 
-      const moduleRef = await Test.createTestingModule({
-        imports: [SharedModule, EventsModule],
-        providers: [MapTriggerRecipients, GetTopicSubscribersUseCase],
-      }).compile();
+    session = new UserSession();
+    await session.initialize();
 
-      session = new UserSession();
-      await session.initialize();
-
-      useCase = moduleRef.get<MapTriggerRecipients>(MapTriggerRecipients);
-      subscribersService = new SubscribersService(session.organization._id, session.environment._id);
-      topicRepository = new TopicRepository();
-      topicSubscribersRepository = new TopicSubscribersRepository();
-    });
-
-    after(() => {
-      process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
-    });
-
-    it('should map properly a single subscriber id as string', async () => {
-      const transactionId = uuid();
-      const subscriberId = SubscriberRepository.createObjectId();
-
-      const command = buildCommand(session, transactionId, subscriberId);
-      const result = await useCase.execute(command);
-
-      expect(result).to.be.eql([{ subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE }]);
-    });
-
-    it('should map properly a single subscriber defined payload', async () => {
-      const transactionId = uuid();
-
-      const subscriberId = SubscriberRepository.createObjectId();
-      const recipient: ISubscribersDefine = {
-        subscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
-
-      const command = buildCommand(session, transactionId, recipient);
-
-      const result = await useCase.execute(command);
-
-      expect(result).to.be.eql([{ ...recipient, _subscriberSource: SubscriberSourceEnum.SINGLE }]);
-    });
-
-    it('should only process the subscriber id and the subscriber recipients and ignore topics', async () => {
-      const firstTopicKey = 'topic-key-mixed-recipients-1';
-      const firstTopicName = 'topic-key-mixed-recipients-1-name';
-      const secondTopicKey = 'topic-key-mixed-recipients-2';
-      const secondTopicName = 'topic-key-mixed-recipients-2-name';
-      const transactionId = uuid();
-
-      const firstTopic = await createTopicEntity(
-        session,
-        topicRepository,
-        topicSubscribersRepository,
-        firstTopicKey,
-        firstTopicName
-      );
-      const firstTopicId = firstTopic._id;
-      const firstSubscriber = await subscribersService.createSubscriber();
-      const secondSubscriber = await subscribersService.createSubscriber();
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
-        firstSubscriber,
-        secondSubscriber,
-      ]);
-
-      const secondTopic = await createTopicEntity(
-        session,
-        topicRepository,
-        topicSubscribersRepository,
-        secondTopicKey,
-        secondTopicName
-      );
-      const secondTopicId = secondTopic._id;
-      const thirdSubscriber = await subscribersService.createSubscriber();
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
-        thirdSubscriber,
-      ]);
-
-      const firstTopicRecipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: firstTopic._id,
-      };
-      const secondTopicRecipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: secondTopic._id,
-      };
-
-      const singleSubscriberId = SubscriberRepository.createObjectId();
-      const subscribersDefineSubscriberId = SubscriberRepository.createObjectId();
-      const singleSubscribersDefine: ISubscribersDefine = {
-        subscriberId: subscribersDefineSubscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
-
-      const recipients = [firstTopicRecipient, singleSubscriberId, secondTopicRecipient, singleSubscribersDefine];
-
-      const command = buildCommand(session, transactionId, recipients);
-
-      const result = await useCase.execute(command);
-
-      expect(result).to.be.eql([
-        { subscriberId: singleSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
-        { ...singleSubscribersDefine, _subscriberSource: SubscriberSourceEnum.SINGLE },
-      ]);
-    });
-
-    it('should map properly multiple duplicated recipients of different types and deduplicate them', async () => {
-      const transactionId = uuid();
-      const firstSubscriberId = SubscriberRepository.createObjectId();
-      const secondSubscriberId = SubscriberRepository.createObjectId();
-
-      const firstRecipient: ISubscribersDefine = {
-        subscriberId: firstSubscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
-
-      const secondRecipient: ISubscribersDefine = {
-        subscriberId: secondSubscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
-
-      const command = buildCommand(session, transactionId, [
-        firstSubscriberId,
-        secondSubscriberId,
-        firstRecipient,
-        secondRecipient,
-        secondSubscriberId,
-        firstSubscriberId,
-      ]);
-      const result = await useCase.execute(command);
-
-      expect(result).to.be.eql([
-        { subscriberId: firstSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
-        { subscriberId: secondSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
-      ]);
-    });
+    useCase = moduleRef.get<MapTriggerRecipients>(MapTriggerRecipients, { strict: false });
+    subscribersService = new SubscribersService(session.organization._id, session.environment._id);
+    topicRepository = new TopicRepository();
+    topicSubscribersRepository = new TopicSubscribersRepository();
   });
 
-  describe('When feature enabled', () => {
-    before(async () => {
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
+  after(() => {
+    process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
+  });
 
-      const moduleRef = await Test.createTestingModule({
-        imports: [SharedModule, EventsModule],
-        providers: [MapTriggerRecipients, GetTopicSubscribersUseCase],
-      }).compile();
+  it('should map properly a single subscriber id as string', async () => {
+    const transactionId = uuid();
+    const subscriberId = SubscriberRepository.createObjectId();
 
-      session = new UserSession();
-      await session.initialize();
+    const command = buildCommand(session, transactionId, subscriberId);
+    const result = await useCase.execute(command);
 
-      useCase = moduleRef.get<MapTriggerRecipients>(MapTriggerRecipients, { strict: false });
-      subscribersService = new SubscribersService(session.organization._id, session.environment._id);
-      topicRepository = new TopicRepository();
-      topicSubscribersRepository = new TopicSubscribersRepository();
-    });
+    expect(result).to.be.eql([{ subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE }]);
+  });
 
-    after(() => {
-      process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
-    });
+  it('should map properly a single subscriber defined payload', async () => {
+    const transactionId = uuid();
 
-    it('should map properly a single subscriber id as string', async () => {
-      const transactionId = uuid();
-      const subscriberId = SubscriberRepository.createObjectId();
+    const subscriberId = SubscriberRepository.createObjectId();
+    const recipient: ISubscribersDefine = {
+      subscriberId,
+      firstName: 'Test Name',
+      lastName: 'Last of name',
+      email: 'test@email.novu',
+    };
 
-      const command = buildCommand(session, transactionId, subscriberId);
+    const command = buildCommand(session, transactionId, recipient);
+
+    const result = await useCase.execute(command);
+
+    expect(result).to.be.eql([{ ...recipient, _subscriberSource: SubscriberSourceEnum.SINGLE }]);
+  });
+
+  it('should map properly a single topic', async () => {
+    const topicKey = 'topic-key-single-recipient';
+    const topicName = 'topic-key-single-recipient-name';
+    const transactionId = uuid();
+
+    const topic = await createTopicEntity(session, topicRepository, topicSubscribersRepository, topicKey, topicName);
+    const topicId = topic._id;
+    const firstSubscriber = await subscribersService.createSubscriber();
+    const secondSubscriber = await subscribersService.createSubscriber();
+    await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, topicId, topicKey, [
+      firstSubscriber,
+      secondSubscriber,
+    ]);
+
+    const recipient: ITopic = {
+      type: TriggerRecipientsTypeEnum.TOPIC,
+      topicKey: topic.key,
+    };
+
+    const command = buildCommand(session, transactionId, [recipient]);
+
+    const result = await useCase.execute(command);
+
+    expect(result).to.include.deep.members([
+      { subscriberId: firstSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+      { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+    ]);
+  });
+
+  it('should throw an error if providing a topic that does not exist', async () => {
+    const topicKey = 'topic-key-single-recipient';
+    const topicName = 'topic-key-single-recipient-name';
+    const transactionId = uuid();
+
+    const recipient: ITopic = {
+      type: TriggerRecipientsTypeEnum.TOPIC,
+      topicKey: TopicRepository.createObjectId(),
+    };
+
+    const command = buildCommand(session, transactionId, [recipient]);
+
+    let error;
+
+    try {
       const result = await useCase.execute(command);
+    } catch (e) {
+      error = e;
+    }
 
-      expect(result).to.be.eql([{ subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE }]);
-    });
+    expect(error).to.be.ok;
+    expect(error.message).to.contain('not found in current environment');
+  });
 
-    it('should map properly a single subscriber defined payload', async () => {
-      const transactionId = uuid();
+  it('should map properly a mixed recipients list with a string, a subscribers define interface and two topics', async () => {
+    const firstTopicKey = 'topic-key-mixed-recipients-1';
+    const firstTopicName = 'topic-key-mixed-recipients-1-name';
+    const secondTopicKey = 'topic-key-mixed-recipients-2';
+    const secondTopicName = 'topic-key-mixed-recipients-2-name';
+    const transactionId = uuid();
 
-      const subscriberId = SubscriberRepository.createObjectId();
-      const recipient: ISubscribersDefine = {
-        subscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
+    const firstTopic = await createTopicEntity(
+      session,
+      topicRepository,
+      topicSubscribersRepository,
+      firstTopicKey,
+      firstTopicName
+    );
+    const firstTopicId = firstTopic._id;
+    const firstSubscriber = await subscribersService.createSubscriber();
+    const secondSubscriber = await subscribersService.createSubscriber();
+    await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
+      firstSubscriber,
+      secondSubscriber,
+    ]);
 
-      const command = buildCommand(session, transactionId, recipient);
+    const secondTopic = await createTopicEntity(
+      session,
+      topicRepository,
+      topicSubscribersRepository,
+      secondTopicKey,
+      secondTopicName
+    );
+    const secondTopicId = secondTopic._id;
+    const thirdSubscriber = await subscribersService.createSubscriber();
+    await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
+      thirdSubscriber,
+    ]);
 
-      const result = await useCase.execute(command);
+    const firstTopicRecipient: ITopic = {
+      type: TriggerRecipientsTypeEnum.TOPIC,
+      topicKey: firstTopic.key,
+    };
+    const secondTopicRecipient: ITopic = {
+      type: TriggerRecipientsTypeEnum.TOPIC,
+      topicKey: secondTopic.key,
+    };
 
-      expect(result).to.be.eql([{ ...recipient, _subscriberSource: SubscriberSourceEnum.SINGLE }]);
-    });
+    const singleSubscriberId = SubscriberRepository.createObjectId();
+    const subscribersDefineSubscriberId = SubscriberRepository.createObjectId();
+    const singleSubscribersDefine: ISubscribersDefine = {
+      subscriberId: subscribersDefineSubscriberId,
+      firstName: 'Test Name',
+      lastName: 'Last of name',
+      email: 'test@email.novu',
+    };
 
-    it('should map properly a single topic', async () => {
-      const topicKey = 'topic-key-single-recipient';
-      const topicName = 'topic-key-single-recipient-name';
-      const transactionId = uuid();
+    const recipients = [firstTopicRecipient, singleSubscriberId, secondTopicRecipient, singleSubscribersDefine];
 
-      const topic = await createTopicEntity(session, topicRepository, topicSubscribersRepository, topicKey, topicName);
-      const topicId = topic._id;
-      const firstSubscriber = await subscribersService.createSubscriber();
-      const secondSubscriber = await subscribersService.createSubscriber();
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, topicId, topicKey, [
-        firstSubscriber,
-        secondSubscriber,
-      ]);
+    const command = buildCommand(session, transactionId, recipients);
 
-      const recipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: topic.key,
-      };
+    const result = await useCase.execute(command);
 
-      const command = buildCommand(session, transactionId, [recipient]);
+    expect(result).to.include.deep.members([
+      { subscriberId: singleSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+      { ...singleSubscribersDefine, _subscriberSource: SubscriberSourceEnum.SINGLE },
+      { subscriberId: firstSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+      { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+      { subscriberId: thirdSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+    ]);
+  });
 
-      const result = await useCase.execute(command);
+  it('should map properly multiple duplicated recipients of different types and deduplicate them', async () => {
+    const transactionId = uuid();
+    const firstSubscriberId = SubscriberRepository.createObjectId();
+    const secondSubscriberId = SubscriberRepository.createObjectId();
 
-      expect(result).to.include.deep.members([
-        { subscriberId: firstSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
-        { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
-      ]);
-    });
+    const firstRecipient: ISubscribersDefine = {
+      subscriberId: firstSubscriberId,
+      firstName: 'Test Name',
+      lastName: 'Last of name',
+      email: 'test@email.novu',
+    };
 
-    it('should throw an error if providing a topic that does not exist', async () => {
-      const topicKey = 'topic-key-single-recipient';
-      const topicName = 'topic-key-single-recipient-name';
-      const transactionId = uuid();
+    const secondRecipient: ISubscribersDefine = {
+      subscriberId: secondSubscriberId,
+      firstName: 'Test Name',
+      lastName: 'Last of name',
+      email: 'test@email.novu',
+    };
 
-      const recipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: TopicRepository.createObjectId(),
-      };
+    const command = buildCommand(session, transactionId, [
+      firstSubscriberId,
+      secondSubscriberId,
+      firstRecipient,
+      secondRecipient,
+      secondSubscriberId,
+      firstSubscriberId,
+    ]);
+    const result = await useCase.execute(command);
 
-      const command = buildCommand(session, transactionId, [recipient]);
+    expect(result).to.be.eql([
+      { subscriberId: firstSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+      { subscriberId: secondSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+    ]);
+  });
 
-      let error;
+  it('should map properly multiple duplicated recipients of different types and deduplicate them but with different order', async () => {
+    const transactionId = uuid();
+    const firstSubscriberId = SubscriberRepository.createObjectId();
+    const secondSubscriberId = SubscriberRepository.createObjectId();
 
-      try {
-        const result = await useCase.execute(command);
-      } catch (e) {
-        error = e;
-      }
+    const firstRecipient: ISubscribersDefine = {
+      subscriberId: firstSubscriberId,
+      firstName: 'Test Name',
+      lastName: 'Last of name',
+      email: 'test@email.novu',
+    };
 
-      expect(error).to.be.ok;
-      expect(error.message).to.contain('not found in current environment');
-    });
+    const secondRecipient: ISubscribersDefine = {
+      subscriberId: secondSubscriberId,
+      firstName: 'Test Name',
+      lastName: 'Last of name',
+      email: 'test@email.novu',
+    };
 
-    it('should map properly a mixed recipients list with a string, a subscribers define interface and two topics', async () => {
-      const firstTopicKey = 'topic-key-mixed-recipients-1';
-      const firstTopicName = 'topic-key-mixed-recipients-1-name';
-      const secondTopicKey = 'topic-key-mixed-recipients-2';
-      const secondTopicName = 'topic-key-mixed-recipients-2-name';
-      const transactionId = uuid();
+    const command = buildCommand(session, transactionId, [
+      firstRecipient,
+      secondRecipient,
+      firstSubscriberId,
+      secondSubscriberId,
+      secondSubscriberId,
+      firstSubscriberId,
+      secondRecipient,
+      firstRecipient,
+    ]);
+    const result = await useCase.execute(command);
 
-      const firstTopic = await createTopicEntity(
-        session,
-        topicRepository,
-        topicSubscribersRepository,
-        firstTopicKey,
-        firstTopicName
-      );
-      const firstTopicId = firstTopic._id;
-      const firstSubscriber = await subscribersService.createSubscriber();
-      const secondSubscriber = await subscribersService.createSubscriber();
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
-        firstSubscriber,
-        secondSubscriber,
-      ]);
+    expect(result).to.be.eql([
+      { ...firstRecipient, _subscriberSource: SubscriberSourceEnum.SINGLE },
+      { ...secondRecipient, _subscriberSource: SubscriberSourceEnum.SINGLE },
+    ]);
+  });
 
-      const secondTopic = await createTopicEntity(
-        session,
-        topicRepository,
-        topicSubscribersRepository,
-        secondTopicKey,
-        secondTopicName
-      );
-      const secondTopicId = secondTopic._id;
-      const thirdSubscriber = await subscribersService.createSubscriber();
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
-        thirdSubscriber,
-      ]);
+  it('should map properly multiple topics and deduplicate them', async () => {
+    const firstTopicKey = 'topic-key-mixed-topics-1';
+    const firstTopicName = 'topic-key-mixed-topics-1-name';
+    const secondTopicKey = 'topic-key-mixed-topics-2';
+    const secondTopicName = 'topic-key-mixed-topics-2-name';
+    const thirdTopicKey = 'topic-key-mixed-topics-3';
+    const thirdTopicName = 'topic-key-mixed-topics-3-name';
+    const transactionId = uuid();
 
-      const firstTopicRecipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: firstTopic.key,
-      };
-      const secondTopicRecipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: secondTopic.key,
-      };
+    const firstSubscriber = await subscribersService.createSubscriber();
+    const secondSubscriber = await subscribersService.createSubscriber();
+    const thirdSubscriber = await subscribersService.createSubscriber();
+    const fourthSubscriber = await subscribersService.createSubscriber();
 
-      const singleSubscriberId = SubscriberRepository.createObjectId();
-      const subscribersDefineSubscriberId = SubscriberRepository.createObjectId();
-      const singleSubscribersDefine: ISubscribersDefine = {
-        subscriberId: subscribersDefineSubscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
+    const firstTopic = await createTopicEntity(
+      session,
+      topicRepository,
+      topicSubscribersRepository,
+      firstTopicKey,
+      firstTopicName
+    );
+    const firstTopicId = firstTopic._id;
+    await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
+      firstSubscriber,
+      secondSubscriber,
+    ]);
 
-      const recipients = [firstTopicRecipient, singleSubscriberId, secondTopicRecipient, singleSubscribersDefine];
+    const secondTopic = await createTopicEntity(
+      session,
+      topicRepository,
+      topicSubscribersRepository,
+      secondTopicKey,
+      secondTopicName
+    );
+    const secondTopicId = secondTopic._id;
+    await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
+      thirdSubscriber,
+    ]);
 
-      const command = buildCommand(session, transactionId, recipients);
+    const thirdTopic = await createTopicEntity(
+      session,
+      topicRepository,
+      topicSubscribersRepository,
+      thirdTopicKey,
+      thirdTopicName
+    );
+    const thirdTopicId = thirdTopic._id;
+    await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, thirdTopicId, thirdTopicKey, [
+      firstSubscriber,
+      fourthSubscriber,
+    ]);
 
-      const result = await useCase.execute(command);
+    const firstTopicRecipient: ITopic = {
+      type: TriggerRecipientsTypeEnum.TOPIC,
+      topicKey: firstTopic.key,
+    };
+    const secondTopicRecipient: ITopic = {
+      type: TriggerRecipientsTypeEnum.TOPIC,
+      topicKey: secondTopic.key,
+    };
+    const thirdTopicRecipient: ITopic = {
+      type: TriggerRecipientsTypeEnum.TOPIC,
+      topicKey: thirdTopic.key,
+    };
 
-      expect(result).to.include.deep.members([
-        { subscriberId: singleSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
-        { ...singleSubscribersDefine, _subscriberSource: SubscriberSourceEnum.SINGLE },
-        { subscriberId: firstSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
-        { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
-        { subscriberId: thirdSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
-      ]);
-    });
+    const command = buildCommand(session, transactionId, [
+      thirdTopicRecipient,
+      firstTopicRecipient,
+      secondTopicRecipient,
+      thirdTopicRecipient,
+      secondTopicRecipient,
+      firstTopicRecipient,
+    ]);
+    const result = await useCase.execute(command);
 
-    it('should map properly multiple duplicated recipients of different types and deduplicate them', async () => {
-      const transactionId = uuid();
-      const firstSubscriberId = SubscriberRepository.createObjectId();
-      const secondSubscriberId = SubscriberRepository.createObjectId();
+    expect(result).to.include.deep.members([
+      { subscriberId: firstSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+      { subscriberId: fourthSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+      { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+      { subscriberId: thirdSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
+    ]);
+  });
 
-      const firstRecipient: ISubscribersDefine = {
-        subscriberId: firstSubscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
+  it('should map properly multiple duplicated recipients of different types and topics and deduplicate them', async () => {
+    const firstTopicKey = 'topic-key-mixed-recipients-deduplication-1';
+    const firstTopicName = 'topic-key-mixed-recipients-deduplication-1-name';
+    const secondTopicKey = 'topic-key-mixed-recipients-deduplication-2';
+    const secondTopicName = 'topic-key-mixed-recipients-deduplication-2-name';
+    const transactionId = uuid();
 
-      const secondRecipient: ISubscribersDefine = {
-        subscriberId: secondSubscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
+    const firstSubscriber = await subscribersService.createSubscriber();
+    const secondSubscriber = await subscribersService.createSubscriber();
+    const thirdSubscriber = await subscribersService.createSubscriber();
 
-      const command = buildCommand(session, transactionId, [
-        firstSubscriberId,
-        secondSubscriberId,
-        firstRecipient,
-        secondRecipient,
-        secondSubscriberId,
-        firstSubscriberId,
-      ]);
-      const result = await useCase.execute(command);
+    const firstRecipient: ISubscribersDefine = {
+      subscriberId: firstSubscriber.subscriberId,
+      firstName: 'Test Name',
+      lastName: 'Last of name',
+      email: 'test@email.novu',
+    };
 
-      expect(result).to.be.eql([
-        { subscriberId: firstSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
-        { subscriberId: secondSubscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
-      ]);
-    });
+    const secondRecipient: ISubscribersDefine = {
+      subscriberId: secondSubscriber.subscriberId,
+      firstName: 'Test Name',
+      lastName: 'Last of name',
+      email: 'test@email.novu',
+    };
 
-    it('should map properly multiple duplicated recipients of different types and deduplicate them but with different order', async () => {
-      const transactionId = uuid();
-      const firstSubscriberId = SubscriberRepository.createObjectId();
-      const secondSubscriberId = SubscriberRepository.createObjectId();
+    const firstTopic = await createTopicEntity(
+      session,
+      topicRepository,
+      topicSubscribersRepository,
+      firstTopicKey,
+      firstTopicName
+    );
+    const firstTopicId = firstTopic._id;
+    await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
+      firstSubscriber,
+      secondSubscriber,
+    ]);
 
-      const firstRecipient: ISubscribersDefine = {
-        subscriberId: firstSubscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
+    const secondTopic = await createTopicEntity(
+      session,
+      topicRepository,
+      topicSubscribersRepository,
+      secondTopicKey,
+      secondTopicName
+    );
+    const secondTopicId = secondTopic._id;
+    await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
+      thirdSubscriber,
+    ]);
 
-      const secondRecipient: ISubscribersDefine = {
-        subscriberId: secondSubscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
+    const firstTopicRecipient: ITopic = {
+      type: TriggerRecipientsTypeEnum.TOPIC,
+      topicKey: firstTopic.key,
+    };
+    const secondTopicRecipient: ITopic = {
+      type: TriggerRecipientsTypeEnum.TOPIC,
+      topicKey: secondTopic.key,
+    };
 
-      const command = buildCommand(session, transactionId, [
-        firstRecipient,
-        secondRecipient,
-        firstSubscriberId,
-        secondSubscriberId,
-        secondSubscriberId,
-        firstSubscriberId,
-        secondRecipient,
-        firstRecipient,
-      ]);
-      const result = await useCase.execute(command);
+    const command = buildCommand(session, transactionId, [
+      secondTopicRecipient,
+      firstRecipient,
+      firstSubscriber.subscriberId,
+      secondSubscriber.subscriberId,
+      firstTopicRecipient,
+      secondRecipient,
+      thirdSubscriber.subscriberId,
+    ]);
+    const result = await useCase.execute(command);
 
-      expect(result).to.be.eql([
-        { ...firstRecipient, _subscriberSource: SubscriberSourceEnum.SINGLE },
-        { ...secondRecipient, _subscriberSource: SubscriberSourceEnum.SINGLE },
-      ]);
-    });
+    expect(result.length).to.equal(3);
 
-    it('should map properly multiple topics and deduplicate them', async () => {
-      const firstTopicKey = 'topic-key-mixed-topics-1';
-      const firstTopicName = 'topic-key-mixed-topics-1-name';
-      const secondTopicKey = 'topic-key-mixed-topics-2';
-      const secondTopicName = 'topic-key-mixed-topics-2-name';
-      const thirdTopicKey = 'topic-key-mixed-topics-3';
-      const thirdTopicName = 'topic-key-mixed-topics-3-name';
-      const transactionId = uuid();
-
-      const firstSubscriber = await subscribersService.createSubscriber();
-      const secondSubscriber = await subscribersService.createSubscriber();
-      const thirdSubscriber = await subscribersService.createSubscriber();
-      const fourthSubscriber = await subscribersService.createSubscriber();
-
-      const firstTopic = await createTopicEntity(
-        session,
-        topicRepository,
-        topicSubscribersRepository,
-        firstTopicKey,
-        firstTopicName
-      );
-      const firstTopicId = firstTopic._id;
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
-        firstSubscriber,
-        secondSubscriber,
-      ]);
-
-      const secondTopic = await createTopicEntity(
-        session,
-        topicRepository,
-        topicSubscribersRepository,
-        secondTopicKey,
-        secondTopicName
-      );
-      const secondTopicId = secondTopic._id;
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
-        thirdSubscriber,
-      ]);
-
-      const thirdTopic = await createTopicEntity(
-        session,
-        topicRepository,
-        topicSubscribersRepository,
-        thirdTopicKey,
-        thirdTopicName
-      );
-      const thirdTopicId = thirdTopic._id;
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, thirdTopicId, thirdTopicKey, [
-        firstSubscriber,
-        fourthSubscriber,
-      ]);
-
-      const firstTopicRecipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: firstTopic.key,
-      };
-      const secondTopicRecipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: secondTopic.key,
-      };
-      const thirdTopicRecipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: thirdTopic.key,
-      };
-
-      const command = buildCommand(session, transactionId, [
-        thirdTopicRecipient,
-        firstTopicRecipient,
-        secondTopicRecipient,
-        thirdTopicRecipient,
-        secondTopicRecipient,
-        firstTopicRecipient,
-      ]);
-      const result = await useCase.execute(command);
-
-      expect(result).to.include.deep.members([
-        { subscriberId: firstSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
-        { subscriberId: fourthSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
-        { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
-        { subscriberId: thirdSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.TOPIC },
-      ]);
-    });
-
-    it('should map properly multiple duplicated recipients of different types and topics and deduplicate them', async () => {
-      const firstTopicKey = 'topic-key-mixed-recipients-deduplication-1';
-      const firstTopicName = 'topic-key-mixed-recipients-deduplication-1-name';
-      const secondTopicKey = 'topic-key-mixed-recipients-deduplication-2';
-      const secondTopicName = 'topic-key-mixed-recipients-deduplication-2-name';
-      const transactionId = uuid();
-
-      const firstSubscriber = await subscribersService.createSubscriber();
-      const secondSubscriber = await subscribersService.createSubscriber();
-      const thirdSubscriber = await subscribersService.createSubscriber();
-
-      const firstRecipient: ISubscribersDefine = {
-        subscriberId: firstSubscriber.subscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
-
-      const secondRecipient: ISubscribersDefine = {
-        subscriberId: secondSubscriber.subscriberId,
-        firstName: 'Test Name',
-        lastName: 'Last of name',
-        email: 'test@email.novu',
-      };
-
-      const firstTopic = await createTopicEntity(
-        session,
-        topicRepository,
-        topicSubscribersRepository,
-        firstTopicKey,
-        firstTopicName
-      );
-      const firstTopicId = firstTopic._id;
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, firstTopicId, firstTopicKey, [
-        firstSubscriber,
-        secondSubscriber,
-      ]);
-
-      const secondTopic = await createTopicEntity(
-        session,
-        topicRepository,
-        topicSubscribersRepository,
-        secondTopicKey,
-        secondTopicName
-      );
-      const secondTopicId = secondTopic._id;
-      await addSubscribersToTopic(session, topicRepository, topicSubscribersRepository, secondTopicId, secondTopicKey, [
-        thirdSubscriber,
-      ]);
-
-      const firstTopicRecipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: firstTopic.key,
-      };
-      const secondTopicRecipient: ITopic = {
-        type: TriggerRecipientsTypeEnum.TOPIC,
-        topicKey: secondTopic.key,
-      };
-
-      const command = buildCommand(session, transactionId, [
-        secondTopicRecipient,
-        firstRecipient,
-        firstSubscriber.subscriberId,
-        secondSubscriber.subscriberId,
-        firstTopicRecipient,
-        secondRecipient,
-        thirdSubscriber.subscriberId,
-      ]);
-      const result = await useCase.execute(command);
-
-      expect(result.length).to.equal(3);
-
-      // We process first recipients that are not topics, so they will take precedence when deduplicating
-      expect(result).to.include.deep.members([
-        { ...firstRecipient, _subscriberSource: SubscriberSourceEnum.SINGLE },
-        { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
-        { subscriberId: thirdSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
-      ]);
-    });
+    // We process first recipients that are not topics, so they will take precedence when deduplicating
+    expect(result).to.include.deep.members([
+      { ...firstRecipient, _subscriberSource: SubscriberSourceEnum.SINGLE },
+      { subscriberId: secondSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+      { subscriberId: thirdSubscriber.subscriberId, _subscriberSource: SubscriberSourceEnum.SINGLE },
+    ]);
   });
 });
 

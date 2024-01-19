@@ -48,8 +48,6 @@ describe('Topic Trigger Event', () => {
     const messageRepository = new MessageRepository();
 
     beforeEach(async () => {
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
       session = new UserSession();
       await session.initialize();
 
@@ -66,11 +64,6 @@ describe('Topic Trigger Event', () => {
       createdTopicDto = await createTopic(session, topicKey, topicName);
       await addSubscribersToTopic(session, createdTopicDto, subscribers);
       to = [{ type: TriggerRecipientsTypeEnum.TOPIC, topicKey: createdTopicDto.key }];
-    });
-
-    afterEach(() => {
-      process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
     });
 
     it('should trigger an event successfully', async () => {
@@ -322,8 +315,6 @@ describe('Topic Trigger Event', () => {
     const logRepository = new LogRepository();
 
     beforeEach(async () => {
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
       session = new UserSession();
       await session.initialize();
 
@@ -373,11 +364,6 @@ describe('Topic Trigger Event', () => {
           email: 'subscribers-define@email.novu',
         },
       ];
-    });
-
-    afterEach(() => {
-      process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
     });
 
     it('should trigger an event successfully', async () => {
