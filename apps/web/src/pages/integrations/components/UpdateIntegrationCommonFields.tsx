@@ -9,14 +9,9 @@ const CopyWrapper = styled.div`
   cursor: pointer;
   &:hover {
     opacity: 0.8;
-  }
-  margin-left: 1px;
-`;
-
-const IntegrationIdentifier = styled.input`
-  &:hover {
     color: ${colors.white};
   }
+  margin-left: 1px;
 `;
 
 export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegratedProvider | null }) => {
@@ -73,16 +68,11 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
           },
         }}
         render={({ field }) => (
-          <IntegrationIdentifier
+          <Input
             {...field}
             required
             label="Integration identifier"
             error={errors.identifier?.message}
-            rightSection={
-              <CopyWrapper onClick={() => identifierClipboard.copy(field.value)}>
-                {identifierClipboard.copied ? <Check /> : <Copy />}
-              </CopyWrapper>
-            }
             data-test-id="provider-instance-identifier"
           />
         )}

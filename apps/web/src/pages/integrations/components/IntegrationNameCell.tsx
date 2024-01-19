@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { colors, IExtendedCellProps, Popover, Text, Star, Tooltip } from '@novu/design-system';
 import type { ITableIntegration } from '../types';
 import { ChannelTypeEnum } from '@novu/shared';
-import { CopyButton } from '../../activities/components/CopyButton';
+import { CopyIdentifierButton } from '../../activities/components/CopyIdentifierButton';
 import { useClipboard } from '@mantine/hooks';
 
 const CellHolder = styled.div`
@@ -37,6 +37,10 @@ const Identifier = styled.span`
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
+
+  &:hover {
+    color: ${colors.white};
+  }
 `;
 
 const IconHolder = styled.div`
@@ -56,12 +60,15 @@ const Description = styled(Text)`
   line-height: 20px;
 `;
 
-const CopyBtn = styled(CopyButton)`
-      display: 'none',
-      visibility: 'hidden',
-      position: 'relative',
-      top: '2px',
-      marginLeft: '8px',
+const CopyBtn = styled(CopyIdentifierButton)`
+      display: 'none',      
+
+       &:hover {
+        position: 'relative',
+        top: '2px',
+        marginLeft: '8px',
+        color: ${colors.white};
+        }
    `;
 
 export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedCellProps<ITableIntegration>) => {
@@ -119,7 +126,7 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
           <Tooltip label={'Integration Identifier'}>
             <Identifier>
               {original.identifier}
-              <CopyBtn onCopy={() => copy(original.identifier)} />
+              <CopyIdentifierButton onCopy={() => copy(original.identifier)} />
             </Identifier>
           </Tooltip>
         )}
