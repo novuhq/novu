@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   EnvironmentId,
+  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ISubscribersSource,
   ITopic,
@@ -20,10 +21,7 @@ import {
   GetTopicSubscribersCommand,
   GetTopicSubscribersUseCase,
 } from '../get-topic-subscribers';
-import {
-  FeatureFlagCommand,
-  GetIsTopicNotificationEnabled,
-} from '../get-feature-flag';
+import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
 import { InstrumentUsecase } from '../../instrumentation';
 
 const isNotTopic = (
@@ -38,7 +36,7 @@ const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
 export class MapTriggerRecipients {
   constructor(
     private getTopicSubscribers: GetTopicSubscribersUseCase,
-    private getIsTopicNotificationEnabled: GetIsTopicNotificationEnabled
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   @InstrumentUsecase()
@@ -115,42 +113,29 @@ export class MapTriggerRecipients {
     userId: UserId,
     recipients: TriggerRecipients
   ): Promise<ISubscribersSource[]> {
-    const featureFlagCommand = FeatureFlagCommand.create({
-      environmentId,
-      organizationId,
-      userId,
-    });
-    const isEnabled = await this.getIsTopicNotificationEnabled.execute(
-      featureFlagCommand
-    );
+    const topics = this.findTopics(recipients);
 
-    if (isEnabled) {
-      const topics = this.findTopics(recipients);
+    const subscribers: ISubscribersSource[] = [];
 
-      const subscribers: ISubscribersSource[] = [];
+    for (const topic of topics) {
+      const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
+        environmentId,
+        topicKey: topic.topicKey,
+        organizationId,
+      });
+      const topicSubscribers = await this.getTopicSubscribers.execute(
+        getTopicSubscribersCommand
+      );
 
-      for (const topic of topics) {
-        const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
-          environmentId,
-          topicKey: topic.topicKey,
-          organizationId,
-        });
-        const topicSubscribers = await this.getTopicSubscribers.execute(
-          getTopicSubscribersCommand
-        );
-
-        topicSubscribers.forEach((subscriber: TopicSubscribersDto) =>
-          subscribers.push({
-            subscriberId: subscriber.externalSubscriberId,
-            _subscriberSource: SubscriberSourceEnum.TOPIC,
-          })
-        );
-      }
-
-      return subscribers;
+      topicSubscribers.forEach((subscriber: TopicSubscribersDto) =>
+        subscribers.push({
+          subscriberId: subscriber.externalSubscriberId,
+          _subscriberSource: SubscriberSourceEnum.TOPIC,
+        })
+      );
     }
 
-    return [];
+    return subscribers;
   }
 
   public mapActor(

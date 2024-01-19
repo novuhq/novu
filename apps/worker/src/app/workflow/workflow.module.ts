@@ -25,13 +25,12 @@ import {
   SelectVariant,
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
-  getIsTopicNotificationEnabled,
+  getFeatureFlag,
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
   CompileInAppTemplate,
   WorkflowInMemoryProviderService,
-  getIsExecutionLogQueueEnabled,
   ExecutionLogRoute,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
@@ -120,13 +119,12 @@ const USE_CASES = [
   WebhookFilterBackoffStrategy,
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
-  getIsTopicNotificationEnabled,
+  getFeatureFlag,
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
   CompileInAppTemplate,
   ExecutionLogRoute,
-  getIsExecutionLogQueueEnabled,
 ];
 
 const PROVIDERS: Provider[] = [];
