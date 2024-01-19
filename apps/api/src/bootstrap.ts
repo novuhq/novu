@@ -47,7 +47,7 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   let nestOptions: Record<string, boolean> = {};
 
   try {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    if (process.env.NOVU_ENTERPRISE === 'true') {
       if (require('@novu/ee-billing')?.rawBodyBuffer) {
         rawBodyBuffer = require('@novu/ee-billing')?.rawBodyBuffer;
         nestOptions = {
