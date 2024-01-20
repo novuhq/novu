@@ -1,11 +1,7 @@
 import styled from '@emotion/styled';
 import { ScrollArea } from '@mantine/core';
 import { colors, shadows } from '@novu/design-system';
-import { HandlebarHelpers } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { getWorkflowVariables } from '../../../../api/notification-templates';
-import { getTextToInsert } from '../CustomCodeEditor';
+import { useEffect, useRef } from 'react';
 
 type AutoSuggestionsDropdownProps = {
   autoSuggestionsCoordinates: {

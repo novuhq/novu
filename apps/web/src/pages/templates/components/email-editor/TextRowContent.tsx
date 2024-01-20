@@ -1,17 +1,17 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { HandlebarHelpers, TextAlignEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 
+import { getHotkeyHandler } from '@mantine/hooks';
 import { colors } from '@novu/design-system';
-import { useEnvController } from '../../../../hooks';
-import type { IForm } from '../formTypes';
-import { useStepFormPath } from '../../hooks/useStepFormPath';
-import { AutoSuggestionsDropdown } from './AutoSuggestionsDropdown';
-import { getHotkeyHandler, useHotkeys } from '@mantine/hooks';
 import { getWorkflowVariables } from '../../../../api/notification-templates';
+import { useEnvController } from '../../../../hooks';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { getTextToInsert } from '../CustomCodeEditor';
+import type { IForm } from '../formTypes';
+import { AutoSuggestionsDropdown } from './AutoSuggestionsDropdown';
 
 export function TextRowContent({ blockIndex }: { blockIndex: number }) {
   const methods = useFormContext<IForm>();
