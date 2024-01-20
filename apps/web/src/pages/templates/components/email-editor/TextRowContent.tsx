@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { TextAlignEnum } from '@novu/shared';
+import { HandlebarHelpers, TextAlignEnum } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
 
 import { colors } from '@novu/design-system';
 import { useEnvController } from '../../../../hooks';
@@ -9,7 +10,8 @@ import type { IForm } from '../formTypes';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { AutoSuggestionsDropdown } from './AutoSuggestionsDropdown';
 import { getHotkeyHandler, useHotkeys } from '@mantine/hooks';
-import { set } from 'cypress/types/lodash';
+import { getWorkflowVariables } from '../../../../api/notification-templates';
+import { getTextToInsert } from '../CustomCodeEditor';
 
 export function TextRowContent({ blockIndex }: { blockIndex: number }) {
   const methods = useFormContext<IForm>();
@@ -31,6 +33,57 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
   const [anchorPosition, setAnchorPosition] = useState<number | null>(null);
   const [variableQuery, setVariableQuery] = useState('');
   const [contentSnapshot, setContentSnapshot] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const { data: variables } = useQuery(['getVariables'], () => getWorkflowVariables(), {
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchInterval: false,
+  });
+
+  const variablesList = useMemo(() => {
+    const systemVars = Object.keys(variables)
+      .map((key) => {
+        const subVariables = variables[key];
+
+        return Object.keys(subVariables)
+          .map((name) => {
+            const type = subVariables[name];
+            if (typeof type === 'object') {
+              return Object.keys(type).map((subName) => {
+                return {
+                  label: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
+                  detail: type[subName],
+                  insertText: getTextToInsert(`${name}.${subName}`, key),
+                };
+              });
+            }
+
+            return {
+              label: `${key === 'translations' ? 'i18n ' : ''}${name}`,
+              detail: type,
+              insertText: getTextToInsert(name, key),
+            };
+          })
+          .flat();
+      })
+      .flat();
+
+    const allVars = [
+      ...Object.keys(HandlebarHelpers).map((name) => ({
+        label: name,
+        detail: HandlebarHelpers[name].description,
+        insertText: name,
+      })),
+      ...systemVars,
+    ];
+
+    if (variableQuery) {
+      return allVars.filter((variable) => variable.label.toLowerCase().includes(variableQuery.toLowerCase()));
+    } else {
+      return allVars;
+    }
+  }, [variableQuery, variables]);
 
   useEffect(() => {
     if (isAutoSuggestionTrigger) {
@@ -107,9 +160,9 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
     const newEndContent = `${endContent.slice(0, slicePositions)}${value}${endContent.slice(slicePositions)}`;
 
     const newContent = `${data.slice(0, anchorPosition)}${newEndContent}`;
+    setText(newContent);
 
     methods.setValue(`${stepFormPath}.template.content.${blockIndex}.content`, newContent);
-    setText(newContent);
     resetAutoSuggestions();
   };
 
@@ -119,6 +172,8 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
     setAnchorPosition(null);
     setVariableQuery('');
     setContentSnapshot('');
+    setSelectedIndex(0);
+    ref.current?.blur();
   };
 
   useEffect(() => {
@@ -151,6 +206,8 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
           autoSuggestionsCoordinates={autoSuggestionsCoordinates}
           onSuggestionsSelect={onSuggestionsSelect}
           variableQuery={variableQuery}
+          selectedIndex={selectedIndex}
+          variablesList={variablesList}
         />
       )}
       <Controller
@@ -213,6 +270,39 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
                     if (showAutoSuggestions) {
                       resetAutoSuggestions();
                     }
+                  },
+                ],
+                [
+                  'ArrowUp',
+                  (e) => {
+                    if (showAutoSuggestions) {
+                      e.stopPropagation();
+                      setSelectedIndex((prevIndex) => Math.max(prevIndex - 1, 0));
+                    }
+                  },
+                  { preventDefault: showAutoSuggestions },
+                ],
+                [
+                  'ArrowDown',
+                  (e) => {
+                    if (showAutoSuggestions) {
+                      e.stopPropagation();
+                      setSelectedIndex((prevIndex) => Math.min(prevIndex + 1, variablesList.length - 1));
+                    }
+                  },
+                  {
+                    preventDefault: showAutoSuggestions,
+                  },
+                ],
+                [
+                  'Enter',
+                  () => {
+                    if (showAutoSuggestions) {
+                      onSuggestionsSelect(variablesList[selectedIndex].insertText);
+                    }
+                  },
+                  {
+                    preventDefault: showAutoSuggestions,
                   },
                 ],
               ])}
