@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { WebSocketsQueueService } from './web-sockets-queue.service';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { IWebSocketJobDto } from '../../dtos';
 
 let webSocketsQueueService: WebSocketsQueueService;
 
@@ -35,7 +36,7 @@ describe('WebSockets Queue service', () => {
       );
       expect(webSocketsQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(webSocketsQueueService.topic).toEqual('ws_socket_queue');
-      expect(await webSocketsQueueService.bullMqService.getStatus()).toEqual({
+      expect(await webSocketsQueueService.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'ws_socket_queue',
         workerName: undefined,
@@ -53,12 +54,16 @@ describe('WebSockets Queue service', () => {
       const _userId = 'web-sockets-queue-user-id';
       const jobData = {
         _id: jobId,
-        test: 'web-sockets-queue-job-data',
         _environmentId,
         _organizationId,
         _userId,
-      };
-      await webSocketsQueueService.add(jobId, jobData, _organizationId);
+      } as any;
+
+      await webSocketsQueueService.add({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await webSocketsQueueService.queue.getActiveCount()).toEqual(0);
       expect(await webSocketsQueueService.queue.getWaitingCount()).toEqual(1);
@@ -88,11 +93,12 @@ describe('WebSockets Queue service', () => {
         _organizationId,
         _userId,
       };
-      await webSocketsQueueService.addMinimalJob(
-        jobId,
-        jobData,
-        _organizationId
-      );
+
+      await webSocketsQueueService.add({
+        name: jobId,
+        data: jobData as any,
+        groupId: _organizationId,
+      });
 
       expect(await webSocketsQueueService.queue.getActiveCount()).toEqual(0);
       expect(await webSocketsQueueService.queue.getWaitingCount()).toEqual(1);

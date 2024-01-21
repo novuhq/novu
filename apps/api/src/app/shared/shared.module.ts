@@ -39,6 +39,10 @@ import {
   LoggerModule,
   QueuesModule,
   storageService,
+  getIsApiIdempotencyEnabled,
+  ExecutionLogRoute,
+  CreateExecutionDetails,
+  getIsExecutionLogQueueEnabled,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -90,9 +94,13 @@ const PROVIDERS = [
   featureFlagsService,
   getIsTopicNotificationEnabled,
   getIsApiRateLimitingEnabled,
+  getIsApiIdempotencyEnabled,
   InvalidateCacheService,
   storageService,
   ...DAL_MODELS,
+  ExecutionLogRoute,
+  CreateExecutionDetails,
+  getIsExecutionLogQueueEnabled,
 ];
 
 @Module({

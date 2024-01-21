@@ -1,12 +1,14 @@
 import { UserSession } from '@novu/testing';
 import { CacheService } from '@novu/application-generic';
 import { expect } from 'chai';
-import { HttpResponseHeaderKeysEnum } from '../src/app/shared/framework/types';
+import { HttpResponseHeaderKeysEnum } from './types';
+import { DOCS_LINK } from './idempotency.interceptor';
+
+process.env.LAUNCH_DARKLY_SDK_KEY = ''; // disable Launch Darkly to allow test to define FF state
+
 describe('Idempotency Test', async () => {
   let session: UserSession;
   const path = '/v1/testing/idempotency';
-  const DOCS_LINK = 'https://docs.novu.co/additional-resources/idempotency';
-
   let cacheService: CacheService | null = null;
 
   describe('when enabled', () => {
@@ -33,9 +35,9 @@ describe('Idempotency Test', async () => {
         .expect(201);
       expect(typeof body.data.number === 'number').to.be.true;
       expect(body.data.number).to.equal(bodyDupe.data.number);
-      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_REPLAY]).to.eq('true');
+      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_REPLAY.toLowerCase()]).to.eq('true');
     });
     it('should return cached and use correct cache key when apiKey is used', async () => {
       const key = `2`;
@@ -58,9 +60,9 @@ describe('Idempotency Test', async () => {
         .expect(201);
       expect(typeof body.data.number === 'number').to.be.true;
       expect(body.data.number).to.equal(bodyDupe.data.number);
-      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_REPLAY]).to.eq('true');
+      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_REPLAY.toLowerCase()]).to.eq('true');
     });
     it('should return cached and use correct cache key when authToken and apiKey combination is used', async () => {
       const key = `3`;
@@ -83,9 +85,9 @@ describe('Idempotency Test', async () => {
         .expect(201);
       expect(typeof body.data.number === 'number').to.be.true;
       expect(body.data.number).to.equal(bodyDupe.data.number);
-      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_REPLAY]).to.eq('true');
+      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_REPLAY.toLowerCase()]).to.eq('true');
     });
     it('should return conflict when concurrent requests are made', async () => {
       const key = `4`;
@@ -98,12 +100,13 @@ describe('Idempotency Test', async () => {
       const oneConflict = status === 409 || statusDupe === 409;
       const conflictBody = status === 201 ? bodyDupe : body;
       const retryHeader =
-        headers[HttpResponseHeaderKeysEnum.RETRY_AFTER] || headerDupe[HttpResponseHeaderKeysEnum.RETRY_AFTER];
+        headers[HttpResponseHeaderKeysEnum.RETRY_AFTER.toLowerCase()] ||
+        headerDupe[HttpResponseHeaderKeysEnum.RETRY_AFTER.toLowerCase()];
       expect(oneSuccess).to.be.true;
       expect(oneConflict).to.be.true;
-      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.LINK]).to.eq(DOCS_LINK);
+      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.LINK.toLowerCase()]).to.eq(DOCS_LINK);
       expect(retryHeader).to.eq(`1`);
       expect(JSON.stringify(conflictBody)).to.eq(
         JSON.stringify({
@@ -131,9 +134,9 @@ describe('Idempotency Test', async () => {
       const conflictBody = status === 201 ? bodyDupe : body;
       expect(oneSuccess).to.be.true;
       expect(oneConflict).to.be.true;
-      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.LINK]).to.eq(DOCS_LINK);
+      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.LINK.toLowerCase()]).to.eq(DOCS_LINK);
       expect(JSON.stringify(conflictBody)).to.eq(
         JSON.stringify({
           message: `Request with key "${key}" is being reused for a different body`,
@@ -160,8 +163,8 @@ describe('Idempotency Test', async () => {
       expect(typeof body.data.number === 'number').to.be.true;
       expect(typeof bodyDupe.data.number === 'number').to.be.true;
       expect(body.data.number).not.to.equal(bodyDupe.data.number);
-      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key1);
+      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key1);
     });
     it('should return non cached response for GET requests', async () => {
       const key = '8';
@@ -181,7 +184,7 @@ describe('Idempotency Test', async () => {
       expect(typeof body.data.number === 'number').to.be.true;
       expect(typeof bodyDupe.data.number === 'number').to.be.true;
       expect(body.data.number).not.to.equal(bodyDupe.data.number);
-      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(undefined);
+      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(undefined);
     });
     it('should return cached error response for duplicate requests', async () => {
       const key = '9';
@@ -200,8 +203,8 @@ describe('Idempotency Test', async () => {
         .expect(422);
       expect(JSON.stringify(body)).to.equal(JSON.stringify(bodyDupe));
 
-      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
-      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY]).to.eq(key);
+      expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
+      expect(headerDupe[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.eq(key);
     });
     it('should return 400 when key bigger than allowed limit', async () => {
       const key = Array.from({ length: 256 })
@@ -221,6 +224,41 @@ describe('Idempotency Test', async () => {
           statusCode: 400,
         })
       );
+    });
+
+    describe('Allowed Authentication Security Schemes', () => {
+      it('should set Idempotency-Key header when ApiKey security scheme is used to authenticate', async () => {
+        const key = '10';
+        const { headers } = await session.testAgent
+          .post(path)
+          .set(HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY, key)
+          .set('authorization', `ApiKey ${session.apiKey}`)
+          .send({ data: 201 })
+          .expect(201);
+        expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.exist;
+      });
+
+      it('should set rate limit headers when a Bearer security scheme is used to authenticate', async () => {
+        const key = '10';
+        const { headers } = await session.testAgent
+          .post(path)
+          .set(HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY, key)
+          .set('authorization', session.token)
+          .send({ data: 201 })
+          .expect(201);
+        expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).to.exist;
+      });
+
+      it('should NOT set rate limit headers when NO authorization header is present', async () => {
+        const key = '10';
+        const { headers } = await session.testAgent
+          .post(path)
+          .set(HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY, key)
+          .set('authorization', '')
+          .send({ data: 201 })
+          .expect(401);
+        expect(headers[HttpResponseHeaderKeysEnum.IDEMPOTENCY_KEY.toLowerCase()]).not.to.exist;
+      });
     });
   });
 

@@ -8,6 +8,8 @@ import {
   CachedEntity,
   Instrument,
   InstrumentUsecase,
+  IWorkflowDataDto,
+  IWorkflowJobDto,
   StorageHelperService,
   WorkflowQueueService,
 } from '@novu/application-generic';
@@ -129,13 +131,13 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    const jobData: ParseEventRequestCommand = {
+    const jobData: IWorkflowDataDto = {
       ...command,
       actor: command.actor,
       transactionId,
     };
 
-    await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
+    await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
 
     return {
       acknowledged: true,

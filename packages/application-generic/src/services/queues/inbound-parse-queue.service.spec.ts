@@ -3,6 +3,7 @@ import { Test } from '@nestjs/testing';
 import { InboundParseQueueService } from './inbound-parse-queue.service';
 import { BullMqService } from '../bull-mq';
 import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import { IHeaders, IInboundParseJobDto } from '../../dtos';
 
 let inboundParseQueueService: InboundParseQueueService;
 
@@ -35,7 +36,7 @@ describe('Inbound Parse Queue service', () => {
       );
       expect(inboundParseQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(inboundParseQueueService.topic).toEqual('inbound-parse-mail');
-      expect(await inboundParseQueueService.bullMqService.getStatus()).toEqual({
+      expect(await inboundParseQueueService.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'inbound-parse-mail',
         workerName: undefined,
@@ -59,17 +60,19 @@ describe('Inbound Parse Queue service', () => {
 
     it('should add a job in the queue', async () => {
       const jobId = 'inbound-parse-mail-job-id';
-      const _environmentId = 'inbound-parse-mail-environment-id';
       const _organizationId = 'inbound-parse-mail-organization-id';
-      const _userId = 'inbound-parse-mail-user-id';
       const jobData = {
-        _id: jobId,
-        test: 'inbound-parse-mail-job-data',
-        _environmentId,
-        _organizationId,
-        _userId,
+        html: '<>Hello World</>',
+        text: 'text',
+        subject: 'subject',
+        messageId: '123',
       };
-      await inboundParseQueueService.add(jobId, jobData, _organizationId);
+
+      await inboundParseQueueService.add({
+        name: jobId,
+        data: jobData as any,
+        groupId: _organizationId,
+      });
 
       expect(await inboundParseQueueService.queue.getActiveCount()).toEqual(0);
       expect(await inboundParseQueueService.queue.getWaitingCount()).toEqual(1);
@@ -94,17 +97,17 @@ describe('Inbound Parse Queue service', () => {
       const _organizationId = 'inbound-parse-mail-organization-id';
       const _userId = 'inbound-parse-mail-user-id';
       const jobData = {
-        _id: jobId,
-        test: 'inbound-parse-mail-job-data-2',
-        _environmentId,
-        _organizationId,
-        _userId,
+        html: '<>Hello World</>',
+        text: 'text',
+        subject: 'subject',
+        messageId: '123',
       };
-      await inboundParseQueueService.addMinimalJob(
-        jobId,
-        jobData,
-        _organizationId
-      );
+
+      await inboundParseQueueService.add({
+        name: jobId,
+        data: jobData as any,
+        groupId: _organizationId,
+      });
 
       expect(await inboundParseQueueService.queue.getActiveCount()).toEqual(0);
       expect(await inboundParseQueueService.queue.getWaitingCount()).toEqual(1);

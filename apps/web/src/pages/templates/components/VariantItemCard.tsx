@@ -264,6 +264,7 @@ export const VariantItemCard = ({
           conditions={conditions}
           filterPartsList={filterPartsList}
           defaultFilter={FilterPartTypeEnum.PAYLOAD}
+          shouldDisallowEmptyConditions
         />
       )}
       <DeleteConfirmModal

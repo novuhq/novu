@@ -16,6 +16,7 @@ import { Tenants } from './tenants/tenants';
 import { ExecutionDetails } from './execution-details/execution-details';
 import { InboundParse } from './inbound-parse/inbound-parse';
 import { Organizations } from './organizations/organizations';
+import { WorkflowOverrides } from './workflow-override/workflow-override';
 
 import { makeRetryable } from './retry';
 
@@ -37,6 +38,7 @@ export class Novu extends EventEmitter {
   readonly executionDetails: ExecutionDetails;
   readonly inboundParse: InboundParse;
   readonly organizations: Organizations;
+  readonly workflowOverrides: WorkflowOverrides;
 
   constructor(apiKey: string, config?: INovuConfiguration) {
     super();
@@ -69,6 +71,7 @@ export class Novu extends EventEmitter {
     this.executionDetails = new ExecutionDetails(this.http);
     this.inboundParse = new InboundParse(this.http);
     this.organizations = new Organizations(this.http);
+    this.workflowOverrides = new WorkflowOverrides(this.http);
 
     this.trigger = this.events.trigger;
     this.bulkTrigger = this.events.bulkTrigger;

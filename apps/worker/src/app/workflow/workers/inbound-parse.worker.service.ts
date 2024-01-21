@@ -1,6 +1,8 @@
 import {
   BullMqService,
   getInboundParseMailWorkerOptions,
+  IInboundParseDataDto,
+  IInboundParseJobDto,
   WorkerBaseService,
   WorkerOptions,
   WorkflowInMemoryProviderService,
@@ -29,7 +31,7 @@ export class InboundParseWorker extends WorkerBaseService {
   }
 
   public getWorkerProcessor() {
-    return async ({ data }: { data: InboundEmailParseCommand }) => {
+    return async ({ data }: { data: IInboundParseDataDto }) => {
       Logger.verbose({ data }, 'Processing the inbound parsed email', LOG_CONTEXT);
       await this.inboundEmailParseUsecase.execute(InboundEmailParseCommand.create({ ...data }));
     };

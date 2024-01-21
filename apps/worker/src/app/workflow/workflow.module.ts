@@ -31,6 +31,8 @@ import {
   TriggerMulticast,
   CompileInAppTemplate,
   WorkflowInMemoryProviderService,
+  getIsExecutionLogQueueEnabled,
+  ExecutionLogRoute,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -125,6 +127,8 @@ const USE_CASES = [
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
+  ExecutionLogRoute,
+  getIsExecutionLogQueueEnabled,
 ];
 
 const PROVIDERS: Provider[] = [];

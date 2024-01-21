@@ -1,9 +1,12 @@
-import { ResendEmailProvider } from './resend.provider';
 import { Resend } from 'resend';
+
+import { ResendEmailProvider } from './resend.provider';
 const mockConfig = {
   apiKey: 'this-api-key-from-resend',
   from: 'test@test.com',
 };
+
+(global as any).Headers = () => {};
 
 const mockNovuMessage = {
   from: 'test@test.com',
@@ -48,7 +51,7 @@ test('should trigger resend email with From Name', async () => {
 
   const provider = new ResendEmailProvider(mockConfigWithSenderName);
   const spy = jest
-    .spyOn(Resend.prototype, 'sendEmail')
+    .spyOn((provider as any).resendClient.emails, 'send')
     .mockImplementation(async () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return {} as any;
