@@ -59,6 +59,9 @@ import { SSO, UserAccess, Cloud } from '@novu/design-system';
 import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { VariantsPage } from './pages/templates/components/VariantsPage';
+import { GetStartedUseCase } from './pages/get-started/GetStartedUseCase';
+import { GetStartedTab } from './pages/get-started/layout/GetStartedTab';
+import { onboardingUseCases } from './pages/get-started/consts';
 
 library.add(far, fas);
 
@@ -168,7 +171,19 @@ function App() {
                     <Route path="create" element={<CreateTenantPage />} />
                     <Route path=":identifier" element={<UpdateTenantPage />} />
                   </Route>
-                  <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
+                  <Route path={ROUTES.GET_STARTED} element={<GetStartedUseCase />}>
+                    <Route path="inapp" element={<GetStartedTab onboardingUseCase={onboardingUseCases.in_app} />} />
+                    <Route
+                      path="multichannel"
+                      element={<GetStartedTab onboardingUseCase={onboardingUseCases.multi_channel} />}
+                    />
+                    <Route path="digest" element={<GetStartedTab onboardingUseCase={onboardingUseCases.digest} />} />
+                    <Route path="delay" element={<GetStartedTab onboardingUseCase={onboardingUseCases.delay} />} />
+                    <Route
+                      path="translation"
+                      element={<GetStartedTab onboardingUseCase={onboardingUseCases.translation} />}
+                    />
+                  </Route>
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
                   <Route path={ROUTES.QUICK_START_SETUP} element={<FrameworkSetup />} />

@@ -20,7 +20,6 @@ export function NavMenu({ menuItems }: INavMenuProps) {
   const { classes } = useStyles();
   const { classes: popoverClasses } = usePopoverStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
-
   const [isHovered, setIsHovered] = useState<string>(null);
 
   return (

@@ -27,7 +27,7 @@ export function DynamicCheckBox({ Icon, type, ...props }: IDynamicCheckBoxProps)
   };
 
   return (
-    <Tooltip multiline width={280} label={tooltipLabel[type]} classNames={tooltipClasses}>
+    <Tooltip multiline arrowSize={8} width={280} label={tooltipLabel[type]} classNames={tooltipClasses}>
       <Container
         checked={isChecked}
         onMouseEnter={() => setIsHovered(true)}
