@@ -11,16 +11,23 @@ import { AddDelayJob } from './add-delay-job.usecase';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
 import { AddJobCommand } from './add-job.command';
-import { CreateExecutionDetailsCommand, DetailEnum } from '../../usecases';
+import {
+  ConditionsFilter,
+  ConditionsFilterCommand,
+  DetailEnum,
+} from '../../usecases';
 import {
   CalculateDelayService,
-  ExecutionLogQueueService,
   JobsOptions,
   StandardQueueService,
 } from '../../services';
 import { LogDecorator } from '../../logging';
 import { InstrumentUsecase } from '../../instrumentation';
 import { validateDigest } from './validation';
+import {
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
+} from '../execution-log-route';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -34,12 +41,14 @@ export class AddJob {
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => StandardQueueService))
     private standardQueueService: StandardQueueService,
-    @Inject(forwardRef(() => ExecutionLogQueueService))
-    private executionLogQueueService: ExecutionLogQueueService,
+    @Inject(forwardRef(() => ExecutionLogRoute))
+    private executionLogRoute: ExecutionLogRoute,
     private mergeOrCreateDigestUsecase: MergeOrCreateDigest,
     private addDelayJob: AddDelayJob,
     @Inject(forwardRef(() => CalculateDelayService))
-    private calculateDelayService: CalculateDelayService
+    private calculateDelayService: CalculateDelayService,
+    @Inject(forwardRef(() => ConditionsFilter))
+    private conditionsFilter: ConditionsFilter
   ) {}
 
   @InstrumentUsecase()
@@ -63,6 +72,26 @@ export class AddJob {
       LOG_CONTEXT
     );
 
+    let filtered = false;
+
+    if (
+      [StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(
+        job.type as StepTypeEnum
+      )
+    ) {
+      const shouldRun = await this.conditionsFilter.filter(
+        ConditionsFilterCommand.create({
+          filters: job.step.filters || [],
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          job,
+        })
+      );
+
+      filtered = !shouldRun.passed;
+    }
+
     let digestAmount: number | undefined;
     let digestCreationResult: DigestCreationResultEnum | undefined;
     if (job.type === StepTypeEnum.DIGEST) {
@@ -75,7 +104,7 @@ export class AddJob {
       Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
 
       digestCreationResult = await this.mergeOrCreateDigestUsecase.execute(
-        MergeOrCreateDigestCommand.create({ job, filtered: command.filtered })
+        MergeOrCreateDigestCommand.create({ job, filtered })
       );
 
       if (digestCreationResult === DigestCreationResultEnum.MERGED) {
@@ -136,25 +165,20 @@ export class AddJob {
       );
     }
 
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
         detail: DetailEnum.STEP_QUEUED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
-      }),
-      groupId: job._organizationId,
-    });
+      })
+    );
 
-    const delay = command.filtered ? 0 : digestAmount ?? delayAmount;
+    const delay = filtered ? 0 : digestAmount ?? delayAmount;
 
-    if ((digestAmount || delayAmount) && command.filtered) {
+    if ((digestAmount || delayAmount) && filtered) {
       Logger.verbose(
         `Delay for job ${job._id} will be 0 because job was filtered`,
         LOG_CONTEXT
@@ -206,12 +230,10 @@ export class AddJob {
           : 'Unexpected job type, Creating execution details';
 
       Logger.verbose(logMessage, LOG_CONTEXT);
-      const meta = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add({
-        name: meta._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...meta,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
           detail:
             job.type === StepTypeEnum.DELAY
               ? DetailEnum.STEP_DELAYED
@@ -221,9 +243,8 @@ export class AddJob {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({ delay }),
-        }),
-        groupId: job._organizationId,
-      });
+        })
+      );
     }
   }
 

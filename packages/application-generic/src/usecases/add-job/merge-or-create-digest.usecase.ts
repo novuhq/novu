@@ -16,16 +16,14 @@ import {
 
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { ApiException } from '../../utils/exceptions';
-import {
-  EventsDistributedLockService,
-  ExecutionLogQueueService,
-} from '../../services';
-import {
-  DetailEnum,
-  CreateExecutionDetailsCommand,
-} from '../create-execution-details';
+import { EventsDistributedLockService } from '../../services';
+import { DetailEnum } from '../create-execution-details';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { getNestedValue } from '../../utils/object';
+import {
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
+} from '../execution-log-route';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -41,8 +39,8 @@ export class MergeOrCreateDigest {
     @Inject(forwardRef(() => EventsDistributedLockService))
     private eventsDistributedLockService: EventsDistributedLockService,
     private jobRepository: JobRepository,
-    @Inject(forwardRef(() => ExecutionLogQueueService))
-    private executionLogQueueService: ExecutionLogQueueService,
+    @Inject(forwardRef(() => ExecutionLogRoute))
+    private executionLogRoute: ExecutionLogRoute,
     private notificationRepository: NotificationRepository
   ) {}
 
@@ -204,38 +202,30 @@ export class MergeOrCreateDigest {
   }
 
   private async digestMergedExecutionDetails(job: JobEntity): Promise<void> {
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
         detail: DetailEnum.DIGEST_MERGED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      }),
-      groupId: job._organizationId,
-    });
+      })
+    );
   }
   private async digestSkippedExecutionDetails(
     job: JobEntity,
     filtered: boolean
   ): Promise<void> {
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
         detail: filtered ? DetailEnum.FILTER_STEPS : DetailEnum.DIGEST_SKIPPED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      }),
-      groupId: job._organizationId,
-    });
+      })
+    );
   }
 }

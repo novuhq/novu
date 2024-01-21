@@ -40,6 +40,9 @@ import {
   QueuesModule,
   storageService,
   getIsApiIdempotencyEnabled,
+  ExecutionLogRoute,
+  CreateExecutionDetails,
+  getIsExecutionLogQueueEnabled,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -95,6 +98,9 @@ const PROVIDERS = [
   InvalidateCacheService,
   storageService,
   ...DAL_MODELS,
+  ExecutionLogRoute,
+  CreateExecutionDetails,
+  getIsExecutionLogQueueEnabled,
 ];
 
 @Module({

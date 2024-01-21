@@ -13,7 +13,6 @@ import {
   buildNotificationTemplateKey,
   CachedEntity,
   DetailEnum,
-  CreateExecutionDetailsCommand,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   Instrument,
@@ -22,8 +21,9 @@ import {
   IFilterVariables,
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
-  ExecutionLogQueueService,
   buildSubscriberKey,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 import {
   SubscriberRepository,
@@ -54,7 +54,7 @@ export class SendMessage {
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
-    private executionLogQueueService: ExecutionLogQueueService,
+    private executionLogRoute: ExecutionLogRoute,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private getSubscriberGlobalPreferenceUsecase: GetSubscriberGlobalPreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
@@ -125,20 +125,16 @@ export class SendMessage {
     }
 
     if (stepType !== StepTypeEnum.DELAY) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add({
-        name: metadata._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,
           isRetry: false,
-        }),
-        groupId: command.organizationId,
-      });
+        })
+      );
     }
 
     const sendMessageCommand = SendMessageCommand.create({ ...command, compileContext: payload });
@@ -175,12 +171,9 @@ export class SendMessage {
     );
 
     if (!shouldRun.passed) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add({
-        name: metadata._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.FILTER_STEPS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
@@ -189,9 +182,8 @@ export class SendMessage {
           raw: JSON.stringify({
             conditions: shouldRun.conditions,
           }),
-        }),
-        groupId: command.organizationId,
-      });
+        })
+      );
     }
 
     return shouldRun;
@@ -228,21 +220,17 @@ export class SendMessage {
     const globalPreferenceResult = this.stepPreferred(globalPreference, job);
 
     if (!globalPreferenceResult) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add({
-        name: metadata._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_FILTERED_BY_GLOBAL_PREFERENCES,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(globalPreference),
-        }),
-        groupId: job._organizationId,
-      });
+        })
+      );
 
       return false;
     }
@@ -261,21 +249,17 @@ export class SendMessage {
     const result = this.stepPreferred(preference, job);
 
     if (!result) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add({
-        name: metadata._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_FILTERED_BY_PREFERENCES,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(preference),
-        }),
-        groupId: job._organizationId,
-      });
+        })
+      );
     }
 
     return result;
@@ -360,12 +344,9 @@ export class SendMessage {
   }
 
   protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
         detail: DetailEnum.TENANT_CONTEXT_SELECTED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -380,9 +361,8 @@ export class SendMessage {
           _environmentId: tenant?._environmentId,
           _id: tenant?._id,
         }),
-      }),
-      groupId: job._organizationId,
-    });
+      })
+    );
   }
 
   protected async handleTenantExecution(job: JobEntity): Promise<TenantEntity | null> {
@@ -395,12 +375,9 @@ export class SendMessage {
         identifier: tenantIdentifier,
       });
       if (!tenant) {
-        const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-        await this.executionLogQueueService.add({
-          name: metadata._id,
-          data: CreateExecutionDetailsCommand.create({
-            ...metadata,
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+        await this.executionLogRoute.execute(
+          ExecutionLogRouteCommand.create({
+            ...ExecutionLogRouteCommand.getDetailsFromJob(job),
             detail: DetailEnum.TENANT_NOT_FOUND,
             source: ExecutionDetailsSourceEnum.INTERNAL,
             status: ExecutionDetailsStatusEnum.FAILED,
@@ -409,9 +386,8 @@ export class SendMessage {
             raw: JSON.stringify({
               tenantIdentifier: tenantIdentifier,
             }),
-          }),
-          groupId: job._organizationId,
-        });
+          })
+        );
 
         return null;
       }

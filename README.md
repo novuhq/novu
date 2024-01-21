@@ -1,4 +1,11 @@
 <div align="center">
+  👨‍💻 <a href="https://novuhq.notion.site/Careers-page-00bffbc69d8b44b790badfeadb7e44c5?utm_source=github" target="_blank">
+     We are hiring in Europe!</a> 👩‍💻
+</div>
+<br/>
+<br/>
+
+<div align="center">
   <a href="https://novu.co?utm_source=github" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">

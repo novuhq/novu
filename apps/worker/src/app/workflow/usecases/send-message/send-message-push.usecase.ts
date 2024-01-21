@@ -22,7 +22,6 @@ import {
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetailsCommand,
   SelectIntegration,
   CompileTemplate,
   CompileTemplateCommand,
@@ -30,7 +29,8 @@ import {
   PushFactory,
   GetNovuProviderCredentials,
   SelectVariant,
-  ExecutionLogQueueService,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 import type { IPushOptions } from '@novu/stateless';
 
@@ -50,7 +50,7 @@ export class SendMessagePush extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected executionLogQueueService: ExecutionLogQueueService,
+    protected executionLogRoute: ExecutionLogRoute,
     private compileTemplate: CompileTemplate,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
@@ -60,7 +60,7 @@ export class SendMessagePush extends SendMessageBase {
     super(
       messageRepository,
       createLogUsecase,
-      executionLogQueueService,
+      executionLogRoute,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
@@ -212,20 +212,16 @@ export class SendMessagePush extends SendMessageBase {
   }
 
   private async sendNotificationError(job: JobEntity): Promise<void> {
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
         detail: DetailEnum.NOTIFICATION_ERROR,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.FAILED,
         isTest: false,
         isRetry: false,
-      }),
-      groupId: job._organizationId,
-    });
+      })
+    );
   }
 
   private async sendPushMissingDeviceTokensError(job: JobEntity, channel: IChannelSettings): Promise<void> {
@@ -259,12 +255,9 @@ export class SendMessagePush extends SendMessageBase {
   ): Promise<void> {
     // We avoid to throw the errors to be able to execute all actions in the loop
     try {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add({
-        name: metadata._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-          ...metadata,
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
           detail,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -273,9 +266,8 @@ export class SendMessagePush extends SendMessageBase {
           ...(contextData?.providerId && { providerId: contextData.providerId }),
           ...(contextData?.messageId && { messageId: contextData.messageId }),
           ...(contextData?.raw && { raw: contextData.raw }),
-        }),
-        groupId: job._organizationId,
-      });
+        })
+      );
     } catch (error) {}
   }
 
@@ -303,12 +295,9 @@ export class SendMessagePush extends SendMessageBase {
         step,
       });
 
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add({
-        name: metadata._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: `${DetailEnum.MESSAGE_SENT}: ${integration.providerId}`,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -316,9 +305,8 @@ export class SendMessagePush extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({ result, deviceToken }),
-        }),
-        groupId: command.organizationId,
-      });
+        })
+      );
 
       return true;
     } catch (e) {
@@ -366,12 +354,9 @@ export class SendMessagePush extends SendMessageBase {
       _jobId: command.jobId,
     });
 
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         detail: `${DetailEnum.MESSAGE_CREATED}: ${integration.providerId}`,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -379,9 +364,8 @@ export class SendMessagePush extends SendMessageBase {
         isTest: false,
         isRetry: false,
         raw: this.storeContent() ? JSON.stringify(content) : null,
-      }),
-      groupId: command.organizationId,
-    });
+      })
+    );
 
     return message;
   }
