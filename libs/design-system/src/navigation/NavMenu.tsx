@@ -1,81 +1,92 @@
 import React, { ReactNode, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink as ReactNavLink } from 'react-router-dom';
 import { Group, Transition, Popover } from '@mantine/core';
 import useStyles from './NavMenu.styles';
 import usePopoverStyles from './NavLinkPopover.styles';
 
 interface INavMenuProps {
-  menuItems: {
-    icon: ReactNode;
-    label: string;
-    link: string;
-    testId?: string;
-    rightSide?: ReactNode | { component: ReactNode; displayOnHover: boolean };
-    condition?: boolean;
-    tooltipLabel?: string;
-  }[];
+  menuItems: IMenuItem[];
+}
+
+interface IMenuItem {
+  icon: ReactNode;
+  label: string;
+  link: string;
+  testId?: string;
+  rightSide?: ReactNode | { component: ReactNode; displayOnHover: boolean };
+  condition?: boolean;
+  tooltipLabel?: string;
 }
 
 export function NavMenu({ menuItems }: INavMenuProps) {
-  const { classes } = useStyles();
-  const { classes: popoverClasses } = usePopoverStyles();
-  const [popoverOpened, setPopoverOpened] = useState(false);
-
-  const [isHovered, setIsHovered] = useState<string>(null);
-
   return (
     <div>
       {menuItems
         .filter(({ condition = true }) => condition)
         .map(({ icon, link, label, testId, rightSide, tooltipLabel }) => {
-          const withOnHover = (rightSide as { component: ReactNode; displayOnHover: boolean })?.displayOnHover || false;
-
           return (
             <NavLink
+              link={link}
+              icon={icon}
+              label={label}
+              tooltipLabel={tooltipLabel}
+              rightSide={rightSide}
               key={link}
-              to={link}
-              className={({ isActive }) => (isActive ? classes.linkActive : classes.link)}
-              data-test-id={testId}
-              onMouseEnter={() => setIsHovered(link)}
-              onMouseLeave={() => setIsHovered(null)}
-            >
-              <Group spacing={10}>
-                <div className={classes.linkIcon}>{icon}</div>
-                <div className={classes.linkLabel}>{label}</div>
-              </Group>
-              {!withOnHover && rightSide}
-
-              {withOnHover &&
-                rightSideWithHover({
-                  rightSide: rightSide,
-                  isHover: isHovered === link,
-                  tooltipLabel: tooltipLabel,
-                  popoverClasses: popoverClasses,
-                  popoverOpened: popoverOpened,
-                  setPopoverOpened: setPopoverOpened,
-                })}
-            </NavLink>
+            />
           );
         })}
     </div>
   );
 }
 
+const NavLink = ({ rightSide, link, testId, icon, label, tooltipLabel }: IMenuItem) => {
+  const [popoverOpened, setPopoverOpened] = useState(false);
+  const [isHovered, setIsHovered] = useState<string>(null);
+  const { classes } = useStyles();
+
+  const withOnHover = (rightSide as { component: ReactNode; displayOnHover: boolean })?.displayOnHover || false;
+
+  return (
+    <ReactNavLink
+      to={link}
+      className={({ isActive }) => (isActive ? classes.linkActive : classes.link)}
+      data-test-id={testId}
+      onMouseEnter={() => setIsHovered(link)}
+      onMouseLeave={() => setIsHovered(null)}
+    >
+      <Group spacing={10}>
+        <div className={classes.linkIcon}>{icon}</div>
+        <div className={classes.linkLabel}>{label}</div>
+      </Group>
+      {!withOnHover && rightSide}
+
+      {withOnHover &&
+        rightSideWithHover({
+          rightSide: rightSide,
+          isHover: isHovered === link,
+          tooltipLabel: tooltipLabel,
+          popoverOpened: popoverOpened,
+          setPopoverOpened: setPopoverOpened,
+        })}
+    </ReactNavLink>
+  );
+};
+
 const rightSideWithHover = ({
   rightSide,
   isHover,
   tooltipLabel,
-  popoverClasses,
   popoverOpened,
   setPopoverOpened,
 }: {
   rightSide?: ReactNode | { component: ReactNode; displayOnHover: boolean };
   isHover: boolean;
   tooltipLabel: string;
-  popoverClasses: { dropdown: string; arrow: string };
   popoverOpened: boolean;
   setPopoverOpened: (value: boolean) => void;
 }) => {
+  const { classes } = usePopoverStyles();
+
   const component = (rightSide as { component: ReactNode; displayOnHover: boolean })?.component || null;
 
   return (
@@ -85,7 +96,7 @@ const rightSideWithHover = ({
           <Popover
             opened={popoverOpened}
             onClose={() => setPopoverOpened(false)}
-            classNames={popoverClasses}
+            classNames={classes}
             withArrow
             withinPortal={true}
             transitionDuration={250}

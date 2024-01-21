@@ -8,6 +8,8 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 
+import { ProductUseCasesEnum } from '@novu/shared';
+
 import { AuthProvider } from './components/providers/AuthProvider';
 import { applyToken, getToken } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
@@ -60,6 +62,8 @@ import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { VariantsPage } from './pages/templates/components/VariantsPage';
 import { BillingRoutes } from './pages/BillingPages';
+import { GetStartedPage } from './pages/get-started/GetStartedPage';
+import { GetStartedTab } from './pages/get-started/layout/GetStartedTab';
 
 library.add(far, fas);
 
@@ -169,7 +173,10 @@ function App() {
                     <Route path="create" element={<CreateTenantPage />} />
                     <Route path=":identifier" element={<UpdateTenantPage />} />
                   </Route>
-                  <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
+                  <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />}>
+                    <Route path="" element={<GetStartedTab usecase={ProductUseCasesEnum.IN_APP} />} />
+                    <Route path=":usecase" element={<GetStartedTab />} />
+                  </Route>
                   <Route path={ROUTES.GET_STARTED_PREVIEW} element={<DigestPreview />} />
                   <Route path={ROUTES.QUICK_START_NOTIFICATION_CENTER} element={<NotificationCenter />} />
                   <Route path={ROUTES.QUICK_START_SETUP} element={<FrameworkSetup />} />

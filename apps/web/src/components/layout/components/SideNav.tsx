@@ -30,12 +30,11 @@ import {
   Translation,
 } from '@novu/design-system';
 import { useEnvController, useFeatureFlag } from '../../../hooks';
-import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useUserOnBoarding } from '../../../api/hooks/useUserOnBoarding';
+import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
 import { VisibilityOff } from './VisibilityOff';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
@@ -72,10 +71,10 @@ export function SideNav({}: Props) {
   const isMultiTenancyEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MULTI_TENANCY_ENABLED);
   const isTranslationManagerEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_MANAGER_ENABLED);
   const {
-    showOnBoarding: showOnBoardingState,
+    showOnboarding: showOnBoardingState,
     isLoading: isLoadingShowOnBoarding,
-    updateOnBoardingStatus,
-  } = useUserOnBoarding();
+    updateOnboardingStatus,
+  } = useUserOnboardingStatus();
   const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
 
   useEffect(() => {
@@ -92,11 +91,8 @@ export function SideNav({}: Props) {
     ]);
   }, [environment, addItem, removeItems, setEnvironment]);
 
-  const lastStep = currentOnboardingStep().get();
-  const getStartedRoute = lastStep === ROUTES.GET_STARTED_PREVIEW ? ROUTES.GET_STARTED : lastStep;
-
-  const handleClick = async () => {
-    await updateOnBoardingStatus({ showOnBoarding: false });
+  const handleHideOnboardingClick = async () => {
+    await updateOnboardingStatus({ showOnboarding: false });
   };
 
   const menuItems = [
@@ -104,8 +100,8 @@ export function SideNav({}: Props) {
       label: 'Get Started',
       condition: !readonly && showOnBoarding,
       icon: <CheckCircleOutlined />,
-      link: getStartedRoute ?? ROUTES.GET_STARTED,
-      rightSide: { component: <VisibilityOff handleClick={handleClick} />, displayOnHover: true },
+      link: ROUTES.GET_STARTED,
+      rightSide: { component: <VisibilityOff onClick={handleHideOnboardingClick} />, displayOnHover: true },
       testId: 'side-nav-quickstart-link',
       tooltipLabel: 'Hide this page from menu',
     },
