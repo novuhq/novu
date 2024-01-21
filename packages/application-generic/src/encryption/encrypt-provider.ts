@@ -1,7 +1,7 @@
 import {
   EncryptedSecret,
   ICredentialsDto,
-  NOVU_SUB_MASK,
+  NOVU_ENCRYPTION_SUB_MASK,
   secureCredentials,
 } from '@novu/shared';
 
@@ -10,14 +10,14 @@ import { decrypt, encrypt } from './cipher';
 export function encryptSecret(text: string): EncryptedSecret {
   const encrypted = encrypt(text);
 
-  return `${NOVU_SUB_MASK}${encrypted}`;
+  return `${NOVU_ENCRYPTION_SUB_MASK}${encrypted}`;
 }
 
 export function decryptSecret(text: string | EncryptedSecret): string {
   let encryptedSecret = text;
 
-  if (novuEncrypted(text)) {
-    encryptedSecret = text.slice(NOVU_SUB_MASK.length);
+  if (isNovuEncrypted(text)) {
+    encryptedSecret = text.slice(NOVU_ENCRYPTION_SUB_MASK.length);
   }
 
   return decrypt(encryptedSecret);
@@ -29,7 +29,7 @@ export function encryptCredentials(
   const encryptedCredentials: ICredentialsDto = {};
 
   for (const key in credentials) {
-    encryptedCredentials[key] = needCredentialEncryption(key)
+    encryptedCredentials[key] = isCredentialEncryptionRequired(key)
       ? encryptSecret(credentials[key])
       : credentials[key];
   }
@@ -44,7 +44,7 @@ export function decryptCredentials(
 
   for (const key in credentials) {
     decryptedCredentials[key] =
-      typeof credentials[key] === 'string' && novuEncrypted(credentials[key])
+      typeof credentials[key] === 'string' && isNovuEncrypted(credentials[key])
         ? decryptSecret(credentials[key])
         : credentials[key];
   }
@@ -53,7 +53,7 @@ export function decryptCredentials(
 }
 
 export function encryptApiKey(apiKey: string): EncryptedSecret {
-  if (novuEncrypted(apiKey)) {
+  if (isNovuEncrypted(apiKey)) {
     return apiKey;
   }
 
@@ -61,17 +61,17 @@ export function encryptApiKey(apiKey: string): EncryptedSecret {
 }
 
 export function decryptApiKey(apiKey: string): string {
-  if (novuEncrypted(apiKey)) {
+  if (isNovuEncrypted(apiKey)) {
     return decryptSecret(apiKey);
   }
 
   return apiKey;
 }
 
-function novuEncrypted(text: string): text is EncryptedSecret {
-  return text.startsWith(NOVU_SUB_MASK);
+function isNovuEncrypted(text: string): text is EncryptedSecret {
+  return text.startsWith(NOVU_ENCRYPTION_SUB_MASK);
 }
 
-function needCredentialEncryption(key: string): boolean {
+function isCredentialEncryptionRequired(key: string): boolean {
   return secureCredentials.some((secureCred) => secureCred === key);
 }

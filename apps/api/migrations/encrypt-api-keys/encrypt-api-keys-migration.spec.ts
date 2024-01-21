@@ -9,6 +9,14 @@ import { decryptApiKey } from '@novu/application-generic';
 
 import { encryptApiKeysMigration } from './encrypt-api-keys-migration';
 
+async function pruneIntegration({ environmentRepository }: { environmentRepository: EnvironmentRepository }) {
+  const old = await environmentRepository.find({});
+
+  for (const oldKey of old) {
+    await environmentRepository.delete({ _id: oldKey._id });
+  }
+}
+
 describe('Encrypt Old api keys', function () {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
@@ -109,11 +117,3 @@ describe('Encrypt Old api keys', function () {
     expect(firstMigrationExecution[1].apiKeys[0]._userId).to.equal(secondMigrationExecution[1].apiKeys[0]._userId);
   });
 });
-
-async function pruneIntegration({ environmentRepository }: { environmentRepository: EnvironmentRepository }) {
-  const old = await environmentRepository.find({});
-
-  for (const oldKey of old) {
-    await environmentRepository.delete({ _id: oldKey._id });
-  }
-}

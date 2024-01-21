@@ -32,15 +32,15 @@ export class GetMyEnvironments {
   }
 
   private decryptApiKeys(environment: EnvironmentEntity): EnvironmentResponseDto {
-    const res = { ...environment };
+    const decryptedApiKeysEnvironment = { ...environment };
 
-    res.apiKeys = environment.apiKeys.map((apiKey) => {
+    decryptedApiKeysEnvironment.apiKeys = environment.apiKeys.map((apiKey) => {
       return {
-        _userId: apiKey._userId,
+        ...apiKey,
         key: decryptApiKey(apiKey.key),
       };
     });
 
-    return res;
+    return decryptedApiKeysEnvironment;
   }
 }

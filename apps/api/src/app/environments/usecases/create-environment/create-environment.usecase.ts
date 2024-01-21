@@ -23,7 +23,7 @@ export class CreateEnvironment {
 
   async execute(command: CreateEnvironmentCommand) {
     const key = await this.generateUniqueApiKey.execute();
-    const encryptedKey = encryptApiKey(key);
+    const encryptedApiKey = encryptApiKey(key);
     const hashedApiKey = createHash('sha256').update(key).digest('hex');
 
     const environment = await this.environmentRepository.create({
@@ -33,7 +33,7 @@ export class CreateEnvironment {
       _parentId: command.parentEnvironmentId,
       apiKeys: [
         {
-          key: encryptedKey,
+          key: encryptedApiKey,
           _userId: command.userId,
           hash: hashedApiKey,
         },

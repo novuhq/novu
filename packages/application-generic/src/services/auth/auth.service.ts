@@ -388,18 +388,14 @@ export class AuthService {
   }> {
     const hashedApiKey = createHash('sha256').update(apiKey).digest('hex');
 
-    /*
-     * backward compatibility - after encrypt-api-keys-migration execution:
-     * * update `findByApiKeyBackwardCompatibility` to `findByApiKey`
-     */
-    const environment =
-      await this.environmentRepository.findByApiKeyBackwardCompatibility({
-        key: apiKey,
-        hash: hashedApiKey,
-      });
+    const environment = await this.environmentRepository.findByApiKey({
+      key: apiKey,
+      hash: hashedApiKey,
+    });
 
     if (!environment) {
-      return { error: 'Environment not found' };
+      // Failed to find the environment for the provided API key.
+      return { error: 'API Key not found' };
     }
 
     let key = environment.apiKeys.find((i) => i.hash === hashedApiKey);
@@ -408,7 +404,7 @@ export class AuthService {
       /*
        * backward compatibility - delete after encrypt-api-keys-migration execution
        * find by decrypted key if key not found, because of backward compatibility
-       * use-case: findByApiKeyBackwardCompatibility found by decrypted key, so we need to validate by decrypted key
+       * use-case: findByApiKey found by decrypted key, so we need to validate by decrypted key
        */
       key = environment.apiKeys.find((i) => i.key === apiKey);
     }

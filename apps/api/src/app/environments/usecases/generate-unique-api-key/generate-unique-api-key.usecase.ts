@@ -31,8 +31,7 @@ export class GenerateUniqueApiKey {
   private async validateIsApiKeyUsed(apiKey: string) {
     const hashedApiKey = createHash('sha256').update(apiKey).digest('hex');
 
-    // backward compatibility - update to `findByApiKey` after encrypt-api-keys-migration run
-    const environment = await this.environmentRepository.findByApiKeyBackwardCompatibility({
+    const environment = await this.environmentRepository.findByApiKey({
       key: apiKey,
       hash: hashedApiKey,
     });
