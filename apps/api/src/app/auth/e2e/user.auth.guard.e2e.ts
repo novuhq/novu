@@ -46,7 +46,7 @@ describe('UserAuthGuard', () => {
     it('should return 401 when ApiKey auth scheme is provided with an invalid value', async () => {
       const response = await request(`${ApiAuthSchemeEnum.API_KEY} invalid_key`);
       expect(response.statusCode).to.equal(401);
-      expect(response.body.message).to.equal('Environment not found');
+      expect(response.body.message).to.equal('API Key not found');
     });
 
     it('should return 401 when ApiKey auth scheme is used for an externally inaccessible API route', async () => {
