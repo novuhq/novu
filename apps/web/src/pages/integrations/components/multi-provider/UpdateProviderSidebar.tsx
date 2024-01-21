@@ -291,7 +291,7 @@ export function UpdateProviderSidebar({
           }
         >
           <NovuProviderSidebarContent provider={selectedProvider} />
-          <UpdateIntegrationCommonFields provider={selectedProvider} />
+          <UpdateIntegrationCommonFields provider={selectedProvider} isNovuInAppProvider={isNovuInAppProvider} />
         </Sidebar>
         <SelectPrimaryIntegrationModal />
       </FormProvider>
@@ -351,7 +351,7 @@ export function UpdateProviderSidebar({
             docReference={selectedProvider?.docReference}
           />
           {isNovuInAppProvider && <NovuInAppSetupWarning provider={selectedProvider} />}
-          <UpdateIntegrationCommonFields provider={selectedProvider} />
+          <UpdateIntegrationCommonFields provider={selectedProvider} isNovuInAppProvider={isNovuInAppProvider} />
           {selectedProvider?.credentials.map((credential: IConfigCredentials) => (
             <InputWrapper key={credential.key}>
               <Controller
