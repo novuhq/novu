@@ -1,11 +1,7 @@
 import styled from '@emotion/styled';
 import { ScrollArea } from '@mantine/core';
 import { colors, shadows } from '@novu/design-system';
-import { HandlebarHelpers } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
-import { getWorkflowVariables } from '../../../../api/notification-templates';
-import { getTextToInsert } from '../CustomCodeEditor';
+import { useEffect, useRef } from 'react';
 
 type AutoSuggestionsDropdownProps = {
   autoSuggestionsCoordinates: {
@@ -14,62 +10,32 @@ type AutoSuggestionsDropdownProps = {
   };
   onSuggestionsSelect: (value: string) => void;
   variableQuery: string;
+  selectedIndex: number;
+  variablesList: {
+    label: string;
+    detail: string;
+    insertText: string;
+  }[];
 };
 
 export function AutoSuggestionsDropdown({
   autoSuggestionsCoordinates,
   onSuggestionsSelect,
-  variableQuery,
+  selectedIndex,
+  variablesList,
 }: AutoSuggestionsDropdownProps) {
-  const { data: variables } = useQuery(['getVariables'], () => getWorkflowVariables(), {
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-  });
+  const selectedRowRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const variablesList = useMemo(() => {
-    const systemVars = Object.keys(variables)
-      .map((key) => {
-        const subVariables = variables[key];
-
-        return Object.keys(subVariables)
-          .map((name) => {
-            const type = subVariables[name];
-            if (typeof type === 'object') {
-              return Object.keys(type).map((subName) => {
-                return {
-                  label: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
-                  detail: type[subName],
-                  insertText: getTextToInsert(`${name}.${subName}`, key),
-                };
-              });
-            }
-
-            return {
-              label: `${key === 'translations' ? 'i18n ' : ''}${name}`,
-              detail: type,
-              insertText: getTextToInsert(name, key),
-            };
-          })
-          .flat();
-      })
-      .flat();
-
-    const allVars = [
-      ...Object.keys(HandlebarHelpers).map((name) => ({
-        label: name,
-        detail: HandlebarHelpers[name].description,
-        insertText: name,
-      })),
-      ...systemVars,
-    ];
-
-    if (variableQuery) {
-      return allVars.filter((variable) => variable.label.toLowerCase().includes(variableQuery.toLowerCase()));
-    } else {
-      return allVars;
+  useEffect(() => {
+    if (variablesList.length > 0 && selectedRowRef.current) {
+      selectedRowRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+        inline: 'start',
+      });
     }
-  }, [variableQuery, variables]);
+  }, [variablesList, selectedIndex]);
 
   if (variablesList.length === 0) {
     return null;
@@ -80,15 +46,18 @@ export function AutoSuggestionsDropdown({
       top={autoSuggestionsCoordinates.top}
       left={autoSuggestionsCoordinates.left}
       onClick={(e) => e.stopPropagation()}
+      ref={containerRef}
     >
-      <ScrollArea w="100%" h="250px" offsetScrollbars>
-        {variablesList.map((variable) => (
+      <ScrollArea w="100%" mah="250px" h="100%" offsetScrollbars pl={10} pt={10}>
+        {variablesList.map((variable, index) => (
           <VariableRow
             key={variable.label}
             onClick={(e) => {
               e.stopPropagation();
               onSuggestionsSelect(variable.insertText);
             }}
+            isFocussed={selectedIndex === index}
+            ref={selectedIndex === index ? selectedRowRef : null}
           >
             {variable.label}
           </VariableRow>
@@ -111,9 +80,10 @@ const Container = styled.div<{ top: number; left: number }>`
   left: ${({ left }) => left}px;
   z-index: 3;
   overflow: hidden;
+  height: 250px;
 `;
 
-const VariableRow = styled.div`
+const VariableRow = styled.div<{ isFocussed: boolean }>`
   display: flex;
   padding: 10px;
   justify-content: space-between;
@@ -126,4 +96,11 @@ const VariableRow = styled.div`
     opacity: 0.8;
     background: ${colors.B30};
   }
+
+  ${({ isFocussed }) =>
+    isFocussed &&
+    `
+    opacity: 0.8;
+    background: ${colors.B30};
+  `}
 `;
