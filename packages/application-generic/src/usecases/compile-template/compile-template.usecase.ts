@@ -28,7 +28,9 @@ Handlebars.registerHelper(
       options.defaultValue = fn(replace);
     }
 
-    return i18next.t(key, options);
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    return new Handlebars.SafeString(i18next.t(key, options));
   }
 );
 Handlebars.registerHelper(
