@@ -47,13 +47,15 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   let nestOptions: Record<string, boolean> = {};
 
   try {
-    if (process.env.NOVU_ENTERPRISE === 'true' && require('@novu/ee-billing')?.rawBodyBuffer || process.env.CI_EE_TEST === 'true') {
-        rawBodyBuffer = require('@novu/ee-billing')?.rawBodyBuffer;
-        nestOptions = {
-          bodyParser: false,
-          rawBody: true,
-        };
-      }
+    if (
+      (process.env.NOVU_ENTERPRISE === 'true' && require('@novu/ee-billing')?.rawBodyBuffer) ||
+      process.env.CI_EE_TEST === 'true'
+    ) {
+      rawBodyBuffer = require('@novu/ee-billing')?.rawBodyBuffer;
+      nestOptions = {
+        bodyParser: false,
+        rawBody: true,
+      };
     }
   } catch (e) {
     Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
