@@ -42,17 +42,18 @@ RUN NX_DAEMON=false pnpm build:web
 # start production stage
 FROM node:20-alpine
 
-WORKDIR /app
-
 RUN apk add --no-cache bash
 RUN npm install -g pnpm@8.9.0 http-server --loglevel notice
 
-COPY --from=builder /usr/src/app/apps/web/env.sh /app/env.sh
-COPY --from=builder /usr/src/app/apps/web/.env /app/.env
+USER 1000
+WORKDIR /app
 
-COPY --from=builder /usr/src/app/apps/web/build /app/build
-COPY --from=builder /usr/src/app/apps/web/public /app/public
-COPY --from=builder /usr/src/app/apps/web/package.json /app/package.json
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/env.sh /app/env.sh
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/.env /app/.env
+
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/build /app/build
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/public /app/public
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/package.json /app/package.json
 
 CMD [ "pnpm", "start:static:build" ]
 # end production stage

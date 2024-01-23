@@ -9,10 +9,10 @@ import {
 } from '@novu/shared';
 import {
   DetailEnum,
-  CreateExecutionDetailsCommand,
   GetUseMergedDigestId,
   FeatureFlagCommand,
-  ExecutionLogQueueService,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
@@ -32,13 +32,13 @@ export class Digest extends SendMessageType {
   constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected executionLogQueueService: ExecutionLogQueueService,
+    protected executionLogRoute: ExecutionLogRoute,
     protected jobRepository: JobRepository,
     private getDigestEventsRegular: GetDigestEventsRegular,
     private getDigestEventsBackoff: GetDigestEventsBackoff,
     private getUseMergedDigestId: GetUseMergedDigestId
   ) {
-    super(messageRepository, createLogUsecase, executionLogQueueService);
+    super(messageRepository, createLogUsecase, executionLogRoute);
   }
 
   public async execute(command: SendMessageCommand) {
@@ -56,21 +56,18 @@ export class Digest extends SendMessageType {
 
     const events = await getEvents(command, currentJob);
     const nextJobs = await this.getJobsToUpdate(command);
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
+
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
         raw: JSON.stringify(events),
-      }),
-      groupId: currentJob._organizationId,
-    });
+      })
+    );
 
     await this.jobRepository.update(
       {

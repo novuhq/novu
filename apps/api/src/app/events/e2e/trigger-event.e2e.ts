@@ -159,6 +159,78 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(executionDetails.length).to.equal(1);
     });
 
+    it('should filter a delay that is the first step in the workflow', async function () {
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.DELAY,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: FieldOperatorEnum.IS_DEFINED,
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messagesAfter.length).to.equal(1);
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DELAY,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails.length).to.equal(1);
+    });
+
     it('should filter digest step', async function () {
       const firstStepUuid = uuid();
       template = await session.createTemplate({

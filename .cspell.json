@@ -546,6 +546,9 @@
     "openapi",
     "headerapikey",
     "fieldname",
+    "isend",
+    "Otel",
+    "opentelemetry",
     "INITDB",
     "isend",
     "Idand"

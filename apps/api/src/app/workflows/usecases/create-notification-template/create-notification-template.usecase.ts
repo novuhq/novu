@@ -24,6 +24,7 @@ import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { ModuleRef } from '@nestjs/core';
+import { checkIsVariantEmpty } from '../../utils';
 
 /**
  * DEPRECATED:
@@ -82,7 +83,7 @@ export class CreateNotificationTemplate {
     const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];
 
     for (const variant of variants) {
-      if (!variant.filters?.length) {
+      if (checkIsVariantEmpty(variant)) {
         throw new ApiException(`Variant conditions are required, variant name ${variant.name} id ${variant._id}`);
       }
     }

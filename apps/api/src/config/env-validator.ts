@@ -78,6 +78,10 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   WORKER_DEFAULT_LOCK_DURATION: num({
     default: undefined,
   }),
+  ENABLE_OTEL: str({
+    default: 'false',
+    choices: ['false', 'true'],
+  }),
 };
 
 if (process.env.STORAGE_SERVICE === 'AZURE') {

@@ -8,6 +8,7 @@ import {
 import {
   GetIsApiIdempotencyEnabled,
   GetIsApiRateLimitingEnabled,
+  GetIsExecutionLogQueueEnabled,
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,
 } from '../usecases';
@@ -64,6 +65,18 @@ export const getIsApiIdempotencyEnabled = {
     featureFlagsServiceItem: FeatureFlagsService
   ): Promise<GetIsApiIdempotencyEnabled> => {
     const useCase = new GetIsApiIdempotencyEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
+export const getIsExecutionLogQueueEnabled = {
+  provide: GetIsExecutionLogQueueEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsExecutionLogQueueEnabled> => {
+    const useCase = new GetIsExecutionLogQueueEnabled(featureFlagsServiceItem);
 
     return useCase;
   },
