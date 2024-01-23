@@ -1,6 +1,7 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import { Pagination, PaginationProps } from './Pagination';
+import { Pagination, IPaginationProps } from './Pagination';
+import { PageSizeSelect } from './PageSizeSelect';
 
 export default {
   title: 'Components/Pagination',
@@ -8,7 +9,13 @@ export default {
   argTypes: {},
 } as Meta<typeof Pagination>;
 
-const Template: StoryFn<typeof Pagination> = ({ ...args }) => <Pagination {...args} />;
+const TEST_PAGE_SIZES = [4, 6, 8];
+
+const Template: StoryFn<typeof Pagination> = ({ ...args }) => (
+  <Pagination {...args}>
+    <PageSizeSelect onPageSizeChange={(val) => alert(val)} pageSizes={TEST_PAGE_SIZES} />
+  </Pagination>
+);
 
 export const PaginationStory = Template.bind({});
 PaginationStory.args = {
@@ -17,4 +24,4 @@ PaginationStory.args = {
   totalItemCount: 100,
   onPageChange: (pageNum) => alert(pageNum),
   pageSize: 10,
-} as PaginationProps;
+} as IPaginationProps;

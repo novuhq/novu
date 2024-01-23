@@ -1,13 +1,22 @@
-import { IPaginationContext } from './PaginationContext';
+import { PropsWithChildren } from 'react';
+import { IPaginationContext, PaginationContext } from './PaginationContext';
 
-export interface PaginationProps extends IPaginationContext {
+export interface IPaginationProps extends IPaginationContext {
   className?: string;
 }
 
-export const Pagination: React.FC<PaginationProps> = ({ currentPageIndex, totalPageCount }) => {
+export const Pagination: React.FC<PropsWithChildren<IPaginationProps>> = ({
+  currentPageIndex,
+  totalPageCount,
+  totalItemCount,
+  onPageChange,
+  pageSize,
+  className,
+  children,
+}) => {
   return (
-    <>
-      {currentPageIndex + 1} / {totalPageCount} pages
-    </>
+    <PaginationContext.Provider value={{ currentPageIndex, totalItemCount, onPageChange, totalPageCount, pageSize }}>
+      <div className={className}>{children}</div>
+    </PaginationContext.Provider>
   );
 };

@@ -1,11 +1,10 @@
 import { createContext } from 'react';
-import { PaginationPageSize } from './Pagination.const';
 
 export interface IPaginationContext {
   totalItemCount: number;
   totalPageCount: number;
   currentPageIndex: number;
-  pageSize: PaginationPageSize;
+  pageSize: number;
   onPageChange: (pageNumber: number) => void;
 }
 
