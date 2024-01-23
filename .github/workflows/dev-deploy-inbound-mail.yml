@@ -18,6 +18,16 @@ env:
   TF_WORKSPACE: novu-dev
 
 jobs:
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Development
+      environment_short: dev
+    secrets: inherit
+
   test_inbound_mail:
     strategy:
       matrix:
@@ -30,11 +40,11 @@ jobs:
   dev_deploy_inbound_mail:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    needs: test_inbound_mail
+    needs: [test_inbound_mail, get_version]
     timeout-minutes: 80
     environment: Development
     permissions:
-      contents: read
+      contents: write
       packages: write
       deployments: write
       id-token: write
@@ -64,20 +74,22 @@ jobs:
           REGISTRY_OWNER: novuhq
           DOCKER_NAME: ${{ matrix.name }}
           IMAGE_TAG: ${{ github.sha }}
+          IMAGE_SEMVER_TAG: ${{ needs.get_version.outputs.env_tag }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DEPOT_PROJECT_ID: 6sj0jfv0n7
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           cd apps/inbound-mail && pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | depot build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/inbound-mail - -t novu-inbound-mail --load
-          docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_SEMVER_TAG
 
           docker run --network=host --name inbound-mail -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
 
-          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_SEMVER_TAG
           echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "IMAGE_SEMVER_TAG=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_SEMVER_TAG" >> $GITHUB_OUTPUT
 
       - name: Checkout cloud infra
         uses: actions/checkout@master
@@ -124,7 +136,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.inbound_mail_ecs_container_name }}
-          image: ${{ steps.build-image.outputs.IMAGE }}
+          image: ${{ steps.build-image.outputs.IMAGE_SEMVER_TAG }}
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -154,3 +166,13 @@ jobs:
           ignore_empty: true
           ignore_missing: true
           url_prefix: "~"
+
+  push_git_tag:
+    needs: [dev_deploy_inbound_mail, get_version]
+    uses: ./.github/workflows/push-git-tag.yml
+    permissions:
+      contents: write
+    with:
+      environment: Development
+      environment_short: dev
+      custom_tag: ${{ needs.get_version.outputs.env_tag }}

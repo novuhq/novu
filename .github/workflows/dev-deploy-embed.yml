@@ -16,6 +16,16 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Development
+      environment_short: dev
+    secrets: inherit
+
   deploy_embed:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-embed-deploy.yml
@@ -29,7 +39,7 @@ jobs:
     secrets: inherit
 
   publish_docker_image_embed:
-    needs: deploy_embed
+    needs: [deploy_embed, get_version]
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-docker.yml
     with:
@@ -37,6 +47,16 @@ jobs:
       package_name: novu/embed
       project_path: libs/embed
       local_tag: novu-embed
-      env_tag: dev
+      env_tag: ${{ needs.get_version.outputs.env_tag }}
       depot_project_id: f88777ff6m
     secrets: inherit
+
+  push_git_tag:
+    needs: [publish_docker_image_embed, get_version]
+    uses: ./.github/workflows/push-git-tag.yml
+    permissions:
+      contents: write
+    with:
+      environment: Development
+      environment_short: dev
+      custom_tag: ${{ needs.get_version.outputs.env_tag }}

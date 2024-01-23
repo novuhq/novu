@@ -83,7 +83,7 @@ jobs:
 
       - name: Build, tag, and push image to ghcr.io
         id: build-image
-        if: ${{ inputs.env_tag == 'dev' || inputs.env_tag == 'stg' }}
+        if: '!contains(inputs.env_tag, "prod")'
         env:
           REGISTRY_OWNER: novuhq
           DOCKER_NAME: ${{ matrix.name }}
@@ -123,6 +123,29 @@ jobs:
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest 
+
+      - name: Production build, tag, and push image to ghcr.io (Temporary step)
+        id: build-prod-image
+        if: contains(inputs.env_tag, '-prod')
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: ${{ matrix.name }}
+          LOCAL_TAG: ${{ inputs.local_tag }}
+          IMAGE_TAG: ${{ github.sha }}
+          ENV_TAG: ${{ inputs.env_tag }}
+          PROJECT_PATH: ${{ inputs.project_path }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DEPOT_PROJECT_ID:  ${{ inputs.depot_project_id }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
+          cd $PROJECT_PATH && npm run docker:build:depot
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
 
       - name: Save image to output
@@ -131,6 +154,7 @@ jobs:
           REGISTRY_OWNER: novuhq
           DOCKER_NAME: ${{ matrix.name }}
           IMAGE_TAG: ${{ github.sha }}
+          ENV_TAG: ${{ inputs.env_tag }}
           OUTPUT_NAME: ${{ contains(matrix.name,'-ee') && 'IMAGE_EE' || 'IMAGE' }}
         run: |
           echo "$OUTPUT_NAME=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
@@ -143,6 +167,7 @@ jobs:
           DOCKER_NAME: ${{ matrix.name }}
           LOCAL_TAG: ${{ inputs.local_tag }}
           IMAGE_TAG: ${{ github.sha }}
+          ENV_TAG: ${{ inputs.env_tag }}
           TEST_PORT: ${{ inputs.test_port }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}

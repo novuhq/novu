@@ -18,6 +18,16 @@ env:
   TF_WORKSPACE: novu-dev
 
 jobs:
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Development
+      environment_short: dev
+    secrets: inherit
+
   test_api:
     strategy:
       matrix:
@@ -32,7 +42,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    needs: test_api
+    needs: [test_api, get_version]
     timeout-minutes: 80
     environment: Development
     permissions:
@@ -55,7 +65,7 @@ jobs:
       - uses: ./.github/actions/docker/build-api
         id: docker_build
         with:
-          tag: dev
+          tag: ${{ needs.get_version.outputs.env_tag }}
           push: 'true'
           github_token: ${{ secrets.GITHUB_TOKEN }}
           docker_name: ${{ matrix.name }}
@@ -113,7 +123,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: ${{ env.api_ecs_container_name }}
-          image: ${{ steps.docker_build.outputs.image }}
+          image: ${{ steps.docker_build.outputs.image_semver_tag }}
 
       - name: Deploy to Amazon ECS service
         if: ${{ contains (matrix.name,'-ee') }}
@@ -165,3 +175,13 @@ jobs:
           guid: "MzgxMjQwOHxBUE18QVBQTElDQVRJT058NDk3NjQzODIy"
           version: "${{ env.RELEASE_VERSION }}"
           user: "${{ github.actor }}"
+
+  push_git_tag:
+    needs: [newrelic, get_version]
+    uses: ./.github/workflows/push-git-tag.yml
+    permissions:
+      contents: write
+    with:
+      environment: Development
+      environment_short: dev
+      custom_tag: ${{ needs.get_version.outputs.env_tag }}

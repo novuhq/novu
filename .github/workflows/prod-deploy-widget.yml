@@ -8,6 +8,16 @@ on:
   workflow_dispatch:
 
 jobs:
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Production
+      environment_short: prod
+    secrets: inherit
+
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
@@ -52,12 +62,13 @@ jobs:
     needs:
       - deploy_widget_us
       - deploy_widget_eu
+      - get_version
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
       package_name: novu/widget
       project_path: apps/widget
       local_tag: novu-widget
-      env_tag: prod
+      env_tag: ${{ needs.get_version.outputs.current_tag }}-prod
       depot_project_id: f88777ff6m
     secrets: inherit

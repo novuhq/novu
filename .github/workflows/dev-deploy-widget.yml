@@ -17,6 +17,16 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Development
+      environment_short: dev
+    secrets: inherit
+
   test_widget:
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
@@ -24,7 +34,7 @@ jobs:
     secrets: inherit
 
   deploy_widget:
-    needs: test_widget
+    needs: [test_widget, get_version]
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-widget-deploy.yml
     with:
@@ -41,7 +51,7 @@ jobs:
     secrets: inherit
 
   publish_docker_image_widget:
-    needs: test_widget
+    needs: [test_widget, get_version]
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-docker.yml
     with:
@@ -49,6 +59,16 @@ jobs:
       package_name: novu/widget
       project_path: apps/widget
       local_tag: novu-widget
-      env_tag: dev
+      env_tag: ${{ needs.get_version.outputs.env_tag }}
       depot_project_id: f88777ff6m
     secrets: inherit
+
+  push_git_tag:
+    needs: [publish_docker_image_widget, get_version]
+    uses: ./.github/workflows/push-git-tag.yml
+    permissions:
+      contents: write
+    with:
+      environment: Development
+      environment_short: dev
+      custom_tag: ${{ needs.get_version.outputs.env_tag }}

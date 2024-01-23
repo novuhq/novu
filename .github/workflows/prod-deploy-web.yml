@@ -9,6 +9,16 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Production
+      environment_short: prod
+    secrets: inherit
+
   test_web:
     uses: ./.github/workflows/reusable-web-e2e.yml
     with:
@@ -57,12 +67,13 @@ jobs:
     needs:
       - deploy_web_us
       - deploy_web_eu
+      - get_version
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
       package_name: novu/web
       project_path: apps/web
       local_tag: novu-web
-      env_tag: prod
+      env_tag: ${{ needs.get_version.outputs.current_tag }}-prod
       depot_project_id: f88777ff6m
     secrets: inherit

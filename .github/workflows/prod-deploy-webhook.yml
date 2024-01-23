@@ -6,11 +6,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Production
+      environment_short: prod
+    secrets: inherit
+
   test_webhook:
     uses: ./.github/workflows/reusable-webhook-e2e.yml
   
   publish_docker_image_webhook:
-    needs: test_webhook
+    needs:
+      - test_webhook
+      - get_version
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
@@ -19,7 +31,7 @@ jobs:
       test_port: 1341
       health_check: true
       local_tag: novu-webhook
-      env_tag: prod
+      env_tag: ${{ needs.get_version.outputs.current_tag }}-prod
       depot_project_id: f88777ff6m
     secrets: inherit
 

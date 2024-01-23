@@ -9,6 +9,16 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
+  get_version:
+    uses: ./.github/workflows/get-version.yml
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      environment: Production
+      environment_short: prod
+    secrets: inherit
+
   deploy_embed_eu:
     uses: ./.github/workflows/reusable-embed-deploy.yml
     with:
@@ -35,12 +45,13 @@ jobs:
     needs:
       - deploy_embed_us
       - deploy_embed_eu
+      - get_version
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
       package_name: novu/embed
       project_path: libs/embed
       local_tag: novu-embed
-      env_tag: prod
+      env_tag: ${{ needs.get_version.outputs.current_tag }}-prod
       depot_project_id: f88777ff6m
     secrets: inherit
