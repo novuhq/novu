@@ -4,5 +4,5 @@ import { BaseCommand } from '@novu/application-generic';
 export class GetBlueprintCommand extends BaseCommand {
   @IsDefined()
   @IsString()
-  templateId: string;
+  templateIdOrIdentifier: string;
 }

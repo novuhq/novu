@@ -21,15 +21,12 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   }
 
   public static isMongoId(id: string) {
-    const libValidation = Types.ObjectId.isValid(id);
-
-    if (!libValidation) {
+    const isValidMongoId = Types.ObjectId.isValid(id);
+    if (!isValidMongoId) {
       return false;
     }
 
-    const castValidation = id === new Types.ObjectId(id).toString();
-
-    return castValidation;
+    return id === new Types.ObjectId(id).toString();
   }
 
   protected convertObjectIdToString(value: Types.ObjectId): string {

@@ -10,9 +10,9 @@ export class GetBlueprint {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
   async execute(command: GetBlueprintCommand): Promise<GetBlueprintResponse> {
-    const template = await this.notificationTemplateRepository.findBlueprint(command.templateId);
+    const template = await this.notificationTemplateRepository.findBlueprint(command.templateIdOrIdentifier);
     if (!template) {
-      throw new NotFoundException(`Template with id ${command.templateId} not found`);
+      throw new NotFoundException(`Template with id ${command.templateIdOrIdentifier} not found`);
     }
 
     return template as GetBlueprintResponse;
