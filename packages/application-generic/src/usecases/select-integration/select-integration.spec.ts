@@ -17,10 +17,13 @@ import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilter } from '../conditions-filter';
 import { CompileTemplate } from '../compile-template';
 import {
-  BullMqService,
   ExecutionLogQueueService,
+  FeatureFlagsService,
   WorkflowInMemoryProviderService,
 } from '../../services';
+import { ExecutionLogRoute } from '../execution-log-route';
+import { CreateExecutionDetails } from '../create-execution-details';
+import { GetIsExecutionLogQueueEnabled } from '../get-feature-flag';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -109,7 +112,11 @@ describe('select integration', function () {
         new JobRepository(),
         new TenantRepository(),
         new EnvironmentRepository(),
-        new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
+        new ExecutionLogRoute(
+          new CreateExecutionDetails(new ExecutionDetailsRepository()),
+          new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
+          new GetIsExecutionLogQueueEnabled(new FeatureFlagsService())
+        ),
         new CompileTemplate()
       ),
       new TenantRepository()

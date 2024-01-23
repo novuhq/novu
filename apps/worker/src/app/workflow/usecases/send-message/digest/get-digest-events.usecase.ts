@@ -8,10 +8,10 @@ import {
 } from '@novu/shared';
 import {
   DetailEnum,
-  CreateExecutionDetailsCommand,
   Instrument,
-  ExecutionLogQueueService,
   getNestedValue,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 
 import { PlatformException } from '../../../../shared/utils';
@@ -20,7 +20,7 @@ const LOG_CONTEXT = 'GetDigestEvents';
 
 @Injectable()
 export abstract class GetDigestEvents {
-  constructor(protected jobRepository: JobRepository, private executionLogQueueService: ExecutionLogQueueService) {}
+  constructor(protected jobRepository: JobRepository, private executionLogRoute: ExecutionLogRoute) {}
 
   @Instrument()
   protected async filterJobs(currentJob: JobEntity, transactionId: string, jobs: JobEntity[]) {
@@ -41,20 +41,17 @@ export abstract class GetDigestEvents {
     )) as Pick<JobEntity, '_id'>;
 
     if (!currentTrigger) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add({
-        name: metadata._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(currentJob),
           detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        }),
-        groupId: currentJob._organizationId,
-      });
+        })
+      );
+
       const message = `Trigger job for jobId ${currentJob._id} is not found`;
       Logger.error(message, LOG_CONTEXT);
       throw new PlatformException(message);

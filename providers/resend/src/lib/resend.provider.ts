@@ -26,10 +26,10 @@ export class ResendEmailProvider implements IEmailProvider {
   async sendMessage(
     options: IEmailOptions
   ): Promise<ISendMessageSuccessResponse> {
-    const senderName = this.config?.senderName;
+    const senderName = options.senderName || this.config?.senderName;
     const fromAddress = options.from || this.config.from;
 
-    const response: any = await this.resendClient.sendEmail({
+    const response = await this.resendClient.emails.send({
       from: senderName ? `${senderName} <${fromAddress}>` : fromAddress,
       to: options.to,
       subject: options.subject,
@@ -44,7 +44,7 @@ export class ResendEmailProvider implements IEmailProvider {
     });
 
     return {
-      id: response.id,
+      id: response.data?.id,
       date: new Date().toISOString(),
     };
   }
@@ -53,7 +53,7 @@ export class ResendEmailProvider implements IEmailProvider {
     options: IEmailOptions
   ): Promise<ICheckIntegrationResponse> {
     try {
-      await this.resendClient.sendEmail({
+      await this.resendClient.emails.send({
         from: options.from || this.config.from,
         to: options.to,
         subject: options.subject,
