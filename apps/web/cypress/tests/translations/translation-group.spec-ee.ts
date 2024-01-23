@@ -1,6 +1,7 @@
 describe('Translations Group Page', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
+    cy.intercept('**/v1/translations/groups**').as('translationsGroups');
   });
 
   it('should display translations group page', function () {
@@ -12,6 +13,8 @@ describe('Translations Group Page', function () {
   it('should add a new translations group', function () {
     cy.visit('/translations');
     cy.waitForNetworkIdle(500);
+    cy.wait('@translationsGroups');
+
     cy.getByTestId('translation-title').should('have.text', 'Translations');
     cy.getByTestId('add-group-btn').click();
     cy.getByTestId('default-language-select').click();
