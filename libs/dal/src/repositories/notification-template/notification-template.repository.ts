@@ -54,29 +54,18 @@ export class NotificationTemplateRepository extends BaseRepository<
 
     let requestQuery: NotificationTemplateQuery;
 
-    switch (isMongoId) {
-      case true: {
-        {
-          requestQuery = {
-            _id: idOrIdentifier,
-            isBlueprint: true,
-            _organizationId: this.blueprintOrganizationId,
-          };
-        }
-
-        break;
-      }
-      case false: {
-        requestQuery = {
-          triggers: { $elemMatch: { identifier: idOrIdentifier } },
-          isBlueprint: true,
-          _organizationId: this.blueprintOrganizationId,
-        };
-
-        break;
-      }
-      default:
-        throw new DalException(`Invalid id ${idOrIdentifier}`);
+    if (isMongoId) {
+      requestQuery = {
+        _id: idOrIdentifier,
+        isBlueprint: true,
+        _organizationId: this.blueprintOrganizationId,
+      };
+    } else {
+      requestQuery = {
+        triggers: { $elemMatch: { identifier: idOrIdentifier } },
+        isBlueprint: true,
+        _organizationId: this.blueprintOrganizationId,
+      };
     }
 
     const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();

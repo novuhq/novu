@@ -41,45 +41,46 @@ export function NavMenu({ menuItems }: INavMenuProps) {
 
 const NavLink = ({ rightSide, link, testId, icon, label, tooltipLabel }: IMenuItem) => {
   const [popoverOpened, setPopoverOpened] = useState(false);
-  const [isHovered, setIsHovered] = useState<string>(null);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
   const { classes } = useStyles();
 
-  const withOnHover = (rightSide as { component: ReactNode; displayOnHover: boolean })?.displayOnHover || false;
+  const onHoverEnabled = (rightSide as { component: ReactNode; displayOnHover: boolean })?.displayOnHover || false;
 
   return (
     <ReactNavLink
       to={link}
       className={({ isActive }) => (isActive ? classes.linkActive : classes.link)}
       data-test-id={testId}
-      onMouseEnter={() => setIsHovered(link)}
-      onMouseLeave={() => setIsHovered(null)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <Group spacing={10}>
         <div className={classes.linkIcon}>{icon}</div>
         <div className={classes.linkLabel}>{label}</div>
       </Group>
-      {!withOnHover && rightSide}
+      {!onHoverEnabled && rightSide}
 
-      {withOnHover &&
-        rightSideWithHover({
-          rightSide: rightSide,
-          isHover: isHovered === link,
-          tooltipLabel: tooltipLabel,
-          popoverOpened: popoverOpened,
-          setPopoverOpened: setPopoverOpened,
-        })}
+      {onHoverEnabled && (
+        <RightSide
+          child={rightSide}
+          isHover={isHovered}
+          tooltipLabel={tooltipLabel}
+          popoverOpened={popoverOpened}
+          setPopoverOpened={setPopoverOpened}
+        />
+      )}
     </ReactNavLink>
   );
 };
 
-const rightSideWithHover = ({
-  rightSide,
+const RightSide = ({
+  child,
   isHover,
   tooltipLabel,
   popoverOpened,
   setPopoverOpened,
 }: {
-  rightSide?: ReactNode | { component: ReactNode; displayOnHover: boolean };
+  child?: ReactNode | { component: ReactNode; displayOnHover: boolean };
   isHover: boolean;
   tooltipLabel: string;
   popoverOpened: boolean;
@@ -87,7 +88,7 @@ const rightSideWithHover = ({
 }) => {
   const { classes } = usePopoverStyles();
 
-  const component = (rightSide as { component: ReactNode; displayOnHover: boolean })?.component || null;
+  const component = (child as { component: ReactNode; displayOnHover: boolean })?.component || null;
 
   return (
     <Transition mounted={isHover} transition="fade" duration={400} timingFunction="ease">
