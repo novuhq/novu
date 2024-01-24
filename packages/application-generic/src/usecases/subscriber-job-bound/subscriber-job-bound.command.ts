@@ -49,7 +49,7 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsEnum(SubscriberSourceEnum)
   _subscriberSource: SubscriberSourceEnum;
 
-  @IsDefined()
+  @IsOptional()
   @IsEnum(TriggerRequestCategoryEnum)
-  requestCategory: TriggerRequestCategoryEnum;
+  requestCategory?: TriggerRequestCategoryEnum;
 }
