@@ -3,7 +3,8 @@ import { createContext } from 'react';
 export interface IPaginationContext {
   totalItemCount: number;
   totalPageCount: number;
-  currentPageIndex: number;
+  /** Note: this is a page *number*, not index */
+  currentPageNumber: number;
   pageSize: number;
   onPageChange: (pageNumber: number) => void;
 }
@@ -11,7 +12,7 @@ export interface IPaginationContext {
 const DEFAULT_PAGINATION_CONTEXT: IPaginationContext = {
   totalItemCount: 0,
   totalPageCount: 1,
-  currentPageIndex: 0,
+  currentPageNumber: 1,
   pageSize: 10,
   onPageChange: () => {},
 };

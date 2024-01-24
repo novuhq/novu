@@ -22,7 +22,7 @@ export interface IPaginationProps extends IPaginationContext {
 }
 
 export const Pagination: React.FC<PropsWithChildren<IPaginationProps>> = ({
-  currentPageIndex,
+  currentPageNumber,
   totalPageCount,
   totalItemCount,
   onPageChange,
@@ -31,7 +31,7 @@ export const Pagination: React.FC<PropsWithChildren<IPaginationProps>> = ({
   children,
 }) => {
   return (
-    <PaginationContext.Provider value={{ currentPageIndex, totalItemCount, onPageChange, totalPageCount, pageSize }}>
+    <PaginationContext.Provider value={{ currentPageNumber, totalItemCount, onPageChange, totalPageCount, pageSize }}>
       <PaginationWrapper className={className}>{children}</PaginationWrapper>
     </PaginationContext.Provider>
   );
