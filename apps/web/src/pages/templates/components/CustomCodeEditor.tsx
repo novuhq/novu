@@ -4,18 +4,11 @@ import { Card, Loader, useMantineColorScheme } from '@mantine/core';
 import { useCallback, useEffect, useRef } from 'react';
 import { HandlebarHelpers } from '@novu/shared';
 import { colors } from '@novu/design-system';
-import { getWorkflowVariables } from '../../../api/notification-templates';
-import { useQuery } from '@tanstack/react-query';
 import { editor as NEditor } from 'monaco-editor';
+
 import { createTranslationMarks } from './createTranslationMarks';
+import { IVariable, useWorkflowVariables } from '../../../api/hooks';
 
-export const getTextToInsert = (text, key) => {
-  if (key === 'translations') {
-    return `i18n "${text}"`;
-  }
-
-  return text;
-};
 export const CustomCodeEditor = ({
   onChange,
   value,
@@ -25,11 +18,7 @@ export const CustomCodeEditor = ({
   value?: string;
   height?: string;
 }) => {
-  const { data: variables, isLoading: isLoadingVariables } = useQuery(['getVariables'], () => getWorkflowVariables(), {
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-  });
+  const { allVariables, isLoading: isLoadingVariables } = useWorkflowVariables();
 
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -44,7 +33,13 @@ export const CustomCodeEditor = ({
 
   return (
     <Card withBorder sx={styledCard}>
-      <CustomCodeEditorBase isDark={isDark} variables={variables} onChange={onChange} value={value} height={height} />
+      <CustomCodeEditorBase
+        isDark={isDark}
+        variables={allVariables}
+        onChange={onChange}
+        value={value}
+        height={height}
+      />
     </Card>
   );
 };
@@ -59,7 +54,7 @@ const CustomCodeEditorBase = ({
   onChange?: (string) => void;
   value?: string;
   height?: string;
-  variables: any;
+  variables: IVariable[];
   isDark: boolean;
 }) => {
   const editorRef = useRef<NEditor.IStandaloneCodeEditor | null>(null);
@@ -74,49 +69,7 @@ const CustomCodeEditorBase = ({
   }, [isDark]);
 
   const getSuggestions = useCallback(
-    (monaco, range) => {
-      const systemVars = Object.keys(variables)
-        .map((key) => {
-          const subVariables = variables[key];
-
-          return Object.keys(subVariables)
-            .map((name) => {
-              const type = subVariables[name];
-              if (typeof type === 'object') {
-                return Object.keys(type).map((subName) => {
-                  return {
-                    label: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
-                    kind: monaco.languages.CompletionItemKind.Variable,
-                    detail: type[subName],
-                    insertText: getTextToInsert(`${name}.${subName}`, key),
-                    range: range,
-                  };
-                });
-              }
-
-              return {
-                label: `${key === 'translations' ? 'i18n ' : ''}${name}`,
-                kind: monaco.languages.CompletionItemKind.Variable,
-                detail: type,
-                insertText: getTextToInsert(name, key),
-                range: range,
-              };
-            })
-            .flat();
-        })
-        .flat();
-
-      return [
-        ...Object.keys(HandlebarHelpers).map((name) => ({
-          label: name,
-          kind: monaco.languages.CompletionItemKind.Function,
-          detail: HandlebarHelpers[name].description,
-          insertText: name,
-          range: range,
-        })),
-        ...systemVars,
-      ];
-    },
+    (monaco, range) => variables.map((el) => ({ ...el, kind: monaco.languages.CompletionItemKind.Function, range })),
     [variables]
   );
 
