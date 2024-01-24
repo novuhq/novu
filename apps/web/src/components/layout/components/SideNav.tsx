@@ -33,7 +33,7 @@ import { useEnvController, useIsMultiTenancyEnabled, useIsTranslationManagerEnab
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
-import { useUserOnBoarding } from '../../../api/hooks/useUserOnBoarding';
+import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
 import { VisibilityOff } from './VisibilityOff';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
@@ -70,10 +70,10 @@ export function SideNav({}: Props) {
   const isMultiTenancyEnabled = useIsMultiTenancyEnabled();
   const isTranslationManagerEnabled = useIsTranslationManagerEnabled();
   const {
-    showOnBoarding: showOnBoardingState,
+    showOnboarding: showOnBoardingState,
     isLoading: isLoadingShowOnBoarding,
-    updateOnBoardingStatus,
-  } = useUserOnBoarding();
+    updateOnboardingStatus,
+  } = useUserOnboardingStatus();
   const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
 
   useEffect(() => {
@@ -90,8 +90,8 @@ export function SideNav({}: Props) {
     ]);
   }, [environment, addItem, removeItems, setEnvironment]);
 
-  const handleClick = async () => {
-    await updateOnBoardingStatus({ showOnBoarding: false });
+  const handleHideOnboardingClick = async () => {
+    await updateOnboardingStatus({ showOnboarding: false });
   };
 
   const menuItems = [
@@ -100,7 +100,7 @@ export function SideNav({}: Props) {
       condition: !readonly && showOnBoarding,
       icon: <CheckCircleOutlined />,
       link: ROUTES.GET_STARTED,
-      rightSide: { component: <VisibilityOff handleClick={handleClick} />, displayOnHover: true },
+      rightSide: { component: <VisibilityOff onClick={handleHideOnboardingClick} />, displayOnHover: true },
       testId: 'side-nav-quickstart-link',
       tooltipLabel: 'Hide this page from menu',
     },
