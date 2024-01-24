@@ -3,9 +3,9 @@ import styled from '@emotion/styled';
 
 import { colors } from '@novu/design-system';
 
-export const VisibilityOff = ({ handleClick }: { handleClick: () => void }) => {
+export const VisibilityOff = ({ onClick }: { onClick: React.MouseEventHandler<HTMLDivElement> }) => {
   return (
-    <IconContainer onClick={handleClick}>
+    <IconContainer onClick={onClick}>
       <EyeInvisibleOutlined
         style={{
           fontSize: '20px',
@@ -17,7 +17,6 @@ export const VisibilityOff = ({ handleClick }: { handleClick: () => void }) => {
 
 const IconContainer = styled.div`
   background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight)};
-
   transition: background 0.2s ease;
   border-radius: 8px;
   height: 32px;
