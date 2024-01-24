@@ -4,7 +4,7 @@ import { DEFAULT_PAGINATION_PAGE_SIZES } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
 
 export type TPageSizeSelectOption = string;
-export interface IPageSizeSelectProps extends Omit<ISelectProps, 'onChange'> {
+export interface IPageSizeSelectProps extends Omit<ISelectProps, 'onChange' | 'data'> {
   onPageSizeChange: (pageSize: number) => void;
   pageSizes?: (number | TPageSizeSelectOption)[];
   className?: string;
