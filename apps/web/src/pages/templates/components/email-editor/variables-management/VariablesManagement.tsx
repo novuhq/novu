@@ -25,6 +25,7 @@ import { useDebounce, useProcessVariables } from '../../../../../hooks';
 import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
 import { getWorkflowVariables } from '../../../../../api/notification-templates';
+import { useWorkflowVariables } from '../../../../../api/hooks';
 
 interface IVariablesList {
   translations: Record<string, any>;
@@ -78,11 +79,7 @@ export const VariablesManagement = ({
     control,
   });
 
-  const { data: variables, isLoading: isLoadingVariables } = useQuery(['getVariables'], () => getWorkflowVariables(), {
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-  });
+  const { variables } = useWorkflowVariables();
 
   const processedVariables = useProcessVariables(variableArray, false);
   const [variablesList, setVariablesList] = useState<IVariablesList>({

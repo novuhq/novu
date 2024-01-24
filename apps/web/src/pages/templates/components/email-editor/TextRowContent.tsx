@@ -1,17 +1,15 @@
 import styled from '@emotion/styled';
-import { HandlebarHelpers, TextAlignEnum } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
-
 import { getHotkeyHandler } from '@mantine/hooks';
+import { TextAlignEnum } from '@novu/shared';
 import { colors } from '@novu/design-system';
-import { getWorkflowVariables } from '../../../../api/notification-templates';
+
 import { useEnvController } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
-import { getTextToInsert } from '../CustomCodeEditor';
 import type { IForm } from '../formTypes';
 import { AutoSuggestionsDropdown } from './AutoSuggestionsDropdown';
+import { useWorkflowVariables } from '../../../../api/hooks';
 
 export function TextRowContent({ blockIndex }: { blockIndex: number }) {
   const methods = useFormContext<IForm>();
@@ -35,55 +33,15 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
   const [contentSnapshot, setContentSnapshot] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const { data: variables } = useQuery(['getVariables'], () => getWorkflowVariables(), {
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    refetchInterval: false,
-  });
+  const { allVariables } = useWorkflowVariables();
 
   const variablesList = useMemo(() => {
-    const systemVars = Object.keys(variables)
-      .map((key) => {
-        const subVariables = variables[key];
-
-        return Object.keys(subVariables)
-          .map((name) => {
-            const type = subVariables[name];
-            if (typeof type === 'object') {
-              return Object.keys(type).map((subName) => {
-                return {
-                  label: `${key === 'translations' ? 'i18n ' : ''}${name}.${subName}`,
-                  detail: type[subName],
-                  insertText: getTextToInsert(`${name}.${subName}`, key),
-                };
-              });
-            }
-
-            return {
-              label: `${key === 'translations' ? 'i18n ' : ''}${name}`,
-              detail: type,
-              insertText: getTextToInsert(name, key),
-            };
-          })
-          .flat();
-      })
-      .flat();
-
-    const allVars = [
-      ...Object.keys(HandlebarHelpers).map((name) => ({
-        label: name,
-        detail: HandlebarHelpers[name].description,
-        insertText: name,
-      })),
-      ...systemVars,
-    ];
-
     if (variableQuery) {
-      return allVars.filter((variable) => variable.label.toLowerCase().includes(variableQuery.toLowerCase()));
-    } else {
-      return allVars;
+      return allVariables.filter((variable) => variable.label.toLowerCase().includes(variableQuery.toLowerCase()));
     }
-  }, [variableQuery, variables]);
+
+    return allVariables;
+  }, [variableQuery, allVariables]);
 
   useEffect(() => {
     if (isAutoSuggestionTrigger) {
