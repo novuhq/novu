@@ -1,17 +1,19 @@
 import { Body, Controller, Logger, Post, UseGuards } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { format } from 'date-fns';
+import * as i18next from 'i18next';
+import { ModuleRef } from '@nestjs/core';
 import {
   ApiException,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   CompileInAppTemplate,
   CompileInAppTemplateCommand,
+  CompileStepTemplate,
+  CompileStepTemplateCommand,
   UserAuthGuard,
 } from '@novu/application-generic';
-import * as i18next from 'i18next';
-import { ModuleRef } from '@nestjs/core';
 import { IEmailBlock, IJwtPayload, MessageTemplateContentType, IMessageCTA } from '@novu/shared';
-
 import { UserSession } from '../shared/framework/user.decorator';
 
 @Controller('/content-templates')
@@ -21,6 +23,7 @@ export class ContentTemplatesController {
   constructor(
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     private compileInAppTemplate: CompileInAppTemplate,
+    private compileStepTemplate: CompileStepTemplate,
     private moduleRef: ModuleRef
   ) {}
 
@@ -67,6 +70,56 @@ export class ContentTemplatesController {
       this.initiateTranslations.bind(this)
     );
   }
+  // TODO: refactor this to use params and single endpoint to manage all the channels
+  @Post('/preview/sms')
+  public previewSms(@UserSession() user: IJwtPayload, @Body('content') content: string, @Body('payload') payload: any) {
+    return this.compileStepTemplate.execute(
+      CompileStepTemplateCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        content,
+        payload,
+      }),
+      this.initiateTranslations.bind(this)
+    );
+  }
+
+  @Post('/preview/chat')
+  public previewChat(
+    @UserSession() user: IJwtPayload,
+    @Body('content') content: string,
+    @Body('payload') payload: any
+  ) {
+    return this.compileStepTemplate.execute(
+      CompileStepTemplateCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        content,
+        payload,
+      }),
+      this.initiateTranslations.bind(this)
+    );
+  }
+
+  @Post('/preview/push')
+  public previewPush(
+    @UserSession() user: IJwtPayload,
+    @Body('content') content: string,
+    @Body('payload') payload: any
+  ) {
+    return this.compileStepTemplate.execute(
+      CompileStepTemplateCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        content,
+        payload,
+      }),
+      this.initiateTranslations.bind(this)
+    );
+  }
 
   protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
     try {
@@ -84,6 +137,16 @@ export class ContentTemplatesController {
           nsSeparator: '.',
           lng: locale || 'en',
           compatibilityJSON: 'v2',
+          interpolation: {
+            formatSeparator: ',',
+            format: function (value, formatting, lng) {
+              if (value && formatting && !isNaN(Date.parse(value))) {
+                return format(new Date(value), formatting);
+              }
+
+              return value.toString();
+            },
+          },
         });
       }
     } catch (e) {
