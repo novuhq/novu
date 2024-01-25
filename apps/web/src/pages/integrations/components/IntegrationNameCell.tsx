@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { colors, IExtendedCellProps, Popover, Text, Star, Tooltip } from '@novu/design-system';
 import type { ITableIntegration } from '../types';
 import { ChannelTypeEnum } from '@novu/shared';
-import { CopyIdentifierButton } from '../../activities/components/CopyIdentifierButton';
+import { CopyButton } from '../../activities/components/CopyButton';
 import { useClipboard } from '@mantine/hooks';
 
 const CellHolder = styled.div`
@@ -60,21 +60,29 @@ const Description = styled(Text)`
   line-height: 20px;
 `;
 
-const CopyBtn = styled(CopyIdentifierButton)`
-      display: 'none',      
-
-       &:hover {
-        position: 'relative',
-        top: '2px',
-        marginLeft: '8px',
-        color: ${colors.white};
-        }
-   `;
+const useStyles = createStyles(() => ({
+  unstyledButton: {
+    width: '100%',
+    '&:hover': {
+      '[data-copy]': {
+        visibility: 'visible',
+      },
+    },
+  },
+  copyButton: {
+    display: 'inline',
+    visibility: 'hidden',
+    position: 'relative',
+    top: '2px',
+    marginLeft: '8px',
+  },
+}));
 
 export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedCellProps<ITableIntegration>) => {
   const { colorScheme } = useMantineColorScheme();
   const [isPopoverOpened, setPopoverOpened] = useState(false);
   const { copy } = useClipboard();
+  const { classes } = useStyles();
 
   if (isLoading) {
     return (
@@ -91,7 +99,7 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
   }
 
   return (
-    <CellHolder data-test-id="integration-name-cell">
+    <CellHolder data-test-id="integration-name-cell" className={classes.unstyledButton}>
       <Popover
         opened={isPopoverOpened && original.primary}
         withArrow
@@ -126,7 +134,7 @@ export const IntegrationNameCell = ({ row: { original }, isLoading }: IExtendedC
           <Tooltip label={'Integration Identifier'}>
             <Identifier>
               {original.identifier}
-              <CopyIdentifierButton onCopy={() => copy(original.identifier)} />
+              <CopyButton className={classes.copyButton} onCopy={() => copy(original.identifier)} />
             </Identifier>
           </Tooltip>
         )}
