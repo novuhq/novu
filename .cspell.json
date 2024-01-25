@@ -545,6 +545,7 @@
     "Stdev",
     "openapi",
     "headerapikey",
+    "fieldname",
     "isend",
     "Otel",
     "opentelemetry",
