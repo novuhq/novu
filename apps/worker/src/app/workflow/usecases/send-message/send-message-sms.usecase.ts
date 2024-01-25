@@ -274,6 +274,7 @@ export class SendMessageSms extends SendMessageBase {
         from: overrides.from || integration.credentials.from,
         content: overrides.content || content,
         id: message._id,
+        customData: overrides.customData || {},
       });
 
       await this.executionLogRoute.execute(
