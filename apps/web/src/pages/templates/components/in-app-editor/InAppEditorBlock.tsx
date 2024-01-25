@@ -3,12 +3,12 @@ import { Controller, useFormContext, useWatch } from 'react-hook-form';
 import { IMessageAction, MessageActionStatusEnum } from '@novu/shared';
 import { InAppWidgetPreview } from './preview/InAppWidgetPreview';
 import type { IForm } from '../formTypes';
-import { EmailCustomCodeEditor } from '../email-editor/EmailCustomCodeEditor';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { colors, errorMessage } from '@novu/design-system';
 import { useMutation } from '@tanstack/react-query';
 import { previewInApp } from '../../../../api/content-templates';
 import { Center, Loader } from '@mantine/core';
+import { CustomCodeEditor } from '../CustomCodeEditor';
 
 export function InAppEditorBlock({
   readonly,
@@ -132,7 +132,7 @@ function ContentContainerController() {
       data-test-id="in-app-content-form-item"
       control={control}
       render={({ field }) => {
-        return <EmailCustomCodeEditor height="100px" onChange={field.onChange} value={field.value} />;
+        return <CustomCodeEditor height="100px" onChange={field.onChange} value={field.value} />;
       }}
     />
   );

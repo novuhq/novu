@@ -78,6 +78,7 @@ describe('Digest Playground Workflow Page', function () {
 
     // click next on hint
     cy.getByTestId('digest-workflow-tooltip-primary-button').contains('Next').click();
+    cy.waitForNetworkIdle(1000);
 
     // check the email hint
     cy.getByTestId('digest-workflow-tooltip').contains('Set-up email content');

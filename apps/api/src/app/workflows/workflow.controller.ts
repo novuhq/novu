@@ -16,7 +16,12 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
 import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
-import { ChangeWorkflowStatusRequestDto, CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from './dto';
+import {
+  ChangeWorkflowStatusRequestDto,
+  CreateWorkflowRequestDto,
+  UpdateWorkflowRequestDto,
+  VariablesResponseDto,
+} from './dto';
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
 import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
@@ -36,6 +41,8 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
 import { ApiOkResponse } from '../shared/framework/response.decorator';
+import { GetWorkflowVariables } from './usecases/get-workflow-variables/get-workflow-variables.usecase';
+import { GetWorkflowVariablesCommand } from './usecases/get-workflow-variables/get-workflow-variables.command';
 
 @ApiCommonResponses()
 @Controller('/workflows')
@@ -47,6 +54,7 @@ export class WorkflowController {
     private getWorkflowsUsecase: GetNotificationTemplates,
     private createWorkflowUsecase: CreateNotificationTemplate,
     private getWorkflowUsecase: GetNotificationTemplate,
+    private getWorkflowVariablesUsecase: GetWorkflowVariables,
     private updateWorkflowByIdUsecase: UpdateNotificationTemplate,
     private deleteWorkflowByIdUsecase: DeleteNotificationTemplate,
     private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus
@@ -124,6 +132,23 @@ export class WorkflowController {
     );
   }
 
+  @Get('/variables')
+  @ApiResponse(VariablesResponseDto)
+  @ApiOperation({
+    summary: 'Get available variables',
+    description: 'Get the variables that can be used in the workflow',
+  })
+  @ExternalApiAccessible()
+  getWorkflowVariables(@UserSession() user: IJwtPayload): Promise<VariablesResponseDto> {
+    return this.getWorkflowVariablesUsecase.execute(
+      GetWorkflowVariablesCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+      })
+    );
+  }
+
   @Get('/:workflowId')
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
@@ -144,7 +169,6 @@ export class WorkflowController {
       })
     );
   }
-
   @Post('')
   @ExternalApiAccessible()
   @UseGuards(RootEnvironmentGuard)

@@ -33,6 +33,7 @@ export interface ISmsOptions {
   from?: string;
   attachments?: IAttachmentOptions[];
   id?: string;
+  customData?: Record<string, any>;
 }
 export interface IPushOptions {
   target: string[];

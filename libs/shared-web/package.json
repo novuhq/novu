@@ -36,7 +36,8 @@
     "@mantine/hooks": "^5.7.1",
     "axios": "^1.6.0",
     "jwt-decode": "^3.1.2",
-    "tslib": "^2.3.1"
+    "tslib": "^2.3.1",
+    "launchdarkly-react-client-sdk": "^3.0.6"
   },
   "devDependencies": {
     "@types/node": "^18.11.12",

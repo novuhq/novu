@@ -693,6 +693,9 @@ importers:
       '@mantine/spotlight':
         specifier: ^5.7.1
         version: 5.10.5(@mantine/core@5.10.5)(@mantine/hooks@5.10.5)(react-dom@17.0.2)(react@17.0.2)
+      '@monaco-editor/react':
+        specifier: ^4.6.0
+        version: 4.6.0(monaco-editor@0.45.0)(react-dom@17.0.2)(react@17.0.2)
       '@novu/design-system':
         specifier: ^0.22.0
         version: link:../../libs/design-system
@@ -810,6 +813,9 @@ importers:
       lodash.set:
         specifier: ^4.3.2
         version: 4.3.2
+      monaco-editor:
+        specifier: ^0.45.0
+        version: 0.45.0
       polished:
         specifier: ^4.1.3
         version: 4.2.2
@@ -1755,6 +1761,9 @@ importers:
 
   enterprise/packages/translation:
     dependencies:
+      '@handlebars/parser':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@nestjs/common':
         specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
@@ -1843,6 +1852,9 @@ importers:
       '@emotion/styled':
         specifier: ^11.6.0
         version: 11.10.6(@emotion/react@11.10.6)(@types/react@17.0.62)(react@17.0.2)
+      '@handlebars/parser':
+        specifier: ^2.1.0
+        version: 2.1.0
       '@mantine/core':
         specifier: ^5.7.1
         version: 5.10.5(@emotion/react@11.10.6)(@mantine/hooks@5.10.5)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
@@ -1852,6 +1864,9 @@ importers:
       '@mantine/prism':
         specifier: ^5.7.1
         version: 5.10.5(@mantine/core@5.10.5)(@mantine/hooks@5.10.5)(react-dom@17.0.2)(react@17.0.2)
+      '@monaco-editor/react':
+        specifier: ^4.6.0
+        version: 4.6.0(monaco-editor@0.45.0)(react-dom@17.0.2)(react@17.0.2)
       '@novu/client':
         specifier: 0.22.0
         version: link:../../../packages/client
@@ -1879,6 +1894,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ^4.4.0
         version: 4.6.0(eslint@8.51.0)
+      monaco-editor:
+        specifier: ^0.45.0
+        version: 0.45.0
       react-hook-form:
         specifier: 7.43.9
         version: 7.43.9(react@17.0.2)
@@ -2307,6 +2325,9 @@ importers:
       jwt-decode:
         specifier: ^3.1.2
         version: 3.1.2
+      launchdarkly-react-client-sdk:
+        specifier: ^3.0.6
+        version: 3.0.6(react-dom@17.0.2)(react@17.0.2)
       react-router-dom:
         specifier: 6.2.2
         version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
@@ -16706,6 +16727,28 @@ packages:
   /@microsoft/tsdoc@0.14.2:
     resolution: {integrity: sha512-9b8mPpKrfeGRuhFH5iO1iwCLeIIsV6+H1sRfxbkoGXIyQE2BTsPd9zqSqQJ+pv5sJ/hT5M1zvOFL02MnEezFug==}
     dev: true
+
+  /@monaco-editor/loader@1.4.0(monaco-editor@0.45.0):
+    resolution: {integrity: sha512-00ioBig0x642hytVspPl7DbQyaSWRaolYie/UFNjoTdvoKPzo6xrXLhTk9ixgIKcLH5b5vDOjVNiGyY+uDCUlg==}
+    peerDependencies:
+      monaco-editor: '>= 0.21.0 < 1'
+    dependencies:
+      monaco-editor: 0.45.0
+      state-local: 1.0.7
+    dev: false
+
+  /@monaco-editor/react@4.6.0(monaco-editor@0.45.0)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-RFkU9/i7cN2bsq/iTkurMWOEErmYcY6JiQI3Jn+WeR/FGISH8JbHERjpS9oRuSOPvDMJI0Z8nJeKkbOs9sBYQw==}
+    peerDependencies:
+      monaco-editor: '>= 0.25.0 < 1'
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@monaco-editor/loader': 1.4.0(monaco-editor@0.45.0)
+      monaco-editor: 0.45.0
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+    dev: false
 
   /@mongodb-js/saslprep@1.1.0:
     resolution: {integrity: sha512-Xfijy7HvfzzqiOAhAepF4SGN5e9leLkMvg/OPOF97XemjfVCYN/oWa75wnkc6mltMSTwY+XlbhWgUOJmkFspSw==}
@@ -43033,6 +43076,10 @@ packages:
     resolution: {integrity: sha512-5LC9SOxjSc2HF6vO2CyuTDNivEdoz2IvyJJGj6X8DJ0eFyfszE0QiEd+iXmBvUP3WHxSjFH/vIsA0EN00cgr8w==}
     dev: false
 
+  /monaco-editor@0.45.0:
+    resolution: {integrity: sha512-mjv1G1ZzfEE3k9HZN0dQ2olMdwIfaeAAjFiwNprLfYNRSz7ctv9XuCT7gPtBGrMUeV1/iZzYKj17Khu1hxoHOA==}
+    dev: false
+
   /mongodb-connection-string-url@2.6.0:
     resolution: {integrity: sha512-WvTZlI9ab0QYtTYnuMLgobULWhokRjtC7db9LtcVfJ+Hsnyr5eo6ZtNAt3Ly24XZScGMelOcGtm7lSn0332tPQ==}
     dependencies:
@@ -50511,6 +50558,10 @@ packages:
 
   /standard-as-callback@2.1.0:
     resolution: {integrity: sha512-qoRRSyROncaz1z0mvYqIE4lCd9p2R90i6GxW3uZv5ucSu8tU7B5HXUP1gG8pVZsYNVaXjk8ClXHPttLyxAL48A==}
+
+  /state-local@1.0.7:
+    resolution: {integrity: sha512-HTEHMNieakEnoe33shBYcZ7NX83ACUjCu8c40iOGEZsngj9zRnkqS9j1pqQPXwobB0ZcVTk27REb7COQ0UR59w==}
+    dev: false
 
   /static-extend@0.1.2:
     resolution: {integrity: sha512-72E9+uLc27Mt718pMHt9VMNiAL4LMsmDbBva8mxWUCkT07fSzEGMYUCk0XWY6lp0j6RBAG4cJ3mWuZv2OE3s0g==}
