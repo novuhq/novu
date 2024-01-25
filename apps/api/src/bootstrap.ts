@@ -43,11 +43,29 @@ validateEnv();
 export async function bootstrap(expressApp?): Promise<INestApplication> {
   BullMqService.haveProInstalled();
 
+  let rawBodyBuffer: undefined | (() => void) = undefined;
+  let nestOptions: Record<string, boolean> = {};
+
+  try {
+    if (
+      (process.env.NOVU_ENTERPRISE === 'true' && require('@novu/ee-billing')?.rawBodyBuffer) ||
+      process.env.CI_EE_TEST === 'true'
+    ) {
+      rawBodyBuffer = require('@novu/ee-billing')?.rawBodyBuffer;
+      nestOptions = {
+        bodyParser: false,
+        rawBody: true,
+      };
+    }
+  } catch (e) {
+    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  }
+
   let app: INestApplication;
   if (expressApp) {
-    app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
+    app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp), nestOptions);
   } else {
-    app = await NestFactory.create(AppModule, { bufferLogs: true });
+    app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
   }
 
   app.useLogger(app.get(PinoLogger));
@@ -88,8 +106,8 @@ export async function bootstrap(expressApp?): Promise<INestApplication> {
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '20mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '20mb', extended: true }));
 
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
+  app.use(bodyParser.json({ verify: rawBodyBuffer }));
+  app.use(bodyParser.urlencoded({ extended: true, verify: rawBodyBuffer }));
 
   app.use(compression());
 
