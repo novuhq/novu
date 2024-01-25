@@ -1,10 +1,7 @@
+import { FIRST_PAGE_NUMBER, MAX_PAGE_COUNT_WITHOUT_ELLIPSIS } from '../Pagination.const';
 import { IPaginationContext } from '../PaginationContext';
 
 export type PaginationSymbol = number | 'ELLIPSIS';
-
-// FIXME: MOVE ME SOMEWHERE BETTER!
-const FIRST_PAGE_NUMBER = 1;
-const MAX_PAGE_COUNT_WITHOUT_ELLIPSIS = 10;
 
 type TGetPaginationSymbolsParams = Pick<IPaginationContext, 'totalPageCount' | 'currentPageNumber'> & {
   siblingCount: number;

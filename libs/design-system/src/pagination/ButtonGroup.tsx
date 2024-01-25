@@ -3,6 +3,7 @@ import { Box, BoxProps } from '@mantine/core';
 import { forwardRef, useContext } from 'react';
 import { ChevronLeft, ChevronRight } from '../icons';
 import { PageButton } from './PageButton';
+import { DEFAULT_SIBLING_COUNT } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
 import { getPaginationSymbols, PaginationSymbol } from './util';
 
@@ -11,11 +12,10 @@ const Group = styled(Box)<BoxProps & React.RefAttributes<HTMLDivElement>>(
   display: flex;
   flex-direction: row;
   align-items: center;
+  /* TODO: use theme value */
   gap: 0.25rem;
 `
 );
-
-const DEFAULT_SIBLING_COUNT = 2;
 
 export interface IButtonGroupProps {
   /** the quantity of items to show on each side of the "current page" */
@@ -28,13 +28,13 @@ export interface IButtonGroupProps {
  * @requires this component to be a child of a Pagination component
  */
 export const ButtonGroup = forwardRef<HTMLDivElement, IButtonGroupProps>(
-  ({ className, siblingCount = DEFAULT_SIBLING_COUNT, ...buttonProps }, ref) => {
+  ({ className, siblingCount = DEFAULT_SIBLING_COUNT }, ref) => {
     const { currentPageNumber, totalPageCount } = useContext(PaginationContext);
 
-    const renderCentralButton = (curPageSymbol: PaginationSymbol) => {
+    const renderCentralButton = (curPageSymbol: PaginationSymbol, index: number) => {
       if (curPageSymbol === 'ELLIPSIS') {
         return (
-          <PageButton key={`pagination-ellipsis-btn-${Math.random() * 100}`} disabled>
+          <PageButton key={`pagination-ellipsis-btn-${index}`} disabled>
             ...
           </PageButton>
         );
@@ -42,7 +42,7 @@ export const ButtonGroup = forwardRef<HTMLDivElement, IButtonGroupProps>(
 
       return (
         <PageButton
-          key={`pagination-page-number-btn-${Math.random() * 100}`}
+          key={`pagination-page-number-btn-${curPageSymbol}-${index}`}
           onClick={({ onPageChange }) => {
             onPageChange(curPageSymbol);
           }}
