@@ -21,7 +21,7 @@ describe('Creation functionality', function () {
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.monaco-editor textarea:first')
+    cy.get('.monaco-editor textarea:first', { timeout: 10000 })
       .parent()
       .click()
       .find('textarea')
