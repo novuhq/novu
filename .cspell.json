@@ -550,7 +550,8 @@
     "opentelemetry",
     "INITDB",
     "isend",
-    "Idand"
+    "Idand",
+    "hubspot"
   ],
   "flagWords": [],
   "patterns": [
