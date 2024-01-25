@@ -21,9 +21,7 @@ const checkIfCurrentPageIsNearStart = ({
   currentPageNumber,
   windowSize,
 }: Omit<TGetPaginationSymbolsParams, 'siblingCount' | 'totalPageCount'> & { windowSize: number }) => {
-  // FIXME: this is done based on arbitrary guessing based on designs... the 1st example has "4" as a special exception start for the range
-
-  return currentPageNumber - windowSize + 2 < FIRST_PAGE_NUMBER;
+  return currentPageNumber - FIRST_PAGE_NUMBER < windowSize;
 };
 
 const getWindowSize = ({ siblingCount, currentPageNumber, totalPageCount }: TGetPaginationSymbolsParams) => {
@@ -31,23 +29,13 @@ const getWindowSize = ({ siblingCount, currentPageNumber, totalPageCount }: TGet
     return totalPageCount;
   }
 
-  let windowSize: number;
-  if (currentPageNumber < 100) {
-    windowSize = siblingCount * 2 + 2;
-  } else if (currentPageNumber >= 100 && currentPageNumber < 1000) {
-    windowSize = siblingCount * 2 + 1;
-  } else if (currentPageNumber >= 1000 && currentPageNumber < 10000) {
-    windowSize = siblingCount * 2;
-  } else {
-    windowSize = Math.max(1, siblingCount * 2 - 1);
-  }
+  const windowSize = siblingCount * 2 + 1;
 
-  // determine if there's "extra" space by getting rid of the ellipsis at the end and replacing first or last page number
+  // determine if there's it's necessary to subsititute the ellipsis with an additional page number
   const numReplacementSlots =
-    currentPageNumber > MAX_PAGE_COUNT_WITHOUT_ELLIPSIS &&
-    (checkIfCurrentPageIsNearEnd({ currentPageNumber, windowSize, totalPageCount }) ||
-      checkIfCurrentPageIsNearStart({ currentPageNumber, windowSize }))
-      ? 2
+    checkIfCurrentPageIsNearEnd({ currentPageNumber, windowSize, totalPageCount }) ||
+    checkIfCurrentPageIsNearStart({ currentPageNumber, windowSize })
+      ? 1
       : 0;
 
   return windowSize + numReplacementSlots;
@@ -59,9 +47,9 @@ const getWindowStart = ({
   totalPageCount,
 }: Omit<TGetPaginationSymbolsParams, 'siblingCount'> & { windowSize: number }) => {
   if (checkIfCurrentPageIsNearEnd({ currentPageNumber, windowSize, totalPageCount })) {
-    return totalPageCount - windowSize + 1;
+    return totalPageCount - windowSize;
   } else if (checkIfCurrentPageIsNearStart({ currentPageNumber, windowSize })) {
-    return currentPageNumber;
+    return FIRST_PAGE_NUMBER + 1;
   }
   const windowOffset = Math.ceil(windowSize / 2) - 1;
 
@@ -83,22 +71,18 @@ export const getPaginationSymbols = ({
   const pageSymbols: PaginationSymbol[] = createArrayForRange(windowSize, windowStart);
 
   // add first page and ellipsis at the beginning
-
-  // FIXME: there has to be a better way to do this, but need more info from Nikolay!
-
-  // if (!checkIfCurrentPageIsNearStart({ currentPageNumber, windowSize })) {
-  if (currentPageNumber > 2) {
+  if (!checkIfCurrentPageIsNearStart({ currentPageNumber, windowSize })) {
     pageSymbols.unshift('ELLIPSIS');
-  }
-  if (currentPageNumber > FIRST_PAGE_NUMBER) {
-    pageSymbols.unshift(FIRST_PAGE_NUMBER);
   }
 
   // add ellipsis and last page at the end
   if (!checkIfCurrentPageIsNearEnd({ currentPageNumber, windowSize, totalPageCount })) {
     pageSymbols.push('ELLIPSIS');
-    pageSymbols.push(totalPageCount);
   }
+
+  // add first and last page numbers
+  pageSymbols.unshift(FIRST_PAGE_NUMBER);
+  pageSymbols.push(totalPageCount);
 
   return pageSymbols;
 };
