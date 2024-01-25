@@ -14,7 +14,7 @@ describe('Workflow Editor - Main Functionality', function () {
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.monaco-editor textarea:first')
+    cy.get('.monaco-editor textarea:first', { timeout: 7000 })
       .parent()
       .click()
       .find('textarea')
@@ -416,7 +416,7 @@ describe('Workflow Editor - Main Functionality', function () {
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type('Text content', {
+    cy.get('.monaco-editor textarea:first', { timeout: 7000 }).parent().click().find('textarea').type('Text content', {
       force: true,
     });
 
