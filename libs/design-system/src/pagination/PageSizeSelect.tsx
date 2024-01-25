@@ -1,7 +1,23 @@
-import { forwardRef, useContext, useMemo } from 'react';
+import styled from '@emotion/styled';
+import { forwardRef, useContext, useEffect, useMemo } from 'react';
 import { ISelectProps, Select } from '../select/Select';
 import { DEFAULT_PAGINATION_PAGE_SIZES } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
+
+const StyledSelect = styled(Select)(
+  ({ theme }) => `
+    max-width: 71px;
+    input {
+        padding-left: 12px;
+        padding-right: 8px;
+    }
+
+    input:not([type=hidden]) + div {
+        /* TODO: use theme value */
+        width: 20px;
+    }
+`
+);
 
 export type TPageSizeSelectOption = string;
 export interface IPageSizeSelectProps extends Omit<ISelectProps, 'onChange' | 'data'> {
@@ -22,14 +38,21 @@ export const PageSizeSelect: React.FC<IPageSizeSelectProps> = forwardRef<HTMLInp
       onPageSizeChange(+val);
     };
 
+    useEffect(() => {
+      console.log('effect', { val: selectProps.value, pageSize });
+      onPageSizeChange(pageSize);
+    }, [pageSize]);
+
     const options = useMemo(() => pageSizes.map((val) => `${val}`), [pageSizes]);
 
+    console.log({ val: selectProps.value, pageSize });
+
     return (
-      <Select
+      <StyledSelect
         ref={selectRef}
         data={options}
         onChange={handlePageSizeChange}
-        value={selectProps.value ?? `${pageSize}`}
+        value={`${pageSize}`}
         className={selectProps.className}
       />
     );

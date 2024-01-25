@@ -23,6 +23,11 @@ const InputWrapper = styled(MantineInput.Wrapper)(({ theme }) => {
   display: flex;
   flex-direction: row;
   align-items: center;
+  
+  input {
+    min-width: 44px;
+    max-width: 80px;
+  }
 
   label {
     color: inherit;
@@ -40,7 +45,11 @@ const InputWrapper = styled(MantineInput.Wrapper)(({ theme }) => {
  */
 export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInputElement, IGoToPageInputProps>(
   ({ className, label, ...inputProps }, forwardedRef) => {
-    const { onPageChange } = useContext(PaginationContext);
+    const { onPageChange, totalPageCount } = useContext(PaginationContext);
+
+    const validateValue = (val: number) => {
+      return !!val && val >= 1 && val <= totalPageCount;
+    };
 
     /*
      * since we are forwarding the ref, we must use useImperativeHandle to be able to
@@ -51,7 +60,7 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
 
     const handleBlurEvent: FocusEventHandler<HTMLInputElement> = (event) => {
       const val = +event.currentTarget.value;
-      if (!val) {
+      if (!validateValue(val)) {
         return;
       }
       onPageChange(val);
@@ -73,6 +82,8 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
             ref={internalRef}
             onBlur={handleBlurEvent}
             onChange={inputProps.onChange}
+            min={1}
+            max={totalPageCount}
             className={className}
           />
         </InputWrapper>
