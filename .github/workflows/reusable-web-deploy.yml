@@ -28,6 +28,9 @@ on:
       react_app_mail_server_domain:
         required: true
         type: string
+      react_app_hubspot_embed:
+        required: false
+        type: string
       # Netlify inputs
       netlify_deploy_message:
         required: true
@@ -81,6 +84,7 @@ jobs:
           echo REACT_APP_ENVIRONMENT=${{ inputs.react_app_environment }} >> .env
           echo REACT_APP_MAIL_SERVER_DOMAIN=${{ inputs.react_app_mail_server_domain }} >> .env
           echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
+          echo REACT_APP_HUBSPOT_EMBED=${{ inputs.react_app_hubspot_embed }} >> .env
 
       - name: Envsetup
         working-directory: apps/web
