@@ -12,7 +12,6 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '../../../constants/routes.enum';
-import { colors, NavMenu, SegmentedControl, shadows, Translation } from '@novu/design-system';
 import {
   Activity,
   Bolt,
@@ -20,16 +19,23 @@ import {
   Brand,
   Buildings,
   CheckCircleOutlined,
+  colors,
+  NavMenu,
   NovuLogo,
   Repeat,
+  SegmentedControl,
   Settings,
+  shadows,
   Team,
+  Translation,
 } from '@novu/design-system';
 import { useEnvController, useIsMultiTenancyEnabled, useIsTranslationManagerEnabled } from '../../../hooks';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
+import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
+import { VisibilityOff } from './VisibilityOff';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -64,6 +70,12 @@ export function SideNav({}: Props) {
   const { classes } = usePopoverStyles();
   const isMultiTenancyEnabled = useIsMultiTenancyEnabled();
   const isTranslationManagerEnabled = useIsTranslationManagerEnabled();
+  const {
+    showOnboarding: showOnBoardingState,
+    isLoading: isLoadingShowOnBoarding,
+    updateOnboardingStatus,
+  } = useUserOnboardingStatus();
+  const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -82,58 +94,64 @@ export function SideNav({}: Props) {
   const lastStep = currentOnboardingStep().get();
   const getStartedRoute = lastStep === ROUTES.GET_STARTED_PREVIEW ? ROUTES.GET_STARTED : lastStep;
 
+  const handleHideOnboardingClick = async () => {
+    await updateOnboardingStatus({ showOnboarding: false });
+  };
+
   const menuItems = [
     {
-      condition: !readonly,
+      label: 'Get Started',
+      condition: !readonly && showOnBoarding,
       icon: <CheckCircleOutlined />,
       link: getStartedRoute ?? ROUTES.GET_STARTED,
-      label: 'Get Started',
+      rightSide: { component: <VisibilityOff onClick={handleHideOnboardingClick} />, displayOnHover: true },
       testId: 'side-nav-quickstart-link',
+      tooltipLabel: 'Hide this page from menu',
     },
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
     {
+      label: 'Tenants',
       condition: isMultiTenancyEnabled,
       icon: <Buildings />,
       link: ROUTES.TENANTS,
-      label: 'Tenants',
       testId: 'side-nav-tenants-link',
     },
     {
+      label: 'Subscribers',
       icon: <Team />,
       link: ROUTES.SUBSCRIBERS,
-      label: 'Subscribers',
       testId: 'side-nav-subscribers-link',
     },
     {
+      label: 'Translations',
       condition: isTranslationManagerEnabled,
       icon: <Translation width={20} height={20} />,
       link: ROUTES.TRANSLATIONS,
-      label: 'Translations',
       testId: 'side-nav-translations-link',
     },
     {
+      label: 'Brand',
       icon: <Brand />,
       link: '/brand',
-      label: 'Brand',
       testId: 'side-nav-brand-link',
     },
     { icon: <Activity />, link: ROUTES.ACTIVITIES, label: 'Activity Feed', testId: 'side-nav-activities-link' },
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
     {
+      label: 'Team Members',
       icon: <Team />,
       link: ROUTES.TEAM,
-      label: 'Team Members',
       testId: 'side-nav-settings-organization',
     },
     {
+      label: 'Changes',
       icon: <Repeat />,
       link: ROUTES.CHANGES,
-      label: 'Changes',
       testId: 'side-nav-changes-link',
       rightSide: <ChangesCountBadge />,
       condition: !readonly,
     },
-    { icon: <Settings />, link: ROUTES.SETTINGS, label: 'Settings', testId: 'side-nav-settings-link' },
+    { label: 'Settings', icon: <Settings />, link: ROUTES.SETTINGS, testId: 'side-nav-settings-link' },
   ];
 
   async function handlePopoverForChanges(e) {
