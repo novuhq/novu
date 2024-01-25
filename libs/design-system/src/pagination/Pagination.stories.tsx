@@ -30,7 +30,7 @@ const Template: StoryFn<typeof Pagination> = ({ ...args }) => {
   return (
     <Pagination {...args} onPageChange={handlePageChange} currentPageNumber={currentPageNumber}>
       <PageSizeSelect onPageSizeChange={(val) => alert(val)} pageSizes={TEST_PAGE_SIZES} />
-      <ButtonGroup></ButtonGroup>
+      <ButtonGroup />
       <GoToPageInput label={'Go to page'} />
     </Pagination>
   );

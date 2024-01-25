@@ -22,6 +22,21 @@ describe(getPaginationSymbols.name, () => {
     ]);
   });
 
+  it('should handle being near the start smoothly', () => {
+    expect(getPaginationSymbols({ totalPageCount: 11, currentPageNumber: 4, siblingCount: 2 })).toEqual([
+      1,
+      'ELLIPSIS',
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      'ELLIPSIS',
+      11,
+    ] as PaginationSymbol[]);
+  });
+
   it('should show assymetric siblings for a >10 pages', () => {
     expect(getPaginationSymbols({ totalPageCount: 48, currentPageNumber: 24, siblingCount: 2 })).toEqual([
       1,
@@ -83,7 +98,7 @@ describe(getPaginationSymbols.name, () => {
       'ELLIPSIS',
       24996,
       24997,
-      27998,
+      24998,
       24999,
       25000,
     ] as PaginationSymbol[]);

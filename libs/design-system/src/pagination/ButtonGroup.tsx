@@ -1,9 +1,10 @@
 import styled from '@emotion/styled';
-import { Box, BoxProps, ChevronIcon } from '@mantine/core';
+import { Box, BoxProps } from '@mantine/core';
 import { forwardRef, useContext } from 'react';
 import { ChevronLeft, ChevronRight } from '../icons';
 import { PageButton } from './PageButton';
 import { PaginationContext } from './PaginationContext';
+import { getPaginationSymbols, PaginationSymbol } from './util';
 
 const Group = styled(Box)<BoxProps & React.RefAttributes<HTMLDivElement>>(
   ({ theme }) => `
@@ -14,7 +15,11 @@ const Group = styled(Box)<BoxProps & React.RefAttributes<HTMLDivElement>>(
 `
 );
 
+const DEFAULT_SIBLING_COUNT = 2;
+
 export interface IButtonGroupProps {
+  /** the quantity of items to show on each side of the "current page" */
+  siblingCount?: number;
   className?: string;
 }
 
@@ -22,36 +27,51 @@ export interface IButtonGroupProps {
  * Button for navigating to a specific page.
  * @requires this component to be a child of a Pagination component
  */
-export const ButtonGroup = forwardRef<HTMLDivElement, IButtonGroupProps>(({ className, ...buttonProps }, ref) => {
-  const { currentPageNumber, totalPageCount } = useContext(PaginationContext);
+export const ButtonGroup = forwardRef<HTMLDivElement, IButtonGroupProps>(
+  ({ className, siblingCount = DEFAULT_SIBLING_COUNT, ...buttonProps }, ref) => {
+    const { currentPageNumber, totalPageCount } = useContext(PaginationContext);
 
-  return (
-    <Group ref={ref}>
-      <PageButton
-        onClick={({ totalItemCount, onPageChange }) => {
-          onPageChange(totalItemCount);
-        }}
-      >
-        <ChevronLeft />
-      </PageButton>
-      <PageButton
-        onClick={({ onPageChange }) => {
-          onPageChange(1);
-        }}
-      >
-        {1}
-      </PageButton>
-      <PageButton>...</PageButton>
-      <PageButton>{currentPageNumber}</PageButton>
-      <PageButton>...</PageButton>
-      <PageButton
-        onClick={({ onPageChange, totalPageCount: totalPages }) => {
-          onPageChange(totalPages);
-        }}
-      >
-        {totalPageCount}
-      </PageButton>
-      <PageButton onClick={() => alert('Right')}>{<ChevronRight />}</PageButton>
-    </Group>
-  );
-});
+    const renderCentralButton = (curPageSymbol: PaginationSymbol) => {
+      if (curPageSymbol === 'ELLIPSIS') {
+        return (
+          <PageButton key={`pagination-ellipsis-btn-${Math.random() * 100}`} disabled>
+            ...
+          </PageButton>
+        );
+      }
+
+      return (
+        <PageButton
+          key={`pagination-page-number-btn-${Math.random() * 100}`}
+          onClick={({ onPageChange }) => {
+            onPageChange(curPageSymbol);
+          }}
+        >
+          {curPageSymbol}
+        </PageButton>
+      );
+    };
+
+    return (
+      <Group ref={ref}>
+        <PageButton
+          onClick={({ onPageChange, currentPageNumber: curPageNum }) => {
+            onPageChange(curPageNum - 1);
+          }}
+          disabled={currentPageNumber === 1}
+        >
+          <ChevronLeft />
+        </PageButton>
+        {getPaginationSymbols({ totalPageCount, currentPageNumber, siblingCount }).map(renderCentralButton)}
+        <PageButton
+          onClick={({ onPageChange, currentPageNumber: curPageNum }) => {
+            onPageChange(curPageNum + 1);
+          }}
+          disabled={currentPageNumber === totalPageCount}
+        >
+          {<ChevronRight />}
+        </PageButton>
+      </Group>
+    );
+  }
+);
