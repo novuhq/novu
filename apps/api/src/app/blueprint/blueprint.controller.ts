@@ -17,11 +17,11 @@ export class BlueprintController {
     return this.getGroupedBlueprintsUsecase.execute();
   }
 
-  @Get('/:templateId')
-  getBlueprintById(@Param('templateId') templateId: string): Promise<GetBlueprintResponse> {
+  @Get('/:templateIdOrIdentifier')
+  getBlueprintById(@Param('templateIdOrIdentifier') templateIdOrIdentifier: string): Promise<GetBlueprintResponse> {
     return this.getBlueprintUsecase.execute(
       GetBlueprintCommand.create({
-        templateId,
+        templateIdOrIdentifier,
       })
     );
   }

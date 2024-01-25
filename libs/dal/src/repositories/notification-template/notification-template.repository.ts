@@ -47,14 +47,26 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(item);
   }
 
-  async findBlueprint(id: string) {
+  async findBlueprint(idOrIdentifier: string) {
     if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
 
-    const requestQuery: NotificationTemplateQuery = {
-      _id: id,
-      isBlueprint: true,
-      _organizationId: this.blueprintOrganizationId,
-    };
+    const isMongoId = NotificationTemplateRepository.isMongoId(idOrIdentifier);
+
+    let requestQuery: NotificationTemplateQuery;
+
+    if (isMongoId) {
+      requestQuery = {
+        _id: idOrIdentifier,
+        isBlueprint: true,
+        _organizationId: this.blueprintOrganizationId,
+      };
+    } else {
+      requestQuery = {
+        triggers: { $elemMatch: { identifier: idOrIdentifier } },
+        isBlueprint: true,
+        _organizationId: this.blueprintOrganizationId,
+      };
+    }
 
     const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
 
