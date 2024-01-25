@@ -120,7 +120,7 @@ jobs:
           parallel: false
           install: false
           config-file: cypress.config.ts
-          spec: "cypress/tests/**/*.*-ee.{js,jsx,ts,tsx}"
+          spec: "cypress/tests/**/*.spec-ee.{js,jsx,ts,tsx}"
 
       - name: Cypress run e2e
         uses: cypress-io/github-action@v6
@@ -138,6 +138,7 @@ jobs:
           parallel: false
           install: false
           config-file: cypress.config.ts
+          spec: "cypress/tests/**/*.spec.{js,jsx,ts,tsx}"
 
       - uses: actions/upload-artifact@v3
         if: failure()
