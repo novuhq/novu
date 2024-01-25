@@ -21,6 +21,10 @@ export async function getTemplateById(id: string) {
   return api.get(`/v1/notification-templates/${id}`);
 }
 
+export async function getWorkflowVariables() {
+  return api.get(`/v1/workflows/variables`);
+}
+
 export async function getBlueprintsGroupedByCategory(): Promise<{
   general: IGroupedBlueprint[];
   popular: IGroupedBlueprint;
