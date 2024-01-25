@@ -27,6 +27,7 @@ jobs:
       react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
       react_app_environment: production
       react_app_mail_server_domain: eu.inbound-mail.novu.co
+      react_app_hubspot_embed: 44416662
       netlify_deploy_message: Prod deployment
       netlify_alias: prod
       netlify_gh_env: Production
@@ -47,6 +48,7 @@ jobs:
       react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
       react_app_environment: production
       react_app_mail_server_domain: inbound-mail.novu.co
+      react_app_hubspot_embed: 44416662
       netlify_deploy_message: Prod deployment
       netlify_alias: prod
       netlify_gh_env: Production

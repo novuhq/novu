@@ -35,6 +35,7 @@ jobs:
       react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
       react_app_environment: dev
       react_app_mail_server_domain: dev.inbound-mail.novu.co
+      react_app_hubspot_embed: 44416662
       netlify_deploy_message: Dev deployment
       netlify_alias: dev
       netlify_gh_env: development
