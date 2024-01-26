@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { forwardRef, useContext, useEffect, useMemo } from 'react';
+import { forwardRef, useContext, useMemo } from 'react';
 import { ISelectProps, Select } from '../select/Select';
 import { DEFAULT_PAGINATION_PAGE_SIZES } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
@@ -38,14 +38,7 @@ export const PageSizeSelect: React.FC<IPageSizeSelectProps> = forwardRef<HTMLInp
       onPageSizeChange(+val);
     };
 
-    useEffect(() => {
-      console.log('effect', { val: selectProps.value, pageSize });
-      onPageSizeChange(pageSize);
-    }, [pageSize]);
-
     const options = useMemo(() => pageSizes.map((val) => `${val}`), [pageSizes]);
-
-    console.log({ val: selectProps.value, pageSize });
 
     return (
       <StyledSelect
