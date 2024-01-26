@@ -23,7 +23,7 @@ export default function InAppSandboxWorkflow() {
         zoomOnScroll={false}
         zoomOnPinch={false}
         panOnDrag={false}
-        panOnScroll={false}
+        panOnScroll
         preventScrolling={false}
       >
         <Background
