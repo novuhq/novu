@@ -1,9 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import { Pagination, IPaginationProps } from './Pagination';
-import { PageSizeSelect } from './PageSizeSelect';
-import { ButtonGroup } from './ButtonGroup';
-import { GoToPageInput } from './GoToPageInput';
+import Pagination, { IPaginationProps } from './Pagination';
 import { useArgs } from '@storybook/client-api';
 
 export default {
@@ -33,9 +30,9 @@ const Template: StoryFn<typeof Pagination> = ({ ...args }) => {
 
   return (
     <Pagination {...args} onPageChange={handlePageChange} currentPageNumber={currentPageNumber}>
-      <PageSizeSelect onPageSizeChange={handlePageSizeChange} pageSizes={TEST_PAGE_SIZES} />
-      <ButtonGroup />
-      <GoToPageInput label={'Go to page'} />
+      <Pagination.PageSizeSelect onPageSizeChange={handlePageSizeChange} pageSizes={TEST_PAGE_SIZES} />
+      <Pagination.ControlBar />
+      <Pagination.GoToPageInput label={'Go to page'} />
     </Pagination>
   );
 };

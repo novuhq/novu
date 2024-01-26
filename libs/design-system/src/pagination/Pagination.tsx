@@ -3,6 +3,10 @@ import { PropsWithChildren } from 'react';
 import { mantineConfig } from '../config/theme.config';
 import { colors } from '../config';
 import { IPaginationContext, PaginationContext } from './PaginationContext';
+import { ControlButton } from './ControlButton';
+import { ControlBar } from './ControlBar';
+import { GoToPageInput } from './GoToPageInput';
+import { PageSizeSelect } from './PageSizeSelect';
 
 const PaginationWrapper = styled.div(
   ({ theme }) => `
@@ -29,7 +33,7 @@ export interface IPaginationProps extends IPaginationContext {
   className?: string;
 }
 
-export const Pagination: React.FC<PropsWithChildren<IPaginationProps>> = ({
+export const Pagination = ({
   currentPageNumber,
   totalPageCount,
   totalItemCount,
@@ -37,10 +41,18 @@ export const Pagination: React.FC<PropsWithChildren<IPaginationProps>> = ({
   pageSize,
   className,
   children,
-}) => {
+}: PropsWithChildren<IPaginationProps>) => {
   return (
     <PaginationContext.Provider value={{ currentPageNumber, totalItemCount, onPageChange, totalPageCount, pageSize }}>
       <PaginationWrapper className={className}>{children}</PaginationWrapper>
     </PaginationContext.Provider>
   );
 };
+
+Pagination.Context = PaginationContext;
+Pagination.ControlButton = ControlButton;
+Pagination.ControlBar = ControlBar;
+Pagination.GoToPageInput = GoToPageInput;
+Pagination.PageSizeSelect = PageSizeSelect;
+
+export default Pagination;
