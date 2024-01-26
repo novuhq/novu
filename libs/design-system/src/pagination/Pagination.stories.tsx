@@ -7,8 +7,8 @@ export default {
   title: 'Components/Pagination',
   component: Pagination,
   args: {
-    currentPageNumber: 5,
-    totalPageCount: 10,
+    currentPageNumber: 6,
+    totalPageCount: 11,
     totalItemCount: 100,
     onPageChange: (pageNum) => alert(pageNum),
     pageSize: 10,
