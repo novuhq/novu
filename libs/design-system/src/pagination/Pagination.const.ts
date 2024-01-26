@@ -13,3 +13,5 @@ export const MAX_PAGE_COUNT_WITHOUT_ELLIPSIS = 10;
  * 12 13 [14] 15 16
  */
 export const DEFAULT_SIBLING_COUNT = 2;
+
+export const DEFAULT_ELLIPSIS_NODE = '...';

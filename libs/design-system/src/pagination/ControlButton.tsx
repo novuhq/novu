@@ -50,7 +50,7 @@ const StyledButton = styled(Button)<StylingProps>(
 `
 );
 
-export interface IPageButtonProps extends Omit<IButtonProps, 'onClick'> {
+export interface IControlButtonProps extends Omit<IButtonProps, 'onClick'> {
   onClick?: TPageButtonClickHandler;
 }
 
@@ -58,7 +58,7 @@ export interface IPageButtonProps extends Omit<IButtonProps, 'onClick'> {
  * Button for navigating to a specific page.
  * @requires this component to be a child of a Pagination component
  */
-export const PageButton: React.FC<IPageButtonProps> = forwardRef<HTMLButtonElement, IPageButtonProps>(
+export const ControlButton: React.FC<IControlButtonProps> = forwardRef<HTMLButtonElement, IControlButtonProps>(
   ({ onClick, className, id, disabled, ...buttonProps }, buttonRef) => {
     const paginationCtx = useContext(PaginationContext);
 
