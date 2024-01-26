@@ -22,7 +22,6 @@ const PaginationWrapper = styled.div(
       min-height: inherit;
       height: 32px;
       min-width: 44px;
-      font-weight: 700;
     } 
 
     /* FIXME: what color to do for light mode? */

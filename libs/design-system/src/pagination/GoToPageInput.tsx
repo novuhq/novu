@@ -44,7 +44,7 @@ const InputWrapper = styled(MantineInput.Wrapper)(({ theme }) => {
  * @requires this component to be a child of a Pagination component
  */
 export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInputElement, IGoToPageInputProps>(
-  ({ className, label, ...inputProps }, forwardedRef) => {
+  ({ className, label, placeholder, ...inputProps }, forwardedRef) => {
     const { onPageChange, totalPageCount } = useContext(PaginationContext);
 
     const validateValue = (val: number) => {
@@ -80,6 +80,7 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
             type={'number'}
             id={'goToPage'}
             ref={internalRef}
+            placeholder={placeholder}
             onBlur={handleBlurEvent}
             onChange={inputProps.onChange}
             min={1}
