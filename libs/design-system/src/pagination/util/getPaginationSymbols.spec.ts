@@ -79,7 +79,7 @@ describe(getPaginationSymbols.name, () => {
     ] as PaginationSymbol[]);
   });
 
-  /** FIXME: tests for Nik's shrinking window size + asymmetric windows */
+  /** FIXME: tests for shrinking window size + asymmetric windows */
   describe('tests that rely upon a window size that changes based on total page count', () => {
     // FIXME: expect this to fail because I will not implement asymmetry until I get word from Nik
     it.fails('should show assymetric siblings for a >10 pages', () => {
