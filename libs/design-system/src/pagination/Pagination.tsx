@@ -20,13 +20,14 @@ const PaginationWrapper = styled.div(
     & input {
       margin: 0;
       min-height: inherit;
+      /** Explicitly set by designs */
       height: 32px;
       min-width: 44px;
     } 
 
     /* FIXME: what color to do for light mode? */
     /* FIXME: why can't I access theme values?! */
-    color: ${theme.colorScheme !== 'light' ? colors.B60 : colors.B15};
+    color: ${theme.colorScheme !== 'light' ? colors.B60 : colors.B40};
     font-size: ${mantineConfig.fontSizes.md}px;
     line-height: 20px;
 `

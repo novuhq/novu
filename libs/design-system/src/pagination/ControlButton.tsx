@@ -12,7 +12,7 @@ type StylingProps = { flags: StyleFlags };
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getFontColor = ({ theme, flags }: { theme: any } & StylingProps): string => {
   return theme.colorScheme !== 'light'
-    ? flags.isCurrentPage
+    ? flags.isCurrentPage || flags.isRichNode
       ? colors.white
       : colors.B60
     : flags.isCurrentPage || flags.isRichNode
@@ -86,12 +86,6 @@ export const ControlButton: React.FC<IControlButtonProps> = forwardRef<HTMLButto
 
     // hydrate the click handler with the context
     const handleClick = () => onClick?.(paginationCtx);
-
-    console.log({
-      isCurrentPage,
-      isSingleDigit,
-      isRichNode,
-    });
 
     return (
       <StyledButton
