@@ -10,12 +10,9 @@ const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   display: flex;
   flex-direction: row;
   align-items: center;
-
+  
   label {
-    color: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    /* FIXME: why can't I access theme values?! */
+    /* TODO: use theme values */
     margin-left: ${'0.5rem'}
   }
 `;

@@ -30,6 +30,15 @@ const PaginationWrapper = styled.div(
       font-size: 14px;
     } 
 
+    & label {
+      color: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      text-wrap: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
     /* FIXME: what color to do for light mode? */
     /* FIXME: why can't I access theme values?! */
     color: ${theme.colorScheme !== 'light' ? colors.B60 : colors.B40};
