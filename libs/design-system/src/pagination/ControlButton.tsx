@@ -9,35 +9,49 @@ export type TPageButtonClickHandler = (ctx: IPaginationContext) => void;
 type StyleFlags = { isCurrentPage?: boolean; isSingleDigit?: boolean; isRichNode?: boolean };
 type StylingProps = { flags: StyleFlags };
 
+// TODO: Fix `theme` type once design system is ready and then use theme values
 const getFontColor = ({ theme, flags }: { theme: any } & StylingProps): string => {
   return theme.colorScheme !== 'light'
     ? flags.isCurrentPage
       ? colors.white
       : colors.B60
-    : flags.isCurrentPage
+    : flags.isCurrentPage || flags.isRichNode
     ? 'black'
     : colors.B60;
 };
 
+// TODO: Fix `theme` type once design system is ready and then use theme values
+const getDisabledFontColor = ({ theme, flags }: { theme: any } & StylingProps): string => {
+  return !flags.isRichNode ? getFontColor({ theme, flags }) : theme.colorScheme !== 'light' ? colors.B40 : colors.B80;
+};
+
+// TODO: Fix `theme` type once design system is ready and then use theme values
 const getFontWeight = ({ theme, flags }: { theme: any } & StylingProps): CSSProperties['fontWeight'] => {
   return flags.isCurrentPage ? 700 : 600;
 };
 
+// TODO: Fix `theme` type once design system is ready and then use theme values
 const getBackgroundColor = ({ theme, flags }: { theme: any } & StylingProps): CSSProperties['fontWeight'] => {
-  return flags.isCurrentPage ? (theme.colorScheme !== 'light' ? colors.B30 : colors.B60) : 'none';
+  return flags.isCurrentPage ? (theme.colorScheme !== 'light' ? colors.B30 : colors.BGLight) : 'none';
 };
 
 const StyledButton = styled(Button)<StylingProps>(
   ({ theme, flags }) => `
-  /* FIXME: B60 is a random val -- need support for color mode */
-  background: ${getBackgroundColor({ theme, flags })};
-  /* FIXME: what should light mode be? Use theme values */
-  color: ${getFontColor({ theme, flags })};
   font-weight: ${getFontWeight({ theme, flags })};
+  background: ${getBackgroundColor({ theme, flags })};
+  color: ${getFontColor({ theme, flags })};
+  /* SVG / icon overrides */
+  path {
+    fill: ${getFontColor({ theme, flags })};
+  }
 
   &:disabled {
-    color: ${getFontColor({ theme, flags })};
     background: ${getBackgroundColor({ theme, flags })};
+    color: ${getDisabledFontColor({ theme, flags })};
+    /* SVG / icon overrides */
+    path {
+      fill: ${getDisabledFontColor({ theme, flags })};
+    }
   }
   
   /* override mantine */
@@ -72,6 +86,12 @@ export const ControlButton: React.FC<IControlButtonProps> = forwardRef<HTMLButto
 
     // hydrate the click handler with the context
     const handleClick = () => onClick?.(paginationCtx);
+
+    console.log({
+      isCurrentPage,
+      isSingleDigit,
+      isRichNode,
+    });
 
     return (
       <StyledButton
