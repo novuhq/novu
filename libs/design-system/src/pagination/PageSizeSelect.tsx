@@ -1,8 +1,25 @@
 import styled from '@emotion/styled';
+import { Input } from '@mantine/core';
 import { forwardRef, useContext, useMemo } from 'react';
 import { ISelectProps, Select } from '../select/Select';
 import { DEFAULT_PAGINATION_PAGE_SIZES } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
+
+const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
+  return `
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+
+  label {
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    /* FIXME: why can't I access theme values?! */
+    margin-left: ${'0.5rem'}
+  }
+`;
+});
 
 const StyledSelect = styled(Select)(
   ({ theme }) => `
@@ -41,13 +58,15 @@ export const PageSizeSelect: React.FC<IPageSizeSelectProps> = forwardRef<HTMLInp
     const options = useMemo(() => pageSizes.map((val) => `${val}`), [pageSizes]);
 
     return (
-      <StyledSelect
-        ref={selectRef}
-        data={options}
-        onChange={handlePageSizeChange}
-        value={`${pageSize}`}
-        className={selectProps.className}
-      />
+      <InputWrapper label={'rows per page'} id="goToPage" inputWrapperOrder={['input', 'label']}>
+        <StyledSelect
+          ref={selectRef}
+          data={options}
+          onChange={handlePageSizeChange}
+          value={`${pageSize}`}
+          className={selectProps.className}
+        />
+      </InputWrapper>
     );
   }
 );
