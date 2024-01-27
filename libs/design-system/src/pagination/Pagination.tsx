@@ -23,6 +23,11 @@ const PaginationWrapper = styled.div(
       /** Explicitly set by designs */
       height: 32px;
       min-width: 44px;
+
+      /* TODO: theme values */
+      background-color: ${theme.colorScheme === 'dark' ? colors.BGDark : colors.white};
+      border-radius: 7px;
+      font-size: 14px;
     } 
 
     /* FIXME: what color to do for light mode? */
