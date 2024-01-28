@@ -12,7 +12,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ChannelTypeEnum, IJwtPayload, MemberRoleEnum } from '@novu/shared';
-import { CalculateLimitNovuIntegration, CalculateLimitNovuIntegrationCommand } from '@novu/application-generic';
+import {
+  CalculateLimitNovuIntegration,
+  CalculateLimitNovuIntegrationCommand,
+  OtelSpan,
+} from '@novu/application-generic';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { UserAuthGuard } from '../auth/framework/user.auth.guard';
@@ -253,6 +257,7 @@ export class IntegrationsController {
 
   @Get('/:channelType/limit')
   @ApiExcludeEndpoint()
+  @OtelSpan()
   async getProviderLimit(
     @UserSession() user: IJwtPayload,
     @Param('channelType') channelType: ChannelTypeEnum
