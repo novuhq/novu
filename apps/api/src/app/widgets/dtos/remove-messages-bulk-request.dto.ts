@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsString } from 'class-validator';
+import { ArrayMaxSize, ArrayNotEmpty, IsArray, IsMongoId } from 'class-validator';
 
 export class RemoveMessagesBulkRequestDto {
   @ApiProperty({
@@ -7,7 +7,7 @@ export class RemoveMessagesBulkRequestDto {
   })
   @IsArray()
   @ArrayNotEmpty()
-  @IsString({ each: true })
+  @IsMongoId({ each: true })
   @ArrayMaxSize(100)
   messageIds: string[];
 }

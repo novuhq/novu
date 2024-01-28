@@ -78,7 +78,7 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST)', funct
     expect(messagesAfter[0]._id).to.equal(firstMessage._id);
   });
 
-  it('should throw exception id not messages were provided', async function () {
+  it('should throw an exception when message ids were not provided', async function () {
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
     await session.triggerEvent(template.triggers[0].identifier, subscriberId);
@@ -101,4 +101,44 @@ describe('Remove messages by bulk - /widgets/messages/bulk/delete (POST)', funct
       expect(e.response.data.message).to.contain('messageIds should not be empty');
     }
   });
+
+  it('should throw an exception message amount exceeds the api limit', async function () {
+    const randomMongoId = session.organization._id;
+
+    let messageIds = duplicateStr(randomMongoId, 100);
+
+    const res = await axios.post(
+      `http://127.0.0.1:${process.env.PORT}/v1/widgets/messages/bulk/delete`,
+      { messageIds },
+      {
+        headers: {
+          Authorization: `Bearer ${subscriberToken}`,
+        },
+      }
+    );
+
+    expect(res.status).to.equal(200);
+
+    try {
+      messageIds = duplicateStr(randomMongoId, 101);
+
+      await axios.post(
+        `http://127.0.0.1:${process.env.PORT}/v1/widgets/messages/bulk/delete`,
+        { messageIds },
+        {
+          headers: {
+            Authorization: `Bearer ${subscriberToken}`,
+          },
+        }
+      );
+
+      expect(true).to.equal(false);
+    } catch (e) {
+      expect(e.response.data.message).to.contain('messageIds must contain no more than 100 elements');
+    }
+  });
 });
+
+function duplicateStr(str: string, count: number): string[] {
+  return [...Array(count)].map((_, i) => str);
+}
