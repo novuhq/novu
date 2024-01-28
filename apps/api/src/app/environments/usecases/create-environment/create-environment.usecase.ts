@@ -1,9 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { EnvironmentRepository } from '@novu/dal';
 import { nanoid } from 'nanoid';
+import { Injectable } from '@nestjs/common';
+import { createHash } from 'crypto';
+
+import { EnvironmentRepository } from '@novu/dal';
+import { encryptApiKey } from '@novu/application-generic';
 
 import { CreateEnvironmentCommand } from './create-environment.command';
-
 import { GenerateUniqueApiKey } from '../generate-unique-api-key/generate-unique-api-key.usecase';
 // eslint-disable-next-line max-len
 import { CreateNotificationGroupCommand } from '../../../notification-groups/usecases/create-notification-group/create-notification-group.command';
@@ -21,6 +23,8 @@ export class CreateEnvironment {
 
   async execute(command: CreateEnvironmentCommand) {
     const key = await this.generateUniqueApiKey.execute();
+    const encryptedApiKey = encryptApiKey(key);
+    const hashedApiKey = createHash('sha256').update(key).digest('hex');
 
     const environment = await this.environmentRepository.create({
       _organizationId: command.organizationId,
@@ -29,8 +33,9 @@ export class CreateEnvironment {
       _parentId: command.parentEnvironmentId,
       apiKeys: [
         {
-          key,
+          key: encryptedApiKey,
           _userId: command.userId,
+          hash: hashedApiKey,
         },
       ],
     });

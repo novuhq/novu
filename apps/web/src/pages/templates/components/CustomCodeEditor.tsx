@@ -2,7 +2,6 @@ import './CustomCodeEditor.css';
 import { Editor, Monaco } from '@monaco-editor/react';
 import { Card, Loader, useMantineColorScheme } from '@mantine/core';
 import { useCallback, useEffect, useRef } from 'react';
-import { HandlebarHelpers } from '@novu/shared';
 import { colors } from '@novu/design-system';
 import { editor as NEditor } from 'monaco-editor';
 
@@ -32,7 +31,7 @@ export const CustomCodeEditor = ({
   }
 
   return (
-    <Card withBorder sx={styledCard}>
+    <Card data-test-id={'custom-code-editor'} withBorder sx={styledCard}>
       <CustomCodeEditorBase
         isDark={isDark}
         variables={allVariables}

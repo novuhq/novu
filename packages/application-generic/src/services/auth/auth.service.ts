@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import {
   forwardRef,
   Inject,
@@ -17,7 +18,6 @@ import {
   UserEntity,
   UserRepository,
   EnvironmentEntity,
-  IApiKey,
 } from '@novu/dal';
 import {
   AuthProviderEnum,
@@ -194,12 +194,9 @@ export class AuthService {
 
   @Instrument()
   public async validateApiKey(apiKey: string): Promise<IJwtPayload> {
-    const {
-      environment,
-      user,
-      error,
-      key, // In the future, roles/scopes will be assigned to the API Key.
-    } = await this.getApiKeyUser({ apiKey });
+    const { environment, user, error } = await this.getApiKeyUser({
+      apiKey,
+    });
 
     if (error) throw new UnauthorizedException(error);
 
@@ -387,15 +384,31 @@ export class AuthService {
   private async getApiKeyUser({ apiKey }: { apiKey: string }): Promise<{
     environment?: EnvironmentEntity;
     user?: UserEntity;
-    key?: IApiKey;
     error?: string;
   }> {
-    const environment = await this.environmentRepository.findByApiKey(apiKey);
+    const hashedApiKey = createHash('sha256').update(apiKey).digest('hex');
+
+    const environment = await this.environmentRepository.findByApiKey({
+      key: apiKey,
+      hash: hashedApiKey,
+    });
+
     if (!environment) {
+      // Failed to find the environment for the provided API key.
       return { error: 'API Key not found' };
     }
 
-    const key = environment.apiKeys.find((i) => i.key === apiKey);
+    let key = environment.apiKeys.find((i) => i.hash === hashedApiKey);
+
+    if (!key) {
+      /*
+       * backward compatibility - delete after encrypt-api-keys-migration execution
+       * find by decrypted key if key not found, because of backward compatibility
+       * use-case: findByApiKey found by decrypted key, so we need to validate by decrypted key
+       */
+      key = environment.apiKeys.find((i) => i.key === apiKey);
+    }
+
     if (!key) {
       return { error: 'API Key not found' };
     }
@@ -405,6 +418,6 @@ export class AuthService {
       return { error: 'User not found' };
     }
 
-    return { environment, user, key };
+    return { environment, user };
   }
 }
