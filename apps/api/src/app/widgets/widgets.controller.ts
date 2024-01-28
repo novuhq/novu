@@ -281,7 +281,7 @@ export class WidgetsController {
   })
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/messages/bulk/delete')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   async removeMessagesBulk(
     @SubscriberSession() subscriberSession: SubscriberEntity,
     @Body() body: RemoveMessagesBulkRequestDto
