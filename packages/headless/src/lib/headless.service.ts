@@ -38,6 +38,7 @@ import {
   IUpdateUserPreferencesVariables,
   IUpdateUserGlobalPreferencesVariables,
   UpdateResult,
+  EmptyObject,
 } from './types';
 
 export const NOTIFICATION_CENTER_TOKEN_KEY = 'nc_token';
@@ -793,6 +794,53 @@ export class HeadlessService {
 
     result
       .mutate({ messageId })
+      .then((data) => {
+        onSuccess?.(data);
+
+        return data;
+      })
+      .catch((error) => {
+        onError?.(error);
+      })
+      .finally(() => {
+        unsubscribe();
+      });
+  }
+
+  public async removeNotifications({
+    messageIds,
+    listener,
+    onSuccess,
+    onError,
+  }: {
+    messageIds: string[];
+    listener: (
+      result: UpdateResult<EmptyObject, unknown, { messageIds: string[] }>
+    ) => void;
+    onSuccess?: (obj: EmptyObject) => void;
+    onError?: (error: unknown) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      EmptyObject,
+      unknown,
+      { messageIds: string[] }
+    >({
+      options: {
+        mutationFn: (variables) =>
+          this.api.removeMessages(variables.messageIds),
+        onSuccess: (data) => {
+          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
+            exact: false,
+          });
+        },
+      },
+      listener: (res) => this.callUpdateListener(res, listener),
+    });
+
+    result
+      .mutate({ messageIds })
       .then((data) => {
         onSuccess?.(data);
 
