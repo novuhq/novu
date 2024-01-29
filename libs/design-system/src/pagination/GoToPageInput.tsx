@@ -30,9 +30,6 @@ const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   }
 
   label {
-    color: inherit;
-    font-size: inherit;
-    line-height: inherit;
     /* TODO: use theme values */
     margin-right: ${'0.5rem'}
   }

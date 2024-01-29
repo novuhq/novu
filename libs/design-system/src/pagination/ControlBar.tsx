@@ -1,11 +1,12 @@
 import styled from '@emotion/styled';
 import { Box, BoxProps } from '@mantine/core';
-import { forwardRef, PropsWithChildren, useContext, useEffect } from 'react';
+import { forwardRef, PropsWithChildren, useContext, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from '../icons';
 import { ControlButton } from './ControlButton';
 import { DEFAULT_ELLIPSIS_NODE, DEFAULT_SIBLING_COUNT, MAX_SIBLING_COUNT, MIN_SIBLING_COUNT } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
 import { getPaginationSymbols, PaginationSymbol } from './util';
+import { clamp } from '../utils';
 
 const Group = styled(Box)<BoxProps & React.RefAttributes<HTMLDivElement>>(
   ({ theme }) => `
@@ -35,12 +36,14 @@ export interface IControlBarProps {
 export const ControlBar = forwardRef<HTMLDivElement, PropsWithChildren<IControlBarProps>>(
   ({ className, siblingCount = DEFAULT_SIBLING_COUNT, ellipsisNode = DEFAULT_ELLIPSIS_NODE, children }, ref) => {
     const { currentPageNumber, totalPageCount } = useContext(PaginationContext);
+    const [clampedSiblingCount, setClampedSiblingCount] = useState<number>(siblingCount);
 
     useEffect(() => {
+      // ensure the sibling count is within the allowed range
       if (siblingCount < MIN_SIBLING_COUNT || siblingCount > MAX_SIBLING_COUNT) {
-        throw new Error(`siblingCount must be between ${MIN_SIBLING_COUNT} and ${MAX_SIBLING_COUNT}`);
+        setClampedSiblingCount(clamp(siblingCount, MIN_SIBLING_COUNT, MAX_SIBLING_COUNT));
       }
-    }, [siblingCount]);
+    }, [siblingCount, setClampedSiblingCount]);
 
     const renderCentralButton = (curPageSymbol: PaginationSymbol, index: number) => {
       if (curPageSymbol === 'ELLIPSIS') {
@@ -75,7 +78,9 @@ export const ControlBar = forwardRef<HTMLDivElement, PropsWithChildren<IControlB
             >
               <ChevronLeft />
             </ControlButton>
-            {getPaginationSymbols({ totalPageCount, currentPageNumber, siblingCount }).map(renderCentralButton)}
+            {getPaginationSymbols({ totalPageCount, currentPageNumber, siblingCount: clampedSiblingCount }).map(
+              renderCentralButton
+            )}
             <ControlButton
               onClick={({ onPageChange, currentPageNumber: curPageNum }) => {
                 onPageChange(curPageNum + 1);
