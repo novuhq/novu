@@ -11,7 +11,6 @@ describe('Translations Group Page', function () {
 
   it('should add a new translations group', function () {
     createTranslationGroup();
-    cy.visit('/translations');
     cy.getByTestId('test-group').click();
     cy.getByTestId('translation-filename').should('have.text', 'Empty...');
     cy.getByTestId('translation-keys-value').should('have.text', '');
