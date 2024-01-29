@@ -10,6 +10,7 @@ import { PageSizeSelect } from './PageSizeSelect';
 import { FIRST_PAGE_NUMBER } from './Pagination.const';
 import { IPaginationContext, PaginationContext } from './PaginationContext';
 import { clampPageNumber } from './util';
+import { IconControlButton } from './IconControlButton';
 
 const PaginationWrapper = styled.div(
   ({ theme }) => `
@@ -104,6 +105,7 @@ export const Pagination = ({
 
 Pagination.Context = PaginationContext;
 Pagination.ControlButton = ControlButton;
+Pagination.IconControlButton = IconControlButton;
 Pagination.ControlBar = ControlBar;
 Pagination.GoToPageInput = GoToPageInput;
 Pagination.PageSizeSelect = PageSizeSelect;

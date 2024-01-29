@@ -7,6 +7,7 @@ import { DEFAULT_ELLIPSIS_NODE, DEFAULT_SIBLING_COUNT, MAX_SIBLING_COUNT, MIN_SI
 import { PaginationContext } from './PaginationContext';
 import { getPaginationSymbols, PaginationSymbol } from './util';
 import { clamp } from '../utils';
+import { IconControlButton } from './IconControlButton';
 
 const Group = styled(Box)<BoxProps & React.RefAttributes<HTMLDivElement>>(
   ({ theme }) => `
@@ -60,6 +61,7 @@ export const ControlBar = forwardRef<HTMLDivElement, PropsWithChildren<IControlB
           onClick={({ onPageChange }) => {
             onPageChange(curPageSymbol);
           }}
+          isCurrentPage={curPageSymbol === currentPageNumber}
         >
           {curPageSymbol}
         </ControlButton>
@@ -70,25 +72,25 @@ export const ControlBar = forwardRef<HTMLDivElement, PropsWithChildren<IControlB
       <Group ref={ref} className={className}>
         {children || (
           <>
-            <ControlButton
+            <IconControlButton
               onClick={({ onPageChange, currentPageNumber: curPageNum }) => {
                 onPageChange(curPageNum - 1);
               }}
               disabled={currentPageNumber === 1}
             >
               <ChevronLeft />
-            </ControlButton>
+            </IconControlButton>
             {getPaginationSymbols({ totalPageCount, currentPageNumber, siblingCount: clampedSiblingCount }).map(
               renderCentralButton
             )}
-            <ControlButton
+            <IconControlButton
               onClick={({ onPageChange, currentPageNumber: curPageNum }) => {
                 onPageChange(curPageNum + 1);
               }}
               disabled={currentPageNumber === totalPageCount}
             >
               {<ChevronRight />}
-            </ControlButton>
+            </IconControlButton>
           </>
         )}
       </Group>
