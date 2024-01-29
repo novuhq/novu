@@ -3,14 +3,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
 import { Route, Routes, BrowserRouter } from 'react-router-dom';
 import { withLDProvider } from 'launchdarkly-react-client-sdk';
-import LogRocket from 'logrocket';
-import setupLogRocketReact from 'logrocket-react';
 import { Integrations } from '@sentry/tracing';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 
-import packageJson from '../package.json';
 import { AuthProvider } from './components/providers/AuthProvider';
 import { applyToken, getToken } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
@@ -26,8 +23,8 @@ import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
-import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
-import { ENV, LAUNCH_DARKLY_CLIENT_SIDE_ID, SENTRY_DSN, CONTEXT_PATH, LOGROCKET_ID } from './config';
+import QuestionnairePage from './pages/auth/QuestionnairePage';
+import { ENV, LAUNCH_DARKLY_CLIENT_SIDE_ID, SENTRY_DSN, CONTEXT_PATH } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { ROUTES } from './constants/routes.enum';
@@ -60,34 +57,10 @@ import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 import { ProductLead } from './components/utils/ProductLead';
 import { SSO, UserAccess, Cloud } from '@novu/design-system';
 import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
+import { TranslationRoutes } from './pages/TranslationPages';
+import { VariantsPage } from './pages/templates/components/VariantsPage';
 
 library.add(far, fas);
-
-if (LOGROCKET_ID && window !== undefined) {
-  LogRocket.init(LOGROCKET_ID, {
-    release: packageJson.version,
-    rootHostname: 'novu.co',
-    console: {
-      shouldAggregateConsoleErrors: true,
-    },
-    network: {
-      requestSanitizer: (request) => {
-        // if the url contains token 'ignore' it
-        if (request.url.toLowerCase().indexOf('token') !== -1) {
-          // ignore the request response pair
-          return null;
-        }
-
-        // remove Authorization header from logrocket
-        request.headers.Authorization = undefined;
-
-        // otherwise log the request normally
-        return request;
-      },
-    },
-  });
-  setupLogRocketReact(LogRocket);
-}
 
 if (SENTRY_DSN) {
   Sentry.init({
@@ -121,28 +94,8 @@ if (SENTRY_DSN) {
      */
     tracesSampleRate: 1.0,
     beforeSend(event: Sentry.Event) {
-      const logRocketSession = LogRocket.sessionURL;
-
-      if (logRocketSession !== null || (event as string) !== '' || event !== undefined) {
-        /*
-         * Must ignore the next line as this variable could be null but
-         * can not be null because of the check in the if statement above.
-         */
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-expect-error
-        event.extra.LogRocket = logRocketSession;
-
-        return event;
-      } else {
-        return event;
-      } //else
+      return event;
     },
-  });
-
-  LogRocket.getSessionURL((sessionURL) => {
-    Sentry.configureScope((scope) => {
-      scope.setExtra('sessionURL', sessionURL);
-    });
   });
 }
 
@@ -177,7 +130,7 @@ function App() {
                 <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
                 <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
                 <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
-                <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} />
+                <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
                 <Route
                   path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
                   element={
@@ -206,6 +159,9 @@ function App() {
                     <Route path="snippet" element={<SnippetPage />} />
                     <Route path="providers" element={<ProvidersPage />} />
                     <Route path=":channel/:stepUuid" element={<ChannelStepEditor />} />
+                    <Route path=":channel/:stepUuid/variants" element={<VariantsPage />} />
+                    <Route path=":channel/:stepUuid/variants/:variantUuid" element={<ChannelStepEditor />} />
+                    <Route path=":channel/:stepUuid/variants/create" element={<VariantsPage />} />
                   </Route>
                   <Route path={ROUTES.WORKFLOWS} element={<WorkflowListPage />} />
                   <Route path={ROUTES.TENANTS} element={<TenantsPage />}>
@@ -271,6 +227,7 @@ function App() {
                     <Route path="" element={<BrandingForm />} />
                     <Route path="layouts" element={<LayoutsListPage />} />
                   </Route>
+                  <Route path="/translations/*" element={<TranslationRoutes />} />
                 </Route>
               </Routes>
             </AuthProvider>

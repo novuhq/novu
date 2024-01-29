@@ -1,4 +1,4 @@
-import { StepTypeEnum } from '@novu/shared';
+import { ISubscribersDefine, StepTypeEnum } from '@novu/shared';
 
 import { NotificationTemplateEntity } from '../notification-template';
 import type { OrganizationId } from '../organization';
@@ -24,8 +24,12 @@ export class NotificationEntity {
 
   _digestedNotificationId?: string;
 
+  /*
+   * This is a field that is used to define the subscriber that will receive the notification.
+   * This field simplifies metric retrieval by associating external subscriber data, such as subscriberId.
+   */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  to?: any;
+  to?: ISubscribersDefine | any;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   payload?: any;

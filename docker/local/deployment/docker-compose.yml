@@ -1,4 +1,5 @@
 version: '3.9'
+name: novu
 services:
   redis:
     image: 'redis:alpine'
@@ -18,12 +19,14 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongodb:/data/db
     ports:
       - 27017:27017
   api:
-    image: 'ghcr.io/novuhq/novu/api:0.21.0'
+    image: 'ghcr.io/novuhq/novu/api:0.22.0'
     depends_on:
       - mongodb
       - redis
@@ -63,7 +66,7 @@ services:
     ports:
       - '3000:3000'
   worker:
-    image: 'ghcr.io/novuhq/novu/worker:0.21.0'
+    image: 'ghcr.io/novuhq/novu/worker:0.22.0'
     depends_on:
       - mongodb
       - redis
@@ -94,7 +97,7 @@ services:
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:0.21.0'
+    image: 'ghcr.io/novuhq/novu/ws:0.22.0'
     depends_on:
       - mongodb
       - redis
@@ -115,10 +118,12 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       WS_CONTEXT_PATH: ${WS_CONTEXT_PATH}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
     ports:
       - '3002:3002'
   web:
-    image: 'ghcr.io/novuhq/novu/web:0.21.0'
+    image: 'ghcr.io/novuhq/novu/web:0.22.0'
     depends_on:
       - api
       - worker
@@ -138,7 +143,7 @@ services:
     ports:
       - 4200:4200
   widget:
-    image: 'ghcr.io/novuhq/novu/widget:0.21.0'
+    image: 'ghcr.io/novuhq/novu/widget:0.22.0'
     depends_on:
       - api
       - worker
@@ -160,7 +165,7 @@ services:
   embed:
     depends_on:
       - widget
-    image: 'ghcr.io/novuhq/novu/embed:0.21.0'
+    image: 'ghcr.io/novuhq/novu/embed:0.22.0'
     container_name: embed
     restart: unless-stopped
     logging:
@@ -170,6 +175,8 @@ services:
         max-file: '5'
     environment:
       WIDGET_URL: ${WIDGET_URL}
+      NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
+      NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
     ports:
       - 4701:4701
 volumes:

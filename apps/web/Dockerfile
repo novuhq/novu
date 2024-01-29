@@ -1,5 +1,5 @@
 # start build stage
-FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine as builder
+FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine as builder
 ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
@@ -16,6 +16,8 @@ COPY libs/testing ./libs/testing
 COPY packages/client ./packages/client
 COPY libs/shared ./libs/shared
 COPY libs/design-system ./libs/design-system
+COPY libs/shared-web ./libs/shared-web
+
 COPY packages/notification-center ./packages/notification-center
 COPY packages/stateless ./packages/stateless
 COPY packages/node ./packages/node
@@ -38,19 +40,20 @@ RUN NX_DAEMON=false pnpm build:web
 # end build stage
 
 # start production stage
-FROM node:16-alpine
-
-WORKDIR /app
+FROM node:20-alpine
 
 RUN apk add --no-cache bash
 RUN npm install -g pnpm@8.9.0 http-server --loglevel notice
 
-COPY --from=builder /usr/src/app/apps/web/env.sh /app/env.sh
-COPY --from=builder /usr/src/app/apps/web/.env /app/.env
+USER 1000
+WORKDIR /app
 
-COPY --from=builder /usr/src/app/apps/web/build /app/build
-COPY --from=builder /usr/src/app/apps/web/public /app/public
-COPY --from=builder /usr/src/app/apps/web/package.json /app/package.json
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/env.sh /app/env.sh
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/.env /app/.env
+
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/build /app/build
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/public /app/public
+COPY --chown=1000:1000 --from=builder /usr/src/app/apps/web/package.json /app/package.json
 
 CMD [ "pnpm", "start:static:build" ]
 # end production stage

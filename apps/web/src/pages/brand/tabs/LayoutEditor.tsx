@@ -27,7 +27,7 @@ import { QueryKeys } from '../../../api/query.keys';
 import { VariablesManagement } from '../../templates/components/email-editor/variables-management/VariablesManagement';
 import { UnsavedChangesModal } from '../../templates/components/UnsavedChangesModal';
 import { VariableManager } from '../../templates/components/VariableManager';
-import { EmailCustomCodeEditor } from '../../templates/components/email-editor/EmailCustomCodeEditor';
+import { CustomCodeEditor } from '../../templates/components/CustomCodeEditor';
 
 interface ILayoutForm {
   content: string;
@@ -275,7 +275,7 @@ export function LayoutEditor({
               data-test-id="layout-content"
               control={control}
               render={({ field }) => {
-                return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} height="380px" />;
+                return <CustomCodeEditor onChange={field.onChange} value={field.value} height="380px" />;
               }}
             />
           </Grid.Col>
@@ -286,7 +286,6 @@ export function LayoutEditor({
             }}
           >
             <VariablesManagement
-              index={0}
               openVariablesModal={() => {
                 setModalOpen(true);
               }}
@@ -342,7 +341,7 @@ export function LayoutEditor({
         centered
         overflow="inside"
       >
-        <VariableManager index={0} variablesArray={variablesArray} path="" control={control} />
+        <VariableManager variablesArray={variablesArray} path="" control={control} />
         <Group position="right">
           <Button
             data-test-id="close-var-manager-modal"

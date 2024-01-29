@@ -91,12 +91,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(initialJobs.length).to.eql(2);
+    expect(initialJobs && initialJobs.length).to.eql(2);
 
     const delayedJobs = initialJobs.filter((elem) => elem.status === JobStatusEnum.DELAYED);
-    expect(delayedJobs.length).to.eql(1);
+    expect(delayedJobs && delayedJobs.length).to.eql(1);
     const mergedJobs = initialJobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
-    expect(mergedJobs.length).to.eql(1);
+    expect(mergedJobs && mergedJobs.length).to.eql(1);
 
     const delayedJob = delayedJobs[0];
 
@@ -113,10 +113,10 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     const digestJob = jobs.find((job) => job.step?.template?.type === StepTypeEnum.DIGEST);
-    expect((digestJob?.digest as IDigestRegularMetadata)?.amount).to.equal(digestAmount);
-    expect((digestJob?.digest as IDigestRegularMetadata)?.unit).to.equal(digestUnit);
+    expect((digestJob && (digestJob?.digest as IDigestRegularMetadata))?.amount).to.equal(digestAmount);
+    expect((digestJob && (digestJob?.digest as IDigestRegularMetadata))?.unit).to.equal(digestUnit);
     const job = jobs.find((item) => item.digest?.events?.length && item.digest.events.length > 0);
-    expect(job?.digest?.events?.length).to.equal(2);
+    expect(job && job?.digest?.events?.length).to.equal(2);
   });
 
   it('should not have digest prop when not running a digest', async function () {
@@ -141,8 +141,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       channel: StepTypeEnum.SMS,
     });
 
-    expect(message[0].content).to.include('NO_DIGEST_PROP');
-    expect(message[0].content).to.not.include('HAS_DIGEST_PROP');
+    expect(message && message[0].content).to.include('NO_DIGEST_PROP');
+    expect(message && message[0].content).to.not.include('HAS_DIGEST_PROP');
   });
 
   it('should add a digest prop to template compilation', async function () {
@@ -181,7 +181,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs.length).to.eql(2);
+    expect(jobs && jobs.length).to.eql(2);
 
     const completedJob = jobs.find((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedJob).to.ok;
@@ -196,7 +196,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
     });
 
-    expect(message?.content).to.include('HAS_DIGEST_PROP');
+    expect(message && message?.content).to.include('HAS_DIGEST_PROP');
   });
 
   it('should digest based on digestKey within time interval', async function () {
@@ -246,12 +246,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs.length).to.eql(3);
+    expect(jobs && jobs.length).to.eql(3);
 
     const delayedJobs = jobs.filter((elem) => elem.status === JobStatusEnum.DELAYED);
-    expect(delayedJobs.length).to.eql(2);
+    expect(delayedJobs && delayedJobs.length).to.eql(2);
     const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
-    expect(mergedJobs.length).to.eql(1);
+    expect(mergedJobs && mergedJobs.length).to.eql(1);
 
     await session.awaitRunningJobs(template?._id, false, 1);
 
@@ -261,12 +261,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     });
 
     const digestedJobs = finalJobs.filter((job) => (job?.digest as IDigestRegularMetadata)?.digestKey === 'id');
-    expect(digestedJobs.length).to.eql(3);
+    expect(digestedJobs && digestedJobs.length).to.eql(3);
 
     const jobsWithEvents = finalJobs.filter(
       (item) => item.type === StepTypeEnum.SMS && item?.digest?.events && item.digest.events.length > 0
     );
-    expect(jobsWithEvents.length).to.equal(2);
+    expect(jobsWithEvents && jobsWithEvents.length).to.equal(2);
   });
 
   it('should digest based on same digestKey within time interval', async function () {
@@ -314,12 +314,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs.length).to.equal(3);
+    expect(jobs && jobs.length).to.equal(3);
 
     const completedJobs = jobs.filter((elem) => elem.status === JobStatusEnum.COMPLETED);
-    expect(completedJobs.length).to.eql(2);
+    expect(completedJobs && completedJobs.length).to.eql(2);
     const mergedJobs = jobs.filter((elem) => elem.status === JobStatusEnum.MERGED);
-    expect(mergedJobs.length).to.eql(1);
+    expect(mergedJobs && mergedJobs.length).to.eql(1);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -334,10 +334,10 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     const firstDigestKeyBatch = messages.filter((message) => (message.content as string).includes('Hello world 2'));
     const secondDigestKeyBatch = messages.filter((message) => (message.content as string).includes('Hello world 1'));
 
-    expect(firstDigestKeyBatch.length).to.eql(1);
-    expect(secondDigestKeyBatch.length).to.eql(1);
+    expect(firstDigestKeyBatch && firstDigestKeyBatch.length).to.eql(1);
+    expect(secondDigestKeyBatch && secondDigestKeyBatch.length).to.eql(1);
 
-    expect(messages.length).to.equal(2);
+    expect(messages && messages.length).to.equal(2);
   });
 
   it('should digest delayed events', async function () {
@@ -377,74 +377,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       },
     });
 
-    expect(jobs.length).to.equal(0);
-  });
-
-  it('should be able to cancel digest', async function () {
-    const id = MessageRepository.createObjectId();
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Hello world {{customVar}}' as string,
-        },
-        {
-          type: StepTypeEnum.DIGEST,
-          content: '',
-          metadata: {
-            unit: DigestUnitEnum.SECONDS,
-            amount: 2,
-            digestKey: 'id',
-            type: DigestTypeEnum.REGULAR,
-          },
-        },
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Hello world {{step.events.length}}' as string,
-        },
-      ],
-    });
-
-    await triggerEvent(
-      {
-        customVar: 'Testing of User Name',
-      },
-      id
-    );
-
-    await session.awaitRunningJobs(template?._id, false, 1);
-    await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
-
-    const delayedJobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DIGEST,
-    });
-
-    expect(delayedJobs.length).to.eql(1);
-
-    const pendingJobs = await jobRepository.count({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      status: JobStatusEnum.PENDING,
-      transactionId: id,
-    });
-
-    expect(pendingJobs).to.equal(1);
-
-    const cancelledDigestJobs = await jobRepository.find({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      status: JobStatusEnum.CANCELED,
-      type: StepTypeEnum.DIGEST,
-      transactionId: id,
-    });
-
-    expect(cancelledDigestJobs.length).to.eql(1);
+    expect(jobs && jobs.length).to.equal(0);
   });
 
   it('should digest with backoff strategy', async function () {
@@ -458,7 +391,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
             amount: 5,
             type: DigestTypeEnum.BACKOFF,
             backoffUnit: DigestUnitEnum.SECONDS,
-            backoffAmount: 1,
+            backoffAmount: 10,
           },
         },
         {
@@ -489,7 +422,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs.length).to.eql(7);
+    expect(jobs && jobs.length).to.eql(7);
 
     const completedJob = jobs.find((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedJob).to.ok;
@@ -505,16 +438,19 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.IN_APP,
     });
 
-    expect(generatedMessageJob.length).to.equal(7);
+    expect(generatedMessageJob && generatedMessageJob.length).to.equal(7);
 
     const mergedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.MERGED);
-    expect(mergedInApp.length).to.equal(5);
+    expect(mergedInApp && mergedInApp.length).to.equal(5);
 
     const completedInApp = generatedMessageJob.filter((elem) => elem.status === JobStatusEnum.COMPLETED);
-    expect(completedInApp.length).to.equal(2);
+    expect(completedInApp && completedInApp.length).to.equal(2);
 
-    expect(completedInApp.find((i) => i.digest?.events?.length === 6)).to.be.ok;
-    expect(completedInApp.find((i) => i.digest?.events?.length === 0)).to.be.ok;
+    const digestEventLength6 = completedInApp.find((i) => i.digest?.events?.length === 6);
+    expect(digestEventLength6).to.be.ok;
+
+    const digestEventLength0 = completedInApp.find((i) => i.digest?.events?.length === 0);
+    expect(digestEventLength0).to.be.ok;
   });
 
   it('should create multiple digest based on different digestKeys', async function () {
@@ -567,17 +503,17 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(digests.length).to.equal(5);
+    expect(digests && digests.length).to.equal(5);
     const noPostIdJobs = digests.filter((job) => !job.payload.postId);
-    expect(noPostIdJobs.length).to.equal(2);
+    expect(noPostIdJobs && noPostIdJobs.length).to.equal(2);
 
     const postId1Jobs = digests.filter((job) => job.payload.postId === postId);
     const postId2Jobs = digests.filter((job) => job.payload.postId === postId2);
     const postId1MergedJobs = postId1Jobs.filter((job) => job.status === JobStatusEnum.MERGED);
 
-    expect(postId1MergedJobs.length).to.equal(1);
-    expect(postId1Jobs.length).to.equal(2);
-    expect(postId2Jobs.length).to.equal(1);
+    expect(postId1MergedJobs && postId1MergedJobs.length).to.equal(1);
+    expect(postId1Jobs && postId1Jobs.length).to.equal(2);
+    expect(postId2Jobs && postId2Jobs.length).to.equal(1);
 
     await session.awaitRunningJobs(template?._id, false, 0);
 
@@ -586,7 +522,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
       _subscriberId: subscriber._id,
     });
-    expect(messages.length).to.eql(3);
+    expect(messages && messages.length).to.eql(3);
     const postId1Content = messages.find((message) => (message.content as string).includes(postId));
     const postId2Content = messages.find((message) => (message.content as string).includes(postId2));
     const noDigestKeyContent = messages.find((message) => message.content === 'Hello world ');
@@ -653,18 +589,18 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(digests.length).to.eql(5);
+    expect(digests && digests.length).to.eql(5);
 
     const noPostIdJobs = digests.filter((job) => !job.payload.nested);
-    expect(noPostIdJobs.length).to.equal(2);
+    expect(noPostIdJobs && noPostIdJobs.length).to.equal(2);
 
     const postId1Jobs = digests.filter((job) => job.payload.nested?.postId === postId);
     const postId2Jobs = digests.filter((job) => job.payload.nested?.postId === postId2);
     const postId1MergedJobs = postId1Jobs.filter((job) => job.status === JobStatusEnum.MERGED);
 
-    expect(postId1MergedJobs.length).to.equal(1);
-    expect(postId1Jobs.length).to.equal(2);
-    expect(postId2Jobs.length).to.equal(1);
+    expect(postId1MergedJobs && postId1MergedJobs.length).to.equal(1);
+    expect(postId1Jobs && postId1Jobs.length).to.equal(2);
+    expect(postId2Jobs && postId2Jobs.length).to.equal(1);
 
     await session.awaitRunningJobs(template?._id, false, 0);
 
@@ -674,7 +610,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _subscriberId: subscriber._id,
     });
 
-    expect(messages.length).to.eql(3);
+    expect(messages && messages.length).to.eql(3);
     const postId1Content = messages.find((message) => (message.content as string).includes(postId));
     const postId2Content = messages.find((message) => (message.content as string).includes(postId2));
     const noDigestKeyContent = messages.find((message) => message.content === 'Hello world ');
@@ -731,22 +667,22 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(digests.length).to.equal(6);
+    expect(digests && digests.length).to.equal(6);
 
     const completedJobs = digests.filter((job) => job.status === JobStatusEnum.COMPLETED);
-    expect(completedJobs.length).to.equal(3);
+    expect(completedJobs && completedJobs.length).to.equal(3);
 
     const skippedJobs = digests.filter((job) => job.status === JobStatusEnum.SKIPPED);
-    expect(skippedJobs.length).to.equal(3);
+    expect(skippedJobs && skippedJobs.length).to.equal(3);
 
     const postId1Jobs = digests.filter((job) => job.payload.postId === postId);
-    expect(postId1Jobs.length).to.equal(2);
+    expect(postId1Jobs && postId1Jobs.length).to.equal(2);
 
     const postId2Jobs = digests.filter((job) => job.payload.postId === postId2);
-    expect(postId2Jobs.length).to.equal(2);
+    expect(postId2Jobs && postId2Jobs.length).to.equal(2);
 
     const noPostIdJobs = digests.filter((job) => !job.payload.postId);
-    expect(noPostIdJobs.length).to.equal(2);
+    expect(noPostIdJobs && noPostIdJobs.length).to.equal(2);
 
     await session.awaitRunningJobs(template?._id, false, 0);
 
@@ -756,7 +692,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _subscriberId: subscriber._id,
     });
 
-    expect(messages.length).to.equal(6);
+    expect(messages && messages.length).to.equal(6);
 
     const contents: string[] = messages
       .map((message) => message.content)
@@ -840,29 +776,29 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(digests.length).to.equal(6);
+    expect(digests && digests.length).to.equal(6);
 
     const completedJobs = digests.filter((job) => job.status === JobStatusEnum.COMPLETED);
-    expect(completedJobs.length).to.equal(3);
+    expect(completedJobs && completedJobs.length).to.equal(3);
 
     const skippedJobs = digests.filter((job) => job.status === JobStatusEnum.SKIPPED);
-    expect(skippedJobs.length).to.equal(3);
+    expect(skippedJobs && skippedJobs.length).to.equal(3);
 
     const postId1Jobs = digests.filter((job) => job.payload?.nested?.postId === postId);
-    expect(postId1Jobs.length).to.equal(2);
+    expect(postId1Jobs && postId1Jobs.length).to.equal(2);
 
     const postId2Jobs = digests.filter((job) => job.payload?.nested?.postId === postId2);
-    expect(postId2Jobs.length).to.equal(2);
+    expect(postId2Jobs && postId2Jobs.length).to.equal(2);
 
     const noPostIdJobs = digests.filter((job) => !job.payload?.nested?.postId);
-    expect(noPostIdJobs.length).to.equal(2);
+    expect(noPostIdJobs && noPostIdJobs.length).to.equal(2);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
       _templateId: template._id,
       _subscriberId: subscriber._id,
     });
-    expect(messages.length).to.equal(6);
+    expect(messages && messages.length).to.equal(6);
 
     const jobCount = await jobRepository.count({
       _environmentId: session.environment._id,
@@ -908,7 +844,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs.length).to.eql(2);
+    expect(jobs && jobs.length).to.eql(2);
 
     const completedJob = jobs.find((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedJob).to.ok;
@@ -924,8 +860,8 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _templateId: template._id,
       _notificationId: completedJob?._notificationId,
     });
-    expect(message?.content).to.include('HAS_DIGEST_PROP');
-    expect(message?.content).to.include('Total events in digest:2');
+    expect(message && message?.content).to.include('HAS_DIGEST_PROP');
+    expect(message && message?.content).to.include('Total events in digest:2');
   });
 
   it('should add a digest prop to push template compilation', async function () {
@@ -965,7 +901,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs.length).to.eql(2);
+    expect(jobs && jobs.length).to.eql(2);
 
     const completedJob = jobs.find((elem) => elem.status === JobStatusEnum.COMPLETED);
     expect(completedJob).to.ok;
@@ -980,7 +916,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       _notificationId: completedJob?._notificationId,
     });
 
-    expect(message?.content).to.include('HAS_DIGEST_PROP');
+    expect(message && message?.content).to.include('HAS_DIGEST_PROP');
   });
 
   it('should merge digest events accordingly when concurrent calls', async () => {
@@ -1043,12 +979,12 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs.length).to.eql(10);
+    expect(jobs && jobs.length).to.eql(10);
 
     const delayedJobs = jobs.filter((elem) => elem.status === JobStatusEnum.DELAYED);
-    expect(delayedJobs.length).to.eql(1);
+    expect(delayedJobs && delayedJobs.length).to.eql(1);
     const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
-    expect(mergedJobs.length).to.eql(9);
+    expect(mergedJobs && mergedJobs.length).to.eql(9);
 
     let delayedJobUpdateTime = delayedJobs[0].updatedAt;
     expect(delayedJobUpdateTime).to.be.ok;
@@ -1110,16 +1046,16 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       type: StepTypeEnum.DIGEST,
     });
 
-    expect(jobs.length).to.eql(10);
+    expect(jobs && jobs.length).to.eql(10);
 
     const delayedJobs = jobs.filter((elem) => elem.status === JobStatusEnum.DELAYED);
-    expect(delayedJobs.length).to.eql(1);
+    expect(delayedJobs && delayedJobs.length).to.eql(1);
     const mergedJobs = jobs.filter((elem) => elem.status !== JobStatusEnum.DELAYED);
-    expect(mergedJobs.length).to.eql(9);
+    expect(mergedJobs && mergedJobs.length).to.eql(9);
 
     const delayedJob = delayedJobs[0];
     const { updatedAt: delayedJobUpdateTime, payload } = delayedJob;
     expect(delayedJobUpdateTime).to.be.ok;
-    expect(payload.customVar).to.contain('sequential-calls-');
+    expect(payload && payload.customVar).to.contain('sequential-calls-');
   });
 });

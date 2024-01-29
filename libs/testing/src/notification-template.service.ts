@@ -78,7 +78,7 @@ export class NotificationTemplateService {
     const templateSteps: NotificationStepEntity[] = [];
 
     for (const message of steps) {
-      const saved = await this.messageTemplateRepository.create({
+      const savedMessageTemplate = await this.messageTemplateRepository.create({
         type: message.type,
         cta: message.cta,
         variables: message.variables,
@@ -86,6 +86,7 @@ export class NotificationTemplateService {
         subject: message.subject,
         title: message.title,
         name: message.name,
+        preheader: message.preheader,
         actor: message.actor,
         _feedId: override.noFeedId ? undefined : feeds[0]._id,
         _layoutId: override.noLayoutId ? undefined : layouts[0]._id,
@@ -94,10 +95,44 @@ export class NotificationTemplateService {
         _environmentId: this.environmentId,
       });
 
-      if (saved?._id) {
+      const variantSteps: NotificationStepEntity[] = [];
+
+      if (message.variants?.length) {
+        for (const variant of message.variants) {
+          const savedVariant = await this.messageTemplateRepository.create({
+            type: variant.type,
+            cta: variant.cta,
+            variables: variant.variables,
+            content: variant.content,
+            subject: variant.subject,
+            title: variant.title,
+            name: variant.name,
+            preheader: variant.preheader,
+            _feedId: override.noFeedId ? undefined : feeds[0]._id,
+            _layoutId: override.noLayoutId ? undefined : layouts[0]._id,
+            _creatorId: this.userId,
+            _organizationId: this.organizationId,
+            _environmentId: this.environmentId,
+          });
+
+          if (savedVariant?._id) {
+            variantSteps.push({
+              filters: variant.filters,
+              _templateId: savedVariant._id,
+              active: variant.active,
+              metadata: variant.metadata as any,
+              replyCallback: variant.replyCallback,
+              uuid: variant.uuid,
+            });
+          }
+        }
+      }
+
+      if (savedMessageTemplate?._id) {
         templateSteps.push({
+          variants: variantSteps,
           filters: message.filters,
-          _templateId: saved._id,
+          _templateId: savedMessageTemplate._id,
           active: message.active,
           metadata: message.metadata as any,
           replyCallback: message.replyCallback,

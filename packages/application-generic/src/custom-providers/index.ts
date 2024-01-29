@@ -1,18 +1,14 @@
 import {
   AnalyticsService,
-  BullMqService,
   CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
-  ReadinessService,
-  OldInstanceBullMqService,
-  StandardQueueService,
-  SubscriberProcessQueueService,
-  WebSocketsQueueService,
-  WorkflowQueueService,
 } from '../services';
 import {
+  GetIsApiIdempotencyEnabled,
+  GetIsApiRateLimitingEnabled,
+  GetIsExecutionLogQueueEnabled,
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,
 } from '../usecases';
@@ -51,32 +47,46 @@ export const getIsTopicNotificationEnabled = {
   inject: [FeatureFlagsService],
 };
 
+export const getIsApiRateLimitingEnabled = {
+  provide: GetIsApiRateLimitingEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsApiRateLimitingEnabled> => {
+    const useCase = new GetIsApiRateLimitingEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
+export const getIsApiIdempotencyEnabled = {
+  provide: GetIsApiIdempotencyEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsApiIdempotencyEnabled> => {
+    const useCase = new GetIsApiIdempotencyEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
+export const getIsExecutionLogQueueEnabled = {
+  provide: GetIsExecutionLogQueueEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsExecutionLogQueueEnabled> => {
+    const useCase = new GetIsExecutionLogQueueEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
 export const cacheInMemoryProviderService = {
   provide: CacheInMemoryProviderService,
   useFactory: (): CacheInMemoryProviderService => {
     return new CacheInMemoryProviderService();
-  },
-};
-
-export const bullMqService = {
-  provide: BullMqService,
-  useFactory: async (): Promise<BullMqService> => {
-    const service = new BullMqService();
-
-    await service.initialize();
-
-    return service;
-  },
-};
-
-export const oldInstanceBullMqService = {
-  provide: OldInstanceBullMqService,
-  useFactory: async (): Promise<OldInstanceBullMqService> => {
-    const service = new OldInstanceBullMqService();
-
-    await service.initialize();
-
-    return service;
   },
 };
 
@@ -118,27 +128,4 @@ export const distributedLockService = {
 
     return service;
   },
-};
-
-export const bullMqTokenList = {
-  provide: 'BULLMQ_LIST',
-  useFactory: (
-    standardQueueService: StandardQueueService,
-    webSocketsQueueService: WebSocketsQueueService,
-    workflowQueueService: WorkflowQueueService,
-    subscriberProcessQueueService: SubscriberProcessQueueService
-  ) => {
-    return [
-      standardQueueService,
-      webSocketsQueueService,
-      workflowQueueService,
-      subscriberProcessQueueService,
-    ];
-  },
-  inject: [
-    StandardQueueService,
-    WebSocketsQueueService,
-    WorkflowQueueService,
-    SubscriberProcessQueueService,
-  ],
 };

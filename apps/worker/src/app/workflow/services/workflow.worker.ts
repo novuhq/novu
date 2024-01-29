@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
 import {
   getWorkflowWorkerOptions,
-  INovuWorker,
   PinoLogger,
   storage,
   Store,
@@ -11,15 +10,21 @@ import {
   WorkflowWorkerService,
   WorkerOptions,
   WorkerProcessor,
+  BullMqService,
+  WorkflowInMemoryProviderService,
+  IWorkflowDataDto,
 } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
 const LOG_CONTEXT = 'WorkflowWorker';
 
 @Injectable()
-export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker {
-  constructor(private triggerEventUsecase: TriggerEvent) {
-    super();
+export class WorkflowWorker extends WorkflowWorkerService {
+  constructor(
+    private triggerEventUsecase: TriggerEvent,
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {
+    super(new BullMqService(workflowInMemoryProviderService));
 
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOptions());
   }
@@ -29,7 +34,7 @@ export class WorkflowWorker extends WorkflowWorkerService implements INovuWorker
   }
 
   private getWorkerProcessor(): WorkerProcessor {
-    return async ({ data }: { data: TriggerEventCommand }) => {
+    return async ({ data }: { data: IWorkflowDataDto }) => {
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;

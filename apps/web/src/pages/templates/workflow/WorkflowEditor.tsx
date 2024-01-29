@@ -1,11 +1,13 @@
 import { Container, Group, Stack, useMantineColorScheme } from '@mantine/core';
-import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
-import { useCallback, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { ComponentType, useCallback, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
-
+import { Node, NodeProps } from 'react-flow-renderer';
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
+import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
+
 import { When } from '../../../components/utils/When';
+import type { IFlowEditorProps } from '../../../components/workflow';
 import { FlowEditor } from '../../../components/workflow';
 import { Button, Settings } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
@@ -22,13 +24,14 @@ import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
 import AddNode from './workflow/node-types/AddNode';
 import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
+import { NodeType, NodeData } from '../../../components/workflow/types';
 
 export const TOP_ROW_HEIGHT = 74;
 
-const nodeTypes = {
-  channelNode: ChannelNode,
-  triggerNode: TriggerNode,
-  addNode: AddNode,
+const nodeTypes: Record<string, ComponentType<NodeProps>> = {
+  [NodeType.CHANNEL]: ChannelNode,
+  [NodeType.TRIGGER]: TriggerNode,
+  [NodeType.ADD_NODE]: AddNode,
 };
 
 const edgeTypes = { special: AddNodeEdge };
@@ -41,12 +44,15 @@ const WorkflowEditor = () => {
   const [dragging, setDragging] = useState(false);
 
   const {
+    control,
     trigger,
-    watch,
     formState: { errors, isDirty },
   } = useFormContext<IForm>();
   const { readonly } = useEnvController();
-  const steps = watch('steps');
+  const steps = useWatch({
+    name: 'steps',
+    control,
+  });
 
   const [toDelete, setToDelete] = useState<string>('');
   const basePath = useBasePath();
@@ -56,18 +62,34 @@ const WorkflowEditor = () => {
   const dark = colorScheme === 'dark';
 
   const onNodeClick = useCallback(
-    (event, node) => {
+    (event, node: Node<NodeData>) => {
       event.preventDefault();
-
-      if (node.type === 'channelNode') {
-        navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
-      }
-      if (node.type === 'triggerNode') {
+      const { step, channelType } = node.data;
+      const isVariant = step && step.variants && step.variants?.length > 0;
+      if (isVariant) {
+        navigate(basePath + `/${channelType}/${step.uuid}/variants`);
+      } else if (node.type === NodeType.CHANNEL) {
+        navigate(basePath + `/${channelType}/${step?.uuid ?? ''}`);
+      } else if (node.type === NodeType.TRIGGER) {
         navigate(basePath + '/test-workflow');
       }
     },
     [navigate, basePath]
   );
+
+  const onEdit: IFlowEditorProps['onEdit'] = (_, node) => {
+    if (node.type === NodeType.CHANNEL) {
+      navigate(basePath + `/${node.data.channelType}/${node.data.step?.uuid ?? ''}`);
+    }
+  };
+
+  const onAddVariant = (uuid: string) => {
+    const channelStep = steps.find((step) => step.uuid === uuid);
+
+    if (channelStep) {
+      navigate(basePath + `/${channelStep.template.type}/${uuid}/variants/create`);
+    }
+  };
 
   const confirmDelete = () => {
     const index = steps.findIndex((item) => item.uuid === toDelete);
@@ -173,6 +195,7 @@ const WorkflowEditor = () => {
             </Stack>
           </Container>
           <FlowEditor
+            isReadonly
             onDelete={onDelete}
             dragging={dragging}
             errors={errors}
@@ -183,15 +206,20 @@ const WorkflowEditor = () => {
             onStepInit={onStepInit}
             onGetStepError={onGetStepError}
             onNodeClick={onNodeClick}
+            onEdit={onEdit}
+            onAddVariant={onAddVariant}
           />
         </div>
       </div>
     );
   }
 
+  const isEmailChannel = channel && [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel);
+  const isVariantsListPath = pathname.endsWith('/variants');
+
   return (
     <>
-      <When truthy={channel && [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
+      <When truthy={isEmailChannel && !isVariantsListPath}>
         <Outlet
           context={{
             setDragging,
@@ -199,7 +227,7 @@ const WorkflowEditor = () => {
           }}
         />
       </When>
-      <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
+      <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel) || isVariantsListPath}>
         <div style={{ display: 'flex', flexFlow: 'row', position: 'relative' }}>
           <div
             style={{
@@ -217,9 +245,11 @@ const WorkflowEditor = () => {
               >
                 <Group>
                   <NameInput />
-                  <Group>
-                    <UpdateButton />
-                  </Group>
+                  <When truthy={!channel}>
+                    <Group>
+                      <UpdateButton />
+                    </Group>
+                  </When>
                   <When truthy={pathname === basePath}>
                     <Button
                       pulse={shouldPulse}
@@ -238,6 +268,8 @@ const WorkflowEditor = () => {
               </Stack>
             </Container>
             <FlowEditor
+              isReadonly={readonly}
+              onEdit={onEdit}
               onDelete={onDelete}
               dragging={dragging}
               errors={errors}
@@ -248,6 +280,7 @@ const WorkflowEditor = () => {
               onStepInit={onStepInit}
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
+              onAddVariant={onAddVariant}
             />
           </div>
           <Outlet
