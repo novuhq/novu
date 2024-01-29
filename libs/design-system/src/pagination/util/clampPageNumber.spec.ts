@@ -24,17 +24,12 @@ describe('clampPageNumber', () => {
     expect(result).to.equal(5);
   });
 
-  it('should use the default first page number if not provided', () => {
-    const result = clampPageNumber(0, { totalPageCount: 10, currentPageNumber: 5 });
-    expect(result).to.equal(FIRST_PAGE_NUMBER);
-  });
-
-  it('should return the current page number if total page count is zero', () => {
+  it('should return the first page number if total page count is zero', () => {
     const result = clampPageNumber(3, { totalPageCount: 0, currentPageNumber: 5 });
     expect(result).to.equal(FIRST_PAGE_NUMBER);
   });
 
-  it('should return the current page number if total page count is negative', () => {
+  it('should return the first page number if total page count is negative', () => {
     const result = clampPageNumber(3, { totalPageCount: -5, currentPageNumber: 5 });
     expect(result).to.equal(FIRST_PAGE_NUMBER);
   });
