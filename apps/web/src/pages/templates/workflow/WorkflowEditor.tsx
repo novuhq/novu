@@ -69,7 +69,7 @@ const WorkflowEditor = () => {
       if (isVariant) {
         navigate(basePath + `/${channelType}/${step.uuid}/variants`);
       } else if (node.type === NodeType.CHANNEL) {
-        navigate(basePath + `/${channelType}/${step?.uuid ?? ''}`);
+        navigate(basePath + `/${channelType}/${step?.uuid ?? ''}/preview`);
       } else if (node.type === NodeType.TRIGGER) {
         navigate(basePath + '/test-workflow');
       }
@@ -219,7 +219,8 @@ const WorkflowEditor = () => {
 
   return (
     <>
-      <When truthy={isEmailChannel && !isVariantsListPath}>
+      <When truthy={!isVariantsListPath}>
+        {/*<When truthy={isEmailChannel && !isVariantsListPath}>*/}
         <Outlet
           context={{
             setDragging,
@@ -227,13 +228,21 @@ const WorkflowEditor = () => {
           }}
         />
       </When>
-      <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel) || isVariantsListPath}>
-        <div style={{ display: 'flex', flexFlow: 'row', position: 'relative' }}>
+      <When
+        truthy={
+          !channel ||
+          channel || // [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP, StepTypeEnum.DIGEST].includes(channel) ||
+          isVariantsListPath
+        }
+      >
+        {/*<When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel) || isVariantsListPath}>*/}
+        <div style={{ display: 'flex', flexFlow: 'row' }}>
           <div
             style={{
               flex: '1 1 auto',
               display: 'flex',
-              flexFlow: 'column',
+              flexFlow: 'Column',
+              // width: '80%',
             }}
           >
             <Container fluid sx={{ width: '100%', height: `${TOP_ROW_HEIGHT}px` }}>
@@ -267,6 +276,7 @@ const WorkflowEditor = () => {
                 </Group>
               </Stack>
             </Container>
+            {/*<div style={{ flex: '1 1 auto', display: 'flex', flexFlow: 'column', width: '80%' }}>*/}
             <FlowEditor
               isReadonly={readonly}
               onEdit={onEdit}
@@ -282,6 +292,7 @@ const WorkflowEditor = () => {
               onNodeClick={onNodeClick}
               onAddVariant={onAddVariant}
             />
+            {/*</div>*/}
           </div>
           <Outlet
             context={{
