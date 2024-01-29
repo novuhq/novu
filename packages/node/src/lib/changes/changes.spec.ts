@@ -27,7 +27,11 @@ describe('test use of novus node package - Changes class', () => {
 
     expect(mockedAxios.get).toHaveBeenCalled();
     expect(mockedAxios.get).toHaveBeenCalledWith('/changes', {
-      params: { limit: 20, page: 1, promoted: false },
+      params: {
+        limit: 20,
+        page: 1,
+        promoted: false,
+      },
     });
   });
 
