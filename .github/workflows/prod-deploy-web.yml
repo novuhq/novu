@@ -66,5 +66,4 @@ jobs:
       project_path: apps/web
       local_tag: novu-web
       env_tag: prod
-      depot_project_id: f88777ff6m
     secrets: inherit

@@ -9,6 +9,7 @@ import {
   OrgScopePrefixEnum,
   ServiceConfigIdentifierEnum,
 } from './shared';
+import { createHash as createHashCrypto } from 'crypto';
 
 const buildSubscriberKey = ({
   subscriberId,
@@ -93,13 +94,23 @@ const buildGroupedBlueprintsKey = (): string =>
     identifier: BLUEPRINT_IDENTIFIER,
   });
 
-const buildAuthServiceKey = ({ apiKey }: { apiKey: string }): string =>
-  buildKeyById({
+const createHash = (apiKey: string): string => {
+  const hash = createHashCrypto('sha256');
+  hash.update(apiKey);
+
+  return hash.digest('hex');
+};
+
+const buildAuthServiceKey = ({ apiKey }: { apiKey: string }): string => {
+  const apiKeyHash = createHash(apiKey);
+
+  return buildKeyById({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.AUTH_SERVICE,
-    identifier: apiKey,
+    identifier: apiKeyHash,
     identifierPrefix: IdentifierPrefixEnum.API_KEY,
   });
+};
 
 const buildMaximumApiRateLimitKey = ({
   apiRateLimitCategory,
