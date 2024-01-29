@@ -1,9 +1,9 @@
 import styled from '@emotion/styled';
 import { Box, BoxProps } from '@mantine/core';
-import { forwardRef, PropsWithChildren, useContext } from 'react';
+import { forwardRef, PropsWithChildren, useContext, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from '../icons';
 import { ControlButton } from './ControlButton';
-import { DEFAULT_ELLIPSIS_NODE, DEFAULT_SIBLING_COUNT } from './Pagination.const';
+import { DEFAULT_ELLIPSIS_NODE, DEFAULT_SIBLING_COUNT, MAX_SIBLING_COUNT, MIN_SIBLING_COUNT } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
 import { getPaginationSymbols, PaginationSymbol } from './util';
 
@@ -35,6 +35,12 @@ export interface IControlBarProps {
 export const ControlBar = forwardRef<HTMLDivElement, PropsWithChildren<IControlBarProps>>(
   ({ className, siblingCount = DEFAULT_SIBLING_COUNT, ellipsisNode = DEFAULT_ELLIPSIS_NODE, children }, ref) => {
     const { currentPageNumber, totalPageCount } = useContext(PaginationContext);
+
+    useEffect(() => {
+      if (siblingCount < MIN_SIBLING_COUNT || siblingCount > MAX_SIBLING_COUNT) {
+        throw new Error(`siblingCount must be between ${MIN_SIBLING_COUNT} and ${MAX_SIBLING_COUNT}`);
+      }
+    }, [siblingCount]);
 
     const renderCentralButton = (curPageSymbol: PaginationSymbol, index: number) => {
       if (curPageSymbol === 'ELLIPSIS') {
