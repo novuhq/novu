@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import Pagination, { IPaginationProps } from './Pagination';
@@ -12,12 +13,15 @@ export default {
     totalItemCount: 100,
     onPageChange: (pageNum) => alert(pageNum),
     pageSize: 10,
+    siblingCount: 2,
+    ellipsisNode: '...',
   },
 } as Meta<typeof Pagination>;
 
 const TEST_PAGE_SIZES = [10, 25, 50, 100];
 
-const Template: StoryFn<typeof Pagination> = ({ ...args }) => {
+// @ts-ignore-next-line
+const Template: StoryFn<typeof Pagination> = ({ siblingCount, ellipsisNode, ...args }) => {
   const [{ currentPageNumber }, updateArgs] = useArgs<IPaginationProps>();
 
   const handlePageSizeChange = (size: number) => {
@@ -31,7 +35,7 @@ const Template: StoryFn<typeof Pagination> = ({ ...args }) => {
   return (
     <Pagination {...args} onPageChange={handlePageChange} currentPageNumber={currentPageNumber}>
       <Pagination.PageSizeSelect onPageSizeChange={handlePageSizeChange} pageSizes={TEST_PAGE_SIZES} />
-      <Pagination.ControlBar />
+      <Pagination.ControlBar siblingCount={siblingCount} ellipsisNode={ellipsisNode} />
       <Pagination.GoToPageInput label={'Go to'} placeholder={'page'} />
     </Pagination>
   );
