@@ -3,6 +3,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "cacheable",
     "Springboot",
     "tmproj",
     "hgignore",
@@ -500,6 +501,8 @@
     "nextjs",
     "vanillajs",
     "errmsg",
+    "devcontainer",
+    "INITDB",
     "springboot",
     "errmsg",
     "shelljs",
@@ -542,6 +545,14 @@
     "Stdev",
     "openapi",
     "headerapikey",
+    "fieldname",
+    "isend",
+    "Otel",
+    "opentelemetry",
+    "INITDB",
+    "isend",
+    "Idand",
+    "hubspot"
   ],
   "flagWords": [],
   "patterns": [

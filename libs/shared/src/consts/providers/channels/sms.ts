@@ -25,6 +25,7 @@ import {
   messagebirdConfig,
   azureSmsConfig,
   bulkSmsConfig,
+  iSendSmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -135,6 +136,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: bulkSmsConfig,
     docReference: 'https://www.bulksms.com/developer/json/v1/',
     logoFileName: { light: 'bulk-sms.png', dark: 'bulk-sms.png' },
+  },
+  {
+    id: SmsProviderIdEnum.ISendSms,
+    displayName: 'iSend SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: iSendSmsConfig,
+    docReference: 'https://send.com.ly/developers/docs',
+    logoFileName: { light: 'isend-sms.png', dark: 'isend-sms.png' },
   },
   {
     id: SmsProviderIdEnum.Clickatell,

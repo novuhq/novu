@@ -1,7 +1,13 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
-import { AddressingTypeEnum, ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, IJwtPayload } from '@novu/shared';
+import {
+  AddressingTypeEnum,
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCostEnum,
+  IJwtPayload,
+  TriggerRequestCategoryEnum,
+} from '@novu/shared';
 import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
@@ -68,6 +74,7 @@ export class EventsController {
         tenant: body.tenant,
         transactionId: body.transactionId,
         addressingType: AddressingTypeEnum.MULTICAST,
+        requestCategory: TriggerRequestCategoryEnum.SINGLE,
       })
     );
 

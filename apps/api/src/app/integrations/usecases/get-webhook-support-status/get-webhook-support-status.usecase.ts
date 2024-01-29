@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { IntegrationEntity, IntegrationQuery, IntegrationRepository } from '@novu/dal';
 import { IEmailProvider, ISmsProvider } from '@novu/stateless';
 import { IMailHandler, ISmsHandler, MailFactory, SmsFactory } from '@novu/application-generic';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, providers } from '@novu/shared';
+
 import { GetWebhookSupportStatusCommand } from './get-webhook-support-status.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
@@ -15,14 +16,17 @@ export class GetWebhookSupportStatus {
   constructor(private integrationRepository: IntegrationRepository) {}
 
   async execute(command: GetWebhookSupportStatusCommand): Promise<boolean> {
-    const { providerId } = command;
-
     const integration = await this.getIntegration(command);
     if (!integration) {
-      throw new NotFoundException(`Integration for ${providerId} was not found`);
+      throw new NotFoundException(`Integration for ${command.providerOrIntegrationId} was not found`);
     }
 
-    const { channel } = integration;
+    const hasNoCredentials = !integration.credentials || Object.keys(integration.credentials).length === 0;
+    if (hasNoCredentials) {
+      throw new ApiException(`Integration ${integration._id} doesn't have credentials set up`);
+    }
+
+    const { channel, providerId } = integration;
     if (![ChannelTypeEnum.EMAIL, ChannelTypeEnum.SMS].includes(channel)) {
       throw new ApiException(`Webhook for ${providerId}-${channel} is not supported yet`);
     }
@@ -35,12 +39,20 @@ export class GetWebhookSupportStatus {
 
     return true;
   }
+
   private async getIntegration(command: GetWebhookSupportStatusCommand) {
-    return await this.integrationRepository.findOne({
+    const providerOrIntegrationId = command.providerOrIntegrationId;
+    const isProviderId = !!providers.find((el) => el.id === providerOrIntegrationId);
+
+    const query: IntegrationQuery = {
+      ...(isProviderId
+        ? { providerId: providerOrIntegrationId, credentials: { $exists: true } }
+        : { _id: providerOrIntegrationId }),
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
-      providerId: command.providerId,
-    });
+    };
+
+    return await this.integrationRepository.findOne(query);
   }
 
   private getHandler(integration: IntegrationEntity): ISmsHandler | IMailHandler | null {

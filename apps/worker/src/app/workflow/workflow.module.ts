@@ -31,6 +31,8 @@ import {
   TriggerMulticast,
   CompileInAppTemplate,
   WorkflowInMemoryProviderService,
+  getIsExecutionLogQueueEnabled,
+  ExecutionLogRoute,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -63,8 +65,8 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   try {
     if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-      if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
-        modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
+      if (require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers) {
+        modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers);
       }
     }
   } catch (e) {
@@ -123,6 +125,8 @@ const USE_CASES = [
   TriggerBroadcast,
   TriggerMulticast,
   CompileInAppTemplate,
+  ExecutionLogRoute,
+  getIsExecutionLogQueueEnabled,
 ];
 
 const PROVIDERS: Provider[] = [];

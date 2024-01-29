@@ -1,6 +1,6 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
-import { ApiServiceLevelEnum, MemberRoleEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateEnvironmentCommand } from '../../../environments/usecases/create-environment/create-environment.command';
@@ -37,7 +37,13 @@ export class CreateOrganization {
       logo: command.logo,
       name: command.name,
       apiServiceLevel: ApiServiceLevelEnum.FREE,
+      domain: command.domain,
+      productUseCases: command.productUseCases,
     });
+
+    if (command.jobTitle) {
+      await this.updateJobTitle(user, command.jobTitle);
+    }
 
     await this.addMemberUsecase.execute(
       AddMemberCommand.create({
@@ -94,5 +100,20 @@ export class CreateOrganization {
     );
 
     return organizationAfterChanges as OrganizationEntity;
+  }
+
+  private async updateJobTitle(user, jobTitle: JobTitleEnum) {
+    await this.userRepository.update(
+      {
+        _id: user._id,
+      },
+      {
+        $set: {
+          jobTitle: jobTitle,
+        },
+      }
+    );
+
+    this.analyticsService.setValue(user._id, 'jobTitle', jobTitle);
   }
 }

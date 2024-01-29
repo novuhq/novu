@@ -1,5 +1,5 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
-import { grafanaOnCallConfig, slackConfig, getstreamConfig } from '../credentials';
+import { grafanaOnCallConfig, slackConfig, getstreamConfig, rocketChatConfig } from '../credentials';
 
 import { ChatProviderIdEnum } from '../provider.enum';
 
@@ -69,5 +69,13 @@ export const chatProviders: IProviderConfig[] = [
     credentials: getstreamConfig,
     docReference: 'https://getstream.io/chat/docs/node/?language=javascript',
     logoFileName: { light: 'getstream.svg', dark: 'getstream.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.RocketChat,
+    displayName: 'Rocket.Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: rocketChatConfig,
+    docReference: 'https://developer.rocket.chat/reference/api/rest-api/endpoints',
+    logoFileName: { light: 'rocket-chat.svg', dark: 'rocket-chat.svg' },
   },
 ];

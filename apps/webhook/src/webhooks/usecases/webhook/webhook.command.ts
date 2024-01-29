@@ -5,7 +5,7 @@ import { WebhookTypes } from '../../interfaces/webhook.interface';
 
 export class WebhookCommand extends EnvironmentCommand {
   @IsDefined()
-  providerId: string;
+  providerOrIntegrationId: string;
 
   @IsDefined()
   body: any;

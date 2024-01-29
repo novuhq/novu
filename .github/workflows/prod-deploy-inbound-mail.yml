@@ -36,11 +36,6 @@ jobs:
       - name: build api
         run: pnpm build:inbound-mail
 
-      - name: Setup Depot
-        uses: depot/setup-action@v1
-        with:
-          oidc: true
-
       - name: Set Bull MQ Env variable for EE
         if: contains(matrix.name, 'ee')
         shell: bash
@@ -55,10 +50,9 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
-          DEPOT_PROJECT_ID: 6sj0jfv0n7
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/inbound-mail && pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | depot build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/inbound-mail - -t novu-inbound-mail --load
+          cd apps/inbound-mail && pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | docker build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/inbound-mail - -t novu-inbound-mail --load
           docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG

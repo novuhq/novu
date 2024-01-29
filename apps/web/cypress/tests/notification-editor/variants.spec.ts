@@ -21,7 +21,7 @@ describe('Workflow Editor - Variants', function () {
   };
 
   const fillInAppEditorContentWith = (text: string) => {
-    cy.get('.ace_text-input').first().clear({ force: true }).type(text, {
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').clear({ force: true }).type(text, {
       parseSpecialCharSequences: false,
       force: true,
     });
@@ -112,8 +112,9 @@ describe('Workflow Editor - Variants', function () {
   const checkEditorContent = (channel: Channel, isVariant = false) => {
     switch (channel) {
       case 'inApp':
-        cy.get('#codeEditor')
-          .first()
+        cy.get('.monaco-editor textarea:first')
+          .parent()
+          .click()
           .contains(isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
         break;
       case 'email':
@@ -136,7 +137,9 @@ describe('Workflow Editor - Variants', function () {
   const clearEditorContent = (channel: Channel) => {
     switch (channel) {
       case 'inApp':
-        cy.get('#codeEditor').first().clear();
+        cy.get('.monaco-editor textarea:first').parent().click().type('{cmd}a').find('textarea').clear({
+          force: true,
+        });
         break;
       case 'email':
         cy.getByTestId('emailSubject').clear();
@@ -281,7 +284,7 @@ describe('Workflow Editor - Variants', function () {
       editChannel('inApp');
       fillEditorContent('inApp');
 
-      cy.getByTestId('editor-sidebar-add-variant').should('be.visible').click();
+      cy.getByTestId('editor-sidebar-add-variant').click();
       addConditions();
       fillEditorContent('inApp', true);
       cy.getByTestId('notification-template-submit-btn').click();
@@ -301,7 +304,7 @@ describe('Workflow Editor - Variants', function () {
       editChannel(channel);
       fillEditorContent(channel);
 
-      cy.getByTestId('editor-sidebar-add-variant').should('be.visible').click();
+      cy.getByTestId('editor-sidebar-add-variant').click();
       addConditions();
       fillEditorContent(channel, true);
       goBack();
@@ -840,6 +843,40 @@ describe('Workflow Editor - Variants', function () {
       cy.reload();
       cy.wait('@getWorkflow');
       cy.getByTestId('variants-count').should('not.exist');
+    });
+
+    it('should not allow removing all conditions from a variant', function () {
+      createWorkflow('Test Removing All Conditions');
+
+      dragAndDrop('inApp');
+      editChannel('inApp');
+      fillEditorContent('inApp');
+      goBack();
+
+      showStepActions('inApp');
+      addVariantActionClick('inApp');
+      addConditions();
+
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      cy.reload();
+      cy.wait('@getWorkflow');
+
+      // edit the variant condition
+      cy.getByTestId('editor-sidebar-edit-conditions').click();
+
+      // open conditions row menu
+      cy.getByTestId('conditions-row-btn').click();
+
+      // delete the condition
+      cy.contains('Delete').click();
+
+      // submit ("Apply conditions") should be disabled
+      cy.getByTestId('apply-conditions-btn').should('be.disabled').click({ force: true });
+
+      // tooltip should warn the user
+      cy.get('div[role="tooltip"]').contains('At least one condition is required');
     });
   });
 
