@@ -987,14 +987,14 @@ export const genericSmsConfig: IConfigCredentials[] = [
     type: 'string',
     value: 'data.date',
     description: 'The path to the date field in the response data ex. (date, message.date, ...)',
-    required: true,
+    required: false,
   },
   {
     key: CredentialsKeyEnum.AuthenticateByToken,
     displayName: 'Authenticate by token',
     type: 'switch',
     description: 'If enabled, the API key and secret key will be sent as a token in the Authorization header',
-    required: true,
+    required: false,
   },
   {
     key: CredentialsKeyEnum.Domain,
