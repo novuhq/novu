@@ -23,7 +23,7 @@ const mockNovuMessage: ISmsOptions = {
 };
 
 const mockBrevoResponse = {
-  reference: 'ab1cde2fgh3i4jklmno',
+  reference: 'brevo-reference',
   messageId: 1511882900176220,
   smsCount: 2,
   usedCredits: 0.7,
