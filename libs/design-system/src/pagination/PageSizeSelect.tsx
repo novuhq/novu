@@ -12,8 +12,15 @@ const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   align-items: center;
   
   label {
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+
     /* TODO: use theme values */
-    margin-left: ${'0.5rem'}
+    margin-left: ${'0.5rem'};
   }
 `;
 });
@@ -22,13 +29,18 @@ const StyledSelect = styled(Select)(
   ({ theme }) => `
     max-width: 71px;
     input {
-        padding-left: 12px;
-        padding-right: 8px;
+      padding-left: 12px;
+      padding-right: 8px;
+      margin: 0;
+      min-height: inherit;
+      /** Explicitly set by designs */
+      height: 32px;
+      min-width: 44px;
     }
 
     input:not([type=hidden]) + div {
-        /* TODO: use theme value */
-        width: 20px;
+      /* TODO: use theme values */
+      width: 20px;
     }
 `
 );

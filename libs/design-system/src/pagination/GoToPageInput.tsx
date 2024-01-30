@@ -24,14 +24,23 @@ const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   align-items: center;
   
   input {
+    margin: 0;
+    min-height: inherit;
+    height: 32px;
     text-align: center;
     min-width: 56px;
     max-width: 60px;
   }
 
   label {
+    color: inherit;
+    font-size: inherit;
+    line-height: inherit;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
     /* TODO: use theme values */
-    margin-right: ${'0.5rem'}
+    margin-right: ${'0.5rem'};
   }
 `;
 });
