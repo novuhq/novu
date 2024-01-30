@@ -73,6 +73,7 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
       SmsProviderIdEnum.AzureSms,
       SmsProviderIdEnum.Bandwidth,
       SmsProviderIdEnum.Simpletexting,
+      SmsProviderIdEnum.BrevoSms,
     ].sort(),
   ],
 };

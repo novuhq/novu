@@ -60,6 +60,7 @@ import { SharedModule } from '../shared/shared.module';
 import { ACTIVE_WORKERS } from '../../config/worker-init.config';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
+import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -125,6 +126,7 @@ const USE_CASES = [
   TriggerBroadcast,
   TriggerMulticast,
   CompileInAppTemplate,
+  InboundEmailParse,
   ExecutionLogRoute,
   getIsExecutionLogQueueEnabled,
 ];
