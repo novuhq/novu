@@ -1,9 +1,10 @@
-FROM node:20-alpine3.16
+FROM node:20-alpine3.19
 
 ENV NX_DAEMON=false
 
 RUN npm install -g pnpm@8.9.0 --loglevel notice
 RUN npm i pm2 -g
+RUN apk --no-cache add curl g++ make py3-pip
 
 USER 1000
 WORKDIR /usr/src/app
