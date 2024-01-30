@@ -2,14 +2,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { OrganizationEntity, UserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
 import { SignUpOriginEnum } from '@novu/shared';
-import { AnalyticsService, AuthService } from '@novu/application-generic';
+import { AnalyticsService, AuthService, createHash } from '@novu/application-generic';
 
 import { UserRegisterCommand } from './user-register.command';
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
-import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()
 export class UserRegister {
