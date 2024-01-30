@@ -153,6 +153,7 @@ export class CreateNotificationTemplate {
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         item,
         changeId: parentChangeId,
+        action: ChangeEntityActionEnum.CREATE,
       })
     );
   }
@@ -389,6 +390,7 @@ export class CreateNotificationTemplate {
             organizationId: command.organizationId,
             userId: command.userId,
             changeId: FeedRepository.createObjectId(),
+            action: ChangeEntityActionEnum.CREATE,
           })
         );
       }
@@ -433,6 +435,7 @@ export class CreateNotificationTemplate {
           userId: command.userId,
           type: ChangeEntityTypeEnum.NOTIFICATION_GROUP,
           changeId: NotificationGroupRepository.createObjectId(),
+          action: ChangeEntityActionEnum.CREATE,
         })
       );
     }
