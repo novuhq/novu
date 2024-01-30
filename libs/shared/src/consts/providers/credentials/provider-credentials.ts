@@ -1063,3 +1063,13 @@ export const rocketChatConfig: IConfigCredentials[] = [
     required: true,
   },
 ];
+
+export const brevoSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
