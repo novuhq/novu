@@ -1,4 +1,5 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine as dev_base
+FROM node:20-alpine3.19 as dev_base
+RUN apk add g++ make py3-pip
 
 ARG BULL_MQ_PRO_TOKEN
 ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN

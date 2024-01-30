@@ -1,5 +1,5 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine as dev_base
-RUN apk --update --no-cache add curl
+FROM node:20-alpine3.19 as dev_base
+RUN apk --update --no-cache add curl g++ make py3-pip
 ENV NX_DAEMON=false
 
 ARG BULL_MQ_PRO_TOKEN

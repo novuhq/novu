@@ -1,5 +1,6 @@
 # start build stage
-FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine as builder
+FROM node:20-alpine3.19 as builder
+RUN apk add g++ make py3-pip
 ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
