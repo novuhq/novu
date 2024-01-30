@@ -77,7 +77,9 @@ export class GenericSmsProvider implements ISmsProvider {
 
     return {
       id: this.getResponseValue(this.config.idPath || 'id', responseData),
-      date: this.getResponseValue(this.config.datePath || 'date', responseData),
+      date:
+        this.getResponseValue(this.config.datePath || 'date', responseData) ||
+        new Date().toISOString(),
     };
   }
 

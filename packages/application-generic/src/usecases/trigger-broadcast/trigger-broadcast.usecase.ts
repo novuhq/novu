@@ -30,7 +30,7 @@ import { TriggerBroadcastCommand } from './trigger-broadcast.command';
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
 
 const LOG_CONTEXT = 'TriggerBroadcastUseCase';
-const QUEUE_CHUNK_SIZE = 100;
+const QUEUE_CHUNK_SIZE = Number(process.env.BROADCAST_QUEUE_CHUNK_SIZE) || 100;
 
 @Injectable()
 export class TriggerBroadcast {

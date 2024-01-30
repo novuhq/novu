@@ -1,6 +1,6 @@
 <div align="center">
-  👨‍💻 <a href="https://novuhq.notion.site/Careers-page-00bffbc69d8b44b790badfeadb7e44c5?utm_source=github" target="_blank">
-     We are hiring in Europe!</a> 👩‍💻
+  👨‍💻 <a href="https://jobs.ashbyhq.com/novu.co?utm_source=github" target="_blank">
+     We are hiring in Europe/UK/Israel!</a> 👩‍💻
 </div>
 <br/>
 <br/>

@@ -50,5 +50,4 @@ jobs:
       project_path: apps/widget
       local_tag: novu-widget
       env_tag: dev
-      depot_project_id: f88777ff6m
     secrets: inherit

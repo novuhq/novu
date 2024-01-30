@@ -5,9 +5,9 @@ import { Tabs } from '@novu/design-system';
 
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useActiveIntegrations, useEnvController } from '../../../../hooks';
-import { EmailCustomCodeEditor } from './EmailCustomCodeEditor';
 import { EmailInboxContent } from './EmailInboxContent';
 import { EmailMessageEditor } from './EmailMessageEditor';
+import { CustomCodeEditor } from '../CustomCodeEditor';
 
 const EDITOR = 'Editor';
 const CUSTOM_CODE = 'Custom Code';
@@ -45,7 +45,7 @@ export function EmailContentCard({ organization }: { organization: IOrganization
           defaultValue=""
           control={control}
           render={({ field }) => {
-            return <EmailCustomCodeEditor onChange={field.onChange} value={field.value} />;
+            return <CustomCodeEditor onChange={field.onChange} value={field.value} />;
           }}
         />
       ),

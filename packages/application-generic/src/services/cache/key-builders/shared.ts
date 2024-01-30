@@ -21,6 +21,22 @@ export const buildCommonKey = ({
   );
 
 /**
+ * Use this to build a key for entities that are scoped to an environment
+ */
+export const buildCommonEnvironmentKey = ({
+  type,
+  keyEntity,
+  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
+  environmentId,
+}: {
+  type: CacheKeyTypeEnum;
+  keyEntity: CacheKeyPrefixEnum;
+  environmentIdPrefix?: OrgScopePrefixEnum;
+  environmentId: string;
+}): string =>
+  prefixWrapper(`${type}:${keyEntity}:${environmentIdPrefix}=${environmentId}`);
+
+/**
  * Use this to build a key for entities that are unscoped (do not belong to a hierarchy)
  */
 export const buildKeyById = ({
@@ -47,6 +63,7 @@ export enum CacheKeyPrefixEnum {
   FEED = 'feed',
   SUBSCRIBER = 'subscriber',
   NOTIFICATION_TEMPLATE = 'notification_template',
+  WORKFLOW_VARIABLES = 'workflow_variables',
   USER = 'user',
   INTEGRATION = 'integration',
   ENVIRONMENT_BY_API_KEY = 'environment_by_api_key',
