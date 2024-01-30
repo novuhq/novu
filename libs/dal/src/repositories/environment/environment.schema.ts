@@ -23,6 +23,7 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
           type: Schema.Types.String,
           unique: true,
         },
+        hash: Schema.Types.String,
         _userId: {
           type: Schema.Types.ObjectId,
           ref: 'User',

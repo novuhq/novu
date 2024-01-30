@@ -46,11 +46,6 @@ jobs:
       - name: build worker
         run: pnpm build:worker --skip-nx-cache
 
-      - name: Setup Depot
-        uses: depot/setup-action@v1
-        with:
-          oidc: true
-
       - name: Set Bull MQ Env variable for EE
         if: contains(matrix.name, 'ee')
         shell: bash
@@ -65,10 +60,9 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
-          DEPOT_PROJECT_ID: 6sj0jfv0n7
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/worker && pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | depot build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load
+          cd apps/worker && pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | docker build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG

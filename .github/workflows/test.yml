@@ -96,6 +96,8 @@ jobs:
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
+    with:
+      ee: true
 
   test_widget:
     name: Test Widget Cypress

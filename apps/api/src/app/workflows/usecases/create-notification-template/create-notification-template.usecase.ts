@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
 
@@ -15,13 +15,15 @@ import {
   INotificationTrigger,
   TriggerTypeEnum,
   IStepVariant,
+  StepTypeEnum,
 } from '@novu/shared';
-import { AnalyticsService, CreateChange, CreateChangeCommand } from '@novu/application-generic';
+import { AnalyticsService, CreateChange, CreateChangeCommand, PlatformException } from '@novu/application-generic';
 
 import { CreateNotificationTemplateCommand, NotificationStepVariant } from './create-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
+import { ModuleRef } from '@nestjs/core';
 import { checkIsVariantEmpty } from '../../utils';
 
 /**
@@ -37,7 +39,8 @@ export class CreateNotificationTemplate {
     private notificationGroupRepository: NotificationGroupRepository,
     private feedRepository: FeedRepository,
     private createChange: CreateChange,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    protected moduleRef: ModuleRef
   ) {}
 
   async execute(usecaseCommand: CreateNotificationTemplateCommand) {
@@ -60,6 +63,18 @@ export class CreateNotificationTemplate {
     const storedWorkflow = await this.storeWorkflow(command, templateSteps, trigger, triggerIdentifier);
 
     await this.createWorkflowChange(command, storedWorkflow, parentChangeId);
+
+    try {
+      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+        if (!require('@novu/ee-translation')?.TranslationsService) {
+          throw new PlatformException('Translation module is not loaded');
+        }
+        const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
+        await service.createTranslationAnalytics(storedWorkflow);
+      }
+    } catch (e) {
+      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+    }
 
     return storedWorkflow;
   }
