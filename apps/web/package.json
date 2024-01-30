@@ -23,7 +23,7 @@
     "build-storybook": "storybook build -s public",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "link:submodules": "pnpm link ../../enterprise/packages/translation-web"
+    "link:submodules": "pnpm link ../../enterprise/packages/translation-web && pnpm link ../../enterprise/packages/billing-web"
   },
   "dependencies": {
     "@ant-design/icons": "4.6.2",
@@ -122,7 +122,8 @@
     "zod": "^3.22.4"
   },
   "optionalDependencies": {
-    "@novu/ee-translation-web": "^0.22.0"
+    "@novu/ee-translation-web": "^0.22.0",
+    "@novu/ee-billing-web": "^0.22.0"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",
