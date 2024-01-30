@@ -1,13 +1,17 @@
 import { Test } from '@nestjs/testing';
 
 import { StandardQueueService } from './standard-queue.service';
+import { BullMqService } from '../bull-mq';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 let standardQueueService: StandardQueueService;
 
 describe('Standard Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      standardQueueService = new StandardQueueService();
+      standardQueueService = new StandardQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await standardQueueService.queue.obliterate();
     });
 
@@ -31,7 +35,7 @@ describe('Standard Queue service', () => {
       );
       expect(standardQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(standardQueueService.topic).toEqual('standard');
-      expect(await standardQueueService.bullMqService.getStatus()).toEqual({
+      expect(await standardQueueService.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'standard',
         workerName: undefined,
@@ -65,7 +69,12 @@ describe('Standard Queue service', () => {
         _organizationId,
         _userId,
       };
-      await standardQueueService.add(jobId, jobData, _organizationId);
+
+      await standardQueueService.add({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await standardQueueService.queue.getActiveCount()).toEqual(0);
       expect(await standardQueueService.queue.getWaitingCount()).toEqual(1);
@@ -95,7 +104,12 @@ describe('Standard Queue service', () => {
         _organizationId,
         _userId,
       };
-      await standardQueueService.addMinimalJob(jobId, jobData, _organizationId);
+
+      await standardQueueService.add({
+        name: jobId,
+        data: jobData,
+        groupId: _organizationId,
+      });
 
       expect(await standardQueueService.queue.getActiveCount()).toEqual(0);
       expect(await standardQueueService.queue.getWaitingCount()).toEqual(1);
@@ -123,7 +137,9 @@ describe('Standard Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      standardQueueService = new StandardQueueService();
+      standardQueueService = new StandardQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await standardQueueService.queue.obliterate();
     });
 

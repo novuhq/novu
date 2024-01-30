@@ -1,19 +1,14 @@
 import {
   AnalyticsService,
-  BullMqService,
   CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
-  ReadinessService,
-  StandardQueueService,
-  SubscriberProcessQueueService,
-  WebSocketsQueueService,
-  WorkflowQueueService,
-  ExecutionLogQueueService,
 } from '../services';
 import {
+  GetIsApiIdempotencyEnabled,
   GetIsApiRateLimitingEnabled,
+  GetIsExecutionLogQueueEnabled,
   GetIsTopicNotificationEnabled,
   GetUseMergedDigestId,
 } from '../usecases';
@@ -64,21 +59,34 @@ export const getIsApiRateLimitingEnabled = {
   inject: [FeatureFlagsService],
 };
 
+export const getIsApiIdempotencyEnabled = {
+  provide: GetIsApiIdempotencyEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsApiIdempotencyEnabled> => {
+    const useCase = new GetIsApiIdempotencyEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
+export const getIsExecutionLogQueueEnabled = {
+  provide: GetIsExecutionLogQueueEnabled,
+  useFactory: async (
+    featureFlagsServiceItem: FeatureFlagsService
+  ): Promise<GetIsExecutionLogQueueEnabled> => {
+    const useCase = new GetIsExecutionLogQueueEnabled(featureFlagsServiceItem);
+
+    return useCase;
+  },
+  inject: [FeatureFlagsService],
+};
+
 export const cacheInMemoryProviderService = {
   provide: CacheInMemoryProviderService,
   useFactory: (): CacheInMemoryProviderService => {
     return new CacheInMemoryProviderService();
-  },
-};
-
-export const bullMqService = {
-  provide: BullMqService,
-  useFactory: async (): Promise<BullMqService> => {
-    const service = new BullMqService();
-
-    await service.initialize();
-
-    return service;
   },
 };
 
@@ -120,30 +128,4 @@ export const distributedLockService = {
 
     return service;
   },
-};
-
-export const bullMqTokenList = {
-  provide: 'BULLMQ_LIST',
-  useFactory: (
-    standardQueueService: StandardQueueService,
-    webSocketsQueueService: WebSocketsQueueService,
-    workflowQueueService: WorkflowQueueService,
-    subscriberProcessQueueService: SubscriberProcessQueueService,
-    executionLogQueueService: ExecutionLogQueueService
-  ) => {
-    return [
-      standardQueueService,
-      webSocketsQueueService,
-      workflowQueueService,
-      subscriberProcessQueueService,
-      executionLogQueueService,
-    ];
-  },
-  inject: [
-    StandardQueueService,
-    WebSocketsQueueService,
-    WorkflowQueueService,
-    SubscriberProcessQueueService,
-    ExecutionLogQueueService,
-  ],
 };

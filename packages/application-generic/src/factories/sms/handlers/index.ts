@@ -23,3 +23,5 @@ export * from './generic-sms.handler';
 export * from './messagebird.handler';
 export * from './azure-sms.handler';
 export * from './bulk-sms.handler';
+export * from './nexmo.handler';
+export * from './isend-sms.handler';

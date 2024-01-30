@@ -43,7 +43,7 @@ export abstract class QueueHealthIndicator
     }
 
     if (!checkActive) {
-      Logger.verbose(`${this.serviceName} is ready`, this.logContext);
+      Logger.log(`${this.serviceName} is ready`, this.logContext);
 
       return this.getStatus(this.indicatorKey, true);
     }
@@ -52,7 +52,7 @@ export abstract class QueueHealthIndicator
     const isActive = isReady && !isPaused;
 
     if (!isActive) {
-      Logger.verbose(`${this.serviceName} is not active`, this.logContext);
+      Logger.log(`${this.serviceName} is not active`, this.logContext);
 
       throw new HealthCheckError(
         `${this.serviceName} Health is not active`,
@@ -60,7 +60,7 @@ export abstract class QueueHealthIndicator
       );
     }
 
-    Logger.verbose(`${this.serviceName} is active`, this.logContext);
+    Logger.log(`${this.serviceName} is active`, this.logContext);
 
     return this.getStatus(this.indicatorKey, true);
   }

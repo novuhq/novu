@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import * as _ from 'lodash';
 
 import {
   IntegrationRepository,
@@ -8,8 +7,6 @@ import {
   JobRepository,
   NotificationTemplateRepository,
   SubscriberEntity,
-  SubscriberRepository,
-  NotificationTemplateEntity,
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
@@ -20,11 +17,7 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 
-import {
-  TriggerEventBroadcastCommand,
-  TriggerEventCommand,
-  TriggerEventMulticastCommand,
-} from './trigger-event.command';
+import { TriggerEventCommand } from './trigger-event.command';
 import {
   ProcessSubscriber,
   ProcessSubscriberCommand,
@@ -38,24 +31,27 @@ import {
 import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
 import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-recipients.use-case';
-import { MapTriggerRecipientsCommand } from '../map-trigger-recipients/map-trigger-recipients.command';
-import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
+import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
+import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
+import {
+  TriggerMulticast,
+  TriggerMulticastCommand,
+} from '../trigger-multicast';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
-const QUEUE_CHUNK_SIZE = 100;
 
 @Injectable()
 export class TriggerEvent {
   constructor(
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
-    private subscriberRepository: SubscriberRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private mapTriggerRecipients: MapTriggerRecipients,
-    private subscriberProcessQueueService: SubscriberProcessQueueService
+    private triggerBroadcast: TriggerBroadcast,
+    private triggerMulticast: TriggerMulticast
   ) {}
 
   @InstrumentUsecase()
@@ -64,7 +60,7 @@ export class TriggerEvent {
       const mappedCommand = {
         ...command,
         tenant: this.mapTenant(command.tenant),
-        actor: this.mapTriggerRecipients.mapSubscriber(command.actor),
+        actor: this.mapTriggerRecipients.mapActor(command.actor),
       };
 
       Logger.debug(mappedCommand.actor);
@@ -138,18 +134,39 @@ export class TriggerEvent {
         );
       }
 
-      if (
-        (mappedCommand as TriggerEventBroadcastCommand).addressingType ===
-        AddressingTypeEnum.BROADCAST
-      ) {
-        const broadcastCommand = mappedCommand as TriggerEventBroadcastCommand;
-        await this.triggerBroadcast(broadcastCommand, actorProcessed, template);
-
-        return;
+      switch (mappedCommand.addressingType) {
+        case AddressingTypeEnum.MULTICAST: {
+          await this.triggerMulticast.execute(
+            TriggerMulticastCommand.create({
+              ...mappedCommand,
+              actor: actorProcessed,
+              template,
+            })
+          );
+          break;
+        }
+        case AddressingTypeEnum.BROADCAST: {
+          await this.triggerBroadcast.execute(
+            TriggerBroadcastCommand.create({
+              ...mappedCommand,
+              actor: actorProcessed,
+              template,
+            })
+          );
+          break;
+        }
+        default: {
+          await this.triggerMulticast.execute(
+            TriggerMulticastCommand.create({
+              addressingType: AddressingTypeEnum.MULTICAST,
+              ...(mappedCommand as TriggerMulticastCommand),
+              actor: actorProcessed,
+              template,
+            })
+          );
+          break;
+        }
       }
-
-      const multicastCommand = mappedCommand as TriggerEventMulticastCommand;
-      await this.triggerMulticast(multicastCommand, actorProcessed, template);
     } catch (e) {
       Logger.error(
         {
@@ -245,116 +262,6 @@ export class TriggerEvent {
     return integration?.providerId as ProvidersIdEnum;
   }
 
-  private async triggerBroadcast(
-    command: TriggerEventBroadcastCommand,
-    actorProcessed: SubscriberEntity,
-    template: NotificationTemplateEntity
-  ) {
-    const subscriberFetchBatchSize = 500;
-    let subscribers: SubscriberEntity[] = [];
-
-    for await (const subscriber of this.subscriberRepository.findBatch(
-      {
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      'subscriberId',
-      {},
-      subscriberFetchBatchSize
-    )) {
-      subscribers.push(subscriber);
-      if (subscribers.length === subscriberFetchBatchSize) {
-        await this.sendToProcessSubscriberService(
-          command,
-          actorProcessed,
-          template,
-          subscribers
-        );
-        subscribers = [];
-      }
-    }
-
-    if (subscribers.length > 0) {
-      await this.sendToProcessSubscriberService(
-        command,
-        actorProcessed,
-        template,
-        subscribers
-      );
-    }
-  }
-
-  private async triggerMulticast(
-    command: TriggerEventMulticastCommand,
-    actorProcessed: SubscriberEntity,
-    template: NotificationTemplateEntity
-  ) {
-    const mappedRecipients = await this.mapTriggerRecipients.execute(
-      MapTriggerRecipientsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        recipients: command.to,
-        transactionId: command.transactionId,
-        userId: command.userId,
-        actor: actorProcessed,
-      })
-    );
-
-    await this.validateSubscriberIdProperty(mappedRecipients);
-
-    const jobs = this.mapSubscribersToJobs(
-      mappedRecipients,
-      command,
-      actorProcessed,
-      template
-    );
-
-    await this.subscriberProcessQueueAddBulk(jobs);
-  }
-
-  private async sendToProcessSubscriberService(
-    command: TriggerEventBroadcastCommand,
-    actorProcessed: SubscriberEntity,
-    template: NotificationTemplateEntity,
-    subscribers: { subscriberId: string }[]
-  ) {
-    const jobs = this.mapSubscribersToJobs(
-      subscribers,
-      command,
-      actorProcessed,
-      template
-    );
-
-    return await this.subscriberProcessQueueAddBulk(jobs);
-  }
-
-  private mapSubscribersToJobs(
-    subscribers: { subscriberId: string }[],
-    command: TriggerEventCommand,
-    actorProcessed,
-    template
-  ) {
-    return subscribers.map((subscriber) => {
-      return {
-        name: command.transactionId + subscriber.subscriberId,
-        data: {
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-          transactionId: command.transactionId,
-          identifier: command.identifier,
-          payload: command.payload,
-          overrides: command.overrides,
-          tenant: command.tenant,
-          ...(actorProcessed && { actor: actorProcessed }),
-          subscriber,
-          templateId: template._id,
-        },
-        groupId: command.organizationId,
-      };
-    });
-  }
-
   private mapTenant(tenant: TriggerTenantContext): ITenantDefine | null {
     if (!tenant) return null;
 
@@ -363,13 +270,5 @@ export class TriggerEvent {
     }
 
     return tenant;
-  }
-
-  private async subscriberProcessQueueAddBulk(jobs) {
-    return await Promise.all(
-      _.chunk(jobs, QUEUE_CHUNK_SIZE).map((chunk) =>
-        this.subscriberProcessQueueService.addBulk(chunk)
-      )
-    );
   }
 }

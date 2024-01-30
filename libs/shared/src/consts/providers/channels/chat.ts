@@ -1,5 +1,6 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
-import { grafanaOnCallConfig, slackConfig } from '../credentials';
+import { grafanaOnCallConfig, slackConfig, getstreamConfig, rocketChatConfig } from '../credentials';
+
 import { ChatProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
@@ -60,5 +61,21 @@ export const chatProviders: IProviderConfig[] = [
     credentials: [] as IConfigCredentials[],
     docReference: 'https://docs.novu.co/channels-and-providers/chat/zulip',
     logoFileName: { light: 'zulip.svg', dark: 'zulip.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.GetStream,
+    displayName: 'GetStream',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: getstreamConfig,
+    docReference: 'https://getstream.io/chat/docs/node/?language=javascript',
+    logoFileName: { light: 'getstream.svg', dark: 'getstream.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.RocketChat,
+    displayName: 'Rocket.Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: rocketChatConfig,
+    docReference: 'https://developer.rocket.chat/reference/api/rest-api/endpoints',
+    logoFileName: { light: 'rocket-chat.svg', dark: 'rocket-chat.svg' },
   },
 ];
