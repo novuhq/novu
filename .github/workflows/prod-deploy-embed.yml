@@ -42,5 +42,4 @@ jobs:
       project_path: libs/embed
       local_tag: novu-embed
       env_tag: prod
-      depot_project_id: f88777ff6m
     secrets: inherit
