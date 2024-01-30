@@ -25,17 +25,43 @@ export const getPaginationSymbols = ({
     return createArrayForRange(totalPageCount);
   }
 
-  const windowSize = getWindowSize({ totalPageCount, siblingCount, currentPageNumber });
-  const windowStart = getWindowStart({ currentPageNumber, windowSize, totalPageCount });
+  // determine if the current page is close enough to either end to omit the ellipsis
+  const windowRange = getWindowRange(siblingCount);
+  const isInRangeOfFirstPage = checkIfCurrentPageIsNearStart({ currentPageNumber, windowRange });
+  const isInRangeOfLastPage = checkIfCurrentPageIsNearEnd({
+    currentPageNumber,
+    windowRange,
+    totalPageCount,
+  });
+
+  // determine how many values to show (not inluding first and last)
+  const windowSize = getWindowSize({
+    totalPageCount,
+    siblingCount,
+    isInRangeOfFirstPage,
+    isInRangeOfLastPage,
+  });
+
+  /*
+   * determine where the window should start -- this behave differently depending on if
+   * the current page is in the middle or within range of either end
+   */
+  const windowStart = getWindowStart({
+    windowSize,
+    currentPageNumber,
+    totalPageCount,
+    isInRangeOfFirstPage,
+    isInRangeOfLastPage,
+  });
   const pageSymbols: PaginationSymbol[] = createArrayForRange(windowSize, windowStart);
 
   // add first page and ellipsis at the beginning
-  if (!checkIfCurrentPageIsNearStart({ currentPageNumber, windowSize })) {
+  if (!isInRangeOfFirstPage) {
     pageSymbols.unshift('ELLIPSIS');
   }
 
   // add ellipsis and last page at the end
-  if (!checkIfCurrentPageIsNearEnd({ currentPageNumber, windowSize, totalPageCount })) {
+  if (!isInRangeOfLastPage) {
     pageSymbols.push('ELLIPSIS');
   }
 
@@ -58,36 +84,51 @@ function createArrayForRange(length: number, baseValue = 1) {
 /** Determines if the current page is within a range of the totalPageCount */
 function checkIfCurrentPageIsNearEnd({
   currentPageNumber,
-  windowSize,
+  windowRange,
   totalPageCount,
-}: Omit<TGetPaginationSymbolsParams, 'siblingCount'> & { windowSize: number }) {
-  return totalPageCount - currentPageNumber < windowSize;
+}: Omit<TGetPaginationSymbolsParams, 'siblingCount'> & { windowRange: number }) {
+  return totalPageCount - currentPageNumber < windowRange;
 }
 
 /** Determines if the current page is within a range of the first page */
 function checkIfCurrentPageIsNearStart({
   currentPageNumber,
-  windowSize,
-}: Omit<TGetPaginationSymbolsParams, 'siblingCount' | 'totalPageCount'> & { windowSize: number }) {
-  return currentPageNumber - FIRST_PAGE_NUMBER < windowSize;
+  windowRange,
+}: Omit<TGetPaginationSymbolsParams, 'siblingCount' | 'totalPageCount'> & { windowRange: number }) {
+  return currentPageNumber - FIRST_PAGE_NUMBER < windowRange;
 }
 
-/** Determines the quantity of page numbers to show, ignoring the first and last pages */
-function getWindowSize({ siblingCount, currentPageNumber, totalPageCount }: TGetPaginationSymbolsParams) {
+interface TInPaginationRangeParams {
+  isInRangeOfFirstPage: boolean;
+  isInRangeOfLastPage: boolean;
+}
+
+/** Determines the quantity of page numbers to show, ignoring the first and last pages (which are always shown) */
+function getWindowSize({
+  siblingCount,
+  totalPageCount,
+  isInRangeOfFirstPage,
+  isInRangeOfLastPage,
+}: Omit<TGetPaginationSymbolsParams, 'currentPageNumber'> & TInPaginationRangeParams) {
   if (totalPageCount <= MAX_PAGE_COUNT_WITHOUT_ELLIPSIS) {
     return totalPageCount;
   }
 
+  // window size in the middle of the range
   const windowSize = siblingCount * 2 + 1;
 
   // determine if there's it's necessary to subsititute the ellipsis with an additional page number
-  const numReplacementSlots =
-    checkIfCurrentPageIsNearEnd({ currentPageNumber, windowSize, totalPageCount }) ||
-    checkIfCurrentPageIsNearStart({ currentPageNumber, windowSize })
-      ? 1
-      : 0;
+  const numReplacementSlots = isInRangeOfFirstPage || isInRangeOfLastPage ? 1 : 0;
 
   return windowSize + numReplacementSlots;
+}
+
+/**
+ * Gets the "distance" within which the current page number is considered to be in range of the first or last page.
+ * This stems from replicating MaterialUI's implementation which has multiple layers of nuance.
+ */
+function getWindowRange(siblingCount: number) {
+  return siblingCount * 2 + (3 - siblingCount);
 }
 
 /**
@@ -96,13 +137,17 @@ function getWindowSize({ siblingCount, currentPageNumber, totalPageCount }: TGet
  * For example, if the goal is to display 3 4 5 6 7, this function will return 3.
  */
 function getWindowStart({
-  currentPageNumber,
   windowSize,
+  currentPageNumber,
   totalPageCount,
-}: Omit<TGetPaginationSymbolsParams, 'siblingCount'> & { windowSize: number }) {
-  if (checkIfCurrentPageIsNearEnd({ currentPageNumber, windowSize, totalPageCount })) {
+  isInRangeOfFirstPage,
+  isInRangeOfLastPage,
+}: Omit<TGetPaginationSymbolsParams, 'siblingCount'> & {
+  windowSize: number;
+} & TInPaginationRangeParams) {
+  if (isInRangeOfLastPage) {
     return totalPageCount - windowSize;
-  } else if (checkIfCurrentPageIsNearStart({ currentPageNumber, windowSize })) {
+  } else if (isInRangeOfFirstPage) {
     return FIRST_PAGE_NUMBER + 1;
   }
   const windowOffset = Math.ceil(windowSize / 2) - 1;

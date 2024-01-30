@@ -78,4 +78,334 @@ describe(getPaginationSymbols.name, () => {
       500,
     ] as PaginationSymbol[]);
   });
+
+  describe('1 sibling', () => {
+    const siblingCount = 1;
+    const totalPageCount = 100;
+    it('should work within the window of the first page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 4, siblingCount })).toEqual([
+        1,
+        2,
+        3,
+        4,
+        5,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work near, but not in window of the first page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 5, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        4,
+        5,
+        6,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work in the middle-ish', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 20, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        19,
+        20,
+        21,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work near, but not in window of the last page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 96, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        95,
+        96,
+        97,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work within the window of the last page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 97, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        96,
+        97,
+        98,
+        99,
+        100,
+      ] as PaginationSymbol[]);
+    });
+  });
+
+  describe('3 siblings', () => {
+    const siblingCount = 3;
+    const totalPageCount = 100;
+    it('should work within the window of the first page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 6, siblingCount })).toEqual([
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work near, but not in window of the first page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 7, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work in the middle-ish', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 20, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work near, but not in window of the last page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 94, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work within the window of the last page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 95, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+      ] as PaginationSymbol[]);
+    });
+  });
+
+  describe('4 siblings', () => {
+    const siblingCount = 4;
+    const totalPageCount = 100;
+    it('should work within the window of the first page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 7, siblingCount })).toEqual([
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work near, but not in window of the first page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 8, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work in the middle-ish', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 20, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work near, but not in window of the last page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 93, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work within the window of the last page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 94, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+      ] as PaginationSymbol[]);
+    });
+  });
+
+  describe('5 siblings', () => {
+    const siblingCount = 5;
+    const totalPageCount = 100;
+    it('should work within the window of the first page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 8, siblingCount })).toEqual([
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work near, but not in window of the first page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 9, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work in the middle-ish', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 20, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        23,
+        24,
+        25,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work near, but not in window of the last page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 92, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        87,
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        'ELLIPSIS',
+        100,
+      ] as PaginationSymbol[]);
+    });
+    it('should work within the window of the last page', () => {
+      expect(getPaginationSymbols({ totalPageCount, currentPageNumber: 93, siblingCount })).toEqual([
+        1,
+        'ELLIPSIS',
+        88,
+        89,
+        90,
+        91,
+        92,
+        93,
+        94,
+        95,
+        96,
+        97,
+        98,
+        99,
+        100,
+      ] as PaginationSymbol[]);
+    });
+  });
 });
