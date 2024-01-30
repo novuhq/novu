@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { StepTypeEnum } from '@novu/shared';
-import { FeedRepository, MessageTemplateRepository, NotificationTemplateRepository } from '@novu/dal';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum, StepTypeEnum } from '@novu/shared';
+import { ChangeRepository, FeedRepository, MessageTemplateRepository, NotificationTemplateRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto } from '../../workflows/dto';
 
 describe('Delete A Feed - /feeds (POST)', async () => {
@@ -9,6 +9,7 @@ describe('Delete A Feed - /feeds (POST)', async () => {
   let feedRepository = new FeedRepository();
   let notificationTemplateRepository = new NotificationTemplateRepository();
   let messageTemplateRepository: MessageTemplateRepository = new MessageTemplateRepository();
+  const changeRepository: ChangeRepository = new ChangeRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -75,6 +76,23 @@ describe('Delete A Feed - /feeds (POST)', async () => {
     });
 
     await session.testAgent.delete(`/v1/feeds/${feed._id}`).send();
+
+    const changes = await changeRepository.find(
+      {
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        enabled: false,
+        _entityId: feed._id,
+        type: ChangeEntityTypeEnum.FEED,
+      },
+      '',
+      {
+        sort: { createdAt: 1 },
+      }
+    );
+
+    expect(changes.length).to.be.equal(1);
+    expect(changes[0].action).to.be.equal(ChangeEntityActionEnum.DELETE);
 
     await session.applyChanges({
       enabled: false,

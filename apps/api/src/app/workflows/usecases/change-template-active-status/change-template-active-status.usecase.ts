@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateEntity, NotificationTemplateRepository, ChangeRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum } from '@novu/shared';
 import {
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
@@ -83,6 +83,7 @@ export class ChangeTemplateActiveStatus {
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         item,
         changeId: parentChangeId,
+        action: ChangeEntityActionEnum.UPDATE,
       })
     );
 

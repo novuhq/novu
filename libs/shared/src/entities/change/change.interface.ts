@@ -8,3 +8,9 @@ export enum ChangeEntityTypeEnum {
   TRANSLATION_GROUP = 'TranslationGroup',
   TRANSLATION = 'Translation',
 }
+
+export enum ChangeEntityActionEnum {
+  CREATE = 'Create',
+  UPDATE = 'Update',
+  DELETE = 'Delete',
+}

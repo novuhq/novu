@@ -2,7 +2,7 @@
 
 import { Injectable } from '@nestjs/common';
 import { ChangeRepository, DalException, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 import {
@@ -95,6 +95,7 @@ export class DeleteNotificationTemplate {
           item: item,
           type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
           changeId: parentChangeId,
+          action: ChangeEntityActionEnum.DELETE,
         })
       );
 

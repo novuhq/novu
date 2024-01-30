@@ -12,6 +12,7 @@ import {
   IFieldFilterPart,
   FilterPartTypeEnum,
   EmailProviderIdEnum,
+  ChangeEntityActionEnum,
   ChangeEntityTypeEnum,
 } from '@novu/shared';
 import {
@@ -172,11 +173,16 @@ describe('Create Workflow - /workflows (POST)', async () => {
     });
     await session.testAgent.post(`/v1/changes/${change?._id}/apply`);
 
+    expect(change?.action).to.be.equal(ChangeEntityActionEnum.CREATE);
+
     change = await changeRepository.findOne({
       _environmentId: session.environment._id,
       _entityId: templateRequestResult._id,
     });
+
     await session.testAgent.post(`/v1/changes/${change?._id}/apply`);
+
+    expect(change?.action).to.be.equal(ChangeEntityActionEnum.CREATE);
 
     const prodEnv = await getProductionEnvironment();
 
@@ -472,6 +478,8 @@ describe('Create Workflow - /workflows (POST)', async () => {
 
     const change = await changeRepository.findOne({ _environmentId: session.environment._id, _entityId: template._id });
     await session.testAgent.post(`/v1/changes/${change?._id}/apply`);
+
+    expect(change?.action).to.be.equal(ChangeEntityActionEnum.DELETE);
 
     const prodEnv = await getProductionEnvironment();
 

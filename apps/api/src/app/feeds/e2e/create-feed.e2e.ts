@@ -1,12 +1,13 @@
 import { expect } from 'chai';
 import { UserSession } from '@novu/testing';
-import { StepTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum, StepTypeEnum } from '@novu/shared';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
-import { FeedRepository } from '@novu/dal';
+import { ChangeRepository, FeedRepository } from '@novu/dal';
 
 describe('Create A Feed - /feeds (POST)', async () => {
   let session: UserSession;
   const feedRepository: FeedRepository = new FeedRepository();
+  const changeRepository: ChangeRepository = new ChangeRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -54,6 +55,23 @@ describe('Create A Feed - /feeds (POST)', async () => {
     };
 
     await session.testAgent.post(`/v1/workflows`).send(testTemplate);
+
+    const changes = await changeRepository.find(
+      {
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+        enabled: false,
+        _entityId: feed._id,
+        type: ChangeEntityTypeEnum.FEED,
+      },
+      '',
+      {
+        sort: { createdAt: 1 },
+      }
+    );
+
+    expect(changes.length).to.be.equal(1);
+    expect(changes[0].action).to.be.equal(ChangeEntityActionEnum.CREATE);
 
     await session.applyChanges({
       enabled: false,

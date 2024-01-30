@@ -13,6 +13,9 @@ const changeSchema = new Schema<ChangeDBModel>(
     type: {
       type: Schema.Types.String,
     },
+    action: {
+      type: Schema.Types.String,
+    },
     change: Schema.Types.Mixed,
     _environmentId: {
       type: Schema.Types.ObjectId,

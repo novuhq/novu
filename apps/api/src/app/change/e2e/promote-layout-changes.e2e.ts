@@ -2,6 +2,7 @@
 import { expect } from 'chai';
 import { ChangeRepository, EnvironmentRepository, LayoutRepository } from '@novu/dal';
 import {
+  ChangeEntityActionEnum,
   ChangeEntityTypeEnum,
   ITemplateVariable,
   LayoutDescription,
@@ -69,6 +70,7 @@ describe('Promote Layout Changes', () => {
     );
 
     expect(changes.length).to.eql(1);
+    expect(changes[0].action).to.be.equal(ChangeEntityActionEnum.CREATE);
     expect(changes[0]._entityId).to.eql(layoutId);
     expect(changes[0].type).to.eql(ChangeEntityTypeEnum.DEFAULT_LAYOUT);
     expect(changes[0].change).to.deep.include({ op: 'add', path: ['_id'], val: layoutId });
@@ -160,6 +162,7 @@ describe('Promote Layout Changes', () => {
     );
 
     expect(changes.length).to.eql(1);
+    expect(changes[0].action).to.be.equal(ChangeEntityActionEnum.UPDATE);
     expect(changes[0]._entityId).to.eql(layoutId);
     expect(changes[0].type).to.eql(ChangeEntityTypeEnum.LAYOUT);
     expect(changes[0].change).to.deep.include.members([
@@ -264,6 +267,7 @@ describe('Promote Layout Changes', () => {
     );
 
     expect(changes.length).to.eql(1);
+    expect(changes[0].action).to.be.equal(ChangeEntityActionEnum.CREATE);
     expect(changes[0]._entityId).to.eql(layoutId);
     expect(changes[0].type).to.eql(ChangeEntityTypeEnum.LAYOUT);
     expect(changes[0].change).to.deep.include({ op: 'add', path: ['_id'], val: layoutId });
@@ -294,6 +298,7 @@ describe('Promote Layout Changes', () => {
     );
 
     expect(deletionChanges.length).to.eql(1);
+    expect(deletionChanges[0].action).to.be.equal(ChangeEntityActionEnum.DELETE);
     expect(deletionChanges[0]._entityId).to.eql(layoutId);
     expect(deletionChanges[0].type).to.eql(ChangeEntityTypeEnum.LAYOUT);
     expect(deletionChanges[0].change).to.deep.include.members([

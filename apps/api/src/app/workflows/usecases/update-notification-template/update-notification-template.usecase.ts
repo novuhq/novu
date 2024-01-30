@@ -8,7 +8,7 @@ import {
   NotificationTemplateRepository,
   StepVariantEntity,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, StepTypeEnum } from '@novu/shared';
+import { ChangeEntityActionEnum, ChangeEntityTypeEnum } from '@novu/shared';
 import {
   AnalyticsService,
   buildNotificationTemplateIdentifierKey,
@@ -191,6 +191,7 @@ export class UpdateNotificationTemplate {
         type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
         item: notificationTemplate,
         changeId: parentChangeId,
+        action: ChangeEntityActionEnum.UPDATE,
       })
     );
 
