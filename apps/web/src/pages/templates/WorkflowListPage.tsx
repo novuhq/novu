@@ -43,6 +43,7 @@ import { TemplateCreationSourceEnum } from './shared';
 import { TemplatesListNoDataOld } from './TemplatesListNoDataOld';
 import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { When } from '../../components/utils/When';
+import { ListPage } from './ListPage';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -202,8 +203,7 @@ function WorkflowListPage() {
   }
 
   return (
-    <PageContainer title="Workflows">
-      <PageHeader title="Workflows" />
+    <ListPage title="Workflows">
       <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         {isTemplateStoreEnabled ? (
           <div>
@@ -285,7 +285,7 @@ function WorkflowListPage() {
         )}
         <TemplatesStoreModal />
       </TemplateListTableWrapper>
-    </PageContainer>
+    </ListPage>
   );
 }
 
