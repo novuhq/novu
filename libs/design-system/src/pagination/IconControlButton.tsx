@@ -4,12 +4,12 @@ import { colors } from '../config';
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getFontColor = ({ theme }: { theme: any }): string => {
-  return theme.colorScheme !== 'light' ? colors.white : 'black';
+  return theme.colorScheme === 'dark' ? colors.white : 'black';
 };
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getDisabledFontColor = ({ theme }: { theme: any }): string => {
-  return theme.colorScheme !== 'light' ? colors.B40 : colors.B80;
+  return theme.colorScheme === 'dark' ? colors.B40 : colors.B80;
 };
 
 export type IconControlButtonProps = Omit<IControlButtonProps, 'isCurrentPage'>;

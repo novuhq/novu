@@ -22,7 +22,7 @@ const PaginationWrapper = styled.div(
      * TODO: use theme values for all styles below.
      * Should be enforced for all child elements as these are in the design system.
      */
-    color: ${theme.colorScheme !== 'light' ? colors.B60 : colors.B40};
+    color: ${theme.colorScheme === 'dark' ? colors.B60 : colors.B40};
     font-size: ${mantineConfig.fontSizes.md}px;
     line-height: 20px;
 

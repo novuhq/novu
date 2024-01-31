@@ -10,7 +10,7 @@ type StylingProps = Pick<IControlButtonProps, 'isCurrentPage'>;
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getFontColor = ({ theme, isCurrentPage }: { theme: any } & StylingProps): string => {
-  return theme.colorScheme !== 'light'
+  return theme.colorScheme === 'dark'
     ? isCurrentPage
       ? colors.white
       : colors.B60
@@ -26,7 +26,7 @@ const getFontWeight = ({ theme, isCurrentPage }: { theme: any } & StylingProps):
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getBackgroundColor = ({ theme, isCurrentPage }: { theme: any } & StylingProps): CSSProperties['fontWeight'] => {
-  return isCurrentPage ? (theme.colorScheme !== 'light' ? colors.B30 : colors.BGLight) : 'none';
+  return isCurrentPage ? (theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight) : 'none';
 };
 
 const StyledButton = styled(Button)<StylingProps>(
