@@ -18,6 +18,9 @@ export function dragAndDrop(channel: Channel, dropTestId = 'addNodeButton') {
 
 export function editChannel(channel: Channel, last = false) {
   cy.clickWorkflowNode(`node-${channel}Selector`, last);
+  if (['inApp', 'email', 'sms', 'chat', 'push'].includes(channel)) {
+    cy.getByTestId('edit-action').click();
+  }
 }
 
 export function goBack() {
