@@ -1,1 +1,1 @@
-export * from './feature-flag.util';
+export * from './feature-flags.util';

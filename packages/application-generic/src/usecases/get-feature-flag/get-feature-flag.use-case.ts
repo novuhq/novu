@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 
 import { GetFeatureFlagCommand } from './get-feature-flag.command';
 import { FeatureFlagsService } from '../../services';
+import { prepareBooleanStringFeatureFlag } from '@novu/shared';
 
 @Injectable()
 export class GetFeatureFlag {
@@ -9,22 +10,11 @@ export class GetFeatureFlag {
 
   async execute(command: GetFeatureFlagCommand): Promise<boolean> {
     const value = process.env[command.key];
-    const defaultValue = this.prepareBooleanStringFeatureFlag(value, false);
+    const defaultValue = prepareBooleanStringFeatureFlag(value, false);
 
     return await this.featureFlagsService.getWithContext({
       ...command,
       defaultValue,
     });
-  }
-
-  protected prepareBooleanStringFeatureFlag(
-    value: string | undefined,
-    defaultValue: boolean
-  ): boolean {
-    if (!value) {
-      return defaultValue;
-    }
-
-    return value === 'true';
   }
 }
