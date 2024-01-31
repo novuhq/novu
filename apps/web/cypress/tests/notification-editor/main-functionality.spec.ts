@@ -13,10 +13,16 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.waitForNetworkIdle(500);
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
-    cy.get('.ace_text-input').first().type('{{firstName}} someone assigned you to {{taskName}}', {
-      parseSpecialCharSequences: false,
-      force: true,
-    });
+
+    cy.get('.monaco-editor textarea:first', { timeout: 7000 })
+      .parent()
+      .click()
+      .find('textarea')
+      .type('{{firstName}} someone assigned you to {{taskName}}', {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
+
     goBack();
     cy.waitForNetworkIdle(500);
 
@@ -34,7 +40,11 @@ describe('Workflow Editor - Main Functionality', function () {
 
     editChannel('inApp');
     cy.waitForNetworkIdle(500);
-    cy.get('.ace_text-layer').first().contains('{{firstName}} someone assigned you to {{taskName}}');
+    cy.get('.monaco-editor textarea:first')
+      .parent()
+      .click()
+      .contains('{{firstName}} someone assigned you to {{taskName}}');
+
     goBack();
     cy.waitForNetworkIdle(500);
     editChannel('email');
@@ -53,9 +63,10 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.waitForNetworkIdle(500);
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
-    cy.get('.ace_text-input').first().type('new content for notification', {
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type('new content for notification', {
       force: true,
     });
+
     cy.getByTestId('enable-add-avatar').click();
     cy.getByTestId('choose-avatar-btn').click();
     cy.getByTestId('avatar-icon-info').click();
@@ -79,7 +90,7 @@ describe('Workflow Editor - Main Functionality', function () {
     editChannel('inApp');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.ace_text-layer').first().contains('Test content for <b>{{firstName}}</b>');
+    cy.get('.monaco-editor textarea:first').parent().click().contains('Test content for <b>{{firstName}}</b>');
 
     goBack();
     cy.waitForNetworkIdle(500);
@@ -92,8 +103,11 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('use-feeds-checkbox').click();
     cy.getByTestId('feed-button-1').click({ force: true });
 
-    cy.get('.ace_text-input')
-      .first()
+    cy.get('.monaco-editor textarea:first')
+      .parent()
+      .click()
+      .type('{cmd}a')
+      .find('textarea')
       .clear({
         force: true,
       })
@@ -334,12 +348,18 @@ describe('Workflow Editor - Main Functionality', function () {
       .find('.mantine-Tabs-tabsList')
       .contains('Custom Code', { matchCase: false })
       .click();
-    cy.get('#codeEditor').type('Hello world code {{name}} <div>Test', { parseSpecialCharSequences: false });
+
+    cy.get('.monaco-editor textarea:first')
+      .parent()
+      .click()
+      .find('textarea')
+      .type('Hello world code {{name}} <div>Test</div>', { parseSpecialCharSequences: false, force: true });
 
     goBack();
 
     editChannel('email');
-    cy.get('#codeEditor').contains('Hello world code {{name}} <div>Test</div>');
+
+    cy.get('.monaco-editor textarea:first').parent().click().contains('Hello world code {{name}} <div>Test</div>');
   });
 
   it('should redirect to dev env for edit template', function () {
@@ -396,7 +416,7 @@ describe('Workflow Editor - Main Functionality', function () {
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.ace_text-input').first().type('Text content', {
+    cy.get('.monaco-editor textarea:first', { timeout: 7000 }).parent().click().find('textarea').type('Text content', {
       force: true,
     });
 
@@ -448,7 +468,7 @@ describe('Workflow Editor - Main Functionality', function () {
     fillBasicNotificationDetails('Test notification');
 
     addAndEditChannel('inApp');
-    cy.get('.ace_text-input').first().type('Test in-app', {
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type('Test in-app', {
       force: true,
     });
 

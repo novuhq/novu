@@ -26,6 +26,7 @@ import {
   azureSmsConfig,
   bulkSmsConfig,
   iSendSmsConfig,
+  brevoSmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -251,5 +252,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: azureSmsConfig,
     docReference: 'https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/sms/receive-sms',
     logoFileName: { light: 'azure-sms.png', dark: 'azure-sms.png' },
+  },
+  {
+    id: SmsProviderIdEnum.BrevoSms,
+    displayName: `Brevo`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: brevoSmsConfig,
+    docReference: 'https://developers.brevo.com/reference/sendtransacsms',
+    logoFileName: { light: 'brevo.svg', dark: 'brevo.svg' },
   },
 ];

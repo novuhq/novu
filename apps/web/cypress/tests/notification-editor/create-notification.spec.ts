@@ -21,10 +21,14 @@ describe('Creation functionality', function () {
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.ace_text-input').first().type('<p>{{firstName}} someone assigned you to {{taskName}}', {
-      parseSpecialCharSequences: false,
-      force: true,
-    });
+    cy.get('.monaco-editor textarea:first', { timeout: 10000 })
+      .parent()
+      .click()
+      .find('textarea')
+      .type('<p>{{firstName}} someone assigned you to {{taskName}}', {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
     cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('editor-mode-switch').find('label').last().click();
     cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName');
@@ -57,8 +61,10 @@ describe('Creation functionality', function () {
     cy.waitForNetworkIdle(500);
 
     // put the multiline notification message
-    cy.get('.ace_text-input')
-      .first()
+    cy.get('.monaco-editor textarea:first')
+      .parent()
+      .click()
+      .find('textarea')
       .type('{{firstName}} someone assigned you to {{taskName}}', {
         parseSpecialCharSequences: false,
         force: true,
@@ -131,13 +137,16 @@ describe('Creation functionality', function () {
     cy.getByTestId('emailSubject').type('this is email subject');
     cy.getByTestId('emailPreheader').type('this is email preheader');
 
-    cy.getByTestId('var-label').first().contains('System Variables');
+    cy.getByTestId('var-label').first().contains('System Variables').click();
     cy.getByTestId('var-label').last().contains('Step Variables');
-    cy.getByTestId('var-items-step').contains('step').contains('object');
+    cy.getByTestId('var-items-step').contains('step');
+    cy.getByTestId('var-items-step').contains('object');
     cy.getByTestId('var-items-branding').contains('branding');
     cy.getByTestId('var-items-subscriber').contains('subscriber');
-    cy.getByTestId('var-item-firstName-string').contains('firstName').contains('string');
-    cy.getByTestId('var-item-customVariable-string').contains('customVariable').contains('string');
+    cy.getByTestId('var-item-firstName-string').contains('firstName');
+    cy.getByTestId('var-item-firstName-string').contains('string');
+    cy.getByTestId('var-item-customVariable-string').contains('customVariable');
+    cy.getByTestId('var-item-customVariable-string').contains('string');
     cy.getByTestId('var-items-subscriber').click();
     cy.getByTestId('var-item-phone-string').contains('string');
 
@@ -244,7 +253,8 @@ describe('Creation functionality', function () {
       parseSpecialCharSequences: false,
     });
 
-    cy.getByTestId('var-items-array').contains('array').contains('object');
+    cy.getByTestId('var-items-array').contains('array');
+    cy.getByTestId('var-items-array').contains('object');
   });
 
   it('should create email notification', function () {

@@ -8,7 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "tsc -p tsconfig.json",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | docker build --build-arg PACKAGE_PATH=apps/inbound-mail - -t novu-inbound-mail",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/inbound-mail - -t novu-inbound-mail",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nodemon",
     "start:dev": "nodemon",

@@ -35,6 +35,8 @@
     "@novu/shared": "0.22.0",
     "@novu/shared-web": "0.22.0",
     "@tanstack/react-query": "^4.20.4",
+    "@monaco-editor/react": "^4.6.0",
+    "monaco-editor": "^0.45.0",
     "axios": "^1.4.0",
     "slugify": "^1.4.6",
     "date-fns": "^2.29.2",
@@ -43,7 +45,8 @@
     "eslint": "^8.33.0",
     "eslint-plugin-react-hooks": "^4.4.0",
     "tslib": "^2.3.1",
-    "@mantine/prism": "^5.7.1"
+    "@mantine/prism": "^5.7.1",
+    "@handlebars/parser": "^2.1.0"
   },
   "devDependencies": {
     "@types/node": "^18.11.12",

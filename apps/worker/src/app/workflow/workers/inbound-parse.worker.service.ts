@@ -16,9 +16,9 @@ import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inboun
 const LOG_CONTEXT = 'InboundParseQueueService';
 
 @Injectable()
-export class InboundParseWorkerService extends WorkerBaseService {
+export class InboundParseWorker extends WorkerBaseService {
   constructor(
-    private emailParseUsecase: InboundEmailParse,
+    private inboundEmailParseUsecase: InboundEmailParse,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService
   ) {
     super(JobTopicNameEnum.INBOUND_PARSE_MAIL, new BullMqService(workflowInMemoryProviderService));
@@ -33,7 +33,7 @@ export class InboundParseWorkerService extends WorkerBaseService {
   public getWorkerProcessor() {
     return async ({ data }: { data: IInboundParseDataDto }) => {
       Logger.verbose({ data }, 'Processing the inbound parsed email', LOG_CONTEXT);
-      await this.emailParseUsecase.execute(InboundEmailParseCommand.create({ ...data }));
+      await this.inboundEmailParseUsecase.execute(InboundEmailParseCommand.create({ ...data }));
     };
   }
 }

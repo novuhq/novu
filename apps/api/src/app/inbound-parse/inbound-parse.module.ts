@@ -3,13 +3,11 @@ import { CompileTemplate, WorkflowInMemoryProviderService } from '@novu/applicat
 
 import { USE_CASES } from './usecases';
 import { InboundParseController } from './inbound-parse.controller';
-import { GetMxRecord } from './usecases/get-mx-record/get-mx-record.usecase';
 
 import { SharedModule } from '../shared/shared.module';
 import { AuthModule } from '../auth/auth.module';
-import { InboundParseWorkerService } from './services/inbound-parse.worker.service';
 
-const PROVIDERS = [GetMxRecord, CompileTemplate, InboundParseWorkerService];
+const PROVIDERS = [CompileTemplate];
 
 const memoryQueueService = {
   provide: WorkflowInMemoryProviderService,
