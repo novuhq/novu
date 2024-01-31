@@ -214,7 +214,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
     cy.getByTestId('add-new-condition').click();
 
     cy.getByTestId('conditions-form-on').click();
@@ -227,7 +227,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
   });
 
   it('should be able to add read/seen filters to a particular step', function () {
@@ -239,7 +239,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-emailSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
     cy.getByTestId('add-new-condition').click();
 
     cy.getByTestId('conditions-form-on').click();
@@ -252,7 +252,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
   });
 
   it('should be able to not add read/seen filters to first step', function () {
@@ -264,7 +264,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-on').click();
@@ -280,7 +280,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -291,15 +291,15 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
 
-    cy.getByTestId('editor-sidebar-edit-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
     cy.getByTestId('conditions-row-btn').click();
     cy.getByTestId('conditions-row-delete').click();
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-add-conditions').should('not.contain', '1');
+    cy.getByTestId('add-conditions-action').should('not.contain', '1');
   });
 
   it('should be able to add webhook filter for a particular step', function () {
@@ -311,7 +311,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -326,7 +326,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
   });
 
   it('should be able to add online right now filter for a particular step', function () {
@@ -338,7 +338,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -349,7 +349,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
   });
 
   it('should be able to add online in the last X time period filter for a particular step', function () {
@@ -361,7 +361,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -373,7 +373,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
   });
 
   it('should be able to add multiple filters to a particular step', function () {
@@ -385,7 +385,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-on').click();
@@ -404,7 +404,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('2');
+    cy.getByTestId('add-conditions-action').contains('2');
   });
 
   it('should re-render content on between step click', function () {
@@ -425,15 +425,19 @@ describe('Workflow Editor - Steps Actions', function () {
     const lastContent = 'last content for sms';
 
     cy.clickWorkflowNode(`node-smsSelector`);
+    cy.getByTestId('edit-action').click();
     cy.getByTestId('smsNotificationContent').type(firstContent);
 
     cy.clickWorkflowNode(`node-smsSelector`, true);
+    cy.getByTestId('edit-action').click();
     cy.getByTestId('smsNotificationContent').type(lastContent);
 
     cy.clickWorkflowNode(`node-smsSelector`);
+    cy.getByTestId('edit-action').click();
     cy.getByTestId('smsNotificationContent').should('have.text', firstContent);
 
     cy.clickWorkflowNode(`node-smsSelector`, true);
+    cy.getByTestId('edit-action').click();
     cy.getByTestId('smsNotificationContent').should('have.text', lastContent);
   });
 });
