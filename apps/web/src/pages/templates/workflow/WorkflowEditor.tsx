@@ -216,11 +216,11 @@ const WorkflowEditor = () => {
 
   const isEmailChannel = channel && [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel);
   const isVariantsListPath = pathname.endsWith('/variants');
+  const isPreviewPath = pathname.endsWith('/preview');
 
   return (
     <>
-      <When truthy={!isVariantsListPath}>
-        {/*<When truthy={isEmailChannel && !isVariantsListPath}>*/}
+      <When truthy={!isVariantsListPath && !isPreviewPath && isEmailChannel}>
         <Outlet
           context={{
             setDragging,
@@ -231,18 +231,17 @@ const WorkflowEditor = () => {
       <When
         truthy={
           !channel ||
-          channel || // [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP, StepTypeEnum.DIGEST].includes(channel) ||
-          isVariantsListPath
+          ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel) ||
+          isVariantsListPath ||
+          isPreviewPath
         }
       >
-        {/*<When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel) || isVariantsListPath}>*/}
-        <div style={{ display: 'flex', flexFlow: 'row' }}>
+        <div style={{ display: 'flex', flexFlow: 'row', position: 'relative' }}>
           <div
             style={{
               flex: '1 1 auto',
               display: 'flex',
               flexFlow: 'Column',
-              // width: '80%',
             }}
           >
             <Container fluid sx={{ width: '100%', height: `${TOP_ROW_HEIGHT}px` }}>
@@ -276,7 +275,6 @@ const WorkflowEditor = () => {
                 </Group>
               </Stack>
             </Container>
-            {/*<div style={{ flex: '1 1 auto', display: 'flex', flexFlow: 'column', width: '80%' }}>*/}
             <FlowEditor
               isReadonly={readonly}
               onEdit={onEdit}
@@ -291,8 +289,8 @@ const WorkflowEditor = () => {
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
               onAddVariant={onAddVariant}
+              sidebarOpen={!(pathname === basePath)}
             />
-            {/*</div>*/}
           </div>
           <Outlet
             context={{

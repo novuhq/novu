@@ -21,7 +21,7 @@ const StepSidebarHeader = () => {
   return (
     <div style={{ display: 'flex', width: '100%', gap: 12 }}>
       <StepName channel={channel} />
-      <EditorSidebarHeaderActions />
+      <EditorSidebarHeaderActions preview />
     </div>
   );
 };
