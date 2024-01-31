@@ -67,7 +67,7 @@ export const PageSizeSelect: React.FC<IPageSizeSelectProps> = forwardRef<HTMLInp
     const options = useMemo(() => pageSizes.map((val) => `${val}`), [pageSizes]);
 
     return (
-      <InputWrapper label={'rows per page'} id="goToPage" inputWrapperOrder={['input', 'label']}>
+      <InputWrapper label={'rows per page'} id="pageSizeSelect" inputWrapperOrder={['input', 'label']}>
         <StyledSelect
           ref={selectRef}
           data={options}
