@@ -15,7 +15,7 @@ const getFontColor = ({ theme, isCurrentPage }: { theme: any } & StylingProps): 
       ? colors.white
       : colors.B60
     : isCurrentPage
-    ? 'black'
+    ? colors.BGDark // TODO: speak with Design -- this is bad, we should not be using a "BG" color for font
     : colors.B60;
 };
 

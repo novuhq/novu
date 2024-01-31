@@ -4,7 +4,8 @@ import { colors } from '../config';
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getFontColor = ({ theme }: { theme: any }): string => {
-  return theme.colorScheme === 'dark' ? colors.white : 'black';
+  // TODO: speak with Design -- this is bad, we should not be using a "BG" color for font
+  return theme.colorScheme === 'dark' ? colors.white : colors.BGDark;
 };
 
 // TODO: Fix `theme` type once design system is ready and then use theme values

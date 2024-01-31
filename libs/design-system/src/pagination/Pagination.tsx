@@ -27,7 +27,7 @@ const PaginationWrapper = styled.div(
     line-height: 20px;
 
     & input {
-      background-color: ${theme.colorScheme === 'dark' ? colors.BGDark : colors.white};
+      background-color: ${theme.colorScheme === 'dark' ? colors.B15 : colors.white};
       border-radius: 7px;
       font-size: 14px;
     } 
