@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { IPaginationProps, PageContainer, Pagination, colors } from '@novu/design-system';
-import PageHeader from '../../components/layout/components/PageHeader';
+import PageHeader from './PageHeader';
 import { ITableProps } from '@novu/design-system/dist/types/table/Table';
 import { ComponentProps, PropsWithChildren } from 'react';
 

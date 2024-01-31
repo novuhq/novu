@@ -11,8 +11,6 @@ import {
   useIsTemplateStoreEnabled,
   INotificationTemplateExtended,
 } from '../../hooks';
-import PageHeader from '../../components/layout/components/PageHeader';
-import PageContainer from '../../components/layout/components/PageContainer';
 import {
   Tag,
   Table,
@@ -43,7 +41,7 @@ import { TemplateCreationSourceEnum } from './shared';
 import { TemplatesListNoDataOld } from './TemplatesListNoDataOld';
 import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { When } from '../../components/utils/When';
-import { ListPage } from './ListPage';
+import { ListPage } from '../../components/layout/components/ListPage';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
