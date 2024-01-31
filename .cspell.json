@@ -552,7 +552,11 @@
     "INITDB",
     "isend",
     "Idand",
-    "hubspot"
+    "hubspot",
+    "containerd",
+    "snapshotter",
+    "moby",
+    "ghaction"
   ],
   "flagWords": [],
   "patterns": [
