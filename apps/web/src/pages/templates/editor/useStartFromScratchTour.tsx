@@ -21,7 +21,7 @@ const StartFromScratchTourSteps: Step[] = [
     disableOverlay: true,
   },
   {
-    target: '[data-test-id="title"]',
+    target: '[data-test-id="name-input"]',
     content: '',
     placement: 'left',
     disableBeacon: true,

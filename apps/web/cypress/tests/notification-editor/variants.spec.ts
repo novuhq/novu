@@ -17,7 +17,7 @@ describe('Workflow Editor - Variants', function () {
       cy.visit('/workflows/create');
     });
     cy.wait('@getWorkflow');
-    cy.getByTestId('title').first().clear().type(title).blur();
+    cy.getByTestId('name-input').first().clear().type(title).blur();
   };
 
   const fillInAppEditorContentWith = (text: string) => {
