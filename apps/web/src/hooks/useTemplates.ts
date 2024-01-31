@@ -11,13 +11,13 @@ export type INotificationTemplateExtended = INotificationTemplate & {
   workflowIntegrationStatus?: WorkflowIntegrationStatus;
 };
 
-export function useTemplates(page = 0, limit = 10) {
+export function useTemplates(pageIndex = 0, pageSize = 10) {
   const { environment } = useEnvController();
   const { data, isLoading, refetch } = useQuery<{
     data: INotificationTemplateExtended[];
     totalCount: number;
     pageSize: number;
-  }>(['notificationsList', environment?._id, page, limit], () => getNotificationsList(page, limit), {
+  }>(['notificationsList', environment?._id, pageIndex, pageSize], () => getNotificationsList(pageIndex, pageSize), {
     keepPreviousData: true,
   });
 

@@ -155,9 +155,10 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
 function WorkflowListPage() {
   const segment = useSegment();
   const { readonly } = useEnvController();
-  const [page, setPage] = useState<number>(0);
+  const [currentPageNumber, setCurrentPageNumber] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
   const { loading: areNotificationGroupLoading } = useNotificationGroup();
-  const { templates, loading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
+  const { templates, loading, totalCount: totalTemplatesCount = 0 } = useTemplates(currentPageNumber - 1, pageSize);
   const isLoading = areNotificationGroupLoading || loading;
   const navigate = useNavigate();
   const { blueprintsGroupedAndPopular: { general, popular } = {}, isLoading: areBlueprintsLoading } =
@@ -177,8 +178,8 @@ function WorkflowListPage() {
   const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
   const isTemplateStoreEnabled = useIsTemplateStoreEnabled();
 
-  function handleTableChange(pageIndex) {
-    setPage(pageIndex);
+  function handleTableChange(pageIndex: number) {
+    setCurrentPageNumber(pageIndex);
   }
 
   const handleRedirectToCreateTemplate = (isFromHeader: boolean) => {
@@ -203,7 +204,17 @@ function WorkflowListPage() {
   }
 
   return (
-    <ListPage title="Workflows">
+    <ListPage
+      title="Workflows"
+      paginationInfo={{
+        totalItemCount: totalTemplatesCount,
+        pageSize,
+        totalPageCount: Math.ceil(totalTemplatesCount / pageSize),
+        currentPageNumber,
+        onPageChange: handleTableChange,
+        onPageSizeChange: setPageSize,
+      }}
+    >
       <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         {isTemplateStoreEnabled ? (
           <div>
@@ -240,12 +251,6 @@ function WorkflowListPage() {
                 data-test-id="notifications-template"
                 columns={columns}
                 data={templates}
-                pagination={{
-                  pageSize: pageSize,
-                  current: page,
-                  total: totalTemplatesCount,
-                  onPageChange: handleTableChange,
-                }}
               />
             </When>
             <When truthy={!hasTemplates}>
@@ -268,12 +273,6 @@ function WorkflowListPage() {
             data-test-id="notifications-template"
             columns={columns}
             data={templates}
-            pagination={{
-              pageSize: pageSize,
-              current: page,
-              total: totalTemplatesCount,
-              onPageChange: handleTableChange,
-            }}
             noDataPlaceholder={
               <TemplatesListNoDataOld
                 onCreateClick={() => handleRedirectToCreateTemplate(false)}
