@@ -3,6 +3,7 @@
 
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import 'cypress-wait-until';
+import 'cypress-file-upload';
 
 Cypress.Commands.add('getByTestId', (selector, ...args) => {
   return cy.get(`[data-test-id=${selector}]`, ...args);
