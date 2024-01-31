@@ -1,4 +1,4 @@
-import { prepareBooleanStringFeatureFlag } from './feature-flag.util';
+import { prepareBooleanStringFeatureFlag } from './feature-flags.util';
 
 describe('FeatureFlagUtil', () => {
   describe('prepareBooleanStringFeatureFlag', () => {
