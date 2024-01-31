@@ -3,7 +3,7 @@ import React from 'react';
 import { HeaderLayout } from './layout/HeaderLayout';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { GetStartedTabs } from './components/GetStartedTabs';
+import { GetStartedTabs } from './components/get-started-tabs/GetStartedTabs';
 
 export function GetStartedPage() {
   return (

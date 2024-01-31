@@ -1,13 +1,16 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Grid, Timeline } from '@mantine/core';
+import { Grid } from '@mantine/core';
 
 import { ProductUseCasesEnum } from '@novu/shared';
+import { colors, Text } from '@novu/design-system';
 
 import { onboardingUseCases } from '../consts';
 import { OnboardingParams } from '../types';
 import { ROUTES } from '../../../constants/routes.enum';
 import { OnboardingUseCasesTabsEnum } from '../../../constants/onboarding-tabs';
+import Card from '../../../components/layout/components/Card';
+import { Timeline } from '../components/timeline/Timeline';
 
 interface IGetStartedTabProps {
   usecase?: ProductUseCasesEnum;
@@ -33,21 +36,20 @@ export function GetStartedTab(props: IGetStartedTabProps) {
     return null;
   }
 
-  const { steps, demo } = onboardingUseCases[usecase];
+  const { steps, Demo, title, description } = onboardingUseCases[usecase];
 
   return (
     <Grid align="stretch">
-      <Grid.Col span={4}>
-        <Timeline bulletSize={40} lineWidth={2}>
-          {steps.map((step, index) => (
-            <Timeline.Item bullet={index + 1} lineVariant={'dashed'} key={step}>
-              {step}
-            </Timeline.Item>
-          ))}
-        </Timeline>
+      <Grid.Col span={4} mt={11.5}>
+        <Card title={title} space={8} mb={24}>
+          <Text style={{ color: colors.B60 }}>{description}</Text>
+        </Card>
+        <Timeline steps={steps} />
       </Grid.Col>
 
-      <Grid.Col span={8}>{demo} </Grid.Col>
+      <Grid.Col span={8}>
+        <Demo />
+      </Grid.Col>
     </Grid>
   );
 }
