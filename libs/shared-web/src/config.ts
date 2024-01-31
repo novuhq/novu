@@ -1,4 +1,4 @@
-import { getContextPath, NovuComponentEnum } from '@novu/shared';
+import { getContextPath, NovuComponentEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 
 function isBrowser() {
   return typeof window !== 'undefined';
@@ -59,14 +59,9 @@ export const MAIL_SERVER_DOMAIN =
 export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
   window._env_.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID || process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 
-export const IS_TEMPLATE_STORE_ENABLED = isCypress
-  ? window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'true'
-  : window._env_.IS_TEMPLATE_STORE_ENABLED || process.env.IS_TEMPLATE_STORE_ENABLED || 'false';
+export const FEATURE_FLAGS = Object.values(FeatureFlagsKeysEnum).reduce((acc, key) => {
+  const defaultValue = isCypress ? true : false;
+  acc[key] = window._env_[key] || process.env[key] || defaultValue;
 
-export const IS_MULTI_TENANCY_ENABLED = isCypress
-  ? window._env_.IS_MULTI_TENANCY_ENABLED || process.env.IS_MULTI_TENANCY_ENABLED || 'true'
-  : window._env_.IS_MULTI_TENANCY_ENABLED || process.env.IS_MULTI_TENANCY_ENABLED || 'false';
-
-export const IS_TRANSLATION_MANAGER_ENABLED = isCypress
-  ? window._env_.IS_TRANSLATION_MANAGER_ENABLED || process.env.IS_TRANSLATION_MANAGER_ENABLED || 'true'
-  : window._env_.IS_TRANSLATION_MANAGER_ENABLED || process.env.IS_TRANSLATION_MANAGER_ENABLED || 'false';
+  return acc;
+}, {} as Record<FeatureFlagsKeysEnum, string | undefined>);
