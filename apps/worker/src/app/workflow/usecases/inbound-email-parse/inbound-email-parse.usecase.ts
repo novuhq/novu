@@ -9,8 +9,7 @@ import {
   NotificationTemplateEntity,
 } from '@novu/dal';
 import axios from 'axios';
-import { createHash } from '../../../shared/helpers/hmac.service';
-import { CompileTemplate, CompileTemplateCommand } from '@novu/application-generic';
+import { CompileTemplate, CompileTemplateCommand, createHash } from '@novu/application-generic';
 
 const LOG_CONTEXT = 'InboundEmailParse';
 
@@ -110,7 +109,7 @@ export class InboundEmailParse {
       _subscriberId: subscriber._id,
     });
 
-    return { transactionId, template, notification, subscriber, environment, job, message };
+    return { template, notification, subscriber, environment, job, message };
   }
 }
 
