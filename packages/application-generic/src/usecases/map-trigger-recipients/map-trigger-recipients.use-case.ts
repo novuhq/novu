@@ -113,29 +113,41 @@ export class MapTriggerRecipients {
     userId: UserId,
     recipients: TriggerRecipients
   ): Promise<ISubscribersSource[]> {
-    const topics = this.findTopics(recipients);
+    const featureFlagCommand = GetFeatureFlagCommand.create({
+      environmentId,
+      organizationId,
+      userId,
+      key: FeatureFlagsKeysEnum.IS_TOPIC_NOTIFICATION_ENABLED,
+    });
+    const isEnabled = await this.getFeatureFlag.execute(featureFlagCommand);
 
-    const subscribers: ISubscribersSource[] = [];
+    if (isEnabled) {
+      const topics = this.findTopics(recipients);
 
-    for (const topic of topics) {
-      const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
-        environmentId,
-        topicKey: topic.topicKey,
-        organizationId,
-      });
-      const topicSubscribers = await this.getTopicSubscribers.execute(
-        getTopicSubscribersCommand
-      );
+      const subscribers: ISubscribersSource[] = [];
 
-      topicSubscribers.forEach((subscriber: TopicSubscribersDto) =>
-        subscribers.push({
-          subscriberId: subscriber.externalSubscriberId,
-          _subscriberSource: SubscriberSourceEnum.TOPIC,
-        })
-      );
+      for (const topic of topics) {
+        const getTopicSubscribersCommand = GetTopicSubscribersCommand.create({
+          environmentId,
+          topicKey: topic.topicKey,
+          organizationId,
+        });
+        const topicSubscribers = await this.getTopicSubscribers.execute(
+          getTopicSubscribersCommand
+        );
+
+        topicSubscribers.forEach((subscriber: TopicSubscribersDto) =>
+          subscribers.push({
+            subscriberId: subscriber.externalSubscriberId,
+            _subscriberSource: SubscriberSourceEnum.TOPIC,
+          })
+        );
+      }
+
+      return subscribers;
     }
 
-    return subscribers;
+    return [];
   }
 
   public mapActor(
