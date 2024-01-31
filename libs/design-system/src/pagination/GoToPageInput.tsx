@@ -113,6 +113,7 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
             maxLength={`${totalPageCount}`.length}
             hideControls
             noClampOnBlur
+            disabled={totalPageCount === 1}
             {...inputProps}
           />
         </Tooltip>
