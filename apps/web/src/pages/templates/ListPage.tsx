@@ -1,65 +1,77 @@
 import styled from '@emotion/styled';
-import { PageContainer, Pagination, colors } from '@novu/design-system';
+import { IPaginationProps, PageContainer, Pagination, colors } from '@novu/design-system';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { ITableProps } from '@novu/design-system/dist/types/table/Table';
-import { PropsWithChildren } from 'react';
+import { ComponentProps, PropsWithChildren } from 'react';
 
-const StickyFooter = styled.div`
+// values directly from designs -- see comment below about why they're necessary
+const FOOTER_FADE_OVERLAY_HEIGHT_PX = 20;
+const FOOTER_HEIGHT_PX = 64;
+const TOTAL_FOOTER_HEIGHT_PX = FOOTER_HEIGHT_PX + FOOTER_FADE_OVERLAY_HEIGHT_PX;
+
+const StickyFooter = styled.footer`
   position: sticky;
-  width 100%;
+  bottom: 0;
+  /**
+   * :( Required CSS witchery because the PageContainer and other contained elements doesn't use Flexbox or Grid.
+   * We can't use position: fixed or absolute because the PageContainer width is dynamic, and we can't inherit it.
+   * 'sticky' alone doesn't work, so we have to force the element to a calculated position.
+   */
+  top: calc(100% - ${TOTAL_FOOTER_HEIGHT_PX}px);
+  max-height: ${TOTAL_FOOTER_HEIGHT_PX}px;
+
+  /** adds a faded overlay to give depth to the footer */
+  border-width: ${FOOTER_FADE_OVERLAY_HEIGHT_PX}px 0 0 0;
+  border-style: solid;
+  border-image: ${({ theme }) =>
+      theme.colorScheme === 'dark'
+        ? `linear-gradient(0deg, ${colors.B15}FF 0%, ${colors.B15}00 100%)`
+        : `linear-gradient(0deg, ${colors.white}FF 0%, ${colors.white}00 100%)`}
+    100% 0 0 0;
+
+  /* TODO: use theme values */
+  z-index: 5;
 `;
 
 const PaginationWrapper = styled.div`
-  width: inherit;
   /* TODO: use theme values */
   padding: 12px 24px 20px 24px;
-  background-color: ${({ theme }) => (theme.colorScheme !== 'light' ? colors.B15 : colors.white)};
+  background-color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B15 : colors.white)};
 `;
 
-export interface IListPageProps<TRow extends object> extends ITableProps<TRow> {
+export interface IListPageProps<TRow extends object> extends Omit<ITableProps<TRow>, 'pagination'> {
   title: string;
+  paginationInfo?: IPaginationProps & ComponentProps<typeof Pagination.PageSizeSelect>;
 }
 
-export const ListPage = <TRow extends object>({ title, children }: PropsWithChildren<IListPageProps<TRow>>) => {
+export const ListPage = <TRow extends object>({
+  title,
+  paginationInfo,
+  children,
+}: PropsWithChildren<IListPageProps<TRow>>) => {
   return (
     <PageContainer title={title}>
       <PageHeader title={title} />
-      {/* <Table
-        loading={isLoading}
-        data-test-id="subscribers-table"
-        columns={columns}
-        data={subscribers || []}
-        pagination={{
-          pageSize: pageSize,
-          current: page,
-          hasMore,
-          minimalPagination: true,
-          onPageChange: handleTableChange,
-        }}
-      /> */}
       {children}
-      <StickyFooter>
-        <PaginationWrapper>
-          <Pagination
-            totalPageCount={100}
-            totalItemCount={1000}
-            pageSize={10}
-            onPageChange={() => {
-              console.log('Page change');
-            }}
-            currentPageNumber={1}
-          >
-            <Pagination.PageSizeSelect
-              onPageSizeChange={() => {
-                console.log('Page size change');
-              }}
-            />
-            <Pagination.ControlBar />
-            <Pagination.GoToPageInput label={'Go to'} placeholder={'page'} />
-          </Pagination>
-        </PaginationWrapper>
-      </StickyFooter>
-      <div style={{ height: '1px' }}></div>
+      {paginationInfo && (
+        <>
+          <StickyFooter>
+            <PaginationWrapper>
+              <Pagination
+                totalItemCount={paginationInfo.totalItemCount}
+                totalPageCount={paginationInfo.totalPageCount}
+                currentPageNumber={paginationInfo.currentPageNumber}
+                pageSize={paginationInfo.pageSize}
+                onPageChange={paginationInfo.onPageChange}
+              >
+                <Pagination.PageSizeSelect onPageSizeChange={paginationInfo.onPageSizeChange} />
+                <Pagination.ControlBar />
+                <Pagination.GoToPageInput label={'Go to'} placeholder={'page'} />
+              </Pagination>
+            </PaginationWrapper>
+          </StickyFooter>
+        </>
+      )}
     </PageContainer>
   );
 };
