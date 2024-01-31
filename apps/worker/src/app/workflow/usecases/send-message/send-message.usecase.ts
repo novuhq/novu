@@ -5,9 +5,6 @@ import {
   ExecutionDetailsStatusEnum,
   IDigestRegularMetadata,
   IPreferenceChannels,
-  IPreferenceOverride,
-  IPreferenceResponse,
-  PreferenceOverrideSourceEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import {
@@ -16,22 +13,26 @@ import {
   buildNotificationTemplateKey,
   CachedEntity,
   DetailEnum,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
   Instrument,
+  ConditionsFilterCommand,
+  ConditionsFilter,
+  IFilterVariables,
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
-  ExecutionLogQueueService,
+  buildSubscriberKey,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 import {
+  SubscriberRepository,
   JobEntity,
   NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
+  TenantEntity,
   TenantRepository,
-  WorkflowOverrideRepository,
 } from '@novu/dal';
 
 import { SendMessageCommand } from './send-message.command';
@@ -43,8 +44,6 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
-import { MessageMatcher } from '../message-matcher';
-import { MessageMatcherCommand } from '../message-matcher/message-matcher.command';
 
 @Injectable()
 export class SendMessage {
@@ -55,27 +54,31 @@ export class SendMessage {
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
     private digest: Digest,
-    private executionLogQueueService: ExecutionLogQueueService,
+    private executionLogRoute: ExecutionLogRoute,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private getSubscriberGlobalPreferenceUsecase: GetSubscriberGlobalPreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
-    private matchMessage: MessageMatcher,
-    private analyticsService: AnalyticsService,
+    private conditionsFilter: ConditionsFilter,
+    private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
-    private workflowOverrideRepository: WorkflowOverrideRepository
+    private analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const shouldRun = await this.filter(command);
-    const preferred = await this.filterPreferredChannels(command.job);
+    const payload = await this.buildCompileContext(command);
+
+    const [shouldRun, preferred] = await Promise.all([
+      this.filter(command, payload),
+      this.filterPreferredChannels(command.job),
+    ]);
 
     const stepType = command.step?.template?.type;
 
     if (!command.payload?.$on_boarding_trigger) {
-      const usedFilters = shouldRun.conditions.reduce(MessageMatcher.sumFilters, {
+      const usedFilters = shouldRun?.conditions.reduce(ConditionsFilter.sumFilters, {
         filters: [],
         failedFilters: [],
         passedFilters: [],
@@ -94,7 +97,7 @@ export class SendMessage {
         };
       }
 
-      this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
+      this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
         _template: command.job._templateId,
         _organization: command.organizationId,
         _environment: command.environmentId,
@@ -115,40 +118,38 @@ export class SendMessage {
       });
     }
 
-    if (!shouldRun.passed || !preferred) {
+    if (!shouldRun?.passed || !preferred) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
       return;
     }
 
     if (stepType !== StepTypeEnum.DELAY) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: stepType === StepTypeEnum.DIGEST ? DetailEnum.START_DIGESTING : DetailEnum.START_SENDING,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,
           isRetry: false,
-        }),
-        command.organizationId
+        })
       );
     }
 
+    const sendMessageCommand = SendMessageCommand.create({ ...command, compileContext: payload });
+
     switch (stepType) {
       case StepTypeEnum.SMS:
-        return await this.sendMessageSms.execute(command);
+        return await this.sendMessageSms.execute(sendMessageCommand);
       case StepTypeEnum.IN_APP:
-        return await this.sendMessageInApp.execute(command);
+        return await this.sendMessageInApp.execute(sendMessageCommand);
       case StepTypeEnum.EMAIL:
-        return await this.sendMessageEmail.execute(command);
+        return await this.sendMessageEmail.execute(sendMessageCommand);
       case StepTypeEnum.CHAT:
-        return await this.sendMessageChat.execute(command);
+        return await this.sendMessageChat.execute(sendMessageCommand);
       case StepTypeEnum.PUSH:
-        return await this.sendMessagePush.execute(command);
+        return await this.sendMessagePush.execute(sendMessageCommand);
       case StepTypeEnum.DIGEST:
         return await this.digest.execute(command);
       case StepTypeEnum.DELAY:
@@ -156,41 +157,32 @@ export class SendMessage {
     }
   }
 
-  private async filter(command: SendMessageCommand) {
-    const messageMatcherCommand = MessageMatcherCommand.create({
-      step: command.job.step,
-      job: command.job,
-      userId: command.userId,
-      transactionId: command.job.transactionId,
-      _subscriberId: command.job._subscriberId,
-      environmentId: command.job._environmentId,
-      organizationId: command.job._organizationId,
-      subscriberId: command.job.subscriberId,
-      identifier: command.job.identifier,
-    });
-
-    const data = await this.matchMessage.getFilterData(messageMatcherCommand);
-
-    const shouldRun = await this.matchMessage.filter(messageMatcherCommand, data);
+  private async filter(command: SendMessageCommand, payload: IFilterVariables) {
+    const shouldRun = await this.conditionsFilter.filter(
+      ConditionsFilterCommand.create({
+        filters: command.job.step.filters || [],
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        step: command.step,
+        job: command.job,
+        variables: payload,
+      })
+    );
 
     if (!shouldRun.passed) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.FILTER_STEPS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({
-            payload: data,
-            filters: command.step.filters,
+            conditions: shouldRun.conditions,
           }),
-        }),
-        command.organizationId
+        })
       );
     }
 
@@ -211,7 +203,7 @@ export class SendMessage {
       return true;
     }
 
-    const subscriber = await this.matchMessage.getSubscriberBySubscriberId({
+    const subscriber = await this.getSubscriberBySubscriberId({
       _environmentId: job._environmentId,
       subscriberId: job.subscriberId,
     });
@@ -228,20 +220,16 @@ export class SendMessage {
     const globalPreferenceResult = this.stepPreferred(globalPreference, job);
 
     if (!globalPreferenceResult) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_FILTERED_BY_GLOBAL_PREFERENCES,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(globalPreference),
-        }),
-        job._organizationId
+        })
       );
 
       return false;
@@ -261,24 +249,50 @@ export class SendMessage {
     const result = this.stepPreferred(preference, job);
 
     if (!result) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(job),
           detail: DetailEnum.STEP_FILTERED_BY_PREFERENCES,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.SUCCESS,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(preference),
-        }),
-        job._organizationId
+        })
       );
     }
 
     return result;
+  }
+
+  @Instrument()
+  private async buildCompileContext(command: SendMessageCommand): Promise<IFilterVariables> {
+    const [subscriber, actor, tenant] = await Promise.all([
+      this.getSubscriberBySubscriberId({
+        subscriberId: command.subscriberId,
+        _environmentId: command.environmentId,
+      }),
+      command.job.actorId &&
+        this.getSubscriberBySubscriberId({
+          subscriberId: command.job.actorId,
+          _environmentId: command.environmentId,
+        }),
+      this.handleTenantExecution(command.job),
+    ]);
+
+    if (!subscriber) throw new PlatformException('Subscriber not found');
+
+    return {
+      subscriber,
+      payload: command.payload,
+      step: {
+        digest: !!command.events?.length,
+        events: command.events,
+        total_count: command.events?.length,
+      },
+      ...(tenant && { tenant }),
+      ...(actor && { actor }),
+    };
   }
 
   @CachedEntity({
@@ -292,16 +306,33 @@ export class SendMessage {
     return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
+  @CachedEntity({
+    builder: (command: { subscriberId: string; _environmentId: string }) =>
+      buildSubscriberKey({
+        _environmentId: command._environmentId,
+        subscriberId: command.subscriberId,
+      }),
+  })
+  public async getSubscriberBySubscriberId({
+    subscriberId,
+    _environmentId,
+  }: {
+    subscriberId: string;
+    _environmentId: string;
+  }) {
+    return await this.subscriberRepository.findOne({
+      _environmentId,
+      subscriberId,
+    });
+  }
+
   @Instrument()
   private stepPreferred(preference: { enabled: boolean; channels: IPreferenceChannels }, job: JobEntity) {
     const templatePreferred = preference.enabled;
 
-    const channels = Object.keys(preference.channels);
-    // Handles the case where the channel is not defined in the preference. i.e, channels = {}
-    const channelPreferred =
-      channels.length > 0
-        ? channels.some((channelKey) => channelKey === job.type && preference.channels[job.type])
-        : true;
+    const channelPreferred = Object.keys(preference.channels).some(
+      (channelKey) => channelKey === job.type && preference.channels[job.type]
+    );
 
     return templatePreferred && channelPreferred;
   }
@@ -310,5 +341,59 @@ export class SendMessage {
     const channels = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH, StepTypeEnum.CHAT];
 
     return !channels.find((channel) => channel === job.type);
+  }
+
+  protected async sendSelectedTenantExecution(job: JobEntity, tenant: TenantEntity) {
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+        detail: DetailEnum.TENANT_CONTEXT_SELECTED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.PENDING,
+        isTest: false,
+        isRetry: false,
+        raw: JSON.stringify({
+          identifier: tenant?.identifier,
+          name: tenant?.name,
+          data: tenant?.data,
+          createdAt: tenant?.createdAt,
+          updatedAt: tenant?.updatedAt,
+          _environmentId: tenant?._environmentId,
+          _id: tenant?._id,
+        }),
+      })
+    );
+  }
+
+  protected async handleTenantExecution(job: JobEntity): Promise<TenantEntity | null> {
+    const tenantIdentifier = job.tenant?.identifier;
+
+    let tenant: TenantEntity | null = null;
+    if (tenantIdentifier) {
+      tenant = await this.tenantRepository.findOne({
+        _environmentId: job._environmentId,
+        identifier: tenantIdentifier,
+      });
+      if (!tenant) {
+        await this.executionLogRoute.execute(
+          ExecutionLogRouteCommand.create({
+            ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+            detail: DetailEnum.TENANT_NOT_FOUND,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              tenantIdentifier: tenantIdentifier,
+            }),
+          })
+        );
+
+        return null;
+      }
+      await this.sendSelectedTenantExecution(job, tenant);
+    }
+
+    return tenant;
   }
 }

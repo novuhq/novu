@@ -4,15 +4,14 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IDigestBaseMetadata,
-  IDigestRegularMetadata,
   StepTypeEnum,
 } from '@novu/shared';
 import {
-  DigestFilterSteps,
   DetailEnum,
-  CreateExecutionDetailsCommand,
   Instrument,
-  ExecutionLogQueueService,
+  getNestedValue,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 
 import { PlatformException } from '../../../../shared/utils';
@@ -21,32 +20,14 @@ const LOG_CONTEXT = 'GetDigestEvents';
 
 @Injectable()
 export abstract class GetDigestEvents {
-  constructor(protected jobRepository: JobRepository, private executionLogQueueService: ExecutionLogQueueService) {}
-
-  protected getJobDigest(job: JobEntity): {
-    digestMeta: IDigestBaseMetadata | undefined;
-    digestKey: string | undefined;
-    digestValue: string | undefined;
-  } {
-    const digestMeta = job.digest as IDigestRegularMetadata | undefined;
-    const digestKey = digestMeta?.digestKey;
-    const digestValue = DigestFilterSteps.getNestedValue(job.payload, digestKey);
-
-    return {
-      digestKey,
-      digestMeta,
-      digestValue,
-    };
-  }
+  constructor(protected jobRepository: JobRepository, private executionLogRoute: ExecutionLogRoute) {}
 
   @Instrument()
   protected async filterJobs(currentJob: JobEntity, transactionId: string, jobs: JobEntity[]) {
     const digestMeta = currentJob?.digest as IDigestBaseMetadata | undefined;
-    const batchValue = currentJob?.payload
-      ? DigestFilterSteps.getNestedValue(currentJob.payload, digestMeta?.digestKey)
-      : undefined;
+    const batchValue = currentJob?.payload ? getNestedValue(currentJob.payload, digestMeta?.digestKey) : undefined;
     const filteredJobs = jobs.filter((job) => {
-      return DigestFilterSteps.getNestedValue(job.payload, digestMeta?.digestKey) === batchValue;
+      return getNestedValue(job.payload, digestMeta?.digestKey) === batchValue;
     });
 
     const currentTrigger = (await this.jobRepository.findOne(
@@ -60,20 +41,17 @@ export abstract class GetDigestEvents {
     )) as Pick<JobEntity, '_id'>;
 
     if (!currentTrigger) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(currentJob),
           detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        }),
-        currentJob._organizationId
+        })
       );
+
       const message = `Trigger job for jobId ${currentJob._id} is not found`;
       Logger.error(message, LOG_CONTEXT);
       throw new PlatformException(message);

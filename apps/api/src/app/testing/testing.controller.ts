@@ -9,7 +9,7 @@ import { SeedDataCommand } from './usecases/seed-data/seed-data.command';
 import { CreateSession } from './usecases/create-session/create-session.usecase';
 import { CreateSessionCommand } from './usecases/create-session/create-session.command';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 
 @Controller('/testing')
@@ -53,7 +53,7 @@ export class TestingController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Post('/idempotency')
   async idempotency(@Body() body: IdempotencyBodyDto): Promise<{ number: number }> {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();

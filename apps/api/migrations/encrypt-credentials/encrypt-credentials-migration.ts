@@ -1,14 +1,14 @@
 import { IntegrationEntity } from '@novu/dal';
-import { encryptProviderSecret } from '../../src/app/shared/services/encryption';
 import { IntegrationRepository } from '@novu/dal';
 import { ICredentialsDto, secureCredentials } from '@novu/shared';
+import { encryptSecret } from '@novu/application-generic';
 
 export async function encryptOldCredentialsMigration() {
   // eslint-disable-next-line no-console
   console.log('start migration - encrypt credentials');
 
   const integrationRepository = new IntegrationRepository();
-  const integrations = await integrationRepository.find({});
+  const integrations = await integrationRepository.find({} as any);
 
   for (const integration of integrations) {
     // eslint-disable-next-line no-console
@@ -25,7 +25,7 @@ export async function encryptOldCredentialsMigration() {
     updatePayload.credentials = encryptCredentialsWithGuard(integration);
 
     await integrationRepository.update(
-      { _id: integration._id },
+      { _id: integration._id, _environmentId: integration._environmentId },
       {
         $set: updatePayload,
       }
@@ -45,7 +45,7 @@ export function encryptCredentialsWithGuard(integration: IntegrationEntity): ICr
     const credential = credentials[key];
 
     if (needEncryption(key, credential, integration)) {
-      encryptedCredentials[key] = encryptProviderSecret(credential);
+      encryptedCredentials[key] = encryptSecret(credential);
     } else {
       encryptedCredentials[key] = credential;
     }

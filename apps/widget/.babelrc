@@ -1,23 +1,18 @@
 {
   "presets": [
     "@babel/preset-typescript",
+    "@babel/preset-env",
     [
       "@babel/preset-react",
       {
         "runtime": "automatic"
       }
-    ],
-    "@babel/preset-env"
+    ]
   ],
   "plugins": [
     "@emotion",
     "@babel/plugin-transform-react-display-name",
     "@babel/plugin-proposal-optional-chaining",
-    [
-      "@babel/plugin-transform-runtime",
-      {
-        "regenerator": true
-      }
-    ]
+    "@babel/plugin-transform-runtime"
   ]
 }

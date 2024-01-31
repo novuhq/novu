@@ -35,6 +35,12 @@ export class GupshupSmsProvider implements ISmsProvider {
       v: '1.1',
       userId: this.config.userId,
       password: this.config.password,
+      ...(options.customData?.principalEntityId && {
+        principalEntityId: options.customData?.principalEntityId,
+      }),
+      ...(options.customData?.dltTemplateId && {
+        dltTemplateId: options.customData?.dltTemplateId,
+      }),
     };
 
     const opts = {

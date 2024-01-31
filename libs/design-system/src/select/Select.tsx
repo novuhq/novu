@@ -26,6 +26,7 @@ interface ISelectProps extends SpacingProps {
   label?: React.ReactNode;
   error?: React.ReactNode;
   itemComponent?: FC<any>;
+  valueComponent?: FC<any>;
   placeholder?: string;
   description?: string;
   getCreateLabel?: (query: string) => React.ReactNode;
@@ -43,6 +44,9 @@ interface ISelectProps extends SpacingProps {
   dataTestId?: string;
   rightSectionWidth?: React.CSSProperties['width'];
   inputProps?: InputBaseProps;
+  withinPortal?: boolean;
+  limit?: SelectProps['limit'];
+  icon?: React.ReactNode;
 }
 
 /**
@@ -64,6 +68,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
       onChange,
       inputProps = {},
       dataTestId,
+      withinPortal = false,
       ...props
     }: ISelectProps,
     ref
@@ -148,6 +153,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             data={data}
             required={required}
             data-test-id={dataTestId}
+            withinPortal={withinPortal}
             {...props}
             {...loadingProps}
           />

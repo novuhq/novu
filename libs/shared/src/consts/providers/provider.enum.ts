@@ -15,6 +15,7 @@ export enum CredentialsKeyEnum {
   Token = 'token',
   From = 'from',
   SenderName = 'senderName',
+  ContentType = 'contentType',
   ApplicationId = 'applicationId',
   ClientId = 'clientId',
   ProjectName = 'projectName',
@@ -82,6 +83,7 @@ export enum SmsProviderIdEnum {
   Infobip = 'infobip-sms',
   BurstSms = 'burst-sms',
   BulkSms = 'bulk-sms',
+  ISendSms = 'isend-sms',
   Clickatell = 'clickatell',
   FortySixElks = 'forty-six-elks',
   Kannel = 'kannel',
@@ -96,6 +98,7 @@ export enum SmsProviderIdEnum {
   MessageBird = 'messagebird',
   Simpletexting = 'simpletexting',
   AzureSms = 'azure-sms',
+  BrevoSms = 'brevo-sms',
 }
 
 export enum ChatProviderIdEnum {
@@ -106,6 +109,8 @@ export enum ChatProviderIdEnum {
   Ryver = 'ryver',
   Zulip = 'zulip',
   GrafanaOnCall = 'grafana-on-call',
+  GetStream = 'getstream',
+  RocketChat = 'rocket-chat',
 }
 
 export enum PushProviderIdEnum {

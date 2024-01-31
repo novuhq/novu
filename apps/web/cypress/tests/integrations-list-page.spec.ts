@@ -150,10 +150,10 @@ describe('Integrations List Page', function () {
     cy.visit('/integrations');
     cy.location('pathname').should('equal', '/integrations');
 
+    checkTableLoading();
+
     cy.wait('@getIntegrations');
     cy.wait('@getEnvironments');
-
-    checkTableLoading();
 
     cy.getByTestId('no-integrations-placeholder').should('be.visible');
     cy.contains('Choose a channel you want to start sending notifications');
@@ -606,7 +606,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('conditions-form-title').contains('Conditions for Mailjet Integration provider instance');
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-on').should('have.value', 'Tenant');
-    cy.getByTestId('conditions-form-key').should('have.value', 'Identifier');
+    cy.getByTestId('conditions-form-key').type('identifier');
     cy.getByTestId('conditions-form-operator').should('have.value', 'Equal');
     cy.getByTestId('conditions-form-value').type('tenant123');
     cy.getByTestId('apply-conditions-btn').click();
@@ -620,6 +620,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('update-provider-sidebar').should('be.visible');
     cy.getByTestId('header-add-conditions-btn').contains('1').click();
     cy.getByTestId('add-new-condition').click();
+    cy.getByTestId('conditions-form-key').last().type('identifier');
     cy.getByTestId('conditions-form-value').last().type('tenant456');
     cy.getByTestId('apply-conditions-btn').click();
     cy.getByTestId('header-add-conditions-btn').contains('2');
@@ -661,7 +662,7 @@ describe('Integrations List Page', function () {
     cy.getByTestId('conditions-form-title').contains('Conditions for SendGrid provider instance');
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-on').should('have.value', 'Tenant');
-    cy.getByTestId('conditions-form-key').should('have.value', 'Identifier');
+    cy.getByTestId('conditions-form-key').type('identifier');
     cy.getByTestId('conditions-form-operator').should('have.value', 'Equal');
     cy.getByTestId('conditions-form-value').type('tenant123');
 
@@ -691,9 +692,12 @@ describe('Integrations List Page', function () {
     cy.getByTestId('provider-instance-name').clear().type('Mailjet Integration');
     cy.getByTestId('add-conditions-btn').click();
     cy.getByTestId('conditions-form-title').contains('Conditions for Mailjet Integration provider instance');
+
     cy.getByTestId('add-new-condition').click();
 
+    cy.getByTestId('conditions-form-key').type('identifier');
     cy.getByTestId('conditions-form-value').type('tenant123');
+
     cy.getByTestId('apply-conditions-btn').click();
 
     cy.getByTestId('create-provider-instance-sidebar-create').should('not.be.disabled').contains('Create').click();
@@ -1159,5 +1163,65 @@ describe('Integrations List Page', function () {
     cy.getByTestId('select-provider-sidebar-next').should('not.be.disabled').contains('Next').click();
     cy.getByTestId('novu-provider-error').contains('You can only create one Novu Email per environment.');
     cy.getByTestId('create-provider-instance-sidebar-create').should('be.disabled');
+  });
+
+  it('should show the Webhook URL for the Email integration', () => {
+    interceptIntegrationRequests();
+    cy.intercept(
+      {
+        method: 'GET',
+        url: '*/integrations/webhook/provider/*/status',
+      },
+      { data: true }
+    ).as('getWebhookStatus');
+
+    cy.getByTestId('integrations-list-table')
+      .getByTestId('integration-name-cell')
+      .contains('SendGrid')
+      .getByTestId('integration-name-cell-primary')
+      .should('be.visible');
+
+    clickOnListRow('SendGrid');
+
+    cy.wait('@getWebhookStatus');
+
+    cy.getByTestId('update-provider-sidebar')
+      .getByTestId('provider-webhook-url')
+      .invoke('val')
+      .then((val) => {
+        expect(val).match(
+          /^http:\/\/(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|localhost):\d{4}\/webhooks\/organizations\/\w{1,}\/environments\/\w{1,}\/email\/\w{1,}/
+        );
+      });
+  });
+
+  it('should show the Webhook URL for the SMS integration', () => {
+    interceptIntegrationRequests();
+    cy.intercept(
+      {
+        method: 'GET',
+        url: '*/integrations/webhook/provider/*/status',
+      },
+      { data: true }
+    ).as('getWebhookStatus');
+
+    cy.getByTestId('integrations-list-table')
+      .getByTestId('integration-name-cell')
+      .contains('SendGrid')
+      .getByTestId('integration-name-cell-primary')
+      .should('be.visible');
+
+    clickOnListRow('Twilio');
+
+    cy.wait('@getWebhookStatus');
+
+    cy.getByTestId('update-provider-sidebar')
+      .getByTestId('provider-webhook-url')
+      .invoke('val')
+      .then((val) => {
+        expect(val).match(
+          /^http:\/\/(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|localhost):\d{4}\/webhooks\/organizations\/\w{1,}\/environments\/\w{1,}\/sms\/\w{1,}/
+        );
+      });
   });
 });

@@ -8,11 +8,15 @@ export async function previewEmail({
   subject,
   layoutId,
 }: {
-  content: string | IEmailBlock[];
-  contentType: MessageTemplateContentType;
+  content?: string | IEmailBlock[];
+  contentType?: MessageTemplateContentType;
   payload: string;
-  subject: string;
+  subject?: string;
   layoutId?: string;
 }) {
   return api.post('/v1/content-templates/preview/email', { content, contentType, payload, subject, layoutId });
+}
+
+export async function previewInApp({ content, cta, payload }: { content?: string; cta: any; payload: string }) {
+  return api.post('/v1/content-templates/preview/in-app', { content, payload, cta });
 }

@@ -1,13 +1,17 @@
 import { Test } from '@nestjs/testing';
 
 import { ExecutionLogQueueService } from './execution-log-queue.service';
+import { BullMqService } from '../bull-mq';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 let executionLogQueueService: ExecutionLogQueueService;
 
 describe('Execution Log Queue service', () => {
   describe('General', () => {
     beforeAll(async () => {
-      executionLogQueueService = new ExecutionLogQueueService();
+      executionLogQueueService = new ExecutionLogQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await executionLogQueueService.queue.drain();
     });
 
@@ -35,7 +39,7 @@ describe('Execution Log Queue service', () => {
       );
       expect(executionLogQueueService.DEFAULT_ATTEMPTS).toEqual(3);
       expect(executionLogQueueService.topic).toEqual('execution-logs');
-      expect(await executionLogQueueService.bullMqService.getStatus()).toEqual({
+      expect(await executionLogQueueService.getStatus()).toEqual({
         queueIsPaused: false,
         queueName: 'execution-logs',
         workerName: undefined,
@@ -62,7 +66,9 @@ describe('Execution Log Queue service', () => {
     beforeAll(async () => {
       process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-      executionLogQueueService = new ExecutionLogQueueService();
+      executionLogQueueService = new ExecutionLogQueueService(
+        new WorkflowInMemoryProviderService()
+      );
       await executionLogQueueService.queue.obliterate();
     });
 
