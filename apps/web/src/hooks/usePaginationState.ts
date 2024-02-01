@@ -1,105 +1,56 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 export interface IUsePaginationOptions {
   startingPageNumber?: number;
   pageSizes?: number[];
-  pageSizeParamName?: string;
-  currentPageNumberParamName?: string;
-  shouldUseUrlParams?: boolean;
 }
 
-export const DEFAULT_URL_PARAM_NAME_PAGE_SIZE = 'size';
-export const DEFAULT_URL_PARAM_NAME_PAGE_NUMBER = 'page';
-const DEFAULT_USE_PAGINATION_OPTIONS: Required<IUsePaginationOptions> = {
-  startingPageNumber: 1,
-  pageSizes: [10, 25, 50, 100],
-  pageSizeParamName: DEFAULT_URL_PARAM_NAME_PAGE_SIZE,
-  currentPageNumberParamName: DEFAULT_URL_PARAM_NAME_PAGE_NUMBER,
-  shouldUseUrlParams: true,
+export const URL_PARAM_NAME_PAGE_SIZE = 'size';
+export const URL_PARAM_NAME_PAGE_NUMBER = 'page';
+export interface IPaginationSearchParams {
+  size: number;
+  page: number;
+}
+
+const test: IPaginationSearchParams = {
+  size: 10,
+  page: 1,
 };
 
-const convertNumberedParamsToURLSearchParams = (
-  numberParams: Record<string, string | number>,
-  defaultParams: URLSearchParams = {} as URLSearchParams
-): URLSearchParams => {
-  return Object.entries(numberParams).reduce((outputParams, [paramName, paramValue]) => {
-    return {
-      ...outputParams,
-      [paramName]: `${paramValue}`,
-    };
-  }, defaultParams);
-};
+export function useSearchParamsState(
+  searchParamName: string,
+  defaultValue: number
+): readonly [searchParamsState: number, setSearchParamsState: (newState: number) => void] {
+  const [searchParams, setSearchParams] = useSearchParams({ [searchParamName]: `${defaultValue}` });
 
-const useNumberSearchParams = (
-  paramsWithDefaults: Record<string, number>
-): [typeof paramsWithDefaults, (val: typeof paramsWithDefaults) => void] => {
-  const [searchParams, setSearchParams] = useSearchParams(convertNumberedParamsToURLSearchParams(paramsWithDefaults));
+  const acquiredSearchParam = searchParams.get(searchParamName);
+  const searchParamsState = acquiredSearchParam ? +acquiredSearchParam : defaultValue;
 
-  const safeguardedParams = useMemo(
-    () =>
-      Object.entries(paramsWithDefaults).reduce((outputParams, [paramName, defaultValue]) => {
-        const paramValue = parseInt(searchParams.get(paramName) ?? 'NaN', 10);
-        const isValidInteger = !isNaN(paramValue) && Number.isInteger(paramValue);
-
-        return {
-          ...outputParams,
-          [paramName]: isValidInteger ? paramValue : defaultValue,
-        };
-      }, {} as typeof paramsWithDefaults),
-    [paramsWithDefaults, searchParams]
-  );
-
-  const setNumberSearchParams = useCallback(
-    (numberParams: Record<keyof typeof paramsWithDefaults, number>) => {
-      setSearchParams(convertNumberedParamsToURLSearchParams(numberParams, searchParams), { replace: true });
+  const setSearchParamsState = useCallback(
+    (newState: number) => {
+      const next = Object.assign(
+        {},
+        Object.entries(Object.fromEntries(searchParams)).reduce(
+          (outputParams, [key, value]) => ({ ...outputParams, [key]: value }),
+          {}
+        ),
+        { [searchParamName]: `${newState}` }
+      );
+      setSearchParams(next, { replace: true });
     },
-    [searchParams, setSearchParams]
+    [searchParamName, searchParams, setSearchParams]
   );
 
-  return [safeguardedParams, setNumberSearchParams];
-};
+  return [searchParamsState, setSearchParamsState];
+}
+
 export const usePaginationState = ({
-  pageSizeParamName = DEFAULT_USE_PAGINATION_OPTIONS.pageSizeParamName,
-  currentPageNumberParamName = DEFAULT_USE_PAGINATION_OPTIONS.currentPageNumberParamName,
-  startingPageNumber = DEFAULT_USE_PAGINATION_OPTIONS.startingPageNumber,
-  pageSizes = DEFAULT_USE_PAGINATION_OPTIONS.pageSizes,
-  shouldUseUrlParams = DEFAULT_USE_PAGINATION_OPTIONS.shouldUseUrlParams,
+  startingPageNumber = 1,
+  pageSizes = [10, 25, 50, 100],
 }: IUsePaginationOptions) => {
-  const [searchParams, setSearchParams] = useNumberSearchParams({
-    [pageSizeParamName]: pageSizes[0],
-    [currentPageNumberParamName]: startingPageNumber,
-  });
-  const savedPageSize = searchParams[pageSizeParamName];
-  const savedCurrentPageNumber = searchParams[currentPageNumberParamName];
-
-  const [currentPageNumber, setCurrentPageNumber] = useState<number>(startingPageNumber);
-  const [pageSize, setPageSize] = useState<number>(pageSizes[0]);
-
-  useEffect(() => {
-    if (!shouldUseUrlParams) {
-      return;
-    }
-
-    if (pageSizes.includes(savedPageSize)) {
-      setPageSize(savedPageSize);
-    }
-    setCurrentPageNumber(savedCurrentPageNumber);
-
-    // should only be run on mount to avoid infinite loop!
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!shouldUseUrlParams) {
-      return;
-    }
-
-    setSearchParams({
-      [pageSizeParamName]: pageSize,
-      [currentPageNumberParamName]: currentPageNumber,
-    });
-  }, [shouldUseUrlParams, setSearchParams, pageSizeParamName, pageSize, currentPageNumberParamName, currentPageNumber]);
+  const [pageSize, setPageSize] = useSearchParamsState('size', pageSizes[0]);
+  const [currentPageNumber, setCurrentPageNumber] = useSearchParamsState('page', startingPageNumber);
 
   return {
     currentPageNumber,
