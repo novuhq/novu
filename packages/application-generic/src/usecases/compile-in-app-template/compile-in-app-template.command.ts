@@ -1,4 +1,4 @@
-import { IsDefined, IsOptional } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { IMessageCTA } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../commands/project.command';
@@ -12,4 +12,8 @@ export class CompileInAppTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   cta?: IMessageCTA;
+
+  @IsString()
+  @IsOptional()
+  locale?: string;
 }
