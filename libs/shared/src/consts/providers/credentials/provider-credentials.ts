@@ -1094,3 +1094,13 @@ export const ringCentralConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const brevoSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

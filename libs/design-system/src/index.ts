@@ -29,6 +29,7 @@ export { NotificationBadge } from './notification-badge/NotificationBadge';
 export { Modal } from './modal/Modal';
 export { LoadingOverlay } from './loading-overlay/LoadingOverlay';
 export { NameInput } from './name-input/NameInput';
+export * from './pagination';
 export * from './cards';
 export * from './arrow-button';
 export * from './popover';
