@@ -249,7 +249,7 @@ describe('Creation functionality', function () {
     dragAndDrop('email');
     cy.waitForNetworkIdle(500);
 
-    cy.clickWorkflowNode('node-emailSelector');
+    editChannel('email');
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('emailSubject').type('this is email subject');
