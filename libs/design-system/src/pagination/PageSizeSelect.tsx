@@ -4,6 +4,8 @@ import { forwardRef, useContext, useMemo } from 'react';
 import { ISelectProps, Select } from '../select/Select';
 import { DEFAULT_PAGINATION_PAGE_SIZES } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
+import { clamp } from '../utils';
+import { getPageNumberForNewPageSize } from './util';
 
 const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   return `
@@ -58,10 +60,21 @@ export interface IPageSizeSelectProps extends Omit<ISelectProps, 'onChange' | 'd
  */
 export const PageSizeSelect: React.FC<IPageSizeSelectProps> = forwardRef<HTMLInputElement, IPageSizeSelectProps>(
   ({ onPageSizeChange, pageSizes = DEFAULT_PAGINATION_PAGE_SIZES, ...selectProps }, selectRef) => {
-    const { pageSize } = useContext(PaginationContext);
+    const { pageSize, totalItemCount, currentPageNumber, onPageChange } = useContext(PaginationContext);
 
+    /** handles clamping of page sizes to avoid poor UX and impossible states */
     const handlePageSizeChange = (val: string | string[]) => {
-      onPageSizeChange(+val);
+      const newPageSize = typeof val === 'string' ? +val : +val[0];
+
+      const updatedPageNum = getPageNumberForNewPageSize({
+        newPageSize,
+        prevPageSize: pageSize,
+        currentPageNumber,
+        totalItemCount,
+      });
+
+      onPageChange(updatedPageNum);
+      onPageSizeChange(newPageSize);
     };
 
     const options = useMemo(() => pageSizes.map((val) => `${val}`), [pageSizes]);
