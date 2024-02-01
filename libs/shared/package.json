@@ -14,8 +14,8 @@
     "precommit": "lint-staged",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "echo \"No test specified\"",
-    "test:watch": ""
+    "test": "jest src",
+    "watch:test": "jest src --watch"
   },
   "author": "",
   "license": "ISC",
@@ -32,6 +32,8 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.24",
+    "@types/jest": "29.5.2",
+    "jest": "^27.1.0",
     "rimraf": "^3.0.2",
     "typescript": "4.9.5"
   },

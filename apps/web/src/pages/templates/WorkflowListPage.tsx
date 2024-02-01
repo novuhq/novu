@@ -8,7 +8,7 @@ import {
   useTemplates,
   useEnvController,
   useNotificationGroup,
-  useIsTemplateStoreEnabled,
+  useFeatureFlag,
   INotificationTemplateExtended,
 } from '../../hooks';
 import PageHeader from '../../components/layout/components/PageHeader';
@@ -43,6 +43,7 @@ import { TemplateCreationSourceEnum } from './shared';
 import { TemplatesListNoDataOld } from './TemplatesListNoDataOld';
 import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { When } from '../../components/utils/When';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -174,7 +175,7 @@ function WorkflowListPage() {
 
   const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ general, popular });
   const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
-  const isTemplateStoreEnabled = useIsTemplateStoreEnabled();
+  const isTemplateStoreEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TEMPLATE_STORE_ENABLED);
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);

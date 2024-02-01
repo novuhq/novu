@@ -62,6 +62,9 @@ import { UpdateSubscriberGlobalPreferencesRequestDto } from '../subscribers/dtos
 import { GetPreferencesByLevel } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.usecase';
 import { GetPreferencesByLevelCommand } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.command';
 import { ApiCommonResponses, ApiNoContentResponse } from '../shared/framework/response.decorator';
+import { RemoveMessagesBulkCommand } from './usecases/remove-messages-bulk/remove-messages-bulk.command';
+import { RemoveMessagesBulk } from './usecases/remove-messages-bulk/remove-messages-bulk.usecase';
+import { RemoveMessagesBulkRequestDto } from './dtos/remove-messages-bulk-request.dto';
 
 @ApiCommonResponses()
 @Controller('/widgets')
@@ -74,6 +77,7 @@ export class WidgetsController {
     private markMessageAsUsecase: MarkMessageAs,
     private removeMessageUsecase: RemoveMessage,
     private removeAllMessagesUsecase: RemoveAllMessages,
+    private removeMessagesBulkUsecase: RemoveMessagesBulk,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
@@ -270,6 +274,26 @@ export class WidgetsController {
     });
 
     await this.removeAllMessagesUsecase.execute(command);
+  }
+
+  @ApiOperation({
+    summary: 'Remove subscriber messages in bulk',
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/bulk/delete')
+  @HttpCode(HttpStatus.OK)
+  async removeMessagesBulk(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: RemoveMessagesBulkRequestDto
+  ) {
+    return await this.removeMessagesBulkUsecase.execute(
+      RemoveMessagesBulkCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        messageIds: body.messageIds,
+      })
+    );
   }
 
   @ApiOperation({

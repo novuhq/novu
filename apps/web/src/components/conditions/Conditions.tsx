@@ -26,6 +26,19 @@ import { OnlineConditionRow } from './OnlineConditionRow';
 import { DefaultGroupOperatorData, DefaultOperatorData } from './constants';
 import { PreviousStepsConditionRow } from './PreviousStepsConditionRow';
 
+export interface IConditionsComponentProps {
+  isOpened: boolean;
+  isReadonly?: boolean;
+  onClose: () => void;
+  updateConditions: (data: IConditions[]) => void;
+  conditions?: IConditions[];
+  name: string;
+  label?: string;
+  filterPartsList: IFilterTypeList[];
+  defaultFilter?: FilterPartTypeEnum;
+  shouldDisallowEmptyConditions?: boolean;
+}
+
 export function Conditions({
   isOpened,
   isReadonly = false,
@@ -36,17 +49,8 @@ export function Conditions({
   label = '',
   filterPartsList,
   defaultFilter,
-}: {
-  isOpened: boolean;
-  isReadonly?: boolean;
-  onClose: () => void;
-  updateConditions: (data: IConditions[]) => void;
-  conditions?: IConditions[];
-  name: string;
-  label?: string;
-  filterPartsList: IFilterTypeList[];
-  defaultFilter?: FilterPartTypeEnum;
-}) {
+  shouldDisallowEmptyConditions,
+}: IConditionsComponentProps) {
   const { colorScheme } = useMantineTheme();
 
   const {
@@ -95,9 +99,17 @@ export function Conditions({
     remove(index);
   }
 
+  /** Flag for determining if conditions are empty but expected not to be */
+  const hasDisallowedEmptyConditions = Boolean(
+    shouldDisallowEmptyConditions && getValues().conditions?.some(({ children }) => !children?.[0])
+  );
+
+  const isSubmitDisabled =
+    !isDirty || isReadonly || (conditions?.length === 0 && fields?.length === 0) || hasDisallowedEmptyConditions;
+
   const onApplyConditions = async () => {
     await trigger('conditions');
-    if (!errors.conditions) {
+    if (!errors.conditions && !isSubmitDisabled) {
       updateConditions(getValues('conditions'));
       onClose();
     }
@@ -121,13 +133,16 @@ export function Conditions({
           <Button variant="outline" onClick={onClose} data-test-id="conditions-form-cancel-btn">
             Cancel
           </Button>
-          <Tooltip position="top" error disabled={isValid} label={'Some conditions are missing values'}>
+          <Tooltip
+            position="top"
+            error
+            disabled={isValid && !hasDisallowedEmptyConditions}
+            label={
+              hasDisallowedEmptyConditions ? 'At least one condition is required' : 'Some conditions are missing values'
+            }
+          >
             <div>
-              <Button
-                disabled={!isDirty || isReadonly || (conditions?.length === 0 && fields?.length === 0)}
-                onClick={onApplyConditions}
-                data-test-id="apply-conditions-btn"
-              >
+              <Button disabled={isSubmitDisabled} onClick={onApplyConditions} data-test-id="apply-conditions-btn">
                 Apply conditions
               </Button>
             </div>

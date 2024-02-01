@@ -1,28 +1,27 @@
 FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine as dev_base
 
-ARG BULL_MQ_PRO_TOKEN
-ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
 ENV NX_DAEMON=false
 
 RUN npm i pm2 -g
 RUN npm --no-update-notifier --no-fund --global install pnpm@8.9.0
 RUN pnpm --version
 
+USER 1000
 WORKDIR /usr/src/app
 
 # ------- DEV BUILD ----------
 FROM dev_base AS dev
 ARG PACKAGE_PATH
 
-COPY ./meta .
-COPY ./deps .
-COPY ./pkg .
+COPY --chown=1000:1000 ./meta .
+COPY --chown=1000:1000 ./deps .
+COPY --chown=1000:1000 ./pkg .
 
-RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
-RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then rm -f .npmrc ; fi
-RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then cp .npmrc-cloud .npmrc  ; fi
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ] ; then echo 'Building with Enterprise Edition of Novu'; rm -f .npmrc ; cp .npmrc-cloud .npmrc ; fi
 
 RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
+    --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
  pnpm install --filter "novuhq" --filter "{${PACKAGE_PATH}}..."\
  --frozen-lockfile\
  --unsafe-perm
@@ -55,12 +54,13 @@ ENV CI=true
 
 WORKDIR /usr/src/app
 
-COPY ./meta .
+COPY --chown=1000:1000 ./meta .
 
 # Get the build artifacts that only include dist folders
-COPY --from=assets /usr/src/app .
+COPY --chown=1000:1000 --from=assets /usr/src/app .
 
 RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
+    --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
  pnpm install --filter "{${PACKAGE_PATH}}..." \
  --frozen-lockfile \
  --unsafe-perm
