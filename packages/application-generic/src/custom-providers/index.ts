@@ -5,13 +5,7 @@ import {
   DistributedLockService,
   FeatureFlagsService,
 } from '../services';
-import {
-  GetIsApiIdempotencyEnabled,
-  GetIsApiRateLimitingEnabled,
-  GetIsExecutionLogQueueEnabled,
-  GetIsTopicNotificationEnabled,
-  GetUseMergedDigestId,
-} from '../usecases';
+import { GetFeatureFlag } from '../usecases';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -23,60 +17,12 @@ export const featureFlagsService = {
   },
 };
 
-export const getUseMergedDigestId = {
-  provide: GetUseMergedDigestId,
-  useFactory: async (
-    featureFlagServiceItem: FeatureFlagsService
-  ): Promise<GetUseMergedDigestId> => {
-    const useCase = new GetUseMergedDigestId(featureFlagServiceItem);
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
-};
-
-export const getIsTopicNotificationEnabled = {
-  provide: GetIsTopicNotificationEnabled,
+export const getFeatureFlag = {
+  provide: GetFeatureFlag,
   useFactory: async (
     featureFlagsServiceItem: FeatureFlagsService
-  ): Promise<GetIsTopicNotificationEnabled> => {
-    const useCase = new GetIsTopicNotificationEnabled(featureFlagsServiceItem);
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
-};
-
-export const getIsApiRateLimitingEnabled = {
-  provide: GetIsApiRateLimitingEnabled,
-  useFactory: async (
-    featureFlagsServiceItem: FeatureFlagsService
-  ): Promise<GetIsApiRateLimitingEnabled> => {
-    const useCase = new GetIsApiRateLimitingEnabled(featureFlagsServiceItem);
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
-};
-
-export const getIsApiIdempotencyEnabled = {
-  provide: GetIsApiIdempotencyEnabled,
-  useFactory: async (
-    featureFlagsServiceItem: FeatureFlagsService
-  ): Promise<GetIsApiIdempotencyEnabled> => {
-    const useCase = new GetIsApiIdempotencyEnabled(featureFlagsServiceItem);
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
-};
-
-export const getIsExecutionLogQueueEnabled = {
-  provide: GetIsExecutionLogQueueEnabled,
-  useFactory: async (
-    featureFlagsServiceItem: FeatureFlagsService
-  ): Promise<GetIsExecutionLogQueueEnabled> => {
-    const useCase = new GetIsExecutionLogQueueEnabled(featureFlagsServiceItem);
+  ): Promise<GetFeatureFlag> => {
+    const useCase = new GetFeatureFlag(featureFlagsServiceItem);
 
     return useCase;
   },
