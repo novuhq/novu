@@ -61,6 +61,7 @@ export const PreviewMobile = ({
   loading = false,
   error,
   showEditOverlay = false,
+  setSelectedLocale,
 }: {
   integration: any;
   subject?: string;
@@ -68,6 +69,7 @@ export const PreviewMobile = ({
   loading?: boolean;
   error?: Merge<FieldError, FieldErrorsImpl<IFormStep>>;
   showEditOverlay?: boolean;
+  setSelectedLocale: (locale: string) => void;
 }) => {
   const { classes } = useStyles({ error: !!(error && error.template?.content && error.template?.content?.message) });
 

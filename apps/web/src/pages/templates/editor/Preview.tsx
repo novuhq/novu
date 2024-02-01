@@ -7,7 +7,7 @@ import type { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 import { previewEmail } from '../../../api/content-templates';
 import { When } from '../../../components/utils/When';
 import { Button, colors, inputStyles } from '@novu/design-system';
-import { useProcessVariables } from '../../../hooks';
+import { useAuthController, useProcessVariables } from '../../../hooks';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 import { errorMessage } from '../../../utils/notifications';
@@ -54,6 +54,13 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
   const processedVariables = useProcessVariables(variables);
   const [payloadValue, setPayloadValue] = useState('{}');
 
+  const { organization } = useAuthController();
+  const [selectedLocale, setSelectedLocale] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    setSelectedLocale(organization?.defaultLocale);
+  }, [organization?.defaultLocale]);
+
   useEffect(() => {
     setPayloadValue(processedVariables);
   }, [processedVariables, setPayloadValue]);
@@ -63,6 +70,7 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
     content?: string | IEmailBlock[];
     payload: any;
     layoutId?: string;
+    locale?: string;
   }) => {
     mutateAsync({
       ...args,
@@ -86,9 +94,10 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
       content: contentType === 'editor' ? editorContent : htmlContent,
       payload: processedVariables,
       layoutId,
+      locale: selectedLocale,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentType, htmlContent, editorContent, processedVariables]);
+  }, [contentType, htmlContent, editorContent, processedVariables, selectedLocale]);
   const theme = useMantineTheme();
 
   useEffect(() => {
@@ -97,6 +106,8 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
     }
     setIntegration(integrations.find((item) => item.channel === 'email' && item.primary) || null);
   }, [integrations, setIntegration]);
+
+  console.log(selectedLocale, organization);
 
   return (
     <>
@@ -112,6 +123,7 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
                   integration={integration}
                   error={error}
                   showEditOverlay={!showVariables}
+                  setSelectedLocale={setSelectedLocale}
                 />
               </When>
               <When truthy={view === 'mobile'}>
@@ -123,6 +135,7 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
                       content={content}
                       integration={integration}
                       error={error}
+                      setSelectedLocale={setSelectedLocale}
                     />
                   </Grid.Col>
                 </Grid>
@@ -180,6 +193,7 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
           integration={integration}
           error={error}
           showEditOverlay={!showVariables}
+          setSelectedLocale={setSelectedLocale}
         />
       )}
     </>

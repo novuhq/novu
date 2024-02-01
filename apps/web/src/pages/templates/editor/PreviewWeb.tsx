@@ -80,6 +80,7 @@ export const PreviewWeb = ({
   loading = false,
   error,
   showEditOverlay = false,
+  setSelectedLocale,
 }: {
   integration: any;
   subject?: string;
@@ -87,6 +88,7 @@ export const PreviewWeb = ({
   loading?: boolean;
   error?: Merge<FieldError, FieldErrorsImpl<IFormStep>>;
   showEditOverlay?: boolean;
+  setSelectedLocale: (locale: string) => void;
 }) => {
   const { classes } = useStyles({ error: !!(error && error.template?.content && error.template?.content?.message) });
 
