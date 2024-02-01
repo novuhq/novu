@@ -24,6 +24,17 @@ describe('getPageNumberForNewPageSize', () => {
     expect(result).toBe(2);
   });
 
+  it('returns 3 when moving from a higher to lower page size ', () => {
+    const params: IAdjustedPageNumParams = {
+      prevPageSize: 25,
+      newPageSize: 10,
+      totalItemCount: 46,
+      currentPageNumber: 2,
+    };
+    const result = getPageNumberForNewPageSize(params);
+    expect(result).toBe(3);
+  });
+
   it('computes a higher page number when switching to a smaller page size', () => {
     const params: IAdjustedPageNumParams = {
       prevPageSize: 50,
