@@ -14,10 +14,12 @@ import { errorMessage } from '../../../utils/notifications';
 import { useActiveIntegrations } from '../../../hooks';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import type { IForm } from '../components/formTypes';
+import { useStepFormErrors } from '../hooks/useStepFormErrors';
 
-export const Preview = ({ view }: { view: string }) => {
+export const Preview = ({ showVariables = true, view }: { view: string; showVariables?: boolean }) => {
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
+  const error = useStepFormErrors();
 
   const subject = useWatch({
     name: `${path}.template.subject`,
@@ -98,64 +100,88 @@ export const Preview = ({ view }: { view: string }) => {
 
   return (
     <>
-      <Grid>
-        <Grid.Col span={9}>
-          <When truthy={view === 'web'}>
-            <PreviewWeb loading={isLoading} subject={parsedSubject} content={content} integration={integration} />
-          </When>
-          <When truthy={view === 'mobile'}>
-            <Grid>
-              <Grid.Col span={12}>
-                <PreviewMobile
+      {showVariables ? (
+        <>
+          <Grid>
+            <Grid.Col span={showVariables ? 9 : 12}>
+              <When truthy={view === 'web'}>
+                <PreviewWeb
                   loading={isLoading}
                   subject={parsedSubject}
                   content={content}
                   integration={integration}
+                  error={error}
+                  showEditOverlay={!showVariables}
                 />
+              </When>
+              <When truthy={view === 'mobile'}>
+                <Grid>
+                  <Grid.Col span={12}>
+                    <PreviewMobile
+                      loading={isLoading}
+                      subject={parsedSubject}
+                      content={content}
+                      integration={integration}
+                      error={error}
+                    />
+                  </Grid.Col>
+                </Grid>
+              </When>
+            </Grid.Col>
+
+            <When truthy={showVariables}>
+              <Grid.Col span={3} p={0}>
+                <div
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+                    borderRadius: 7,
+                    padding: 15,
+                  }}
+                >
+                  <JsonInput
+                    data-test-id="preview-json-param"
+                    formatOnBlur
+                    autosize
+                    styles={inputStyles}
+                    label="Payload:"
+                    value={payloadValue}
+                    onChange={setPayloadValue}
+                    minRows={6}
+                    mb={20}
+                    validationError="Invalid JSON"
+                  />
+                  <Button
+                    fullWidth
+                    onClick={() => {
+                      parseContent({
+                        contentType,
+                        content: contentType === 'editor' ? editorContent : htmlContent,
+                        payload: payloadValue,
+                        layoutId,
+                      });
+                    }}
+                    variant="outline"
+                    data-test-id="apply-variables"
+                  >
+                    Apply Variables
+                  </Button>
+                </div>
               </Grid.Col>
-            </Grid>
-          </When>
-        </Grid.Col>
-        <Grid.Col span={3} p={0}>
-          <div
-            style={{
-              width: '100%',
-              height: '100%',
-              background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
-              borderRadius: 7,
-              padding: 15,
-            }}
-          >
-            <JsonInput
-              data-test-id="preview-json-param"
-              formatOnBlur
-              autosize
-              styles={inputStyles}
-              label="Payload:"
-              value={payloadValue}
-              onChange={setPayloadValue}
-              minRows={6}
-              mb={20}
-              validationError="Invalid JSON"
-            />
-            <Button
-              fullWidth
-              onClick={() => {
-                parseContent({
-                  contentType,
-                  content: contentType === 'editor' ? editorContent : htmlContent,
-                  payload: payloadValue,
-                  layoutId,
-                });
-              }}
-              variant="outline"
-              data-test-id="apply-variables"
-            >
-              Apply Variables
-            </Button>
-          </div>
-        </Grid.Col>
-      </Grid>
+            </When>
+          </Grid>
+        </>
+      ) : (
+        <PreviewWeb
+          loading={isLoading}
+          subject={parsedSubject}
+          content={content}
+          integration={integration}
+          error={error}
+          showEditOverlay={!showVariables}
+        />
+      )}
     </>
   );
 };

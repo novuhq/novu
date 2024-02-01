@@ -1,15 +1,17 @@
-import { Center, createStyles, Group, Loader } from '@mantine/core';
-import { format } from 'date-fns';
-import Frame from 'react-frame-component';
-import { colors } from '@novu/design-system';
-import { PreviewDateIcon } from './PreviewDateIcon';
-import { PreviewUserIcon } from './PreviewUserIcon';
+import { Center, createStyles, Group, Loader, Skeleton, Stack } from '@mantine/core';
+import { colors, Text } from '@novu/design-system';
+import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import { Mobile } from './Mobile';
+import Frame from 'react-frame-component';
+import { FieldError, FieldErrorsImpl, Merge } from 'react-hook-form';
 import { When } from '../../../components/utils/When';
+import { IFormStep } from '../components/formTypes';
 import { EmailIntegrationInfo } from './EmailIntegrationInfo';
+import { Mobile } from './Mobile';
+import { PreviewEditOverlay } from './PreviewEditOverlay';
+import { PreviewUserIcon } from './PreviewUserIcon';
 
-const useStyles = createStyles((theme) => ({
+const useStyles = createStyles((theme, { error }: { error: boolean }) => ({
   header: {
     width: '100%',
     marginTop: '20px',
@@ -21,10 +23,6 @@ const useStyles = createStyles((theme) => ({
     fontWeight: 'bolder',
   },
   from: {
-    color: theme.colorScheme === 'dark' ? colors.B60 : colors.B70,
-    fontWeight: 'normal',
-  },
-  date: {
     color: theme.colorScheme === 'dark' ? colors.B60 : colors.B70,
     fontWeight: 'normal',
   },
@@ -50,6 +48,10 @@ const useStyles = createStyles((theme) => ({
     padding: '15px',
     textAlign: 'center',
   },
+  content: {
+    position: 'relative',
+    border: error ? `1px solid ${colors.error}` : 'none',
+  },
 }));
 
 export const PreviewMobile = ({
@@ -57,13 +59,31 @@ export const PreviewMobile = ({
   subject,
   content,
   loading = false,
+  error,
+  showEditOverlay = false,
 }: {
   integration: any;
   subject?: string;
   content: string;
   loading?: boolean;
+  error?: Merge<FieldError, FieldErrorsImpl<IFormStep>>;
+  showEditOverlay?: boolean;
 }) => {
-  const { classes } = useStyles();
+  const { classes } = useStyles({ error: !!(error && error.template?.content && error.template?.content?.message) });
+
+  const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
+
+  const handleMouseEnter = () => {
+    if (showEditOverlay) {
+      setIsEditOverlayVisible(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (showEditOverlay && isEditOverlayVisible) {
+      setIsEditOverlayVisible(false);
+    }
+  };
 
   return (
     <>
@@ -83,54 +103,82 @@ export const PreviewMobile = ({
                 }}
                 spacing={13}
               >
-                <PreviewUserIcon />
-                <div>
-                  <div data-test-id="preview-subject" className={classes.subject}>
-                    {subject}
+                <When truthy={loading}>
+                  <Skeleton height={40} width={40} circle />
+                  <Stack spacing={3}>
+                    <Skeleton height={14} width={160} radius="xs" />
+                    <Skeleton height={14} width={80} />
+                  </Stack>
+                </When>
+
+                <When truthy={!loading}>
+                  <PreviewUserIcon />
+                  <div>
+                    {error && error.template?.subject && error.template?.subject?.message ? (
+                      <Text color={colors.error}>{error.template.subject.message}</Text>
+                    ) : (
+                      <>
+                        <div data-test-id="preview-subject" className={classes.subject}>
+                          {subject}
+                        </div>
+                        <Group spacing={13} position="apart">
+                          <div data-test-id="preview-from" className={classes.from}>
+                            <EmailIntegrationInfo integration={integration} field={'from'} />
+                          </div>
+                        </Group>
+                      </>
+                    )}
                   </div>
-                  <Group spacing={13} position="apart">
-                    <div data-test-id="preview-from" className={classes.from}>
-                      <EmailIntegrationInfo integration={integration} field={'from'} />
-                    </div>
-                    <div className={classes.date}>
-                      <PreviewDateIcon />
-                      <span
-                        style={{
-                          marginLeft: '4px',
-                        }}
-                        data-test-id="preview-date"
-                      >
-                        {format(new Date(), 'EEE, MMM d, HH:mm')}
-                      </span>
-                    </div>
-                  </Group>
-                </div>
+                </When>
               </Group>
             </div>
           </Group>
         </div>
         <div className={classes.line}></div>
-        <When truthy={loading}>
-          <div>
-            <Center>
-              <Loader color={colors.B70} mb={20} mt={20} size={32} />
-            </Center>
-          </div>
-        </When>
-        <When truthy={!loading}>
-          <ErrorBoundary
-            FallbackComponent={() => (
-              <div data-test-id="preview-content" className={classes.fallbackFrame}>
-                Oops! We've recognized some glitch in this HTML. Please give it another look!
-              </div>
+        <div className={classes.content} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+          <When truthy={loading}>
+            <Stack spacing={40} py={40} px={30} h="100%">
+              <Group position="center" noWrap>
+                <Skeleton height={40} width={80} radius="sm" />
+              </Group>
+              <Stack spacing={12}>
+                <Group spacing={16} noWrap>
+                  <Skeleton height={14} width={'70%'} radius="sm" />
+                  <Skeleton height={14} width={'30%'} radius="sm" />
+                </Group>
+                <Group spacing={16} noWrap>
+                  <Skeleton height={14} width={'30%'} radius="sm" />
+                  <Skeleton height={14} width={'70%'} radius="sm" />
+                </Group>
+                <Group spacing={16} noWrap>
+                  <Skeleton height={14} width={'72%'} radius="sm" />
+                </Group>
+              </Stack>
+
+              <Group spacing={16} mt="auto" noWrap>
+                <Skeleton height={14} width={'30%'} radius="sm" />
+              </Group>
+            </Stack>
+          </When>
+          <When truthy={!loading}>
+            {isEditOverlayVisible && <PreviewEditOverlay />}
+            <ErrorBoundary
+              FallbackComponent={() => (
+                <div data-test-id="preview-content" className={classes.fallbackFrame}>
+                  Oops! We've recognized some glitch in this HTML. Please give it another look!
+                </div>
+              )}
+              resetKeys={[content]}
+            >
+              <Frame data-test-id="preview-content" className={classes.frame} initialContent={content}>
+                <></>
+              </Frame>
+            </ErrorBoundary>
+            {error && error.template?.content && error.template?.content?.message && (
+              <Text color={colors.error}>{error?.template?.content?.message}</Text>
             )}
-            resetKeys={[content]}
-          >
-            <Frame data-test-id="preview-content" className={classes.frame} initialContent={content}>
-              <></>
-            </Frame>
-          </ErrorBoundary>
-        </When>
+          </When>
+        </div>
       </Mobile>
     </>
   );
