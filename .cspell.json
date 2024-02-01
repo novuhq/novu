@@ -545,9 +545,14 @@
     "Stdev",
     "openapi",
     "headerapikey",
+    "fieldname",
+    "isend",
+    "Otel",
+    "opentelemetry",
     "INITDB",
     "isend",
-    "Idand"
+    "Idand",
+    "hubspot"
   ],
   "flagWords": [],
   "patterns": [

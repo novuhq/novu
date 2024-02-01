@@ -31,6 +31,7 @@ const BodyHolder = styled.div<{ isParentScrollable: boolean }>`
   gap: 24px;
   padding-right: 5px;
   margin-right: 19px;
+  height: 100%;
 `;
 
 const FooterHolder = styled.div`

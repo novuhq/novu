@@ -4,6 +4,7 @@ import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import * as Sentry from '@sentry/node';
 import { BullMqService, getErrorInterceptor, Logger } from '@novu/application-generic';
+import * as packageJson from '../package.json';
 
 import { AppModule } from './app.module';
 import { CONTEXT_PATH } from './config';
@@ -19,7 +20,6 @@ if (process.env.SENTRY_DSN) {
     release: `v${version}`,
   });
 }
-
 export async function bootstrap() {
   BullMqService.haveProInstalled();
   const app = await NestFactory.create(AppModule, { bufferLogs: true });

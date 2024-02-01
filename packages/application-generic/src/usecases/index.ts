@@ -39,3 +39,5 @@ export * from './promote-type-change.command';
 export * from './trigger-broadcast';
 export * from './trigger-multicast';
 export * from './compile-in-app-template';
+export * from './execution-log-route';
+export * from './compile-step-template';

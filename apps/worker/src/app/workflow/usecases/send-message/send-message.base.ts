@@ -1,6 +1,7 @@
 import * as i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
+import { format } from 'date-fns';
 import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -10,17 +11,17 @@ import {
   IMessageTemplate,
   SmsProviderIdEnum,
 } from '@novu/shared';
+
 import {
   DetailEnum,
-  CreateExecutionDetailsCommand,
   SelectIntegration,
   SelectIntegrationCommand,
   GetNovuProviderCredentials,
   SelectVariantCommand,
   SelectVariant,
-  ExecutionLogQueueService,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
-
 import { SendMessageType } from './send-message-type.usecase';
 import { CreateLog } from '../../../shared/logs';
 import { PlatformException } from '../../../shared/utils';
@@ -31,14 +32,14 @@ export abstract class SendMessageBase extends SendMessageType {
   protected constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected executionLogQueueService: ExecutionLogQueueService,
+    protected executionLogRoute: ExecutionLogRoute,
     protected subscriberRepository: SubscriberRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef
   ) {
-    super(messageRepository, createLogUsecase, executionLogQueueService);
+    super(messageRepository, createLogUsecase, executionLogRoute);
   }
 
   protected async getIntegration(
@@ -74,30 +75,23 @@ export abstract class SendMessageBase extends SendMessageType {
   }
 
   protected async sendErrorHandlebars(job: JobEntity, error: string) {
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
         detail: DetailEnum.MESSAGE_CONTENT_NOT_GENERATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.FAILED,
         isTest: false,
         isRetry: false,
         raw: JSON.stringify({ error }),
-      }),
-      groupId: job._organizationId,
-    });
+      })
+    );
   }
 
   protected async sendSelectedIntegrationExecution(job: JobEntity, integration: IntegrationEntity) {
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
         detail: DetailEnum.INTEGRATION_INSTANCE_SELECTED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -110,9 +104,8 @@ export abstract class SendMessageBase extends SendMessageType {
           _environmentId: integration?._environmentId,
           _id: integration?._id,
         }),
-      }),
-      groupId: job._organizationId,
-    });
+      })
+    );
   }
 
   protected async processVariants(command: SendMessageCommand): Promise<IMessageTemplate> {
@@ -128,21 +121,17 @@ export abstract class SendMessageBase extends SendMessageType {
     );
 
     if (conditions) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add({
-        name: metadata._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.VARIANT_CHOSEN,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,
           isRetry: false,
           raw: JSON.stringify({ conditions }),
-        }),
-        groupId: command.job._organizationId,
-      });
+        })
+      );
     }
 
     return messageTemplate;
@@ -164,6 +153,16 @@ export abstract class SendMessageBase extends SendMessageType {
           nsSeparator: '.',
           lng: locale || 'en',
           compatibilityJSON: 'v2',
+          interpolation: {
+            formatSeparator: ',',
+            format: function (value, formatting, lng) {
+              if (value && formatting && !isNaN(Date.parse(value))) {
+                return format(new Date(value), formatting);
+              }
+
+              return value.toString();
+            },
+          },
         });
       }
     } catch (e) {

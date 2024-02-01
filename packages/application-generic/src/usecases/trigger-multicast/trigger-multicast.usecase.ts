@@ -30,7 +30,7 @@ import { MapTriggerRecipientsCommand } from '../map-trigger-recipients';
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
 
 const LOG_CONTEXT = 'TriggerMulticastUseCase';
-const QUEUE_CHUNK_SIZE = 100;
+const QUEUE_CHUNK_SIZE = Number(process.env.MULTICAST_QUEUE_CHUNK_SIZE) || 100;
 
 @Injectable()
 export class TriggerMulticast {
