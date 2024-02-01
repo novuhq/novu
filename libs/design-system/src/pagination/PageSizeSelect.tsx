@@ -7,6 +7,7 @@ import { PaginationContext } from './PaginationContext';
 import { clamp } from '../utils';
 import { getPageNumberForNewPageSize } from './util';
 
+
 const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   return `
   display: flex;

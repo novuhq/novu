@@ -64,7 +64,7 @@ runs:
         GH_PASSWORD: ${{ inputs.github_token }}
       run: |
         set -x
-        cd apps/api && pnpm run docker:build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN}
+        cd apps/api && pnpm run docker:build
 
     - name: Tag and test
       id: build-image
