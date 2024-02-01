@@ -25,7 +25,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.react-flow__node').should('have.length', 4);
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.waitForNetworkIdle(500);
-    cy.getByTestId('editor-sidebar-delete').click();
+    cy.getByTestId('step-actions-menu').click().getByTestId('delete-step-action').click();
     cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
@@ -112,12 +112,13 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.waitForNetworkIdle(500);
 
-    cy.clickWorkflowNode(`node-inAppSelector`);
+    editChannel(`inApp`);
     cy.getByTestId(`step-active-switch`).get('label').contains('Active');
     cy.getByTestId(`step-active-switch`).click({ force: true });
     goBack();
 
-    cy.clickWorkflowNode(`node-inAppSelector`);
+    editChannel(`inApp`);
+
     cy.getByTestId(`step-active-switch`).get('label').contains('Inactive');
   });
 
@@ -128,12 +129,12 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.waitForNetworkIdle(500);
 
-    cy.clickWorkflowNode(`node-inAppSelector`);
+    editChannel(`inApp`);
     cy.getByTestId(`step-should-stop-on-fail-switch`).get('label').contains('Stop if step fails');
     cy.getByTestId(`step-should-stop-on-fail-switch`).click({ force: true });
     goBack();
 
-    cy.clickWorkflowNode(`node-inAppSelector`);
+    editChannel(`inApp`);
     cy.getByTestId(`step-should-stop-on-fail-switch`).should('be.checked');
   });
 

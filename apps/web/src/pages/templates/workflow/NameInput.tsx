@@ -62,7 +62,6 @@ export const NameInput = () => {
             error={showErrors && fieldState.error?.message}
             type="text"
             data-test-id="name-input"
-            // data-test-id="title"
             placeholder="Enter workflow name"
             disabled={readonly}
           />
