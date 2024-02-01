@@ -2295,6 +2295,12 @@ importers:
       '@types/bluebird':
         specifier: ^3.5.24
         version: 3.5.38
+      '@types/jest':
+        specifier: 29.5.2
+        version: 29.5.2
+      jest:
+        specifier: ^27.1.0
+        version: 27.5.1(ts-node@10.9.1)
       rimraf:
         specifier: ^3.0.2
         version: 3.0.2
@@ -30154,7 +30160,7 @@ packages:
       '@babel/core': 7.23.2
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/babel__core': 7.20.0
+      '@types/babel__core': 7.20.3
       babel-plugin-istanbul: 6.1.1
       babel-preset-jest: 27.5.1(@babel/core@7.23.2)
       chalk: 4.1.2
@@ -49351,7 +49357,7 @@ packages:
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
-      '@babel/code-frame': 7.21.4
+      '@babel/code-frame': 7.22.13
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
