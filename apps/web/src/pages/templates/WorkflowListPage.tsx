@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ActionIcon, useMantineTheme, Group } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
@@ -153,10 +152,21 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
 function WorkflowListPage() {
   const segment = useSegment();
   const { readonly } = useEnvController();
-  const [currentPageNumber, setCurrentPageNumber] = useState<number>(1);
-  const [pageSize, setPageSize] = useState<number>(10);
+  /*
+   * const [currentPageNumber, setCurrentPageNumber] = useState<number>(1);
+   * const [pageSize, setPageSize] = useState<number>(10);
+   */
   const { loading: areNotificationGroupLoading } = useNotificationGroup();
-  const { templates, loading, totalCount: totalTemplatesCount = 0 } = useTemplates(currentPageNumber - 1, pageSize);
+  const {
+    templates,
+    loading,
+    totalItemCount,
+    totalPageCount,
+    currentPageNumber,
+    setCurrentPageNumber,
+    setPageSize,
+    pageSize,
+  } = useTemplates();
   const isLoading = areNotificationGroupLoading || loading;
   const navigate = useNavigate();
   const { blueprintsGroupedAndPopular: { general, popular } = {}, isLoading: areBlueprintsLoading } =
@@ -205,9 +215,9 @@ function WorkflowListPage() {
     <ListPage
       title="Workflows"
       paginationInfo={{
-        totalItemCount: totalTemplatesCount,
+        totalItemCount,
         pageSize,
-        totalPageCount: Math.ceil(totalTemplatesCount / pageSize),
+        totalPageCount,
         currentPageNumber,
         onPageChange: handleTableChange,
         onPageSizeChange: setPageSize,

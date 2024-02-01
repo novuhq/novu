@@ -1,4 +1,4 @@
-import { QueryFunction, QueryKey, QueryOptions, UseQueryOptions, useQuery } from '@tanstack/react-query';
+import { QueryFunction, QueryKey, UseQueryOptions, useQuery } from '@tanstack/react-query';
 import { IUsePaginationOptions, usePaginationState } from './usePaginationState';
 
 interface IPaginatedQueryContext {
