@@ -4,9 +4,7 @@ import { forwardRef, useContext, useMemo } from 'react';
 import { ISelectProps, Select } from '../select/Select';
 import { DEFAULT_PAGINATION_PAGE_SIZES } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
-import { clamp } from '../utils';
 import { getPageNumberForNewPageSize } from './util';
-
 
 const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   return `
