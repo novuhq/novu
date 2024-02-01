@@ -77,4 +77,3 @@ export type UpdateResult<
 
 export type IMessageId = string | string[];
 export type IFeedId = string | string[];
-export type EmptyObject = Record<string, never>;

@@ -38,7 +38,6 @@ import {
   IUpdateUserPreferencesVariables,
   IUpdateUserGlobalPreferencesVariables,
   UpdateResult,
-  EmptyObject,
 } from './types';
 
 export const NOTIFICATION_CENTER_TOKEN_KEY = 'nc_token';
@@ -815,15 +814,15 @@ export class HeadlessService {
   }: {
     messageIds: string[];
     listener: (
-      result: UpdateResult<EmptyObject, unknown, { messageIds: string[] }>
+      result: UpdateResult<void, unknown, { messageIds: string[] }>
     ) => void;
-    onSuccess?: (obj: EmptyObject) => void;
+    onSuccess?: (obj: void) => void;
     onError?: (error: unknown) => void;
   }) {
     this.assertSessionInitialized();
 
     const { result, unsubscribe } = this.queryService.subscribeMutation<
-      EmptyObject,
+      void,
       unknown,
       { messageIds: string[] }
     >({
