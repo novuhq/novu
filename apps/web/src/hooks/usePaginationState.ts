@@ -10,31 +10,41 @@ export interface IUsePaginationOptions {
   pageNumberParamName?: string;
 }
 
-export function useSearchParamsState(
-  searchParamName: string,
-  defaultValue: number
-): readonly [number, (newState: number) => void] {
-  const [searchParams, setSearchParams] = useSearchParams({ [searchParamName]: `${defaultValue}` });
+export function useSearchParamsState({
+  startingPageNumber,
+  pageNumberParamName,
+  pageSizeParamName,
+  pageSizes,
+}: Required<IUsePaginationOptions>) {
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const acquiredSearchParam = searchParams.get(searchParamName);
-  const searchParamsState = acquiredSearchParam ? +acquiredSearchParam : defaultValue;
+  const getParamVal = (name: string, defaultValue: number) => {
+    const param = searchParams.get(name);
 
-  const setSearchParamsState = useCallback(
-    (newVal: number) => {
-      const next = Object.assign(
-        {},
-        Object.entries(Object.fromEntries(searchParams)).reduce(
-          (outputParams, [key, value]) => ({ ...outputParams, [key]: value }),
-          {}
-        ),
-        { [searchParamName]: `${newVal}` }
-      );
-      setSearchParams(next, { replace: true });
-    },
-    [searchParamName, searchParams, setSearchParams]
-  );
+    return param ? +param : defaultValue;
+  };
 
-  return [searchParamsState, setSearchParamsState];
+  const setSearchParamsState = (searchParamName: string) => (newVal: number) => {
+    const next = Object.assign(
+      {},
+      Object.entries(Object.fromEntries(searchParams)).reduce(
+        (outputParams, [key, value]) => ({ ...outputParams, [key]: value }),
+        {}
+      ),
+      { [searchParamName]: `${newVal}` }
+    );
+    setSearchParams(next, { replace: true });
+  };
+
+  const pageSize = getParamVal(pageSizeParamName, pageSizes[0]);
+  const currentPageNumber = getParamVal(pageNumberParamName, startingPageNumber);
+
+  return {
+    pageSize,
+    currentPageNumber,
+    setPageSize: setSearchParamsState(pageSizeParamName),
+    setCurrentPageNumber: setSearchParamsState(pageNumberParamName),
+  };
 }
 
 export const usePaginationState = ({
@@ -43,8 +53,12 @@ export const usePaginationState = ({
   pageNumberParamName = URL_PARAM_NAME_PAGE_NUMBER,
   pageSizeParamName = URL_PARAM_NAME_PAGE_SIZE,
 }: IUsePaginationOptions) => {
-  const [pageSize, setPageSize] = useSearchParamsState(pageSizeParamName, pageSizes[0]);
-  const [currentPageNumber, setCurrentPageNumber] = useSearchParamsState(pageNumberParamName, startingPageNumber);
+  const { pageSize, setPageSize, currentPageNumber, setCurrentPageNumber } = useSearchParamsState({
+    startingPageNumber,
+    pageSizes,
+    pageSizeParamName,
+    pageNumberParamName,
+  });
 
   return {
     currentPageNumber,
