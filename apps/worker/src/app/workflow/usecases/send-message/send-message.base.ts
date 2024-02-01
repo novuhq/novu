@@ -1,6 +1,7 @@
 import * as i18next from 'i18next';
 import { ModuleRef } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
+import { format } from 'date-fns';
 import { IntegrationEntity, JobEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -10,6 +11,7 @@ import {
   IMessageTemplate,
   SmsProviderIdEnum,
 } from '@novu/shared';
+
 import {
   DetailEnum,
   SelectIntegration,
@@ -20,7 +22,6 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
-
 import { SendMessageType } from './send-message-type.usecase';
 import { CreateLog } from '../../../shared/logs';
 import { PlatformException } from '../../../shared/utils';
@@ -152,6 +153,16 @@ export abstract class SendMessageBase extends SendMessageType {
           nsSeparator: '.',
           lng: locale || 'en',
           compatibilityJSON: 'v2',
+          interpolation: {
+            formatSeparator: ',',
+            format: function (value, formatting, lng) {
+              if (value && formatting && !isNaN(Date.parse(value))) {
+                return format(new Date(value), formatting);
+              }
+
+              return value.toString();
+            },
+          },
         });
       }
     } catch (e) {

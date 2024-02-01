@@ -1,6 +1,7 @@
 import React from 'react';
+import { colors } from '../../config';
 
-export function TerminalGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
+export function TerminalGradient(props: React.ComponentPropsWithoutRef<'svg'> & { disabled?: boolean }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 16 16" {...props}>
       <mask
@@ -23,8 +24,8 @@ export function TerminalGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
       </g>
       <defs>
         <linearGradient id="paint0_linear_2012_45416" x1="1.6" x2="14.4" y1="8" y2="8" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#DD2476"></stop>
-          <stop offset="1" stopColor="#FF512F"></stop>
+          <stop stopColor={props.disabled ? colors.B40 : '#DD2476'}></stop>
+          <stop offset="1" stopColor={props.disabled ? colors.B40 : '#FF512F'}></stop>
         </linearGradient>
       </defs>
     </svg>

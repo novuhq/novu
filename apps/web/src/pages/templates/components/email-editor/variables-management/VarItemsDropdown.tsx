@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Collapse, UnstyledButton, useMantineTheme } from '@mantine/core';
-import { ChevronUp, ChevronDown, colors } from '@novu/design-system';
+import { Collapse, UnstyledButton, Center, Highlight } from '@mantine/core';
+import { ChevronUp, ChevronDown, colors, Folder } from '@novu/design-system';
 import { VarItem } from './VarItem';
 import { VarItemTooltip } from './VarItemTooltip';
 
-export const VarItemsDropdown = ({ name, type }) => {
+export const VarItemsDropdown = ({ name, type, highlight, withFolders = false, path = '' }) => {
   const [open, setOpen] = useState(false);
-  const theme = useMantineTheme();
 
   return (
     <>
@@ -20,22 +19,46 @@ export const VarItemsDropdown = ({ name, type }) => {
           width: '100%',
         }}
       >
-        <VarItem name={name} type="object">
-          <span
+        {withFolders ? (
+          <div
             style={{
-              float: 'right',
+              color: colors.B60,
+              marginBottom: 10,
+              padding: 8,
+              width: '100%',
             }}
           >
-            {open ? <ChevronUp /> : <ChevronDown />}
-          </span>
-        </VarItem>
+            <Center inline>
+              <Folder style={{ marginRight: '8px' }} />
+              <Highlight span inline highlight={highlight}>
+                {name}
+              </Highlight>
+            </Center>
+            <span
+              style={{
+                float: 'right',
+              }}
+            >
+              {open ? <ChevronUp /> : <ChevronDown />}
+            </span>
+          </div>
+        ) : (
+          <VarItem highlight={highlight} name={name} type="object">
+            <span
+              style={{
+                float: 'right',
+              }}
+            >
+              {open ? <ChevronUp /> : <ChevronDown />}
+            </span>
+          </VarItem>
+        )}
       </UnstyledButton>
       <Collapse in={open}>
         <div
           style={{
-            borderBottom: `1px solid ${theme.colorScheme === 'dark' ? colors.B20 : colors.B85}`,
             marginBottom: 10,
-            paddingLeft: 12,
+            paddingLeft: 8,
           }}
         >
           {Object.keys(type).map((key, index) => {
@@ -44,12 +67,27 @@ export const VarItemsDropdown = ({ name, type }) => {
             if (varType !== null && !['boolean', 'string', 'number', 'object', 'array'].includes(varType)) {
               varType = typeof varType;
             }
-
             if (varType === 'object') {
-              return <VarItemsDropdown key={index} name={key} type={type?.[key]} />;
+              return (
+                <VarItemsDropdown
+                  path={`${name}.${key}`}
+                  highlight={highlight}
+                  key={index}
+                  name={key}
+                  type={type?.[key]}
+                />
+              );
             }
 
-            return <VarItemTooltip pathToCopy={`${name}.${key}`} name={key} type={varType} key={index} />;
+            return (
+              <VarItemTooltip
+                highlight={highlight}
+                pathToCopy={`${path}.${key}`}
+                name={key}
+                type={varType}
+                key={index}
+              />
+            );
           })}
         </div>
       </Collapse>

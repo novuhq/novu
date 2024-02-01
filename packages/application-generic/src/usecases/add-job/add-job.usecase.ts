@@ -11,7 +11,11 @@ import { AddDelayJob } from './add-delay-job.usecase';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
 import { AddJobCommand } from './add-job.command';
-import { DetailEnum } from '../../usecases';
+import {
+  ConditionsFilter,
+  ConditionsFilterCommand,
+  DetailEnum,
+} from '../../usecases';
 import {
   CalculateDelayService,
   JobsOptions,
@@ -42,7 +46,9 @@ export class AddJob {
     private mergeOrCreateDigestUsecase: MergeOrCreateDigest,
     private addDelayJob: AddDelayJob,
     @Inject(forwardRef(() => CalculateDelayService))
-    private calculateDelayService: CalculateDelayService
+    private calculateDelayService: CalculateDelayService,
+    @Inject(forwardRef(() => ConditionsFilter))
+    private conditionsFilter: ConditionsFilter
   ) {}
 
   @InstrumentUsecase()
@@ -66,6 +72,26 @@ export class AddJob {
       LOG_CONTEXT
     );
 
+    let filtered = false;
+
+    if (
+      [StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(
+        job.type as StepTypeEnum
+      )
+    ) {
+      const shouldRun = await this.conditionsFilter.filter(
+        ConditionsFilterCommand.create({
+          filters: job.step.filters || [],
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          job,
+        })
+      );
+
+      filtered = !shouldRun.passed;
+    }
+
     let digestAmount: number | undefined;
     let digestCreationResult: DigestCreationResultEnum | undefined;
     if (job.type === StepTypeEnum.DIGEST) {
@@ -78,7 +104,7 @@ export class AddJob {
       Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
 
       digestCreationResult = await this.mergeOrCreateDigestUsecase.execute(
-        MergeOrCreateDigestCommand.create({ job, filtered: command.filtered })
+        MergeOrCreateDigestCommand.create({ job, filtered })
       );
 
       if (digestCreationResult === DigestCreationResultEnum.MERGED) {
@@ -150,9 +176,9 @@ export class AddJob {
       })
     );
 
-    const delay = command.filtered ? 0 : digestAmount ?? delayAmount;
+    const delay = filtered ? 0 : digestAmount ?? delayAmount;
 
-    if ((digestAmount || delayAmount) && command.filtered) {
+    if ((digestAmount || delayAmount) && filtered) {
       Logger.verbose(
         `Delay for job ${job._id} will be 0 because job was filtered`,
         LOG_CONTEXT
