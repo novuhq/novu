@@ -107,8 +107,6 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
     setIntegration(integrations.find((item) => item.channel === 'email' && item.primary) || null);
   }, [integrations, setIntegration]);
 
-  console.log(selectedLocale, organization);
-
   return (
     <>
       {showVariables ? (
