@@ -35,8 +35,9 @@ export const tooltipStyles = createStyles((theme, _params, getRef) => {
 
   return {
     tooltip: {
+      padding: '16px',
       background: dark ? colors.B20 : colors.white,
-      color: dark ? colors.B80 : colors.B60,
+      color: dark ? colors.B60 : colors.B60,
       fontSize: '14px',
       boxShadow: dark ? 'none' : '0px 5px 15px 0px #2644800D',
     },

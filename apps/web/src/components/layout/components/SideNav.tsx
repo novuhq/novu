@@ -30,7 +30,6 @@ import {
   Translation,
 } from '@novu/design-system';
 import { useEnvController, useIsMultiTenancyEnabled, useIsTranslationManagerEnabled } from '../../../hooks';
-import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
@@ -91,9 +90,6 @@ export function SideNav({}: Props) {
     ]);
   }, [environment, addItem, removeItems, setEnvironment]);
 
-  const lastStep = currentOnboardingStep().get();
-  const getStartedRoute = lastStep === ROUTES.GET_STARTED_PREVIEW ? ROUTES.GET_STARTED : lastStep;
-
   const handleHideOnboardingClick = async () => {
     await updateOnboardingStatus({ showOnboarding: false });
   };
@@ -103,7 +99,7 @@ export function SideNav({}: Props) {
       label: 'Get Started',
       condition: !readonly && showOnBoarding,
       icon: <CheckCircleOutlined />,
-      link: getStartedRoute ?? ROUTES.GET_STARTED,
+      link: ROUTES.GET_STARTED,
       rightSide: { component: <VisibilityOff onClick={handleHideOnboardingClick} />, displayOnHover: true },
       testId: 'side-nav-quickstart-link',
       tooltipLabel: 'Hide this page from menu',
