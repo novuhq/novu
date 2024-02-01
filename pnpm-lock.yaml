@@ -2621,6 +2621,9 @@ importers:
       '@novu/resend':
         specifier: ^0.22.0
         version: link:../../providers/resend
+      '@novu/ring-central':
+        specifier: ^0.22.0
+        version: link:../../providers/ring-central
       '@novu/rocket-chat':
         specifier: ^0.22.0
         version: link:../../providers/rocket-chat
@@ -5739,6 +5742,49 @@ importers:
       typedoc:
         specifier: ^0.24.0
         version: 0.24.6(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  providers/ring-central:
+    dependencies:
+      '@novu/stateless':
+        specifier: 0.22.0
+        version: link:../../packages/stateless
+      '@ringcentral/sdk':
+        specifier: ^5.0.1
+        version: 5.0.1
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ~1.0.1
+        version: 1.0.2(nyc@15.1.0)
+      '@types/jest':
+        specifier: ~27.5.2
+        version: 27.5.2
+      cspell:
+        specifier: ~6.19.2
+        version: 6.19.2
+      jest:
+        specifier: ~27.5.1
+        version: 27.5.1(ts-node@10.9.1)
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      nyc:
+        specifier: ~15.1.0
+        version: 15.1.0
+      prettier:
+        specifier: ~2.8.0
+        version: 2.8.7
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      ts-jest:
+        specifier: ~27.1.5
+        version: 27.1.5(@babel/core@7.23.2)(@types/jest@27.5.2)(jest@27.5.1)(typescript@4.9.5)
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
       typescript:
         specifier: 4.9.5
         version: 4.9.5
@@ -13857,7 +13903,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@emotion/babel-plugin': 11.10.6
       '@emotion/is-prop-valid': 1.2.0
       '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
@@ -17868,7 +17914,7 @@ packages:
     dependencies:
       chalk: 4.1.2
       consola: 2.15.3
-      node-fetch: 2.6.9
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
 
@@ -21363,6 +21409,17 @@ packages:
       pretty: 2.0.0
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
+    dev: false
+
+  /@ringcentral/sdk@5.0.1:
+    resolution: {integrity: sha512-7lKXMZIbooC7zTCkqgjn1G36aOXd92uXwkiYBBNYwmIawlviZSeNE0UY9GHZQzRaxZ6bqQ/bvHzl/t/G5fzMMA==}
+    engines: {node: '>=4'}
+    dependencies:
+      dom-storage: 2.1.0
+      is-plain-object: 2.0.4
+      node-fetch: 2.7.0
+    transitivePeerDependencies:
+      - encoding
     dev: false
 
   /@rollup/plugin-babel@5.3.1(@babel/core@7.23.2)(rollup@2.79.1):
@@ -25692,7 +25749,7 @@ packages:
     dependencies:
       '@storybook/client-logger': 7.4.2
       memoizerific: 1.11.3
-      qs: 6.11.1
+      qs: 6.11.2
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
 
@@ -26823,12 +26880,6 @@ packages:
       '@types/node': 14.18.42
     dev: true
 
-  /@types/jsonwebtoken@9.0.2:
-    resolution: {integrity: sha512-drE6uz7QBKq1fYqqoFKTDRdFCPHd5TCub75BM+D+cMx7NU9hUz7SESLfC2fSCXVFMO5Yj8sOWHuGqPgjc+fz0Q==}
-    dependencies:
-      '@types/node': 14.18.42
-    dev: false
-
   /@types/jsonwebtoken@9.0.5:
     resolution: {integrity: sha512-VRLSGzik+Unrup6BsouBeHsf4d1hOEgYWTm/7Nmw1sXoN1+tRly/Gy/po3yeahnP4jfnQWWAhQAqcNfH7ngOkA==}
     dependencies:
@@ -27491,7 +27542,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@eslint-community/regexpp': 4.5.0
+      '@eslint-community/regexpp': 4.9.1
       '@typescript-eslint/parser': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
       '@typescript-eslint/scope-manager': 5.58.0
       '@typescript-eslint/type-utils': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
@@ -33664,6 +33715,10 @@ packages:
       domhandler: 5.0.3
       entities: 4.4.0
 
+  /dom-storage@2.1.0:
+    resolution: {integrity: sha512-g6RpyWXzl0RR6OTElHKBl7nwnK87GUyZMYC7JWsB/IA73vpqK2K6LT39x4VepLxlSsWBFrPVLnsSR5Jyty0+2Q==}
+    dev: false
+
   /domelementtype@1.3.1:
     resolution: {integrity: sha512-BSKB+TSpMpFI/HOxCNr1O8aMOTZ8hT3pM3GQ0w/mWRmkhEDSFJkkyzz4XQsBV44BChwGkrDfMyjVD0eA2aFV3w==}
     dev: true
@@ -34686,7 +34741,7 @@ packages:
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       aria-query: 5.1.3
       array-includes: 3.1.6
       array.prototype.flatmap: 1.3.1
@@ -36330,7 +36385,7 @@ packages:
       extend: 3.0.2
       https-proxy-agent: 5.0.1
       is-stream: 2.0.1
-      node-fetch: 2.6.9
+      node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -40506,7 +40561,7 @@ packages:
     engines: {node: '>=14'}
     dependencies:
       '@types/express': 4.17.17
-      '@types/jsonwebtoken': 9.0.2
+      '@types/jsonwebtoken': 9.0.5
       debug: 4.3.4(supports-color@8.1.1)
       jose: 4.13.1
       limiter: 1.1.5
@@ -43317,6 +43372,7 @@ packages:
         optional: true
     dependencies:
       whatwg-url: 5.0.0
+    dev: false
 
   /node-fetch@2.7.0:
     resolution: {integrity: sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==}
@@ -48030,7 +48086,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       react: 17.0.2
       use-composed-ref: 1.3.0(react@17.0.2)
       use-latest: 1.2.1(@types/react@17.0.62)(react@17.0.2)
@@ -48932,7 +48988,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.16.9
+      terser: 5.22.0
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
@@ -51009,7 +51065,7 @@ packages:
     dependencies:
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
-      node-fetch: 2.6.9
+      node-fetch: 2.7.0
       stream-events: 1.0.5
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -51156,7 +51212,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       '@swc/core': 1.3.49
       esbuild: 0.18.20
       jest-worker: 27.5.1
@@ -51206,7 +51262,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       esbuild: 0.18.17
       jest-worker: 27.5.1
       schema-utils: 3.1.2
@@ -51231,7 +51287,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       jest-worker: 27.5.1
       schema-utils: 3.1.2
       serialize-javascript: 6.0.1
@@ -51802,7 +51858,7 @@ packages:
       chalk: 4.1.2
       enhanced-resolve: 5.15.0
       micromatch: 4.0.5
-      semver: 7.5.2
+      semver: 7.5.4
       typescript: 4.9.5
       webpack: 5.82.1(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
     dev: true

@@ -25,3 +25,4 @@ export * from './azure-sms.handler';
 export * from './bulk-sms.handler';
 export * from './nexmo.handler';
 export * from './isend-sms.handler';
+export * from './ring-central.handler';

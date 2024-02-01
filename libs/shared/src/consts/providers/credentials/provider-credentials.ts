@@ -1063,3 +1063,34 @@ export const rocketChatConfig: IConfigCredentials[] = [
     required: true,
   },
 ];
+
+export const ringCentralConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    description: 'Your RingCentral app client ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client secret',
+    description: 'Your RingCentral app client secret',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Secure,
+    displayName: 'Is sandbox',
+    type: 'switch',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'JWT token',
+    description: 'Your RingCentral user JWT token',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

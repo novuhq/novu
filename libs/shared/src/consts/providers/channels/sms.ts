@@ -26,6 +26,7 @@ import {
   azureSmsConfig,
   bulkSmsConfig,
   iSendSmsConfig,
+  ringCentralConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -251,5 +252,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: azureSmsConfig,
     docReference: 'https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/sms/receive-sms',
     logoFileName: { light: 'azure-sms.png', dark: 'azure-sms.png' },
+  },
+  {
+    id: SmsProviderIdEnum.RingCentral,
+    displayName: `RingCentral`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: ringCentralConfig,
+    docReference: 'https://developers.ringcentral.com/guide/messaging',
+    logoFileName: { light: 'ring-central.svg', dark: 'ring-central.svg' },
   },
 ];
