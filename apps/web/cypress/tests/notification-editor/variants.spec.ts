@@ -322,7 +322,7 @@ describe('Workflow Editor - Variants', function () {
       cy.wait('@getWorkflow');
 
       cy.getByTestId(`node-${channel}Selector`).getByTestId('variants-count').contains('2 variants');
-      editChannel(channel);
+      cy.clickWorkflowNode(`node-${channel}Selector`);
 
       checkVariantListCard({ selector: 'variant-item-card-1', message: VARIANT_EDITOR_TEXT });
       checkVariantConditions({ selector: 'variant-item-card-1', contains: '1' });
