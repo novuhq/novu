@@ -1,4 +1,4 @@
-import { dragAndDrop } from './notification-editor';
+import { dragAndDrop, editChannel } from './notification-editor';
 import { goBack } from './notification-editor';
 
 describe('Changes Screen', function () {
@@ -122,7 +122,7 @@ function createNotification() {
   cy.visit('/workflows/create');
   cy.waitForNetworkIdle(500);
 
-  cy.getByTestId('title').clear().type('Test Notification Title');
+  cy.getByTestId('name-input').clear().type('Test Notification Title');
 
   cy.getByTestId('settings-page').click();
   cy.waitForNetworkIdle(500);
@@ -135,7 +135,7 @@ function createNotification() {
   dragAndDrop('email');
   cy.waitForNetworkIdle(500);
 
-  cy.clickWorkflowNode(`node-emailSelector`);
+  editChannel('email');
   cy.waitForNetworkIdle(500);
 
   cy.getByTestId('emailSubject').type('this is email subject');
