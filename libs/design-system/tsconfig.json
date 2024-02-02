@@ -1,5 +1,5 @@
 {
-  "include": ["src"],
+  "include": ["src", "setup-tests.ts"],
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist/cjs",
