@@ -22,7 +22,7 @@ jobs:
           node-version: 16
 
       - name: Install axios
-        run: npm install axios@1.6.2
+        run: npm install axios
 
       - name: Run Validate Submodule Sync
         id: validate
