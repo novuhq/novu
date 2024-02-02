@@ -21,12 +21,6 @@ jobs:
         with:
           node-version: 16
 
-      - name: Install eslint
-        run: npm install eslint@7.15.0
-
-      - name: Install axios
-        run: npm install axios
-
       - name: Run Validate Submodule Sync
         id: validate
         run: node .github/workflows/scripts/validate-submodule-sync.js ${{ github.ref }}

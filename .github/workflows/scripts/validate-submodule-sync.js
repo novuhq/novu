@@ -1,5 +1,5 @@
 const { execSync } = require('child_process');
-const { get } = require('axios');
+const https = require('https');
 const core = require('@actions/core');
 
 /*
@@ -23,18 +23,41 @@ async function fetchCommits(branch) {
   const owner = 'novuhq';
   const repo = 'packages-enterprise';
 
-  try {
-    const { data: commits } = await get(`https://api.github.com/repos/${owner}/${repo}/commits?sha=${branch}`, {
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
-      },
+  const options = {
+    hostname: 'api.github.com',
+    path: `/repos/${owner}/${repo}/commits?sha=${branch}`,
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+      Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
+      'User-Agent': '@novuhq/validate-submodule-sync-action',
+    },
+  };
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      let data = '';
+
+      res.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        try {
+          const commits = JSON.parse(data);
+          resolve(commits);
+        } catch (error) {
+          reject(new Error('Error parsing response data'));
+        }
+      });
     });
 
-    return commits;
-  } catch (error) {
-    throw new Error('Error occurred while fetching commits:' + error.message);
-  }
+    req.on('error', (error) => {
+      reject(new Error('Error occurred while fetching commits: ' + error.message));
+    });
+
+    req.end();
+  });
 }
 
 function getLastCommitHash(commits) {
