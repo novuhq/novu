@@ -14,16 +14,16 @@ import {
   InstrumentUsecase,
   InvalidateCacheService,
   DetailEnum,
-  CreateExecutionDetailsCommand,
   SelectIntegration,
-  WebSocketsQueueService,
   buildFeedKey,
   buildMessageCountKey,
   GetNovuProviderCredentials,
   SelectVariant,
-  ExecutionLogQueueService,
   CompileInAppTemplate,
   CompileInAppTemplateCommand,
+  WebSocketsQueueService,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -40,7 +40,7 @@ export class SendMessageInApp extends SendMessageBase {
     protected messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     protected createLogUsecase: CreateLog,
-    protected executionLogQueueService: ExecutionLogQueueService,
+    protected executionLogRoute: ExecutionLogRoute,
     protected subscriberRepository: SubscriberRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
@@ -51,7 +51,7 @@ export class SendMessageInApp extends SendMessageBase {
     super(
       messageRepository,
       createLogUsecase,
-      executionLogQueueService,
+      executionLogRoute,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
@@ -79,20 +79,16 @@ export class SendMessageInApp extends SendMessageBase {
     });
 
     if (!integration) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add({
-        name: metadata._id,
-        data: CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        }),
-        groupId: command.organizationId,
-      });
+        })
+      );
 
       return;
     }
@@ -211,12 +207,9 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!message) throw new PlatformException('Message not found');
 
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        ...metadata,
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: integration.providerId,
         detail: DetailEnum.MESSAGE_CREATED,
@@ -224,9 +217,8 @@ export class SendMessageInApp extends SendMessageBase {
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
-      }),
-      groupId: command.organizationId,
-    });
+      })
+    );
 
     await this.webSocketsQueueService.add({
       name: 'sendMessage',
@@ -245,12 +237,9 @@ export class SendMessageInApp extends SendMessageBase {
       groupId: command.organizationId,
     });
 
-    const meta = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: meta._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...meta,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: integration.providerId,
         detail: DetailEnum.MESSAGE_SENT,
@@ -258,8 +247,7 @@ export class SendMessageInApp extends SendMessageBase {
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      }),
-      groupId: command.organizationId,
-    });
+      })
+    );
   }
 }

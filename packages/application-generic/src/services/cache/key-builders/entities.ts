@@ -1,14 +1,15 @@
 import {
   BLUEPRINT_IDENTIFIER,
+  buildCommonEnvironmentKey,
   buildCommonKey,
   buildKeyById,
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
   OrgScopePrefixEnum,
-  prefixWrapper,
   ServiceConfigIdentifierEnum,
 } from './shared';
+import { createHash as createHashCrypto } from 'crypto';
 
 const buildSubscriberKey = ({
   subscriberId,
@@ -23,6 +24,19 @@ const buildSubscriberKey = ({
     environmentId: _environmentId,
     identifierPrefix: IdentifierPrefixEnum.SUBSCRIBER_ID,
     identifier: subscriberId,
+  });
+
+const buildVariablesKey = ({
+  _environmentId,
+  _organizationId,
+}: {
+  _environmentId: string;
+  _organizationId: string;
+}): string =>
+  buildCommonEnvironmentKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.WORKFLOW_VARIABLES,
+    environmentId: _environmentId,
   });
 
 const buildUserKey = ({ _id }: { _id: string }): string =>
@@ -80,13 +94,23 @@ const buildGroupedBlueprintsKey = (): string =>
     identifier: BLUEPRINT_IDENTIFIER,
   });
 
-const buildAuthServiceKey = ({ apiKey }: { apiKey: string }): string =>
-  buildKeyById({
+const createHash = (apiKey: string): string => {
+  const hash = createHashCrypto('sha256');
+  hash.update(apiKey);
+
+  return hash.digest('hex');
+};
+
+const buildAuthServiceKey = ({ apiKey }: { apiKey: string }): string => {
+  const apiKeyHash = createHash(apiKey);
+
+  return buildKeyById({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.AUTH_SERVICE,
-    identifier: apiKey,
+    identifier: apiKeyHash,
     identifierPrefix: IdentifierPrefixEnum.API_KEY,
   });
+};
 
 const buildMaximumApiRateLimitKey = ({
   apiRateLimitCategory,
@@ -145,4 +169,5 @@ export {
   buildMaximumApiRateLimitKey,
   buildEvaluateApiRateLimitKey,
   buildServiceConfigApiRateLimitMaximumKey,
+  buildVariablesKey,
 };

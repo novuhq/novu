@@ -166,6 +166,7 @@ export const EditorSidebarHeaderActions = () => {
           conditions={conditions}
           filterPartsList={filterPartsList}
           defaultFilter={FilterPartTypeEnum.PAYLOAD}
+          shouldDisallowEmptyConditions={isUnderVariantPath}
         />
       )}
 

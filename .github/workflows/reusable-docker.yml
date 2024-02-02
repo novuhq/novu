@@ -16,11 +16,6 @@ on:
       project_path:
         required: true
         type: string
-      # The ID of the depot project.
-      # Note: Currently we build everything under one project (it requires to set up the OIDC for each project and I had some issues with the Depot)
-      depot_project_id:
-        required: true
-        type: string
       # The port used for testing. This is not a required input, and it defaults to '1341'.
       # This value is added, so you can test the image after it's built in test mode and by doing a health-check.
       test_port:
@@ -32,7 +27,7 @@ on:
         required: false
         default: false
         type: boolean
-      # The tag under which the image is built, it should align with the name in the project command docker:build:depot
+      # The tag under which the image is built, it should align with the name in the project command docker:build
       local_tag:
         required: true
         type: string
@@ -76,11 +71,6 @@ jobs:
           slim: 'true'
           submodules: ${{ contains (matrix.name,'-ee') }}
 
-      - name: Setup Depot
-        uses: depot/setup-action@v1
-        with:
-          oidc: true
-
       - name: Build, tag, and push image to ghcr.io
         id: build-image
         if: ${{ inputs.env_tag == 'dev' || inputs.env_tag == 'stg' }}
@@ -93,10 +83,9 @@ jobs:
           PROJECT_PATH: ${{ inputs.project_path }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
-          DEPOT_PROJECT_ID: ${{ inputs.depot_project_id }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd $PROJECT_PATH && npm run docker:build:depot
+          cd $PROJECT_PATH && npm run docker:build
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
@@ -114,10 +103,9 @@ jobs:
           PROJECT_PATH: ${{ inputs.project_path }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
-          DEPOT_PROJECT_ID:  ${{ inputs.depot_project_id }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd $PROJECT_PATH && npm run docker:build:depot
+          cd $PROJECT_PATH && npm run docker:build
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest

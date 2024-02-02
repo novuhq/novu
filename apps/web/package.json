@@ -15,6 +15,7 @@
     "start:docker": "pnpm build && pnpm start:static:build",
     "start:dev": "pnpm start",
     "cypress:run": "cross-env NODE_ENV=test cypress run",
+    "cypress:run:ee": "cross-env NODE_ENV=test cypress run --spec cypress/tests/**/*-ee.{js,jsx,ts,tsx}",
     "cypress:install": "cypress install",
     "cypress:open": "cross-env NODE_ENV=test cypress open",
     "cypress:run:components": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component",
@@ -23,7 +24,7 @@
     "build-storybook": "storybook build -s public",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "link:submodules": "pnpm link ../../enterprise/packages/translation-web"
+    "link:submodules": "pnpm link ../../enterprise/packages/translation-web && pnpm link ../../enterprise/packages/billing-web"
   },
   "dependencies": {
     "@ant-design/icons": "4.6.2",
@@ -69,6 +70,8 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@types/react-table": "^7.7.12",
+    "@monaco-editor/react": "^4.6.0",
+    "monaco-editor": "^0.45.0",
     "ace-builds": "^1.4.12",
     "antd": "^4.10.0",
     "autoprefixer": "^9.8.6",
@@ -122,7 +125,8 @@
     "zod": "^3.22.4"
   },
   "optionalDependencies": {
-    "@novu/ee-translation-web": "^0.22.0"
+    "@novu/ee-translation-web": "^0.22.0",
+    "@novu/ee-billing-web": "^0.22.0"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",

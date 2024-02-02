@@ -1,25 +1,20 @@
+import { NotFoundError } from 'rxjs';
 import { Injectable, Logger } from '@nestjs/common';
+
 import { JobRepository } from '@novu/dal';
 import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
-import {
-  CreateExecutionDetailsCommand,
-  DetailEnum,
-  ExecutionLogQueueService,
-  InstrumentUsecase,
-} from '@novu/application-generic';
+import { DetailEnum, ExecutionLogRoute, ExecutionLogRouteCommand, InstrumentUsecase } from '@novu/application-generic';
 
 import { HandleLastFailedJobCommand } from './handle-last-failed-job.command';
-
 import { QueueNextJob, QueueNextJobCommand } from '../queue-next-job';
 import { PlatformException } from '../../../shared/utils';
-import { NotFoundError } from 'rxjs';
 
 const LOG_CONTEXT = 'HandleLastFailedJob';
 
 @Injectable()
 export class HandleLastFailedJob {
   constructor(
-    private executionLogQueueService: ExecutionLogQueueService,
+    private executionLogRoute: ExecutionLogRoute,
     private queueNextJob: QueueNextJob,
     private jobRepository: JobRepository
   ) {}
@@ -40,21 +35,18 @@ export class HandleLastFailedJob {
       Logger.error(message, new NotFoundError(message), LOG_CONTEXT);
       throw new PlatformException(message);
     }
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add({
-      name: metadata._id,
-      data: CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
         detail: DetailEnum.WEBHOOK_FILTER_FAILED_LAST_RETRY,
         source: ExecutionDetailsSourceEnum.WEBHOOK,
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: true,
         raw: JSON.stringify({ message: JSON.parse(error.message).message }),
-      }),
-      groupId: job._organizationId,
-    });
+      })
+    );
 
     if (!job?.step?.shouldStopOnFail) {
       await this.queueNextJob.execute(

@@ -28,6 +28,7 @@ runs:
         TZ: "UTC"
         GITHUB_OAUTH_REDIRECT: "http://127.0.0.1:1336/v1/auth/github/callback"
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
+        CI_EE_TEST: "true"
       run: cd apps/api && pnpm start:build &
 
     - name: Start Worker
@@ -37,6 +38,7 @@ runs:
         PORT: "1342"
         TZ: "UTC"
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
+        CI_EE_TEST: "true"
       run: cd apps/worker && pnpm start:prod &
 
     - name: Wait on API and Worker

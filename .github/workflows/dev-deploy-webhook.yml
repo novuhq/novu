@@ -31,7 +31,6 @@ jobs:
       health_check: true
       local_tag: novu-webhook
       env_tag: dev
-      depot_project_id: f88777ff6m
     secrets: inherit
 
   deploy_dev_webhook:

@@ -1,10 +1,9 @@
 import { useState } from 'react';
 import { colors, ChevronUp, ChevronDown } from '@novu/design-system';
-import { Collapse, UnstyledButton, useMantineTheme } from '@mantine/core';
+import { Collapse, UnstyledButton, Center } from '@mantine/core';
 
-export const VarLabel = ({ label, children }) => {
-  const [open, setOpen] = useState(true);
-  const theme = useMantineTheme();
+export const VarLabel = ({ label, children, Icon }) => {
+  const [open, setOpen] = useState(false);
 
   return (
     <>
@@ -17,16 +16,20 @@ export const VarLabel = ({ label, children }) => {
         sx={{
           width: '100%',
           marginBottom: 15,
+          marginTop: 20,
         }}
       >
         <div
           style={{
-            color: theme.colorScheme === 'dark' ? colors.white : colors.B60,
+            color: colors.B60,
             fontSize: 14,
             fontWeight: 'bold',
           }}
         >
-          {label}
+          <Center inline>
+            <Icon width={16} height={16} color={colors.B60} style={{ marginRight: '8px' }} />
+            {label}
+          </Center>
           <span
             style={{
               float: 'right',

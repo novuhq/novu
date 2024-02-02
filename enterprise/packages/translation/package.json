@@ -13,15 +13,16 @@
     "symlink": "ln -s ../../../.source/translation/src ./src"
   },
   "dependencies": {
+    "@handlebars/parser": "^2.1.0",
     "@nestjs/swagger": "^7.1.8",
     "@novu/application-generic": "^0.22.0",
     "@novu/ee-dal": "^0.22.0",
     "@novu/shared": "^0.22.0",
-    "class-validator": "^0.14.0",
     "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.0",
+    "multer": "^1.4.5-lts.1",
     "shortid": "^2.2.16",
-    "slugify": "^1.4.6",
-    "multer": "^1.4.5-lts.1"
+    "slugify": "^1.4.6"
   },
   "devDependencies": {
     "@types/chai": "^4.2.11",
@@ -39,8 +40,8 @@
   },
   "peerDependencies": {
     "@nestjs/common": "10.2.2",
-    "@nestjs/platform-express": "^10.2.2",
     "@nestjs/jwt": "10.2.0",
+    "@nestjs/platform-express": "^10.2.2",
     "@novu/dal": "^0.22.0"
   }
 }
