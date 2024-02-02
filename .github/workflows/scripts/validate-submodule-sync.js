@@ -1,6 +1,5 @@
 const { execSync } = require('child_process');
 const https = require('https');
-const core = require('@actions/core');
 
 /*
  * Get the hash link of the submodule from the root directory of the project
@@ -87,13 +86,7 @@ async function validateSubmoduleSync(githubRef) {
   const commits = await fetchCommits(branch);
   const lastSubmoduleCommitHash = getLastCommitHash(commits);
 
-  const isValid = submoduleHash === lastSubmoduleCommitHash;
-
-  // Set the output parameters
-  core.setOutput('submoduleHash', submoduleHash);
-  core.setOutput('lastCommitHash', lastSubmoduleCommitHash);
-
-  return isValid;
+  return submoduleHash === lastSubmoduleCommitHash;
 }
 
 (async function execute() {
