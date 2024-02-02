@@ -552,7 +552,8 @@
     "INITDB",
     "isend",
     "Idand",
-    "hubspot"
+    "hubspot",
+    "hokify",
   ],
   "flagWords": [],
   "patterns": [
