@@ -1,60 +1,58 @@
 import styled from '@emotion/styled';
 import 'material-symbols/outlined.css';
-import { MaterialSymbol } from 'material-symbols';
+import { IIconAxes, IIconStyleProps, IconName } from './Icon.types';
+import { DEFAULT_ICON_GRADE, DEFAULT_ICON_OPTICAL_SIZE, DEFAULT_ICON_SIZE, DEFAULT_ICON_WEIGHT } from './Icon.const';
+import React from 'react';
 
-export const MaterialSymbolWeightArray = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
-export type MaterialSymbolWeight = (typeof MaterialSymbolWeightArray)[number];
-
-interface IIconStyleProps {
-  /**
-   * Default `false`.
-   *
-   * Fill gives you the ability to modify the default icon style. A single icon can render both unfilled and filled states.
-   */
-  isFilled?: boolean;
-  /**
-   * Weight defines the symbol’s stroke weight, with a range of weights between thin (100) and heavy (900).
-   * Weight can  also affect the overall size of the symbol.
-   */
-  weight?: MaterialSymbolWeight;
-  /**
-   * Weight and grade affect a symbol’s thickness. Adjustments to grade are more granular than adjustments to weight
-   * and have a small impact on the size of the symbol.
-   *
-   */
-  grade?: number;
-  /**
-   * Default `'inherit'`.
-   *
-   * Size defines the icon width and height in pixels. For the image to look the same at different sizes, the stroke
-   * weight (thickness) changes as the icon size scales.
-   */
-  size?: number;
-}
-
-const StyledIcon = styled.span<IIconStyleProps>(
-  ({ theme, isFilled, weight, grade, size }) => `
+const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
+  ({ theme, isFilled, weight, grade, opticalSize, size }) => `
   font-variation-settings: 'FILL' ${isFilled ? 1 : 0}, 'wght' ${weight}, 'GRAD' ${grade}, 'opsz' ${size};
+  font-size: ${size}px;
+
+  /**
+   * overrides
+   **/
+  
+  /** since Material Symbols are actually just a font, disable it being selectable like normal text */
+  user-select: none;
+
 `
 );
 
-export interface IIconProps extends IIconStyleProps {
+export interface IIconProps extends IIconAxes, IIconStyleProps, React.HTMLAttributes<HTMLSpanElement> {
   /**
    * The name of the Icon to use.
    * https://fonts.google.com/icons
    */
-  name: MaterialSymbol;
+  name: IconName;
   className?: string;
 }
 
-export const Icon: React.FC<IIconProps> = ({ className, name, isFilled, grade, weight, size }) => {
+export const Icon: React.FC<IIconProps> = ({
+  className,
+  name,
+  // axes
+  isFilled = false,
+  grade = DEFAULT_ICON_GRADE,
+  weight = DEFAULT_ICON_WEIGHT,
+  opticalSize = DEFAULT_ICON_OPTICAL_SIZE,
+
+  // styles
+  size = DEFAULT_ICON_SIZE,
+  ...spanProps
+}) => {
   return (
     <StyledIcon
       isFilled={isFilled}
       grade={grade}
       weight={weight}
+      opticalSize={opticalSize}
       size={size}
       className={`material-symbols-outlined ${className}`}
+      /** a11y */
+      role="img"
+      aria-label={`icon-${name}`}
+      {...spanProps}
     >
       {name}
     </StyledIcon>
