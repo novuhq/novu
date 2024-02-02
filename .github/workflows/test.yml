@@ -29,7 +29,7 @@ jobs:
 
       - name: Run Validate Submodule Sync
         id: validate
-        run: node .github/workflows/scripts/validate-submodule-sync.js ${{ github.ref }}
+        run: node .github/workflows/scripts/validate-submodule-sync.ts ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
