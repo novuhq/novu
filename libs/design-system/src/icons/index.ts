@@ -1,3 +1,5 @@
+export * from './material-symbols';
+
 export { ActiveLabel } from './general/ActiveLabel';
 export { Activity } from './general/Activity';
 export { Brand } from './general/Brand';
