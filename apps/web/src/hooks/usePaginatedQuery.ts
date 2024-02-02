@@ -1,5 +1,5 @@
 import { QueryFunction, QueryKey, UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { IUsePaginationOptions, usePaginationState } from '@novu/design-system';
+import { IUsePaginationStateOptions, usePaginationState } from '@novu/design-system';
 
 interface IPaginatedQueryContext {
   pageSize: number;
@@ -23,7 +23,7 @@ export interface UsePaginatedQueryProps<TResponse extends object> {
   /** Return the *total* number of items for the query */
   getTotalItemCount: (resp: TResponse) => number;
   queryOptions?: Omit<UseQueryOptions<TResponse>, 'queryKey' | 'queryFn'>;
-  paginationOptions?: IUsePaginationOptions;
+  paginationOptions?: IUsePaginationStateOptions;
 }
 
 export const usePaginatedQuery = <TResponse extends object>({
