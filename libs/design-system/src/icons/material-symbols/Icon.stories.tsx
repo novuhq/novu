@@ -2,7 +2,6 @@ import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import { Icon } from './Icon';
 import { DEFAULT_ICON_GRADE, DEFAULT_ICON_OPTICAL_SIZE, DEFAULT_ICON_SIZE, DEFAULT_ICON_WEIGHT } from './Icon.const';
-import styled from '@emotion/styled';
 
 export default {
   title: 'Icons/MaterialIcon',
