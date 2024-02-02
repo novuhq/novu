@@ -24,6 +24,7 @@
     "link:submodules": "pnpm link ../../enterprise/packages/translation"
   },
   "dependencies": {
+    "@hokify/agenda": "^6.3.0",
     "@nestjs/axios": "~2.0.0",
     "@nestjs/common": "10.2.2",
     "@nestjs/core": "^10.2.2",
@@ -84,6 +85,7 @@
     "typescript": "4.9.5"
   },
   "optionalDependencies": {
+    "@novu/ee-billing": "^0.22.0",
     "@novu/ee-translation": "^0.22.0"
   },
   "lint-staged": {

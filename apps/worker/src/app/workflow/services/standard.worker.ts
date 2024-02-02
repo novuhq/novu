@@ -1,5 +1,5 @@
 const nr = require('newrelic');
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
@@ -26,11 +26,12 @@ import {
   HandleLastFailedJobCommand,
   HandleLastFailedJob,
 } from '../usecases';
+import { CreateBillingJob } from '../usecases/create-billing-job/create-billing-job.usecase';
 
 const LOG_CONTEXT = 'StandardWorker';
 
 @Injectable()
-export class StandardWorker extends StandardWorkerService {
+export class StandardWorker extends StandardWorkerService implements OnModuleInit {
   constructor(
     private handleLastFailedJob: HandleLastFailedJob,
     private runJob: RunJob,
@@ -39,7 +40,8 @@ export class StandardWorker extends StandardWorkerService {
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
     private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
     @Inject(forwardRef(() => WorkflowInMemoryProviderService))
-    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
+    private createBillingJob: CreateBillingJob
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
 
@@ -48,6 +50,11 @@ export class StandardWorker extends StandardWorkerService {
     this.worker.on('failed', async (job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> => {
       await this.jobHasFailed(job, error);
     });
+  }
+  async onModuleInit() {
+    Logger.log('Standard Worker is starting moduleInit', LOG_CONTEXT);
+    await this.createBillingJob.execute();
+    Logger.log('Standard Worker has started moduleInit', LOG_CONTEXT);
   }
 
   private getWorkerOptions(): WorkerOptions {
