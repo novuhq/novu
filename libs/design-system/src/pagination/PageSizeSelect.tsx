@@ -5,24 +5,35 @@ import { ISelectProps, Select } from '../select/Select';
 import { DEFAULT_PAGINATION_PAGE_SIZES } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
 import { getPageNumberForNewPageSize } from './util';
+import { colors } from '../config';
 
 const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   return `
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  
-  label {
-    color: inherit;
-    font-size: inherit;
-    line-height: inherit;
-    text-wrap: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    
+    & label {
+      color: inherit;
+      font-size: inherit;
+      line-height: inherit;
+      text-wrap: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
 
-    /* TODO: use theme values */
-    margin-left: ${'0.5rem'};
-  }
+      /* TODO: use theme values */
+      margin-left: ${'0.5rem'};
+    }
+    
+    /**
+     * TODO: use theme values for all styles below.
+     * Should be enforced for all child elements as these are in the design system.
+     */
+    color: ${theme.colorScheme === 'dark' ? colors.B60 : colors.B40};
+
+    & input {
+      background-color: ${theme.colorScheme === 'dark' ? colors.B15 : colors.white};
+    }
 `;
 });
 

@@ -12,6 +12,7 @@ import styled from '@emotion/styled';
 import { Input, NumberInput, NumberInputProps } from '@mantine/core';
 import { Tooltip } from '../tooltip/Tooltip';
 import { FIRST_PAGE_NUMBER } from './Pagination.const';
+import { colors } from '../config';
 
 export interface IGoToPageInputProps extends NumberInputProps {
   firstPageNumber?: number;
@@ -22,8 +23,16 @@ const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  
+
+      
+  /**
+   * TODO: use theme values for color styles below.
+   * Should be enforced for all child elements as these are in the design system.
+   */
+  color: ${theme.colorScheme === 'dark' ? colors.B60 : colors.B40};
+
   input {
+    background-color: ${theme.colorScheme === 'dark' ? colors.B15 : colors.white};
     margin: 0;
     min-height: inherit;
     height: 32px;
