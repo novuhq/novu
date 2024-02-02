@@ -21,11 +21,8 @@ jobs:
         with:
           node-version: 16
 
-      - name: Install @octokit/action
-        run: npm --prefix .github/workflows/scripts install @octokit/action
-
-      - name: Install @actions/core
-        run: npm --prefix .github/workflows/scripts install @actions/core
+      - name: Install axios
+        run: npm install axios@1.6.2
 
       - name: Run Validate Submodule Sync
         id: validate
