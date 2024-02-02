@@ -43,6 +43,9 @@ async function fetchCommits(branch) {
 
       res.on('end', () => {
         try {
+          // eslint-disable-next-line no-console
+          console.log('data ', data);
+
           const commits = JSON.parse(data);
           resolve(commits);
         } catch (error) {
@@ -52,6 +55,9 @@ async function fetchCommits(branch) {
     });
 
     req.on('error', (error) => {
+      // eslint-disable-next-line no-console
+      console.log('error ', error);
+
       reject(new Error('Error occurred while fetching commits: ' + error.message));
     });
 
@@ -84,6 +90,10 @@ async function validateSubmoduleSync(githubRef) {
 
   const submoduleHash = getSubmoduleHash();
   const commits = await fetchCommits(branch);
+
+  // eslint-disable-next-line no-console
+  console.log('commits ', commits);
+
   const lastSubmoduleCommitHash = getLastCommitHash(commits);
 
   return submoduleHash === lastSubmoduleCommitHash;
