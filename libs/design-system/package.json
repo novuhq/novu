@@ -34,8 +34,6 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@cypress/react": "^7.0.3",
-    "@cypress/webpack-preprocessor": "^6.0.0",
     "@emotion/css": "^11.10.5",
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
@@ -57,6 +55,7 @@
     "tslib": "^2.3.1"
   },
   "devDependencies": {
+    "@cypress/react": "^7.0.3",
     "@storybook/addon-actions": "^7.5.0",
     "@storybook/addon-docs": "^7.4.2",
     "@storybook/client-api": "^7.6.10",
