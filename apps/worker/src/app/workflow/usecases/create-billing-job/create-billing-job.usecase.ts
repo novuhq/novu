@@ -6,7 +6,7 @@ import { PlatformException } from '../../../shared/utils';
 const LOG_CONTEXT = 'CreateBillingJob';
 const JOB_NAME = 'create-usage-records';
 const BILLING_TIMEZONE = 'Etc/UTC';
-const BILLING_CRON_INTERVAL = '0 1,13 * * *';
+const BILLING_CRON_INTERVAL = '0 * * * *';
 
 @Injectable()
 export class CreateBillingJob {
@@ -23,7 +23,6 @@ export class CreateBillingJob {
         }
 
         this.agenda.define(JOB_NAME, async (job) => {
-          Logger.log(`Job started: ${job.attrs.nextRunAt}`, LOG_CONTEXT);
           Logger.log('Starting usage records job', LOG_CONTEXT);
           try {
             const createUsageRecords = this.moduleRef.get(module.CreateUsageRecords, {
@@ -32,7 +31,7 @@ export class CreateBillingJob {
 
             await createUsageRecords.execute(
               module.CreateUsageRecordsCommand.create({
-                startDate: new Date(),
+                startDate: new Date(job.attrs.lastRunAt || Date.now()),
               })
             );
           } catch (error) {
@@ -42,8 +41,7 @@ export class CreateBillingJob {
           Logger.log('Completed usage records job', LOG_CONTEXT);
         });
 
-        await this.agenda.every('* * * * *', JOB_NAME, { timezone: BILLING_TIMEZONE });
-        // await this.agenda.every(BILLING_CRON_INTERVAL, JOB_NAME, { timezone: BILLING_TIMEZONE });
+        await this.agenda.every(BILLING_CRON_INTERVAL, JOB_NAME, { timezone: BILLING_TIMEZONE });
 
         Logger.log('Completed creation of usage records job', LOG_CONTEXT);
       }
