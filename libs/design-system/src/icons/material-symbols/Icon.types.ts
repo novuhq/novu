@@ -22,13 +22,15 @@ export interface IIconAxes {
    */
   weight?: IconWeight;
   /**
+   * Default: 0
+   * 
    * Weight and grade affect a symbol’s thickness. Adjustments to grade are more granular than adjustments to weight
    * and have a small impact on the size of the symbol.
    *
    */
   grade?: IconGrade;
   /**
-   * Default `'inherit'`.
+   * Default 20.
    *
    * Size defines the icon width and height in pixels. For the image to look the same at different sizes, the stroke
    * weight (thickness) changes as the icon size scales.
@@ -40,6 +42,11 @@ export interface IIconAxes {
 export type IconSize = '16' | '20' | '24';
 export type IconColor = CSSProperties['color'];
 export interface IIconStyleProps {
+  /**
+  * Default: '20'. 
+  *
+  * The actual display size in pixels.
+  */
   size?: IconSize;
   /**
    * NOTE: this is only to be used with colors from the design system, and will later be enforced more strictly
