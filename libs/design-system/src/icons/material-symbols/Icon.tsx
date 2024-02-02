@@ -8,9 +8,13 @@ import { colors } from '../../config';
 const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
   ({ theme, isFilled, weight, grade, opticalSize, size, unsafeColor: color }) => `
   /** Material Axes */
+
+  /** cspell:disable-next-line */
   font-variation-settings: 'FILL' ${isFilled ? 1 : 0}, 'wght' ${weight}, 'GRAD' ${grade}, 'opsz' ${opticalSize};
 
   font-size: ${size}px;
+  text-align: center;
+  text-align-vertical: middle;
 
   /** TODO: use real theme values once released */
   color: ${color ?? (theme.colorScheme === 'dark' ? colors.B60 : colors.B60)};
@@ -62,7 +66,7 @@ export const Icon: React.FC<IIconProps> = ({
       /** styles */
       size={size}
       unsafeColor={unsafeColor}
-      className={`material-symbols-outlined ${className}`}
+      className={`material-symbols-outlined${className ? ` ${className}` : ''}`}
       /** a11y */
       role="img"
       aria-label={`icon-${name}`}
