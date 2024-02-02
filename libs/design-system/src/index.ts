@@ -38,6 +38,8 @@ export * from './sidebar';
 export * from './when';
 export * from './ThemeProvider';
 export * from './icons';
+// TODO: remove this once we have removed the old icons
+export * from './icons/material-symbols';
 export * from './config/inputs.styles';
 export * from './config/helper';
 export * from './tabs/Tabs.styles';
