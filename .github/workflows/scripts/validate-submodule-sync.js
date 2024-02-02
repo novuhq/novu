@@ -5,7 +5,7 @@ const core = require('@actions/core');
 /*
  * Get the hash link of the submodule from the root directory of the project
  */
-function getSubmoduleHash(): string {
+function getSubmoduleHash() {
   try {
     return execSync('git submodule status --recursive', { cwd: __dirname + '/../../' })
       .toString()
@@ -19,7 +19,7 @@ function getSubmoduleHash(): string {
 /*
  * Fetch the commits from the submodule repository
  */
-async function fetchCommits(branch: string) {
+async function fetchCommits(branch) {
   const owner = 'novuhq';
   const repo = 'packages-enterprise';
 
@@ -48,11 +48,11 @@ function getLastCommitHash(commits) {
  * If the new tag or PR was created, skip the validation.
  * This serves as an additional guard; however, this validation should be performed within the action.
  */
-function shouldSkip(githubRef: string) {
+function shouldSkip(githubRef) {
   return !githubRef.includes('refs/heads/');
 }
 
-async function validateSubmoduleSync(githubRef: string) {
+async function validateSubmoduleSync(githubRef) {
   if (shouldSkip(githubRef)) {
     // return true;
   }
