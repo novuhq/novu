@@ -1,4 +1,5 @@
 import { MaterialSymbol } from 'material-symbols';
+import { CSSProperties } from 'react';
 
 export const IconWeightArray = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
 export type IconWeight = (typeof IconWeightArray)[number];
@@ -37,7 +38,11 @@ export interface IIconAxes {
 
 /** Size in px */
 export type IconSize = '16' | '20' | '24';
-
+export type IconColor = CSSProperties['color'];
 export interface IIconStyleProps {
   size?: IconSize;
+  /**
+   * NOTE: this is only to be used with colors from the design system, and will later be enforced more strictly
+   */
+  unsafeColor?: IconColor;
 }
