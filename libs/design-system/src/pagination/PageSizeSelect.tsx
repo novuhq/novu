@@ -72,7 +72,7 @@ export const PageSizeSelect: React.FC<IPageSizeSelectProps> = forwardRef<HTMLInp
         totalItemCount,
       });
 
-      onPageChange(updatedPageNum);
+      onPageChange(updatedPageNum, true);
       onPageSizeChange(newPageSize);
     };
 
