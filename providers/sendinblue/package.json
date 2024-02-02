@@ -30,7 +30,8 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.22.0",
-    "axios": "^1.6.2"
+    "cross-fetch": "^4.0.0",
+    "proxy-agent": "^6.3.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
