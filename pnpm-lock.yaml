@@ -2261,6 +2261,9 @@ importers:
       jwt-decode:
         specifier: ^3.1.2
         version: 3.1.2
+      material-symbols:
+        specifier: ^0.14.6
+        version: 0.14.6
       react-helmet-async:
         specifier: ^1.3.0
         version: 1.3.0(react-dom@17.0.2)(react@17.0.2)
@@ -43601,6 +43604,10 @@ packages:
 
   /material-colors@1.2.6:
     resolution: {integrity: sha512-6qE4B9deFBIa9YSpOc9O0Sgc43zTeVYbgDT5veRKSlB2+ZuHNoVVxA1L/ckMUayV9Ay9y7Z/SZCLcGteW9i7bg==}
+    dev: false
+
+  /material-symbols@0.14.6:
+    resolution: {integrity: sha512-pyo4ckYj9lbNiKY6w4OENmYzkAKsx7UkG24ChEMGp7EqnAYkNc0kpb1GbnJq391G97HHe+BGtUMrHyUYV3N8rg==}
     dev: false
 
   /md5@2.3.0:
