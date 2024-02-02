@@ -1,5 +1,5 @@
 import { QueryFunction, QueryKey, UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { IUsePaginationOptions, usePaginationState } from './usePaginationState';
+import { IUsePaginationOptions, usePaginationState } from '@novu/design-system';
 
 interface IPaginatedQueryContext {
   pageSize: number;
