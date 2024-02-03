@@ -1,12 +1,34 @@
 import styled from '@emotion/styled';
 import { Group, Stack } from '@mantine/core';
-import { colors, Text, Title } from '@novu/design-system';
-import React from 'react';
-import { NovuGreyIcon } from '../common';
+import { colors, Text } from '@novu/design-system';
+import { useState } from 'react';
+import { NovuGreyIcon, PreviewEditOverlay } from '../common';
 
 export function ChatContent({ content, error }) {
+  const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
+
+  const handleMouseEnter = () => {
+    setIsEditOverlayVisible(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsEditOverlayVisible(false);
+  };
+
   return (
-    <Group spacing={16} align="flex-start" noWrap pt={24} pb={40}>
+    <Group
+      spacing={16}
+      align="flex-start"
+      noWrap
+      pt={24}
+      pb={20}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      sx={{
+        position: 'relative',
+      }}
+    >
+      {isEditOverlayVisible && <PreviewEditOverlay />}
       <div>
         <NovuGreyIcon width="32px" height="32px" />
       </div>
@@ -28,7 +50,7 @@ export function ChatContent({ content, error }) {
         {error && error.template?.content && error.template?.content?.message ? (
           <Text color={colors.error}>{error.template.content.message}</Text>
         ) : (
-          <Title color={colors.B80}>{content}</Title>
+          <Text color={colors.B80}>{content}</Text>
         )}
       </Stack>
     </Group>
