@@ -1,7 +1,7 @@
 import { StepTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
 
-import { Preview as EmailPreview } from '../editor/Preview';
+import { EmailPreview } from '../../../components/workflow/Preview/Email/EmailPreview';
 import { useNavigateFromEditor } from '../hooks/useNavigateFromEditor';
 import { useStepIndex } from '../hooks/useStepIndex';
 import { ChannelPreviewSidebar } from './ChannelPreviewSidebar';

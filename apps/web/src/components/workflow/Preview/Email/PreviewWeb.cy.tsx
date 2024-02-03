@@ -1,4 +1,4 @@
-import { TestWrapper } from '../../../testing';
+import { TestWrapper } from '../../../../testing';
 import { PreviewWeb } from './PreviewWeb';
 import { format } from 'date-fns';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';

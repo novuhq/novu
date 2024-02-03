@@ -5,18 +5,18 @@ import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Button, colors, inputStyles } from '@novu/design-system';
-import { previewEmail } from '../../../api/content-templates';
-import { getLocalesFromContent } from '../../../api/translations';
-import { When } from '../../../components/utils/When';
-import { useActiveIntegrations, useAuthController, useProcessVariables } from '../../../hooks';
-import { errorMessage } from '../../../utils/notifications';
-import type { IForm } from '../components/formTypes';
-import { useStepFormErrors } from '../hooks/useStepFormErrors';
-import { useStepFormPath } from '../hooks/useStepFormPath';
+import { previewEmail } from '../../../../api/content-templates';
+import { getLocalesFromContent } from '../../../../api/translations';
+import { When } from '../../../utils/When';
+import { useActiveIntegrations, useAuthController, useProcessVariables } from '../../../../hooks';
+import { errorMessage } from '../../../../utils/notifications';
+import type { IForm } from '../../../../pages/templates/components/formTypes';
+import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepFormErrors';
+import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 
-export const Preview = ({ showVariables = true, view }: { view: string; showVariables?: boolean }) => {
+export const EmailPreview = ({ showVariables = true, view }: { view: string; showVariables?: boolean }) => {
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
   const error = useStepFormErrors();

@@ -1,8 +1,8 @@
 import { createStyles, Group } from '@mantine/core';
 import { format } from 'date-fns';
 import { colors } from '@novu/design-system';
-import { EmailIntegrationInfo } from '../EmailIntegrationInfo';
-import { Mobile } from '../Mobile';
+import { EmailIntegrationInfo } from '../../../../../pages/templates/editor/EmailIntegrationInfo';
+import { Mobile } from '../../common/Mobile';
 import { DateArrow } from './DateArrow';
 import { ItemSkeleton } from './InboxItem';
 

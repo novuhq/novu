@@ -4,13 +4,13 @@ import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import Frame from 'react-frame-component';
 import { FieldError, FieldErrorsImpl, Merge } from 'react-hook-form';
-import { When } from '../../../components/utils/When';
-import { IFormStep } from '../components/formTypes';
-import { EmailIntegrationInfo } from './EmailIntegrationInfo';
-import { LocaleSelect } from './LocaleSelect';
-import { Mobile } from './Mobile';
-import { PreviewEditOverlay } from './PreviewEditOverlay';
-import { PreviewUserIcon } from './PreviewUserIcon';
+import { When } from '../../../utils/When';
+import { IFormStep } from '../../../../pages/templates/components/formTypes';
+import { EmailIntegrationInfo } from '../../../../pages/templates/editor/EmailIntegrationInfo';
+import { LocaleSelect } from '../common/LocaleSelect';
+import { Mobile } from '../common/Mobile';
+import { PreviewEditOverlay } from '../common/PreviewEditOverlay';
+import { PreviewUserIcon } from '../common/PreviewUserIcon';
 
 const useStyles = createStyles((theme, { error }: { error: boolean }) => ({
   header: {

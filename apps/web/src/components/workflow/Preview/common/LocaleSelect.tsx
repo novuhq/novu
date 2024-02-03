@@ -1,7 +1,7 @@
 import { SelectItemProps, Group } from '@mantine/core';
 import { Select, Text } from '@novu/design-system';
 import { forwardRef } from 'react';
-import { IS_DOCKER_HOSTED } from '../../../config';
+import { IS_DOCKER_HOSTED } from '../../../../config';
 
 export function LocaleSelect({ locales, value, isLoading, readonly, setSelectedLocale }) {
   if (IS_DOCKER_HOSTED) {
