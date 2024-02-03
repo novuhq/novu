@@ -23,7 +23,7 @@ import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
-import CreateOrganizationPage from './pages/auth/CreateOrganizationPage';
+import QuestionnairePage from './pages/auth/QuestionnairePage';
 import { ENV, LAUNCH_DARKLY_CLIENT_SIDE_ID, SENTRY_DSN, CONTEXT_PATH } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
@@ -57,6 +57,7 @@ import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 import { ProductLead } from './components/utils/ProductLead';
 import { SSO, UserAccess, Cloud } from '@novu/design-system';
 import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
+import { TranslationRoutes } from './pages/TranslationPages';
 import { VariantsPage } from './pages/templates/components/VariantsPage';
 
 library.add(far, fas);
@@ -129,7 +130,7 @@ function App() {
                 <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
                 <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
                 <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
-                <Route path={ROUTES.AUTH_APPLICATION} element={<CreateOrganizationPage />} />
+                <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
                 <Route
                   path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
                   element={
@@ -226,6 +227,7 @@ function App() {
                     <Route path="" element={<BrandingForm />} />
                     <Route path="layouts" element={<LayoutsListPage />} />
                   </Route>
+                  <Route path="/translations/*" element={<TranslationRoutes />} />
                 </Route>
               </Routes>
             </AuthProvider>

@@ -122,7 +122,7 @@ export function VariantsPage() {
           <Group position="left" spacing={4}>
             <ErrorIcon color={colors.error} width="16px" height="16px" />
             <Text color={colors.error} data-test-id="variants-list-current-error">
-              {errorState?.errorMessage}
+              {errorState?.errorMessage || ''}
             </Text>
           </Group>
           <Group position="left" spacing={20}>

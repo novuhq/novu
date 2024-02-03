@@ -33,12 +33,13 @@ import {
   DalServiceHealthIndicator,
   distributedLockService,
   featureFlagsService,
-  getIsTopicNotificationEnabled,
-  getIsApiRateLimitingEnabled,
+  getFeatureFlag,
   InvalidateCacheService,
   LoggerModule,
   QueuesModule,
   storageService,
+  ExecutionLogRoute,
+  CreateExecutionDetails,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -88,11 +89,12 @@ const PROVIDERS = [
   DalServiceHealthIndicator,
   distributedLockService,
   featureFlagsService,
-  getIsTopicNotificationEnabled,
-  getIsApiRateLimitingEnabled,
   InvalidateCacheService,
   storageService,
   ...DAL_MODELS,
+  ExecutionLogRoute,
+  CreateExecutionDetails,
+  getFeatureFlag,
 ];
 
 @Module({

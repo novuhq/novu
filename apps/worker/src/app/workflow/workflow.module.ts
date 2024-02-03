@@ -1,4 +1,4 @@
-import { Module, OnApplicationShutdown, Provider } from '@nestjs/common';
+import { DynamicModule, Logger, Module, Provider, OnApplicationShutdown } from '@nestjs/common';
 import {
   AddDelayJob,
   MergeOrCreateDigest,
@@ -25,11 +25,13 @@ import {
   SelectVariant,
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
-  getIsTopicNotificationEnabled,
+  getFeatureFlag,
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
+  CompileInAppTemplate,
   WorkflowInMemoryProviderService,
+  ExecutionLogRoute,
 } from '@novu/application-generic';
 import { JobRepository } from '@novu/dal';
 
@@ -55,7 +57,24 @@ import {
 
 import { SharedModule } from '../shared/shared.module';
 import { ACTIVE_WORKERS } from '../../config/worker-init.config';
+import { Type } from '@nestjs/common/interfaces/type.interface';
+import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
+import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 
+const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
+  const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
+  try {
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      if (require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers) {
+        modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers);
+      }
+    }
+  } catch (e) {
+    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+  }
+
+  return modules;
+};
 const REPOSITORIES = [JobRepository];
 
 const USE_CASES = [
@@ -101,10 +120,13 @@ const USE_CASES = [
   WebhookFilterBackoffStrategy,
   MapTriggerRecipients,
   GetTopicSubscribersUseCase,
-  getIsTopicNotificationEnabled,
+  getFeatureFlag,
   SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
+  CompileInAppTemplate,
+  InboundEmailParse,
+  ExecutionLogRoute,
 ];
 
 const PROVIDERS: Provider[] = [];
@@ -128,7 +150,7 @@ const memoryQueueService = {
 };
 
 @Module({
-  imports: [SharedModule],
+  imports: [SharedModule, ...enterpriseImports()],
   controllers: [],
   providers: [memoryQueueService, ...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
   exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],

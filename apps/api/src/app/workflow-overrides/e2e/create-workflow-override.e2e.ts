@@ -56,6 +56,8 @@ describe('Create Integration - /workflow-overrides (POST)', function () {
       push: true,
     });
     expect(res.body.data.deleted).to.equal(false);
+    expect(res.body.data._environmentId).to.equal(session.environment._id);
+    expect(res.body.data._organizationId).to.equal(session.organization._id);
   });
 
   it('should fail on creation of new workflow override with missing workflow id', async function () {

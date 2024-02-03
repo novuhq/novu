@@ -77,7 +77,7 @@ export class UserSession {
 
   apiKey: string;
 
-  constructor(public serverUrl = `http://localhost:${process.env.PORT}`) {
+  constructor(public serverUrl = `http://127.0.0.1:${process.env.PORT}`) {
     this.jobsService = new JobsService();
   }
 
@@ -265,6 +265,20 @@ export class UserSession {
     await organizationService.addMember(this.organization._id, this.user._id);
 
     return this.organization;
+  }
+
+  async switchToProdEnvironment() {
+    const prodEnvironment = await this.environmentService.getProductionEnvironment(this.organization._id);
+    if (prodEnvironment) {
+      await this.switchEnvironment(prodEnvironment._id);
+    }
+  }
+
+  async switchToDevEnvironment() {
+    const devEnvironment = await this.environmentService.getDevelopmentEnvironment(this.organization._id);
+    if (devEnvironment) {
+      await this.switchEnvironment(devEnvironment._id);
+    }
   }
 
   async switchEnvironment(environmentId: string) {

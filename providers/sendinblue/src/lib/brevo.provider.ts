@@ -37,6 +37,8 @@ export class BrevoEmailProvider implements IEmailProvider {
       email: options.from || this.config.from,
       name: options.senderName || this.config.senderName,
     };
+    email.templateId = options.customData?.templateId;
+    email.params = options.customData?.templateParams;
     email.to = getFormattedTo(options.to);
     email.subject = options.subject;
     email.htmlContent = options.html;

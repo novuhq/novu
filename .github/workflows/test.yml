@@ -96,6 +96,8 @@ jobs:
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
+    with:
+      ee: true
 
   test_widget:
     name: Test Widget Cypress
@@ -160,13 +162,22 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - run: echo '${{ needs.get-affected.outputs.test-packages }}'
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-project
+      - name: Display Test Packages
+        run: echo '${{ needs.get-affected.outputs.test-packages }}'
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Project
+        uses: ./.github/actions/setup-project
         with:
           slim: 'true'
-      - uses: ./.github/actions/setup-redis-cluster
-      - uses: mansagroup/nrwl-nx-action@v3
+
+      - name: Setup Redis Cluster
+        uses: ./.github/actions/setup-redis-cluster
+
+      - name: Run Lint, Build, Test
+        uses: mansagroup/nrwl-nx-action@v3
         env:
           LOGGING_LEVEL: 'info'
         with:
@@ -189,6 +200,7 @@ jobs:
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
 
   test_api:
+    name: Test API
     needs: [get-affected]
     strategy:
       # The order is important for ee to be first, otherwise outputs not work correctly
@@ -231,8 +243,8 @@ jobs:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
 
-  validate_swagger:
-    name: Validate Swagger
+  validate_openapi:
+    name: Validate OpenAPI
     runs-on: ubuntu-latest
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
@@ -250,4 +262,4 @@ jobs:
         with:
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
-      - uses: ./.github/actions/validate-swagger
+      - uses: ./.github/actions/validate-openapi

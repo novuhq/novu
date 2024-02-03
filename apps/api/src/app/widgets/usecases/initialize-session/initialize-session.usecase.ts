@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
@@ -9,15 +9,14 @@ import {
   SelectIntegrationCommand,
   SelectIntegration,
   AuthService,
+  createHash,
 } from '@novu/application-generic';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InitializeSessionCommand } from './initialize-session.command';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
-import { createHash } from '../../../shared/helpers/hmac.service';
 
-const LOG_CONTEXT = 'InitializeSession';
 @Injectable()
 export class InitializeSession {
   constructor(
@@ -55,7 +54,6 @@ export class InitializeSession {
       validateNotificationCenterEncryption(environment, command);
     }
 
-    Logger.log('InitializeSession:command ' + JSON.stringify(command), LOG_CONTEXT);
     const commandos = CreateSubscriberCommand.create({
       environmentId: environment._id,
       organizationId: environment._organizationId,

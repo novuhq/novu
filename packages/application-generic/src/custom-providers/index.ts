@@ -1,24 +1,11 @@
 import {
   AnalyticsService,
-  BullMqService,
   CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
-  InboundParseQueueService,
-  ReadinessService,
-  StandardQueueService,
-  SubscriberProcessQueueService,
-  WebSocketsQueueService,
-  WorkflowQueueService,
-  ExecutionLogQueueService,
-  WorkflowInMemoryProviderService,
 } from '../services';
-import {
-  GetIsApiRateLimitingEnabled,
-  GetIsTopicNotificationEnabled,
-  GetUseMergedDigestId,
-} from '../usecases';
+import { GetFeatureFlag } from '../usecases';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -30,36 +17,12 @@ export const featureFlagsService = {
   },
 };
 
-export const getUseMergedDigestId = {
-  provide: GetUseMergedDigestId,
-  useFactory: async (
-    featureFlagServiceItem: FeatureFlagsService
-  ): Promise<GetUseMergedDigestId> => {
-    const useCase = new GetUseMergedDigestId(featureFlagServiceItem);
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
-};
-
-export const getIsTopicNotificationEnabled = {
-  provide: GetIsTopicNotificationEnabled,
+export const getFeatureFlag = {
+  provide: GetFeatureFlag,
   useFactory: async (
     featureFlagsServiceItem: FeatureFlagsService
-  ): Promise<GetIsTopicNotificationEnabled> => {
-    const useCase = new GetIsTopicNotificationEnabled(featureFlagsServiceItem);
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
-};
-
-export const getIsApiRateLimitingEnabled = {
-  provide: GetIsApiRateLimitingEnabled,
-  useFactory: async (
-    featureFlagsServiceItem: FeatureFlagsService
-  ): Promise<GetIsApiRateLimitingEnabled> => {
-    const useCase = new GetIsApiRateLimitingEnabled(featureFlagsServiceItem);
+  ): Promise<GetFeatureFlag> => {
+    const useCase = new GetFeatureFlag(featureFlagsServiceItem);
 
     return useCase;
   },

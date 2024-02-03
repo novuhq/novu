@@ -4,6 +4,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import {
   BullMqService,
   getWebSocketWorkerOptions,
+  IWebSocketDataDto,
   WebSocketsWorkerService,
   WorkerOptions,
   WorkflowInMemoryProviderService,
@@ -31,24 +32,23 @@ export class WebSocketWorker extends WebSocketsWorkerService {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;
 
-        Logger.verbose(
-          `Job ${job.id} / ${job.data.event} is being processed in the MemoryDB instance WebSocketWorker`,
-          LOG_CONTEXT
-        );
+        Logger.log(`Job ${job.id} / ${job.data.event} is being processed WebSocketWorker`, LOG_CONTEXT);
 
         nr.startBackgroundTransaction(
           ObservabilityBackgroundTransactionEnum.WS_SOCKET_QUEUE,
           'WS Service',
           function () {
             const transaction = nr.getTransaction();
+            const { data: jobData } = job;
+            const data: IWebSocketDataDto = jobData;
 
             _this.externalServicesRoute
               .execute(
                 ExternalServicesRouteCommand.create({
-                  userId: job.data.userId,
-                  event: job.data.event,
-                  payload: job.data.payload,
-                  _environmentId: job.data._environmentId,
+                  userId: data.userId,
+                  event: data.event,
+                  payload: data.payload,
+                  _environmentId: data._environmentId,
                 })
               )
               .then(resolve)

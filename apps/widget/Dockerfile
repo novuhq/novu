@@ -1,33 +1,34 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs16-alpine
+FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine
 ENV NX_DAEMON=false
-
-WORKDIR /usr/src/app
 
 RUN apk add --no-cache bash
 RUN npm install -g pnpm@8.9.0 --loglevel notice
 
-COPY .npmrc .
-COPY package.json .
+USER 1000
+WORKDIR /usr/src/app
 
-COPY apps/widget ./apps/widget
+COPY --chown=1000:1000 .npmrc .
+COPY --chown=1000:1000 package.json .
 
-COPY libs/dal ./libs/dal
-COPY packages/client ./packages/client
-COPY libs/testing ./libs/testing
-COPY libs/shared ./libs/shared
-COPY packages/notification-center ./packages/notification-center
-COPY packages/stateless ./packages/stateless
-COPY packages/node ./packages/node
+COPY --chown=1000:1000 apps/widget ./apps/widget
 
-COPY tsconfig.json .
-COPY tsconfig.base.json .
+COPY --chown=1000:1000 libs/dal ./libs/dal
+COPY --chown=1000:1000 packages/client ./packages/client
+COPY --chown=1000:1000 libs/testing ./libs/testing
+COPY --chown=1000:1000 libs/shared ./libs/shared
+COPY --chown=1000:1000 packages/notification-center ./packages/notification-center
+COPY --chown=1000:1000 packages/stateless ./packages/stateless
+COPY --chown=1000:1000 packages/node ./packages/node
 
-COPY .eslintrc.js .
-COPY .prettierrc .
-COPY .prettierignore .
-COPY nx.json .
-COPY pnpm-workspace.yaml .
-COPY pnpm-lock.yaml .
+COPY --chown=1000:1000 tsconfig.json .
+COPY --chown=1000:1000 tsconfig.base.json .
+
+COPY --chown=1000:1000 .eslintrc.js .
+COPY --chown=1000:1000 .prettierrc .
+COPY --chown=1000:1000 .prettierignore .
+COPY --chown=1000:1000 nx.json .
+COPY --chown=1000:1000 pnpm-workspace.yaml .
+COPY --chown=1000:1000 pnpm-lock.yaml .
 
 RUN pnpm install --reporter=silent
 RUN pnpm build

@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -21,14 +23,14 @@ import * as Sentry from '@sentry/node';
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetailsCommand,
   SelectIntegration,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   MailFactory,
   GetNovuProviderCredentials,
   SelectVariant,
-  ExecutionLogQueueService,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
@@ -48,20 +50,22 @@ export class SendMessageEmail extends SendMessageBase {
     protected messageRepository: MessageRepository,
     protected layoutRepository: LayoutRepository,
     protected createLogUsecase: CreateLog,
-    protected executionLogQueueService: ExecutionLogQueueService,
+    protected executionLogRoute: ExecutionLogRoute,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
-    protected selectVariant: SelectVariant
+    protected selectVariant: SelectVariant,
+    protected moduleRef: ModuleRef
   ) {
     super(
       messageRepository,
       createLogUsecase,
-      executionLogQueueService,
+      executionLogRoute,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
-      selectVariant
+      selectVariant,
+      moduleRef
     );
   }
 
@@ -82,20 +86,16 @@ export class SendMessageEmail extends SendMessageBase {
         },
       });
     } catch (e) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           raw: JSON.stringify({ message: e.message }),
           isTest: false,
           isRetry: false,
-        }),
-        command.organizationId
+        })
       );
 
       return;
@@ -114,12 +114,9 @@ export class SendMessageEmail extends SendMessageBase {
     });
 
     if (!integration) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -132,8 +129,7 @@ export class SendMessageEmail extends SendMessageBase {
                 }),
               }
             : {}),
-        }),
-        command.organizationId
+        })
       );
 
       return;
@@ -211,7 +207,8 @@ export class SendMessageEmail extends SendMessageBase {
           organizationId: command.organizationId,
           userId: command.userId,
           ...payload,
-        })
+        }),
+        this.initiateTranslations.bind(this)
       ));
 
       if (this.storeContent()) {
@@ -240,12 +237,9 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -253,8 +247,7 @@ export class SendMessageEmail extends SendMessageBase {
         isTest: false,
         isRetry: false,
         raw: this.storeContent() ? JSON.stringify(payload) : null,
-      }),
-      command.organizationId
+      })
     );
 
     const attachments = (<IAttachmentOptions[]>command.payload.attachments)?.map(
@@ -304,20 +297,16 @@ export class SendMessageEmail extends SendMessageBase {
 
   private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
     if (!command.step.replyCallback?.url) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: messageId,
           detail: DetailEnum.REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.WARNING,
           isTest: false,
           isRetry: false,
-        }),
-        command.organizationId
+        })
       );
 
       return null;
@@ -338,20 +327,16 @@ export class SendMessageEmail extends SendMessageBase {
           ? DetailEnum.REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION
           : DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION;
 
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: messageId,
           detail: detailEnum,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.WARNING,
           isTest: false,
           isRetry: false,
-        }),
-        command.organizationId
+        })
       );
 
       return null;
@@ -375,20 +360,16 @@ export class SendMessageEmail extends SendMessageBase {
         LogCodeEnum.SUBSCRIBER_MISSING_EMAIL
       );
 
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        }),
-        command.organizationId
+        })
       );
 
       return;
@@ -406,20 +387,16 @@ export class SendMessageEmail extends SendMessageBase {
         LogCodeEnum.MISSING_EMAIL_INTEGRATION
       );
 
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        }),
-        command.organizationId
+        })
       );
 
       return;
@@ -440,12 +417,9 @@ export class SendMessageEmail extends SendMessageBase {
 
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
 
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.MESSAGE_SENT,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -453,8 +427,7 @@ export class SendMessageEmail extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(result),
-        }),
-        command.organizationId
+        })
       );
 
       Logger.verbose({ command }, 'Execution details of sending an email message have been stored', LOG_CONTEXT);
@@ -482,12 +455,9 @@ export class SendMessageEmail extends SendMessageBase {
         error
       );
 
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.PROVIDER_ERROR,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -495,8 +465,7 @@ export class SendMessageEmail extends SendMessageBase {
           isTest: false,
           isRetry: false,
           raw: JSON.stringify(error),
-        }),
-        command.organizationId
+        })
       );
 
       return;
@@ -515,12 +484,9 @@ export class SendMessageEmail extends SendMessageBase {
         '_id'
       );
       if (!layoutOverride) {
-        const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-        await this.executionLogQueueService.add(
-          metadata._id,
-          CreateExecutionDetailsCommand.create({
-            ...metadata,
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        await this.executionLogRoute.execute(
+          ExecutionLogRouteCommand.create({
+            ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
             detail: DetailEnum.LAYOUT_NOT_FOUND,
             source: ExecutionDetailsSourceEnum.INTERNAL,
             status: ExecutionDetailsStatusEnum.FAILED,
@@ -529,8 +495,7 @@ export class SendMessageEmail extends SendMessageBase {
             raw: JSON.stringify({
               layoutIdentifier: overrideLayoutIdentifier,
             }),
-          }),
-          command.organizationId
+          })
         );
       }
 

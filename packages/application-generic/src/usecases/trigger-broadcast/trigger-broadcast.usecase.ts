@@ -11,8 +11,8 @@ import {
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  ISubscribersDefine,
   ProvidersIdEnum,
+  SubscriberSourceEnum,
 } from '@novu/shared';
 
 import { ProcessSubscriber } from '../process-subscriber';
@@ -27,9 +27,10 @@ import { ProcessTenant } from '../process-tenant';
 import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-recipients.use-case';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
+import { IProcessSubscriberBulkJobDto } from '../../dtos';
 
 const LOG_CONTEXT = 'TriggerBroadcastUseCase';
-const QUEUE_CHUNK_SIZE = 100;
+const QUEUE_CHUNK_SIZE = Number(process.env.BROADCAST_QUEUE_CHUNK_SIZE) || 100;
 
 @Injectable()
 export class TriggerBroadcast {
@@ -111,30 +112,6 @@ export class TriggerBroadcast {
   }
 
   @Instrument()
-  private async validateSubscriberIdProperty(
-    to: ISubscribersDefine[]
-  ): Promise<boolean> {
-    for (const subscriber of to) {
-      const subscriberIdExists =
-        typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
-
-      if (Array.isArray(subscriberIdExists)) {
-        throw new ApiException(
-          'subscriberId under property to is type array, which is not allowed please make sure all subscribers ids are strings'
-        );
-      }
-
-      if (!subscriberIdExists) {
-        throw new ApiException(
-          'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
-        );
-      }
-    }
-
-    return true;
-  }
-
-  @Instrument()
   private async getProviderId(
     environmentId: string,
     channelType: ChannelTypeEnum
@@ -163,7 +140,7 @@ export class TriggerBroadcast {
   private mapSubscribersToJobs(
     subscribers: { subscriberId: string }[],
     command: TriggerBroadcastCommand
-  ) {
+  ): IProcessSubscriberBulkJobDto[] {
     return subscribers.map((subscriber) => {
       return {
         name: command.transactionId + subscriber.subscriberId,
@@ -179,6 +156,8 @@ export class TriggerBroadcast {
           ...(command.actor && { actor: command.actor }),
           subscriber,
           templateId: command.template._id,
+          _subscriberSource: SubscriberSourceEnum.BROADCAST,
+          requestCategory: command.requestCategory,
         },
         groupId: command.organizationId,
       };
