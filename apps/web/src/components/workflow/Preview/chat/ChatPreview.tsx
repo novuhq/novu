@@ -56,7 +56,7 @@ export function ChatPreview() {
         }
         labelPosition="center"
       />
-      <ChatContent content={content} />
+      <ChatContent content={content} error={error} />
       <ChatInput />
     </div>
   );
