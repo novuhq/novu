@@ -140,7 +140,6 @@ export const PreviewMobile = ({
                   <LocaleSelect
                     isLoading={loading}
                     locales={locales}
-                    readonly={false}
                     value={selectedLocale}
                     setSelectedLocale={setSelectedLocale}
                   />

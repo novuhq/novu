@@ -1,7 +1,7 @@
 import { StepTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
+import { ChatPreview, EmailPreview } from '../../../components/workflow/Preview';
 
-import { EmailPreview } from '../../../components/workflow/Preview/Email/EmailPreview';
 import { useNavigateFromEditor } from '../hooks/useNavigateFromEditor';
 import { useStepIndex } from '../hooks/useStepIndex';
 import { ChannelPreviewSidebar } from './ChannelPreviewSidebar';
@@ -21,7 +21,7 @@ const PreviewComponent = ({ channel }: { channel: StepTypeEnum }) => {
       return <>IN APP</>;
 
     case StepTypeEnum.CHAT:
-      return <>CHAT</>;
+      return <ChatPreview />;
 
     case StepTypeEnum.PUSH:
       return <>PUSH</>;
