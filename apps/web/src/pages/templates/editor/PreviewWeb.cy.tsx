@@ -24,6 +24,7 @@ describe('Preview web', () => {
               },
             }}
             setSelectedLocale={() => {}}
+            locales={[]}
           />
         </QueryClientProvider>
       </TestWrapper>
@@ -52,6 +53,7 @@ describe('Preview web', () => {
               },
             }}
             setSelectedLocale={() => {}}
+            locales={[]}
           />
         </QueryClientProvider>
       </TestWrapper>

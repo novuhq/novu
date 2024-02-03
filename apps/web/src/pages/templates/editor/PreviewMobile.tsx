@@ -7,6 +7,7 @@ import { FieldError, FieldErrorsImpl, Merge } from 'react-hook-form';
 import { When } from '../../../components/utils/When';
 import { IFormStep } from '../components/formTypes';
 import { EmailIntegrationInfo } from './EmailIntegrationInfo';
+import { LocaleSelect } from './LocaleSelect';
 import { Mobile } from './Mobile';
 import { PreviewEditOverlay } from './PreviewEditOverlay';
 import { PreviewUserIcon } from './PreviewUserIcon';
@@ -62,6 +63,8 @@ export const PreviewMobile = ({
   error,
   showEditOverlay = false,
   setSelectedLocale,
+  selectedLocale,
+  locales,
 }: {
   integration: any;
   subject?: string;
@@ -70,6 +73,8 @@ export const PreviewMobile = ({
   error?: Merge<FieldError, FieldErrorsImpl<IFormStep>>;
   showEditOverlay?: boolean;
   setSelectedLocale: (locale: string) => void;
+  selectedLocale?: string;
+  locales: any[];
 }) => {
   const { classes } = useStyles({ error: !!(error && error.template?.content && error.template?.content?.message) });
 
@@ -104,6 +109,7 @@ export const PreviewMobile = ({
                   height: '40px',
                 }}
                 spacing={13}
+                noWrap
               >
                 <When truthy={loading}>
                   <Skeleton height={40} width={40} circle />
@@ -131,6 +137,13 @@ export const PreviewMobile = ({
                       </>
                     )}
                   </div>
+                  <LocaleSelect
+                    isLoading={loading}
+                    locales={locales}
+                    readonly={false}
+                    value={selectedLocale}
+                    setSelectedLocale={setSelectedLocale}
+                  />
                 </When>
               </Group>
             </div>

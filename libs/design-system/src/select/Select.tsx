@@ -47,6 +47,7 @@ interface ISelectProps extends SpacingProps {
   withinPortal?: boolean;
   limit?: SelectProps['limit'];
   icon?: React.ReactNode;
+  variant?: SelectProps['variant'];
 }
 
 /**

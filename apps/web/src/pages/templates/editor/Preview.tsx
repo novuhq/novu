@@ -1,20 +1,20 @@
 import { Grid, JsonInput, useMantineTheme } from '@mantine/core';
+import type { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
+import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { useMutation } from '@tanstack/react-query';
-import type { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 
-import { previewEmail } from '../../../api/content-templates';
-import { When } from '../../../components/utils/When';
 import { Button, colors, inputStyles } from '@novu/design-system';
-import { useAuthController, useProcessVariables } from '../../../hooks';
-import { PreviewMobile } from './PreviewMobile';
-import { PreviewWeb } from './PreviewWeb';
+import { previewEmail } from '../../../api/content-templates';
+import { getLocalesFromContent } from '../../../api/translations';
+import { When } from '../../../components/utils/When';
+import { useActiveIntegrations, useAuthController, useProcessVariables } from '../../../hooks';
 import { errorMessage } from '../../../utils/notifications';
-import { useActiveIntegrations } from '../../../hooks';
-import { useStepFormPath } from '../hooks/useStepFormPath';
 import type { IForm } from '../components/formTypes';
 import { useStepFormErrors } from '../hooks/useStepFormErrors';
+import { useStepFormPath } from '../hooks/useStepFormPath';
+import { PreviewMobile } from './PreviewMobile';
+import { PreviewWeb } from './PreviewWeb';
 
 export const Preview = ({ showVariables = true, view }: { view: string; showVariables?: boolean }) => {
   const { control } = useFormContext<IForm>();
@@ -51,11 +51,21 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
   const [parsedSubject, setParsedSubject] = useState(subject);
   const [content, setContent] = useState<string>('<html><head></head><body><div></div></body></html>');
   const { isLoading, mutateAsync } = useMutation(previewEmail);
+  const { mutateAsync: translationLocales, data: locales } = useMutation(getLocalesFromContent);
   const processedVariables = useProcessVariables(variables);
   const [payloadValue, setPayloadValue] = useState('{}');
 
   const { organization } = useAuthController();
   const [selectedLocale, setSelectedLocale] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const emailContent = contentType === 'editor' ? editorContent : htmlContent;
+    if (emailContent) {
+      translationLocales({
+        content: emailContent,
+      });
+    }
+  }, [contentType, editorContent, htmlContent, translationLocales]);
 
   useEffect(() => {
     setSelectedLocale(organization?.defaultLocale);
@@ -122,6 +132,8 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
                   error={error}
                   showEditOverlay={!showVariables}
                   setSelectedLocale={setSelectedLocale}
+                  locales={locales || []}
+                  selectedLocale={selectedLocale}
                 />
               </When>
               <When truthy={view === 'mobile'}>
@@ -134,6 +146,8 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
                       integration={integration}
                       error={error}
                       setSelectedLocale={setSelectedLocale}
+                      locales={locales || []}
+                      selectedLocale={selectedLocale}
                     />
                   </Grid.Col>
                 </Grid>
@@ -192,6 +206,8 @@ export const Preview = ({ showVariables = true, view }: { view: string; showVari
           error={error}
           showEditOverlay={!showVariables}
           setSelectedLocale={setSelectedLocale}
+          locales={locales || []}
+          selectedLocale={selectedLocale}
         />
       )}
     </>

@@ -7,6 +7,7 @@ import { FieldError, FieldErrorsImpl, Merge } from 'react-hook-form';
 import { When } from '../../../components/utils/When';
 import { IFormStep } from '../components/formTypes';
 import { EmailIntegrationInfo } from './EmailIntegrationInfo';
+import { LocaleSelect } from './LocaleSelect';
 import { PreviewEditOverlay } from './PreviewEditOverlay';
 import { PreviewUserIcon } from './PreviewUserIcon';
 
@@ -81,6 +82,8 @@ export const PreviewWeb = ({
   error,
   showEditOverlay = false,
   setSelectedLocale,
+  selectedLocale,
+  locales,
 }: {
   integration: any;
   subject?: string;
@@ -89,6 +92,8 @@ export const PreviewWeb = ({
   error?: Merge<FieldError, FieldErrorsImpl<IFormStep>>;
   showEditOverlay?: boolean;
   setSelectedLocale: (locale: string) => void;
+  selectedLocale?: string;
+  locales: any[];
 }) => {
   const { classes } = useStyles({ error: !!(error && error.template?.content && error.template?.content?.message) });
 
@@ -148,6 +153,14 @@ export const PreviewWeb = ({
                     </>
                   )}
                 </div>
+
+                <LocaleSelect
+                  isLoading={loading}
+                  locales={locales}
+                  readonly={false}
+                  value={selectedLocale}
+                  setSelectedLocale={setSelectedLocale}
+                />
               </When>
             </Group>
           </div>
