@@ -1,8 +1,8 @@
-import { Divider, Stack } from '@mantine/core';
+import { Divider } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 import { useAuthController } from '@novu/shared-web';
 import { useMutation } from '@tanstack/react-query';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { getLocalesFromContent } from '../../../../api/translations';
 import { IForm } from '../../../../pages/templates/components/formTypes';
@@ -40,12 +40,14 @@ export function ChatPreview() {
 
   return (
     <div>
-      <LocaleSelect
-        value={selectedLocale}
-        setSelectedLocale={selectedLocale}
-        isLoading={false}
-        locales={locales || []}
-      />
+      <div>
+        <LocaleSelect
+          value={selectedLocale}
+          setSelectedLocale={selectedLocale}
+          isLoading={false}
+          locales={locales || []}
+        />
+      </div>
       <Divider
         label={
           <Text color={colors.B30} weight="bold">
@@ -54,7 +56,7 @@ export function ChatPreview() {
         }
         labelPosition="center"
       />
-      <ChatContent />
+      <ChatContent content={content} />
       <ChatInput />
     </div>
   );

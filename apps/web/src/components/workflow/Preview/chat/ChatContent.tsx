@@ -4,7 +4,7 @@ import { colors, Text, Title } from '@novu/design-system';
 import React from 'react';
 import { NovuGreyIcon } from '../common';
 
-export function ChatContent() {
+export function ChatContent({ content }) {
   return (
     <Group spacing={16} align="flex-start" noWrap pt={24} pb={40}>
       <div>
@@ -25,13 +25,7 @@ export function ChatContent() {
           <PillStyled>APP</PillStyled>
           <Text color={colors.B60}>now</Text>
         </Group>
-        <Text color={colors.B80}>
-          Lorem ipsum dolor sit amet consectetur, adipisicing elit. Ipsam, quae. Est voluptas exercitationem nobis optio
-          eos incidunt delectus deleniti omnis cum ipsa assumenda veritatis dolor provident voluptatibus, quisquam,
-          laudantium illo! Explicabo molestias vel ea quia placeat, ducimus facere labore repellendus earum veniam
-          voluptatibus soluta quos, temporibus dicta fugiat aut perferendis mollitia sapiente eaque laboriosam? Quidem
-          earum porro fuga nesciunt blanditiis!
-        </Text>
+        <Text color={colors.B80}>{content}</Text>
       </Stack>
     </Group>
   );

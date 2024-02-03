@@ -9,28 +9,27 @@ export function LocaleSelect({ locales, value, isLoading, setSelectedLocale }) {
   }
 
   return (
-    <div style={{ marginLeft: 'auto' }}>
-      <Select
-        itemComponent={SelectItem}
-        data={locales?.map((locale) => {
-          return {
-            value: locale.langIso,
-            label: locale.langName,
-          };
-        })}
-        icon={<FlagIcon locale={value} />}
-        loading={isLoading}
-        limit={50}
-        searchable
-        withinPortal
-        onChange={(val) => {
-          setSelectedLocale(val);
-        }}
-        value={value}
-        variant="unstyled"
-        rightSectionWidth={20}
-      />
-    </div>
+    <Select
+      inputProps={{ maw: 200 }}
+      itemComponent={SelectItem}
+      data={locales?.map((locale) => {
+        return {
+          value: locale.langIso,
+          label: locale.langName,
+        };
+      })}
+      icon={<FlagIcon locale={value} />}
+      loading={isLoading}
+      limit={50}
+      searchable
+      withinPortal
+      onChange={(val) => {
+        setSelectedLocale(val);
+      }}
+      value={value}
+      variant="unstyled"
+      rightSectionWidth={20}
+    />
   );
 }
 
