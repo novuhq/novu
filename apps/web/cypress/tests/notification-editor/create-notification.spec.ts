@@ -203,6 +203,9 @@ describe('Creation functionality', function () {
     cy.clickWorkflowNode('node-emailSelector');
     cy.waitForNetworkIdle(500);
 
+    cy.getByTestId('edit-action').click();
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('emailSubject').type('this is email subject');
     cy.getByTestId('email-editor').getByTestId('editor-row').click();
     cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
@@ -223,6 +226,7 @@ describe('Creation functionality', function () {
     cy.waitForNetworkIdle(500);
 
     cy.clickWorkflowNode('node-smsSelector');
+    cy.getByTestId('edit-action').click();
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('smsNotificationContent').type('This text is written from a test {{var}}', {
@@ -240,11 +244,12 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     dragAndDrop('email');
     cy.waitForNetworkIdle(500);
 
-    cy.clickWorkflowNode('node-emailSelector');
+    editChannel('email');
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('emailSubject').type('this is email subject');

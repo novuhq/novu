@@ -69,7 +69,7 @@ const WorkflowEditor = () => {
       if (isVariant) {
         navigate(basePath + `/${channelType}/${step.uuid}/variants`);
       } else if (node.type === NodeType.CHANNEL) {
-        navigate(basePath + `/${channelType}/${step?.uuid ?? ''}`);
+        navigate(basePath + `/${channelType}/${step?.uuid ?? ''}/preview`);
       } else if (node.type === NodeType.TRIGGER) {
         navigate(basePath + '/test-workflow');
       }
@@ -216,10 +216,11 @@ const WorkflowEditor = () => {
 
   const isEmailChannel = channel && [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel);
   const isVariantsListPath = pathname.endsWith('/variants');
+  const isPreviewPath = pathname.endsWith('/preview');
 
   return (
     <>
-      <When truthy={isEmailChannel && !isVariantsListPath}>
+      <When truthy={!isVariantsListPath && !isPreviewPath && isEmailChannel}>
         <Outlet
           context={{
             setDragging,
@@ -227,13 +228,20 @@ const WorkflowEditor = () => {
           }}
         />
       </When>
-      <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel) || isVariantsListPath}>
+      <When
+        truthy={
+          !channel ||
+          ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel) ||
+          isVariantsListPath ||
+          isPreviewPath
+        }
+      >
         <div style={{ display: 'flex', flexFlow: 'row', position: 'relative' }}>
           <div
             style={{
               flex: '1 1 auto',
               display: 'flex',
-              flexFlow: 'column',
+              flexFlow: 'Column',
             }}
           >
             <Container fluid sx={{ width: '100%', height: `${TOP_ROW_HEIGHT}px` }}>
@@ -281,6 +289,7 @@ const WorkflowEditor = () => {
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
               onAddVariant={onAddVariant}
+              sidebarOpen={!(pathname === basePath)}
             />
           </div>
           <Outlet

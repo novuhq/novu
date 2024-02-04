@@ -31,6 +31,8 @@ describe('Tenants Page', function () {
         cy.getByTestId('update-tenant-sidebar-submit').click();
       });
 
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('tenants-list-table').find('td:nth-child(1)').contains('New Name');
     cy.getByTestId('tenants-list-table').find('td:nth-child(2)').contains('test-tenant');
 

@@ -17,7 +17,7 @@ describe('Workflow Editor - Variants', function () {
       cy.visit('/workflows/create');
     });
     cy.wait('@getWorkflow');
-    cy.getByTestId('title').first().clear().type(title).blur();
+    cy.getByTestId('name-input').first().clear().type(title).blur();
   };
 
   const fillInAppEditorContentWith = (text: string) => {
@@ -322,7 +322,7 @@ describe('Workflow Editor - Variants', function () {
       cy.wait('@getWorkflow');
 
       cy.getByTestId(`node-${channel}Selector`).getByTestId('variants-count').contains('2 variants');
-      editChannel(channel);
+      cy.clickWorkflowNode(`node-${channel}Selector`);
 
       checkVariantListCard({ selector: 'variant-item-card-1', message: VARIANT_EDITOR_TEXT });
       checkVariantConditions({ selector: 'variant-item-card-1', contains: '1' });
@@ -647,7 +647,7 @@ describe('Workflow Editor - Variants', function () {
 
       navigateAndOpenFirstWorkflow();
 
-      editChannel(channel);
+      cy.clickWorkflowNode(`node-${channel}Selector`);
 
       cy.getByTestId('variant-item-card-0').getByTestId('conditions-action').should('be.visible').contains('1');
       cy.getByTestId('variant-item-card-0').trigger('mouseover');
@@ -678,7 +678,7 @@ describe('Workflow Editor - Variants', function () {
 
       navigateAndOpenFirstWorkflow();
 
-      editChannel(channel);
+      cy.clickWorkflowNode(`node-${channel}Selector`);
 
       cy.getByTestId('variant-root-card').getByTestId('conditions-action').should('be.visible').contains('No');
       cy.getByTestId('variant-root-card').trigger('mouseover');

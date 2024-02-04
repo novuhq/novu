@@ -7,7 +7,7 @@ import { useBasePath } from './useBasePath';
 import { useStepIndex } from './useStepIndex';
 import { useEffect } from 'react';
 
-export const useNavigateFromEditor = () => {
+export const useNavigateFromEditor = (preview = false) => {
   const {
     channel,
     stepUuid = '',
@@ -26,7 +26,10 @@ export const useNavigateFromEditor = () => {
   const { stepIndex, variantIndex } = useStepIndex();
   const isStepExists = stepIndex > -1;
   const isVariantExists = typeof variantIndex !== 'undefined' && variantIndex > -1;
-  const stepEditorPath = `${workflowEditorPath}/${channel}/${stepUuid}`;
+  const isDigestOrDelay = channel === StepTypeEnum.DIGEST || channel === StepTypeEnum.DELAY;
+
+  const shouldNavigateToPreview = preview && !isDigestOrDelay;
+  const stepEditorPath = `${workflowEditorPath}/${channel}/${stepUuid}${shouldNavigateToPreview ? '/preview' : ''}`;
 
   useEffect(() => {
     if (!areStepsExists) {

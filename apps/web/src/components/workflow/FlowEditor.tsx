@@ -1,12 +1,4 @@
-import {
-  ComponentType,
-  MouseEvent,
-  MouseEvent as ReactMouseEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
+import { ComponentType, MouseEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, {
   addEdge,
   Background,
@@ -63,6 +55,7 @@ export interface IFlowEditorProps extends ReactFlowProps {
   onStepInit?: (step: IFlowStep) => Promise<void>;
   onGetStepError?: (i: number, errors: any) => string;
   addStep?: (channelType: StepTypeEnum, id: string, index?: number) => void;
+  sidebarOpen?: boolean;
 }
 
 export function FlowEditor({
@@ -90,6 +83,7 @@ export function FlowEditor({
   onEdit,
   onDelete,
   onAddVariant,
+  sidebarOpen,
   ...restProps
 }: IFlowEditorProps) {
   const { colorScheme } = useMantineColorScheme();
@@ -101,11 +95,12 @@ export function FlowEditor({
 
   useEffect(() => {
     const clientWidth = reactFlowWrapper.current?.clientWidth;
-    const middle = clientWidth ? clientWidth / 2 - 100 : 0;
+    const sub = sidebarOpen ? 300 : 100;
+    const middle = clientWidth ? clientWidth / 2 - sub : 0;
     const zoomView = 1;
 
     reactFlowInstance.setViewport({ x: middle, y: 10, zoom: zoomView });
-  }, [reactFlowInstance]);
+  }, [reactFlowInstance, sidebarOpen]);
 
   useEffect(() => {
     setTimeout(() => {
