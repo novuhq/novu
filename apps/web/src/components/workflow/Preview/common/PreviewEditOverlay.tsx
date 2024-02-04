@@ -27,7 +27,7 @@ export function PreviewEditOverlay() {
 
   return (
     <OverlayStyled>
-      <Flex align="center" justify="center" h="100%">
+      <Flex onClick={handleEditMessage} align="center" justify="center" h="100%" style={{ cursor: 'pointer' }}>
         <UnstyledButton onClick={handleEditMessage}>
           <Group spacing={10} position="center" align="center" h="100%" noWrap>
             <PencilOutlined color={colors.white} />

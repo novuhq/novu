@@ -25,6 +25,6 @@ const InputStyled = styled.div`
   border-radius: 8px;
   border: 1px solid ${colors.B40};
   opacity: 0.2;
-  background: ${colors.B17};
+  background: transparent;
   margin-top: 20px;
 `;

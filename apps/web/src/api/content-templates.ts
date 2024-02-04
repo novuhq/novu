@@ -32,3 +32,15 @@ export async function previewInApp({
 }) {
   return api.post('/v1/content-templates/preview/in-app', { content, payload, cta, locale });
 }
+
+export async function previewChat({
+  content,
+  payload,
+  locale,
+}: {
+  content?: string;
+  payload: string;
+  locale?: string;
+}) {
+  return api.post('/v1/content-templates/preview/chat', { content, payload, locale });
+}
