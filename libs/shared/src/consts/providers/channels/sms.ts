@@ -144,7 +144,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: iSendSmsConfig,
     docReference: 'https://send.com.ly/developers/docs',
-    logoFileName: { light: 'isend-sms.png', dark: 'isend-sms.png' },
+    logoFileName: { light: 'isend-sms.svg', dark: 'isend-sms.svg' },
   },
   {
     id: SmsProviderIdEnum.Clickatell,
