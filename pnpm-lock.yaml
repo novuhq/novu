@@ -5811,7 +5811,7 @@ importers:
     dependencies:
       '@novu/stateless':
         specifier: 0.22.0
-        version: link:../../packages/stateless
+        version: 0.22.0
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -16622,7 +16622,7 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
     dependencies:
-      '@mantine/core': 5.10.5(@emotion/react@11.10.6)(@mantine/hooks@5.10.5)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
+      '@mantine/core': 5.10.5(@emotion/react@11.10.6)(@mantine/hooks@5.10.5)(@types/react@17.0.53)(react-dom@17.0.2)(react@17.0.2)
       '@mantine/hooks': 5.10.5(react@17.0.2)
       '@mantine/utils': 5.10.5(react@17.0.2)
       react: 17.0.2
@@ -16687,7 +16687,7 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
     dependencies:
-      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@emotion/react': 11.10.6(@types/react@17.0.53)(react@17.0.2)
       clsx: 1.1.1
       csstype: 3.0.9
       react: 17.0.2
@@ -17345,6 +17345,15 @@ packages:
       '@floating-ui/dom': 0.1.10
       vue: 3.2.47
       vue-resize: 2.0.0-alpha.1(vue@3.2.47)
+    dev: false
+
+  /@novu/stateless@0.22.0:
+    resolution: {integrity: sha512-QEzNQeQ649lBmW91OQFK3K+vDVTlIgDmfHpjFxYcbf+60ZpKqhqJha32G7cjAmjMtmD/RWJUiZS2aEdnX4v2yw==}
+    engines: {node: '>=10'}
+    dependencies:
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
     dev: false
 
   /@npmcli/arborist@5.3.0:
@@ -29074,7 +29083,6 @@ packages:
     resolution: {integrity: sha512-Y9rRfJG5jcKOE0CLisYbojUjIrIEE7AGMzA/Sm4BslANhbS+cDMpgBdcPT91oJ7OuJ9hYJBx59RjbhxVnrF8Xg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-    dev: true
 
   /acorn@8.8.2:
     resolution: {integrity: sha512-xjIYgE8HBrkpd/sJqOGNspf8uHG+NOHGOw6a/Urj8taM2EXfdNAH2oFcPeIFfsv3+kz/mJrS5VuMqbNLjCa2vw==}
@@ -33497,6 +33505,7 @@ packages:
     dependencies:
       ms: 2.1.3
       supports-color: 5.5.0
+    dev: true
 
   /debug@3.2.7(supports-color@8.1.1):
     resolution: {integrity: sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==}
@@ -34723,7 +34732,7 @@ packages:
   /eslint-import-resolver-node@0.3.7:
     resolution: {integrity: sha512-gozW2blMLJCeFpBwugLTGyvVjNoeo1knonXAcatC6bjPBZitotxdWf7Gimr25N4c0AAOo4eOUfaG82IJPDpqCA==}
     dependencies:
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       is-core-module: 2.13.0
       resolve: 1.22.2
     transitivePeerDependencies:
@@ -34738,7 +34747,7 @@ packages:
       webpack: '>=1.11.0'
     dependencies:
       array.prototype.find: 2.2.2
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       enhanced-resolve: 0.9.1
       eslint-plugin-import: 2.28.1(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-webpack@0.13.7)(eslint@8.38.0)
       find-root: 1.1.0
@@ -34776,7 +34785,7 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/parser': 5.58.0(eslint@8.38.0)(typescript@4.9.5)
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       eslint: 8.38.0
       eslint-import-resolver-node: 0.3.7
       eslint-import-resolver-webpack: 0.13.7(eslint-plugin-import@2.28.1)(webpack@5.78.0)
@@ -34806,7 +34815,7 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/parser': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-import-resolver-webpack: 0.13.7(eslint-plugin-import@2.28.1)(webpack@5.78.0)
@@ -34887,7 +34896,7 @@ packages:
       array.prototype.findlastindex: 1.2.3
       array.prototype.flat: 1.3.1
       array.prototype.flatmap: 1.3.1
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       doctrine: 2.1.0
       eslint: 8.38.0
       eslint-import-resolver-node: 0.3.7
@@ -34922,7 +34931,7 @@ packages:
       array.prototype.findlastindex: 1.2.3
       array.prototype.flat: 1.3.1
       array.prototype.flatmap: 1.3.1
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       doctrine: 2.1.0
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
@@ -39472,7 +39481,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1(@types/node@16.11.7)(typescript@4.9.5)
+      ts-node: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
     transitivePeerDependencies:
       - bufferutil
       - canvas
@@ -43398,7 +43407,7 @@ packages:
     hasBin: true
     requiresBuild: true
     dependencies:
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       iconv-lite: 0.6.3
       sax: 1.2.4
     transitivePeerDependencies:
@@ -45734,7 +45743,7 @@ packages:
     engines: {node: '>= 0.12.0'}
     dependencies:
       async: 2.6.4
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       mkdirp: 0.5.6
     transitivePeerDependencies:
       - supports-color
@@ -51710,7 +51719,7 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
     dependencies:
-      acorn: 8.10.0
+      acorn: 8.11.3
       commander: 2.20.3
       source-map: 0.6.1
       source-map-support: 0.5.21
@@ -52269,7 +52278,7 @@ packages:
       micromatch: 4.0.5
       semver: 7.5.2
       typescript: 4.9.5
-      webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
+      webpack: 5.78.0
     dev: true
 
   /ts-loader@9.4.2(typescript@4.9.5)(webpack@5.82.1):

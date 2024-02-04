@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Popover as MantinePopover, PopoverProps, createStyles, MantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import { css } from '@emotion/css';
@@ -13,9 +13,17 @@ interface INovuPopoverProps {
   theme: INovuTheme;
   offset?: number;
   position?: PopoverProps['position'];
+  opened?: boolean;
 }
 
-export function Popover({ children, bell, theme, offset = 0, position = 'bottom-end' }: INovuPopoverProps) {
+export function Popover({
+  children,
+  bell,
+  theme,
+  offset = 0,
+  position = 'bottom-end',
+  opened: isOpened = false,
+}: INovuPopoverProps) {
   const [isVisible, setIsVisible] = useState<boolean>(false);
   const { cx, classes } = usePopoverStyles(theme.popover?.arrowColor);
   const [popoverArrowStyles, popoverDropdownStyles] = useStyles(['popover.arrow', 'popover.dropdown']);
@@ -25,6 +33,11 @@ export function Popover({ children, bell, theme, offset = 0, position = 'bottom-
   };
   const { markFetchedNotificationsAsSeen } = useNotifications();
 
+  useEffect(() => {
+    if (isOpened) {
+      setIsVisible(true);
+    }
+  }, [isOpened]);
   function handlerBellClick() {
     if (isVisible) {
       markFetchedNotificationsAsSeen();
