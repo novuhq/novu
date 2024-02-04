@@ -322,7 +322,7 @@ export const quickStartChannels: IQuickStartChannelConfiguration[] = [
     title: 'Chat',
     displayName: 'Chat',
     type: ChannelTypeEnum.CHAT,
-    description: 'Connect chat apps such as Slack, WhatsApp and Teams.',
+    description: 'Connect chat apps such as Slack, Discord and Teams.',
     clickHandler: (container) => {
       container.setClickedChannel({ open: true, channelType: container.channelType });
     },

@@ -74,6 +74,7 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
       SmsProviderIdEnum.Bandwidth,
       SmsProviderIdEnum.Simpletexting,
       SmsProviderIdEnum.BrevoSms,
+      SmsProviderIdEnum.ISendSms,
     ].sort(),
   ],
 };

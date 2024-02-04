@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-auth",
-  "version": "0.22.0",
+  "version": "0.23.0",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -13,9 +13,9 @@
     "symlink": "ln -s ../../../.source/auth/src ./src"
   },
   "dependencies": {
-    "@novu/dal": "^0.22.0",
-    "@novu/shared": "^0.22.0",
-    "@novu/application-generic": "^0.22.0",
+    "@novu/application-generic": "^0.23.0",
+    "@novu/dal": "^0.23.0",
+    "@novu/shared": "^0.23.0",
     "passport-google-oauth": "^2.0.0"
   },
   "devDependencies": {
@@ -32,10 +32,10 @@
     "typescript": "4.9.5"
   },
   "peerDependencies": {
-    "@nestjs/passport": "9.0.3",
     "@nestjs/common": "10.2.2",
     "@nestjs/jwt": "10.2.0",
-    "passport-oauth2": "^1.6.1",
-    "passport": "0.6.0"
+    "@nestjs/passport": "9.0.3",
+    "passport": "0.6.0",
+    "passport-oauth2": "^1.6.1"
   }
 }
