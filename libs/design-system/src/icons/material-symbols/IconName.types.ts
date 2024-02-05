@@ -1,3 +1,4 @@
+/** cspell:disable */
 export type IconNames = [
   '123',
   '360',
