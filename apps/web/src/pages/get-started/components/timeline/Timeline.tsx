@@ -1,21 +1,16 @@
 import React from 'react';
-import { createStyles, MantineTheme, Timeline as MantineTimeline } from '@mantine/core';
+import { Timeline as MantineTimeline } from '@mantine/core';
 
 import useStyles from './Timeline.styles';
-import { IOnboardingStep } from '../../consts';
+import { IOnboardingStep } from '../../consts/types';
 
-export enum ExpandStepsTypeEnum {
-  HOVER = 'hover',
-  TRUE = 'true',
-  FALSE = 'false',
-}
-
+export type ExpandStepsType = boolean | 'hover';
 interface ITimelineProps {
   steps: IOnboardingStep[];
-  expandSteps?: ExpandStepsTypeEnum;
+  expandSteps?: ExpandStepsType;
 }
 
-export function Timeline({ steps, expandSteps = ExpandStepsTypeEnum.HOVER }: ITimelineProps) {
+export function Timeline({ steps, expandSteps = true }: ITimelineProps) {
   const { classes } = useStyles({ expandSteps });
 
   return (
@@ -24,7 +19,12 @@ export function Timeline({ steps, expandSteps = ExpandStepsTypeEnum.HOVER }: ITi
         const { title, Description } = step;
 
         return (
-          <MantineTimeline.Item bullet={index + 1} lineVariant={'dashed'} key={index} title={title}>
+          <MantineTimeline.Item
+            bullet={index + 1}
+            lineVariant={'dashed'}
+            key={`${title.toLowerCase().replace(' ', '-')}-${index}`}
+            title={title}
+          >
             <Description />
           </MantineTimeline.Item>
         );
