@@ -34,7 +34,7 @@ export function OAuth({ invitationToken }: { invitationToken?: string | undefine
           >
             Sign In with GitHub
           </OAuthButton>
-          <OAuthButton
+          {/*<OAuthButton
             component="a"
             href={googleLink}
             my={30}
@@ -46,7 +46,7 @@ export function OAuth({ invitationToken }: { invitationToken?: string | undefine
             sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px', marginLeft: 10 }}
           >
             Sign In with Google
-          </OAuthButton>
+          </OAuthButton>*/}
         </Container>
         <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
       </>

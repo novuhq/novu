@@ -25,11 +25,12 @@ import {
   Settings,
   Team,
 } from '@novu/design-system';
-import { useEnvController, useIsMultiTenancyEnabled, useIsTranslationManagerEnabled } from '../../../hooks';
+import { useEnvController, useFeatureFlag } from '../../../hooks';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -62,8 +63,8 @@ export function SideNav({}: Props) {
   const dark = colorScheme === 'dark';
   const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
-  const isMultiTenancyEnabled = useIsMultiTenancyEnabled();
-  const isTranslationManagerEnabled = useIsTranslationManagerEnabled();
+  const isMultiTenancyEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MULTI_TENANCY_ENABLED);
+  const isTranslationManagerEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_MANAGER_ENABLED);
 
   useEffect(() => {
     removeItems(['toggle-environment']);

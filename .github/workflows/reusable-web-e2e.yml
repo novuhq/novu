@@ -163,7 +163,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Build
-        run: CI='' pnpm build:web
+        run: CI='' pnpm build:web --skip-nx-cache
 
       # run cypress install only when cache was not hit
       - name: Cypress install
