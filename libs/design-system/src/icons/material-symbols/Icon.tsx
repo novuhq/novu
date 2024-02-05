@@ -3,12 +3,12 @@ import { IIconAxes, IIconStyleProps, IconName } from './Icon.types';
 import { DEFAULT_ICON_GRADE, DEFAULT_ICON_OPTICAL_SIZE, DEFAULT_ICON_SIZE, DEFAULT_ICON_WEIGHT } from './Icon.const';
 import React from 'react';
 import { colors } from '../../config';
-
-// cspell:disable-next-line
-import '@fontsource-variable/material-symbols-outlined/full.css';
+import './Icon.css';
 
 const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
   ({ theme, isFilled, weight, grade, opticalSize, size, unsafeColor: color }) => `
+  /** Base styling for font -- adapted from https://fontsource.org/docs/getting-started/material-symbols */
+
   /** Material Axes */
 
   /** cspell:disable-next-line */
@@ -27,23 +27,6 @@ const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
   
   /** since Material Symbols are actually just a font, disable it being selectable like normal text */
   user-select: none;
-
-  /** Base styling for font -- adapted from https://fontsource.org/docs/getting-started/material-symbols */
-  font-family: 'Material Symbols Outlined Variable', sans-serif;
-  font-weight: normal;
-  font-style: normal;
-  font-size: 24px;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  font-feature-settings: "liga";
 `
 );
 
