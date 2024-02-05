@@ -6,7 +6,6 @@ import { colors } from '../../config';
 import IconName from './IconName.types';
 
 import '@fontsource-variable/material-symbols-outlined/full.css';
-import './outlined.css';
 
 const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
   ({ theme, isFilled, weight, grade, opticalSize, size, unsafeColor: color }) => `
@@ -29,6 +28,22 @@ const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
   /** since Material Symbols are actually just a font, disable it being selectable like normal text */
   user-select: none;
 
+  /** Base styling for font -- adapted from https://github.com/marella/material-symbols/blob/main/material-symbols/outlined.css */
+  font-family: 'Material Symbols Outlined Variable', sans-serif;
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "liga";
 `
 );
 
