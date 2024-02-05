@@ -6,7 +6,7 @@ This directory, `material-symbols`, will be moved up one level in the file tree 
 
 ## Background
 
-This group of icons comes from the [Material Symbols and Icons project](https://fonts.google.com/icons), but we are using a 3rd party library to pull them in: [material-symbols](https://github.com/marella/material-symbols/tree/main). The icon set is **actually** a font with special behavior when you type certain text.
+This group of icons comes from the [Material Symbols and Icons project](https://fonts.google.com/icons), but we are using a [3rd party library](https://fontsource.org/docs/getting-started/material-symbols) to assist with importing the icons. The icon set is **actually** a font with special behavior when you type certain text.
 
 ### A11y Context
 

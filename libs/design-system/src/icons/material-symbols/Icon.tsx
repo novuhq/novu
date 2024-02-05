@@ -5,6 +5,7 @@ import React from 'react';
 import { colors } from '../../config';
 import IconName from './IconName.types';
 
+// cspell:disable-next-line
 import '@fontsource-variable/material-symbols-outlined/full.css';
 
 const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
@@ -28,7 +29,7 @@ const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
   /** since Material Symbols are actually just a font, disable it being selectable like normal text */
   user-select: none;
 
-  /** Base styling for font -- adapted from https://github.com/marella/material-symbols/blob/main/material-symbols/outlined.css */
+  /** Base styling for font -- adapted from https://fontsource.org/docs/getting-started/material-symbols */
   font-family: 'Material Symbols Outlined Variable', sans-serif;
   font-weight: normal;
   font-style: normal;
