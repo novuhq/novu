@@ -1,9 +1,12 @@
 import styled from '@emotion/styled';
-import 'material-symbols/outlined.css';
-import { IIconAxes, IIconStyleProps, IconName } from './Icon.types';
+import { IIconAxes, IIconStyleProps } from './Icon.types';
 import { DEFAULT_ICON_GRADE, DEFAULT_ICON_OPTICAL_SIZE, DEFAULT_ICON_SIZE, DEFAULT_ICON_WEIGHT } from './Icon.const';
 import React from 'react';
 import { colors } from '../../config';
+import IconName from './IconName.types';
+
+import '@fontsource-variable/material-symbols-outlined/full.css';
+import './outlined.css';
 
 const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
   ({ theme, isFilled, weight, grade, opticalSize, size, unsafeColor: color }) => `
@@ -29,7 +32,10 @@ const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
 `
 );
 
-export interface IIconProps extends IIconAxes, IIconStyleProps, Omit<React.HTMLAttributes<HTMLSpanElement>, 'color'> {
+export interface IIconProps
+  extends IIconAxes,
+    IIconStyleProps,
+    Omit<React.HTMLAttributes<HTMLSpanElement>, 'color' | 'dangerouslySetInnerHtml'> {
   /**
    * The name of the Icon to use.
    * https://fonts.google.com/icons

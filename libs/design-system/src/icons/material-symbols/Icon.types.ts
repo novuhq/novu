@@ -1,4 +1,3 @@
-import { MaterialSymbol } from 'material-symbols';
 import { CSSProperties } from 'react';
 
 export const IconWeightArray = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
@@ -6,8 +5,6 @@ export type IconWeight = (typeof IconWeightArray)[number];
 
 export type IconGrade = number;
 export type IconOpticalSize = number;
-
-export type IconName = MaterialSymbol;
 
 export interface IIconAxes {
   /**
@@ -23,7 +20,7 @@ export interface IIconAxes {
   weight?: IconWeight;
   /**
    * Default: 0
-   * 
+   *
    * Weight and grade affect a symbol’s thickness. Adjustments to grade are more granular than adjustments to weight
    * and have a small impact on the size of the symbol.
    *
@@ -43,10 +40,10 @@ export type IconSize = '16' | '20' | '24';
 export type IconColor = CSSProperties['color'];
 export interface IIconStyleProps {
   /**
-  * Default: '20'. 
-  *
-  * The actual display size in pixels.
-  */
+   * Default: '20'.
+   *
+   * The actual display size in pixels.
+   */
   size?: IconSize;
   /**
    * NOTE: this is only to be used with colors from the design system, and will later be enforced more strictly
