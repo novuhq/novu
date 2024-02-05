@@ -587,6 +587,50 @@ describe('Create Integration - /integration (POST)', function () {
     expect(smsResult.body.statusCode).to.equal(409);
     expect(smsResult.body.message).to.equal('Integration with novu provider for sms channel already exists');
   });
+
+  it('should not allow creating Novu Email integration when credentials are not set', async function () {
+    const oldNovuEmailIntegrationApiKey = process.env.NOVU_EMAIL_INTEGRATION_API_KEY;
+    process.env.NOVU_EMAIL_INTEGRATION_API_KEY = '';
+
+    const novuEmailIntegrationPayload = {
+      name: EmailProviderIdEnum.Novu,
+      providerId: EmailProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: {},
+      active: true,
+      check: false,
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(novuEmailIntegrationPayload);
+
+    expect(body.statusCode).to.equal(400);
+    expect(body.message).to.equal(
+      `Creating Novu integration for ${novuEmailIntegrationPayload.providerId} provider is not allowed`
+    );
+    process.env.NOVU_EMAIL_INTEGRATION_API_KEY = oldNovuEmailIntegrationApiKey;
+  });
+
+  it('should not allow creating Novu SMS integration when credentials are not set', async function () {
+    const oldNovuSmsIntegrationAccountSid = process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID;
+    process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID = '';
+
+    const novuSmsIntegrationPayload = {
+      name: SmsProviderIdEnum.Novu,
+      providerId: SmsProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.SMS,
+      credentials: {},
+      active: true,
+      check: false,
+    };
+
+    const { body } = await session.testAgent.post('/v1/integrations').send(novuSmsIntegrationPayload);
+
+    expect(body.statusCode).to.equal(400);
+    expect(body.message).to.equal(
+      `Creating Novu integration for ${novuSmsIntegrationPayload.providerId} provider is not allowed`
+    );
+    process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID = oldNovuSmsIntegrationAccountSid;
+  });
 });
 
 async function insertIntegrationTwice(

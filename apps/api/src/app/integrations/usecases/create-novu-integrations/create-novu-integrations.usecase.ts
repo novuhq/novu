@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IntegrationRepository } from '@novu/dal';
+import { areNovuEmailCredentialsSet, areNovuSmsCredentialsSet } from '@novu/application-generic';
 
 import { CreateNovuIntegrationsCommand } from './create-novu-integrations.command';
 import { CreateIntegration } from '../create-integration/create-integration.usecase';
@@ -10,13 +11,8 @@ import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/s
 export class CreateNovuIntegrations {
   constructor(private createIntegration: CreateIntegration, private integrationRepository: IntegrationRepository) {}
 
-  async execute(command: CreateNovuIntegrationsCommand): Promise<void> {
-    if (
-      !process.env.NOVU_EMAIL_INTEGRATION_API_KEY ||
-      !process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID ||
-      !process.env.NOVU_SMS_INTEGRATION_TOKEN ||
-      !process.env.NOVU_SMS_INTEGRATION_SENDER
-    ) {
+  private async createEmailIntegration(command: CreateNovuIntegrationsCommand) {
+    if (!areNovuEmailCredentialsSet()) {
       return;
     }
 
@@ -41,6 +37,12 @@ export class CreateNovuIntegrations {
         })
       );
     }
+  }
+
+  private async createSmsIntegration(command: CreateNovuIntegrationsCommand) {
+    if (!areNovuSmsCredentialsSet()) {
+      return;
+    }
 
     const smsIntegrationCount = await this.integrationRepository.count({
       providerId: SmsProviderIdEnum.Novu,
@@ -63,5 +65,10 @@ export class CreateNovuIntegrations {
         })
       );
     }
+  }
+
+  async execute(command: CreateNovuIntegrationsCommand): Promise<void> {
+    await this.createEmailIntegration(command);
+    await this.createSmsIntegration(command);
   }
 }
