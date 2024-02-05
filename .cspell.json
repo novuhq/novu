@@ -556,7 +556,10 @@
     "containerd",
     "snapshotter",
     "moby",
-    "ghaction"
+    "ghaction",
+    "spyon",
+    "restapi",
+    "ringcentral"
   ],
   "flagWords": [],
   "patterns": [
