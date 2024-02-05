@@ -2361,6 +2361,9 @@ importers:
       vite-plugin-dts:
         specifier: ^3.6.0
         version: 3.6.2(@types/node@18.18.5)(typescript@4.9.5)(vite@4.4.9)
+      vite-plugin-lib-inject-css:
+        specifier: ^1.3.0
+        version: 1.3.0(vite@4.4.9)
       vitest:
         specifier: ^1.2.1
         version: 1.2.1(@types/node@18.18.5)(jsdom@24.0.0)
@@ -54135,6 +54138,16 @@ packages:
       - '@types/node'
       - rollup
       - supports-color
+    dev: true
+
+  /vite-plugin-lib-inject-css@1.3.0(vite@4.4.9):
+    resolution: {integrity: sha512-Rldq36U9TDlpDom3yoLybfJtzn897+oMKdX0+fxbVYnYjRGnTtaFfnMmfOckH8GQ3cvGAKv9Ai1PWyE0amIbjg==}
+    peerDependencies:
+      vite: '*'
+    dependencies:
+      magic-string: 0.30.5
+      picocolors: 1.0.0
+      vite: 4.4.9(@types/node@18.18.5)
     dev: true
 
   /vite@4.4.7(@types/node@16.11.7)(less@4.1.3)(sass@1.64.1)(terser@5.19.2):
