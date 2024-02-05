@@ -23,6 +23,8 @@ declare global {
       FRONT_BASE_URL: string;
       API_ROOT_URL: string;
       SENTRY_DSN: string;
+      STRIPE_API_KEY: string;
+      STRIPE_CONNECT_SECRET: string;
     }
   }
 }
