@@ -1,5 +1,5 @@
 /** cspell:disable */
-export type IconNames = [
+export const ICON_NAMES = [
   '123',
   '360',
   '10k',
@@ -3208,8 +3208,5 @@ export type IconNames = [
   'zoom_in',
   'zoom_in_map',
   'zoom_out',
-  'zoom_out_map'
-];
-
-export type IconName = IconNames[number];
-export default IconName;
+  'zoom_out_map',
+] as const;

@@ -1,10 +1,12 @@
 import { CSSProperties } from 'react';
+import { ICON_NAMES } from './IconNames.const';
 
 export const IconWeightArray = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const;
 export type IconWeight = (typeof IconWeightArray)[number];
 
 export type IconGrade = number;
 export type IconOpticalSize = number;
+export type IconName = (typeof ICON_NAMES)[number];
 
 export interface IIconAxes {
   /**

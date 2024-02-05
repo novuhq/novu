@@ -1,9 +1,8 @@
 import styled from '@emotion/styled';
-import { IIconAxes, IIconStyleProps } from './Icon.types';
+import { IIconAxes, IIconStyleProps, IconName } from './Icon.types';
 import { DEFAULT_ICON_GRADE, DEFAULT_ICON_OPTICAL_SIZE, DEFAULT_ICON_SIZE, DEFAULT_ICON_WEIGHT } from './Icon.const';
 import React from 'react';
 import { colors } from '../../config';
-import IconName from './IconName.types';
 
 // cspell:disable-next-line
 import '@fontsource-variable/material-symbols-outlined/full.css';
