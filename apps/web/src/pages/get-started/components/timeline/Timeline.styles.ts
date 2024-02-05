@@ -1,8 +1,8 @@
 import { createStyles, MantineTheme } from '@mantine/core';
-import { ExpandStepsTypeEnum } from './Timeline';
+import { ExpandStepsType } from './Timeline';
 
 interface ITimelineParams {
-  expandSteps: ExpandStepsTypeEnum;
+  expandSteps: ExpandStepsType;
 }
 
 export default createStyles((theme: MantineTheme, { expandSteps }: ITimelineParams, getRef) => {
@@ -10,7 +10,7 @@ export default createStyles((theme: MantineTheme, { expandSteps }: ITimelinePara
 
   return {
     item: {
-      ...(expandSteps === ExpandStepsTypeEnum.HOVER && {
+      ...(expandSteps === 'hover' && {
         '&:hover': {
           [`& .${itemContent}`]: {
             display: 'block',
@@ -39,7 +39,7 @@ export default createStyles((theme: MantineTheme, { expandSteps }: ITimelinePara
       opacity: 0,
       maxHeight: 0,
 
-      ...(expandSteps === ExpandStepsTypeEnum.TRUE && {
+      ...(expandSteps === true && {
         display: 'block',
         opacity: 1,
         maxHeight: '400px',
