@@ -42,9 +42,9 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @ValidateNested()
   tenant?: TriggerTenantContext | null;
 
-  @IsDefined()
+  @IsOptional()
   @IsEnum(TriggerRequestCategoryEnum)
-  requestCategory: TriggerRequestCategoryEnum;
+  requestCategory?: TriggerRequestCategoryEnum;
 }
 
 export class TriggerEventMulticastCommand extends TriggerEventBaseCommand {

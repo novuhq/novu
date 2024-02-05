@@ -1,4 +1,5 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine as dev_base
+FROM node:20-alpine3.19 as dev_base
+RUN apk add g++ make py3-pip
 ENV NX_DAEMON=false
 
 RUN npm i pm2 -g

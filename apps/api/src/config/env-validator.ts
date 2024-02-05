@@ -78,6 +78,12 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   WORKER_DEFAULT_LOCK_DURATION: num({
     default: undefined,
   }),
+  STRIPE_API_KEY: str({
+    default: undefined,
+  }),
+  STRIPE_CONNECT_SECRET: str({
+    default: undefined,
+  }),
   ENABLE_OTEL: str({
     default: 'false',
     choices: ['false', 'true'],
