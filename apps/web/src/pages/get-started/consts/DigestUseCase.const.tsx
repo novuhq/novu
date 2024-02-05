@@ -39,7 +39,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
         return (
           <span>
             <StepDescription>Novu pre-defined preferences for the digest node.</StepDescription>
-            <Link text={' Customise digest node'} href={'https://mantine.dev/core/timeline/'} />
+            <Link text={' Customize digest node'} href={'https://mantine.dev/core/timeline/'} />
             <StepDescription>.</StepDescription>
           </span>
         );

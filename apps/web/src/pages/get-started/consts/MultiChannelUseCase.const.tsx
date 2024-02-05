@@ -6,7 +6,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
   description:
     'Notifies subscribers using a wide range of channels: In-App, Email, Chat, Push, and SMS.\n' +
     '\n' +
-    'Configure as many providers as you like to customise notification experience.',
+    'Configure as many providers as you like to Customize notification experience.',
   steps: [
     {
       title: 'Configure providers',

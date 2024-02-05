@@ -37,7 +37,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
         return (
           <span>
             <StepDescription>Novu has predefined a time interval of 5 minutes.</StepDescription>
-            <Link text={' Customise delay'} href={'https://mantine.dev/core/timeline/'} />
+            <Link text={' Customize delay'} href={'https://mantine.dev/core/timeline/'} />
             <StepDescription>.</StepDescription>
           </span>
         );
