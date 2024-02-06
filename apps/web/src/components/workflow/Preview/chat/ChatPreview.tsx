@@ -18,7 +18,7 @@ export function ChatPreview() {
   const { organization } = useAuthController();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
-  const [selectedLocale, setSelectedLocale] = useState<string | undefined>(undefined);
+  const [selectedLocale, onLocaleChange] = useState<string | undefined>(undefined);
   const { isLoading, mutateAsync } = useMutation(previewChat);
   const [compiledContent, setCompiledContent] = useState('');
 
@@ -38,7 +38,7 @@ export function ChatPreview() {
   });
 
   useEffect(() => {
-    setSelectedLocale(organization?.defaultLocale);
+    onLocaleChange(organization?.defaultLocale);
   }, [organization?.defaultLocale]);
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export function ChatPreview() {
       <div>
         <LocaleSelect
           value={selectedLocale}
-          setSelectedLocale={setSelectedLocale}
+          onLocaleChange={onLocaleChange}
           isLoading={isLoadingLocales}
           locales={locales || []}
         />

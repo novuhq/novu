@@ -22,7 +22,7 @@ describe('Preview web', () => {
                 from: 'novu@novu',
               },
             }}
-            setSelectedLocale={() => {}}
+            onLocaleChange={() => {}}
             locales={[]}
           />
         </QueryClientProvider>
@@ -50,7 +50,7 @@ describe('Preview web', () => {
                 from: 'novu@novu',
               },
             }}
-            setSelectedLocale={() => {}}
+            onLocaleChange={() => {}}
             locales={[]}
           />
         </QueryClientProvider>

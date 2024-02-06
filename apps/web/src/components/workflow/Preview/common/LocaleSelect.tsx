@@ -3,7 +3,7 @@ import { Select, Text } from '@novu/design-system';
 import { forwardRef } from 'react';
 import { IS_DOCKER_HOSTED } from '../../../../config';
 
-export function LocaleSelect({ locales, value, isLoading, setSelectedLocale }) {
+export function LocaleSelect({ locales, value, isLoading, onLocaleChange }) {
   if (IS_DOCKER_HOSTED || locales.length === 0) {
     return null;
   }
@@ -24,7 +24,7 @@ export function LocaleSelect({ locales, value, isLoading, setSelectedLocale }) {
       searchable
       withinPortal
       onChange={(val) => {
-        setSelectedLocale(val);
+        onLocaleChange(val);
       }}
       value={value}
       variant="unstyled"

@@ -81,7 +81,7 @@ export const PreviewWeb = ({
   loading = false,
   error,
   showEditOverlay = false,
-  setSelectedLocale,
+  onLocaleChange,
   selectedLocale,
   locales,
 }: {
@@ -91,7 +91,7 @@ export const PreviewWeb = ({
   loading?: boolean;
   error?: Merge<FieldError, FieldErrorsImpl<IFormStep>>;
   showEditOverlay?: boolean;
-  setSelectedLocale: (locale: string) => void;
+  onLocaleChange: (locale: string) => void;
   selectedLocale?: string;
   locales: any[];
 }) => {
@@ -158,7 +158,7 @@ export const PreviewWeb = ({
                     isLoading={loading}
                     locales={locales}
                     value={selectedLocale}
-                    setSelectedLocale={setSelectedLocale}
+                    onLocaleChange={onLocaleChange}
                   />
                 </div>
               </When>

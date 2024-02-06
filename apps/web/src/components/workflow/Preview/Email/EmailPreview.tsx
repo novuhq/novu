@@ -1,7 +1,7 @@
 import { Grid, JsonInput, useMantineTheme } from '@mantine/core';
 import type { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Button, colors, inputStyles } from '@novu/design-system';
@@ -47,7 +47,6 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   });
 
   const { integrations = [] } = useActiveIntegrations();
-  const [integration, setIntegration]: any = useState(null);
   const [parsedSubject, setParsedSubject] = useState(subject);
   const [content, setContent] = useState<string>('<html><head></head><body><div></div></body></html>');
   const { isLoading, mutateAsync } = useMutation(previewEmail);
@@ -110,93 +109,90 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   }, [contentType, htmlContent, editorContent, processedVariables, selectedLocale]);
   const theme = useMantineTheme();
 
-  useEffect(() => {
-    if (integrations.length === 0) {
-      return;
-    }
-    setIntegration(integrations.find((item) => item.channel === 'email' && item.primary) || null);
-  }, [integrations, setIntegration]);
+  const integration = useMemo(() => {
+    return integrations.find((item) => item.channel === 'email' && item.primary) || null;
+  }, [integrations]);
+
+  const onLocaleChange = (locale: string) => {
+    setSelectedLocale(locale);
+  };
 
   return (
     <>
       {showVariables ? (
-        <>
-          <Grid>
-            <Grid.Col span={showVariables ? 9 : 12}>
-              <When truthy={view === 'web'}>
-                <PreviewWeb
-                  loading={isLoading}
-                  subject={parsedSubject}
-                  content={content}
-                  integration={integration}
-                  error={error}
-                  showEditOverlay={!showVariables}
-                  setSelectedLocale={setSelectedLocale}
-                  locales={locales || []}
-                  selectedLocale={selectedLocale}
-                />
-              </When>
-              <When truthy={view === 'mobile'}>
-                <Grid>
-                  <Grid.Col span={12}>
-                    <PreviewMobile
-                      loading={isLoading}
-                      subject={parsedSubject}
-                      content={content}
-                      integration={integration}
-                      error={error}
-                      setSelectedLocale={setSelectedLocale}
-                      locales={locales || []}
-                      selectedLocale={selectedLocale}
-                    />
-                  </Grid.Col>
-                </Grid>
-              </When>
-            </Grid.Col>
-
-            <When truthy={showVariables}>
-              <Grid.Col span={3} p={0}>
-                <div
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
-                    borderRadius: 7,
-                    padding: 15,
-                  }}
-                >
-                  <JsonInput
-                    data-test-id="preview-json-param"
-                    formatOnBlur
-                    autosize
-                    styles={inputStyles}
-                    label="Payload:"
-                    value={payloadValue}
-                    onChange={setPayloadValue}
-                    minRows={6}
-                    mb={20}
-                    validationError="Invalid JSON"
-                  />
-                  <Button
-                    fullWidth
-                    onClick={() => {
-                      parseContent({
-                        contentType,
-                        content: contentType === 'editor' ? editorContent : htmlContent,
-                        payload: payloadValue,
-                        layoutId,
-                      });
-                    }}
-                    variant="outline"
-                    data-test-id="apply-variables"
-                  >
-                    Apply Variables
-                  </Button>
-                </div>
-              </Grid.Col>
+        <Grid>
+          <Grid.Col span={9}>
+            <When truthy={view === 'web'}>
+              <PreviewWeb
+                loading={isLoading}
+                subject={parsedSubject}
+                content={content}
+                integration={integration}
+                error={error}
+                showEditOverlay={false}
+                onLocaleChange={onLocaleChange}
+                locales={locales || []}
+                selectedLocale={selectedLocale}
+              />
             </When>
-          </Grid>
-        </>
+            <When truthy={view === 'mobile'}>
+              <Grid>
+                <Grid.Col span={12}>
+                  <PreviewMobile
+                    loading={isLoading}
+                    subject={parsedSubject}
+                    content={content}
+                    integration={integration}
+                    error={error}
+                    onLocaleChange={onLocaleChange}
+                    locales={locales || []}
+                    selectedLocale={selectedLocale}
+                  />
+                </Grid.Col>
+              </Grid>
+            </When>
+          </Grid.Col>
+
+          <Grid.Col span={3} p={0}>
+            <div
+              style={{
+                width: '100%',
+                height: '100%',
+                background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+                borderRadius: 7,
+                padding: 15,
+              }}
+            >
+              <JsonInput
+                data-test-id="preview-json-param"
+                formatOnBlur
+                autosize
+                styles={inputStyles}
+                label="Payload:"
+                value={payloadValue}
+                onChange={setPayloadValue}
+                minRows={6}
+                mb={20}
+                validationError="Invalid JSON"
+              />
+              <Button
+                fullWidth
+                onClick={() => {
+                  parseContent({
+                    contentType,
+                    content: contentType === 'editor' ? editorContent : htmlContent,
+                    payload: payloadValue,
+                    layoutId,
+                  });
+                }}
+                variant="outline"
+                data-test-id="apply-variables"
+              >
+                Apply Variables
+              </Button>
+            </div>
+          </Grid.Col>
+        </Grid>
       ) : (
         <PreviewWeb
           loading={isLoading}
@@ -205,7 +201,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
           integration={integration}
           error={error}
           showEditOverlay={!showVariables}
-          setSelectedLocale={setSelectedLocale}
+          onLocaleChange={onLocaleChange}
           locales={locales || []}
           selectedLocale={selectedLocale}
         />
