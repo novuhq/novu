@@ -37,7 +37,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(({ label, value, 
   return (
     <Group ref={ref} noWrap {...others}>
       <FlagIcon locale={value} />
-      <Text> {label}</Text>
+      <Text rows={1}> {label}</Text>
     </Group>
   );
 });
