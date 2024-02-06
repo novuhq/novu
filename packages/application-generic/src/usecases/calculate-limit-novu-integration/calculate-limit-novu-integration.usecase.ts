@@ -10,7 +10,7 @@ import {
 import {
   areNovuEmailCredentialsSet,
   areNovuSmsCredentialsSet,
-} from '../../utils/novuIntegrations';
+} from '../../utils/novu-integrations';
 import { CalculateLimitNovuIntegrationCommand } from './calculate-limit-novu-integration.command';
 
 @Injectable()
