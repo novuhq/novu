@@ -3,5 +3,5 @@ import { MemberRoleEnum } from '@novu/shared';
 
 export class UpdateMemberRolesDto {
   @IsEnum(MemberRoleEnum)
-  role: MemberRoleEnum;
+  role: MemberRoleEnum.ADMIN;
 }

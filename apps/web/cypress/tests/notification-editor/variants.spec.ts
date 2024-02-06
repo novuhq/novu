@@ -21,7 +21,7 @@ describe('Workflow Editor - Variants', function () {
   };
 
   const fillInAppEditorContentWith = (text: string) => {
-    cy.get('.ace_text-input').first().clear({ force: true }).type(text, {
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').clear({ force: true }).type(text, {
       parseSpecialCharSequences: false,
       force: true,
     });
@@ -112,8 +112,9 @@ describe('Workflow Editor - Variants', function () {
   const checkEditorContent = (channel: Channel, isVariant = false) => {
     switch (channel) {
       case 'inApp':
-        cy.get('#codeEditor')
-          .first()
+        cy.get('.monaco-editor textarea:first')
+          .parent()
+          .click()
           .contains(isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
         break;
       case 'email':
@@ -136,7 +137,9 @@ describe('Workflow Editor - Variants', function () {
   const clearEditorContent = (channel: Channel) => {
     switch (channel) {
       case 'inApp':
-        cy.get('#codeEditor').first().clear();
+        cy.get('.monaco-editor textarea:first').parent().click().type('{cmd}a').find('textarea').clear({
+          force: true,
+        });
         break;
       case 'email':
         cy.getByTestId('emailSubject').clear();
@@ -230,6 +233,29 @@ describe('Workflow Editor - Variants', function () {
     cy.waitForNetworkIdle(500);
   };
 
+  const checkVariantListCard = ({
+    selector,
+    message,
+    hasBorder = false,
+  }: {
+    message: string;
+    selector: string;
+    hasBorder?: boolean;
+  }) => {
+    cy.getByTestId(selector).contains(message);
+    if (hasBorder) {
+      cy.getByTestId(selector)
+        .find('div[role="button"]')
+        .first()
+        .should('have.css', 'border-style', 'solid')
+        .and('have.css', 'border-width', '1px');
+    }
+  };
+
+  const checkVariantConditions = ({ selector, contains }: { selector: string; contains: string }) => {
+    cy.getByTestId(selector).getByTestId('conditions-action').should('be.visible').contains(contains);
+  };
+
   describe('Add variant flow', function () {
     it('should allow creating the variants for the in-app channel', function () {
       addVariantForChannel('inApp', 'V1 In-App');
@@ -258,7 +284,7 @@ describe('Workflow Editor - Variants', function () {
       editChannel('inApp');
       fillEditorContent('inApp');
 
-      cy.getByTestId('editor-sidebar-add-variant').should('be.visible').click();
+      cy.getByTestId('editor-sidebar-add-variant').click();
       addConditions();
       fillEditorContent('inApp', true);
       cy.getByTestId('notification-template-submit-btn').click();
@@ -268,6 +294,44 @@ describe('Workflow Editor - Variants', function () {
       cy.wait('@getWorkflow');
 
       checkEditorContent('inApp', true);
+    });
+
+    it('should allow creating multiple variants', function () {
+      const channel = 'inApp';
+      createWorkflow('Add multiple variants');
+
+      dragAndDrop(channel);
+      editChannel(channel);
+      fillEditorContent(channel);
+
+      cy.getByTestId('editor-sidebar-add-variant').click();
+      addConditions();
+      fillEditorContent(channel, true);
+      goBack();
+
+      cy.getByTestId('editor-sidebar-add-variant').should('be.visible').click();
+      addConditions();
+      fillEditorContent(channel, true);
+      goBack();
+      goBack();
+
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      cy.reload();
+      cy.wait('@getWorkflow');
+
+      cy.getByTestId(`node-${channel}Selector`).getByTestId('variants-count').contains('2 variants');
+      editChannel(channel);
+
+      checkVariantListCard({ selector: 'variant-item-card-1', message: VARIANT_EDITOR_TEXT });
+      checkVariantConditions({ selector: 'variant-item-card-1', contains: '1' });
+
+      checkVariantListCard({ selector: 'variant-item-card-0', message: VARIANT_EDITOR_TEXT });
+      checkVariantConditions({ selector: 'variant-item-card-0', contains: '1' });
+
+      checkVariantListCard({ selector: 'variant-root-card', message: EDITOR_TEXT });
+      checkVariantConditions({ selector: 'variant-item-card-0', contains: 'No' });
     });
 
     it('should not allow creating variant for digest step', function () {
@@ -780,31 +844,46 @@ describe('Workflow Editor - Variants', function () {
       cy.wait('@getWorkflow');
       cy.getByTestId('variants-count').should('not.exist');
     });
+
+    it('should not allow removing all conditions from a variant', function () {
+      createWorkflow('Test Removing All Conditions');
+
+      dragAndDrop('inApp');
+      editChannel('inApp');
+      fillEditorContent('inApp');
+      goBack();
+
+      showStepActions('inApp');
+      addVariantActionClick('inApp');
+      addConditions();
+
+      cy.getByTestId('notification-template-submit-btn').click();
+      cy.wait('@updateWorkflow');
+
+      cy.reload();
+      cy.wait('@getWorkflow');
+
+      // edit the variant condition
+      cy.getByTestId('editor-sidebar-edit-conditions').click();
+
+      // open conditions row menu
+      cy.getByTestId('conditions-row-btn').click();
+
+      // delete the condition
+      cy.contains('Delete').click();
+
+      // submit ("Apply conditions") should be disabled
+      cy.getByTestId('apply-conditions-btn').should('be.disabled').click({ force: true });
+
+      // tooltip should warn the user
+      cy.get('div[role="tooltip"]').contains('At least one condition is required');
+    });
   });
 
   describe('Variants List Errors', function () {
     const checkCurrentError = ({ message, count }: { message: string; count: string }) => {
       cy.getByTestId('variants-list-current-error').contains(message);
       cy.getByTestId('variants-list-errors-count').contains(count);
-    };
-
-    const checkVariantListCard = ({
-      selector,
-      message,
-      hasBorder = false,
-    }: {
-      message: string;
-      selector: string;
-      hasBorder?: boolean;
-    }) => {
-      cy.getByTestId(selector).contains(message);
-      if (hasBorder) {
-        cy.getByTestId(selector)
-          .find('div[role="button"]')
-          .first()
-          .should('have.css', 'border-style', 'solid')
-          .and('have.css', 'border-width', '1px');
-      }
     };
 
     it('should show the push variant errors', function () {

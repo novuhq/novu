@@ -1,6 +1,6 @@
 import { Group } from '@mantine/core';
 import { useEffect, useRef, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { FilterPartTypeEnum, DELAYED_STEPS, StepTypeEnum } from '@novu/shared';
 import { ActionButton, Condition, ConditionPlus, ConditionsFile, Trash, VariantPlus } from '@novu/design-system';
@@ -16,13 +16,13 @@ import { useStepInfoPath } from '../hooks/useStepInfoPath';
 import { useStepVariantsCount } from '../hooks/useStepVariantsCount';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { IForm } from './formTypes';
-import { useTemplateEditorForm } from './TemplateEditorFormProvider';
+import { makeVariantFromStep, useTemplateEditorForm } from './TemplateEditorFormProvider';
 
 const variantsCreatePath = '/variants/create';
 
 export const EditorSidebarHeaderActions = () => {
-  const { watch, setValue } = useFormContext<IForm>();
-  const { addVariant, deleteStep, deleteVariant } = useTemplateEditorForm();
+  const { control, watch, setValue, getValues } = useFormContext<IForm>();
+  const { deleteStep, deleteVariant } = useTemplateEditorForm();
   const { readonly: isReadonly } = useEnvController();
   const {
     stepUuid = '',
@@ -47,10 +47,15 @@ export const EditorSidebarHeaderActions = () => {
 
   const stepFormPath = useStepFormPath();
 
-  const { stepIndex } = useStepIndex();
+  const { step: rootStep, stepIndex } = useStepIndex();
   const filterPartsList = useFilterPartsList({ index: stepIndex });
   const { isUnderTheStepPath, isUnderVariantsListPath, isUnderVariantPath } = useStepInfoPath();
   const { variantsCount } = useStepVariantsCount();
+
+  const { append } = useFieldArray({
+    control,
+    name: `steps.${stepIndex}.variants`,
+  });
 
   const isNewVariantCreationUrl = pathname.endsWith(variantsCreatePath);
   // [] is the default value for filters for the new variants
@@ -58,9 +63,6 @@ export const EditorSidebarHeaderActions = () => {
   const conditions = isNewVariantCreationUrl ? [] : watch(`${stepFormPath}.filters`);
   const formPathName = watch(`${stepFormPath}.name`);
   const name = isNewVariantCreationUrl ? `V${variantsCount + 1} ${formPathName}` : formPathName;
-
-  const PlusIcon = isUnderVariantsListPath ? ConditionsFile : ConditionPlus;
-  const ConditionsIcon = isUnderVariantsListPath ? ConditionsFile : Condition;
   const hasNoFilters = (filters && filters?.length === 0) || !filters || isNewVariantCreationUrl;
   const isDelayedStep = DELAYED_STEPS.includes(channel as StepTypeEnum);
   const isAddVariantActionAvailable = (isUnderTheStepPath || isUnderVariantsListPath) && !isDelayedStep;
@@ -73,12 +75,13 @@ export const EditorSidebarHeaderActions = () => {
   const updateConditions = (newConditions: IConditions[]) => {
     if (isNewVariantCreationUrl) {
       proceedToNewVariant.current = true;
-      const variant = addVariant(stepUuid);
-      if (variant) {
-        const variantIndex = 0; // we add the variant at the beginning of the array
-        setValue(`steps.${stepIndex}.variants.${variantIndex}.filters`, newConditions, { shouldDirty: true });
-        navigate(basePath + `/${variant.template.type}/${stepUuid}/variants/${variant.uuid}`);
+      if (!rootStep) {
+        return;
       }
+
+      const variant = makeVariantFromStep(rootStep, { conditions: newConditions });
+      append(variant);
+      navigate(basePath + `/${variant.template.type}/${stepUuid}/variants/${variant.uuid}`);
     } else {
       setValue(`${stepFormPath}.filters`, newConditions, { shouldDirty: true });
     }
@@ -131,7 +134,7 @@ export const EditorSidebarHeaderActions = () => {
           <ActionButton
             tooltip={`${conditionAction} ${isUnderVariantsListPath ? 'group' : ''} conditions`}
             onClick={() => setConditionsOpened(true)}
-            Icon={PlusIcon}
+            Icon={ConditionPlus}
             data-test-id="editor-sidebar-add-conditions"
           />
         </When>
@@ -140,7 +143,7 @@ export const EditorSidebarHeaderActions = () => {
             tooltip={`${conditionAction} ${isUnderVariantsListPath ? 'group' : ''} conditions`}
             text={`${filters?.length ?? ''}`}
             onClick={() => setConditionsOpened(true)}
-            Icon={ConditionsIcon}
+            Icon={Condition}
             data-test-id="editor-sidebar-edit-conditions"
           />
         </When>
@@ -163,6 +166,7 @@ export const EditorSidebarHeaderActions = () => {
           conditions={conditions}
           filterPartsList={filterPartsList}
           defaultFilter={FilterPartTypeEnum.PAYLOAD}
+          shouldDisallowEmptyConditions={isUnderVariantPath}
         />
       )}
 

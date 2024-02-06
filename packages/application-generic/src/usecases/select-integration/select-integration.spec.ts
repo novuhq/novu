@@ -16,7 +16,14 @@ import { SelectIntegrationCommand } from './select-integration.command';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilter } from '../conditions-filter';
 import { CompileTemplate } from '../compile-template';
-import { ExecutionLogQueueService } from '../../services';
+import {
+  ExecutionLogQueueService,
+  FeatureFlagsService,
+  WorkflowInMemoryProviderService,
+} from '../../services';
+import { ExecutionLogRoute } from '../execution-log-route';
+import { CreateExecutionDetails } from '../create-execution-details';
+import { GetFeatureFlag } from '../get-feature-flag';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -105,7 +112,11 @@ describe('select integration', function () {
         new JobRepository(),
         new TenantRepository(),
         new EnvironmentRepository(),
-        new ExecutionLogQueueService(),
+        new ExecutionLogRoute(
+          new CreateExecutionDetails(new ExecutionDetailsRepository()),
+          new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
+          new GetFeatureFlag(new FeatureFlagsService())
+        ),
         new CompileTemplate()
       ),
       new TenantRepository()

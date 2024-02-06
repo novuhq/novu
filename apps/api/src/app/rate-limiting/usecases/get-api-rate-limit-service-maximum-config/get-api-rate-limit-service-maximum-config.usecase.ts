@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitServiceMaximumEnvVarFormat,
@@ -37,9 +37,10 @@ export class GetApiRateLimitServiceMaximumConfig implements OnModuleInit {
     const newHash = this.getConfigHash(newDefault);
 
     if (previousHash !== newHash) {
+      Logger.log(`Updating API Rate Limit Maximum config cache`, GetApiRateLimitServiceMaximumConfig.name);
       await this.cacheService.set(cacheKey, newHash);
 
-      this.invalidateCache.invalidateQuery({
+      this.invalidateCache.invalidateByKey({
         key: buildMaximumApiRateLimitKey({
           _environmentId: '*',
           apiRateLimitCategory: '*',

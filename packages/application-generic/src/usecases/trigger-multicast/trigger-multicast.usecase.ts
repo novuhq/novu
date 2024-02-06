@@ -3,7 +3,6 @@ import * as _ from 'lodash';
 
 import {
   IntegrationRepository,
-  JobEntity,
   JobRepository,
   NotificationTemplateRepository,
   SubscriberRepository,
@@ -11,6 +10,7 @@ import {
 import {
   ChannelTypeEnum,
   ISubscribersDefine,
+  ISubscribersSource,
   ProvidersIdEnum,
 } from '@novu/shared';
 
@@ -27,9 +27,10 @@ import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-reci
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
 import { MapTriggerRecipientsCommand } from '../map-trigger-recipients';
+import { IProcessSubscriberBulkJobDto } from '../../dtos';
 
 const LOG_CONTEXT = 'TriggerMulticastUseCase';
-const QUEUE_CHUNK_SIZE = 100;
+const QUEUE_CHUNK_SIZE = Number(process.env.MULTICAST_QUEUE_CHUNK_SIZE) || 100;
 
 @Injectable()
 export class TriggerMulticast {
@@ -85,28 +86,8 @@ export class TriggerMulticast {
   }
 
   @Instrument()
-  private async validateTransactionIdProperty(
-    transactionId: string,
-    environmentId: string
-  ): Promise<void> {
-    const found = (await this.jobRepository.findOne(
-      {
-        transactionId,
-        _environmentId: environmentId,
-      },
-      '_id'
-    )) as Pick<JobEntity, '_id'>;
-
-    if (found) {
-      throw new ApiException(
-        'transactionId property is not unique, please make sure all triggers have a unique transactionId'
-      );
-    }
-  }
-
-  @Instrument()
   private async validateSubscriberIdProperty(
-    to: ISubscribersDefine[]
+    to: ISubscribersSource[]
   ): Promise<boolean> {
     for (const subscriber of to) {
       const subscriberIdExists =
@@ -145,21 +126,15 @@ export class TriggerMulticast {
     return integration?.providerId as ProvidersIdEnum;
   }
 
-  private async sendToProcessSubscriberService(
-    command: TriggerMulticastCommand,
-    subscribers: { subscriberId: string }[]
-  ) {
-    const jobs = this.mapSubscribersToJobs(subscribers, command);
-
-    return await this.subscriberProcessQueueAddBulk(jobs);
-  }
-
   private mapSubscribersToJobs(
-    subscribers: { subscriberId: string }[],
+    subscribers: ISubscribersSource[],
     command: TriggerMulticastCommand
-  ) {
+  ): IProcessSubscriberBulkJobDto[] {
     return subscribers.map((subscriber) => {
-      return {
+      const { _subscriberSource, ...subscribersDefineParams } = subscriber;
+      const subscribersDefine: ISubscribersDefine = subscribersDefineParams;
+
+      const job: IProcessSubscriberBulkJobDto = {
         name: command.transactionId + subscriber.subscriberId,
         data: {
           environmentId: command.environmentId,
@@ -169,20 +144,32 @@ export class TriggerMulticast {
           identifier: command.identifier,
           payload: command.payload,
           overrides: command.overrides,
-          tenant: command.tenant,
-          ...(command.actor && { actor: command.actor }),
-          subscriber,
+          subscriber: subscribersDefine,
           templateId: command.template._id,
+          _subscriberSource: _subscriberSource,
+          requestCategory: command.requestCategory,
         },
         groupId: command.organizationId,
       };
+
+      if (command.actor) {
+        job.data.actor = command.actor;
+      }
+      if (command.tenant) {
+        job.data.tenant = command.tenant;
+      }
+
+      return job;
     });
   }
 
-  private async subscriberProcessQueueAddBulk(jobs) {
+  private async subscriberProcessQueueAddBulk(
+    jobs: IProcessSubscriberBulkJobDto[]
+  ) {
     return await Promise.all(
-      _.chunk(jobs, QUEUE_CHUNK_SIZE).map((chunk) =>
-        this.subscriberProcessQueueService.addBulk(chunk)
+      _.chunk(jobs, QUEUE_CHUNK_SIZE).map(
+        (chunk: IProcessSubscriberBulkJobDto[]) =>
+          this.subscriberProcessQueueService.addBulk(chunk)
       )
     );
   }

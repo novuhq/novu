@@ -4,10 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { colors, Sidebar } from '@novu/design-system';
 
 import { useBasePath } from '../hooks/useBasePath';
+import { useLocalThemePreference } from '@novu/shared-web';
 
 export const WorkflowSidebar = ({ children, title }: { children: ReactNode; title: string }) => {
   const navigate = useNavigate();
   const path = useBasePath();
+  const { themeStatus } = useLocalThemePreference();
+
+  const isDark = themeStatus === 'dark';
 
   return (
     <Sidebar
@@ -21,7 +25,7 @@ export const WorkflowSidebar = ({ children, title }: { children: ReactNode; titl
             display: 'flex',
             flexFlow: 'Column',
           }}
-          color={colors.white}
+          color={isDark ? colors.white : colors.black}
           size={20}
           weight="bold"
         >

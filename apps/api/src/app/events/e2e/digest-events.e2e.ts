@@ -391,7 +391,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
             amount: 5,
             type: DigestTypeEnum.BACKOFF,
             backoffUnit: DigestUnitEnum.SECONDS,
-            backoffAmount: 1,
+            backoffAmount: 10,
           },
         },
         {

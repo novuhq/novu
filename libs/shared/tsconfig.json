@@ -7,7 +7,7 @@
     "declaration": true,
     "outDir": "./dist/cjs",
     "rootDir": "./src",
-    "types": ["node"]
+    "types": ["node", "jest"]
   },
   "include": ["src/**/*"]
 }

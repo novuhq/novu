@@ -1,5 +1,10 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { JobEntity, JobRepository, IDelayOrDigestJobResult } from '@novu/dal';
+import {
+  JobEntity,
+  JobRepository,
+  IDelayOrDigestJobResult,
+  NotificationRepository,
+} from '@novu/dal';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -11,16 +16,14 @@ import {
 
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { ApiException } from '../../utils/exceptions';
-import {
-  EventsDistributedLockService,
-  ExecutionLogQueueService,
-} from '../../services';
-import {
-  DetailEnum,
-  CreateExecutionDetailsCommand,
-} from '../create-execution-details';
+import { EventsDistributedLockService } from '../../services';
+import { DetailEnum } from '../create-execution-details';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import { getNestedValue } from '../../utils/object';
+import {
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
+} from '../execution-log-route';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -36,8 +39,9 @@ export class MergeOrCreateDigest {
     @Inject(forwardRef(() => EventsDistributedLockService))
     private eventsDistributedLockService: EventsDistributedLockService,
     private jobRepository: JobRepository,
-    @Inject(forwardRef(() => ExecutionLogQueueService))
-    private executionLogQueueService: ExecutionLogQueueService
+    @Inject(forwardRef(() => ExecutionLogRoute))
+    private executionLogRoute: ExecutionLogRoute,
+    private notificationRepository: NotificationRepository
   ) {}
 
   @InstrumentUsecase()
@@ -50,18 +54,24 @@ export class MergeOrCreateDigest {
     const digestKey = digestMeta?.digestKey;
     const digestValue = getNestedValue(job.payload, digestKey);
 
-    const digestAction = await this.shouldDelayDigestOrMergeWithLock(
-      job,
-      digestKey,
-      digestValue,
-      digestMeta
-    );
+    const digestAction = command.filtered
+      ? { digestResult: DigestCreationResultEnum.SKIPPED }
+      : await this.shouldDelayDigestOrMergeWithLock(
+          job,
+          digestKey,
+          digestValue,
+          digestMeta
+        );
 
     switch (digestAction.digestResult) {
       case DigestCreationResultEnum.MERGED:
-        return await this.processMergedDigest(job, digestAction.activeDigestId);
+        return await this.processMergedDigest(
+          job,
+          digestAction.activeDigestId,
+          digestAction.activeNotificationId
+        );
       case DigestCreationResultEnum.SKIPPED:
-        return await this.processSkippedDigest(job);
+        return await this.processSkippedDigest(job, command.filtered);
       case DigestCreationResultEnum.CREATED:
         return await this.processCreatedDigest(digestMeta, job);
       default:
@@ -87,47 +97,64 @@ export class MergeOrCreateDigest {
   @Instrument()
   private async processMergedDigest(
     job: JobEntity,
-    activeDigestId: string
+    activeDigestId: string,
+    activeNotificationId: string
   ): Promise<DigestCreationResultEnum> {
-    await this.jobRepository.update(
-      {
-        _environmentId: job._environmentId,
-        _id: job._id,
-      },
-      {
-        $set: {
-          status: JobStatusEnum.MERGED,
-          _mergedDigestId: activeDigestId,
+    await Promise.all([
+      this.jobRepository.update(
+        {
+          _environmentId: job._environmentId,
+          _id: job._id,
         },
-      }
-    );
-
-    await this.jobRepository.updateAllChildJobStatus(
-      job,
-      JobStatusEnum.MERGED,
-      activeDigestId
-    );
-
-    await this.digestMergedExecutionDetails(job);
+        {
+          $set: {
+            status: JobStatusEnum.MERGED,
+            _mergedDigestId: activeDigestId,
+          },
+        }
+      ),
+      this.jobRepository.updateAllChildJobStatus(
+        job,
+        JobStatusEnum.MERGED,
+        activeDigestId
+      ),
+      this.digestMergedExecutionDetails(job),
+      this.notificationRepository.update(
+        {
+          _environmentId: job._environmentId,
+          _id: job._notificationId,
+        },
+        {
+          $set: {
+            _digestedNotificationId: activeNotificationId,
+            expireAt: job.expireAt,
+          },
+        }
+      ),
+    ]);
 
     return DigestCreationResultEnum.MERGED;
   }
 
   @Instrument()
   private async processSkippedDigest(
-    job: JobEntity
+    job: JobEntity,
+    filtered = false
   ): Promise<DigestCreationResultEnum> {
-    await this.jobRepository.update(
-      {
-        _environmentId: job._environmentId,
-        _id: job._id,
-      },
-      {
-        $set: {
-          status: JobStatusEnum.SKIPPED,
+    await Promise.all([
+      this.jobRepository.update(
+        {
+          _environmentId: job._environmentId,
+          _id: job._id,
         },
-      }
-    );
+        {
+          $set: {
+            status: JobStatusEnum.SKIPPED,
+          },
+        }
+      ),
+      this.digestSkippedExecutionDetails(job, filtered),
+    ]);
 
     return DigestCreationResultEnum.SKIPPED;
   }
@@ -175,19 +202,30 @@ export class MergeOrCreateDigest {
   }
 
   private async digestMergedExecutionDetails(job: JobEntity): Promise<void> {
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
-        ...metadata,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
         detail: DetailEnum.DIGEST_MERGED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      }),
-      job._organizationId
+      })
+    );
+  }
+  private async digestSkippedExecutionDetails(
+    job: JobEntity,
+    filtered: boolean
+  ): Promise<void> {
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
+        detail: filtered ? DetailEnum.FILTER_STEPS : DetailEnum.DIGEST_SKIPPED,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+      })
     );
   }
 }

@@ -1164,4 +1164,64 @@ describe('Integrations List Page', function () {
     cy.getByTestId('novu-provider-error').contains('You can only create one Novu Email per environment.');
     cy.getByTestId('create-provider-instance-sidebar-create').should('be.disabled');
   });
+
+  it('should show the Webhook URL for the Email integration', () => {
+    interceptIntegrationRequests();
+    cy.intercept(
+      {
+        method: 'GET',
+        url: '*/integrations/webhook/provider/*/status',
+      },
+      { data: true }
+    ).as('getWebhookStatus');
+
+    cy.getByTestId('integrations-list-table')
+      .getByTestId('integration-name-cell')
+      .contains('SendGrid')
+      .getByTestId('integration-name-cell-primary')
+      .should('be.visible');
+
+    clickOnListRow('SendGrid');
+
+    cy.wait('@getWebhookStatus');
+
+    cy.getByTestId('update-provider-sidebar')
+      .getByTestId('provider-webhook-url')
+      .invoke('val')
+      .then((val) => {
+        expect(val).match(
+          /^http:\/\/(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|localhost):\d{4}\/webhooks\/organizations\/\w{1,}\/environments\/\w{1,}\/email\/\w{1,}/
+        );
+      });
+  });
+
+  it('should show the Webhook URL for the SMS integration', () => {
+    interceptIntegrationRequests();
+    cy.intercept(
+      {
+        method: 'GET',
+        url: '*/integrations/webhook/provider/*/status',
+      },
+      { data: true }
+    ).as('getWebhookStatus');
+
+    cy.getByTestId('integrations-list-table')
+      .getByTestId('integration-name-cell')
+      .contains('SendGrid')
+      .getByTestId('integration-name-cell-primary')
+      .should('be.visible');
+
+    clickOnListRow('Twilio');
+
+    cy.wait('@getWebhookStatus');
+
+    cy.getByTestId('update-provider-sidebar')
+      .getByTestId('provider-webhook-url')
+      .invoke('val')
+      .then((val) => {
+        expect(val).match(
+          /^http:\/\/(?:\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|localhost):\d{4}\/webhooks\/organizations\/\w{1,}\/environments\/\w{1,}\/sms\/\w{1,}/
+        );
+      });
+  });
 });

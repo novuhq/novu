@@ -52,13 +52,15 @@ export class Subscribers extends WithHttp implements ISubscribers {
   async setCredentials(
     subscriberId: string,
     providerId: string,
-    credentials: IChannelCredentials
+    credentials: IChannelCredentials,
+    integrationIdentifier?: string
   ) {
     return await this.http.put(`/subscribers/${subscriberId}/credentials`, {
       providerId,
       credentials: {
         ...credentials,
       },
+      ...(integrationIdentifier && { integrationIdentifier }),
     });
   }
 

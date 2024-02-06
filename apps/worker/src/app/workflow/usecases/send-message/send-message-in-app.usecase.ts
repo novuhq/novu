@@ -1,19 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import {
-  MessageRepository,
-  NotificationStepEntity,
-  SubscriberRepository,
-  MessageEntity,
-  OrganizationRepository,
-  OrganizationEntity,
-} from '@novu/dal';
+import { ModuleRef } from '@nestjs/core';
+
+import { MessageRepository, NotificationStepEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  IMessageButton,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  IEmailBlock,
   ActorTypeEnum,
   WebSocketEventEnum,
 } from '@novu/shared';
@@ -21,16 +14,16 @@ import {
   InstrumentUsecase,
   InvalidateCacheService,
   DetailEnum,
-  CreateExecutionDetailsCommand,
   SelectIntegration,
-  CompileTemplate,
-  CompileTemplateCommand,
-  WebSocketsQueueService,
   buildFeedKey,
   buildMessageCountKey,
   GetNovuProviderCredentials,
   SelectVariant,
-  ExecutionLogQueueService,
+  CompileInAppTemplate,
+  CompileInAppTemplateCommand,
+  WebSocketsQueueService,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -47,22 +40,23 @@ export class SendMessageInApp extends SendMessageBase {
     protected messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     protected createLogUsecase: CreateLog,
-    protected executionLogQueueService: ExecutionLogQueueService,
+    protected executionLogRoute: ExecutionLogRoute,
     protected subscriberRepository: SubscriberRepository,
-    private compileTemplate: CompileTemplate,
-    private organizationRepository: OrganizationRepository,
     protected selectIntegration: SelectIntegration,
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
-    protected selectVariant: SelectVariant
+    protected selectVariant: SelectVariant,
+    protected moduleRef: ModuleRef,
+    protected compileInAppTemplate: CompileInAppTemplate
   ) {
     super(
       messageRepository,
       createLogUsecase,
-      executionLogQueueService,
+      executionLogRoute,
       subscriberRepository,
       selectIntegration,
       getNovuProviderCredentials,
-      selectVariant
+      selectVariant,
+      moduleRef
     );
   }
 
@@ -85,19 +79,15 @@ export class SendMessageInApp extends SendMessageBase {
     });
 
     if (!integration) {
-      const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-      await this.executionLogQueueService.add(
-        metadata._id,
-        CreateExecutionDetailsCommand.create({
-          ...metadata,
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-        }),
-        command.organizationId
+        })
       );
 
       return;
@@ -110,35 +100,32 @@ export class SendMessageInApp extends SendMessageBase {
 
     const { actor } = command.step.template;
 
-    const [template, organization] = await Promise.all([
-      this.processVariants(command),
-      this.organizationRepository.findOne({ _id: command.organizationId }, 'branding'),
-    ]);
+    const template = await this.processVariants(command);
 
     if (template) {
       step.template = template;
     }
 
     try {
-      content = await this.compileInAppTemplate(step.template.content, command.compileContext, organization);
+      const compiled = await this.compileInAppTemplate.execute(
+        CompileInAppTemplateCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          payload: this.getCompilePayload(command.compileContext),
+          content: step.template.content as string,
+          cta: step.template.cta,
+          userId: command.userId,
+        }),
+        this.initiateTranslations.bind(this)
+      );
+      content = compiled.content;
 
       if (step.template.cta?.data?.url) {
-        step.template.cta.data.url = await this.compileInAppTemplate(
-          step.template.cta?.data?.url,
-          command.compileContext,
-          organization
-        );
+        step.template.cta.data.url = compiled.url;
       }
 
       if (step.template.cta?.action?.buttons) {
-        const ctaButtons: IMessageButton[] = [];
-
-        for (const action of step.template.cta.action.buttons) {
-          const buttonContent = await this.compileInAppTemplate(action.content, command.compileContext, organization);
-          ctaButtons.push({ type: action.type, content: buttonContent });
-        }
-
-        step.template.cta.action.buttons = ctaButtons;
+        step.template.cta.action.buttons = compiled.ctaButtons;
       }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
@@ -220,12 +207,9 @@ export class SendMessageInApp extends SendMessageBase {
 
     if (!message) throw new PlatformException('Message not found');
 
-    const metadata = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      metadata._id,
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        ...metadata,
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: integration.providerId,
         detail: DetailEnum.MESSAGE_CREATED,
@@ -233,13 +217,12 @@ export class SendMessageInApp extends SendMessageBase {
         status: ExecutionDetailsStatusEnum.PENDING,
         isTest: false,
         isRetry: false,
-      }),
-      command.organizationId
+      })
     );
 
-    await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage',
-      {
+    await this.webSocketsQueueService.add({
+      name: 'sendMessage',
+      data: {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
@@ -247,19 +230,16 @@ export class SendMessageInApp extends SendMessageBase {
           messageId: message._id,
         },
       },
-      {
+      options: {
         removeOnComplete: true,
         removeOnFail: true,
       },
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
 
-    const meta = CreateExecutionDetailsCommand.getExecutionLogMetadata();
-    await this.executionLogQueueService.add(
-      meta._id,
-      CreateExecutionDetailsCommand.create({
-        ...meta,
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: integration.providerId,
         detail: DetailEnum.MESSAGE_SENT,
@@ -267,23 +247,6 @@ export class SendMessageInApp extends SendMessageBase {
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      }),
-      command.organizationId
-    );
-  }
-
-  private async compileInAppTemplate(
-    content: string | IEmailBlock[],
-    payload: any,
-    organization: OrganizationEntity | null
-  ): Promise<string> {
-    return await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        template: content as string,
-        data: {
-          ...this.getCompilePayload(payload),
-          branding: { logo: organization?.branding?.logo, color: organization?.branding?.color || '#f47373' },
-        },
       })
     );
   }

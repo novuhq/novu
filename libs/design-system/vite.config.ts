@@ -1,3 +1,5 @@
+/// <reference types="vitest" />
+
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
@@ -15,4 +17,8 @@ export default defineConfig({
       external: ['react', 'react/jsx-runtime'],
     },
   },
+  /*
+   * // Configure vitest here -- for now the defaults work well :)
+   * test: {},
+   */
 });
