@@ -3,35 +3,33 @@ import { Select, Text } from '@novu/design-system';
 import { forwardRef } from 'react';
 import { IS_DOCKER_HOSTED } from '../../../../config';
 
-export function LocaleSelect({ locales, value, isLoading, readonly, setSelectedLocale }) {
-  if (IS_DOCKER_HOSTED) {
+export function LocaleSelect({ locales, value, isLoading, setSelectedLocale }) {
+  if (IS_DOCKER_HOSTED || locales.length === 0) {
     return null;
   }
 
   return (
-    <div style={{ marginLeft: 'auto' }}>
-      <Select
-        itemComponent={SelectItem}
-        data={locales?.map((locale) => {
-          return {
-            value: locale.langIso,
-            label: locale.langName,
-          };
-        })}
-        icon={<FlagIcon locale={value} />}
-        loading={isLoading}
-        limit={50}
-        searchable
-        withinPortal
-        disabled={readonly}
-        onChange={(val) => {
-          setSelectedLocale(val);
-        }}
-        value={value}
-        variant="unstyled"
-        rightSectionWidth={20}
-      />
-    </div>
+    <Select
+      inputProps={{ maw: 200 }}
+      itemComponent={SelectItem}
+      data={locales?.map((locale) => {
+        return {
+          value: locale.langIso,
+          label: locale.langName,
+        };
+      })}
+      icon={<FlagIcon locale={value} />}
+      loading={isLoading}
+      limit={50}
+      searchable
+      withinPortal
+      onChange={(val) => {
+        setSelectedLocale(val);
+      }}
+      value={value}
+      variant="unstyled"
+      rightSectionWidth={20}
+    />
   );
 }
 

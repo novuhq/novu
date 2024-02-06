@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { EmailContentCard } from './EmailContentCard';
 import { useAuthContext } from '../../../../components/providers/AuthProvider';
 import { When } from '../../../../components/utils/When';
-import { EmailPreview } from '../../../../components/workflow/Preview/Email/EmailPreview';
+import { EmailPreview } from '../../../../components/workflow/Preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
 import { Grid, SegmentedControl, useMantineTheme } from '@mantine/core';
 import { TestSendEmail } from './TestSendEmail';

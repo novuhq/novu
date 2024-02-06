@@ -1,9 +1,8 @@
-import styled from '@emotion/styled';
 import { Flex, Group, Overlay, UnstyledButton } from '@mantine/core';
-import { colors, PencilOutlined, Text } from '@novu/design-system';
+import { colors, PencilOutlined, Text, Variant } from '@novu/design-system';
 import { StepTypeEnum } from '@novu/shared';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useBasePath } from '../../../../pages/templates/hooks/useBasePath';
+import { useBasePath } from '../hooks/useBasePath';
 
 export function PreviewEditOverlay() {
   const basePath = useBasePath();
@@ -26,8 +25,8 @@ export function PreviewEditOverlay() {
   };
 
   return (
-    <OverlayStyled>
-      <Flex onClick={handleEditMessage} align="center" justify="center" h="100%" style={{ cursor: 'pointer' }}>
+    <Overlay color="rgba(41, 41, 51, 0.80)">
+      <Flex align="center" justify="center" h="100%">
         <UnstyledButton onClick={handleEditMessage}>
           <Group spacing={10} position="center" align="center" h="100%" noWrap>
             <PencilOutlined color={colors.white} />
@@ -35,13 +34,6 @@ export function PreviewEditOverlay() {
           </Group>
         </UnstyledButton>
       </Flex>
-    </OverlayStyled>
+    </Overlay>
   );
 }
-
-const OverlayStyled = styled(Overlay)`
-  backdrop-filter: blur(2px);
-  border-radius: 8px;
-  border: 1px solid ${colors.B30};
-  background: rgba(41, 41, 51, 0.8);
-`;

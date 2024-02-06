@@ -137,13 +137,14 @@ export const PreviewMobile = ({
                       </>
                     )}
                   </div>
-                  <LocaleSelect
-                    isLoading={loading}
-                    locales={locales}
-                    readonly={false}
-                    value={selectedLocale}
-                    setSelectedLocale={setSelectedLocale}
-                  />
+                  <div style={{ marginLeft: 'auto' }}>
+                    <LocaleSelect
+                      isLoading={loading}
+                      locales={locales}
+                      value={selectedLocale}
+                      setSelectedLocale={setSelectedLocale}
+                    />
+                  </div>
                 </When>
               </Group>
             </div>
