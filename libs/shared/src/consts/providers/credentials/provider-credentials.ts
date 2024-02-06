@@ -1073,3 +1073,19 @@ export const brevoSmsConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const unifonicConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.AppID,
+    displayName: 'AppSid',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Sender',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];

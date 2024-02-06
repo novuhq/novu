@@ -27,6 +27,7 @@ import {
   bulkSmsConfig,
   iSendSmsConfig,
   brevoSmsConfig,
+  unifonicConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -260,5 +261,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: brevoSmsConfig,
     docReference: 'https://developers.brevo.com/reference/sendtransacsms',
     logoFileName: { light: 'brevo.svg', dark: 'brevo.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.Unifonic,
+    displayName: 'Unifonic',
+    channel: ChannelTypeEnum.SMS,
+    credentials: unifonicConfig,
+    docReference: 'https://docs.unifonic.com/reference/sendmessage',
+    logoFileName: { light: 'unifonic.svg', dark: 'unifonic.svg' },
   },
 ];
