@@ -44,7 +44,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
       return {
         updateOne: {
           filter: { subscriberId, _environmentId: environmentId, _organizationId: organizationId },
-          update: { $set: rest },
+          update: { $set: { ...rest, deleted: false } },
           upsert: true,
         },
       };
