@@ -10,7 +10,6 @@ export function LocaleSelect({ locales, value, isLoading, onLocaleChange }) {
 
   return (
     <Select
-      inputProps={{ maw: 200 }}
       itemComponent={SelectItem}
       data={locales?.map((locale) => {
         return {
@@ -28,7 +27,6 @@ export function LocaleSelect({ locales, value, isLoading, onLocaleChange }) {
       }}
       value={value}
       variant="unstyled"
-      rightSectionWidth={20}
     />
   );
 }

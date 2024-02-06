@@ -1,16 +1,17 @@
-import { Center, createStyles, Group, Loader, Skeleton, Stack } from '@mantine/core';
+import { createStyles, Group, Skeleton, Stack } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import Frame from 'react-frame-component';
 import { FieldError, FieldErrorsImpl, Merge } from 'react-hook-form';
-import { When } from '../../../utils/When';
 import { IFormStep } from '../../../../pages/templates/components/formTypes';
 import { EmailIntegrationInfo } from '../../../../pages/templates/editor/EmailIntegrationInfo';
+import { When } from '../../../utils/When';
 import { LocaleSelect } from '../common/LocaleSelect';
 import { Mobile } from '../common/Mobile';
 import { PreviewEditOverlay } from '../common/PreviewEditOverlay';
 import { PreviewUserIcon } from '../common/PreviewUserIcon';
+import { HeaderSkeleton } from './HeaderSkeleton';
 
 const useStyles = createStyles((theme, { error }: { error: boolean }) => ({
   header: {
@@ -112,11 +113,7 @@ export const PreviewMobile = ({
                 noWrap
               >
                 <When truthy={loading}>
-                  <Skeleton height={40} width={40} circle />
-                  <Stack spacing={3}>
-                    <Skeleton height={14} width={160} radius="xs" />
-                    <Skeleton height={14} width={80} />
-                  </Stack>
+                  <HeaderSkeleton />
                 </When>
 
                 <When truthy={!loading}>
