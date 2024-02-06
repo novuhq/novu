@@ -12,8 +12,7 @@
     "precommit": "lint-staged",
     "lint": "eslint src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
-    "lint:fix": "pnpm lint -- --fix",
-    "symlink": "ln -s ../../../../.source/libs/dal/src ./src"
+    "lint:fix": "pnpm lint -- --fix"
   },
   "author": "",
   "license": "ISC",
