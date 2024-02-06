@@ -1,7 +1,7 @@
 import { Grid, JsonInput, useMantineTheme } from '@mantine/core';
 import type { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Button, colors, inputStyles } from '@novu/design-system';
@@ -183,6 +183,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
                     content: contentType === 'editor' ? editorContent : htmlContent,
                     payload: payloadValue,
                     layoutId,
+                    locale: selectedLocale,
                   });
                 }}
                 variant="outline"
