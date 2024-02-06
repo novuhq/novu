@@ -140,4 +140,87 @@ describe('Bulk create subscribers - /v1/subscribers/bulk (POST)', function () {
       expect(error.response.data.message[0]).to.equal('subscribers must contain no more than 500 elements');
     }
   });
+
+  it('should allow recreate deleted subscribers', async function () {
+    const existingSubscriber = { subscriberId: subscriber.subscriberId, firstName: 'existingSubscriber' };
+    const newSubscriber1 = {
+      subscriberId: 'test1',
+      firstName: 'sub1',
+      email: 'sub1@test.co',
+    };
+    const newSubscriber2 = {
+      subscriberId: 'test2',
+      firstName: 'sub2',
+      email: 'sub2@test.co',
+    };
+    const { data: body } = await axiosInstance.post(
+      `${session.serverUrl}${BULK_API_ENDPOINT}`,
+      {
+        subscribers: [existingSubscriber, newSubscriber1, newSubscriber2],
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+    expect(body.data).to.be.ok;
+
+    const {
+      data: { updated, created },
+    } = body;
+
+    expect(updated?.length).to.equal(1);
+    expect(created?.length).to.equal(2);
+    expect(updated[0].subscriberId).to.equal(existingSubscriber.subscriberId);
+    expect(created[0].subscriberId).to.equal(newSubscriber1.subscriberId);
+    expect(created[1].subscriberId).to.equal(newSubscriber2.subscriberId);
+
+    // delete the two created subscribers
+    await axiosInstance.delete(`${session.serverUrl}/v1/subscribers/${newSubscriber1.subscriberId}`, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    });
+    await axiosInstance.delete(`${session.serverUrl}/v1/subscribers/${newSubscriber2.subscriberId}`, {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    });
+
+    // recreate the deleted subscribers
+    const { data: recreateBody } = await axiosInstance.post(
+      `${session.serverUrl}${BULK_API_ENDPOINT}`,
+      {
+        subscribers: [existingSubscriber, newSubscriber1, newSubscriber2],
+      },
+      {
+        headers: {
+          authorization: `ApiKey ${session.apiKey}`,
+        },
+      }
+    );
+
+    expect(recreateBody.data).to.be.ok;
+    const {
+      data: { updated: updatedAgain },
+    } = recreateBody;
+
+    expect(updatedAgain?.length).to.equal(3);
+    expect(updatedAgain[0].subscriberId).to.equal(existingSubscriber.subscriberId);
+    expect(updatedAgain[1].subscriberId).to.equal(newSubscriber1.subscriberId);
+    expect(updatedAgain[2].subscriberId).to.equal(newSubscriber2.subscriberId);
+
+    // check that they are not marked as deleted
+    const recreatedSubscriber1 = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriber1.subscriberId
+    );
+    const recreatedSubscriber2 = await subscriberRepository.findBySubscriberId(
+      session.environment._id,
+      newSubscriber2.subscriberId
+    );
+    expect(recreatedSubscriber1.deleted).to.be.false;
+    expect(recreatedSubscriber2.deleted).to.be.false;
+  });
 });
