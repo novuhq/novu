@@ -46,16 +46,16 @@ describe('Create translation group - /translations/groups (POST)', async () => {
     expect(locales).to.deep.eq(['en_US']);
   });
 
-  it('should check that default locale is included in group', async () => {
+  it('should check that default locale is included in group else add it', async () => {
     const result = await session.testAgent.post(`/v1/translations/groups`).send({
       name: 'test',
-      identifier: 'test',
+      identifier: 'test1',
       locales: ['en_GB'],
     });
-
-    expect(result.body.message).to.be.eq('Default language needs to be in all translation groups');
-    expect(result.body.statusCode).to.be.eq(400);
-    expect(result.body.error).to.be.eq('Bad Request');
+    const data = await session.testAgent.get(`/v1/translations/groups/test1`).send();
+    const group = data.body.data;
+    const locales = group.translations.map((t) => t.isoLanguage);
+    expect(locales).to.deep.eq(['en_US', 'en_GB']);
   });
 
   it('should check that locale is allowed', async () => {

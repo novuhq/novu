@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   EnvironmentId,
+  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ISubscribersSource,
   ITopic,
@@ -20,10 +21,7 @@ import {
   GetTopicSubscribersCommand,
   GetTopicSubscribersUseCase,
 } from '../get-topic-subscribers';
-import {
-  FeatureFlagCommand,
-  GetIsTopicNotificationEnabled,
-} from '../get-feature-flag';
+import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
 import { InstrumentUsecase } from '../../instrumentation';
 
 const isNotTopic = (
@@ -38,7 +36,7 @@ const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
 export class MapTriggerRecipients {
   constructor(
     private getTopicSubscribers: GetTopicSubscribersUseCase,
-    private getIsTopicNotificationEnabled: GetIsTopicNotificationEnabled
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   @InstrumentUsecase()
@@ -115,14 +113,13 @@ export class MapTriggerRecipients {
     userId: UserId,
     recipients: TriggerRecipients
   ): Promise<ISubscribersSource[]> {
-    const featureFlagCommand = FeatureFlagCommand.create({
+    const featureFlagCommand = GetFeatureFlagCommand.create({
       environmentId,
       organizationId,
       userId,
+      key: FeatureFlagsKeysEnum.IS_TOPIC_NOTIFICATION_ENABLED,
     });
-    const isEnabled = await this.getIsTopicNotificationEnabled.execute(
-      featureFlagCommand
-    );
+    const isEnabled = await this.getFeatureFlag.execute(featureFlagCommand);
 
     if (isEnabled) {
       const topics = this.findTopics(recipients);
