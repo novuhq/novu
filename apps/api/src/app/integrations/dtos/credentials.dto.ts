@@ -158,6 +158,11 @@ export class CredentialsDto implements ICredentials {
   datePath?: string;
 
   @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  apiToken?: string;
+
+  @ApiPropertyOptional()
   @IsBoolean()
   @IsOptional()
   authenticateByToken?: boolean;
