@@ -35,6 +35,10 @@ const StyledButton = styled(Button)<StylingProps>(
   background: ${getBackgroundColor({ theme, isCurrentPage })};
   color: ${getFontColor({ theme, isCurrentPage })};
 
+  & .mantine-Button-label {
+    background-image: none;
+  }
+
   &:disabled {
     background: ${getBackgroundColor({ theme, isCurrentPage })};
     color: ${getFontColor({ theme, isCurrentPage })};

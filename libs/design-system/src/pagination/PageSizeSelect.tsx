@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Input, MantineTheme, useMantineTheme } from '@mantine/core';
+import { Input, useMantineTheme } from '@mantine/core';
 import { forwardRef, useContext, useMemo } from 'react';
 import { ISelectProps, Select } from '../select/Select';
 import { DEFAULT_PAGINATION_PAGE_SIZES } from './Pagination.const';
@@ -32,7 +32,8 @@ const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
     color: ${theme.colorScheme === 'dark' ? colors.B60 : colors.B40};
 
     & input {
-      background-color: ${theme.colorScheme === 'dark' ? colors.B15 : colors.white};
+      border-color: ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80};
+      background-color: transparent;
     }
 `;
 });

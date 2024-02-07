@@ -153,10 +153,6 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
 function WorkflowListPage() {
   const segment = useSegment();
   const { readonly } = useEnvController();
-  /*
-   * const [currentPageNumber, setCurrentPageNumber] = useState<number>(1);
-   * const [pageSize, setPageSize] = useState<number>(10);
-   */
   const { loading: areNotificationGroupLoading } = useNotificationGroup();
   const {
     templates,

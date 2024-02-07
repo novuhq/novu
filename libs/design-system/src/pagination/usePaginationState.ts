@@ -31,7 +31,7 @@ export const usePaginationState = ({
     setCurrentPageNumber(page);
 
     const sizeValUnchecked = parseInt(sizeStr ?? 'NaN', 10);
-    const size = pageSizes.includes(sizeValUnchecked) ? sizeValUnchecked : pageSizes[0];
+    const size = pageSizes.includes(sizeValUnchecked) && sizeValUnchecked > 0 ? sizeValUnchecked : pageSizes[0];
     setPageSize(size);
 
     // must only be on mount

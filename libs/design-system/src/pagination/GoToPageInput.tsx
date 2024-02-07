@@ -32,7 +32,8 @@ const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   color: ${theme.colorScheme === 'dark' ? colors.B60 : colors.B40};
 
   input {
-    background-color: ${theme.colorScheme === 'dark' ? colors.B15 : colors.white};
+    background-color: transparent;
+    border-color: ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80};
     margin: 0;
     min-height: inherit;
     height: 32px;
