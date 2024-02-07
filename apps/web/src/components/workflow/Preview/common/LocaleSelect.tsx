@@ -1,7 +1,10 @@
+import styled from '@emotion/styled';
 import { SelectItemProps, Group } from '@mantine/core';
 import { Select, Text } from '@novu/design-system';
 import { forwardRef } from 'react';
 import { IS_DOCKER_HOSTED } from '../../../../config';
+
+const rightSectionWidth = 20;
 
 export function LocaleSelect({ locales, value, isLoading, onLocaleChange }) {
   // Do not render locale select if self-hosted or no locale or only one locale
@@ -10,25 +13,28 @@ export function LocaleSelect({ locales, value, isLoading, onLocaleChange }) {
   }
 
   return (
-    <Select
-      itemComponent={SelectItem}
-      data={locales?.map((locale) => {
-        return {
-          value: locale.langIso,
-          label: locale.langName,
-        };
-      })}
-      icon={<FlagIcon locale={value} />}
-      loading={isLoading}
-      limit={50}
-      searchable
-      withinPortal
-      onChange={(val) => {
-        onLocaleChange(val);
-      }}
-      value={value}
-      variant="unstyled"
-    />
+    <SelectContainer>
+      <Select
+        itemComponent={SelectItem}
+        data={locales?.map((locale) => {
+          return {
+            value: locale.langIso,
+            label: locale.langName,
+          };
+        })}
+        icon={<FlagIcon locale={value} />}
+        loading={isLoading}
+        limit={50}
+        searchable
+        withinPortal
+        onChange={(val) => {
+          onLocaleChange(val);
+        }}
+        value={value}
+        variant="unstyled"
+        rightSectionWidth={rightSectionWidth}
+      />
+    </SelectContainer>
   );
 }
 
@@ -54,3 +60,9 @@ export const FlagIcon = ({ locale }) => {
 
   return [];
 };
+
+const SelectContainer = styled.div`
+  .mantine-Select-input {
+    padding-right: ${rightSectionWidth}px;
+  }
+`;
