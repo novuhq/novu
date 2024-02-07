@@ -27,6 +27,7 @@ import {
   NovuSmsHandler,
   NexmoHandler,
   ISendSmsHandler,
+  RingCentralHandler,
   BrevoSmsHandler,
 } from './handlers';
 
@@ -58,6 +59,7 @@ export class SmsFactory implements ISmsFactory {
     new NovuSmsHandler(),
     new NexmoHandler(),
     new ISendSmsHandler(),
+    new RingCentralHandler(),
     new BrevoSmsHandler(),
   ];
 
