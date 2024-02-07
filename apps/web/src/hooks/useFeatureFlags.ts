@@ -69,5 +69,6 @@ export const useIsImprovedOnboardingEnabled = (): boolean => {
   // TODO: find out why the other ones use so many steps to accomplish what LaunchDarkly has built-in
   const isTranslationManagerEnabled = useGetFlagByKey<boolean>(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
 
-  return isTranslationManagerEnabled ?? false;
+  // !FIXME: reset default to false when ready for release
+  return isTranslationManagerEnabled ?? true;
 };
