@@ -1,6 +1,5 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
-import { GetPortalLink } from '@novu/ee-billing';
 
 describe('Get portal link', async () => {
   it('Get portal link', async () => {
@@ -26,7 +25,7 @@ describe('Get portal link', async () => {
 
     const stub = sinon.stub(stubObject.billingPortal.sessions, 'create').resolves({ url: 'url' });
 
-    const usecase: GetPortalLink = new (require('@novu/ee-billing').GetPortalLink)(stubObject, getCustomerUsecase);
+    const usecase = new (require('@novu/ee-billing').GetPortalLink)(stubObject, getCustomerUsecase);
 
     const result = await usecase.execute({
       environmentId: 'environment_dd',
