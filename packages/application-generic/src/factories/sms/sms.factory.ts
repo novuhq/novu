@@ -27,6 +27,8 @@ import {
   NovuSmsHandler,
   NexmoHandler,
   ISendSmsHandler,
+  RingCentralHandler,
+  BrevoSmsHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -57,6 +59,8 @@ export class SmsFactory implements ISmsFactory {
     new NovuSmsHandler(),
     new NexmoHandler(),
     new ISendSmsHandler(),
+    new RingCentralHandler(),
+    new BrevoSmsHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

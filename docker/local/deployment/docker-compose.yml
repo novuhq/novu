@@ -26,7 +26,7 @@ services:
     ports:
       - 27017:27017
   api:
-    image: 'ghcr.io/novuhq/novu/api:0.22.0'
+    image: 'ghcr.io/novuhq/novu/api:0.23.0'
     depends_on:
       - mongodb
       - redis
@@ -66,7 +66,7 @@ services:
     ports:
       - '3000:3000'
   worker:
-    image: 'ghcr.io/novuhq/novu/worker:0.22.0'
+    image: 'ghcr.io/novuhq/novu/worker:0.23.0'
     depends_on:
       - mongodb
       - redis
@@ -96,8 +96,10 @@ services:
       SENTRY_DSN: ${SENTRY_DSN}
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
+      BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE}
+      MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
   ws:
-    image: 'ghcr.io/novuhq/novu/ws:0.22.0'
+    image: 'ghcr.io/novuhq/novu/ws:0.23.0'
     depends_on:
       - mongodb
       - redis
@@ -123,7 +125,7 @@ services:
     ports:
       - '3002:3002'
   web:
-    image: 'ghcr.io/novuhq/novu/web:0.22.0'
+    image: 'ghcr.io/novuhq/novu/web:0.23.0'
     depends_on:
       - api
       - worker
@@ -143,7 +145,7 @@ services:
     ports:
       - 4200:4200
   widget:
-    image: 'ghcr.io/novuhq/novu/widget:0.22.0'
+    image: 'ghcr.io/novuhq/novu/widget:0.23.0'
     depends_on:
       - api
       - worker
@@ -165,7 +167,7 @@ services:
   embed:
     depends_on:
       - widget
-    image: 'ghcr.io/novuhq/novu/embed:0.22.0'
+    image: 'ghcr.io/novuhq/novu/embed:0.23.0'
     container_name: embed
     restart: unless-stopped
     logging:

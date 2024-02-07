@@ -44,7 +44,7 @@ describe('MapTriggerRecipientsUseCase', () => {
       await featureFlagsService.initialize();
 
       process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
+      process.env.IS_TOPIC_NOTIFICATION_ENABLED = 'false';
 
       const moduleRef = await Test.createTestingModule({
         imports: [SharedModule, EventsModule],
@@ -196,7 +196,7 @@ describe('MapTriggerRecipientsUseCase', () => {
   describe('When feature enabled', () => {
     before(async () => {
       process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
+      process.env.IS_TOPIC_NOTIFICATION_ENABLED = 'true';
 
       const moduleRef = await Test.createTestingModule({
         imports: [SharedModule, EventsModule],

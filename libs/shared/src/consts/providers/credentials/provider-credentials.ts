@@ -987,14 +987,14 @@ export const genericSmsConfig: IConfigCredentials[] = [
     type: 'string',
     value: 'data.date',
     description: 'The path to the date field in the response data ex. (date, message.date, ...)',
-    required: true,
+    required: false,
   },
   {
     key: CredentialsKeyEnum.AuthenticateByToken,
     displayName: 'Authenticate by token',
     type: 'switch',
     description: 'If enabled, the API key and secret key will be sent as a token in the Authorization header',
-    required: true,
+    required: false,
   },
   {
     key: CredentialsKeyEnum.Domain,
@@ -1062,4 +1062,45 @@ export const rocketChatConfig: IConfigCredentials[] = [
     type: 'text',
     required: true,
   },
+];
+
+export const ringCentralConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    description: 'Your RingCentral app client ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client secret',
+    description: 'Your RingCentral app client secret',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Secure,
+    displayName: 'Is sandbox',
+    type: 'switch',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'JWT token',
+    description: 'Your RingCentral user JWT token',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const brevoSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
 ];

@@ -6,10 +6,8 @@ import {
   CreateExecutionDetailsCommand,
 } from '../create-execution-details';
 import { ExecutionLogQueueService } from '../../services';
-import {
-  FeatureFlagCommand,
-  GetIsExecutionLogQueueEnabled,
-} from '../get-feature-flag';
+import { GetFeatureFlagCommand, GetFeatureFlag } from '../get-feature-flag';
+import { FeatureFlagsKeysEnum } from '../../services/types';
 
 const LOG_CONTEXT = 'ExecutionLogRoute';
 
@@ -19,12 +17,13 @@ export class ExecutionLogRoute {
     private createExecutionDetails: CreateExecutionDetails,
     @Inject(forwardRef(() => ExecutionLogQueueService))
     private executionLogQueueService: ExecutionLogQueueService,
-    private getIsExecutionLogQueueEnabled: GetIsExecutionLogQueueEnabled
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   async execute(command: ExecutionLogRouteCommand) {
-    const isEnabled = await this.getIsExecutionLogQueueEnabled.execute(
-      FeatureFlagCommand.create({
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        key: FeatureFlagsKeysEnum.IS_API_EXECUTION_LOG_QUEUE_ENABLED,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,

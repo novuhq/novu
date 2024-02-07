@@ -60,6 +60,7 @@ import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { VariantsPage } from './pages/templates/components/VariantsPage';
 import { ChannelPreview } from './pages/templates/components/ChannelPreview';
+import { BillingRoutes } from './pages/BillingPages';
 
 library.add(far, fas);
 
@@ -179,6 +180,7 @@ function App() {
                   <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
                   <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
                     <Route path="" element={<ApiKeysCard />} />
+                    <Route path="billing/*" element={<BillingRoutes />} />
                     <Route path="email" element={<EmailSettings />} />
                     <Route
                       path="permissions"

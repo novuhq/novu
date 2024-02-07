@@ -2,6 +2,16 @@ import { IFlagKey, testFlagEnumValidity } from './flags.types';
 import { FeatureFlagsKeysEnum } from './feature-flags';
 import { SystemCriticalFlagsEnum } from './system-critical-flags';
 
+describe('Flags', () => {
+  /**
+   * This describe block resolves the Jest error of a test suite not having any tests.
+   * It has no other purpose.
+   */
+  it('tests the Typescript compiler errors below', () => {
+    expect(true).toEqual(true);
+  });
+});
+
 /**
  * Type Error tests for template literal types - Flag naming
  * `export` is specified to avoid false-positive issue of:
