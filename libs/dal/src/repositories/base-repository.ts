@@ -92,6 +92,19 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     }
   }
 
+  async *aggregateBatch(
+    query: any,
+    select = '',
+    options: { limit?: number; sort?: any; skip?: number } = {},
+    batchSize = 500
+  ) {
+    for await (const doc of this._model
+      .aggregate<FilterQuery<T_DBModel> & T_Enforcement>(query, { batchSize: batchSize })
+      .cursor()) {
+      yield this.mapEntity(doc);
+    }
+  }
+
   private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & T_Enforcement) {
     let startDate: Date = new Date();
     if (data.expireAt) {
