@@ -109,6 +109,7 @@
     "react-hook-form": "7.43.9",
     "react-is": "^18.2.0",
     "react-joyride": "^2.5.3",
+    "react-material-symbols": "^4.3.1",
     "react-password-strength-bar": "^0.4.1",
     "react-router-dom": "6.2.2",
     "react-syntax-highlighter": "^15.4.3",
@@ -125,8 +126,8 @@
     "zod": "^3.22.4"
   },
   "optionalDependencies": {
-    "@novu/ee-translation-web": "^0.23.1",
-    "@novu/ee-billing-web": "^0.23.1"
+    "@novu/ee-billing-web": "^0.23.1",
+    "@novu/ee-translation-web": "^0.23.1"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",

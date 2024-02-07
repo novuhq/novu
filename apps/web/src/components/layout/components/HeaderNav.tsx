@@ -26,6 +26,9 @@ import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
 import { NotificationCenterWidget } from './NotificationCenterWidget';
 import { useSegment } from '../../providers/SegmentProvider';
+import { MaterialSymbol } from 'react-material-symbols';
+
+import 'react-material-symbols/outlined';
 
 type Props = { isIntercomOpened: boolean };
 const menuItem = [
@@ -35,19 +38,19 @@ const menuItem = [
     path: ROUTES.TEAM,
   },
 ];
-const headerIconsSettings = { color: colors.B60, width: 24, height: 24 };
+// const headerIconsSettings = { color: colors.B60, width: 24, height: 24 };
 
 const Icon = () => {
   const { themeStatus } = useLocalThemePreference();
 
   if (themeStatus === 'dark') {
-    return <Moon {...headerIconsSettings} />;
+    return <MaterialSymbol icon={'dark_mode'} />;
   }
   if (themeStatus === 'light') {
-    return <Sun {...headerIconsSettings} />;
+    return <MaterialSymbol icon={'light_mode'} />;
   }
 
-  return <Ellipse {...headerIconsSettings} />;
+  return <MaterialSymbol icon={'child_care'} />;
 };
 
 export function HeaderNav({ isIntercomOpened }: Props) {
