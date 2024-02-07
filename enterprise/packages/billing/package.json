@@ -13,6 +13,7 @@
     "symlink": "ln -s ../../../.source/billing/src ./src"
   },
   "dependencies": {
+    "@hokify/agenda": "^6.3.0",
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/throttler": "^5.0.1",
     "@novu/application-generic": "^0.22.0",
