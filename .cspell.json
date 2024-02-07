@@ -558,6 +558,9 @@
     "moby",
     "ghaction",
     "livemode",
+    "spyon",
+    "restapi",
+    "ringcentral"
   ],
   "flagWords": [],
   "patterns": [
