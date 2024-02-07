@@ -6,6 +6,9 @@ import {
   FeatureFlagsService,
 } from '../services';
 import { GetFeatureFlag } from '../usecases';
+import { Agenda } from '@hokify/agenda';
+import { CronService } from '../services/cron';
+import os from 'os';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -55,6 +58,19 @@ export const analyticsService = {
   useFactory: async () => {
     const service = new AnalyticsService(process.env.SEGMENT_TOKEN);
     await service.initialize();
+
+    return service;
+  },
+};
+
+export const cronService = {
+  provide: CronService,
+  useFactory: async () => {
+    const agenda = new Agenda({
+      db: { address: process.env.MONGO_URL },
+      name: `${os.hostname}-${process.pid}`,
+    });
+    const service = new CronService(agenda);
 
     return service;
   },

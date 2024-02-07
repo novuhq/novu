@@ -22,4 +22,5 @@ export enum ObservabilityBackgroundTransactionEnum {
   WS_SOCKET_QUEUE = 'ws_socket_queue',
   WS_SOCKET_SOCKET_CONNECTION = 'ws_socket_handle_connection',
   WS_SOCKET_HANDLE_DISCONNECT = 'ws_socket_handle_disconnect',
+  CRON_JOB_QUEUE = 'cron-job-queue',
 }
