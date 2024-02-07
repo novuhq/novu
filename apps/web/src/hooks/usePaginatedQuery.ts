@@ -37,7 +37,7 @@ export const usePaginatedQuery = <TResponse extends object>({
   const pageIndex = currentPageNumber - 1;
 
   const queryKeyToUse =
-    typeof queryKey === 'function' ? queryKey({ pageIndex, pageSize }) : [...queryKey, currentPageNumber - 1, pageSize];
+    typeof queryKey === 'function' ? queryKey({ pageIndex, pageSize }) : [...queryKey, pageIndex, pageSize];
 
   // hydrate the function with the pagination context so that the caller can include it in the request
   const hydratedQueryFn = buildQueryFn({ pageIndex, pageSize });
