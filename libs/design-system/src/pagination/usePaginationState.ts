@@ -19,24 +19,12 @@ export const usePaginationState = ({
 }: IUsePaginationStateOptions) => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [pageSize, setPageSize] = useState<number>(pageSizes[0]);
-  const [currentPageNumber, setCurrentPageNumber] = useState<number>(startingPageNumber);
-
-  // Load url params or defaults ONLY on mount
-  useEffect(() => {
-    const pageStr = searchParams.get(pageNumberParamName);
-    const sizeStr = searchParams.get(pageSizeParamName);
-
-    const page = pageStr ? parseInt(pageStr, 10) : startingPageNumber;
-    setCurrentPageNumber(page);
-
-    const sizeValUnchecked = parseInt(sizeStr ?? 'NaN', 10);
-    const size = pageSizes.includes(sizeValUnchecked) && sizeValUnchecked > 0 ? sizeValUnchecked : pageSizes[0];
-    setPageSize(size);
-
-    // must only be on mount
-    // eslint-disable-next-line-react-hooks//exhaustive-deps
-  }, []);
+  const [pageSize, setPageSize] = useState<number>(
+    getValidatedPageSizeFromUrl(searchParams.get(pageSizeParamName), pageSizes)
+  );
+  const [currentPageNumber, setCurrentPageNumber] = useState<number>(
+    getValidatedPageNumberFromUrl(searchParams.get(pageNumberParamName), startingPageNumber)
+  );
 
   useEffect(() => {
     setSearchParams(
@@ -55,3 +43,15 @@ export const usePaginationState = ({
     setCurrentPageNumber,
   };
 };
+
+function getValidatedPageNumberFromUrl(pageNumberStr: string | undefined, startingPageNumber: number): number {
+  const pageNumberUnchecked = parseInt(pageNumberStr ?? 'NaN', 10);
+
+  return pageNumberUnchecked && pageNumberUnchecked > 0 ? pageNumberUnchecked : startingPageNumber;
+}
+
+function getValidatedPageSizeFromUrl(pageSizeStr: string | undefined, pageSizes: number[]): number {
+  const sizeValUnchecked = parseInt(pageSizeStr ?? 'NaN', 10);
+
+  return pageSizes.includes(sizeValUnchecked) && sizeValUnchecked > 0 ? sizeValUnchecked : pageSizes[0];
+}
