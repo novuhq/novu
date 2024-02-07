@@ -2,8 +2,8 @@ import axios from 'axios';
 import { UnifonicSmsProvider } from './unifonic.provider';
 
 const mockConfig = {
-  AppSid: 'I0tn4MU17MPaI6aTRcXmAnpsdCthjI',
-  SenderID: 'NEOM',
+  AppSid: '',
+  SenderID: '',
   baseUrl: 'https://el.cloud.unifonic.com/rest/SMS/messages',
 };
 
