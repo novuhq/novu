@@ -156,7 +156,7 @@ export class TriggerMulticast {
         subscriberId: subscriber.externalSubscriberId,
       };
 
-      if (!actor || actor.subscriberId !== subscriberDefine.subscriberId) {
+      if (actor && actor.subscriberId !== subscriberDefine.subscriberId) {
         subscriberDefines.push(subscriberDefine);
       }
     }
