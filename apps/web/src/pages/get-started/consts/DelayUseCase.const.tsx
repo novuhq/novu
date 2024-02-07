@@ -1,4 +1,4 @@
-import { Link, StepDescription } from './shared';
+import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 
 export const DelayUseCaseConst: OnboardingUseCase = {
@@ -9,13 +9,13 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       title: 'Configure providers',
       Description: function () {
         return (
-          <span>
-            <StepDescription>
+          <StepDescription>
+            <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
-            </StepDescription>
-            <Link text={' Integration store'} href={'https://mantine.dev/core/timeline/'} />
-            <StepDescription>.</StepDescription>
-          </span>
+            </StepText>
+            <Link children={' Integration store'} href={'https://mantine.dev/core/timeline/'} />
+            <StepText>.</StepText>
+          </StepDescription>
         );
       },
     },
@@ -23,11 +23,11 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       title: 'Build a workflow',
       Description: function () {
         return (
-          <span>
-            <StepDescription>Novu pre-built workflow with a digest node.</StepDescription>
-            <Link text={' Customize '} href={'https://mantine.dev/core/timeline/'} />
-            <StepDescription>the workflow or create a new one on the Workflows page.</StepDescription>
-          </span>
+          <StepDescription>
+            <StepText>Novu pre-built workflow with a digest node.</StepText>
+            <Link children={' Customize '} href={'https://mantine.dev/core/timeline/'} />
+            <StepText>the workflow or create a new one on the Workflows page.</StepText>
+          </StepDescription>
         );
       },
     },
@@ -35,11 +35,11 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       title: 'Set-up a delay preferences',
       Description: function () {
         return (
-          <span>
-            <StepDescription>Novu has predefined a time interval of 5 minutes.</StepDescription>
-            <Link text={' Customize delay'} href={'https://mantine.dev/core/timeline/'} />
-            <StepDescription>.</StepDescription>
-          </span>
+          <StepDescription>
+            <StepText>Novu has predefined a time interval of 5 minutes.</StepText>
+            <Link children={' Customize delay'} href={'https://mantine.dev/core/timeline/'} />
+            <StepText>.</StepText>
+          </StepDescription>
         );
       },
     },
@@ -47,12 +47,12 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       title: 'Connect trigger and run test',
       Description: function () {
         return (
-          <span>
-            <Link text={'Test the trigger '} href={'https://mantine.dev/core/timeline/'} />
-            <StepDescription>
+          <StepDescription>
+            <Link children={'Test the trigger '} href={'https://mantine.dev/core/timeline/'} />
+            <StepText>
               as if you sent it from your API. Add a subscriber by sending data to the trigger method.
-            </StepDescription>
-          </span>
+            </StepText>
+          </StepDescription>
         );
       },
     },
@@ -60,13 +60,13 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       title: 'Track activity feed',
       Description: function () {
         return (
-          <span>
-            <StepDescription>Discover</StepDescription>
-            <Link text={' activity feed '} href={'https://mantine.dev/core/timeline/'} />
-            <StepDescription>
+          <StepDescription>
+            <StepText>Discover</StepText>
+            <Link children={' activity feed '} href={'https://mantine.dev/core/timeline/'} />
+            <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
-            </StepDescription>
-          </span>
+            </StepText>
+          </StepDescription>
         );
       },
     },

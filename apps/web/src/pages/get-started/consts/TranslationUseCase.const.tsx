@@ -1,4 +1,4 @@
-import { Link, StepDescription } from './shared';
+import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 
 export const TranslationUseCaseConst: OnboardingUseCase = {
@@ -11,13 +11,13 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
       title: 'Configure providers',
       Description: function () {
         return (
-          <span>
-            <StepDescription>
+          <StepDescription>
+            <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
-            </StepDescription>
-            <Link text={' Integration store '} href={'https://mantine.dev/core/timeline/'} />
-            <StepDescription>.</StepDescription>
-          </span>
+            </StepText>
+            <Link children={' Integration store '} href={'https://mantine.dev/core/timeline/'} />
+            <StepText>.</StepText>
+          </StepDescription>
         );
       },
     },
@@ -25,11 +25,11 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
       title: 'Add a translation group',
       Description: function () {
         return (
-          <span>
-            <StepDescription>Add a translation group and specify the languages in the</StepDescription>
-            <Link text={' Translations page'} href={'https://mantine.dev/core/timeline/'} />
-            <StepDescription>.</StepDescription>
-          </span>
+          <StepDescription>
+            <StepText>Add a translation group and specify the languages in the</StepText>
+            <Link children={' Translations page'} href={'https://mantine.dev/core/timeline/'} />
+            <StepText>.</StepText>
+          </StepDescription>
         );
       },
     },
@@ -37,9 +37,9 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
       title: 'Upload JSON files with languages',
       Description: function () {
         return (
-          <span>
-            <StepDescription>Upload JSON files with multiple languages to the translations group.</StepDescription>
-          </span>
+          <StepDescription>
+            <StepText>Upload JSON files with multiple languages to the translations group.</StepText>
+          </StepDescription>
         );
       },
     },
@@ -47,13 +47,13 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
       title: 'Update content with translation variables',
       Description: function () {
         return (
-          <span>
-            <StepDescription>
+          <StepDescription>
+            <StepText>
               {
                 'Update content with {{i18n variables}} in your messages. These variables will automatically adapt to subscribers locale.'
               }
-            </StepDescription>
-          </span>
+            </StepText>
+          </StepDescription>
         );
       },
     },

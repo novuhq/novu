@@ -9,9 +9,9 @@ export interface IOnboardingStep {
   Description: React.ComponentType<any>;
 }
 
-export type OnboardingUseCase = {
+export interface OnboardingUseCase {
   title: string;
   description: string;
   steps: IOnboardingStep[];
   Demo: React.ComponentType<any>;
-};
+}
