@@ -6,7 +6,7 @@ import { useFormContext, useWatch } from 'react-hook-form';
 
 import { Button, colors, inputStyles } from '@novu/design-system';
 import { previewEmail } from '../../../../api/content-templates';
-import { getLocalesFromContent } from '../../../../api/translations';
+
 import { When } from '../../../utils/When';
 import { useActiveIntegrations, useAuthController, useProcessVariables } from '../../../../hooks';
 import { errorMessage } from '../../../../utils/notifications';
@@ -15,6 +15,8 @@ import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepForm
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
+import { useGetLocalesFromContent, usePreviewEmail } from '../../../../api/hooks';
+import { IS_DOCKER_HOSTED, useDataRef } from '@novu/shared-web';
 
 export const EmailPreview = ({ showVariables = true, view }: { view: string; showVariables?: boolean }) => {
   const { control } = useFormContext<IForm>();
@@ -47,24 +49,42 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   });
 
   const { integrations = [] } = useActiveIntegrations();
-  const [parsedSubject, setParsedSubject] = useState(subject);
-  const [content, setContent] = useState<string>('<html><head></head><body><div></div></body></html>');
-  const { isLoading, mutateAsync } = useMutation(previewEmail);
-  const { mutateAsync: translationLocales, data: locales } = useMutation(getLocalesFromContent);
+
+  const [parsedPreviewState, setParsedPreviewState] = useState({
+    subject: subject,
+    content: '<html><head></head><body><div></div></body></html>',
+  });
+
+  const { isLoading, getEmailPreview } = usePreviewEmail({
+    onSuccess: (result) => {
+      setParsedPreviewState({
+        content: result.html,
+        subject: result.subject,
+      });
+    },
+  });
+
+  const { data: locales, getLocalesFromContent } = useGetLocalesFromContent();
   const processedVariables = useProcessVariables(variables);
   const [payloadValue, setPayloadValue] = useState('{}');
 
   const { organization } = useAuthController();
   const [selectedLocale, setSelectedLocale] = useState<string | undefined>(undefined);
 
+  const previewData = useDataRef({ contentType, htmlContent, editorContent, layoutId, subject });
+
   useEffect(() => {
-    const emailContent = contentType === 'editor' ? editorContent : htmlContent;
-    if (emailContent) {
-      translationLocales({
+    const emailContent =
+      previewData.current.contentType === 'editor'
+        ? previewData.current.editorContent
+        : previewData.current.htmlContent;
+
+    if (emailContent && !IS_DOCKER_HOSTED) {
+      getLocalesFromContent({
         content: emailContent,
       });
     }
-  }, [contentType, editorContent, htmlContent, translationLocales]);
+  }, [getLocalesFromContent, previewData]);
 
   useEffect(() => {
     setSelectedLocale(organization?.defaultLocale);
@@ -74,39 +94,30 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
     setPayloadValue(processedVariables);
   }, [processedVariables, setPayloadValue]);
 
-  const parseContent = (args: {
-    contentType?: MessageTemplateContentType;
-    content?: string | IEmailBlock[];
-    payload: any;
-    layoutId?: string;
-    locale?: string;
-  }) => {
-    mutateAsync({
-      ...args,
-      payload: JSON.parse(args.payload),
-      subject: subject ? subject : '',
-    })
-      .then((result: { html: string; subject: string }) => {
-        setContent(result.html);
-        setParsedSubject(result.subject);
-
-        return result;
-      })
-      .catch((e: any) => {
-        errorMessage(e?.message || 'Un-expected error occurred');
+  const parseContent = useCallback(
+    (args: { payload: any }) => {
+      getEmailPreview({
+        ...args,
+        contentType: previewData.current.contentType,
+        content:
+          previewData.current.contentType === 'editor'
+            ? previewData.current.editorContent
+            : previewData.current.htmlContent,
+        layoutId: previewData.current.layoutId,
+        payload: JSON.parse(args.payload),
+        subject: previewData.current.subject ?? '',
+        locale: selectedLocale,
       });
-  };
+    },
+    [getEmailPreview, previewData, selectedLocale]
+  );
 
   useEffect(() => {
     parseContent({
-      contentType,
-      content: contentType === 'editor' ? editorContent : htmlContent,
       payload: processedVariables,
-      layoutId,
-      locale: selectedLocale,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contentType, htmlContent, editorContent, processedVariables, selectedLocale]);
+  }, [parseContent, previewData, processedVariables, selectedLocale]);
+
   const theme = useMantineTheme();
 
   const integration = useMemo(() => {
@@ -125,8 +136,8 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
             <When truthy={view === 'web'}>
               <PreviewWeb
                 loading={isLoading}
-                subject={parsedSubject}
-                content={content}
+                subject={parsedPreviewState.subject}
+                content={parsedPreviewState.content}
                 integration={integration}
                 error={error}
                 showEditOverlay={false}
@@ -140,8 +151,8 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
                 <Grid.Col span={12}>
                   <PreviewMobile
                     loading={isLoading}
-                    subject={parsedSubject}
-                    content={content}
+                    subject={parsedPreviewState.subject}
+                    content={parsedPreviewState.content}
                     integration={integration}
                     error={error}
                     onLocaleChange={onLocaleChange}
@@ -179,11 +190,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
                 fullWidth
                 onClick={() => {
                   parseContent({
-                    contentType,
-                    content: contentType === 'editor' ? editorContent : htmlContent,
                     payload: payloadValue,
-                    layoutId,
-                    locale: selectedLocale,
                   });
                 }}
                 variant="outline"
@@ -197,8 +204,8 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
       ) : (
         <PreviewWeb
           loading={isLoading}
-          subject={parsedSubject}
-          content={content}
+          subject={parsedPreviewState.subject}
+          content={parsedPreviewState.content}
           integration={integration}
           error={error}
           showEditOverlay={!showVariables}

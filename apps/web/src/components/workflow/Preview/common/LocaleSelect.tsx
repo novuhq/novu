@@ -4,7 +4,8 @@ import { forwardRef } from 'react';
 import { IS_DOCKER_HOSTED } from '../../../../config';
 
 export function LocaleSelect({ locales, value, isLoading, onLocaleChange }) {
-  if (IS_DOCKER_HOSTED || locales.length === 0) {
+  // Do not render locale select if self-hosted or no locale or only one locale
+  if (IS_DOCKER_HOSTED || locales.length < 2) {
     return null;
   }
 
