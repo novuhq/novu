@@ -4,7 +4,7 @@ import { OnboardingUseCase } from './types';
 export const InAppUseCaseConst: OnboardingUseCase = {
   title: 'In-app notifications center',
   description:
-    'Utilize Novu’s pre-built customizable in-app component. ' +
+    "Utilize Novu's pre-built customizable in-app component. " +
     'Or opt for the headless library to create your own in-app notification center.',
   steps: [
     {
