@@ -120,8 +120,8 @@ export class TriggerMulticast {
             {
               _organizationId: organizationId,
               _environmentId: environmentId,
-              topicIds: topicIds,
-              excludeSubscribers: singleSubscriberIds,
+              _topicId: { $in: topicIds },
+              externalSubscriberId: { $nin: singleSubscriberIds },
             },
             {
               limit: subscriberFetchBatchSize,
