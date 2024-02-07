@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Input } from '@mantine/core';
+import { Input, MantineTheme, useMantineTheme } from '@mantine/core';
 import { forwardRef, useContext, useMemo } from 'react';
 import { ISelectProps, Select } from '../select/Select';
 import { DEFAULT_PAGINATION_PAGE_SIZES } from './Pagination.const';
@@ -38,7 +38,7 @@ const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
 });
 
 const StyledSelect = styled(Select)(
-  ({ theme }) => `
+  () => `
     max-width: 71px;
     input {
       padding-left: 12px;
@@ -90,7 +90,12 @@ export const PageSizeSelect: React.FC<IPageSizeSelectProps> = forwardRef<HTMLInp
     const options = useMemo(() => pageSizes.map((val) => `${val}`), [pageSizes]);
 
     return (
-      <InputWrapper label={'rows per page'} id="pageSizeSelect" inputWrapperOrder={['input', 'label']}>
+      <InputWrapper
+        label={'rows per page'}
+        id="pageSizeSelect"
+        inputWrapperOrder={['input', 'label']}
+        theme={useMantineTheme()}
+      >
         <StyledSelect
           ref={selectRef}
           data={options}

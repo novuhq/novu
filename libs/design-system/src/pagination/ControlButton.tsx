@@ -1,9 +1,9 @@
 import styled from '@emotion/styled';
+import { useMantineTheme } from '@mantine/core';
 import { CSSProperties, forwardRef, useContext } from 'react';
-import { colors } from '../config';
 import { Button, IButtonProps } from '../button/Button';
+import { colors } from '../config';
 import { IPaginationContext, PaginationContext } from './PaginationContext';
-
 export type TPageButtonClickHandler = (ctx: IPaginationContext) => void;
 
 type StylingProps = Pick<IControlButtonProps, 'isCurrentPage'>;
@@ -70,6 +70,7 @@ export const ControlButton: React.FC<IControlButtonProps> = forwardRef<HTMLButto
 
     return (
       <StyledButton
+        theme={useMantineTheme()}
         isCurrentPage={isCurrentPage}
         id={id}
         onClick={handleClick}
