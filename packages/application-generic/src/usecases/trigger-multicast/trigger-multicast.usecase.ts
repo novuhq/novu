@@ -5,10 +5,12 @@ import {
   IntegrationRepository,
   JobRepository,
   NotificationTemplateRepository,
+  SubscriberEntity,
   SubscriberRepository,
   TopicEntity,
   TopicRepository,
   TopicSubscribersRepository,
+  TopicSubscribersEntity,
 } from '@novu/dal';
 import {
   FeatureFlagsKeysEnum,
@@ -94,7 +96,7 @@ export class TriggerMulticast {
         })
       );
 
-      if (!isEnabled) {
+      if (!isEnabled || topicKeys.size === 0) {
         return;
       }
 
@@ -109,43 +111,57 @@ export class TriggerMulticast {
       const topicIds = topics.map((topic) => topic._id);
       const singleSubscriberIds = Array.from(singleSubscribers.keys());
       const subscriberFetchBatchSize = 500;
-      let subscribersList: ISubscribersDefine[] = [];
 
-      for await (const topicSubscriber of this.topicSubscribersRepository.getTopicDistinctSubscribers(
-        {
-          _organizationId: organizationId,
-          _environmentId: environmentId,
-          topicIds: topicIds,
-          excludeSubscribers: singleSubscriberIds,
-        }
-      )) {
-        const externalSubscriberId = topicSubscriber._id;
+      let page = 0;
 
-        if (actor && actor.subscriberId === externalSubscriberId) {
-          continue;
-        }
-
-        subscribersList.push({ subscriberId: externalSubscriberId });
-
-        if (subscribersList.length === subscriberFetchBatchSize) {
-          await this.sendToProcessSubscriberService(
-            command,
-            subscribersList,
-            SubscriberSourceEnum.TOPIC
+      while (true) {
+        const data =
+          await this.topicSubscribersRepository.getDistinctSubscribers(
+            {
+              _organizationId: organizationId,
+              _environmentId: environmentId,
+              topicIds: topicIds,
+              excludeSubscribers: singleSubscriberIds,
+            },
+            {
+              limit: subscriberFetchBatchSize,
+              skip: page * subscriberFetchBatchSize,
+            }
           );
 
-          subscribersList = [];
+        if (!data || data.length === 0) {
+          break;
         }
-      }
 
-      if (subscribersList.length > 0) {
+        const subscribersDefine = this.buildSubscribersDefine(data, actor);
         await this.sendToProcessSubscriberService(
           command,
-          subscribersList,
+          subscribersDefine,
           SubscriberSourceEnum.TOPIC
         );
+
+        page++;
       }
     }
+  }
+
+  private buildSubscribersDefine(
+    data: TopicSubscribersEntity[],
+    actor: SubscriberEntity
+  ) {
+    const subscriberDefines: ISubscribersDefine[] = [];
+
+    for (const subscriber of data) {
+      const subscriberDefine: ISubscribersDefine = {
+        subscriberId: subscriber.externalSubscriberId,
+      };
+
+      if (!actor || actor.subscriberId !== subscriberDefine.subscriberId) {
+        subscriberDefines.push(subscriberDefine);
+      }
+    }
+
+    return subscriberDefines;
   }
 
   private async getTopicsByTopicKeys(

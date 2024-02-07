@@ -9,6 +9,9 @@ import { TopicSubscribers } from './topic-subscribers.schema';
 import { EnvironmentId, OrganizationId, TopicId, TopicKey } from './types';
 import { BaseRepository } from '../base-repository';
 import type { EnforceEnvOrOrgIds } from '../../types/enforce';
+import { FilterQuery } from 'mongoose';
+
+type TopicSubscribersQuery = FilterQuery<TopicSubscribersDBModel>;
 
 export class TopicSubscribersRepository extends BaseRepository<
   TopicSubscribersDBModel,
@@ -53,6 +56,22 @@ export class TopicSubscribersRepository extends BaseRepository<
     ])) {
       yield doc;
     }
+  }
+
+  async getDistinctSubscribers(
+    query: TopicSubscribersQuery & {
+      _environmentId: string;
+    },
+    options?: {
+      limit?: number;
+      skip?: number;
+    }
+  ) {
+    const data = await this.MongooseModel.distinct('externalSubscriberId', query)
+      .limit(options?.limit || 10)
+      .skip(options?.skip || 10);
+
+    return this.mapEntities(data);
   }
 
   async findOneByTopicKeyAndExternalSubscriberId(
