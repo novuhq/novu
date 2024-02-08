@@ -7,13 +7,13 @@ export class UnifonicHandler extends BaseSmsHandler {
     super('unifonic', ChannelTypeEnum.SMS);
   }
   buildProvider(credentials: ICredentials) {
-    if (!credentials.user || !credentials.appID) {
+    if (!credentials.user || !credentials.apiKey) {
       throw Error('Invalid credentials');
     }
 
     const config = {
-      AppSid: credentials.appID,
-      SenderID: credentials.user
+      AppSid: credentials.apiKey,
+      SenderID: credentials.user,
     };
 
     this.provider = new UnifonicSmsProvider(config);

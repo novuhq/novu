@@ -269,14 +269,15 @@ export class SendMessageSms extends SendMessageBase {
         throw new PlatformException(`Sms handler for provider ${integration.providerId} is  not found`);
       }
 
-      const result = await smsHandler.send({
+      const smsMessage = {
         to: overrides.to || phone,
         from: overrides.from || integration.credentials.from,
         content: overrides.content || content,
         id: message._id,
         customData: overrides.customData || {},
-      });
+      };
 
+      const result = await smsHandler.send(smsMessage);
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
           ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),

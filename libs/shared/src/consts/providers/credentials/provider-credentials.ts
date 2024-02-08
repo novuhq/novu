@@ -1076,8 +1076,8 @@ export const brevoSmsConfig: IConfigCredentials[] = [
 
 export const unifonicConfig: IConfigCredentials[] = [
   {
-    key: CredentialsKeyEnum.AppID,
-    displayName: 'AppSid',
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'ApiKey',
     type: 'string',
     required: true,
   },

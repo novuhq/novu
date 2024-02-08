@@ -28,7 +28,7 @@ import {
   NexmoHandler,
   ISendSmsHandler,
   BrevoSmsHandler,
-  UnifonicHandler
+  UnifonicHandler,
 } from './handlers';
 
 export class SmsFactory implements ISmsFactory {
@@ -60,7 +60,7 @@ export class SmsFactory implements ISmsFactory {
     new NexmoHandler(),
     new ISendSmsHandler(),
     new BrevoSmsHandler(),
-    new UnifonicHandler()
+    new UnifonicHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {
