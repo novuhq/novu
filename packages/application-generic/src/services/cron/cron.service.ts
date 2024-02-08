@@ -82,12 +82,11 @@ export abstract class CronService implements OnModuleInit, OnModuleDestroy {
     };
     this.handleJobOutcome(jobName, 'create-started');
     try {
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
+      const _this = this;
       this.addJob(
         jobName,
-        async (job) => {
-          // eslint-disable-next-line @typescript-eslint/no-this-alias
-          const _this = this;
-
+        async function runCronJob(job) {
           nr.startBackgroundTransaction(
             ObservabilityBackgroundTransactionEnum.CRON_JOB_QUEUE,
             `cron-${jobName}`,
