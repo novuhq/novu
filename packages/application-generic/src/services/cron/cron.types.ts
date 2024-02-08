@@ -5,9 +5,12 @@ export type CronOptions = {
   lockLifetime?: number;
   /** Higher priority jobs will run first. */
   priority?: number;
-  /** How many jobs of this kind can run in parallel/simultanously per Cron instance */
+  /** How many jobs of this kind can run in parallel/simultaneously per Cron instance */
   concurrency?: number;
-  /** The timezone that the job should be run in. */
+  /**
+   * The IANA timezone that the job should be run in.
+   * @see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+   */
   timezone?: string;
 };
 
