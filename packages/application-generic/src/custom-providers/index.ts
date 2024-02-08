@@ -7,8 +7,7 @@ import {
 } from '../services';
 import { GetFeatureFlag } from '../usecases';
 import { Agenda } from '@hokify/agenda';
-import { CronServiceBase, AgendaCronService } from '../services/cron';
-import os from 'os';
+import { CronService, AgendaCronService } from '../services/cron';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -64,12 +63,9 @@ export const analyticsService = {
 };
 
 export const cronService = {
-  provide: CronServiceBase,
+  provide: CronService,
   useFactory: async () => {
-    const agenda = new Agenda({
-      db: { address: process.env.MONGO_URL },
-      name: `${os.hostname}-${process.pid}`,
-    });
+    const agenda = new Agenda({ db: { address: process.env.MONGO_URL } });
     const service = new AgendaCronService(agenda);
 
     return service;
