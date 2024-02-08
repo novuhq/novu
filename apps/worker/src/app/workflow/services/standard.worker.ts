@@ -1,5 +1,5 @@
 const nr = require('newrelic');
-import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
