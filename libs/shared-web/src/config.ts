@@ -1,4 +1,4 @@
-import { getContextPath, NovuComponentEnum } from '@novu/shared';
+import { getContextPath, NovuComponentEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 
 function isBrowser() {
   return typeof window !== 'undefined';
@@ -70,3 +70,11 @@ export const IS_MULTI_TENANCY_ENABLED = isCypress
 export const IS_TRANSLATION_MANAGER_ENABLED = isCypress
   ? window._env_.IS_TRANSLATION_MANAGER_ENABLED || process.env.IS_TRANSLATION_MANAGER_ENABLED || 'true'
   : window._env_.IS_TRANSLATION_MANAGER_ENABLED || process.env.IS_TRANSLATION_MANAGER_ENABLED || 'false';
+
+export const IS_IMPROVED_ONBOARDING_ENABLED = isCypress
+  ? window._env_[FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED] ||
+    process.env[FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED] ||
+    'true'
+  : window._env_[FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED] ||
+    process.env[FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED] ||
+    'false';
