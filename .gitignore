@@ -102,3 +102,9 @@ docker/.env
 .vercel
 
 .pnpm-store/
+
+# NX Build System
+.nx/cache
+
+# EE Symlinked folders
+enterprise/packages/**/src

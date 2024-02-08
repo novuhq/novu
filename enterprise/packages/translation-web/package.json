@@ -21,8 +21,7 @@
     "build:watch": "npm run build:esm:watch",
     "lint": "eslint --ext .ts,.tsx src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
-    "start": "npm run build:watch",
-    "symlink": "ln -s ../../../.source/translation-web/src ./src"
+    "start": "npm run build:watch"
   },
   "dependencies": {
     "@emotion/css": "^11.10.5",
