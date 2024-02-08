@@ -4,16 +4,14 @@ import { Center, Container, Loader, Tabs } from '@mantine/core';
 
 import { colors, Digest, HalfClock, MultiChannel, RingingBell, Translation } from '@novu/design-system';
 
-import { useAuthContext } from '../../../components/providers/AuthProvider';
-import { OnboardingParams } from '../types';
-import { ROUTES } from '../../../constants/routes.enum';
-import { OnboardingUseCasesTabsEnum } from '../../../constants/onboarding-tabs';
-import { When } from '../../../components/utils/When';
+import { useAuthContext } from '../../../../components/providers/AuthProvider';
+import { OnboardingParams } from '../../types';
+import { ROUTES } from '../../../../constants/routes.enum';
+import { OnboardingUseCasesTabsEnum } from '../../../../constants/onboarding-tabs';
 import useStyles from './GetStartedTabs.style';
 
 export function GetStartedTabs() {
   const { currentOrganization } = useAuthContext();
-  const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
   const { classes } = useStyles();
   const navigate = useNavigate();
   const { usecase } = useParams<OnboardingParams>();
@@ -54,11 +52,9 @@ export function GetStartedTabs() {
           <Tabs.Tab value={OnboardingUseCasesTabsEnum.DELAY} icon={<HalfClock style={iconStyle} />}>
             Delay
           </Tabs.Tab>
-          <When truthy={!selfHosted}>
-            <Tabs.Tab value={OnboardingUseCasesTabsEnum.TRANSLATION} icon={<Translation style={iconStyle} />}>
-              Translate
-            </Tabs.Tab>
-          </When>
+          <Tabs.Tab value={OnboardingUseCasesTabsEnum.TRANSLATION} icon={<Translation style={iconStyle} />}>
+            Translate
+          </Tabs.Tab>
         </Tabs.List>
       </Tabs>
       <Outlet />
