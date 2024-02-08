@@ -53,7 +53,6 @@ import {
   SetJobAsFailed,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
-  CreateBillingJob,
 } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';
@@ -61,7 +60,6 @@ import { ACTIVE_WORKERS } from '../../config/worker-init.config';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
-import { Agenda } from '@hokify/agenda';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -69,9 +67,6 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
       if (require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers) {
         modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers);
-      }
-      if (require('@novu/ee-billing')?.BillingModule) {
-        modules.push(require('@novu/ee-billing')?.BillingModule);
       }
     }
   } catch (e) {
@@ -132,7 +127,6 @@ const USE_CASES = [
   CompileInAppTemplate,
   InboundEmailParse,
   ExecutionLogRoute,
-  CreateBillingJob,
 ];
 
 const PROVIDERS: Provider[] = [];
@@ -155,29 +149,10 @@ const memoryQueueService = {
   },
 };
 
-const agendaService = {
-  provide: Agenda,
-  useFactory: async () => {
-    const agenda = new Agenda({ db: { address: process.env.MONGO_URL } });
-
-    await agenda.start();
-
-    return agenda;
-  },
-};
-
 @Module({
   imports: [SharedModule, ...enterpriseImports()],
   controllers: [],
-  providers: [
-    memoryQueueService,
-    agendaService,
-    ...ACTIVE_WORKERS,
-    ...PROVIDERS,
-    ...USE_CASES,
-    ...REPOSITORIES,
-    activeWorkersToken,
-  ],
+  providers: [memoryQueueService, ...ACTIVE_WORKERS, ...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
   exports: [...PROVIDERS, ...USE_CASES, ...REPOSITORIES, activeWorkersToken],
 })
 export class WorkflowModule implements OnApplicationShutdown {
