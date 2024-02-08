@@ -1,12 +1,9 @@
 import {
   DynamicModule,
-  Logger,
   Module,
   OnApplicationShutdown,
   Provider,
 } from '@nestjs/common';
-import { Type } from '@nestjs/common/interfaces/type.interface';
-import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
@@ -28,7 +25,6 @@ import {
 } from '../services/queues';
 import { ActiveJobsMetricWorkerService } from '../services/workers';
 import { JobTopicNameEnum } from '@novu/shared';
-import { CronModule } from './cron.module';
 
 const memoryQueueService = {
   provide: WorkflowInMemoryProviderService,
@@ -43,32 +39,6 @@ const memoryQueueService = {
 
 const INTERNAL_MODULE_PROVIDERS = [memoryQueueService];
 const BASE_PROVIDERS: Provider[] = [ReadinessService];
-
-const enterpriseImports = (): Array<
-  Type | DynamicModule | Promise<DynamicModule> | ForwardReference
-> => {
-  const modules: Array<
-    Type | DynamicModule | Promise<DynamicModule> | ForwardReference
-  > = [];
-  try {
-    if (
-      process.env.NOVU_ENTERPRISE === 'true' ||
-      process.env.CI_EE_TEST === 'true'
-    ) {
-      if (require('@novu/ee-billing')?.BillingModule) {
-        modules.push(require('@novu/ee-billing')?.BillingModule);
-      }
-    }
-  } catch (e) {
-    Logger.error(
-      e,
-      `Unexpected error while importing enterprise modules`,
-      'EnterpriseImport'
-    );
-  }
-
-  return modules;
-};
 
 @Module({
   providers: [],
@@ -111,24 +81,10 @@ export class QueuesModule implements OnApplicationShutdown {
           );
           break;
         case JobTopicNameEnum.STANDARD:
-          const eeProviders: Provider[] = [];
-          try {
-            if (
-              process.env.NOVU_ENTERPRISE === 'true' ||
-              process.env.CI_EE_TEST === 'true'
-            ) {
-              eeProviders.push(
-                require('@novu/ee-billing').BillingUsageCronService
-              );
-            }
-          } catch (e) {
-            Logger.log('BillingUsageCronService not available');
-          }
           tokenList.push(StandardQueueService);
           DYNAMIC_PROVIDERS.push(
             StandardQueueService,
-            StandardQueueServiceHealthIndicator,
-            ...eeProviders
+            StandardQueueServiceHealthIndicator
           );
           break;
         case JobTopicNameEnum.PROCESS_SUBSCRIBER:
@@ -172,7 +128,6 @@ export class QueuesModule implements OnApplicationShutdown {
     });
 
     return {
-      imports: [CronModule, ...enterpriseImports()],
       module: QueuesModule,
       providers: [...DYNAMIC_PROVIDERS, ...INTERNAL_MODULE_PROVIDERS],
       exports: [...DYNAMIC_PROVIDERS],
