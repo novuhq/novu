@@ -10,7 +10,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { checkingForCronJob } from '../../shared/utils';
 
 const LOG_CONTEXT = 'ActiveJobMetricService';
-const METRIC_JOB_ID = 'metric-job';
+const METRIC_JOB_ID = 'metrics-job';
 
 @Injectable()
 export class ActiveJobsMetricService {
@@ -25,11 +25,11 @@ export class ActiveJobsMetricService {
 
       this.activeJobsMetricWorkerService.worker.on('completed', async (job) => {
         await checkingForCronJob(process.env.ACTIVE_CRON_ID);
-        Logger.verbose({ jobId: job.id }, 'Metric Completed Job', LOG_CONTEXT);
+        Logger.log({ jobId: job.id }, 'Metric Completed Job', LOG_CONTEXT);
       });
 
       this.activeJobsMetricWorkerService.worker.on('failed', async (job, error) => {
-        Logger.verbose('Metric Completed Job failed', LOG_CONTEXT, error);
+        Logger.error(error, 'Metric Completed Job failed', LOG_CONTEXT);
       });
 
       this.addToQueueIfMetricJobExists();
@@ -50,10 +50,10 @@ export class ActiveJobsMetricService {
       })
     )
       .then(async (exists: boolean): Promise<void> => {
-        Logger.debug(`metric job exists: ${exists}`, LOG_CONTEXT);
+        Logger.log(`metric job exists: ${exists}`, LOG_CONTEXT);
 
         if (!exists) {
-          Logger.debug(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
+          Logger.log(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
 
           return await this.activeJobsMetricQueueService.add({
             name: METRIC_JOB_ID,
@@ -89,7 +89,7 @@ export class ActiveJobsMetricService {
   private getWorkerProcessor() {
     return async () => {
       return await new Promise<void>(async (resolve, reject): Promise<void> => {
-        Logger.verbose('metric job started', LOG_CONTEXT);
+        Logger.log('metric job started', LOG_CONTEXT);
         const deploymentName = process.env.FLEET_NAME ?? 'default';
 
         try {
