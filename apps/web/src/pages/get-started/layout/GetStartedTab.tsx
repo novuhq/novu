@@ -40,14 +40,13 @@ export function GetStartedTab(props: IGetStartedTabProps) {
   const { steps, Demo, title, description } = UseCasesConst[usecase];
 
   return (
-    <Grid align="stretch">
-      <Grid.Col span={4} mt={12}>
+    <Grid align="stretch" justify={'space-between'}>
+      <Grid.Col span={3} mt={12}>
         <Card title={title} space={8} mb={24}>
-          <Description style={{ color: colors.B60 }}>{description}</Description>
+          <Description>{description}</Description>
         </Card>
         <Timeline steps={steps} />
       </Grid.Col>
-
       <Grid.Col span={8}>
         <Demo />
       </Grid.Col>
@@ -57,4 +56,5 @@ export function GetStartedTab(props: IGetStartedTabProps) {
 
 const Description = styled(Text)`
   color: ${colors.B60};
+  line-height: 1.5rem;
 `;

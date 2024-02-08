@@ -61,6 +61,19 @@ export const InAppUseCaseConst: OnboardingUseCase = {
     },
   ],
   Demo: () => {
-    return <h1>GIF</h1>;
+    return (
+      <div
+        style={{
+          height: '520px',
+          backgroundColor: '#525266',
+          display: 'flex',
+          borderRadius: '2%',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <h1>Placeholder</h1>
+      </div>
+    );
   },
 };
