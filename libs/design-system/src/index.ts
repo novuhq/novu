@@ -9,6 +9,7 @@ export { Input } from './input/Input';
 export { Textarea } from './textarea/Textarea';
 export { Radio } from './radio/Radio';
 export { Select } from './select/Select';
+export type { ISelectProps } from './select/Select.types';
 export { Switch } from './switch/Switch';
 export * from './table';
 export { Tag } from './tag/Tag';

@@ -44,3 +44,15 @@ export async function previewChat({
 }) {
   return api.post('/v1/content-templates/preview/chat', { content, payload, locale });
 }
+
+export async function previewSms({
+  content,
+  payload,
+  locale,
+}: {
+  content?: string | IEmailBlock[];
+  payload: string;
+  locale?: string;
+}): Promise<{ content: string }> {
+  return api.post('/v1/content-templates/preview/sms', { content, payload, locale });
+}
