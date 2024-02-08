@@ -131,7 +131,7 @@ export abstract class CronService implements OnModuleInit, OnModuleDestroy {
   public async remove(jobName: string) {
     this.handleJobOutcome(jobName, 'cancel-started');
     try {
-      await this.remove(jobName);
+      await this.removeJob(jobName);
       this.handleJobOutcome(jobName, 'cancel-completed');
     } catch (error) {
       this.handleJobOutcome(jobName, 'cancel-failed', error);
