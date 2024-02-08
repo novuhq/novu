@@ -26,6 +26,7 @@ import {
   HandleLastFailedJobCommand,
   HandleLastFailedJob,
 } from '../usecases';
+import { BillingUsageCronService } from '@novu/ee-billing';
 
 const LOG_CONTEXT = 'StandardWorker';
 
@@ -39,7 +40,8 @@ export class StandardWorker extends StandardWorkerService {
     @Inject(forwardRef(() => WebhookFilterBackoffStrategy))
     private webhookFilterBackoffStrategy: WebhookFilterBackoffStrategy,
     @Inject(forwardRef(() => WorkflowInMemoryProviderService))
-    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
+    public billingUsageCronService: BillingUsageCronService
   ) {
     super(new BullMqService(workflowInMemoryProviderService));
 

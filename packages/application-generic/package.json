@@ -159,6 +159,7 @@
     "i18next": "^23.7.6"
   },
   "optionalDependencies": {
+    "@novu/ee-billing": "^0.22.0",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {
