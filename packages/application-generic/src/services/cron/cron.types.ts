@@ -14,7 +14,7 @@ export type CronOptions = {
   timezone?: string;
 };
 
-export type CronJobData<TData, TName extends string = string> = {
+export type CronJobData<TData> = {
   /** The name of the job */
   name: string;
   /** The time the job was scheduled to start at */
