@@ -1,5 +1,5 @@
 const nr = require('newrelic');
-import { Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { MetricsService } from '../metrics';
@@ -24,6 +24,7 @@ const METRICS_JOB_NAME = 'send-cron-metrics';
 const METRICS_JOB_CONCURRENCY = 1;
 const METRICS_JOB_LOCK_LIFETIME = 1 * 60 * 1000; // 1 minute
 
+@Injectable()
 export abstract class CronService implements OnModuleInit, OnModuleDestroy {
   private deploymentName = process.env.FLEET_NAME ?? 'default';
   protected abstract cronServiceName: string;

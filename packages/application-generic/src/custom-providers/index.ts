@@ -4,6 +4,7 @@ import {
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
+  MetricsService,
 } from '../services';
 import { GetFeatureFlag } from '../usecases';
 import { Agenda } from '@hokify/agenda';
@@ -64,12 +65,13 @@ export const analyticsService = {
 
 export const cronService = {
   provide: CronService,
-  useFactory: async () => {
+  useFactory: async (metricsService: MetricsService) => {
     const agenda = new Agenda({ db: { address: process.env.MONGO_URL } });
-    const service = new AgendaCronService(agenda);
+    const service = new AgendaCronService(agenda, metricsService);
 
     return service;
   },
+  inject: [MetricsService],
 };
 
 export const distributedLockService = {

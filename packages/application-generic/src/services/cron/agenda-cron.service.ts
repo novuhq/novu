@@ -1,12 +1,12 @@
 import { Agenda } from '@hokify/agenda';
 import { MetricsService } from '../metrics';
-import { CronService } from './cron-base.service';
+import { CronService } from './cron.service';
 import { CronJobProcessor, CronMetrics, CronOptions } from './cron.types';
 
 export class AgendaCronService extends CronService {
   cronServiceName = 'AgendaCronService';
 
-  constructor(private agenda: Agenda, metricsService?: MetricsService) {
+  constructor(private agenda: Agenda, metricsService: MetricsService) {
     super(metricsService);
   }
 
