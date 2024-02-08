@@ -38,7 +38,7 @@ export class AgendaCronService extends CronService {
     });
   }
 
-  public async removeJob(jobName: string) {
+  protected async removeJob(jobName: string) {
     await this.agenda.cancel({ name: jobName });
   }
 
