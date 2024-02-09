@@ -7,16 +7,40 @@ export async function previewEmail({
   payload,
   subject,
   layoutId,
+  locale,
 }: {
   content?: string | IEmailBlock[];
   contentType?: MessageTemplateContentType;
   payload: string;
   subject?: string;
   layoutId?: string;
+  locale?: string;
 }) {
-  return api.post('/v1/content-templates/preview/email', { content, contentType, payload, subject, layoutId });
+  return api.post('/v1/content-templates/preview/email', { content, contentType, payload, subject, layoutId, locale });
 }
 
-export async function previewInApp({ content, cta, payload }: { content?: string; cta: any; payload: string }) {
-  return api.post('/v1/content-templates/preview/in-app', { content, payload, cta });
+export async function previewInApp({
+  content,
+  cta,
+  payload,
+  locale,
+}: {
+  content?: string;
+  cta: any;
+  payload: string;
+  locale?: string;
+}) {
+  return api.post('/v1/content-templates/preview/in-app', { content, payload, cta, locale });
+}
+
+export async function previewChat({
+  content,
+  payload,
+  locale,
+}: {
+  content?: string;
+  payload: string;
+  locale?: string;
+}) {
+  return api.post('/v1/content-templates/preview/chat', { content, payload, locale });
 }

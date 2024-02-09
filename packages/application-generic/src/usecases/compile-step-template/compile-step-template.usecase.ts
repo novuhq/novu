@@ -34,7 +34,9 @@ export class CompileStepTemplate extends CompileTemplateBase {
       await initiateTranslations(
         command.environmentId,
         command.organizationId,
-        command.payload.subscriber?.locale || organization.defaultLocale
+        command.locale ||
+          command.payload.subscriber?.locale ||
+          organization.defaultLocale
       );
     }
 
