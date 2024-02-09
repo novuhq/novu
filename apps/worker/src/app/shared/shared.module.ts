@@ -34,6 +34,7 @@ import {
   CreateNotificationJobs,
   CreateSubscriber,
   CreateTenant,
+  CronModule,
   DalServiceHealthIndicator,
   DigestFilterSteps,
   distributedLockService,
@@ -125,6 +126,7 @@ const PROVIDERS = [
 @Module({
   imports: [
     MetricsModule,
+    CronModule.forRoot([JobTopicNameEnum.CRON]),
     QueuesModule.forRoot(
       UNIQUE_WORKER_DEPENDENCIES.length
         ? [JobTopicNameEnum.ACTIVE_JOBS_METRIC, ...UNIQUE_WORKER_DEPENDENCIES]

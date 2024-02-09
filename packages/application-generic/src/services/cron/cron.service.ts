@@ -1,8 +1,12 @@
 const nr = require('newrelic');
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
+import {
+  JobCronNameEnum,
+  ObservabilityBackgroundTransactionEnum,
+} from '@novu/shared';
 import { MetricsService } from '../metrics';
+import { ACTIVE_CRON_JOBS_TOKEN } from './cron.constants';
 import {
   CronJobData,
   CronJobProcessor,
@@ -20,7 +24,7 @@ const DEFAULT_CRON_OPTIONS: CronOptions = {
 };
 
 const METRICS_CRON_INTERVAL = '*/10 * * * * *'; // every 10 seconds
-const METRICS_JOB_NAME = 'send-cron-metrics';
+const METRICS_JOB_NAME = JobCronNameEnum.SEND_CRON_METRICS;
 const METRICS_JOB_CONCURRENCY = 1;
 const METRICS_JOB_LOCK_LIFETIME = 1 * 60 * 1000; // 1 minute
 
@@ -29,16 +33,19 @@ export abstract class CronService implements OnModuleInit, OnModuleDestroy {
   private deploymentName = process.env.FLEET_NAME ?? 'default';
   protected abstract cronServiceName: string;
 
-  constructor(private metricsService: MetricsService) {}
+  constructor(
+    private metricsService: MetricsService,
+    @Inject(ACTIVE_CRON_JOBS_TOKEN) private activeJobs: JobCronNameEnum[]
+  ) {}
 
   protected abstract addJob<TData = unknown>(
-    jobName: string,
+    jobName: JobCronNameEnum,
     processor: CronJobProcessor<TData>,
     interval: string,
     options: CronOptions
   ): Promise<void>;
 
-  protected abstract removeJob(jobName: string): Promise<void>;
+  protected abstract removeJob(jobName: JobCronNameEnum): Promise<void>;
 
   protected abstract getMetrics(): Promise<CronMetrics>;
 
@@ -70,12 +77,25 @@ export abstract class CronService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
+  private isActiveJob(jobName: JobCronNameEnum): boolean {
+    return this.activeJobs.includes(jobName);
+  }
+
   public async add<TData = unknown>(
-    jobName: string,
+    jobName: JobCronNameEnum,
     processor: (job: CronJobData<TData>) => Promise<void>,
     interval: string,
     options: CronOptions
   ): Promise<void> {
+    if (!this.isActiveJob(jobName)) {
+      Logger.verbose(
+        `The '${jobName}' job is not active and will not be added to the CRON service`,
+        LOG_CONTEXT
+      );
+
+      return;
+    }
+
     const combinedOptions = {
       ...DEFAULT_CRON_OPTIONS,
       ...options,
@@ -127,7 +147,7 @@ export abstract class CronService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  public async remove(jobName: string) {
+  public async remove(jobName: JobCronNameEnum) {
     this.handleJobOutcome(jobName, 'cancel-started');
     try {
       await this.removeJob(jobName);
@@ -167,7 +187,11 @@ export abstract class CronService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  private handleJobOutcome(jobName: string, outcome: string, error?: unknown) {
+  private handleJobOutcome(
+    jobName: JobCronNameEnum,
+    outcome: string,
+    error?: unknown
+  ) {
     const outcomeMessage = `Cron/${this.deploymentName}/${jobName}/${outcome}`;
     this.metricsService.recordMetric(outcomeMessage, 1);
 

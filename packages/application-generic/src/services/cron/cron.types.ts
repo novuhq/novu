@@ -1,3 +1,5 @@
+import { JobCronNameEnum } from '@novu/shared';
+
 export type CronOptions = {
   /** Max number of locked jobs of this kind */
   lockLimit?: number;
@@ -16,7 +18,7 @@ export type CronOptions = {
 
 export type CronJobData<TData> = {
   /** The name of the job */
-  name: string;
+  name: JobCronNameEnum;
   /** The time the job was scheduled to start at */
   startedAt: Date;
   /** The custom data provided for the job run */
@@ -27,11 +29,12 @@ export type CronJobProcessor<TData> = (
   job: CronJobData<TData>
 ) => Promise<void>;
 
-export type CronMetrics = {
-  [jobName: string]: {
+export type CronMetrics = Record<
+  JobCronNameEnum,
+  {
     /** The number of jobs that are currently running */
     active: number;
     /** The number of jobs that are currently waiting to be run */
     waiting: number;
-  };
-};
+  }
+>;

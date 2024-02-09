@@ -68,6 +68,9 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       if (require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers) {
         modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers);
       }
+      if (require('@novu/ee-billing')?.BillingModule) {
+        modules.push(require('@novu/ee-billing')?.BillingModule);
+      }
     }
   } catch (e) {
     Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');

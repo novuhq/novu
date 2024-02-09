@@ -1,14 +1,12 @@
 import { Agenda } from '@hokify/agenda';
-import { MetricsService } from '../metrics';
 import { CronService } from './cron.service';
 import { CronJobProcessor, CronMetrics, CronOptions } from './cron.types';
 
 export class AgendaCronService extends CronService {
   cronServiceName = 'AgendaCronService';
-
-  constructor(private agenda: Agenda, metricsService: MetricsService) {
-    super(metricsService);
-  }
+  private agenda: Agenda = new Agenda({
+    db: { address: process.env.MONGO_URI },
+  });
 
   protected async addJob<TData>(
     jobName: string,

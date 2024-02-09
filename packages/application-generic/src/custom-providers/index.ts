@@ -63,17 +63,6 @@ export const analyticsService = {
   },
 };
 
-export const cronService = {
-  provide: CronService,
-  useFactory: async (metricsService: MetricsService) => {
-    const agenda = new Agenda({ db: { address: process.env.MONGO_URL } });
-    const service = new AgendaCronService(agenda, metricsService);
-
-    return service;
-  },
-  inject: [MetricsService],
-};
-
 export const distributedLockService = {
   provide: DistributedLockService,
   useFactory: async (): Promise<DistributedLockService> => {
