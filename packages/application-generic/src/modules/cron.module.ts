@@ -39,14 +39,11 @@ export const cronService = {
 
 const PROVIDERS: Provider[] = [cronService, AgendaCronService];
 
-@Module({
-  imports: [MetricsModule],
-  providers: [...PROVIDERS],
-  exports: [...PROVIDERS],
-})
+@Module({})
 export class CronModule {
   static forRoot(activeWorkers: JobTopicNameEnum[]): DynamicModule {
     return {
+      imports: [MetricsModule],
       module: CronModule,
       providers: [
         {
@@ -68,8 +65,9 @@ export class CronModule {
             return uniqueActiveJobs;
           },
         },
+        ...PROVIDERS,
       ],
-      exports: [cronService],
+      exports: [...PROVIDERS],
     };
   }
 }

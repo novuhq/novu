@@ -1,4 +1,5 @@
 import { Agenda } from '@hokify/agenda';
+import { JobCronNameEnum } from '@novu/shared';
 import { CronService } from './cron.service';
 import { CronJobProcessor, CronMetrics, CronOptions } from './cron.types';
 
@@ -9,7 +10,7 @@ export class AgendaCronService extends CronService {
   });
 
   protected async addJob<TData>(
-    jobName: string,
+    jobName: JobCronNameEnum,
     processor: CronJobProcessor<TData>,
     interval: string,
     options: CronOptions
