@@ -1,21 +1,19 @@
 import { Agenda } from '@hokify/agenda';
-import { Logger } from '@nestjs/common';
 import { JobCronNameEnum } from '@novu/shared';
 import { CronService } from './cron.service';
 import { CronJobProcessor, CronMetrics, CronOptions } from './cron.types';
-import os from 'os';
+import { MetricsService } from '../metrics';
 
 export class AgendaCronService extends CronService {
   cronServiceName = 'AgendaCronService';
-  private agenda: Agenda = new Agenda({
-    db: { address: process.env.MONGO_URI },
-    /**
-     * Sets the hostname for the Job. Used to debug last host to run the job via the collection
-     *
-     * @see https://github.com/agenda/agenda/tree/master?tab=readme-ov-file#namename
-     */
-    name: os.hostname + '-' + process.pid,
-  });
+
+  constructor(
+    metricsService: MetricsService,
+    activeJobs: JobCronNameEnum[],
+    private agenda: Agenda
+  ) {
+    super(metricsService, activeJobs);
+  }
 
   protected async addJob<TData>(
     jobName: JobCronNameEnum,
@@ -50,7 +48,6 @@ export class AgendaCronService extends CronService {
   }
 
   protected async initialize() {
-    await this.agenda.ready;
     await this.agenda.start();
   }
 
@@ -64,8 +61,8 @@ export class AgendaCronService extends CronService {
     const metrics = Object.entries(stats.jobStatus).reduce(
       (acc, [jobName, status]) => {
         acc[jobName] = {
-          active: status.running,
-          waiting: status.locked,
+          active: status.running ?? 0,
+          waiting: status.locked ?? 0,
         };
 
         return acc;

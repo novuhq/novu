@@ -4,11 +4,9 @@ import {
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
-  MetricsService,
 } from '../services';
 import { GetFeatureFlag } from '../usecases';
-import { Agenda } from '@hokify/agenda';
-import { CronService, AgendaCronService } from '../services/cron';
+import { DalService } from '@novu/dal';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -48,6 +46,16 @@ export const cacheService = {
     const service = new CacheService(factoryCacheInMemoryProviderService);
 
     await service.initialize();
+
+    return service;
+  },
+};
+
+export const dalService = {
+  provide: DalService,
+  useFactory: async () => {
+    const service = new DalService();
+    await service.connect(String(process.env.MONGO_URL));
 
     return service;
   },

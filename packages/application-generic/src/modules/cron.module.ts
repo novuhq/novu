@@ -1,5 +1,6 @@
-import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
+import { DynamicModule, Module, Provider } from '@nestjs/common';
 import { JobCronNameEnum, JobTopicNameEnum } from '@novu/shared';
+import { DalService } from '@novu/dal';
 import {
   ACTIVE_CRON_JOBS_TOKEN,
   AgendaCronService,
@@ -7,6 +8,9 @@ import {
   MetricsService,
 } from '../services';
 import { MetricsModule } from './metrics.module';
+import { dalService as customDalService } from '../custom-providers';
+import os from 'os';
+import { Agenda } from '@hokify/agenda';
 
 /**
  * This map is a little uncomfortable because it depends on the Job topic name, coupling the Cron jobs to the
@@ -28,16 +32,35 @@ export const cronService = {
   provide: CronService,
   useFactory: async (
     metricsService: MetricsService,
-    activeCronJobs: JobCronNameEnum[]
+    activeCronJobs: JobCronNameEnum[],
+    dalService: DalService
   ) => {
-    const service = new AgendaCronService(metricsService, activeCronJobs);
+    const agenda = new Agenda({
+      mongo: dalService.connection.getClient().db() as any,
+      /**
+       * Sets the hostname for the Job. Used to debug last host to run the job via the collection
+       *
+       * @see https://github.com/agenda/agenda/tree/master?tab=readme-ov-file#namename
+       */
+      name: os.hostname + '-' + process.pid,
+    });
+    const service = new AgendaCronService(
+      metricsService,
+      activeCronJobs,
+      agenda
+    );
 
     return service;
   },
-  inject: [MetricsService, ACTIVE_CRON_JOBS_TOKEN],
+  inject: [MetricsService, ACTIVE_CRON_JOBS_TOKEN, DalService],
 };
 
-const PROVIDERS: Provider[] = [cronService, AgendaCronService, MetricsService];
+const PROVIDERS: Provider[] = [
+  cronService,
+  AgendaCronService,
+  MetricsService,
+  customDalService,
+];
 
 @Module({})
 export class CronModule {
@@ -64,10 +87,8 @@ export class CronModule {
             );
 
             const uniqueActiveJobs = [...new Set(activeJobs)];
-            Logger.log(uniqueActiveJobs, 'Active Cron Jobs');
-            Logger.log(runningWorkers, 'Running Workers');
 
-            return [];
+            return uniqueActiveJobs;
           },
         },
         ...PROVIDERS,

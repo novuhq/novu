@@ -61,6 +61,10 @@ export abstract class CronService
 
   protected abstract shutdown(): Promise<void>;
 
+  /**
+   * This method is called when the application has fully started up.
+   * It ensures that all relevant jobs are added to the CRON service before starting up.
+   */
   async onApplicationBootstrap() {
     if (!this.activeJobs || this.activeJobs.length === 0) {
       Logger.verbose(
@@ -69,6 +73,13 @@ export abstract class CronService
       );
 
       return;
+    } else {
+      Logger.log(
+        `Active CRON jobs found for ${
+          this.cronServiceName
+        }: [${this.activeJobs.join(', ')}]`,
+        LOG_CONTEXT
+      );
     }
 
     try {
@@ -76,11 +87,18 @@ export abstract class CronService
         `Starting the '${this.cronServiceName}' CRON service up`,
         LOG_CONTEXT
       );
-      await this.initialize();
-      Logger.log(
-        `Starting up the '${this.cronServiceName}' CRON service has finished`,
-        LOG_CONTEXT
-      );
+      await Promise.race([
+        this.initialize(),
+        new Promise((resolve, reject) =>
+          setTimeout(
+            () =>
+              reject(
+                `Timed out while starting the ${this.cronServiceName} CRON service`
+              ),
+            2000
+          )
+        ),
+      ]);
       await this.createSendCronMetricsJob();
       Logger.log(
         `Starting up the '${this.cronServiceName}' CRON service has finished`,
@@ -88,13 +106,17 @@ export abstract class CronService
       );
     } catch (error) {
       Logger.error(
-        `Failed to start the '${
-          this.cronServiceName
-        }' CRON service: ${JSON.stringify(error)}`,
+        `Failed to start the '${this.cronServiceName}' CRON service`,
+        error,
         LOG_CONTEXT
       );
     }
   }
+
+  /**
+   * This method is called when the application is shutting down.
+   * It ensures that all relevant jobs are removed from the CRON service before shutting down.
+   */
   async onApplicationShutdown() {
     if (!this.activeJobs || this.activeJobs.length === 0) {
       Logger.verbose(
@@ -117,9 +139,8 @@ export abstract class CronService
       );
     } catch (error) {
       Logger.error(
-        `Failed to shut down the '${
-          this.cronServiceName
-        }' CRON service: ${JSON.stringify(error)}`,
+        `Failed to shut down the '${this.cronServiceName}' CRON service`,
+        error,
         LOG_CONTEXT
       );
     }
@@ -244,13 +265,10 @@ export abstract class CronService
     this.metricsService.recordMetric(outcomeMessage, 1);
 
     const eventName = this.kebabToSentenceCase(outcome);
-
-    const logMessage = error
-      ? `${eventName}: '${jobName}' job: ${JSON.stringify(error)}`
-      : `${eventName}: '${jobName}' job`;
+    const logMessage = `${eventName}: '${jobName}' job`;
 
     if (error) {
-      Logger.error(logMessage, LOG_CONTEXT);
+      Logger.error(logMessage, error, LOG_CONTEXT);
     } else {
       Logger.verbose(logMessage, LOG_CONTEXT);
     }
