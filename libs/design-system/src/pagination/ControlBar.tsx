@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { Box, BoxProps } from '@mantine/core';
+import { Box, BoxProps, useMantineTheme } from '@mantine/core';
 import { forwardRef, PropsWithChildren, useContext, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from '../icons';
 import { ControlButton } from './ControlButton';
@@ -69,7 +69,7 @@ export const ControlBar = forwardRef<HTMLDivElement, PropsWithChildren<IControlB
     };
 
     return (
-      <Group ref={ref} className={className}>
+      <Group ref={ref} className={className} theme={useMantineTheme()}>
         {children || (
           <>
             <IconControlButton
