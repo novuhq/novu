@@ -2,7 +2,7 @@ import { createStyles, Group } from '@mantine/core';
 import { format } from 'date-fns';
 import { colors } from '@novu/design-system';
 import { EmailIntegrationInfo } from '../../../../../pages/templates/editor/EmailIntegrationInfo';
-import { Mobile } from '../../common/Mobile';
+import { EmailMobile } from '../../common/EmailMobile';
 import { DateArrow } from './DateArrow';
 import { ItemSkeleton } from './InboxItem';
 
@@ -55,7 +55,7 @@ export const PreviewMobileInbox = ({
 
   return (
     <>
-      <Mobile>
+      <EmailMobile>
         <div className={classes.header}>Inbox</div>
         <div className={classes.content}>
           <div className={classes.InboxItem}>
@@ -74,7 +74,7 @@ export const PreviewMobileInbox = ({
         </div>
         <ItemSkeleton />
         <ItemSkeleton />
-      </Mobile>
+      </EmailMobile>
       <div className={classes.bottom}></div>
     </>
   );
