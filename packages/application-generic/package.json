@@ -159,7 +159,6 @@
     "rxjs": "7.8.1"
   },
   "optionalDependencies": {
-    "@novu/ee-billing": "^0.22.0",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {

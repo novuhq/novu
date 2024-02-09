@@ -65,10 +65,12 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   try {
     if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      Logger.log('Importing enterprise modules', 'EnterpriseImport');
       if (require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers) {
         modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers);
       }
       if (require('@novu/ee-billing')?.BillingModule) {
+        Logger.log('Importing enterprise billing module', 'EnterpriseImport');
         modules.push(require('@novu/ee-billing')?.BillingModule);
       }
     }

@@ -1,4 +1,4 @@
-import { DynamicModule, Module, Provider } from '@nestjs/common';
+import { DynamicModule, Logger, Module, Provider } from '@nestjs/common';
 import { JobCronNameEnum, JobTopicNameEnum } from '@novu/shared';
 import {
   ACTIVE_CRON_JOBS_TOKEN,
@@ -18,7 +18,7 @@ import { MetricsModule } from './metrics.module';
 const cronJobsFromWorkers: Partial<
   Record<JobTopicNameEnum, Array<JobCronNameEnum>>
 > = {
-  [JobTopicNameEnum.CRON]: [
+  [JobTopicNameEnum.STANDARD]: [
     JobCronNameEnum.CREATE_BILLING_USAGE_RECORDS,
     JobCronNameEnum.SEND_CRON_METRICS,
   ],
@@ -37,7 +37,7 @@ export const cronService = {
   inject: [MetricsService, ACTIVE_CRON_JOBS_TOKEN],
 };
 
-const PROVIDERS: Provider[] = [cronService, AgendaCronService];
+const PROVIDERS: Provider[] = [cronService, AgendaCronService, MetricsService];
 
 @Module({})
 export class CronModule {
@@ -49,7 +49,10 @@ export class CronModule {
         {
           provide: ACTIVE_CRON_JOBS_TOKEN,
           useFactory: async () => {
-            const activeJobs: JobCronNameEnum[] = activeWorkers.reduce(
+            const runningWorkers = activeWorkers.length
+              ? activeWorkers
+              : Object.values(JobTopicNameEnum);
+            const activeJobs: JobCronNameEnum[] = runningWorkers.reduce(
               (acc, worker) => {
                 if (cronJobsFromWorkers[worker]) {
                   return [...acc, ...cronJobsFromWorkers[worker]];
@@ -61,8 +64,10 @@ export class CronModule {
             );
 
             const uniqueActiveJobs = [...new Set(activeJobs)];
+            Logger.log(uniqueActiveJobs, 'Active Cron Jobs');
+            Logger.log(runningWorkers, 'Running Workers');
 
-            return uniqueActiveJobs;
+            return [];
           },
         },
         ...PROVIDERS,

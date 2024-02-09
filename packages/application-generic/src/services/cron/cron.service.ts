@@ -1,5 +1,11 @@
 const nr = require('newrelic');
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+  OnApplicationShutdown,
+} from '@nestjs/common';
 import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import {
   JobCronNameEnum,
@@ -29,7 +35,9 @@ const METRICS_JOB_CONCURRENCY = 1;
 const METRICS_JOB_LOCK_LIFETIME = 1 * 60 * 1000; // 1 minute
 
 @Injectable()
-export abstract class CronService implements OnModuleInit, OnModuleDestroy {
+export abstract class CronService
+  implements OnApplicationBootstrap, OnApplicationShutdown
+{
   private deploymentName = process.env.FLEET_NAME ?? 'default';
   protected abstract cronServiceName: string;
 
@@ -53,28 +61,68 @@ export abstract class CronService implements OnModuleInit, OnModuleDestroy {
 
   protected abstract shutdown(): Promise<void>;
 
-  async onModuleInit() {
-    Logger.log(
-      `Starting the '${this.cronServiceName}' CRON service up`,
-      LOG_CONTEXT
-    );
-    await this.initialize();
-    await this.createSendCronMetricsJob();
-    Logger.log(
-      `Starting up the '${this.cronServiceName}' CRON service has finished`,
-      LOG_CONTEXT
-    );
+  async onApplicationBootstrap() {
+    if (!this.activeJobs || this.activeJobs.length === 0) {
+      Logger.verbose(
+        `The '${this.cronServiceName}' CRON service has no active jobs and will not start up`,
+        LOG_CONTEXT
+      );
+
+      return;
+    }
+
+    try {
+      Logger.log(
+        `Starting the '${this.cronServiceName}' CRON service up`,
+        LOG_CONTEXT
+      );
+      await this.initialize();
+      Logger.log(
+        `Starting up the '${this.cronServiceName}' CRON service has finished`,
+        LOG_CONTEXT
+      );
+      await this.createSendCronMetricsJob();
+      Logger.log(
+        `Starting up the '${this.cronServiceName}' CRON service has finished`,
+        LOG_CONTEXT
+      );
+    } catch (error) {
+      Logger.error(
+        `Failed to start the '${
+          this.cronServiceName
+        }' CRON service: ${JSON.stringify(error)}`,
+        LOG_CONTEXT
+      );
+    }
   }
-  async onModuleDestroy() {
-    Logger.log(
-      `Shutting the '${this.cronServiceName}' CRON service down`,
-      LOG_CONTEXT
-    );
-    await this.shutdown();
-    Logger.log(
-      `Shutting down the '${this.cronServiceName}' CRON service has finished`,
-      LOG_CONTEXT
-    );
+  async onApplicationShutdown() {
+    if (!this.activeJobs || this.activeJobs.length === 0) {
+      Logger.verbose(
+        `The '${this.cronServiceName}' CRON service has no active jobs and will not shut down`,
+        LOG_CONTEXT
+      );
+
+      return;
+    }
+
+    try {
+      Logger.log(
+        `Shutting the '${this.cronServiceName}' CRON service down`,
+        LOG_CONTEXT
+      );
+      await this.shutdown();
+      Logger.log(
+        `Shutting down the '${this.cronServiceName}' CRON service has finished`,
+        LOG_CONTEXT
+      );
+    } catch (error) {
+      Logger.error(
+        `Failed to shut down the '${
+          this.cronServiceName
+        }' CRON service: ${JSON.stringify(error)}`,
+        LOG_CONTEXT
+      );
+    }
   }
 
   private isActiveJob(jobName: JobCronNameEnum): boolean {

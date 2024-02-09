@@ -1,12 +1,20 @@
 import { Agenda } from '@hokify/agenda';
+import { Logger } from '@nestjs/common';
 import { JobCronNameEnum } from '@novu/shared';
 import { CronService } from './cron.service';
 import { CronJobProcessor, CronMetrics, CronOptions } from './cron.types';
+import os from 'os';
 
 export class AgendaCronService extends CronService {
   cronServiceName = 'AgendaCronService';
   private agenda: Agenda = new Agenda({
     db: { address: process.env.MONGO_URI },
+    /**
+     * Sets the hostname for the Job. Used to debug last host to run the job via the collection
+     *
+     * @see https://github.com/agenda/agenda/tree/master?tab=readme-ov-file#namename
+     */
+    name: os.hostname + '-' + process.pid,
   });
 
   protected async addJob<TData>(
@@ -42,6 +50,7 @@ export class AgendaCronService extends CronService {
   }
 
   protected async initialize() {
+    await this.agenda.ready;
     await this.agenda.start();
   }
 
