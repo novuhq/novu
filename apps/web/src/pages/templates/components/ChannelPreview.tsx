@@ -1,11 +1,10 @@
 import { StepTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
-import { ChatPreview, EmailPreview, PushPreview } from '../../../components/workflow/Preview';
+import { ChatPreview, EmailPreview, PushPreview, SmsPreview } from '../../../components/workflow/Preview';
 
 import { useNavigateFromEditor } from '../hooks/useNavigateFromEditor';
 import { useStepIndex } from '../hooks/useStepIndex';
 import { ChannelPreviewSidebar } from './ChannelPreviewSidebar';
-import { SmsPreview } from './SmsPreview';
 
 const PreviewComponent = ({ channel }: { channel: StepTypeEnum }) => {
   switch (channel) {

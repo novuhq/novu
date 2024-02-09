@@ -17,7 +17,7 @@ export type ResultType = { html: string; subject: string };
 
 type ErrorType = { error: string; message: string; statusCode: number };
 
-export const usePreviewStep = (options: UseMutationOptions<ResultType, ErrorType, PayloadType> = {}) => {
+export const usePreviewPush = (options: UseMutationOptions<ResultType, ErrorType, PayloadType> = {}) => {
   const { mutateAsync, isLoading } = useMutation<ResultType, ErrorType, PayloadType>(
     ({ content, payload, layoutId, locale, subject }) => previewEmail({ content, payload, layoutId, locale, subject }),
 

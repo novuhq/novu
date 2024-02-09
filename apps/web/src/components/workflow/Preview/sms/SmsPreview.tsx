@@ -4,13 +4,13 @@ import { useAuthController, useDataRef } from '@novu/shared-web';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { useGetLocalesFromContent, usePreviewSms } from '../../../api/hooks';
-import { LocaleSelect } from '../../../components/workflow/Preview/common';
-import { useNavigateToStepEditor } from '../hooks/useNavigateToStepEditor';
-import { useStepFormErrors } from '../hooks/useStepFormErrors';
-import { useStepFormPath } from '../hooks/useStepFormPath';
-import { IForm } from './formTypes';
-import { MobileSimulator } from './phone-simulator';
+import { useGetLocalesFromContent, usePreviewSms } from '../../../../api/hooks';
+import { LocaleSelect } from '../common';
+import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
+import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepFormErrors';
+import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
+import { IForm } from '../../../../pages/templates/components/formTypes';
+import { MobileSimulator } from '../common/phone-simulator';
 import { SmsBubble } from './SmsBubble';
 
 const BodyContainer = styled.div`
