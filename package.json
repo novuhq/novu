@@ -43,6 +43,7 @@
     "build-ee": "nx run-many --target=build-ee --all",
     "build:with-ee": "pnpm build && pnpm build-ee",
     "prebuild": "nx run-many --target=prebuild --all",
+    "prebuild:dev": "nx run-many --target=prebuild -p @novu/api @novu/worker @novu/shared @novu/shared-web @novu/design-system @novu/ws @novu/widget @novu/web",
     "build:api": "nx build @novu/api",
     "build:worker": "nx build @novu/worker",
     "build:ws": "nx build @novu/ws",
