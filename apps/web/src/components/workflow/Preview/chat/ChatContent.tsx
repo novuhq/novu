@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { NovuGreyIcon, PreviewEditOverlay } from '../common';
 import { When } from '../../../utils/When';
 
-export function ChatContent({ isLoading, content, error }) {
+export function ChatContent({ isLoading, content, errorMsg }) {
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -58,8 +58,8 @@ export function ChatContent({ isLoading, content, error }) {
             <PillStyled isDark={isDark}>APP</PillStyled>
             <Text color={isDark ? colors.B60 : colors.B70}>now</Text>
           </Group>
-          {error && error.template?.content && error.template?.content?.message ? (
-            <Text color={colors.error}>{error.template.content.message}</Text>
+          {errorMsg ? (
+            <Text color={colors.error}>{errorMsg}</Text>
           ) : (
             <Text color={isDark ? colors.B80 : colors.B20}>{content}</Text>
           )}

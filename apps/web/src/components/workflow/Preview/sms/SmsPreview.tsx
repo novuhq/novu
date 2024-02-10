@@ -1,18 +1,17 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
-import { useAuthController, useDataRef } from '@novu/shared-web';
 import { ChannelTypeEnum } from '@novu/shared';
+import { useAuthController, useDataRef } from '@novu/shared-web';
 
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useGetLocalesFromContent, usePreviewSms } from '../../../../api/hooks';
-import { LocaleSelect } from '../common';
-import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
-import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepFormErrors';
-import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { IForm } from '../../../../pages/templates/components/formTypes';
-import { MobileSimulator } from '../common';
+import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
+import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
+import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
+import { LocaleSelect, MobileSimulator } from '../common';
 import { SmsBubble } from './SmsBubble';
 
 const BodyContainer = styled.div`
@@ -35,7 +34,8 @@ const LocaleSelectStyled = styled(LocaleSelect)`
 export const SmsPreview = () => {
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
-  const error = useStepFormErrors();
+
+  const templateContentError = useStepFormCombinedErrors();
   const templateContent = useWatch({
     name: `${path}.template.content`,
     control,
@@ -44,7 +44,6 @@ export const SmsPreview = () => {
   const [previewContent, setPreviewContent] = useState(templateContent as string);
   const [selectedLocale, setSelectedLocale] = useState('');
   const previewData = useDataRef({ templateContent });
-  const templateContentError = error?.template?.content?.message;
 
   const { data: locales, isLoading: areLocalesLoading, getLocalesFromContent } = useGetLocalesFromContent();
   const { isLoading: isPreviewContentLoading, getSmsPreview } = usePreviewSms({

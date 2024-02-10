@@ -6,8 +6,10 @@ import { useGetLocalesFromContent, usePreviewPush } from '../../../../api/hooks'
 import { IS_DOCKER_HOSTED } from '../../../../config';
 import { useAuthController, useDataRef, useProcessVariables } from '../../../../hooks';
 import { IForm } from '../../../../pages/templates/components/formTypes';
+import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
 import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepFormErrors';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
+import { formatErrorMessage, mapStepErrors } from '../../../../pages/templates/shared/errors';
 import { LocaleSelect } from '../common';
 import { ContentHeaderStyled, ContentStyled, ContentWrapperStyled } from '../common/mobile/Mobile.styles';
 import { NovuGreyIcon } from '../common/NovuGreyIcon';
@@ -19,7 +21,7 @@ export default function Content() {
 
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
-  const error = useStepFormErrors();
+  const errorMsg = useStepFormCombinedErrors();
 
   const [selectedLocale, setSelectedLocale] = useState<string | undefined>(undefined);
 
@@ -99,7 +101,7 @@ export default function Content() {
           value={selectedLocale}
         />
       </Group>
-      <ContentStyled>
+      <ContentStyled isError={!!errorMsg}>
         <ContentHeaderStyled>
           <Flex align="center" gap={5}>
             <NovuGreyIcon color={isDark ? colors.B30 : colors.BGLight} width="24px" height="24px" />
@@ -118,6 +120,7 @@ export default function Content() {
           </Text>
         </div>
       </ContentStyled>
+      {errorMsg && <Text color={colors.error}>{errorMsg}</Text>}
     </ContentWrapperStyled>
   );
 }

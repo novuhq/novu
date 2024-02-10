@@ -53,7 +53,7 @@ export const Statusbarstyled = styled.div<{ isAndroid: boolean }>`
   padding-top: ${({ isAndroid }) => (isAndroid ? '15px' : '0')};
 `;
 
-export const ContentStyled = styled.div`
+export const ContentStyled = styled.div<{ isError: boolean }>`
   display: flex;
   padding: 16px;
   flex-direction: column;
@@ -63,6 +63,7 @@ export const ContentStyled = styled.div`
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.6);
   backdrop-filter: blur(20px);
+  ${({ isError }) => isError && `border: 1px solid ${colors.error};`}
 `;
 
 export const ContentWrapperStyled = styled.div`

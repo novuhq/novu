@@ -13,6 +13,7 @@ import { ChatContent } from './ChatContent';
 import { ChatInput } from './ChatInput';
 import { previewChat } from '../../../../api/content-templates';
 import { errorMessage } from '../../../../utils/notifications';
+import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
 
 export function ChatPreview() {
   const { organization } = useAuthController();
@@ -30,7 +31,8 @@ export function ChatPreview() {
 
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
-  const error = useStepFormErrors();
+
+  const errorMsg = useStepFormCombinedErrors();
 
   const content = useWatch({
     name: `${path}.template.content`,
@@ -92,7 +94,7 @@ export function ChatPreview() {
         }
         labelPosition="center"
       />
-      <ChatContent isLoading={isLoading || isLoadingLocales} content={compiledContent} error={error} />
+      <ChatContent isLoading={isLoading || isLoadingLocales} content={compiledContent} errorMsg={errorMsg} />
       <ChatInput />
     </div>
   );
