@@ -1,6 +1,8 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
 import { useAuthController, useDataRef } from '@novu/shared-web';
+import { ChannelTypeEnum } from '@novu/shared';
+
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
@@ -10,7 +12,7 @@ import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNa
 import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepFormErrors';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { IForm } from '../../../../pages/templates/components/formTypes';
-import { MobileSimulator } from '../common/phone-simulator';
+import { MobileSimulator } from '../common';
 import { SmsBubble } from './SmsBubble';
 
 const BodyContainer = styled.div`
@@ -74,7 +76,7 @@ export const SmsPreview = () => {
   const isBubbleLoading = !templateContentError && isPreviewContentLoading;
 
   return (
-    <MobileSimulator>
+    <MobileSimulator channel={ChannelTypeEnum.SMS}>
       <BodyContainer>
         <LocaleSelectStyled
           isLoading={areLocalesLoading}
