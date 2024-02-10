@@ -6,6 +6,9 @@ export class CompileStepTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   content: string;
 
+  @IsOptional()
+  title?: string;
+
   @IsDefined()
   payload: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
