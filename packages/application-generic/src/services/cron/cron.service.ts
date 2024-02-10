@@ -36,7 +36,7 @@ const CRON_STARTUP_RETRIES = 3;
 const METRICS_CRON_INTERVAL = CronExpressionEnum.EVERY_10_SECONDS;
 const METRICS_JOB_NAME = JobCronNameEnum.SEND_CRON_METRICS;
 const METRICS_JOB_CONCURRENCY = 1;
-const METRICS_JOB_LOCK_LIFETIME = 1 * 60 * 1000; // 1 minute in milleseconds
+const METRICS_JOB_LOCK_LIFETIME = 1 * 60 * 1000; // 1 minute in milliseconds
 
 @Injectable()
 export abstract class CronService
