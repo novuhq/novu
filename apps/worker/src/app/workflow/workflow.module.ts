@@ -56,7 +56,7 @@ import {
 } from './usecases';
 
 import { SharedModule } from '../shared/shared.module';
-import { ACTIVE_WORKERS } from '../../config/worker-init.config';
+import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.config';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
@@ -71,7 +71,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       }
       if (require('@novu/ee-billing')?.BillingModule) {
         Logger.log('Importing enterprise billing module', 'EnterpriseImport');
-        modules.push(require('@novu/ee-billing')?.BillingModule);
+        modules.push(require('@novu/ee-billing')?.BillingModule.forRoot(workersToProcess));
       }
     }
   } catch (e) {
