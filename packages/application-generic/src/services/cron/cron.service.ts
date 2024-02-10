@@ -6,7 +6,6 @@ import {
   OnApplicationBootstrap,
   OnApplicationShutdown,
 } from '@nestjs/common';
-import { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import {
   JobCronNameEnum,
   ObservabilityBackgroundTransactionEnum,
@@ -15,6 +14,7 @@ import { MetricsService } from '../metrics';
 import { ACTIVE_CRON_JOBS_TOKEN } from './cron.constants';
 import {
   CronJobData,
+  CronMetricsEventEnum,
   CronJobProcessor,
   CronMetrics,
   CronOptions,
@@ -29,6 +29,7 @@ const DEFAULT_CRON_OPTIONS: CronOptions = {
   timezone: 'Etc/UTC',
 };
 const CRON_STARTUP_TIMEOUT = 2000; // 2 seconds
+const CRON_STARTUP_RETRIES = 3;
 
 const METRICS_CRON_INTERVAL = '*/10 * * * * *'; // every 10 seconds
 const METRICS_JOB_NAME = JobCronNameEnum.SEND_CRON_METRICS;
@@ -88,8 +89,8 @@ export abstract class CronService
         `Starting the '${this.cronServiceName}' CRON service up`,
         LOG_CONTEXT
       );
-      await Promise.race([
-        this.initialize(),
+      let retries = CRON_STARTUP_RETRIES;
+      const createTimeoutPromise = () =>
         new Promise((resolve, reject) =>
           setTimeout(
             () =>
@@ -98,8 +99,23 @@ export abstract class CronService
               ),
             CRON_STARTUP_TIMEOUT
           )
-        ),
-      ]);
+        );
+
+      while (retries > 0) {
+        try {
+          await Promise.race([this.initialize(), createTimeoutPromise()]);
+          break; // If the promise is resolved, break the loop
+        } catch (error) {
+          retries--;
+          if (retries === 0) throw error; // If it's the last retry, throw the error
+          Logger.warn(
+            `Attempt ${3 - retries} to start the '${
+              this.cronServiceName
+            }' CRON service failed. Retrying...`,
+            LOG_CONTEXT
+          );
+        }
+      }
       await this.createSendCronMetricsJob();
       Logger.log(
         `Starting up the '${this.cronServiceName}' CRON service has finished`,
@@ -107,7 +123,7 @@ export abstract class CronService
       );
     } catch (error) {
       Logger.error(
-        `Failed to start the '${this.cronServiceName}' CRON service`,
+        `Failed to start the '${this.cronServiceName}' CRON service after ${CRON_STARTUP_RETRIES} retries`,
         error,
         LOG_CONTEXT
       );
@@ -170,7 +186,7 @@ export abstract class CronService
       ...DEFAULT_CRON_OPTIONS,
       ...options,
     };
-    this.handleJobOutcome(jobName, 'create-started');
+    this.handleJobOutcome(jobName, CronMetricsEventEnum.CREATE_STARTED);
     try {
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const _this = this;
@@ -184,16 +200,23 @@ export abstract class CronService
               return new Promise<void>(async (resolve, reject) => {
                 const transaction = nr.getTransaction();
                 try {
-                  _this.handleJobOutcome(jobName, 'started');
+                  _this.handleJobOutcome(jobName, CronMetricsEventEnum.STARTED);
                   await processor({
                     name: jobName,
                     startedAt: job.startedAt,
                     data: job.data as TData,
                   });
-                  _this.handleJobOutcome(jobName, 'completed');
+                  _this.handleJobOutcome(
+                    jobName,
+                    CronMetricsEventEnum.COMPLETED
+                  );
                   resolve();
                 } catch (error) {
-                  _this.handleJobOutcome(jobName, 'failed', error);
+                  _this.handleJobOutcome(
+                    jobName,
+                    CronMetricsEventEnum.FAILED,
+                    error
+                  );
                   reject(error);
                 } finally {
                   transaction.end();
@@ -210,20 +233,20 @@ export abstract class CronService
           priority: combinedOptions.priority,
         }
       );
-      this.handleJobOutcome(jobName, 'create-completed');
+      this.handleJobOutcome(jobName, CronMetricsEventEnum.CREATE_COMPLETED);
     } catch (error) {
-      this.handleJobOutcome(jobName, 'create-failed', error);
+      this.handleJobOutcome(jobName, CronMetricsEventEnum.CREATE_FAILED, error);
       throw error;
     }
   }
 
   public async remove(jobName: JobCronNameEnum) {
-    this.handleJobOutcome(jobName, 'cancel-started');
+    this.handleJobOutcome(jobName, CronMetricsEventEnum.CANCEL_STARTED);
     try {
       await this.removeJob(jobName);
-      this.handleJobOutcome(jobName, 'cancel-completed');
+      this.handleJobOutcome(jobName, CronMetricsEventEnum.CANCEL_COMPLETED);
     } catch (error) {
-      this.handleJobOutcome(jobName, 'cancel-failed', error);
+      this.handleJobOutcome(jobName, CronMetricsEventEnum.CANCEL_FAILED, error);
       throw error;
     }
   }
@@ -247,11 +270,11 @@ export abstract class CronService
 
     Object.entries(metrics).forEach(([jobName, jobMetrics]) => {
       this.metricsService.recordMetric(
-        `Cron/${this.deploymentName}/${jobName}/active`,
+        `Cron/${this.deploymentName}/${jobName}/${CronMetricsEventEnum.ACTIVE}`,
         jobMetrics.active
       );
       this.metricsService.recordMetric(
-        `Cron/${this.deploymentName}/${jobName}/waiting`,
+        `Cron/${this.deploymentName}/${jobName}/${CronMetricsEventEnum.WAITING}`,
         jobMetrics.waiting
       );
     });
@@ -259,13 +282,13 @@ export abstract class CronService
 
   private handleJobOutcome(
     jobName: JobCronNameEnum,
-    outcome: string,
+    event: CronMetricsEventEnum,
     error?: unknown
   ) {
-    const outcomeMessage = `Cron/${this.deploymentName}/${jobName}/${outcome}`;
+    const outcomeMessage = `Cron/${this.deploymentName}/${jobName}/${event}`;
     this.metricsService.recordMetric(outcomeMessage, 1);
 
-    const eventName = this.kebabToSentenceCase(outcome);
+    const eventName = this.kebabToSentenceCase(event);
     const logMessage = `${eventName}: '${jobName}' job`;
 
     if (error) {

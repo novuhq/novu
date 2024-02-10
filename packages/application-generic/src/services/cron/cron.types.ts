@@ -38,3 +38,17 @@ export type CronMetrics = Record<
     waiting: number;
   }
 >;
+
+export enum CronMetricsEventEnum {
+  ACTIVE = 'active',
+  WAITING = 'waiting',
+  STARTED = 'started',
+  COMPLETED = 'completed',
+  FAILED = 'failed',
+  CREATE_STARTED = 'create-started',
+  CREATE_COMPLETED = 'create-completed',
+  CREATE_FAILED = 'create-failed',
+  CANCEL_STARTED = 'cancel-started',
+  CANCEL_COMPLETED = 'cancel-completed',
+  CANCEL_FAILED = 'cancel-failed',
+}
