@@ -1,13 +1,11 @@
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 import { defineConfig } from 'vite';
-import { extname, relative, resolve } from 'path';
-import { fileURLToPath } from 'node:url';
 import dts from 'vite-plugin-dts';
 import { libInjectCss } from 'vite-plugin-lib-inject-css';
-import { glob } from 'glob';
 
 const LIB_DIR = 'src';
-const OUTPUT_FORMAT = 'cjs';
+const OUTPUT_FORMAT = 'es';
 
 export default defineConfig({
   plugins: [
@@ -18,6 +16,7 @@ export default defineConfig({
     // generate .d.ts files
     dts({ include: [LIB_DIR] }),
   ],
+
   build: {
     outDir: `./dist/${OUTPUT_FORMAT}`,
     sourcemap: true,
@@ -27,7 +26,7 @@ export default defineConfig({
       formats: [OUTPUT_FORMAT],
     },
     rollupOptions: {
-      external: ['react', 'react/jsx-runtime'],
+      external: ['react', 'react/jsx-runtime.js'],
       // input: Object.fromEntries(
       //   // https://rollupjs.org/configuration-options/#input
       //   glob.sync(`${LIB_DIR}/**/*.{ts,tsx}`).map((file) => [

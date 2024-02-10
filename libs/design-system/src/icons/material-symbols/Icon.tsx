@@ -3,7 +3,6 @@ import { IIconAxes, IIconStyleProps, IconName } from './Icon.types';
 import { DEFAULT_ICON_GRADE, DEFAULT_ICON_OPTICAL_SIZE, DEFAULT_ICON_SIZE, DEFAULT_ICON_WEIGHT } from './Icon.const';
 import React from 'react';
 import { colors } from '../../config';
-import './Icon.css';
 
 const StyledIcon = styled.span<IIconAxes & IIconStyleProps>(
   ({ theme, isFilled, weight, grade, opticalSize, size, unsafeColor: color }) => `

@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+import '@novu/design-system/dist/es/index.css';
+
 ReactDOM.render(
   <React.StrictMode>
     <App />

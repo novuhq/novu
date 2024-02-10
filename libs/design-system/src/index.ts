@@ -1,3 +1,5 @@
+import './index.css';
+
 export { Button } from './button/Button';
 export { ActionButton } from './button/ActionButton';
 export { PlusButton } from './button/PlusButton';

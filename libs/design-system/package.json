@@ -6,12 +6,12 @@
   "private": true,
   "license": "ISC",
   "author": "",
-  "main": "dist/cjs/index.js",
-  "module": "dist/esm/index.mjs",
+  "main": "dist/es/index.js",
+  "module": "dist/es/index.mjs",
   "types": "dist/types/index.d.ts",
   "files": [
     "dist/cjs",
-    "dist/esm",
+    "dist/es",
     "dist/types"
   ],
   "sideEffects": [
@@ -94,7 +94,7 @@
     "vitest": "^1.2.1"
   },
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0",
-    "react-dom": "^16.8.0 || ^17.0.0"
+    "react": "^17.0.0",
+    "react-dom": "^17.0.0"
   }
 }
