@@ -110,7 +110,7 @@ export default function Content() {
           <Text color={colors.B60}>now</Text>
         </ContentHeaderStyled>
         <div>
-          <Text color={colors.B15} weight="bold">
+          <Text color={colors.B15} weight="bold" rows={1}>
             {parsedPreviewState.title || ''}
           </Text>
           <Text color={colors.B15} rows={3}>
