@@ -1,4 +1,4 @@
-import { Flex, Group, useMantineColorScheme } from '@mantine/core';
+import { Flex, Group, Skeleton, Stack, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
@@ -13,6 +13,7 @@ import { formatErrorMessage, mapStepErrors } from '../../../../pages/templates/s
 import { LocaleSelect } from '../common';
 import { ContentHeaderStyled, ContentStyled, ContentWrapperStyled } from '../common/mobile/Mobile.styles';
 import { NovuGreyIcon } from '../common/NovuGreyIcon';
+import styled from '@emotion/styled';
 
 export default function Content() {
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
@@ -59,7 +60,7 @@ export default function Content() {
 
   const previewData = useDataRef({ content, title });
 
-  const { data: locales, getLocalesFromContent } = useGetLocalesFromContent();
+  const { data: locales, getLocalesFromContent, isLoading: isLocalesLoading } = useGetLocalesFromContent();
 
   useEffect(() => {
     getPushPreview({
@@ -95,32 +96,71 @@ export default function Content() {
     <ContentWrapperStyled>
       <Group>
         <LocaleSelect
-          isLoading={false}
+          isLoading={isLocalesLoading}
           locales={locales || []}
           onLocaleChange={onLocaleChange}
           value={selectedLocale}
         />
       </Group>
       <ContentStyled isError={!!errorMsg}>
-        <ContentHeaderStyled>
-          <Flex align="center" gap={5}>
-            <NovuGreyIcon color={isDark ? colors.B30 : colors.BGLight} width="24px" height="24px" />
-            <Text color={isDark ? colors.B30 : colors.BGLight} weight="bold">
-              Your App
+        {isLoading ? (
+          <HeaderSkeleton />
+        ) : (
+          <ContentHeaderStyled>
+            <Flex align="center" gap={5}>
+              <NovuGreyIcon color={isDark ? colors.B30 : colors.BGLight} width="24px" height="24px" />
+              <Text color={isDark ? colors.B30 : colors.BGLight} weight="bold">
+                Your App
+              </Text>
+            </Flex>
+            <Text color={colors.B60}>now</Text>
+          </ContentHeaderStyled>
+        )}
+        {isLoading ? (
+          <ContentSkeleton />
+        ) : (
+          <div>
+            <Text color={colors.B15} weight="bold" rows={1}>
+              {parsedPreviewState.title || ''}
             </Text>
-          </Flex>
-          <Text color={colors.B60}>now</Text>
-        </ContentHeaderStyled>
-        <div>
-          <Text color={colors.B15} weight="bold" rows={1}>
-            {parsedPreviewState.title || ''}
-          </Text>
-          <Text color={colors.B15} rows={3}>
-            {parsedPreviewState.content || ''}
-          </Text>
-        </div>
+            <Text color={colors.B15} rows={3}>
+              {parsedPreviewState.content || ''}
+            </Text>
+          </div>
+        )}
       </ContentStyled>
-      {errorMsg && <Text color={colors.error}>{errorMsg}</Text>}
+      {errorMsg && !isLoading && <Text color={colors.error}>{errorMsg}</Text>}
     </ContentWrapperStyled>
   );
 }
+
+const HeaderSkeleton = () => {
+  return (
+    <Group position="apart" noWrap>
+      <Group spacing={16} noWrap>
+        <SkeletonStyled radius={6} height={24} width={24} />
+        <SkeletonStyled height={14} width={80} radius={6} />
+      </Group>
+      <SkeletonStyled height={14} width={40} radius={6} />
+    </Group>
+  );
+};
+
+const ContentSkeleton = () => {
+  return (
+    <Stack spacing={10} w="100%">
+      <SkeletonStyled height={14} width="70%" radius={6} />
+      <SkeletonStyled height={14} width="35%" radius={6} />
+    </Stack>
+  );
+};
+
+const SkeletonStyled = styled(Skeleton)`
+  &::before {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  &::after {
+    background: rgba(0, 0, 0, 0.08);
+  }
+`;
