@@ -12,7 +12,6 @@ export enum JobTopicNameEnum {
   WEB_SOCKETS = 'ws_socket_queue',
   WORKFLOW = 'trigger-handler',
   PROCESS_SUBSCRIBER = 'process-subscriber',
-  CRON = 'cron',
 }
 
 export enum ObservabilityBackgroundTransactionEnum {
