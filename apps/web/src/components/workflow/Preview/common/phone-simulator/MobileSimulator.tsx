@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { colors, shadows } from '@novu/design-system';
 
@@ -9,9 +9,11 @@ import { AndroidIndicatorsIcon } from './AndroidIndicatorsIcon';
 import { IOSKeyboard } from './IOSKeyboard';
 import { AndroidKeyboard } from './AndroidKeyboard';
 import { useMantineColorScheme } from '@mantine/core';
+import { ChannelTypeEnum } from '@novu/shared';
+import { When } from '../../../../utils/When';
 
 const borderRadius = 40;
-const MobileSimulatorBody = styled.div`
+const MobileSimulatorBody = styled.div<{ channel: ChannelTypeEnum; isIOS: boolean }>`
   position: relative;
   display: flex;
   flex-direction: column;
@@ -23,6 +25,19 @@ const MobileSimulatorBody = styled.div`
   border: 24px solid ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B15 : colors.BGLight)};
   box-shadow: ${shadows.dark};
   background: ${({ theme }) => (theme.colorScheme === 'dark' ? '#4b4b51' : colors.white)};
+
+  ${({ channel, isIOS }) => {
+    if (channel === ChannelTypeEnum.PUSH) {
+      return `
+      background-position: center;
+      background-repeat: no-repeat;
+      background: linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.6) 100%),
+        url(/static/images/mobilePreview/${isIOS ? 'iphone' : 'android'}.jpeg) no-repeat center
+          center / cover,
+        lightgray;
+    `;
+    }
+  }}
 `;
 
 const Notch = styled.div`
@@ -76,12 +91,12 @@ const TimeIconStyled = styled(({ isVisible }: { isVisible: boolean }) => (
   <TimeIcon style={{ opacity: isVisible ? 1 : 0 }} />
 ))``;
 
-export const MobileSimulator: React.FC = ({ children }) => {
+export const MobileSimulator = ({ children, channel }: { channel: ChannelTypeEnum; children: React.ReactNode }) => {
   const [isIOS, setIsIOS] = useState(true);
   const { colorScheme } = useMantineColorScheme();
 
   return (
-    <MobileSimulatorBody>
+    <MobileSimulatorBody isIOS={isIOS} channel={channel}>
       {isIOS ? <Notch /> : <Camera />}
       <IndicatorsContainer>
         <TimeIconStyled isVisible={isIOS} />
@@ -91,11 +106,13 @@ export const MobileSimulator: React.FC = ({ children }) => {
         <PhonePlatformSwitch checked={isIOS} onChange={() => setIsIOS((old) => !old)} />
       </SwitchContainer>
       {children}
-      {isIOS ? (
-        <IOSKeyboard isDarkMode={colorScheme === 'dark'} />
-      ) : (
-        <AndroidKeyboard isDarkMode={colorScheme === 'dark'} />
-      )}
+      <When truthy={channel === ChannelTypeEnum.SMS}>
+        {isIOS ? (
+          <IOSKeyboard isDarkMode={colorScheme === 'dark'} />
+        ) : (
+          <AndroidKeyboard isDarkMode={colorScheme === 'dark'} />
+        )}
+      </When>
     </MobileSimulatorBody>
   );
 };
