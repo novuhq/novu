@@ -38,7 +38,8 @@ export const cronService = {
     const agenda = new Agenda({
       mongo: dalService.connection.getClient().db() as any,
       /**
-       * Sets the hostname for the Job. Used to debug last host to run the job via the collection
+       * Sets the hostname for the Job. Used to debug last host to run the job via
+       * the collection's `lastModifiedBy` attribute.
        *
        * @see https://github.com/agenda/agenda/tree/master?tab=readme-ov-file#namename
        */
