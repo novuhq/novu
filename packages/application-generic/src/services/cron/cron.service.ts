@@ -109,7 +109,7 @@ export abstract class CronService
           retries--;
           if (retries === 0) throw error; // If it's the last retry, throw the error
           Logger.warn(
-            `Attempt ${3 - retries} to start the '${
+            `Attempt ${CRON_STARTUP_RETRIES - retries} to start the '${
               this.cronServiceName
             }' CRON service failed. Retrying...`,
             LOG_CONTEXT
