@@ -1,4 +1,4 @@
-import { JobCronNameEnum } from '@novu/shared';
+import { JobCronNameEnum, Timezone } from '@novu/shared';
 
 export type CronOptions = {
   /** Max number of locked jobs of this kind */
@@ -13,7 +13,7 @@ export type CronOptions = {
    * The IANA timezone that the job should be run in.
    * @see https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
    */
-  timezone?: string;
+  timezone?: Timezone;
 };
 
 export type CronJobData<TData> = {

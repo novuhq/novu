@@ -7,8 +7,10 @@ import {
   OnApplicationShutdown,
 } from '@nestjs/common';
 import {
+  CronExpressionEnum,
   JobCronNameEnum,
   ObservabilityBackgroundTransactionEnum,
+  TimezoneEnum,
 } from '@novu/shared';
 import { MetricsService } from '../metrics';
 import { ACTIVE_CRON_JOBS_TOKEN } from './cron.constants';
@@ -26,15 +28,15 @@ const DEFAULT_CRON_OPTIONS: CronOptions = {
   lockLifetime: 10000,
   priority: 0,
   concurrency: 1,
-  timezone: 'Etc/UTC',
+  timezone: TimezoneEnum.ETC_UTC,
 };
-const CRON_STARTUP_TIMEOUT = 2000; // 2 seconds
+const CRON_STARTUP_TIMEOUT = 2000; // 2 seconds in milliseconds
 const CRON_STARTUP_RETRIES = 3;
 
-const METRICS_CRON_INTERVAL = '*/10 * * * * *'; // every 10 seconds
+const METRICS_CRON_INTERVAL = CronExpressionEnum.EVERY_10_SECONDS;
 const METRICS_JOB_NAME = JobCronNameEnum.SEND_CRON_METRICS;
 const METRICS_JOB_CONCURRENCY = 1;
-const METRICS_JOB_LOCK_LIFETIME = 1 * 60 * 1000; // 1 minute
+const METRICS_JOB_LOCK_LIFETIME = 1 * 60 * 1000; // 1 minute in milleseconds
 
 @Injectable()
 export abstract class CronService
