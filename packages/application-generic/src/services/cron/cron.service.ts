@@ -28,6 +28,7 @@ const DEFAULT_CRON_OPTIONS: CronOptions = {
   concurrency: 1,
   timezone: 'Etc/UTC',
 };
+const CRON_STARTUP_TIMEOUT = 2000; // 2 seconds
 
 const METRICS_CRON_INTERVAL = '*/10 * * * * *'; // every 10 seconds
 const METRICS_JOB_NAME = JobCronNameEnum.SEND_CRON_METRICS;
@@ -95,7 +96,7 @@ export abstract class CronService
               reject(
                 `Timed out while starting the ${this.cronServiceName} CRON service`
               ),
-            2000
+            CRON_STARTUP_TIMEOUT
           )
         ),
       ]);
