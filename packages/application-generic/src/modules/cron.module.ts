@@ -36,7 +36,7 @@ export const cronService = {
     dalService: DalService
   ) => {
     const agenda = new Agenda({
-      db: { address: dalService.connection.host },
+      mongo: dalService.connection.getClient().db() as any,
       /**
        * Sets the hostname for the Job. Used to debug last host to run the job via the collection
        *
