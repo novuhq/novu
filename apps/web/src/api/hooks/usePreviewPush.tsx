@@ -1,25 +1,23 @@
 import { errorMessage } from '@novu/design-system';
-import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
-import { IS_DOCKER_HOSTED } from '@novu/shared-web';
+import { IEmailBlock } from '@novu/shared';
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { useCallback } from 'react';
-import { previewEmail } from '../content-templates';
+import { previewPush } from '../content-templates';
 
-export type PayloadType = {
-  content?: string;
+type PayloadType = {
+  content?: string | IEmailBlock[];
   payload: string;
-  subject?: string;
-  layoutId?: string;
+  title?: string;
   locale?: string;
 };
 
-export type ResultType = { html: string; subject: string };
+type ResultType = { content: string; title: string };
 
 type ErrorType = { error: string; message: string; statusCode: number };
 
 export const usePreviewPush = (options: UseMutationOptions<ResultType, ErrorType, PayloadType> = {}) => {
   const { mutateAsync, isLoading } = useMutation<ResultType, ErrorType, PayloadType>(
-    ({ content, payload, layoutId, locale, subject }) => previewEmail({ content, payload, layoutId, locale, subject }),
+    ({ content, payload, locale, title }) => previewPush({ content, payload, locale, title }),
 
     {
       onError: (e: any) => {
@@ -31,25 +29,20 @@ export const usePreviewPush = (options: UseMutationOptions<ResultType, ErrorType
     }
   );
 
-  const getEmailPreviewCallback = useCallback(
-    async ({ content, payload, layoutId, locale, subject }: PayloadType) => {
-      if (IS_DOCKER_HOSTED) {
-        return;
-      }
-
+  const getPushPreviewCallback = useCallback(
+    async ({ content, payload, locale, title: subject }: PayloadType) => {
       await mutateAsync({
         content,
         payload,
-        layoutId,
         locale,
-        subject,
+        title: subject,
       });
     },
     [mutateAsync]
   );
 
   return {
-    getEmailPreview: getEmailPreviewCallback,
+    getPushPreview: getPushPreviewCallback,
     isLoading,
   };
 };
