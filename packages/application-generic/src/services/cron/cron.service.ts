@@ -129,7 +129,6 @@ export abstract class CronService
         error,
         LOG_CONTEXT
       );
-      throw error;
     }
   }
 
