@@ -7,8 +7,8 @@ import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
 import { Grid, SegmentedControl, useMantineTheme } from '@mantine/core';
 import { TestSendEmail } from './TestSendEmail';
 import { colors } from '@novu/design-system';
-import { MobileIcon } from '../../../../components/workflow/Preview/Email/PreviewSegment/MobileIcon';
-import { WebIcon } from '../../../../components/workflow/Preview/Email/PreviewSegment/WebIcon';
+import { MobileIcon } from '../../../../components/workflow/Preview/email/PreviewSegment/MobileIcon';
+import { WebIcon } from '../../../../components/workflow/Preview/email/PreviewSegment/WebIcon';
 import { useHotkeys } from '@mantine/hooks';
 import { VariablesManagement } from './variables-management/VariablesManagement';
 import {

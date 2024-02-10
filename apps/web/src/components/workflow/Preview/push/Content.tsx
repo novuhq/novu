@@ -1,13 +1,16 @@
 import { Flex, Group, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
-import React, { useState } from 'react';
-import { NovuGreyIcon } from '../common/NovuGreyIcon';
-import { ContentHeaderStyled, ContentStyled, ContentWrapperStyled } from '../common/mobile/Mobile.styles';
-import { LocaleSelect } from '../common';
+import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
+import { useGetLocalesFromContent, usePreviewPush } from '../../../../api/hooks';
+import { IS_DOCKER_HOSTED } from '../../../../config';
+import { useAuthController, useDataRef, useProcessVariables } from '../../../../hooks';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepFormErrors';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
+import { LocaleSelect } from '../common';
+import { ContentHeaderStyled, ContentStyled, ContentWrapperStyled } from '../common/mobile/Mobile.styles';
+import { NovuGreyIcon } from '../common/NovuGreyIcon';
 
 export default function Content() {
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
@@ -18,9 +21,20 @@ export default function Content() {
   const path = useStepFormPath();
   const error = useStepFormErrors();
 
+  const [selectedLocale, setSelectedLocale] = useState<string | undefined>(undefined);
+
   const [parsedPreviewState, setParsedPreviewState] = useState({
     title: '',
     content: '',
+  });
+
+  const { getPushPreview, isLoading } = usePreviewPush({
+    onSuccess: (result) => {
+      setParsedPreviewState({
+        content: result.content,
+        title: result.title,
+      });
+    },
   });
 
   const title = useWatch({
@@ -33,15 +47,58 @@ export default function Content() {
     control,
   });
 
+  const variables = useWatch({
+    name: `${path}.template.variables`,
+    control,
+  });
+
+  const { organization } = useAuthController();
+  const processedVariables = useProcessVariables(variables);
+
+  const previewData = useDataRef({ content, title });
+
+  const { data: locales, getLocalesFromContent } = useGetLocalesFromContent();
+
+  useEffect(() => {
+    getPushPreview({
+      content: previewData.current.content,
+      title: previewData.current.title,
+      locale: selectedLocale,
+      payload: processedVariables,
+    });
+  }, [getPushPreview, previewData, processedVariables, selectedLocale]);
+
+  useEffect(() => {
+    if (!IS_DOCKER_HOSTED) {
+      /*
+       * combining title and content to get locales based upon variables in both title and content
+       * The api is not concerned about the content type, it will parse the given string and return the locales
+       */
+      const combinedContent = `${previewData.current.title} ${previewData.current.content}`;
+      getLocalesFromContent({
+        content: combinedContent,
+      });
+    }
+  }, [getLocalesFromContent, previewData]);
+
+  useEffect(() => {
+    setSelectedLocale(organization?.defaultLocale);
+  }, [organization?.defaultLocale]);
+
+  const onLocaleChange = (locale: string) => {
+    setSelectedLocale(locale);
+  };
+
   return (
     <ContentWrapperStyled>
-      <div
-        style={{
-          width: '100px',
-        }}
-      >
-        <LocaleSelect isLoading={false} locales={[]} onLocaleChange={() => {}} value="hi_IN" />
-      </div>
+      <Group>
+        <LocaleSelect
+          isLoading={false}
+          locales={locales || []}
+          onLocaleChange={onLocaleChange}
+          value={selectedLocale}
+        />
+      </Group>
       <ContentStyled>
         <ContentHeaderStyled>
           <Flex align="center" gap={5}>
@@ -54,10 +111,10 @@ export default function Content() {
         </ContentHeaderStyled>
         <div>
           <Text color={colors.B15} weight="bold">
-            {title || ''}
+            {parsedPreviewState.title || ''}
           </Text>
           <Text color={colors.B15} rows={3}>
-            {content}
+            {parsedPreviewState.content || ''}
           </Text>
         </div>
       </ContentStyled>

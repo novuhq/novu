@@ -1,14 +1,14 @@
-import React from 'react';
+import { ChannelTypeEnum } from '@novu/shared';
 
-import { Mobile } from '../common';
+import { MobileSimulator } from '../common';
 import Content from './Content';
 
 export function PushPreview() {
   return (
     <div>
-      <Mobile>
+      <MobileSimulator channel={ChannelTypeEnum.PUSH}>
         <Content />
-      </Mobile>
+      </MobileSimulator>
     </div>
   );
 }

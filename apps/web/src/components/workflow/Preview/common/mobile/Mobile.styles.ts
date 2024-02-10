@@ -9,8 +9,8 @@ export const MobileFrameStyled = styled.div<{ isAndroid: boolean }>`
   width: 440px;
   height: 880px;
   overflow: hidden;
-  background-position: center;
   position: relative;
+  background-position: center;
   background-repeat: no-repeat;
   background: linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.6) 100%),
     url(/static/images/mobilePreview/${({ isAndroid }) => (isAndroid ? 'android' : 'iphone')}.jpeg) no-repeat center
