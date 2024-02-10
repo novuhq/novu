@@ -17,7 +17,7 @@ import { Agenda } from '@hokify/agenda';
  * queue names that are injected via the environment variable `ACTIVE_WORKERS`.
  *
  * Moving forward, we should consider specifying an enum for Workers to decouple the Worker names from
- * the job names. This would allow us to specify the cron jobs in a more explicit way.
+ * the job names. This would allow us to specify the cron jobs in a more explicit way for each worker.
  */
 const cronJobsFromWorkers: Partial<
   Record<JobTopicNameEnum, Array<JobCronNameEnum>>
