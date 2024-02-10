@@ -12,12 +12,10 @@ import {
   shadows,
   Text,
   Tooltip,
-  Ellipse,
-  Moon,
   Question,
-  Sun,
   Logout,
   InviteMembers,
+  Icon as MatIcon,
 } from '@novu/design-system';
 import { useLocalThemePreference, useDebounce } from '../../../hooks';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
@@ -35,19 +33,19 @@ const menuItem = [
     path: ROUTES.TEAM,
   },
 ];
-const headerIconsSettings = { color: colors.B60, width: 24, height: 24 };
+// const headerIconsSettings = { color: colors.B60, width: 24, height: 24 };
 
 const Icon = () => {
   const { themeStatus } = useLocalThemePreference();
 
   if (themeStatus === 'dark') {
-    return <Moon {...headerIconsSettings} />;
+    return <MatIcon name="dark_mode" />;
   }
   if (themeStatus === 'light') {
-    return <Sun {...headerIconsSettings} />;
+    return <MatIcon name="light_mode" />;
   }
 
-  return <Ellipse {...headerIconsSettings} />;
+  return <MatIcon name="settings_system_daydream" />;
 };
 
 export function HeaderNav({ isIntercomOpened }: Props) {
