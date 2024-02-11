@@ -17,7 +17,7 @@ export class UnifonicSmsProvider implements ISmsProvider {
       AppSid: string;
       SenderID: string;
     }
-  ) {}
+  ) { }
 
   async sendMessage(
     options: ISmsOptions
@@ -30,7 +30,13 @@ export class UnifonicSmsProvider implements ISmsProvider {
     };
 
     const url = this.DEFAULT_BASE_URL;
-    await axios.post(url, data);
+    await axios.post(url, data).catch((e) => {
+      throw new Error(
+        e?.message?.length
+          ? e.message
+          : 'Some thing went wrong while calling unifonic'
+      );
+    });
 
     return {
       id: options.id,
