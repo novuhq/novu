@@ -23,20 +23,22 @@ export class TopicSubscribersRepository extends BaseRepository<
     await this.upsertMany(subscribers);
   }
 
-  async *getTopicDistinctSubscribers({
-    _environmentId,
-    _organizationId,
-    topicIds,
-    excludeSubscribers,
+  async getTopicDistinctSubscribersCursor({
+    query,
+    batchSize = 500,
   }: {
-    _environmentId: EnvironmentId;
-    _organizationId: OrganizationId;
-    topicIds: string[];
-    excludeSubscribers: string[];
+    query: {
+      _environmentId: EnvironmentId;
+      _organizationId: OrganizationId;
+      topicIds: string[];
+      excludeSubscribers: string[];
+    };
+    batchSize?: number;
   }) {
+    const { _organizationId, _environmentId, topicIds, excludeSubscribers } = query;
     const mappedTopicIds = topicIds.map((id) => this.convertStringToObjectId(id));
 
-    for await (const doc of this.aggregateBatch([
+    const aggregatePipeline = [
       {
         $match: {
           _organizationId: this.convertStringToObjectId(_organizationId),
@@ -50,9 +52,9 @@ export class TopicSubscribersRepository extends BaseRepository<
           _id: '$externalSubscriberId',
         },
       },
-    ])) {
-      yield doc;
-    }
+    ];
+
+    return this._model.aggregate(aggregatePipeline, { batchSize: batchSize }).cursor();
   }
 
   async findOneByTopicKeyAndExternalSubscriberId(

@@ -110,15 +110,20 @@ export class TriggerMulticast {
       const singleSubscriberIds = Array.from(singleSubscribers.keys());
       const subscriberFetchBatchSize = 500;
       let subscribersList: ISubscribersDefine[] = [];
+      const cursor =
+        await this.topicSubscribersRepository.getTopicDistinctSubscribersCursor(
+          {
+            query: {
+              _organizationId: organizationId,
+              _environmentId: environmentId,
+              topicIds: topicIds,
+              excludeSubscribers: singleSubscriberIds,
+            },
+            batchSize: subscriberFetchBatchSize,
+          }
+        );
 
-      for await (const topicSubscriber of this.topicSubscribersRepository.getTopicDistinctSubscribers(
-        {
-          _organizationId: organizationId,
-          _environmentId: environmentId,
-          topicIds: topicIds,
-          excludeSubscribers: singleSubscriberIds,
-        }
-      )) {
+      for await (const topicSubscriber of cursor) {
         const externalSubscriberId = topicSubscriber._id;
 
         if (actor && actor.subscriberId === externalSubscriberId) {
