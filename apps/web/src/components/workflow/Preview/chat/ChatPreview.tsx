@@ -4,16 +4,15 @@ import { useAuthController } from '@novu/shared-web';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
+import { previewChat } from '../../../../api/content-templates';
 import { getLocalesFromContent } from '../../../../api/translations';
 import { IForm } from '../../../../pages/templates/components/formTypes';
-import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepFormErrors';
+import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
+import { errorMessage } from '../../../../utils/notifications';
 import { LocaleSelect } from '../common';
 import { ChatContent } from './ChatContent';
 import { ChatInput } from './ChatInput';
-import { previewChat } from '../../../../api/content-templates';
-import { errorMessage } from '../../../../utils/notifications';
-import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
 
 export function ChatPreview() {
   const { organization } = useAuthController();
