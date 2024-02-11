@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
 
-export const ContentStyled = styled.div<{ isError: boolean }>`
+export const ContentStyled = styled.div<{ isBlur: boolean }>`
   display: flex;
   padding: 16px;
   flex-direction: column;
@@ -10,13 +10,21 @@ export const ContentStyled = styled.div<{ isError: boolean }>`
   flex-shrink: 0;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  ${({ isError }) => isError && `border: 1px solid ${colors.error};`}
+  position: relative;
+  overflow: hidden;
+  ${({ isBlur }) => isBlur && 'filter: blur(2px)'};
 `;
 
 export const ContentWrapperStyled = styled.div`
   padding: 8px;
   margin-top: 72px;
+`;
+
+export const ContentAndOVerlayWrapperStyled = styled.div<{ isError: boolean }>`
+  overflow: hidden;
+  position: relative;
+  border-radius: 12px;
+  ${({ isError }) => isError && `border: 1px solid ${colors.error};`}
 `;
 
 export const ContentHeaderStyled = styled.div`

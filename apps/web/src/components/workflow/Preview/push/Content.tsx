@@ -9,9 +9,14 @@ import { useAuthController, useDataRef, useProcessVariables } from '../../../../
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
-import { LocaleSelect } from '../common';
+import { LocaleSelect, PreviewEditOverlay } from '../common';
 import { NovuGreyIcon } from '../common/NovuGreyIcon';
-import { ContentHeaderStyled, ContentStyled, ContentWrapperStyled } from './Content.styles';
+import {
+  ContentAndOVerlayWrapperStyled,
+  ContentHeaderStyled,
+  ContentStyled,
+  ContentWrapperStyled,
+} from './Content.styles';
 
 export default function Content() {
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
@@ -90,6 +95,14 @@ export default function Content() {
     setSelectedLocale(locale);
   };
 
+  const handleMouseEnter = () => {
+    setIsEditOverlayVisible(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsEditOverlayVisible(false);
+  };
+
   return (
     <ContentWrapperStyled>
       <Group>
@@ -100,33 +113,41 @@ export default function Content() {
           value={selectedLocale}
         />
       </Group>
-      <ContentStyled isError={!!errorMsg}>
-        {isLoading ? (
-          <HeaderSkeleton />
-        ) : (
-          <ContentHeaderStyled>
-            <Flex align="center" gap={5}>
-              <NovuGreyIcon color={isDark ? colors.B30 : '#1F1F27'} width="24px" height="24px" />
-              <Text color={colors.B20} weight="bold">
-                Your App
+      <ContentAndOVerlayWrapperStyled
+        isError={!!errorMsg}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {isEditOverlayVisible && <PreviewEditOverlay />}
+        <ContentStyled isBlur={isEditOverlayVisible}>
+          {isLoading ? (
+            <HeaderSkeleton />
+          ) : (
+            <ContentHeaderStyled>
+              <Flex align="center" gap={5}>
+                <NovuGreyIcon color={isDark ? colors.B30 : '#1F1F27'} width="24px" height="24px" />
+                <Text color={colors.B20} weight="bold">
+                  Your App
+                </Text>
+              </Flex>
+              <Text color={colors.B60}>now</Text>
+            </ContentHeaderStyled>
+          )}
+          {isLoading ? (
+            <ContentSkeleton />
+          ) : (
+            <div>
+              <Text color={colors.B15} weight="bold" rows={1}>
+                {parsedPreviewState.title || ''}
               </Text>
-            </Flex>
-            <Text color={colors.B60}>now</Text>
-          </ContentHeaderStyled>
-        )}
-        {isLoading ? (
-          <ContentSkeleton />
-        ) : (
-          <div>
-            <Text color={colors.B15} weight="bold" rows={1}>
-              {parsedPreviewState.title || ''}
-            </Text>
-            <Text color={colors.B15} rows={3}>
-              {parsedPreviewState.content || ''}
-            </Text>
-          </div>
-        )}
-      </ContentStyled>
+              <Text color={colors.B15} rows={3}>
+                {parsedPreviewState.content || ''}
+              </Text>
+            </div>
+          )}
+        </ContentStyled>
+      </ContentAndOVerlayWrapperStyled>
+
       {errorMsg && !isLoading && <Text color={colors.error}>{errorMsg}</Text>}
     </ContentWrapperStyled>
   );
