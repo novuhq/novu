@@ -71,27 +71,27 @@ export class RunJob {
 
       await this.storageHelperService.getAttachments(job.payload?.attachments);
 
-      const payload = {
-        identifier: job.identifier,
-        payload: job.payload ?? {},
-        overrides: job.overrides ?? {},
-        step: job.step,
-        transactionId: job.transactionId,
-        notificationId: job._notificationId,
-        _templateId: job._templateId,
-        environmentId: job._environmentId,
-        organizationId: job._organizationId,
-        userId: job._userId,
-        subscriberId: job.subscriberId,
-        // backward compatibility - ternary needed to be removed once the queue renewed
-        _subscriberId: job._subscriberId ? job._subscriberId : job.subscriberId,
-        jobId: job._id,
-        events: job.digest?.events,
-        job,
-      };
+      await this.sendMessage.execute(
+        SendMessageCommand.create({
+          identifier: job.identifier,
+          payload: job.payload ?? {},
+          overrides: job.overrides ?? {},
+          step: job.step,
+          transactionId: job.transactionId,
+          notificationId: job._notificationId,
+          _templateId: job._templateId,
+          environmentId: job._environmentId,
+          organizationId: job._organizationId,
+          userId: job._userId,
+          subscriberId: job.subscriberId,
+          // backward compatibility - ternary needed to be removed once the queue renewed
+          _subscriberId: job._subscriberId ? job._subscriberId : job.subscriberId,
+          jobId: job._id,
+          events: job.digest?.events,
+          job,
+        })
+      );
 
-      const msg = SendMessageCommand.create(payload);
-      await this.sendMessage.execute(msg);
       await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
     } catch (error: any) {
       Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);

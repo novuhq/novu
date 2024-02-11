@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "node ./check-ee.mjs",
-    "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.json",
+    "build:esm": "node_modules/.bin/tsc -p tsconfig.json",
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "lint": "eslint src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
