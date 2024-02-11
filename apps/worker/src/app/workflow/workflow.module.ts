@@ -60,6 +60,7 @@ import { ACTIVE_WORKERS, workersToProcess } from '../../config/worker-init.confi
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { JobTopicNameEnum } from '@novu/shared';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -72,7 +73,8 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       }
       if (require('@novu/ee-billing')?.BillingModule) {
         Logger.log('Importing enterprise billing module', 'EnterpriseImport');
-        modules.push(require('@novu/ee-billing')?.BillingModule.forRoot(workersToProcess));
+        const activeWorkers = workersToProcess.length ? workersToProcess : Object.values(JobTopicNameEnum);
+        modules.push(require('@novu/ee-billing')?.BillingModule.forRoot(activeWorkers));
       }
     }
   } catch (e) {

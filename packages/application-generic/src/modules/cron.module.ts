@@ -60,7 +60,7 @@ const PROVIDERS: Provider[] = [cronService, MetricsService, customDalService];
 
 @Module({})
 export class CronModule {
-  static forRoot(activeWorkers: JobTopicNameEnum[]): DynamicModule {
+  static forRoot(activeWorkers?: JobTopicNameEnum[]): DynamicModule {
     return {
       imports: [MetricsModule],
       module: CronModule,
@@ -68,10 +68,7 @@ export class CronModule {
         {
           provide: ACTIVE_CRON_JOBS_TOKEN,
           useFactory: async () => {
-            const runningWorkers = activeWorkers.length
-              ? activeWorkers
-              : Object.values(JobTopicNameEnum);
-            const activeJobs: JobCronNameEnum[] = runningWorkers.reduce(
+            const activeJobs: JobCronNameEnum[] = activeWorkers.reduce(
               (acc, worker) => {
                 if (cronJobsFromWorkers[worker]) {
                   return [...acc, ...cronJobsFromWorkers[worker]];
