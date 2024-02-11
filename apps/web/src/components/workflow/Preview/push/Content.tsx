@@ -108,8 +108,8 @@ export default function Content() {
         ) : (
           <ContentHeaderStyled>
             <Flex align="center" gap={5}>
-              <NovuGreyIcon color={isDark ? colors.B30 : colors.BGLight} width="24px" height="24px" />
-              <Text color={isDark ? colors.B30 : colors.BGLight} weight="bold">
+              <NovuGreyIcon color={isDark ? colors.B30 : '#1F1F27'} width="24px" height="24px" />
+              <Text color={colors.B20} weight="bold">
                 Your App
               </Text>
             </Flex>

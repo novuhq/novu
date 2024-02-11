@@ -13,6 +13,9 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { When } from '../../../../utils/When';
 
 const borderRadius = 40;
+const lightThemeBackground = 'rgba(255, 255, 255, 0.4)';
+const darkThemeBackground = 'rgba(0, 0, 0, 0.6)';
+
 const MobileSimulatorBody = styled.div<{ channel: ChannelTypeEnum; isIOS: boolean }>`
   position: relative;
   display: flex;
@@ -26,12 +29,14 @@ const MobileSimulatorBody = styled.div<{ channel: ChannelTypeEnum; isIOS: boolea
   box-shadow: ${shadows.dark};
   background: ${({ theme }) => (theme.colorScheme === 'dark' ? '#4b4b51' : colors.white)};
 
-  ${({ channel, isIOS }) => {
+  ${({ channel, isIOS, theme }) => {
     if (channel === ChannelTypeEnum.PUSH) {
       return `
       background-position: center;
       background-repeat: no-repeat;
-      background: linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.6) 100%),
+      background: linear-gradient(0deg, ${
+        theme.colorScheme === 'dark' ? darkThemeBackground : lightThemeBackground
+      } 0%, ${theme.colorScheme === 'dark' ? darkThemeBackground : lightThemeBackground} 100%),
         url(/static/images/mobilePreview/${isIOS ? 'iphone' : 'android'}.jpeg) no-repeat center
           center / cover,
         lightgray;
