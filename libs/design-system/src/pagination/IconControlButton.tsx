@@ -1,6 +1,7 @@
 import styled from '@emotion/styled';
 import { ControlButton, IControlButtonProps } from './ControlButton';
 import { colors } from '../config';
+import { useMantineTheme } from '@mantine/core';
 
 // TODO: Fix `theme` type once design system is ready and then use theme values
 const getFontColor = ({ theme }: { theme: any }): string => {
@@ -15,17 +16,14 @@ const getDisabledFontColor = ({ theme }: { theme: any }): string => {
 
 export type IconControlButtonProps = Omit<IControlButtonProps, 'isCurrentPage'>;
 
-/**
- * Specialized ControlButton for "rich" nodes such as Icons or custom JSX elements.
- */
-export const IconControlButton = styled(ControlButton)<IconControlButtonProps>(
+const _IconControlButton = styled(ControlButton)<IconControlButtonProps>(
   ({ theme }) => `
   color: ${getFontColor({ theme })};
   /* SVG / icon overrides */
   path {
     fill: ${getFontColor({ theme })};
   }
-
+  
   &:disabled {
     color: ${getDisabledFontColor({ theme })};
     /* SVG / icon overrides */
@@ -33,5 +31,12 @@ export const IconControlButton = styled(ControlButton)<IconControlButtonProps>(
       fill: ${getDisabledFontColor({ theme })};
     }
   }
-`
+  `
+);
+
+/**
+ * Specialized ControlButton for "rich" nodes such as Icons or custom JSX elements.
+ */
+export const IconControlButton: React.FC<IconControlButtonProps> = (props) => (
+  <_IconControlButton theme={useMantineTheme()} {...props} />
 );
