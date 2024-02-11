@@ -6,5 +6,4 @@ export * from './PreviewUserIcon';
 export * from './NovuGreyIcon';
 export * from './EmojiIcon';
 export * from './SendIcon';
-export * from './mobile/';
 export * from './phone-simulator';
