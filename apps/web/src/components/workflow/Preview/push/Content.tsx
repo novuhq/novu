@@ -1,3 +1,4 @@
+import styled from '@emotion/styled';
 import { Flex, Group, Skeleton, Stack, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 import { useEffect, useState } from 'react';
@@ -7,13 +8,10 @@ import { IS_DOCKER_HOSTED } from '../../../../config';
 import { useAuthController, useDataRef, useProcessVariables } from '../../../../hooks';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
-import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepFormErrors';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
-import { formatErrorMessage, mapStepErrors } from '../../../../pages/templates/shared/errors';
 import { LocaleSelect } from '../common';
-import { ContentHeaderStyled, ContentStyled, ContentWrapperStyled } from '../common/mobile/Mobile.styles';
 import { NovuGreyIcon } from '../common/NovuGreyIcon';
-import styled from '@emotion/styled';
+import { ContentHeaderStyled, ContentStyled, ContentWrapperStyled } from './Content.styles';
 
 export default function Content() {
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
