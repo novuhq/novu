@@ -56,12 +56,7 @@ export const cronService = {
   inject: [MetricsService, ACTIVE_CRON_JOBS_TOKEN, DalService],
 };
 
-const PROVIDERS: Provider[] = [
-  cronService,
-  AgendaCronService,
-  MetricsService,
-  customDalService,
-];
+const PROVIDERS: Provider[] = [cronService, MetricsService, customDalService];
 
 @Module({})
 export class CronModule {

@@ -47,7 +47,7 @@ export abstract class CronService
 
   constructor(
     private metricsService: MetricsService,
-    @Inject(ACTIVE_CRON_JOBS_TOKEN) private activeJobs: JobCronNameEnum[]
+    private activeJobs: JobCronNameEnum[]
   ) {}
 
   protected abstract addJob<TData = unknown>(
