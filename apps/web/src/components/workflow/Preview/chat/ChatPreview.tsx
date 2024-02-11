@@ -1,4 +1,4 @@
-import { Divider, useMantineColorScheme } from '@mantine/core';
+import { Divider, Flex, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 import { useAuthController } from '@novu/shared-web';
 import { useMutation } from '@tanstack/react-query';
@@ -76,14 +76,14 @@ export function ChatPreview() {
 
   return (
     <div>
-      <div>
+      <Flex>
         <LocaleSelect
           value={selectedLocale}
           onLocaleChange={onLocaleChange}
           isLoading={isLoadingLocales}
           locales={locales || []}
         />
-      </div>
+      </Flex>
       <Divider
         color={isDark ? colors.B30 : colors.BGLight}
         label={
