@@ -1,7 +1,7 @@
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { errorMessage } from '@novu/design-system';
-import { IEmailBlock } from '@novu/shared';
+import type { IEmailBlock, IResponseError } from '@novu/shared';
 import { IS_DOCKER_HOSTED } from '@novu/shared-web';
 
 import { previewSms } from '../content-templates';
@@ -14,13 +14,11 @@ type PayloadType = {
 
 type ResultType = { content: string };
 
-type ErrorType = { error: string; message: string; statusCode: number };
-
-export const usePreviewSms = (options: UseMutationOptions<ResultType, ErrorType, PayloadType> = {}) => {
-  const { mutateAsync, isLoading } = useMutation<ResultType, ErrorType, PayloadType>(
+export const usePreviewSms = (options: UseMutationOptions<ResultType, IResponseError, PayloadType> = {}) => {
+  const { mutateAsync, isLoading } = useMutation<ResultType, IResponseError, PayloadType>(
     ({ content, payload, locale }) => previewSms({ content, payload, locale }),
     {
-      onError: (e: any) => {
+      onError: (e) => {
         errorMessage(e.message || 'Unexpected error');
       },
       onSuccess: (result, variables, context) => {
