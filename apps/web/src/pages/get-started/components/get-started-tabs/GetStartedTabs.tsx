@@ -1,14 +1,14 @@
 import { Outlet, URLSearchParamsInit, useSearchParams } from 'react-router-dom';
 import { Center, Container, Loader, Tabs } from '@mantine/core';
 
-import { colors, Digest, HalfClock, MultiChannel, RingingBell, Translation } from '@novu/design-system';
+import { colors } from '@novu/design-system';
 
 import { useAuthContext } from '../../../../components/providers/AuthProvider';
 import useStyles from './GetStartedTabs.style';
-import { CSSProperties } from 'react';
 import { GetStartedTab } from '../../layout/GetStartedTab';
 import { UseCasesConst } from '../../consts/UseCases.const';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
+import { GetStartedTabConfig, TAB_CONFIGS } from './GetStartedTabs.const';
 
 const TAB_SEARCH_PARAM_NAME = 'tab';
 const DEFAULT_TAB: OnboardingUseCasesTabsEnum = OnboardingUseCasesTabsEnum.IN_APP;
@@ -36,41 +36,10 @@ const useTabSearchParams = () => {
   };
 };
 
-const ICON_STYLE: Partial<CSSProperties> = { height: 20, width: 20, marginBottom: '12px' };
-const TAB_CONFIGS = [
-  {
-    value: OnboardingUseCasesTabsEnum.IN_APP,
-    icon: <RingingBell style={ICON_STYLE} />,
-    title: 'In-app',
-  },
-  {
-    value: OnboardingUseCasesTabsEnum.MULTI_CHANNEL,
-    icon: <MultiChannel style={ICON_STYLE} />,
-    title: 'Multi-channel',
-  },
-  {
-    value: OnboardingUseCasesTabsEnum.DIGEST,
-    icon: <Digest style={ICON_STYLE} />,
-    title: 'Digest',
-  },
-  {
-    value: OnboardingUseCasesTabsEnum.DELAY,
-    icon: <HalfClock style={ICON_STYLE} />,
-    title: 'Delay',
-  },
-  {
-    value: OnboardingUseCasesTabsEnum.TRANSLATION,
-    icon: <Translation style={ICON_STYLE} />,
-    title: 'Translate',
-  },
-];
-
-export function GetStartedTabs() {
+export function GetStartedTabs({ tabConfigs = TAB_CONFIGS }: { tabConfigs?: GetStartedTabConfig[] }) {
   const { currentOrganization } = useAuthContext();
   const { classes } = useStyles();
   const { currentTab, setTab } = useTabSearchParams();
-
-  console.log({ currentTab, cfg: UseCasesConst[currentTab] });
 
   if (!currentOrganization) {
     return (
@@ -94,13 +63,13 @@ export function GetStartedTabs() {
         mb={15}
       >
         <Tabs.List>
-          {TAB_CONFIGS.map(({ value, icon, title }) => (
+          {tabConfigs.map(({ value, icon, title }) => (
             <Tabs.Tab key={`tab-${value}`} value={value} icon={icon}>
               {title}
             </Tabs.Tab>
           ))}
         </Tabs.List>
-        {TAB_CONFIGS.map(({ value }) => (
+        {tabConfigs.map(({ value }) => (
           <Tabs.Panel key={`tab-panel-${value}`} value={value}>
             {<GetStartedTab {...UseCasesConst[value]} />}
           </Tabs.Panel>
