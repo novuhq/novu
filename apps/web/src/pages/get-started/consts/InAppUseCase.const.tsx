@@ -4,7 +4,7 @@ import { OnboardingUseCase } from './types';
 export const InAppUseCaseConst: OnboardingUseCase = {
   title: 'In-app notifications center',
   description:
-    'Utilize Novu’s pre-built customizable in-app component. ' +
+    "Utilize Novu's pre-built customizable in-app component. " +
     'Or opt for the headless library to create your own in-app notification center.',
   steps: [
     {
@@ -61,6 +61,19 @@ export const InAppUseCaseConst: OnboardingUseCase = {
     },
   ],
   Demo: () => {
-    return <h1>GIF</h1>;
+    return (
+      <div
+        style={{
+          height: '520px',
+          backgroundColor: '#525266',
+          display: 'flex',
+          borderRadius: '2%',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <h1>Placeholder</h1>
+      </div>
+    );
   },
 };
