@@ -1,44 +1,15 @@
-import React, { useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Grid } from '@mantine/core';
 import styled from '@emotion/styled';
+import { Grid } from '@mantine/core';
 
-import { ProductUseCasesEnum } from '@novu/shared';
 import { colors, Text } from '@novu/design-system';
 
-import { OnboardingParams } from '../types';
-import { ROUTES } from '../../../constants/routes.enum';
-import { OnboardingUseCasesTabsEnum } from '../../../constants/onboarding-tabs';
 import Card from '../../../components/layout/components/Card';
 import { Timeline } from '../components/timeline/Timeline';
-import { UseCasesConst } from '../consts/UseCases.const';
+import { OnboardingUseCase } from '../consts/types';
 
-interface IGetStartedTabProps {
-  usecase?: ProductUseCasesEnum;
-}
+type IGetStartedTabProps = OnboardingUseCase;
 
-export function GetStartedTab(props: IGetStartedTabProps) {
-  const navigate = useNavigate();
-  const { usecase: usecaseParam } = useParams<Record<OnboardingParams, OnboardingUseCasesTabsEnum | undefined>>();
-
-  const usecase = (props.usecase || usecaseParam?.replace('-', '_')) as ProductUseCasesEnum | undefined;
-
-  /*
-   * This will redirect to the in-app tab if the use case is not provided in the parameters and component input.
-   * * This state should not occur; it was added as a precautionary measure.
-   */
-  useEffect(() => {
-    if (!usecase) {
-      navigate(`${ROUTES.GET_STARTED}/${OnboardingUseCasesTabsEnum.IN_APP}`);
-    }
-  }, [navigate, usecase]);
-
-  if (!usecase) {
-    return null;
-  }
-
-  const { steps, Demo, title, description } = UseCasesConst[usecase];
-
+export function GetStartedTab({ steps, Demo, title, description }: IGetStartedTabProps) {
   return (
     <Grid align="stretch" justify={'space-between'}>
       <Grid.Col span={3} mt={12}>

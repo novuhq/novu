@@ -1,63 +1,47 @@
-import React from 'react';
-import { Outlet, useNavigate, useParams } from 'react-router-dom';
-import { Center, Container, Loader, Tabs } from '@mantine/core';
-
-import { colors, Digest, HalfClock, MultiChannel, RingingBell, Translation } from '@novu/design-system';
-
-import { useAuthContext } from '../../../../components/providers/AuthProvider';
-import { OnboardingParams } from '../../types';
-import { ROUTES } from '../../../../constants/routes.enum';
-import { OnboardingUseCasesTabsEnum } from '../../../../constants/onboarding-tabs';
+import { Container, Tabs } from '@mantine/core';
+import { Outlet } from 'react-router-dom';
+import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
+import { UseCasesConst } from '../../consts/UseCases.const';
+import { GetStartedTab } from '../../layout/GetStartedTab';
+import { GetStartedTabConfig, TAB_CONFIGS } from './GetStartedTabs.const';
 import useStyles from './GetStartedTabs.style';
 
-export function GetStartedTabs() {
-  const { currentOrganization } = useAuthContext();
+interface IGetStartedTabsProps {
+  tabConfigs?: GetStartedTabConfig[];
+  currentTab: OnboardingUseCasesTabsEnum;
+  setTab: (tab: OnboardingUseCasesTabsEnum) => void;
+}
+
+export const GetStartedTabs: React.FC<IGetStartedTabsProps> = ({ tabConfigs = TAB_CONFIGS, currentTab, setTab }) => {
   const { classes } = useStyles();
-  const navigate = useNavigate();
-  const { usecase } = useParams<OnboardingParams>();
-
-  const iconStyle = { height: 20, width: 20, marginBottom: '12px' };
-
-  if (!currentOrganization) {
-    return (
-      <Center>
-        <Loader color={colors.error} size={32} />
-      </Center>
-    );
-  }
 
   return (
     <Container fluid mt={15} ml={5}>
       <Tabs
         orientation="horizontal"
         keepMounted={true}
-        onTabChange={(tabValue) => {
-          navigate(`${ROUTES.GET_STARTED}/${tabValue}`);
+        onTabChange={(tabValue: OnboardingUseCasesTabsEnum) => {
+          setTab(tabValue);
         }}
         variant="default"
-        value={usecase ?? OnboardingUseCasesTabsEnum.IN_APP}
+        value={currentTab}
         classNames={classes}
         mb={15}
       >
         <Tabs.List>
-          <Tabs.Tab value={OnboardingUseCasesTabsEnum.IN_APP} icon={<RingingBell style={iconStyle} />}>
-            In-app
-          </Tabs.Tab>
-          <Tabs.Tab value={OnboardingUseCasesTabsEnum.MULTI_CHANNEL} icon={<MultiChannel style={iconStyle} />}>
-            Multi-channel
-          </Tabs.Tab>
-          <Tabs.Tab value={OnboardingUseCasesTabsEnum.DIGEST} icon={<Digest style={iconStyle} />}>
-            Digest
-          </Tabs.Tab>
-          <Tabs.Tab value={OnboardingUseCasesTabsEnum.DELAY} icon={<HalfClock style={iconStyle} />}>
-            Delay
-          </Tabs.Tab>
-          <Tabs.Tab value={OnboardingUseCasesTabsEnum.TRANSLATION} icon={<Translation style={iconStyle} />}>
-            Translate
-          </Tabs.Tab>
+          {tabConfigs.map(({ value, icon, title }) => (
+            <Tabs.Tab key={`tab-${value}`} value={value} icon={icon}>
+              {title}
+            </Tabs.Tab>
+          ))}
         </Tabs.List>
+        {tabConfigs.map(({ value }) => (
+          <Tabs.Panel key={`tab-panel-${value}`} value={value}>
+            {<GetStartedTab {...UseCasesConst[value]} />}
+          </Tabs.Panel>
+        ))}
       </Tabs>
       <Outlet />
     </Container>
   );
-}
+};
