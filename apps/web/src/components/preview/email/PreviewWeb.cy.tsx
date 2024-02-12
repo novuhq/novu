@@ -1,10 +1,10 @@
-import { TestWrapper } from '../../../../testing';
-import { PreviewMobile } from './PreviewMobile';
+import { TestWrapper } from '../../../testing';
+import { PreviewWeb } from './PreviewWeb';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const queryClient = new QueryClient({});
 
-describe('Preview mobile', () => {
+describe('Preview web', () => {
   it('should render without content', () => {
     cy.on('uncaught:exception', (err) => {
       if (err.message.includes('Target container is not a DOM element')) {
@@ -14,7 +14,7 @@ describe('Preview mobile', () => {
     cy.mount(
       <TestWrapper>
         <QueryClientProvider client={queryClient}>
-          <PreviewMobile
+          <PreviewWeb
             subject="Subject"
             content=""
             integration={{
@@ -42,7 +42,7 @@ describe('Preview mobile', () => {
     cy.mount(
       <TestWrapper>
         <QueryClientProvider client={queryClient}>
-          <PreviewMobile
+          <PreviewWeb
             subject="Subject"
             content={content}
             integration={{

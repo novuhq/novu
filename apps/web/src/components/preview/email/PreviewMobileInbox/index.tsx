@@ -1,7 +1,7 @@
 import { createStyles, Group } from '@mantine/core';
 import { format } from 'date-fns';
 import { colors } from '@novu/design-system';
-import { EmailIntegrationInfo } from '../../../../../pages/templates/editor/EmailIntegrationInfo';
+import { EmailIntegrationInfo } from '../../../../pages/templates/editor/EmailIntegrationInfo';
 import { EmailMobile } from '../../common/EmailMobile';
 import { DateArrow } from './DateArrow';
 import { ItemSkeleton } from './InboxItem';

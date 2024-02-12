@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { SelectItemProps, Group } from '@mantine/core';
 import { Select, ISelectProps, Text } from '@novu/design-system';
 import { forwardRef } from 'react';
-import { IS_DOCKER_HOSTED } from '../../../../config';
+import { IS_DOCKER_HOSTED } from '../../../config';
 
 const rightSectionWidth = 20;
 

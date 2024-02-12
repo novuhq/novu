@@ -6,11 +6,11 @@ import { useAuthController, useDataRef } from '@novu/shared-web';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
-import { useGetLocalesFromContent, usePreviewSms } from '../../../../api/hooks';
-import { IForm } from '../../../../pages/templates/components/formTypes';
-import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
-import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
-import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
+import { useGetLocalesFromContent, usePreviewSms } from '../../../api/hooks';
+import { IForm } from '../../../pages/templates/components/formTypes';
+import { useNavigateToStepEditor } from '../../../pages/templates/hooks/useNavigateToStepEditor';
+import { useStepFormCombinedErrors } from '../../../pages/templates/hooks/useStepFormCombinedErrors';
+import { useStepFormPath } from '../../../pages/templates/hooks/useStepFormPath';
 import { LocaleSelect, MobileSimulator } from '../common';
 import { SmsBubble } from './SmsBubble';
 
