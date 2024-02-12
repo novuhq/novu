@@ -643,6 +643,7 @@
     "apps/worker/README.md",
     ".gitignore",
     "angular.json",
-    "ng-package.json"
+    "ng-package.json",
+    "libs/shared/src/types/timezones/timezones.types.ts"
   ]
 }
