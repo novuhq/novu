@@ -35,7 +35,7 @@ runs:
   steps:
     - name: ⛏️ build api
       shell: bash
-      run: pnpm build:api --skip-nx-cache
+      run: pnpm build:api
 
     - uses: crazy-max/ghaction-setup-docker@v2
       with:
