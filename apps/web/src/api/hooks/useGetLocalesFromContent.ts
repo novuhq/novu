@@ -1,8 +1,9 @@
 import { errorMessage } from '@novu/design-system';
-import { IEmailBlock } from '@novu/shared';
+import type { IResponseError, IEmailBlock } from '@novu/shared';
 import { IS_DOCKER_HOSTED } from '@novu/shared-web';
 import { useMutation } from '@tanstack/react-query';
 import { useCallback } from 'react';
+
 import { getLocalesFromContent } from '../translations';
 
 export interface ILocale {
@@ -26,14 +27,11 @@ export const useGetLocalesFromContent = () => {
     mutateAsync: getLocalesFromContentMutation,
     isLoading,
     data,
-  } = useMutation<ILocale[], { error: string; message: string; statusCode: number }, Payload>(
-    ({ content }) => getLocalesFromContent({ content }),
-    {
-      onError: (e: any) => {
-        errorMessage(e.message || 'Unexpected error');
-      },
-    }
-  );
+  } = useMutation<ILocale[], IResponseError, Payload>(({ content }) => getLocalesFromContent({ content }), {
+    onError: (e: any) => {
+      errorMessage(e.message || 'Unexpected error');
+    },
+  });
 
   const getLocalesFromContentCallback = useCallback(
     async ({ content }: Payload) => {

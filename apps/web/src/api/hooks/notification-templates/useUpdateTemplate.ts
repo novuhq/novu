@@ -1,5 +1,5 @@
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
-import { INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
+import type { IResponseError, INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
 
 import { updateTemplate } from '../../notification-templates';
 import { QueryKeys } from '../../query.keys';
@@ -7,7 +7,7 @@ import { QueryKeys } from '../../query.keys';
 export const useUpdateTemplate = (
   options: UseMutationOptions<
     INotificationTemplate,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { id: string; data: Partial<IUpdateNotificationTemplateDto> }
   > = {}
 ) => {
@@ -15,7 +15,7 @@ export const useUpdateTemplate = (
 
   const { mutateAsync: updateTemplateMutation, ...rest } = useMutation<
     INotificationTemplate,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { id: string; data: Partial<IUpdateNotificationTemplateDto> }
   >(({ id, data }) => updateTemplate(id, data), {
     ...options,

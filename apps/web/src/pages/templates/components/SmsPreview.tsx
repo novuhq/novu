@@ -1,15 +1,10 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
-import { useAuthController, useDataRef } from '@novu/shared-web';
-import { useEffect, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
 
-import { useGetLocalesFromContent, usePreviewSms } from '../../../api/hooks';
 import { LocaleSelect } from '../../../components/workflow/Preview/common';
+import { usePreviewTemplate } from '../hooks/usePreviewTemplate';
 import { useNavigateToStepEditor } from '../hooks/useNavigateToStepEditor';
-import { useStepFormErrors } from '../hooks/useStepFormErrors';
-import { useStepFormPath } from '../hooks/useStepFormPath';
-import { IForm } from './formTypes';
+import { useTemplateLocales } from '../hooks/useTemplateLocales';
 import { MobileSimulator } from './phone-simulator';
 import { SmsBubble } from './SmsBubble';
 
@@ -17,7 +12,7 @@ const BodyContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  margin: auto 20px 40px 20px;
+  margin: auto 1.25rem 2.5rem 1.25rem;
 `;
 
 const LocaleSelectStyled = styled(LocaleSelect)`
@@ -31,47 +26,9 @@ const LocaleSelectStyled = styled(LocaleSelect)`
 `;
 
 export const SmsPreview = () => {
-  const { control } = useFormContext<IForm>();
-  const path = useStepFormPath();
-  const error = useStepFormErrors();
-  const templateContent = useWatch({
-    name: `${path}.template.content`,
-    control,
-  });
-  const { organization } = useAuthController();
-  const [previewContent, setPreviewContent] = useState(templateContent as string);
-  const [selectedLocale, setSelectedLocale] = useState('');
-  const previewData = useDataRef({ templateContent });
-  const templateContentError = error?.template?.content?.message;
-
-  const { data: locales, isLoading: areLocalesLoading, getLocalesFromContent } = useGetLocalesFromContent();
-  const { isLoading: isPreviewContentLoading, getSmsPreview } = usePreviewSms({
-    onSuccess: (result) => {
-      setPreviewContent(result.content);
-    },
-  });
-
   const { navigateToStepEditor } = useNavigateToStepEditor();
-
-  useEffect(() => {
-    getLocalesFromContent({
-      content: previewData.current.templateContent,
-    });
-  }, [getLocalesFromContent, previewData]);
-
-  useEffect(() => {
-    getSmsPreview({
-      content: previewData.current.templateContent,
-      payload: '',
-      locale: selectedLocale,
-    });
-  }, [selectedLocale, previewData, getSmsPreview]);
-
-  const onLocaleChange = (locale) => {
-    setSelectedLocale(locale);
-  };
-
-  const isBubbleLoading = !templateContentError && isPreviewContentLoading;
+  const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales();
+  const { isPreviewContentLoading, previewContent, templateContentError } = usePreviewTemplate(selectedLocale);
 
   return (
     <MobileSimulator>
@@ -79,13 +36,13 @@ export const SmsPreview = () => {
         <LocaleSelectStyled
           isLoading={areLocalesLoading}
           locales={locales}
-          value={selectedLocale || organization?.defaultLocale}
+          value={selectedLocale}
           onLocaleChange={onLocaleChange}
           dropdownPosition="top"
         />
         <SmsBubble
           onEditClick={navigateToStepEditor}
-          isLoading={isBubbleLoading}
+          isLoading={isPreviewContentLoading}
           text={previewContent}
           error={templateContentError}
         />
