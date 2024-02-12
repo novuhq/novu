@@ -84,6 +84,7 @@
     "typescript": "4.9.5"
   },
   "optionalDependencies": {
+    "@novu/ee-billing": "^0.23.1",
     "@novu/ee-translation": "^0.23.1"
   },
   "lint-staged": {

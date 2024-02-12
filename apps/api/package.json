@@ -47,7 +47,6 @@
     "@novu/shared": "^0.23.1",
     "@novu/stateless": "^0.23.1",
     "@novu/testing": "^0.23.1",
-    "@novu/ee-billing": "^0.23.1",
     "@sendgrid/mail": "^8.1.0",
     "@sentry/hub": "^7.40.0",
     "@sentry/node": "^7.40.0",
@@ -119,6 +118,7 @@
   },
   "optionalDependencies": {
     "@novu/ee-auth": "^0.23.1",
+    "@novu/ee-billing": "^0.23.1",
     "@novu/ee-translation": "^0.23.1"
   },
   "lint-staged": {

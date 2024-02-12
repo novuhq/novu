@@ -25,3 +25,4 @@ export {
   WorkerOptions,
 } from './bull-mq';
 export * from './auth';
+export * from './cron';
