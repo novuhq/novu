@@ -46,16 +46,8 @@ const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
 @Injectable()
 export class TriggerMulticast {
   constructor(
-    private processSubscriber: ProcessSubscriber,
-    private integrationRepository: IntegrationRepository,
-    private subscriberRepository: SubscriberRepository,
-    private jobRepository: JobRepository,
-    private notificationTemplateRepository: NotificationTemplateRepository,
-    private processTenant: ProcessTenant,
     private logger: PinoLogger,
-    private mapTriggerRecipients: MapTriggerRecipients,
     private subscriberProcessQueueService: SubscriberProcessQueueService,
-    private getTopicSubscribers: GetTopicSubscribersUseCase,
     private topicSubscribersRepository: TopicSubscribersRepository,
     private topicRepository: TopicRepository,
     private getFeatureFlag: GetFeatureFlag
