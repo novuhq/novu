@@ -3,7 +3,12 @@ import { useFlags } from 'launchdarkly-react-client-sdk';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect } from 'react';
 
-import { IS_TEMPLATE_STORE_ENABLED, IS_MULTI_TENANCY_ENABLED, IS_TRANSLATION_MANAGER_ENABLED } from '../config';
+import {
+  IS_TEMPLATE_STORE_ENABLED,
+  IS_MULTI_TENANCY_ENABLED,
+  IS_TRANSLATION_MANAGER_ENABLED,
+  IS_IMPROVED_ONBOARDING_ENABLED,
+} from '../config';
 
 export const useFeatureFlags = (organization: IOrganizationEntity) => {
   const ldClient = useLDClient();
@@ -66,7 +71,7 @@ export const useIsTranslationManagerEnabled = (): boolean => {
 };
 
 export const useIsImprovedOnboardingEnabled = (): boolean => {
-  const value = IS_TRANSLATION_MANAGER_ENABLED;
+  const value = IS_IMPROVED_ONBOARDING_ENABLED;
   const fallbackValue = false;
   const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
 
