@@ -5,12 +5,12 @@ import { useFormContext, useWatch } from 'react-hook-form';
 import { Button, colors, inputStyles } from '@novu/design-system';
 
 import { IS_DOCKER_HOSTED, useDataRef } from '@novu/shared-web';
-import { useGetLocalesFromContent, usePreviewEmail } from '../../../api/hooks';
-import { useActiveIntegrations, useAuthController, useProcessVariables } from '../../../hooks';
-import type { IForm } from '../../../pages/templates/components/formTypes';
-import { useStepFormErrors } from '../../../pages/templates/hooks/useStepFormErrors';
-import { useStepFormPath } from '../../../pages/templates/hooks/useStepFormPath';
-import { When } from '../../utils/When';
+import { useGetLocalesFromContent, usePreviewEmail } from '../../../../api/hooks';
+import { useActiveIntegrations, useAuthController, useProcessVariables } from '../../../../hooks';
+import type { IForm } from '../../../../pages/templates/components/formTypes';
+import { useStepFormErrors } from '../../../../pages/templates/hooks/useStepFormErrors';
+import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
+import { When } from '../../../utils/When';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 

@@ -1,6 +1,6 @@
 import { StepTypeEnum } from '@novu/shared';
 import { useParams } from 'react-router-dom';
-import { ChatPreview, EmailPreview, PushPreview, SmsPreview } from '../../../components/preview';
+import { ChatPreview, EmailPreview, PushPreview, SmsPreview } from '../../../components/workflow/preview';
 
 import { useNavigateFromEditor } from '../hooks/useNavigateFromEditor';
 import { useStepIndex } from '../hooks/useStepIndex';

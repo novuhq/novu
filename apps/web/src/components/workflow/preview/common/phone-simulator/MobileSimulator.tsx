@@ -6,7 +6,7 @@ import { PhonePlatformSwitch } from './PhonePlatformSwitch';
 
 import { useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
-import { When } from '../../../utils/When';
+import { When } from '../../../../utils/When';
 import { AndroidIndicatorsIcon, AndroidKeyboard, IOSIndicatorsIcon, IOSKeyboard, TimeIcon } from '../icons';
 
 const borderRadius = 40;

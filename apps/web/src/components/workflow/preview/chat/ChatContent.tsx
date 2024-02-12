@@ -3,7 +3,7 @@ import { Group, Skeleton, Stack, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 import { useState } from 'react';
 import { NovuGreyIcon, PreviewEditOverlay } from '../common';
-import { When } from '../../utils/When';
+import { When } from '../../../utils/When';
 
 export function ChatContent({ isLoading, content, errorMsg }) {
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);

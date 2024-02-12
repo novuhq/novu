@@ -3,12 +3,12 @@ import { Flex, Group, Skeleton, Stack, useMantineColorScheme } from '@mantine/co
 import { colors, Text } from '@novu/design-system';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { useGetLocalesFromContent, usePreviewPush } from '../../../api/hooks';
-import { IS_DOCKER_HOSTED } from '../../../config';
-import { useAuthController, useDataRef, useProcessVariables } from '../../../hooks';
-import { IForm } from '../../../pages/templates/components/formTypes';
-import { useStepFormCombinedErrors } from '../../../pages/templates/hooks/useStepFormCombinedErrors';
-import { useStepFormPath } from '../../../pages/templates/hooks/useStepFormPath';
+import { useGetLocalesFromContent, usePreviewPush } from '../../../../api/hooks';
+import { IS_DOCKER_HOSTED } from '../../../../config';
+import { useAuthController, useDataRef, useProcessVariables } from '../../../../hooks';
+import { IForm } from '../../../../pages/templates/components/formTypes';
+import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
+import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { LocaleSelect, PreviewEditOverlay } from '../common';
 import { NovuGreyIcon } from '../common/NovuGreyIcon';
 import {

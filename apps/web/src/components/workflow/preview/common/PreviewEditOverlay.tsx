@@ -3,7 +3,7 @@ import { Flex, Group, Overlay, UnstyledButton } from '@mantine/core';
 import { colors, PencilOutlined, Text } from '@novu/design-system';
 import { StepTypeEnum } from '@novu/shared';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useBasePath } from '../../../pages/templates/hooks/useBasePath';
+import { useBasePath } from '../../../../pages/templates/hooks/useBasePath';
 
 export function PreviewEditOverlay() {
   const basePath = useBasePath();
