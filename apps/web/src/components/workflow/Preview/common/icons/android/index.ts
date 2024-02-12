@@ -1,3 +1,3 @@
-export * from './AndroidNetwork';
-export * from './AndroidWifi';
-export * from './AndroidBattery';
+export * from './AndroidIcon';
+export * from './AndroidIndicatorsIcon';
+export * from './AndroidKeyboard';

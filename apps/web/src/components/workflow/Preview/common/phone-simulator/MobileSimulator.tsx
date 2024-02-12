@@ -1,16 +1,13 @@
-import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import { colors, shadows } from '@novu/design-system';
+import React, { useState } from 'react';
 
 import { PhonePlatformSwitch } from './PhonePlatformSwitch';
-import { TimeIcon } from './TimeIcon';
-import { IOSIndicatorsIcon } from './IOSIndicatorsIcon';
-import { AndroidIndicatorsIcon } from './AndroidIndicatorsIcon';
-import { IOSKeyboard } from './IOSKeyboard';
-import { AndroidKeyboard } from './AndroidKeyboard';
+
 import { useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 import { When } from '../../../../utils/When';
+import { AndroidIndicatorsIcon, AndroidKeyboard, IOSIndicatorsIcon, IOSKeyboard, TimeIcon } from '../icons';
 
 const borderRadius = 40;
 const lightThemeBackground = 'rgba(255, 255, 255, 0.4)';

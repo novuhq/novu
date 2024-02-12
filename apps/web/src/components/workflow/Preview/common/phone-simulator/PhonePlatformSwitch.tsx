@@ -1,9 +1,7 @@
-import { ComponentProps, forwardRef } from 'react';
 import styled from '@emotion/styled';
 import { colors, shadows } from '@novu/design-system';
-
-import { AndroidIcon } from './AndroidIcon';
-import { AppleIcon } from './AppleIcon';
+import { ComponentProps, forwardRef } from 'react';
+import { AndroidIcon, AppleIcon } from '../icons';
 
 export type IPhonePlatformSwitchProps = Pick<ComponentProps<'input'>, 'checked' | 'onChange' | 'className' | 'style'>;
 
