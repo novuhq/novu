@@ -1,6 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
-import { Grid } from '@mantine/core';
+import { Grid, Stack } from '@mantine/core';
 import { useState } from 'react';
 import { useTimeout } from '@mantine/hooks';
 
@@ -9,10 +9,11 @@ import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm } from '../formTypes';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
-import { CustomCodeEditor, CustomCodeEditorWrapper } from '../CustomCodeEditor';
+import { CustomCodeEditor } from '../CustomCodeEditor';
 import { ChatPreview } from '../../../../components/workflow/Preview';
 
 import { VariableManagerModal } from '../VariableManagerModal';
+import { VariableManagementButton } from '../VariableManagementButton';
 
 const templateFields = ['content'];
 
@@ -27,6 +28,12 @@ export function TemplateChatEditor() {
   const [variablesModalOpened, setVariablesModalOpen] = useState(false);
 
   const { start, clear } = useTimeout(() => setShowLoading(false), 1000);
+  const handleContentChange = (value: string, onChange: (string) => void) => {
+    setShowLoading(true);
+    clear();
+    onChange(value);
+    start();
+  };
 
   return (
     <>
@@ -39,18 +46,19 @@ export function TemplateChatEditor() {
             defaultValue=""
             control={control}
             render={({ field }) => (
-              <CustomCodeEditorWrapper
-                onChange={(value) => {
-                  setShowLoading(true);
-                  clear();
-                  field.onChange(value);
-                  start();
-                }}
-                value={(field.value as string) || ''}
-                openVariablesModal={() => {
-                  setVariablesModalOpen(true);
-                }}
-              />
+              <Stack spacing={8}>
+                <VariableManagementButton
+                  openVariablesModal={() => {
+                    setVariablesModalOpen(true);
+                  }}
+                />
+                <CustomCodeEditor
+                  value={(field.value as string) || ''}
+                  onChange={(value) => {
+                    handleContentChange(value, field.onChange);
+                  }}
+                />
+              </Stack>
             )}
           />
         </Grid.Col>

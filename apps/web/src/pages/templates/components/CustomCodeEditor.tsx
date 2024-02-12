@@ -1,79 +1,13 @@
 import './CustomCodeEditor.css';
 import { Editor, Monaco } from '@monaco-editor/react';
-import { Card, Group, Loader, Stack, useMantineColorScheme, createStyles } from '@mantine/core';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { colors, Text, CurlyBrackets, ActionButton, Popover } from '@novu/design-system';
+import { Card, Loader, useMantineColorScheme } from '@mantine/core';
+import { useCallback, useEffect, useRef } from 'react';
+import { colors } from '@novu/design-system';
 import { editor as NEditor } from 'monaco-editor';
 
 import { createTranslationMarks } from './createTranslationMarks';
 import { IVariable, useWorkflowVariables } from '../../../api/hooks';
-import { useStepFormPath } from '../hooks/useStepFormPath';
-import { VariablesManagementNew } from './email-editor/variables-management/VariablesManagement';
 
-const usePopoverStyles = createStyles(() => ({
-  dropdown: {
-    padding: '0px !important',
-    flex: 1,
-    overflowY: 'auto',
-    maxHeight: '700px',
-  },
-}));
-export const CustomCodeEditorWrapper = ({
-  label,
-  onChange,
-  value,
-  openVariablesModal,
-}: {
-  label?: string;
-  onChange?: (string) => void;
-  value?: string;
-  openVariablesModal: () => void;
-}) => {
-  const stepFormPath = useStepFormPath();
-  const [openVariablesManagement, setOpenVariablesManagement] = useState<boolean>(false);
-  const { classes } = usePopoverStyles();
-
-  return (
-    <Stack spacing={8}>
-      <Group position={'apart'}>
-        <Text weight="bold">{label ?? 'Message content'}</Text>
-        <Popover
-          width={300}
-          className={classes.dropdown}
-          opened={openVariablesManagement}
-          target={
-            <ActionButton
-              Icon={CurlyBrackets}
-              onClick={() => setOpenVariablesManagement(!openVariablesManagement)}
-              tooltip="Open variables panel"
-              sx={{
-                '> svg': {
-                  width: 16,
-                  height: 12,
-                },
-              }}
-            />
-          }
-          content={
-            <VariablesManagementNew
-              closeVariablesManagement={() => {
-                setOpenVariablesManagement(false);
-              }}
-              path={`${stepFormPath}.template.variables`}
-              openVariablesModal={() => {
-                setOpenVariablesManagement(false);
-                openVariablesModal();
-              }}
-            />
-          }
-          withArrow={false}
-          position={'right-start'}
-        />
-      </Group>
-      <CustomCodeEditor value={value} onChange={onChange} />
-    </Stack>
-  );
-};
 export const CustomCodeEditor = ({
   onChange,
   value,

@@ -1,14 +1,10 @@
 import { useWatch } from 'react-hook-form';
-import { Container, Group, UnstyledButton } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
+import { Group } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
 import * as set from 'lodash.set';
 import styled from '@emotion/styled';
 
 import {
-  Text,
-  Tooltip,
-  EditGradient,
   Translation,
   colors,
   NovuIcon,
@@ -18,8 +14,8 @@ import {
   shadows,
   EmptySearch,
   ActionButton,
-  Edit,
   PencilOutlined,
+  Close,
 } from '@novu/design-system';
 
 import { VarItemsDropdown } from './VarItemsDropdown';
@@ -27,9 +23,7 @@ import { VarLabel } from './VarLabel';
 import { useDebounce, useProcessVariables } from '../../../../../hooks';
 import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
-import { getWorkflowVariables } from '../../../../../api/notification-templates';
 import { useWorkflowVariables } from '../../../../../api/hooks';
-import { Close } from '@novu/design-system/dist/cjs';
 
 interface IVariablesList {
   translations: Record<string, any>;
@@ -70,91 +64,6 @@ const searchVariables = (list, search: string) => {
 };
 
 export const VariablesManagement = ({
-  openVariablesModal,
-  control,
-  path,
-}: {
-  openVariablesModal?: () => void;
-  control?: any;
-  path: string;
-}) => {
-  const variableArray = useWatch({
-    name: path,
-    control,
-  });
-
-  const { variables } = useWorkflowVariables();
-
-  const processedVariables = useProcessVariables(variableArray, false);
-  const [variablesList, setVariablesList] = useState<IVariablesList>({
-    ...variables,
-    step: processedVariables,
-  });
-  const [searchVal, setSearchVal] = useState('');
-
-  const debouncedSearchChange = useDebounce((args: { search: string; list: IVariablesList }) => {
-    const { search, list } = args;
-    const { system, translations, step } = list;
-    setSearchVal(search);
-    setVariablesList({
-      system: searchVariables(system, search),
-      translations: searchVariables(translations, search),
-      step: searchVariables(step, search),
-    });
-  }, 500);
-
-  useEffect(() => {
-    if (variables) {
-      setVariablesList({ ...variables, step: processedVariables });
-    }
-  }, [variables, processedVariables, setVariablesList]);
-
-  const emptyVariablesList = Object.values(variablesList).every((list) => Object.keys(list).length === 0);
-
-  const handleSearchVariable = (e) => {
-    debouncedSearchChange({ search: e.target.value, list: { ...variables, step: processedVariables } });
-  };
-
-  return (
-    <VariablesContainer>
-      <When truthy={openVariablesModal !== undefined}>
-        <Group noWrap spacing={20} position={'right'}>
-          <ActionButton
-            onClick={() => {
-              if (openVariablesModal) {
-                openVariablesModal();
-              }
-            }}
-            Icon={PencilOutlined}
-            data-test-id="open-edit-variables-btn"
-            tooltip={'Add defaults or mark as required'}
-          />
-        </Group>
-      </When>
-      <Input
-        type={'search'}
-        onChange={handleSearchVariable}
-        mb={20}
-        placeholder={'Search variables...'}
-        rightSection={<Search />}
-      />
-      <When truthy={emptyVariablesList}>
-        <EmptySearchContainer>
-          <EmptySearch style={{ maxWidth: 200, marginBottom: 15 }} />
-          <span style={{ color: colors.B40, fontSize: 16, fontWeight: 600, lineHeight: '20px' }}>No matches found</span>
-          <span style={{ color: colors.B40, fontSize: 14, fontWeight: 400, lineHeight: '20px' }}>
-            Try being less specific or using different keywords.
-          </span>
-        </EmptySearchContainer>
-      </When>
-      <When truthy={!emptyVariablesList}>
-        <VariablesSection variablesList={variablesList} searchVal={searchVal} />
-      </When>
-    </VariablesContainer>
-  );
-};
-
-export const VariablesManagementNew = ({
   openVariablesModal,
   closeVariablesManagement,
   control,
@@ -203,9 +112,16 @@ export const VariablesManagementNew = ({
   };
 
   return (
-    <VariablesContainerNew>
+    <VariablesContainer>
       <When truthy={openVariablesModal !== undefined}>
-        <Group noWrap spacing={20} position={'right'}>
+        <Group
+          px={16}
+          h={40}
+          noWrap
+          spacing={20}
+          position={'right'}
+          style={{ borderRadius: '8px 8px 0px 0px', backgroundColor: colors.B15 }}
+        >
           <ActionButton
             onClick={() => {
               if (openVariablesModal) {
@@ -216,46 +132,47 @@ export const VariablesManagementNew = ({
             data-test-id="open-edit-variables-btn"
             tooltip={'Add defaults or mark as required'}
           />
-          <ActionButton
-            onClick={closeVariablesManagement}
-            sx={{
-              // marginLeft: 'auto',
-              '> svg': {
-                width: 14,
-                height: 14,
-              },
-            }}
-            Icon={Close}
-          />
+          <When truthy={closeVariablesManagement}>
+            <ActionButton
+              onClick={closeVariablesManagement}
+              sx={{
+                '> svg': {
+                  width: 14,
+                  height: 14,
+                },
+              }}
+              Icon={Close}
+            />
+          </When>
         </Group>
       </When>
-      <Input
-        type={'search'}
-        onChange={handleSearchVariable}
-        mb={20}
-        placeholder={'Search variables...'}
-        rightSection={<Search />}
-      />
-      <When truthy={emptyVariablesList}>
-        <EmptySearchContainer>
-          <EmptySearch style={{ maxWidth: 200, marginBottom: 15 }} />
-          <span style={{ color: colors.B40, fontSize: 16, fontWeight: 600, lineHeight: '20px' }}>No matches found</span>
-          <span style={{ color: colors.B40, fontSize: 14, fontWeight: 400, lineHeight: '20px' }}>
-            Try being less specific or using different keywords.
-          </span>
-        </EmptySearchContainer>
-      </When>
-      <When truthy={!emptyVariablesList}>
-        <VariablesSection variablesList={variablesList} searchVal={searchVal} />
-      </When>
-    </VariablesContainerNew>
+      <div style={{ padding: '12px' }}>
+        <Input
+          type={'search'}
+          onChange={handleSearchVariable}
+          mb={20}
+          placeholder={'Search variables...'}
+          rightSection={<Search />}
+        />
+        <When truthy={emptyVariablesList}>
+          <EmptySearchContainer>
+            <EmptySearch style={{ maxWidth: 200, marginBottom: 15 }} />
+            <span style={{ color: colors.B40, fontSize: 16, fontWeight: 600, lineHeight: '20px' }}>
+              No matches found
+            </span>
+            <span style={{ color: colors.B40, fontSize: 14, fontWeight: 400, lineHeight: '20px' }}>
+              Try being less specific or using different keywords.
+            </span>
+          </EmptySearchContainer>
+        </When>
+        <When truthy={!emptyVariablesList}>
+          <VariablesSection variablesList={variablesList} searchVal={searchVal} />
+        </When>
+      </div>
+    </VariablesContainer>
   );
 };
-const ButtonsContainer = styled(Container)`
-  padding: 0;
-  margin-left: auto;
-  margin-right: 0;
-`;
+
 const VariablesSection = ({ variablesList, searchVal }: { variablesList: IVariablesList; searchVal: string }) => {
   const { translations, system, step } = variablesList;
 
@@ -325,14 +242,7 @@ const VariablesContainer = styled.div`
   width: 100%;
   height: 100%;
   border-radius: 8px;
-  padding: 15px;
   box-shadow: ${shadows.dark};
-`;
-const VariablesContainerNew = styled.div`
-  width: 100%;
-  height: 100%;
-  border-radius: 8px;
-  padding: 15px;
 `;
 
 const EmptySearchContainer = styled.div`
