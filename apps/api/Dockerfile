@@ -27,7 +27,7 @@ RUN --mount=type=cache,id=pnpm-store-api,target=/root/.pnpm-store\
  --frozen-lockfile\
  --unsafe-perm
 
-RUN NODE_ENV=production NX_DAEMON=false pnpm build:api --skip-nx-cache
+RUN NODE_ENV=production NX_DAEMON=false pnpm build:api
 
 WORKDIR /usr/src/app/apps/api
 
