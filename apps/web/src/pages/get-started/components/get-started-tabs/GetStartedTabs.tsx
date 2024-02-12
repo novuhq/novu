@@ -4,9 +4,11 @@ import { Center, Container, Loader, Tabs } from '@mantine/core';
 import { colors, Digest, HalfClock, MultiChannel, RingingBell, Translation } from '@novu/design-system';
 
 import { useAuthContext } from '../../../../components/providers/AuthProvider';
-import { OnboardingUseCasesTabsEnum } from '../../../../constants/onboarding-tabs';
 import useStyles from './GetStartedTabs.style';
 import { CSSProperties } from 'react';
+import { GetStartedTab } from '../../layout/GetStartedTab';
+import { UseCasesConst } from '../../consts/UseCases.const';
+import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
 
 const TAB_SEARCH_PARAM_NAME = 'tab';
 const DEFAULT_TAB: OnboardingUseCasesTabsEnum = OnboardingUseCasesTabsEnum.IN_APP;
@@ -68,6 +70,8 @@ export function GetStartedTabs() {
   const { classes } = useStyles();
   const { currentTab, setTab } = useTabSearchParams();
 
+  console.log({ currentTab, cfg: UseCasesConst[currentTab] });
+
   if (!currentOrganization) {
     return (
       <Center>
@@ -91,11 +95,16 @@ export function GetStartedTabs() {
       >
         <Tabs.List>
           {TAB_CONFIGS.map(({ value, icon, title }) => (
-            <Tabs.Tab value={value} icon={icon}>
+            <Tabs.Tab key={`tab-${value}`} value={value} icon={icon}>
               {title}
             </Tabs.Tab>
           ))}
         </Tabs.List>
+        {TAB_CONFIGS.map(({ value }) => (
+          <Tabs.Panel key={`tab-panel-${value}`} value={value}>
+            {<GetStartedTab {...UseCasesConst[value]} />}
+          </Tabs.Panel>
+        ))}
       </Tabs>
       <Outlet />
     </Container>
