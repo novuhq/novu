@@ -806,6 +806,53 @@ export class HeadlessService {
       });
   }
 
+  public async removeNotifications({
+    messageIds,
+    listener,
+    onSuccess,
+    onError,
+  }: {
+    messageIds: string[];
+    listener: (
+      result: UpdateResult<void, unknown, { messageIds: string[] }>
+    ) => void;
+    onSuccess?: (obj: void) => void;
+    onError?: (error: unknown) => void;
+  }) {
+    this.assertSessionInitialized();
+
+    const { result, unsubscribe } = this.queryService.subscribeMutation<
+      void,
+      unknown,
+      { messageIds: string[] }
+    >({
+      options: {
+        mutationFn: (variables) =>
+          this.api.removeMessages(variables.messageIds),
+        onSuccess: (data) => {
+          this.queryClient.refetchQueries(NOTIFICATIONS_QUERY_KEY, {
+            exact: false,
+          });
+        },
+      },
+      listener: (res) => this.callUpdateListener(res, listener),
+    });
+
+    result
+      .mutate({ messageIds })
+      .then((data) => {
+        onSuccess?.(data);
+
+        return data;
+      })
+      .catch((error) => {
+        onError?.(error);
+      })
+      .finally(() => {
+        unsubscribe();
+      });
+  }
+
   public async updateAction({
     messageId,
     actionButtonType,

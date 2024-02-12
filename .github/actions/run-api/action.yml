@@ -14,7 +14,7 @@ runs:
   steps:
     - name: Build API
       shell: bash
-      run: CI='' pnpm build:api
+      run: CI='' pnpm build:api --skip-nx-cache
 
     - name: Start API
       shell: bash

@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared-web",
-  "version": "0.22.0",
+  "version": "0.23.1",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "private": true,
@@ -28,16 +28,16 @@
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json"
   },
   "dependencies": {
-    "@novu/shared": "0.22.0",
+    "@mantine/hooks": "^5.7.1",
+    "@novu/shared": "^0.23.1",
     "@segment/analytics-next": "1.59.0",
     "@sentry/react": "^7.40.0",
     "@tanstack/react-query": "^4.20.4",
-    "react-router-dom": "6.2.2",
-    "@mantine/hooks": "^5.7.1",
     "axios": "^1.6.0",
     "jwt-decode": "^3.1.2",
-    "tslib": "^2.3.1",
-    "launchdarkly-react-client-sdk": "^3.0.6"
+    "launchdarkly-react-client-sdk": "^3.0.6",
+    "react-router-dom": "6.2.2",
+    "tslib": "^2.3.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.12",

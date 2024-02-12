@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-dal",
-  "version": "0.22.0",
+  "version": "0.23.1",
   "description": "",
   "private": true,
   "scripts": {
@@ -12,15 +12,14 @@
     "precommit": "lint-staged",
     "lint": "eslint src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
-    "lint:fix": "pnpm lint -- --fix",
-    "symlink": "ln -s ../../../../.source/libs/dal/src ./src"
+    "lint:fix": "pnpm lint -- --fix"
   },
   "author": "",
   "license": "ISC",
   "main": "dist/index.js",
   "dependencies": {
-    "@novu/shared": "^0.22.0",
-    "@novu/dal": "^0.22.0",
+    "@novu/dal": "^0.23.1",
+    "@novu/shared": "^0.23.1",
     "mongoose": "^7.5.0",
     "mongoose-delete": "^1.0.1",
     "rimraf": "^3.0.2"

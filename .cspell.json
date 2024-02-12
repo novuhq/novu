@@ -552,7 +552,15 @@
     "INITDB",
     "isend",
     "Idand",
-    "hubspot"
+    "hubspot",
+    "hokify",
+    "containerd",
+    "snapshotter",
+    "moby",
+    "ghaction",
+    "spyon",
+    "restapi",
+    "ringcentral"
   ],
   "flagWords": [],
   "patterns": [

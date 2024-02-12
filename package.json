@@ -13,7 +13,7 @@
     "commit": "cz",
     "nx": "nx",
     "lint-staged": "lint-staged",
-    "generate:provider": "npx hygen provider new --version 0.16.3",
+    "generate:provider": "npx hygen provider new --version 0.23.1",
     "lint": "nx run-many --target=lint --all",
     "test": "cross-env CI=true lerna run test:watch --parallel",
     "start:dev": "cross-env TZ=UTC lerna run start:dev --parallel --concurrency=20 --scope=@novu/{api,worker,web,widget,ws,notification-center}",
@@ -52,7 +52,7 @@
     "build:widget": "nx build @novu/widget",
     "build:embed": "nx build @novu/embed",
     "build:storybook": "nx run @novu/web:build-storybook",
-    "test:providers": "pnpm --filter './providers/**' test",
+    "test:providers": "cross-env pnpm --filter './providers/**' test",
     "release:patch": "lerna version patch --no-push",
     "release:minor": "lerna version minor --no-push",
     "release:preminor": "lerna version preminor --no-push",
@@ -68,7 +68,7 @@
     "jarvis": "node scripts/jarvis.js",
     "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
     "get-affected": "node scripts/print-affected-array.mjs",
-    "symlink:submodules": "nx run-many --target=symlink --all",
+    "symlink:submodules": "pnpm --filter \"@novu/ee-*\" exec node \"$(pwd)/scripts/symlink-ee.mjs\"",
     "install:with-ee": "pnpm install && pnpm symlink:submodules"
   },
   "devDependencies": {

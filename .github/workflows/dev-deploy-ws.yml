@@ -45,6 +45,26 @@ jobs:
         with:
           submodules: ${{ contains (matrix.name,'-ee') }}
 
+      - uses: crazy-max/ghaction-setup-docker@v2
+        with:
+          version: v24.0.6
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: 'image=moby/buildkit:v0.12.4'
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -100,7 +120,7 @@ jobs:
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG --secret id=BULL_MQ_PRO_NPM_TOKEN -f apps/ws/Dockerfile . 
+          BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG --platform=linux/amd64,linux/arm64 --provenance=false --load --secret id=BULL_MQ_PRO_NPM_TOKEN -f apps/ws/Dockerfile . 
           docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1340/v1/health-check | grep 'ok'
           docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:dev
