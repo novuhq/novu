@@ -1,51 +1,68 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
+import { Grid } from '@mantine/core';
+import { useState } from 'react';
+import { useTimeout } from '@mantine/hooks';
 
-import { Textarea } from '@novu/design-system';
-import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
-import { useStepFormErrors } from '../../hooks/useStepFormErrors';
+import { useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm } from '../formTypes';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
-import { VariableManager } from '../VariableManager';
-import { TranslateProductLead } from '../TranslateProductLead';
+import { CustomCodeEditor, CustomCodeEditorWrapper } from '../CustomCodeEditor';
+import { ChatPreview } from '../../../../components/workflow/Preview';
+
+import { VariableManagerModal } from '../VariableManagerModal';
 
 const templateFields = ['content'];
 
 export function TemplateChatEditor() {
-  const { readonly } = useEnvController();
+  const [showLoading, setShowLoading] = useState(false);
   const stepFormPath = useStepFormPath();
-  const stepFormErrors = useStepFormErrors();
   const { control } = useFormContext<IForm>();
   const variablesArray = useVariablesManager(templateFields);
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.CHAT,
   });
+  const [variablesModalOpened, setVariablesModalOpen] = useState(false);
+
+  const { start, clear } = useTimeout(() => setShowLoading(false), 1000);
 
   return (
     <>
       {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.CHAT} /> : null}
       <StepSettings />
-      <Controller
-        name={`${stepFormPath}.template.content`}
-        defaultValue=""
-        control={control}
-        render={({ field }) => (
-          <Textarea
-            {...field}
-            data-test-id="chatNotificationContent"
-            error={stepFormErrors ? stepFormErrors?.template?.content?.message : undefined}
-            disabled={readonly}
-            minRows={4}
-            value={(field.value as string) || ''}
-            label="Chat message content"
-            placeholder="Add notification content here..."
+      <Grid>
+        <Grid.Col span={6}>
+          <Controller
+            name={`${stepFormPath}.template.content`}
+            defaultValue=""
+            control={control}
+            render={({ field }) => (
+              <CustomCodeEditorWrapper
+                onChange={(value) => {
+                  setShowLoading(true);
+                  clear();
+                  field.onChange(value);
+                  start();
+                }}
+                value={(field.value as string) || ''}
+                openVariablesModal={() => {
+                  setVariablesModalOpen(true);
+                }}
+              />
+            )}
           />
-        )}
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <ChatPreview showLoading={showLoading} />
+        </Grid.Col>
+      </Grid>
+      <VariableManagerModal
+        open={variablesModalOpened}
+        setOpen={setVariablesModalOpen}
+        variablesArray={variablesArray}
       />
-      <VariableManager variablesArray={variablesArray} path={`${stepFormPath}.template`} />
-      <TranslateProductLead id="translate-chat-editor" />
     </>
   );
 }

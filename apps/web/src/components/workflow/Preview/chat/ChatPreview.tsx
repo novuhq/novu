@@ -13,13 +13,14 @@ import { ChatContent } from './ChatContent';
 import { ChatInput } from './ChatInput';
 import { previewChat } from '../../../../api/content-templates';
 import { errorMessage } from '../../../../utils/notifications';
+import { useProcessVariables } from '../../../../hooks';
 
-export function ChatPreview() {
+export function ChatPreview({ showLoading = false }: { showLoading?: boolean }) {
   const { organization } = useAuthController();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const [selectedLocale, onLocaleChange] = useState<string | undefined>(undefined);
-  const { isLoading, mutateAsync } = useMutation(previewChat);
+  const { isLoading: isLoadingContent, mutateAsync } = useMutation(previewChat);
   const [compiledContent, setCompiledContent] = useState('');
 
   const {
@@ -37,17 +38,29 @@ export function ChatPreview() {
     control,
   });
 
+  const variables = useWatch({
+    name: `${path}.template.variables`,
+    control,
+  });
+
+  const processedVariables = useProcessVariables(variables);
+  const [payloadValue, setPayloadValue] = useState('{}');
+
   useEffect(() => {
     onLocaleChange(organization?.defaultLocale);
   }, [organization?.defaultLocale]);
 
   useEffect(() => {
-    if (content) {
+    if (!showLoading && content) {
       translationLocales({
         content,
       });
     }
-  }, [content, translationLocales]);
+  }, [content, showLoading, translationLocales]);
+
+  useEffect(() => {
+    setPayloadValue(processedVariables);
+  }, [processedVariables, setPayloadValue]);
 
   const parseContent = (args: { content?: string | any; payload: any; locale?: string }) => {
     mutateAsync({
@@ -65,13 +78,16 @@ export function ChatPreview() {
   };
 
   useEffect(() => {
-    parseContent({
-      content,
-      payload: `{}`,
-      locale: selectedLocale,
-    });
+    if (!showLoading) {
+      parseContent({
+        content,
+        payload: processedVariables,
+        locale: selectedLocale,
+      });
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [compiledContent, selectedLocale]);
+  }, [content, showLoading, selectedLocale, processedVariables]);
 
   return (
     <div>
@@ -79,7 +95,7 @@ export function ChatPreview() {
         <LocaleSelect
           value={selectedLocale}
           onLocaleChange={onLocaleChange}
-          isLoading={isLoadingLocales}
+          isLoading={isLoadingLocales || isLoadingContent}
           locales={locales || []}
         />
       </div>
@@ -92,7 +108,11 @@ export function ChatPreview() {
         }
         labelPosition="center"
       />
-      <ChatContent isLoading={isLoading || isLoadingLocales} content={compiledContent} error={error} />
+      <ChatContent
+        isLoading={showLoading || isLoadingContent || isLoadingLocales}
+        content={compiledContent}
+        error={error}
+      />
       <ChatInput />
     </div>
   );

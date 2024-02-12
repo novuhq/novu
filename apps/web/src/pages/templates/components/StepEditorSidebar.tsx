@@ -36,15 +36,17 @@ export const StepEditorSidebar = ({ children }: { children: ReactNode }) => {
   const { stepIndex, variantIndex } = useStepIndex();
   const { variantsCount } = useStepVariantsCount();
   const key = `${stepIndex}_${variantIndex}`;
-  const isEmailOrInApp = channel === StepTypeEnum.IN_APP || channel === StepTypeEnum.EMAIL;
+  const isExpandedChannel = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.CHAT].includes(
+    channel as StepTypeEnum
+  );
 
   return (
     <Sidebar
       key={key}
       isOpened
-      isExpanded={isEmailOrInApp}
+      isExpanded={isExpandedChannel}
       customHeader={<StepSidebarHeader />}
-      isParentScrollable={isEmailOrInApp}
+      isParentScrollable={isExpandedChannel}
       onClose={() => {
         if (variantsCount > 0) {
           navigate(basePath + `/${channel}/${stepUuid}/variants`);

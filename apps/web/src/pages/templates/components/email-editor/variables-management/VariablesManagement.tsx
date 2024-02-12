@@ -1,5 +1,5 @@
 import { useWatch } from 'react-hook-form';
-import { UnstyledButton } from '@mantine/core';
+import { Container, Group, UnstyledButton } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import React, { useEffect, useState } from 'react';
 import * as set from 'lodash.set';
@@ -17,6 +17,9 @@ import {
   Workflow,
   shadows,
   EmptySearch,
+  ActionButton,
+  Edit,
+  PencilOutlined,
 } from '@novu/design-system';
 
 import { VarItemsDropdown } from './VarItemsDropdown';
@@ -26,6 +29,7 @@ import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
 import { getWorkflowVariables } from '../../../../../api/notification-templates';
 import { useWorkflowVariables } from '../../../../../api/hooks';
+import { Close } from '@novu/design-system/dist/cjs';
 
 interface IVariablesList {
   translations: Record<string, any>;
@@ -114,36 +118,18 @@ export const VariablesManagement = ({
   return (
     <VariablesContainer>
       <When truthy={openVariablesModal !== undefined}>
-        <div
-          style={{
-            textAlign: 'right',
-            marginBottom: '20px',
-          }}
-        >
-          <Tooltip label="Add defaults or mark as required">
-            <UnstyledButton
-              data-test-id="open-edit-variables-btn"
-              onClick={() => {
-                if (openVariablesModal) {
-                  openVariablesModal();
-                }
-              }}
-              type="button"
-            >
-              <Text gradient>
-                Edit Variables
-                <EditGradient
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    marginBottom: '-4px',
-                    marginLeft: 5,
-                  }}
-                />
-              </Text>
-            </UnstyledButton>
-          </Tooltip>
-        </div>
+        <Group noWrap spacing={20} position={'right'}>
+          <ActionButton
+            onClick={() => {
+              if (openVariablesModal) {
+                openVariablesModal();
+              }
+            }}
+            Icon={PencilOutlined}
+            data-test-id="open-edit-variables-btn"
+            tooltip={'Add defaults or mark as required'}
+          />
+        </Group>
       </When>
       <Input
         type={'search'}
@@ -168,6 +154,108 @@ export const VariablesManagement = ({
   );
 };
 
+export const VariablesManagementNew = ({
+  openVariablesModal,
+  closeVariablesManagement,
+  control,
+  path,
+}: {
+  openVariablesModal?: () => void;
+  closeVariablesManagement?: () => void;
+  control?: any;
+  path: string;
+}) => {
+  const variableArray = useWatch({
+    name: path,
+    control,
+  });
+
+  const { variables } = useWorkflowVariables();
+
+  const processedVariables = useProcessVariables(variableArray, false);
+  const [variablesList, setVariablesList] = useState<IVariablesList>({
+    ...variables,
+    step: processedVariables,
+  });
+  const [searchVal, setSearchVal] = useState('');
+
+  const debouncedSearchChange = useDebounce((args: { search: string; list: IVariablesList }) => {
+    const { search, list } = args;
+    const { system, translations, step } = list;
+    setSearchVal(search);
+    setVariablesList({
+      system: searchVariables(system, search),
+      translations: searchVariables(translations, search),
+      step: searchVariables(step, search),
+    });
+  }, 500);
+
+  useEffect(() => {
+    if (variables) {
+      setVariablesList({ ...variables, step: processedVariables });
+    }
+  }, [variables, processedVariables, setVariablesList]);
+
+  const emptyVariablesList = Object.values(variablesList).every((list) => Object.keys(list).length === 0);
+
+  const handleSearchVariable = (e) => {
+    debouncedSearchChange({ search: e.target.value, list: { ...variables, step: processedVariables } });
+  };
+
+  return (
+    <VariablesContainerNew>
+      <When truthy={openVariablesModal !== undefined}>
+        <Group noWrap spacing={20} position={'right'}>
+          <ActionButton
+            onClick={() => {
+              if (openVariablesModal) {
+                openVariablesModal();
+              }
+            }}
+            Icon={PencilOutlined}
+            data-test-id="open-edit-variables-btn"
+            tooltip={'Add defaults or mark as required'}
+          />
+          <ActionButton
+            onClick={closeVariablesManagement}
+            sx={{
+              // marginLeft: 'auto',
+              '> svg': {
+                width: 14,
+                height: 14,
+              },
+            }}
+            Icon={Close}
+          />
+        </Group>
+      </When>
+      <Input
+        type={'search'}
+        onChange={handleSearchVariable}
+        mb={20}
+        placeholder={'Search variables...'}
+        rightSection={<Search />}
+      />
+      <When truthy={emptyVariablesList}>
+        <EmptySearchContainer>
+          <EmptySearch style={{ maxWidth: 200, marginBottom: 15 }} />
+          <span style={{ color: colors.B40, fontSize: 16, fontWeight: 600, lineHeight: '20px' }}>No matches found</span>
+          <span style={{ color: colors.B40, fontSize: 14, fontWeight: 400, lineHeight: '20px' }}>
+            Try being less specific or using different keywords.
+          </span>
+        </EmptySearchContainer>
+      </When>
+      <When truthy={!emptyVariablesList}>
+        <VariablesSection variablesList={variablesList} searchVal={searchVal} />
+      </When>
+    </VariablesContainerNew>
+  );
+};
+const ButtonsContainer = styled(Container)`
+  padding: 0;
+  margin-left: auto;
+  margin-right: 0;
+`;
 const VariablesSection = ({ variablesList, searchVal }: { variablesList: IVariablesList; searchVal: string }) => {
   const { translations, system, step } = variablesList;
 
@@ -239,6 +327,12 @@ const VariablesContainer = styled.div`
   border-radius: 8px;
   padding: 15px;
   box-shadow: ${shadows.dark};
+`;
+const VariablesContainerNew = styled.div`
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  padding: 15px;
 `;
 
 const EmptySearchContainer = styled.div`
