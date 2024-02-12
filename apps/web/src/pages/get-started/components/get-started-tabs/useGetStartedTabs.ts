@@ -16,7 +16,8 @@ export const useTabSearchParams = () => {
   const [params, setParams] = useSearchParams(DEFAULT_PARAMS as unknown as URLSearchParamsInit);
 
   const setTab = (tab: OnboardingUseCasesTabsEnum) => {
-    setParams({ [TAB_SEARCH_PARAM_NAME]: tab });
+    // replace is used so that changing the search params isn't considered a change in page
+    setParams({ [TAB_SEARCH_PARAM_NAME]: tab }, { replace: true });
   };
 
   const currentTab = (params.get(TAB_SEARCH_PARAM_NAME) as OnboardingUseCasesTabsEnum) ?? DEFAULT_TAB;
