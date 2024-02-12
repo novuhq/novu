@@ -45,7 +45,7 @@ describe('Workflow Editor - Variants', function () {
   };
 
   const fillChatEditorContentWith = (content: string) => {
-    cy.getByTestId('chatNotificationContent').clear().type(content, {
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').clear({ force: true }).type(content, {
       parseSpecialCharSequences: false,
       force: true,
     });
@@ -125,7 +125,10 @@ describe('Workflow Editor - Variants', function () {
         cy.getByTestId('smsNotificationContent').should('have.value', isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
         break;
       case 'chat':
-        cy.getByTestId('chatNotificationContent').should('have.value', isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
+        cy.get('.monaco-editor textarea:first')
+          .parent()
+          .click()
+          .contains(isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
         break;
       case 'push':
         cy.getByTestId('pushNotificationTitle').should('have.value', PUSH_TITLE);
@@ -149,7 +152,9 @@ describe('Workflow Editor - Variants', function () {
         cy.getByTestId('smsNotificationContent').clear();
         break;
       case 'chat':
-        cy.getByTestId('chatNotificationContent').clear();
+        cy.get('.monaco-editor textarea:first').parent().click().type('{cmd}a').find('textarea').clear({
+          force: true,
+        });
         break;
       case 'push':
         cy.getByTestId('pushNotificationTitle').clear();

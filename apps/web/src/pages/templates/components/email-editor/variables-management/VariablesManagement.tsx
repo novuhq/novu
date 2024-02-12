@@ -1,5 +1,5 @@
 import { useWatch } from 'react-hook-form';
-import { Group } from '@mantine/core';
+import { Group, useMantineColorScheme } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
 import * as set from 'lodash.set';
 import styled from '@emotion/styled';
@@ -78,6 +78,7 @@ export const VariablesManagement = ({
     name: path,
     control,
   });
+  const { colorScheme } = useMantineColorScheme();
 
   const { variables } = useWorkflowVariables();
 
@@ -120,7 +121,10 @@ export const VariablesManagement = ({
           noWrap
           spacing={20}
           position={'right'}
-          style={{ borderRadius: '8px 8px 0px 0px', backgroundColor: colors.B15 }}
+          style={{
+            borderRadius: '8px 8px 0px 0px',
+            backgroundColor: colorScheme === 'dark' ? colors.B15 : colors.BGLight,
+          }}
         >
           <ActionButton
             onClick={() => {
