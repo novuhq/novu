@@ -39,9 +39,7 @@ describe('Get portal link', async () => {
     });
 
     expect(spy.lastCall.args.at(0)).to.deep.equal({
-      environmentId: 'environment_dd',
       organizationId: 'organization_id',
-      userId: 'user_id',
     });
 
     expect(result).to.equal('url');
