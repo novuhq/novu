@@ -23,7 +23,7 @@ export class TopicSubscribersRepository extends BaseRepository<
     await this.upsertMany(subscribers);
   }
 
-  async getTopicDistinctSubscribersCursor({
+  async *getTopicDistinctSubscribers({
     query,
     batchSize = 500,
   }: {
@@ -54,7 +54,9 @@ export class TopicSubscribersRepository extends BaseRepository<
       },
     ];
 
-    return this._model.aggregate(aggregatePipeline, { batchSize: batchSize }).cursor();
+    for await (const doc of this._model.aggregate(aggregatePipeline, { batchSize: batchSize }).cursor()) {
+      yield this.mapEntity(doc);
+    }
   }
 
   async findOneByTopicKeyAndExternalSubscriberId(
