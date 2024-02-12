@@ -68,11 +68,13 @@ export const VariablesManagement = ({
   closeVariablesManagement,
   control,
   path,
+  isPopover = false,
 }: {
   openVariablesModal?: () => void;
   closeVariablesManagement?: () => void;
   control?: any;
   path: string;
+  isPopover?: boolean;
 }) => {
   const variableArray = useWatch({
     name: path,
@@ -113,7 +115,7 @@ export const VariablesManagement = ({
   };
 
   return (
-    <VariablesContainer>
+    <VariablesContainer isPopover={isPopover}>
       <When truthy={openVariablesModal !== undefined}>
         <Group
           px={16}
@@ -242,11 +244,11 @@ const VariableSectionItem = ({
   );
 };
 
-const VariablesContainer = styled.div`
+const VariablesContainer = styled.div<{ isPopover: boolean }>`
   width: 100%;
   height: 100%;
   border-radius: 8px;
-  box-shadow: ${shadows.dark};
+  box-shadow: ${({ isPopover }) => (isPopover ? 'none' : shadows.dark)};
 `;
 
 const EmptySearchContainer = styled.div`

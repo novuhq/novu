@@ -11,7 +11,7 @@ const usePopoverStyles = createStyles(() => ({
     flex: 1,
     overflowY: 'auto',
     overflowX: 'hidden',
-    maxHeight: '700px',
+    height: '70%',
     borderColor: 'transparent',
   },
 }));
@@ -49,6 +49,7 @@ export const VariableManagementButton = ({
         }
         content={
           <VariablesManagement
+            isPopover
             closeVariablesManagement={() => {
               setOpenVariablesManagement(false);
             }}
