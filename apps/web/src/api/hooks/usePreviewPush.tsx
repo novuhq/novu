@@ -30,12 +30,12 @@ export const usePreviewPush = (options: UseMutationOptions<ResultType, ErrorType
   );
 
   const getPushPreviewCallback = useCallback(
-    async ({ content, payload, locale, title: subject }: PayloadType) => {
+    async ({ content, payload, locale, title }: PayloadType) => {
       await mutateAsync({
         content,
         payload,
         locale,
-        title: subject,
+        title,
       });
     },
     [mutateAsync]
