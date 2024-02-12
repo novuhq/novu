@@ -64,3 +64,13 @@ export const useIsTranslationManagerEnabled = (): boolean => {
 
   return isTranslationManagerEnabled ?? defaultValue;
 };
+
+export const useIsImprovedOnboardingEnabled = (): boolean => {
+  const value = IS_TRANSLATION_MANAGER_ENABLED;
+  const fallbackValue = false;
+  const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
+
+  const isImprovedOnboardingEnabled = useGetFlagByKey<boolean>(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
+
+  return isImprovedOnboardingEnabled ?? defaultValue;
+};

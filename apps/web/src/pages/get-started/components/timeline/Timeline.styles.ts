@@ -1,4 +1,5 @@
 import { createStyles, MantineTheme } from '@mantine/core';
+import { colors } from '@novu/design-system';
 import { ExpandStepsType } from './Timeline';
 
 interface ITimelineParams {
@@ -23,14 +24,22 @@ export default createStyles((theme: MantineTheme, { expandSteps }: ITimelinePara
       }),
 
       '&:not(:first-of-type)': {
-        marginTop: '16px',
+        marginTop: '1rem',
+      },
+      '&::before': {
+        backgroundColor: theme.colorScheme === 'dark' ? colors.B30 : colors.B30,
       },
     },
 
-    itemTitle: { margin: '0px', lineHeight: '24px' },
-
+    itemTitle: { margin: 0, lineHeight: '1.5rem', fontWeight: 600 },
+    itemBullet: {
+      '&[data-with-child]': {
+        fontWeight: 600,
+        backgroundColor: theme.colorScheme === 'dark' ? colors.B30 : colors.B30,
+      },
+    },
     itemBody: {
-      lineHeight: '20px',
+      lineHeight: '1.25rem',
     },
 
     itemContent: {

@@ -1,12 +1,12 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
 
-export const StepText = styled.div`
+export const StepText = styled.p`
   display: inline;
   color: ${colors.B60};
 `;
 
-export const StepDescription = styled.p`
+export const StepDescription = styled.div`
   margin: 0;
 `;
 
