@@ -1,6 +1,5 @@
 export * from './LocaleSelect';
 export * from './EmailMobile';
-export * from './PreviewDateIcon';
 export * from './PreviewEditOverlay';
 export * from './PreviewUserIcon';
 export * from './NovuGreyIcon';
