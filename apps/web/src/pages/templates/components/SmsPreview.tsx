@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
 
 import { LocaleSelect } from '../../../components/workflow/Preview/common';
-import { usePreviewTemplate } from '../hooks/usePreviewTemplate';
+import { usePreviewSmsTemplate } from '../hooks/usePreviewSmsTemplate';
 import { useNavigateToStepEditor } from '../hooks/useNavigateToStepEditor';
 import { useTemplateLocales } from '../hooks/useTemplateLocales';
 import { MobileSimulator } from './phone-simulator';
@@ -28,7 +28,7 @@ const LocaleSelectStyled = styled(LocaleSelect)`
 export const SmsPreview = () => {
   const { navigateToStepEditor } = useNavigateToStepEditor();
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales();
-  const { isPreviewContentLoading, previewContent, templateContentError } = usePreviewTemplate(selectedLocale);
+  const { isPreviewContentLoading, previewContent, templateContentError } = usePreviewSmsTemplate(selectedLocale);
 
   return (
     <MobileSimulator>
