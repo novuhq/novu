@@ -1,8 +1,8 @@
 import {
   decryptCredentials,
-  decryptProviderSecret,
+  decryptSecret,
   encryptCredentials,
-  encryptProviderSecret,
+  encryptSecret,
 } from './encrypt-provider';
 import { ICredentialsDto } from '@novu/shared';
 
@@ -11,7 +11,7 @@ describe('Encrypt provider secrets', function () {
 
   it('should encrypt provider secret', async function () {
     const password = '1234';
-    const encrypted = encryptProviderSecret(password);
+    const encrypted = encryptSecret(password);
 
     expect(encrypted).toContain(novuSubMask);
     expect(encrypted).not.toEqual(password);
@@ -20,8 +20,8 @@ describe('Encrypt provider secrets', function () {
 
   it('should decrypt provider secret', async function () {
     const password = '123';
-    const encrypted = encryptProviderSecret(password);
-    const decrypted = decryptProviderSecret(encrypted);
+    const encrypted = encryptSecret(password);
+    const decrypted = decryptSecret(encrypted);
 
     expect(decrypted).toEqual(password);
   });

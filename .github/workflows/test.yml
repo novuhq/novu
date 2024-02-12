@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: streetsidesoftware/cspell-action@v2
+      - uses: streetsidesoftware/cspell-action@v5
 
   get-affected:
     name: Get Affected Packages
@@ -43,7 +43,7 @@ jobs:
       # Get current branch name
       - name: Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v5.2
+        uses: tj-actions/branch-names@v7.0.7
       # Get base branch name to compare with. Base branch on a PR, "main" branch on pushing.
       - name: Get base branch name
         id: get-base-branch-name
@@ -92,14 +92,16 @@ jobs:
 
   test_web:
     name: Test Web Cypress
-    needs: [ get-affected ]
+    needs: [get-affected]
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
+    with:
+      ee: true
 
   test_widget:
     name: Test Widget Cypress
-    needs: [ get-affected ]
+    needs: [get-affected]
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
       ee: true
@@ -110,7 +112,7 @@ jobs:
     name: Build Docker API
     runs-on: ubuntu-latest
     timeout-minutes: 80
-    needs: [ get-affected ]
+    needs: [get-affected]
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
     permissions:
       contents: read
@@ -119,7 +121,7 @@ jobs:
       id-token: write
     strategy:
       matrix:
-        name: [ 'novu/api', 'novu/api-ee' ]
+        name: ['novu/api', 'novu/api-ee']
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup-project
@@ -160,13 +162,22 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - run: echo '${{ needs.get-affected.outputs.test-packages }}'
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-project
+      - name: Display Test Packages
+        run: echo '${{ needs.get-affected.outputs.test-packages }}'
+
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Project
+        uses: ./.github/actions/setup-project
         with:
           slim: 'true'
-      - uses: ./.github/actions/setup-redis-cluster
-      - uses: mansagroup/nrwl-nx-action@v3
+
+      - name: Setup Redis Cluster
+        uses: ./.github/actions/setup-redis-cluster
+
+      - name: Run Lint, Build, Test
+        uses: mansagroup/nrwl-nx-action@v3
         env:
           LOGGING_LEVEL: 'info'
         with:
@@ -189,19 +200,19 @@ jobs:
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
 
   test_api:
-    needs: [ get-affected ]
+    name: Test API
+    needs: [get-affected]
     strategy:
       # The order is important for ee to be first, otherwise outputs not work correctly
       matrix:
-        name: [ 'novu/api-ee', 'novu/api' ]
+        name: ['novu/api-ee', 'novu/api']
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'-ee') }}
-      test-e2e-affected: ${{ fromJson(needs.get-affected.outputs.test-e2e)[0] }}
-      test-e2e-ee-affected: ${{ fromJson(needs.get-affected.outputs.test-e2e-ee)[0] }}
+      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
+      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') }}
       job-name: ${{ matrix.name }}
     secrets: inherit
-
 
   test_unit:
     name: Unit Test
@@ -232,8 +243,8 @@ jobs:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
 
-  validate_swagger:
-    name: Validate Swagger
+  validate_openapi:
+    name: Validate OpenAPI
     runs-on: ubuntu-latest
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
@@ -251,4 +262,4 @@ jobs:
         with:
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
 
-      - uses: ./.github/actions/validate-swagger
+      - uses: ./.github/actions/validate-openapi

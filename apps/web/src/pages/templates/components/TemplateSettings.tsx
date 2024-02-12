@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Group } from '@mantine/core';
 import styled from '@emotion/styled';
+import { useFormContext } from 'react-hook-form';
 
 import { Button, colors, Trash } from '@novu/design-system';
 import { NotificationSettingsForm } from './notification-setting-form/NotificationSettingsForm';
@@ -10,10 +11,9 @@ import { useEnvController } from '../../../hooks';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { deleteTemplateById } from '../../../api/notification-templates';
 import { ROUTES } from '../../../constants/routes.enum';
-import { SubPageWrapper } from './SubPageWrapper';
 import { WorkflowSettingsTabs } from './WorkflowSettingsTabs';
-import { useFormContext } from 'react-hook-form';
 import { IForm } from './formTypes';
+import { WorkflowSidebar } from './WorkflowSidebar';
 
 export const TemplateSettings = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -52,10 +52,10 @@ export const TemplateSettings = () => {
   };
 
   return (
-    <SubPageWrapper title="Workflow Settings">
+    <WorkflowSidebar title="Workflow Settings">
       <WorkflowSettingsTabs />
       <NotificationSettingsForm trigger={trigger} />
-      <Group position="right" mt={'auto'}>
+      <Group position="right" mt={'auto'} mb={24}>
         <DeleteNotificationButton
           variant="outline"
           disabled={readonly}
@@ -84,7 +84,7 @@ export const TemplateSettings = () => {
         confirmButtonText="Delete Workflow"
         cancelButtonText="Cancel"
       />
-    </SubPageWrapper>
+    </WorkflowSidebar>
   );
 };
 

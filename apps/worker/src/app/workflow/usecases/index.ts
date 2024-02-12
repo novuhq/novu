@@ -1,5 +1,4 @@
 export * from './handle-last-failed-job';
-export * from './message-matcher';
 export * from './queue-next-job';
 export * from './run-job';
 export * from './send-message';

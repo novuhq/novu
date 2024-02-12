@@ -186,6 +186,7 @@ export function IntegrationsListModal({
         channel={provider?.channel}
       />
       <UpdateProviderSidebar
+        key={integrationIdToEdit}
         isOpened={sidebarType === SidebarType.UPDATE}
         onClose={onSidebarClose}
         integrationId={integrationIdToEdit}

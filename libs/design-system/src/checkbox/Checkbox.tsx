@@ -34,3 +34,5 @@ export function Checkbox({
     />
   );
 }
+
+Checkbox.Group = MantineCheckbox.Group;

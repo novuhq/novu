@@ -1,7 +1,4 @@
-import {
-  GetIsInMemoryClusterModeEnabled,
-  GetIsRequestRateLimitingEnabled,
-} from './index';
+import { GetIsInMemoryClusterModeEnabled } from './index';
 
 describe('Get System Critical Flag', () => {
   describe('SystemCriticalFlagEnum.IS_IN_MEMORY_CLUSTER_MODE_ENABLED', () => {
@@ -51,28 +48,6 @@ describe('Get System Critical Flag', () => {
 
       const result = getIsInMemoryClusterModeEnabled.execute();
       expect(result).toEqual(false);
-    });
-  });
-
-  describe('SystemCriticalFlagEnum.IS_REQUEST_RATE_LIMITING_ENABLED', () => {
-    it('should return default hardcoded value when no environment variable is set', async () => {
-      process.env.IS_REQUEST_RATE_LIMITING_ENABLED = '';
-
-      const getIsRequestRateLimitingEnabled =
-        new GetIsRequestRateLimitingEnabled();
-
-      const result = getIsRequestRateLimitingEnabled.execute();
-      expect(result).toEqual(false);
-    });
-
-    it('should return environment variable value when environment variable is set', async () => {
-      process.env.IS_REQUEST_RATE_LIMITING_ENABLED = 'true';
-
-      const getIsRequestRateLimitingEnabled =
-        new GetIsRequestRateLimitingEnabled();
-
-      const result = getIsRequestRateLimitingEnabled.execute();
-      expect(result).toEqual(true);
     });
   });
 });

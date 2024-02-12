@@ -2,7 +2,7 @@ import { Tooltip as MantineTooltip, TooltipProps } from '@mantine/core';
 
 import useStyles from './Tooltip.styles';
 
-interface ITooltipProps
+export interface ITooltipProps
   extends Pick<
     TooltipProps,
     | 'multiline'

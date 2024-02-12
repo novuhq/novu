@@ -7,7 +7,6 @@ import {
   GetNovuProviderCredentials,
   StorageHelperService,
   SendTestEmail,
-  BaseApiQueuesModule,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -24,6 +23,7 @@ import { ExecutionDetailsModule } from '../execution-details/execution-details.m
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { JobTopicNameEnum } from '@novu/shared';
 
 const PROVIDERS = [
   CreateExecutionDetails,
@@ -47,7 +47,6 @@ const PROVIDERS = [
     TopicsModule,
     LayoutsModule,
     TenantModule,
-    BaseApiQueuesModule,
   ],
   controllers: [EventsController],
   providers: [...PROVIDERS, ...USE_CASES],

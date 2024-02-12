@@ -422,7 +422,7 @@ describe('ContentService', function () {
             {
               isNegated: false,
               type: 'GROUP',
-              value: 'AND',
+              value: FieldLogicalOperatorEnum.AND,
             },
           ],
         },

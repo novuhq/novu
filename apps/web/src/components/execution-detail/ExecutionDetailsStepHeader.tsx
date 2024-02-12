@@ -86,6 +86,9 @@ const generateDetailByStepAndStatus = (status, step) => {
   }
 
   if (step.type === StepTypeEnum.DIGEST) {
+    if (status === JobStatusEnum.SKIPPED) {
+      return step.executionDetails?.at(-1)?.detail;
+    }
     const { digest } = step;
 
     return `Digesting events for ${digest.amount} ${digest.unit}`;

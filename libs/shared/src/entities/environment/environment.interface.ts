@@ -1,4 +1,4 @@
-import { IApiRateLimits } from '../../types';
+import { IApiRateLimitMaximum } from '../../types';
 
 export interface IEnvironment {
   _id?: string;
@@ -8,7 +8,7 @@ export interface IEnvironment {
   identifier: string;
   widget: IWidgetSettings;
   dns?: IDnsSettings;
-  apiRateLimits?: IApiRateLimits;
+  apiRateLimits?: IApiRateLimitMaximum;
 
   branding?: {
     color: string;

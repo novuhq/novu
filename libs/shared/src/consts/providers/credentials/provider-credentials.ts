@@ -374,6 +374,33 @@ export const bulkSmsConfig: IConfigCredentials[] = [
   },
 ];
 
+export const iSendSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'API Token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.From,
+    displayName: 'Default Sender ID',
+    type: 'string',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.ContentType,
+    displayName: 'Content Type',
+    type: 'dropdown',
+    required: false,
+    value: null,
+    dropdown: [
+      { name: 'Default', value: null },
+      { name: 'Unicode', value: 'unicode' },
+      { name: 'Plain', value: 'plain' },
+    ],
+  },
+];
+
 export const clickatellConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiKey,
@@ -519,6 +546,15 @@ export const grafanaOnCallConfig: IConfigCredentials[] = [
   },
 ];
 
+export const getstreamConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+];
+
 export const fcmConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ServiceAccount,
@@ -618,7 +654,7 @@ export const apnsConfig: IConfigCredentials[] = [
     key: CredentialsKeyEnum.Secure,
     displayName: 'Production',
     type: 'switch',
-    required: true,
+    required: false,
   },
 
   ...pushConfigBase,
@@ -962,14 +998,14 @@ export const genericSmsConfig: IConfigCredentials[] = [
     type: 'string',
     value: 'data.date',
     description: 'The path to the date field in the response data ex. (date, message.date, ...)',
-    required: true,
+    required: false,
   },
   {
     key: CredentialsKeyEnum.AuthenticateByToken,
     displayName: 'Authenticate by token',
     type: 'switch',
     description: 'If enabled, the API key and secret key will be sent as a token in the Authorization header',
-    required: true,
+    required: false,
   },
   {
     key: CredentialsKeyEnum.Domain,
@@ -1017,6 +1053,64 @@ export const azureSmsConfig: IConfigCredentials[] = [
     displayName: 'Connection string',
     description: 'Your Azure account connection string',
     type: 'text',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const rocketChatConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Personal Access Token (x-auth-token)',
+    description: 'Personal Access Token of your user',
+    type: 'text',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'User id (x-user-id)',
+    description: 'Your User id',
+    type: 'text',
+    required: true,
+  },
+];
+
+export const ringCentralConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    description: 'Your RingCentral app client ID',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client secret',
+    description: 'Your RingCentral app client secret',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Secure,
+    displayName: 'Is sandbox',
+    type: 'switch',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'JWT token',
+    description: 'Your RingCentral user JWT token',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
+
+export const brevoSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
     required: true,
   },
   ...smsConfigBase,

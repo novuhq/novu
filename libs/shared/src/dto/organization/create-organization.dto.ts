@@ -1,7 +1,14 @@
+import { JobTitleEnum, ProductUseCasesEnum } from '../../types';
+
+export type ProductUseCases = Partial<Record<ProductUseCasesEnum, boolean>>;
+
 export interface ICreateOrganizationDto {
   name: string;
   logo?: string;
   taxIdentifier?: string;
+  jobTitle?: JobTitleEnum;
+  domain?: string;
+  productUseCases?: ProductUseCases;
 }
 
 export interface IOrganizationDTO {

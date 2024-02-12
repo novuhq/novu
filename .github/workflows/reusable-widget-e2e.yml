@@ -89,7 +89,7 @@ jobs:
           cd apps/ws && pnpm start:prod &
 
       - name: Wait on Widget and WS Services
-        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:3500
+        run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check http://127.0.0.1:3500/
 
       - name: Cypress install
         if: steps.setup-project.outputs.cypress_cache_hit != 'true'
@@ -104,7 +104,7 @@ jobs:
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WIDGET_KEY }}
         with:
           working-directory: apps/widget
-          wait-on: http://localhost:3500
+          wait-on: http://127.0.0.1:3500/
           browser: chrome
           install: false
           record: true

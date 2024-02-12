@@ -13,18 +13,6 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    if (!request.headers.authorization) return false;
-
-    const token = request.headers.authorization.split(' ')[1];
-    if (!token) return false;
-
-    const authorizationHeader = request.headers.authorization;
-    if (!authorizationHeader?.includes('ApiKey')) {
-      const user = jwt.decode(token) as IJwtPayload;
-      if (!user) return false;
-    }
-
     /*
      * TODO: The roles check implementation is currently not enabled
      * As we are not using roles in the system at this point

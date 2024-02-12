@@ -55,11 +55,6 @@ export class InMemoryProviderService {
   }
 
   private buildClient(provider: InMemoryProviderEnum): InMemoryProviderClient {
-    // TODO: Temporary while migrating to MemoryDB
-    if (provider === InMemoryProviderEnum.OLD_INSTANCE_REDIS) {
-      return this.oldInstanceInMemoryProviderSetup();
-    }
-
     return this.isCluster
       ? this.inMemoryClusterProviderSetup(provider)
       : this.inMemoryProviderSetup();
@@ -115,10 +110,7 @@ export class InMemoryProviderService {
 
   public getOptions(): RedisOptions | undefined {
     if (this.inMemoryProviderClient) {
-      if (
-        this.provider === InMemoryProviderEnum.OLD_INSTANCE_REDIS ||
-        !this.isCluster
-      ) {
+      if (!this.isCluster) {
         const options: RedisOptions = this.inMemoryProviderClient.options;
 
         return options;
@@ -285,95 +277,6 @@ export class InMemoryProviderService {
 
       inMemoryProviderClient.on('wait', () => {
         Logger.verbose(this.descriptiveLogMessage('Redis wait'), LOG_CONTEXT);
-      });
-
-      return inMemoryProviderClient;
-    }
-  }
-
-  /**
-   * TODO: Temporary while we migrate to MemoryDB
-   */
-  private oldInstanceInMemoryProviderSetup(): Redis | undefined {
-    Logger.verbose(
-      this.descriptiveLogMessage('In-memory old instance service set up'),
-      LOG_CONTEXT
-    );
-
-    const { getClient, getConfig, isClientReady } = getClientAndConfig();
-
-    this.isProviderClientReady = isClientReady;
-    this.inMemoryProviderConfig = getConfig();
-    const { host, port, ttl } = getConfig();
-
-    if (!host) {
-      Logger.warn(
-        this.descriptiveLogMessage(
-          'Missing host for in-memory provider old instance'
-        ),
-        LOG_CONTEXT
-      );
-    }
-
-    const inMemoryProviderClient = getClient();
-    if (host && inMemoryProviderClient) {
-      Logger.log(
-        this.descriptiveLogMessage(
-          `Connecting to old instance to ${host}:${port}`
-        ),
-        LOG_CONTEXT
-      );
-
-      inMemoryProviderClient.on('connect', () => {
-        Logger.log(
-          this.descriptiveLogMessage('REDIS CONNECTED to old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('reconnecting', () => {
-        Logger.verbose(
-          this.descriptiveLogMessage('Redis reconnecting to old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('close', () => {
-        Logger.verbose(
-          this.descriptiveLogMessage('Redis close old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('end', () => {
-        Logger.verbose(
-          this.descriptiveLogMessage('Redis end old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('error', (error) => {
-        Logger.error(
-          error,
-          this.descriptiveLogMessage(
-            'There has been an error in the InMemory provider client for the old instance'
-          ),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('ready', () => {
-        Logger.log(
-          this.descriptiveLogMessage('Redis ready for old instance'),
-          LOG_CONTEXT
-        );
-      });
-
-      inMemoryProviderClient.on('wait', () => {
-        Logger.verbose(
-          this.descriptiveLogMessage('Redis wait for old instance'),
-          LOG_CONTEXT
-        );
       });
 
       return inMemoryProviderClient;

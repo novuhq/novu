@@ -1,0 +1,161 @@
+name: Build, tag and push docker image to ghcr.io
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_call:
+    inputs:
+      # The environment with the GH secrets environment.
+      environment:
+        required: true
+        type: string
+      # The name of the package under which the docker image will be published on GH Packages.
+      package_name:
+        required: true
+        type: string
+      # The path to the project in the monorepo.
+      project_path:
+        required: true
+        type: string
+      # The port used for testing. This is not a required input, and it defaults to '1341'.
+      # This value is added, so you can test the image after it's built in test mode and by doing a health-check.
+      test_port:
+        required: false
+        default: '1341'
+        type: string
+      # The boolean that helps to determine whether to perform a health check. This is not a required input and defaults to false.
+      health_check:
+        required: false
+        default: false
+        type: boolean
+      # The tag under which the image is built, it should align with the name in the project command docker:build
+      local_tag:
+        required: true
+        type: string
+      # The environment tag. Possible values are dev, stg, and prod. This is not a required input of type string.
+      env_tag:
+        required: false
+        type: string
+    outputs:
+      docker_image:
+        description: 'The image that was built'
+        value: ${{ jobs.reusable_docker.outputs.docker_image }}
+      docker_image_ee:
+        description: 'The enterprise image that was built'
+        value: ${{ jobs.reusable_docker.outputs.docker_image_ee }}
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  reusable_docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    outputs:
+      docker_image: ${{ steps.save-image-to-output.outputs.IMAGE }}
+      docker_image_ee: ${{ steps.save-image-to-output.outputs.IMAGE_EE }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    strategy:
+      matrix:
+        name: [ '${{ inputs.package_name }}-ee', '${{ inputs.package_name }}' ]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: 'true'
+          submodules: ${{ contains (matrix.name,'-ee') }}
+
+      - uses: crazy-max/ghaction-setup-docker@v2
+        with:
+          version: v24.0.6
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: 'image=moby/buildkit:v0.12.4'
+
+      - name: Build, tag, and push image to ghcr.io
+        id: build-image
+        if: ${{ inputs.env_tag == 'dev' || inputs.env_tag == 'stg' }}
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: ${{ matrix.name }}
+          LOCAL_TAG: ${{ inputs.local_tag }}
+          IMAGE_TAG: ${{ github.sha }}
+          ENV_TAG: ${{ inputs.env_tag }}
+          PROJECT_PATH: ${{ inputs.project_path }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
+          cd $PROJECT_PATH && npm run docker:build
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
+
+      - name: Production build, tag, and push image to ghcr.io
+        id: build-prod-image
+        if: ${{ inputs.env_tag == 'prod' }}
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: ${{ matrix.name }}
+          LOCAL_TAG: ${{ inputs.local_tag }}
+          IMAGE_TAG: ${{ github.sha }}
+          ENV_TAG: ${{ inputs.env_tag }}
+          PROJECT_PATH: ${{ inputs.project_path }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
+          cd $PROJECT_PATH && npm run docker:build
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
+
+      - name: Save image to output
+        id: save-image-to-output
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: ${{ matrix.name }}
+          IMAGE_TAG: ${{ github.sha }}
+          OUTPUT_NAME: ${{ contains(matrix.name,'-ee') && 'IMAGE_EE' || 'IMAGE' }}
+        run: |
+          echo "$OUTPUT_NAME=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Health check test
+        id: health-check
+        if: ${{ inputs.health_check == 'true' && (steps.build-image.outcome == 'success' || steps.build-prod-image.outcome == 'success') }}
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: ${{ matrix.name }}
+          LOCAL_TAG: ${{ inputs.local_tag }}
+          IMAGE_TAG: ${{ github.sha }}
+          TEST_PORT: ${{ inputs.test_port }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
+
+          docker run --network=host --name $LOCAL_TAG -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:$TEST_PORT/v1/health-check | grep 'ok'

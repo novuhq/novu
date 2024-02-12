@@ -12,6 +12,7 @@ import {
   SubscriberProcessQueueHealthIndicator,
   WorkflowQueueServiceHealthIndicator,
 } from '../../health';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
 
 let readinessService: ReadinessService;
 let standardQueueService: StandardQueueService;
@@ -24,14 +25,20 @@ describe('Readiness Service', () => {
     process.env.IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
-    standardQueueService = new StandardQueueService();
-    workflowQueueService = new WorkflowQueueService();
-    subscriberProcessQueueService = new SubscriberProcessQueueService();
+    standardQueueService = new StandardQueueService(
+      new WorkflowInMemoryProviderService()
+    );
+    workflowQueueService = new WorkflowQueueService(
+      new WorkflowInMemoryProviderService()
+    );
+    subscriberProcessQueueService = new SubscriberProcessQueueService(
+      new WorkflowInMemoryProviderService()
+    );
 
     await Promise.all([
-      standardQueueService.bullMqService.initialize(),
-      workflowQueueService.bullMqService.initialize(),
-      subscriberProcessQueueService.bullMqService.initialize(),
+      standardQueueService.workflowInMemoryProviderService.initialize(),
+      workflowQueueService.workflowInMemoryProviderService.initialize(),
+      subscriberProcessQueueService.workflowInMemoryProviderService.initialize(),
     ]);
 
     const standardQueueServiceHealthIndicator =
@@ -41,11 +48,11 @@ describe('Readiness Service', () => {
     const subscriberProcessQueueHealthIndicator =
       new SubscriberProcessQueueHealthIndicator(subscriberProcessQueueService);
 
-    readinessService = new ReadinessService(
+    readinessService = new ReadinessService([
       standardQueueServiceHealthIndicator,
       workflowQueueServiceHealthIndicator,
-      subscriberProcessQueueHealthIndicator
-    );
+      subscriberProcessQueueHealthIndicator,
+    ]);
   });
 
   afterAll(async () => {
@@ -86,7 +93,9 @@ describe('Readiness Service', () => {
         };
       };
 
-      testWorker = new StandardWorkerService();
+      testWorker = new StandardWorkerService(
+        new BullMqService(new WorkflowInMemoryProviderService())
+      );
       await testWorker.initWorker(getWorkerProcessor(), getWorkerOptions());
 
       const [initialIsPaused, initialIsRunning] = await Promise.all([

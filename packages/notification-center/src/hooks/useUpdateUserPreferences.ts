@@ -23,7 +23,7 @@ export const useUpdateUserPreferences = ({
   const updatePreferenceChecked = useCallback(
     ({ templateId, checked, channelType }: IUpdateUserPreferencesVariables) => {
       queryClient.setQueryData<IUserPreferenceSettings[]>(userPreferencesQueryKey, (oldUserPreferences) =>
-        oldUserPreferences.map((setting) => {
+        oldUserPreferences?.map((setting) => {
           if (setting.template._id === templateId) {
             return {
               ...setting,
@@ -51,7 +51,7 @@ export const useUpdateUserPreferences = ({
       ...options,
       onSuccess: (data, variables, context) => {
         queryClient.setQueryData<IUserPreferenceSettings[]>(userPreferencesQueryKey, (oldUserPreferences) =>
-          oldUserPreferences.map((setting) => {
+          oldUserPreferences?.map((setting) => {
             if (setting.template._id === data.template._id) {
               return data;
             }

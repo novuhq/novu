@@ -1,28 +1,35 @@
-import { Injectable, Logger } from '@nestjs/common';
 const nr = require('newrelic');
+import { Injectable, Logger } from '@nestjs/common';
+
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   getSubscriberProcessWorkerOptions,
   SubscriberJobBound,
   SubscriberProcessWorkerService,
   PinoLogger,
-  SubscriberJobBoundCommand,
   storage,
   Store,
   WorkerOptions,
+  BullMqService,
+  WorkflowInMemoryProviderService,
+  IProcessSubscriberDataDto,
 } from '@novu/application-generic';
 
 const LOG_CONTEXT = 'SubscriberProcessWorker';
 
 @Injectable()
 export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
-  constructor(private subscriberJobBoundUsecase: SubscriberJobBound) {
-    super();
+  constructor(
+    private subscriberJobBoundUsecase: SubscriberJobBound,
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {
+    super(new BullMqService(workflowInMemoryProviderService));
+
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts());
   }
 
   public getWorkerProcessor() {
-    return async ({ data }: { data: SubscriberJobBoundCommand }) => {
+    return async ({ data }: { data: IProcessSubscriberDataDto }) => {
       return await new Promise(async (resolve, reject) => {
         // eslint-disable-next-line @typescript-eslint/no-this-alias
         const _this = this;

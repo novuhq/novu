@@ -38,7 +38,7 @@ jobs:
       if: steps.setup.outputs.has_token == 'true'
       with:
         submodules: ${{ inputs.ee }}
-        token: ${{ secrets.GH_PACKAGES }}
+        token: ${{ secrets.SUBMODULES_TOKEN }}
       # else checkout without submodules if the token is not provided
     - uses: actions/checkout@v3
       if: steps.setup.outputs.has_token != 'true'

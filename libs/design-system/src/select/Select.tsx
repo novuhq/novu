@@ -19,13 +19,14 @@ import { colors } from '../config';
 import { Text } from '../index';
 import { SpacingProps } from '../shared/spacing.props';
 
-interface ISelectProps extends SpacingProps {
+export interface ISelectProps extends SpacingProps {
   data: (string | { value: string; label?: string } | SelectItem)[];
   value?: string[] | string | null;
   onChange?: (value: string[] | string | null) => void;
   label?: React.ReactNode;
   error?: React.ReactNode;
   itemComponent?: FC<any>;
+  valueComponent?: FC<any>;
   placeholder?: string;
   description?: string;
   getCreateLabel?: (query: string) => React.ReactNode;
@@ -43,6 +44,10 @@ interface ISelectProps extends SpacingProps {
   dataTestId?: string;
   rightSectionWidth?: React.CSSProperties['width'];
   inputProps?: InputBaseProps;
+  withinPortal?: boolean;
+  limit?: SelectProps['limit'];
+  icon?: React.ReactNode;
+  className?: string;
 }
 
 /**
@@ -64,6 +69,8 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
       onChange,
       inputProps = {},
       dataTestId,
+      withinPortal = false,
+      className,
       ...props
     }: ISelectProps,
     ref
@@ -116,7 +123,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
     }, [loading, theme]);
 
     return (
-      <Wrapper style={{ position: 'relative' }}>
+      <Wrapper style={{ position: 'relative' }} className={className}>
         {multiselect ? (
           <MantineMultiSelect
             ref={ref}
@@ -148,6 +155,7 @@ export const Select = React.forwardRef<HTMLInputElement, ISelectProps>(
             data={data}
             required={required}
             data-test-id={dataTestId}
+            withinPortal={withinPortal}
             {...props}
             {...loadingProps}
           />

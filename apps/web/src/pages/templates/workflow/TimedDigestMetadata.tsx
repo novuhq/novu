@@ -7,6 +7,8 @@ import { colors, Input, SegmentedControl, inputStyles } from '@novu/design-syste
 import { WeekDaySelect } from './digest/WeekDaySelect';
 import { ScheduleMonthlyFields } from './digest/ScheduleMonthlyFields';
 import { When } from '../../../components/utils/When';
+import { useStepFormPath } from '../hooks/useStepFormPath';
+import { useEnvController } from '../../../hooks';
 
 const convertUnitToLabel = (unit: DigestUnitEnum) => {
   switch (unit) {
@@ -25,12 +27,14 @@ const convertUnitToLabel = (unit: DigestUnitEnum) => {
   }
 };
 
-export const TimedDigestMetadata = ({ index, readonly }: { index: number; readonly: boolean }) => {
+export const TimedDigestMetadata = () => {
+  const { readonly } = useEnvController();
   const { control, watch, setValue } = useFormContext();
+  const stepFormPath = useStepFormPath();
   const unit: DigestUnitEnum =
-    watch(`steps.${index}.digestMetadata.${DigestTypeEnum.TIMED}.unit`) ?? DigestUnitEnum.DAYS;
-  const amountFieldName = `steps.${index}.digestMetadata.${DigestTypeEnum.TIMED}.${unit}.amount`;
-  const atTimeFieldName = `steps.${index}.digestMetadata.${DigestTypeEnum.TIMED}.${unit}.atTime`;
+    watch(`${stepFormPath}.digestMetadata.${DigestTypeEnum.TIMED}.unit`) ?? DigestUnitEnum.DAYS;
+  const amountFieldName = `${stepFormPath}.digestMetadata.${DigestTypeEnum.TIMED}.${unit}.amount`;
+  const atTimeFieldName = `${stepFormPath}.digestMetadata.${DigestTypeEnum.TIMED}.${unit}.atTime`;
   const amountDefaultValue = unit === DigestUnitEnum.MINUTES ? '5' : '1';
   const atTimeDefaultValue = format(new Date(), 'HH:mm');
 
@@ -39,7 +43,7 @@ export const TimedDigestMetadata = ({ index, readonly }: { index: number; readon
       <Controller
         control={control}
         defaultValue={DigestUnitEnum.DAYS}
-        name={`steps.${index}.digestMetadata.${DigestTypeEnum.TIMED}.unit`}
+        name={`${stepFormPath}.digestMetadata.${DigestTypeEnum.TIMED}.unit`}
         render={({ field }) => {
           return (
             <SegmentedControl
@@ -139,7 +143,7 @@ export const TimedDigestMetadata = ({ index, readonly }: { index: number; readon
       <When truthy={unit === DigestUnitEnum.WEEKS}>
         <Controller
           control={control}
-          name={`steps.${index}.digestMetadata.${DigestTypeEnum.TIMED}.${unit}.weekDays`}
+          name={`${stepFormPath}.digestMetadata.${DigestTypeEnum.TIMED}.${unit}.weekDays`}
           defaultValue={[format(new Date(), 'EEEE').toLowerCase()]}
           render={({ field }) => {
             return <WeekDaySelect value={field.value} disabled={readonly} onChange={field.onChange} />;
@@ -147,7 +151,7 @@ export const TimedDigestMetadata = ({ index, readonly }: { index: number; readon
         />
       </When>
       <When truthy={unit === DigestUnitEnum.MONTHS}>
-        <ScheduleMonthlyFields readonly={readonly} index={index} control={control} />
+        <ScheduleMonthlyFields />
       </When>
     </>
   );

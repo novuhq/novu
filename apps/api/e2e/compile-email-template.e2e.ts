@@ -216,4 +216,160 @@ describe('Compile E-mail Template', function () {
       expect(subject).to.equal('A title for Header Test');
     });
   });
+
+  describe('Escaping', function () {
+    it('should escape editor text in double curly braces', async function () {
+      const { html } = await useCase.execute(
+        CompileEmailTemplateCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          layoutId: null,
+          preheader: null,
+          content: [
+            {
+              type: EmailBlockTypeEnum.TEXT,
+              content: '<div>{{textUrl}}</div>',
+            },
+          ],
+          payload: {
+            textUrl: 'https://example.com?email=text+testing@example.com',
+          },
+          userId: session.user._id,
+          contentType: 'editor',
+          subject: 'Editor Text Escape Test',
+        })
+      );
+
+      expect(html).to.contain('<div>https://example.com?email&#x3D;text+testing@example.com</div>');
+    });
+
+    it('should not escape editor text in triple curly braces', async function () {
+      const { html } = await useCase.execute(
+        CompileEmailTemplateCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          layoutId: null,
+          preheader: null,
+          content: [
+            {
+              type: EmailBlockTypeEnum.TEXT,
+              content: '<div>{{{textUrl}}}</div>',
+            },
+          ],
+          payload: {
+            textUrl: 'https://example.com?email=text+testing@example.com',
+          },
+          userId: session.user._id,
+          contentType: 'editor',
+          subject: 'Editor Text No Escape Test',
+        })
+      );
+
+      expect(html).to.contain('<div>https://example.com?email=text+testing@example.com</div>');
+    });
+
+    it('should escape button text in double curly braces', async function () {
+      const { html } = await useCase.execute(
+        CompileEmailTemplateCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          layoutId: null,
+          preheader: null,
+          content: [
+            {
+              type: EmailBlockTypeEnum.BUTTON,
+              content: '{{buttonText}}',
+              url: 'https://example.com',
+            },
+          ],
+          payload: {
+            buttonText: 'https://example.com?email=button+testing@example.com',
+          },
+          userId: session.user._id,
+          contentType: 'editor',
+          subject: 'Editor Button Escape Test',
+        })
+      );
+
+      expect(html).to.contain('https://example.com?email&#x3D;button+testing@example.com');
+    });
+
+    it('should not escape button text in triple curly braces', async function () {
+      const { html } = await useCase.execute(
+        CompileEmailTemplateCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          layoutId: null,
+          preheader: null,
+          content: [
+            {
+              type: EmailBlockTypeEnum.BUTTON,
+              content: '{{{buttonText}}}',
+              url: 'https://example.com',
+            },
+          ],
+          payload: {
+            buttonText: 'https://example.com?email=button+testing@example.com',
+          },
+          userId: session.user._id,
+          contentType: 'editor',
+          subject: 'Editor Button Escape Test',
+        })
+      );
+
+      expect(html).to.contain('https://example.com?email=button+testing@example.com');
+    });
+
+    it('should escape button url in double curly braces', async function () {
+      const { html } = await useCase.execute(
+        CompileEmailTemplateCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          layoutId: null,
+          preheader: null,
+          content: [
+            {
+              type: EmailBlockTypeEnum.BUTTON,
+              content: 'Click Here To Go To Link!',
+              url: '{{buttonUrl}}',
+            },
+          ],
+          payload: {
+            buttonUrl: 'https://example.com?email=button+testing@example.com',
+          },
+          userId: session.user._id,
+          contentType: 'editor',
+          subject: 'Editor Button Escape Test',
+        })
+      );
+
+      expect(html).to.contain('https://example.com?email&#x3D;button+testing@example.com');
+    });
+
+    it('should not escape button url in triple curly braces', async function () {
+      const { html } = await useCase.execute(
+        CompileEmailTemplateCommand.create({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+          layoutId: null,
+          preheader: null,
+          content: [
+            {
+              type: EmailBlockTypeEnum.BUTTON,
+              content: 'Click Here To Go To Link!',
+              url: '{{{buttonUrl}}}',
+            },
+          ],
+          payload: {
+            buttonUrl: 'https://example.com?email=button+testing@example.com',
+          },
+          userId: session.user._id,
+          contentType: 'editor',
+          subject: 'Editor Button No Escape Test',
+        })
+      );
+
+      expect(html).to.contain('https://example.com?email=button+testing@example.com');
+    });
+  });
 });

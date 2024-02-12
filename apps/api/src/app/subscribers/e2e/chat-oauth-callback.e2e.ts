@@ -5,7 +5,7 @@ import * as sinon from 'sinon';
 import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum, ChatProviderIdEnum } from '@novu/shared';
 import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
-import { createHash } from '../../shared/helpers/hmac.service';
+import { createHash } from '@novu/application-generic';
 
 const axiosInstance = axios.create();
 

@@ -2,15 +2,17 @@ import styled from '@emotion/styled';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Grid } from '@mantine/core';
-
 import { Input, Switch, Text, CircleArrowRight } from '@novu/design-system';
+
 import { useEnvController } from '../../../hooks';
 import { When } from '../../../components/utils/When';
+import { useStepFormPath } from '../hooks/useStepFormPath';
 
-export const ReplyCallback = ({ control, index }) => {
+export const ReplyCallback = () => {
+  const path = useStepFormPath();
   const { environment } = useEnvController();
   const { watch } = useFormContext();
-  const replyCallbackActive = watch(`steps.${index}.replyCallback.active`);
+  const replyCallbackActive = watch(`${path}.replyCallback.active`);
 
   const domainMxRecordConfigured =
     environment?.dns?.inboundParseDomain && environment?.dns?.mxRecordConfigured === true;
@@ -26,21 +28,23 @@ export const ReplyCallback = ({ control, index }) => {
           redirectTo={'/settings'}
         />
       </When>
-      <ReplyCallbackUrlInput index={index} control={control} />
+      <ReplyCallbackUrlInput />
     </>
   );
 };
 
-export const ReplyCallbackUrlInput = ({ control, index }) => {
+export const ReplyCallbackUrlInput = () => {
+  const { control } = useFormContext();
+  const path = useStepFormPath();
   const { readonly } = useEnvController();
   const { watch } = useFormContext();
-  const replyCallbackActive = watch(`steps.${index}.replyCallback.active`);
+  const replyCallbackActive = watch(`${path}.replyCallback.active`);
 
   return (
     <When truthy={replyCallbackActive}>
       <Controller
         control={control}
-        name={`steps.${index}.replyCallback.url`}
+        name={`${path}.replyCallback.url`}
         defaultValue=""
         render={({ field: { value, ...field } }) => {
           return (
@@ -63,14 +67,16 @@ export const ReplyCallbackUrlInput = ({ control, index }) => {
   );
 };
 
-export const ReplyCallbackSwitch = ({ control, index }) => {
+export const ReplyCallbackSwitch = () => {
+  const { control } = useFormContext();
   const { readonly } = useEnvController();
+  const path = useStepFormPath();
 
   return (
     <>
       <Controller
         control={control}
-        name={`steps.${index}.replyCallback.active`}
+        name={`${path}.replyCallback.active`}
         defaultValue={false}
         render={({ field: { value, ...field } }) => {
           return (

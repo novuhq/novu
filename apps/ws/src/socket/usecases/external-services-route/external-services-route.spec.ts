@@ -27,11 +27,9 @@ const createWsGatewayStub = (result) => {
   return {
     sendMessage: sinon.stub(),
     server: {
-      sockets: {
-        in: sinon.stub().returns({
-          fetchSockets: sinon.stub().resolves(result),
-        }),
-      },
+      in: sinon.stub().returns({
+        fetchSockets: sinon.stub().resolves(result),
+      }),
     },
   } as WSGateway;
 };
@@ -64,8 +62,8 @@ describe('ExternalServicesRoute', () => {
 
       await externalServicesRoute.execute(commandReceivedMessage);
 
-      sinon.assert.calledOnceWithExactly(wsGatewayStub.server.sockets.in, userId);
-      sinon.assert.calledOnceWithExactly(wsGatewayStub.server.sockets.in(userId).fetchSockets);
+      sinon.assert.calledOnceWithExactly(wsGatewayStub.server.in, userId);
+      sinon.assert.calledOnceWithExactly(wsGatewayStub.server.in(userId).fetchSockets);
       sinon.assert.notCalled(wsGatewayStub.sendMessage);
     });
   });

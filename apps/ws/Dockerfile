@@ -1,39 +1,40 @@
-FROM node:16-alpine3.16
+FROM node:20-alpine3.19
 
-ARG BULL_MQ_PRO_TOKEN
-ENV BULL_MQ_PRO_NPM_TOKEN=$BULL_MQ_PRO_TOKEN
 ENV NX_DAEMON=false
-
-WORKDIR /usr/src/app
 
 RUN npm install -g pnpm@8.9.0 --loglevel notice
 RUN npm i pm2 -g
+RUN apk --no-cache add g++ make py3-pip
 
-COPY .npmrc .
-COPY .npmrc-cloud .
+USER 1000
+WORKDIR /usr/src/app
 
-COPY package.json .
+COPY --chown=1000:1000 .npmrc .
+COPY --chown=1000:1000 .npmrc-cloud .
 
-COPY providers ./providers
-COPY apps/ws ./apps/ws
-COPY libs/dal ./libs/dal
-COPY libs/shared ./libs/shared
-COPY libs/testing ./libs/testing
-COPY packages/client ./packages/client
-COPY packages/stateless ./packages/stateless
-COPY packages/node ./packages/node
-COPY packages/application-generic ./packages/application-generic
+COPY --chown=1000:1000 package.json .
 
-COPY ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
+COPY --chown=1000:1000 providers ./providers
+COPY --chown=1000:1000 apps/ws ./apps/ws
+COPY --chown=1000:1000 libs/dal ./libs/dal
+COPY --chown=1000:1000 libs/shared ./libs/shared
+COPY --chown=1000:1000 libs/testing ./libs/testing
+COPY --chown=1000:1000 packages/client ./packages/client
+COPY --chown=1000:1000 packages/stateless ./packages/stateless
+COPY --chown=1000:1000 packages/node ./packages/node
+COPY --chown=1000:1000 packages/application-generic ./packages/application-generic
 
-RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ] ; then echo 'Building with Enterprise Edition of Novu' ; fi
-RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then rm -f .npmrc ; fi
-RUN if [ -n '${BULL_MQ_PRO_NPM_TOKEN}' ]; then cp .npmrc-cloud .npmrc; fi
+COPY --chown=1000:1000 ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
 
-RUN pnpm install --reporter=silent
-RUN pnpm build:ws
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ] ; then echo 'Building with Enterprise Edition of Novu'; rm -f .npmrc ; cp .npmrc-cloud .npmrc ; fi
 
-RUN if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    pnpm install --verbose && \
+    pnpm build:ws
+
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
+    if $BULL_MQ_PRO_NPM_TOKEN ; then rm -f .npmrc ; fi
 
 WORKDIR /usr/src/app/apps/ws
 

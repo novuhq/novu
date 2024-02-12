@@ -6,13 +6,14 @@ import {
   ExecutionDetailsStatusEnum,
   DigestTypeEnum,
   IDigestRegularMetadata,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import {
   DetailEnum,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  GetUseMergedDigestId,
-  FeatureFlagCommand,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
@@ -32,20 +33,21 @@ export class Digest extends SendMessageType {
   constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogRoute: ExecutionLogRoute,
     protected jobRepository: JobRepository,
     private getDigestEventsRegular: GetDigestEventsRegular,
     private getDigestEventsBackoff: GetDigestEventsBackoff,
-    private getUseMergedDigestId: GetUseMergedDigestId
+    private getFeatureFlag: GetFeatureFlag
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, executionLogRoute);
   }
 
   public async execute(command: SendMessageCommand) {
     const currentJob = await this.getCurrentJob(command);
 
-    const useMergedDigestId = await this.getUseMergedDigestId.execute(
-      FeatureFlagCommand.create({
+    const useMergedDigestId = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        key: FeatureFlagsKeysEnum.IS_USE_MERGED_DIGEST_ID_ENABLED,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
@@ -57,9 +59,9 @@ export class Digest extends SendMessageType {
     const events = await getEvents(command, currentJob);
     const nextJobs = await this.getJobsToUpdate(command);
 
-    this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(currentJob),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,

@@ -134,6 +134,7 @@ export type ITriggerOverrideSMS = {
   to?: string;
   content?: string;
   from?: string;
+  customData?: Record<string, any>;
 };
 
 export type ITriggerOverrideExpo = {

@@ -1,19 +1,19 @@
 import { colors, shadows, Button } from '@novu/design-system';
 import { VariableManager } from './VariableManager';
 import { Group, Modal, Title, useMantineTheme } from '@mantine/core';
+import { useStepFormPath } from '../hooks/useStepFormPath';
 
 export const VariableManagerModal = ({
   open,
   setOpen,
-  index,
   variablesArray,
 }: {
   open: boolean;
   setOpen: (open: boolean) => void;
-  index: number;
   variablesArray: Record<string, any>;
 }) => {
   const theme = useMantineTheme();
+  const stepFormPath = useStepFormPath();
 
   return (
     <Modal
@@ -41,7 +41,7 @@ export const VariableManagerModal = ({
       centered
       overflow="inside"
     >
-      <VariableManager hideLabel={true} index={index} variablesArray={variablesArray} />
+      <VariableManager hideLabel={true} variablesArray={variablesArray} path={`${stepFormPath}.template`} />
       <Group position="right">
         <Button
           data-test-id="close-var-manager-modal"

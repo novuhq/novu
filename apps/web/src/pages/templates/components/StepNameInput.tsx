@@ -1,14 +1,25 @@
+import { ReactNode } from 'react';
 import { TextInput, useMantineColorScheme } from '@mantine/core';
 import { Controller, useFormContext } from 'react-hook-form';
-import { useEnvController } from '../../../hooks';
-import { IForm } from './formTypes';
-import { colors } from '@novu/notification-center';
+import { colors } from '@novu/design-system';
 
-export const StepNameInput = ({ index, defaultValue }: { index: number; defaultValue: string }) => {
+import { useEnvController } from '../../../hooks';
+import type { IForm } from './formTypes';
+
+export const StepNameInput = ({
+  path,
+  defaultValue,
+  label,
+}: {
+  path?: string;
+  defaultValue: string;
+  label?: ReactNode;
+}) => {
   const {
     control,
     formState: { errors, isSubmitted },
   } = useFormContext<IForm>();
+
   const { readonly } = useEnvController();
   const showErrors = isSubmitted && errors?.steps;
   const { colorScheme } = useMantineColorScheme();
@@ -16,15 +27,18 @@ export const StepNameInput = ({ index, defaultValue }: { index: number; defaultV
   return (
     <Controller
       control={control}
-      name={`steps.${index}.name`}
+      name={`${path}.name` as any}
       defaultValue=""
       render={({ field, fieldState }) => {
         return (
           <TextInput
             styles={(theme) => ({
               root: {
+                display: 'flex',
+                flexDirection: 'column-reverse',
+                gap: 4,
                 flex: '1 1 auto',
-                marginRight: 16,
+                width: '100%',
               },
               wrapper: {
                 background: 'transparent',
@@ -38,9 +52,10 @@ export const StepNameInput = ({ index, defaultValue }: { index: number; defaultV
                 fontSize: '20px',
                 fontWeight: 'bolder',
                 padding: 9,
+                // paddingTop: 20,
                 lineHeight: '28px',
                 minHeight: 'auto',
-                height: 'auto',
+                height: '40px',
                 width: '100%',
                 textOverflow: 'ellipsis',
                 '&:not(:placeholder-shown)': {
@@ -57,8 +72,13 @@ export const StepNameInput = ({ index, defaultValue }: { index: number; defaultV
                   opacity: 1,
                 },
               },
+              label: {
+                fontSize: '14px',
+                lineHeight: '20px',
+              },
             })}
             {...field}
+            label={label}
             value={field.value !== undefined ? field.value : defaultValue}
             error={showErrors && fieldState.error?.message}
             type="text"

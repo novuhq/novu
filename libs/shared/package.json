@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "0.21.0",
+  "version": "0.23.1",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
@@ -14,8 +14,8 @@
     "precommit": "lint-staged",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "test": "echo \"No test specified\"",
-    "test:watch": ""
+    "test": "jest src",
+    "watch:test": "jest src --watch"
   },
   "author": "",
   "license": "ISC",
@@ -26,12 +26,14 @@
     "dist/"
   ],
   "dependencies": {
-    "axios": "^1.4.0",
+    "axios": "^1.6.2",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.0"
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.24",
+    "@types/jest": "29.5.2",
+    "jest": "^27.1.0",
     "rimraf": "^3.0.2",
     "typescript": "4.9.5"
   },

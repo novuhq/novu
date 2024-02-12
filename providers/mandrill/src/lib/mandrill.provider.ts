@@ -46,8 +46,8 @@ export class MandrillProvider implements IEmailProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const mandrillSendOption = {
       message: {
-        from_email: this.config.from,
-        from_name: this.config.senderName,
+        from_email: emailOptions.from || this.config.from,
+        from_name: emailOptions.senderName || this.config.senderName,
         subject: emailOptions.subject,
         html: emailOptions.html,
         to: this.mapTo(emailOptions),

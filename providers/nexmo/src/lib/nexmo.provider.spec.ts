@@ -10,9 +10,9 @@ test('should trigger nexmo library correctly', async () => {
   const spy = jest
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    .spyOn(provider.vonageClient.message, 'sendSms')
-    .mockImplementation(async (_a, _b, _c, _d, cb) => {
-      cb(null, {
+    .spyOn(provider.vonageClient.sms, 'send')
+    .mockImplementation(async () => {
+      return {
         'message-count': 1,
         messages: [
           {
@@ -25,7 +25,8 @@ test('should trigger nexmo library correctly', async () => {
             network: '1',
           },
         ],
-      });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any;
     });
 
   await provider.sendMessage({
@@ -33,7 +34,10 @@ test('should trigger nexmo library correctly', async () => {
     content: 'SMS Content',
   });
 
-  expect(spy.mock.calls[0][0]).toBe('+112345');
-  expect(spy.mock.calls[0][1]).toBe('+176543');
-  expect(spy.mock.calls[0][2]).toBe('SMS Content');
+  expect(spy).toHaveBeenCalled();
+  expect(spy).toHaveBeenCalledWith({
+    from: '+112345',
+    text: 'SMS Content',
+    to: '+176543',
+  });
 });

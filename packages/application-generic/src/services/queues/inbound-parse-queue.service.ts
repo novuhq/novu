@@ -3,18 +3,36 @@ import { JobTopicNameEnum } from '@novu/shared';
 
 import { QueueBaseService } from './queue-base.service';
 
-import { QueueOptions } from '../bull-mq';
+import { BullMqService, QueueOptions } from '../bull-mq';
+import { WorkflowInMemoryProviderService } from '../in-memory-provider';
+import {
+  IInboundParseBulkJobDto,
+  IInboundParseJobDto,
+} from '../../dtos/inbound-parse-job.dto';
 
 const LOG_CONTEXT = 'InboundParseQueueService';
 
 @Injectable()
 export class InboundParseQueueService extends QueueBaseService {
-  constructor() {
-    super(JobTopicNameEnum.INBOUND_PARSE_MAIL);
+  constructor(
+    public workflowInMemoryProviderService: WorkflowInMemoryProviderService
+  ) {
+    super(
+      JobTopicNameEnum.INBOUND_PARSE_MAIL,
+      new BullMqService(workflowInMemoryProviderService)
+    );
 
     Logger.log(`Creating queue ${this.topic}`, LOG_CONTEXT);
 
     this.createQueue(this.getOverrideOptions());
+  }
+
+  public async add(data: IInboundParseJobDto) {
+    return await super.add(data);
+  }
+
+  public async addBulk(data: IInboundParseBulkJobDto[]) {
+    return await super.addBulk(data);
   }
 
   private getOverrideOptions(): QueueOptions {

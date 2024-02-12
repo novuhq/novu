@@ -40,6 +40,7 @@ const userSchema = new Schema<UserDBModel>(
     servicesHashes: {
       intercom: Schema.Types.String,
     },
+    jobTitle: Schema.Types.String,
   },
   schemaOptions
 );

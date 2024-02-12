@@ -4,7 +4,7 @@ import { useHasActiveIntegrations } from './useHasActiveIntegrations';
 
 type UseHasPrimaryIntegrationProps = {
   filterByEnv?: boolean;
-  channelType: ChannelTypeEnum;
+  channelType?: ChannelTypeEnum;
 };
 
 export function useGetPrimaryIntegration({ filterByEnv = true, channelType }: UseHasPrimaryIntegrationProps) {

@@ -79,6 +79,184 @@ const validateUnit = ({
   }
 };
 
+const digestMetadataSchema = z.object({
+  type: z.enum([DigestTypeEnum.REGULAR, DigestTypeEnum.TIMED]),
+  digestKey: z.string().optional(),
+  [DigestTypeEnum.REGULAR]: z
+    .object({
+      amount: z.string(),
+      unit: z.enum([DigestUnitEnum.SECONDS, DigestUnitEnum.MINUTES, DigestUnitEnum.HOURS, DigestUnitEnum.DAYS]),
+      backoff: z.boolean().optional(),
+      backoffAmount: z.string().optional(),
+      backoffUnit: z
+        .enum([DigestUnitEnum.SECONDS, DigestUnitEnum.MINUTES, DigestUnitEnum.HOURS, DigestUnitEnum.DAYS])
+        .optional(),
+    })
+    .passthrough()
+    .optional(),
+  [DigestTypeEnum.TIMED]: z
+    .object({
+      unit: z.enum([
+        DigestUnitEnum.MINUTES,
+        DigestUnitEnum.HOURS,
+        DigestUnitEnum.DAYS,
+        DigestUnitEnum.WEEKS,
+        DigestUnitEnum.MONTHS,
+      ]),
+      [DigestUnitEnum.MINUTES]: z
+        .object({
+          amount: z.string(),
+        })
+        .passthrough()
+        .optional(),
+      [DigestUnitEnum.HOURS]: z
+        .object({
+          amount: z.string(),
+        })
+        .passthrough()
+        .optional(),
+      [DigestUnitEnum.DAYS]: z
+        .object({
+          amount: z.string(),
+          atTime: z.string(),
+        })
+        .passthrough()
+        .optional(),
+      [DigestUnitEnum.WEEKS]: z
+        .object({
+          amount: z.string(),
+          atTime: z.string(),
+          weekDays: z.array(
+            z.enum([
+              DaysEnum.MONDAY,
+              DaysEnum.TUESDAY,
+              DaysEnum.WEDNESDAY,
+              DaysEnum.THURSDAY,
+              DaysEnum.FRIDAY,
+              DaysEnum.SATURDAY,
+              DaysEnum.SUNDAY,
+            ])
+          ),
+        })
+        .passthrough()
+        .optional(),
+      [DigestUnitEnum.MONTHS]: z
+        .object({
+          amount: z.string(),
+          atTime: z.string(),
+          monthDays: z.array(z.number()),
+          monthlyType: z.enum([MonthlyTypeEnum.EACH, MonthlyTypeEnum.ON]),
+          ordinal: z
+            .enum([
+              OrdinalEnum.FIRST,
+              OrdinalEnum.SECOND,
+              OrdinalEnum.THIRD,
+              OrdinalEnum.FOURTH,
+              OrdinalEnum.FIFTH,
+              OrdinalEnum.LAST,
+            ])
+            .optional(),
+          ordinalValue: z
+            .enum([
+              OrdinalValueEnum.DAY,
+              OrdinalValueEnum.WEEKDAY,
+              OrdinalValueEnum.WEEKEND,
+              OrdinalValueEnum.MONDAY,
+              OrdinalValueEnum.TUESDAY,
+              OrdinalValueEnum.WEDNESDAY,
+              OrdinalValueEnum.THURSDAY,
+              OrdinalValueEnum.FRIDAY,
+              OrdinalValueEnum.SATURDAY,
+              OrdinalValueEnum.SUNDAY,
+            ])
+            .optional(),
+        })
+        .passthrough()
+        .optional(),
+    })
+    .passthrough()
+    .optional(),
+});
+
+const delayMetadataSchema = z
+  .object({
+    type: z.enum([DelayTypeEnum.REGULAR, DelayTypeEnum.SCHEDULED]),
+    [DelayTypeEnum.REGULAR]: z
+      .object({
+        amount: z.string(),
+        unit: z.string(),
+      })
+      .passthrough()
+      .optional(),
+    [DelayTypeEnum.SCHEDULED]: z
+      .object({
+        delayPath: z.string(),
+      })
+      .passthrough()
+      .optional(),
+  })
+  .passthrough();
+
+const templateSchema = z
+  .object({
+    content: z.any(),
+    subject: z.any(),
+    title: z.any(),
+    layoutId: z.any().optional(),
+    senderName: z.any().optional(),
+  })
+  .passthrough();
+
+const variantSchema = z.object({
+  template: templateSchema.superRefine((template, ctx) => {
+    validateTemplate(template, ctx);
+  }),
+  digestMetadata: digestMetadataSchema.optional(),
+  delayMetadata: delayMetadataSchema.optional(),
+});
+
+const validateTemplate = (template, ctx) => {
+  if (
+    (template.type === ChannelTypeEnum.SMS ||
+      template.type === ChannelTypeEnum.IN_APP ||
+      template.type === ChannelTypeEnum.PUSH ||
+      template.type === ChannelTypeEnum.CHAT) &&
+    template.content.length === 0
+  ) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.too_small,
+      minimum: 1,
+      type: 'string',
+      inclusive: true,
+      message: `Message content is missing!`,
+      path: ['content'],
+    });
+  }
+  if (template.type === ChannelTypeEnum.EMAIL) {
+    if (!template.subject) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.too_small,
+        minimum: 1,
+        type: 'string',
+        inclusive: true,
+        message: 'Email subject is missing!',
+        path: ['subject'],
+      });
+    }
+  }
+
+  if (template.type === ChannelTypeEnum.PUSH && !template.title) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.too_small,
+      minimum: 1,
+      type: 'string',
+      inclusive: true,
+      message: 'Message title is missing!',
+      path: ['title'],
+    });
+  }
+};
+
 export const schema = z
   .object({
     name: z
@@ -115,181 +293,8 @@ export const schema = z
       .array(
         z
           .object({
-            template: z
-              .object({
-                content: z.any(),
-                subject: z.any(),
-                title: z.any(),
-                layoutId: z.any().optional(),
-                senderName: z.any().optional(),
-              })
-              .passthrough()
-              .superRefine((template: any, ctx) => {
-                if (
-                  (template.type === ChannelTypeEnum.SMS ||
-                    template.type === ChannelTypeEnum.IN_APP ||
-                    template.type === ChannelTypeEnum.PUSH ||
-                    template.type === ChannelTypeEnum.CHAT) &&
-                  template.content.length === 0
-                ) {
-                  ctx.addIssue({
-                    code: z.ZodIssueCode.too_small,
-                    minimum: 1,
-                    type: 'string',
-                    inclusive: true,
-                    message: `Message content is missing!`,
-                    path: ['content'],
-                  });
-                }
-                if (template.type === ChannelTypeEnum.EMAIL) {
-                  if (!template.subject) {
-                    ctx.addIssue({
-                      code: z.ZodIssueCode.too_small,
-                      minimum: 1,
-                      type: 'string',
-                      inclusive: true,
-                      message: 'Email subject is missing!',
-                      path: ['subject'],
-                    });
-                  }
-                }
-
-                if (template.type === ChannelTypeEnum.PUSH && !template.title) {
-                  ctx.addIssue({
-                    code: z.ZodIssueCode.too_small,
-                    minimum: 1,
-                    type: 'string',
-                    inclusive: true,
-                    message: 'Message title is missing!',
-                    path: ['title'],
-                  });
-                }
-              }),
-            digestMetadata: z
-              .object({
-                type: z.enum([DigestTypeEnum.REGULAR, DigestTypeEnum.TIMED]),
-                digestKey: z.string().optional(),
-                [DigestTypeEnum.REGULAR]: z
-                  .object({
-                    amount: z.string(),
-                    unit: z.enum([
-                      DigestUnitEnum.SECONDS,
-                      DigestUnitEnum.MINUTES,
-                      DigestUnitEnum.HOURS,
-                      DigestUnitEnum.DAYS,
-                    ]),
-                    backoff: z.boolean().optional(),
-                    backoffAmount: z.string().optional(),
-                    backoffUnit: z
-                      .enum([DigestUnitEnum.SECONDS, DigestUnitEnum.MINUTES, DigestUnitEnum.HOURS, DigestUnitEnum.DAYS])
-                      .optional(),
-                  })
-                  .passthrough()
-                  .optional(),
-                [DigestTypeEnum.TIMED]: z
-                  .object({
-                    unit: z.enum([
-                      DigestUnitEnum.MINUTES,
-                      DigestUnitEnum.HOURS,
-                      DigestUnitEnum.DAYS,
-                      DigestUnitEnum.WEEKS,
-                      DigestUnitEnum.MONTHS,
-                    ]),
-                    [DigestUnitEnum.MINUTES]: z
-                      .object({
-                        amount: z.string(),
-                      })
-                      .passthrough()
-                      .optional(),
-                    [DigestUnitEnum.HOURS]: z
-                      .object({
-                        amount: z.string(),
-                      })
-                      .passthrough()
-                      .optional(),
-                    [DigestUnitEnum.DAYS]: z
-                      .object({
-                        amount: z.string(),
-                        atTime: z.string(),
-                      })
-                      .passthrough()
-                      .optional(),
-                    [DigestUnitEnum.WEEKS]: z
-                      .object({
-                        amount: z.string(),
-                        atTime: z.string(),
-                        weekDays: z.array(
-                          z.enum([
-                            DaysEnum.MONDAY,
-                            DaysEnum.TUESDAY,
-                            DaysEnum.WEDNESDAY,
-                            DaysEnum.THURSDAY,
-                            DaysEnum.FRIDAY,
-                            DaysEnum.SATURDAY,
-                            DaysEnum.SUNDAY,
-                          ])
-                        ),
-                      })
-                      .passthrough()
-                      .optional(),
-                    [DigestUnitEnum.MONTHS]: z
-                      .object({
-                        amount: z.string(),
-                        atTime: z.string(),
-                        monthDays: z.array(z.number()),
-                        monthlyType: z.enum([MonthlyTypeEnum.EACH, MonthlyTypeEnum.ON]),
-                        ordinal: z
-                          .enum([
-                            OrdinalEnum.FIRST,
-                            OrdinalEnum.SECOND,
-                            OrdinalEnum.THIRD,
-                            OrdinalEnum.FOURTH,
-                            OrdinalEnum.FIFTH,
-                            OrdinalEnum.LAST,
-                          ])
-                          .optional(),
-                        ordinalValue: z
-                          .enum([
-                            OrdinalValueEnum.DAY,
-                            OrdinalValueEnum.WEEKDAY,
-                            OrdinalValueEnum.WEEKEND,
-                            OrdinalValueEnum.MONDAY,
-                            OrdinalValueEnum.TUESDAY,
-                            OrdinalValueEnum.WEDNESDAY,
-                            OrdinalValueEnum.THURSDAY,
-                            OrdinalValueEnum.FRIDAY,
-                            OrdinalValueEnum.SATURDAY,
-                            OrdinalValueEnum.SUNDAY,
-                          ])
-                          .optional(),
-                      })
-                      .passthrough()
-                      .optional(),
-                  })
-                  .passthrough()
-                  .optional(),
-              })
-              .passthrough()
-              .optional(),
-            delayMetadata: z
-              .object({
-                type: z.enum([DelayTypeEnum.REGULAR, DelayTypeEnum.SCHEDULED]),
-                [DelayTypeEnum.REGULAR]: z
-                  .object({
-                    amount: z.string(),
-                    unit: z.string(),
-                  })
-                  .passthrough()
-                  .optional(),
-                [DelayTypeEnum.SCHEDULED]: z
-                  .object({
-                    delayPath: z.string(),
-                  })
-                  .passthrough()
-                  .optional(),
-              })
-              .passthrough()
-              .optional(),
+            ...variantSchema.shape,
+            variants: z.array(variantSchema.passthrough()).optional(),
           })
           .passthrough()
           .superRefine((step, ctx) => {

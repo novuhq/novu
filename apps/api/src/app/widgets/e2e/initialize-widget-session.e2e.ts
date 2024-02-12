@@ -2,11 +2,11 @@ import { IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { createHash } from '../../shared/helpers/hmac.service';
 import {
   buildIntegrationKey,
   CacheInMemoryProviderService,
   CacheService,
+  createHash,
   InvalidateCacheService,
 } from '@novu/application-generic';
 

@@ -31,7 +31,7 @@ export class SendchampSmsProvider implements ISmsProvider {
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
     const payload = {
-      sender_name: this.config.from,
+      sender_name: options.from || this.config.from,
       to: options.to,
       message: options.content,
       route: 'international',

@@ -1,15 +1,16 @@
 import { Stack } from '@mantine/core';
 import { useState } from 'react';
-import { Control, Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 
 import { ChannelTypeEnum } from '@novu/shared';
 import { Input } from '@novu/design-system';
 import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
-import type { IForm, ITemplates } from '../formTypes';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { VariableManagerModal } from '../VariableManagerModal';
 import { InAppContentCard } from './InAppContentCard';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
+import type { IForm, ITemplates } from '../formTypes';
 
 const getVariableContents = (template: ITemplates) => {
   const baseContent = ['content'];
@@ -25,15 +26,13 @@ const getVariableContents = (template: ITemplates) => {
   return baseContent;
 };
 
-export function TemplateInAppEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
+export function TemplateInAppEditor() {
   const { readonly } = useEnvController();
-  const { watch } = useFormContext<IForm>();
+  const { control, watch } = useFormContext<IForm>();
   const [modalOpen, setModalOpen] = useState(false);
-
-  const template = watch(`steps.${index}.template`);
-  const variableContents = getVariableContents(template);
-
-  const variablesArray = useVariablesManager(index, variableContents);
+  const stepFormPath = useStepFormPath();
+  const contents = getVariableContents(watch(`${stepFormPath}.template`));
+  const variablesArray = useVariablesManager(contents);
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.IN_APP,
   });
@@ -41,10 +40,10 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
   return (
     <>
       {!hasActiveIntegration && <LackIntegrationAlert channelType={ChannelTypeEnum.IN_APP} />}
-      <StepSettings index={index} />
+      <StepSettings />
       <Stack spacing={24}>
         <Controller
-          name={`steps.${index}.template.cta.data.url` as any}
+          name={`${stepFormPath}.template.cta.data.url` as any}
           defaultValue=""
           control={control}
           render={({ field, fieldState }) => (
@@ -60,14 +59,12 @@ export function TemplateInAppEditor({ control, index }: { control: Control<IForm
           )}
         />
         <InAppContentCard
-          index={index}
           openVariablesModal={() => {
             setModalOpen(true);
           }}
         />
       </Stack>
-
-      <VariableManagerModal open={modalOpen} setOpen={setModalOpen} index={index} variablesArray={variablesArray} />
+      <VariableManagerModal open={modalOpen} setOpen={setModalOpen} variablesArray={variablesArray} />
     </>
   );
 }

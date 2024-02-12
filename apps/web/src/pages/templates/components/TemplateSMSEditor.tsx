@@ -1,9 +1,8 @@
-import { Control, Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { ChannelTypeEnum } from '@novu/shared';
+import { Textarea } from '@novu/design-system';
 
 import { LackIntegrationAlert } from './LackIntegrationAlert';
-import type { IForm } from './formTypes';
-import { Textarea } from '@novu/design-system';
 import {
   useEnvController,
   useHasActiveIntegrations,
@@ -12,15 +11,16 @@ import {
 } from '../../../hooks';
 import { VariableManager } from './VariableManager';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
+import { useStepFormPath } from '../hooks/useStepFormPath';
+import { TranslateProductLead } from './TranslateProductLead';
 
 const templateFields = ['content'];
 
-export function TemplateSMSEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
+export function TemplateSMSEditor() {
   const { readonly, environment } = useEnvController();
-  const {
-    formState: { errors },
-  } = useFormContext();
-  const variablesArray = useVariablesManager(index, templateFields);
+  const stepFormPath = useStepFormPath();
+  const { control } = useFormContext();
+  const variablesArray = useVariablesManager(templateFields);
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.SMS,
   });
@@ -38,16 +38,16 @@ export function TemplateSMSEditor({ control, index }: { control: Control<IForm>;
           isPrimaryMissing
         />
       ) : null}
-      <StepSettings index={index} />
+      <StepSettings />
       <Controller
-        name={`steps.${index}.template.content` as any}
+        name={`${stepFormPath}.template.content` as any}
         defaultValue=""
         control={control}
-        render={({ field }) => (
+        render={({ field, fieldState }) => (
           <Textarea
             {...field}
             data-test-id="smsNotificationContent"
-            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
+            error={fieldState.error?.message}
             disabled={readonly}
             minRows={4}
             value={field.value || ''}
@@ -56,7 +56,8 @@ export function TemplateSMSEditor({ control, index }: { control: Control<IForm>;
           />
         )}
       />
-      <VariableManager index={index} variablesArray={variablesArray} />
+      <VariableManager variablesArray={variablesArray} path={`${stepFormPath}.template`} />
+      <TranslateProductLead id="translate-sms-editor" />
     </>
   );
 }

@@ -25,6 +25,9 @@ import {
   messagebirdConfig,
   azureSmsConfig,
   bulkSmsConfig,
+  iSendSmsConfig,
+  ringCentralConfig,
+  brevoSmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -137,6 +140,14 @@ export const smsProviders: IProviderConfig[] = [
     logoFileName: { light: 'bulk-sms.png', dark: 'bulk-sms.png' },
   },
   {
+    id: SmsProviderIdEnum.ISendSms,
+    displayName: 'iSend SMS',
+    channel: ChannelTypeEnum.SMS,
+    credentials: iSendSmsConfig,
+    docReference: 'https://send.com.ly/developers/docs',
+    logoFileName: { light: 'isend-sms.svg', dark: 'isend-sms.svg' },
+  },
+  {
     id: SmsProviderIdEnum.Clickatell,
     displayName: 'clickatell',
     channel: ChannelTypeEnum.SMS,
@@ -242,5 +253,21 @@ export const smsProviders: IProviderConfig[] = [
     credentials: azureSmsConfig,
     docReference: 'https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/sms/receive-sms',
     logoFileName: { light: 'azure-sms.png', dark: 'azure-sms.png' },
+  },
+  {
+    id: SmsProviderIdEnum.RingCentral,
+    displayName: `RingCentral`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: ringCentralConfig,
+    docReference: 'https://developers.ringcentral.com/guide/messaging',
+    logoFileName: { light: 'ring-central.svg', dark: 'ring-central.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.BrevoSms,
+    displayName: `Brevo`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: brevoSmsConfig,
+    docReference: 'https://developers.brevo.com/reference/sendtransacsms',
+    logoFileName: { light: 'brevo.svg', dark: 'brevo.svg' },
   },
 ];

@@ -1,5 +1,11 @@
 import { IsDefined, IsString, IsOptional, ValidateNested, ValidateIf, IsEnum } from 'class-validator';
-import { AddressingTypeEnum, TriggerRecipients, TriggerRecipientSubscriber, TriggerTenantContext } from '@novu/shared';
+import {
+  AddressingTypeEnum,
+  TriggerRecipients,
+  TriggerRecipientSubscriber,
+  TriggerRequestCategoryEnum,
+  TriggerTenantContext,
+} from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -27,17 +33,23 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @ValidateNested()
   @ValidateIf((_, value) => typeof value !== 'string')
   tenant?: TriggerTenantContext | null;
+
+  @IsOptional()
+  @IsEnum(TriggerRequestCategoryEnum)
+  requestCategory?: TriggerRequestCategoryEnum;
 }
 
 export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {
   @IsDefined()
   to: TriggerRecipients;
+
+  @IsEnum(AddressingTypeEnum)
+  addressingType: AddressingTypeEnum.MULTICAST;
 }
 
 export class ParseEventRequestBroadcastCommand extends ParseEventRequestBaseCommand {
-  @IsDefined()
   @IsEnum(AddressingTypeEnum)
-  addressingType: AddressingTypeEnum;
+  addressingType: AddressingTypeEnum.BROADCAST;
 }
 
 export type ParseEventRequestCommand = ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;

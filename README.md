@@ -1,4 +1,11 @@
 <div align="center">
+  👨‍💻 <a href="https://jobs.ashbyhq.com/novu.co?utm_source=github" target="_blank">
+     We are hiring in Europe/UK/Israel!</a> 👩‍💻
+</div>
+<br/>
+<br/>
+
+<div align="center">
   <a href="https://novu.co?utm_source=github" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">

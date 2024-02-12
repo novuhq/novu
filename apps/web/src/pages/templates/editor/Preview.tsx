@@ -12,33 +12,35 @@ import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 import { errorMessage } from '../../../utils/notifications';
 import { useActiveIntegrations } from '../../../hooks';
+import { useStepFormPath } from '../hooks/useStepFormPath';
+import type { IForm } from '../components/formTypes';
 
-export const Preview = ({ activeStep, view }: { activeStep: number; view: string }) => {
-  const { control } = useFormContext();
+export const Preview = ({ view }: { view: string }) => {
+  const { control } = useFormContext<IForm>();
+  const path = useStepFormPath();
 
   const subject = useWatch({
-    name: `steps.${activeStep}.template.subject`,
+    name: `${path}.template.subject`,
     control,
   });
   const contentType = useWatch({
-    name: `steps.${activeStep}.template.contentType`,
+    name: `${path}.template.contentType`,
     control,
   });
   const htmlContent = useWatch({
-    name: `steps.${activeStep}.template.htmlContent`,
+    name: `${path}.template.htmlContent`,
     control,
   });
   const editorContent = useWatch({
-    name: `steps.${activeStep}.template.content`,
+    name: `${path}.template.content`,
     control,
   });
-
   const variables = useWatch({
-    name: `steps.${activeStep}.template.variables`,
+    name: `${path}.template.variables`,
     control,
   });
   const layoutId = useWatch({
-    name: `steps.${activeStep}.template.layoutId`,
+    name: `${path}.template.layoutId`,
     control,
   });
 
@@ -55,10 +57,10 @@ export const Preview = ({ activeStep, view }: { activeStep: number; view: string
   }, [processedVariables, setPayloadValue]);
 
   const parseContent = (args: {
-    contentType: MessageTemplateContentType;
-    content: string | IEmailBlock[];
+    contentType?: MessageTemplateContentType;
+    content?: string | IEmailBlock[];
     payload: any;
-    layoutId: string;
+    layoutId?: string;
   }) => {
     mutateAsync({
       ...args,

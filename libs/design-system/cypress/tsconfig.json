@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.json",
-  "include": ["./**/*.ts", "global.d.ts", "../src/**/*.cy.{js,jsx,ts,tsx}"],
+  "include": ["**/*.ts", "global.d.ts", "../src/**/*.cy.{js,jsx,ts,tsx}"],
   "exclude": [],
   "compilerOptions": {
     "types": ["cypress"],

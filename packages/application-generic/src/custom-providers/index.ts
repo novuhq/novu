@@ -1,21 +1,12 @@
 import {
   AnalyticsService,
-  BullMqService,
   CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
-  ReadinessService,
-  OldInstanceBullMqService,
-  StandardQueueService,
-  SubscriberProcessQueueService,
-  WebSocketsQueueService,
-  WorkflowQueueService,
 } from '../services';
-import {
-  GetIsTopicNotificationEnabled,
-  GetUseMergedDigestId,
-} from '../usecases';
+import { GetFeatureFlag } from '../usecases';
+import { DalService } from '@novu/dal';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -27,24 +18,12 @@ export const featureFlagsService = {
   },
 };
 
-export const getUseMergedDigestId = {
-  provide: GetUseMergedDigestId,
-  useFactory: async (
-    featureFlagServiceItem: FeatureFlagsService
-  ): Promise<GetUseMergedDigestId> => {
-    const useCase = new GetUseMergedDigestId(featureFlagServiceItem);
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
-};
-
-export const getIsTopicNotificationEnabled = {
-  provide: GetIsTopicNotificationEnabled,
+export const getFeatureFlag = {
+  provide: GetFeatureFlag,
   useFactory: async (
     featureFlagsServiceItem: FeatureFlagsService
-  ): Promise<GetIsTopicNotificationEnabled> => {
-    const useCase = new GetIsTopicNotificationEnabled(featureFlagsServiceItem);
+  ): Promise<GetFeatureFlag> => {
+    const useCase = new GetFeatureFlag(featureFlagsServiceItem);
 
     return useCase;
   },
@@ -58,28 +37,6 @@ export const cacheInMemoryProviderService = {
   },
 };
 
-export const bullMqService = {
-  provide: BullMqService,
-  useFactory: async (): Promise<BullMqService> => {
-    const service = new BullMqService();
-
-    await service.initialize();
-
-    return service;
-  },
-};
-
-export const oldInstanceBullMqService = {
-  provide: OldInstanceBullMqService,
-  useFactory: async (): Promise<OldInstanceBullMqService> => {
-    const service = new OldInstanceBullMqService();
-
-    await service.initialize();
-
-    return service;
-  },
-};
-
 export const cacheService = {
   provide: CacheService,
   useFactory: async (): Promise<CacheService> => {
@@ -89,6 +46,16 @@ export const cacheService = {
     const service = new CacheService(factoryCacheInMemoryProviderService);
 
     await service.initialize();
+
+    return service;
+  },
+};
+
+export const dalService = {
+  provide: DalService,
+  useFactory: async () => {
+    const service = new DalService();
+    await service.connect(String(process.env.MONGO_URL));
 
     return service;
   },
@@ -118,27 +85,4 @@ export const distributedLockService = {
 
     return service;
   },
-};
-
-export const bullMqTokenList = {
-  provide: 'BULLMQ_LIST',
-  useFactory: (
-    standardQueueService: StandardQueueService,
-    webSocketsQueueService: WebSocketsQueueService,
-    workflowQueueService: WorkflowQueueService,
-    subscriberProcessQueueService: SubscriberProcessQueueService
-  ) => {
-    return [
-      standardQueueService,
-      webSocketsQueueService,
-      workflowQueueService,
-      subscriberProcessQueueService,
-    ];
-  },
-  inject: [
-    StandardQueueService,
-    WebSocketsQueueService,
-    WorkflowQueueService,
-    SubscriberProcessQueueService,
-  ],
 };

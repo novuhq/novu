@@ -4,11 +4,12 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
+  CreateChange,
+  CreateChangeCommand,
   InvalidateCacheService,
 } from '@novu/application-generic';
 
 import { ChangeTemplateActiveStatusCommand } from './change-template-active-status.command';
-import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 
 /**
  * DEPRECATED:

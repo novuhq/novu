@@ -24,6 +24,7 @@ export interface IEmailOptions {
   notificationDetails?: any;
   ipPoolName?: string;
   customData?: Record<string, any>;
+  senderName?: string;
 }
 
 export interface ISmsOptions {
@@ -32,6 +33,7 @@ export interface ISmsOptions {
   from?: string;
   attachments?: IAttachmentOptions[];
   id?: string;
+  customData?: Record<string, any>;
 }
 export interface IPushOptions {
   target: string[];

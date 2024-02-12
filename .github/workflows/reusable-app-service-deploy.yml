@@ -52,11 +52,11 @@ jobs:
           terraform_wrapper: false
 
       - name: Terraform Init
-        working-directory: cloud-infra/terraform/novu
+        working-directory: cloud-infra/terraform/novu/aws
         run: terraform init
 
       - name: Terraform get output
-        working-directory: cloud-infra/terraform/novu
+        working-directory: cloud-infra/terraform/novu/aws
         id: terraform
         env:
           SERVICE_NAME: ${{ inputs.service_name }}

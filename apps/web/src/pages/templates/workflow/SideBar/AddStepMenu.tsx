@@ -85,8 +85,8 @@ const StyledNav = styled.div`
 
 const StyledDraggableNode = styled.div`
   &:not(:hover) svg path {
-    stop-color: currentcolor !important;
-    fill: currentcolor !important;
+    stop-color: currentcolor;
+    fill: currentcolor;
   }
 
   &:hover {

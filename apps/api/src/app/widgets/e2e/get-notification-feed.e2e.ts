@@ -209,7 +209,7 @@ describe('GET /widget/notifications/feed', function () {
   });
 
   async function getSubscriberFeed(query = {}) {
-    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/feed`, {
+    const response = await axios.get(`http://127.0.0.1:${process.env.PORT}/v1/widgets/notifications/feed`, {
       params: {
         page: 0,
         ...query,
@@ -224,7 +224,7 @@ describe('GET /widget/notifications/feed', function () {
 
   async function markMessageAsSeen(messageId: string) {
     return await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      `http://127.0.0.1:${process.env.PORT}/v1/widgets/messages/markAs`,
       { messageId, mark: { seen: true } },
       {
         headers: {

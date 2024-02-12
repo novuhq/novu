@@ -56,7 +56,7 @@ describe('Unread Count - GET /widget/notifications/unread', function () {
     expect(messages[0].read).to.equal(false);
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      `http://127.0.0.1:${process.env.PORT}/v1/widgets/messages/markAs`,
       { messageId, mark: { read: true } },
       {
         headers: {
@@ -85,7 +85,7 @@ describe('Unread Count - GET /widget/notifications/unread', function () {
     expect(messages[0].read).to.equal(false);
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      `http://127.0.0.1:${process.env.PORT}/v1/widgets/messages/markAs`,
       { messageId, mark: { read: true } },
       {
         headers: {
@@ -114,7 +114,7 @@ describe('Unread Count - GET /widget/notifications/unread', function () {
     expect(messages[0].read).to.equal(false);
 
     await axios.post(
-      `http://localhost:${process.env.PORT}/v1/widgets/messages/markAs`,
+      `http://127.0.0.1:${process.env.PORT}/v1/widgets/messages/markAs`,
       { messageId, mark: { read: true } },
       {
         headers: {
@@ -128,7 +128,7 @@ describe('Unread Count - GET /widget/notifications/unread', function () {
   });
 
   async function getUnreadCount(query = {}) {
-    const response = await axios.get(`http://localhost:${process.env.PORT}/v1/widgets/notifications/unread`, {
+    const response = await axios.get(`http://127.0.0.1:${process.env.PORT}/v1/widgets/notifications/unread`, {
       params: {
         ...query,
       },

@@ -261,7 +261,7 @@ check_nvm () {
 }
 
 install_node () {
-    NODE_JS_VERSION="v16.15.1"
+    NODE_JS_VERSION="v20.8.1"
 
     SKIP="$(check_nvm)"
 
@@ -512,4 +512,3 @@ install_os_dependencies () {
 install_os_dependencies
 clone_monorepo
 refresh_shell
-

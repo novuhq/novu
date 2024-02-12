@@ -15,11 +15,11 @@ import {
   UseRowSelectInstanceProps,
   UseRowSelectState,
 } from 'react-table';
+import { useDataRef } from '@novu/shared-web';
 
 import useStyles from './Table.styles';
 import { colors } from '../config';
 import { DefaultCell } from './DefaultCell';
-import { useDataRef } from '../hooks';
 import { ChevronLeft, ChevronRight } from '../icons';
 import { Radio } from '../radio/Radio';
 
@@ -40,6 +40,8 @@ export type IExtendedCellProps<T extends object = {}> = CellProps<T> & { isLoadi
 export type IExtendedColumn<T extends object = {}> = Column<T> & {
   Cell?: (props: IExtendedCellProps<T>) => React.ReactNode;
 };
+
+export type IRow<T extends object = {}> = Row<T>;
 
 const defaultColumn: Partial<IExtendedColumn> = {
   Cell: DefaultCell,
