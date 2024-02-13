@@ -1,5 +1,6 @@
 import { Group, createStyles } from '@mantine/core';
-import { useState } from 'react';
+import { useDisclosure } from '@mantine/hooks';
+
 import { Text, CurlyBrackets, ActionButton, Popover } from '@novu/design-system';
 
 import { useStepFormPath } from '../hooks/useStepFormPath';
@@ -18,13 +19,14 @@ const usePopoverStyles = createStyles(() => ({
 
 export const VariableManagementButton = ({
   label,
-  openVariablesModal,
+  openEditVariablesModal,
 }: {
   label?: string;
-  openVariablesModal: () => void;
+  openEditVariablesModal: () => void;
 }) => {
   const stepFormPath = useStepFormPath();
-  const [openVariablesManagement, setOpenVariablesManagement] = useState<boolean>(false);
+  const [variablesManagementOpen, { close: closeVariablesManagement, toggle: toggleVariablesManagement }] =
+    useDisclosure(false);
   const { classes } = usePopoverStyles();
 
   return (
@@ -33,11 +35,11 @@ export const VariableManagementButton = ({
       <Popover
         width={300}
         className={classes.dropdown}
-        opened={openVariablesManagement}
+        opened={variablesManagementOpen}
         target={
           <ActionButton
             Icon={CurlyBrackets}
-            onClick={() => setOpenVariablesManagement(!openVariablesManagement)}
+            onClick={toggleVariablesManagement}
             tooltip="Open variables panel"
             sx={{
               '> svg': {
@@ -50,13 +52,11 @@ export const VariableManagementButton = ({
         content={
           <VariablesManagement
             isPopover
-            closeVariablesManagement={() => {
-              setOpenVariablesManagement(false);
-            }}
+            closeVariablesManagement={closeVariablesManagement}
             path={`${stepFormPath}.template.variables`}
             openVariablesModal={() => {
-              setOpenVariablesManagement(false);
-              openVariablesModal();
+              closeVariablesManagement();
+              openEditVariablesModal();
             }}
           />
         }

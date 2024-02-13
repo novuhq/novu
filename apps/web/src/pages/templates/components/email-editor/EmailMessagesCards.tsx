@@ -18,7 +18,7 @@ import {
   useVariablesManager,
   useEnvController,
 } from '../../../../hooks';
-import { VariableManagerModal } from '../VariableManagerModal';
+import { EditVariablesModal } from '../EditVariablesModal';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import { TranslateProductLead } from '../TranslateProductLead';
 import { ChannelTypeEnum } from '@novu/shared';
@@ -176,7 +176,7 @@ export function EmailMessagesCards() {
           </Grid.Col>
         </Grid>
       </When>
-      <VariableManagerModal setOpen={setModalOpen} open={modalOpen} variablesArray={variablesArray} />
+      <EditVariablesModal setOpen={setModalOpen} open={modalOpen} variablesArray={variablesArray} />
     </>
   );
 }

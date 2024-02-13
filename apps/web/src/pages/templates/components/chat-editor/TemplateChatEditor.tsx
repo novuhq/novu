@@ -2,7 +2,6 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 import { Grid, Stack } from '@mantine/core';
 import { useState } from 'react';
-import { useTimeout } from '@mantine/hooks';
 
 import { useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
@@ -12,28 +11,21 @@ import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { CustomCodeEditor } from '../CustomCodeEditor';
 import { ChatPreview } from '../../../../components/workflow/Preview';
 
-import { VariableManagerModal } from '../VariableManagerModal';
+import { EditVariablesModal } from '../EditVariablesModal';
 import { VariableManagementButton } from '../VariableManagementButton';
+import { useEditTemplateContent } from '../../hooks/useEditTemplateContent';
 
 const templateFields = ['content'];
 
 export function TemplateChatEditor() {
-  const [showLoading, setShowLoading] = useState(false);
+  const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext<IForm>();
   const variablesArray = useVariablesManager(templateFields);
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.CHAT,
   });
-  const [variablesModalOpened, setVariablesModalOpen] = useState(false);
-
-  const { start, clear } = useTimeout(() => setShowLoading(false), 1000);
-  const handleContentChange = (value: string, onChange: (string) => void) => {
-    setShowLoading(true);
-    clear();
-    onChange(value);
-    start();
-  };
+  const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
 
   return (
     <>
@@ -48,8 +40,8 @@ export function TemplateChatEditor() {
             render={({ field }) => (
               <Stack spacing={8}>
                 <VariableManagementButton
-                  openVariablesModal={() => {
-                    setVariablesModalOpen(true);
+                  openEditVariablesModal={() => {
+                    setEditVariablesModalOpen(true);
                   }}
                 />
                 <CustomCodeEditor
@@ -63,12 +55,12 @@ export function TemplateChatEditor() {
           />
         </Grid.Col>
         <Grid.Col span={6}>
-          <ChatPreview showLoading={showLoading} />
+          <ChatPreview showLoading={isPreviewLoading} />
         </Grid.Col>
       </Grid>
-      <VariableManagerModal
-        open={variablesModalOpened}
-        setOpen={setVariablesModalOpen}
+      <EditVariablesModal
+        open={editVariablesModalOpened}
+        setOpen={setEditVariablesModalOpen}
         variablesArray={variablesArray}
       />
     </>

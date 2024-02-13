@@ -3,7 +3,7 @@ import { VariableManager } from './VariableManager';
 import { Group, Modal, Title, useMantineTheme } from '@mantine/core';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 
-export const VariableManagerModal = ({
+export const EditVariablesModal = ({
   open,
   setOpen,
   variablesArray,
