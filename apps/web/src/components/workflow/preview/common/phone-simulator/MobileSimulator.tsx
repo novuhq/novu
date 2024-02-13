@@ -14,12 +14,18 @@ import {
 } from './MobileSimulator.styles';
 import { AndroidIndicatorsIcon, IOSIndicatorsIcon, IOSKeyboard, AndroidKeyboard } from '../icons';
 
-export const MobileSimulator = ({ children, channel }: { channel: ChannelTypeEnum; children: React.ReactNode }) => {
+export const MobileSimulator = ({
+  children,
+  withBackground,
+}: {
+  withBackground: boolean;
+  children: React.ReactNode;
+}) => {
   const [isIOS, setIsIOS] = useState(true);
   const { colorScheme } = useMantineColorScheme();
 
   return (
-    <MobileSimulatorBody isIOS={isIOS} channel={channel}>
+    <MobileSimulatorBody isIOS={isIOS} withBackground={withBackground}>
       {isIOS ? <Notch /> : <Camera />}
       <IndicatorsContainer>
         <TimeIconStyled isVisible={isIOS} />
@@ -29,7 +35,7 @@ export const MobileSimulator = ({ children, channel }: { channel: ChannelTypeEnu
         <PhonePlatformSwitch isIOS={isIOS} onChange={() => setIsIOS((old) => !old)} />
       </SwitchContainer>
       {children}
-      <When truthy={channel === ChannelTypeEnum.SMS}>
+      <When truthy={!withBackground}>
         {isIOS ? (
           <IOSKeyboard isDarkMode={colorScheme === 'dark'} />
         ) : (

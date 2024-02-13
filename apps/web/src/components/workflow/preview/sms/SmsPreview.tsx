@@ -1,6 +1,5 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
-import { ChannelTypeEnum } from '@novu/shared';
 
 import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
 import { usePreviewTemplate } from '../../../../pages/templates/hooks/usePreviewTemplate';
@@ -31,7 +30,7 @@ export const SmsPreview = () => {
   const { isPreviewContentLoading, previewContent, templateContentError } = usePreviewTemplate(selectedLocale);
 
   return (
-    <MobileSimulator channel={ChannelTypeEnum.SMS}>
+    <MobileSimulator withBackground={false}>
       <BodyContainer>
         <LocaleSelectStyled
           isLoading={areLocalesLoading}

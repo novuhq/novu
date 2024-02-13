@@ -8,7 +8,7 @@ const BORDER_RADIUS_PX = 40;
 const LIGHT_THEME_BACKGROUND = 'rgba(255, 255, 255, 0.4)';
 const DARK_THEME_BACKGROUND = 'rgba(0, 0, 0, 0.6)';
 
-export const MobileSimulatorBody = styled.div<{ channel: ChannelTypeEnum; isIOS: boolean }>`
+export const MobileSimulatorBody = styled.div<{ withBackground: boolean; isIOS: boolean }>`
   position: relative;
   display: flex;
   flex-direction: column;
@@ -21,8 +21,8 @@ export const MobileSimulatorBody = styled.div<{ channel: ChannelTypeEnum; isIOS:
   box-shadow: ${shadows.dark};
   background: ${({ theme }) => (theme.colorScheme === 'dark' ? '#4b4b51' : colors.white)};
 
-  ${({ channel, isIOS, theme }) => {
-    if (channel === ChannelTypeEnum.PUSH) {
+  ${({ withBackground, isIOS, theme }) => {
+    if (withBackground) {
       return `
       background-position: center;
       background-repeat: no-repeat;
