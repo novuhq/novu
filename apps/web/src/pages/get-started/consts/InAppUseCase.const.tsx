@@ -1,3 +1,4 @@
+import { useTheme } from '@emotion/react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ROUTES } from '@novu/shared-web';
 import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
@@ -70,7 +71,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} href={'https://mantine.dev/core/timeline/'} />
+            <Link children={' activity feed '} href={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
@@ -80,11 +81,14 @@ export const InAppUseCaseConst: OnboardingUseCase = {
     },
   ],
   Demo: () => {
+    const { colorScheme, colors } = useTheme();
+    const isDarkMode = colorScheme === 'dark';
+
     return (
       <div
         style={{
           height: '520px',
-          backgroundColor: '#525266',
+          backgroundColor: isDarkMode ? colors.dark[4] : colors.gray[4],
           display: 'flex',
           borderRadius: '2%',
           justifyContent: 'center',
