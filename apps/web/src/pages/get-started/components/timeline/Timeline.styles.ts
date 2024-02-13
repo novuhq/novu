@@ -26,20 +26,30 @@ export default createStyles((theme: MantineTheme, { expandSteps }: ITimelinePara
       '&:not(:first-of-type)': {
         marginTop: '1rem',
       },
+      // timeline dashed connector line
       '&::before': {
-        backgroundColor: theme.colorScheme === 'dark' ? colors.B30 : colors.B30,
+        backgroundColor: 'transparent',
+        borderColor: theme.colorScheme === 'dark' ? colors.B30 : colors.B85,
       },
     },
 
-    itemTitle: { margin: 0, lineHeight: '1.5rem', fontWeight: 600 },
+    itemTitle: {
+      margin: 0,
+      lineHeight: '1.5rem',
+      fontWeight: 600,
+      color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+    },
     itemBullet: {
       '&[data-with-child]': {
         fontWeight: 600,
-        backgroundColor: theme.colorScheme === 'dark' ? colors.B30 : colors.B30,
+        border: 'none',
+        backgroundColor: theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight,
+        color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
       },
     },
     itemBody: {
       lineHeight: '1.25rem',
+      color: colors.B60,
     },
 
     itemContent: {

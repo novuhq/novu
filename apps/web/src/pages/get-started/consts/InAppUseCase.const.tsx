@@ -71,7 +71,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} href={ROUTES.ACTIVITIES} />
+            <Link href={ROUTES.ACTIVITIES}> activity feed </Link>
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
