@@ -23,8 +23,6 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         const getInAppIntegrationUrl = () => {
           const inAppIntegration = integrations?.[0];
           if (!inAppIntegration) {
-            alert('Loading!');
-
             return ROUTES.INTEGRATIONS;
           }
 
