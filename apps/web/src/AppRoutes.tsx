@@ -1,11 +1,10 @@
 import { Cloud, SSO, UserAccess } from '@novu/design-system';
-import { ProductUseCasesEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ProductUseCasesEnum } from '@novu/shared';
 import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { RequiredAuth } from './components/layout/RequiredAuth';
 import { ProductLead } from './components/utils/ProductLead';
 import { ROUTES } from './constants/routes.enum';
-import { useIsImprovedOnboardingEnabled } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import InvitationPage from './pages/auth/InvitationPage';
 import LoginPage from './pages/auth/LoginPage';
@@ -50,9 +49,10 @@ import { TenantsPage } from './pages/tenants/TenantsPage';
 import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { BillingRoutes } from './pages/BillingPages';
+import { useFeatureFlag } from './hooks';
 
 export const AppRoutes = () => {
-  const isImprovedOnboardingEnabled = useIsImprovedOnboardingEnabled();
+  const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
 
   return (
     <Routes>
