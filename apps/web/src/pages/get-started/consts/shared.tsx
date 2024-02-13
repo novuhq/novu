@@ -10,9 +10,9 @@ export const StepDescription = styled.div`
   margin: 0;
 `;
 
-export function Link({ href, children }: { href: string; children: string }) {
+export function Link({ children, ...linkProps }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   return (
-    <StyledLink href={href} target="_blank" rel="noreferrer noopener">
+    <StyledLink {...linkProps} target="_blank" rel="noreferrer noopener">
       {children}
     </StyledLink>
   );

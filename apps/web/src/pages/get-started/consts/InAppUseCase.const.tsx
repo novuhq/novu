@@ -1,3 +1,6 @@
+import { ChannelTypeEnum } from '@novu/shared';
+import { ROUTES } from '@novu/shared-web';
+import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
@@ -13,9 +16,22 @@ export const InAppUseCaseConst: OnboardingUseCase = {
     {
       title: 'Configure In-App provider',
       Description: function () {
+        const { integrations } = useGetIntegrationsByChannel({ channelType: ChannelTypeEnum.IN_APP });
+
+        const getInAppIntegrationUrl = () => {
+          const inAppIntegration = integrations?.[0];
+          if (!inAppIntegration) {
+            alert('Loading!');
+
+            return ROUTES.INTEGRATIONS;
+          }
+
+          return `${ROUTES.INTEGRATIONS}/${inAppIntegration._id}`;
+        };
+
         return (
           <StepDescription>
-            <Link children={'Create In-app provider'} href={'https://mantine.dev/core/timeline/'} />
+            <Link href={getInAppIntegrationUrl()}>Create In-app provider</Link>
             <StepText>
               {' instance, and select a framework to set up credentials in the Novu’s Integration store.'}
             </StepText>
