@@ -17,7 +17,7 @@ export const ContentStyled = styled.div<{ isBlur: boolean }>`
 
 export const ContentWrapperStyled = styled.div`
   padding: 0.5rem;
-  margin-top: 12rem;
+  margin-top: 4.5rem;
 `;
 
 export const ContentAndOVerlayWrapperStyled = styled.div<{ isError: boolean }>`
