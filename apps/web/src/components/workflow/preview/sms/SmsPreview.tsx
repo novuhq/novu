@@ -1,6 +1,5 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
-
 import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
 import { usePreviewSmsTemplate } from '../../../../pages/templates/hooks/usePreviewSmsTemplate';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
