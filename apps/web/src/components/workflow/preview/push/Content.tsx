@@ -1,15 +1,12 @@
 import styled from '@emotion/styled';
 import { Flex, Group, Skeleton, Stack, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
-import { useGetLocalesFromContent, usePreviewPush } from '../../../../api/hooks';
-import { IS_DOCKER_HOSTED } from '../../../../config';
-import { useAuthController, useDataRef, useProcessVariables } from '../../../../hooks';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { usePreviewPushTemplate } from '../../../../pages/templates/hooks/usePreviewPushTemplate';
-import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
+import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { LocaleSelect, PreviewEditOverlay } from '../common';
 import { NovuGreyIcon } from '../common/NovuGreyIcon';
 import {
@@ -26,9 +23,6 @@ export default function Content() {
 
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
-  const errorMsg = useStepFormCombinedErrors();
-
-  const [selectedLocale, setSelectedLocale] = useState<string | undefined>(undefined);
 
   const title = useWatch({
     name: `${path}.template.title`,
@@ -40,39 +34,12 @@ export default function Content() {
     control,
   });
 
-  const variables = useWatch({
-    name: `${path}.template.variables`,
-    control,
+  const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
+    content: content as string,
+    title: title,
   });
 
-  const { organization } = useAuthController();
-
   const { isPreviewLoading, parsedPreviewState, templateError } = usePreviewPushTemplate(selectedLocale);
-
-  const previewData = useDataRef({ content, title });
-
-  const { data: locales, getLocalesFromContent, isLoading: isLocalesLoading } = useGetLocalesFromContent();
-
-  useEffect(() => {
-    if (!IS_DOCKER_HOSTED) {
-      /*
-       * combining title and content to get locales based upon variables in both title and content
-       * The api is not concerned about the content type, it will parse the given string and return the locales
-       */
-      const combinedContent = `${previewData.current.title} ${previewData.current.content}`;
-      getLocalesFromContent({
-        content: combinedContent,
-      });
-    }
-  }, [getLocalesFromContent, previewData]);
-
-  useEffect(() => {
-    setSelectedLocale(organization?.defaultLocale);
-  }, [organization?.defaultLocale]);
-
-  const onLocaleChange = (locale: string) => {
-    setSelectedLocale(locale);
-  };
 
   const handleMouseEnter = () => {
     setIsEditOverlayVisible(true);
@@ -86,14 +53,14 @@ export default function Content() {
     <ContentWrapperStyled>
       <Group>
         <LocaleSelect
-          isLoading={isLocalesLoading}
+          isLoading={areLocalesLoading}
           locales={locales || []}
           onLocaleChange={onLocaleChange}
           value={selectedLocale}
         />
       </Group>
       <ContentAndOVerlayWrapperStyled
-        isError={!!errorMsg}
+        isError={!!templateError}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
@@ -125,7 +92,7 @@ export default function Content() {
         </ContentStyled>
       </ContentAndOVerlayWrapperStyled>
 
-      {errorMsg && !isPreviewLoading && <Text color={colors.error}>{errorMsg}</Text>}
+      {templateError && !isPreviewLoading && <Text color={colors.error}>{templateError}</Text>}
     </ContentWrapperStyled>
   );
 }
