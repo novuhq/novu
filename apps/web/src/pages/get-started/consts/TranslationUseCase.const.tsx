@@ -1,3 +1,4 @@
+import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 
@@ -58,7 +59,5 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => {
-    return <h1>GIF</h1>;
-  },
+  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
 };

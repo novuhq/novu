@@ -1,5 +1,6 @@
 import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
 import { ROUTES } from '@novu/shared-web';
+import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 
@@ -75,7 +76,5 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => {
-    return <h1>GIF</h1>;
-  },
+  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
 };

@@ -2,6 +2,7 @@ import { useTheme } from '@emotion/react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ROUTES } from '@novu/shared-web';
 import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
+import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
@@ -80,23 +81,5 @@ export const InAppUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => {
-    const { colorScheme, colors } = useTheme();
-    const isDarkMode = colorScheme === 'dark';
-
-    return (
-      <div
-        style={{
-          height: '520px',
-          backgroundColor: isDarkMode ? colors.dark[4] : colors.gray[4],
-          display: 'flex',
-          borderRadius: '2%',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <h1>Placeholder</h1>
-      </div>
-    );
-  },
+  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
 };
