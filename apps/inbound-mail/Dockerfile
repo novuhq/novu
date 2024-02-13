@@ -28,7 +28,7 @@ RUN --mount=type=cache,id=pnpm-store-inbound-mail,target=/root/.pnpm-store\
  --unsafe-perm\
  --reporter=silent
 
-RUN NODE_ENV=production pnpm build:inbound-mail
+RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && NODE_ENV=production pnpm build:inbound-mail
 
 WORKDIR /usr/src/app/apps/inbound-mail
 
