@@ -23,7 +23,7 @@ const useStyles = createStyles((theme) => ({
   },
 }));
 
-export const Mobile = ({ children }) => {
+export const EmailMobile = ({ children }) => {
   const { classes } = useStyles();
 
   return (

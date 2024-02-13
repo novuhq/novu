@@ -119,6 +119,7 @@ export class ContentTemplatesController {
   public previewPush(
     @UserSession() user: IJwtPayload,
     @Body('content') content: string,
+    @Body('title') title: string,
     @Body('payload') payload: any,
     @Body('locale') locale?: string
   ) {
@@ -130,6 +131,7 @@ export class ContentTemplatesController {
         content,
         payload,
         locale,
+        title,
       }),
       this.initiateTranslations.bind(this)
     );

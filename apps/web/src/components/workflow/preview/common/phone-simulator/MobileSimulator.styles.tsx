@@ -1,11 +1,12 @@
 import styled from '@emotion/styled';
 import { colors, shadows } from '@novu/design-system';
-
-import { TimeIcon } from './TimeIcon';
+import { TimeIcon } from '../icons';
 
 const BORDER_RADIUS_PX = 40;
+const LIGHT_THEME_BACKGROUND = 'rgba(255, 255, 255, 0.4)';
+const DARK_THEME_BACKGROUND = 'rgba(0, 0, 0, 0.6)';
 
-export const MobileSimulatorBody = styled.div`
+export const MobileSimulatorBody = styled.div<{ withBackground: boolean; isIOS: boolean }>`
   position: relative;
   display: flex;
   flex-direction: column;
@@ -17,6 +18,21 @@ export const MobileSimulatorBody = styled.div`
   border: 1.5rem solid ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B15 : colors.BGLight)};
   box-shadow: ${shadows.dark};
   background: ${({ theme }) => (theme.colorScheme === 'dark' ? '#4b4b51' : colors.white)};
+
+  ${({ withBackground, isIOS, theme }) => {
+    if (withBackground) {
+      return `
+      background-position: center;
+      background-repeat: no-repeat;
+      background: linear-gradient(0deg, ${
+        theme.colorScheme === 'dark' ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND
+      } 0%, ${theme.colorScheme === 'dark' ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND} 100%),
+        url(/static/images/mobilePreview/${isIOS ? 'iphone' : 'android'}.webp) no-repeat center
+          center / cover,
+        lightgray;
+    `;
+    }
+  }}
 `;
 
 export const Notch = styled.div`

@@ -56,3 +56,17 @@ export async function previewSms({
 }): Promise<{ content: string }> {
   return api.post('/v1/content-templates/preview/sms', { content, payload, locale });
 }
+
+export async function previewPush({
+  content,
+  payload,
+  locale,
+  title,
+}: {
+  content?: string | IEmailBlock[];
+  title?: string;
+  payload?: string;
+  locale?: string;
+}): Promise<{ content: string; title: string }> {
+  return api.post('/v1/content-templates/preview/push', { content, payload, locale, title });
+}
