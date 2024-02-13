@@ -5,6 +5,7 @@ import { ChatPreview, EmailPreview } from '../../../components/workflow/Preview'
 import { useNavigateFromEditor } from '../hooks/useNavigateFromEditor';
 import { useStepIndex } from '../hooks/useStepIndex';
 import { ChannelPreviewSidebar } from './ChannelPreviewSidebar';
+import { SmsPreview } from './SmsPreview';
 
 const PreviewComponent = ({ channel }: { channel: StepTypeEnum }) => {
   switch (channel) {
@@ -15,7 +16,7 @@ const PreviewComponent = ({ channel }: { channel: StepTypeEnum }) => {
       return <>TRIGGER</>;
 
     case StepTypeEnum.SMS:
-      return <>SMS</>;
+      return <SmsPreview />;
 
     case StepTypeEnum.IN_APP:
       return <>IN APP</>;

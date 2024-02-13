@@ -1,3 +1,4 @@
-import { errorMessage, successMessage } from '@novu/design-system';
+import { errorMessage as errorMessageRoot, successMessage as successMessageRoot } from '@novu/design-system';
 
-export { errorMessage, successMessage };
+export const errorMessage = errorMessageRoot;
+export const successMessage = successMessageRoot;

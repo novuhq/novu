@@ -5,14 +5,8 @@ import { useMutation } from '@tanstack/react-query';
 import decode from 'jwt-decode';
 import { Group, Input as MantineInput } from '@mantine/core';
 
-import {
-  ICreateOrganizationDto,
-  IJwtPayload,
-  JobTitleEnum,
-  jobTitleToLabelMapper,
-  ProductUseCases,
-  ProductUseCasesEnum,
-} from '@novu/shared';
+import { JobTitleEnum, jobTitleToLabelMapper, ProductUseCasesEnum } from '@novu/shared';
+import type { ProductUseCases, IResponseError, ICreateOrganizationDto, IJwtPayload } from '@novu/shared';
 import {
   Button,
   Input,
@@ -41,7 +35,7 @@ export function QuestionnaireForm() {
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     ICreateOrganizationDto
   >((data: ICreateOrganizationDto) => api.post(`/v1/organizations`, data));
 

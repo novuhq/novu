@@ -5,6 +5,7 @@ import { showNotification } from '@mantine/notifications';
 import { Container, Group } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum } from '@novu/shared';
+import type { IResponseError } from '@novu/shared';
 
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -34,11 +35,9 @@ export function MembersInvitePage() {
     refetch,
   } = useQuery<any[]>(['getOrganizationMembers'], getOrganizationMembers);
 
-  const { isLoading: loadingSendInvite, mutateAsync: sendInvite } = useMutation<
-    string,
-    { error: string; message: string; statusCode: number },
-    string
-  >((email) => inviteMember(email));
+  const { isLoading: loadingSendInvite, mutateAsync: sendInvite } = useMutation<string, IResponseError, string>(
+    (email) => inviteMember(email)
+  );
 
   async function onSubmit({ email }) {
     if (!email) return;

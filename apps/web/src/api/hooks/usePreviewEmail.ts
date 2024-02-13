@@ -1,5 +1,5 @@
 import { errorMessage } from '@novu/design-system';
-import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
+import type { IResponseError, IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 import { IS_DOCKER_HOSTED } from '@novu/shared-web';
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { useCallback } from 'react';
@@ -16,10 +16,8 @@ export type PayloadType = {
 
 export type ResultType = { html: string; subject: string };
 
-type ErrorType = { error: string; message: string; statusCode: number };
-
-export const usePreviewEmail = (options: UseMutationOptions<ResultType, ErrorType, PayloadType> = {}) => {
-  const { mutateAsync, isLoading } = useMutation<ResultType, ErrorType, PayloadType>(
+export const usePreviewEmail = (options: UseMutationOptions<ResultType, IResponseError, PayloadType> = {}) => {
+  const { mutateAsync, isLoading } = useMutation<ResultType, IResponseError, PayloadType>(
     ({ content, payload, contentType, layoutId, locale, subject }) =>
       previewEmail({ content, payload, contentType, layoutId, locale, subject }),
 
