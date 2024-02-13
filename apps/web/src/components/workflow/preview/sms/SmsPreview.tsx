@@ -1,11 +1,12 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
-
-import { LocaleSelect } from '../../../components/workflow/Preview/common';
-import { usePreviewSmsTemplate } from '../hooks/usePreviewSmsTemplate';
-import { useNavigateToStepEditor } from '../hooks/useNavigateToStepEditor';
-import { useTemplateLocales } from '../hooks/useTemplateLocales';
-import { MobileSimulator } from './phone-simulator';
+import { useFormContext, useWatch } from 'react-hook-form';
+import { IForm } from '../../../../pages/templates/components/formTypes';
+import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
+import { usePreviewSmsTemplate } from '../../../../pages/templates/hooks/usePreviewSmsTemplate';
+import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
+import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
+import { LocaleSelect, MobileSimulator } from '../common';
 import { SmsBubble } from './SmsBubble';
 
 const BodyContainer = styled.div`
@@ -27,11 +28,22 @@ const LocaleSelectStyled = styled(LocaleSelect)`
 
 export const SmsPreview = () => {
   const { navigateToStepEditor } = useNavigateToStepEditor();
-  const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales();
+
+  const { control } = useFormContext<IForm>();
+  const path = useStepFormPath();
+  const templateContent = useWatch({
+    name: `${path}.template.content`,
+    control,
+  });
+
+  const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
+    content: templateContent as string,
+  });
+
   const { isPreviewContentLoading, previewContent, templateContentError } = usePreviewSmsTemplate(selectedLocale);
 
   return (
-    <MobileSimulator>
+    <MobileSimulator withBackground={false}>
       <BodyContainer>
         <LocaleSelectStyled
           isLoading={areLocalesLoading}

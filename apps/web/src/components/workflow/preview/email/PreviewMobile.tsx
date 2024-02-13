@@ -8,7 +8,7 @@ import { IFormStep } from '../../../../pages/templates/components/formTypes';
 import { EmailIntegrationInfo } from '../../../../pages/templates/editor/EmailIntegrationInfo';
 import { When } from '../../../utils/When';
 import { LocaleSelect } from '../common/LocaleSelect';
-import { Mobile } from '../common/Mobile';
+import { EmailMobile } from '../common/EmailMobile';
 import { PreviewEditOverlay } from '../common/PreviewEditOverlay';
 import { PreviewUserIcon } from '../common/PreviewUserIcon';
 import { ContentSkeleton, HeaderSkeleton } from './Skeleton';
@@ -95,7 +95,7 @@ export const PreviewMobile = ({
 
   return (
     <>
-      <Mobile>
+      <EmailMobile>
         <div className={classes.header}>
           <Group
             sx={{
@@ -171,7 +171,7 @@ export const PreviewMobile = ({
             )}
           </When>
         </div>
-      </Mobile>
+      </EmailMobile>
     </>
   );
 };

@@ -1,11 +1,9 @@
 import { useState } from 'react';
+import { useMantineColorScheme } from '@mantine/core';
+import { ChannelTypeEnum } from '@novu/shared';
+import { When } from '@novu/design-system';
 
 import { PhonePlatformSwitch } from './PhonePlatformSwitch';
-import { IOSIndicatorsIcon } from './IOSIndicatorsIcon';
-import { AndroidIndicatorsIcon } from './AndroidIndicatorsIcon';
-import { IOSKeyboard } from './IOSKeyboard';
-import { AndroidKeyboard } from './AndroidKeyboard';
-import { useMantineColorScheme } from '@mantine/core';
 import {
   IndicatorsContainer,
   MobileSimulatorBody,
@@ -14,13 +12,20 @@ import {
   TimeIconStyled,
   Camera,
 } from './MobileSimulator.styles';
+import { AndroidIndicatorsIcon, IOSIndicatorsIcon, IOSKeyboard, AndroidKeyboard } from '../icons';
 
-export const MobileSimulator: React.FC = ({ children }) => {
+export const MobileSimulator = ({
+  children,
+  withBackground,
+}: {
+  withBackground: boolean;
+  children: React.ReactNode;
+}) => {
   const [isIOS, setIsIOS] = useState(true);
   const { colorScheme } = useMantineColorScheme();
 
   return (
-    <MobileSimulatorBody>
+    <MobileSimulatorBody isIOS={isIOS} withBackground={withBackground}>
       {isIOS ? <Notch /> : <Camera />}
       <IndicatorsContainer>
         <TimeIconStyled isVisible={isIOS} />
@@ -30,11 +35,13 @@ export const MobileSimulator: React.FC = ({ children }) => {
         <PhonePlatformSwitch isIOS={isIOS} onChange={() => setIsIOS((old) => !old)} />
       </SwitchContainer>
       {children}
-      {isIOS ? (
-        <IOSKeyboard isDarkMode={colorScheme === 'dark'} />
-      ) : (
-        <AndroidKeyboard isDarkMode={colorScheme === 'dark'} />
-      )}
+      <When truthy={!withBackground}>
+        {isIOS ? (
+          <IOSKeyboard isDarkMode={colorScheme === 'dark'} />
+        ) : (
+          <AndroidKeyboard isDarkMode={colorScheme === 'dark'} />
+        )}
+      </When>
     </MobileSimulatorBody>
   );
 };

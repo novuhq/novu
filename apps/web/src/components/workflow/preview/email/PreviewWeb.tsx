@@ -12,7 +12,7 @@ import { PreviewEditOverlay } from '../common/PreviewEditOverlay';
 import { PreviewUserIcon } from '../common/PreviewUserIcon';
 import { ContentSkeleton, HeaderSkeleton } from './Skeleton';
 
-const useStyles = createStyles((theme, { error }: { error: boolean }) => ({
+const useStyles = createStyles((theme, { error, isBlur }: { error: boolean; isBlur: boolean }) => ({
   browser: {
     backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.B98,
     borderRadius: '8px',
@@ -51,6 +51,7 @@ const useStyles = createStyles((theme, { error }: { error: boolean }) => ({
     flex: 1,
     border: error ? `1px solid ${colors.error}` : 'none',
     position: 'relative',
+    filter: isBlur ? 'blur(2px)' : 'none',
   },
   contentContainer: {
     padding: '24px',
@@ -72,6 +73,12 @@ const useStyles = createStyles((theme, { error }: { error: boolean }) => ({
     height: '100%',
     padding: '15px',
     textAlign: 'center',
+  },
+  overlayContainer: {
+    position: 'relative',
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
   },
 }));
 
@@ -96,9 +103,12 @@ export const PreviewWeb = ({
   selectedLocale?: string;
   locales: any[];
 }) => {
-  const { classes } = useStyles({ error: !!(error && error.template?.content && error.template?.content?.message) });
-
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
+
+  const { classes } = useStyles({
+    error: !!(error && error.template?.content && error.template?.content?.message),
+    isBlur: isEditOverlayVisible,
+  });
 
   const handleMouseEnter = () => {
     if (showEditOverlay) {
@@ -161,33 +171,35 @@ export const PreviewWeb = ({
               </When>
             </Group>
           </div>
-
-          <div className={classes.content} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-            <When truthy={loading}>
-              <ContentSkeleton />
+          <div className={classes.overlayContainer} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+            <When truthy={isEditOverlayVisible && !loading}>
+              <PreviewEditOverlay />
             </When>
-            <When truthy={!loading}>
-              {isEditOverlayVisible && <PreviewEditOverlay />}
+            <div className={classes.content}>
+              <When truthy={loading}>
+                <ContentSkeleton />
+              </When>
+              <When truthy={!loading}>
+                <ErrorBoundary
+                  FallbackComponent={() => (
+                    <div data-test-id="preview-content" className={classes.fallbackFrame}>
+                      <Text color={colors.error}>
+                        Oops! We've recognized some glitch in this HTML. Please give it another look!
+                      </Text>
+                    </div>
+                  )}
+                  resetKeys={[content]}
+                >
+                  <Frame className={classes.frame} data-test-id="preview-content" initialContent={content}>
+                    <></>
+                  </Frame>
+                </ErrorBoundary>
 
-              <ErrorBoundary
-                FallbackComponent={() => (
-                  <div data-test-id="preview-content" className={classes.fallbackFrame}>
-                    <Text color={colors.error}>
-                      Oops! We've recognized some glitch in this HTML. Please give it another look!
-                    </Text>
-                  </div>
+                {error && error.template?.content && error.template?.content?.message && (
+                  <Text color={colors.error}>{error?.template?.content?.message}</Text>
                 )}
-                resetKeys={[content]}
-              >
-                <Frame className={classes.frame} data-test-id="preview-content" initialContent={content}>
-                  <></>
-                </Frame>
-              </ErrorBoundary>
-
-              {error && error.template?.content && error.template?.content?.message && (
-                <Text color={colors.error}>{error?.template?.content?.message}</Text>
-              )}
-            </When>
+              </When>
+            </div>
           </div>
         </div>
       </div>
