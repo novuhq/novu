@@ -70,17 +70,17 @@ export function ChatContent({ isLoading, content, errorMsg }) {
 
 const PillStyled = styled.div<{ isDark: boolean }>`
   background-color: ${({ isDark }) => (isDark ? colors.B40 : colors.BGLight)};
-  border-radius: 4px;
+  border-radius: 0.25rem;
   padding: 0px 6px;
   align-items: center;
   color: ${({ isDark }) => (isDark ? colors.B80 : colors.B40)};
   font-size: 10px;
   font-weight: 400;
-  line-height: 20px;
+  line-height: 1.25rem;
 `;
 
 const ContentAndOVerlayWrapperStyled = styled.div`
   position: relative;
-  padding-top: 24px;
-  padding-bottom: 20px;
+  padding-top: 1.5rem;
+  padding-bottom: 1.25rem;
 `;
