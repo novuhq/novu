@@ -28,7 +28,7 @@ export const useGetLocalesFromContent = () => {
     isLoading,
     data,
   } = useMutation<ILocale[], IResponseError, Payload>(({ content }) => getLocalesFromContent({ content }), {
-    onError: (e: any) => {
+    onError: (e) => {
       errorMessage(e.message || 'Unexpected error');
     },
   });
