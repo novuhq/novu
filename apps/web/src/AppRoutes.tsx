@@ -1,5 +1,5 @@
 import { Cloud, SSO, UserAccess } from '@novu/design-system';
-import { FeatureFlagsKeysEnum, ProductUseCasesEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { RequiredAuth } from './components/layout/RequiredAuth';
@@ -15,7 +15,6 @@ import { BrandPage } from './pages/brand/BrandPage';
 import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { GetStartedPage } from './pages/get-started/GetStartedPage';
-import { GetStartedTab } from './pages/get-started/layout/GetStartedTab';
 import HomePage from './pages/HomePage';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
 import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
@@ -100,10 +99,7 @@ export const AppRoutes = () => {
           <Route path=":identifier" element={<UpdateTenantPage />} />
         </Route>
         {isImprovedOnboardingEnabled ? (
-          <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />}>
-            <Route path="" element={<GetStartedTab usecase={ProductUseCasesEnum.IN_APP} />} />
-            <Route path=":usecase" element={<GetStartedTab />} />
-          </Route>
+          <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />} />
         ) : (
           <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
         )}

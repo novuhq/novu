@@ -1,8 +1,6 @@
-import { ProductUseCasesEnum } from '@novu/shared';
+import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 
-export type OnboardingUseCases = {
-  [key in ProductUseCasesEnum]: OnboardingUseCase;
-};
+export type OnboardingUseCases = Record<OnboardingUseCasesTabsEnum, OnboardingUseCase>;
 
 export interface IOnboardingStep {
   title: string;
