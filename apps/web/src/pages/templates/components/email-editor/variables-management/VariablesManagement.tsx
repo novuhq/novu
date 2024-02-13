@@ -1,14 +1,10 @@
 import { useWatch } from 'react-hook-form';
-import { UnstyledButton } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
+import { Group, useMantineColorScheme } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
 import * as set from 'lodash.set';
 import styled from '@emotion/styled';
 
 import {
-  Text,
-  Tooltip,
-  EditGradient,
   Translation,
   colors,
   NovuIcon,
@@ -17,6 +13,9 @@ import {
   Workflow,
   shadows,
   EmptySearch,
+  ActionButton,
+  PencilOutlined,
+  Close,
 } from '@novu/design-system';
 
 import { VarItemsDropdown } from './VarItemsDropdown';
@@ -24,7 +23,6 @@ import { VarLabel } from './VarLabel';
 import { useDebounce, useProcessVariables } from '../../../../../hooks';
 import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
-import { getWorkflowVariables } from '../../../../../api/notification-templates';
 import { useWorkflowVariables } from '../../../../../api/hooks';
 
 interface IVariablesList {
@@ -67,17 +65,22 @@ const searchVariables = (list, search: string) => {
 
 export const VariablesManagement = ({
   openVariablesModal,
+  closeVariablesManagement,
   control,
   path,
+  isPopover = false,
 }: {
   openVariablesModal?: () => void;
+  closeVariablesManagement?: () => void;
   control?: any;
   path: string;
+  isPopover?: boolean;
 }) => {
   const variableArray = useWatch({
     name: path,
     control,
   });
+  const { colorScheme } = useMantineColorScheme();
 
   const { variables } = useWorkflowVariables();
 
@@ -112,58 +115,66 @@ export const VariablesManagement = ({
   };
 
   return (
-    <VariablesContainer>
+    <VariablesContainer isPopover={isPopover}>
       <When truthy={openVariablesModal !== undefined}>
-        <div
+        <Group
+          px={16}
+          h={40}
+          noWrap
+          spacing={20}
+          position={'right'}
           style={{
-            textAlign: 'right',
-            marginBottom: '20px',
+            borderRadius: '8px 8px 0px 0px',
+            backgroundColor: colorScheme === 'dark' ? colors.B15 : colors.BGLight,
           }}
         >
-          <Tooltip label="Add defaults or mark as required">
-            <UnstyledButton
-              data-test-id="open-edit-variables-btn"
-              onClick={() => {
-                if (openVariablesModal) {
-                  openVariablesModal();
-                }
+          <ActionButton
+            onClick={() => {
+              if (openVariablesModal) {
+                openVariablesModal();
+              }
+            }}
+            Icon={PencilOutlined}
+            data-test-id="open-edit-variables-btn"
+            tooltip={'Add defaults or mark as required'}
+          />
+          <When truthy={closeVariablesManagement}>
+            <ActionButton
+              onClick={closeVariablesManagement}
+              sx={{
+                '> svg': {
+                  width: 14,
+                  height: 14,
+                },
               }}
-              type="button"
-            >
-              <Text gradient>
-                Edit Variables
-                <EditGradient
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    marginBottom: '-4px',
-                    marginLeft: 5,
-                  }}
-                />
-              </Text>
-            </UnstyledButton>
-          </Tooltip>
-        </div>
+              Icon={Close}
+            />
+          </When>
+        </Group>
       </When>
-      <Input
-        type={'search'}
-        onChange={handleSearchVariable}
-        mb={20}
-        placeholder={'Search variables...'}
-        rightSection={<Search />}
-      />
-      <When truthy={emptyVariablesList}>
-        <EmptySearchContainer>
-          <EmptySearch style={{ maxWidth: 200, marginBottom: 15 }} />
-          <span style={{ color: colors.B40, fontSize: 16, fontWeight: 600, lineHeight: '20px' }}>No matches found</span>
-          <span style={{ color: colors.B40, fontSize: 14, fontWeight: 400, lineHeight: '20px' }}>
-            Try being less specific or using different keywords.
-          </span>
-        </EmptySearchContainer>
-      </When>
-      <When truthy={!emptyVariablesList}>
-        <VariablesSection variablesList={variablesList} searchVal={searchVal} />
-      </When>
+      <div style={{ padding: '12px' }}>
+        <Input
+          type={'search'}
+          onChange={handleSearchVariable}
+          mb={20}
+          placeholder={'Search variables...'}
+          rightSection={<Search />}
+        />
+        <When truthy={emptyVariablesList}>
+          <EmptySearchContainer>
+            <EmptySearch style={{ maxWidth: 200, marginBottom: 15 }} />
+            <span style={{ color: colors.B40, fontSize: 16, fontWeight: 600, lineHeight: '20px' }}>
+              No matches found
+            </span>
+            <span style={{ color: colors.B40, fontSize: 14, fontWeight: 400, lineHeight: '20px' }}>
+              Try being less specific or using different keywords.
+            </span>
+          </EmptySearchContainer>
+        </When>
+        <When truthy={!emptyVariablesList}>
+          <VariablesSection variablesList={variablesList} searchVal={searchVal} />
+        </When>
+      </div>
     </VariablesContainer>
   );
 };
@@ -233,12 +244,11 @@ const VariableSectionItem = ({
   );
 };
 
-const VariablesContainer = styled.div`
+const VariablesContainer = styled.div<{ isPopover: boolean }>`
   width: 100%;
   height: 100%;
   border-radius: 8px;
-  padding: 15px;
-  box-shadow: ${shadows.dark};
+  box-shadow: ${({ isPopover }) => (isPopover ? 'none' : shadows.dark)};
 `;
 
 const EmptySearchContainer = styled.div`
