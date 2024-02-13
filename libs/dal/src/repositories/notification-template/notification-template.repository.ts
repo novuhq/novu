@@ -209,7 +209,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   private get blueprintOrganizationId(): string | undefined {
-    return process.env.BLUEPRINT_CREATOR;
+    return NotificationTemplateRepository.getBlueprintOrganizationId();
   }
 
   public static getBlueprintOrganizationId(): string | undefined {

@@ -1,5 +1,8 @@
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
+import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
+
+const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-digest';
 
 export const DigestUseCaseConst: OnboardingUseCase = {
   title: 'Digest multiple events',
@@ -27,7 +30,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-built workflow with a digest node.</StepText>
-            <Link children={' Customize '} href={'https://mantine.dev/core/timeline/'} />
+            <CreateWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
             <StepText>the workflow or create a new one on the Workflows page.</StepText>
           </StepDescription>
         );
