@@ -34,6 +34,7 @@ declare global {
       NEW_RELIC_LICENSE_KEY: string;
       SEGMENT_TOKEN?: string;
       LAUNCH_DARKLY_SDK_KEY?: string;
+      STRIPE_API_KEY: string;
     }
   }
 }

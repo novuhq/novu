@@ -49,7 +49,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
         modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
       }
       if (require('@novu/ee-billing')?.BillingModule) {
-        modules.push(require('@novu/ee-billing')?.BillingModule);
+        modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
       }
     }
   } catch (e) {
