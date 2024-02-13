@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { IUpdateIntegrationBodyDto } from '@novu/shared';
+import type { IResponseError, IUpdateIntegrationBodyDto } from '@novu/shared';
 
 import { errorMessage } from '../../utils/notifications';
 import { updateIntegration } from '../integration';
@@ -12,7 +12,7 @@ export const useUpdateIntegration = (integrationId: string) => {
 
   const { mutateAsync: updateIntegrationMutation, isLoading: isLoadingUpdate } = useMutation<
     IntegrationEntity,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     {
       id: string;
       data: IUpdateIntegrationBodyDto;

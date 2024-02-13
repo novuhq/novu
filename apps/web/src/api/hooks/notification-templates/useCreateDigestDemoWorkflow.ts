@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
+import type { IResponseError, ICreateNotificationTemplateDto, INotificationTemplate } from '@novu/shared';
 
 import { createTemplate } from '../../notification-templates';
 import { parseUrl } from '../../../utils/routeUtils';
@@ -16,7 +17,7 @@ export const useCreateDigestDemoWorkflow = () => {
   const { groups, loading: areNotificationGroupLoading } = useNotificationGroup();
   const { mutateAsync: createNotificationTemplate, isLoading: isCreating } = useMutation<
     INotificationTemplate & { __source?: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { template: ICreateNotificationTemplateDto; params: { __source?: string } }
   >((data) => createTemplate(data.template, data.params), {
     onSuccess: (template) => {

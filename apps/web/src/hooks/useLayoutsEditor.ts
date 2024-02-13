@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ILayoutEntity, IResponseError } from '@novu/shared';
+
 import { QueryKeys } from '../api/query.keys';
 import { createLayout, getLayoutById, updateLayoutById } from '../api/layouts';
-import { ILayoutEntity } from '@novu/shared';
 
 export function useLayoutsEditor(id: string) {
   const queryClient = useQueryClient();
@@ -13,7 +14,7 @@ export function useLayoutsEditor(id: string) {
 
   const { mutateAsync: updateLayout, isLoading: isLoadingUpdate } = useMutation<
     ILayoutEntity,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { layoutId: string; data: any }
   >(({ layoutId, data }) => updateLayoutById(layoutId, data), {
     onSuccess: () => {
