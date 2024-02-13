@@ -3,12 +3,12 @@ import { colors } from '@novu/design-system';
 
 export const ContentStyled = styled.div<{ isBlur: boolean }>`
   display: flex;
-  padding: 16px;
+  padding: 1rem;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
+  gap: 1rem;
   flex-shrink: 0;
-  border-radius: 12px;
+  border-radius: 1.5rem;
   background: rgba(255, 255, 255, 0.6);
   position: relative;
   overflow: hidden;
@@ -16,14 +16,14 @@ export const ContentStyled = styled.div<{ isBlur: boolean }>`
 `;
 
 export const ContentWrapperStyled = styled.div`
-  padding: 8px;
-  margin-top: 72px;
+  padding: 0.5rem;
+  margin-top: 12rem;
 `;
 
 export const ContentAndOVerlayWrapperStyled = styled.div<{ isError: boolean }>`
   overflow: hidden;
   position: relative;
-  border-radius: 12px;
+  border-radius: 1.5rem;
   ${({ isError }) => isError && `border: 1px solid ${colors.error};`}
 `;
 
