@@ -19,7 +19,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link children={' Integration store'} href={'https://mantine.dev/core/timeline/'} />
+            <Link href={ROUTES.INTEGRATIONS}> Integration store</Link>
             <StepText>.</StepText>
           </StepDescription>
         );
