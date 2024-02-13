@@ -1,33 +1,26 @@
 import styled from '@emotion/styled';
 import { Group, Skeleton, Stack, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
-import { useState } from 'react';
+
 import { NovuGreyIcon, PreviewEditOverlay } from '../common';
 import { When } from '../../../utils/When';
+import { useHover } from '../../../../hooks';
 
 export function ChatContent({ isLoading, content, errorMsg }) {
-  const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
+  const { isHovered, onMouseEnter, onMouseLeave } = useHover();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const handleMouseEnter = () => {
-    setIsEditOverlayVisible(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsEditOverlayVisible(false);
-  };
-
   return (
-    <ContentAndOVerlayWrapperStyled onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      {isEditOverlayVisible && <PreviewEditOverlay />}
+    <ContentAndOVerlayWrapperStyled onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+      {isHovered && <PreviewEditOverlay />}
       <Group
         spacing={16}
         align="flex-start"
         noWrap
         sx={{
           position: 'relative',
-          ...(isEditOverlayVisible && { filter: 'blur(2px)' }),
+          ...(isHovered && { filter: 'blur(2px)' }),
         }}
       >
         <When truthy={isLoading}>

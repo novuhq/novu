@@ -1,8 +1,9 @@
 import styled from '@emotion/styled';
 import { Flex, Group, Skeleton, Stack, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
-import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
+
+import { useHover } from '../../../../hooks';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { usePreviewPushTemplate } from '../../../../pages/templates/hooks/usePreviewPushTemplate';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
@@ -17,7 +18,7 @@ import {
 } from './Content.styles';
 
 export default function Content() {
-  const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
+  const { isHovered, onMouseEnter, onMouseLeave } = useHover();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -41,14 +42,6 @@ export default function Content() {
 
   const { isPreviewLoading, parsedPreviewState, templateError } = usePreviewPushTemplate(selectedLocale);
 
-  const handleMouseEnter = () => {
-    setIsEditOverlayVisible(true);
-  };
-
-  const handleMouseLeave = () => {
-    setIsEditOverlayVisible(false);
-  };
-
   return (
     <ContentWrapperStyled>
       <Group>
@@ -59,13 +52,9 @@ export default function Content() {
           value={selectedLocale}
         />
       </Group>
-      <ContentAndOVerlayWrapperStyled
-        isError={!!templateError}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        {isEditOverlayVisible && <PreviewEditOverlay />}
-        <ContentStyled isBlur={isEditOverlayVisible}>
+      <ContentAndOVerlayWrapperStyled isError={!!templateError} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
+        {isHovered && <PreviewEditOverlay />}
+        <ContentStyled isBlur={isHovered}>
           {isPreviewLoading ? (
             <Skeletons />
           ) : (
