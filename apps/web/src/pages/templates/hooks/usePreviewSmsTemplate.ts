@@ -6,7 +6,7 @@ import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
 
-export const usePreviewTemplate = (locale?: string) => {
+export const usePreviewSmsTemplate = (locale?: string) => {
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateContentError = useStepFormCombinedErrors();
