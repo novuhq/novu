@@ -6047,8 +6047,8 @@ importers:
   providers/rocket-chat:
     dependencies:
       '@novu/stateless':
-        specifier: 0.22.0
-        version: 0.22.0
+        specifier: 0.23.0
+        version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
         version: 1.6.2
@@ -36389,7 +36389,7 @@ packages:
       damerau-levenshtein: 1.0.8
       emoji-regex: 9.2.2
       eslint: 8.51.0
-      has: 1.0.4
+      has: 1.0.3
       jsx-ast-utils: 3.3.3
       language-tags: 1.0.5
       minimatch: 3.1.2

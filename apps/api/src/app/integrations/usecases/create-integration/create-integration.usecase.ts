@@ -15,6 +15,8 @@ import {
   encryptCredentials,
   buildIntegrationKey,
   InvalidateCacheService,
+  areNovuSmsCredentialsSet,
+  areNovuEmailCredentialsSet,
 } from '@novu/application-generic';
 
 import { CreateIntegrationCommand } from './create-integration.command';
@@ -65,7 +67,7 @@ export class CreateIntegration {
     return result;
   }
 
-  async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
+  private async validate(command: CreateIntegrationCommand): Promise<void> {
     const existingIntegration = await this.integrationRepository.findOne({
       _environmentId: command.environmentId,
       providerId: command.providerId,
@@ -78,6 +80,13 @@ export class CreateIntegration {
       command.channel === ChannelTypeEnum.IN_APP
     ) {
       throw new BadRequestException('One environment can only have one In app provider');
+    }
+
+    if (
+      (command.providerId === SmsProviderIdEnum.Novu && !areNovuSmsCredentialsSet()) ||
+      (command.providerId === EmailProviderIdEnum.Novu && !areNovuEmailCredentialsSet())
+    ) {
+      throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);
     }
 
     if (command.providerId === SmsProviderIdEnum.Novu || command.providerId === EmailProviderIdEnum.Novu) {
@@ -104,6 +113,10 @@ export class CreateIntegration {
         throw new ConflictException('Integration with identifier already exists');
       }
     }
+  }
+
+  async execute(command: CreateIntegrationCommand): Promise<IntegrationEntity> {
+    await this.validate(command);
 
     this.analyticsService.track('Create Integration - [Integrations]', command.userId, {
       providerId: command.providerId,
