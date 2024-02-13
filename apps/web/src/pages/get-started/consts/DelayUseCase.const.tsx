@@ -1,4 +1,5 @@
 import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
+import { ROUTES } from '@novu/shared-web';
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 
@@ -65,7 +66,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} href={'https://mantine.dev/core/timeline/'} />
+            <Link href={ROUTES.ACTIVITIES}> activity feed </Link>
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
