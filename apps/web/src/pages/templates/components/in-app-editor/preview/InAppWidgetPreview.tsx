@@ -41,7 +41,7 @@ export function InAppWidgetPreview({
 
   function onRemoveTemplate() {
     setIsButtonsTemplateSelected(false);
-    onChange('');
+    onChange({});
   }
 
   const editableContent = (

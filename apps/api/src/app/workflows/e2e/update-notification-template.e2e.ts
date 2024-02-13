@@ -354,4 +354,30 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     expect(updatedTemplate.steps[0].replyCallback?.active).to.equal(true);
     expect(updatedTemplate.steps[0].replyCallback?.url).to.equal('acme-corp.com/webhook');
   });
+
+  it('should not able to update step with invalid action', async function () {
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.environment._id
+    );
+    const workflow = await notificationTemplateService.createTemplate();
+    const invalidAction = '';
+    const update: IUpdateNotificationTemplateDto = {
+      steps: [
+        {
+          template: {
+            type: StepTypeEnum.IN_APP,
+            cta: { action: invalidAction } as any,
+            content: 'This is new content for notification',
+          },
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.put(`/v1/workflows/${workflow._id}`).send(update);
+
+    expect(body.message).to.equal('Please provide a valid CTA action');
+    expect(body.statusCode).to.equal(400);
+  });
 });
