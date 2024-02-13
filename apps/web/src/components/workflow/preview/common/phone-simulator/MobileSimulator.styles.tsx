@@ -29,7 +29,7 @@ export const MobileSimulatorBody = styled.div<{ withBackground: boolean; isIOS: 
       background: linear-gradient(0deg, ${
         theme.colorScheme === 'dark' ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND
       } 0%, ${theme.colorScheme === 'dark' ? DARK_THEME_BACKGROUND : LIGHT_THEME_BACKGROUND} 100%),
-        url(/static/images/mobilePreview/${isIOS ? 'iphone' : 'android'}.jpeg) no-repeat center
+        url(/static/images/mobilePreview/${isIOS ? 'iphone' : 'android'}.webp) no-repeat center
           center / cover,
         lightgray;
     `;
