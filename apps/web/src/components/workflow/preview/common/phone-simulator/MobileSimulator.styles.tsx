@@ -1,7 +1,5 @@
 import styled from '@emotion/styled';
 import { colors, shadows } from '@novu/design-system';
-import { ChannelTypeEnum } from '@novu/shared';
-
 import { TimeIcon } from '../icons';
 
 const BORDER_RADIUS_PX = 40;
