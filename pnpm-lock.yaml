@@ -6047,7 +6047,7 @@ importers:
   providers/rocket-chat:
     dependencies:
       '@novu/stateless':
-        specifier: 0.23.0
+        specifier: 0.23.1
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -18120,15 +18120,6 @@ packages:
       '@floating-ui/dom': 0.1.10
       vue: 3.2.47
       vue-resize: 2.0.0-alpha.1(vue@3.2.47)
-    dev: false
-
-  /@novu/stateless@0.22.0:
-    resolution: {integrity: sha512-QEzNQeQ649lBmW91OQFK3K+vDVTlIgDmfHpjFxYcbf+60ZpKqhqJha32G7cjAmjMtmD/RWJUiZS2aEdnX4v2yw==}
-    engines: {node: '>=10'}
-    dependencies:
-      handlebars: 4.7.7
-      lodash.get: 4.4.2
-      lodash.merge: 4.6.2
     dev: false
 
   /@npmcli/arborist@5.3.0:
