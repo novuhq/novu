@@ -1,5 +1,8 @@
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
+import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
+
+const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-multi-channel';
 
 export const MultiChannelUseCaseConst: OnboardingUseCase = {
   title: 'Multi-channel notifications',
@@ -28,7 +31,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu has prepared workflow templates.</StepText>
-            <Link children={'  Customize  '} href={'https://mantine.dev/core/timeline/'} />
+            <CreateWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
             <StepText> a Multi-Channel template or start with a blank workflow.</StepText>
           </StepDescription>
         );

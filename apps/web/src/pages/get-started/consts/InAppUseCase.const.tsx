@@ -1,5 +1,8 @@
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
+import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
+
+const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-in-app';
 
 export const InAppUseCaseConst: OnboardingUseCase = {
   title: 'In-app notifications center',
@@ -26,7 +29,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-built a workflow for testing.</StepText>
-            <Link children={' Customize '} href={'https://mantine.dev/core/timeline/'} />
+            <CreateWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
             <StepText>it or create a new one on the Workflows page. </StepText>
           </StepDescription>
         );
