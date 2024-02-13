@@ -9,7 +9,7 @@ import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm } from '../formTypes';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { CustomCodeEditor } from '../CustomCodeEditor';
-import { ChatPreview } from '../../../../components/workflow/Preview';
+import { ChatPreview } from '../../../../components/workflow/preview';
 
 import { EditVariablesModal } from '../EditVariablesModal';
 import { VariableManagementButton } from '../VariableManagementButton';

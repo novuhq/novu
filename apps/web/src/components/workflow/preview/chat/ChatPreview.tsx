@@ -13,13 +13,14 @@ import { errorMessage } from '../../../../utils/notifications';
 import { LocaleSelect } from '../common';
 import { ChatContent } from './ChatContent';
 import { ChatInput } from './ChatInput';
+import { useProcessVariables } from '../../../../hooks';
 
-export function ChatPreview() {
+export function ChatPreview({ showLoading = false }: { showLoading?: boolean }) {
   const { organization } = useAuthController();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const [selectedLocale, onLocaleChange] = useState<string | undefined>(undefined);
-  const { isLoading, mutateAsync } = useMutation(previewChat);
+  const { isLoading: isLoadingContent, mutateAsync } = useMutation(previewChat);
   const [compiledContent, setCompiledContent] = useState('');
 
   const {
@@ -38,17 +39,24 @@ export function ChatPreview() {
     control,
   });
 
+  const variables = useWatch({
+    name: `${path}.template.variables`,
+    control,
+  });
+
+  const processedVariables = useProcessVariables(variables);
+
   useEffect(() => {
     onLocaleChange(organization?.defaultLocale);
   }, [organization?.defaultLocale]);
 
   useEffect(() => {
-    if (content) {
+    if (!showLoading && content) {
       translationLocales({
         content,
       });
     }
-  }, [content, translationLocales]);
+  }, [content, showLoading, translationLocales]);
 
   const parseContent = (args: { content?: string | any; payload: any; locale?: string }) => {
     mutateAsync({
@@ -66,13 +74,16 @@ export function ChatPreview() {
   };
 
   useEffect(() => {
-    parseContent({
-      content,
-      payload: `{}`,
-      locale: selectedLocale,
-    });
+    if (!showLoading) {
+      parseContent({
+        content,
+        payload: processedVariables,
+        locale: selectedLocale,
+      });
+    }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [compiledContent, selectedLocale]);
+  }, [content, showLoading, selectedLocale, processedVariables]);
 
   return (
     <div>
@@ -80,7 +91,7 @@ export function ChatPreview() {
         <LocaleSelect
           value={selectedLocale}
           onLocaleChange={onLocaleChange}
-          isLoading={isLoadingLocales}
+          isLoading={isLoadingLocales || isLoadingContent}
           locales={locales || []}
         />
       </Flex>
@@ -93,7 +104,11 @@ export function ChatPreview() {
         }
         labelPosition="center"
       />
-      <ChatContent isLoading={isLoading || isLoadingLocales} content={compiledContent} errorMsg={errorMsg} />
+      <ChatContent
+        isLoading={showLoading || isLoadingContent || isLoadingLocales}
+        content={compiledContent}
+        errorMsg={errorMsg}
+      />
       <ChatInput />
     </div>
   );
