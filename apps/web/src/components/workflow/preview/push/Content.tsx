@@ -7,6 +7,7 @@ import { useGetLocalesFromContent, usePreviewPush } from '../../../../api/hooks'
 import { IS_DOCKER_HOSTED } from '../../../../config';
 import { useAuthController, useDataRef, useProcessVariables } from '../../../../hooks';
 import { IForm } from '../../../../pages/templates/components/formTypes';
+import { usePreviewPushTemplate } from '../../../../pages/templates/hooks/usePreviewPushTemplate';
 import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { LocaleSelect, PreviewEditOverlay } from '../common';
@@ -29,20 +30,6 @@ export default function Content() {
 
   const [selectedLocale, setSelectedLocale] = useState<string | undefined>(undefined);
 
-  const [parsedPreviewState, setParsedPreviewState] = useState({
-    title: '',
-    content: '',
-  });
-
-  const { getPushPreview, isLoading } = usePreviewPush({
-    onSuccess: (result) => {
-      setParsedPreviewState({
-        content: result.content,
-        title: result.title,
-      });
-    },
-  });
-
   const title = useWatch({
     name: `${path}.template.title`,
     control,
@@ -59,20 +46,12 @@ export default function Content() {
   });
 
   const { organization } = useAuthController();
-  const processedVariables = useProcessVariables(variables);
+
+  const { isPreviewLoading, parsedPreviewState, templateError } = usePreviewPushTemplate(selectedLocale);
 
   const previewData = useDataRef({ content, title });
 
   const { data: locales, getLocalesFromContent, isLoading: isLocalesLoading } = useGetLocalesFromContent();
-
-  useEffect(() => {
-    getPushPreview({
-      content: previewData.current.content,
-      title: previewData.current.title,
-      locale: selectedLocale,
-      payload: processedVariables,
-    });
-  }, [getPushPreview, previewData, processedVariables, selectedLocale]);
 
   useEffect(() => {
     if (!IS_DOCKER_HOSTED) {
@@ -120,38 +99,45 @@ export default function Content() {
       >
         {isEditOverlayVisible && <PreviewEditOverlay />}
         <ContentStyled isBlur={isEditOverlayVisible}>
-          {isLoading ? (
-            <HeaderSkeleton />
+          {isPreviewLoading ? (
+            <Skeletons />
           ) : (
-            <ContentHeaderStyled>
-              <Flex align="center" gap={5}>
-                <NovuGreyIcon color={isDark ? colors.B30 : '#1F1F27'} width="24px" height="24px" />
-                <Text color={colors.B20} weight="bold">
-                  Your App
+            <>
+              <ContentHeaderStyled>
+                <Flex align="center" gap={5}>
+                  <NovuGreyIcon color={isDark ? colors.B30 : '#1F1F27'} width="24px" height="24px" />
+                  <Text color={colors.B20} weight="bold">
+                    Your App
+                  </Text>
+                </Flex>
+                <Text color={colors.B60}>now</Text>
+              </ContentHeaderStyled>
+              <div>
+                <Text color={colors.B15} weight="bold" rows={1}>
+                  {parsedPreviewState.title || ''}
                 </Text>
-              </Flex>
-              <Text color={colors.B60}>now</Text>
-            </ContentHeaderStyled>
-          )}
-          {isLoading ? (
-            <ContentSkeleton />
-          ) : (
-            <div>
-              <Text color={colors.B15} weight="bold" rows={1}>
-                {parsedPreviewState.title || ''}
-              </Text>
-              <Text color={colors.B15} rows={3}>
-                {parsedPreviewState.content || ''}
-              </Text>
-            </div>
+                <Text color={colors.B15} rows={3}>
+                  {parsedPreviewState.content || ''}
+                </Text>
+              </div>
+            </>
           )}
         </ContentStyled>
       </ContentAndOVerlayWrapperStyled>
 
-      {errorMsg && !isLoading && <Text color={colors.error}>{errorMsg}</Text>}
+      {errorMsg && !isPreviewLoading && <Text color={colors.error}>{errorMsg}</Text>}
     </ContentWrapperStyled>
   );
 }
+
+const Skeletons = () => {
+  return (
+    <>
+      <HeaderSkeleton />
+      <ContentSkeleton />
+    </>
+  );
+};
 
 const HeaderSkeleton = () => {
   return (
