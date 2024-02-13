@@ -3,19 +3,20 @@ import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { usePreviewSms } from '../../../api/hooks';
 import { IForm } from '../components/formTypes';
-import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
+import { useStepFormErrors } from './useStepFormErrors';
 import { useStepFormPath } from './useStepFormPath';
 
 export const usePreviewSmsTemplate = (locale?: string) => {
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
-  const templateContentError = useStepFormCombinedErrors();
+  const error = useStepFormErrors();
   const templateContent = useWatch({
     name: `${path}.template.content`,
     control,
   });
   const [previewContent, setPreviewContent] = useState(templateContent as string);
   const previewData = useDataRef({ templateContent });
+  const templateContentError = error?.template?.content?.message;
 
   const { isLoading, getSmsPreview } = usePreviewSms({
     onSuccess: (result) => {
