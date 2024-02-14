@@ -2,7 +2,6 @@ import * as sinon from 'sinon';
 import { OrganizationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { SetupIntentSucceededHandler } from '@novu/ee-billing';
 
 describe('Stripe webhooks', async () => {
   it('Should handle setup intent succeded event', async () => {
@@ -50,10 +49,7 @@ describe('Stripe webhooks', async () => {
     const repo = new OrganizationRepository();
     const updateSubscriptionStub = sinon.stub(stubObject.subscriptionItems, 'update').resolves({});
     const updateOrgStub = sinon.stub(repo, 'update').resolves({ matched: 1, modified: 1 });
-    const handler: SetupIntentSucceededHandler = new (require('@novu/ee-billing').SetupIntentSucceededHandler)(
-      stubObject,
-      repo
-    );
+    const handler = new (require('@novu/ee-billing').SetupIntentSucceededHandler)(stubObject, repo);
 
     await handler.handle({
       type: 'setup_intent.succeeded',
