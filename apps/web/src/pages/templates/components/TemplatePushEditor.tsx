@@ -2,31 +2,25 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Text } from '@novu/design-system';
-import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
-import { useStepFormErrors } from '../hooks/useStepFormErrors';
+import { useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
 
-import { TranslateProductLead } from './TranslateProductLead';
 import { Grid, Stack } from '@mantine/core';
-import { CustomCodeEditor } from './CustomCodeEditor';
-import { VariableManagementButton } from './VariableManagementButton';
 import { useState } from 'react';
-import { useTimeout } from '@mantine/hooks';
-import { EditVariablesModal } from './EditVariablesModal';
-import { useEditTemplateContent } from '../hooks/useEditTemplateContent';
 import { PushPreview } from '../../../components/workflow/preview';
+import { useEditTemplateContent } from '../hooks/useEditTemplateContent';
+import { CustomCodeEditor } from './CustomCodeEditor';
+import { EditVariablesModal } from './EditVariablesModal';
+import { TranslateProductLead } from './TranslateProductLead';
+import { VariableManagementButton } from './VariableManagementButton';
 
 const templateFields = ['content', 'title'];
 
 export function TemplatePushEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
-  const [showLoading, setShowLoading] = useState(false);
-
-  const { readonly } = useEnvController();
   const stepFormPath = useStepFormPath();
-  const stepFormErrors = useStepFormErrors();
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);
 
