@@ -1,4 +1,3 @@
-import { useDataRef } from '@novu/shared-web';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { usePreviewPush } from '../../../api/hooks';
@@ -33,8 +32,6 @@ export const usePreviewPushTemplate = (locale?: string) => {
 
   const processedVariables = useProcessVariables(templateVariables);
 
-  const previewData = useDataRef({ templateContent, templateTitle, processedVariables });
-
   const { isLoading, getPushPreview } = usePreviewPush({
     onSuccess: (result) => {
       setParsedPreviewState({
@@ -47,11 +44,11 @@ export const usePreviewPushTemplate = (locale?: string) => {
   useEffect(() => {
     getPushPreview({
       locale,
-      content: previewData.current.templateContent,
-      payload: previewData.current.processedVariables,
-      title: previewData.current.templateTitle,
+      content: templateContent,
+      payload: processedVariables,
+      title: templateTitle,
     });
-  }, [getPushPreview, locale, previewData]);
+  }, [getPushPreview, locale, processedVariables, templateContent, templateTitle]);
 
   const isPreviewLoading = !templateError && isLoading;
 
