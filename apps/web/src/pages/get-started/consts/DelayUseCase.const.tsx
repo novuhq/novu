@@ -29,15 +29,15 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>Novu pre-built workflow with a digest node.</StepText>
-            <CreateWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
-            <StepText>the workflow or create a new one on the Workflows page.</StepText>
+            <StepText>Novu pre-built workflow with a delay node.</StepText>
+            <CreateWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}> Customize </CreateWorkflowButton>
+            <StepText> the workflow or create a new one on the Workflows page.</StepText>
           </StepDescription>
         );
       },
     },
     {
-      title: 'Set-up a delay preferences',
+      title: 'Set-up delay preferences',
       Description: function () {
         return (
           <StepDescription>
