@@ -61,6 +61,7 @@ export function TemplatePushEditor() {
                       handleContentChange(value, field.onChange);
                     }}
                     data-test-id="pushNotificationTitle"
+                    height="128px"
                   />
                 </Stack>
               )}
