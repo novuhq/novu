@@ -52,14 +52,24 @@ describe('Workflow Editor - Variants', function () {
   };
 
   const fillPushEditorContentWith = (title: string, content: string) => {
-    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').clear({ force: true }).type(title, {
-      parseSpecialCharSequences: false,
-      force: true,
-    });
-    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').clear({ force: true }).type(content, {
-      parseSpecialCharSequences: false,
-      force: true,
-    });
+    cy.get('[data-test-id=push-title-container] .monaco-editor textarea:first')
+      .parent()
+      .click()
+      .find('textarea')
+      .clear({ force: true })
+      .type(title, {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
+    cy.get('push-content-container .monaco-editor textarea:first')
+      .parent()
+      .click()
+      .find('textarea')
+      .clear({ force: true })
+      .type(content, {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
   };
 
   const showStepActions = (channel: Channel) => {
@@ -131,8 +141,14 @@ describe('Workflow Editor - Variants', function () {
           .contains(isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
         break;
       case 'push':
-        cy.getByTestId('pushNotificationTitle').should('have.value', PUSH_TITLE);
-        cy.getByTestId('pushNotificationContent').should('have.value', isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
+        cy.get('[data-test-id=push-title-container] .monaco-editor textarea:first')
+          .parent()
+          .click()
+          .contains(PUSH_TITLE);
+        cy.get('[data-test-id=push-content-container] .monaco-editor textarea:first')
+          .parent()
+          .click()
+          .contains(isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
         break;
     }
   };
@@ -157,8 +173,22 @@ describe('Workflow Editor - Variants', function () {
         });
         break;
       case 'push':
-        cy.getByTestId('pushNotificationTitle').clear();
-        cy.getByTestId('pushNotificationContent').clear();
+        cy.get('[data-test-id=push-title-container] .monaco-editor textarea:first')
+          .parent()
+          .click()
+          .type('{cmd}a')
+          .find('textarea')
+          .clear({
+            force: true,
+          });
+        cy.get('[data-test-id=push-content-container] .monaco-editor textarea:first')
+          .parent()
+          .click()
+          .type('{cmd}a')
+          .find('textarea')
+          .clear({
+            force: true,
+          });
         break;
     }
   };

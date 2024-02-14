@@ -48,7 +48,7 @@ export function TemplatePushEditor() {
               defaultValue=""
               control={control}
               render={({ field }) => (
-                <Stack spacing={8}>
+                <Stack spacing={8} data-test-id="push-title-container">
                   <VariableManagementButton
                     openEditVariablesModal={() => {
                       setEditVariablesModalOpen(true);
@@ -60,7 +60,6 @@ export function TemplatePushEditor() {
                     onChange={(value) => {
                       handleContentChange(value, field.onChange);
                     }}
-                    data-test-id="pushNotificationTitle"
                     height="128px"
                   />
                 </Stack>
@@ -71,14 +70,13 @@ export function TemplatePushEditor() {
               defaultValue=""
               control={control}
               render={({ field }) => (
-                <Stack spacing={8}>
+                <Stack spacing={8} data-test-id="push-content-container">
                   <Text weight="bold">Message</Text>
                   <CustomCodeEditor
                     value={(field.value as string) || ''}
                     onChange={(value) => {
                       handleContentChange(value, field.onChange);
                     }}
-                    data-test-id="pushNotificationContent"
                   />
                 </Stack>
               )}
