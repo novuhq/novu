@@ -5,6 +5,7 @@ import { usePreviewSms } from '../../../api/hooks';
 import { IForm } from '../components/formTypes';
 import { useStepFormErrors } from './useStepFormErrors';
 import { useStepFormPath } from './useStepFormPath';
+import { useProcessVariables } from '../../../hooks';
 
 export const usePreviewSmsTemplate = (locale?: string) => {
   const { control } = useFormContext<IForm>();
@@ -14,6 +15,11 @@ export const usePreviewSmsTemplate = (locale?: string) => {
     name: `${path}.template.content`,
     control,
   });
+  const templateVariables = useWatch({
+    name: `${path}.template.variables`,
+    control,
+  });
+  const processedVariables = useProcessVariables(templateVariables);
   const [previewContent, setPreviewContent] = useState(templateContent as string);
   const previewData = useDataRef({ templateContent });
   const templateContentError = error?.template?.content?.message;
@@ -27,10 +33,10 @@ export const usePreviewSmsTemplate = (locale?: string) => {
   useEffect(() => {
     getSmsPreview({
       content: previewData.current.templateContent,
-      payload: '',
+      payload: processedVariables,
       locale,
     });
-  }, [locale, previewData, getSmsPreview]);
+  }, [locale, previewData, getSmsPreview, templateContent, processedVariables]);
 
   const isPreviewContentLoading = !templateContentError && isLoading;
 
