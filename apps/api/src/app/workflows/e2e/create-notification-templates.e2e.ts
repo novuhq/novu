@@ -78,6 +78,7 @@ describe('Create Workflow - /workflows (POST)', async () => {
             name: 'Message Name',
             subject: 'Test email subject',
             preheader: 'Test email preheader',
+            senderName: 'Test email sender name',
             content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
             type: StepTypeEnum.EMAIL,
           },
@@ -102,6 +103,7 @@ describe('Create Workflow - /workflows (POST)', async () => {
                 name: 'Better Message Template',
                 subject: 'Better subject',
                 preheader: 'Better pre header',
+                senderName: 'Better pre sender name',
                 content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample of Better text block' }],
                 type: StepTypeEnum.EMAIL,
               },
@@ -144,6 +146,7 @@ describe('Create Workflow - /workflows (POST)', async () => {
     expect(message?.template?.active).to.equal(defaultMessageIsActive);
     expect(message?.template?.subject).to.equal(`${messageRequest?.template?.subject}`);
     expect(message?.template?.preheader).to.equal(`${messageRequest?.template?.preheader}`);
+    expect(message?.template?.senderName).to.equal(`${messageRequest?.template?.senderName}`);
 
     const filters = message?.filters ? message?.filters[0] : null;
     expect(filters?.type).to.equal(filtersTest?.type);
@@ -159,6 +162,7 @@ describe('Create Workflow - /workflows (POST)', async () => {
     expect(variantResult?.template?.active).to.equal(variantRequest?.active);
     expect(variantResult?.template?.subject).to.equal(variantRequest?.template?.subject);
     expect(variantResult?.template?.preheader).to.equal(variantRequest?.template?.preheader);
+    expect(variantResult?.template?.senderName).to.equal(variantRequest?.template?.senderName);
 
     if (Array.isArray(message?.template?.content) && Array.isArray(messageRequest?.template?.content)) {
       expect(message?.template?.content[0].type).to.equal(messageRequest?.template?.content[0].type);
@@ -206,6 +210,8 @@ describe('Create Workflow - /workflows (POST)', async () => {
     expect(message?.template?.type).to.equal(prodVersionMessage?.type);
     expect(message?.template?.content).to.deep.equal(prodVersionMessage?.content);
     expect(message?.template?.active).to.equal(prodVersionMessage?.active);
+    expect(message?.template?.preheader).to.equal(prodVersionMessage?.preheader);
+    expect(message?.template?.senderName).to.equal(prodVersionMessage?.senderName);
 
     const prodVersionVariant = await messageTemplateRepository.findOne({
       _environmentId: prodEnv._id,
@@ -217,6 +223,8 @@ describe('Create Workflow - /workflows (POST)', async () => {
     expect(variantResult?.template?.type).to.equal(prodVersionVariant?.type);
     expect(variantResult?.template?.content).to.deep.equal(prodVersionVariant?.content);
     expect(variantResult?.template?.active).to.equal(prodVersionVariant?.active);
+    expect(variantResult?.template?.preheader).to.equal(prodVersionVariant?.preheader);
+    expect(variantResult?.template?.senderName).to.equal(prodVersionVariant?.senderName);
   });
 
   it('should create a valid notification', async () => {
