@@ -14,7 +14,7 @@ import { CustomCodeEditor } from './CustomCodeEditor';
 import { VariableManagementButton } from './VariableManagementButton';
 import { useState } from 'react';
 import { useTimeout } from '@mantine/hooks';
-import { VariableManagerModal } from './VariableManagerModal';
+import { EditVariablesModal } from './EditVariablesModal';
 
 const templateFields = ['content', 'title'];
 
@@ -88,7 +88,7 @@ export function TemplatePushEditor() {
               )}
             />
           </Stack>
-          <VariableManagerModal
+          <EditVariablesModal
             open={variablesModalOpened}
             setOpen={setVariablesModalOpen}
             variablesArray={variablesArray}
