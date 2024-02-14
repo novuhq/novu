@@ -15,11 +15,13 @@ import { VariableManagementButton } from './VariableManagementButton';
 import { useState } from 'react';
 import { useTimeout } from '@mantine/hooks';
 import { EditVariablesModal } from './EditVariablesModal';
+import { useEditTemplateContent } from '../hooks/useEditTemplateContent';
+import { PushPreview } from '../../../components/workflow/preview';
 
 const templateFields = ['content', 'title'];
 
 export function TemplatePushEditor() {
-  const [variablesModalOpened, setVariablesModalOpen] = useState(false);
+  const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const [showLoading, setShowLoading] = useState(false);
 
   const { readonly } = useEnvController();
@@ -28,17 +30,10 @@ export function TemplatePushEditor() {
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);
 
+  const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.PUSH,
   });
-
-  const { start, clear } = useTimeout(() => setShowLoading(false), 1000);
-  const handleContentChange = (value: string, onChange: (string) => void) => {
-    setShowLoading(true);
-    clear();
-    onChange(value);
-    start();
-  };
 
   return (
     <>
@@ -55,8 +50,8 @@ export function TemplatePushEditor() {
               render={({ field }) => (
                 <Stack spacing={8}>
                   <VariableManagementButton
-                    openVariablesModal={() => {
-                      setVariablesModalOpen(true);
+                    openEditVariablesModal={() => {
+                      setEditVariablesModalOpen(true);
                     }}
                     label="Title"
                   />
@@ -89,12 +84,14 @@ export function TemplatePushEditor() {
             />
           </Stack>
           <EditVariablesModal
-            open={variablesModalOpened}
-            setOpen={setVariablesModalOpen}
+            open={editVariablesModalOpened}
+            setOpen={setEditVariablesModalOpen}
             variablesArray={variablesArray}
           />
         </Grid.Col>
-        <Grid.Col span={6}>Preview</Grid.Col>
+        <Grid.Col span={6}>
+          <PushPreview showLoading={isPreviewLoading} />
+        </Grid.Col>
       </Grid>
       <TranslateProductLead id="translate-push-editor" />
     </>
