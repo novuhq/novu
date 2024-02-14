@@ -27,7 +27,7 @@ describe('Create setup intent', async () => {
     const stubList = sinon.stub(stubObject.setupIntents, 'list').resolves({
       data: [
         {
-          status: 'succeded',
+          status: 'succeeded',
           metadata: {
             apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
           },
