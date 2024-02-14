@@ -61,7 +61,7 @@ describe('Workflow Editor - Variants', function () {
         parseSpecialCharSequences: false,
         force: true,
       });
-    cy.get('push-content-container .monaco-editor textarea:first')
+    cy.get('[data-test-id=push-content-container] .monaco-editor textarea:first')
       .parent()
       .click()
       .find('textarea')
