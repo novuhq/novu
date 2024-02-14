@@ -23,7 +23,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         const getInAppIntegrationUrl = () => {
           const inAppIntegration = integrations?.[0];
           if (!inAppIntegration) {
-            return ROUTES.INTEGRATIONS;
+            return `${ROUTES.INTEGRATIONS_CREATE}?scrollTo=${ChannelTypeEnum.IN_APP}`;
           }
 
           return `${ROUTES.INTEGRATIONS}/${inAppIntegration._id}`;
