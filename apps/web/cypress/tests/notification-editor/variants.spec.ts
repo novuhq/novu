@@ -52,11 +52,11 @@ describe('Workflow Editor - Variants', function () {
   };
 
   const fillPushEditorContentWith = (title: string, content: string) => {
-    cy.getByTestId('pushNotificationTitle').clear().type(title, {
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').clear({ force: true }).type(title, {
       parseSpecialCharSequences: false,
       force: true,
     });
-    cy.getByTestId('pushNotificationContent').clear().type(content, {
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').clear({ force: true }).type(content, {
       parseSpecialCharSequences: false,
       force: true,
     });
