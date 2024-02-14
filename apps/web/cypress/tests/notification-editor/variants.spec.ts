@@ -938,6 +938,8 @@ describe('Workflow Editor - Variants', function () {
       clearEditorContent(channel);
       goBack();
 
+      cy.waitForNetworkIdle(500);
+
       checkCurrentError({ message: messageTitleMissing, count: '1/2' });
       checkVariantListCard({ selector: 'variant-item-card-0', message: messageTitleMissing, hasBorder: true });
 
