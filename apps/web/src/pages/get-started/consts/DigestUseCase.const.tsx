@@ -112,7 +112,7 @@ export const DigestPlaygroundUseCase: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Specify the interval during which the digest will collect notifications.</StepText>
-            <TimerControl unitLabel="sec" mt="0.5rem" value={time} setValue={setTime} />
+            <TimerControl unitLabel="sec" mt="0.5rem" value={time} min={10} setValue={setTime} />
           </StepDescription>
         );
       },

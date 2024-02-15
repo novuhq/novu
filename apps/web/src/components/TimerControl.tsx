@@ -1,17 +1,13 @@
 import styled from '@emotion/styled';
-import { FlexProps, Flex } from '@mantine/core';
+import { Flex, FlexProps } from '@mantine/core';
 import { clamp } from '@mantine/hooks';
-import { IButtonProps, colors, CountdownTimer, ChevronUp, ChevronDown, Text, Button } from '@novu/design-system';
+import { Button, ChevronDown, ChevronUp, colors, CountdownTimer, IButtonProps, Text } from '@novu/design-system';
 import { Dispatch, SetStateAction } from 'react';
 
-export interface ITimerControlProps extends FlexProps {
-  value: number;
-  setValue: Dispatch<SetStateAction<number>>;
-  unitLabel?: string;
-  step?: number;
-  min?: number;
-  max?: number;
-}
+const DEFAULT_STEP = 1;
+const DEFAULT_MIN = 1;
+const DEFAULT_MAX = 60;
+const DEFAULT_UNIT_LABEL = 'sec';
 
 const IconButton = styled(Button)<IButtonProps>(
   ({ theme }) => `
@@ -35,16 +31,25 @@ const IconButton = styled(Button)<IButtonProps>(
 );
 
 const StyledTimeValue = styled(Text)`
+  // leave room for 2 digits
   min-width: 2ch;
 `;
+export interface ITimerControlProps extends FlexProps {
+  value: number;
+  setValue: Dispatch<SetStateAction<number>>;
+  step?: number;
+  min?: number;
+  max?: number;
+  unitLabel?: string;
+}
 
 export const TimerControl: React.FC<ITimerControlProps> = ({
   value,
   setValue,
-  unitLabel = 'sec',
-  step = 1,
-  min = 1,
-  max = 60,
+  unitLabel = DEFAULT_UNIT_LABEL,
+  step = DEFAULT_STEP,
+  min = DEFAULT_MIN,
+  max = DEFAULT_MAX,
   ...flexProps
 }) => {
   const clampValue = (val: number) => clamp(val, min, max);
