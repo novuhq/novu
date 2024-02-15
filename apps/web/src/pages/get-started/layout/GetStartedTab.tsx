@@ -19,8 +19,8 @@ export function GetStartedTab({ steps, Demo, title, description, BottomSection }
   return (
     <Grid align="stretch" justify={'space-between'}>
       <Grid.Col span={3} mt={12}>
-        <Card title={title} space={8} mb={24}>
-          <Description>{description}</Description>
+        <Card title={title} space={description ? '0.5rem' : 0} mb={description ? 24 : 16}>
+          {description ? <Description>{description}</Description> : null}
         </Card>
         <StyledTimeline steps={steps} hasBottomSection={!!BottomSection} />
         {BottomSection ? <BottomSection /> : null}

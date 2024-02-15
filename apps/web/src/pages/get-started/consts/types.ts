@@ -9,7 +9,7 @@ export interface IOnboardingStep {
 
 export interface OnboardingUseCase {
   title: string;
-  description: string;
+  description?: string;
   steps: IOnboardingStep[];
   Demo: React.ComponentType<any>;
   BottomSection?: React.ComponentType<any>;
