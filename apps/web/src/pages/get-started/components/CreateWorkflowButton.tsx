@@ -10,14 +10,14 @@ import { getBlueprintTemplateById } from '../../../api/notification-templates';
 import { getWorkflowBlueprintDetails } from '../../../utils';
 import { TemplateCreationSourceEnum } from '../../templates/shared';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { PropsWithChildren } from 'react';
 
 export function CreateWorkflowButton({
   blueprintIdentifier,
   children,
-}: {
+}: PropsWithChildren<{
   blueprintIdentifier: string;
-  children: string;
-}) {
+}>) {
   const openNewTab = (route: ROUTES, param: string) =>
     window.open(`${window.location.origin}${route.replace(':templateId', param)}`, '_blank', 'noreferrer noopener');
 
