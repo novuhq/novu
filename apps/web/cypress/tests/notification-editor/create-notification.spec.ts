@@ -229,14 +229,23 @@ describe('Creation functionality', function () {
     cy.getByTestId('edit-action').click();
     cy.waitForNetworkIdle(500);
 
-    cy.getByTestId('smsNotificationContent').type('This text is written from a test {{var}}', {
-      parseSpecialCharSequences: false,
-    });
+    cy.get('.monaco-editor textarea:first')
+      .parent()
+      .click()
+      .find('textarea')
+      .type('This text is written from a test {{var}}', {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
+    cy.getByTestId('open-variable-management').click();
+    cy.getByTestId('open-edit-variables-btn').click();
     cy.getByTestId('variable-default-value').type('Test');
+    cy.getByTestId('close-var-manager-modal').click();
 
     cy.getByTestId('notification-template-submit-btn').click();
     cy.waitForNetworkIdle(500);
-
+    cy.getByTestId('open-variable-management').click();
+    cy.getByTestId('open-edit-variables-btn').click();
     cy.getByTestId('variable-default-value').should('have.value', 'Test');
   });
 
