@@ -242,6 +242,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
             name: 'Message Name',
             subject: 'Test email subject',
             preheader: 'Test email preheader',
+            senderName: 'Test email sender name',
             type: StepTypeEnum.EMAIL,
             content: [],
           },
@@ -272,7 +273,8 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
             template: {
               name: 'Message Name',
               subject: 'Test email subject',
-              preheader: '',
+              preheader: 'updated preheader',
+              senderName: 'updated sender name',
               type: StepTypeEnum.EMAIL,
               content: [],
               cta: null,
@@ -298,7 +300,8 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     const steps = updated.data.steps;
 
     expect(steps[0]._parentId).to.equal(null);
-    expect(steps[0].template.preheader).to.equal('');
+    expect(steps[0].template.preheader).to.equal('updated preheader');
+    expect(steps[0].template.senderName).to.equal('updated sender name');
     expect(steps[0]._id).to.equal(steps[1]._parentId);
     expect(steps[1]._id).to.equal(steps[2]._parentId);
   });
