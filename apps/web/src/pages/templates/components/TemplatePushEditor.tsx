@@ -35,7 +35,7 @@ export function TemplatePushEditor() {
       <StepSettings />
 
       <Grid>
-        <Grid.Col span={6}>
+        <Grid.Col span={'auto'}>
           <Stack spacing={32}>
             <Controller
               name={`${stepFormPath}.template.title` as any}
@@ -82,7 +82,7 @@ export function TemplatePushEditor() {
             variablesArray={variablesArray}
           />
         </Grid.Col>
-        <Grid.Col span={6}>
+        <Grid.Col span={'content'}>
           <Flex justify="center">
             <PushPreview showLoading={isPreviewLoading} showOverlay={false} />
           </Flex>
