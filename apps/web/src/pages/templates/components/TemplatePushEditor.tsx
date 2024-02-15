@@ -34,7 +34,7 @@ export function TemplatePushEditor() {
       {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.PUSH} /> : null}
       <StepSettings />
 
-      <Grid>
+      <Grid gutter={24}>
         <Grid.Col span={'auto'}>
           <Stack spacing={32}>
             <Controller
