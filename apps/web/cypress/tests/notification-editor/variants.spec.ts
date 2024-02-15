@@ -937,6 +937,8 @@ describe('Workflow Editor - Variants', function () {
       addVariantActionClick(channel);
       addConditions();
       clearEditorContent(channel);
+
+      checkEditorContent(channel);
       goBack();
 
       cy.wait(1000);
