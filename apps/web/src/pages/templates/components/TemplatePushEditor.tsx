@@ -7,7 +7,7 @@ import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
 
-import { Grid, Stack } from '@mantine/core';
+import { Flex, Grid, Stack } from '@mantine/core';
 import { useState } from 'react';
 import { PushPreview } from '../../../components/workflow/preview';
 import { useEditTemplateContent } from '../hooks/useEditTemplateContent';
@@ -83,10 +83,11 @@ export function TemplatePushEditor() {
           />
         </Grid.Col>
         <Grid.Col span={6}>
-          <PushPreview showLoading={isPreviewLoading} />
+          <Flex justify="center">
+            <PushPreview showLoading={isPreviewLoading} showOverlay={false} />
+          </Flex>
         </Grid.Col>
       </Grid>
-      <TranslateProductLead id="translate-push-editor" />
     </>
   );
 }

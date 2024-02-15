@@ -17,7 +17,13 @@ import {
   ContentWrapperStyled,
 } from './Content.styles';
 
-export default function Content({ showLoading = false }: { showLoading?: boolean }) {
+export default function Content({
+  showLoading = false,
+  showOverlay = true,
+}: {
+  showLoading?: boolean;
+  showOverlay?: boolean;
+}) {
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -53,8 +59,8 @@ export default function Content({ showLoading = false }: { showLoading?: boolean
         />
       </Group>
       <ContentAndOVerlayWrapperStyled isError={!!templateError} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-        {isHovered && <PreviewEditOverlay />}
-        <ContentStyled isBlur={isHovered}>
+        {showOverlay && isHovered && <PreviewEditOverlay />}
+        <ContentStyled isBlur={showOverlay && isHovered}>
           {isPreviewLoading || showLoading ? (
             <Skeletons />
           ) : (
