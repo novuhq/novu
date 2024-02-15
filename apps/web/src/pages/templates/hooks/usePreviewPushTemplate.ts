@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { usePreviewPush } from '../../../api/hooks';
-import { useProcessVariables } from '../../../hooks';
+import { useDataRef, useProcessVariables } from '../../../hooks';
 import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
@@ -32,6 +32,8 @@ export const usePreviewPushTemplate = ({ disabled, locale }: { disabled: boolean
 
   const processedVariables = useProcessVariables(templateVariables);
 
+  const previewData = useDataRef({ content: templateContent, title: templateTitle, payload: processedVariables });
+
   const { isLoading, getPushPreview } = usePreviewPush({
     onSuccess: (result) => {
       setParsedPreviewState({
@@ -45,12 +47,12 @@ export const usePreviewPushTemplate = ({ disabled, locale }: { disabled: boolean
     if (!disabled) {
       getPushPreview({
         locale,
-        content: templateContent,
-        payload: processedVariables,
-        title: templateTitle,
+        content: previewData.current.content,
+        payload: previewData.current.payload,
+        title: previewData.current.title,
       });
     }
-  }, [disabled, getPushPreview, locale, processedVariables, templateContent, templateTitle]);
+  }, [disabled, getPushPreview, locale, previewData]);
 
   const isPreviewLoading = !templateError && isLoading;
 
