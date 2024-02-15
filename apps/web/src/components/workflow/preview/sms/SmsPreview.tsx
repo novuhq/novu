@@ -38,6 +38,7 @@ export const SmsPreview = () => {
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: templateContent as string,
+    disabled: false,
   });
 
   const { isPreviewContentLoading, previewContent, templateContentError } = usePreviewSmsTemplate(selectedLocale);

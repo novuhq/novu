@@ -44,9 +44,13 @@ export default function Content({
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
     title: title,
+    disabled: showLoading,
   });
 
-  const { isPreviewLoading, parsedPreviewState, templateError } = usePreviewPushTemplate(selectedLocale);
+  const { isPreviewLoading, parsedPreviewState, templateError } = usePreviewPushTemplate({
+    disabled: showLoading,
+    locale: selectedLocale,
+  });
 
   return (
     <ContentWrapperStyled>

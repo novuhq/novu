@@ -6,7 +6,7 @@ import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
 
-export const usePreviewPushTemplate = (locale?: string) => {
+export const usePreviewPushTemplate = ({ disabled, locale }: { disabled: boolean; locale?: string }) => {
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateError = useStepFormCombinedErrors();
@@ -42,13 +42,15 @@ export const usePreviewPushTemplate = (locale?: string) => {
   });
 
   useEffect(() => {
-    getPushPreview({
-      locale,
-      content: templateContent,
-      payload: JSON.parse(processedVariables),
-      title: templateTitle,
-    });
-  }, [getPushPreview, locale, processedVariables, templateContent, templateTitle]);
+    if (!disabled) {
+      getPushPreview({
+        locale,
+        content: templateContent,
+        payload: JSON.parse(processedVariables),
+        title: templateTitle,
+      });
+    }
+  }, [disabled, getPushPreview, locale, processedVariables, templateContent, templateTitle]);
 
   const isPreviewLoading = !templateError && isLoading;
 
