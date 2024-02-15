@@ -1,10 +1,12 @@
 import { ROUTES } from '@novu/shared-web';
 
-import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
-import { GetStartedLink, StepDescription, StepText } from './shared';
+import { GetStartedLink, Link, StepDescription, StepText } from './shared';
 import { OnboardingNodeEnum, OnboardingUseCase } from './types';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
+import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
+import { DigestPlaygroundView } from './DigestUsecasePlaygroundView.const';
+import { GetStartedTabsViewsEnum } from './GetStartedTabsViewsEnum';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-digest';
 
@@ -35,9 +37,9 @@ export const DigestUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>Novu pre-built workflow with a digest node.</StepText>
-            <OpenWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
-            <StepText>the workflow or create a new one on the Workflows page.</StepText>
+            <StepText>Novu pre-built workflow with a digest node. </StepText>
+            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>Customize</OpenWorkflowButton>
+            <StepText> the workflow or create a new one on the Workflows page.</StepText>
           </StepDescription>
         );
       },
@@ -48,11 +50,10 @@ export const DigestUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-defined preferences for the digest node.</StepText>
-            <OpenWorkflowButton
-              children={' Customize digest node'}
-              blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}
-              node={OnboardingNodeEnum.DIGEST}
-            />
+            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} node={OnboardingNodeEnum.DIGEST}>
+              {' '}
+              Customize digest node
+            </OpenWorkflowButton>
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -64,10 +65,11 @@ export const DigestUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <OpenWorkflowButton
-              children={'Test the trigger '}
               blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}
               node={OnboardingNodeEnum.TEST_WORKFLOW}
-            />
+            >
+              Test the trigger{' '}
+            </OpenWorkflowButton>
             <StepText>
               as if you sent it from your API. Add a subscriber by sending data to the trigger method. Click multiple
               times to see how the digest node butch messages.
@@ -92,4 +94,16 @@ export const DigestUseCaseConst: OnboardingUseCase = {
     },
   ],
   Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
+  BottomSection: function ({ setView }) {
+    return (
+      <StepDescription>
+        <StepText>Not ready to configure Digest? </StepText>
+        <Link onClick={() => setView?.(GetStartedTabsViewsEnum.DIGEST_PLAYGROUND)}>Open digest playground</Link>
+        <StepText> for a quick test.</StepText>
+      </StepDescription>
+    );
+  },
+  views: {
+    [GetStartedTabsViewsEnum.DIGEST_PLAYGROUND]: DigestPlaygroundView,
+  },
 };
