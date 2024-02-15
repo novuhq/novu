@@ -1,4 +1,5 @@
 import { MouseEventHandler, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { PencilOutlined } from '@novu/design-system';
 
 import {
@@ -24,6 +25,10 @@ interface ISmsBubbleProps {
 export const SmsBubble: React.FC<ISmsBubbleProps> = ({ className, text = '', isLoading, onEditClick, error }) => {
   const [isHovered, setIsHovered] = useState(false);
   const isError = !!error;
+  const { pathname } = useLocation();
+
+  const isPreviewPath = pathname.endsWith('/preview');
+  const showEditOverlay = isHovered && isPreviewPath;
 
   const onEditClickHandler: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();
@@ -37,13 +42,13 @@ export const SmsBubble: React.FC<ISmsBubbleProps> = ({ className, text = '', isL
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {isHovered && (
+      {showEditOverlay && (
         <EditLabel onClick={onEditClickHandler}>
           <PencilOutlined />
           Edit message
         </EditLabel>
       )}
-      <SmsBubbleContainer isError={isError} isBlur={isHovered}>
+      <SmsBubbleContainer isError={isError} isBlur={showEditOverlay}>
         {isLoading ? (
           <SkeletonContainer>
             <SkeletonFirstRect />

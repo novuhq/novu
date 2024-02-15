@@ -22,7 +22,7 @@ const templateFields = ['content'];
 
 export function TemplateSMSEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
-  const { readonly, environment } = useEnvController();
+  const { environment } = useEnvController();
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);
@@ -45,13 +45,13 @@ export function TemplateSMSEditor() {
         />
       ) : null}
       <StepSettings />
-      <Grid>
-        <Grid.Col span={6}>
+      <Grid gutter={24}>
+        <Grid.Col span={'auto'}>
           <Controller
             name={`${stepFormPath}.template.content` as any}
             defaultValue=""
             control={control}
-            render={({ field, fieldState }) => (
+            render={({ field }) => (
               <Stack spacing={8}>
                 <VariableManagementButton
                   openEditVariablesModal={() => {
@@ -68,8 +68,8 @@ export function TemplateSMSEditor() {
             )}
           />
         </Grid.Col>
-        <Grid.Col span={6}>
-          <SmsPreview />
+        <Grid.Col span={'content'}>
+          <SmsPreview showPreviewAsLoading={isPreviewLoading} />
         </Grid.Col>
       </Grid>
       <EditVariablesModal
