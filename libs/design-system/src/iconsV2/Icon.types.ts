@@ -25,4 +25,4 @@ export interface IIconProps extends Omit<SVGAttributes<SVGElement>, 'color'>, II
   /** Description for accessibility. This is mandatory so that we make a11y a priority with icons */
   title: string;
 }
-export type IconType = React.ComponentType<IIconProps>;
+export type IconType = (props: IIconProps) => JSX.Element;
