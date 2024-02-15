@@ -5,20 +5,29 @@ import { ApiServiceLevelEnum } from '@novu/shared';
 
 describe('Stripe webhooks', async () => {
   it('Should handle setup intent succeded event', async () => {
-    if (!require('@novu/ee-billing').SetupIntentSucceededHandler) {
+    if (!require('@novu/ee-billing').SetupIntentSucceededHandler || !require('@novu/ee-billing').UpsertSubscription) {
       throw new Error("SetupIntentSucceededHandler doesn't exist");
     }
     const stubObject = {
       customers: {
         retrieve: () => {},
-      },
-      products: {
-        search: () => {},
-      },
-      subscriptionItems: {
         update: () => {},
       },
+      subscriptions: {
+        update: () => {},
+      },
+      prices: {
+        list: () => {},
+      },
     };
+    const listPricesStub = sinon.stub(stubObject.prices, 'list').resolves({
+      data: [
+        {
+          id: 'price_id',
+        },
+      ],
+    });
+    const updateCustomerStub = sinon.stub(stubObject.customers, 'update').resolves({});
     const getCustomerStub = sinon.stub(stubObject.customers, 'retrieve').resolves(
       Promise.resolve({
         deleted: false,
@@ -28,28 +37,18 @@ describe('Stripe webhooks', async () => {
         subscriptions: {
           data: [
             {
+              id: 'subscription_id',
               items: { data: [{ id: 'item_id' }] },
             },
           ],
         },
       })
     );
-    const getProductStub = sinon.stub(stubObject.products, 'search').resolves(
-      Promise.resolve({
-        data: [
-          {
-            metadata: {
-              apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-            },
-            default_price: 'price_id',
-          },
-        ],
-      })
-    );
     const repo = new OrganizationRepository();
-    const updateSubscriptionStub = sinon.stub(stubObject.subscriptionItems, 'update').resolves({});
+    const updateSubscriptionStub = sinon.stub(stubObject.subscriptions, 'update').resolves({});
     const updateOrgStub = sinon.stub(repo, 'update').resolves({ matched: 1, modified: 1 });
-    const handler = new (require('@novu/ee-billing').SetupIntentSucceededHandler)(stubObject, repo);
+    const upsertSubscription = new (require('@novu/ee-billing').UpsertSubscription)(stubObject, repo);
+    const handler = new (require('@novu/ee-billing').SetupIntentSucceededHandler)(upsertSubscription, stubObject);
 
     await handler.handle({
       type: 'setup_intent.succeeded',
@@ -77,7 +76,7 @@ describe('Stripe webhooks', async () => {
           mandate: null,
           next_action: null,
           on_behalf_of: null,
-          payment_method: null,
+          payment_method: 'payment_method_id',
           single_use_mandate: null,
           usage: '',
         },
@@ -96,13 +95,25 @@ describe('Stripe webhooks', async () => {
       expand: ['subscriptions'],
     });
 
-    expect(getProductStub.lastCall.args.at(0)).to.deep.equal({
-      query: 'metadata["apiServiceLevel"]:"business"',
-      limit: 1,
+    expect(updateSubscriptionStub.lastCall.args.at(0)).to.equal('subscription_id');
+    expect(updateSubscriptionStub.lastCall.args.at(1)).to.deep.equal({
+      items: [
+        {
+          price: 'price_id',
+        },
+      ],
     });
-
-    expect(updateSubscriptionStub.lastCall.args.at(0)).to.equal('item_id');
-    expect(updateSubscriptionStub.lastCall.args.at(1)).to.deep.equal({ price: 'price_id' });
     expect(updateOrgStub.lastCall.args).to.deep.equal([{ _id: 'organization_id' }, { apiServiceLevel: 'business' }]);
+
+    expect(updateCustomerStub.lastCall.args).to.deep.equal([
+      'customer_id',
+      { invoice_settings: { default_payment_method: 'payment_method_id' } },
+    ]);
+
+    expect(listPricesStub.lastCall.args).to.deep.equal([
+      {
+        lookup_keys: ['business_flat_monthly', 'business_usage_notifications'],
+      },
+    ]);
   });
 });
