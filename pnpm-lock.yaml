@@ -1842,6 +1842,12 @@ importers:
       '@novu/shared-web':
         specifier: 0.23.1
         version: link:../../../libs/shared-web
+      '@stripe/react-stripe-js':
+        specifier: ^2.5.0
+        version: 2.5.0(@stripe/stripe-js@2.4.0)(react-dom@17.0.2)(react@17.0.2)
+      '@stripe/stripe-js':
+        specifier: ^2.4.0
+        version: 2.4.0
       '@tanstack/react-query':
         specifier: ^4.20.4
         version: 4.29.1(react-dom@17.0.2)(react@17.0.2)
@@ -27226,6 +27232,23 @@ packages:
       '@types/express': 4.17.17
       file-system-cache: 2.3.0
     dev: true
+
+  /@stripe/react-stripe-js@2.5.0(@stripe/stripe-js@2.4.0)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-ys5bnrufNoBlUPRblWkiN7dUCX3s2noBZS0Lf5GkHYO9x3SXJMZccif53IdP4X6tZyNLn7aSMgZBUZqsdzrvhg==}
+    peerDependencies:
+      '@stripe/stripe-js': ^1.44.1 || ^2.0.0 || ^3.0.0
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@stripe/stripe-js': 2.4.0
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+    dev: false
+
+  /@stripe/stripe-js@2.4.0:
+    resolution: {integrity: sha512-WFkQx1mbs2b5+7looI9IV1BLa3bIApuN3ehp9FP58xGg7KL9hCHDECgW3BwO9l9L+xBPVAD7Yjn1EhGe6EDTeA==}
+    dev: false
 
   /@surma/rollup-plugin-off-main-thread@2.2.3:
     resolution: {integrity: sha512-lR8q/9W7hZpMWweNiAKU7NQerBnzQQLvi8qnTDU/fxItPhtZVMbPV3lbCwjhIlNBe9Bbr5V+KHshvWmVSG9cxQ==}
@@ -53129,7 +53152,7 @@ packages:
       jest-worker: 27.5.1
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
-      terser: 5.16.9
+      terser: 5.22.0
       webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
 
   /terser-webpack-plugin@5.3.9(@swc/core@1.3.49)(esbuild@0.18.20)(webpack@5.82.1):
@@ -53178,7 +53201,7 @@ packages:
       jest-worker: 27.5.1
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
-      terser: 5.16.9
+      terser: 5.22.0
       webpack: 5.88.2(esbuild@0.18.17)
     dev: true
 
@@ -53202,7 +53225,7 @@ packages:
       jest-worker: 27.5.1
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
-      terser: 5.16.9
+      terser: 5.22.0
       webpack: 5.78.0
     dev: true
 
@@ -53845,8 +53868,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 16.11.7
-      acorn: 8.11.3
-      acorn-walk: 8.3.2
+      acorn: 8.10.0
+      acorn-walk: 8.2.0
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
@@ -53876,8 +53899,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 16.11.7
-      acorn: 8.11.3
-      acorn-walk: 8.3.2
+      acorn: 8.10.0
+      acorn-walk: 8.2.0
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
@@ -53907,8 +53930,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 20.5.1
-      acorn: 8.11.3
-      acorn-walk: 8.3.2
+      acorn: 8.10.0
+      acorn-walk: 8.2.0
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2

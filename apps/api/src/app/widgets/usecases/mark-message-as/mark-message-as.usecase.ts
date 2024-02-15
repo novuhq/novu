@@ -67,18 +67,14 @@ export class MarkMessageAs {
   }
 
   private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: MarkEnum) {
-    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-
     this.updateSocketCount(subscriber, marked);
 
-    if (admin) {
-      for (const message of messages) {
-        this.analyticsService.track(`Mark as ${marked} - [Notification Center]`, admin._userId, {
-          _subscriber: message._subscriberId,
-          _organization: command.organizationId,
-          _template: message._templateId,
-        });
-      }
+    for (const message of messages) {
+      this.analyticsService.mixpanelTrack(`Mark as ${marked} - [Notification Center]`, '', {
+        _subscriber: message._subscriberId,
+        _organization: command.organizationId,
+        _template: message._templateId,
+      });
     }
   }
 
