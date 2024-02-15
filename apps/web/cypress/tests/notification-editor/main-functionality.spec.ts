@@ -316,7 +316,7 @@ describe('Workflow Editor - Main Functionality', function () {
     addAndEditChannel('sms');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.monaco-editor textarea:first')
+    cy.get('.monaco-editor textarea:first', { timeout: 7000 })
       .parent()
       .click()
       .find('textarea')

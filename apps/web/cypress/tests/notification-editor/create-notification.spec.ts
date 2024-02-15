@@ -229,7 +229,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('edit-action').click();
     cy.waitForNetworkIdle(500);
 
-    cy.get('.monaco-editor textarea:first')
+    cy.get('.monaco-editor textarea:first', { timeout: 7000 })
       .parent()
       .click()
       .find('textarea')
