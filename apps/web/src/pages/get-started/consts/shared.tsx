@@ -7,6 +7,7 @@ export const StepText = styled.p`
 `;
 
 export const StepDescription = styled.div`
+  line-height: 1.25rem;
   margin: 0;
 `;
 
@@ -20,4 +21,5 @@ export function Link({ children, ...linkProps }: React.AnchorHTMLAttributes<HTML
 
 export const StyledLink = styled.a`
   color: ${colors.gradientEnd};
+  cursor: pointer;
 `;

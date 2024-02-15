@@ -1,22 +1,65 @@
 import styled from '@emotion/styled';
 import { Grid } from '@mantine/core';
 
-import { colors, Text } from '@novu/design-system';
+import { ArrowLeft, Button, colors, Text } from '@novu/design-system';
+import { useMemo } from 'react';
 
 import Card from '../../../components/layout/components/Card';
 import { Timeline } from '../components/timeline/Timeline';
-import { OnboardingUseCase } from '../consts/types';
+import { GetStartedTabsViewsEnum, TAB_VIEW_SET } from '../consts/GetStartedTabsViewsEnum';
+import { IOnboardingUseCaseViewContext, OnboardingUseCase } from '../consts/types';
 
-type IGetStartedTabProps = OnboardingUseCase;
+export interface IGetStartedTabProps extends OnboardingUseCase, IOnboardingUseCaseViewContext {}
 
-export function GetStartedTab({ steps, Demo, title, description }: IGetStartedTabProps) {
+const StyledTimeline = styled(Timeline)<{ hasBottomSection?: boolean }>(
+  ({ hasBottomSection }) => `
+  margin-bottom: ${hasBottomSection ? '1.5rem' : 0};
+`
+);
+
+const TabBreadcrumb = styled(Button)(
+  ({ theme }) => `
+  padding: 0;
+  background: none;
+  border: none;
+  color: ${theme.colors.gray[7]};
+  margin-bottom: 1rem;
+  height: inherit;
+  
+  display: flex;
+  
+  & span {
+    background-image: none;
+    font-weight: normal;
+  }
+  `
+);
+
+export function GetStartedTab({ setView, currentView, views, ...tabProps }: IGetStartedTabProps) {
+  const shouldShowBreadcrumb = !!currentView && views && !!views[currentView];
+
+  const { steps, Demo, title, description, BottomSection } = useMemo(() => {
+    if (!currentView || !views) {
+      return tabProps;
+    }
+
+    return views[currentView] ?? tabProps;
+  }, [views, currentView, tabProps]);
+
   return (
     <Grid align="stretch" justify={'space-between'}>
       <Grid.Col span={3} mt={12}>
-        <Card title={title} space={8} mb={24}>
-          <Description>{description}</Description>
+        {shouldShowBreadcrumb ? (
+          <TabBreadcrumb onClick={() => setView(null)}>
+            <ArrowLeft />
+            Back to description
+          </TabBreadcrumb>
+        ) : null}
+        <Card title={title} space={description ? '0.5rem' : 0} mb={description ? 24 : 16}>
+          {description ? <Description>{description}</Description> : null}
         </Card>
-        <Timeline steps={steps} />
+        <StyledTimeline steps={steps} hasBottomSection={!!BottomSection} />
+        {BottomSection ? <BottomSection setView={setView} /> : null}
       </Grid.Col>
       <Grid.Col span={8}>
         <Demo />

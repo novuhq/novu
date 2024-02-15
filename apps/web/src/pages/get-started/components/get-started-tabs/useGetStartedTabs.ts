@@ -12,15 +12,19 @@ const DEFAULT_PARAMS: GetStartedTabSearchParams = {
   [TAB_SEARCH_PARAM_NAME]: DEFAULT_TAB,
 } satisfies URLSearchParamsInit;
 
-export const useTabSearchParams = () => {
+export const useGetStartedTabs = () => {
   const [params, setParams] = useSearchParams(DEFAULT_PARAMS as unknown as URLSearchParamsInit);
 
-  const setTab = (tab: OnboardingUseCasesTabsEnum) => {
-    // replace is used so that changing the search params isn't considered a change in page
-    setParams({ [TAB_SEARCH_PARAM_NAME]: tab }, { replace: true });
-  };
-
   const currentTab = (params.get(TAB_SEARCH_PARAM_NAME) as OnboardingUseCasesTabsEnum) ?? DEFAULT_TAB;
+  const setTab = (tab: OnboardingUseCasesTabsEnum) => {
+    params.set(TAB_SEARCH_PARAM_NAME, tab);
+
+    setParams(
+      params,
+      // replace is used so that changing the search params isn't considered a change in page
+      { replace: true }
+    );
+  };
 
   return {
     currentTab,
