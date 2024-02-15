@@ -1,3 +1,5 @@
+/** cspell:disable */
+
 /** Re-prefix all icons */
 import {
   Md123 as Icon123,

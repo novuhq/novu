@@ -1,3 +1,5 @@
+/** cspell:disable */
+
 import type { IconType as NovuIconType } from './Icon.types';
 
 /** Override Icon types */
