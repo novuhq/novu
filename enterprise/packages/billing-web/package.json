@@ -33,7 +33,7 @@
     "@novu/design-system": "0.23.1",
     "@novu/shared": "0.23.1",
     "@novu/shared-web": "0.23.1",
-    "@stripe/react-stripe-js": "^2.4.0",
+    "@stripe/react-stripe-js": "^2.5.0",
     "@stripe/stripe-js": "^2.4.0",
     "@tanstack/react-query": "^4.20.4",
     "axios": "^1.4.0",

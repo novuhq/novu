@@ -1843,8 +1843,8 @@ importers:
         specifier: 0.23.1
         version: link:../../../libs/shared-web
       '@stripe/react-stripe-js':
-        specifier: ^2.4.0
-        version: 2.4.0(@stripe/stripe-js@2.4.0)(react-dom@17.0.2)(react@17.0.2)
+        specifier: ^2.5.0
+        version: 2.5.0(@stripe/stripe-js@2.4.0)(react-dom@17.0.2)(react@17.0.2)
       '@stripe/stripe-js':
         specifier: ^2.4.0
         version: 2.4.0
@@ -17468,7 +17468,7 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
     dependencies:
-      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@emotion/react': 11.10.6(@types/react@17.0.53)(react@17.0.2)
       clsx: 1.1.1
       csstype: 3.0.9
       react: 17.0.2
@@ -27233,10 +27233,10 @@ packages:
       file-system-cache: 2.3.0
     dev: true
 
-  /@stripe/react-stripe-js@2.4.0(@stripe/stripe-js@2.4.0)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-1jVQEL3OuhuzNlf4OdfqovHt+MkWh8Uh8xpLxx/xUFUDdF+7/kDOrGKy+xJO3WLCfZUL7NAy+/ypwXbbYZi0tg==}
+  /@stripe/react-stripe-js@2.5.0(@stripe/stripe-js@2.4.0)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-ys5bnrufNoBlUPRblWkiN7dUCX3s2noBZS0Lf5GkHYO9x3SXJMZccif53IdP4X6tZyNLn7aSMgZBUZqsdzrvhg==}
     peerDependencies:
-      '@stripe/stripe-js': ^1.44.1 || ^2.0.0
+      '@stripe/stripe-js': ^1.44.1 || ^2.0.0 || ^3.0.0
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
@@ -40892,7 +40892,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1(@types/node@16.11.7)(typescript@4.9.5)
+      ts-node: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
     transitivePeerDependencies:
       - bufferutil
       - canvas
