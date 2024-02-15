@@ -176,7 +176,7 @@ describe('Workflow Editor - Variants', function () {
         cy.get('[data-test-id=push-title-container] .monaco-editor textarea:first')
           .parent()
           .click()
-          .type('{cmd}a')
+          .type('{selectAll}{backspace}')
           .find('textarea')
           .clear({
             force: true,
@@ -939,19 +939,14 @@ describe('Workflow Editor - Variants', function () {
       clearEditorContent(channel);
       goBack();
 
-      cy.wait(1000);
-
       checkCurrentError({ message: messageTitleMissing, count: '1/2' });
       checkVariantListCard({ selector: 'variant-item-card-0', message: messageTitleMissing, hasBorder: true });
 
       cy.getByTestId('variants-list-errors-down').click();
-
-      cy.wait(1000);
       checkCurrentError({ message: messageContentMissing, count: '2/2' });
       checkVariantListCard({ selector: 'variant-item-card-0', message: messageContentMissing, hasBorder: true });
 
       cy.getByTestId('variants-list-errors-up').click();
-      cy.wait(1000);
       checkCurrentError({ message: messageTitleMissing, count: '1/2' });
       checkVariantListCard({ selector: 'variant-item-card-0', message: messageTitleMissing, hasBorder: true });
     });
