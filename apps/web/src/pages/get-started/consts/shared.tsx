@@ -7,6 +7,7 @@ export const StepText = styled.p`
 `;
 
 export const StepDescription = styled.div`
+  line-height: 1.25rem;
   margin: 0;
 `;
 

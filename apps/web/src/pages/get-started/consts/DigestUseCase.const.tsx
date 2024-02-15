@@ -32,7 +32,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-built workflow with a digest node.</StepText>
-            <CreateWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
+            <CreateWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}> Customize </CreateWorkflowButton>
             <StepText>the workflow or create a new one on the Workflows page.</StepText>
           </StepDescription>
         );
@@ -80,4 +80,14 @@ export const DigestUseCaseConst: OnboardingUseCase = {
     },
   ],
   Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
+  BottomSection: function () {
+    return (
+      <StepDescription>
+        <StepText>Not ready to configure Digest? </StepText>
+        <br />
+        <Link href={ROUTES.ACTIVITIES}>Open digest playground</Link>
+        <StepText> for a quick test.</StepText>
+      </StepDescription>
+    );
+  },
 };

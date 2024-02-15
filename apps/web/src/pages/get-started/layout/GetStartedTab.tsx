@@ -9,14 +9,21 @@ import { OnboardingUseCase } from '../consts/types';
 
 type IGetStartedTabProps = OnboardingUseCase;
 
-export function GetStartedTab({ steps, Demo, title, description }: IGetStartedTabProps) {
+const StyledTimeline = styled(Timeline)<{ hasBottomSection?: boolean }>(
+  ({ hasBottomSection }) => `
+  margin-bottom: ${hasBottomSection ? '1.5rem' : 0};
+`
+);
+
+export function GetStartedTab({ steps, Demo, title, description, BottomSection }: IGetStartedTabProps) {
   return (
     <Grid align="stretch" justify={'space-between'}>
       <Grid.Col span={3} mt={12}>
         <Card title={title} space={8} mb={24}>
           <Description>{description}</Description>
         </Card>
-        <Timeline steps={steps} />
+        <StyledTimeline steps={steps} hasBottomSection={!!BottomSection} />
+        {BottomSection ? <BottomSection /> : null}
       </Grid.Col>
       <Grid.Col span={8}>
         <Demo />
