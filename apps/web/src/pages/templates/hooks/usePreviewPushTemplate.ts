@@ -45,7 +45,7 @@ export const usePreviewPushTemplate = (locale?: string) => {
     getPushPreview({
       locale,
       content: templateContent,
-      payload: processedVariables,
+      payload: JSON.parse(processedVariables),
       title: templateTitle,
     });
   }, [getPushPreview, locale, processedVariables, templateContent, templateTitle]);
