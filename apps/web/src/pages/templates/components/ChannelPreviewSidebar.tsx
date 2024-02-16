@@ -8,6 +8,7 @@ import { StepName } from './StepName';
 import { useBasePath } from '../hooks/useBasePath';
 import { EditorSidebarHeaderActions } from './EditorSidebarHeaderActions';
 import { useStepVariantsCount } from '../hooks/useStepVariantsCount';
+import { useNavigateToVariantPreview } from '../hooks/useNavigateToVariantPreview';
 
 const StepSidebarHeader = () => {
   const { channel } = useParams<{
@@ -27,12 +28,12 @@ const StepSidebarHeader = () => {
 };
 
 export const ChannelPreviewSidebar = ({ children }: { children: ReactNode }) => {
-  const { channel, stepUuid } = useParams<{
-    channel: StepTypeEnum;
+  const { stepUuid } = useParams<{
     stepUuid: string;
   }>();
   const navigate = useNavigate();
   const basePath = useBasePath();
+  const { navigateToVariantPreview } = useNavigateToVariantPreview();
   const { stepIndex, variantIndex } = useStepIndex();
   const { variantsCount } = useStepVariantsCount();
   const key = `${stepIndex}_${variantIndex}`;
@@ -44,7 +45,7 @@ export const ChannelPreviewSidebar = ({ children }: { children: ReactNode }) => 
       customHeader={<StepSidebarHeader />}
       onClose={() => {
         if (variantsCount > 0) {
-          navigate(basePath + `/${channel}/${stepUuid}/variants`);
+          navigateToVariantPreview({ variantUuid: stepUuid });
 
           return;
         }

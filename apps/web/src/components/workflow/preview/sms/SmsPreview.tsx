@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
 import { usePreviewSmsTemplate } from '../../../../pages/templates/hooks/usePreviewSmsTemplate';
@@ -28,19 +28,15 @@ const LocaleSelectStyled = styled(LocaleSelect)`
 
 export const SmsPreview = () => {
   const { navigateToStepEditor } = useNavigateToStepEditor();
-
-  const { control } = useFormContext<IForm>();
+  const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
-  const templateContent = useWatch({
-    name: `${path}.template.content`,
-    control,
-  });
+  const templateContent = watch(`${path}.template.content`);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: templateContent as string,
   });
 
-  const { isPreviewContentLoading, previewContent, templateContentError } = usePreviewSmsTemplate(selectedLocale);
+  const { isPreviewContentLoading, previewContent, templateError } = usePreviewSmsTemplate(selectedLocale);
 
   return (
     <MobileSimulator withBackground={false}>
@@ -56,7 +52,7 @@ export const SmsPreview = () => {
           onEditClick={navigateToStepEditor}
           isLoading={isPreviewContentLoading}
           text={previewContent}
-          error={templateContentError}
+          error={templateError}
         />
       </BodyContainer>
     </MobileSimulator>

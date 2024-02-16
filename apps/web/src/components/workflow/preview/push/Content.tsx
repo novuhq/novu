@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Flex, Group, Skeleton, Stack, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 
 import { useHover } from '../../../../hooks';
 import { IForm } from '../../../../pages/templates/components/formTypes';
@@ -22,18 +22,11 @@ export default function Content() {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
-  const { control } = useFormContext<IForm>();
+  const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
 
-  const title = useWatch({
-    name: `${path}.template.title`,
-    control,
-  });
-
-  const content = useWatch({
-    name: `${path}.template.content`,
-    control,
-  });
+  const title = watch(`${path}.template.title`);
+  const content = watch(`${path}.template.content`);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,

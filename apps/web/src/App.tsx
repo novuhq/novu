@@ -162,7 +162,7 @@ function App() {
                     <Route path="providers" element={<ProvidersPage />} />
                     <Route path=":channel/:stepUuid" element={<ChannelStepEditor />} />
                     <Route path=":channel/:stepUuid/preview" element={<ChannelPreview />} />
-                    <Route path=":channel/:stepUuid/variants" element={<VariantsPage />} />
+                    <Route path=":channel/:stepUuid/variants/:variantUuid/preview" element={<VariantsPage />} />
                     <Route path=":channel/:stepUuid/variants/:variantUuid" element={<ChannelStepEditor />} />
                     <Route path=":channel/:stepUuid/variants/create" element={<VariantsPage />} />
                   </Route>

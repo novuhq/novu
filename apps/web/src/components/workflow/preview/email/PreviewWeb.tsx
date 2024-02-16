@@ -1,4 +1,4 @@
-import { createStyles, Group, Skeleton, Stack } from '@mantine/core';
+import { createStyles, Group } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -16,8 +16,9 @@ const useStyles = createStyles((theme, { error, isBlur }: { error: boolean; isBl
   browser: {
     backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.B98,
     borderRadius: '8px',
-    height: '95%',
+    height: '100%',
     minHeight: '50vh',
+    width: '100%',
   },
   bar: {
     borderRadius: '8px 8px 0 0',

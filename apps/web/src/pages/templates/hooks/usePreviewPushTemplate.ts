@@ -1,6 +1,6 @@
-import { useDataRef } from '@novu/shared-web';
 import { useEffect, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
+
 import { usePreviewPush } from '../../../api/hooks';
 import { useProcessVariables } from '../../../hooks';
 import { IForm } from '../components/formTypes';
@@ -8,23 +8,12 @@ import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
 
 export const usePreviewPushTemplate = (locale?: string) => {
-  const { control } = useFormContext<IForm>();
+  const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateError = useStepFormCombinedErrors();
-  const templateContent = useWatch({
-    name: `${path}.template.content`,
-    control,
-  });
-
-  const templateTitle = useWatch({
-    name: `${path}.template.title`,
-    control,
-  });
-
-  const templateVariables = useWatch({
-    name: `${path}.template.variables`,
-    control,
-  });
+  const templateContent = watch(`${path}.template.content`);
+  const templateTitle = watch(`${path}.template.title`);
+  const templateVariables = watch(`${path}.template.variables`);
 
   const [parsedPreviewState, setParsedPreviewState] = useState({
     title: templateTitle,
@@ -32,8 +21,6 @@ export const usePreviewPushTemplate = (locale?: string) => {
   });
 
   const processedVariables = useProcessVariables(templateVariables);
-
-  const previewData = useDataRef({ templateContent, templateTitle, processedVariables });
 
   const { isLoading, getPushPreview } = usePreviewPush({
     onSuccess: (result) => {
@@ -45,13 +32,15 @@ export const usePreviewPushTemplate = (locale?: string) => {
   });
 
   useEffect(() => {
+    if (!locale) return;
+
     getPushPreview({
       locale,
-      content: previewData.current.templateContent,
-      payload: previewData.current.processedVariables,
-      title: previewData.current.templateTitle,
+      content: templateContent,
+      payload: processedVariables,
+      title: templateTitle,
     });
-  }, [getPushPreview, locale, previewData]);
+  }, [getPushPreview, locale, templateContent, processedVariables, templateTitle]);
 
   const isPreviewLoading = !templateError && isLoading;
 
