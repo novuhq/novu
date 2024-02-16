@@ -36,7 +36,7 @@ export const StepEditorSidebar = ({ children }: { children: ReactNode }) => {
   const { stepIndex, variantIndex } = useStepIndex();
   const { variantsCount } = useStepVariantsCount();
   const key = `${stepIndex}_${variantIndex}`;
-  const isExpandedChannel = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.CHAT].includes(
+  const isExpandedChannel = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.CHAT, StepTypeEnum.SMS].includes(
     channel as StepTypeEnum
   );
 
