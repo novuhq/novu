@@ -53,33 +53,35 @@ describe('GetPrices', () => {
   expectedPrices
     .map(({ apiServiceLevel, prices }) => {
       return () => {
-        it(`should fetch the prices list with the expected values for apiServiceLevel of ${apiServiceLevel}`, async () => {
-          const useCase = createUseCase();
+        describe(`apiServiceLevel of ${apiServiceLevel}`, () => {
+          it(`should fetch the prices list with the expected values`, async () => {
+            const useCase = createUseCase();
 
-          await useCase.execute(
-            GetPricesCommand.create({
-              apiServiceLevel: apiServiceLevel,
-            })
-          );
-
-          expect(listPricesStub.lastCall.args[0].lookup_keys).to.contain.members(prices);
-        });
-
-        it(`should throw an error if no prices are found for apiServiceLevel of ${apiServiceLevel}`, async () => {
-          listPricesStub.resolves({ data: [] });
-          const useCase = createUseCase();
-
-          try {
             await useCase.execute(
               GetPricesCommand.create({
                 apiServiceLevel: apiServiceLevel,
               })
             );
-          } catch (e) {
-            expect(e.message).to.equal(
-              `No price found for apiServiceLevel: '${apiServiceLevel}' and lookup_keys: '${prices}'`
-            );
-          }
+
+            expect(listPricesStub.lastCall.args[0].lookup_keys).to.contain.members(prices);
+          });
+
+          it(`should throw an error if no prices are found`, async () => {
+            listPricesStub.resolves({ data: [] });
+            const useCase = createUseCase();
+
+            try {
+              await useCase.execute(
+                GetPricesCommand.create({
+                  apiServiceLevel: apiServiceLevel,
+                })
+              );
+            } catch (e) {
+              expect(e.message).to.equal(
+                `No price found for apiServiceLevel: '${apiServiceLevel}' and lookup_keys: '${prices}'`
+              );
+            }
+          });
         });
       };
     })
