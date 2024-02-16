@@ -42,14 +42,14 @@ const mockSetupIntentSucceededEvent = {
   request: null,
 } as const;
 
-describe('Stripe webhooks', async () => {
+describe('Stripe webhooks', () => {
   const stripeStub = {
     customers: {
       update: () => {},
     },
   };
 
-  const eeBilling = await import('@novu/ee-billing');
+  const eeBilling = require('@novu/ee-billing');
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }

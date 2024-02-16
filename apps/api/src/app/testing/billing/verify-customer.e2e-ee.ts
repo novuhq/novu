@@ -5,8 +5,8 @@ import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { VerifyCustomerCommand } from '@novu/ee-billing';
 
-describe('VerifyCustomer', async () => {
-  const eeBilling = await import('@novu/ee-billing');
+describe('VerifyCustomer', () => {
+  const eeBilling = require('@novu/ee-billing');
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }

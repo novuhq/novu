@@ -4,8 +4,8 @@ import { NotificationRepository, OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { ApiServiceLevelEnum } from '@novu/shared';
 
-describe('GetPlatformNotificationUsage', async () => {
-  const eeBilling = await import('@novu/ee-billing');
+describe('GetPlatformNotificationUsage', () => {
+  const eeBilling = require('@novu/ee-billing');
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }
@@ -88,6 +88,6 @@ describe('GetPlatformNotificationUsage', async () => {
       })
     );
 
-    expect(result).to.contains.deep.members(expectedResult);
+    expect(result).to.have.deep.members(expectedResult);
   });
 });

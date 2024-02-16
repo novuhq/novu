@@ -3,8 +3,8 @@ import { OrganizationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 
-describe('UpsertSubscription', async () => {
-  const eeBilling = await import('@novu/ee-billing');
+describe('UpsertSubscription', () => {
+  const eeBilling = require('@novu/ee-billing');
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }

@@ -2,8 +2,8 @@ import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 
-describe('GetPrices', async () => {
-  const eeBilling = await import('@novu/ee-billing');
+describe('GetPrices', () => {
+  const eeBilling = require('@novu/ee-billing');
   if (!eeBilling) {
     throw new Error('ee-billing does not exist');
   }
@@ -50,34 +50,38 @@ describe('GetPrices', async () => {
       prices: ['business_flat_monthly', 'business_usage_notifications'],
     },
   ];
-  expectedPrices.forEach(({ apiServiceLevel, prices }) => {
-    it(`should fetch the prices list with the expected values for apiServiceLevel of ${apiServiceLevel}`, async () => {
-      const useCase = createUseCase();
+  expectedPrices
+    .map(({ apiServiceLevel, prices }) => {
+      return () => {
+        it(`should fetch the prices list with the expected values for apiServiceLevel of ${apiServiceLevel}`, async () => {
+          const useCase = createUseCase();
 
-      await useCase.execute(
-        GetPricesCommand.create({
-          apiServiceLevel: apiServiceLevel,
-        })
-      );
+          await useCase.execute(
+            GetPricesCommand.create({
+              apiServiceLevel: apiServiceLevel,
+            })
+          );
 
-      expect(listPricesStub.lastCall.args[0].lookup_keys).to.contain.members(prices);
-    });
+          expect(listPricesStub.lastCall.args[0].lookup_keys).to.contain.members(prices);
+        });
 
-    it(`should throw an error if no prices are found for apiServiceLevel of ${apiServiceLevel}`, async () => {
-      listPricesStub.resolves({ data: [] });
-      const useCase = createUseCase();
+        it(`should throw an error if no prices are found for apiServiceLevel of ${apiServiceLevel}`, async () => {
+          listPricesStub.resolves({ data: [] });
+          const useCase = createUseCase();
 
-      try {
-        await useCase.execute(
-          GetPricesCommand.create({
-            apiServiceLevel: apiServiceLevel,
-          })
-        );
-      } catch (e) {
-        expect(e.message).to.equal(
-          `No price found for apiServiceLevel: '${apiServiceLevel}' and lookup_keys: '${prices}'`
-        );
-      }
-    });
-  });
+          try {
+            await useCase.execute(
+              GetPricesCommand.create({
+                apiServiceLevel: apiServiceLevel,
+              })
+            );
+          } catch (e) {
+            expect(e.message).to.equal(
+              `No price found for apiServiceLevel: '${apiServiceLevel}' and lookup_keys: '${prices}'`
+            );
+          }
+        });
+      };
+    })
+    .forEach((test) => test());
 });
