@@ -4,13 +4,13 @@ import { GetStartedTabs } from './components/get-started-tabs/GetStartedTabs';
 import { useAuthContext } from '../../components/providers/AuthProvider';
 import { Center, Loader } from '@mantine/core';
 import { colors } from '@novu/design-system';
-import { useTabSearchParams } from './components/get-started-tabs/useGetStartedTabs';
+import { useGetStartedTabs } from './components/get-started-tabs/useGetStartedTabs';
 
 const PAGE_TITLE = 'Get started';
 
 export function GetStartedPage() {
   const { currentOrganization } = useAuthContext();
-  const { currentTab, setTab } = useTabSearchParams();
+  const { currentTab, setTab } = useGetStartedTabs();
 
   return (
     <PageContainer title={PAGE_TITLE}>

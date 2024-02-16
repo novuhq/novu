@@ -21,4 +21,5 @@ export function Link({ children, ...linkProps }: React.AnchorHTMLAttributes<HTML
 
 export const StyledLink = styled.a`
   color: ${colors.gradientEnd};
+  cursor: pointer;
 `;

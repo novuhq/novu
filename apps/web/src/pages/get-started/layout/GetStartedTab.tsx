@@ -2,12 +2,14 @@ import styled from '@emotion/styled';
 import { Grid } from '@mantine/core';
 
 import { ArrowLeft, Button, colors, Text } from '@novu/design-system';
+import { useMemo } from 'react';
 
 import Card from '../../../components/layout/components/Card';
 import { Timeline } from '../components/timeline/Timeline';
-import { OnboardingUseCase } from '../consts/types';
+import { GetStartedTabsViewsEnum, TAB_VIEW_SET } from '../consts/GetStartedTabsViewsEnum';
+import { IOnboardingUseCaseViewContext, OnboardingUseCase } from '../consts/types';
 
-type IGetStartedTabProps = OnboardingUseCase;
+export interface IGetStartedTabProps extends OnboardingUseCase, IOnboardingUseCaseViewContext {}
 
 const StyledTimeline = styled(Timeline)<{ hasBottomSection?: boolean }>(
   ({ hasBottomSection }) => `
@@ -33,19 +35,31 @@ const TabBreadcrumb = styled(Button)(
   `
 );
 
-export function GetStartedTab({ steps, Demo, title, description, BottomSection }: IGetStartedTabProps) {
+export function GetStartedTab({ setView, currentView, views, ...tabProps }: IGetStartedTabProps) {
+  const shouldShowBreadcrumb = !!currentView && views && !!views[currentView];
+
+  const { steps, Demo, title, description, BottomSection } = useMemo(() => {
+    if (!currentView || !views) {
+      return tabProps;
+    }
+
+    return views[currentView] ?? tabProps;
+  }, [views, currentView, tabProps]);
+
   return (
     <Grid align="stretch" justify={'space-between'}>
       <Grid.Col span={3} mt={12}>
-        <TabBreadcrumb>
-          <ArrowLeft />
-          Back to description
-        </TabBreadcrumb>
+        {shouldShowBreadcrumb ? (
+          <TabBreadcrumb onClick={() => setView(null)}>
+            <ArrowLeft />
+            Back to description
+          </TabBreadcrumb>
+        ) : null}
         <Card title={title} space={description ? '0.5rem' : 0} mb={description ? 24 : 16}>
           {description ? <Description>{description}</Description> : null}
         </Card>
         <StyledTimeline steps={steps} hasBottomSection={!!BottomSection} />
-        {BottomSection ? <BottomSection /> : null}
+        {BottomSection ? <BottomSection setView={setView} /> : null}
       </Grid.Col>
       <Grid.Col span={8}>
         <Demo />

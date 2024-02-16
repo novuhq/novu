@@ -1,19 +1,22 @@
-import { Container, Tabs } from '@mantine/core';
+import styled from '@emotion/styled';
+import { Button, Container, Tabs } from '@mantine/core';
+import { ArrowLeft } from '@novu/design-system';
 import { Outlet } from 'react-router-dom';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
 import { UseCasesConst } from '../../consts/UseCases.const';
 import { GetStartedTab } from '../../layout/GetStartedTab';
 import { GetStartedTabConfig, TAB_CONFIGS } from './GetStartedTabs.const';
 import useStyles from './GetStartedTabs.style';
+import { useGetStartedTabs } from './useGetStartedTabs';
+import { useGetStartedTabView } from './useGetStartedTabView';
 
-interface IGetStartedTabsProps {
+interface IGetStartedTabsProps extends ReturnType<typeof useGetStartedTabs> {
   tabConfigs?: GetStartedTabConfig[];
-  currentTab: OnboardingUseCasesTabsEnum;
-  setTab: (tab: OnboardingUseCasesTabsEnum) => void;
 }
 
 export const GetStartedTabs: React.FC<IGetStartedTabsProps> = ({ tabConfigs = TAB_CONFIGS, currentTab, setTab }) => {
   const { classes } = useStyles();
+  const { currentView, setView } = useGetStartedTabView();
 
   return (
     <Container fluid mt={15} ml={5}>
@@ -21,6 +24,8 @@ export const GetStartedTabs: React.FC<IGetStartedTabsProps> = ({ tabConfigs = TA
         orientation="horizontal"
         keepMounted={true}
         onTabChange={(tabValue: OnboardingUseCasesTabsEnum) => {
+          // reset the view when changing tabs
+          setView(null);
           setTab(tabValue);
         }}
         variant="default"
@@ -37,7 +42,7 @@ export const GetStartedTabs: React.FC<IGetStartedTabsProps> = ({ tabConfigs = TA
         </Tabs.List>
         {tabConfigs.map(({ value }) => (
           <Tabs.Panel key={`tab-panel-${value}`} value={value}>
-            {<GetStartedTab {...UseCasesConst[value]} />}
+            <GetStartedTab setView={setView} currentView={currentView} {...UseCasesConst[value]} />
           </Tabs.Panel>
         ))}
       </Tabs>
