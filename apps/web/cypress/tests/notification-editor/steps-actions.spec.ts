@@ -87,7 +87,11 @@ describe('Workflow Editor - Steps Actions', function () {
     dragAndDrop('sms');
 
     editChannel('sms');
-    cy.getByTestId('smsNotificationContent').type('new content for sms');
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type('new content for sms', {
+      parseSpecialCharSequences: false,
+      force: true,
+    });
+
     cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/workflows/edit/' + template._id);
@@ -427,18 +431,22 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-smsSelector`);
     cy.getByTestId('edit-action').click();
-    cy.getByTestId('smsNotificationContent').type(firstContent);
+
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type(firstContent, {
+      force: true,
+    });
 
     cy.clickWorkflowNode(`node-smsSelector`, true);
     cy.getByTestId('edit-action').click();
-    cy.getByTestId('smsNotificationContent').type(lastContent);
-
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type(lastContent, {
+      force: true,
+    });
     cy.clickWorkflowNode(`node-smsSelector`);
     cy.getByTestId('edit-action').click();
-    cy.getByTestId('smsNotificationContent').should('have.text', firstContent);
+    cy.get('.monaco-editor textarea:first').parent().click().contains(firstContent);
 
     cy.clickWorkflowNode(`node-smsSelector`, true);
     cy.getByTestId('edit-action').click();
-    cy.getByTestId('smsNotificationContent').should('have.text', lastContent);
+    cy.get('.monaco-editor textarea:first').parent().click().contains(lastContent);
   });
 });
