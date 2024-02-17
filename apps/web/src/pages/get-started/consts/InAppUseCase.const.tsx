@@ -1,5 +1,13 @@
+import { useTheme } from '@emotion/react';
+import { ChannelTypeEnum } from '@novu/shared';
+import { ROUTES } from '@novu/shared-web';
+import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
+import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
+import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
+
+const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-in-app';
 
 export const InAppUseCaseConst: OnboardingUseCase = {
   title: 'In-app notifications center',
@@ -10,9 +18,20 @@ export const InAppUseCaseConst: OnboardingUseCase = {
     {
       title: 'Configure In-App provider',
       Description: function () {
+        const { integrations } = useGetIntegrationsByChannel({ channelType: ChannelTypeEnum.IN_APP });
+
+        const getInAppIntegrationUrl = () => {
+          const inAppIntegration = integrations?.[0];
+          if (!inAppIntegration) {
+            return `${ROUTES.INTEGRATIONS_CREATE}?scrollTo=${ChannelTypeEnum.IN_APP}`;
+          }
+
+          return `${ROUTES.INTEGRATIONS}/${inAppIntegration._id}`;
+        };
+
         return (
           <StepDescription>
-            <Link children={'Create In-app provider'} href={'https://mantine.dev/core/timeline/'} />
+            <Link href={getInAppIntegrationUrl()}>Create In-app provider</Link>
             <StepText>
               {' instance, and select a framework to set up credentials in the Novu’s Integration store.'}
             </StepText>
@@ -26,7 +45,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-built a workflow for testing.</StepText>
-            <Link children={' Customize '} href={'https://mantine.dev/core/timeline/'} />
+            <CreateWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
             <StepText>it or create a new one on the Workflows page. </StepText>
           </StepDescription>
         );
@@ -51,7 +70,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} href={'https://mantine.dev/core/timeline/'} />
+            <Link href={ROUTES.ACTIVITIES}> activity feed </Link>
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
@@ -60,20 +79,5 @@ export const InAppUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => {
-    return (
-      <div
-        style={{
-          height: '520px',
-          backgroundColor: '#525266',
-          display: 'flex',
-          borderRadius: '2%',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <h1>Placeholder</h1>
-      </div>
-    );
-  },
+  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
 };

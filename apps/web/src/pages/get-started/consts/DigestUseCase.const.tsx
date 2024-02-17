@@ -1,5 +1,10 @@
+import { ROUTES } from '@novu/shared-web';
+import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
+import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
+
+const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-digest';
 
 export const DigestUseCaseConst: OnboardingUseCase = {
   title: 'Digest multiple events',
@@ -14,7 +19,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link children={' Integration store'} href={'https://mantine.dev/core/timeline/'} />
+            <Link href={ROUTES.INTEGRATIONS}> Integration store</Link>
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -27,7 +32,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-built workflow with a digest node.</StepText>
-            <Link children={' Customize '} href={'https://mantine.dev/core/timeline/'} />
+            <CreateWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
             <StepText>the workflow or create a new one on the Workflows page.</StepText>
           </StepDescription>
         );
@@ -65,7 +70,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} href={'https://mantine.dev/core/timeline/'} />
+            <Link href={ROUTES.ACTIVITIES}> activity feed </Link>
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
@@ -74,7 +79,5 @@ export const DigestUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => {
-    return <h1>GIF</h1>;
-  },
+  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
 };

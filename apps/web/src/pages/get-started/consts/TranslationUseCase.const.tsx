@@ -1,10 +1,12 @@
+import { ROUTES } from '@novu/shared-web';
+import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 
 export const TranslationUseCaseConst: OnboardingUseCase = {
   title: 'Translate content',
   description:
-    'Upload translations to use them as variables or for auto-upload in the editor in a workflow.' +
+    'Upload translations to use them as variables or for auto-upload in the editor in a workflow. ' +
     'This feature is available for business and enterprise plan.',
   steps: [
     {
@@ -15,7 +17,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link children={' Integration store '} href={'https://mantine.dev/core/timeline/'} />
+            <Link href={ROUTES.INTEGRATIONS}> Integration store</Link>
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -27,7 +29,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Add a translation group and specify the languages in the</StepText>
-            <Link children={' Translations page'} href={'https://mantine.dev/core/timeline/'} />
+            <Link children={' Translations page'} href={ROUTES.TRANSLATIONS} />
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -58,7 +60,5 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => {
-    return <h1>GIF</h1>;
-  },
+  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
 };
