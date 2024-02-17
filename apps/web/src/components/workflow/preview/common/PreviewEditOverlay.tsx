@@ -42,5 +42,4 @@ export function PreviewEditOverlay() {
 const OverlayStyled = styled(Overlay)`
   border: 1px solid ${colors.B30};
   background: rgba(41, 41, 51, 0.8);
-  border-radius: 12px;
 `;
