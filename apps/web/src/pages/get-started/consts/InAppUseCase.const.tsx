@@ -1,11 +1,10 @@
-import { useTheme } from '@emotion/react';
 import { ChannelTypeEnum } from '@novu/shared';
 import { ROUTES } from '@novu/shared-web';
 import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
 import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { Link, StepDescription, StepText } from './shared';
-import { OnboardingUseCase } from './types';
-import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
+import { OnboardingNodeEnum, OnboardingUseCase } from './types';
+import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-in-app';
 
@@ -31,7 +30,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
 
         return (
           <StepDescription>
-            <Link href={getInAppIntegrationUrl()}>Create In-app provider</Link>
+            <Link children={'Create In-app provider'} route={ROUTES.INTEGRATIONS_CREATE} />
             <StepText>
               {' instance, and select a framework to set up credentials in the Novu’s Integration store.'}
             </StepText>
@@ -45,7 +44,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-built a workflow for testing.</StepText>
-            <CreateWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
+            <OpenWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
             <StepText>it or create a new one on the Workflows page. </StepText>
           </StepDescription>
         );
@@ -56,7 +55,11 @@ export const InAppUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <Link children={'Test the trigger'} href={'https://mantine.dev/core/timeline/'} />
+            <OpenWorkflowButton
+              children={'Test the trigger'}
+              blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}
+              node={OnboardingNodeEnum.TEST_WORKFLOW}
+            />
             <StepText>
               {' as if you sent it from your API. Add a subscriber by sending data to the trigger method.'}
             </StepText>
@@ -70,7 +73,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link href={ROUTES.ACTIVITIES}> activity feed </Link>
+            <Link children={' activity feed '} route={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>

@@ -1,6 +1,6 @@
 import { ROUTES } from '@novu/shared-web';
 import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
-import { Link, StepDescription, StepText } from './shared';
+import { DemoLayout, Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 
 export const TranslationUseCaseConst: OnboardingUseCase = {
