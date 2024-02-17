@@ -1,4 +1,5 @@
 import { ROUTES } from '@novu/shared-web';
+
 import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingNodeEnum, OnboardingUseCase } from './types';
@@ -21,7 +22,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link children={' Integration store'} route={ROUTES.INTEGRATIONS_CREATE} />
+            <Link children={' Integration store'} href={ROUTES.INTEGRATIONS_CREATE} />
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -62,7 +63,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} route={ROUTES.ACTIVITIES} />
+            <Link children={' activity feed '} href={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>

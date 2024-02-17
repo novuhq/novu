@@ -1,7 +1,9 @@
+import { ROUTES } from '@novu/shared-web';
+
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingNodeEnum, OnboardingUseCase } from './types';
-import { ROUTES } from '@novu/shared-web';
 import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
+import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-delay';
 
@@ -17,7 +19,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link children={' Integration store'} route={ROUTES.INTEGRATIONS_CREATE} />
+            <Link children={' Integration store'} href={ROUTES.INTEGRATIONS_CREATE} />
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -74,7 +76,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} route={ROUTES.ACTIVITIES} />
+            <Link children={' activity feed '} href={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>

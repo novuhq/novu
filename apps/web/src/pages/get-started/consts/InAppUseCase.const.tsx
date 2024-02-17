@@ -1,5 +1,6 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { ROUTES } from '@novu/shared-web';
+
 import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
 import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { Link, StepDescription, StepText } from './shared';
@@ -30,7 +31,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
 
         return (
           <StepDescription>
-            <Link children={'Create In-app provider'} route={ROUTES.INTEGRATIONS_CREATE} />
+            <Link children={'Create In-app provider'} href={ROUTES.INTEGRATIONS_CREATE} />
             <StepText>
               {' instance, and select a framework to set up credentials in the Novu’s Integration store.'}
             </StepText>
@@ -73,7 +74,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} route={ROUTES.ACTIVITIES} />
+            <Link children={' activity feed '} href={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
