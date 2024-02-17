@@ -25,7 +25,7 @@ describe('Creation functionality', function () {
       .parent()
       .click()
       .find('textarea')
-      .type('<p>{{firstName}} someone assigned you to {{taskName}}', {
+      .type('<p>{{firstName}} someone assigned you to {{taskName}}</p>', {
         parseSpecialCharSequences: false,
         force: true,
       });
