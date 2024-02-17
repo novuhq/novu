@@ -1,6 +1,7 @@
-import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
-import { Link, StepDescription, StepText } from './shared';
-import { OnboardingUseCase } from './types';
+import { ROUTES } from '../../../constants/routes.enum';
+import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
+import { DemoLayout, Link, StepDescription, StepText } from './shared';
+import { OnboardingNodeEnum, OnboardingUseCase } from './types';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-delay';
 
@@ -16,7 +17,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link children={' Integration store'} href={'https://mantine.dev/core/timeline/'} />
+            <Link children={' Integration store'} route={ROUTES.INTEGRATIONS_CREATE} />
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -28,7 +29,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-built workflow with a digest node.</StepText>
-            <CreateWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
+            <OpenWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
             <StepText>the workflow or create a new one on the Workflows page.</StepText>
           </StepDescription>
         );
@@ -40,7 +41,11 @@ export const DelayUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu has predefined a time interval of 5 minutes.</StepText>
-            <Link children={' Customize delay'} href={'https://mantine.dev/core/timeline/'} />
+            <OpenWorkflowButton
+              children={' Customize delay'}
+              blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}
+              node={OnboardingNodeEnum.DELAY}
+            />
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -51,7 +56,11 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <Link children={'Test the trigger '} href={'https://mantine.dev/core/timeline/'} />
+            <OpenWorkflowButton
+              children={'Test the trigger '}
+              blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}
+              node={OnboardingNodeEnum.TEST_WORKFLOW}
+            />
             <StepText>
               as if you sent it from your API. Add a subscriber by sending data to the trigger method.
             </StepText>
@@ -65,7 +74,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} href={'https://mantine.dev/core/timeline/'} />
+            <Link children={' activity feed '} route={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
@@ -75,6 +84,10 @@ export const DelayUseCaseConst: OnboardingUseCase = {
     },
   ],
   Demo: () => {
-    return <h1>GIF</h1>;
+    return (
+      <DemoLayout>
+        <h1>Placeholder</h1>
+      </DemoLayout>
+    );
   },
 };

@@ -1,5 +1,6 @@
-import { Link, StepDescription, StepText } from './shared';
+import { DemoLayout, Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
+import { ROUTES } from '../../../constants/routes.enum';
 
 export const TranslationUseCaseConst: OnboardingUseCase = {
   title: 'Translate content',
@@ -15,7 +16,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link children={' Integration store '} href={'https://mantine.dev/core/timeline/'} />
+            <Link children={' Integration store '} route={ROUTES.INTEGRATIONS_CREATE} />
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -27,7 +28,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Add a translation group and specify the languages in the</StepText>
-            <Link children={' Translations page'} href={'https://mantine.dev/core/timeline/'} />
+            <Link children={' Translations page'} route={ROUTES.TRANSLATIONS} />
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -59,6 +60,10 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
     },
   ],
   Demo: () => {
-    return <h1>GIF</h1>;
+    return (
+      <DemoLayout>
+        <h1>Placeholder</h1>
+      </DemoLayout>
+    );
   },
 };

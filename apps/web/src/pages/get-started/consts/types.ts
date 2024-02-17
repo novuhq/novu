@@ -13,3 +13,10 @@ export interface OnboardingUseCase {
   steps: IOnboardingStep[];
   Demo: React.ComponentType<any>;
 }
+
+export enum OnboardingNodeEnum {
+  IN_APP = 'in_app',
+  DELAY = 'delay',
+  DIGEST = 'digest',
+  TEST_WORKFLOW = 'test-workflow',
+}

@@ -1,6 +1,7 @@
-import { Link, StepDescription, StepText } from './shared';
-import { OnboardingUseCase } from './types';
-import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
+import { DemoLayout, Link, StepDescription, StepText } from './shared';
+import { OnboardingNodeEnum, OnboardingUseCase } from './types';
+import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
+import { ROUTES } from '../../../constants/routes.enum';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-multi-channel';
 
@@ -19,7 +20,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link children={' Integration store'} href={'https://mantine.dev/core/timeline/'} />
+            <Link children={' Integration store'} route={ROUTES.INTEGRATIONS_CREATE} />
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -31,7 +32,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu has prepared workflow templates.</StepText>
-            <CreateWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
+            <OpenWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
             <StepText> a Multi-Channel template or start with a blank workflow.</StepText>
           </StepDescription>
         );
@@ -42,7 +43,11 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <Link children={'Test the trigger '} href={'https://mantine.dev/core/timeline/'} />
+            <OpenWorkflowButton
+              children={'Test the trigger '}
+              blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}
+              node={OnboardingNodeEnum.TEST_WORKFLOW}
+            />
             <StepText>
               Test the trigger as if you sent it from your API. Add a subscriber by sending data to the trigger method.
             </StepText>
@@ -56,7 +61,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} href={'https://mantine.dev/core/timeline/'} />
+            <Link children={' activity feed '} route={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
@@ -66,6 +71,10 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
     },
   ],
   Demo: () => {
-    return <h1>GIF</h1>;
+    return (
+      <DemoLayout>
+        <h1>Placeholder</h1>
+      </DemoLayout>
+    );
   },
 };
