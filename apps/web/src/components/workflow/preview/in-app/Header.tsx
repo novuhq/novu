@@ -1,11 +1,22 @@
 import styled from '@emotion/styled';
-import React from 'react';
 import { colors } from '@novu/design-system';
-import { InAppHeaderIcons } from '../common';
+import { InAppHeaderIcons, LocaleSelect } from '../common';
 
-export function Header() {
+export function Header({ selectedLocale, locales, areLocalesLoading, onLocaleChange }) {
   return (
     <ContainerStyled>
+      <div
+        style={{
+          marginRight: 'auto',
+        }}
+      >
+        <LocaleSelect
+          isLoading={areLocalesLoading}
+          locales={locales || []}
+          onLocaleChange={onLocaleChange}
+          value={selectedLocale}
+        />
+      </div>
       <InAppHeaderIcons />
     </ContainerStyled>
   );
