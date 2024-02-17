@@ -1,5 +1,4 @@
-import styled from '@emotion/styled';
-import { Skeleton, Stack } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 
 import { useHover } from '../../../../hooks';
@@ -7,7 +6,7 @@ import { PreviewEditOverlay } from '../common';
 import {
   ContentAndOVerlayWrapperStyled,
   ContentStyled,
-  NotificationTextstyled,
+  NotificationTextStyled,
   SkeletonStyled,
   TimeTextStyled,
 } from './Content.styles';
@@ -41,7 +40,7 @@ export default function Content({
               <Skeletons />
             ) : (
               <>
-                <NotificationTextstyled
+                <NotificationTextStyled
                   isExampleNotification={false}
                   dangerouslySetInnerHTML={{
                     __html: parsedPreviewState.content as string,
@@ -56,7 +55,7 @@ export default function Content({
       </div>
 
       <ContentStyled isBlur={false} isExampleNotification>
-        <NotificationTextstyled isExampleNotification>Notification Example</NotificationTextstyled>
+        <NotificationTextStyled isExampleNotification>Notification Example</NotificationTextStyled>
         <TimeTextStyled isExampleNotification>10 minutes ago</TimeTextStyled>
       </ContentStyled>
     </Stack>

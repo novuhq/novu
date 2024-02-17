@@ -46,7 +46,7 @@ export const ContentAndOVerlayWrapperStyled = styled.div<{ isError: boolean }>`
   }
 `;
 
-export const NotificationTextstyled = styled.div<{ isExampleNotification: boolean }>`
+export const NotificationTextStyled = styled.div<{ isExampleNotification: boolean }>`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.BGDark)};
   font-size: 14px;
   font-style: normal;
@@ -65,7 +65,7 @@ export const NotificationTextstyled = styled.div<{ isExampleNotification: boolea
   }}
 `;
 
-export const TimeTextStyled = styled(NotificationTextstyled)`
+export const TimeTextStyled = styled(NotificationTextStyled)`
   color: ${colors.B40};
   ${({ isExampleNotification }) => {
     if (isExampleNotification) {
