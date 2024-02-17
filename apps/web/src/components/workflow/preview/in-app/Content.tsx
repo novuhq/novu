@@ -45,6 +45,7 @@ export default function Content({
                   dangerouslySetInnerHTML={{
                     __html: parsedPreviewState.content as string,
                   }}
+                  data-test-id="in-app-content-preview"
                 />
                 <TimeTextStyled isExampleNotification={false}>5 minutes ago</TimeTextStyled>
               </>
