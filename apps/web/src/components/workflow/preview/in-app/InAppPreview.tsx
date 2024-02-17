@@ -1,4 +1,7 @@
 import styled from '@emotion/styled';
+import { Grid, JsonInput, useMantineTheme } from '@mantine/core';
+import { Button, colors, inputStyles, When } from '@novu/design-system';
+import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { usePreviewInAppTemplate } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
@@ -7,7 +10,9 @@ import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplat
 import Content from './Content';
 import { Header } from './Header';
 
-export function InAppPreview({ showOverlay = true }: { showOverlay?: boolean }) {
+export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
+  const theme = useMantineTheme();
+  const [payloadValue, setPayloadValue] = useState('{}');
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
 
@@ -20,31 +25,80 @@ export function InAppPreview({ showOverlay = true }: { showOverlay?: boolean }) 
     content: content as string,
   });
 
-  const { isPreviewLoading, parsedPreviewState, templateError } = usePreviewInAppTemplate(selectedLocale);
+  const { isPreviewLoading, parsedPreviewState, templateError, parseInAppContent, processedVariables } =
+    usePreviewInAppTemplate(selectedLocale);
+
+  useEffect(() => {
+    setPayloadValue(processedVariables);
+  }, [processedVariables, setPayloadValue]);
 
   return (
-    <div>
-      <ContainerStyled>
-        <Header
-          selectedLocale={selectedLocale}
-          locales={locales}
-          areLocalesLoading={areLocalesLoading}
-          onLocaleChange={onLocaleChange}
-        />
-        <Content
-          isPreviewLoading={isPreviewLoading}
-          parsedPreviewState={parsedPreviewState}
-          templateError={templateError}
-          showOverlay={showOverlay}
-        />
-      </ContainerStyled>
-    </div>
+    <Grid gutter={24}>
+      <Grid.Col span={showVariables ? 8 : 12}>
+        <ContainerStyled removePadding={showVariables}>
+          <Header
+            selectedLocale={selectedLocale}
+            locales={locales}
+            areLocalesLoading={areLocalesLoading}
+            onLocaleChange={onLocaleChange}
+          />
+          <Content
+            isPreviewLoading={isPreviewLoading}
+            parsedPreviewState={parsedPreviewState}
+            templateError={templateError}
+            showOverlay={!showVariables}
+          />
+        </ContainerStyled>
+      </Grid.Col>
+
+      <When truthy={showVariables}>
+        <Grid.Col span={4}>
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
+              borderRadius: 7,
+              padding: 15,
+              paddingTop: 0,
+            }}
+          >
+            <JsonInput
+              data-test-id="preview-json-param"
+              formatOnBlur
+              autosize
+              styles={inputStyles}
+              label="Payload"
+              value={payloadValue}
+              onChange={setPayloadValue}
+              minRows={6}
+              mb={20}
+              validationError="Invalid JSON"
+            />
+            <Button
+              fullWidth
+              onClick={() => {
+                parseInAppContent({
+                  payload: payloadValue,
+                });
+              }}
+              variant="outline"
+              data-test-id="apply-variables"
+            >
+              Apply Variables
+            </Button>
+          </div>
+        </Grid.Col>
+      </When>
+    </Grid>
   );
 }
 
-const ContainerStyled = styled.div`
+const ContainerStyled = styled.div<{ removePadding: boolean }>`
   display: flex;
   padding: 1rem 5rem;
   flex-direction: column;
   gap: 1rem;
+
+  ${({ removePadding }) => removePadding && `padding: 0;`}
 `;

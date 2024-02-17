@@ -1,6 +1,6 @@
 import { IMessageButton } from '@novu/shared';
 import { useDataRef } from '@novu/shared-web';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { usePreviewInApp } from '../../../api/hooks';
 import { useProcessVariables } from '../../../hooks';
@@ -61,7 +61,19 @@ export const usePreviewInAppTemplate = (locale?: string) => {
     });
   }, [getInAppPreview, locale, previewData]);
 
+  const parseInAppContent = useCallback(
+    ({ payload }) => {
+      getInAppPreview({
+        locale,
+        payload,
+        content: previewData.current.templateContent as string,
+        cta: previewData.current.templateCta,
+      });
+    },
+    [getInAppPreview, locale, previewData]
+  );
+
   const isPreviewLoading = !templateError && isLoading;
 
-  return { parsedPreviewState, isPreviewLoading, templateError };
+  return { parsedPreviewState, isPreviewLoading, templateError, parseInAppContent, processedVariables };
 };

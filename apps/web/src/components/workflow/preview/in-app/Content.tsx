@@ -25,6 +25,8 @@ export default function Content({
 }) {
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
 
+  const isBlur = isHovered && showOverlay;
+
   return (
     <Stack spacing={16}>
       <div>
@@ -33,8 +35,8 @@ export default function Content({
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
         >
-          {isHovered && <PreviewEditOverlay />}
-          <ContentStyled isBlur={isHovered}>
+          {isBlur && <PreviewEditOverlay />}
+          <ContentStyled isBlur={isBlur}>
             {isPreviewLoading ? (
               <Skeletons />
             ) : (
