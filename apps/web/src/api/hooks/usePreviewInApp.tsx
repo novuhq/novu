@@ -33,7 +33,7 @@ export const usePreviewInApp = (options: UseMutationOptions<ResultType, ErrorTyp
     async ({ content, payload, locale, cta }: PayloadType) => {
       await mutateAsync({
         content,
-        payload,
+        payload: JSON.parse(payload),
         locale,
         cta,
       });
