@@ -6,7 +6,6 @@ import { InAppPreview } from '../../../../components/workflow/preview';
 import { useEnvController } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
-import { TranslateProductLead } from '../TranslateProductLead';
 import { AvatarFeedFields } from './AvatarFeedFields';
 import { InAppEditorBlock } from './InAppEditorBlock';
 
@@ -67,12 +66,6 @@ export function InAppContentCard({ openVariablesModal }: { openVariablesModal: (
         <Grid mt={24} grow>
           <Grid.Col span={9}>
             <InAppEditorBlock readonly={readonly} />
-            <TranslateProductLead
-              id="translate-in-app-editor"
-              style={{
-                marginTop: 32,
-              }}
-            />
             <AvatarFeedFields />
           </Grid.Col>
           <Grid.Col
