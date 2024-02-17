@@ -18,9 +18,6 @@ import {
   Sun,
   Logout,
   InviteMembers,
-  IconDarkMode,
-  IconLightMode,
-  IconRoomPreferences,
 } from '@novu/design-system';
 import { useLocalThemePreference, useDebounce } from '../../../hooks';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
@@ -44,14 +41,13 @@ const Icon = () => {
   const { themeStatus } = useLocalThemePreference();
 
   if (themeStatus === 'dark') {
-    // FIXME: Revert these changes before merging!
-    return <IconDarkMode size="18" color="blue" />;
+    return <Moon {...headerIconsSettings} />;
   }
   if (themeStatus === 'light') {
-    return <IconLightMode />;
+    return <Sun {...headerIconsSettings} />;
   }
 
-  return <IconRoomPreferences />;
+  return <Ellipse {...headerIconsSettings} />;
 };
 
 export function HeaderNav({ isIntercomOpened }: Props) {
