@@ -41,7 +41,7 @@ export const usePreviewInAppTemplate = (locale?: string) => {
 
   const processedVariables = useProcessVariables(templateVariables);
 
-  const previewData = useDataRef({ templateContent, templateCta, processedVariables, templateEnableAvatar });
+  const previewData = useDataRef({ templateContent, templateCta, templateEnableAvatar });
 
   const { isLoading, getInAppPreview } = usePreviewInApp({
     onSuccess: (result) => {
@@ -56,10 +56,10 @@ export const usePreviewInAppTemplate = (locale?: string) => {
     getInAppPreview({
       locale,
       content: previewData.current.templateContent as string,
-      payload: previewData.current.processedVariables,
+      payload: processedVariables,
       cta: previewData.current.templateCta,
     });
-  }, [getInAppPreview, locale, previewData]);
+  }, [getInAppPreview, locale, previewData, processedVariables]);
 
   const parseInAppContent = useCallback(
     ({ payload }) => {
