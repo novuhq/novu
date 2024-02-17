@@ -7,7 +7,7 @@ import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplat
 import Content from './Content';
 import { Header } from './Header';
 
-export function InAppPreview() {
+export function InAppPreview({ showOverlay = true }: { showOverlay?: boolean }) {
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
 
@@ -35,6 +35,7 @@ export function InAppPreview() {
           isPreviewLoading={isPreviewLoading}
           parsedPreviewState={parsedPreviewState}
           templateError={templateError}
+          showOverlay={showOverlay}
         />
       </ContainerStyled>
     </div>

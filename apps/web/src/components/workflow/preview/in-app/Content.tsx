@@ -12,7 +12,17 @@ import {
   TimeTextStyled,
 } from './Content.styles';
 
-export default function Content({ isPreviewLoading, parsedPreviewState, templateError }) {
+export default function Content({
+  isPreviewLoading,
+  parsedPreviewState,
+  templateError,
+  showOverlay = true,
+}: {
+  isPreviewLoading: boolean;
+  parsedPreviewState: any;
+  templateError: string;
+  showOverlay?: boolean;
+}) {
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
 
   return (
