@@ -181,7 +181,7 @@ describe('Workflow Editor - Variants', function () {
         cy.get('[data-test-id=push-title-container] .monaco-editor textarea:first')
           .parent()
           .click()
-          .type('{selectAll}{backspace}')
+          .type('{cmd}a')
           .find('textarea')
           .clear({
             force: true,
@@ -190,7 +190,7 @@ describe('Workflow Editor - Variants', function () {
         cy.get('[data-test-id=push-content-container] .monaco-editor textarea:first')
           .parent()
           .click()
-          .type('{selectAll}{backspace}')
+          .type('{cmd}a')
           .find('textarea')
           .clear({
             force: true,
