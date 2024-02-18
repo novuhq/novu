@@ -39,6 +39,7 @@ export const VariableManagementButton = ({
         target={
           <ActionButton
             Icon={CurlyBrackets}
+            data-test-id="open-variable-management"
             onClick={toggleVariablesManagement}
             tooltip="Open variables panel"
             sx={{

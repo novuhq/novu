@@ -35,7 +35,7 @@ export const usePreviewSms = (options: UseMutationOptions<ResultType, IResponseE
 
       return mutateAsync({
         content,
-        payload,
+        payload: JSON.parse(payload),
         locale,
       });
     },

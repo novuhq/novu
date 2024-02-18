@@ -7,9 +7,11 @@ import { useAuthController } from '../../../hooks';
 export const useTemplateLocales = ({
   content,
   title,
+  disabled,
 }: {
-  content: string | IEmailBlock[] | undefined;
+  content?: string | IEmailBlock[];
   title?: string;
+  disabled?: boolean;
 }) => {
   const { organization } = useAuthController();
   const [selectedLocale, setSelectedLocale] = useState('');
@@ -17,7 +19,7 @@ export const useTemplateLocales = ({
   const { data: locales, isLoading: areLocalesLoading, getLocalesFromContent } = useGetLocalesFromContent();
 
   useEffect(() => {
-    if (!content) {
+    if (!content || disabled) {
       return;
     }
 
@@ -33,7 +35,7 @@ export const useTemplateLocales = ({
     getLocalesFromContent({
       content: combinedContent,
     });
-  }, [getLocalesFromContent, content, title]);
+  }, [getLocalesFromContent, disabled, content, title]);
 
   const onLocaleChange = (locale: string) => {
     setSelectedLocale(locale);

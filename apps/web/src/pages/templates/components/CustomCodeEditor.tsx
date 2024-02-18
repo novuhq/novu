@@ -7,6 +7,7 @@ import { editor as NEditor } from 'monaco-editor';
 
 import { createTranslationMarks } from './createTranslationMarks';
 import { IVariable, useWorkflowVariables } from '../../../api/hooks';
+import { useEnvController } from '@novu/shared-web';
 
 export const CustomCodeEditor = ({
   onChange,
@@ -59,6 +60,8 @@ const CustomCodeEditorBase = ({
   variables: any;
   isDark: boolean;
 }) => {
+  const { readonly } = useEnvController();
+
   const editorRef = useRef<NEditor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const decoratorsRef = useRef<NEditor.IEditorDecorationsCollection | null>(null);
@@ -157,6 +160,7 @@ const CustomCodeEditorBase = ({
         renderLineHighlight: 'all',
         fontSize: 14,
         lineHeight: 20,
+        readOnly: readonly,
       }}
       className={isDark ? 'custom-code-editor-dark' : 'custom-code-editor'}
     />

@@ -5,12 +5,15 @@ import { usePreviewSms } from '../../../api/hooks';
 import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
+import { useProcessVariables } from '../../../hooks';
 
-export const usePreviewSmsTemplate = (locale?: string) => {
+export const usePreviewSmsTemplate = (locale?: string, disabled?: boolean) => {
   const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateContent = watch(`${path}.template.content`);
+  const templateVariables = watch(`${path}.template.variables`);
   const [previewContent, setPreviewContent] = useState(templateContent as string);
+  const processedVariables = useProcessVariables(templateVariables);
   const templateError = useStepFormCombinedErrors();
 
   const { isLoading, getSmsPreview } = usePreviewSms({
@@ -20,16 +23,16 @@ export const usePreviewSmsTemplate = (locale?: string) => {
   });
 
   useEffect(() => {
-    if (!locale) return;
+    if (!locale || disabled) return;
 
     getSmsPreview({
       content: templateContent,
-      payload: '',
+      payload: processedVariables,
       locale,
     });
-  }, [locale, templateContent, getSmsPreview]);
+  }, [locale, templateContent, processedVariables, disabled, getSmsPreview]);
 
-  const isPreviewContentLoading = !templateError && isLoading;
+  const isPreviewContentLoading = (!templateError && isLoading) || disabled;
 
   return { previewContent, isPreviewContentLoading, templateError };
 };

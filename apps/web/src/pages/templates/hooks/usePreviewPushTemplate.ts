@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { usePreviewPush } from '../../../api/hooks';
-import { useProcessVariables } from '../../../hooks';
+import { useDataRef, useProcessVariables } from '../../../hooks';
 import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
 
-export const usePreviewPushTemplate = (locale?: string) => {
+export const usePreviewPushTemplate = ({ disabled, locale }: { disabled: boolean; locale?: string }) => {
   const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateError = useStepFormCombinedErrors();
@@ -32,7 +32,7 @@ export const usePreviewPushTemplate = (locale?: string) => {
   });
 
   useEffect(() => {
-    if (!locale) return;
+    if (!locale || disabled) return;
 
     getPushPreview({
       locale,
@@ -40,7 +40,7 @@ export const usePreviewPushTemplate = (locale?: string) => {
       payload: processedVariables,
       title: templateTitle,
     });
-  }, [getPushPreview, locale, templateContent, processedVariables, templateTitle]);
+  }, [getPushPreview, disabled, locale, templateContent, processedVariables, templateTitle]);
 
   const isPreviewLoading = !templateError && isLoading;
 

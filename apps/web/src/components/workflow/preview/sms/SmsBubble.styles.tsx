@@ -51,6 +51,7 @@ export const SmsBubbleContainer = styled.div<{ isBlur: boolean; isError: boolean
 export const BubbleText = styled(Text)`
   overflow: hidden;
   margin: 0;
+  color: ${colors.white};
 `;
 
 export const Delivered = styled.span`

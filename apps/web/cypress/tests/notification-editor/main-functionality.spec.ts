@@ -316,9 +316,15 @@ describe('Workflow Editor - Main Functionality', function () {
     addAndEditChannel('sms');
     cy.waitForNetworkIdle(500);
 
-    cy.getByTestId('smsNotificationContent').type('{{firstName}} someone assigned you to {{taskName}}', {
-      parseSpecialCharSequences: false,
-    });
+    cy.get('.monaco-editor textarea:first', { timeout: 7000 })
+      .parent()
+      .click()
+      .find('textarea')
+      .type('{{firstName}} someone assigned you to {{taskName}}', {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
+
     goBack();
     cy.waitForNetworkIdle(500);
     cy.getByTestId('notification-template-submit-btn').click();
