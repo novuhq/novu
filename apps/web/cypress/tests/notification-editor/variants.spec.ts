@@ -38,7 +38,7 @@ describe('Workflow Editor - Variants', function () {
   };
 
   const fillSmsEditorContentWith = (content: string) => {
-    cy.getByTestId('smsNotificationContent').clear().type(content, {
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').clear({ force: true }).type(content, {
       parseSpecialCharSequences: false,
       force: true,
     });
@@ -52,14 +52,24 @@ describe('Workflow Editor - Variants', function () {
   };
 
   const fillPushEditorContentWith = (title: string, content: string) => {
-    cy.getByTestId('pushNotificationTitle').clear().type(title, {
-      parseSpecialCharSequences: false,
-      force: true,
-    });
-    cy.getByTestId('pushNotificationContent').clear().type(content, {
-      parseSpecialCharSequences: false,
-      force: true,
-    });
+    cy.get('[data-test-id=push-title-container] .monaco-editor textarea:first')
+      .parent()
+      .click()
+      .find('textarea')
+      .clear({ force: true })
+      .type(title, {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
+    cy.get('[data-test-id=push-content-container] .monaco-editor textarea:first')
+      .parent()
+      .click()
+      .find('textarea')
+      .clear({ force: true })
+      .type(content, {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
   };
 
   const showStepActions = (channel: Channel) => {
@@ -122,7 +132,10 @@ describe('Workflow Editor - Variants', function () {
         cy.getByTestId('email-editor').contains(isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
         break;
       case 'sms':
-        cy.getByTestId('smsNotificationContent').should('have.value', isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
+        cy.get('.monaco-editor textarea:first')
+          .parent()
+          .click()
+          .contains(isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
         break;
       case 'chat':
         cy.get('.monaco-editor textarea:first')
@@ -131,8 +144,14 @@ describe('Workflow Editor - Variants', function () {
           .contains(isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
         break;
       case 'push':
-        cy.getByTestId('pushNotificationTitle').should('have.value', PUSH_TITLE);
-        cy.getByTestId('pushNotificationContent').should('have.value', isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
+        cy.get('[data-test-id=push-title-container] .monaco-editor textarea:first')
+          .parent()
+          .click()
+          .contains(PUSH_TITLE);
+        cy.get('[data-test-id=push-content-container] .monaco-editor textarea:first')
+          .parent()
+          .click()
+          .contains(isVariant ? VARIANT_EDITOR_TEXT : EDITOR_TEXT);
         break;
     }
   };
@@ -149,7 +168,9 @@ describe('Workflow Editor - Variants', function () {
         cy.getByTestId('email-editor').clear();
         break;
       case 'sms':
-        cy.getByTestId('smsNotificationContent').clear();
+        cy.get('.monaco-editor textarea:first').parent().click().type('{cmd}a').find('textarea').clear({
+          force: true,
+        });
         break;
       case 'chat':
         cy.get('.monaco-editor textarea:first').parent().click().type('{cmd}a').find('textarea').clear({
@@ -157,8 +178,23 @@ describe('Workflow Editor - Variants', function () {
         });
         break;
       case 'push':
-        cy.getByTestId('pushNotificationTitle').clear();
-        cy.getByTestId('pushNotificationContent').clear();
+        cy.get('[data-test-id=push-title-container] .monaco-editor textarea:first')
+          .parent()
+          .click()
+          .find('textarea')
+          .type(Cypress.platform === 'darwin' ? '{cmd}a' : '{ctrl}a', { force: true })
+          .clear({
+            force: true,
+          });
+
+        cy.get('[data-test-id=push-content-container] .monaco-editor textarea:first')
+          .parent()
+          .click()
+          .find('textarea')
+          .type(Cypress.platform === 'darwin' ? '{cmd}a' : '{ctrl}a', { force: true })
+          .clear({
+            force: true,
+          });
         break;
     }
   };
@@ -912,12 +948,10 @@ describe('Workflow Editor - Variants', function () {
       checkVariantListCard({ selector: 'variant-item-card-0', message: messageTitleMissing, hasBorder: true });
 
       cy.getByTestId('variants-list-errors-down').click();
-
       checkCurrentError({ message: messageContentMissing, count: '2/2' });
       checkVariantListCard({ selector: 'variant-item-card-0', message: messageContentMissing, hasBorder: true });
 
       cy.getByTestId('variants-list-errors-up').click();
-
       checkCurrentError({ message: messageTitleMissing, count: '1/2' });
       checkVariantListCard({ selector: 'variant-item-card-0', message: messageTitleMissing, hasBorder: true });
     });

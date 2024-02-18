@@ -33,7 +33,7 @@ export const usePreviewPush = (options: UseMutationOptions<ResultType, ErrorType
     async ({ content, payload, locale, title }: PayloadType) => {
       await mutateAsync({
         content,
-        payload,
+        payload: JSON.parse(payload),
         locale,
         title,
       });

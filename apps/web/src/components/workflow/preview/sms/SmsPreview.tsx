@@ -26,7 +26,7 @@ const LocaleSelectStyled = styled(LocaleSelect)`
   }
 `;
 
-export const SmsPreview = () => {
+export const SmsPreview = ({ showPreviewAsLoading = false }: { showPreviewAsLoading?: boolean }) => {
   const { navigateToStepEditor } = useNavigateToStepEditor();
 
   const { control } = useFormContext<IForm>();
@@ -38,9 +38,13 @@ export const SmsPreview = () => {
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: templateContent as string,
+    disabled: false,
   });
 
-  const { isPreviewContentLoading, previewContent, templateContentError } = usePreviewSmsTemplate(selectedLocale);
+  const { isPreviewContentLoading, previewContent, templateContentError } = usePreviewSmsTemplate(
+    selectedLocale,
+    showPreviewAsLoading
+  );
 
   return (
     <MobileSimulator withBackground={false}>
