@@ -20,7 +20,6 @@ import {
 } from '../../../../hooks';
 import { EditVariablesModal } from '../EditVariablesModal';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
-import { TranslateProductLead } from '../TranslateProductLead';
 import { ChannelTypeEnum } from '@novu/shared';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
@@ -154,12 +153,6 @@ export function EmailMessagesCards() {
         <Grid grow>
           <Grid.Col span={9}>
             <EmailContentCard organization={currentOrganization} />
-            <TranslateProductLead
-              id="translate-email-editor"
-              style={{
-                marginTop: 32,
-              }}
-            />
           </Grid.Col>
           <Grid.Col
             span={3}
