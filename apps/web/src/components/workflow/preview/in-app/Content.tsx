@@ -5,7 +5,7 @@ import { useHover } from '../../../../hooks';
 import { ParsedPreviewStateType } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { PreviewEditOverlay } from '../common';
 import {
-  ContentAndOVerlayWrapperStyled,
+  ContentAndOverlayWrapperStyled,
   ContentStyled,
   NotificationTextStyled,
   SkeletonStyled,
@@ -30,7 +30,7 @@ export default function Content({
   return (
     <Stack spacing={16}>
       <div>
-        <ContentAndOVerlayWrapperStyled
+        <ContentAndOverlayWrapperStyled
           isError={!!templateError}
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
@@ -52,7 +52,7 @@ export default function Content({
               </>
             )}
           </ContentStyled>
-        </ContentAndOVerlayWrapperStyled>
+        </ContentAndOverlayWrapperStyled>
         {templateError && !isPreviewLoading && <Text color={colors.error}>{templateError}</Text>}
       </div>
 

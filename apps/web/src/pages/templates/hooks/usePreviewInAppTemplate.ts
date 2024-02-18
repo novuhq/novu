@@ -1,9 +1,7 @@
 import { IMessageButton } from '@novu/shared';
-import { useDataRef } from '@novu/shared-web';
 import { useCallback, useEffect, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { usePreviewInApp } from '../../../api/hooks';
-import { useProcessVariables } from '../../../hooks';
 import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
@@ -13,37 +11,17 @@ export type ParsedPreviewStateType = {
   content: string;
 };
 
-export const usePreviewInAppTemplate = (locale?: string) => {
-  const { control } = useFormContext<IForm>();
+export const usePreviewInAppTemplate = ({ locale, payload }: { locale?: string; payload: string }) => {
+  const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateError = useStepFormCombinedErrors();
-  const templateContent = useWatch({
-    name: `${path}.template.content`,
-    control,
-  });
-
-  const templateVariables = useWatch({
-    name: `${path}.template.variables`,
-    control,
-  });
-
-  const templateCta = useWatch({
-    name: `${path}.template.cta`,
-    control,
-  });
-  const templateEnableAvatar = useWatch({
-    name: `${path}.template.enableAvatar` as any,
-    control,
-  });
+  const templateContent = watch(`${path}.template.content`);
+  const templateCta = watch(`${path}.template.cta`);
 
   const [parsedPreviewState, setParsedPreviewState] = useState<ParsedPreviewStateType>({
     ctaButtons: [],
     content: templateContent as string,
   });
-
-  const processedVariables = useProcessVariables(templateVariables);
-
-  const previewData = useDataRef({ templateContent, templateCta, templateEnableAvatar });
 
   const { isLoading, getInAppPreview } = usePreviewInApp({
     onSuccess: (result) => {
@@ -54,28 +32,32 @@ export const usePreviewInAppTemplate = (locale?: string) => {
     },
   });
 
-  useEffect(() => {
-    getInAppPreview({
-      locale,
-      content: previewData.current.templateContent as string,
-      payload: processedVariables,
-      cta: previewData.current.templateCta,
-    });
-  }, [getInAppPreview, locale, previewData, processedVariables]);
+  const getInAppPreviewCallback = useCallback(
+    (payloadArg: string) => {
+      if (!locale || !templateContent) return;
 
-  const parseInAppContent = useCallback(
-    ({ payload }) => {
       getInAppPreview({
         locale,
-        payload,
-        content: previewData.current.templateContent as string,
-        cta: previewData.current.templateCta,
+        content: templateContent as string,
+        payload: JSON.parse(payloadArg),
+        cta: templateCta,
       });
     },
-    [getInAppPreview, locale, previewData]
+    [getInAppPreview, locale, templateCta, templateContent]
   );
+
+  useEffect(() => {
+    if (!locale) return;
+
+    getInAppPreviewCallback(payload);
+  }, [getInAppPreviewCallback, locale, payload]);
 
   const isPreviewLoading = !templateError && isLoading;
 
-  return { parsedPreviewState, isPreviewLoading, templateError, parseInAppContent, processedVariables };
+  return {
+    parsedPreviewState,
+    isPreviewLoading,
+    templateError,
+    parseInAppContent: getInAppPreviewCallback,
+  };
 };

@@ -29,7 +29,7 @@ export const ContentStyled = styled.div<{ isBlur: boolean; isExampleNotification
   }}
 `;
 
-export const ContentAndOVerlayWrapperStyled = styled.div<{ isError: boolean }>`
+export const ContentAndOverlayWrapperStyled = styled.div<{ isError: boolean }>`
   overflow: hidden;
   border-radius: 0.5rem;
   ${({ isError }) => isError && `border: 1px solid ${colors.error};`}

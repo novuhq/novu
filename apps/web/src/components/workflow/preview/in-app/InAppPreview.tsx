@@ -2,31 +2,33 @@ import styled from '@emotion/styled';
 import { Grid, JsonInput, useMantineTheme } from '@mantine/core';
 import { Button, colors, inputStyles, When } from '@novu/design-system';
 import { useEffect, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { usePreviewInAppTemplate } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import Content from './Content';
 import { Header } from './Header';
+import { useProcessVariables } from '../../../../hooks';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
   const theme = useMantineTheme();
   const [payloadValue, setPayloadValue] = useState('{}');
-  const { control } = useFormContext<IForm>();
+  const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
 
-  const content = useWatch({
-    name: `${path}.template.content`,
-    control,
-  });
+  const content = watch(`${path}.template.content`);
+  const variables = watch(`${path}.template.variables`);
+  const processedVariables = useProcessVariables(variables);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
   });
 
-  const { isPreviewLoading, parsedPreviewState, templateError, parseInAppContent, processedVariables } =
-    usePreviewInAppTemplate(selectedLocale);
+  const { isPreviewLoading, parsedPreviewState, templateError, parseInAppContent } = usePreviewInAppTemplate({
+    locale: selectedLocale,
+    payload: processedVariables,
+  });
 
   useEffect(() => {
     setPayloadValue(processedVariables);
@@ -78,9 +80,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
             <Button
               fullWidth
               onClick={() => {
-                parseInAppContent({
-                  payload: payloadValue,
-                });
+                parseInAppContent(payloadValue);
               }}
               variant="outline"
               data-test-id="apply-variables"
