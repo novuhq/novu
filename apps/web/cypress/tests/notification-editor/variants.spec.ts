@@ -178,13 +178,23 @@ describe('Workflow Editor - Variants', function () {
         });
         break;
       case 'push':
-        cy.get('[data-test-id=push-title-container] .monaco-editor textarea:first').clear({
-          force: true,
-        });
+        cy.get('[data-test-id=push-title-container] .monaco-editor textarea:first')
+          .parent()
+          .click()
+          .find('textarea')
+          .type(Cypress.platform === 'darwin' ? '{cmd}a' : '{ctrl}a', { force: true })
+          .clear({
+            force: true,
+          });
 
-        cy.get('[data-test-id=push-content-container] .monaco-editor textarea:first').clear({
-          force: true,
-        });
+        cy.get('[data-test-id=push-content-container] .monaco-editor textarea:first')
+          .parent()
+          .click()
+          .find('textarea')
+          .type(Cypress.platform === 'darwin' ? '{cmd}a' : '{ctrl}a', { force: true })
+          .clear({
+            force: true,
+          });
         break;
     }
   };
