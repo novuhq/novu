@@ -1,9 +1,10 @@
-FROM node:20-alpine3.16
+FROM node:20-alpine3.19
 
 ENV NX_DAEMON=false
 
 RUN npm install -g pnpm@8.9.0 --loglevel notice
 RUN npm i pm2 -g
+RUN apk --no-cache add g++ make py3-pip
 
 USER 1000
 WORKDIR /usr/src/app
@@ -29,7 +30,7 @@ RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM
     if [ -n "${BULL_MQ_PRO_NPM_TOKEN}" ] ; then echo 'Building with Enterprise Edition of Novu'; rm -f .npmrc ; cp .npmrc-cloud .npmrc ; fi
 
 RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \
-    pnpm install --reporter=silent && \
+    pnpm install --verbose && \
     pnpm build:ws
 
 RUN --mount=type=secret,id=BULL_MQ_PRO_NPM_TOKEN,uid=1000 export BULL_MQ_PRO_NPM_TOKEN=$(cat /run/secrets/BULL_MQ_PRO_NPM_TOKEN) && \

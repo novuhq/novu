@@ -62,7 +62,7 @@ jobs:
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/worker && pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load
+          cd apps/worker && pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load --platform=linux/amd64,linux/arm64 --provenance=false
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG

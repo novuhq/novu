@@ -34,9 +34,9 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @ValidateIf((_, value) => typeof value !== 'string')
   tenant?: TriggerTenantContext | null;
 
-  @IsDefined()
+  @IsOptional()
   @IsEnum(TriggerRequestCategoryEnum)
-  requestCategory: TriggerRequestCategoryEnum;
+  requestCategory?: TriggerRequestCategoryEnum;
 }
 
 export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {

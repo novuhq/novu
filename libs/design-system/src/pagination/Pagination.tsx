@@ -58,9 +58,12 @@ export const Pagination = ({
   shouldSkipValidation,
   children,
 }: PropsWithChildren<IPaginationProps>) => {
-  const handlePageChangeWithValidation = (pageNum: number) => {
-    const val = shouldSkipValidation ? pageNum : clampPageNumber(pageNum, { totalPageCount, currentPageNumber });
-    onPageChange(val);
+  const handlePageChangeWithValidation = (pageNum: number, shouldSkipPageChangeValidation?: boolean) => {
+    const val =
+      shouldSkipValidation || shouldSkipPageChangeValidation
+        ? pageNum
+        : clampPageNumber(pageNum, { totalPageCount, currentPageNumber });
+    onPageChange(val, shouldSkipPageChangeValidation);
   };
 
   const totalPageCountToUse = shouldSkipValidation

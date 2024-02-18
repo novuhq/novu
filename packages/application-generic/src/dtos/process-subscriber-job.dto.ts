@@ -24,7 +24,7 @@ export interface IProcessSubscriberDataDto {
   subscriber: ISubscribersDefine;
   templateId: string;
   _subscriberSource: SubscriberSourceEnum;
-  requestCategory: TriggerRequestCategoryEnum;
+  requestCategory?: TriggerRequestCategoryEnum;
 }
 
 export interface IProcessSubscriberJobDto extends IJobParams {

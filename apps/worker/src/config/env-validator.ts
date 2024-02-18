@@ -50,6 +50,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   LAUNCH_DARKLY_SDK_KEY: str({
     default: '',
   }),
+  STRIPE_API_KEY: str({
+    default: undefined,
+  }),
 };
 
 if (process.env.STORAGE_SERVICE === 'AZURE') {

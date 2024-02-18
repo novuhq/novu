@@ -98,6 +98,7 @@ export enum SmsProviderIdEnum {
   MessageBird = 'messagebird',
   Simpletexting = 'simpletexting',
   AzureSms = 'azure-sms',
+  RingCentral = 'ring-central',
   BrevoSms = 'brevo-sms',
   Smsmode = 'smsmode',
 }

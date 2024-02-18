@@ -31,7 +31,7 @@ export type IWorkflowDataDto = {
   transactionId: string;
   actor?: TriggerRecipientSubscriber | null;
   tenant?: TriggerTenantContext | null;
-  requestCategory: TriggerRequestCategoryEnum;
+  requestCategory?: TriggerRequestCategoryEnum;
 } & Addressing;
 
 export interface IWorkflowJobDto extends IJobParams {

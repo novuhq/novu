@@ -1,0 +1,62 @@
+{
+  "name": "@novu/ee-billing-web",
+  "version": "0.23.1",
+  "description": "",
+  "repository": "https://github.com/novuhq/novu",
+  "license": "ISC",
+  "author": "",
+  "private": true,
+  "sideEffects": false,
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "files": [
+    "dist/esm"
+  ],
+  "scripts": {
+    "prebuild": "rimraf dist",
+    "build": "node ./check-ee.mjs",
+    "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
+    "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
+    "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
+    "build:watch": "npm run build:esm:watch",
+    "lint": "eslint --ext .ts,.tsx src --no-error-on-unmatched-pattern",
+    "test": "echo 'skip test in the ci'",
+    "start": "npm run build:watch"
+  },
+  "dependencies": {
+    "@emotion/css": "^11.10.5",
+    "@emotion/react": "^11.7.1",
+    "@emotion/styled": "^11.6.0",
+    "@mantine/core": "^5.7.1",
+    "@mantine/hooks": "^5.7.1",
+    "@novu/client": "0.23.1",
+    "@novu/design-system": "0.23.1",
+    "@novu/shared": "0.23.1",
+    "@novu/shared-web": "0.23.1",
+    "@stripe/react-stripe-js": "^2.5.0",
+    "@stripe/stripe-js": "^2.4.0",
+    "@tanstack/react-query": "^4.20.4",
+    "axios": "^1.4.0",
+    "date-fns": "^2.29.2",
+    "eslint": "^8.33.0",
+    "eslint-plugin-react-hooks": "^4.4.0",
+    "react-hook-form": "7.43.9",
+    "react-router-dom": "6.2.2",
+    "tslib": "^2.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.12",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "rimraf": "^3.0.2",
+    "ts-loader": "~9.4.0",
+    "tslib": "^2.3.1",
+    "typescript": "4.9.5"
+  },
+  "peerDependencies": {
+    "react": "^16.8.0 || ^17.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0"
+  }
+}
