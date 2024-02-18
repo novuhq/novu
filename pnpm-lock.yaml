@@ -2755,6 +2755,9 @@ importers:
       '@novu/getstream':
         specifier: ^0.23.1
         version: link:../../providers/getstream
+      '@novu/google-chat':
+        specifier: ^0.23.1
+        version: link:../../providers/google-chat
       '@novu/grafana-on-call':
         specifier: ^0.23.1
         version: link:../../providers/grafana-on-call
@@ -4631,6 +4634,49 @@ importers:
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
+        version: 1.6.2
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ~1.0.1
+        version: 1.0.2(nyc@15.1.0)
+      '@types/jest':
+        specifier: ~27.5.2
+        version: 27.5.2
+      cspell:
+        specifier: ~6.19.2
+        version: 6.19.2
+      jest:
+        specifier: ~27.5.1
+        version: 27.5.1(ts-node@10.9.1)
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      nyc:
+        specifier: ~15.1.0
+        version: 15.1.0
+      prettier:
+        specifier: ~2.8.0
+        version: 2.8.7
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      ts-jest:
+        specifier: ~27.1.5
+        version: 27.1.5(@babel/core@7.23.2)(@types/jest@27.5.2)(jest@27.5.1)(typescript@4.9.5)
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  providers/google-chat:
+    dependencies:
+      '@novu/stateless':
+        specifier: ^0.20.0-alpha.1
+        version: 0.20.0
+      axios:
+        specifier: ^1.3.3
         version: 1.6.2
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -18189,6 +18235,15 @@ packages:
       vue-resize: 2.0.0-alpha.1(vue@3.2.47)
     dev: false
 
+  /@novu/stateless@0.20.0:
+    resolution: {integrity: sha512-ebjVTnbfnU1D1ZmKvcB047GbZ+S0u8NPDNetFPxQ7UAppefh5EQ5fE5wj84HDSB3df6FO+6jXEmChUXLxKVK4g==}
+    engines: {node: '>=10'}
+    dependencies:
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
+    dev: false
+
   /@npmcli/arborist@5.3.0:
     resolution: {integrity: sha512-+rZ9zgL1lnbl8Xbb1NQdMjveOMwj4lIYfcDtyJHHi5x4X8jtR6m8SXooJMZy5vmFVZ8w7A2Bnd/oX9eTuU8w5A==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
@@ -31566,7 +31621,7 @@ packages:
       '@babel/core': 7.23.2
       '@jest/transform': 27.5.1
       '@jest/types': 27.5.1
-      '@types/babel__core': 7.20.0
+      '@types/babel__core': 7.20.3
       babel-plugin-istanbul: 6.1.1
       babel-preset-jest: 27.5.1(@babel/core@7.23.2)
       chalk: 4.1.2
@@ -50918,7 +50973,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.16.9
+      terser: 5.22.0
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
@@ -52546,7 +52601,7 @@ packages:
   /strip-literal@1.3.0:
     resolution: {integrity: sha512-PugKzOsyXpArk0yWmUwqOZecSO0GH0bPoctLcqNDH9J04pVW3lflYE0ujElBGTloevcxF5MofAOZ7C5l2b+wLg==}
     dependencies:
-      acorn: 8.10.0
+      acorn: 8.11.3
     dev: true
 
   /strip-outer@1.0.1:
@@ -53926,8 +53981,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 16.11.7
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
@@ -53957,8 +54012,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 16.11.7
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
@@ -53988,8 +54043,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 20.5.1
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2

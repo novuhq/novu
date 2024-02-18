@@ -73,6 +73,7 @@
     "@novu/generic-sms": "^0.23.1",
     "@novu/getstream": "^0.23.1",
     "@novu/grafana-on-call": "^0.23.1",
+    "@novu/google-chat": "^0.23.1",
     "@novu/gupshup": "^0.23.1",
     "@novu/infobip": "^0.23.1",
     "@novu/isend-sms": "^0.23.1",
