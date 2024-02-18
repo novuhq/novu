@@ -51,7 +51,7 @@ export const usePreviewEmailTemplate = ({ locale, payload }: { locale?: string; 
     if (!locale) return;
 
     getEmailPreviewCallback(payload);
-  }, [getEmailPreviewCallback, payload]);
+  }, [getEmailPreviewCallback, locale, payload]);
 
   const isPreviewContentLoading = !templateError && isLoading;
 
