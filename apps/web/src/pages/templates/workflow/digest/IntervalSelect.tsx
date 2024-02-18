@@ -1,7 +1,6 @@
 import { DigestUnitEnum } from '@novu/shared';
 import { Controller } from 'react-hook-form';
-import { Select } from '../../../../design-system';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
+import { Select, inputStyles } from '@novu/design-system';
 
 const options = [
   { value: DigestUnitEnum.SECONDS, label: 'sec (s)' },

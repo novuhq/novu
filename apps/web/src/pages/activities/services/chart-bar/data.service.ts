@@ -3,7 +3,7 @@ import { ScriptableContext } from 'chart.js';
 import { format, subDays } from 'date-fns';
 import { IActivityGraphStats, IChartData } from '../../interfaces';
 import { activityGraphStatsMock } from '../../consts';
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 
 export function getChartData(data: IActivityGraphStats[] | undefined, isDark: boolean): IChartData {
   if (!data || data?.length === 0) {

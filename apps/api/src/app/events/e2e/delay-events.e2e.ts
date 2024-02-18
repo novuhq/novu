@@ -10,8 +10,7 @@ import {
   JobStatusEnum,
 } from '@novu/dal';
 import { UserSession, SubscribersService } from '@novu/testing';
-import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum } from '@novu/shared';
-import { StandardQueueService } from '@novu/application-generic';
+import { StepTypeEnum, DelayTypeEnum, DigestUnitEnum, DigestTypeEnum, JobTopicNameEnum } from '@novu/shared';
 
 const axiosInstance = axios.create();
 
@@ -21,16 +20,15 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
   const jobRepository = new JobRepository();
-  let standardQueueService: StandardQueueService;
   const messageRepository = new MessageRepository();
 
-  const triggerEvent = async (payload, transactionId?: string, overrides = {}) => {
+  const triggerEvent = async (payload, transactionId?: string, overrides = {}, to = [subscriber.subscriberId]) => {
     await axiosInstance.post(
       `${session.serverUrl}/v1/events/trigger`,
       {
         transactionId,
         name: template.triggers[0].identifier,
-        to: [subscriber.subscriberId],
+        to,
         payload,
         overrides,
       },
@@ -48,7 +46,6 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     template = await session.createTemplate();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
-    standardQueueService = session?.testServer?.getService(StandardQueueService);
   });
 
   it('should delay event for time interval', async function () {
@@ -190,7 +187,8 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     const updatedAt = delayedJob?.updatedAt as string;
     const diff = differenceInMilliseconds(new Date(delayedJob.payload.sendAt), new Date(updatedAt));
 
-    const delay = await standardQueueService.queue.getDelayed();
+    const delay = await session.queueGet(JobTopicNameEnum.STANDARD, 'getDelayed');
+
     expect(delay[0].opts.delay).to.approximately(diff, 1000);
   });
 
@@ -327,67 +325,5 @@ describe('Trigger event - Delay triggered events - /v1/events/trigger (POST)', f
     } catch (e) {
       expect(e.response.data.message).to.equal('payload is missing required key(s) and type(s): sendAt (ISO Date)');
     }
-  });
-
-  it('should be able to cancel delay', async function () {
-    const id = MessageRepository.createObjectId();
-    template = await session.createTemplate({
-      steps: [
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Hello world {{customVar}}' as string,
-        },
-        {
-          type: StepTypeEnum.DELAY,
-          content: '',
-          metadata: {
-            unit: DigestUnitEnum.SECONDS,
-            amount: 0.1,
-            type: DelayTypeEnum.REGULAR,
-          },
-        },
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Hello world {{customVar}}' as string,
-        },
-      ],
-    });
-
-    await triggerEvent(
-      {
-        customVar: 'Testing of User Name',
-      },
-      id
-    );
-
-    await session.awaitRunningJobs(template?._id, true, 1);
-    await axiosInstance.delete(`${session.serverUrl}/v1/events/trigger/${id}`, {
-      headers: {
-        authorization: `ApiKey ${session.apiKey}`,
-      },
-    });
-
-    let delayedJob = await jobRepository.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DELAY,
-    });
-
-    const pendingJobs = await jobRepository.count({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      status: JobStatusEnum.PENDING,
-      transactionId: id,
-    });
-
-    expect(pendingJobs).to.equal(1);
-
-    delayedJob = await jobRepository.findOne({
-      _environmentId: session.environment._id,
-      _templateId: template._id,
-      type: StepTypeEnum.DELAY,
-      transactionId: id,
-    });
-    expect(delayedJob!.status).to.equal(JobStatusEnum.CANCELED);
   });
 });

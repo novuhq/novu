@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import React from 'react';
-import { colors, shadows, Text } from '../../design-system';
+import { colors, shadows, Text } from '@novu/design-system';
 
 type NodeStepProps = {
   className?: string;
@@ -44,7 +44,7 @@ const LeftContent = styled.div`
   align-items: center;
   gap: 15px;
   svg {
-    stop:first-child {
+    stop:first-of-type {
       stop-color: #dd2476 !important;
     }
     stop:last-child {

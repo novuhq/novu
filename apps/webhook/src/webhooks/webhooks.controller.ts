@@ -9,36 +9,36 @@ import { WebhookCommand } from './usecases/webhook/webhook.command';
 export class WebhooksController {
   constructor(private webhookUsecase: Webhook) {}
 
-  @Post('/organizations/:organizationId/environments/:environmentId/email/:providerId')
+  @Post('/organizations/:organizationId/environments/:environmentId/email/:providerOrIntegrationId')
   public emailWebhook(
     @Param('organizationId') organizationId: string,
     @Param('environmentId') environmentId: string,
-    @Param('providerId') providerId: string,
+    @Param('providerOrIntegrationId') providerOrIntegrationId: string,
     @Body() body: any
   ): Promise<IWebhookResult[]> {
     return this.webhookUsecase.execute(
       WebhookCommand.create({
         environmentId,
         organizationId,
-        providerId,
+        providerOrIntegrationId,
         body,
         type: 'email',
       })
     );
   }
 
-  @Post('/organizations/:organizationId/environments/:environmentId/sms/:providerId')
+  @Post('/organizations/:organizationId/environments/:environmentId/sms/:providerOrIntegrationId')
   public smsWebhook(
     @Param('organizationId') organizationId: string,
     @Param('environmentId') environmentId: string,
-    @Param('providerId') providerId: string,
+    @Param('providerOrIntegrationId') providerOrIntegrationId: string,
     @Body() body: any
   ): Promise<IWebhookResult[]> {
     return this.webhookUsecase.execute(
       WebhookCommand.create({
         environmentId,
         organizationId,
-        providerId,
+        providerOrIntegrationId,
         body,
         type: 'sms',
       })

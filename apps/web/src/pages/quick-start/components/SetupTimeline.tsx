@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getApiKeys } from '../../../api/environment';
 import { When } from '../../../components/utils/When';
 import { API_ROOT, ENV, IS_DOCKER_HOSTED, WS_URL } from '../../../config';
-import { colors, shadows, Text } from '../../../design-system';
+import { colors, shadows, Text } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
 import { PrismOnCopy } from '../../settings/tabs/components/Prism';
 import { SetupStatus } from './SetupStatus';
@@ -87,7 +87,7 @@ export const SetupTimeline = ({
 
       <When truthy={framework === 'demo'}>
         <span style={{ color: colors.B60 }}>
-          If your browser did not automatically open, go to localhost at http://localhost:3000
+          If your browser did not automatically open, go to localhost at http://127.0.0.1:3000
         </span>
       </When>
     </Stack>

@@ -8,7 +8,6 @@ import { Outlet, Route, Routes } from 'react-router-dom';
 const testOrganization: IOrganizationEntity = {
   _id: '1',
   name: 'Test',
-  members: [],
   branding: {
     logo: 'https://test.com/logo.png',
     color: '#000000',
@@ -17,6 +16,8 @@ const testOrganization: IOrganizationEntity = {
     contentBackground: '#ffffff',
     direction: 'ltr',
   },
+  createdAt: '2023-12-27T13:17:06.309Z',
+  updatedAt: '2023-12-27T13:17:06.409Z',
 };
 
 const queryClient = new QueryClient();

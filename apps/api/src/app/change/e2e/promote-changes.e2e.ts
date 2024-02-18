@@ -13,6 +13,8 @@ import {
   ChangeEntityTypeEnum,
   ChannelCTATypeEnum,
   EmailBlockTypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
   StepTypeEnum,
   FilterPartTypeEnum,
   TemplateVariableTypeEnum,
@@ -69,13 +71,13 @@ describe('Promote changes', () => {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.SUBSCRIBER,
                     field: 'firstName',
                     value: 'test value',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                   },
                 ],
               },
@@ -96,7 +98,7 @@ describe('Promote changes', () => {
         _parentId: notificationTemplateId,
       });
 
-      expect(prodVersion._notificationGroupId).to.eq(prodGroup._id);
+      expect(prodVersion?._notificationGroupId).to.eq(prodGroup._id);
     });
 
     it('should promote step variables default values', async () => {
@@ -204,13 +206,13 @@ describe('Promote changes', () => {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.SUBSCRIBER,
                     field: 'firstName',
                     value: 'test value',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                   },
                 ],
               },
@@ -242,7 +244,7 @@ describe('Promote changes', () => {
         _parentId: notificationTemplateId,
       } as any);
 
-      expect(prodVersion.steps.length).to.eq(0);
+      expect(prodVersion?.steps.length).to.eq(0);
     });
 
     it('update active flag on notification template', async () => {
@@ -274,7 +276,7 @@ describe('Promote changes', () => {
         _parentId: notificationTemplateId,
       });
 
-      expect(prodVersion.active).to.eq(true);
+      expect(prodVersion?.active).to.eq(true);
     });
 
     it('update existing message', async () => {
@@ -295,13 +297,13 @@ describe('Promote changes', () => {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.SUBSCRIBER,
                     field: 'firstName',
                     value: 'test value',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                   },
                 ],
               },
@@ -352,7 +354,7 @@ describe('Promote changes', () => {
         _parentId: step._templateId,
       });
 
-      expect(prodVersion.name).to.eq('test');
+      expect(prodVersion?.name).to.eq('test');
     });
 
     it('add one more message', async () => {
@@ -373,13 +375,13 @@ describe('Promote changes', () => {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.SUBSCRIBER,
                     field: 'firstName',
                     value: 'test value',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                   },
                 ],
               },
@@ -431,13 +433,13 @@ describe('Promote changes', () => {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.SUBSCRIBER,
                     field: 'secondName',
                     value: 'test value',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                   },
                 ],
               },
@@ -479,13 +481,13 @@ describe('Promote changes', () => {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.SUBSCRIBER,
                     field: 'firstName',
                     value: 'test value',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                   },
                 ],
               },
@@ -521,13 +523,13 @@ describe('Promote changes', () => {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.SUBSCRIBER,
                     field: 'firstName',
                     value: 'test value',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                   },
                 ],
               },
@@ -632,13 +634,13 @@ describe('Promote changes', () => {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.SUBSCRIBER,
                     field: 'firstName',
                     value: 'test value',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                   },
                 ],
               },
@@ -659,7 +661,7 @@ describe('Promote changes', () => {
         _parentId: notificationTemplateId,
       });
 
-      expect(prodVersion.isBlueprint).to.equal(true);
+      expect(prodVersion?.isBlueprint).to.equal(true);
     });
 
     it('should merge creation, and status changes to one change', async () => {
@@ -724,9 +726,15 @@ describe('Promote changes', () => {
     });
   });
 
-  async function getProductionEnvironment() {
-    return await environmentRepository.findOne({
+  async function getProductionEnvironment(): Promise<EnvironmentEntity> {
+    const production = await environmentRepository.findOne({
       _parentId: session.environment._id,
     });
+
+    if (!production) {
+      throw new Error('No production environment');
+    }
+
+    return production;
   }
 });

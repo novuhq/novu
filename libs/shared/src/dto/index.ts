@@ -9,3 +9,4 @@ export * from './subscriber';
 export * from './topic';
 export * from './workflows';
 export * from './tenant';
+export * from './workflow-override';

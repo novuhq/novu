@@ -16,6 +16,7 @@ import {
   plunkConfig,
   sparkpostConfig,
   emailWebhookConfig,
+  brazeEmailConfig,
 } from '../credentials';
 import { IProviderConfig } from '../provider.interface';
 import { EmailProviderIdEnum } from '../provider.enum';
@@ -134,6 +135,14 @@ export const emailProviders: IProviderConfig[] = [
     credentials: infobipEmailConfig,
     docReference: 'https://docs.novu.co/channels-and-providers/email/infobip',
     logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
+  },
+  {
+    id: EmailProviderIdEnum.Braze,
+    displayName: 'Braze',
+    channel: ChannelTypeEnum.EMAIL,
+    credentials: brazeEmailConfig,
+    docReference: 'https://www.braze.com/docs/api/endpoints/messaging/send_messages/post_send_messages/',
+    logoFileName: { light: 'braze.svg', dark: 'braze.svg' },
   },
   {
     id: EmailProviderIdEnum.Resend,

@@ -1,12 +1,16 @@
 import { Injectable } from '@nestjs/common';
+import { startOfMonth, endOfMonth } from 'date-fns';
 import { MessageRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
-import { startOfMonth, endOfMonth } from 'date-fns';
 
+import {
+  areNovuEmailCredentialsSet,
+  areNovuSmsCredentialsSet,
+} from '../../utils/novu-integrations';
 import { CalculateLimitNovuIntegrationCommand } from './calculate-limit-novu-integration.command';
 
 @Injectable()
@@ -30,17 +34,12 @@ export class CalculateLimitNovuIntegration {
 
     if (
       channelType === ChannelTypeEnum.EMAIL &&
-      !process.env.NOVU_EMAIL_INTEGRATION_API_KEY
+      !areNovuEmailCredentialsSet()
     ) {
       return;
     }
 
-    if (
-      channelType === ChannelTypeEnum.SMS &&
-      !process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID &&
-      !process.env.NOVU_SMS_INTEGRATION_TOKEN &&
-      !process.env.NOVU_SMS_INTEGRATION_SENDER
-    ) {
+    if (channelType === ChannelTypeEnum.SMS && !areNovuSmsCredentialsSet()) {
       return;
     }
 

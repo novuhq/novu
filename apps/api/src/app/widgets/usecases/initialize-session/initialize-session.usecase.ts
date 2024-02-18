@@ -9,13 +9,13 @@ import {
   SelectIntegrationCommand,
   SelectIntegration,
   AuthService,
+  createHash,
 } from '@novu/application-generic';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InitializeSessionCommand } from './initialize-session.command';
 
 import { SessionInitializeResponseDto } from '../../dtos/session-initialize-response.dto';
-import { createHash } from '../../../shared/helpers/hmac.service';
 
 @Injectable()
 export class InitializeSession {

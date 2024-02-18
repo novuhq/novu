@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { Group, Overlay } from '@mantine/core';
-import { colors, shadows, Text } from '../../../design-system';
+import { colors, shadows, Text } from '@novu/design-system';
 import InAppSandboxWorkflow from './InAppSandboxWorkflow';
 import { YourAppHeaderSection } from './YourAppHeaderSection';
 

@@ -11,6 +11,7 @@ declare global {
       MAX_NOVU_INTEGRATION_MAIL_REQUESTS?: string;
       NOVU_EMAIL_INTEGRATION_API_KEY?: string;
       STORAGE_SERVICE?: string;
+      METRICS_SERVICE?: string;
       REDIS_HOST: string;
       REDIS_PORT: number;
       REDIS_PASSWORD?: string;
@@ -33,6 +34,7 @@ declare global {
       NEW_RELIC_LICENSE_KEY: string;
       SEGMENT_TOKEN?: string;
       LAUNCH_DARKLY_SDK_KEY?: string;
+      STRIPE_API_KEY: string;
     }
   }
 }

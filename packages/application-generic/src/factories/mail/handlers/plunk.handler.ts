@@ -8,8 +8,9 @@ export class PlunkHandler extends BaseHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    const config: { apiKey: string } = {
+    const config: { apiKey: string; senderName: string } = {
       apiKey: credentials.apiKey,
+      senderName: credentials.senderName,
     };
 
     this.provider = new PlunkEmailProvider(config);

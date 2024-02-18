@@ -1,6 +1,5 @@
 import { createStyles, MantineSize, MantineTheme } from '@mantine/core';
-import { colors, shadows } from '../../../../../design-system';
-import { getGradient } from '../../../../../design-system/config/helper';
+import { colors, shadows, getGradient } from '@novu/design-system';
 
 export default createStyles<string, { size: MantineSize }>((theme: MantineTheme, _params, getRef) => {
   const dark = theme.colorScheme === 'dark';

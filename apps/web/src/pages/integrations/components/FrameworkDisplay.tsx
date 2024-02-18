@@ -1,14 +1,7 @@
 import { Text, UnstyledButton, Group, useMantineTheme } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { colors } from '@novu/notification-center';
-import {
-  AngularGradient,
-  Copy,
-  ReactGradient,
-  VueGradient,
-  JsGradient,
-  CodeGradient,
-} from '../../../design-system/icons';
+import { AngularGradient, Copy, ReactGradient, VueGradient, JsGradient, CodeGradient } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
 import { FrameworkEnum } from '../../quick-start/consts';
 

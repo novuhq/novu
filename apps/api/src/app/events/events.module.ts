@@ -2,25 +2,11 @@ import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
 
 import {
-  AddJob,
-  AddDelayJob,
-  MergeOrCreateDigest,
   CreateExecutionDetails,
-  CreateNotificationJobs,
-  DigestFilterSteps,
-  DigestFilterStepsBackoff,
-  DigestFilterStepsRegular,
-  DigestFilterStepsTimed,
   EventsDistributedLockService,
   GetNovuProviderCredentials,
-  ProcessSubscriber,
-  ProcessTenant,
-  QueuesModule,
   StorageHelperService,
   SendTestEmail,
-  StoreSubscriberJobs,
-  TriggerEvent,
-  MapTriggerRecipients,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -37,26 +23,14 @@ import { ExecutionDetailsModule } from '../execution-details/execution-details.m
 import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { TenantModule } from '../tenant/tenant.module';
+import { JobTopicNameEnum } from '@novu/shared';
 
 const PROVIDERS = [
-  AddJob,
-  AddDelayJob,
-  MergeOrCreateDigest,
   CreateExecutionDetails,
-  CreateNotificationJobs,
-  DigestFilterSteps,
-  DigestFilterStepsBackoff,
-  DigestFilterStepsRegular,
-  DigestFilterStepsTimed,
   GetNovuProviderCredentials,
   StorageHelperService,
   EventsDistributedLockService,
-  ProcessSubscriber,
-  ProcessTenant,
   SendTestEmail,
-  StoreSubscriberJobs,
-  TriggerEvent,
-  MapTriggerRecipients,
 ];
 
 @Module({
@@ -73,7 +47,6 @@ const PROVIDERS = [
     TopicsModule,
     LayoutsModule,
     TenantModule,
-    QueuesModule,
   ],
   controllers: [EventsController],
   providers: [...PROVIDERS, ...USE_CASES],

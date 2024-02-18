@@ -2,13 +2,12 @@ import { IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { createHash } from '../../shared/helpers/hmac.service';
 import {
   buildIntegrationKey,
+  CacheInMemoryProviderService,
   CacheService,
-  InMemoryProviderService,
+  createHash,
   InvalidateCacheService,
-  InMemoryProviderEnum,
 } from '@novu/application-generic';
 
 const integrationRepository = new IntegrationRepository();
@@ -19,8 +18,8 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   let invalidateCache: InvalidateCacheService;
 
   before(async () => {
-    const inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
-    const cacheService = new CacheService(inMemoryProviderService);
+    const cacheInMemoryProviderService = new CacheInMemoryProviderService();
+    const cacheService = new CacheService(cacheInMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);
   });

@@ -1,15 +1,8 @@
-import Analytics from 'analytics-node';
+import { Analytics } from '@segment/analytics-node';
 import { Logger } from '@nestjs/common';
 import * as Mixpanel from 'mixpanel';
 
-// Due to problematic analytics-node types, we need to use require
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const AnalyticsClass = require('analytics-node');
-
-interface IOrganization {
-  name?: string | null;
-  createdAt?: string | null;
-}
+import { IOrganizationEntity } from '@novu/shared';
 
 interface IUser {
   _id?: string | null;
@@ -29,8 +22,9 @@ export class AnalyticsService {
 
   async initialize() {
     if (this.segmentToken) {
-      this.segment = new AnalyticsClass(this.segmentToken, {
-        flushAt: this.batchSize,
+      this.segment = new Analytics({
+        writeKey: this.segmentToken,
+        maxEventsInBatch: this.batchSize,
       });
     }
 
@@ -41,20 +35,26 @@ export class AnalyticsService {
 
   upsertGroup(
     organizationId: string,
-    organization: IOrganization,
+    organization: IOrganizationEntity,
     user: IUser
   ) {
     if (this.segmentEnabled) {
+      const traits: Record<string, unknown> = {
+        _organization: organizationId,
+        id: organizationId,
+        name: organization.name,
+        createdAt: organization.createdAt,
+        domain: organization.domain || user.email?.split('@')[1],
+      };
+
+      if (organization.productUseCases) {
+        traits.productUseCases = organization.productUseCases;
+      }
+
       this.segment.group({
         userId: user._id as any,
         groupId: organizationId,
-        traits: {
-          _organization: organizationId,
-          id: organizationId,
-          name: organization.name,
-          createdAt: organization.createdAt,
-          domain: user.email?.split('@')[1],
-        },
+        traits: traits,
       });
     }
   }

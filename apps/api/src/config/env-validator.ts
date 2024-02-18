@@ -1,5 +1,4 @@
-import { bool, json, makeValidator, port, str, num, url, ValidatorSpec } from 'envalid';
-import * as envalid from 'envalid';
+import { bool, cleanEnv, json, makeValidator, port, str, num, url, ValidatorSpec } from 'envalid';
 
 const str32 = makeValidator((variable) => {
   if (!(typeof variable === 'string') || variable.length != 32) {
@@ -47,7 +46,7 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NEW_RELIC_LICENSE_KEY: str({
     default: '',
   }),
-  FF_IS_TOPIC_NOTIFICATION_ENABLED: bool({
+  IS_TOPIC_NOTIFICATION_ENABLED: bool({
     desc: 'This is the environment variable used to enable the feature to send notifications to a topic',
     default: true,
     choices: [false, true],
@@ -72,6 +71,22 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   LAUNCH_DARKLY_SDK_KEY: str({
     default: '',
+  }),
+  WORKER_DEFAULT_CONCURRENCY: num({
+    default: undefined,
+  }),
+  WORKER_DEFAULT_LOCK_DURATION: num({
+    default: undefined,
+  }),
+  STRIPE_API_KEY: str({
+    default: undefined,
+  }),
+  STRIPE_CONNECT_SECRET: str({
+    default: undefined,
+  }),
+  ENABLE_OTEL: str({
+    default: 'false',
+    choices: ['false', 'true'],
   }),
 };
 
@@ -120,5 +135,5 @@ if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
 }
 
 export function validateEnv() {
-  envalid.cleanEnv(process.env, validators);
+  cleanEnv(process.env, validators);
 }

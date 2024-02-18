@@ -1,7 +1,6 @@
 import React from 'react';
 import { Group, Modal, useMantineTheme } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
-import { Button, colors, shadows, Title, Text } from '../../../design-system';
+import { Button, colors, shadows, Title, Text } from '@novu/design-system';
 
 export function NavigateValidatorModal({
   isOpen,
@@ -22,6 +21,9 @@ export function NavigateValidatorModal({
         overlayColor={theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight}
         overlayOpacity={0.7}
         styles={{
+          root: {
+            zIndex: 201, // because the editor sidebar has z-index 200
+          },
           modal: {
             backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
           },

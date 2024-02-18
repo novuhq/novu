@@ -1,8 +1,7 @@
-const nr = require('newrelic');
-
 import {
   ActiveJobsMetricQueueService,
   ActiveJobsMetricWorkerService,
+  MetricsService,
   QueueBaseService,
   WorkerOptions,
 } from '@novu/application-generic';
@@ -11,28 +10,26 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { checkingForCronJob } from '../../shared/utils';
 
 const LOG_CONTEXT = 'ActiveJobMetricService';
-const METRIC_JOB_ID = 'metric-job';
+const METRIC_JOB_ID = 'metrics-job';
 
 @Injectable()
 export class ActiveJobsMetricService {
-  public readonly activeJobsMetricQueueService: ActiveJobsMetricQueueService;
-  public readonly activeJobsMetricWorkerService: ActiveJobsMetricWorkerService;
-
-  constructor(@Inject('BULLMQ_LIST') private tokenList: QueueBaseService[]) {
+  constructor(
+    @Inject('BULLMQ_LIST') private tokenList: QueueBaseService[],
+    public readonly activeJobsMetricQueueService: ActiveJobsMetricQueueService,
+    public readonly activeJobsMetricWorkerService: ActiveJobsMetricWorkerService,
+    private metricsService: MetricsService
+  ) {
     if (process.env.NOVU_MANAGED_SERVICE === 'true' && process.env.NEW_RELIC_LICENSE_KEY) {
-      this.activeJobsMetricQueueService = new ActiveJobsMetricQueueService();
-      this.activeJobsMetricWorkerService = new ActiveJobsMetricWorkerService();
-
-      this.activeJobsMetricQueueService.createQueue();
       this.activeJobsMetricWorkerService.createWorker(this.getWorkerProcessor(), this.getWorkerOptions());
 
       this.activeJobsMetricWorkerService.worker.on('completed', async (job) => {
         await checkingForCronJob(process.env.ACTIVE_CRON_ID);
-        Logger.verbose({ jobId: job.id }, 'Metric Completed Job', LOG_CONTEXT);
+        Logger.log({ jobId: job.id }, 'Metric Completed Job', LOG_CONTEXT);
       });
 
       this.activeJobsMetricWorkerService.worker.on('failed', async (job, error) => {
-        Logger.verbose('Metric Completed Job failed', LOG_CONTEXT, error);
+        Logger.error(error, 'Metric Completed Job failed', LOG_CONTEXT);
       });
 
       this.addToQueueIfMetricJobExists();
@@ -53,21 +50,26 @@ export class ActiveJobsMetricService {
       })
     )
       .then(async (exists: boolean): Promise<void> => {
-        Logger.debug(`metric job exists: ${exists}`, LOG_CONTEXT);
+        Logger.log(`metric job exists: ${exists}`, LOG_CONTEXT);
 
         if (!exists) {
-          Logger.debug(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
+          Logger.log(`metricJob doesn't exist, creating it`, LOG_CONTEXT);
 
-          return await this.activeJobsMetricQueueService.add(METRIC_JOB_ID, undefined, '', {
-            jobId: METRIC_JOB_ID,
-            repeatJobKey: METRIC_JOB_ID,
-            repeat: {
-              immediately: true,
-              pattern: '* * * * * *',
+          return await this.activeJobsMetricQueueService.add({
+            name: METRIC_JOB_ID,
+            data: undefined,
+            groupId: '',
+            options: {
+              jobId: METRIC_JOB_ID,
+              repeatJobKey: METRIC_JOB_ID,
+              repeat: {
+                immediately: true,
+                pattern: '* * * * * *',
+              },
+              removeOnFail: true,
+              removeOnComplete: true,
+              attempts: 1,
             },
-            removeOnFail: true,
-            removeOnComplete: true,
-            attempts: 1,
           });
         }
 
@@ -87,24 +89,22 @@ export class ActiveJobsMetricService {
   private getWorkerProcessor() {
     return async () => {
       return await new Promise<void>(async (resolve, reject): Promise<void> => {
-        Logger.verbose('metric job started', LOG_CONTEXT);
+        Logger.log('metric job started', LOG_CONTEXT);
         const deploymentName = process.env.FLEET_NAME ?? 'default';
 
         try {
           for (const queueService of this.tokenList) {
-            const waitCount = (queueService.bullMqService.queue as any).getGroupsJobsCount
-              ? await (queueService.bullMqService.queue as any).getGroupsJobsCount()
-              : await queueService.bullMqService.queue.getWaitingCount();
-            const delayedCount = await queueService.bullMqService.queue.getDelayedCount();
-            const activeCount = await queueService.bullMqService.queue.getActiveCount();
+            const waitCount = queueService.getGroupsJobsCount
+              ? await queueService.getGroupsJobsCount()
+              : await queueService.getWaitingCount();
+            const delayedCount = await queueService.getDelayedCount();
+            const activeCount = await queueService.getActiveCount();
 
             Logger.verbose('Recording active, waiting, and delayed metrics');
 
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
-            nr.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
-
-            Logger.verbose(`Queue/${deploymentName}/${queueService.topic}`, { waitCount, delayedCount, activeCount });
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/waiting`, waitCount);
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/delayed`, delayedCount);
+            this.metricsService.recordMetric(`Queue/${deploymentName}/${queueService.topic}/active`, activeCount);
           }
 
           return resolve();
@@ -120,13 +120,13 @@ export class ActiveJobsMetricService {
   public async gracefulShutdown(): Promise<void> {
     Logger.log('Shutting the Active Jobs Metric service down', LOG_CONTEXT);
 
-    await this.activeJobsMetricQueueService.gracefulShutdown();
-    await this.activeJobsMetricWorkerService.gracefulShutdown();
+    if (this.activeJobsMetricQueueService) {
+      await this.activeJobsMetricQueueService.gracefulShutdown();
+    }
+    if (this.activeJobsMetricWorkerService) {
+      await this.activeJobsMetricWorkerService.gracefulShutdown();
+    }
 
     Logger.log('Shutting down the Active Jobs Metric service has finished', LOG_CONTEXT);
-  }
-
-  async onModuleDestroy(): Promise<void> {
-    await this.gracefulShutdown();
   }
 }

@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import React from 'react';
 
-import { PlusButton } from '../../../design-system';
+import { PlusButton } from '@novu/design-system';
 
 const IntegrationsListToolbarHolder = styled.div`
   display: flex;

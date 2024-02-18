@@ -1,6 +1,6 @@
 import { createStyles, Group } from '@mantine/core';
 import { format } from 'date-fns';
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 import { EmailIntegrationInfo } from '../EmailIntegrationInfo';
 import { Mobile } from '../Mobile';
 import { DateArrow } from './DateArrow';

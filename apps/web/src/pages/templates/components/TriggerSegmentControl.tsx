@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { SegmentedControl } from '../../../design-system';
+import { SegmentedControl } from '@novu/design-system';
 import { useBasePath } from '../hooks/useBasePath';
 
 export const TriggerSegmentControl = () => {

@@ -14,6 +14,7 @@ import {
   MonthlyTypeEnum,
   OrdinalEnum,
   OrdinalValueEnum,
+  StepVariantDto,
 } from '@novu/shared';
 import { IsBoolean, ValidateNested } from 'class-validator';
 
@@ -104,7 +105,7 @@ class DelayScheduledMetadata implements IDelayScheduledMetadata {
 }
 
 @ApiExtraModels(DigestRegularMetadata, DigestTimedMetadata, DelayRegularMetadata, DelayScheduledMetadata)
-export class NotificationStep {
+export class NotificationStepVariant implements StepVariantDto {
   @ApiPropertyOptional()
   _id?: string;
 
@@ -155,4 +156,13 @@ export class NotificationStep {
     active: boolean;
     url: string;
   };
+}
+
+@ApiExtraModels(DigestRegularMetadata, DigestTimedMetadata, DelayRegularMetadata, DelayScheduledMetadata)
+export class NotificationStep extends NotificationStepVariant {
+  @ApiPropertyOptional({
+    type: NotificationStepVariant,
+  })
+  @ValidateNested()
+  variants?: NotificationStepVariant[];
 }

@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
 import { MessageEntity, PreferenceLevelEnum, SubscriberEntity } from '@novu/dal';
 import { MarkMessagesAsEnum, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
@@ -61,7 +61,12 @@ import {
 import { UpdateSubscriberGlobalPreferencesRequestDto } from '../subscribers/dtos/update-subscriber-global-preferences-request.dto';
 import { GetPreferencesByLevel } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.usecase';
 import { GetPreferencesByLevelCommand } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.command';
+import { ApiCommonResponses, ApiNoContentResponse } from '../shared/framework/response.decorator';
+import { RemoveMessagesBulkCommand } from './usecases/remove-messages-bulk/remove-messages-bulk.command';
+import { RemoveMessagesBulk } from './usecases/remove-messages-bulk/remove-messages-bulk.usecase';
+import { RemoveMessagesBulkRequestDto } from './dtos/remove-messages-bulk-request.dto';
 
+@ApiCommonResponses()
 @Controller('/widgets')
 @ApiExcludeController()
 export class WidgetsController {
@@ -72,6 +77,7 @@ export class WidgetsController {
     private markMessageAsUsecase: MarkMessageAs,
     private removeMessageUsecase: RemoveMessage,
     private removeAllMessagesUsecase: RemoveAllMessages,
+    private removeMessagesBulkUsecase: RemoveMessagesBulk,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
@@ -271,6 +277,26 @@ export class WidgetsController {
   }
 
   @ApiOperation({
+    summary: 'Remove subscriber messages in bulk',
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/bulk/delete')
+  @HttpCode(HttpStatus.OK)
+  async removeMessagesBulk(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: RemoveMessagesBulkRequestDto
+  ) {
+    return await this.removeMessagesBulkUsecase.execute(
+      RemoveMessagesBulkCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        messageIds: body.messageIds,
+      })
+    );
+  }
+
+  @ApiOperation({
     summary: "Mark subscriber's all unread messages as read",
   })
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -431,7 +457,7 @@ export class WidgetsController {
     let paramArray: string[] | undefined = undefined;
 
     if (param) {
-      paramArray = Array.isArray(param) ? param : param.split(',');
+      paramArray = Array.isArray(param) ? param : String(param).split(',');
     }
 
     return paramArray as string[];

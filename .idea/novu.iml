@@ -42,6 +42,7 @@
       <excludeFolder url="file://$MODULE_DIR$/packages/react/storybook-static" />
       <excludeFolder url="file://$MODULE_DIR$/packages/notification-center/.storybook" />
       <excludeFolder url="file://$MODULE_DIR$/packages/notification-center/build" />
+      <excludeFolder url="file://$MODULE_DIR$/.source" />
       <excludePattern pattern="dist" />
       <excludePattern pattern="build" />
     </content>

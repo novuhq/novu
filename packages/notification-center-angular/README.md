@@ -1,14 +1,15 @@
 # NotificationCenterAngular
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 15.0.0.
+This is the Angular workspace root project for Novu Angular libraries and components. The libraries are located under `/projects/*`.
+New libraries should also be added under `/projects/*` by using the `ng generate library <my-lib-name>` command.
 
-## Development server
+## Publishing
+To publish the `@novu/notification-center-angular` package, simply run `npm run publish:npm`. The following steps will be executed:
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+1. Build package into the `/dist/notification-center-angular` directory
+2. Publish the `/dist/notification-center-angular` to NPM under @novu/notification-center-angular`
 
-## Code scaffolding
-
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+> ⚠️ Ensure that the `/projects/notification-center-angular/package.json` has the correct `@novu/*` version values before publishing
 
 ## Build
 

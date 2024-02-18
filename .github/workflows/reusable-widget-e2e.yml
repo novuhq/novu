@@ -5,16 +5,11 @@ name: Test E2E WIDGET
 on:
   workflow_call:
     inputs:
-      submodules:
-        description: 'The flag controlling whether we want submodules to checkout'
+      ee:
+        description: 'use the ee version of worker'
         required: false
         default: false
         type: boolean
-      submodule_branch:
-        description: 'Submodule branch to checkout to'
-        required: false
-        default: 'main'
-        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -49,8 +44,15 @@ jobs:
           else
             echo "has_token=false" >> $GITHUB_OUTPUT
           fi
-      - uses: actions/checkout@v3
       # checkout with submodules if token is provided
+      - uses: actions/checkout@v3
+        if: steps.setup.outputs.has_token == 'true'
+        with:
+          submodules: ${{ inputs.ee }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+      # else checkout without submodules if the token is not provided
+      - uses: actions/checkout@v3
+        if: steps.setup.outputs.has_token != 'true'
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
@@ -87,7 +89,7 @@ jobs:
           cd apps/ws && pnpm start:prod &
 
       - name: Wait on Widget and WS Services
-        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:3500
+        run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check http://127.0.0.1:3500/
 
       - name: Cypress install
         if: steps.setup-project.outputs.cypress_cache_hit != 'true'
@@ -95,14 +97,14 @@ jobs:
         run: pnpm cypress install
 
       - name: Cypress run
-        uses: cypress-io/github-action@v2
+        uses: cypress-io/github-action@v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WIDGET_KEY }}
         with:
           working-directory: apps/widget
-          wait-on: http://localhost:3500
+          wait-on: http://127.0.0.1:3500/
           browser: chrome
           install: false
           record: true

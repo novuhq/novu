@@ -1,0 +1,111 @@
+name: Deploy Web to Netlify
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      react_app_api_url:
+        required: true
+        type: string
+      react_app_ws_url:
+        required: true
+        type: string
+      react_app_webhook_url:
+        required: true
+        type: string
+      react_app_widget_embed_path:
+        required: true
+        type: string
+      react_app_sentry_dsn:
+        required: true
+        type: string
+      react_app_environment:
+        required: true
+        type: string
+      react_app_mail_server_domain:
+        required: true
+        type: string
+      react_app_hubspot_embed:
+        required: false
+        type: string
+      # Netlify inputs
+      netlify_deploy_message:
+        required: true
+        type: string
+      netlify_alias:
+        required: true
+        type: string
+      netlify_gh_env:
+        required: true
+        type: string
+      netlify_site_id:
+        required: true
+        type: string
+
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  reusable_web_deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+        name: Checkout with submodules
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: 'true'
+          submodules: true
+
+      - name: Create env file
+        working-directory: apps/web
+        run: |
+          touch .env
+          echo REACT_APP_SEGMENT_KEY=${{ secrets.WEB_SEGMENT_KEY }} >> .env
+          echo REACT_APP_INTERCOM_APP_ID=${{ secrets.INTERCOM_APP_ID }} >> .env
+          echo REACT_APP_API_URL=${{ inputs.react_app_api_url }} >> .env
+          echo REACT_APP_WS_URL=${{ inputs.react_app_ws_url }} >> .env
+          echo REACT_APP_WEBHOOK_URL=${{ inputs.react_app_webhook_url }} >> .env
+          echo REACT_APP_WIDGET_EMBED_PATH=${{ inputs.react_app_widget_embed_path }} >> .env
+          echo REACT_APP_NOVU_APP_ID=${{ secrets.NOVU_APP_ID }} >> .env
+          echo REACT_APP_SENTRY_DSN=${{ inputs.react_app_sentry_dsn }} >> .env
+          echo REACT_APP_ENVIRONMENT=${{ inputs.react_app_environment }} >> .env
+          echo REACT_APP_MAIL_SERVER_DOMAIN=${{ inputs.react_app_mail_server_domain }} >> .env
+          echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
+          echo REACT_APP_HUBSPOT_EMBED=${{ inputs.react_app_hubspot_embed }} >> .env
+          echo REACT_APP_STRIPE_CLIENT_KEY=${{ secrets.STRIPE_CLIENT_KEY }} >> .env
+
+      - name: Envsetup
+        working-directory: apps/web
+        run: npm run envsetup
+
+      - name: Build
+        run: CI='' pnpm build:web --skip-nx-cache
+
+      - name: Deploy WEB
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: apps/web/build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: ${{ inputs.netlify_deploy_message }}
+          production-deploy: true
+          alias: ${{ inputs.netlify_alias }}
+          github-deployment-environment: ${{ inputs.netlify_gh_env }}
+          github-deployment-description: Web Deployment
+          netlify-config-path: apps/web/netlify.toml
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ inputs.netlify_site_id }}
+        timeout-minutes: 1

@@ -14,6 +14,10 @@ export function getTemplateVariables(bod: any[]): IMustacheVariable[] {
     .filter((body) => body.type === 'MustacheStatement')
     .flatMap((body) => {
       const varName = body.params[0]?.original || (body.path.original as string);
+
+      if (body.path.original === HandlebarHelpersEnum.I18N) {
+        return [];
+      }
       if (!shouldAddVariable(varName)) {
         return [];
       }

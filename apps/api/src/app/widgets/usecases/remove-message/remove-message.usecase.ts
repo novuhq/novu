@@ -98,14 +98,14 @@ export class RemoveMessage {
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
     const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.webSocketsQueueService.add(
-      'sendMessage',
-      {
+    this.webSocketsQueueService.add({
+      name: 'sendMessage',
+      data: {
         event: eventMessage,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
       },
-      subscriber._organizationId
-    );
+      groupId: subscriber._organizationId,
+    });
   }
 }

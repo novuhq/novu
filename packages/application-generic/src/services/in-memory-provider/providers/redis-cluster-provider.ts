@@ -9,6 +9,8 @@ import { Logger } from '@nestjs/common';
 
 export { ChainableCommander, Cluster, ClusterOptions };
 
+import { convertStringValues } from './variable-mappers';
+
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
 const DEFAULT_CONNECT_TIMEOUT = 50000;
@@ -45,14 +47,16 @@ export interface IRedisClusterProviderConfig {
 export const getRedisClusterProviderConfig =
   (): IRedisClusterProviderConfig => {
     const redisClusterConfig: IRedisClusterConfig = {
-      host: process.env.REDIS_CLUSTER_SERVICE_HOST,
-      ports: process.env.REDIS_CLUSTER_SERVICE_PORTS,
-      ttl: process.env.REDIS_CLUSTER_TTL,
-      password: process.env.REDIS_CLUSTER_PASSWORD,
-      connectTimeout: process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT,
-      keepAlive: process.env.REDIS_CLUSTER_KEEP_ALIVE,
-      family: process.env.REDIS_CLUSTER_FAMILY,
-      keyPrefix: process.env.REDIS_CLUSTER_KEY_PREFIX,
+      host: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_HOST),
+      ports: convertStringValues(process.env.REDIS_CLUSTER_SERVICE_PORTS),
+      ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
+      password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
+      connectTimeout: convertStringValues(
+        process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT
+      ),
+      keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
+      family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
+      keyPrefix: convertStringValues(process.env.REDIS_CLUSTER_KEY_PREFIX),
       tls: process.env.REDIS_CLUSTER_TLS as ConnectionOptions,
     };
 

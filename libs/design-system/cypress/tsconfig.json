@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["**/*.ts", "global.d.ts", "../src/**/*.cy.{js,jsx,ts,tsx}"],
+  "exclude": [],
+  "compilerOptions": {
+    "types": ["cypress"],
+    "lib": ["es2015", "dom"],
+    "isolatedModules": false,
+    "allowJs": true
+  }
+}

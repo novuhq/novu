@@ -6,10 +6,9 @@ let inMemoryProviderService: InMemoryProviderService;
 describe('In-memory Provider Service', () => {
   describe('Non cluster mode', () => {
     beforeEach(async () => {
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
-
       inMemoryProviderService = new InMemoryProviderService(
-        InMemoryProviderEnum.REDIS
+        InMemoryProviderEnum.REDIS,
+        false
       );
 
       await inMemoryProviderService.delayUntilReadiness();
@@ -45,8 +44,6 @@ describe('In-memory Provider Service', () => {
       });
 
       it('should instantiate the provider properly', async () => {
-        expect(inMemoryProviderService.isClusterMode()).toEqual(false);
-
         const { inMemoryProviderClient } = inMemoryProviderService;
 
         expect(inMemoryProviderClient.status).toEqual('ready');
@@ -84,10 +81,9 @@ describe('In-memory Provider Service', () => {
 
   describe('Cluster mode', () => {
     beforeEach(async () => {
-      process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
-
       inMemoryProviderService = new InMemoryProviderService(
-        InMemoryProviderEnum.REDIS
+        InMemoryProviderEnum.REDIS,
+        true
       );
       await inMemoryProviderService.delayUntilReadiness();
 
@@ -102,6 +98,7 @@ describe('In-memory Provider Service', () => {
       it('enableAutoPipelining is enabled', async () => {
         const clusterWithPipelining = new InMemoryProviderService(
           InMemoryProviderEnum.REDIS,
+          true,
           true
         );
         await clusterWithPipelining.delayUntilReadiness();
@@ -147,8 +144,6 @@ describe('In-memory Provider Service', () => {
       });
 
       it('should instantiate the provider properly', async () => {
-        expect(inMemoryProviderService.isClusterMode()).toEqual(true);
-
         const { inMemoryProviderClient } = inMemoryProviderService;
 
         expect(inMemoryProviderClient.status).toEqual('ready');

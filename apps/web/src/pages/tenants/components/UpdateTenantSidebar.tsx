@@ -3,10 +3,9 @@ import { Group, Stack } from '@mantine/core';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-
 import { ITenantEntity, IUpdateTenantDto } from '@novu/shared';
+import { Button, colors, NameInput, Sidebar, Text } from '@novu/design-system';
 
-import { Button, colors, NameInput, Sidebar, Text } from '../../../design-system';
 import { getTenantByIdentifier, updateTenant } from '../../../api/tenants';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';

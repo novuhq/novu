@@ -1,6 +1,13 @@
 import { expect } from 'chai';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
-import { StepTypeEnum, INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
+import {
+  StepTypeEnum,
+  INotificationTemplate,
+  IUpdateNotificationTemplateDto,
+  FilterPartTypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+} from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dto';
 import { WorkflowResponse } from '../dto/workflow-response.dto';
@@ -29,6 +36,50 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
             type: StepTypeEnum.IN_APP,
             content: 'This is new content for notification',
           },
+          variants: [
+            {
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: FieldLogicalOperatorEnum.AND,
+                  children: [
+                    {
+                      on: FilterPartTypeEnum.TENANT,
+                      field: 'name',
+                      value: 'Titans',
+                      operator: FieldOperatorEnum.EQUAL,
+                    },
+                  ],
+                },
+              ],
+              template: {
+                type: StepTypeEnum.IN_APP,
+                content: 'first content',
+              },
+            },
+            {
+              filters: [
+                {
+                  isNegated: false,
+                  type: 'GROUP',
+                  value: FieldLogicalOperatorEnum.AND,
+                  children: [
+                    {
+                      on: FilterPartTypeEnum.TENANT,
+                      field: 'name',
+                      value: 'Titans',
+                      operator: FieldOperatorEnum.EQUAL,
+                    },
+                  ],
+                },
+              ],
+              template: {
+                type: StepTypeEnum.IN_APP,
+                content: 'second content',
+              },
+            },
+          ],
         },
       ],
     };
@@ -39,7 +90,19 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     expect(foundTemplate.name).to.equal('new name for notification');
     expect(foundTemplate.description).to.equal(template.description);
     expect(foundTemplate.steps.length).to.equal(1);
-    expect(foundTemplate.steps[0].template.content).to.equal(update.steps[0].template.content);
+
+    const updateRequestStep = update.steps ? update.steps[0] : undefined;
+    expect(foundTemplate.steps[0].template?.content).to.equal(updateRequestStep?.template?.content);
+
+    const fountVariant = foundTemplate.steps[0].variants ? foundTemplate.steps[0].variants[0] : undefined;
+    const updateRequestStepVariant = updateRequestStep?.variants ? updateRequestStep?.variants[0] : undefined;
+    expect(fountVariant?.template?.content).to.equal(updateRequestStepVariant?.template?.content);
+
+    // test variant parent id
+    const firstVariant = foundTemplate.steps[0].variants ? foundTemplate.steps[0].variants[0] : undefined;
+    expect(firstVariant?._parentId).to.equal(null);
+    const secondVariant = foundTemplate.steps[0].variants ? foundTemplate.steps[0].variants[1] : undefined;
+    expect(secondVariant?._parentId).to.equal(firstVariant?._id);
 
     const change = await changeRepository.findOne({
       _environmentId: session.environment._id,
@@ -179,6 +242,7 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
             name: 'Message Name',
             subject: 'Test email subject',
             preheader: 'Test email preheader',
+            senderName: 'Test email sender name',
             type: StepTypeEnum.EMAIL,
             content: [],
           },
@@ -209,7 +273,8 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
             template: {
               name: 'Message Name',
               subject: 'Test email subject',
-              preheader: '',
+              preheader: 'updated preheader',
+              senderName: 'updated sender name',
               type: StepTypeEnum.EMAIL,
               content: [],
               cta: null,
@@ -235,7 +300,8 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     const steps = updated.data.steps;
 
     expect(steps[0]._parentId).to.equal(null);
-    expect(steps[0].template.preheader).to.equal('');
+    expect(steps[0].template.preheader).to.equal('updated preheader');
+    expect(steps[0].template.senderName).to.equal('updated sender name');
     expect(steps[0]._id).to.equal(steps[1]._parentId);
     expect(steps[1]._id).to.equal(steps[2]._parentId);
   });
@@ -290,5 +356,31 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     expect(updatedTemplate.name).to.equal(testTemplate.name);
     expect(updatedTemplate.steps[0].replyCallback?.active).to.equal(true);
     expect(updatedTemplate.steps[0].replyCallback?.url).to.equal('acme-corp.com/webhook');
+  });
+
+  it('should not able to update step with invalid action', async function () {
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.environment._id
+    );
+    const workflow = await notificationTemplateService.createTemplate();
+    const invalidAction = '';
+    const update: IUpdateNotificationTemplateDto = {
+      steps: [
+        {
+          template: {
+            type: StepTypeEnum.IN_APP,
+            cta: { action: invalidAction } as any,
+            content: 'This is new content for notification',
+          },
+        },
+      ],
+    };
+
+    const { body } = await session.testAgent.put(`/v1/workflows/${workflow._id}`).send(update);
+
+    expect(body.message).to.equal('Please provide a valid CTA action');
+    expect(body.statusCode).to.equal(400);
   });
 });

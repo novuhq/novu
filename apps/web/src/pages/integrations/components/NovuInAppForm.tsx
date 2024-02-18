@@ -7,8 +7,7 @@ import { ICredentialsDto } from '@novu/shared';
 
 import { IIntegratedProvider } from '../types';
 import { updateIntegration } from '../../../api/integration';
-import { Switch, Button, colors } from '../../../design-system';
-import { CircleArrowRight } from '../../../design-system/icons';
+import { Switch, Button, colors, CircleArrowRight } from '@novu/design-system';
 import { When } from '../../../components/utils/When';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 

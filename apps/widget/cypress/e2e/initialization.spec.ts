@@ -33,8 +33,8 @@ describe('Initialization with enabled HMAC encryption in shell', function () {
       .as('session')
       .then((session: any) => {
         cy.wait(500);
-        Cypress.config('baseUrl', 'http://localhost:3500');
-        const WidgetURL = `http://localhost:3500/${session.environment.identifier}`;
+        Cypress.config('baseUrl', 'http://127.0.0.1:3500');
+        const WidgetURL = `http://127.0.0.1:3500/${session.environment.identifier}`;
         return cy.forceVisit(WidgetURL);
       });
     cy.wait('@sessionInitialize', {

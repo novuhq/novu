@@ -66,19 +66,19 @@ export async function bootstrap(): Promise<INestApplication> {
   app.use(bodyParser.json());
   app.use(bodyParser.urlencoded({ extended: true }));
 
-  // Starts listening for shutdown hooks
   app.enableShutdownHooks();
 
   Logger.log('BOOTSTRAPPED SUCCESSFULLY');
 
-  await app.listen(process.env.PORT);
+  await app.init();
 
-  if (process.env.NOVU_MANAGED_SERVICE) {
-    // Temporarily Workaround around a race condition with app enablement
-    await new Promise((resolve) => setTimeout(resolve, 7000));
+  try {
+    await startAppInfra(app);
+  } catch (e) {
+    process.exit(1);
   }
 
-  await startAppInfra(app);
+  await app.listen(process.env.PORT);
 
   Logger.log(`Started application in NODE_ENV=${process.env.NODE_ENV} on port ${process.env.PORT}`);
 

@@ -4,7 +4,7 @@ import { ChangeEntityTypeEnum } from '@novu/shared';
 
 import { DeleteFeedCommand } from './delete-feed.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
+import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
 
 @Injectable()
 export class DeleteFeed {

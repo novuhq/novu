@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   MessageRepository,
   NotificationStepEntity,
@@ -7,7 +9,6 @@ import {
   IntegrationEntity,
   MessageEntity,
   LayoutRepository,
-  TenantRepository,
 } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -22,13 +23,14 @@ import * as Sentry from '@sentry/node';
 import {
   InstrumentUsecase,
   DetailEnum,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
   SelectIntegration,
   CompileEmailTemplate,
   CompileEmailTemplateCommand,
   MailFactory,
   GetNovuProviderCredentials,
+  SelectVariant,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
@@ -47,32 +49,28 @@ export class SendMessageEmail extends SendMessageBase {
     protected subscriberRepository: SubscriberRepository,
     protected messageRepository: MessageRepository,
     protected layoutRepository: LayoutRepository,
-    protected tenantRepository: TenantRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogRoute: ExecutionLogRoute,
     private compileEmailTemplateUsecase: CompileEmailTemplate,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant,
+    protected moduleRef: ModuleRef
   ) {
     super(
       messageRepository,
       createLogUsecase,
-      createExecutionDetails,
+      executionLogRoute,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant,
+      moduleRef
     );
   }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-    if (!subscriber) throw new PlatformException(`Subscriber ${command.subscriberId} not found`);
-
     let integration: IntegrationEntity | undefined = undefined;
 
     const overrideSelectedIntegration = command.overrides?.email?.integrationIdentifier;
@@ -88,9 +86,9 @@ export class SendMessageEmail extends SendMessageBase {
         },
       });
     } catch (e) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.LIMIT_PASSED_NOVU_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -103,10 +101,12 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    const emailChannel: NotificationStepEntity = command.step;
-    if (!emailChannel) throw new PlatformException('Email channel step not found');
-    if (!emailChannel.template) throw new PlatformException('Email channel template not found');
+    const step: NotificationStepEntity = command.step;
 
+    if (!step) throw new PlatformException('Email channel step not found');
+    if (!step.template) throw new PlatformException('Email channel template not found');
+
+    const { subscriber } = command.compileContext;
     const email = command.payload.email || subscriber.email;
 
     Sentry.addBreadcrumb({
@@ -114,9 +114,9 @@ export class SendMessageEmail extends SendMessageBase {
     });
 
     if (!integration) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -135,11 +135,15 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    const [tenant, overrideLayoutId] = await Promise.all([
-      this.handleTenantExecution(command.job),
+    const [template, overrideLayoutId] = await Promise.all([
+      this.processVariants(command),
       this.getOverrideLayoutId(command),
       this.sendSelectedIntegrationExecution(command.job, integration),
     ]);
+
+    if (template) {
+      step.template = template;
+    }
 
     const overrides: Record<string, any> = Object.assign(
       {},
@@ -148,27 +152,18 @@ export class SendMessageEmail extends SendMessageBase {
     );
 
     let html;
-    let subject = '';
+    let subject = step?.template?.subject || '';
     let content;
-    let senderName = overrides?.senderName || emailChannel.template.senderName;
+    let senderName;
 
     const payload = {
-      senderName: emailChannel.template.senderName || '',
-      subject: emailChannel.template.subject || '',
-      preheader: emailChannel.template.preheader,
-      content: emailChannel.template.content,
-      layoutId: overrideLayoutId ?? emailChannel.template._layoutId,
-      contentType: emailChannel.template.contentType ? emailChannel.template.contentType : 'editor',
-      payload: {
-        ...command.payload,
-        step: {
-          digest: !!command.events?.length,
-          events: command.events,
-          total_count: command.events?.length,
-        },
-        ...(tenant && { tenant }),
-        subscriber,
-      },
+      senderName: step.template.senderName,
+      subject,
+      preheader: step.template.preheader,
+      content: step.template.content,
+      layoutId: overrideLayoutId ?? step.template._layoutId,
+      contentType: step.template.contentType ? step.template.contentType : 'editor',
+      payload: this.getCompilePayload(command.compileContext),
     };
 
     const messagePayload = Object.assign({}, command.payload);
@@ -180,7 +175,7 @@ export class SendMessageEmail extends SendMessageBase {
       _organizationId: command.organizationId,
       _subscriberId: command._subscriberId,
       _templateId: command._templateId,
-      _messageTemplateId: emailChannel.template._id,
+      _messageTemplateId: step.template._id,
       subject,
       channel: ChannelTypeEnum.EMAIL,
       transactionId: command.transactionId,
@@ -212,7 +207,8 @@ export class SendMessageEmail extends SendMessageBase {
           organizationId: command.organizationId,
           userId: command.userId,
           ...payload,
-        })
+        }),
+        this.initiateTranslations.bind(this)
       ));
 
       if (this.storeContent()) {
@@ -241,9 +237,9 @@ export class SendMessageEmail extends SendMessageBase {
       return;
     }
 
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         detail: DetailEnum.MESSAGE_CREATED,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.PENDING,
@@ -271,6 +267,7 @@ export class SendMessageEmail extends SendMessageBase {
         html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
+        senderName,
         id: message._id,
         replyTo: replyToAddress,
         notificationDetails: {
@@ -291,7 +288,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     if (email && integration) {
-      await this.sendMessage(integration, mailData, message, command, senderName);
+      await this.sendMessage(integration, mailData, message, command);
 
       return;
     }
@@ -300,9 +297,9 @@ export class SendMessageEmail extends SendMessageBase {
 
   private async getReplyTo(command: SendMessageCommand, messageId: string): Promise<string | null> {
     if (!command.step.replyCallback?.url) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: messageId,
           detail: DetailEnum.REPLY_CALLBACK_MISSING_REPLAY_CALLBACK_URL,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -330,9 +327,9 @@ export class SendMessageEmail extends SendMessageBase {
           ? DetailEnum.REPLY_CALLBACK_MISSING_MX_RECORD_CONFIGURATION
           : DetailEnum.REPLY_CALLBACK_MISSING_MX_ROUTE_DOMAIN_CONFIGURATION;
 
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: messageId,
           detail: detailEnum,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -363,9 +360,9 @@ export class SendMessageEmail extends SendMessageBase {
         LogCodeEnum.SUBSCRIBER_MISSING_EMAIL
       );
 
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_CHANNEL_DETAILS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -390,9 +387,9 @@ export class SendMessageEmail extends SendMessageBase {
         LogCodeEnum.MISSING_EMAIL_INTEGRATION
       );
 
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -410,20 +407,19 @@ export class SendMessageEmail extends SendMessageBase {
     integration: IntegrationEntity,
     mailData: IEmailOptions,
     message: MessageEntity,
-    command: SendMessageCommand,
-    senderName?: string
+    command: SendMessageCommand
   ) {
     const mailFactory = new MailFactory();
-    const mailHandler = mailFactory.getHandler(this.buildFactoryIntegration(integration, senderName), mailData.from);
+    const mailHandler = mailFactory.getHandler(this.buildFactoryIntegration(integration), mailData.from);
 
     try {
       const result = await mailHandler.send(mailData);
 
       Logger.verbose({ command }, 'Email message has been sent', LOG_CONTEXT);
 
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.MESSAGE_SENT,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -459,9 +455,9 @@ export class SendMessageEmail extends SendMessageBase {
         error
       );
 
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           messageId: message._id,
           detail: DetailEnum.PROVIDER_ERROR,
           source: ExecutionDetailsSourceEnum.INTERNAL,
@@ -488,9 +484,9 @@ export class SendMessageEmail extends SendMessageBase {
         '_id'
       );
       if (!layoutOverride) {
-        await this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        await this.executionLogRoute.execute(
+          ExecutionLogRouteCommand.create({
+            ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
             detail: DetailEnum.LAYOUT_NOT_FOUND,
             source: ExecutionDetailsSourceEnum.INTERNAL,
             status: ExecutionDetailsStatusEnum.FAILED,
@@ -512,7 +508,6 @@ export class SendMessageEmail extends SendMessageBase {
       ...integration,
       credentials: {
         ...integration.credentials,
-        senderName: senderName && senderName.length > 0 ? senderName : integration.credentials.senderName,
       },
       providerId: integration.providerId,
     };
@@ -532,9 +527,12 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     to,
     from: overrides?.from || options.from,
     text: overrides?.text,
+    html: overrides?.html || overrides?.text || options.html,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
     ...ipPoolName,
+    senderName: overrides?.senderName || options.senderName,
+    subject: overrides?.subject || options.subject,
     customData: overrides?.customData || {},
   };
 };

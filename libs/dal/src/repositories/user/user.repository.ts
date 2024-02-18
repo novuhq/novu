@@ -15,6 +15,13 @@ export class UserRepository extends BaseRepository<UserDBModel, UserEntity, obje
     });
   }
 
+  async findById(id: string, select?: string): Promise<UserEntity | null> {
+    const data = await this.MongooseModel.findById(id, select);
+    if (!data) return null;
+
+    return this.mapEntity(data.toObject());
+  }
+
   private hashResetToken(token: string) {
     return createHash('sha256').update(token).digest('hex');
   }

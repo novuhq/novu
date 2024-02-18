@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import styled from '@emotion/styled';
 
-import { colors, DotsNavigation } from '../../../../design-system';
+import { colors, DotsNavigation } from '@novu/design-system';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../../constants/routes.enum';
 import { Grid } from '@mantine/core';

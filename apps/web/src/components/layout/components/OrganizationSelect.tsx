@@ -4,7 +4,7 @@ import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
 import { IOrganizationEntity } from '@novu/shared';
 
-import { Select } from '../../../design-system';
+import { Select } from '@novu/design-system';
 import { addOrganization, switchOrganization } from '../../../api/organization';
 import { useAuthContext } from '../../providers/AuthProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';

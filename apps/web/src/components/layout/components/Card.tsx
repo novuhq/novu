@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container, Space, Sx } from '@mantine/core';
-import { Title } from '../../../design-system';
+import { Title } from '@novu/design-system';
 
 const Card = ({
   title,

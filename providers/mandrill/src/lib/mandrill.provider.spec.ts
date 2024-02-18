@@ -3,6 +3,7 @@ import { MandrillProvider } from './mandrill.provider';
 const mockConfig = {
   apiKey: 'API_KEY',
   from: 'test@test.com',
+  senderName: 'Test Sender',
 };
 
 test('should trigger mandrill correctly', async () => {
@@ -33,6 +34,7 @@ test('should trigger mandrill correctly', async () => {
   expect(spy).toHaveBeenCalledWith({
     message: {
       from_email: mockConfig.from,
+      from_name: mockConfig.senderName,
       subject: mockNovuMessage.subject,
       html: mockNovuMessage.html,
       to: [

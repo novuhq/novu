@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '../../../constants/routes.enum';
-import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
+import { colors, NavMenu, SegmentedControl, shadows, Translation } from '@novu/design-system';
 import {
   Activity,
   Bolt,
@@ -24,12 +24,13 @@ import {
   Repeat,
   Settings,
   Team,
-} from '../../../design-system/icons';
-import { useEnvController, useIsMultiTenancyEnabled } from '../../../hooks';
+} from '@novu/design-system';
+import { useEnvController, useFeatureFlag } from '../../../hooks';
 import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -62,7 +63,8 @@ export function SideNav({}: Props) {
   const dark = colorScheme === 'dark';
   const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
-  const isMultiTenancyEnabled = useIsMultiTenancyEnabled();
+  const isMultiTenancyEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MULTI_TENANCY_ENABLED);
+  const isTranslationManagerEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_MANAGER_ENABLED);
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -102,6 +104,13 @@ export function SideNav({}: Props) {
       link: ROUTES.SUBSCRIBERS,
       label: 'Subscribers',
       testId: 'side-nav-subscribers-link',
+    },
+    {
+      condition: isTranslationManagerEnabled,
+      icon: <Translation width={20} height={20} />,
+      link: ROUTES.TRANSLATIONS,
+      label: 'Translations',
+      testId: 'side-nav-translations-link',
     },
     {
       icon: <Brand />,

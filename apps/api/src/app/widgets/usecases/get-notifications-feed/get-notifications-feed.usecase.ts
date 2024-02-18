@@ -69,7 +69,7 @@ export class GetNotificationsFeed {
     );
 
     if (feed.length) {
-      this.analyticsService.track('Fetch Feed - [Notification Center]', command.organizationId, {
+      this.analyticsService.mixpanelTrack('Fetch Feed - [Notification Center]', '', {
         _subscriber: feed[0]?._subscriberId,
         _organization: command.organizationId,
         feedSize: feed.length,

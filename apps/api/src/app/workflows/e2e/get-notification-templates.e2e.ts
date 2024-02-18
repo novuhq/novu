@@ -1,6 +1,14 @@
 import { expect } from 'chai';
 import { NotificationTemplateEntity } from '@novu/dal';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
+import {
+  ChannelCTATypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  FilterPartTypeEnum,
+  StepTypeEnum,
+  TemplateVariableTypeEnum,
+} from '@novu/shared';
 
 describe('Get workflows - /workflows (GET)', async () => {
   let session: UserSession;
@@ -17,7 +25,54 @@ describe('Get workflows - /workflows (GET)', async () => {
       session.environment._id
     );
 
-    templates.push(await notificationTemplateService.createTemplate());
+    templates.push(
+      await notificationTemplateService.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.IN_APP,
+            content: 'Test content for <b>{{firstName}}</b>',
+            cta: {
+              type: ChannelCTATypeEnum.REDIRECT,
+              data: {
+                url: '/cypress/test-shell/example/test?test-param=true',
+              },
+            },
+            variables: [
+              {
+                defaultValue: '',
+                name: 'firstName',
+                required: false,
+                type: TemplateVariableTypeEnum.STRING,
+              },
+            ],
+            variants: [
+              {
+                name: 'In-App',
+                subject: 'test',
+                type: StepTypeEnum.IN_APP,
+                content: '',
+                contentType: 'editor',
+                variables: [],
+                active: true,
+                filters: [
+                  {
+                    value: FieldLogicalOperatorEnum.OR,
+                    children: [
+                      {
+                        operator: FieldOperatorEnum.EQUAL,
+                        on: FilterPartTypeEnum.PAYLOAD,
+                        field: 'ef',
+                        value: 'dsf',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+    );
     templates.push(await notificationTemplateService.createTemplate());
     templates.push(await notificationTemplateService.createTemplate());
   });
@@ -32,6 +87,19 @@ describe('Get workflows - /workflows (GET)', async () => {
     expect(found).to.be.ok;
     expect(found.name).to.equal(templates[0].name);
     expect(found.notificationGroup.name).to.equal('General');
+  });
+
+  it('should not include variants data in the response', async () => {
+    const { body } = await session.testAgent.get(`/v1/workflows`);
+
+    expect(body.data.length).to.equal(3);
+
+    const found = body.data.find((i) => templates[0]._id === i._id);
+
+    expect(found).to.be.ok;
+    expect(found.name).to.equal(templates[0].name);
+    expect(found.notificationGroup.name).to.equal('General');
+    expect(found.steps[0].variants).to.be.undefined;
   });
 
   it('should return all workflows as per pagination', async () => {

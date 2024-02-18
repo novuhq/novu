@@ -1,4 +1,5 @@
 import * as capitalize from 'lodash.capitalize';
+import { JobTitleEnum, jobTitleToLabelMapper } from '@novu/shared';
 
 describe('User Sign-up and Login', function () {
   describe('Sign up', function () {
@@ -14,10 +15,17 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('email').type('example@example.com');
       cy.getByTestId('password').type('usEr_password_123!');
       cy.getByTestId('accept-cb').click({ force: true });
+
       cy.getByTestId('submitButton').click();
+
       cy.location('pathname').should('equal', '/auth/application');
-      cy.getByTestId('app-creation').type('Organization Name');
+      cy.getByTestId('questionnaire-job-title').click();
+      cy.get('.mantine-Select-item').contains(jobTitleToLabelMapper[JobTitleEnum.PRODUCT_MANAGER]).click();
+      cy.getByTestId('questionnaire-company-name').type('Company Name');
+      cy.getByTestId('check-box-container-multi_channel').trigger('mouseover').click();
+
       cy.getByTestId('submit-btn').click();
+
       cy.location('pathname').should('equal', '/get-started');
     });
 
@@ -51,7 +59,7 @@ describe('User Sign-up and Login', function () {
       cy.loginWithGitHub();
 
       cy.location('pathname').should('equal', '/auth/application');
-      cy.getByTestId('app-creation').type('Organization Name');
+      cy.getByTestId('questionnaire-company-name').type('Organization Name');
       cy.getByTestId('submit-btn').click();
 
       cy.location('pathname').should('equal', '/quickstart');
@@ -82,7 +90,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('submitButton').click();
 
       cy.location('pathname').should('equal', '/auth/application');
-      cy.getByTestId('app-creation').type('Organization Name');
+      cy.getByTestId('questionnaire-company-name').type('Organization Name');
       cy.getByTestId('submit-btn').click();
 
       cy.location('pathname').should('equal', '/quickstart');

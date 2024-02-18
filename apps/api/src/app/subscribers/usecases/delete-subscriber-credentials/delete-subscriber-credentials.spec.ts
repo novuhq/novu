@@ -55,7 +55,10 @@ describe('Delete subscriber provider credentials', function () {
       })
     );
 
-    let updatedSubscriber = await subscriberRepository.findById(subscriber._id);
+    let updatedSubscriber = await subscriberRepository.findOne({
+      _id: subscriber._id,
+      _environmentId: subscriber._environmentId,
+    });
 
     const newDiscordProvider = updatedSubscriber?.channels?.find(
       (channel) => channel.providerId === ChatProviderIdEnum.Discord
@@ -72,7 +75,10 @@ describe('Delete subscriber provider credentials', function () {
       })
     );
 
-    updatedSubscriber = await subscriberRepository.findById(subscriber._id);
+    updatedSubscriber = await subscriberRepository.findOne({
+      _id: subscriber._id,
+      _environmentId: subscriber._environmentId,
+    });
 
     const isDiscordProviderDeleted = updatedSubscriber?.channels?.find(
       (channel) => channel.providerId === ChatProviderIdEnum.Discord

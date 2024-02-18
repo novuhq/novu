@@ -5,7 +5,7 @@ import { showNotification } from '@mantine/notifications';
 import { Group } from '@mantine/core';
 
 import { ConfirmRegenerationModal } from './ConfirmRegenerationModal';
-import { Button, Text } from '../../../../design-system';
+import { Button, Text } from '@novu/design-system';
 import { regenerateApiKeys } from '../../../../api/environment';
 
 export const Regenerate = ({ fetchApiKeys }: { fetchApiKeys: () => void }) => {

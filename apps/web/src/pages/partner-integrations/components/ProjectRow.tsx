@@ -6,7 +6,7 @@ import { useIntersection } from '@mantine/hooks';
 import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query';
 import { IOrganizationEntity } from '@novu/shared';
 
-import { Text, Select } from '../../../design-system';
+import { Text, Select } from '@novu/design-system';
 import { ProjectLinkFormValues } from './LinkProjectContainer';
 
 type ProjectDataType = {

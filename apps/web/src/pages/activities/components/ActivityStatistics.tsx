@@ -4,7 +4,7 @@ import { Skeleton, useMantineTheme } from '@mantine/core';
 
 import { getActivityStats } from '../../../api/activity';
 import { formatNumber } from '../../../utils';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 
 export function ActivityStatistics() {
   const { data: activityStats } = useQuery<{

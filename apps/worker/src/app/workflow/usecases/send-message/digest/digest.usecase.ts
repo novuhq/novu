@@ -1,18 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MessageRepository, JobRepository, JobStatusEnum } from '@novu/dal';
+import { MessageRepository, JobRepository, JobStatusEnum, JobEntity } from '@novu/dal';
 import {
   StepTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   DigestTypeEnum,
   IDigestRegularMetadata,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
 import {
   DetailEnum,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  GetUseMergedDigestId,
-  FeatureFlagCommand,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
@@ -32,18 +33,21 @@ export class Digest extends SendMessageType {
   constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogRoute: ExecutionLogRoute,
     protected jobRepository: JobRepository,
     private getDigestEventsRegular: GetDigestEventsRegular,
     private getDigestEventsBackoff: GetDigestEventsBackoff,
-    private getUseMergedDigestId: GetUseMergedDigestId
+    private getFeatureFlag: GetFeatureFlag
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, executionLogRoute);
   }
 
   public async execute(command: SendMessageCommand) {
-    const useMergedDigestId = await this.getUseMergedDigestId.execute(
-      FeatureFlagCommand.create({
+    const currentJob = await this.getCurrentJob(command);
+
+    const useMergedDigestId = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        key: FeatureFlagsKeysEnum.IS_USE_MERGED_DIGEST_ID_ENABLED,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
@@ -52,18 +56,18 @@ export class Digest extends SendMessageType {
 
     const getEvents = useMergedDigestId ? this.getEvents.bind(this) : this.backwardCompatibleGetEvents.bind(this);
 
-    const events = await getEvents(command);
+    const events = await getEvents(command, currentJob);
     const nextJobs = await this.getJobsToUpdate(command);
 
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: DetailEnum.DIGESTED_EVENTS_PROVIDED,
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+        detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(nextJobs),
+        raw: JSON.stringify(events),
       })
     );
 
@@ -76,17 +80,13 @@ export class Digest extends SendMessageType {
       },
       {
         $set: {
-          digest: {
-            events,
-          },
+          'digest.events': events,
         },
       }
     );
   }
 
-  private async getEvents(command: SendMessageCommand) {
-    const currentJob = await this.getCurrentJob(command);
-
+  private async getEvents(command: SendMessageCommand, currentJob: JobEntity) {
     const jobs = await this.jobRepository.find(
       {
         _mergedDigestId: currentJob._id,
@@ -101,9 +101,7 @@ export class Digest extends SendMessageType {
     return [currentJob.payload, ...jobs.map((job) => job.payload)];
   }
 
-  private async backwardCompatibleGetEvents(command: SendMessageCommand) {
-    const currentJob = await this.getCurrentJob(command);
-
+  private async backwardCompatibleGetEvents(command: SendMessageCommand, currentJob: JobEntity) {
     const digestEventsCommand = DigestEventsCommand.create({
       currentJob,
       _subscriberId: command._subscriberId,

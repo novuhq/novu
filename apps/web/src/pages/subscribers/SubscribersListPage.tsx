@@ -6,9 +6,7 @@ import type { ISubscriber } from '@novu/shared';
 import { useSubscribers } from '../../hooks';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
-import { Table, withCellLoading, IExtendedColumn } from '../../design-system';
-import { ViewportWide } from '../../design-system/icons/general/ViewportWide';
-import { HoverCard } from '../../design-system/hover-card/HoverCard';
+import { Table, withCellLoading, IExtendedColumn, ViewportWide, HoverCard } from '@novu/design-system';
 
 const columns: IExtendedColumn<ISubscriber>[] = [
   {

@@ -7,13 +7,14 @@ import { AppService } from './app.service';
 import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
 import { WebhooksModule } from './webhooks/webhooks.module';
-import { createNestLoggingModuleOptions, LoggerModule } from '@novu/application-generic';
+import { createNestLoggingModuleOptions, LoggerModule, TracingModule } from '@novu/application-generic';
 const packageJson = require('../package.json');
 
 const modules = [
   SharedModule,
   HealthModule,
   WebhooksModule,
+  TracingModule.register(packageJson.name),
   LoggerModule.forRoot(
     createNestLoggingModuleOptions({
       serviceName: packageJson.name,

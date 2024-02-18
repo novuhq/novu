@@ -1,78 +1,72 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+<div align="center">
+  <a href="https://novu.co" target="_blank">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
+    <img src="https://user-images.githubusercontent.com/2233092/213641043-3bbb3f21-3c53-4e67-afe5-755aeb222159.png" width="280" alt="Logo"/>
+  </picture>
+  </a>
+</div>
 
-[travis-image]: https://api.travis-ci.org/nestjs/nest.svg?branch=main
-[travis-url]: https://travis-ci.org/nestjs/nest
-[linux-image]: https://img.shields.io/travis/nestjs/nest/master.svg?label=linux
-[linux-url]: https://travis-ci.org/nestjs/nest
-  <p align="center">A progressive <a href="http://nodejs.org" target="blank">Node.js</a> framework for building efficient and scalable server-side applications, heavily inspired by <a href="https://angular.io" target="blank">Angular</a>.</p>
-  <p align="center">
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/dm/@nestjs/core.svg" alt="NPM Downloads" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://api.travis-ci.org/nestjs/nest.svg?branch=master" alt="Travis" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://img.shields.io/travis/nestjs/nest/master.svg?label=linux" alt="Linux" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#5" alt="Coverage" /></a>
-<a href="https://gitter.im/nestjs/nestjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge"><img src="https://badges.gitter.im/nestjs/nestjs.svg" alt="Gitter" /></a>
-<a href="https://opencollective.com/nest#backer"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec"><img src="https://img.shields.io/badge/Donate-PayPal-dc3d53.svg"/></a>
-  <a href="https://twitter.com/nestframework"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+# @novu/api
 
-## Description
+A RESTful API for accessing the Novu platform, built using [NestJS](https://nestjs.com/).
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## OpenAPI (formerly Swagger)
 
-## Installation
+The Novu API utilizes the [`@nestjs/swagger`](https://github.com/nestjs/swagger) package to generate up-to-date OpenAPI specifications.
+
+A web interface to browse the published endpoints is available during local development at [localhost:3000/openapi](https://localhost:3000/openapi). An OpenAPI specification can be retrieved at [api.novu.co/openapi.yaml](https://api.novu.co/openapi.yaml).
+
+To maintain consistency and quality of OpenAPI documentation, Novu uses [Spectral](https://github.com/stoplightio/spectral) to validate the OpenAPI specification and enforce style. The OpenAPI specification is run through a Github action on pull request, and call also be run locally after starting the API with:
 
 ```bash
-$ npm install
+$ npm run lint:openapi
 ```
 
-## Running the app
+The command will return warnings and errors that must be fixed before the Github action will pass. These fixes are created by making changes through the `@nestjs/swagger` decorators.
+
+## Running the API
+
+See the docs for [Run in Local Machine](https://docs.novu.co/community/run-in-local-machine) to get setup. Then run:
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# incremental rebuild (webpack)
-$ npm run webpack
-$ npm run start:hmr
-
-# production mode
-$ npm run start:prod
+# Run the API in watch mode
+$ npm run start:api
 ```
 
 ## Test
 
+### Unit Tests
 ```bash
 # unit tests
 $ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
 ```
 
-## Support
+### E2E tests
+See the docs for [Running on Local Machine - API Tests](https://docs.novu.co/community/run-in-local-machine#api).
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Migrations
+Database migrations are included for features that have a hard dependency on specific data being available on database entities. These migrations are run by both Novu Cloud and Novu Self-Hosted users to support new feature releases.
 
-## Stay in touch
+### How to Run
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+The `npm run migration` script is available in the `package.json` to ensure script changes are DRY and consistent. This script is included in user-facing communications such as our documentation and release notes, and the script naming therefore MUST remain stable.
 
-## License
+The path to the migration to run is passed as a positional argument to the script. For example, to run the Add Integration Identifier script, we would enter the following:
 
-Nest is [MIT licensed](LICENSE).
+```bash
+npm run migration -- ./migrations/integration-scheme-update/add-integration-identifier-migration.ts
+```
+
+### Conventions
+
+These migrations live in the `./migrations` directory, and follow the naming convention of:
+`./migrations/<CHANGE_DESCRIPTION>/<CHANGE_ACTION>.ts`. Each `<CHANGE_DESCRIPTION>` may have 1 or more `<CHANGE_ACTION>.ts` scripts. For example:
+
+```
+.
+└── migrations/
+    └── integration-scheme-update/
+        ├── add-integration-identifier-migration.ts
+        └── add-primary-priority-migration.ts
+```

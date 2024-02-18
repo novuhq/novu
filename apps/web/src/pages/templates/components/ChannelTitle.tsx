@@ -1,6 +1,6 @@
 import { Group } from '@mantine/core';
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { Chat, DigestGradient, InApp, Mail, Mobile, Sms, TimerGradient } from '../../../design-system/icons';
+import { Chat, DigestGradient, InApp, Mail, Mobile, Sms, TimerGradient } from '@novu/design-system';
 
 export const ChannelTitle = ({
   channel,

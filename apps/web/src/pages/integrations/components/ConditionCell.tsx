@@ -1,6 +1,5 @@
 import { Group, useMantineColorScheme } from '@mantine/core';
-import { colors, IExtendedCellProps, withCellLoading } from '../../../design-system';
-import { Condition } from '../../../design-system/icons';
+import { colors, IExtendedCellProps, withCellLoading, Condition } from '@novu/design-system';
 import type { ITableIntegration } from '../types';
 
 const ConditionCellBase = ({ row: { original } }: IExtendedCellProps<ITableIntegration>) => {

@@ -18,13 +18,11 @@ import {
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
 
-import { Button, colors, Input, shadows, Switch, Text } from '../../../../design-system';
+import { Button, colors, Input, shadows, Switch, Text, Close, Check, Copy } from '@novu/design-system';
 import type { IIntegratedProvider } from '../../types';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../../api/integration';
-import { Close } from '../../../../design-system/icons';
 import { IntegrationInput } from '../IntegrationInput';
 import { API_ROOT, CONTEXT_PATH } from '../../../../config';
-import { Check, Copy } from '../../../../design-system/icons';
 import { successMessage } from '../../../../utils/notifications';
 import { QueryKeys } from '../../../../api/query.keys';
 import { useSegment } from '../../../../components/providers/SegmentProvider';

@@ -51,13 +51,13 @@ describe('Encrypt Old Credentials', function () {
       });
     }
 
-    const newIntegration = await integrationRepository.find({});
+    const newIntegration = await integrationRepository.find({} as any);
 
     expect(newIntegration.length).to.equal(2);
 
     await encryptOldCredentialsMigration();
 
-    const encryptIntegration = await integrationRepository.find({});
+    const encryptIntegration = await integrationRepository.find({} as any);
 
     for (const integrationKey in encryptIntegration) {
       const integration = encryptIntegration[integrationKey];

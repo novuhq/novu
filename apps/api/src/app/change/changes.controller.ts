@@ -9,9 +9,9 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IJwtPayload } from '@novu/shared';
+import { ApiRateLimitCostEnum, IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ApplyChange, ApplyChangeCommand } from './usecases';
 import { GetChanges } from './usecases/get-changes/get-changes.usecase';
 import { GetChangesCommand } from './usecases/get-changes/get-changes.command';
@@ -19,17 +19,19 @@ import { BulkApplyChange } from './usecases/bulk-apply-change/bulk-apply-change.
 import { BulkApplyChangeCommand } from './usecases/bulk-apply-change/bulk-apply-change.command';
 import { CountChanges } from './usecases/count-changes/count-changes.usecase';
 import { CountChangesCommand } from './usecases/count-changes/count-changes.command';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ChangesResponseDto, ChangeResponseDto } from './dtos/change-response.dto';
 import { ChangesRequestDto } from './dtos/change-request.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataNumberDto } from '../shared/dtos/data-wrapper-dto';
 import { BulkApplyChangeDto } from './dtos/bulk-apply-change.dto';
+import { ThrottlerCost } from '../rate-limiting/guards';
 
+@ApiCommonResponses()
 @Controller('/changes')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(JwtAuthGuard)
+@UseGuards(UserAuthGuard)
 @ApiTags('Changes')
 export class ChangesController {
   constructor(
@@ -78,6 +80,7 @@ export class ChangesController {
     );
   }
 
+  @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk/apply')
   @ApiResponse(ChangeResponseDto, 201, true)
   @ApiOperation({

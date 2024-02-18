@@ -1,3 +1,4 @@
+import { Control } from 'react-hook-form';
 import { BuilderFieldType, BuilderGroupValues, FilterParts, FilterPartTypeEnum } from '@novu/shared';
 
 export interface IConditions {
@@ -6,14 +7,19 @@ export interface IConditions {
   value?: BuilderGroupValues;
   children?: FilterParts[];
 }
-
-export enum ConditionsContextEnum {
-  INTEGRATIONS = 'INTEGRATIONS',
+export interface IConditionsForm {
+  conditions: IConditions[];
 }
 
-export const ConditionsContextFields = {
-  [ConditionsContextEnum.INTEGRATIONS]: {
-    label: 'provider instance',
-    filterPartsList: [FilterPartTypeEnum.TENANT],
-  },
-};
+export interface IConditionsProps {
+  control: Control<IConditionsForm>;
+  isReadonly?: boolean;
+  index: number;
+}
+export type DataSelect = { value: string; label: string };
+
+export interface IFilterTypeList {
+  value: FilterPartTypeEnum;
+  label: string;
+  data?: DataSelect[];
+}

@@ -1,63 +1,77 @@
-const createGeneratethemailsendrequest = jest.fn();
-
 // eslint-disable-next-line import/first
 import { NetCoreProvider } from './netcore.provider';
-import * as lib from 'pepipost/lib';
+import axios from 'axios';
+import { IEmailBody } from 'netcore';
+import { IEmailOptions } from '@novu/stateless';
 
-jest.mock('pepipost/lib', () => {
-  const actual = jest.requireActual('pepipost/lib');
-  if (typeof actual !== 'object') {
-    return {
-      MailSendController: {
-        createGeneratethemailsendrequest,
-      },
-      Configuration: {
-        apiKey: '',
-      },
-    };
-  }
+jest.mock('axios');
 
-  return {
-    ...actual,
-    MailSendController: {
-      createGeneratethemailsendrequest,
-    },
-    Configuration: {
-      apiKey: '',
-    },
-  };
-});
-
-const mockNovuMessage = {
-  from: 'test@test1.com',
-  to: ['test@test2.com'],
-  subject: 'test subject',
-  html: '<div> Mail Content </div>',
+const mockConfig = {
+  apiKey: 'test-key',
+  from: 'netcore',
+  senderName: "Novu's Team",
 };
 
-test('should trigger netcore correctly', async () => {
-  const id = 'id';
-  const apiKey = 'apiKey';
-  const provider = new NetCoreProvider({
-    apiKey,
-    from: 'test@test.com',
-  });
-  createGeneratethemailsendrequest.mockReturnValue({
-    data: {
-      message_id: id,
-      TRANSID: id + 1,
+const mockEmailOptions: IEmailOptions = {
+  html: '<div> Mail Content </div>',
+  subject: 'test subject',
+  from: 'test@test1.com',
+  to: ['test@to.com'],
+  cc: ['test@cc.com'],
+  bcc: ['test@bcc.com'],
+  attachments: [
+    { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
+  ],
+};
+
+const mockNovuMessage: IEmailBody = {
+  from: { email: mockEmailOptions.from },
+  subject: mockEmailOptions.subject,
+  content: [{ type: 'html', value: mockEmailOptions.html }],
+  personalizations: [
+    {
+      bcc: mockEmailOptions.bcc.map((email) => ({ email })),
+      to: mockEmailOptions.to.map((email) => ({ email })),
+      cc: mockEmailOptions.cc.map((email) => ({ email })),
+      attachments: mockEmailOptions.attachments.map((attachment) => {
+        return {
+          content: attachment.file.toString('base64'),
+          name: attachment.name,
+        };
+      }),
     },
+  ],
+};
+
+describe('test netcore email send api', () => {
+  const mockedAxios = axios as jest.Mocked<typeof axios>;
+
+  beforeEach(() => {
+    mockedAxios.create.mockReturnThis();
   });
 
-  const res = await provider.sendMessage(mockNovuMessage);
+  test('should trigger email correctly', async () => {
+    const response = {
+      data: {
+        data: {
+          message_id: 'fa6cb2977cdfd457b3ac98be710ad763',
+        },
+        message: 'OK',
+        status: 'success',
+      },
+    };
 
-  expect(createGeneratethemailsendrequest).toHaveBeenCalled();
-  const args = createGeneratethemailsendrequest.mock.calls[0][0];
-  expect(args.from.email).toBe(mockNovuMessage.from);
-  expect(args.subject).toBe(mockNovuMessage.subject);
-  expect(args.content[0].value).toBe(mockNovuMessage.html);
-  expect(args.content[0].type).toBe('html');
-  expect(args.personalizations[0].to[0].email).toBe(mockNovuMessage.to[0]);
-  expect(lib.Configuration.apiKey).toBe(apiKey);
-  expect(res.id).toBe(id + 1);
+    mockedAxios.request.mockResolvedValue(response);
+
+    const netCoreProvider = new NetCoreProvider(mockConfig);
+
+    const spy = jest.spyOn(netCoreProvider, 'sendMessage');
+
+    const res = await netCoreProvider.sendMessage(mockEmailOptions);
+
+    expect(mockedAxios.request).toHaveBeenCalled();
+    expect(spy).toHaveBeenCalled();
+    expect(spy).toBeCalledWith(mockEmailOptions);
+    expect(res.id).toEqual(response.data.data.message_id);
+  });
 });

@@ -8,7 +8,7 @@ import { useTemplates, useDebounce } from '../../hooks';
 import { getActivityList } from '../../api/activity';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { Select, Input, Button } from '../../design-system';
+import { Select, Input, Button } from '@novu/design-system';
 import { ActivityStatistics } from './components/ActivityStatistics';
 import { ActivityGraph } from './components/ActivityGraph';
 import { ActivityList } from './components/ActivityList';

@@ -36,7 +36,7 @@ export interface IEmailOverrides extends IIntegrationOverride {
   cc?: string[];
   bcc?: string[];
   senderName?: string;
-  customData?: Record<string, Record<string, unknown>>;
+  customData?: Record<string, any>;
 }
 
 export type ITriggerTenant = string | ITenantDefine;
@@ -134,6 +134,7 @@ export type ITriggerOverrideSMS = {
   to?: string;
   content?: string;
   from?: string;
+  customData?: Record<string, any>;
 };
 
 export type ITriggerOverrideExpo = {

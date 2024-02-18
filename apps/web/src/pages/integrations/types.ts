@@ -29,6 +29,7 @@ export interface IIntegratedProvider {
   integrationId: string;
   displayName: string;
   channel: ChannelTypeEnum;
+  hasCredentials?: boolean;
   credentials: IConfigCredentials[];
   docReference: string;
   comingSoon: boolean;

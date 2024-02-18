@@ -14,7 +14,6 @@ import {
 Cypress.on('window:before:load', (win) => {
   win._cypress = {
     ...win._cypress,
-    IS_MULTI_PROVIDER_CONFIGURATION_ENABLED: 'true',
   };
   win.isDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
 });

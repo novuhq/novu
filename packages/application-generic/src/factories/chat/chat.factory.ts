@@ -5,6 +5,11 @@ import { DiscordHandler } from './handlers/discord.handler';
 import { MSTeamsHandler } from './handlers/msteams.handler';
 import { MattermostHandler } from './handlers/mattermost.handler';
 import { GoogleChatHandler } from './handlers/google-chat.handler';
+import { GrafanaOnCallHandler } from './handlers/grafana-on-call.handler';
+import { RyverHandler } from './handlers/ryver.handler';
+import { ZulipHandler } from './handlers/zulip.handler';
+import { GetstreamChatHandler } from './handlers/getstream.handler';
+import { RocketChatHandler } from './handlers/rocket-chat.handler';
 
 export class ChatFactory implements IChatFactory {
   handlers: IChatHandler[] = [
@@ -13,6 +18,11 @@ export class ChatFactory implements IChatFactory {
     new MSTeamsHandler(),
     new MattermostHandler(),
     new GoogleChatHandler(),
+    new RyverHandler(),
+    new ZulipHandler(),
+    new GrafanaOnCallHandler(),
+    new GetstreamChatHandler(),
+    new RocketChatHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

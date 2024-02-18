@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Center } from '@mantine/core';
 import styled from '@emotion/styled';
 
-import { Button } from '../../../design-system';
+import { Button } from '@novu/design-system';
 import { currentOnboardingStep } from './route/store';
 
 export function NavButton({

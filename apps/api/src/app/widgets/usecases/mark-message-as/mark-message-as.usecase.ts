@@ -67,33 +67,29 @@ export class MarkMessageAs {
   }
 
   private async updateServices(command: MarkMessageAsCommand, subscriber, messages, marked: MarkEnum) {
-    const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
-
     this.updateSocketCount(subscriber, marked);
 
-    if (admin) {
-      for (const message of messages) {
-        this.analyticsService.track(`Mark as ${marked} - [Notification Center]`, admin._userId, {
-          _subscriber: message._subscriberId,
-          _organization: command.organizationId,
-          _template: message._templateId,
-        });
-      }
+    for (const message of messages) {
+      this.analyticsService.mixpanelTrack(`Mark as ${marked} - [Notification Center]`, '', {
+        _subscriber: message._subscriberId,
+        _organization: command.organizationId,
+        _template: message._templateId,
+      });
     }
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, mark: MarkEnum) {
     const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.webSocketsQueueService.add(
-      'sendMessage',
-      {
+    this.webSocketsQueueService.add({
+      name: 'sendMessage',
+      data: {
         event: eventMessage,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
       },
-      subscriber._organizationId
-    );
+      groupId: subscriber._organizationId,
+    });
   }
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>

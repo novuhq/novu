@@ -4,9 +4,9 @@ import { ChangeEntityTypeEnum, ITemplateVariable } from '@novu/shared';
 
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
-import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { UpdateChangeCommand } from '../../../change/usecases/update-change/update-change.command';
 import { UpdateChange } from '../../../change/usecases/update-change/update-change';
+import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
 
 @Injectable()
 export class UpdateMessageTemplate {
@@ -103,7 +103,10 @@ export class UpdateMessageTemplate {
       }
     );
 
-    const item = await this.messageTemplateRepository.findById(command.templateId);
+    const item = await this.messageTemplateRepository.findOne({
+      _id: command.templateId,
+      _organizationId: command.organizationId,
+    });
     if (!item) throw new NotFoundException(`Message template with id ${command.templateId} is not found`);
 
     if (command.feedId || (!command.feedId && existingTemplate._feedId)) {

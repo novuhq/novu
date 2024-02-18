@@ -14,7 +14,7 @@ helm install my-release ./
 
 ## Introduction
 
-This Helm chart is inspired by Bitnami charts and make use of Bitnami charts for its depencencies.
+This Helm chart is inspired by Bitnami charts and make use of Bitnami charts for its dependencies.
 
 This chart bootstraps a [Novu](https://github.com/novuhq/novu) deployment on a [Kubernetes](https://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 

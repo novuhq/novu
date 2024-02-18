@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { IUserEntity } from '@novu/shared';
 
-import { colors, shadows, Title, Text, Button } from '../../../design-system';
+import { colors, shadows, Title, Text, Button } from '@novu/design-system';
 import { updateUserOnBoarding } from '../../../api/user';
 import { getBlueprintTemplateById } from '../../../api/notification-templates';
 import { errorMessage } from '../../../utils/notifications';

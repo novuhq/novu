@@ -3,7 +3,7 @@ import { Stack } from '@mantine/core';
 import { NavigateFunction } from 'react-router-dom';
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { Bell, Chat, Mail, Mobile, Sms } from '../../design-system/icons';
+import { Bell, Chat, Mail, Mobile, Sms } from '@novu/design-system';
 import { ROUTES } from '../../constants/routes.enum';
 import { WIDGET_EMBED_PATH } from '../../config';
 
@@ -322,7 +322,7 @@ export const quickStartChannels: IQuickStartChannelConfiguration[] = [
     title: 'Chat',
     displayName: 'Chat',
     type: ChannelTypeEnum.CHAT,
-    description: 'Connect chat apps such as Slack, WhatsApp and Teams.',
+    description: 'Connect chat apps such as Slack, Discord and Teams.',
     clickHandler: (container) => {
       container.setClickedChannel({ open: true, channelType: container.channelType });
     },

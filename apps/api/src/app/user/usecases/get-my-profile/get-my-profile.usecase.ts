@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+
 import { UserRepository } from '@novu/dal';
+import { createHash } from '@novu/application-generic';
+
 import { GetMyProfileCommand } from './get-my-profile.dto';
-import { createHash } from '../../../shared/helpers/hmac.service';
 @Injectable()
 export class GetMyProfileUsecase {
   constructor(private readonly userRepository: UserRepository) {}

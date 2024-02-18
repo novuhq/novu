@@ -22,7 +22,7 @@ if (process.env.SENTRY_DSN) {
 export default mailin.start(
   {
     port: env.PORT || 25,
-    host: env.HOST || '0.0.0.0',
+    host: env.HOST || '127.0.0.1',
     disableDkim: env.disableDkim,
     disableSpf: env.disableSpf,
     disableSpamScore: env.disableSpamScore,

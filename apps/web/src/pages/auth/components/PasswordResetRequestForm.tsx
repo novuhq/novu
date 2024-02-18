@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Center } from '@mantine/core';
 
 import { api } from '../../../api/api.client';
-import { Button, colors, Input, Text } from '../../../design-system';
+import { Button, colors, Input, Text } from '@novu/design-system';
 import { useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 

@@ -1,11 +1,37 @@
 {
   "name": "@novu/notification-center-angular",
-  "version": "0.9.2",
+  "version": "0.23.1",
   "peerDependencies": {
-    "@angular/common": "^15.0.0",
-    "@angular/core": "^15.0.0"
+    "@angular/common": "^15.0.0 || ^16.0.0 || ^17.0.0",
+    "@angular/core": "^15.0.0 || ^16.0.0 || ^17.0.0",
+    "@angular/platform-browser": "^15.0.0 || ^16.0.0 || ^17.0.0",
+    "@angular/platform-browser-dynamic": "^15.0.0 || ^16.0.0 || ^17.0.0"
   },
   "dependencies": {
+    "@novu/notification-center": "^0.23.1",
+    "@types/react": "^17.0.0",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
     "tslib": "^2.3.0"
-  }
+  },
+  "files": [
+    "dist/esm2022",
+    "dist/fesm2022",
+    "dist/lib",
+    "dist/index.d.ts"
+  ],
+  "module": "dist/fesm2022/novu-notification-center-angular.mjs",
+  "typings": "dist/index.d.ts",
+  "exports": {
+    "./package.json": {
+      "default": "./package.json"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "esm2022": "./dist/esm2022/novu-notification-center-angular.mjs",
+      "esm": "./dist/esm2022/novu-notification-center-angular.mjs",
+      "default": "./dist/fesm2022/novu-notification-center-angular.mjs"
+    }
+  },
+  "sideEffects": false
 }

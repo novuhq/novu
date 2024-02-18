@@ -38,13 +38,6 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return await this.MongooseModel.aggregate(query).read(options.readPreference || 'primary');
   }
 
-  async findById(id: string, select?: string): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findById(id, select);
-    if (!data) return null;
-
-    return this.mapEntity(data.toObject());
-  }
-
   async findOne(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select?: ProjectionType<T_MappedEntity>,

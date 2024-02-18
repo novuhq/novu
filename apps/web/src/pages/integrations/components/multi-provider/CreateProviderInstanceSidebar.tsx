@@ -1,27 +1,35 @@
+import { Group, Radio, Text, Input, useMantineTheme } from '@mantine/core';
+import { useEffect, useMemo } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { ActionIcon, Group, Radio, Text, Input, useMantineTheme } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { ChannelTypeEnum, ICreateIntegrationBodyDto, NOVU_PROVIDERS, providers } from '@novu/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import {
+  ActionButton,
+  Button,
+  colors,
+  NameInput,
+  Sidebar,
+  ConditionPlus,
+  ArrowLeft,
+  Condition,
+  inputStyles,
+} from '@novu/design-system';
 
-import { createIntegration } from '../../../../api/integration';
-import { QueryKeys } from '../../../../api/query.keys';
-import { useSegment } from '../../../../components/providers/SegmentProvider';
-import { Button, colors, NameInput, Sidebar } from '../../../../design-system';
-import { ConditionPlus, ArrowLeft, Condition } from '../../../../design-system/icons';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
 import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
-import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { createIntegration } from '../../../../api/integration';
+import { defaultIntegrationConditionsProps, IntegrationsStoreModalAnalytics } from '../../constants';
 import { errorMessage, successMessage } from '../../../../utils/notifications';
-import { IntegrationsStoreModalAnalytics } from '../../constants';
+import { QueryKeys } from '../../../../api/query.keys';
+import { ProviderImage } from './SelectProviderSidebar';
+import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
 import type { IntegrationEntity } from '../../types';
 import { useProviders } from '../../useProviders';
 import { When } from '../../../../components/utils/When';
 import { Conditions, IConditions } from '../../../../components/conditions';
 import { ConditionIconButton } from '../ConditionIconButton';
-import { ProviderImage } from './SelectProviderSidebar';
 
 interface ICreateProviderInstanceForm {
   name: string;
@@ -148,6 +156,7 @@ export function CreateProviderInstanceSidebar({
   if (!provider) {
     return null;
   }
+
   const updateConditions = (conditions: IConditions[]) => {
     setValue('conditions', conditions, { shouldDirty: true });
   };
@@ -160,8 +169,9 @@ export function CreateProviderInstanceSidebar({
         conditions={conditions}
         name={name}
         isOpened={conditionsFormOpened}
-        setConditions={updateConditions}
+        updateConditions={updateConditions}
         onClose={closeConditionsForm}
+        {...defaultIntegrationConditionsProps}
       />
     );
   }
@@ -177,9 +187,17 @@ export function CreateProviderInstanceSidebar({
       onClose={onClose}
       customHeader={
         <Group spacing={12} w="100%" h={40} noWrap>
-          <ActionIcon onClick={onGoBack} variant={'transparent'} data-test-id="create-provider-instance-sidebar-back">
-            <ArrowLeft color={colors.B80} />
-          </ActionIcon>
+          <ActionButton
+            Icon={ArrowLeft}
+            onClick={onGoBack}
+            data-test-id="create-provider-instance-sidebar-back"
+            sx={{
+              '> svg': {
+                width: 16,
+                height: 16,
+              },
+            }}
+          />
           <ProviderImage providerId={provider?.id ?? ''} />
           <Controller
             control={control}

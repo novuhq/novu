@@ -42,7 +42,7 @@ export class FortySixElksSmsProvider implements ISmsProvider {
     ).toString('base64');
 
     const data = new URLSearchParams({
-      from: this.config.from,
+      from: options.from || this.config.from,
       to: options.to,
       message: options.content,
     }).toString();

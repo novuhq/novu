@@ -3,7 +3,7 @@ import { Grid, UnstyledButton } from '@mantine/core';
 import { IConfigCredentials } from '@novu/shared';
 import { useState } from 'react';
 import { When } from '../../../components/utils/When';
-import { Textarea } from '../../../design-system';
+import { Textarea } from '@novu/design-system';
 
 export const IntegrationSecretTextarea = ({
   credential,
@@ -26,7 +26,9 @@ export const IntegrationSecretTextarea = ({
             label={credential.displayName}
             required={credential.required}
             placeholder="*****************"
-            description={credential.description ?? ''}
+            description={
+              credential.description ?? 'Click on the eye icon to edit and reveal the contents of this field'
+            }
             data-test-id={credential.key}
             error={errors[credential.key]?.message}
             disabled
@@ -37,7 +39,9 @@ export const IntegrationSecretTextarea = ({
             label={credential.displayName}
             required={credential.required}
             placeholder={credential.displayName}
-            description={credential.description ?? ''}
+            description={
+              credential.description ?? 'Click on the eye icon to edit and reveal the contents of this field'
+            }
             data-test-id={credential.key}
             error={errors[credential.key]?.message}
             {...field}

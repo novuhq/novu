@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
-import { addMilliseconds } from 'date-fns';
+import { addMilliseconds, addMonths } from 'date-fns';
 import {
   JobEntity,
   JobStatusEnum,
@@ -101,7 +101,10 @@ export class CreateNotificationJobs {
         type: step.template.type,
         providerId: providerId,
         expireAt: notification.expireAt,
-        ...(command.actor && { _actorId: command.actor?._id }),
+        ...(command.actor && {
+          _actorId: command.actor?._id,
+          actorId: command.actor?.subscriberId,
+        }),
       };
 
       jobs.push(job);
@@ -159,22 +162,30 @@ export class CreateNotificationJobs {
   }
 
   private calculateExpireAt(command: CreateNotificationJobsCommand) {
-    const delayedSteps = command.template.steps.filter(
-      (step) =>
-        step.template?.type === StepTypeEnum.DIGEST ||
-        step.template?.type === StepTypeEnum.DELAY
-    );
+    try {
+      const delayedSteps = command.template.steps.filter(
+        (step) =>
+          step.template?.type === StepTypeEnum.DIGEST ||
+          step.template?.type === StepTypeEnum.DELAY
+      );
 
-    const delay = delayedSteps
-      .map((step) =>
-        this.calculateDelayService.calculateDelay({
-          stepMetadata: step.metadata,
-          payload: command.payload,
-          overrides: command.overrides,
-        })
-      )
-      .reduce((sum, delayAmount) => sum + delayAmount, 0);
+      const delay = delayedSteps
+        .map((step) =>
+          this.calculateDelayService.calculateDelay({
+            stepMetadata: step.metadata,
+            payload: command.payload,
+            overrides: command.overrides,
+          })
+        )
+        .reduce((sum, delayAmount) => sum + delayAmount, 0);
 
-    return addMilliseconds(Date.now(), delay);
+      return addMilliseconds(Date.now(), delay);
+    } catch (e) {
+      /*
+       * If the user has entered an incorrect negative delay,
+       * we'll accept it as a temporary solution to enable printing error execution details later in the process when a job is available.
+       */
+      return addMonths(Date.now(), 1);
+    }
   }
 }

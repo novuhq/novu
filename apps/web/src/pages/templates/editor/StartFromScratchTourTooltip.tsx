@@ -9,15 +9,17 @@ import { useAuthContext } from '../../../components/providers/AuthProvider';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { When } from '../../../components/utils/When';
-import { Button, colors, Text } from '../../../design-system';
 import {
+  Button,
+  colors,
+  Text,
   BuildWorkflow,
   Pencil,
   QuickGuide,
   RightArrow,
   RunTestBell,
   WorkflowSettings,
-} from '../../../design-system/icons';
+} from '@novu/design-system';
 import { errorMessage } from '../../../utils/notifications';
 import { ordinalNumbers, SCRATCH_HINT_INDEX_TO_CLICK_ANALYTICS, StartFromScratchTourAnalyticsEnum } from '../constants';
 import { useBasePath } from '../hooks/useBasePath';

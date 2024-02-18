@@ -1,5 +1,5 @@
 import { createStyles } from '@mantine/core';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 
 const useStyles = createStyles((theme) => ({
   phone: {

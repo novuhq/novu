@@ -3,7 +3,7 @@ import { Skeleton } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { ChannelTypeEnum } from '@novu/shared';
 
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 import { CHANNEL_TYPE_TO_ICON_NAME } from '../constants';
 
 const IconSkeleton = styled(Skeleton)`

@@ -1,6 +1,12 @@
 import { expect } from 'chai';
 import { ChangeRepository } from '@novu/dal';
-import { EmailBlockTypeEnum, StepTypeEnum, FilterPartTypeEnum } from '@novu/shared';
+import {
+  EmailBlockTypeEnum,
+  StepTypeEnum,
+  FilterPartTypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+} from '@novu/shared';
 import { UserSession } from '@novu/testing';
 
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../../workflows/dto';
@@ -32,13 +38,13 @@ describe('Get changes', () => {
             {
               isNegated: false,
               type: 'GROUP',
-              value: 'AND',
+              value: FieldLogicalOperatorEnum.AND,
               children: [
                 {
                   on: FilterPartTypeEnum.SUBSCRIBER,
                   field: 'firstName',
                   value: 'test value',
-                  operator: 'EQUAL',
+                  operator: FieldOperatorEnum.EQUAL,
                 },
               ],
             },

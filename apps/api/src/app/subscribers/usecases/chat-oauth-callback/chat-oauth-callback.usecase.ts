@@ -84,7 +84,7 @@ export class ChatOauthCallback {
   }
 
   private async getEnvironment(environmentId: string): Promise<EnvironmentEntity> {
-    const environment = await this.environmentRepository.findById(environmentId);
+    const environment = await this.environmentRepository.findOne({ _id: environmentId });
 
     if (environment == null) {
       throw new NotFoundException(`Environment ID: ${environmentId} not found`);

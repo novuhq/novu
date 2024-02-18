@@ -6,10 +6,9 @@ import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 
 import { IQuickStartChannelConfiguration, OnBoardingAnalyticsEnum, quickStartChannels } from '../consts';
 import { When } from '../../../components/utils/When';
-import { ActiveLabel } from '../../../design-system/icons/general/ActiveLabel';
+import { ActiveLabel, Button, colors } from '@novu/design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useActiveIntegrations, useIntegrationLimit } from '../../../hooks';
-import { Button, colors } from '../../../design-system';
 import type { IntegrationEntity } from '../../integrations/types';
 import { useCreateInAppIntegration } from '../../../hooks/useCreateInAppIntegration';
 

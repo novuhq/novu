@@ -1,9 +1,17 @@
 import styled from '@emotion/styled';
-import { Group, ActionIcon, Text } from '@mantine/core';
+import { Group, Text } from '@mantine/core';
 import { useState } from 'react';
-import { When } from '../../../components/utils/When';
-import { Tooltip, Button, colors, Modal, Title } from '../../../design-system';
-import { RemoveCondition, StarEmpty, Warning } from '../../../design-system/icons';
+import {
+  When,
+  Button,
+  colors,
+  Modal,
+  Title,
+  ActionButton,
+  RemoveCondition,
+  StarEmpty,
+  Warning,
+} from '@novu/design-system';
 
 const IconButton = styled(Group)`
   text-align: center;
@@ -44,8 +52,8 @@ export const PrimaryIconButton = ({
 
   return (
     <>
-      <Tooltip
-        label={
+      <ActionButton
+        tooltip={
           <>
             Mark as Primary
             <When truthy={conditions > 0}>
@@ -53,25 +61,18 @@ export const PrimaryIconButton = ({
             </When>
           </>
         }
-        position="bottom"
-      >
-        <ActionIcon
-          data-test-id="header-make-primary-btn"
-          onClick={() => {
-            if (conditions > 0) {
-              setModalOpen(true);
+        tooltipPosition="bottom"
+        Icon={StarEmpty}
+        onClick={() => {
+          if (conditions > 0) {
+            setModalOpen(true);
 
-              return;
-            }
-            onClick();
-          }}
-          variant="transparent"
-        >
-          <IconButton position="center" spacing={4}>
-            <StarEmpty />
-          </IconButton>
-        </ActionIcon>
-      </Tooltip>
+            return;
+          }
+          onClick();
+        }}
+        data-test-id="header-make-primary-btn"
+      />
       <Modal
         data-test-id="remove-conditions-modal"
         opened={modalOpen}

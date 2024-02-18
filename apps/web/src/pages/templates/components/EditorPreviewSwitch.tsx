@@ -1,5 +1,5 @@
 import { SegmentedControl, useMantineTheme } from '@mantine/core';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 import { ViewEnum } from './email-editor/EmailMessagesCards';
 
 export const EditorPreviewSwitch = ({ view, setView }) => {

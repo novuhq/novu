@@ -5,13 +5,7 @@
     "default": {
       "runner": "@nrwl/nx-cloud",
       "options": {
-        "cacheableOperations": [
-          "build",
-          "test",
-          "lint",
-          "package",
-          "prepare"
-        ],
+        "cacheableOperations": ["build", "test", "lint", "package", "prepare"],
         "canTrackAnalytics": false,
         "accessToken": "N2EyNDhhMGUtYmJkNS00YzQ5LTg5NDYtODg5ZmE2NDE5YWNmfHJlYWQtd3JpdGU="
       }
@@ -21,6 +15,7 @@
     "build": [
       {
         "target": "build",
+        "inputs": ["!{projectRoot}/enterprise/**/*"],
         "projects": "dependencies"
       }
     ],
@@ -39,5 +34,13 @@
   },
   "affected": {
     "defaultBase": "main"
+  },
+  "targetDefaults": {
+    "build-ee": {
+      "dependsOn": ["^build-ee"]
+    },
+    "build": {
+      "dependsOn": ["^build"]
+    }
   }
 }

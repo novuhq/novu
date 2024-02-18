@@ -4,8 +4,7 @@ import { Stack, Text, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
 import { When } from '../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../config';
-import { colors } from '../../../design-system';
-import { Close } from '../../../design-system/icons/actions/Close';
+import { colors, Close } from '@novu/design-system';
 import { useIntegrationLimit } from '../../../hooks';
 import { LimitBar } from './LimitBar';
 

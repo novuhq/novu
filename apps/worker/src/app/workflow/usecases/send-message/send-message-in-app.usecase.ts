@@ -1,22 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import {
-  MessageRepository,
-  NotificationStepEntity,
-  SubscriberRepository,
-  SubscriberEntity,
-  MessageEntity,
-  OrganizationRepository,
-  OrganizationEntity,
-  TenantRepository,
-  TenantEntity,
-} from '@novu/dal';
+import { ModuleRef } from '@nestjs/core';
+
+import { MessageRepository, NotificationStepEntity, SubscriberRepository, MessageEntity } from '@novu/dal';
 import {
   ChannelTypeEnum,
-  IMessageButton,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  IEmailBlock,
   ActorTypeEnum,
   WebSocketEventEnum,
 } from '@novu/shared';
@@ -24,15 +14,16 @@ import {
   InstrumentUsecase,
   InvalidateCacheService,
   DetailEnum,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
   SelectIntegration,
-  CompileTemplate,
-  CompileTemplateCommand,
-  WebSocketsQueueService,
   buildFeedKey,
   buildMessageCountKey,
   GetNovuProviderCredentials,
+  SelectVariant,
+  CompileInAppTemplate,
+  CompileInAppTemplateCommand,
+  WebSocketsQueueService,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -49,32 +40,28 @@ export class SendMessageInApp extends SendMessageBase {
     protected messageRepository: MessageRepository,
     private webSocketsQueueService: WebSocketsQueueService,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogRoute: ExecutionLogRoute,
     protected subscriberRepository: SubscriberRepository,
-    protected tenantRepository: TenantRepository,
-    private compileTemplate: CompileTemplate,
-    private organizationRepository: OrganizationRepository,
     protected selectIntegration: SelectIntegration,
-    protected getNovuProviderCredentials: GetNovuProviderCredentials
+    protected getNovuProviderCredentials: GetNovuProviderCredentials,
+    protected selectVariant: SelectVariant,
+    protected moduleRef: ModuleRef,
+    protected compileInAppTemplate: CompileInAppTemplate
   ) {
     super(
       messageRepository,
       createLogUsecase,
-      createExecutionDetails,
+      executionLogRoute,
       subscriberRepository,
-      tenantRepository,
       selectIntegration,
-      getNovuProviderCredentials
+      getNovuProviderCredentials,
+      selectVariant,
+      moduleRef
     );
   }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    const subscriber = await this.getSubscriberBySubscriberId({
-      subscriberId: command.subscriberId,
-      _environmentId: command.environmentId,
-    });
-    if (!subscriber) throw new PlatformException('Subscriber not found');
     if (!command.step.template) throw new PlatformException('Template not found');
 
     Sentry.addBreadcrumb({
@@ -92,9 +79,9 @@ export class SendMessageInApp extends SendMessageBase {
     });
 
     if (!integration) {
-      await this.createExecutionDetails.execute(
-        CreateExecutionDetailsCommand.create({
-          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
           detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.FAILED,
@@ -106,55 +93,39 @@ export class SendMessageInApp extends SendMessageBase {
       return;
     }
 
-    const inAppChannel: NotificationStepEntity = command.step;
-    if (!inAppChannel.template) throw new PlatformException('Template not found');
+    const step: NotificationStepEntity = command.step;
+    if (!step.template) throw new PlatformException('Template not found');
 
     let content = '';
 
     const { actor } = command.step.template;
 
-    const [tenant, organization] = await Promise.all([
-      this.handleTenantExecution(command.job),
-      this.organizationRepository.findById(command.organizationId, 'branding'),
-    ]);
+    const template = await this.processVariants(command);
+
+    if (template) {
+      step.template = template;
+    }
 
     try {
-      content = await this.compileInAppTemplate(
-        inAppChannel.template.content,
-        command.payload,
-        subscriber,
-        command,
-        organization,
-        tenant
+      const compiled = await this.compileInAppTemplate.execute(
+        CompileInAppTemplateCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          payload: this.getCompilePayload(command.compileContext),
+          content: step.template.content as string,
+          cta: step.template.cta,
+          userId: command.userId,
+        }),
+        this.initiateTranslations.bind(this)
       );
+      content = compiled.content;
 
-      if (inAppChannel.template.cta?.data?.url) {
-        inAppChannel.template.cta.data.url = await this.compileInAppTemplate(
-          inAppChannel.template.cta?.data?.url,
-          command.payload,
-          subscriber,
-          command,
-          organization,
-          tenant
-        );
+      if (step.template.cta?.data?.url) {
+        step.template.cta.data.url = compiled.url;
       }
 
-      if (inAppChannel.template.cta?.action?.buttons) {
-        const ctaButtons: IMessageButton[] = [];
-
-        for (const action of inAppChannel.template.cta.action.buttons) {
-          const buttonContent = await this.compileInAppTemplate(
-            action.content,
-            command.payload,
-            subscriber,
-            command,
-            organization,
-            tenant
-          );
-          ctaButtons.push({ type: action.type, content: buttonContent });
-        }
-
-        inAppChannel.template.cta.action.buttons = ctaButtons;
+      if (step.template.cta?.action?.buttons) {
+        step.template.cta.action.buttons = compiled.ctaButtons;
       }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
@@ -170,25 +141,25 @@ export class SendMessageInApp extends SendMessageBase {
       _environmentId: command.environmentId,
       _subscriberId: command._subscriberId,
       _templateId: command._templateId,
-      _messageTemplateId: inAppChannel.template._id,
+      _messageTemplateId: step.template._id,
       channel: ChannelTypeEnum.IN_APP,
       transactionId: command.transactionId,
       providerId: integration.providerId,
-      _feedId: inAppChannel.template._feedId,
+      _feedId: step.template._feedId,
     });
 
     let message: MessageEntity | null = null;
 
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
-        subscriberId: subscriber.subscriberId,
+        subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
 
     await this.invalidateCache.invalidateQuery({
       key: buildMessageCountKey().invalidate({
-        subscriberId: subscriber.subscriberId,
+        subscriberId: command.subscriberId,
         _environmentId: command.environmentId,
       }),
     });
@@ -200,10 +171,10 @@ export class SendMessageInApp extends SendMessageBase {
         _organizationId: command.organizationId,
         _subscriberId: command._subscriberId,
         _templateId: command._templateId,
-        _messageTemplateId: inAppChannel.template._id,
+        _messageTemplateId: step.template._id,
         channel: ChannelTypeEnum.IN_APP,
-        cta: inAppChannel.template.cta,
-        _feedId: inAppChannel.template._feedId,
+        cta: step.template.cta,
+        _feedId: step.template._feedId,
         transactionId: command.transactionId,
         content: this.storeContent() ? content : null,
         payload: messagePayload,
@@ -224,21 +195,21 @@ export class SendMessageInApp extends SendMessageBase {
         {
           $set: {
             seen: false,
-            cta: inAppChannel.template.cta,
+            cta: step.template.cta,
             content,
             payload: messagePayload,
             createdAt: new Date(),
           },
         }
       );
-      message = await this.messageRepository.findById(oldMessage._id);
+      message = await this.messageRepository.findOne({ _id: oldMessage._id, _environmentId: command.environmentId });
     }
 
     if (!message) throw new PlatformException('Message not found');
 
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: integration.providerId,
         detail: DetailEnum.MESSAGE_CREATED,
@@ -249,9 +220,9 @@ export class SendMessageInApp extends SendMessageBase {
       })
     );
 
-    await this.webSocketsQueueService.bullMqService.add(
-      'sendMessage',
-      {
+    await this.webSocketsQueueService.add({
+      name: 'sendMessage',
+      data: {
         event: WebSocketEventEnum.RECEIVED,
         userId: command._subscriberId,
         _environmentId: command.environmentId,
@@ -259,16 +230,16 @@ export class SendMessageInApp extends SendMessageBase {
           messageId: message._id,
         },
       },
-      {
+      options: {
         removeOnComplete: true,
         removeOnFail: true,
       },
-      command.organizationId
-    );
+      groupId: command.organizationId,
+    });
 
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
         messageId: message._id,
         providerId: integration.providerId,
         detail: DetailEnum.MESSAGE_SENT,
@@ -276,35 +247,6 @@ export class SendMessageInApp extends SendMessageBase {
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-      })
-    );
-  }
-
-  private async compileInAppTemplate(
-    content: string | IEmailBlock[],
-    payload: any,
-    subscriber: SubscriberEntity,
-    command: SendMessageCommand,
-    organization: OrganizationEntity | null,
-    tenant: TenantEntity | null
-  ): Promise<string> {
-    return await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        template: content as string,
-        data: {
-          subscriber,
-          step: {
-            digest: !!command.events?.length,
-            events: command.events,
-            total_count: command.events?.length,
-          },
-          branding: {
-            logo: organization?.branding?.logo,
-            color: organization?.branding?.color || '#f47373',
-          },
-          ...(tenant && { tenant }),
-          ...payload,
-        },
       })
     );
   }

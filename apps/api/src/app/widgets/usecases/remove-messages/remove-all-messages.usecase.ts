@@ -40,7 +40,7 @@ export class RemoveAllMessages {
     try {
       let feed;
       if (command.feedId) {
-        feed = await this.feedRepository.findById(command.feedId);
+        feed = await this.feedRepository.findOne({ _id: command.feedId, _organizationId: command.organizationId });
         if (!feed) {
           throw new NotFoundException(`Feed with ${command.feedId} not found`);
         }
@@ -100,14 +100,14 @@ export class RemoveAllMessages {
   private updateSocketCount(subscriber: SubscriberEntity, mark: string) {
     const eventMessage = mark === MarkEnum.READ ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN;
 
-    this.webSocketsQueueService.add(
-      'sendMessage',
-      {
+    this.webSocketsQueueService.add({
+      name: 'sendMessage',
+      data: {
         event: eventMessage,
         userId: subscriber._id,
         _environmentId: subscriber._environmentId,
       },
-      subscriber._organizationId
-    );
+      groupId: subscriber._organizationId,
+    });
   }
 }

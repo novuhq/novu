@@ -120,10 +120,10 @@ async function setupRunner() {
       console.log(`
         Everything is running 🎊
 
-        Web: http://localhost:4200
-        Widget: http://localhost:4500
-        API: http://localhost:3000
-        Worker: http://localhost:3004
+        Web: http://127.0.0.1:4200
+        Widget: http://127.0.0.1:4500
+        API: http://127.0.0.1:3000
+        Worker: http://127.0.0.1:3004
       `);
     } else if (answers.runConfiguration === WEB_PROJECT) {
       try {
@@ -153,10 +153,10 @@ async function setupRunner() {
         console.log(`
           Everything is running 🎊
         
-          Web: http://localhost:4200
-          API: http://localhost:3000
-          WS: http://localhost:3002
-          Worker: http://localhost:3004
+          Web: http://127.0.0.1:4200
+          API: http://127.0.0.1:3000
+          WS: http://127.0.0.1:3002
+          Worker: http://127.0.0.1:3004
         `);
       } catch (e) {
         console.error(`Failed to spin up the project ❌`, e);
@@ -178,8 +178,8 @@ async function setupRunner() {
       console.log(`
         Everything is running 🎊
 
-        API: http://localhost:3000
-        Worker: http://localhost:3004
+        API: http://127.0.0.1:3000
+        Worker: http://127.0.0.1:3004
       `);
     } else if (answers.runApiConfiguration === API_INTEGRATION_TESTS) {
       shell.exec('nx run-many --target=build --projects=@novu/api,@novu/worker');

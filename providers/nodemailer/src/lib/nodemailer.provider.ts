@@ -126,7 +126,7 @@ export class NodemailerProvider implements IEmailProvider {
     const sendMailOptions: SendMailOptions = {
       from: {
         address: options.from || this.config.from,
-        name: this.config.senderName || '',
+        name: options.senderName || this.config.senderName || '',
       },
       to: options.to,
       subject: options.subject,

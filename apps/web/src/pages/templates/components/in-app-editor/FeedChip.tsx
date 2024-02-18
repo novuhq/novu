@@ -1,26 +1,27 @@
-import React from 'react';
 import styled from '@emotion/styled';
 import { ColorScheme, useMantineTheme } from '@mantine/core';
 import { IFeedEntity } from '@novu/shared';
+import type { UseFormSetValue } from 'react-hook-form';
 
-import { colors, shadows } from '../../../../design-system';
-import { DotsHorizontal } from '../../../../design-system/icons';
+import { colors, shadows, DotsHorizontal } from '@novu/design-system';
 import { useEnvController } from '../../../../hooks';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
+import type { IForm } from '../formTypes';
 
 interface IFeedItemProps {
   showFeed: boolean;
-  index: number;
   setOpened: (hover: boolean) => void;
   item: IFeedEntity;
   feedIndex: number;
   onEditClick: () => void;
   field: any;
-  setValue: (key: string, value: string, options: { shouldDirty: boolean }) => void;
+  setValue: UseFormSetValue<IForm>;
 }
 
 export function FeedChip(props: IFeedItemProps) {
   const { colorScheme } = useMantineTheme();
   const { readonly } = useEnvController();
+  const path = useStepFormPath();
 
   const selectedItem = props.field.value === props.item._id;
 
@@ -32,7 +33,7 @@ export function FeedChip(props: IFeedItemProps) {
       readonly={readonly}
       data-test-id={`feed-button-${props.feedIndex}${selectedItem ? '-checked' : ''}`}
       onClick={() => {
-        props.setValue(`steps.${props.index}.template.feedId`, props?.item?._id || '', { shouldDirty: true });
+        props.setValue(`${path}.template.feedId`, props?.item?._id || '', { shouldDirty: true });
       }}
     >
       <div>{props.item?.name}</div>
