@@ -2,6 +2,7 @@ import { Stack } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 
 import { useHover } from '../../../../hooks';
+import { ParsedPreviewStateType } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { PreviewEditOverlay } from '../common';
 import {
   ContentAndOVerlayWrapperStyled,
@@ -18,7 +19,7 @@ export default function Content({
   showOverlay = true,
 }: {
   isPreviewLoading: boolean;
-  parsedPreviewState: any;
+  parsedPreviewState: ParsedPreviewStateType;
   templateError: string;
   showOverlay?: boolean;
 }) {
