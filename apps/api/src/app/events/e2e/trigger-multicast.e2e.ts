@@ -350,7 +350,7 @@ describe('TriggerMulticast', () => {
     const newSubscriber = await subscriberService.createSubscriber();
     await addSubscribersToTopic(session, bootstrapFirstTopic, [newSubscriber]);
 
-    // first topic: subscribers A, B
+    // first topic: subscribers A, B, newSubscriber
     const firstTopic: TriggerRecipients = [bootstrapFirstTopic];
 
     // second topic: subscribers C, D
