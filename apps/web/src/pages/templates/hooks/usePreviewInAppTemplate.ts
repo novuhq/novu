@@ -8,6 +8,11 @@ import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
 
+export type ParsedPreviewStateType = {
+  ctaButtons: IMessageButton[];
+  content: string;
+};
+
 export const usePreviewInAppTemplate = (locale?: string) => {
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
@@ -31,10 +36,7 @@ export const usePreviewInAppTemplate = (locale?: string) => {
     control,
   });
 
-  const [parsedPreviewState, setParsedPreviewState] = useState<{
-    ctaButtons: IMessageButton[];
-    content: string;
-  }>({
+  const [parsedPreviewState, setParsedPreviewState] = useState<ParsedPreviewStateType>({
     ctaButtons: [],
     content: templateContent as string,
   });
