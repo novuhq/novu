@@ -64,12 +64,15 @@ export class TriggerMulticast {
 
       const { singleSubscribers, topicKeys } =
         splitByRecipientType(mappedRecipients);
+      const subscribersToProcess = Array.from(singleSubscribers.values());
 
-      await this.sendToProcessSubscriberService(
-        command,
-        Array.from(singleSubscribers.values()),
-        SubscriberSourceEnum.SINGLE
-      );
+      if (subscribersToProcess.length > 0) {
+        await this.sendToProcessSubscriberService(
+          command,
+          subscribersToProcess,
+          SubscriberSourceEnum.SINGLE
+        );
+      }
 
       const isEnabled = await this.getFeatureFlag.execute(
         GetFeatureFlagCommand.create({
