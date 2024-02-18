@@ -562,7 +562,9 @@
     "spyon",
     "restapi",
     "ringcentral",
-    "reshard"
+    "reshard",
+    "smsmode",
+    "Smsmode"
   ],
   "flagWords": [],
   "patterns": [
