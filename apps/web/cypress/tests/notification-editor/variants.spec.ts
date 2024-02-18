@@ -350,7 +350,7 @@ describe('Workflow Editor - Variants', function () {
       fillEditorContent(channel, true);
       goBack();
 
-      cy.getByTestId('editor-sidebar-add-variant').should('be.visible').click();
+      cy.getByTestId('variant-sidebar-add-variant').should('be.visible').click();
       addConditions();
       fillEditorContent(channel, true);
       goBack();
@@ -592,11 +592,14 @@ describe('Workflow Editor - Variants', function () {
       addConditions();
       goBack();
 
-      cy.getByTestId('variants-list-sidebar').getByTestId('editor-sidebar-add-conditions').should('be.visible').click();
+      cy.getByTestId('variants-list-sidebar')
+        .getByTestId('variant-sidebar-add-conditions')
+        .should('be.visible')
+        .click();
       addConditions();
 
       cy.getByTestId('variants-list-sidebar')
-        .getByTestId('editor-sidebar-edit-conditions')
+        .getByTestId('variant-sidebar-edit-conditions')
         .should('be.visible')
         .contains('1');
     });
@@ -838,7 +841,7 @@ describe('Workflow Editor - Variants', function () {
       cy.reload();
       cy.wait('@getWorkflow');
 
-      cy.getByTestId('editor-sidebar-delete').click();
+      cy.getByTestId('variant-sidebar-delete').click();
 
       cy.get('.mantine-Modal-modal').contains('Delete step?');
       cy.get('.mantine-Modal-modal button').contains('Delete step').click();

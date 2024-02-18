@@ -8,7 +8,7 @@ type URLParams = AUTH_INVITATION_TOKEN_TYPE | AUTH_RESET_TOKEN_TYPE | TEMPLATES_
 
 const escapeRegExp = (string: string) => string.replace(/[.*+\-?^${}()|[\]\\]/g, '\\$&');
 
-export const parseUrl = (urlToParse: string, params: URLParams) => {
+export const parseUrl = (urlToParse: string, params: URLParams | Record<string, string>) => {
   return Object.keys(params).reduce((url, name) => {
     const value = params[name];
 

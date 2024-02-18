@@ -6,7 +6,7 @@ import { useNavigateFromEditor } from '../hooks/useNavigateFromEditor';
 import { useStepIndex } from '../hooks/useStepIndex';
 import { ChannelPreviewSidebar } from './ChannelPreviewSidebar';
 
-const PreviewComponent = ({ channel }: { channel: StepTypeEnum }) => {
+export const PreviewComponent = ({ channel }: { channel: StepTypeEnum }) => {
   switch (channel) {
     case StepTypeEnum.EMAIL:
       return <EmailPreview view="web" showVariables={false} />;
