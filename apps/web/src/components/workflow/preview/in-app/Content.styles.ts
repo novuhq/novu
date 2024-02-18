@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { Skeleton } from '@mantine/core';
-import { colors } from '@novu/design-system';
+import { colors, shadows } from '@novu/design-system';
 
 export const ContentStyled = styled.div<{ isBlur: boolean; isExampleNotification?: boolean }>`
   display: flex;
@@ -19,8 +19,11 @@ export const ContentStyled = styled.div<{ isBlur: boolean; isExampleNotification
       return `
       border-radius: 8px;
       opacity: 0.4;
-      background: 
-      linear-gradient(90deg, rgba(35, 35, 43, 0.40) 0%, rgba(36, 36, 45, 0.40) 48.44%, rgba(41, 41, 52, 0.40) 100%), ${colors.B20};
+      background: ${({ theme }) =>
+        theme.colorScheme === 'dark'
+          ? `linear-gradient(90deg, rgba(35, 35, 43, 0.40) 0%, rgba(36, 36, 45, 0.40) 48.44%, rgba(41, 41, 52, 0.40) 100%), ${colors.B20}`
+          : colors.white};
+      box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.medium)};
       `;
     }
   }}
@@ -31,6 +34,7 @@ export const ContentAndOVerlayWrapperStyled = styled.div<{ isError: boolean }>`
   border-radius: 0.5rem;
   ${({ isError }) => isError && `border: 1px solid ${colors.error};`}
   position: relative;
+  box-shadow: ${({ theme }) => (theme.colorScheme === 'dark' ? shadows.dark : shadows.medium)};
 
   &:before {
     content: '';
@@ -46,7 +50,7 @@ export const ContentAndOVerlayWrapperStyled = styled.div<{ isError: boolean }>`
   }
 `;
 
-export const NotificationTextstyled = styled.div<{ isExampleNotification: boolean }>`
+export const NotificationTextStyled = styled.div<{ isExampleNotification: boolean }>`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.BGDark)};
   font-size: 14px;
   font-style: normal;
@@ -65,7 +69,7 @@ export const NotificationTextstyled = styled.div<{ isExampleNotification: boolea
   }}
 `;
 
-export const TimeTextStyled = styled(NotificationTextstyled)`
+export const TimeTextStyled = styled(NotificationTextStyled)`
   color: ${colors.B40};
   ${({ isExampleNotification }) => {
     if (isExampleNotification) {

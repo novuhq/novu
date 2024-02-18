@@ -1,12 +1,17 @@
 import { IMessageButton } from '@novu/shared';
 import { useDataRef } from '@novu/shared-web';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { usePreviewInApp } from '../../../api/hooks';
 import { useProcessVariables } from '../../../hooks';
 import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
+
+export type ParsedPreviewStateType = {
+  ctaButtons: IMessageButton[];
+  content: string;
+};
 
 export const usePreviewInAppTemplate = (locale?: string) => {
   const { control } = useFormContext<IForm>();
@@ -31,17 +36,14 @@ export const usePreviewInAppTemplate = (locale?: string) => {
     control,
   });
 
-  const [parsedPreviewState, setParsedPreviewState] = useState<{
-    ctaButtons: IMessageButton[];
-    content: string;
-  }>({
+  const [parsedPreviewState, setParsedPreviewState] = useState<ParsedPreviewStateType>({
     ctaButtons: [],
     content: templateContent as string,
   });
 
   const processedVariables = useProcessVariables(templateVariables);
 
-  const previewData = useDataRef({ templateContent, templateCta, processedVariables, templateEnableAvatar });
+  const previewData = useDataRef({ templateContent, templateCta, templateEnableAvatar });
 
   const { isLoading, getInAppPreview } = usePreviewInApp({
     onSuccess: (result) => {
@@ -56,12 +58,24 @@ export const usePreviewInAppTemplate = (locale?: string) => {
     getInAppPreview({
       locale,
       content: previewData.current.templateContent as string,
-      payload: previewData.current.processedVariables,
+      payload: processedVariables,
       cta: previewData.current.templateCta,
     });
-  }, [getInAppPreview, locale, previewData]);
+  }, [getInAppPreview, locale, previewData, processedVariables]);
+
+  const parseInAppContent = useCallback(
+    ({ payload }) => {
+      getInAppPreview({
+        locale,
+        payload,
+        content: previewData.current.templateContent as string,
+        cta: previewData.current.templateCta,
+      });
+    },
+    [getInAppPreview, locale, previewData]
+  );
 
   const isPreviewLoading = !templateError && isLoading;
 
-  return { parsedPreviewState, isPreviewLoading, templateError };
+  return { parsedPreviewState, isPreviewLoading, templateError, parseInAppContent, processedVariables };
 };

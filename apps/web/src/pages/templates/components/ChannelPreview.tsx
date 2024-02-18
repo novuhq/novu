@@ -18,7 +18,7 @@ const PreviewComponent = ({ channel }: { channel: StepTypeEnum }) => {
       return <SmsPreview />;
 
     case StepTypeEnum.IN_APP:
-      return <InAppPreview />;
+      return <InAppPreview showVariables={false} />;
 
     case StepTypeEnum.CHAT:
       return <ChatPreview />;

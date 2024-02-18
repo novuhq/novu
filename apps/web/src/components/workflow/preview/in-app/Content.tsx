@@ -1,19 +1,31 @@
-import styled from '@emotion/styled';
-import { Skeleton, Stack } from '@mantine/core';
+import { Stack } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 
 import { useHover } from '../../../../hooks';
+import { ParsedPreviewStateType } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { PreviewEditOverlay } from '../common';
 import {
   ContentAndOVerlayWrapperStyled,
   ContentStyled,
-  NotificationTextstyled,
+  NotificationTextStyled,
   SkeletonStyled,
   TimeTextStyled,
 } from './Content.styles';
 
-export default function Content({ isPreviewLoading, parsedPreviewState, templateError }) {
+export default function Content({
+  isPreviewLoading,
+  parsedPreviewState,
+  templateError,
+  showOverlay = true,
+}: {
+  isPreviewLoading: boolean;
+  parsedPreviewState: ParsedPreviewStateType;
+  templateError: string;
+  showOverlay?: boolean;
+}) {
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
+
+  const isBlur = isHovered && showOverlay;
 
   return (
     <Stack spacing={16}>
@@ -23,17 +35,18 @@ export default function Content({ isPreviewLoading, parsedPreviewState, template
           onMouseEnter={onMouseEnter}
           onMouseLeave={onMouseLeave}
         >
-          {isHovered && <PreviewEditOverlay />}
-          <ContentStyled isBlur={isHovered}>
+          {isBlur && <PreviewEditOverlay />}
+          <ContentStyled isBlur={isBlur}>
             {isPreviewLoading ? (
               <Skeletons />
             ) : (
               <>
-                <NotificationTextstyled
+                <NotificationTextStyled
                   isExampleNotification={false}
                   dangerouslySetInnerHTML={{
                     __html: parsedPreviewState.content as string,
                   }}
+                  data-test-id="in-app-content-preview"
                 />
                 <TimeTextStyled isExampleNotification={false}>5 minutes ago</TimeTextStyled>
               </>
@@ -44,7 +57,7 @@ export default function Content({ isPreviewLoading, parsedPreviewState, template
       </div>
 
       <ContentStyled isBlur={false} isExampleNotification>
-        <NotificationTextstyled isExampleNotification>Notification Example</NotificationTextstyled>
+        <NotificationTextStyled isExampleNotification>Notification Example</NotificationTextStyled>
         <TimeTextStyled isExampleNotification>10 minutes ago</TimeTextStyled>
       </ContentStyled>
     </Stack>
