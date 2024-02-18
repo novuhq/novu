@@ -1,13 +1,12 @@
-import { useDataRef } from '@novu/shared-web';
 import { useEffect, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { usePreviewPush } from '../../../api/hooks';
-import { useProcessVariables } from '../../../hooks';
+import { useDataRef, useProcessVariables } from '../../../hooks';
 import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
 
-export const usePreviewPushTemplate = (locale?: string) => {
+export const usePreviewPushTemplate = ({ disabled, locale }: { disabled: boolean; locale?: string }) => {
   const { control } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateError = useStepFormCombinedErrors();
@@ -33,7 +32,7 @@ export const usePreviewPushTemplate = (locale?: string) => {
 
   const processedVariables = useProcessVariables(templateVariables);
 
-  const previewData = useDataRef({ templateContent, templateTitle, processedVariables });
+  const previewData = useDataRef({ content: templateContent, title: templateTitle, payload: processedVariables });
 
   const { isLoading, getPushPreview } = usePreviewPush({
     onSuccess: (result) => {
@@ -45,13 +44,15 @@ export const usePreviewPushTemplate = (locale?: string) => {
   });
 
   useEffect(() => {
-    getPushPreview({
-      locale,
-      content: previewData.current.templateContent,
-      payload: previewData.current.processedVariables,
-      title: previewData.current.templateTitle,
-    });
-  }, [getPushPreview, locale, previewData]);
+    if (!disabled) {
+      getPushPreview({
+        locale,
+        content: previewData.current.content,
+        payload: previewData.current.payload,
+        title: previewData.current.title,
+      });
+    }
+  }, [disabled, getPushPreview, locale, previewData]);
 
   const isPreviewLoading = !templateError && isLoading;
 

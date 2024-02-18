@@ -17,7 +17,13 @@ import {
   ContentWrapperStyled,
 } from './Content.styles';
 
-export default function Content() {
+export default function Content({
+  showLoading = false,
+  showOverlay = true,
+}: {
+  showLoading?: boolean;
+  showOverlay?: boolean;
+}) {
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -38,9 +44,13 @@ export default function Content() {
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
     title: title,
+    disabled: showLoading,
   });
 
-  const { isPreviewLoading, parsedPreviewState, templateError } = usePreviewPushTemplate(selectedLocale);
+  const { isPreviewLoading, parsedPreviewState, templateError } = usePreviewPushTemplate({
+    disabled: showLoading,
+    locale: selectedLocale,
+  });
 
   return (
     <ContentWrapperStyled>
@@ -53,9 +63,9 @@ export default function Content() {
         />
       </Group>
       <ContentAndOVerlayWrapperStyled isError={!!templateError} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-        {isHovered && <PreviewEditOverlay />}
-        <ContentStyled isBlur={isHovered}>
-          {isPreviewLoading ? (
+        {showOverlay && isHovered && <PreviewEditOverlay />}
+        <ContentStyled isBlur={showOverlay && isHovered}>
+          {isPreviewLoading || showLoading ? (
             <Skeletons />
           ) : (
             <>
@@ -81,7 +91,7 @@ export default function Content() {
         </ContentStyled>
       </ContentAndOVerlayWrapperStyled>
 
-      {templateError && !isPreviewLoading && <Text color={colors.error}>{templateError}</Text>}
+      {templateError && !isPreviewLoading && !showLoading && <Text color={colors.error}>{templateError}</Text>}
     </ContentWrapperStyled>
   );
 }
