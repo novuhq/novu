@@ -1,6 +1,6 @@
 import { GoogleChatProvider } from './google-chat.provider';
 
-test('should trigger google-chat library correctly', async () => {
+test('should trigger Google Chat library correctly', async () => {
   const provider = new GoogleChatProvider({});
   const spy = jest
     .spyOn(provider, 'sendMessage')
