@@ -18,17 +18,22 @@ interface ISmsBubbleProps {
   className?: string;
   text?: string;
   isLoading?: boolean;
+  withOverlay?: boolean;
   onEditClick?: MouseEventHandler<HTMLButtonElement>;
   error?: string;
 }
 
-export const SmsBubble: React.FC<ISmsBubbleProps> = ({ className, text = '', isLoading, onEditClick, error }) => {
+export const SmsBubble: React.FC<ISmsBubbleProps> = ({
+  className,
+  text = '',
+  isLoading,
+  onEditClick,
+  error,
+  withOverlay,
+}) => {
   const [isHovered, setIsHovered] = useState(false);
   const isError = !!error;
-  const { pathname } = useLocation();
-
-  const isPreviewPath = pathname.endsWith('/preview');
-  const showEditOverlay = isHovered && isPreviewPath;
+  const showEditOverlay = !!withOverlay && isHovered && !isLoading;
 
   const onEditClickHandler: MouseEventHandler<HTMLButtonElement> = (e) => {
     e.stopPropagation();

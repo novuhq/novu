@@ -1,6 +1,7 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
 import { useFormContext } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
 import { usePreviewSmsTemplate } from '../../../../pages/templates/hooks/usePreviewSmsTemplate';
@@ -31,6 +32,8 @@ export const SmsPreview = ({ showPreviewAsLoading = false }: { showPreviewAsLoad
   const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateContent = watch(`${path}.template.content`);
+  const { pathname } = useLocation();
+  const isPreviewPath = pathname.endsWith('/preview');
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: templateContent as string,
@@ -57,6 +60,7 @@ export const SmsPreview = ({ showPreviewAsLoading = false }: { showPreviewAsLoad
           isLoading={isPreviewContentLoading || areLocalesLoading}
           text={previewContent}
           error={templateError}
+          withOverlay={isPreviewPath}
         />
       </BodyContainer>
     </MobileSimulator>
