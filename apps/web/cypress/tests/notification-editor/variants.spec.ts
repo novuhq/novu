@@ -73,7 +73,7 @@ describe('Workflow Editor - Variants', function () {
   };
 
   const showStepActions = (channel: Channel) => {
-    cy.getByTestId(`node-${channel}Selector`).parent().trigger('mouseover', { force: true });
+    cy.getByTestId(`node-${channel}Selector`).parent().trigger('mouseover');
   };
 
   const addVariantActionClick = (channel: Channel) => {
@@ -88,7 +88,7 @@ describe('Workflow Editor - Variants', function () {
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-key').last().type('test');
     cy.getByTestId('conditions-form-value').last().type('test');
-    cy.getByTestId('apply-conditions-btn').click();
+    cy.getByTestId('apply-conditions-btn').click({ force: true });
   };
 
   const checkTheVariantsList = (title: string, content: string) => {
