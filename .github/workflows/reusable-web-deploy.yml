@@ -85,6 +85,7 @@ jobs:
           echo REACT_APP_MAIL_SERVER_DOMAIN=${{ inputs.react_app_mail_server_domain }} >> .env
           echo REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID=${{ secrets.LAUNCH_DARKLY_CLIENT_SIDE_ID }} >> .env
           echo REACT_APP_HUBSPOT_EMBED=${{ inputs.react_app_hubspot_embed }} >> .env
+          echo REACT_APP_STRIPE_CLIENT_KEY=${{ secrets.STRIPE_CLIENT_KEY }} >> .env
 
       - name: Envsetup
         working-directory: apps/web
