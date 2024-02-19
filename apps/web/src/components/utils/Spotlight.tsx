@@ -59,7 +59,7 @@ export const SpotLight = ({ children }) => {
         id: 'navigate-docs',
         title: 'Go to Documentation',
         onTrigger: () => {
-          window?.open(`https://docs.novu.co/${UTM_CAMPAIGN_QUERY_PARAM}`, '_blank')?.focus();
+          window?.open(`https://docs.novu.co${UTM_CAMPAIGN_QUERY_PARAM}`, '_blank')?.focus();
         },
       },
       {

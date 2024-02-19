@@ -84,7 +84,7 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
       </Group>
       <Group spacing={16} mt={16} grow>
         <a
-          href={`https://docs.novu.co/notification-center/client/web-component/${UTM_CAMPAIGN_QUERY_PARAM}`}
+          href={`https://docs.novu.co/notification-center/client/web-component${UTM_CAMPAIGN_QUERY_PARAM}`}
           onClick={() => {
             setFramework('');
           }}
@@ -98,7 +98,7 @@ export const FrameworkDisplay = ({ setFramework }: { setFramework: (framework: s
           </Group>
         </a>
         <a
-          href={`https://docs.novu.co/notification-center/client/headless/get-started/${UTM_CAMPAIGN_QUERY_PARAM}`}
+          href={`https://docs.novu.co/notification-center/client/headless/get-started${UTM_CAMPAIGN_QUERY_PARAM}`}
           onClick={() => {
             setFramework('');
           }}

@@ -28,7 +28,7 @@ export const guidePreview: Record<string, IGuide> = {
   trigger: {
     title: GuideTitleEnum.TRIGGER_PREVIEW,
     description: 'Use the server SDK in your app for a specific trigger. ',
-    docsUrl: `https://docs.novu.co/api-reference/events/trigger-event/${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docsUrl: `https://docs.novu.co/api-reference/events/trigger-event${UTM_CAMPAIGN_QUERY_PARAM}`,
     sequence: {
       1: { open: false, opacity: HINT_HIDDEN_OPACITY },
       2: { open: true, opacity: HINT_VISIBLE_OPACITY },
@@ -40,7 +40,7 @@ export const guidePreview: Record<string, IGuide> = {
   digest: {
     title: GuideTitleEnum.DIGEST_PREVIEW,
     description: 'Aggregates multiple events into a precise notification. ',
-    docsUrl: `https://docs.novu.co/workflows/digest/${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docsUrl: `https://docs.novu.co/workflows/digest${UTM_CAMPAIGN_QUERY_PARAM}`,
     sequence: {
       1: { open: false, opacity: HINT_HIDDEN_OPACITY },
       2: { open: false, opacity: HINT_HIDDEN_OPACITY },
@@ -52,7 +52,7 @@ export const guidePreview: Record<string, IGuide> = {
   email: {
     title: GuideTitleEnum.CHANNELS_PREVIEW,
     description: 'Build desired order of channels. ',
-    docsUrl: `https://docs.novu.co/channels-and-providers/integration-store/${UTM_CAMPAIGN_QUERY_PARAM}`,
+    docsUrl: `https://docs.novu.co/channels-and-providers/integration-store${UTM_CAMPAIGN_QUERY_PARAM}`,
     sequence: {
       1: { open: false, opacity: HINT_HIDDEN_OPACITY },
       2: { open: false, opacity: HINT_HIDDEN_OPACITY },

@@ -82,7 +82,7 @@ export const TemplatesDigestPlaygroundPage = () => {
           <LinkStyled
             target="_blank"
             rel="noopener noreferrer"
-            href={`https://docs.novu.co/workflows/digest/${UTM_CAMPAIGN_QUERY_PARAM}`}
+            href={`https://docs.novu.co/workflows/digest${UTM_CAMPAIGN_QUERY_PARAM}`}
             onClick={handleLearnMoreClick}
           >
             Learn more in docs

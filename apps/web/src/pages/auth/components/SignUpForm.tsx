@@ -224,7 +224,7 @@ function Accept() {
       <span>I accept the </span>
       <a
         style={{ textDecoration: 'underline' }}
-        href={`https://novu.co/terms/${UTM_CAMPAIGN_QUERY_PARAM}`}
+        href={`https://novu.co/terms${UTM_CAMPAIGN_QUERY_PARAM}`}
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -233,7 +233,7 @@ function Accept() {
       <span> and have read the </span>
       <a
         style={{ textDecoration: 'underline' }}
-        href={`https://novu.co/privacy/${UTM_CAMPAIGN_QUERY_PARAM}`}
+        href={`https://novu.co/privacy${UTM_CAMPAIGN_QUERY_PARAM}`}
         target="_blank"
         rel="noopener noreferrer"
       >
