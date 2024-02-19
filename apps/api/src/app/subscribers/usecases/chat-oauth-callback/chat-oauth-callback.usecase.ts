@@ -79,6 +79,7 @@ export class ChatOauthCallback {
         integrationIdentifier: command.integrationIdentifier,
         credentials: subscriberCredentials,
         oauthHandler: OAuthHandlerEnum.NOVU,
+        isIdempotentOperation: false,
       })
     );
   }

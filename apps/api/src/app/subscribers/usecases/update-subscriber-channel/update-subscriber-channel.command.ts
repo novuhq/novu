@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { ChannelCredentials, SubscriberChannel } from '../../../shared/dtos/subscriber-channel';
@@ -33,4 +33,7 @@ export class UpdateSubscriberChannelCommand extends EnvironmentCommand implement
   @IsOptional()
   @IsString()
   integrationIdentifier?: string;
+
+  @IsBoolean()
+  isIdempotentOperation: boolean;
 }
