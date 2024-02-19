@@ -26,7 +26,7 @@ export const createTopic = async (
   session: UserSession,
   topicKey: TopicKey,
   topicName: TopicName
-): Promise<{ _id: TopicId }> => {
+): Promise<{ _id: TopicId; key: TopicKey }> => {
   const response = await session.testAgent.post(BASE_PATH).send({
     key: topicKey,
     name: topicName,
@@ -40,7 +40,7 @@ export const createTopic = async (
   expect(_id).to.be.string;
   expect(key).to.eq(topicKey);
 
-  return { _id };
+  return { _id, key };
 };
 
 export const getTopic = async (
