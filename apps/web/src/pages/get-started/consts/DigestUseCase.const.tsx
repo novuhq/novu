@@ -1,16 +1,21 @@
 import { ROUTES } from '@novu/shared-web';
+import { GetStartedAnimation } from '../components/GetStartedAnimation';
 
-import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
-import { Link, StepDescription, StepText } from './shared';
 import { OnboardingWorkflowRouteEnum, OnboardingUseCase } from './types';
+import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
+import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
+import { DigestPlaygroundView } from './DigestUsecasePlaygroundView.const';
+import { GetStartedTabsViewsEnum } from './GetStartedTabsViewsEnum';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-digest';
 
 export const DigestUseCaseConst: OnboardingUseCase = {
   title: 'Digest multiple events',
+  type: OnboardingUseCasesTabsEnum.DIGEST,
   description:
     'Aggregates multiple events into a single, concise message, preventing user overload with excessive notifications.',
+  useCaseLink: 'https://docs.novu.co/workflows/digest',
   steps: [
     {
       title: 'Configure providers',
@@ -20,7 +25,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link href={ROUTES.INTEGRATIONS_CREATE}>Integration store</Link>
+            <GetStartedLink children={' Integration store'} href={ROUTES.INTEGRATIONS_CREATE} />
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -32,9 +37,9 @@ export const DigestUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>Novu pre-built workflow with a digest node.</StepText>
+            <StepText>Novu pre-built workflow with a digest node. </StepText>
             <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>Customize</OpenWorkflowButton>
-            <StepText>the workflow or create a new one on the Workflows page.</StepText>
+            <StepText> the workflow or create a new one on the Workflows page.</StepText>
           </StepDescription>
         );
       },
@@ -44,7 +49,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>Novu pre-defined preferences for the digest node.</StepText>
+            <StepText>Novu pre-defined preferences for the digest node. </StepText>
             <OpenWorkflowButton
               blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}
               node={OnboardingWorkflowRouteEnum.DIGEST}
@@ -65,7 +70,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
               blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}
               node={OnboardingWorkflowRouteEnum.TEST_WORKFLOW}
             >
-              Test the trigger
+              Test the trigger{' '}
             </OpenWorkflowButton>
             <StepText>
               as if you sent it from your API. Add a subscriber by sending data to the trigger method. Click multiple
@@ -81,7 +86,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link href={ROUTES.ACTIVITIES}>activity feed</Link>
+            <GetStartedLink children={' activity feed '} href={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
@@ -90,5 +95,21 @@ export const DigestUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
+  Demo: () => <GetStartedAnimation useCase={OnboardingUseCasesTabsEnum.DIGEST} />,
+  /* TODO: uncomment this when we want to support Digest Playground features */
+  /*
+   * BottomSection: function ({ setView }) {
+   *   return (
+   *     <StepDescription>
+   *       <StepText>Not ready to configure Digest? </StepText>
+   *       <br />
+   *       <Link onClick={() => setView?.(GetStartedTabsViewsEnum.DIGEST_PLAYGROUND)}>Open digest playground</Link>
+   *       <StepText> for a quick test.</StepText>
+   *     </StepDescription>
+   *   );
+   * },
+   */
+  views: {
+    [GetStartedTabsViewsEnum.DIGEST_PLAYGROUND]: DigestPlaygroundView,
+  },
 };
