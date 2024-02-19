@@ -283,7 +283,7 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Modify subscriber credentials',
     description: `Subscriber credentials associated to the delivery methods such as slack and push tokens.
-    This endpoint appends provided new credentials and deviceTokens to the existing ones.`,
+    This endpoint appends provided credentials and deviceTokens to the existing ones.`,
   })
   async modifySubscriberChannel(
     @UserSession() user: IJwtPayload,
