@@ -31,7 +31,7 @@ describe('Creation functionality', function () {
       });
     cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('editor-mode-switch').find('label').last().click();
-    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName');
+    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName', { timeout: 1000 });
 
     goBack();
     cy.getByTestId('notification-template-submit-btn').click();

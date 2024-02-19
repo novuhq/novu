@@ -32,7 +32,7 @@ export const usePreviewPushTemplate = ({ disabled, locale }: { disabled: boolean
   });
 
   useEffect(() => {
-    if (!locale || disabled) return;
+    if (disabled) return;
 
     getPushPreview({
       locale,

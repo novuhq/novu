@@ -27,7 +27,6 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
 
   const { isPreviewLoading, parsedPreviewState, templateError, parseInAppContent } = usePreviewInAppTemplate({
     locale: selectedLocale,
-    payload: processedVariables,
   });
 
   useEffect(() => {

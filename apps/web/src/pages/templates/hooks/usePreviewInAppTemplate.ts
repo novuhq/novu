@@ -2,6 +2,7 @@ import { IMessageButton } from '@novu/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { usePreviewInApp } from '../../../api/hooks';
+import { useProcessVariables } from '../../../hooks';
 import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
@@ -11,16 +12,18 @@ export type ParsedPreviewStateType = {
   content: string;
 };
 
-export const usePreviewInAppTemplate = ({ locale, payload }: { locale?: string; payload: string }) => {
+export const usePreviewInAppTemplate = ({ locale }: { locale?: string }) => {
   const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateError = useStepFormCombinedErrors();
   const templateContent = watch(`${path}.template.content`);
   const templateCta = watch(`${path}.template.cta`);
+  const variables = watch(`${path}.template.variables`);
+  const payload = useProcessVariables(variables);
 
   const [parsedPreviewState, setParsedPreviewState] = useState<ParsedPreviewStateType>({
     ctaButtons: [],
-    content: templateContent as string,
+    content: '',
   });
 
   const { isLoading, getInAppPreview } = usePreviewInApp({
@@ -34,7 +37,7 @@ export const usePreviewInAppTemplate = ({ locale, payload }: { locale?: string; 
 
   const getInAppPreviewCallback = useCallback(
     (payloadArg: string) => {
-      if (!locale || !templateContent) return;
+      if (!templateContent) return;
 
       getInAppPreview({
         locale,
@@ -47,8 +50,6 @@ export const usePreviewInAppTemplate = ({ locale, payload }: { locale?: string; 
   );
 
   useEffect(() => {
-    if (!locale) return;
-
     getInAppPreviewCallback(payload);
   }, [getInAppPreviewCallback, locale, payload]);
 

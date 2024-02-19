@@ -33,7 +33,7 @@ export const usePreviewEmailTemplate = ({ locale, payload }: { locale?: string; 
   const getEmailPreviewCallback = useCallback(
     (payloadArg: string) => {
       const content = contentType === 'editor' ? editorContent : htmlContent;
-      if (!locale || !content) return;
+      if (!content) return;
 
       getEmailPreview({
         contentType: contentType,
@@ -48,8 +48,6 @@ export const usePreviewEmailTemplate = ({ locale, payload }: { locale?: string; 
   );
 
   useEffect(() => {
-    if (!locale) return;
-
     getEmailPreviewCallback(payload);
   }, [getEmailPreviewCallback, locale, payload]);
 

@@ -23,8 +23,6 @@ export const usePreviewChatTemplate = (locale?: string) => {
   });
 
   useEffect(() => {
-    if (!locale) return;
-
     getChatPreview({
       content: templateContent,
       payload: processedVariables,
