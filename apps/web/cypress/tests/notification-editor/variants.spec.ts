@@ -73,7 +73,7 @@ describe('Workflow Editor - Variants', function () {
   };
 
   const showStepActions = (channel: Channel) => {
-    cy.getByTestId(`node-${channel}Selector`).parent().trigger('mouseover');
+    cy.getByTestId(`node-${channel}Selector`).parent().trigger('mouseover', { force: true });
   };
 
   const addVariantActionClick = (channel: Channel) => {
