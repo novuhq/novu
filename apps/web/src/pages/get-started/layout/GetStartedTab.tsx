@@ -6,10 +6,11 @@ import { colors, Text } from '@novu/design-system';
 import Card from '../../../components/layout/components/Card';
 import { Timeline } from '../components/timeline/Timeline';
 import { OnboardingUseCase } from '../consts/types';
+import { AdditionInformationLink } from '../components/AdditionInformationLink';
 
 type IGetStartedTabProps = OnboardingUseCase;
 
-export function GetStartedTab({ steps, Demo, title, description }: IGetStartedTabProps) {
+export function GetStartedTab({ steps, Demo, title, description, useCaseLink, type }: IGetStartedTabProps) {
   return (
     <Grid align="stretch" justify={'space-between'}>
       <Grid.Col span={3} mt={12}>
@@ -17,6 +18,7 @@ export function GetStartedTab({ steps, Demo, title, description }: IGetStartedTa
           <Description>{description}</Description>
         </Card>
         <Timeline steps={steps} />
+        <AdditionInformationLink channel={type} href={useCaseLink} />
       </Grid.Col>
       <Grid.Col span={8}>
         <Demo />

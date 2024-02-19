@@ -12,6 +12,8 @@ export interface OnboardingUseCase {
   description: string;
   steps: IOnboardingStep[];
   Demo: React.ComponentType<any>;
+  useCaseLink: string;
+  type: OnboardingUseCasesTabsEnum;
 }
 
 export enum OnboardingNodeEnum {

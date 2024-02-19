@@ -3,17 +3,20 @@ import { ROUTES } from '@novu/shared-web';
 
 import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
 import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
-import { Link, StepDescription, StepText } from './shared';
+import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingNodeEnum, OnboardingUseCase } from './types';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
+import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-in-app';
 
 export const InAppUseCaseConst: OnboardingUseCase = {
   title: 'In-app notifications center',
+  type: OnboardingUseCasesTabsEnum.IN_APP,
   description:
     "Utilize Novu's pre-built customizable in-app component. " +
     'Or opt for the headless library to create your own in-app notification center.',
+  useCaseLink: 'https://docs.novu.co/channels-and-providers/in-app/introduction',
   steps: [
     {
       title: 'Configure In-App provider',
@@ -31,7 +34,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
 
         return (
           <StepDescription>
-            <Link children={'Create In-app provider'} href={ROUTES.INTEGRATIONS_CREATE} />
+            <GetStartedLink children={'Create In-app provider'} href={ROUTES.INTEGRATIONS_CREATE} />
             <StepText>
               {' instance, and select a framework to set up credentials in the Novu’s Integration store.'}
             </StepText>
@@ -74,7 +77,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link children={' activity feed '} href={ROUTES.ACTIVITIES} />
+            <GetStartedLink children={' activity feed '} href={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>

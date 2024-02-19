@@ -1,14 +1,17 @@
 import { ROUTES } from '@novu/shared-web';
 
 import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
-import { Link, StepDescription, StepText } from './shared';
+import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
+import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 
 export const TranslationUseCaseConst: OnboardingUseCase = {
   title: 'Translate content',
+  type: OnboardingUseCasesTabsEnum.MULTI_CHANNEL,
   description:
     'Upload translations to use them as variables or for auto-upload in the editor in a workflow. ' +
     'This feature is available for business and enterprise plan.',
+  useCaseLink: 'https://docs.novu.co/content-creation-design/translations',
   steps: [
     {
       title: 'Configure providers',
@@ -18,7 +21,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link href={ROUTES.INTEGRATIONS}> Integration store</Link>
+            <GetStartedLink href={ROUTES.INTEGRATIONS}> Integration store</GetStartedLink>
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -30,7 +33,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Add a translation group and specify the languages in the</StepText>
-            <Link children={' Translations page'} href={ROUTES.TRANSLATIONS} />
+            <GetStartedLink children={' Translations page'} href={ROUTES.TRANSLATIONS} />
             <StepText>.</StepText>
           </StepDescription>
         );
