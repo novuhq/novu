@@ -98,6 +98,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
     return (
       <StepDescription>
         <StepText>Not ready to configure Digest? </StepText>
+        <br />
         <Link onClick={() => setView?.(GetStartedTabsViewsEnum.DIGEST_PLAYGROUND)}>Open digest playground</Link>
         <StepText> for a quick test.</StepText>
       </StepDescription>

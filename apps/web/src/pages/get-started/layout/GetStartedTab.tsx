@@ -59,8 +59,8 @@ export function GetStartedTab({ setView, currentView, views, ...tabProps }: IGet
           {description ? <Description>{description}</Description> : null}
         </Card>
         <StyledTimeline steps={steps} hasBottomSection={!!BottomSection} />
-        <AdditionInformationLink channel={type} href={useCaseLink} />
         {BottomSection ? <BottomSection setView={setView} /> : null}
+        <AdditionInformationLink channel={type} href={useCaseLink} />
       </Grid.Col>
       <Grid.Col span={8}>
         <Demo />

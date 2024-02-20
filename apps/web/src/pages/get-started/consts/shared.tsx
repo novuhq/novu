@@ -33,8 +33,8 @@ export function Link({ children, ...linkProps }: React.AnchorHTMLAttributes<HTML
   };
 
   return (
-    <a onClick={handleOnClick} {...linkProps} target="_blank" rel="noreferrer noopener">
+    <StyledLink onClick={handleOnClick} {...linkProps} target="_blank" rel="noreferrer noopener">
       {children}
-    </a>
+    </StyledLink>
   );
 }
