@@ -25,7 +25,6 @@ describe('Translations Group Page', function () {
 
   it('should upload translation file', function () {
     createTranslationGroup();
-    cy.getByTestId('upload-menu').click();
     cy.getByTestId('upload-files-dropdown-item').find('input').attachFile('translation.json');
     cy.getByTestId('upload-submit-btn').click();
     cy.visit('/translations');
