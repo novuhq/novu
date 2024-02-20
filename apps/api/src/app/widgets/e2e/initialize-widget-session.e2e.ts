@@ -10,6 +10,8 @@ import {
   InvalidateCacheService,
 } from '@novu/application-generic';
 
+import { encryptApiKeysMigration } from '../../../../migrations/encrypt-api-keys/encrypt-api-keys-migration';
+
 const integrationRepository = new IntegrationRepository();
 const subscriberId = '12345';
 
@@ -91,16 +93,28 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     expect(responseInvalidSubscriberId.body.message).to.contain('Please provide a valid HMAC hash');
   });
 
-  it('should fail the test with invalid secret key', async function () {
+  it('should fail the test with invalid hmac', async function () {
     const validSecretKey = session.environment.apiKeys[0].key;
 
     const invalidSecretKey = 'invalid-secret-key';
     const invalidSubscriberHmacHash = createHash(invalidSecretKey, subscriberId);
 
-    const responseInvalidSecretKey = await initWidgetSession(subscriberId, session, invalidSecretKey);
+    const responseInvalidSecretKey = await initWidgetSession(subscriberId, session, invalidSubscriberHmacHash);
 
     expect(responseInvalidSecretKey.body?.data?.profile).to.not.exist;
     expect(responseInvalidSecretKey.body.message).to.contain('Please provide a valid HMAC hash');
+  });
+
+  it('should pass api key migration regression tests', async function () {
+    const validSecretKey = session.environment.apiKeys[0].key;
+
+    const invalidSubscriberHmacHash = createHash(validSecretKey, subscriberId);
+
+    await encryptApiKeysMigration();
+
+    const response = await initWidgetSession(subscriberId, session, invalidSubscriberHmacHash);
+
+    expect(response.status).to.equal(201);
   });
 });
 
