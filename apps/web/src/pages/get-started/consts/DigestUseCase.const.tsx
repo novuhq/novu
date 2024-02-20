@@ -94,16 +94,19 @@ export const DigestUseCaseConst: OnboardingUseCase = {
     },
   ],
   Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
-  BottomSection: function ({ setView }) {
-    return (
-      <StepDescription>
-        <StepText>Not ready to configure Digest? </StepText>
-        <br />
-        <Link onClick={() => setView?.(GetStartedTabsViewsEnum.DIGEST_PLAYGROUND)}>Open digest playground</Link>
-        <StepText> for a quick test.</StepText>
-      </StepDescription>
-    );
-  },
+  /* TODO: uncomment this when we want to support Digest Playground features */
+  /*
+   * BottomSection: function ({ setView }) {
+   *   return (
+   *     <StepDescription>
+   *       <StepText>Not ready to configure Digest? </StepText>
+   *       <br />
+   *       <Link onClick={() => setView?.(GetStartedTabsViewsEnum.DIGEST_PLAYGROUND)}>Open digest playground</Link>
+   *       <StepText> for a quick test.</StepText>
+   *     </StepDescription>
+   *   );
+   * },
+   */
   views: {
     [GetStartedTabsViewsEnum.DIGEST_PLAYGROUND]: DigestPlaygroundView,
   },
