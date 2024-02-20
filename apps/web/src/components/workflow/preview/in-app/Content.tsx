@@ -1,7 +1,10 @@
-import { Stack } from '@mantine/core';
+import { Group, Stack } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
+import { MessageActionStatusEnum } from '@novu/shared';
 
 import { useHover } from '../../../../hooks';
+import { ActionBlockContainer } from '../../../../pages/templates/components/in-app-editor/preview/ActionBlockContainer';
+import AvatarContainer from '../../../../pages/templates/components/in-app-editor/preview/AvatarContainer';
 import { ParsedPreviewStateType } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { PreviewEditOverlay } from '../common';
 import {
@@ -17,11 +20,13 @@ export default function Content({
   parsedPreviewState,
   templateError,
   showOverlay = true,
+  enableAvatar,
 }: {
   isPreviewLoading: boolean;
   parsedPreviewState: ParsedPreviewStateType;
   templateError: string;
   showOverlay?: boolean;
+  enableAvatar?: boolean;
 }) {
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
 
@@ -40,16 +45,35 @@ export default function Content({
             {isPreviewLoading ? (
               <Skeletons />
             ) : (
-              <>
-                <NotificationTextStyled
-                  isExampleNotification={false}
-                  dangerouslySetInnerHTML={{
-                    __html: parsedPreviewState.content as string,
-                  }}
-                  data-test-id="in-app-content-preview"
-                />
-                <TimeTextStyled isExampleNotification={false}>5 minutes ago</TimeTextStyled>
-              </>
+              <div>
+                <Group spacing={10} align="flex-start">
+                  {enableAvatar && <AvatarContainer opened={false} setOpened={() => {}} readonly={true} />}
+                  <Stack spacing={24}>
+                    <NotificationTextStyled
+                      isExampleNotification={false}
+                      dangerouslySetInnerHTML={{
+                        __html: parsedPreviewState.content as string,
+                      }}
+                      data-test-id="in-app-content-preview"
+                    />
+                    <TimeTextStyled isExampleNotification={false}>5 minutes ago</TimeTextStyled>
+                  </Stack>
+                </Group>
+                {parsedPreviewState.ctaButtons.length > 0 && (
+                  <ActionBlockContainer
+                    value={{
+                      status: MessageActionStatusEnum.PENDING,
+                      buttons: parsedPreviewState.ctaButtons,
+                      result: {},
+                    }}
+                    onChange={() => {}}
+                    onButtonAddClickHandle={() => {}}
+                    onRemoveTemplate={() => {}}
+                    isButtonsTemplateSelected={true}
+                    readonly={true}
+                  />
+                )}
+              </div>
             )}
           </ContentStyled>
         </ContentAndOverlayWrapperStyled>
