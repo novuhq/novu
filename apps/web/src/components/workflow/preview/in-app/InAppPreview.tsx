@@ -19,6 +19,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
 
   const content = watch(`${path}.template.content`);
   const variables = watch(`${path}.template.variables`);
+  const enableAvatar = watch(`${path}.template.enableAvatar`);
   const processedVariables = useProcessVariables(variables);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
@@ -48,6 +49,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
             parsedPreviewState={parsedPreviewState}
             templateError={templateError}
             showOverlay={!showVariables}
+            enableAvatar={enableAvatar}
           />
         </ContainerStyled>
       </Grid.Col>

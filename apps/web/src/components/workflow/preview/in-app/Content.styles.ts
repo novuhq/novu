@@ -5,7 +5,7 @@ import { colors, shadows } from '@novu/design-system';
 export const ContentStyled = styled.div<{ isBlur: boolean; isExampleNotification?: boolean }>`
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 1.5rem;
   flex-shrink: 0;
   position: relative;
