@@ -1,17 +1,18 @@
+import { useCallback } from 'react';
 import { Stack } from '@mantine/core';
 import styled from '@emotion/styled';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useNavigate, useParams } from 'react-router-dom';
+import { UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import { ArrowButton, colors, Title, Text, Button } from '@novu/design-system';
 
 import PageContainer from '../../components/layout/components/PageContainer';
-import { ArrowButton, colors, Title, Text, Button } from '@novu/design-system';
 import { parseUrl } from '../../utils/routeUtils';
 import { ROUTES } from '../../constants/routes.enum';
 import { DigestDemoFlow } from '../../components';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { DigestPlaygroundAnalyticsEnum } from './constants';
 import { useTourStorage } from './hooks/useTourStorage';
-import { useCallback } from 'react';
 
 const Heading = styled(Title)`
   color: ${colors.B40};
@@ -81,7 +82,7 @@ export const TemplatesDigestPlaygroundPage = () => {
           <LinkStyled
             target="_blank"
             rel="noopener noreferrer"
-            href="https://docs.novu.co/workflows/digest"
+            href={`https://docs.novu.co/workflows/digest${UTM_CAMPAIGN_QUERY_PARAM}`}
             onClick={handleLearnMoreClick}
           >
             Learn more in docs
