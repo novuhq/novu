@@ -80,7 +80,7 @@ const WorkflowEditor = () => {
         navigate(basePath + '/test-workflow');
       }
     },
-    [navigate, basePath]
+    [navigate, basePath, navigateToVariantPreview]
   );
 
   const onEdit: IFlowEditorProps['onEdit'] = (_, node) => {

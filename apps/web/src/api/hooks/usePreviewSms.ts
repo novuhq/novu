@@ -28,12 +28,8 @@ export const usePreviewSms = (options: UseMutationOptions<ResultType, IResponseE
   );
 
   const getSmsPreview = useCallback(
-    ({ content, payload, locale }: PayloadType) => {
-      if (IS_DOCKER_HOSTED) {
-        return;
-      }
-
-      return mutateAsync({
+    async ({ content, payload, locale }: PayloadType) => {
+      await mutateAsync({
         content,
         payload: JSON.parse(payload),
         locale,

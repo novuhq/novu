@@ -33,10 +33,6 @@ export const usePreviewEmail = (options: UseMutationOptions<ResultType, IRespons
 
   const getEmailPreviewCallback = useCallback(
     async ({ content, payload, contentType, layoutId, locale, subject }: PayloadType) => {
-      if (IS_DOCKER_HOSTED) {
-        return;
-      }
-
       await mutateAsync({
         content,
         payload,

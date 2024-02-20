@@ -46,5 +46,5 @@ export const useNavigateFromEditor = (preview = false) => {
     if (isStepWithNoVariant && isNotStepEditorPath) {
       navigate(stepEditorPath);
     }
-  }, [navigate, areStepsExists, isStepExists, isVariantExists, workflowEditorPath, stepEditorPath]);
+  }, [navigate, areStepsExists, isStepExists, isVariantExists, workflowEditorPath, pathname, stepEditorPath]);
 };

@@ -183,7 +183,7 @@ export const PreviewWeb = ({
               <When truthy={!loading}>
                 <ErrorBoundary
                   FallbackComponent={() => (
-                    <div data-test-id="preview-content" className={classes.fallbackFrame}>
+                    <div className={classes.fallbackFrame} data-test-id="preview-content">
                       <Text color={colors.error}>
                         Oops! We've recognized some glitch in this HTML. Please give it another look!
                       </Text>

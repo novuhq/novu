@@ -28,12 +28,8 @@ export const usePreviewChat = (options: UseMutationOptions<ResultType, IResponse
   );
 
   const getChatPreview = useCallback(
-    ({ content, payload, locale }: PayloadType) => {
-      if (IS_DOCKER_HOSTED) {
-        return;
-      }
-
-      return mutateAsync({
+    async ({ content, payload, locale }: PayloadType) => {
+      await mutateAsync({
         content,
         payload,
         locale,

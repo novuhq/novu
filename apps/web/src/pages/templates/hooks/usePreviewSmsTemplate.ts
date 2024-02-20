@@ -23,7 +23,7 @@ export const usePreviewSmsTemplate = (locale?: string, disabled?: boolean) => {
   });
 
   useEffect(() => {
-    if (!locale || disabled) return;
+    if (disabled) return;
 
     getSmsPreview({
       content: templateContent,

@@ -76,4 +76,6 @@ const ContentAndOVerlayWrapperStyled = styled.div`
   position: relative;
   padding-top: 1.5rem;
   padding-bottom: 1.25rem;
+  border-radius: 0.5rem;
+  overflow: hidden;
 `;
