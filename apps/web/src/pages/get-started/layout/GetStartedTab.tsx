@@ -7,7 +7,6 @@ import { useMemo } from 'react';
 import Card from '../../../components/layout/components/Card';
 import { Timeline } from '../components/timeline/Timeline';
 import { AdditionInformationLink } from '../components/AdditionInformationLink';
-import { GetStartedTabsViewsEnum, TAB_VIEW_SET } from '../consts/GetStartedTabsViewsEnum';
 import { IOnboardingUseCaseViewContext, OnboardingUseCase } from '../consts/types';
 
 export interface IGetStartedTabProps extends OnboardingUseCase, IOnboardingUseCaseViewContext {}
