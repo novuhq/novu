@@ -1,6 +1,6 @@
 import { ROUTES } from '@novu/shared-web';
 
-import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
+import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingNodeEnum, OnboardingUseCase } from './types';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
@@ -75,5 +75,5 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
+  Demo: () => <GetStartedAnimation useCase={OnboardingUseCasesTabsEnum.MULTI_CHANNEL} />,
 };

@@ -2,7 +2,7 @@ import { ROUTES } from '@novu/shared-web';
 
 import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingNodeEnum, OnboardingUseCase } from './types';
-import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
+import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 
@@ -88,5 +88,5 @@ export const DelayUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
+  Demo: () => <GetStartedAnimation useCase={OnboardingUseCasesTabsEnum.DELAY} />,
 };

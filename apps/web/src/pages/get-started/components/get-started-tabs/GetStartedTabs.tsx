@@ -1,6 +1,4 @@
-import styled from '@emotion/styled';
-import { Button, Container, Tabs } from '@mantine/core';
-import { ArrowLeft } from '@novu/design-system';
+import { Container, Tabs } from '@mantine/core';
 import { Outlet } from 'react-router-dom';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
 import { UseCasesConst } from '../../consts/UseCases.const';
@@ -22,7 +20,8 @@ export const GetStartedTabs: React.FC<IGetStartedTabsProps> = ({ tabConfigs = TA
     <Container fluid mt={15} ml={5}>
       <Tabs
         orientation="horizontal"
-        keepMounted={true}
+        // must disable, otherwise causes memory leaks with animations!
+        keepMounted={false}
         onTabChange={(tabValue: OnboardingUseCasesTabsEnum) => {
           // reset the view when changing tabs
           setView(null);

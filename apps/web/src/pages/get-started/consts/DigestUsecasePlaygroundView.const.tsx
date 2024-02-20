@@ -3,7 +3,6 @@ import { Flex } from '@mantine/core';
 import { Bolt, Button, colors, Text } from '@novu/design-system';
 import { useState } from 'react';
 import { TimerControl } from '../../../components/TimerControl';
-import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 import { StepButton, StepDescription, StepText, StyledLink } from './shared';
 import { OnboardingUseCase } from './types';
@@ -53,7 +52,7 @@ export const DigestPlaygroundView: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Playground'} assetLight={'Light Playground'} />,
+  Demo: () => <>Digest Playground</>,
   type: OnboardingUseCasesTabsEnum.DIGEST,
   useCaseLink: '',
   BottomSection: function () {

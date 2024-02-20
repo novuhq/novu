@@ -1,12 +1,12 @@
 import { ROUTES } from '@novu/shared-web';
+import { GetStartedAnimation } from '../components/GetStartedAnimation';
 
-import { GetStartedLink, Link, StepDescription, StepText } from './shared';
-import { OnboardingNodeEnum, OnboardingUseCase } from './types';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
-import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
-import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { DigestPlaygroundView } from './DigestUsecasePlaygroundView.const';
 import { GetStartedTabsViewsEnum } from './GetStartedTabsViewsEnum';
+import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
+import { GetStartedLink, StepDescription, StepText } from './shared';
+import { OnboardingNodeEnum, OnboardingUseCase } from './types';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-digest';
 
@@ -93,7 +93,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
+  Demo: () => <GetStartedAnimation useCase={OnboardingUseCasesTabsEnum.DIGEST} />,
   /* TODO: uncomment this when we want to support Digest Playground features */
   /*
    * BottomSection: function ({ setView }) {
