@@ -41,6 +41,7 @@ describe('Delete subscriber provider credentials', function () {
         providerId: ChatProviderIdEnum.Discord,
         credentials: { webhookUrl: 'newWebhookUrl' },
         oauthHandler: OAuthHandlerEnum.NOVU,
+        isIdempotentOperation: false,
       })
     );
 
@@ -52,6 +53,7 @@ describe('Delete subscriber provider credentials', function () {
         providerId: PushProviderIdEnum.FCM,
         credentials: { deviceTokens: fcmTokens },
         oauthHandler: OAuthHandlerEnum.NOVU,
+        isIdempotentOperation: false,
       })
     );
 

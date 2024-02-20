@@ -10,6 +10,7 @@ import {
   SelectIntegration,
   AuthService,
   createHash,
+  decryptApiKey,
 } from '@novu/application-generic';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -84,7 +85,8 @@ export class InitializeSession {
 }
 
 function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
-  const hmacHash = createHash(environment.apiKeys[0].key, command.subscriberId);
+  const key = decryptApiKey(environment.apiKeys[0].key);
+  const hmacHash = createHash(key, command.subscriberId);
   if (hmacHash !== command.hmacHash) {
     throw new ApiException('Please provide a valid HMAC hash');
   }

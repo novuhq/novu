@@ -10,6 +10,7 @@ const iconClassName = css`
 
 export const IconProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   const theme = useMantineTheme();
+
   return (
     <IconContext.Provider
       value={{
