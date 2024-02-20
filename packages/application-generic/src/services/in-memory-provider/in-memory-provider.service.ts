@@ -304,7 +304,7 @@ export class InMemoryProviderService {
           LOG_CONTEXT
         );
       } catch (error) {
-        Logger.error(
+        Logger.warn(
           error,
           this.descriptiveLogMessage(
             `In-memory provider service shutdown has failed`

@@ -7,6 +7,7 @@ import { useLocalThemePreference } from '@novu/shared-web';
 import { mantineConfig } from './config/theme.config';
 import { colors, shadows } from './config';
 import { ChevronDown } from './icons';
+import { IconProvider } from './iconsV2/IconProvider';
 
 const accordionStyles = (theme: MantineTheme) => ({
   item: {
@@ -123,7 +124,9 @@ export function ThemeProvider({ children }: { children: ReactNode | ReactNode[];
             },
           })}
         />
-        <NotificationsProvider>{children}</NotificationsProvider>
+        <NotificationsProvider>
+          <IconProvider>{children}</IconProvider>
+        </NotificationsProvider>
       </MantineProvider>
     </ColorSchemeProvider>
   );
