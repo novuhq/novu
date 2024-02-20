@@ -2,7 +2,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { ROUTES } from '@novu/shared-web';
 
 import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
-import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
+import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingNodeEnum, OnboardingUseCase } from './types';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
@@ -34,7 +34,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
 
         return (
           <StepDescription>
-            <GetStartedLink children={'Create In-app provider'} href={ROUTES.INTEGRATIONS_CREATE} />
+            <GetStartedLink href={getInAppIntegrationUrl()}>Create In-app provider</GetStartedLink>
             <StepText>
               {' instance, and select a framework to set up credentials in the Novu’s Integration store.'}
             </StepText>
@@ -86,5 +86,5 @@ export const InAppUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
+  Demo: () => <GetStartedAnimation useCase={OnboardingUseCasesTabsEnum.IN_APP} />,
 };
