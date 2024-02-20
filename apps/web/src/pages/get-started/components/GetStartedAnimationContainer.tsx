@@ -1,6 +1,7 @@
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { FC, ReactNode } from 'react';
+import { GetStartedAnimation } from './GetStartedAnimation';
 
 type GetStartedAnimationElement = ReactNode;
 
@@ -10,7 +11,9 @@ interface IGetStartedAnimationContainerProps {
 }
 
 // TODO: add styles for consistent display of animations across tabs
-const AnimationContainer = styled.div``;
+const AnimationContainer = styled.div`
+  height: 520px;
+`;
 
 export const GetStartedAnimationContainer: FC<IGetStartedAnimationContainerProps> = ({ assetDark, assetLight }) => {
   const { colorScheme } = useTheme();
@@ -19,7 +22,7 @@ export const GetStartedAnimationContainer: FC<IGetStartedAnimationContainerProps
   // TODO remove Placeholder wrapping when assets are available
   return (
     <AnimationContainer>
-      {isDarkMode ? <Placeholder placeholder={assetDark} /> : <Placeholder placeholder={assetLight} />}
+      <GetStartedAnimation />
     </AnimationContainer>
   );
 };
