@@ -1,7 +1,6 @@
 import { Group, Stack } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 import { MessageActionStatusEnum } from '@novu/shared';
-import { useWatch } from 'react-hook-form';
 
 import { useHover } from '../../../../hooks';
 import { ActionBlockContainer } from '../../../../pages/templates/components/in-app-editor/preview/ActionBlockContainer';
