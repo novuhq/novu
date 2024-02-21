@@ -42,6 +42,11 @@ const triggerNode: Node = {
   position: { x: 0, y: 10 },
 };
 
+// This should
+// throw a warning in
+// CI because it's a
+// multi-line comment
+// with the wrong format
 const DEFAULT_WRAPPER_STYLES = {
   height: '100%',
   width: '100%',
