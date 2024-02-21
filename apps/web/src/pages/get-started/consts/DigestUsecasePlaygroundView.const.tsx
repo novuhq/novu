@@ -1,11 +1,13 @@
 import styled from '@emotion/styled';
 import { Flex } from '@mantine/core';
 import { Bolt, Button, colors, Text } from '@novu/design-system';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { TimerControl } from '../../../components/TimerControl';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
-import { StepDescription, StepText, StyledLink } from './shared';
+import { StepDescription, StepDescriptionAction, StepText, StyledLink } from './shared';
 import { OnboardingUseCase } from './types';
+import { useDigestDemoFlowContext } from '../../../components/quick-start/digest-demo-flow/DigestDemoFlowProvider';
+import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 
 const StyledBolt = styled(Bolt)`
   color: ${colors.gradientMiddle};
@@ -19,10 +21,17 @@ export const DigestPlaygroundView: OnboardingUseCase = {
       Description: function () {
         const [time, setTime] = useState<number>(10);
 
+        const { isReadOnly, triggerCount, isRunningDigest, digestInterval, updateDigestInterval } =
+          useDigestDemoFlowContext();
+
+        useEffect(() => {
+          updateDigestInterval(time);
+        }, [time]);
+
         return (
           <StepDescription>
             <StepText>Specify the interval during which the digest will collect notifications.</StepText>
-            <TimerControl unitLabel="sec" mt="0.5rem" value={time} min={10} setValue={setTime} />
+            <TimerControl unitLabel="sec" mt="0.5rem" value={time} min={10} max={30} setValue={setTime} />
           </StepDescription>
         );
       },
@@ -31,13 +40,15 @@ export const DigestPlaygroundView: OnboardingUseCase = {
     {
       title: 'Run trigger multiple times',
       Description: function () {
+        const { runTrigger } = useDigestDemoFlowContext();
+
         return (
-          <StepDescription>
+          <StepDescriptionAction>
             <StepText>Click the button multiple times to generate a few notifications.</StepText>
-            <Button variant="outline" mt="0.5rem">
+            <Button onClick={runTrigger} variant="outline">
               Run workflow trigger
             </Button>
-          </StepDescription>
+          </StepDescriptionAction>
         );
       },
     },
@@ -52,7 +63,11 @@ export const DigestPlaygroundView: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => <>Digest Playground</>,
+  Demo: ({ children }: { children?: React.ReactNode }) => (
+    <GetStartedAnimationContainer assetDark={'Dark Playground'} assetLight={'Light Playground'}>
+      {children}
+    </GetStartedAnimationContainer>
+  ),
   type: OnboardingUseCasesTabsEnum.DIGEST,
   useCaseLink: '',
   BottomSection: function () {

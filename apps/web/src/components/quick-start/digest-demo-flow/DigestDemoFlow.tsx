@@ -25,6 +25,7 @@ export function DigestDemoFlow({
 }) {
   const [ref, rect] = useResizeObserver();
   const reactFlowInstance = useReactFlow();
+
   const { isInitialLoading: isLoadingTemplate } = useTemplateFetcher(
     { templateId },
     { enabled: !isReadOnly && !!templateId, refetchOnWindowFocus: false }
@@ -102,3 +103,5 @@ const nodes: Node[] = [
 ];
 
 const nodeTypes = { triggerNode: TriggerNode, digestNode: DigestNode, emailNode: EmailNode };
+
+export const digestDemoConfigurations = { nodes, edges };

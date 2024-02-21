@@ -40,7 +40,7 @@ export interface ITimerControlProps extends FlexProps {
   step?: number;
   min?: number;
   max?: number;
-  unitLabel?: string;
+  unitLabel?: 'sec';
 }
 
 export const TimerControl: React.FC<ITimerControlProps> = ({

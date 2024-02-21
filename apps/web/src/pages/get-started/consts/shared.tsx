@@ -25,6 +25,12 @@ export const StyledLink = styled.a`
   cursor: pointer;
 `;
 
+export const StepDescriptionAction = styled(StepDescription)`
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+`;
+
 export function Link({ children, ...linkProps }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const segment = useSegment();
 

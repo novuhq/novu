@@ -8,7 +8,7 @@ export interface IOnboardingUseCaseViewContext {
   currentView?: GetStartedTabsViewsEnum;
 }
 
-type UseCaseViewContext = Partial<IOnboardingUseCaseViewContext>;
+export type UseCaseViewContext = Partial<IOnboardingUseCaseViewContext>;
 
 export interface IOnboardingStep {
   title: string;
