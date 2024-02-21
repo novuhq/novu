@@ -9,12 +9,6 @@ import { colors, shadows } from './config';
 import { ChevronDown } from './icons';
 import { IconProvider } from './iconsV2/IconProvider';
 
-// This should
-// throw a warning in
-// CI because it's a
-// multi-line comment
-// with the wrong format
-
 const accordionStyles = (theme: MantineTheme) => ({
   item: {
     background: theme.colorScheme === 'dark' ? colors.B15 : colors.B98,
