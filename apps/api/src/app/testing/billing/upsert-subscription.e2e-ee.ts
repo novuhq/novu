@@ -51,7 +51,9 @@ describe('UpsertSubscription', () => {
     ] as any);
     updateOrgStub = sinon.stub(repo, 'update').resolves({ matched: 1, modified: 1 });
     createSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'create');
-    updateSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'update');
+    updateSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'update').resolves({
+      status: 'active',
+    });
   });
 
   afterEach(() => {
@@ -90,6 +92,8 @@ describe('UpsertSubscription', () => {
               price: 'price_id_2',
             },
           ],
+          trial_period_days: undefined,
+          trial_settings: undefined,
         },
       ]);
     });
