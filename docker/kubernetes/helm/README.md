@@ -9,7 +9,7 @@ Novu provides a unified API that makes it simple to send notifications through m
 ## TL;DR
 
 ```console
-helm install my-release ./
+helm install my-novu ./ --set store.encryptionKey=$(openssl rand -base64 32)
 ```
 
 ## Introduction
@@ -25,10 +25,10 @@ This chart bootstraps a [Novu](https://github.com/novuhq/novu) deployment on a [
 
 ## Installing the Chart
 
-To install the chart with the release name `my-release`:
+To install the chart with the release name `my-novu`:
 
 ```console
-helm install my-release ./
+helm install my-novu ./ --set store.encryptionKey=$(openssl rand -base64 32)
 ```
 
 These commands deploy a Keycloak application on the Kubernetes cluster in the default configuration.
@@ -40,7 +40,7 @@ These commands deploy a Keycloak application on the Kubernetes cluster in the de
 To uninstall/delete the `my-release` deployment:
 
 ```console
-helm delete my-release
+helm delete my-novu
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.

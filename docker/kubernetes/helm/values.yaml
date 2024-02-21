@@ -1705,7 +1705,7 @@ store:
   ## @param store.encryption-key The encryption key used to encrypt/decrypt provider credentials
   ## Please change this for production use !
   ##
-  encryption-key: ekwUKf9yLjGPLOz939Y1GM0nJckVoVyF # you need to change this !
+  encryption-key: '' # you need to change this !
 
 ## @section Mongodb configuration
 ##
