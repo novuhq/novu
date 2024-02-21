@@ -15,10 +15,19 @@ export interface IOnboardingStep {
   Description: React.ComponentType<UseCaseViewContext>;
 }
 
+export enum OnboardingNodeEnum {
+  IN_APP = 'in_app',
+  DELAY = 'delay',
+  DIGEST = 'digest',
+  TEST_WORKFLOW = 'test-workflow',
+}
+
 export interface OnboardingUseCase {
   title: string;
   description?: string;
   steps: IOnboardingStep[];
+  useCaseLink: string;
+  type: OnboardingUseCasesTabsEnum;
   Demo: React.ComponentType<UseCaseViewContext>;
   BottomSection?: React.ComponentType<UseCaseViewContext>;
   views?: Partial<Record<GetStartedTabsViewsEnum, OnboardingUseCase>>;

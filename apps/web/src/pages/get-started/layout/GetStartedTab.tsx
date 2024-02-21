@@ -6,8 +6,8 @@ import { useMemo } from 'react';
 
 import Card from '../../../components/layout/components/Card';
 import { Timeline } from '../components/timeline/Timeline';
-import { GetStartedTabsViewsEnum, TAB_VIEW_SET } from '../consts/GetStartedTabsViewsEnum';
 import { IOnboardingUseCaseViewContext, OnboardingUseCase } from '../consts/types';
+import { AdditionInformationLink } from '../components/AdditionInformationLink';
 
 export interface IGetStartedTabProps extends OnboardingUseCase, IOnboardingUseCaseViewContext {}
 
@@ -60,6 +60,7 @@ export function GetStartedTab({ setView, currentView, views, ...tabProps }: IGet
         </Card>
         <StyledTimeline steps={steps} hasBottomSection={!!BottomSection} />
         {BottomSection ? <BottomSection setView={setView} /> : null}
+        <AdditionInformationLink channel={type} href={useCaseLink} />
       </Grid.Col>
       <Grid.Col span={8}>
         <Demo />

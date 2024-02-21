@@ -97,6 +97,7 @@ export { Translation } from './general/Translation';
 export { MultiChannel } from './general/MultiChannel';
 export { HalfClock } from './general/HalfClock';
 export { RingingBell } from './general/RingingBell';
+export { OpenedBook } from './general/OpenedBook';
 
 export { Copy } from './actions/Copy';
 export { Close } from './actions/Close';

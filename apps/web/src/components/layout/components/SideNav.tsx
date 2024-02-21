@@ -36,6 +36,7 @@ import OrganizationSelect from './OrganizationSelect';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
 import { VisibilityOff } from './VisibilityOff';
+import { useSegment } from '../../providers/SegmentProvider';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -58,6 +59,7 @@ type Props = {};
 
 export function SideNav({}: Props) {
   const navigate = useNavigate();
+  const segment = useSegment();
   const [opened, setOpened] = useState(false);
   const { setEnvironment, isLoading, environment, readonly } = useEnvController({
     onSuccess: (newEnvironment) => {
@@ -92,6 +94,7 @@ export function SideNav({}: Props) {
   }, [environment, addItem, removeItems, setEnvironment]);
 
   const handleHideOnboardingClick = async () => {
+    segment.track('Click Hide Get Started Page - [Get Started]');
     await updateOnboardingStatus({ showOnboarding: false });
   };
 

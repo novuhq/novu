@@ -41,6 +41,7 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
 import { ApiOkResponse } from '../shared/framework/response.decorator';
+import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
 import { GetWorkflowVariables } from './usecases/get-workflow-variables/get-workflow-variables.usecase';
 import { GetWorkflowVariablesCommand } from './usecases/get-workflow-variables/get-workflow-variables.command';
 
@@ -123,7 +124,7 @@ export class WorkflowController {
   @ExternalApiAccessible()
   deleteWorkflowById(@UserSession() user: IJwtPayload, @Param('workflowId') workflowId: string): Promise<boolean> {
     return this.deleteWorkflowByIdUsecase.execute(
-      GetNotificationTemplateCommand.create({
+      DeleteNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -149,7 +150,7 @@ export class WorkflowController {
     );
   }
 
-  @Get('/:workflowId')
+  @Get('/:workflowIdOrIdentifier')
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Get workflow',
@@ -158,14 +159,14 @@ export class WorkflowController {
   @ExternalApiAccessible()
   getWorkflowById(
     @UserSession() user: IJwtPayload,
-    @Param('workflowId') workflowId: string
+    @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string
   ): Promise<WorkflowResponse> {
     return this.getWorkflowUsecase.execute(
       GetNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        templateId: workflowId,
+        workflowIdOrIdentifier: workflowIdOrIdentifier,
       })
     );
   }

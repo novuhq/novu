@@ -1,4 +1,4 @@
-import { IsDefined, IsString } from 'class-validator';
+import { IsDefined, IsMongoId, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 /**
@@ -6,8 +6,8 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
  * This command is deprecated and will be removed in the future.
  * Please use the GetWorkflowCommand instead.
  */
-export class GetNotificationTemplateCommand extends EnvironmentWithUserCommand {
+export class DeleteNotificationTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
-  @IsString()
-  workflowIdOrIdentifier: string;
+  @IsMongoId()
+  templateId: string;
 }

@@ -1,17 +1,21 @@
 import { ROUTES } from '@novu/shared-web';
-import { CreateWorkflowButton } from '../components/CreateWorkflowButton';
+
+import { GetStartedLink, Link, StepDescription, StepText } from './shared';
+import { OnboardingUseCase } from './types';
+import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
+import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { DigestPlaygroundView } from './DigestUsecasePlaygroundView.const';
 import { GetStartedTabsViewsEnum } from './GetStartedTabsViewsEnum';
-import { Link, StepDescription, StepText } from './shared';
-import { OnboardingUseCase } from './types';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-digest';
 
 export const DigestUseCaseConst: OnboardingUseCase = {
   title: 'Digest multiple events',
+  type: OnboardingUseCasesTabsEnum.DIGEST,
   description:
     'Aggregates multiple events into a single, concise message, preventing user overload with excessive notifications.',
+  useCaseLink: 'https://docs.novu.co/workflows/digest',
   steps: [
     {
       title: 'Configure providers',
@@ -21,7 +25,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <Link href={ROUTES.INTEGRATIONS}> Integration store</Link>
+            <GetStartedLink children={' Integration store'} href={ROUTES.INTEGRATIONS_CREATE} />
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -33,9 +37,9 @@ export const DigestUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>Novu pre-built workflow with a digest node. </StepText>
-            <CreateWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>Customize</CreateWorkflowButton>
-            <StepText> the workflow or create a new one on the Workflows page.</StepText>
+            <StepText>Novu pre-built workflow with a digest node.</StepText>
+            <OpenWorkflowButton children={' Customize '} blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} />
+            <StepText>the workflow or create a new one on the Workflows page.</StepText>
           </StepDescription>
         );
       },
@@ -46,7 +50,9 @@ export const DigestUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-defined preferences for the digest node.</StepText>
-            <Link href={'https://mantine.dev/core/timeline/'}> Customize digest node</Link>
+            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER} node={OnboardingNodeEnum.DIGEST}>
+              Customize digest node
+            </OpenWorkflowButton>
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -57,7 +63,12 @@ export const DigestUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <Link href={'https://mantine.dev/core/timeline/'}>Test the trigger </Link>
+            <OpenWorkflowButton
+              blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}
+              node={OnboardingNodeEnum.TEST_WORKFLOW}
+            >
+              Test the trigger
+            </OpenWorkflowButton>
             <StepText>
               as if you sent it from your API. Add a subscriber by sending data to the trigger method. Click multiple
               times to see how the digest node butch messages.
@@ -72,7 +83,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link href={ROUTES.ACTIVITIES}> activity feed </Link>
+            <GetStartedLink children={' activity feed '} href={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>

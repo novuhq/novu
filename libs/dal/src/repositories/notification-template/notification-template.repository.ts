@@ -47,26 +47,43 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(item);
   }
 
+  buildIdOrIdentifierQuery(idOrIdentifier: string) {
+    const isMongoId = NotificationTemplateRepository.isMongoId(idOrIdentifier);
+
+    let identifierQuery: { _id: string } | { triggers: { $elemMatch: { identifier: string } } };
+
+    if (isMongoId) {
+      identifierQuery = {
+        _id: idOrIdentifier,
+      };
+    } else {
+      identifierQuery = {
+        triggers: { $elemMatch: { identifier: idOrIdentifier } },
+      };
+    }
+
+    return identifierQuery;
+  }
+
   async findBlueprint(idOrIdentifier: string) {
     if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
 
-    const isMongoId = NotificationTemplateRepository.isMongoId(idOrIdentifier);
+    const requestQuery: NotificationTemplateQuery = {
+      isBlueprint: true,
+      _organizationId: this.blueprintOrganizationId,
+      ...this.buildIdOrIdentifierQuery(idOrIdentifier),
+    };
 
-    let requestQuery: NotificationTemplateQuery;
+    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
 
-    if (isMongoId) {
-      requestQuery = {
-        _id: idOrIdentifier,
-        isBlueprint: true,
-        _organizationId: this.blueprintOrganizationId,
-      };
-    } else {
-      requestQuery = {
-        triggers: { $elemMatch: { identifier: idOrIdentifier } },
-        isBlueprint: true,
-        _organizationId: this.blueprintOrganizationId,
-      };
-    }
+    return this.mapEntity(item);
+  }
+
+  async findByIdOrIdentifier({ idOrIdentifier, environmentId }: { idOrIdentifier: string; environmentId: string }) {
+    const requestQuery: NotificationTemplateQuery = {
+      _environmentId: environmentId,
+      ...this.buildIdOrIdentifierQuery(idOrIdentifier),
+    };
 
     const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
 
