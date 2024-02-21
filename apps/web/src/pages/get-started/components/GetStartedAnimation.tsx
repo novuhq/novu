@@ -16,7 +16,8 @@ const STATE_MACHINE_INPUT_NAME = 'white theme';
 const getAnimationPath = (useCase: OnboardingUseCasesTabsEnum) => `${ROOT_ANIMATION_PATH}/${useCase}.riv`;
 
 const AnimationContainer = styled.div`
-  height: 520px;
+  /* taken from Figma to try to get a good estimate on aspect ratio */
+  aspect-ratio: 540 / 472;
 `;
 
 export const GetStartedAnimation: FC<IGetStartedAnimationProps> = ({ useCase }) => {
@@ -25,6 +26,7 @@ export const GetStartedAnimation: FC<IGetStartedAnimationProps> = ({ useCase }) 
     src: getAnimationPath(useCase),
     stateMachines: STATE_MACHINE_NAME,
     autoplay: true,
+    // https://help.rive.app/runtimes/loading-assets#handling-assets
     assetLoader: (asset, bytes) => {
       /*
        * If the asset has a `cdnUuid`, return false to let the runtime handle
