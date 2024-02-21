@@ -1,6 +1,6 @@
 import { ROUTES } from '@novu/shared-web';
 
-import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
+import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
@@ -64,5 +64,6 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
+  // FIXME: switch with TRANSLATION animation when available
+  Demo: () => <GetStartedAnimation useCase={OnboardingUseCasesTabsEnum.MULTI_CHANNEL} />,
 };
