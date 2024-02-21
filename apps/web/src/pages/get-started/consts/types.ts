@@ -14,7 +14,7 @@ export interface OnboardingUseCase {
   Demo: React.ComponentType<any>;
 }
 
-export enum OnboardingNodeEnum {
+export enum OnboardingWorkflowRouteEnum {
   IN_APP = 'in_app',
   DELAY = 'delay',
   DIGEST = 'digest',

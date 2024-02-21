@@ -20,7 +20,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     return new Types.ObjectId().toString();
   }
 
-  public static isMongoId(id: string) {
+  public static isInternalId(id: string) {
     const isValidMongoId = Types.ObjectId.isValid(id);
     if (!isValidMongoId) {
       return false;

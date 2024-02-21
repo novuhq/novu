@@ -10,7 +10,7 @@ import { getBlueprintTemplateById, getTemplateById } from '../../../api/notifica
 import { getWorkflowBlueprintDetails } from '../../../utils';
 import { TemplateCreationSourceEnum } from '../../templates/shared';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { OnboardingNodeEnum } from '../consts/types';
+import { OnboardingWorkflowRouteEnum } from '../consts/types';
 
 export function OpenWorkflowButton({
   blueprintIdentifier,
@@ -19,7 +19,7 @@ export function OpenWorkflowButton({
 }: {
   blueprintIdentifier: string;
   children: React.ReactNode;
-  node?: OnboardingNodeEnum;
+  node?: OnboardingWorkflowRouteEnum;
 }) {
   const segment = useSegment();
 
@@ -92,7 +92,7 @@ export function OpenWorkflowButton({
   return <Link onClick={() => handleOpenWorkflowClick()}>{children}</Link>;
 }
 
-function buildUrl(workflowData, node?: OnboardingNodeEnum) {
+function buildUrl(workflowData, node?: OnboardingWorkflowRouteEnum) {
   const nodeRoute = getNodeRoute(node, workflowData);
 
   return `${window.location.origin}${ROUTES.WORKFLOWS_EDIT_TEMPLATEID.replace(
@@ -100,7 +100,7 @@ function buildUrl(workflowData, node?: OnboardingNodeEnum) {
     workflowData._id
   )}${nodeRoute}`;
 }
-function getNodeRoute(node: OnboardingNodeEnum | undefined, workflowData: INotificationTemplate): string {
+function getNodeRoute(node: OnboardingWorkflowRouteEnum | undefined, workflowData: INotificationTemplate): string {
   if (!node) {
     return '';
   }

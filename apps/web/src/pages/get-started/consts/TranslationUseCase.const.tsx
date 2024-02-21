@@ -30,7 +30,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Add a translation group and specify the languages in the</StepText>
-            <Link children={' Translations page'} href={ROUTES.TRANSLATIONS} />
+            <Link href={ROUTES.TRANSLATIONS}>Translations page</Link>
             <StepText>.</StepText>
           </StepDescription>
         );

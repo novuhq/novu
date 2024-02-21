@@ -147,7 +147,7 @@ export class NotificationTemplateController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        workflowIdOrIdentifier: workflowIdOrIdentifier,
+        workflowIdOrIdentifier,
       })
     );
   }
