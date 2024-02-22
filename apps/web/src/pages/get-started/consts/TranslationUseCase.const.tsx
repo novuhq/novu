@@ -1,4 +1,5 @@
 import { ROUTES } from '@novu/shared-web';
+
 import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { Link, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
@@ -29,7 +30,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Add a translation group and specify the languages in the</StepText>
-            <Link children={' Translations page'} href={ROUTES.TRANSLATIONS} />
+            <Link href={ROUTES.TRANSLATIONS}>Translations page</Link>
             <StepText>.</StepText>
           </StepDescription>
         );
