@@ -61,11 +61,6 @@ export function OpenWorkflowButton({
   };
 
   const getBlueprint = async (): Promise<INotificationTemplate | undefined> => {
-    segment.track('[Get Started] Click Create Notification Template', {
-      templateIdentifier: blueprintIdentifier,
-      location: TemplateCreationSourceEnum.ONBOARDING_GET_STARTED,
-    });
-
     let blueprintData: INotificationTemplate | undefined;
 
     try {
