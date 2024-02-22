@@ -3,11 +3,11 @@ import styled from '@emotion/styled/macro';
 import { Title, Text, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
-import { ICredentialsDto } from '@novu/shared';
+import { ICredentialsDto, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import { Switch, Button, colors, CircleArrowRight } from '@novu/design-system';
 
 import { IIntegratedProvider } from '../types';
 import { updateIntegration } from '../../../api/integration';
-import { Switch, Button, colors, CircleArrowRight } from '@novu/design-system';
 import { When } from '../../../components/utils/When';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 
@@ -129,7 +129,9 @@ export const NovuInAppForm = ({
           </Text>
           <CircleArrowRightStyled
             onClick={() => {
-              window.open('https://docs.novu.co/notification-center/client/iframe#enabling-hmac-encryption');
+              window.open(
+                `https://docs.novu.co/notification-center/client/iframe${UTM_CAMPAIGN_QUERY_PARAM}#enabling-hmac-encryption`
+              );
             }}
           />
         </WarningMessage>

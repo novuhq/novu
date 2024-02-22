@@ -62,7 +62,7 @@ export class WorkflowController {
   ) {}
 
   @Get('')
-  @ApiResponse(WorkflowResponse)
+  @ApiResponse(WorkflowsResponseDto)
   @ApiOperation({
     summary: 'Get workflows',
     description: `Workflows were previously named notification templates`,
