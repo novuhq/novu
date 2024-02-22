@@ -11,6 +11,7 @@ import { INTERCOM_APP_ID } from '../../config';
 import { RequiredAuth } from './RequiredAuth';
 import { SpotLight } from '../utils/Spotlight';
 import { SpotLightProvider } from '../providers/SpotlightProvider';
+import { FreeTrialBanner } from './components/FreeTrialBanner';
 
 const AppShellNew = styled.div`
   display: flex;
@@ -58,6 +59,7 @@ export function AppLayout() {
                 <AppShellNew>
                   <SideNav />
                   <ContentShell>
+                    <FreeTrialBanner />
                     <HeaderNav isIntercomOpened={isIntercomOpened} />
                     <Outlet />
                   </ContentShell>
