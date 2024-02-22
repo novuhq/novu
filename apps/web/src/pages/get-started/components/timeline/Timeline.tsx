@@ -8,13 +8,14 @@ export type ExpandStepsType = boolean | 'hover';
 interface ITimelineProps {
   steps: IOnboardingStep[];
   expandSteps?: ExpandStepsType;
+  className?: string;
 }
 
-export function Timeline({ steps, expandSteps = true }: ITimelineProps) {
+export function Timeline({ className, steps, expandSteps = true }: ITimelineProps) {
   const { classes } = useStyles({ expandSteps });
 
   return (
-    <MantineTimeline classNames={classes} bulletSize={24} lineWidth={1}>
+    <MantineTimeline classNames={classes} className={className} bulletSize={24} lineWidth={1}>
       {steps.map((step, index) => {
         const { title, Description } = step;
 

@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { IUserEntity } from '@novu/shared';
 
 import { updateUserOnBoarding } from '../user';
-import { useAuthContext } from '../../components/providers/AuthProvider';
+import { useAuthContext } from '@novu/shared-web';
 
 interface IErrorResponseType {
   error: string;
