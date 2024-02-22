@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { colors } from '@novu/design-system';
+import { Button, colors } from '@novu/design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export const StepText = styled.p`
@@ -10,6 +10,10 @@ export const StepText = styled.p`
 export const StepDescription = styled.div`
   line-height: 1.25rem;
   margin: 0;
+`;
+
+export const StepButton = styled(Button)`
+  display: block;
 `;
 
 export function GetStartedLink({ children, ...linkProps }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {

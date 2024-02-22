@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { TimerControl } from '../../../components/TimerControl';
 import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
-import { StepDescription, StepText, StyledLink } from './shared';
+import { StepButton, StepDescription, StepText, StyledLink } from './shared';
 import { OnboardingUseCase } from './types';
 
 const StyledBolt = styled(Bolt)`
@@ -35,9 +35,9 @@ export const DigestPlaygroundView: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Click the button multiple times to generate a few notifications.</StepText>
-            <Button variant="outline" mt="0.5rem" display={'block'}>
+            <StepButton variant="outline" mt="0.5rem">
               Run workflow trigger
-            </Button>
+            </StepButton>
           </StepDescription>
         );
       },
