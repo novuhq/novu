@@ -18,7 +18,7 @@ export function AdditionInformationLink({ channel, ...linkProps }: IAdditionInfo
 }
 
 const StyledLink = styled(Link)`
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: flex-start;
 `;
