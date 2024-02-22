@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 
-import { colors, Text, OpenedBook } from '@novu/design-system';
+import { colors, Text, IconMenuBook } from '@novu/design-system';
 
 import { Link } from '../consts/shared';
 import { OnboardingUseCasesTabsEnum } from '../consts/OnboardingUseCasesTabsEnum';
@@ -11,7 +11,7 @@ interface IAdditionInformationLinkProps extends React.AnchorHTMLAttributes<HTMLA
 export function AdditionInformationLink({ channel, ...linkProps }: IAdditionInformationLinkProps) {
   return (
     <StyledLink {...linkProps}>
-      <OpenedBook />
+      <IconMenuBook />
       <StyledText>Learn about {channel}</StyledText>
     </StyledLink>
   );
