@@ -35,7 +35,7 @@ export const DigestPlaygroundView: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Click the button multiple times to generate a few notifications.</StepText>
-            <Button variant="outline" mt="0.5rem">
+            <Button variant="outline" mt="0.5rem" display={'block'}>
               Run workflow trigger
             </Button>
           </StepDescription>
