@@ -48,7 +48,7 @@ export function GetStartedTab({ setView, currentView, views, ...tabProps }: IGet
 
   return (
     <Grid align="stretch" justify={'space-between'}>
-      <Grid.Col span={3} mt={12}>
+      <Grid.Col span={3} mt={12} miw={'18.75rem'}>
         {shouldShowBreadcrumb ? (
           <TabBreadcrumb onClick={() => setView(null)}>
             <ArrowLeft />
