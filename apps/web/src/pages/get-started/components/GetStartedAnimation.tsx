@@ -18,6 +18,8 @@ const getAnimationPath = (useCase: OnboardingUseCasesTabsEnum) => `${ROOT_ANIMAT
 const AnimationContainer = styled.div`
   /* taken from Figma to try to get a good estimate on aspect ratio */
   aspect-ratio: 540 / 472;
+  max-width: 62.5rem;
+  margin: auto;
 `;
 
 export const GetStartedAnimation: FC<IGetStartedAnimationProps> = ({ useCase }) => {
