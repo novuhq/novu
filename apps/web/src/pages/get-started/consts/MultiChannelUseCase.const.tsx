@@ -37,8 +37,8 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu has prepared workflow templates.</StepText>
-            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>Customize</OpenWorkflowButton>
-            <StepText> a Multi-Channel template or start with a blank workflow.</StepText>
+            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>{' Customize '}</OpenWorkflowButton>
+            <StepText>a Multi-Channel template or start with a blank workflow.</StepText>
           </StepDescription>
         );
       },
@@ -55,7 +55,9 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
               Test the trigger
             </OpenWorkflowButton>
             <StepText>
-              Test the trigger as if you sent it from your API. Add a subscriber by sending data to the trigger method.
+              {
+                ' Test the trigger as if you sent it from your API. Add a subscriber by sending data to the trigger method.'
+              }
             </StepText>
           </StepDescription>
         );

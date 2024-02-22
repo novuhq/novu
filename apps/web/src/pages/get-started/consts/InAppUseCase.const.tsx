@@ -48,7 +48,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-built a workflow for testing.</StepText>
-            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>Customize</OpenWorkflowButton>
+            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>{' Customize '}</OpenWorkflowButton>
             <StepText>it or create a new one on the Workflows page. </StepText>
           </StepDescription>
         );

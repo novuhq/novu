@@ -7,7 +7,7 @@ import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 
 export const TranslationUseCaseConst: OnboardingUseCase = {
   title: 'Translate content',
-  type: OnboardingUseCasesTabsEnum.MULTI_CHANNEL,
+  type: OnboardingUseCasesTabsEnum.TRANSLATION,
   description:
     'Upload translations to use them as variables or for auto-upload in the editor in a workflow. ' +
     'This feature is available for business and enterprise plan.',
@@ -55,9 +55,8 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>
-              {
-                'Update content with {{i18n variables}} in your messages. These variables will automatically adapt to subscribers locale.'
-              }
+              {'Update content with {{i18n variables}} in your messages. ' +
+                "These variables will automatically adapt to a subscriber's locale."}
             </StepText>
           </StepDescription>
         );

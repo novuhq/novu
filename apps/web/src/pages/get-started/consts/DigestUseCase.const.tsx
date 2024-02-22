@@ -37,8 +37,8 @@ export const DigestUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>Novu pre-built workflow with a digest node. </StepText>
-            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>Customize</OpenWorkflowButton>
+            <StepText>Novu pre-built workflow with a digest node.</StepText>
+            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>{' Customize '}</OpenWorkflowButton>
             <StepText> the workflow or create a new one on the Workflows page.</StepText>
           </StepDescription>
         );
