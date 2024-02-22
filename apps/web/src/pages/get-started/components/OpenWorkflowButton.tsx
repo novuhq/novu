@@ -1,6 +1,3 @@
-import styled from '@emotion/styled';
-
-import { colors } from '@novu/design-system';
 import { INotificationTemplate } from '@novu/shared';
 
 import { ROUTES } from '../../../constants/routes.enum';
@@ -11,6 +8,7 @@ import { getWorkflowBlueprintDetails } from '../../../utils';
 import { TemplateCreationSourceEnum } from '../../templates/shared';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { OnboardingWorkflowRouteEnum } from '../consts/types';
+import { StyledLink } from '../consts/shared';
 
 export function OpenWorkflowButton({
   blueprintIdentifier,
@@ -63,11 +61,6 @@ export function OpenWorkflowButton({
   };
 
   const getBlueprint = async (): Promise<INotificationTemplate | undefined> => {
-    segment.track('[Get Started] Click Create Notification Template', {
-      templateIdentifier: blueprintIdentifier,
-      location: TemplateCreationSourceEnum.ONBOARDING_GET_STARTED,
-    });
-
     let blueprintData: INotificationTemplate | undefined;
 
     try {
@@ -89,7 +82,7 @@ export function OpenWorkflowButton({
     return blueprintData;
   };
 
-  return <Link onClick={() => handleOpenWorkflowClick()}>{children}</Link>;
+  return <StyledLink onClick={() => handleOpenWorkflowClick()}>{children}</StyledLink>;
 }
 
 function buildUrl(workflowData, node?: OnboardingWorkflowRouteEnum) {
@@ -111,7 +104,3 @@ function getNodeRoute(node: OnboardingWorkflowRouteEnum | undefined, workflowDat
 
   return `${nodeRoute}${idRoute}`;
 }
-
-export const Link = styled.a`
-  color: ${colors.gradientEnd};
-`;

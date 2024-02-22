@@ -2,18 +2,21 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { ROUTES } from '@novu/shared-web';
 
 import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
-import { GetStartedAnimationContainer } from '../components/GetStartedAnimationContainer';
-import { Link, StepDescription, StepText } from './shared';
+import { GetStartedAnimation } from '../components/GetStartedAnimation';
+import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingWorkflowRouteEnum, OnboardingUseCase } from './types';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
+import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-in-app';
 
 export const InAppUseCaseConst: OnboardingUseCase = {
   title: 'In-app notifications center',
+  type: OnboardingUseCasesTabsEnum.IN_APP,
   description:
     "Utilize Novu's pre-built customizable in-app component. " +
     'Or opt for the headless library to create your own in-app notification center.',
+  useCaseLink: 'https://docs.novu.co/channels-and-providers/in-app/introduction',
   steps: [
     {
       title: 'Configure In-App provider',
@@ -31,7 +34,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
 
         return (
           <StepDescription>
-            <Link href={ROUTES.INTEGRATIONS_CREATE}>Create In-app provider</Link>
+            <GetStartedLink href={getInAppIntegrationUrl()}>Create In-app provider</GetStartedLink>
             <StepText>
               {' instance, and select a framework to set up credentials in the Novu’s Integration store.'}
             </StepText>
@@ -45,7 +48,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Novu pre-built a workflow for testing.</StepText>
-            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>Customize</OpenWorkflowButton>
+            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>{' Customize '}</OpenWorkflowButton>
             <StepText>it or create a new one on the Workflows page. </StepText>
           </StepDescription>
         );
@@ -75,7 +78,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <Link href={ROUTES.ACTIVITIES}>activity feed</Link>
+            <GetStartedLink children={' activity feed '} href={ROUTES.ACTIVITIES} />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
@@ -84,5 +87,5 @@ export const InAppUseCaseConst: OnboardingUseCase = {
       },
     },
   ],
-  Demo: () => <GetStartedAnimationContainer assetDark={'Dark Placeholder'} assetLight={'Light Placeholder'} />,
+  Demo: () => <GetStartedAnimation useCase={OnboardingUseCasesTabsEnum.IN_APP} />,
 };
