@@ -117,6 +117,7 @@
     "@novu/termii": "^0.24.0",
     "@novu/testing": "^0.24.0",
     "@novu/twilio": "^0.24.0",
+    "@novu/whatsapp-business": "^0.24.0",
     "@novu/zulip": "^0.24.0",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.40.2",
