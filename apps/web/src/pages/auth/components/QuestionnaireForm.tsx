@@ -111,7 +111,7 @@ export function QuestionnaireForm() {
   const StyledSelect = styled(Select)`
     .mantine-Select-invalid {
       /* TODO: our current error color isn't from our color configs :/ */
-      border-color: #fa5252;
+      border-color: #e03131;
     }
   `;
 
