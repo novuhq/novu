@@ -57,7 +57,10 @@ export function TriggerNode({ data }: { data: { label: string; email?: string } 
 
 function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
   const [notificationNumber, setNotificationNumber] = useState(1);
-  const { templates = [], loading: templatesLoading } = useTemplates();
+  const { templates = [], loading: templatesLoading } = useTemplates({
+    pageIndex: 0,
+    pageSize: 100,
+  });
 
   const segment = useSegment();
 

@@ -12,7 +12,11 @@ export type INotificationTemplateExtended = INotificationTemplate & {
 };
 
 /** allow override of paginated inputs */
-export function useTemplates(pageIndex?: number, pageSize?: number) {
+export function useTemplates({
+  pageIndex,
+  pageSize,
+  areSearchParamsEnabled = false,
+}: { pageIndex?: number; pageSize?: number; areSearchParamsEnabled?: boolean } = {}) {
   const { environment } = useEnvController();
 
   const {
@@ -30,10 +34,15 @@ export function useTemplates(pageIndex?: number, pageSize?: number) {
     buildQueryFn:
       ({ pageIndex: ctxPageIndex, pageSize: ctxPageSize }) =>
       () =>
-        getNotificationsList(pageIndex ?? ctxPageIndex, pageSize ?? ctxPageSize),
+        getNotificationsList(ctxPageIndex, ctxPageSize),
     getTotalItemCount: (resp) => resp.totalCount,
     queryOptions: {
       keepPreviousData: true,
+    },
+    paginationOptions: {
+      areSearchParamsEnabled,
+      startingPageNumber: (pageIndex ?? 0) + 1,
+      startingPageSize: pageSize,
     },
   });
 
