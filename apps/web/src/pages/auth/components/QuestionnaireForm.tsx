@@ -15,6 +15,7 @@ import {
 } from '@novu/shared';
 import {
   Button,
+  colors,
   Digest,
   HalfClock,
   Input,
@@ -30,6 +31,7 @@ import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
+import styled from '@emotion/styled/macro';
 
 export function QuestionnaireForm() {
   const [loading, setLoading] = useState<boolean>();
@@ -102,6 +104,17 @@ export function QuestionnaireForm() {
     navigate(`${ROUTES.GET_STARTED}/${mappedUsecase}`);
   };
 
+  /**
+   * This is a temporary fix for making the form cohesive.
+   * However, in the long term it should be addressed at the Design System level.
+   */
+  const StyledSelect = styled(Select)`
+    .mantine-Select-invalid {
+      /* TODO: our current error color isn't from our color configs :/ */
+      border-color: #e03131;
+    }
+  `;
+
   return (
     <form noValidate name="create-app-form" onSubmit={handleSubmit(onCreateOrganization)}>
       <Controller
@@ -112,7 +125,7 @@ export function QuestionnaireForm() {
         }}
         render={({ field }) => {
           return (
-            <Select
+            <StyledSelect
               label="Job title"
               data-test-id="questionnaire-job-title"
               error={errors.jobTitle?.message}
