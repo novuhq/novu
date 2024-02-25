@@ -561,7 +561,8 @@
     "livemode",
     "spyon",
     "restapi",
-    "ringcentral"
+    "ringcentral",
+    "reshard"
   ],
   "flagWords": [],
   "patterns": [

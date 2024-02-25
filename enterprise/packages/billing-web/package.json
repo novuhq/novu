@@ -33,13 +33,15 @@
     "@novu/design-system": "0.23.1",
     "@novu/shared": "0.23.1",
     "@novu/shared-web": "0.23.1",
+    "@stripe/react-stripe-js": "^2.5.0",
+    "@stripe/stripe-js": "^2.4.0",
     "@tanstack/react-query": "^4.20.4",
     "axios": "^1.4.0",
     "date-fns": "^2.29.2",
-    "react-hook-form": "7.43.9",
-    "react-router-dom": "6.2.2",
     "eslint": "^8.33.0",
     "eslint-plugin-react-hooks": "^4.4.0",
+    "react-hook-form": "7.43.9",
+    "react-router-dom": "6.2.2",
     "tslib": "^2.3.1"
   },
   "devDependencies": {
