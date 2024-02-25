@@ -38,7 +38,9 @@ export * from './dots-navigation';
 export * from './sidebar';
 export * from './when';
 export * from './ThemeProvider';
+/** @deprecated */
 export * from './icons';
+export * from './iconsV2';
 export * from './config/inputs.styles';
 export * from './config/helper';
 export * from './tabs/Tabs.styles';
