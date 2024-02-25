@@ -6,21 +6,21 @@ import { NovuGreyIcon, PreviewEditOverlay } from '../common';
 import { When } from '../../../utils/When';
 import { useHover } from '../../../../hooks';
 
-export function ChatContent({ isLoading, content, errorMsg }) {
+export function ChatContent({ isLoading, content, errorMsg, showOverlay = true }) {
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
   return (
     <ContentAndOVerlayWrapperStyled onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
-      {isHovered && <PreviewEditOverlay />}
+      {isHovered && showOverlay && <PreviewEditOverlay />}
       <Group
         spacing={16}
         align="flex-start"
         noWrap
         sx={{
           position: 'relative',
-          ...(isHovered && { filter: 'blur(2px)' }),
+          ...(isHovered && showOverlay && { filter: 'blur(2px)' }),
         }}
       >
         <When truthy={isLoading}>

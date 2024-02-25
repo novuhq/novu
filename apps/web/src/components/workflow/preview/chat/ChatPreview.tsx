@@ -2,6 +2,7 @@ import styled from '@emotion/styled';
 import { Divider, Flex, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 import { useFormContext } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
@@ -23,12 +24,18 @@ export function ChatPreview({ showLoading = false }: { showLoading?: boolean }) 
   const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const content = watch(`${path}.template.content`);
+  const { pathname } = useLocation();
+  const isPreviewPath = pathname.endsWith('/preview');
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
+    disabled: showLoading,
   });
 
-  const { isPreviewContentLoading, previewContent, templateError } = usePreviewChatTemplate(selectedLocale);
+  const { isPreviewContentLoading, previewContent, templateError } = usePreviewChatTemplate({
+    locale: selectedLocale,
+    disabled: showLoading,
+  });
 
   return (
     <ChatPreviewContainer>
@@ -50,6 +57,7 @@ export function ChatPreview({ showLoading = false }: { showLoading?: boolean }) 
         labelPosition="center"
       />
       <ChatContent
+        showOverlay={isPreviewPath}
         isLoading={showLoading || isPreviewContentLoading || areLocalesLoading}
         content={previewContent}
         errorMsg={templateError}
