@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
+
 import { usePreviewPush } from '../../../api/hooks';
 import { useDataRef, useProcessVariables } from '../../../hooks';
 import { IForm } from '../components/formTypes';
@@ -7,23 +8,12 @@ import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
 
 export const usePreviewPushTemplate = ({ disabled, locale }: { disabled: boolean; locale?: string }) => {
-  const { control } = useFormContext<IForm>();
+  const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateError = useStepFormCombinedErrors();
-  const templateContent = useWatch({
-    name: `${path}.template.content`,
-    control,
-  });
-
-  const templateTitle = useWatch({
-    name: `${path}.template.title`,
-    control,
-  });
-
-  const templateVariables = useWatch({
-    name: `${path}.template.variables`,
-    control,
-  });
+  const templateContent = watch(`${path}.template.content`);
+  const templateTitle = watch(`${path}.template.title`);
+  const templateVariables = watch(`${path}.template.variables`);
 
   const [parsedPreviewState, setParsedPreviewState] = useState({
     title: templateTitle,
@@ -31,8 +21,6 @@ export const usePreviewPushTemplate = ({ disabled, locale }: { disabled: boolean
   });
 
   const processedVariables = useProcessVariables(templateVariables);
-
-  const previewData = useDataRef({ content: templateContent, title: templateTitle, payload: processedVariables });
 
   const { isLoading, getPushPreview } = usePreviewPush({
     onSuccess: (result) => {
@@ -44,15 +32,15 @@ export const usePreviewPushTemplate = ({ disabled, locale }: { disabled: boolean
   });
 
   useEffect(() => {
-    if (!disabled) {
-      getPushPreview({
-        locale,
-        content: previewData.current.content,
-        payload: previewData.current.payload,
-        title: previewData.current.title,
-      });
-    }
-  }, [disabled, getPushPreview, locale, previewData]);
+    if (disabled) return;
+
+    getPushPreview({
+      locale,
+      content: templateContent,
+      payload: processedVariables,
+      title: templateTitle,
+    });
+  }, [getPushPreview, disabled, locale, templateContent, processedVariables, templateTitle]);
 
   const isPreviewLoading = !templateError && isLoading;
 

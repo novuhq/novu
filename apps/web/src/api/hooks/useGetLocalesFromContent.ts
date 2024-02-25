@@ -19,7 +19,7 @@ export interface ILocale {
 }
 
 type Payload = {
-  content: string | IEmailBlock[];
+  content?: string | IEmailBlock[];
 };
 
 export const useGetLocalesFromContent = () => {

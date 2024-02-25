@@ -1,6 +1,7 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
 import { usePreviewSmsTemplate } from '../../../../pages/templates/hooks/usePreviewSmsTemplate';
@@ -28,20 +29,18 @@ const LocaleSelectStyled = styled(LocaleSelect)`
 
 export const SmsPreview = ({ showPreviewAsLoading = false }: { showPreviewAsLoading?: boolean }) => {
   const { navigateToStepEditor } = useNavigateToStepEditor();
-
-  const { control } = useFormContext<IForm>();
+  const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
-  const templateContent = useWatch({
-    name: `${path}.template.content`,
-    control,
-  });
+  const templateContent = watch(`${path}.template.content`);
+  const { pathname } = useLocation();
+  const isPreviewPath = pathname.endsWith('/preview');
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: templateContent as string,
-    disabled: false,
+    disabled: showPreviewAsLoading,
   });
 
-  const { isPreviewContentLoading, previewContent, templateContentError } = usePreviewSmsTemplate(
+  const { isPreviewContentLoading, previewContent, templateError } = usePreviewSmsTemplate(
     selectedLocale,
     showPreviewAsLoading
   );
@@ -58,9 +57,10 @@ export const SmsPreview = ({ showPreviewAsLoading = false }: { showPreviewAsLoad
         />
         <SmsBubble
           onEditClick={navigateToStepEditor}
-          isLoading={isPreviewContentLoading}
+          isLoading={isPreviewContentLoading || areLocalesLoading}
           text={previewContent}
-          error={templateContentError}
+          error={templateError}
+          withOverlay={isPreviewPath}
         />
       </BodyContainer>
     </MobileSimulator>

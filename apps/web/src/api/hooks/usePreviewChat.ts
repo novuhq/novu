@@ -1,22 +1,22 @@
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { errorMessage } from '@novu/design-system';
-import type { IEmailBlock, IResponseError } from '@novu/shared';
+import type { IResponseError } from '@novu/shared';
 import { IS_DOCKER_HOSTED } from '@novu/shared-web';
 
-import { previewSms } from '../content-templates';
+import { previewChat } from '../content-templates';
 
 type PayloadType = {
-  content?: string | IEmailBlock[];
+  content?: string;
   payload: string;
   locale?: string;
 };
 
 type ResultType = { content: string };
 
-export const usePreviewSms = (options: UseMutationOptions<ResultType, IResponseError, PayloadType> = {}) => {
+export const usePreviewChat = (options: UseMutationOptions<ResultType, IResponseError, PayloadType> = {}) => {
   const { mutateAsync, isLoading } = useMutation<ResultType, IResponseError, PayloadType>(
-    ({ content, payload, locale }) => previewSms({ content, payload, locale }),
+    ({ content, payload, locale }) => previewChat({ content, payload, locale }),
     {
       onError: (e) => {
         errorMessage(e.message || 'Unexpected error');
@@ -27,11 +27,11 @@ export const usePreviewSms = (options: UseMutationOptions<ResultType, IResponseE
     }
   );
 
-  const getSmsPreview = useCallback(
+  const getChatPreview = useCallback(
     async ({ content, payload, locale }: PayloadType) => {
       await mutateAsync({
         content,
-        payload: JSON.parse(payload),
+        payload,
         locale,
       });
     },
@@ -39,7 +39,7 @@ export const usePreviewSms = (options: UseMutationOptions<ResultType, IResponseE
   );
 
   return {
-    getSmsPreview,
+    getChatPreview,
     isLoading,
   };
 };

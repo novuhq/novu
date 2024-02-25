@@ -25,13 +25,13 @@ describe('Creation functionality', function () {
       .parent()
       .click()
       .find('textarea')
-      .type('<p>{{firstName}} someone assigned you to {{taskName}}', {
+      .type('<p>{{firstName}} someone assigned you to {{taskName}}</p>', {
         parseSpecialCharSequences: false,
         force: true,
       });
     cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('editor-mode-switch').find('label').last().click();
-    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName');
+    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName', { timeout: 1000 });
 
     goBack();
     cy.getByTestId('notification-template-submit-btn').click();

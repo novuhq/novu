@@ -1,5 +1,5 @@
 import { useFormContext } from 'react-hook-form';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
 
 import type { IForm } from '../components/formTypes';
@@ -20,6 +20,7 @@ export const useNavigateFromEditor = (preview = false) => {
   const { watch } = useFormContext<IForm>();
   const steps = watch('steps');
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const workflowEditorPath = useBasePath();
 
   const areStepsExists = steps.length > 0;
@@ -35,11 +36,15 @@ export const useNavigateFromEditor = (preview = false) => {
     if (!areStepsExists) {
       return;
     }
+
     if (!isStepExists) {
       navigate(workflowEditorPath);
     }
-    if (isStepExists && !isVariantExists) {
+
+    const isNotStepEditorPath = pathname !== stepEditorPath;
+    const isStepWithNoVariant = isStepExists && !isVariantExists;
+    if (isStepWithNoVariant && isNotStepEditorPath) {
       navigate(stepEditorPath);
     }
-  }, [navigate, areStepsExists, isStepExists, isVariantExists, workflowEditorPath, stepEditorPath]);
+  }, [navigate, areStepsExists, isStepExists, isVariantExists, workflowEditorPath, pathname, stepEditorPath]);
 };

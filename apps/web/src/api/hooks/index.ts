@@ -7,3 +7,5 @@ export * from './useGetLocalesFromContent';
 export * from './usePreviewEmail';
 export * from './usePreviewSms';
 export * from './usePreviewPush';
+export * from './usePreviewChat';
+export * from './usePreviewInApp';

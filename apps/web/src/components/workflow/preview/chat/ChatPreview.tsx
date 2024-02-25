@@ -1,97 +1,49 @@
+import styled from '@emotion/styled';
 import { Divider, Flex, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
-import { useAuthController } from '@novu/shared-web';
-import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
-import { previewChat } from '../../../../api/content-templates';
-import { getLocalesFromContent } from '../../../../api/translations';
+import { useFormContext } from 'react-hook-form';
+import { useLocation } from 'react-router-dom';
+
 import { IForm } from '../../../../pages/templates/components/formTypes';
-import { useStepFormCombinedErrors } from '../../../../pages/templates/hooks/useStepFormCombinedErrors';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
-import { errorMessage } from '../../../../utils/notifications';
 import { LocaleSelect } from '../common';
 import { ChatContent } from './ChatContent';
 import { ChatInput } from './ChatInput';
-import { useProcessVariables } from '../../../../hooks';
+import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
+import { usePreviewChatTemplate } from '../../../../pages/templates/hooks/usePreviewChatTemplate';
+
+const ChatPreviewContainer = styled.div`
+  width: 100%;
+  max-width: 37.5em;
+`;
 
 export function ChatPreview({ showLoading = false }: { showLoading?: boolean }) {
-  const { organization } = useAuthController();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
-  const [selectedLocale, onLocaleChange] = useState<string | undefined>(undefined);
-  const { isLoading: isLoadingContent, mutateAsync } = useMutation(previewChat);
-  const [compiledContent, setCompiledContent] = useState('');
 
-  const {
-    mutateAsync: translationLocales,
-    data: locales,
-    isLoading: isLoadingLocales,
-  } = useMutation(getLocalesFromContent);
-
-  const { control } = useFormContext<IForm>();
+  const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
+  const content = watch(`${path}.template.content`);
+  const { pathname } = useLocation();
+  const isPreviewPath = pathname.endsWith('/preview');
 
-  const errorMsg = useStepFormCombinedErrors();
-
-  const content = useWatch({
-    name: `${path}.template.content`,
-    control,
+  const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
+    content: content as string,
+    disabled: showLoading,
   });
 
-  const variables = useWatch({
-    name: `${path}.template.variables`,
-    control,
+  const { isPreviewContentLoading, previewContent, templateError } = usePreviewChatTemplate({
+    locale: selectedLocale,
+    disabled: showLoading,
   });
-
-  const processedVariables = useProcessVariables(variables);
-
-  useEffect(() => {
-    onLocaleChange(organization?.defaultLocale);
-  }, [organization?.defaultLocale]);
-
-  useEffect(() => {
-    if (!showLoading && content) {
-      translationLocales({
-        content,
-      });
-    }
-  }, [content, showLoading, translationLocales]);
-
-  const parseContent = (args: { content?: string | any; payload: any; locale?: string }) => {
-    mutateAsync({
-      ...args,
-      payload: JSON.parse(args.payload),
-    })
-      .then((result: { content: string }) => {
-        setCompiledContent(result.content);
-
-        return result;
-      })
-      .catch((e: any) => {
-        errorMessage(e?.message || 'Un-expected error occurred');
-      });
-  };
-
-  useEffect(() => {
-    if (!showLoading) {
-      parseContent({
-        content,
-        payload: processedVariables,
-        locale: selectedLocale,
-      });
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content, showLoading, selectedLocale, processedVariables]);
 
   return (
-    <div>
+    <ChatPreviewContainer>
       <Flex>
         <LocaleSelect
           value={selectedLocale}
           onLocaleChange={onLocaleChange}
-          isLoading={isLoadingLocales || isLoadingContent}
+          isLoading={areLocalesLoading || isPreviewContentLoading}
           locales={locales || []}
         />
       </Flex>
@@ -105,11 +57,12 @@ export function ChatPreview({ showLoading = false }: { showLoading?: boolean }) 
         labelPosition="center"
       />
       <ChatContent
-        isLoading={showLoading || isLoadingContent || isLoadingLocales}
-        content={compiledContent}
-        errorMsg={errorMsg}
+        showOverlay={isPreviewPath}
+        isLoading={showLoading || isPreviewContentLoading || areLocalesLoading}
+        content={previewContent}
+        errorMsg={templateError}
       />
       <ChatInput />
-    </div>
+    </ChatPreviewContainer>
   );
 }
