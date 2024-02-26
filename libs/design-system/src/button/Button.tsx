@@ -1,4 +1,4 @@
-import React, { MouseEventHandler } from 'react';
+import React, { forwardRef, MouseEventHandler } from 'react';
 import { Button as MantineButton, ButtonProps, Sx } from '@mantine/core';
 
 import useStyles from './Button.styles';
@@ -27,41 +27,47 @@ export interface IButtonProps extends ButtonProps {
  * Button component
  *
  */
-export function Button({
-  id,
-  loading,
-  children,
-  submit = false,
-  icon,
-  size = 'md',
-  fullWidth,
-  disabled = false,
-  inherit = false,
-  onClick,
-  variant = 'gradient',
-  pulse,
-  iconPosition = 'left',
-  ...props
-}: IButtonProps) {
-  const { classes } = useStyles({ disabled, inherit, variant, pulse });
-  const withIconProps = icon ? (iconPosition === 'left' ? { leftIcon: icon } : { rightIcon: icon }) : {};
+export const Button = forwardRef<HTMLButtonElement, IButtonProps>(
+  (
+    {
+      id,
+      loading,
+      children,
+      submit = false,
+      icon,
+      size = 'md',
+      fullWidth,
+      disabled = false,
+      inherit = false,
+      onClick,
+      variant = 'gradient',
+      pulse,
+      iconPosition = 'left',
+      ...props
+    },
+    buttonRef
+  ) => {
+    const { classes } = useStyles({ disabled, inherit, variant, pulse });
+    const withIconProps = icon ? (iconPosition === 'left' ? { leftIcon: icon } : { rightIcon: icon }) : {};
 
-  return (
-    <MantineButton
-      id={id}
-      radius="md"
-      classNames={classes}
-      {...withIconProps}
-      type={submit ? 'submit' : 'button'}
-      onClick={onClick}
-      disabled={disabled}
-      size={size}
-      loading={loading}
-      fullWidth={fullWidth}
-      variant={variant}
-      {...props}
-    >
-      {children}
-    </MantineButton>
-  );
-}
+    return (
+      <MantineButton
+        id={id}
+        ref={buttonRef}
+        radius="md"
+        classNames={classes}
+        {...withIconProps}
+        type={submit ? 'submit' : 'button'}
+        onClick={onClick}
+        disabled={disabled}
+        size={size}
+        loading={loading}
+        fullWidth={fullWidth}
+        variant={variant}
+        {...props}
+      >
+        {children}
+      </MantineButton>
+    );
+  }
+);

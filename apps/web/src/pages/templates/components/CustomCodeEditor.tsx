@@ -7,6 +7,7 @@ import { editor as NEditor } from 'monaco-editor';
 
 import { createTranslationMarks } from './createTranslationMarks';
 import { IVariable, useWorkflowVariables } from '../../../api/hooks';
+import { useEnvController } from '@novu/shared-web';
 
 export const CustomCodeEditor = ({
   onChange,
@@ -17,7 +18,7 @@ export const CustomCodeEditor = ({
   value?: string;
   height?: string;
 }) => {
-  const { allVariables, isLoading: isLoadingVariables } = useWorkflowVariables();
+  const { allVariables, variables, isLoading: isLoadingVariables } = useWorkflowVariables();
 
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -34,7 +35,8 @@ export const CustomCodeEditor = ({
     <Card data-test-id={'custom-code-editor'} withBorder sx={styledCard}>
       <CustomCodeEditorBase
         isDark={isDark}
-        variables={allVariables}
+        allVariables={allVariables}
+        variables={variables}
         onChange={onChange}
         value={value}
         height={height}
@@ -47,15 +49,19 @@ const CustomCodeEditorBase = ({
   onChange,
   value,
   height = '300px',
+  allVariables,
   variables,
   isDark,
 }: {
   onChange?: (string) => void;
   value?: string;
   height?: string;
-  variables: IVariable[];
+  allVariables: IVariable[];
+  variables: any;
   isDark: boolean;
 }) => {
+  const { readonly } = useEnvController();
+
   const editorRef = useRef<NEditor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const decoratorsRef = useRef<NEditor.IEditorDecorationsCollection | null>(null);
@@ -68,8 +74,8 @@ const CustomCodeEditorBase = ({
   }, [isDark]);
 
   const getSuggestions = useCallback(
-    (monaco, range) => variables.map((el) => ({ ...el, kind: monaco.languages.CompletionItemKind.Function, range })),
-    [variables]
+    (monaco, range) => allVariables.map((el) => ({ ...el, kind: monaco.languages.CompletionItemKind.Function, range })),
+    [allVariables]
   );
 
   return (
@@ -154,6 +160,7 @@ const CustomCodeEditorBase = ({
         renderLineHighlight: 'all',
         fontSize: 14,
         lineHeight: 20,
+        readOnly: readonly,
       }}
       className={isDark ? 'custom-code-editor-dark' : 'custom-code-editor'}
     />

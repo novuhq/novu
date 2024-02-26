@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ActionIcon, useMantineTheme, Group } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
@@ -8,11 +7,9 @@ import {
   useTemplates,
   useEnvController,
   useNotificationGroup,
-  useIsTemplateStoreEnabled,
+  useFeatureFlag,
   INotificationTemplateExtended,
 } from '../../hooks';
-import PageHeader from '../../components/layout/components/PageHeader';
-import PageContainer from '../../components/layout/components/PageContainer';
 import {
   Tag,
   Table,
@@ -43,6 +40,8 @@ import { TemplateCreationSourceEnum } from './shared';
 import { TemplatesListNoDataOld } from './TemplatesListNoDataOld';
 import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { When } from '../../components/utils/When';
+import { ListPage } from '../../components/layout/components/ListPage';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -154,9 +153,17 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
 function WorkflowListPage() {
   const segment = useSegment();
   const { readonly } = useEnvController();
-  const [page, setPage] = useState<number>(0);
   const { loading: areNotificationGroupLoading } = useNotificationGroup();
-  const { templates, loading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
+  const {
+    templates,
+    loading,
+    totalItemCount,
+    totalPageCount,
+    currentPageNumber,
+    setCurrentPageNumber,
+    setPageSize,
+    pageSize,
+  } = useTemplates({ areSearchParamsEnabled: true });
   const isLoading = areNotificationGroupLoading || loading;
   const navigate = useNavigate();
   const { blueprintsGroupedAndPopular: { general, popular } = {}, isLoading: areBlueprintsLoading } =
@@ -174,10 +181,10 @@ function WorkflowListPage() {
 
   const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ general, popular });
   const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
-  const isTemplateStoreEnabled = useIsTemplateStoreEnabled();
+  const isTemplateStoreEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TEMPLATE_STORE_ENABLED);
 
-  function handleTableChange(pageIndex) {
-    setPage(pageIndex);
+  function handleTableChange(pageIndex: number) {
+    setCurrentPageNumber(pageIndex);
   }
 
   const handleRedirectToCreateTemplate = (isFromHeader: boolean) => {
@@ -202,8 +209,17 @@ function WorkflowListPage() {
   }
 
   return (
-    <PageContainer title="Workflows">
-      <PageHeader title="Workflows" />
+    <ListPage
+      title="Workflows"
+      paginationInfo={{
+        totalItemCount,
+        pageSize,
+        totalPageCount,
+        currentPageNumber,
+        onPageChange: handleTableChange,
+        onPageSizeChange: setPageSize,
+      }}
+    >
       <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
         {isTemplateStoreEnabled ? (
           <div>
@@ -240,12 +256,6 @@ function WorkflowListPage() {
                 data-test-id="notifications-template"
                 columns={columns}
                 data={templates}
-                pagination={{
-                  pageSize: pageSize,
-                  current: page,
-                  total: totalTemplatesCount,
-                  onPageChange: handleTableChange,
-                }}
               />
             </When>
             <When truthy={!hasTemplates}>
@@ -268,12 +278,6 @@ function WorkflowListPage() {
             data-test-id="notifications-template"
             columns={columns}
             data={templates}
-            pagination={{
-              pageSize: pageSize,
-              current: page,
-              total: totalTemplatesCount,
-              onPageChange: handleTableChange,
-            }}
             noDataPlaceholder={
               <TemplatesListNoDataOld
                 onCreateClick={() => handleRedirectToCreateTemplate(false)}
@@ -285,7 +289,7 @@ function WorkflowListPage() {
         )}
         <TemplatesStoreModal />
       </TemplateListTableWrapper>
-    </PageContainer>
+    </ListPage>
   );
 }
 

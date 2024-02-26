@@ -1,4 +1,4 @@
-import { Container, Group, Stack, useMantineColorScheme } from '@mantine/core';
+import { Container, Group, Stack } from '@mantine/core';
 import { ComponentType, useCallback, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -25,6 +25,8 @@ import AddNode from './workflow/node-types/AddNode';
 import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
 import { NodeType, NodeData } from '../../../components/workflow/types';
+import { useStepInfoPath } from '../hooks/useStepInfoPath';
+import { useNavigateToVariantPreview } from '../hooks/useNavigateToVariantPreview';
 
 export const TOP_ROW_HEIGHT = 74;
 
@@ -38,9 +40,11 @@ const edgeTypes = { special: AddNodeEdge };
 
 const WorkflowEditor = () => {
   const { addStep, deleteStep } = useTemplateEditorForm();
+  const { isUnderVariantsListPath } = useStepInfoPath();
   const { channel } = useParams<{
     channel: StepTypeEnum | undefined;
   }>();
+  const { navigateToVariantPreview } = useNavigateToVariantPreview();
   const [dragging, setDragging] = useState(false);
 
   const {
@@ -58,8 +62,6 @@ const WorkflowEditor = () => {
   const basePath = useBasePath();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { colorScheme } = useMantineColorScheme();
-  const dark = colorScheme === 'dark';
 
   const onNodeClick = useCallback(
     (event, node: Node<NodeData>) => {
@@ -67,14 +69,18 @@ const WorkflowEditor = () => {
       const { step, channelType } = node.data;
       const isVariant = step && step.variants && step.variants?.length > 0;
       if (isVariant) {
-        navigate(basePath + `/${channelType}/${step.uuid}/variants`);
+        navigateToVariantPreview({
+          channel: channelType,
+          stepUuid: step.uuid,
+          variantUuid: step.uuid,
+        });
       } else if (node.type === NodeType.CHANNEL) {
-        navigate(basePath + `/${channelType}/${step?.uuid ?? ''}`);
+        navigate(basePath + `/${channelType}/${step?.uuid ?? ''}/preview`);
       } else if (node.type === NodeType.TRIGGER) {
         navigate(basePath + '/test-workflow');
       }
     },
-    [navigate, basePath]
+    [navigate, basePath, navigateToVariantPreview]
   );
 
   const onEdit: IFlowEditorProps['onEdit'] = (_, node) => {
@@ -215,11 +221,11 @@ const WorkflowEditor = () => {
   }
 
   const isEmailChannel = channel && [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel);
-  const isVariantsListPath = pathname.endsWith('/variants');
+  const isPreviewPath = pathname.endsWith('/preview');
 
   return (
     <>
-      <When truthy={isEmailChannel && !isVariantsListPath}>
+      <When truthy={!isUnderVariantsListPath && !isPreviewPath && isEmailChannel}>
         <Outlet
           context={{
             setDragging,
@@ -227,13 +233,20 @@ const WorkflowEditor = () => {
           }}
         />
       </When>
-      <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel) || isVariantsListPath}>
+      <When
+        truthy={
+          !channel ||
+          ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel) ||
+          isUnderVariantsListPath ||
+          isPreviewPath
+        }
+      >
         <div style={{ display: 'flex', flexFlow: 'row', position: 'relative' }}>
           <div
             style={{
               flex: '1 1 auto',
               display: 'flex',
-              flexFlow: 'column',
+              flexFlow: 'Column',
             }}
           >
             <Container fluid sx={{ width: '100%', height: `${TOP_ROW_HEIGHT}px` }}>
@@ -281,6 +294,7 @@ const WorkflowEditor = () => {
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
               onAddVariant={onAddVariant}
+              sidebarOpen={!(pathname === basePath)}
             />
           </div>
           <Outlet

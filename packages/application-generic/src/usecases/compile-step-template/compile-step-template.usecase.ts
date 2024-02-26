@@ -34,7 +34,9 @@ export class CompileStepTemplate extends CompileTemplateBase {
       await initiateTranslations(
         command.environmentId,
         command.organizationId,
-        command.payload.subscriber?.locale || organization.defaultLocale
+        command.locale ||
+          command.payload.subscriber?.locale ||
+          organization.defaultLocale
       );
     }
 
@@ -42,15 +44,21 @@ export class CompileStepTemplate extends CompileTemplateBase {
 
     let content = '';
 
+    let title: string | undefined = undefined;
+
     try {
       content = await this.compileStepTemplate(command.content, payload);
+
+      if (command.title) {
+        title = await this.compileStepTemplate(command.title, payload);
+      }
     } catch (e: any) {
       throw new ApiException(
         e?.message || `Message content could not be generated`
       );
     }
 
-    return { content };
+    return { content, title };
   }
 
   private async compileStepTemplate(

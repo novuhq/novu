@@ -8,11 +8,16 @@ import {
   ThrottlerStorage,
 } from '@nestjs/throttler';
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from '@nestjs/common';
-import { Observable } from 'rxjs';
 import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/evaluate-api-rate-limit';
 import { Reflector } from '@nestjs/core';
-import { FeatureFlagCommand, GetIsApiRateLimitingEnabled, Instrument } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum, ApiAuthSchemeEnum, IJwtPayload } from '@novu/shared';
+import { GetFeatureFlag, GetFeatureFlagCommand, Instrument } from '@novu/application-generic';
+import {
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCostEnum,
+  ApiAuthSchemeEnum,
+  IJwtPayload,
+  FeatureFlagsKeysEnum,
+} from '@novu/shared';
 import { ThrottlerCost, ThrottlerCategory } from './throttler.decorator';
 import { HttpRequestHeaderKeysEnum, HttpResponseHeaderKeysEnum } from '../../shared/framework/types';
 
@@ -34,7 +39,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     @InjectThrottlerStorage() protected readonly storageService: ThrottlerStorage,
     reflector: Reflector,
     private evaluateApiRateLimit: EvaluateApiRateLimit,
-    private getIsApiRateLimitingEnabled: GetIsApiRateLimitingEnabled
+    private getFeatureFlag: GetFeatureFlag
   ) {
     super(options, storageService, reflector);
   }
@@ -66,11 +71,12 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     const user = this.getReqUser(context);
     const { organizationId, environmentId, _id } = user;
 
-    const isEnabled = await this.getIsApiRateLimitingEnabled.execute(
-      FeatureFlagCommand.create({
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
         environmentId,
         organizationId,
         userId: _id,
+        key: FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_ENABLED,
       })
     );
 

@@ -17,7 +17,7 @@ describe('Side Menu', function () {
     cy.getByTestId('side-nav-bottom-link-support').should('have.attr', 'href').should('eq', 'https://discord.novu.co');
     cy.getByTestId('side-nav-bottom-link-documentation')
       .should('have.attr', 'href')
-      .should('eq', 'https://docs.novu.co');
+      .should('eq', 'https://docs.novu.co?utm_campaign=in-app');
 
     cy.getByTestId('side-nav-bottom-link-share-feedback')
       .should('have.attr', 'href')

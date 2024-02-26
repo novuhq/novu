@@ -1,193 +1,74 @@
-import {
-  GetIsApiRateLimitingEnabled,
-  GetIsTemplateStoreEnabled,
-  GetIsTopicNotificationEnabled,
-  GetIsTranslationManagerEnabled,
-} from './index';
-import { FeatureFlagCommand } from './get-feature-flag.command';
+import { GetFeatureFlag } from './index';
+import { GetFeatureFlagCommand } from './get-feature-flag.command';
 import { FeatureFlagsService } from '../../services';
+import { FeatureFlagsKeysEnum } from '../../services/types';
 
 const originalLaunchDarklySdkKey = process.env.LAUNCH_DARKLY_SDK_KEY;
+const mockKey = FeatureFlagsKeysEnum.IS_API_RATE_LIMITING_ENABLED;
 
 describe('Get Feature Flag', () => {
-  let featureFlagCommand: FeatureFlagCommand;
+  let getFeatureFlagCommand: GetFeatureFlagCommand;
 
   describe('Provider: Launch Darkly', () => {
-    describe('No SDK key environment variable is set', () => {
+    describe('SDK key environment variable IS NOT set', () => {
       beforeEach(async () => {
         process.env.LAUNCH_DARKLY_SDK_KEY = '';
 
-        featureFlagCommand = FeatureFlagCommand.create({
+        getFeatureFlagCommand = GetFeatureFlagCommand.create({
+          key: mockKey,
           environmentId: 'environmentId',
           organizationId: 'organizationId',
           userId: 'userId',
         });
       });
 
-      describe('IS_TEMPLATE_STORE_ENABLED', () => {
-        it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
-          process.env.IS_TEMPLATE_STORE_ENABLED = '';
+      it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
+        process.env[mockKey] = '';
 
-          const getIsTemplateStoreEnabled = new GetIsTemplateStoreEnabled(
-            new FeatureFlagsService()
-          );
+        const getFeatureFlag = new GetFeatureFlag(new FeatureFlagsService());
 
-          const result = await getIsTemplateStoreEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(false);
-        });
-
-        it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
-          process.env.IS_TEMPLATE_STORE_ENABLED = 'true';
-
-          const getIsTemplateStoreEnabled = new GetIsTemplateStoreEnabled(
-            new FeatureFlagsService()
-          );
-
-          const result = await getIsTemplateStoreEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(true);
-        });
+        const result = await getFeatureFlag.execute(getFeatureFlagCommand);
+        expect(result).toEqual(false);
       });
 
-      describe('IS_TOPIC_NOTIFICATION_ENABLED', () => {
-        it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
-          process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = '';
+      it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
+        process.env[mockKey] = 'true';
 
-          const getIsTopicNotificationEnabled =
-            new GetIsTopicNotificationEnabled(new FeatureFlagsService());
+        const getIsTemplateStoreEnabled = new GetFeatureFlag(
+          new FeatureFlagsService()
+        );
 
-          const result = await getIsTopicNotificationEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(true);
-        });
-
-        it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
-          process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
-
-          const getIsTopicNotificationEnabled =
-            new GetIsTopicNotificationEnabled(new FeatureFlagsService());
-
-          const result = await getIsTopicNotificationEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(false);
-        });
-      });
-
-      describe('IS_API_RATE_LIMITING_ENABLED', () => {
-        it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
-          process.env.IS_API_RATE_LIMITING_ENABLED = '';
-
-          const getIsApiRateLimitingEnabled = new GetIsApiRateLimitingEnabled(
-            new FeatureFlagsService()
-          );
-
-          const result = await getIsApiRateLimitingEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(false);
-        });
-
-        it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
-          process.env.IS_API_RATE_LIMITING_ENABLED = 'true';
-
-          const getIsApiRateLimitingEnabled = new GetIsApiRateLimitingEnabled(
-            new FeatureFlagsService()
-          );
-
-          const result = await getIsApiRateLimitingEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(true);
-        });
-      });
-
-      describe('IS_TRANSLATION_MANAGER_ENABLED', () => {
-        it('should return default hardcoded value when no SDK env is set and no feature flag is set', async () => {
-          process.env.IS_TRANSLATION_MANAGER_ENABLED = '';
-
-          const getIsTranslationManagerEnabled =
-            new GetIsTranslationManagerEnabled(new FeatureFlagsService());
-
-          const result = await getIsTranslationManagerEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(true);
-        });
-
-        it('should return env variable value when no SDK env is set but the feature flag is set', async () => {
-          process.env.IS_TRANSLATION_MANAGER_ENABLED = 'false';
-
-          const getIsTranslationManagerEnabled =
-            new GetIsTranslationManagerEnabled(new FeatureFlagsService());
-
-          const result = await getIsTranslationManagerEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(false);
-        });
+        const result = await getIsTemplateStoreEnabled.execute(
+          getFeatureFlagCommand
+        );
+        expect(result).toEqual(true);
       });
     });
 
-    describe('SDK key environment variable is set', () => {
+    describe('SDK key environment variable IS set', () => {
       beforeEach(async () => {
         process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
 
-        featureFlagCommand = FeatureFlagCommand.create({
+        getFeatureFlagCommand = GetFeatureFlagCommand.create({
+          key: mockKey,
           environmentId: 'environmentId',
           organizationId: 'organizationId',
           userId: 'userId',
         });
       });
 
-      describe('IS_TEMPLATE_STORE_ENABLED', () => {
-        it(`should get the feature flag value stored in Launch Darkly (enabled)
+      it(`should get the feature flag value stored in Launch Darkly (enabled)
            when the SDK key env variable is set regardless of the feature flag set`, async () => {
-          process.env.IS_TEMPLATE_STORE_ENABLED = 'false';
+        process.env[mockKey] = 'false';
 
-          const getIsTemplateStoreEnabled = new GetIsTemplateStoreEnabled(
-            new FeatureFlagsService()
-          );
+        const getIsTemplateStoreEnabled = new GetFeatureFlag(
+          new FeatureFlagsService()
+        );
 
-          const result = await getIsTemplateStoreEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(true);
-        });
-      });
-
-      describe('IS_TOPIC_NOTIFICATION_ENABLED', () => {
-        it(`should get the feature flag value stored in Launch Darkly (enabled)
-           when the SDK key env variable is set regardless of the feature flag set`, async () => {
-          process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
-
-          const getIsTopicNotificationEnabled =
-            new GetIsTopicNotificationEnabled(new FeatureFlagsService());
-
-          const result = await getIsTopicNotificationEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(true);
-        });
-      });
-
-      describe('IS_TRANSLATION_MANAGER_ENABLED', () => {
-        it(`should get the feature flag value stored in Launch Darkly (enabled)
-           when the SDK key env variable is set regardless of the feature flag set`, async () => {
-          process.env.IS_TRANSLATION_MANAGER_ENABLED = 'false';
-
-          const getIsTranslationManagerEnabled =
-            new GetIsTranslationManagerEnabled(new FeatureFlagsService());
-
-          const result = await getIsTranslationManagerEnabled.execute(
-            featureFlagCommand
-          );
-          expect(result).toEqual(true);
-        });
+        const result = await getIsTemplateStoreEnabled.execute(
+          getFeatureFlagCommand
+        );
+        expect(result).toEqual(true);
       });
     });
   });

@@ -46,7 +46,7 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   NEW_RELIC_LICENSE_KEY: str({
     default: '',
   }),
-  FF_IS_TOPIC_NOTIFICATION_ENABLED: bool({
+  IS_TOPIC_NOTIFICATION_ENABLED: bool({
     desc: 'This is the environment variable used to enable the feature to send notifications to a topic',
     default: true,
     choices: [false, true],
@@ -76,6 +76,12 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
     default: undefined,
   }),
   WORKER_DEFAULT_LOCK_DURATION: num({
+    default: undefined,
+  }),
+  STRIPE_API_KEY: str({
+    default: undefined,
+  }),
+  STRIPE_CONNECT_SECRET: str({
     default: undefined,
   }),
   ENABLE_OTEL: str({

@@ -25,11 +25,13 @@ describe('Tenants Page', function () {
     cy.getByTestId('tenants-list-table')
       .find('tr')
       .eq(1)
-      .click()
+      .click({ force: true })
       .then(() => {
         cy.getByTestId('tenant-name').clear().type('New Name');
         cy.getByTestId('update-tenant-sidebar-submit').click();
       });
+
+    cy.waitForNetworkIdle(500);
 
     cy.getByTestId('tenants-list-table').find('td:nth-child(1)').contains('New Name');
     cy.getByTestId('tenants-list-table').find('td:nth-child(2)').contains('test-tenant');
@@ -38,7 +40,7 @@ describe('Tenants Page', function () {
     cy.getByTestId('tenants-list-table')
       .find('tr')
       .eq(1)
-      .click()
+      .click({ force: true })
       .then(() => {
         cy.getByTestId('tenant-identifier').clear().type('new-identifier');
         cy.getByTestId('update-tenant-sidebar-submit').click();

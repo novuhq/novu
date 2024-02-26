@@ -123,12 +123,42 @@ export class FeatureFlagsService {
       return defaultValue;
     }
 
-    // TODO: Select here which context we will need in the future
-    return (await this.service.getWithUserContext(
-      key,
-      defaultValue,
-      context.userId
-    )) satisfies T;
+    /**
+     * The `userId` context is the most specific context, so we will prioritize it over the others.
+     * The `environmentId` context is the second most specific context, so we will prioritize it over the `organizationId`.
+     * The `organizationId` context is the least specific context.
+     */
+    let contextTarget: keyof IFeatureFlagContext;
+    if (context.userId === 'system' && context.environmentId === 'system') {
+      contextTarget = 'organizationId';
+    } else if (context.userId === 'system') {
+      contextTarget = 'environmentId';
+    } else {
+      contextTarget = 'userId';
+    }
+
+    switch (contextTarget) {
+      case 'organizationId':
+        return (await this.service.getWithOrganizationContext(
+          key,
+          defaultValue,
+          context.organizationId
+        )) satisfies T;
+      case 'environmentId':
+        return (await this.service.getWithEnvironmentContext(
+          key,
+          defaultValue,
+          context.environmentId
+        )) satisfies T;
+      case 'userId':
+        return (await this.service.getWithUserContext(
+          key,
+          defaultValue,
+          context.userId
+        )) satisfies T;
+      default:
+        throw new Error('Invalid context target');
+    }
   }
 
   private isServiceEnabled(): boolean {

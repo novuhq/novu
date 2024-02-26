@@ -1,8 +1,1 @@
-import {
-  useFeatureFlags,
-  useIsTemplateStoreEnabled,
-  useIsMultiTenancyEnabled,
-  useIsTranslationManagerEnabled,
-} from '@novu/shared-web';
-
-export { useFeatureFlags, useIsTemplateStoreEnabled, useIsMultiTenancyEnabled, useIsTranslationManagerEnabled };
+export { useFeatureFlags, useFeatureFlag } from '@novu/shared-web';

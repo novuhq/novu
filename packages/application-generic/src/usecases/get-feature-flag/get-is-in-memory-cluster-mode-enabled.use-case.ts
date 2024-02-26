@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { SystemCriticalFlagsEnum } from '@novu/shared';
 
-import { GetFeatureFlag } from './get-feature-flag.use-case';
 import { GetSystemCriticalFlag } from './get-system-critical-flag.use-case';
 
 @Injectable()

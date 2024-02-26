@@ -49,7 +49,7 @@ describe('Topic Trigger Event', () => {
 
     beforeEach(async () => {
       process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
+      process.env.IS_TOPIC_NOTIFICATION_ENABLED = 'true';
       session = new UserSession();
       await session.initialize();
 
@@ -70,7 +70,7 @@ describe('Topic Trigger Event', () => {
 
     afterEach(() => {
       process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
+      process.env.IS_TOPIC_NOTIFICATION_ENABLED = 'false';
     });
 
     it('should trigger an event successfully', async () => {
@@ -323,7 +323,7 @@ describe('Topic Trigger Event', () => {
 
     beforeEach(async () => {
       process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'true';
+      process.env.IS_TOPIC_NOTIFICATION_ENABLED = 'true';
       session = new UserSession();
       await session.initialize();
 
@@ -377,7 +377,7 @@ describe('Topic Trigger Event', () => {
 
     afterEach(() => {
       process.env.LAUNCH_DARKLY_SDK_KEY = originalLaunchDarklySdkKey;
-      process.env.FF_IS_TOPIC_NOTIFICATION_ENABLED = 'false';
+      process.env.IS_TOPIC_NOTIFICATION_ENABLED = 'false';
     });
 
     it('should trigger an event successfully', async () => {

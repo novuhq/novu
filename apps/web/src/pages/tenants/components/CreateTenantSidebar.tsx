@@ -3,10 +3,9 @@ import { Group, Stack } from '@mantine/core';
 import { useForm } from 'react-hook-form';
 import { useQueryClient, useMutation } from '@tanstack/react-query';
 import slugify from 'slugify';
-
-import { ICreateTenantDto, ITenantEntity } from '@novu/shared';
-
+import type { IResponseError, ICreateTenantDto, ITenantEntity } from '@novu/shared';
 import { Button, colors, Sidebar, Text, Title, Tooltip } from '@novu/design-system';
+
 import { createTenant } from '../../../api/tenants';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
@@ -26,7 +25,7 @@ export function CreateTenantSidebar({
 
   const { mutateAsync: createTenantMutation, isLoading: isLoadingCreate } = useMutation<
     ITenantEntity,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     ICreateTenantDto
   >(createTenant, {
     onSuccess: async () => {

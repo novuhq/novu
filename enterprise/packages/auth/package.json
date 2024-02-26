@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-auth",
-  "version": "0.22.0",
+  "version": "0.23.1",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -9,13 +9,12 @@
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "lint": "eslint src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
-    "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts",
-    "symlink": "ln -s ../../../.source/auth/src ./src"
+    "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
-    "@novu/dal": "^0.22.0",
-    "@novu/shared": "^0.22.0",
-    "@novu/application-generic": "^0.22.0",
+    "@novu/application-generic": "^0.23.1",
+    "@novu/dal": "^0.23.1",
+    "@novu/shared": "^0.23.1",
     "passport-google-oauth": "^2.0.0"
   },
   "devDependencies": {
@@ -32,10 +31,10 @@
     "typescript": "4.9.5"
   },
   "peerDependencies": {
-    "@nestjs/passport": "9.0.3",
     "@nestjs/common": "10.2.2",
     "@nestjs/jwt": "10.2.0",
-    "passport-oauth2": "^1.6.1",
-    "passport": "0.6.0"
+    "@nestjs/passport": "9.0.3",
+    "passport": "0.6.0",
+    "passport-oauth2": "^1.6.1"
   }
 }

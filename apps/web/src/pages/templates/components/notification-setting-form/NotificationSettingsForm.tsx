@@ -2,7 +2,7 @@ import { ActionIcon, Grid, Stack } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useFormContext } from 'react-hook-form';
-import { INotificationTrigger } from '@novu/shared';
+import type { IResponseError, INotificationTrigger } from '@novu/shared';
 
 import { api } from '../../../../api/api.client';
 import { Input, Select, Switch, Tooltip, Check, Copy } from '@novu/design-system';
@@ -33,7 +33,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
   const { groups, loading: loadingGroups } = useNotificationGroup();
   const { isLoading: loadingCreateGroup, mutateAsync: createNotificationGroup } = useMutation<
     { name: string; _id: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     {
       name: string;
     }

@@ -23,7 +23,7 @@ import {
 } from '../../services';
 import { ExecutionLogRoute } from '../execution-log-route';
 import { CreateExecutionDetails } from '../create-execution-details';
-import { GetIsExecutionLogQueueEnabled } from '../get-feature-flag';
+import { GetFeatureFlag } from '../get-feature-flag';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -115,7 +115,7 @@ describe('select integration', function () {
         new ExecutionLogRoute(
           new CreateExecutionDetails(new ExecutionDetailsRepository()),
           new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
-          new GetIsExecutionLogQueueEnabled(new FeatureFlagsService())
+          new GetFeatureFlag(new FeatureFlagsService())
         ),
         new CompileTemplate()
       ),

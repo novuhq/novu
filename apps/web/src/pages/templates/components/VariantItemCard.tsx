@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { FilterPartTypeEnum, StepTypeEnum, STEP_TYPE_TO_CHANNEL_TYPE } from '@novu/shared';
-import { useEffect, useRef, useState } from 'react';
+import { MouseEventHandler, useEffect, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
 import { colors, Check, Conditions as ConditionsIcon } from '@novu/design-system';
@@ -16,6 +16,7 @@ import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { IForm, IFormStep, IVariantStep } from './formTypes';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { NODE_ERROR_TYPES } from '../workflow/workflow/node-types/utils';
+import { useNavigateToVariantPreview } from '../hooks/useNavigateToVariantPreview';
 
 const VariantItemCardHolder = styled.div`
   display: grid;
@@ -31,10 +32,10 @@ const FlexContainer = styled.span`
   align-items: center;
 `;
 
-const WorkflowNodeStyled = styled(WorkflowNode)<{ isError: boolean }>`
+const WorkflowNodeStyled = styled(WorkflowNode)`
+  cursor: pointer;
   grid-column: 5 / -1;
   grid-row: 2 / -1;
-  ${({ isError }) => (isError ? `border: 1px solid ${colors.error}` : '')}
 `;
 
 const HorizontalLine = styled.span`
@@ -122,7 +123,6 @@ export const VariantItemCard = ({
   variant,
   'data-test-id': dataTestId,
   errorMessage,
-  isActiveError = false,
   nodeErrorType,
 }: {
   isReadonly?: boolean;
@@ -133,13 +133,17 @@ export const VariantItemCard = ({
   nodeType: NodeType;
   'data-test-id'?: string;
   errorMessage?: string;
-  isActiveError?: boolean;
   nodeErrorType?: NODE_ERROR_TYPES;
 }) => {
   const { setValue } = useFormContext<IForm>();
-  const { channel, stepUuid = '' } = useParams<{
+  const {
+    channel,
+    stepUuid = '',
+    variantUuid = '',
+  } = useParams<{
     channel: StepTypeEnum;
     stepUuid: string;
+    variantUuid: string;
   }>();
   const subtitle = useStepSubtitle({
     path: `steps.${stepIndex}.variants.${variantIndex}`,
@@ -148,6 +152,7 @@ export const VariantItemCard = ({
   });
   const navigate = useNavigate();
   const basePath = useBasePath();
+  const { navigateToVariantPreview } = useNavigateToVariantPreview();
   const [areConditionsOpened, setConditionsOpened] = useState(false);
   const filterPartsList = useFilterPartsList({ index: stepIndex });
   const { deleteVariant } = useTemplateEditorForm();
@@ -157,16 +162,23 @@ export const VariantItemCard = ({
   const Icon = stepIcon[channel ?? ''];
   const variantsCount = ('variants' in variant ? variant.variants?.length : 0) ?? 0;
   const isRoot = nodeType === 'variantRoot';
+  const isSelected = (isRoot && stepUuid === variantUuid) || variant.uuid === variantUuid;
   const conditions = variant.filters ?? [];
   const conditionsCount = conditions && conditions.length > 0 ? conditions[0].children?.length ?? 0 : 0;
 
-  const onEdit = () => {
+  const onEdit: MouseEventHandler<HTMLButtonElement> = (e) => {
+    e.stopPropagation();
     if (isRoot) {
       navigate(basePath + `/${channel}/${stepUuid}`);
 
       return;
     }
     navigate(basePath + `/${channel}/${stepUuid}/variants/${variant.uuid}`);
+  };
+
+  const onClick: MouseEventHandler<HTMLDivElement> = (e) => {
+    e.stopPropagation();
+    navigateToVariantPreview({ variantUuid: variant.uuid });
   };
 
   const onDeleteIcon = () => {
@@ -200,10 +212,10 @@ export const VariantItemCard = ({
   };
 
   useEffect(() => {
-    if (isActiveError) {
+    if (isSelected) {
       variantItemCardHolderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [isActiveError]);
+  }, [isSelected]);
 
   return (
     <VariantItemCardHolder ref={variantItemCardHolderRef} data-test-id={dataTestId}>
@@ -245,14 +257,15 @@ export const VariantItemCard = ({
         channelType={variant.template?.type}
         variantsCount={variantsCount}
         conditionsCount={conditionsCount}
+        onClick={onClick}
         onEdit={onEdit}
         onDelete={onDeleteIcon}
         onAddConditions={onAddConditions}
         menuPosition="bottom-end"
         nodeType={nodeType}
         errors={errorMessage}
-        isError={isActiveError}
         nodeErrorType={nodeErrorType}
+        active={isSelected}
       />
       {areConditionsOpened && (
         <Conditions

@@ -11,11 +11,11 @@ import {
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
-import { CacheService, FeatureFlagCommand, GetIsApiIdempotencyEnabled, Instrument } from '@novu/application-generic';
+import { CacheService, GetFeatureFlagCommand, GetFeatureFlag, Instrument } from '@novu/application-generic';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { createHash } from 'crypto';
-import { ApiAuthSchemeEnum, IJwtPayload } from '@novu/shared';
+import { ApiAuthSchemeEnum, FeatureFlagsKeysEnum, IJwtPayload } from '@novu/shared';
 import { HttpResponseHeaderKeysEnum } from './types';
 
 const LOG_CONTEXT = 'IdempotencyInterceptor';
@@ -34,10 +34,7 @@ const ALLOWED_METHODS = ['post', 'patch'];
 
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
-  constructor(
-    private readonly cacheService: CacheService,
-    private getIsApiIdempotencyEnabled: GetIsApiIdempotencyEnabled
-  ) {}
+  constructor(private readonly cacheService: CacheService, private getFeatureFlag: GetFeatureFlag) {}
 
   protected async isEnabled(context: ExecutionContext): Promise<boolean> {
     const isAllowedAuthScheme = this.isAllowedAuthScheme(context);
@@ -48,8 +45,9 @@ export class IdempotencyInterceptor implements NestInterceptor {
     const user = this.getReqUser(context);
     const { organizationId, environmentId, _id } = user;
 
-    const isEnabled = await this.getIsApiIdempotencyEnabled.execute(
-      FeatureFlagCommand.create({
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        key: FeatureFlagsKeysEnum.IS_API_IDEMPOTENCY_ENABLED,
         environmentId,
         organizationId,
         userId: _id,

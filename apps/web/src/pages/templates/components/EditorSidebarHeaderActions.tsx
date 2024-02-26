@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { FilterPartTypeEnum, DELAYED_STEPS, StepTypeEnum } from '@novu/shared';
-import { ActionButton, Condition, ConditionPlus, ConditionsFile, Trash, VariantPlus } from '@novu/design-system';
+import { ActionButton, Condition, ConditionPlus, Trash, VariantPlus } from '@novu/design-system';
 
 import { Conditions, IConditions } from '../../../components/conditions';
 import { When } from '../../../components/utils/When';
@@ -17,11 +17,12 @@ import { useStepVariantsCount } from '../hooks/useStepVariantsCount';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { IForm } from './formTypes';
 import { makeVariantFromStep, useTemplateEditorForm } from './TemplateEditorFormProvider';
+import { WorkflowNodeActions } from '../workflow/workflow/node-types/WorkflowNodeActions';
 
 const variantsCreatePath = '/variants/create';
 
-export const EditorSidebarHeaderActions = () => {
-  const { control, watch, setValue, getValues } = useFormContext<IForm>();
+export const EditorSidebarHeaderActions = ({ preview = false }: { preview?: boolean }) => {
+  const { control, watch, setValue } = useFormContext<IForm>();
   const { deleteStep, deleteVariant } = useTemplateEditorForm();
   const { readonly: isReadonly } = useEnvController();
   const {
@@ -72,6 +73,11 @@ export const EditorSidebarHeaderActions = () => {
     navigate(newPath);
   };
 
+  const onEdit = () => {
+    const newPath = basePath + `/${channel}/${stepUuid}`;
+    navigate(newPath);
+  };
+
   const updateConditions = (newConditions: IConditions[]) => {
     if (isNewVariantCreationUrl) {
       proceedToNewVariant.current = true;
@@ -88,12 +94,13 @@ export const EditorSidebarHeaderActions = () => {
   };
 
   const onConditionsClose = () => {
-    setConditionsOpened(false);
-
     if (isNewVariantCreationUrl && !proceedToNewVariant.current) {
-      const newPath = variantsCount > 0 ? pathname.replace('/create', '') : basePath;
-      navigate(newPath);
+      navigate(-1);
+
+      return;
     }
+
+    setConditionsOpened(false);
   };
 
   const openDeleteModal = () => {
@@ -121,41 +128,57 @@ export const EditorSidebarHeaderActions = () => {
 
   return (
     <>
-      <Group noWrap spacing={12} ml={'auto'} sx={{ alignItems: 'flex-start' }}>
-        <When truthy={isAddVariantActionAvailable && !isReadonly}>
-          <ActionButton
-            tooltip="Add variant"
-            onClick={onAddVariant}
-            Icon={VariantPlus}
-            data-test-id="editor-sidebar-add-variant"
-          />
-        </When>
-        <When truthy={hasNoFilters && !isReadonly}>
-          <ActionButton
-            tooltip={`${conditionAction} ${isUnderVariantsListPath ? 'group' : ''} conditions`}
-            onClick={() => setConditionsOpened(true)}
-            Icon={ConditionPlus}
-            data-test-id="editor-sidebar-add-conditions"
-          />
-        </When>
-        <When truthy={!hasNoFilters}>
-          <ActionButton
-            tooltip={`${conditionAction} ${isUnderVariantsListPath ? 'group' : ''} conditions`}
-            text={`${filters?.length ?? ''}`}
-            onClick={() => setConditionsOpened(true)}
-            Icon={Condition}
-            data-test-id="editor-sidebar-edit-conditions"
-          />
-        </When>
-        <When truthy={!isReadonly}>
-          <ActionButton
-            tooltip={`Delete ${isUnderVariantPath ? 'variant' : 'step'}`}
-            onClick={openDeleteModal}
-            Icon={Trash}
-            data-test-id="editor-sidebar-delete"
-          />
-        </When>
-      </Group>
+      <When truthy={preview}>
+        <WorkflowNodeActions
+          onEdit={onEdit}
+          onAddVariant={isAddVariantActionAvailable ? onAddVariant : undefined}
+          onDelete={openDeleteModal}
+          onAddConditions={() => setConditionsOpened(true)}
+          channelType={channel as StepTypeEnum}
+          nodeType={'step'}
+          conditionsCount={filters?.length || 0}
+          isReadOnly={isReadonly}
+          menuPosition={'bottom'}
+          showMenu={true}
+        />
+      </When>
+      <When truthy={!preview}>
+        <Group noWrap spacing={12} ml={'auto'} sx={{ alignItems: 'flex-start' }}>
+          <When truthy={isAddVariantActionAvailable && !isReadonly}>
+            <ActionButton
+              tooltip="Add variant"
+              onClick={onAddVariant}
+              Icon={VariantPlus}
+              data-test-id="editor-sidebar-add-variant"
+            />
+          </When>
+          <When truthy={hasNoFilters && !isReadonly}>
+            <ActionButton
+              tooltip={`${conditionAction} ${isUnderVariantsListPath ? 'group' : ''} conditions`}
+              onClick={() => setConditionsOpened(true)}
+              Icon={ConditionPlus}
+              data-test-id="editor-sidebar-add-conditions"
+            />
+          </When>
+          <When truthy={!hasNoFilters}>
+            <ActionButton
+              tooltip={`${conditionAction} ${isUnderVariantsListPath ? 'group' : ''} conditions`}
+              text={`${filters?.length ?? ''}`}
+              onClick={() => setConditionsOpened(true)}
+              Icon={Condition}
+              data-test-id="editor-sidebar-edit-conditions"
+            />
+          </When>
+          <When truthy={!isReadonly}>
+            <ActionButton
+              tooltip={`Delete ${isUnderVariantPath ? 'variant' : 'step'}`}
+              onClick={openDeleteModal}
+              Icon={Trash}
+              data-test-id="editor-sidebar-delete"
+            />
+          </When>
+        </Group>
+      </When>
       {areConditionsOpened && (
         <Conditions
           isOpened={areConditionsOpened}
