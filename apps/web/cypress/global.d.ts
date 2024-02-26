@@ -45,6 +45,13 @@ declare namespace Cypress {
      */
     inviteUser(email: string): Chainable<Response>;
 
+    /**
+     * Intercept feature flags from LaunchDarkly and mock their response.
+     *
+     * Must be in beforeEach (vs before) because intercepts are cleared before each test run.
+     */
+    mockFeatureFlags(featureFlags: Partial<Record<FeatureFlagsKeysEnum, boolean>>): Chainable<void>;
+
     loginWithGitHub(): Chainable<any>;
 
     makeBlueprints(): Chainable<any>;
