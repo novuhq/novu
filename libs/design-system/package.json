@@ -16,6 +16,7 @@
     "dist/types"
   ],
   "scripts": {
+    "prepare": "panda codegen",
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
     "lint": "eslint --ext .ts,.tsx src",
@@ -26,7 +27,7 @@
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
     "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "pnpm run prepare && storybook dev -p 6006",
     "build-storybook": "storybook build",
     "cypress:install": "cypress install",
     "cypress:open": "cross-env NODE_ENV=test cypress open",
