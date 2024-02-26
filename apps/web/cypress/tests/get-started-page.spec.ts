@@ -55,10 +55,6 @@ describe('GetStartedPage', () => {
     cy.initializeSession().as('session');
   });
 
-  afterEach(() => {
-    // Add any teardown code if needed
-  });
-
   it('should have all tabs and default to in-app', () => {
     cy.visit(BASE_ROUTE);
 
