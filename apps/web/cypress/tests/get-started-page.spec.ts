@@ -52,6 +52,8 @@ const visitTabAndVerifyContent = ({ tabName, tabTitle, numTimelineSteps, linkSte
 
 describe('GetStartedPage', () => {
   beforeEach(function () {
+    cy.mockFeatureFlags({ IS_IMPROVED_ONBOARDING_ENABLED: true });
+
     cy.initializeSession().as('session');
   });
 
