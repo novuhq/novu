@@ -1,13 +1,13 @@
 import { Handle, Position } from 'react-flow-renderer';
-
 import { Button, colors, shadows, Text, Title, BoltOutlinedGradient, Playground } from '@novu/design-system';
-
 import styled from '@emotion/styled';
 import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
-import { ActorTypeEnum, INotificationTemplate, StepTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
+import { ActorTypeEnum, StepTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
+import type { IResponseError, INotificationTemplate } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+
 import { createTemplate, testTrigger } from '../../../api/notification-templates';
 import { useEffectOnce, useNotificationGroup, useTemplates } from '../../../hooks';
 import {
@@ -65,7 +65,7 @@ function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
 
   const { mutate: createNotificationTemplate, isLoading: createTemplateLoading } = useMutation<
     INotificationTemplate & { __source?: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { template: ICreateNotificationTemplateDto; params: { __source?: string } }
   >((data) => createTemplate(data.template, data.params), {
     onError: (error) => {

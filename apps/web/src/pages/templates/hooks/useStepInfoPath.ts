@@ -7,7 +7,7 @@ export const useStepInfoPath = () => {
   const { stepIndex, variantIndex } = useStepIndex();
   const isStep = stepIndex > -1;
   const isVariant = typeof variantIndex !== 'undefined' && variantIndex > -1;
-  const isUnderVariantsListPath = pathname.endsWith('/variants');
+  const isUnderVariantsListPath = pathname.includes('/variants') && pathname.endsWith('/preview');
   const isUnderTheStepPath = isStep && !isVariant && !isUnderVariantsListPath;
   const isUnderVariantPath = isStep && isVariant && !isUnderVariantsListPath;
 

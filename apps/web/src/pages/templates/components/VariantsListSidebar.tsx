@@ -5,8 +5,8 @@ import { Sidebar } from '@novu/design-system';
 
 import { useStepIndex } from '../hooks/useStepIndex';
 import { StepName } from './StepName';
+import { VariantsListSidebarActions } from './VariantsListSidebarActions';
 import { useBasePath } from '../hooks/useBasePath';
-import { EditorSidebarHeaderActions } from './EditorSidebarHeaderActions';
 
 const VariantsSidebarHeader = ({ isLoading }: { isLoading?: boolean }) => {
   const { channel } = useParams<{
@@ -20,33 +20,30 @@ const VariantsSidebarHeader = ({ isLoading }: { isLoading?: boolean }) => {
   return (
     <div style={{ display: 'flex', width: '100%', gap: 12 }}>
       <StepName channel={channel} />
-      <EditorSidebarHeaderActions />
+      <VariantsListSidebarActions />
     </div>
   );
 };
 
 export const VariantsListSidebar = ({ isLoading = false, children }: { isLoading?: boolean; children: ReactNode }) => {
   const navigate = useNavigate();
-  const path = useBasePath();
+  const basePath = useBasePath();
   const { stepIndex } = useStepIndex();
 
   return (
     <Sidebar
       key={`${stepIndex}`}
       isOpened
+      isExpanded
       isLoading={isLoading}
       customHeader={<VariantsSidebarHeader isLoading={isLoading} />}
       onClose={() => {
-        navigate(path);
+        navigate(basePath);
       }}
       styles={{
         body: {
           '> form': {
             gap: 0,
-          },
-          '.sidebar-body-holder': {
-            marginRight: 0,
-            paddingRight: 0,
           },
         },
       }}
