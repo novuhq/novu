@@ -1,5 +1,4 @@
 import { errorMessage } from '@novu/design-system';
-import { INotificationTemplate } from '@novu/shared';
 
 import { TemplateCreationSourceEnum } from '../../templates/shared';
 import { useSegment } from '../../../components/providers/SegmentProvider';
@@ -7,22 +6,7 @@ import { OnboardingWorkflowRouteEnum } from '../consts/types';
 import { StyledLink } from '../consts/shared';
 import { useCreateWorkflowFromBlueprint } from '../../../hooks';
 import { openInNewTab } from '../../../utils';
-import { parseUrl } from '../../../utils/routeUtils';
-import { ROUTES } from '../../../constants/routes.enum';
-
-function buildWorkflowEditorUrl(workflow: INotificationTemplate, step?: OnboardingWorkflowRouteEnum) {
-  const workflowRoute = parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: workflow._id! });
-  if (step === OnboardingWorkflowRouteEnum.TEST_WORKFLOW) {
-    return `${window.location.origin}${workflowRoute}/${OnboardingWorkflowRouteEnum.TEST_WORKFLOW}`;
-  }
-
-  const stepUuid = workflow.steps.find((el) => el.name?.toLowerCase() === step?.toLowerCase())?.uuid;
-  if (step && stepUuid) {
-    return `${window.location.origin}${workflowRoute}/${step}/${stepUuid}`;
-  }
-
-  return `${window.location.origin}${workflowRoute}`;
-}
+import { buildWorkflowEditorUrl } from '../utils/workflowEditorUrl';
 
 export function OpenWorkflowButton({
   blueprintIdentifier,
