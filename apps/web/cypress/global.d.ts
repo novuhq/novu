@@ -2,6 +2,7 @@
 
 type IMountType = import('cypress/react').mount;
 type ICreateNotificationTemplateDto = import('@novu/shared').ICreateNotificationTemplateDto;
+type FeatureFlagsKeysEnum = import('@novu/shared').FeatureFlagsKeysEnum;
 
 declare namespace Cypress {
   interface Chainable {
