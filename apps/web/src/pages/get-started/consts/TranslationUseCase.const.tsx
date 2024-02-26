@@ -21,7 +21,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <GetStartedLink href={ROUTES.INTEGRATIONS}> Integration store</GetStartedLink>
+            <GetStartedLink href={ROUTES.INTEGRATIONS_CREATE}> Integration store</GetStartedLink>
             <StepText>.</StepText>
           </StepDescription>
         );

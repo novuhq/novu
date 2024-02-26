@@ -17,11 +17,7 @@ export const StepButton = styled(Button)`
 `;
 
 export function GetStartedLink({ children, ...linkProps }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
-  return (
-    <Link {...linkProps}>
-      <StyledLink>{children}</StyledLink>
-    </Link>
-  );
+  return <StyledLink {...linkProps}>{children}</StyledLink>;
 }
 
 export const StyledLink = styled.a`

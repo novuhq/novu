@@ -25,7 +25,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <GetStartedLink children={' Integration store'} href={ROUTES.INTEGRATIONS_CREATE} />
+            <GetStartedLink href={ROUTES.INTEGRATIONS_CREATE}>{' Integration store'}</GetStartedLink>
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -55,9 +55,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
               Test the trigger
             </OpenWorkflowButton>
             <StepText>
-              {
-                ' Test the trigger as if you sent it from your API. Add a subscriber by sending data to the trigger method.'
-              }
+              {' as if you sent it from your API. Add a subscriber by sending data to the trigger method.'}
             </StepText>
           </StepDescription>
         );
