@@ -11,7 +11,6 @@ import {
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { ROUTES } from '../../../constants/routes.enum';
 import {
   Activity,
   Bolt,
@@ -20,6 +19,7 @@ import {
   Buildings,
   CheckCircleOutlined,
   colors,
+  IconViewQuilt,
   NavMenu,
   NovuLogo,
   Repeat,
@@ -29,14 +29,15 @@ import {
   Team,
   Translation,
 } from '@novu/design-system';
+import { FeatureFlagsKeysEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
+import { ROUTES } from '../../../constants/routes.enum';
 import { useEnvController, useFeatureFlag } from '../../../hooks';
+import { useSegment } from '../../providers/SegmentProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
-import { FeatureFlagsKeysEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
-import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
 import { VisibilityOff } from './VisibilityOff';
-import { useSegment } from '../../providers/SegmentProvider';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -78,6 +79,7 @@ export function SideNav({}: Props) {
     updateOnboardingStatus,
   } = useUserOnboardingStatus();
   const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -131,6 +133,7 @@ export function SideNav({}: Props) {
     },
     {
       label: 'Brand',
+      condition: !isInformationArchitectureEnabled,
       icon: <Brand />,
       link: '/brand',
       testId: 'side-nav-brand-link',
@@ -139,9 +142,17 @@ export function SideNav({}: Props) {
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
     {
       label: 'Team Members',
+      condition: !isInformationArchitectureEnabled,
       icon: <Team />,
       link: ROUTES.TEAM,
       testId: 'side-nav-settings-organization',
+    },
+    {
+      condition: isInformationArchitectureEnabled,
+      icon: <IconViewQuilt />,
+      link: ROUTES.LAYOUT,
+      label: 'Layouts',
+      testId: 'side-nav-layouts-link',
     },
     {
       label: 'Changes',

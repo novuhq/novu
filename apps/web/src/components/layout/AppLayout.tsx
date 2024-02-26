@@ -11,6 +11,9 @@ import { INTERCOM_APP_ID } from '../../config';
 import { RequiredAuth } from './RequiredAuth';
 import { SpotLight } from '../utils/Spotlight';
 import { SpotLightProvider } from '../providers/SpotlightProvider';
+import { useFeatureFlag } from '@novu/shared-web';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { HeaderNav as HeaderNavNew } from './components/v2/HeaderNav';
 
 const AppShellNew = styled.div`
   display: flex;
@@ -28,6 +31,8 @@ const ContentShell = styled.div`
 
 export function AppLayout() {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
+
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   return (
     <RequiredAuth>
@@ -58,7 +63,11 @@ export function AppLayout() {
                 <AppShellNew>
                   <SideNav />
                   <ContentShell>
-                    <HeaderNav isIntercomOpened={isIntercomOpened} />
+                    {isInformationArchitectureEnabled ? (
+                      <HeaderNavNew />
+                    ) : (
+                      <HeaderNav isIntercomOpened={isIntercomOpened} />
+                    )}
                     <Outlet />
                   </ContentShell>
                 </AppShellNew>

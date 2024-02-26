@@ -35,4 +35,5 @@ export enum ROUTES {
   CONTACT = '/contact',
   BRAND = '/brand',
   TRANSLATIONS = '/translations',
+  LAYOUT = '/layouts',
 }
