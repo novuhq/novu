@@ -4,8 +4,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { Center } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
-
-import { passwordConstraints } from '@novu/shared';
+import { passwordConstraints, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import type { IResponseError } from '@novu/shared';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '@novu/design-system';
 
 import { useAuthContext } from '../../../components/providers/AuthProvider';
@@ -42,7 +42,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
 
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     {
       firstName: string;
       lastName: string;
@@ -223,13 +223,18 @@ function Accept() {
   return (
     <>
       <span>I accept the </span>
-      <a style={{ textDecoration: 'underline' }} href="https://novu.co/terms" target="_blank" rel="noopener noreferrer">
+      <a
+        style={{ textDecoration: 'underline' }}
+        href={`https://novu.co/terms${UTM_CAMPAIGN_QUERY_PARAM}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         Terms and Conditions
       </a>
       <span> and have read the </span>
       <a
         style={{ textDecoration: 'underline' }}
-        href="https://novu.co/privacy"
+        href={`https://novu.co/privacy${UTM_CAMPAIGN_QUERY_PARAM}`}
         target="_blank"
         rel="noopener noreferrer"
       >

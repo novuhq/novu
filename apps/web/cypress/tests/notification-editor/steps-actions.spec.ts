@@ -25,7 +25,7 @@ describe('Workflow Editor - Steps Actions', function () {
     cy.get('.react-flow__node').should('have.length', 4);
     cy.clickWorkflowNode(`node-inAppSelector`);
     cy.waitForNetworkIdle(500);
-    cy.getByTestId('editor-sidebar-delete').click();
+    cy.getByTestId('step-actions-menu').click().getByTestId('delete-step-action').click();
     cy.get('.mantine-Modal-modal button').contains('Delete step').click();
     cy.getByTestId(`node-inAppSelector`).should('not.exist');
     cy.get('.react-flow__node').should('have.length', 3);
@@ -87,7 +87,11 @@ describe('Workflow Editor - Steps Actions', function () {
     dragAndDrop('sms');
 
     editChannel('sms');
-    cy.getByTestId('smsNotificationContent').type('new content for sms');
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type('new content for sms', {
+      parseSpecialCharSequences: false,
+      force: true,
+    });
+
     cy.getByTestId('notification-template-submit-btn').click();
 
     cy.visit('/workflows/edit/' + template._id);
@@ -112,12 +116,13 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.waitForNetworkIdle(500);
 
-    cy.clickWorkflowNode(`node-inAppSelector`);
+    editChannel(`inApp`);
     cy.getByTestId(`step-active-switch`).get('label').contains('Active');
     cy.getByTestId(`step-active-switch`).click({ force: true });
     goBack();
 
-    cy.clickWorkflowNode(`node-inAppSelector`);
+    editChannel(`inApp`);
+
     cy.getByTestId(`step-active-switch`).get('label').contains('Inactive');
   });
 
@@ -128,12 +133,12 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.waitForNetworkIdle(500);
 
-    cy.clickWorkflowNode(`node-inAppSelector`);
+    editChannel(`inApp`);
     cy.getByTestId(`step-should-stop-on-fail-switch`).get('label').contains('Stop if step fails');
     cy.getByTestId(`step-should-stop-on-fail-switch`).click({ force: true });
     goBack();
 
-    cy.clickWorkflowNode(`node-inAppSelector`);
+    editChannel(`inApp`);
     cy.getByTestId(`step-should-stop-on-fail-switch`).should('be.checked');
   });
 
@@ -214,7 +219,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
     cy.getByTestId('add-new-condition').click();
 
     cy.getByTestId('conditions-form-on').click();
@@ -227,7 +232,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
   });
 
   it('should be able to add read/seen filters to a particular step', function () {
@@ -239,7 +244,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-emailSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
     cy.getByTestId('add-new-condition').click();
 
     cy.getByTestId('conditions-form-on').click();
@@ -252,7 +257,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
   });
 
   it('should be able to not add read/seen filters to first step', function () {
@@ -264,7 +269,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-on').click();
@@ -280,7 +285,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -291,15 +296,15 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
 
-    cy.getByTestId('editor-sidebar-edit-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
     cy.getByTestId('conditions-row-btn').click();
     cy.getByTestId('conditions-row-delete').click();
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-add-conditions').should('not.contain', '1');
+    cy.getByTestId('add-conditions-action').should('not.contain', '1');
   });
 
   it('should be able to add webhook filter for a particular step', function () {
@@ -311,7 +316,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -326,7 +331,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
   });
 
   it('should be able to add online right now filter for a particular step', function () {
@@ -338,7 +343,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -349,7 +354,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
   });
 
   it('should be able to add online in the last X time period filter for a particular step', function () {
@@ -361,7 +366,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
 
@@ -373,7 +378,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('1');
+    cy.getByTestId('add-conditions-action').contains('1');
   });
 
   it('should be able to add multiple filters to a particular step', function () {
@@ -385,7 +390,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.clickWorkflowNode(`node-inAppSelector`);
 
-    cy.getByTestId('editor-sidebar-add-conditions').click();
+    cy.getByTestId('add-conditions-action').click();
 
     cy.getByTestId('add-new-condition').click();
     cy.getByTestId('conditions-form-on').click();
@@ -404,7 +409,7 @@ describe('Workflow Editor - Steps Actions', function () {
 
     cy.getByTestId('apply-conditions-btn').click();
 
-    cy.getByTestId('editor-sidebar-edit-conditions').contains('2');
+    cy.getByTestId('add-conditions-action').contains('2');
   });
 
   it('should re-render content on between step click', function () {
@@ -425,15 +430,23 @@ describe('Workflow Editor - Steps Actions', function () {
     const lastContent = 'last content for sms';
 
     cy.clickWorkflowNode(`node-smsSelector`);
-    cy.getByTestId('smsNotificationContent').type(firstContent);
+    cy.getByTestId('edit-action').click();
+
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type(firstContent, {
+      force: true,
+    });
 
     cy.clickWorkflowNode(`node-smsSelector`, true);
-    cy.getByTestId('smsNotificationContent').type(lastContent);
-
+    cy.getByTestId('edit-action').click();
+    cy.get('.monaco-editor textarea:first').parent().click().find('textarea').type(lastContent, {
+      force: true,
+    });
     cy.clickWorkflowNode(`node-smsSelector`);
-    cy.getByTestId('smsNotificationContent').should('have.text', firstContent);
+    cy.getByTestId('edit-action').click();
+    cy.get('.monaco-editor textarea:first').parent().click().contains(firstContent);
 
     cy.clickWorkflowNode(`node-smsSelector`, true);
-    cy.getByTestId('smsNotificationContent').should('have.text', lastContent);
+    cy.getByTestId('edit-action').click();
+    cy.get('.monaco-editor textarea:first').parent().click().contains(lastContent);
   });
 });

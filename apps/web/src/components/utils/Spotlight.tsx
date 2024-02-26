@@ -2,8 +2,10 @@ import { SpotlightProvider } from '@mantine/spotlight';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, Bolt, Box, Settings, Repeat, Team, Brand, Chat } from '@novu/design-system';
-import { useSpotlightContext } from '../providers/SpotlightProvider';
+import { UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+
 import { ROUTES } from '../../constants/routes.enum';
+import { useSpotlightContext } from '../providers/SpotlightProvider';
 
 export const SpotLight = ({ children }) => {
   const navigate = useNavigate();
@@ -57,7 +59,7 @@ export const SpotLight = ({ children }) => {
         id: 'navigate-docs',
         title: 'Go to Documentation',
         onTrigger: () => {
-          window?.open('https://docs.novu.co/', '_blank')?.focus();
+          window?.open(`https://docs.novu.co${UTM_CAMPAIGN_QUERY_PARAM}`, '_blank')?.focus();
         },
       },
       {

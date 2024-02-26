@@ -4,6 +4,9 @@
  *
  * E.g. instead of using <Md10k />, use <Icon10k />
  */
+export { AppleIcon } from './general/AppleIcon';
+export { AndroidIcon } from './general/AndroidIcon';
+export { CurlyBrackets } from './general/CurlyBrackets';
 
 export {
   /** @deprecated - Use https://react-icons.github.io/react-icons/icons/md/ for names with "Icon" instead of "Md" */

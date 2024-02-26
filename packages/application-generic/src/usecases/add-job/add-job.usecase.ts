@@ -85,6 +85,7 @@ export class AddJob {
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
+          step: job.step,
           job,
         })
       );

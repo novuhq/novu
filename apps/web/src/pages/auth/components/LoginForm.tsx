@@ -4,8 +4,8 @@ import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Center } from '@mantine/core';
-
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
+import type { IResponseError } from '@novu/shared';
 
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { api } from '../../../api/api.client';
@@ -24,7 +24,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const { setToken } = useAuthContext();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     {
       email: string;
       password: string;

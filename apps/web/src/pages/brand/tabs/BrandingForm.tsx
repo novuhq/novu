@@ -6,13 +6,12 @@ import { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useOutletContext } from 'react-router-dom';
-import { IOrganizationEntity } from '@novu/shared';
+import type { IResponseError, IOrganizationEntity } from '@novu/shared';
+import { Button, ColorInput, colors, Select, inputStyles, Upload, Trash } from '@novu/design-system';
 
 import { updateBrandingSettings } from '../../../api/organization';
 import { getSignedUrl } from '../../../api/storage';
 import Card from '../../../components/layout/components/Card';
-import { Button, ColorInput, colors, Select, inputStyles, Upload, Trash } from '@novu/design-system';
-
 import { successMessage } from '../../../utils/notifications';
 
 const mimeTypes = {
@@ -26,7 +25,7 @@ export function BrandingForm() {
   }>();
   const { mutateAsync: getSignedUrlAction } = useMutation<
     { signedUrl: string; path: string; additionalHeaders: object },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     string
   >(getSignedUrl);
   const { setValue, handleSubmit, control } = useForm({
@@ -41,7 +40,7 @@ export function BrandingForm() {
 
   const { mutateAsync: updateBrandingSettingsMutation, isLoading: isUpdateBrandingLoading } = useMutation<
     { logo: string; path: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { logo: string | undefined; color: string | undefined }
   >(updateBrandingSettings);
 
