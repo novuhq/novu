@@ -10,6 +10,7 @@ import { errorMessage } from '../../../utils/notifications';
 import { useNotificationGroup, useTemplates } from '../../../hooks';
 import { v4 as uuid4 } from 'uuid';
 import { TemplateCreationSourceEnum } from '../../../pages/templates/shared';
+import { FIRST_100_WORKFLOWS } from '../../../constants/workflowConstants';
 
 export const useCreateDigestDemoWorkflow = () => {
   const navigate = useNavigate();
@@ -26,10 +27,7 @@ export const useCreateDigestDemoWorkflow = () => {
       errorMessage('Failed to create Digest Workflow');
     },
   });
-  const { templates = [], loading: templatesLoading } = useTemplates({
-    pageIndex: 0,
-    pageSize: 100,
-  });
+  const { templates = [], loading: templatesLoading } = useTemplates(FIRST_100_WORKFLOWS);
   const digestOnboardingTemplate = 'Digest Workflow Example';
 
   const createDigestDemoWorkflow = useCallback(() => {

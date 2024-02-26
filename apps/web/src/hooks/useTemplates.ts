@@ -1,4 +1,5 @@
 import { INotificationTemplate, WorkflowIntegrationStatus } from '@novu/shared';
+import { IUsePaginationStateOptions } from '@novu/design-system';
 
 import { useEnvController } from './useEnvController';
 import { getNotificationsList } from '../api/notification-templates';
@@ -16,7 +17,10 @@ export function useTemplates({
   pageIndex,
   pageSize,
   areSearchParamsEnabled = false,
-}: { pageIndex?: number; pageSize?: number; areSearchParamsEnabled?: boolean } = {}) {
+}: {
+  pageIndex?: IUsePaginationStateOptions['startingPageNumber'];
+  pageSize?: IUsePaginationStateOptions['startingPageSize'];
+} & Pick<IUsePaginationStateOptions, 'areSearchParamsEnabled'> = {}) {
   const { environment } = useEnvController();
 
   const {

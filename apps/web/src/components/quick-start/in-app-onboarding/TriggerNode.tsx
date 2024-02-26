@@ -19,6 +19,7 @@ import { NodeStep } from '../../workflow';
 import { useSegment } from '../../providers/SegmentProvider';
 import { errorMessage } from '../../../utils/notifications';
 import { TemplateCreationSourceEnum } from '../../../pages/templates/shared';
+import { FIRST_100_WORKFLOWS } from '../../../constants/workflowConstants';
 
 const useStyles = createStyles((theme) => ({
   dropdown: {
@@ -57,10 +58,7 @@ export function TriggerNode({ data }: { data: { label: string; email?: string } 
 
 function TriggerButton({ setOpened }: { setOpened: (value: boolean) => void }) {
   const [notificationNumber, setNotificationNumber] = useState(1);
-  const { templates = [], loading: templatesLoading } = useTemplates({
-    pageIndex: 0,
-    pageSize: 100,
-  });
+  const { templates = [], loading: templatesLoading } = useTemplates(FIRST_100_WORKFLOWS);
 
   const segment = useSegment();
 

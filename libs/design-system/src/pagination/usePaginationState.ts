@@ -31,7 +31,9 @@ export const usePaginationState = ({
   );
 
   useEffect(() => {
-    if (!areSearchParamsEnabled) return;
+    if (!areSearchParamsEnabled) {
+      return;
+    }
 
     setSearchParams(
       {
