@@ -22,6 +22,7 @@ const setSearchParams = vi.fn();
 
 const mockUseSearchParams = (): ReturnType<typeof useSearchParams> => {
   const params = new URLSearchParams();
+
   return [params, setSearchParams];
 };
 
@@ -64,6 +65,7 @@ it('usePaginationState updates state based on URL parameters on mount', async ()
     const params = new URLSearchParams();
     params.set('page', `${page}`);
     params.set('size', `${size}`);
+
     return [params, setSearchParams];
   };
 
