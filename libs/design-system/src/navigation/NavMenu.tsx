@@ -32,6 +32,7 @@ export function NavMenu({ menuItems }: INavMenuProps) {
               tooltipLabel={tooltipLabel}
               rightSide={rightSide}
               key={link}
+              testId={testId}
             />
           );
         })}

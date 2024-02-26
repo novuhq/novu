@@ -101,7 +101,7 @@ export function QuestionnaireForm() {
 
     const firstUsecase = findFirstUsecase(data.productUseCases) ?? '';
     const mappedUsecase = firstUsecase.replace('_', '-');
-    navigate(`${ROUTES.GET_STARTED}/${mappedUsecase}`);
+    navigate(`${ROUTES.GET_STARTED}?tab=${mappedUsecase}`);
   };
 
   /**
