@@ -178,7 +178,7 @@ export function HeaderNavNew() {
         padding: 8,
       }}
     >
-      {/* TODO: Change postion: right to space-between for breadcumbs */}
+      {/* TODO: Change position: right to space-between for breadcrumbs */}
       <Group position="right" noWrap align="center">
         <Group spacing={16}>
           <NotificationCenterWidget user={currentUser} />
