@@ -1,4 +1,5 @@
 import { defineConfig } from '@pandacss/dev';
+import { NovuPandaPreset } from './src/panda/NovuPandaPreset';
 
 export default defineConfig({
   // Whether to use css reset
@@ -10,31 +11,14 @@ export default defineConfig({
   // Files to exclude
   exclude: [],
 
-  /*
-   * remove preset tokens from Panda to ensure that only our tokens are available
-   * presets: [],
-   */
+  presets: [NovuPandaPreset],
 
-  // Useful for theme customization
+  /*
+   * Any additional configuration that is specific to design-system, but SHOULD NOT be propagated to
+   * other apps or consumers. Use this sparingly!
+   */
   theme: {
-    extend: {
-      tokens: {
-        fontSizes: {
-          '075': {
-            value: '0.75rem',
-            type: 'fontSize',
-          },
-          '100': {
-            value: '1rem',
-            type: 'fontSize',
-          },
-          '125': {
-            value: '1.25rem',
-            type: 'fontSize',
-          },
-        },
-      },
-    },
+    extend: {},
   },
 
   // The output directory for your css system
