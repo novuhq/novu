@@ -48,6 +48,7 @@ import { TenantsPage } from './pages/tenants/TenantsPage';
 import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { BillingRoutes } from './pages/BillingPages';
+import { ChannelPreview } from './pages/templates/components/ChannelPreview';
 import { useFeatureFlag } from './hooks';
 
 export const AppRoutes = () => {
@@ -89,7 +90,8 @@ export const AppRoutes = () => {
           <Route path="snippet" element={<SnippetPage />} />
           <Route path="providers" element={<ProvidersPage />} />
           <Route path=":channel/:stepUuid" element={<ChannelStepEditor />} />
-          <Route path=":channel/:stepUuid/variants" element={<VariantsPage />} />
+          <Route path=":channel/:stepUuid/preview" element={<ChannelPreview />} />
+          <Route path=":channel/:stepUuid/variants/:variantUuid/preview" element={<VariantsPage />} />
           <Route path=":channel/:stepUuid/variants/:variantUuid" element={<ChannelStepEditor />} />
           <Route path=":channel/:stepUuid/variants/create" element={<VariantsPage />} />
         </Route>
