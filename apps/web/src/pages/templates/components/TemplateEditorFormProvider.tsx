@@ -123,8 +123,12 @@ interface AddVariantResult {
   variantIndex: number;
 }
 
+interface INotificationTemplateWithChimera extends INotificationTemplate {
+  chimera?: boolean;
+}
+
 interface ITemplateEditorFormContext {
-  template?: INotificationTemplate;
+  template?: INotificationTemplateWithChimera;
   isLoading: boolean;
   isCreating: boolean;
   isUpdating: boolean;
@@ -296,7 +300,7 @@ const TemplateEditorFormProvider = ({ children }) => {
 
   const value = useMemo<ITemplateEditorFormContext>(
     () => ({
-      template,
+      template: { ...template, chimera: true } as INotificationTemplateWithChimera,
       isLoading: isLoading || loadingGroups,
       isCreating,
       isUpdating,
