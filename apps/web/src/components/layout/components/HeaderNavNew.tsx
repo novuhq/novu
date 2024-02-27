@@ -7,13 +7,13 @@ import { useIntercom } from 'react-use-intercom';
 import {
   colors,
   Dropdown,
-  Ellipse,
   IconDarkMode,
   IconHelpOutline,
   IconLightMode,
   IconLogout,
   IconOutlineGroupAdd,
-  Settings,
+  IconSettings,
+  IconTonality,
   Text,
   Tooltip,
 } from '@novu/design-system';
@@ -30,7 +30,7 @@ import { NotificationCenterWidget } from './NotificationCenterWidget';
 const menuItem = (iconColor) => [
   {
     title: 'Settings',
-    icon: <Settings width={20} height={20} color={iconColor} />,
+    icon: <IconSettings color={iconColor} />,
     path: ROUTES.SETTINGS,
   },
   {
@@ -39,7 +39,7 @@ const menuItem = (iconColor) => [
     path: ROUTES.TEAM,
   },
 ];
-const headerIconsSettings = { color: colors.B60, width: 20, height: 20 };
+const headerIconsSettings = { color: colors.B60, size: 20 };
 
 const Icon = () => {
   const { themeStatus } = useLocalThemePreference();
@@ -51,7 +51,7 @@ const Icon = () => {
     return <IconLightMode {...headerIconsSettings} />;
   }
 
-  return <Ellipse {...headerIconsSettings} />;
+  return <IconTonality {...headerIconsSettings} />;
 };
 
 export function HeaderNavNew() {
