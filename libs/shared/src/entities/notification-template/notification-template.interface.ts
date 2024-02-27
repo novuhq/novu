@@ -3,6 +3,11 @@ import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
 
+export enum NotificationTemplateTypeEnum {
+  REGULAR = 'REGULAR',
+  CHIMERA = 'CHIMERA',
+}
+
 export interface INotificationTemplate {
   _id?: string;
   name: string;
@@ -20,6 +25,7 @@ export interface INotificationTemplate {
   steps: INotificationTemplateStep[];
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
+  type?: NotificationTemplateTypeEnum;
 }
 
 export class IGroupedBlueprint {

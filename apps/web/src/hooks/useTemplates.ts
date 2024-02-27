@@ -1,4 +1,4 @@
-import { INotificationTemplate, WorkflowIntegrationStatus } from '@novu/shared';
+import { INotificationTemplate, WorkflowIntegrationStatus, NotificationTemplateTypeEnum } from '@novu/shared';
 import { IUsePaginationStateOptions } from '@novu/design-system';
 
 import { useEnvController } from './useEnvController';
@@ -53,7 +53,10 @@ export function useTemplates({
 
   return {
     ...paginatedQueryResp,
-    templates: data?.data.map((template) => ({ ...template, chimera: true })),
+    templates: data?.data.map((template) => ({
+      ...template,
+      chimera: template.type === NotificationTemplateTypeEnum.CHIMERA,
+    })),
     loading: isLoading,
     totalCount: data?.totalCount,
     totalItemCount,
