@@ -573,7 +573,8 @@
     "hostedtoolcache",
     "HeaderNavNew",
     "reshard",
-    "hostedtoolcache"
+    "hostedtoolcache",
+    "HeaderNavNew"
   ],
   "flagWords": [],
   "patterns": [
