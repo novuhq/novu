@@ -562,7 +562,8 @@
     "spyon",
     "restapi",
     "ringcentral",
-    "reshard"
+    "reshard",
+    "HeaderNavNew"
   ],
   "flagWords": [],
   "patterns": [
