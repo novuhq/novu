@@ -570,7 +570,8 @@
     "azcopy",
     "cpack",
     "pulumi",
-    "hostedtoolcache"
+    "hostedtoolcache",
+    "HeaderNavNew"
   ],
   "flagWords": [],
   "patterns": [
