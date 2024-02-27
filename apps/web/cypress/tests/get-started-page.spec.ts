@@ -2,6 +2,7 @@ interface ITabLinkInfo {
   label: string;
   type: 'button' | 'a';
   urlRegex: RegExp;
+  windowOpenCallIndex?: number;
 }
 
 interface ITabTest {
@@ -15,8 +16,11 @@ const BASE_ROUTE = '/get-started';
 
 const visitTabAndVerifyContent = ({ tabName, tabTitle, numTimelineSteps, linkSteps }: ITabTest) => {
   cy.visit(BASE_ROUTE);
+  cy.window().then((win) => {
+    cy.stub(win, 'open').as('windowOpen');
+  });
 
-  cy.contains(tabName).click();
+  cy.contains(tabName).as('tab').click();
 
   // Check that the clicked tab is now selected
   cy.get('button[role="tab"][aria-selected="true"]').contains(tabName).should('exist');
@@ -38,23 +42,38 @@ const visitTabAndVerifyContent = ({ tabName, tabTitle, numTimelineSteps, linkSte
   });
 
   // validate various links, open them, and go back to the tab
-  linkSteps.forEach(({ urlRegex, label, type }) => {
-    cy.contains(type, label).should('be.visible').click();
+  linkSteps.forEach(({ urlRegex, label, type, windowOpenCallIndex }) => {
+    cy.contains(type, label).should('be.visible');
+    if (type === 'a') {
+      cy.contains(type, label).should('have.attr', 'target', '_blank');
+      cy.contains(type, label).should('have.attr', 'rel', 'noopener noreferrer');
+      cy.contains(type, label).should('have.attr', 'href').should('match', urlRegex);
+    } else {
+      const index = windowOpenCallIndex ?? 0;
+      cy.contains(type, label).click();
+      cy.get('@windowOpen')
+        .its('callCount')
+        .should('equal', index + 1);
 
-    cy.url().should('match', urlRegex);
-
-    cy.go('back');
-
-    // FIXME: required until feature flag check is removed since we always end up back on `in-app` tab
-    cy.contains(tabName).click();
+      cy.get('@windowOpen')
+        .its('args')
+        .then((args) => {
+          const newTabUrl = args[index][0];
+          const target = args[index][1];
+          const rel = args[index][2];
+          expect(newTabUrl).to.match(urlRegex);
+          expect(target).to.equal('_blank');
+          expect(rel).to.equal('noreferrer noopener');
+        });
+    }
   });
 };
 
 describe('GetStartedPage', () => {
   beforeEach(function () {
     cy.mockFeatureFlags({ IS_IMPROVED_ONBOARDING_ENABLED: true });
-
     cy.initializeSession().as('session');
+    cy.makeBlueprints();
   });
 
   it('should have all tabs and default to in-app', () => {
@@ -71,8 +90,7 @@ describe('GetStartedPage', () => {
     cy.get('button[role="tab"][aria-selected="true"]').contains('In-app').should('exist');
   });
 
-  // FIXME: this will fail until we remove the conditional load based on feature-flag
-  it.skip('should load the page with a specific tab selected when the appropriate URL search param is passed', () => {
+  it('should load the page with a specific tab selected when the appropriate URL search param is passed', () => {
     cy.visit(`${BASE_ROUTE}?tab=multi-channel`);
 
     // Check that In-app is defaulted and selected
@@ -90,16 +108,18 @@ describe('GetStartedPage', () => {
           type: 'a',
           urlRegex: new RegExp('/integrations/[A-Z0-9]+', 'i'),
         },
-        /*         // {
-        //   label: 'Customize',
-        //   type: 'button',
-        //   urlRegex: new RegExp('/workflows'),
-        // },
-        // {
-        //   label: 'Test the trigger',
-        //   type: 'button',
-        //   urlRegex: new RegExp('/workflows'),
-        // }, */
+        {
+          label: 'Customize',
+          type: 'button',
+          urlRegex: /\/workflows\/edit\/\w{1,}/,
+          windowOpenCallIndex: 0,
+        },
+        {
+          label: 'Test the trigger',
+          type: 'button',
+          urlRegex: /\/workflows\/edit\/\w{1,}\/test-workflow/,
+          windowOpenCallIndex: 1,
+        },
         {
           label: 'activity feed',
           type: 'a',
@@ -120,16 +140,18 @@ describe('GetStartedPage', () => {
           type: 'a',
           urlRegex: new RegExp('/integrations/create'),
         },
-        /*         // {
-        //   label: 'Customize',
-        //   type: 'button',
-        //   urlRegex: new RegExp('/workflows'),
-        // },
-        // {
-        //   label: 'Test the trigger',
-        //   type: 'button',
-        //   urlRegex: new RegExp('/workflows'),
-        // }, */
+        {
+          label: 'Customize',
+          type: 'button',
+          urlRegex: /\/workflows\/edit\/\w{1,}/,
+          windowOpenCallIndex: 0,
+        },
+        {
+          label: 'Test the trigger',
+          type: 'button',
+          urlRegex: /\/workflows\/edit\/\w{1,}\/test-workflow/,
+          windowOpenCallIndex: 1,
+        },
         {
           label: 'activity feed',
           type: 'a',
@@ -150,21 +172,24 @@ describe('GetStartedPage', () => {
           type: 'a',
           urlRegex: new RegExp('/integrations/create'),
         },
-        /*         // {
-        //   label: 'Customize',
-        //   type: 'button',
-        //   urlRegex: new RegExp('/workflows'),
-        // },
-        // {
-        //   label: 'Customize digest node',
-        //   type: 'button',
-        //   urlRegex: new RegExp('/workflows'),
-        // },
-        // {
-        //   label: 'Test the trigger',
-        //   type: 'button',
-        //   urlRegex: new RegExp('/workflows'),
-        // }, */
+        {
+          label: 'Customize',
+          type: 'button',
+          urlRegex: /\/workflows\/edit\/\w{1,}/,
+          windowOpenCallIndex: 0,
+        },
+        {
+          label: 'Customize digest node',
+          type: 'button',
+          urlRegex: /\/workflows\/edit\/\w{1,}\/digest\/\w{1,}/,
+          windowOpenCallIndex: 1,
+        },
+        {
+          label: 'Test the trigger',
+          type: 'button',
+          urlRegex: /\/workflows\/edit\/\w{1,}\/test-workflow/,
+          windowOpenCallIndex: 2,
+        },
         {
           label: 'activity feed',
           type: 'a',
@@ -185,21 +210,24 @@ describe('GetStartedPage', () => {
           type: 'a',
           urlRegex: new RegExp('/integrations/create'),
         },
-        /*         // {
-        //   label: 'Customize',
-        //   type: 'button',
-        //   urlRegex: new RegExp('/workflows'),
-        // },
-        // {
-        //   label: 'Customize delay',
-        //   type: 'button',
-        //   urlRegex: new RegExp('/workflows'),
-        // },
-        // {
-        //   label: 'Test the trigger',
-        //   type: 'button',
-        //   urlRegex: new RegExp('/workflows'),
-        // }, */
+        {
+          label: 'Customize',
+          type: 'button',
+          urlRegex: /\/workflows\/edit\/\w{1,}/,
+          windowOpenCallIndex: 0,
+        },
+        {
+          label: 'Customize delay',
+          type: 'button',
+          urlRegex: /\/workflows\/edit\/\w{1,}\/delay\/\w{1,}/,
+          windowOpenCallIndex: 1,
+        },
+        {
+          label: 'Test the trigger',
+          type: 'button',
+          urlRegex: /\/workflows\/edit\/\w{1,}\/test-workflow/,
+          windowOpenCallIndex: 2,
+        },
         {
           label: 'activity feed',
           type: 'a',

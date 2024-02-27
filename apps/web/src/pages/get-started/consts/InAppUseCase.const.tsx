@@ -34,7 +34,9 @@ export const InAppUseCaseConst: OnboardingUseCase = {
 
         return (
           <StepDescription>
-            <GetStartedLink href={getInAppIntegrationUrl()}>Create In-app provider</GetStartedLink>
+            <GetStartedLink href={getInAppIntegrationUrl()} target="_blank" rel="noopener noreferrer">
+              Create In-app provider
+            </GetStartedLink>
             <StepText>
               {' instance, and select a framework to set up credentials in the Novu’s Integration store.'}
             </StepText>
@@ -47,9 +49,9 @@ export const InAppUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>Novu pre-built a workflow for testing.</StepText>
-            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>{' Customize '}</OpenWorkflowButton>
-            <StepText>it or create a new one on the Workflows page. </StepText>
+            <StepText>Novu pre-built a workflow for testing. </StepText>
+            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>Customize</OpenWorkflowButton>
+            <StepText> it or create a new one on the Workflows page. </StepText>
           </StepDescription>
         );
       },
@@ -78,7 +80,12 @@ export const InAppUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <GetStartedLink children={' activity feed '} href={ROUTES.ACTIVITIES} />
+            <GetStartedLink
+              children={' activity feed '}
+              href={ROUTES.ACTIVITIES}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>

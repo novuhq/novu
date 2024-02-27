@@ -21,7 +21,10 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <GetStartedLink href={ROUTES.INTEGRATIONS_CREATE}> Integration store</GetStartedLink>
+            <GetStartedLink href={ROUTES.INTEGRATIONS_CREATE} target="_blank" rel="noopener noreferrer">
+              {' '}
+              Integration store
+            </GetStartedLink>
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -33,7 +36,12 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Add a translation group and specify the languages in the</StepText>
-            <GetStartedLink children={' Translations page'} href={ROUTES.TRANSLATIONS} />
+            <GetStartedLink
+              children={' Translations page'}
+              href={ROUTES.TRANSLATIONS}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
             <StepText>.</StepText>
           </StepDescription>
         );

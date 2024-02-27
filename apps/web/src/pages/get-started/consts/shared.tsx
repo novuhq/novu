@@ -25,6 +25,19 @@ export const StyledLink = styled.a`
   cursor: pointer;
 `;
 
+export const LinkButton = styled.button`
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  outline: none;
+  color: ${colors.gradientEnd};
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  cursor: pointer;
+`;
+
 export function Link({ children, ...linkProps }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
   const segment = useSegment();
 

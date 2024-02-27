@@ -3,7 +3,7 @@ import { errorMessage } from '@novu/design-system';
 import { TemplateCreationSourceEnum } from '../../templates/shared';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { OnboardingWorkflowRouteEnum } from '../consts/types';
-import { StyledLink } from '../consts/shared';
+import { LinkButton } from '../consts/shared';
 import { useCreateWorkflowFromBlueprint } from '../../../hooks';
 import { openInNewTab } from '../../../utils';
 import { buildWorkflowEditorUrl } from '../utils/workflowEditorUrl';
@@ -35,5 +35,5 @@ export function OpenWorkflowButton({
     createWorkflowFromBlueprint({ blueprintIdentifier });
   };
 
-  return <StyledLink onClick={handleOpenWorkflowClick}>{children}</StyledLink>;
+  return <LinkButton onClick={handleOpenWorkflowClick}>{children}</LinkButton>;
 }
