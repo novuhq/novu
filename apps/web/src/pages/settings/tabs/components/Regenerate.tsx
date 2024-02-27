@@ -3,18 +3,16 @@ import styled from '@emotion/styled';
 import { useMutation } from '@tanstack/react-query';
 import { showNotification } from '@mantine/notifications';
 import { Group } from '@mantine/core';
+import { Button, Text } from '@novu/design-system';
+import type { IResponseError } from '@novu/shared';
 
 import { ConfirmRegenerationModal } from './ConfirmRegenerationModal';
-import { Button, Text } from '@novu/design-system';
 import { regenerateApiKeys } from '../../../../api/environment';
 
 export const Regenerate = ({ fetchApiKeys }: { fetchApiKeys: () => void }) => {
   const [isModalOpened, setModalIsOpened] = useState(false);
 
-  const { mutateAsync: regenerateApiKeysMutation } = useMutation<
-    { key: string }[],
-    { error: string; message: string; statusCode: number }
-  >(regenerateApiKeys);
+  const { mutateAsync: regenerateApiKeysMutation } = useMutation<{ key: string }[], IResponseError>(regenerateApiKeys);
 
   async function handleModal() {
     setModalIsOpened(true);

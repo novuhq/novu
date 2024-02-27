@@ -85,7 +85,7 @@ describe('Workflow Editor - Main Functionality', function () {
 
     cy.getByTestId('settings-page').click();
     cy.waitForNetworkIdle(500);
-    cy.getByTestId('title').first().should('have.value', template.name);
+    cy.getByTestId('name-input').first().should('have.value', template.name);
 
     editChannel('inApp');
     cy.waitForNetworkIdle(500);
@@ -95,7 +95,7 @@ describe('Workflow Editor - Main Functionality', function () {
     goBack();
     cy.waitForNetworkIdle(500);
 
-    cy.getByTestId('title').clear().type('This is the new notification title');
+    cy.getByTestId('name-input').clear().type('This is the new notification title');
 
     editChannel('inApp', true);
     cy.waitForNetworkIdle(500);
@@ -211,7 +211,7 @@ describe('Workflow Editor - Main Functionality', function () {
     dragAndDrop('email');
     cy.waitForNetworkIdle(500);
 
-    cy.clickWorkflowNode(`node-emailSelector`);
+    editChannel(`email`);
 
     cy.getByTestId(`step-active-switch`).should('have.value', 'on');
     cy.getByTestId(`step-active-switch`).click({ force: true });
@@ -221,8 +221,8 @@ describe('Workflow Editor - Main Functionality', function () {
     goBack();
 
     dragAndDrop('inApp');
+    editChannel('inApp');
 
-    cy.clickWorkflowNode(`node-inAppSelector`);
     cy.getByTestId(`step-active-switch`).should('have.value', 'on');
   });
 
@@ -316,9 +316,15 @@ describe('Workflow Editor - Main Functionality', function () {
     addAndEditChannel('sms');
     cy.waitForNetworkIdle(500);
 
-    cy.getByTestId('smsNotificationContent').type('{{firstName}} someone assigned you to {{taskName}}', {
-      parseSpecialCharSequences: false,
-    });
+    cy.get('.monaco-editor textarea:first', { timeout: 7000 })
+      .parent()
+      .click()
+      .find('textarea')
+      .type('{{firstName}} someone assigned you to {{taskName}}', {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
+
     goBack();
     cy.waitForNetworkIdle(500);
     cy.getByTestId('notification-template-submit-btn').click();

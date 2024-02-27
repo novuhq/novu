@@ -4,7 +4,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useDisclosure } from '@mantine/hooks';
-import { ChannelTypeEnum, ICreateIntegrationBodyDto, NOVU_PROVIDERS, providers } from '@novu/shared';
+import { ChannelTypeEnum, NOVU_PROVIDERS, providers } from '@novu/shared';
+import type { IResponseError, ICreateIntegrationBodyDto } from '@novu/shared';
 import {
   ActionButton,
   Button,
@@ -67,7 +68,7 @@ export function CreateProviderInstanceSidebar({
 
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
     IntegrationEntity,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     ICreateIntegrationBodyDto
   >(createIntegration);
 

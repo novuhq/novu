@@ -974,6 +974,9 @@ importers:
       cypress:
         specifier: ^13.3.1
         version: 13.3.1
+      cypress-file-upload:
+        specifier: ^5.0.8
+        version: 5.0.8(cypress@13.3.1)
       cypress-localstorage-commands:
         specifier: ^2.2.4
         version: 2.2.4(cypress@13.3.1)
@@ -2040,6 +2043,9 @@ importers:
       '@mantine/core':
         specifier: ^5.7.1
         version: 5.10.5(@emotion/react@11.10.6)(@mantine/hooks@5.10.5)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
+      '@mantine/dropzone':
+        specifier: ^5.9.2
+        version: 5.10.5(@mantine/core@5.10.5)(@mantine/hooks@5.10.5)(react-dom@17.0.2)(react@17.0.2)
       '@mantine/hooks':
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
@@ -34621,6 +34627,15 @@ packages:
 
   /cyclist@1.0.1:
     resolution: {integrity: sha512-NJGVKPS81XejHcLhaLJS7plab0fK3slPh11mESeeDq2W4ZI5kUKK/LRRdVDvjJseojbPB7ZwjnyOybg3Igea/A==}
+    dev: true
+
+  /cypress-file-upload@5.0.8(cypress@13.3.1):
+    resolution: {integrity: sha512-+8VzNabRk3zG6x8f8BWArF/xA/W0VK4IZNx3MV0jFWrJS/qKn8eHfa5nU73P9fOQAgwHFJx7zjg4lwOnljMO8g==}
+    engines: {node: '>=8.2.1'}
+    peerDependencies:
+      cypress: '>3.0.0'
+    dependencies:
+      cypress: 13.3.1
     dev: true
 
   /cypress-intellij-reporter@0.0.7:

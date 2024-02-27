@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
+import type { IResponseError } from '@novu/shared';
 
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { api } from '../../../api/api.client';
@@ -21,7 +22,7 @@ export function PasswordResetForm({ token }: Props) {
   const navigate = useNavigate();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     {
       password: string;
       token: string;

@@ -29,6 +29,7 @@
     "@emotion/styled": "^11.6.0",
     "@handlebars/parser": "^2.1.0",
     "@mantine/core": "^5.7.1",
+    "@mantine/dropzone": "^5.9.2",
     "@mantine/hooks": "^5.7.1",
     "@mantine/prism": "^5.7.1",
     "@monaco-editor/react": "^4.6.0",
