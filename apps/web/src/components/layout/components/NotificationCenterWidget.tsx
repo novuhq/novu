@@ -1,9 +1,17 @@
 import { useMantineColorScheme } from '@mantine/core';
-import { IUserEntity, IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '@novu/shared';
-import { NotificationBell, NovuProvider, PopoverNotificationCenter, useUpdateAction } from '@novu/notification-center';
+import {
+  ColorScheme,
+  NotificationBell as NovuNotificationBell,
+  NovuProvider,
+  PopoverNotificationCenter,
+  useUpdateAction,
+} from '@novu/notification-center';
+import { ButtonTypeEnum, FeatureFlagsKeysEnum, IMessage, IUserEntity, MessageActionStatusEnum } from '@novu/shared';
 
-import { API_ROOT, APP_ID, WS_URL, IS_EU_ENV } from '../../../config';
-import { useEnvController } from '../../../hooks';
+import styled from '@emotion/styled';
+import { colors, IconNotifications } from '@novu/design-system';
+import { API_ROOT, APP_ID, IS_EU_ENV, WS_URL } from '../../../config';
+import { useEnvController, useFeatureFlag } from '../../../hooks';
 
 const BACKEND_URL = IS_EU_ENV ? 'https://api.novu.co' : API_ROOT;
 const SOCKET_URL = IS_EU_ENV ? 'https://ws.novu.co' : WS_URL;
@@ -51,3 +59,29 @@ function PopoverWrapper() {
     </PopoverNotificationCenter>
   );
 }
+
+function NotificationBell({ unseenCount, colorScheme }: { unseenCount?: number; colorScheme: ColorScheme }) {
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
+
+  if (isInformationArchitectureEnabled) {
+    return <NovuNotificationBell unseenCount={unseenCount} colorScheme={colorScheme} />;
+  }
+
+  return (
+    <span style={{ position: 'relative' }}>
+      <IconNotifications color={colors.B60} />
+      {!!unseenCount && <StyledDot />}
+    </span>
+  );
+}
+
+const StyledDot = styled.div`
+  position: absolute;
+  top: -35%;
+  right: -5%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: ${colors.vertical};
+  border: 2px solid ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B15 : colors.white)};
+`;
