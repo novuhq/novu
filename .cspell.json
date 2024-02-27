@@ -571,7 +571,8 @@
     "cpack",
     "pulumi",
     "hostedtoolcache",
-    "HeaderNavNew"
+    "HeaderNavNew",
+    "reshard"
   ],
   "flagWords": [],
   "patterns": [
