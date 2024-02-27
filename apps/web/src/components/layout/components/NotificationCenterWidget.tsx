@@ -63,7 +63,7 @@ function PopoverWrapper() {
 function NotificationBell({ unseenCount, colorScheme }: { unseenCount?: number; colorScheme: ColorScheme }) {
   const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
-  if (isInformationArchitectureEnabled) {
+  if (!isInformationArchitectureEnabled) {
     return <NovuNotificationBell unseenCount={unseenCount} colorScheme={colorScheme} />;
   }
 
