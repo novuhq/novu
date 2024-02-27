@@ -574,7 +574,8 @@
     "HeaderNavNew",
     "reshard",
     "hostedtoolcache",
-    "HeaderNavNew"
+    "HeaderNavNew",
+    "reshard"
   ],
   "flagWords": [],
   "patterns": [
