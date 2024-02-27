@@ -27,15 +27,15 @@ import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
 import { NotificationCenterWidget } from './NotificationCenterWidget';
 
-const menuItem = [
+const menuItem = (iconColor) => [
   {
     title: 'Settings',
-    icon: <Settings width={20} height={20} />,
+    icon: <Settings width={20} height={20} color={iconColor} />,
     path: ROUTES.SETTINGS,
   },
   {
     title: 'Invite Members',
-    icon: <IconOutlineGroupAdd />,
+    icon: <IconOutlineGroupAdd color={iconColor} />,
     path: ROUTES.TEAM,
   },
 ];
@@ -62,6 +62,8 @@ export function HeaderNavNew() {
   const { boot } = useIntercom();
   const segment = useSegment();
   const isSelfHosted = IS_DOCKER_HOSTED;
+  const isDark = colorScheme === 'dark';
+  const iconColor = isDark ? colors.white : colors.B40;
 
   const debounceThemeChange = useDebounce((args: { colorScheme: ColorScheme; themeStatus: string }) => {
     segment.track('Theme is set - [Theme]', args);
@@ -124,6 +126,8 @@ export function HeaderNavNew() {
     addItem(additionalMenuItems);
   }, [addItem, removeItems, additionalMenuItems]);
 
+  const menuItems = useMemo(() => menuItem(iconColor), [iconColor]);
+
   const profileMenuMantine = [
     <Dropdown.Item disabled key="user">
       <Group spacing={16} noWrap>
@@ -138,14 +142,14 @@ export function HeaderNavNew() {
         </div>
       </Group>
     </Dropdown.Item>,
-    ...menuItem.map(({ title, icon, path }) => (
+    ...menuItems.map(({ title, icon, path }) => (
       <Link to={path} key={title}>
         <Dropdown.Item key={title} icon={icon} component="div">
           {title}
         </Dropdown.Item>
       </Link>
     )),
-    <Dropdown.Item key="logout" icon={<IconLogout />} onClick={logout} data-test-id="logout-button">
+    <Dropdown.Item key="logout" icon={<IconLogout color={iconColor} />} onClick={logout} data-test-id="logout-button">
       Log Out
     </Dropdown.Item>,
   ];
