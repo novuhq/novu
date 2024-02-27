@@ -25,7 +25,9 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <GetStartedLink children={' Integration store'} href={ROUTES.INTEGRATIONS_CREATE} />
+            <GetStartedLink href={ROUTES.INTEGRATIONS_CREATE} target="_blank" rel="noopener noreferrer">
+              {' Integration store'}
+            </GetStartedLink>
             <StepText>.</StepText>
           </StepDescription>
         );
@@ -36,9 +38,9 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>Novu has prepared workflow templates.</StepText>
-            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>{' Customize '}</OpenWorkflowButton>
-            <StepText>a Multi-Channel template or start with a blank workflow.</StepText>
+            <StepText>Novu has prepared workflow templates. </StepText>
+            <OpenWorkflowButton blueprintIdentifier={USECASE_BLUEPRINT_IDENTIFIER}>Customize</OpenWorkflowButton>
+            <StepText> a Multi-Channel template or start with a blank workflow.</StepText>
           </StepDescription>
         );
       },
@@ -55,9 +57,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
               Test the trigger
             </OpenWorkflowButton>
             <StepText>
-              {
-                ' Test the trigger as if you sent it from your API. Add a subscriber by sending data to the trigger method.'
-              }
+              {' as if you sent it from your API. Add a subscriber by sending data to the trigger method.'}
             </StepText>
           </StepDescription>
         );
@@ -69,7 +69,12 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>Discover</StepText>
-            <GetStartedLink children={' activity feed '} href={ROUTES.ACTIVITIES} />
+            <GetStartedLink
+              children={' activity feed '}
+              href={ROUTES.ACTIVITIES}
+              target="_blank"
+              rel="noopener noreferrer"
+            />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
             </StepText>
