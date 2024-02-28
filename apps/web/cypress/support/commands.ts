@@ -176,17 +176,17 @@ Cypress.Commands.add('loginWithGitHub', () => {
  */
 Cypress.Commands.add('mockFeatureFlags', (featureFlags: Partial<Record<FeatureFlagsKeysEnum, boolean>>) => {
   // turn off push (EventSource) updates from LaunchDarkly
-  cy.intercept({ hostname: /https:\/\/clientstream\.launchdarkly\.com/ }, (req) => {
+  cy.intercept({ hostname: /clientstream\.launchdarkly\.com/ }, (req) => {
     req.reply('data: no streaming feature flag data here\n\n', {
       'content-type': 'text/event-stream; charset=utf-8',
     });
   });
 
   // ignore api calls to events endpoint
-  cy.intercept({ hostname: /https:\/\/events\.launchdarkly\.com/ }, { body: {} });
+  cy.intercept({ hostname: /events\.launchdarkly\.com/ }, { body: {} });
 
   // return feature flag values in format expected by launchdarkly client
-  cy.intercept({ hostname: /https:\/\/app\.launchdarkly\.com/ }, (req) => {
+  cy.intercept({ hostname: /app\.launchdarkly\.com/ }, (req) => {
     const body = {};
     Object.entries(featureFlags).forEach(([featureFlagName, featureFlagValue]) => {
       body[featureFlagName] = { value: featureFlagValue };
