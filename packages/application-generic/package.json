@@ -45,12 +45,12 @@
     "reflect-metadata": "^0.1.13"
   },
   "dependencies": {
-    "@hokify/agenda": "^6.3.0",
     "@aws-sdk/client-cloudwatch": "^3.382.0",
     "@aws-sdk/client-s3": "^3.382.0",
     "@aws-sdk/s3-request-presigner": "^3.382.0",
     "@azure/storage-blob": "^12.11.0",
     "@google-cloud/storage": "^6.2.3",
+    "@hokify/agenda": "^6.3.0",
     "@nestjs/passport": "^10.0.1",
     "@novu/africas-talking": "^0.23.1",
     "@novu/apns": "^0.23.1",
@@ -133,6 +133,7 @@
     "@opentelemetry/sdk-trace-base": "^1.19.0",
     "@opentelemetry/sdk-trace-node": "^1.19.0",
     "@opentelemetry/semantic-conventions": "^1.19.0",
+    "@pyroscope/nodejs": "^0.2.9",
     "@segment/analytics-node": "^1.1.4",
     "@sentry/node": "^7.12.1",
     "axios": "^1.6.2",

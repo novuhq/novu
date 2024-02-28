@@ -23,3 +23,4 @@ export * from './decorators/external-api.decorator';
 export * from './decorators/user-session.decorator';
 export * from './tracing';
 export * from './dtos';
+export * from './profiling';
