@@ -1,7 +1,6 @@
 import {
   Inject,
   Injectable,
-  Logger,
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
@@ -11,7 +10,6 @@ import { PinoLogger } from 'nestjs-pino';
 
 @Injectable()
 export class ProfilingService implements OnModuleInit, OnModuleDestroy {
-  // private readonly logger = new Logger('Pyroscope');
   private initialized = false;
 
   constructor(
@@ -38,7 +36,6 @@ export class ProfilingService implements OnModuleInit, OnModuleDestroy {
   onModuleInit() {
     this.logger.debug(`Pyroscope enabled: ${this.enabled}`);
     if (this.enabled) {
-      console.log('Showing up to jimmy');
       this.logger.debug(`Pyroscope url: ${this.url}`);
       this.logger.debug(`service name: ${this.serviceName}`);
 
