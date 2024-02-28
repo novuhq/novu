@@ -30,7 +30,7 @@ import { currentOnboardingStep } from '../../../pages/quick-start/components/rou
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -218,7 +218,7 @@ export function SideNav({}: Props) {
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://docs.novu.co"
+            href={`https://docs.novu.co${UTM_CAMPAIGN_QUERY_PARAM}`}
             data-test-id="side-nav-bottom-link-documentation"
           >
             Docs

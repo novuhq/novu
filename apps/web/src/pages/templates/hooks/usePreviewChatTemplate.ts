@@ -7,7 +7,7 @@ import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
 
-export const usePreviewChatTemplate = (locale?: string) => {
+export const usePreviewChatTemplate = ({ disabled, locale }: { disabled: boolean; locale?: string }) => {
   const { watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const templateContent = watch(`${path}.template.content`) as string;
@@ -23,12 +23,14 @@ export const usePreviewChatTemplate = (locale?: string) => {
   });
 
   useEffect(() => {
+    if (disabled) return;
+
     getChatPreview({
       content: templateContent,
-      payload: processedVariables,
+      payload: JSON.parse(processedVariables),
       locale,
     });
-  }, [locale, templateContent, processedVariables, getChatPreview]);
+  }, [locale, disabled, templateContent, processedVariables, getChatPreview]);
 
   const isPreviewContentLoading = !templateError && isLoading;
 

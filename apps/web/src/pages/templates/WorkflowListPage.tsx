@@ -163,7 +163,7 @@ function WorkflowListPage() {
     setCurrentPageNumber,
     setPageSize,
     pageSize,
-  } = useTemplates();
+  } = useTemplates({ areSearchParamsEnabled: true });
   const isLoading = areNotificationGroupLoading || loading;
   const navigate = useNavigate();
   const { blueprintsGroupedAndPopular: { general, popular } = {}, isLoading: areBlueprintsLoading } =
