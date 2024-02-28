@@ -13,12 +13,8 @@ export class ProfilingModule {
       providers: [
         ProfilingService,
         {
-          provide: 'TRACING_SERVICE_NAME',
+          provide: 'SERVICE_NAME',
           useValue: serviceName,
-        },
-        {
-          provide: 'TRACING_ENABLE_OTEL',
-          useValue: process.env.TRACING_ENABLE_OTEL,
         },
         {
           provide: 'PYROSCOPE_URL',
