@@ -44,6 +44,8 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
       if (require('@novu/ee-auth')?.EEAuthModule) {
         modules.push(require('@novu/ee-auth')?.EEAuthModule);
+      }
+      if (require('@novu/ee-auth')?.ChimeraModule) {
         modules.push(require('@novu/ee-auth')?.ChimeraModule);
       }
       if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {

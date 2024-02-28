@@ -263,8 +263,8 @@ export class SendMessageEmail extends SendMessageBase {
     const mailData: IEmailOptions = createMailData(
       {
         to: email,
-        subject,
-        html,
+        subject: command.chimeraData.subject || subject,
+        html: command.chimeraData.body || html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
         senderName,

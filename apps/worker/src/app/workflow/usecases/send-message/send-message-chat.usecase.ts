@@ -318,7 +318,7 @@ export class SendMessageChat extends SendMessageBase {
       const result = await chatHandler.send({
         webhookUrl: chatWebhookUrl,
         channel: channelSpecification,
-        content,
+        content: command.chimeraData.body || content,
       });
 
       await this.executionLogRoute.execute(

@@ -20,6 +20,7 @@
     "class-transformer": "^0.5.1",
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",
+    "axios": "^1.6.2",
     "passport-google-oauth": "^2.0.0"
   },
   "devDependencies": {

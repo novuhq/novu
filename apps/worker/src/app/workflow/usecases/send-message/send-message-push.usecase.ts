@@ -287,8 +287,8 @@ export class SendMessagePush extends SendMessageBase {
 
       const result = await pushHandler.send({
         target: [deviceToken],
-        title,
-        content,
+        title: command.chimeraData.subject || title,
+        content: command.chimeraData.content || content,
         payload: command.payload,
         overrides,
         subscriber,

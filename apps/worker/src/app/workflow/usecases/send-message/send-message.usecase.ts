@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -8,29 +8,29 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import {
-  InstrumentUsecase,
   AnalyticsService,
   buildNotificationTemplateKey,
-  CachedEntity,
-  DetailEnum,
-  GetSubscriberTemplatePreference,
-  GetSubscriberTemplatePreferenceCommand,
-  Instrument,
-  ConditionsFilterCommand,
-  ConditionsFilter,
-  IFilterVariables,
-  GetSubscriberGlobalPreference,
-  GetSubscriberGlobalPreferenceCommand,
   buildSubscriberKey,
+  CachedEntity,
+  ConditionsFilter,
+  ConditionsFilterCommand,
+  DetailEnum,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
+  IFilterVariables,
+  Instrument,
+  InstrumentUsecase,
 } from '@novu/application-generic';
 import {
-  SubscriberRepository,
   JobEntity,
-  NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
+  NotificationTemplateRepository,
+  SubscriberRepository,
   TenantEntity,
   TenantRepository,
 } from '@novu/dal';
@@ -44,9 +44,12 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class SendMessage {
+  protected chimeraConnector: any = this.initiateChimeraConnector();
+
   constructor(
     private sendMessageEmail: SendMessageEmail,
     private sendMessageSms: SendMessageSms,
@@ -63,7 +66,8 @@ export class SendMessage {
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    protected moduleRef: ModuleRef
   ) {}
 
   @InstrumentUsecase()
@@ -122,6 +126,8 @@ export class SendMessage {
       });
     }
 
+    const chimeraResponse = await this.chimeraConnector.execute(command, shouldRun);
+
     if (!shouldRun?.passed || !preferred) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
@@ -141,7 +147,11 @@ export class SendMessage {
       );
     }
 
-    const sendMessageCommand = SendMessageCommand.create({ ...command, compileContext: payload });
+    const sendMessageCommand = SendMessageCommand.create({
+      ...command,
+      compileContext: payload,
+      chimeraData: chimeraResponse,
+    });
 
     switch (stepType) {
       case StepTypeEnum.SMS:
@@ -399,5 +409,19 @@ export class SendMessage {
     }
 
     return tenant;
+  }
+
+  private async initiateChimeraConnector() {
+    try {
+      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+        if (!require('@novu/ee-auth')?.ChimeraConnector) {
+          throw new PlatformException('ChimeraConnector module is not loaded');
+        }
+
+        return this.moduleRef.get(require('@novu/ee-auth')?.ChimeraConnector, { strict: false });
+      }
+    } catch (e) {
+      Logger.error(e, `Unexpected error while importing enterprise modules`, 'ChimeraConnector');
+    }
   }
 }

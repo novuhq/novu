@@ -176,7 +176,7 @@ export class SendMessageInApp extends SendMessageBase {
         cta: step.template.cta,
         _feedId: step.template._feedId,
         transactionId: command.transactionId,
-        content: this.storeContent() ? content : null,
+        content: this.storeContent() ? command.chimeraData.content || content : null,
         payload: messagePayload,
         providerId: integration.providerId,
         templateIdentifier: command.identifier,

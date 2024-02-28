@@ -1442,6 +1442,9 @@ importers:
         specifier: ^8.3.2
         version: 8.3.2
     optionalDependencies:
+      '@novu/ee-auth':
+        specifier: ^0.23.1
+        version: link:../../enterprise/packages/auth
       '@novu/ee-billing':
         specifier: ^0.23.1
         version: link:../../enterprise/packages/billing
@@ -1690,6 +1693,9 @@ importers:
       '@novu/stateless':
         specifier: ^0.23.1
         version: link:../../../packages/stateless
+      axios:
+        specifier: ^1.6.2
+        version: 1.6.2
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -36389,7 +36395,7 @@ packages:
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)
-      has: 1.0.3
+      has: 1.0.4
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
