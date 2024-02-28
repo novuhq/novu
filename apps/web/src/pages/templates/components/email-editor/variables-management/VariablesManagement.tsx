@@ -199,7 +199,7 @@ const VariablesSection = ({ variablesList, searchVal }: { variablesList: IVariab
   );
 };
 
-const VariableSectionItem = ({
+export const VariableSectionItem = ({
   variableList,
   search,
   sectionName,

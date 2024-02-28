@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Grid, Stack } from '@mantine/core';
 import { useState } from 'react';
 
-import { useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
+import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm } from '../formTypes';
@@ -14,6 +14,9 @@ import { ChatPreview } from '../../../../components/workflow/preview';
 import { EditVariablesModal } from '../EditVariablesModal';
 import { VariableManagementButton } from '../VariableManagementButton';
 import { useEditTemplateContent } from '../../hooks/useEditTemplateContent';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
+import { When } from '@novu/design-system';
+import { InputVariables } from '../InputVariables';
 
 const templateFields = ['content'];
 
@@ -26,6 +29,8 @@ export function TemplateChatEditor() {
     channelType: ChannelTypeEnum.CHAT,
   });
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
+  const { template } = useTemplateEditorForm();
+  const { chimera } = useEnvController({}, template?.chimera);
 
   return (
     <>
@@ -43,13 +48,19 @@ export function TemplateChatEditor() {
                   openEditVariablesModal={() => {
                     setEditVariablesModalOpen(true);
                   }}
+                  label={chimera ? 'Input variables' : undefined}
                 />
-                <CustomCodeEditor
-                  value={(field.value as string) || ''}
-                  onChange={(value) => {
-                    handleContentChange(value, field.onChange);
-                  }}
-                />
+                <When truthy={!chimera}>
+                  <CustomCodeEditor
+                    value={(field.value as string) || ''}
+                    onChange={(value) => {
+                      handleContentChange(value, field.onChange);
+                    }}
+                  />
+                </When>
+                <When truthy={chimera}>
+                  <InputVariables />
+                </When>
               </Stack>
             )}
           />

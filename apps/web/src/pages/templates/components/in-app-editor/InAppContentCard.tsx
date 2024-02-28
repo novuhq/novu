@@ -6,6 +6,7 @@ import { InAppPreview } from '../../../../components/workflow/preview';
 import { useEnvController } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
+import { InputVariables } from '../InputVariables';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 import { AvatarFeedFields } from './AvatarFeedFields';
 import { InAppEditorBlock } from './InAppEditorBlock';
@@ -70,6 +71,9 @@ export function InAppContentCard({ openVariablesModal }: { openVariablesModal: (
             <When truthy={!chimera}>
               <InAppEditorBlock readonly={readonly} />
               <AvatarFeedFields />
+            </When>
+            <When truthy={chimera}>
+              <InputVariables />
             </When>
           </Grid.Col>
           <Grid.Col

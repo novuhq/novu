@@ -24,6 +24,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
+import { InputVariables } from '../InputVariables';
 
 export enum ViewEnum {
   EDIT = 'Edit',
@@ -154,7 +155,12 @@ export function EmailMessagesCards() {
       <When truthy={view === ViewEnum.EDIT}>
         <Grid grow>
           <Grid.Col span={9}>
-            <EmailContentCard organization={currentOrganization} />
+            <When truthy={!chimera}>
+              <EmailContentCard organization={currentOrganization} />
+            </When>
+            <When truthy={chimera}>
+              <InputVariables />
+            </When>
           </Grid.Col>
           <Grid.Col
             span={3}
