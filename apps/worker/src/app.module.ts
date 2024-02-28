@@ -7,11 +7,14 @@ import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-refe
 import { SharedModule } from './app/shared/shared.module';
 import { HealthModule } from './app/health/health.module';
 import { WorkflowModule } from './app/workflow/workflow.module';
+import { ProfilingModule } from '@novu/application-generic';
+import * as packageJson from '../package.json';
 
 const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   SharedModule,
   HealthModule,
   WorkflowModule,
+  ProfilingModule.register(packageJson.name),
 ];
 
 const providers: Provider[] = [];
