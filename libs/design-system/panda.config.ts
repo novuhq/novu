@@ -23,4 +23,7 @@ export default defineConfig({
 
   // The output directory for your css system
   outdir: 'styled-system',
+
+  // Enables JSX util generation!
+  jsxFramework: 'react',
 });
