@@ -13,6 +13,8 @@ import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePreviewEmailTemplate';
+import { useMutation } from '@tanstack/react-query';
+import { api } from '@novu/shared-web';
 
 const PreviewContainer = styled.div`
   display: flex;
@@ -42,10 +44,19 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   const processedVariables = useProcessVariables(variables);
   const content = contentType === 'editor' ? editorContent : htmlContent;
   const [payloadValue, setPayloadValue] = useState(processedVariables ?? '{}');
+  const [chimeraContent, setChimeraContent] = useState('<html><head></head><body><div></div></body></html>');
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content,
   });
+  const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
+    (data) => api.post('/v1/chimera/preview/workflowId/stepId', data),
+    {
+      onSuccess(data) {
+        setChimeraContent(data.outputs.body);
+      },
+    }
+  );
   const { getEmailPreview, previewContent, subject, isPreviewContentLoading } = usePreviewEmailTemplate({
     locale: selectedLocale,
     payload: processedVariables,
@@ -56,10 +67,14 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   }, [integrations]);
 
   useEffect(() => {
+    mutateAsync(JSON.parse(processedVariables));
+  }, [processedVariables]);
+
+  useEffect(() => {
     setPayloadValue(processedVariables);
   }, [setPayloadValue, processedVariables]);
 
-  const isLoading = isPreviewContentLoading || areLocalesLoading;
+  const isLoading = isPreviewContentLoading || areLocalesLoading || isChimeraLoading;
 
   return (
     <>
@@ -69,7 +84,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
             <PreviewWeb
               loading={isLoading}
               subject={subject}
-              content={previewContent}
+              content={chimeraContent}
               integration={integration}
               error={error}
               showEditOverlay={false}
@@ -82,7 +97,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
             <PreviewMobile
               loading={isLoading}
               subject={subject}
-              content={previewContent}
+              content={chimeraContent}
               integration={integration}
               error={error}
               onLocaleChange={onLocaleChange}
@@ -106,7 +121,8 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
             <Button
               fullWidth
               onClick={() => {
-                getEmailPreview(payloadValue);
+                mutateAsync(JSON.parse(payloadValue));
+                // getEmailPreview(payloadValue);
               }}
               variant="outline"
               data-test-id="apply-variables"
