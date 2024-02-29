@@ -23,6 +23,8 @@ import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import { ChannelTypeEnum } from '@novu/shared';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
+import { InputVariables } from '../InputVariables';
 
 export enum ViewEnum {
   EDIT = 'Edit',
@@ -45,7 +47,8 @@ export function EmailMessagesCards() {
   const { primaryIntegration } = useGetPrimaryIntegration({
     channelType: ChannelTypeEnum.EMAIL,
   });
-  const { environment } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { environment, chimera } = useEnvController({}, template?.chimera);
   const stepFormPath = useStepFormPath();
 
   useHotkeys([
@@ -152,7 +155,12 @@ export function EmailMessagesCards() {
       <When truthy={view === ViewEnum.EDIT}>
         <Grid grow>
           <Grid.Col span={9}>
-            <EmailContentCard organization={currentOrganization} />
+            <When truthy={!chimera}>
+              <EmailContentCard organization={currentOrganization} />
+            </When>
+            <When truthy={chimera}>
+              <InputVariables />
+            </When>
           </Grid.Col>
           <Grid.Col
             span={3}
@@ -161,6 +169,7 @@ export function EmailMessagesCards() {
             }}
           >
             <VariablesManagement
+              chimera={chimera}
               path={`${stepFormPath}.template.variables`}
               openVariablesModal={() => {
                 setModalOpen(true);

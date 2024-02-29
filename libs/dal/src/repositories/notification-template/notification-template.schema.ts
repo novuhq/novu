@@ -20,6 +20,10 @@ const variantSchemePart = {
   },
   uuid: Schema.Types.String,
   name: Schema.Types.String,
+  type: {
+    type: Schema.Types.String,
+    default: 'REGULAR',
+  },
   filters: [
     {
       isNegated: Schema.Types.Boolean,

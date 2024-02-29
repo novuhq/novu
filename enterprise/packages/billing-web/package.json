@@ -42,7 +42,10 @@
     "eslint-plugin-react-hooks": "^4.4.0",
     "react-hook-form": "7.43.9",
     "react-router-dom": "6.2.2",
-    "tslib": "^2.3.1"
+    "tslib": "^2.3.1",
+    "@rjsf/core": "^5.17.1",
+    "@rjsf/utils": "^5.17.1",
+    "@rjsf/validator-ajv8": "^5.17.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.12",

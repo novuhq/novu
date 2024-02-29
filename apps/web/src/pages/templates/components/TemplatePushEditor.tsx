@@ -1,8 +1,8 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Text } from '@novu/design-system';
-import { useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
+import { Text, When } from '@novu/design-system';
+import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
@@ -13,8 +13,9 @@ import { PushPreview } from '../../../components/workflow/preview';
 import { useEditTemplateContent } from '../hooks/useEditTemplateContent';
 import { CustomCodeEditor } from './CustomCodeEditor';
 import { EditVariablesModal } from './EditVariablesModal';
-import { TranslateProductLead } from './TranslateProductLead';
 import { VariableManagementButton } from './VariableManagementButton';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
+import { InputVariables } from './InputVariables';
 
 const templateFields = ['content', 'title'];
 
@@ -28,6 +29,8 @@ export function TemplatePushEditor() {
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.PUSH,
   });
+  const { template } = useTemplateEditorForm();
+  const { chimera } = useEnvController({}, template?.chimera);
 
   return (
     <>
@@ -47,34 +50,41 @@ export function TemplatePushEditor() {
                     openEditVariablesModal={() => {
                       setEditVariablesModalOpen(true);
                     }}
-                    label="Title"
+                    label={chimera ? 'Input variables' : 'Title'}
                   />
-                  <CustomCodeEditor
-                    value={(field.value as string) || ''}
-                    onChange={(value) => {
-                      handleContentChange(value, field.onChange);
-                    }}
-                    height="128px"
-                  />
+                  <When truthy={!chimera}>
+                    <CustomCodeEditor
+                      value={(field.value as string) || ''}
+                      onChange={(value) => {
+                        handleContentChange(value, field.onChange);
+                      }}
+                      height="128px"
+                    />
+                  </When>
+                  <When truthy={chimera}>
+                    <InputVariables />
+                  </When>
                 </Stack>
               )}
             />
-            <Controller
-              name={`${stepFormPath}.template.content` as any}
-              defaultValue=""
-              control={control}
-              render={({ field }) => (
-                <Stack spacing={8} data-test-id="push-content-container">
-                  <Text weight="bold">Message</Text>
-                  <CustomCodeEditor
-                    value={(field.value as string) || ''}
-                    onChange={(value) => {
-                      handleContentChange(value, field.onChange);
-                    }}
-                  />
-                </Stack>
-              )}
-            />
+            <When truthy={!chimera}>
+              <Controller
+                name={`${stepFormPath}.template.content` as any}
+                defaultValue=""
+                control={control}
+                render={({ field }) => (
+                  <Stack spacing={8} data-test-id="push-content-container">
+                    <Text weight="bold">Message</Text>
+                    <CustomCodeEditor
+                      value={(field.value as string) || ''}
+                      onChange={(value) => {
+                        handleContentChange(value, field.onChange);
+                      }}
+                    />
+                  </Stack>
+                )}
+              />
+            </When>
           </Stack>
           <EditVariablesModal
             open={editVariablesModalOpened}

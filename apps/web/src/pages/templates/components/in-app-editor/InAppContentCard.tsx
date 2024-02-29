@@ -6,6 +6,8 @@ import { InAppPreview } from '../../../../components/workflow/preview';
 import { useEnvController } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
+import { InputVariables } from '../InputVariables';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 import { AvatarFeedFields } from './AvatarFeedFields';
 import { InAppEditorBlock } from './InAppEditorBlock';
 
@@ -13,7 +15,8 @@ const EDITOR = 'Editor';
 const PREVIEW = 'Preview';
 
 export function InAppContentCard({ openVariablesModal }: { openVariablesModal: () => void }) {
-  const { readonly } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { readonly, chimera } = useEnvController({}, template?.chimera);
   const theme = useMantineTheme();
 
   const [activeTab, setActiveTab] = useState<string>(EDITOR);
@@ -65,8 +68,13 @@ export function InAppContentCard({ openVariablesModal }: { openVariablesModal: (
       <When truthy={activeTab === EDITOR}>
         <Grid mt={24} grow>
           <Grid.Col span={9}>
-            <InAppEditorBlock readonly={readonly} />
-            <AvatarFeedFields />
+            <When truthy={!chimera}>
+              <InAppEditorBlock readonly={readonly} />
+              <AvatarFeedFields />
+            </When>
+            <When truthy={chimera}>
+              <InputVariables />
+            </When>
           </Grid.Col>
           <Grid.Col
             span={3}
@@ -74,7 +82,11 @@ export function InAppContentCard({ openVariablesModal }: { openVariablesModal: (
               maxWidth: '350px',
             }}
           >
-            <VariablesManagement path={`${stepFormPath}.template.variables`} openVariablesModal={openVariablesModal} />
+            <VariablesManagement
+              chimera={chimera}
+              path={`${stepFormPath}.template.variables`}
+              openVariablesModal={openVariablesModal}
+            />
           </Grid.Col>
         </Grid>
       </When>

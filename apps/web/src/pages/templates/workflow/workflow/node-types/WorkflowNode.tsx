@@ -28,6 +28,7 @@ import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
 import { NodeErrorPopover } from '../../NodeErrorPopover';
 import { NODE_ERROR_TYPES } from './utils';
 import { WorkflowNodeActions } from './WorkflowNodeActions';
+import { useTemplateEditorForm } from '../../../components/TemplateEditorFormProvider';
 
 export type NodeType = 'step' | 'stepRoot' | 'variant' | 'variantRoot';
 
@@ -87,7 +88,8 @@ export function WorkflowNode({
 }: IWorkflowNodeProps) {
   const segment = useSegment();
 
-  const { readonly: readonlyEnv, environment } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { readonly: readonlyEnv, environment } = useEnvController({}, template?.chimera);
   const { cx, classes, theme } = useTemplateButtonStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);

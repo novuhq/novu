@@ -17,12 +17,16 @@ import { VariableManagementButton } from '../VariableManagementButton';
 import { CustomCodeEditor } from '../CustomCodeEditor';
 import { SmsPreview } from '../../../../components/workflow/preview';
 import { EditVariablesModal } from '../EditVariablesModal';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
+import { When } from '@novu/design-system';
+import { InputVariables } from '../InputVariables';
 
 const templateFields = ['content'];
 
 export function TemplateSMSEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
-  const { environment } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { environment, chimera } = useEnvController({}, template?.chimera);
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);
@@ -57,13 +61,19 @@ export function TemplateSMSEditor() {
                   openEditVariablesModal={() => {
                     setEditVariablesModalOpen(true);
                   }}
+                  label={chimera ? 'Input variables' : undefined}
                 />
-                <CustomCodeEditor
-                  value={(field.value as string) || ''}
-                  onChange={(value) => {
-                    handleContentChange(value, field.onChange);
-                  }}
-                />
+                <When truthy={!chimera}>
+                  <CustomCodeEditor
+                    value={(field.value as string) || ''}
+                    onChange={(value) => {
+                      handleContentChange(value, field.onChange);
+                    }}
+                  />
+                </When>
+                <When truthy={chimera}>
+                  <InputVariables />
+                </When>
               </Stack>
             )}
           />
