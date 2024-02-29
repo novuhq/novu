@@ -1,9 +1,27 @@
+import { useMantineTheme } from '@mantine/core';
 import { ROUTES } from '@novu/shared-web';
+import styled from '@emotion/styled';
 
-import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { GetStartedLink, StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
+import { TranslationUseCaseImage } from '../components/TranslationsUsecaseImage';
+
+const ImageContainer = styled.div`
+  /* taken from Figma to try to get a good estimate on aspect ratio */
+  aspect-ratio: 540 / 472;
+  max-width: 62.5rem;
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+`;
+
+const TranslationUseCaseImageStyled = styled(TranslationUseCaseImage)`
+  width: 52.5rem;
+  margin-top: ${({ theme }) => (theme.colorScheme === 'dark' ? '3.75rem' : '3rem')};
+  margin-left: 3rem;
+`;
 
 export const TranslationUseCaseConst: OnboardingUseCase = {
   title: 'Translate content',
@@ -72,5 +90,13 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
     },
   ],
   // FIXME: switch with TRANSLATION animation when available
-  Demo: () => <GetStartedAnimation useCase={OnboardingUseCasesTabsEnum.MULTI_CHANNEL} />,
+  Demo: () => {
+    const { colorScheme } = useMantineTheme();
+
+    return (
+      <ImageContainer>
+        <TranslationUseCaseImageStyled colorScheme={colorScheme} />
+      </ImageContainer>
+    );
+  },
 };

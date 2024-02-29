@@ -2,6 +2,8 @@ import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { Alignment, Fit, Layout, useRive, useStateMachineInput } from '@rive-app/react-canvas';
 import { FC, useEffect } from 'react';
+import { ColorScheme } from '@mantine/core';
+
 import { OnboardingUseCasesTabsEnum } from '../consts/OnboardingUseCasesTabsEnum';
 
 interface IGetStartedAnimationProps {
@@ -11,9 +13,14 @@ interface IGetStartedAnimationProps {
 // uses `public` as the default base directory
 const ROOT_ANIMATION_PATH = `animations/get-started`;
 const STATE_MACHINE_NAME = 'SM';
-const STATE_MACHINE_INPUT_NAME = 'white theme';
+const STATE_MACHINE_INPUT_NAME = 'theme';
+const LIGHT_THEME_INPUT = 2;
+const DARK_THEME_INPUT = 0;
+// const NEW_DARK_THEME_INPUT = 1;
 
 const getAnimationPath = (useCase: OnboardingUseCasesTabsEnum) => `${ROOT_ANIMATION_PATH}/${useCase}.riv`;
+
+const getInputNumber = (colorScheme: ColorScheme) => (colorScheme === 'light' ? LIGHT_THEME_INPUT : DARK_THEME_INPUT);
 
 const AnimationContainer = styled.div`
   /* taken from Figma to try to get a good estimate on aspect ratio */
@@ -35,7 +42,7 @@ export const GetStartedAnimation: FC<IGetStartedAnimationProps> = ({ useCase }) 
     rive,
     STATE_MACHINE_NAME,
     STATE_MACHINE_INPUT_NAME,
-    colorScheme === 'light'
+    getInputNumber(colorScheme)
   );
 
   // change animation color scheme input on color scheme change
@@ -44,7 +51,7 @@ export const GetStartedAnimation: FC<IGetStartedAnimationProps> = ({ useCase }) 
       return;
     }
 
-    stateMachineInput.value = colorScheme === 'light';
+    stateMachineInput.value = getInputNumber(colorScheme);
   }, [colorScheme, stateMachineInput]);
 
   return (
