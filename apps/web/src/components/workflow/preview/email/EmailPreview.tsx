@@ -33,9 +33,11 @@ const JSONContainer = styled.div`
 `;
 
 export const EmailPreview = ({ showVariables = true, view }: { view: string; showVariables?: boolean }) => {
-  const { watch } = useFormContext<IForm>();
+  const { watch, formState } = useFormContext<IForm>();
   const path = useStepFormPath();
   const error = useStepFormErrors();
+
+  const stepId = watch(`${path}.template.name`);
 
   const contentType = watch(`${path}.template.contentType`);
   const htmlContent = watch(`${path}.template.htmlContent`);
@@ -45,15 +47,19 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   const content = contentType === 'editor' ? editorContent : htmlContent;
   const [payloadValue, setPayloadValue] = useState(processedVariables ?? '{}');
   const [chimeraContent, setChimeraContent] = useState('<html><head></head><body><div></div></body></html>');
+  const [chimeraSubject, setChimeraSubject] = useState('');
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content,
   });
+
+  console.log({ formState });
   const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
-    (data) => api.post('/v1/chimera/preview/workflowId/stepId', data),
+    (data) => api.post('/v1/chimera/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
     {
       onSuccess(data) {
         setChimeraContent(data.outputs.body);
+        setChimeraSubject(data.outputs.subject);
       },
     }
   );
@@ -83,7 +89,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
           <When truthy={view === 'web'}>
             <PreviewWeb
               loading={isLoading}
-              subject={subject}
+              subject={chimeraSubject}
               content={chimeraContent}
               integration={integration}
               error={error}

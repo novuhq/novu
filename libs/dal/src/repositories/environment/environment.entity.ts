@@ -43,6 +43,10 @@ export class EnvironmentEntity {
   dns?: IDnsSettings;
 
   _parentId: string;
+
+  chimera: {
+    url: string;
+  };
 }
 
 export type EnvironmentDBModel = ChangePropsValueType<

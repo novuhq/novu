@@ -191,9 +191,12 @@ export const PreviewWeb = ({
                   )}
                   resetKeys={[content]}
                 >
-                  <Frame className={classes.frame} data-test-id="preview-content" initialContent={content}>
+                  <iframe srcDoc={content} className={classes.frame} data-test-id="preview-content" />
+                  {/*    
+              Issue with rendering email without html
+              <Frame className={classes.frame} data-test-id="preview-content" initialContent={content}>
                     <></>
-                  </Frame>
+                  </Frame>*/}
                 </ErrorBoundary>
 
                 {error && error.template?.content && error.template?.content?.message && (
