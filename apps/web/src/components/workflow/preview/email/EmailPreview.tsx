@@ -14,7 +14,8 @@ import { PreviewWeb } from './PreviewWeb';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePreviewEmailTemplate';
 import { useMutation } from '@tanstack/react-query';
-import { api } from '@novu/shared-web';
+import { api, useEnvController } from '@novu/shared-web';
+import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 
 const PreviewContainer = styled.div`
   display: flex;
@@ -36,6 +37,8 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   const { watch, formState } = useFormContext<IForm>();
   const path = useStepFormPath();
   const error = useStepFormErrors();
+  const { template } = useTemplateEditorForm();
+  const { chimera } = useEnvController({}, template?.chimera);
 
   const stepId = watch(`${path}.template.name`);
 
@@ -53,7 +56,6 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
     content,
   });
 
-  console.log({ formState });
   const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
     (data) => api.post('/v1/chimera/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
     {
@@ -73,8 +75,10 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   }, [integrations]);
 
   useEffect(() => {
-    mutateAsync(JSON.parse(processedVariables));
-  }, [processedVariables]);
+    if (chimera) {
+      mutateAsync(JSON.parse(processedVariables));
+    }
+  }, [processedVariables, chimera]);
 
   useEffect(() => {
     setPayloadValue(processedVariables);
@@ -127,8 +131,13 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
             <Button
               fullWidth
               onClick={() => {
-                mutateAsync(JSON.parse(payloadValue));
-                // getEmailPreview(payloadValue);
+                if (chimera) {
+                  mutateAsync(JSON.parse(payloadValue));
+
+                  return;
+                }
+
+                getEmailPreview(payloadValue);
               }}
               variant="outline"
               data-test-id="apply-variables"

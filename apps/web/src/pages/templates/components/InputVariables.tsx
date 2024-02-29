@@ -5,7 +5,7 @@ import { useStepFormPath } from '../hooks/useStepFormPath';
 export const InputVariables = () => {
   const stepFormPath = useStepFormPath();
   const { watch } = useFormContext();
-  const input = watch(`${stepFormPath}.input`);
+  const inputs = watch(`${stepFormPath}.inputs`);
 
   if (IS_DOCKER_HOSTED) {
     return null;
@@ -15,7 +15,7 @@ export const InputVariables = () => {
     const module = require('@novu/ee-billing-web');
     const InputVariablesComponent = module.InputVariables;
 
-    return <InputVariablesComponent />;
+    return <InputVariablesComponent schema={inputs} />;
   } catch (e) {}
 
   return null;
