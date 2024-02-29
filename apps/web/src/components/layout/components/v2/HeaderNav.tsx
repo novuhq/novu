@@ -75,7 +75,7 @@ export function HeaderNav() {
   const iconColor = isDark ? colors.white : colors.B40;
 
   useBootIntercom();
-  useTrackThemeChange({ colorScheme });
+  useTrackThemeChange();
 
   const themeTitle = useMemo(() => getThemeTitle(colorScheme), [colorScheme]);
 
