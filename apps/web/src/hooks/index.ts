@@ -23,3 +23,4 @@ export * from './useInlineComponent';
 export * from './useHoverOverItem';
 export * from './useHover';
 export * from './useBootIntercom';
+export * from './useTrackThemeChange';
