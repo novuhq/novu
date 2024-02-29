@@ -2,7 +2,7 @@ repo_name: novuhq/novu
 report_id: ea7cf3d82a2e6edfe6715f6cad618ee9
 version: 0.1
 repo_type: Public
-timestamp: '2024-01-11T12:23:41+00:00'
+timestamp: '2024-02-29T18:08:09+00:00'
 requested_by: jainpawan21
 provider: github
 branch: next
@@ -587,7 +587,7 @@ tools:
   last_updated_by: renovate[bot]
   last_updated_on: 2023-06-11 07:09:06.000000000 Z
 - name: Prettier
-  description: 'Prettier is an opinionated code formatter. '
+  description: Prettier is an opinionated code formatter.
   website_url: https://prettier.io/
   version: 2.8.0
   license: MIT
@@ -625,7 +625,7 @@ tools:
   last_updated_by: Dima Grossman
   last_updated_on: 2021-11-07 20:14:11.000000000 Z
 - name: Sentry
-  description: 'See performance issues, fix errors faster, and optimize code health. '
+  description: See performance issues, fix errors faster, and optimize code health.
   website_url: https://sentry.io/welcome/?utm_source=stackshare&utm_medium=link&utm_campaign=profile
   open_source: true
   hosted_saas: true
@@ -650,7 +650,7 @@ tools:
   last_updated_by: davidsoderberg
   last_updated_on: 2022-07-01 14:15:33.000000000 Z
 - name: SuperTest
-  description: 'A library for testing node.js HTTP servers '
+  description: A library for testing node.js HTTP servers
   website_url: https://www.npmjs.com/package/supertest
   version: 6.0.0
   license: MIT
@@ -792,7 +792,7 @@ tools:
   last_updated_on: 2022-03-30 12:40:42.000000000 Z
 - name: Mailtrap
   description: "Email Delivery Platform that delivers just in time.\L Great for businesses
-    and individuals. "
+    and individuals."
   website_url: https://mailtrap.io/
   open_source: false
   hosted_saas: true
@@ -868,7 +868,7 @@ tools:
   last_updated_by: Dima Grossman
   last_updated_on: 2023-12-05 15:05:55.000000000 Z
 - name: Poli
-  description: 'An easy-to-use SQL reporting application '
+  description: An easy-to-use SQL reporting application
   website_url: https://github.com/shzlw/poli
   license: MIT
   open_source: true
@@ -3212,6 +3212,13 @@ tools:
   detection_source: apps/web/package.json
   last_updated_by: Nikita Grossman
   last_updated_on: 2023-02-17 11:00:13.000000000 Z
+  vulnerabilities:
+  - name: Prototype Pollution in lodash
+    cve_id: CVE-2020-8203
+    cve_url: https://github.com/advisories/GHSA-p6mc-m468-83gw
+    detected_date: Jan 25
+    severity: high
+    first_patched: 
 - name: markdownlint-cli
   description: MarkdownLint Command Line Interface
   package_url: https://www.npmjs.com/markdownlint-cli
@@ -4046,6 +4053,13 @@ tools:
   last_updated_by: David Söderberg
   last_updated_on: 2023-10-19 07:35:06.000000000 Z
   vulnerabilities:
+  - name: Vite dev server option `server.fs.deny` can be bypassed when hosted on case-insensitive
+      filesystem
+    cve_id: CVE-2024-23331
+    cve_url: https://github.com/advisories/GHSA-c24v-8rfc-w8vw
+    detected_date: Jan 20
+    severity: high
+    first_patched: 4.5.2
   - name: Vite XSS vulnerability in `server.transformIndexHtml` via URL payload
     cve_id: CVE-2023-49293
     cve_url: https://github.com/advisories/GHSA-92r3-m2mg-pj97
