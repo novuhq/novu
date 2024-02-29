@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '../../../constants/routes.enum';
-import { colors, NavMenu, SegmentedControl, shadows, Translation } from '@novu/design-system';
+import { colors, IconViewQuilt, NavMenu, SegmentedControl, shadows, Translation } from '@novu/design-system';
 import {
   Activity,
   Bolt,
@@ -65,6 +65,7 @@ export function SideNav({}: Props) {
   const { classes } = usePopoverStyles();
   const isMultiTenancyEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MULTI_TENANCY_ENABLED);
   const isTranslationManagerEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_MANAGER_ENABLED);
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -113,6 +114,7 @@ export function SideNav({}: Props) {
       testId: 'side-nav-translations-link',
     },
     {
+      condition: !isInformationArchitectureEnabled,
       icon: <Brand />,
       link: '/brand',
       label: 'Brand',
@@ -121,10 +123,18 @@ export function SideNav({}: Props) {
     { icon: <Activity />, link: ROUTES.ACTIVITIES, label: 'Activity Feed', testId: 'side-nav-activities-link' },
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
     {
+      condition: !isInformationArchitectureEnabled,
       icon: <Team />,
       link: ROUTES.TEAM,
       label: 'Team Members',
       testId: 'side-nav-settings-organization',
+    },
+    {
+      condition: isInformationArchitectureEnabled,
+      icon: <IconViewQuilt />,
+      link: ROUTES.LAYOUT,
+      label: 'Layouts',
+      testId: 'side-nav-layouts-link',
     },
     {
       icon: <Repeat />,

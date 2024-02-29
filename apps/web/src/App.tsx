@@ -182,6 +182,8 @@ function App() {
                     <Route path="" element={<ApiKeysCard />} />
                     <Route path="billing/*" element={<BillingRoutes />} />
                     <Route path="email" element={<EmailSettings />} />
+                    <Route path="team" element={<MembersInvitePage />} />
+                    <Route path="brand" element={<BrandingForm />} />
                     <Route
                       path="permissions"
                       element={
@@ -230,6 +232,9 @@ function App() {
                   <Route path={ROUTES.BRAND} element={<BrandPage />}>
                     <Route path="" element={<BrandingForm />} />
                     <Route path="layouts" element={<LayoutsListPage />} />
+                  </Route>
+                  <Route path={ROUTES.LAYOUT} element={<BrandPage />}>
+                    <Route path="" element={<LayoutsListPage />} />
                   </Route>
                   <Route path="/translations/*" element={<TranslationRoutes />} />
                 </Route>
