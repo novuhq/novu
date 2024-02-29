@@ -32,8 +32,12 @@ module.exports = {
     'cypress/globals': true,
   },
   ignorePatterns: ['craco.config.js', 'cypress/*'],
-  extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
-  plugins: ['cypress'],
+  extends: [
+    'plugin:cypress/recommended',
+    '../../.eslintrc.js',
+    // 'plugin:@pandacss/recommended'
+  ],
+  plugins: ['cypress', '@pandacss'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,
