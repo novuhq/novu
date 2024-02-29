@@ -46,9 +46,9 @@ export class GupshupSmsProvider implements ISmsProvider {
     const opts = {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(params),
+      body: new URLSearchParams(params),
     };
 
     const response = await fetch(GupshupSmsProvider.BASE_URL, opts);
