@@ -2,7 +2,6 @@ import { ActionIcon, Avatar, ColorScheme, Group, Header, useMantineColorScheme }
 import * as capitalize from 'lodash.capitalize';
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useIntercom } from 'react-use-intercom';
 
 import {
   colors,
@@ -17,17 +16,17 @@ import {
   Text,
   Tooltip,
 } from '@novu/design-system';
-import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, REACT_APP_VERSION } from '../../../config';
-import { ROUTES } from '../../../constants/routes.enum';
-import { useDebounce, useLocalThemePreference } from '../../../hooks';
-import { discordInviteUrl } from '../../../pages/quick-start/consts';
-import { useAuthContext } from '../../providers/AuthProvider';
-import { useSegment } from '../../providers/SegmentProvider';
-import { useSpotlightContext } from '../../providers/SpotlightProvider';
-import { HEADER_HEIGHT } from '../constants';
-import { NotificationCenterWidget } from './NotificationCenterWidget';
+import { CONTEXT_PATH, IS_DOCKER_HOSTED, REACT_APP_VERSION } from '../../../../config';
+import { ROUTES } from '../../../../constants/routes.enum';
+import { useBootIntercom, useDebounce, useLocalThemePreference } from '../../../../hooks';
+import { discordInviteUrl } from '../../../../pages/quick-start/consts';
+import { useAuthContext } from '../../../providers/AuthProvider';
+import { useSegment } from '../../../providers/SegmentProvider';
+import { useSpotlightContext } from '../../../providers/SpotlightProvider';
+import { HEADER_HEIGHT } from '../../constants';
+import { NotificationCenterWidget } from '../NotificationCenterWidget';
 
-const menuItem = (iconColor) => [
+const menuItem = (iconColor: string) => [
   {
     title: 'Settings',
     icon: <IconSettings color={iconColor} />,
@@ -39,27 +38,25 @@ const menuItem = (iconColor) => [
     path: ROUTES.TEAM,
   },
 ];
-const headerIconsSettings = { color: colors.B60, size: 20 };
 
 const Icon = () => {
   const { themeStatus } = useLocalThemePreference();
 
   if (themeStatus === 'dark') {
-    return <IconDarkMode {...headerIconsSettings} />;
+    return <IconDarkMode />;
   }
   if (themeStatus === 'light') {
-    return <IconLightMode {...headerIconsSettings} />;
+    return <IconLightMode />;
   }
 
-  return <IconTonality {...headerIconsSettings} />;
+  return <IconTonality />;
 };
 
-export function HeaderNavNew() {
+export function HeaderNav() {
   const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const { addItem, removeItems } = useSpotlightContext();
-  const { boot } = useIntercom();
   const segment = useSegment();
   const isSelfHosted = IS_DOCKER_HOSTED;
   const isDark = colorScheme === 'dark';
@@ -73,24 +70,7 @@ export function HeaderNavNew() {
     debounceThemeChange({ colorScheme, themeStatus });
   }, [colorScheme, themeStatus, debounceThemeChange]);
 
-  useEffect(() => {
-    const shouldBootIntercom = !!INTERCOM_APP_ID && currentUser && currentOrganization;
-    if (shouldBootIntercom) {
-      boot({
-        userId: currentUser._id,
-        email: currentUser?.email ?? '',
-        name: currentUser?.firstName + ' ' + currentUser?.lastName,
-        createdAt: currentUser?.createdAt,
-        company: {
-          name: currentOrganization?.name,
-          companyId: currentOrganization?._id as string,
-        },
-        userHash: currentUser.servicesHashes?.intercom,
-        customLauncherSelector: '#intercom-launcher',
-        hideDefaultLauncher: true,
-      });
-    }
-  }, [boot, currentUser, currentOrganization]);
+  useBootIntercom();
 
   let themeTitle = 'Match System Appearance';
   if (themeStatus === 'dark') {

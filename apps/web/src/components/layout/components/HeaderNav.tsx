@@ -2,9 +2,8 @@ import { ActionIcon, Avatar, ColorScheme, Container, Group, Header, useMantineCo
 import * as capitalize from 'lodash.capitalize';
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useIntercom } from 'react-use-intercom';
 
-import { CONTEXT_PATH, INTERCOM_APP_ID, IS_DOCKER_HOSTED, REACT_APP_VERSION } from '../../../config';
+import { CONTEXT_PATH, IS_DOCKER_HOSTED, REACT_APP_VERSION } from '../../../config';
 import { ROUTES } from '../../../constants/routes.enum';
 import {
   colors,
@@ -19,7 +18,7 @@ import {
   Logout,
   InviteMembers,
 } from '@novu/design-system';
-import { useLocalThemePreference, useDebounce } from '../../../hooks';
+import { useLocalThemePreference, useDebounce, useBootIntercom } from '../../../hooks';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
 import { useAuthContext } from '../../providers/AuthProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
@@ -50,12 +49,16 @@ const Icon = () => {
   return <Ellipse {...headerIconsSettings} />;
 };
 
+/**
+ * @deprecated This file will be removed in future.
+ * Use HeaderNav from V2 folder instead.
+ */
 export function HeaderNav({ isIntercomOpened }: Props) {
   const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const { addItem, removeItems } = useSpotlightContext();
-  const { boot } = useIntercom();
+
   const segment = useSegment();
   const isSelfHosted = IS_DOCKER_HOSTED;
 
@@ -67,24 +70,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
     debounceThemeChange({ colorScheme, themeStatus });
   }, [colorScheme, themeStatus, debounceThemeChange]);
 
-  useEffect(() => {
-    const shouldBootIntercom = !!INTERCOM_APP_ID && currentUser && currentOrganization;
-    if (shouldBootIntercom) {
-      boot({
-        userId: currentUser._id,
-        email: currentUser?.email ?? '',
-        name: currentUser?.firstName + ' ' + currentUser?.lastName,
-        createdAt: currentUser?.createdAt,
-        company: {
-          name: currentOrganization?.name,
-          companyId: currentOrganization?._id as string,
-        },
-        userHash: currentUser.servicesHashes?.intercom,
-        customLauncherSelector: '#intercom-launcher',
-        hideDefaultLauncher: true,
-      });
-    }
-  }, [boot, currentUser, currentOrganization]);
+  useBootIntercom();
 
   let themeTitle = 'Match System Appearance';
   if (themeStatus === 'dark') {
