@@ -1,4 +1,7 @@
 import { definePreset } from '@pandacss/dev';
+import { COLOR_TOKENS } from './colors';
+import { SIZES_TOKENS } from './sizes';
+import { SPACING_TOKENS } from './spacing';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -11,20 +14,9 @@ import { definePreset } from '@pandacss/dev';
 export const NovuPandaPreset = definePreset({
   theme: {
     tokens: {
-      fontSizes: {
-        '075': {
-          value: '0.75rem',
-          type: 'fontSize',
-        },
-        '100': {
-          value: '1rem',
-          type: 'fontSize',
-        },
-        '125': {
-          value: '1.25rem',
-          type: 'fontSize',
-        },
-      },
+      sizes: SIZES_TOKENS,
+      spacing: SPACING_TOKENS,
+      colors: COLOR_TOKENS,
     },
   },
 });
