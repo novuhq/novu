@@ -78,6 +78,7 @@ export function SideNav({}: Props) {
     updateOnboardingStatus,
   } = useUserOnboardingStatus();
   const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -131,6 +132,7 @@ export function SideNav({}: Props) {
     },
     {
       label: 'Brand',
+      condition: !isInformationArchitectureEnabled,
       icon: <Brand />,
       link: '/brand',
       testId: 'side-nav-brand-link',
@@ -139,12 +141,20 @@ export function SideNav({}: Props) {
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
     {
       label: 'Team Members',
+      condition: !isInformationArchitectureEnabled,
       icon: <Team />,
       link: ROUTES.TEAM,
       testId: 'side-nav-settings-organization',
     },
     {
       label: 'Changes',
+      condition: isInformationArchitectureEnabled,
+      icon: <IconViewQuilt />,
+      link: ROUTES.LAYOUT,
+      label: 'Layouts',
+      testId: 'side-nav-layouts-link',
+    },
+    {
       icon: <Repeat />,
       link: ROUTES.CHANGES,
       testId: 'side-nav-changes-link',
