@@ -30,6 +30,7 @@ const webhookTriggerSchema = new Schema<WebhookTriggerDBModel>(
       ref: 'User',
     },
     token: Schema.Types.String,
+    subscribers: [Schema.Types.String],
     variables: [
       {
         name: Schema.Types.String,

@@ -1,4 +1,4 @@
-import { EnvironmentId, ITemplateVariable, OrganizationId, TemplateVariableTypeEnum } from '@novu/shared';
+import { EnvironmentId, ITemplateVariable, OrganizationId, SubscriberId, TemplateVariableTypeEnum } from '@novu/shared';
 
 import type { ChangePropsValueType } from '../../types';
 import { NotificationTemplateId } from '../notification-template';
@@ -22,6 +22,8 @@ export class WebhookTriggerEntity {
   active: boolean;
 
   token: string;
+
+  subscribers: SubscriberId[];
 
   variables?: IWebhookTemplateVariable[];
 }
