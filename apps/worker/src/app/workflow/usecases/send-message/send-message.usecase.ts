@@ -411,7 +411,7 @@ export class SendMessage {
     return tenant;
   }
 
-  private async initiateChimeraConnector() {
+  private initiateChimeraConnector() {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
         if (!require('@novu/ee-auth')?.ChimeraConnector) {

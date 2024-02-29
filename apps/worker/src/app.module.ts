@@ -6,30 +6,11 @@ import { SharedModule } from './app/shared/shared.module';
 import { HealthModule } from './app/health/health.module';
 import { WorkflowModule } from './app/workflow/workflow.module';
 
-const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
+const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   SharedModule,
   HealthModule,
   WorkflowModule,
 ];
-
-const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
-  const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
-  try {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-      if (require('@novu/ee-auth')?.ChimeraConnectorModule) {
-        modules.push(require('@novu/ee-auth')?.ChimeraConnectorModule);
-      }
-    }
-  } catch (e) {
-    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
-  }
-
-  return modules;
-};
-
-const enterpriseModules = enterpriseImports();
-
-const modules = baseModules.concat(enterpriseModules);
 
 const providers: Provider[] = [];
 

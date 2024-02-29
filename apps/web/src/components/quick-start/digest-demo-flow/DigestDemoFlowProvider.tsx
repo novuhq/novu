@@ -67,9 +67,9 @@ export const DigestDemoFlowProvider = ({
       enabled: !isReadOnly && !!templateId,
       refetchOnWindowFocus: false,
       onSuccess: (fetchedTemplate) => {
-        const digest: INotificationTemplateStep | undefined = fetchedTemplate.steps.find(
-          (step) => step.template?.type === StepTypeEnum.DIGEST
-        );
+        const digest: INotificationTemplateStep | undefined = (
+          fetchedTemplate.steps as INotificationTemplateStep[]
+        ).find((step) => step.template?.type === StepTypeEnum.DIGEST);
         if (digest) {
           setState((state) => ({
             ...state,
