@@ -1,4 +1,4 @@
-import { ActionIcon, Avatar, ColorScheme, Group, Header, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Avatar, Group, Header, useMantineColorScheme } from '@mantine/core';
 import * as capitalize from 'lodash.capitalize';
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -15,16 +15,29 @@ import {
   IconTonality,
   Text,
   Tooltip,
+  When,
 } from '@novu/design-system';
 import { CONTEXT_PATH, IS_DOCKER_HOSTED, REACT_APP_VERSION } from '../../../../config';
 import { ROUTES } from '../../../../constants/routes.enum';
-import { useBootIntercom, useDebounce, useLocalThemePreference } from '../../../../hooks';
+import { useBootIntercom, useLocalThemePreference } from '../../../../hooks';
+import useTrackThemeChange from '../../../../hooks/useTrackThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { useAuthContext } from '../../../providers/AuthProvider';
-import { useSegment } from '../../../providers/SegmentProvider';
 import { useSpotlightContext } from '../../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
+
+const FALLBACK_AVATAR = CONTEXT_PATH + '/static/images/avatar.png';
+
+const getThemeTitle = (themeStatus: string) => {
+  if (themeStatus === 'dark') {
+    return 'Dark Theme';
+  } else if (themeStatus === 'light') {
+    return 'Light Theme';
+  } else {
+    return 'Match System Appearance';
+  }
+};
 
 const menuItem = (iconColor: string) => [
   {
@@ -55,32 +68,19 @@ const Icon = () => {
 export function HeaderNav() {
   const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
-  const { themeStatus } = useLocalThemePreference();
+
   const { addItem, removeItems } = useSpotlightContext();
-  const segment = useSegment();
   const isSelfHosted = IS_DOCKER_HOSTED;
   const isDark = colorScheme === 'dark';
   const iconColor = isDark ? colors.white : colors.B40;
 
-  const debounceThemeChange = useDebounce((args: { colorScheme: ColorScheme; themeStatus: string }) => {
-    segment.track('Theme is set - [Theme]', args);
-  }, 500);
+  useBootIntercom();
+  useTrackThemeChange({ colorScheme });
+
+  const themeTitle = useMemo(() => getThemeTitle(colorScheme), [colorScheme]);
 
   useEffect(() => {
-    debounceThemeChange({ colorScheme, themeStatus });
-  }, [colorScheme, themeStatus, debounceThemeChange]);
-
-  useBootIntercom();
-
-  let themeTitle = 'Match System Appearance';
-  if (themeStatus === 'dark') {
-    themeTitle = 'Dark Theme';
-  } else if (themeStatus === 'light') {
-    themeTitle = 'Light Theme';
-  }
-
-  const additionalMenuItems = useMemo(() => {
-    return [
+    const spotlightMenuItems = [
       {
         id: 'toggle-theme',
         title: themeTitle,
@@ -98,13 +98,10 @@ export function HeaderNav() {
         },
       },
     ];
-  }, [toggleColorScheme, logout, themeTitle]);
+    removeItems(spotlightMenuItems.map((item) => item.id));
 
-  useEffect(() => {
-    removeItems(additionalMenuItems.map((item) => item.id));
-
-    addItem(additionalMenuItems);
-  }, [addItem, removeItems, additionalMenuItems]);
+    addItem(spotlightMenuItems);
+  }, [addItem, removeItems, themeTitle, toggleColorScheme, logout]);
 
   const menuItems = useMemo(() => menuItem(iconColor), [iconColor]);
 
@@ -113,18 +110,24 @@ export function HeaderNav() {
       <Group spacing={16} noWrap>
         <Avatar radius="sm" size={40} src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'} />
         <div style={{ flex: 1 }}>
-          <Text data-test-id="header-dropdown-username" rows={1} weight="bold">
-            {capitalize(currentUser?.firstName as string)} {capitalize(currentUser?.lastName as string)}
+          <Text data-test-id="header-dropdown-username" rows={1} weight="bold" transform="capitalize">
+            {currentUser?.firstName as string} {currentUser?.lastName as string}
           </Text>
-          <Text size={14} color={colors.B60} rows={1} data-test-id="header-dropdown-organization-name">
-            {capitalize(currentOrganization?.name as string)}
+          <Text
+            size={14}
+            color={colors.B60}
+            rows={1}
+            data-test-id="header-dropdown-organization-name"
+            transform="capitalize"
+          >
+            {currentOrganization?.name as string}
           </Text>
         </div>
       </Group>
     </Dropdown.Item>,
     ...menuItems.map(({ title, icon, path }) => (
-      <Link to={path} key={title}>
-        <Dropdown.Item key={title} icon={icon} component="div">
+      <Link to={path} key={`link-${title}`}>
+        <Dropdown.Item key={`item-${title}`} icon={icon} component="div">
           {title}
         </Dropdown.Item>
       </Link>
@@ -133,19 +136,6 @@ export function HeaderNav() {
       Log Out
     </Dropdown.Item>,
   ];
-
-  isSelfHosted &&
-    profileMenuMantine.push(
-      <Dropdown.Item
-        style={{
-          padding: '10px 20px',
-        }}
-        disabled
-        key="version"
-      >
-        <Text color={colors.B40}>Version: {REACT_APP_VERSION}</Text>
-      </Dropdown.Item>
-    );
 
   return (
     <Header
@@ -184,10 +174,10 @@ export function HeaderNav() {
           <Dropdown
             position="bottom-end"
             styles={{
-              dropdown: { minWidth: 220, padding: '4px' },
-              item: { paddingInline: '12px', paddingBlock: '10px' },
+              dropdown: { minWidth: 220, padding: '0.25rem' },
+              item: { paddingInline: '0.75rem', paddingBlock: '0.625rem' },
               itemIcon: {
-                marginRight: '12px',
+                marginRight: '0.75rem',
               },
             }}
             control={
@@ -196,12 +186,22 @@ export function HeaderNav() {
                   size={24}
                   radius="sm"
                   data-test-id="header-profile-avatar"
-                  src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}
+                  src={currentUser?.profilePicture || FALLBACK_AVATAR}
                 />
               </ActionIcon>
             }
           >
             {profileMenuMantine}
+            <When truthy={isSelfHosted}>
+              <Dropdown.Item
+                style={{
+                  padding: '0.625rem 1.25px',
+                }}
+                disabled
+              >
+                <Text color={colors.B40}>Version: {REACT_APP_VERSION}</Text>
+              </Dropdown.Item>
+            </When>
           </Dropdown>
         </Group>
       </Group>
