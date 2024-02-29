@@ -108,6 +108,10 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
       type: Schema.Types.Boolean,
       default: false,
     },
+    type: {
+      type: Schema.Types.String,
+      default: 'REGULAR',
+    },
     draft: {
       type: Schema.Types.Boolean,
       default: true,

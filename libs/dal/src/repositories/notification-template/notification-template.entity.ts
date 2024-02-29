@@ -15,6 +15,7 @@ import {
   INotificationTemplate,
   INotificationTemplateStep,
   IMessageTemplate,
+  NotificationTemplateTypeEnum,
 } from '@novu/shared';
 
 import { NotificationGroupEntity } from '../notification-group';
@@ -70,6 +71,8 @@ export class NotificationTemplateEntity implements INotificationTemplate {
   blueprintId?: string;
 
   data?: NotificationTemplateCustomData;
+
+  type?: NotificationTemplateTypeEnum;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<
