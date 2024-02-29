@@ -19,6 +19,7 @@ const variantSchemePart = {
     default: false,
   },
   uuid: Schema.Types.String,
+  stepId: Schema.Types.String,
   name: Schema.Types.String,
   type: {
     type: Schema.Types.String,

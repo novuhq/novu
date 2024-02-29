@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 import {
   FilterParts,
   BuilderFieldType,
@@ -95,6 +95,8 @@ export class StepVariantEntity implements IStepVariant {
   _id?: string;
 
   uuid?: string;
+
+  stepId?: string;
 
   name?: string;
 
