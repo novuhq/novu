@@ -26,3 +26,4 @@ export * from './useHover';
 export * from './useBootIntercom';
 export * from './useThemeChange';
 export * from './useIsDarkTheme';
+export * from './useTrackThemeChange';
