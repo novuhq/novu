@@ -9,7 +9,7 @@ import {
 } from '@novu/shared';
 
 import { IEmailBlock, ITemplateVariable } from './types';
-import type { ChangePropsValueType } from '../../types/helpers';
+import type { ChangePropsValueType } from '../../types';
 
 export class MessageTemplateEntity implements IMessageTemplate {
   _id?: string;
@@ -22,6 +22,8 @@ export class MessageTemplateEntity implements IMessageTemplate {
 
   // TODO: Due a circular dependency I can't import LayoutId from Layout.
   _layoutId?: string | null;
+
+  webhookIds?: string[];
 
   type: StepTypeEnum;
 
