@@ -47,6 +47,7 @@
     "@novu/shared": "^0.23.1",
     "@novu/stateless": "^0.23.1",
     "@novu/testing": "^0.23.1",
+    "@paralleldrive/cuid2": "^2.2.2",
     "@sendgrid/mail": "^8.1.0",
     "@sentry/hub": "^7.40.0",
     "@sentry/node": "^7.40.0",
