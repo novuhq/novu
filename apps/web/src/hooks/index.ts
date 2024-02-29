@@ -1,3 +1,4 @@
+export { useDataRef, useKeyDown, useLocalThemePreference } from '@novu/shared-web';
 export * from './integrations';
 export * from './useAuthController';
 export * from './useBlueprint';
@@ -22,4 +23,4 @@ export * from './useInlineComponent';
 export * from './useHoverOverItem';
 export * from './useCreateWorkflowFromBlueprint';
 export * from './useHover';
-export { useDataRef, useKeyDown, useLocalThemePreference } from '@novu/shared-web';
+export * from './useBootIntercom';

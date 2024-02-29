@@ -13,7 +13,7 @@ import { SpotLight } from '../utils/Spotlight';
 import { SpotLightProvider } from '../providers/SpotlightProvider';
 import { useFeatureFlag } from '@novu/shared-web';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { HeaderNavNew } from './components/HeaderNavNew';
+import { HeaderNav as HeaderNavNew } from './components/v2/HeaderNav';
 
 const AppShellNew = styled.div`
   display: flex;
