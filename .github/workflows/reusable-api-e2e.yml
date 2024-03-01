@@ -46,7 +46,7 @@ jobs:
   e2e_api:
     name: Test E2E
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     timeout-minutes: 80
     permissions:
       contents: read
