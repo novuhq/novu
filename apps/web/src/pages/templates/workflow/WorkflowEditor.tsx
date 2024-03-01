@@ -266,6 +266,11 @@ const WorkflowEditor = () => {
               >
                 <Group>
                   <NameInput />
+                  <When truthy={!channel}>
+                    <Group>
+                      <UpdateButton />
+                    </Group>
+                  </When>
                   <When truthy={pathname === basePath}>
                     <Button
                       pulse={tagsIncludesOnboarding || shouldPulse}

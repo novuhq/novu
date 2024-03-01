@@ -20,7 +20,11 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
   const { integrations } = useActiveIntegrations();
   const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
   const { create, isLoading } = useCreateInAppIntegration((data: any) => {});
-  const { createOnboardingExperimentWorkflow } = useCreateOnboardingExperimentWorkflow();
+  const {
+    createOnboardingExperimentWorkflow,
+    isLoading: IsCreateOnboardingExpWorkflowLoading,
+    isDisabled: isIsCreateOnboardingExpWorkflowDisabled,
+  } = useCreateOnboardingExperimentWorkflow();
   const { isOnboardingExperimentEnabled } = useOnboardingExperiment();
 
   function trackClick(channel: IQuickStartChannelConfiguration, integrationActive: boolean) {
@@ -74,7 +78,8 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                 </TitleRow>
                 <Description>{channel.description}</Description>
                 <StyledButton
-                  loading={isLoading}
+                  loading={isLoading || IsCreateOnboardingExpWorkflowLoading}
+                  disabled={isIsCreateOnboardingExpWorkflowDisabled}
                   pulse={isOnboardingExperiment}
                   fullWidth={isOnboardingExperiment}
                   variant={isOnboardingExperiment ? 'gradient' : 'outline'}

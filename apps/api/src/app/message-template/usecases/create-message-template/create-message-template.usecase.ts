@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum, IMessageAction } from '@novu/shared';
+import { ChangeEntityTypeEnum, IMessageAction, StepTypeEnum } from '@novu/shared';
 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
@@ -20,6 +20,10 @@ export class CreateMessageTemplate {
   async execute(command: CreateMessageTemplateCommand): Promise<MessageTemplateEntity> {
     if ((command?.cta?.action as IMessageAction | undefined | '') === '') {
       throw new ApiException('Please provide a valid CTA action');
+    }
+
+    const layoutId = null;
+    if (command.type === StepTypeEnum.EMAIL && !command.layoutId) {
     }
 
     let item: MessageTemplateEntity = await this.messageTemplateRepository.create({

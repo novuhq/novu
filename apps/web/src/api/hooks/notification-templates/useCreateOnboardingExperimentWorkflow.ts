@@ -35,24 +35,25 @@ export const useCreateOnboardingExperimentWorkflow = () => {
     },
   });
 
-  const { mutate: makePrimaryIntegration } = useMutation<IntegrationEntity, IResponseError, { id: string }>(
-    ({ id }) => setIntegrationAsPrimary(id),
-    {
-      onSuccess: () => {
-        queryClient.refetchQueries({
-          predicate: ({ queryKey }) =>
-            queryKey.includes(QueryKeys.integrationsList) || queryKey.includes(QueryKeys.activeIntegrations),
-        });
-      },
-      onError: () => {
-        errorMessage("Failed to update integration's primary status");
-      },
-    }
-  );
+  const { mutate: makePrimaryIntegration, isLoading: isPrimaryEmailIntegrationLoading } = useMutation<
+    IntegrationEntity,
+    IResponseError,
+    { id: string }
+  >(({ id }) => setIntegrationAsPrimary(id), {
+    onSuccess: () => {
+      queryClient.refetchQueries({
+        predicate: ({ queryKey }) =>
+          queryKey.includes(QueryKeys.integrationsList) || queryKey.includes(QueryKeys.activeIntegrations),
+      });
+    },
+    onError: () => {
+      errorMessage("Failed to update integration's primary status");
+    },
+  });
 
   const { templates = [], loading: templatesLoading } = useTemplates(FIRST_100_WORKFLOWS);
 
-  const { integrations } = useIntegrations();
+  const { integrations, loading: isIntegrationsLoading } = useIntegrations();
 
   const onboardingExperimentWorkflow = 'Onboarding Workflow';
 
@@ -70,7 +71,7 @@ export const useCreateOnboardingExperimentWorkflow = () => {
     if (novuEmailIntegration && !novuEmailIntegration?.primary) {
       makePrimaryIntegration({ id: novuEmailIntegration?._id as string });
     }
-    // }
+
     if (onboardingExperimentWorkflowExists) {
       navigate(
         parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: onboardingExperimentWorkflowExists._id as string })
@@ -109,7 +110,17 @@ export const useCreateOnboardingExperimentWorkflow = () => {
 
   return {
     createOnboardingExperimentWorkflow,
-    isLoading: isCreating,
-    isDisabled: areNotificationGroupLoading || isCreating,
+    isLoading:
+      areNotificationGroupLoading ||
+      templatesLoading ||
+      isIntegrationsLoading ||
+      isPrimaryEmailIntegrationLoading ||
+      isCreating,
+    isDisabled:
+      areNotificationGroupLoading ||
+      templatesLoading ||
+      isIntegrationsLoading ||
+      isPrimaryEmailIntegrationLoading ||
+      isCreating,
   };
 };
