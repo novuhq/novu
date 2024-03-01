@@ -22,6 +22,7 @@ import { useAuthContext } from '../../../providers/AuthProvider';
 import { useSpotlightContext } from '../../../providers/SpotlightProvider';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
+import { ProfileMenuItem } from './ProfileMenuItem';
 
 const FALLBACK_AVATAR = CONTEXT_PATH + '/static/images/avatar.png';
 
@@ -75,23 +76,7 @@ export function HeaderNav() {
 
   const profileMenuMantine = [
     <Dropdown.Item disabled key="user">
-      <Group spacing={16} noWrap>
-        <Avatar radius="sm" size={40} src={currentUser?.profilePicture || FALLBACK_AVATAR} />
-        <div style={{ flex: 1 }}>
-          <Text data-test-id="header-dropdown-username" rows={1} weight="bold" transform="capitalize">
-            {currentUser?.firstName as string} {currentUser?.lastName as string}
-          </Text>
-          <Text
-            size={14}
-            color={colors.B60}
-            rows={1}
-            data-test-id="header-dropdown-organization-name"
-            transform="capitalize"
-          >
-            {currentOrganization?.name as string}
-          </Text>
-        </div>
-      </Group>
+      <ProfileMenuItem currentOrganization={currentOrganization} currentUser={currentUser} />
     </Dropdown.Item>,
     ...menuItems.map(({ title, icon, path }) => (
       <Link to={path} key={`link-${title}`}>
