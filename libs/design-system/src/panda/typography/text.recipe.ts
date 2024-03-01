@@ -1,16 +1,22 @@
-import { defineRecipe } from '@pandacss/dev';
+import { cva, RecipeVariantProps } from 'styled-system/css';
 
-export const TEXT_RECIPE = defineRecipe({
-  className: 'text',
-  jsx: ['Title', 'Text'],
+export const textRecipe = cva({
+  base: {
+    color: 'semantic.typography.text.main',
+    fontSize: '100',
+  },
   variants: {
     variant: {
       title: {
-        textStyle: 'title/page',
+        page: {
+          // textStyles: {},
+        },
       },
       text: {
-        textStyle: 'text',
+        textStyle: 'text/main',
       },
     },
   },
 });
+
+export type TextVariantProps = RecipeVariantProps<typeof textRecipe>;
