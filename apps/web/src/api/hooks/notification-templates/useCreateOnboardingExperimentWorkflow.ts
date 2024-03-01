@@ -58,7 +58,7 @@ export const useCreateOnboardingExperimentWorkflow = () => {
   const createOnboardingExperimentWorkflow = useCallback(() => {
     if (templatesLoading) return;
 
-    const onboardingExprimentWorkflowExists = templates.find((template) =>
+    const onboardingExperimentWorkflowExists = templates.find((template) =>
       template.name.includes(onboardingExperimentWorkflow)
     );
 
@@ -70,9 +70,9 @@ export const useCreateOnboardingExperimentWorkflow = () => {
       makePrimaryIntegration({ id: novuEmailIntegration?._id as string });
     }
     // }
-    if (onboardingExprimentWorkflowExists) {
+    if (onboardingExperimentWorkflowExists) {
       navigate(
-        parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: onboardingExprimentWorkflowExists._id as string })
+        parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: onboardingExperimentWorkflowExists._id as string })
       );
     } else {
       const payload = {
