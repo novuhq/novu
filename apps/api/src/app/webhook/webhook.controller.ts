@@ -4,6 +4,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -16,7 +17,12 @@ import {
 import { UserAuthGuard } from '@novu/application-generic';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
-import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum } from '@novu/shared';
+import {
+  AddressingTypeEnum,
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCostEnum,
+  TriggerRequestCategoryEnum,
+} from '@novu/shared';
 import { GetWebhook } from './usecases/get-webhook.usecase';
 import {
   CreateWebhookCommand,
@@ -31,6 +37,9 @@ import { RegenWebhook } from './usecases/regen-webhook.usecase';
 import { CreateWebhook } from './usecases/create-webhook.usecase';
 import { UpdateWebhook } from './usecases/update-webhook.usecase';
 import { WebhookResponseDto } from './dtos/webhook-responce.dto';
+import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../events/usecases/parse-event-request';
+import { TriggerEventResponseDto } from '../events/dtos';
+import { NotificationTemplateRepository } from '@novu/dal/src';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ApiCommonResponses()
@@ -46,7 +55,10 @@ export class WorkflowController {
     private listWebhooks: ListWebhook,
     private regenWebhook: RegenWebhook,
     private createWebhook: CreateWebhook,
-    private updateWebhook: UpdateWebhook
+    private updateWebhook: UpdateWebhook,
+    // from event controller
+    private parseEventRequest: ParseEventRequest,
+    private notificationTemplateRepository: NotificationTemplateRepository
   ) {}
 
   @Get('environments/:envId/webhooks')
@@ -173,13 +185,54 @@ export class WorkflowController {
     summary: 'webhook trigger event',
     description: `
       Using this endpoint you can trigger an event without having to set up the Novu SDK.
+      Note: Idempotency is not guaranteed on this endpoint 
+      and if Idempotency is a concern then it is highly advised to use the SDK.
     `,
   })
-  async triggerWebhook(@Param('webhookId') webhookId: string): Promise<string> {
+  async triggerWebhook(@Param('webhookId') webhookId: string): Promise<TriggerEventResponseDto> {
     // Get webhook
+    const webhook = await this.getWebhook.execute(
+      SpecificWebhookCommand.create({
+        webhookId: webhookId,
+      })
+    );
+
+    if (!webhook) {
+      throw new NotFoundException('Webhook not found');
+    }
+
+    // Get notification template
+    const template = await this.notificationTemplateRepository.findById(webhook.templateId, webhook.environmentId);
+
+    if (!template) {
+      throw new NotFoundException('Workflow not found');
+    }
 
     // Pass webhook to trigger event
+    const result = await this.parseEventRequest.execute(
+      ParseEventRequestMulticastCommand.create({
+        /*
+         * This say the specific webhook that is being called
+         * can enhance with headers if users want more details and tracing
+         */
+        userId: 'webhook-' + webhook.name,
+        environmentId: webhook.environmentId,
+        organizationId: webhook.organizationId,
+        identifier: template.triggers[0].identifier,
+        payload: webhook.variables || {},
+        overrides: {},
+        to: webhook.subscribers,
+        /*
+         *  Maybe actor this should be webhook name
+         * actor: body.actor,
+         * tenant: body.tenant,
+         * transactionId: body.transactionId,
+         */
+        addressingType: AddressingTypeEnum.MULTICAST,
+        requestCategory: TriggerRequestCategoryEnum.SINGLE,
+      })
+    );
 
-    return 'TODO';
+    return result as unknown as TriggerEventResponseDto;
   }
 }

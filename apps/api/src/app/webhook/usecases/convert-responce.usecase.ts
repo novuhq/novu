@@ -11,5 +11,6 @@ export function convertToDTO(entity: WebhookTriggerEntity): WebhookResponseDto {
     description: entity.description,
     active: entity.active,
     variables: entity.variables,
+    subscribers: entity.subscribers,
   } as WebhookResponseDto;
 }

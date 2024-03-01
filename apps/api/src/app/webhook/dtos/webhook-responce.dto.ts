@@ -30,6 +30,9 @@ export class WebhookResponseDto {
   @IsBoolean()
   active: boolean;
 
+  @IsDefined()
+  subscribers: string[];
+
   @IsOptional()
   variables: IWebhookTemplateVariable | undefined;
 }
