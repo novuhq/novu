@@ -44,6 +44,8 @@ export class CreateWebhookCommand extends BaseCommand {
 
   active?: boolean;
 
+  subscribers: string[];
+
   variables?: IWebhookTemplateVariable[];
 }
 
@@ -71,6 +73,8 @@ export interface ICreateWebhookBody {
   name: string;
 
   description: string;
+
+  subscribers: string[];
 
   active?: boolean;
 

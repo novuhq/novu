@@ -87,7 +87,7 @@ export class WorkflowController {
 
   @Post('/webhook')
   async createWebhookMethod(@Body() body: ICreateWebhookBody) {
-    this.createWebhook.execute(
+    await this.createWebhook.execute(
       CreateWebhookCommand.create({
         webhookId: body.webhookId,
 
@@ -102,6 +102,8 @@ export class WorkflowController {
         description: body.description,
 
         active: body.active,
+
+        subscribers: body.subscribers,
 
         variables: body.variables,
       })

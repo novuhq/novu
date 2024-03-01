@@ -17,12 +17,22 @@ export class RegenWebhook {
       throw new NotFoundException('Webhook not found');
     }
 
+    let newID = '';
+    let idCount = 0;
+
+    do {
+      newID = 'wh-' + createId();
+      idCount = await this.webhookRepository.count({
+        _id: command.webhookId,
+      });
+    } while (idCount != 0);
+
     return await this.webhookRepository.update(
       {
         _id: command.webhookId,
       },
       {
-        token: 'wh-' + createId(),
+        token: newID,
       }
     );
   }
