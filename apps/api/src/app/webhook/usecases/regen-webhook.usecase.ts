@@ -3,9 +3,10 @@ import { SpecificWebhookCommand } from '../dtos/webhook-request.dto';
 import { WebhookTriggerRepository } from '@novu/dal/src/repositories/webhook-trigger/webhook-trigger.repository';
 import { NotFoundException } from '@nestjs/common';
 import { createId } from '@paralleldrive/cuid2';
+import { GenID } from './gen-id.usecase';
 
 export class RegenWebhook {
-  constructor(private webhookRepository: WebhookTriggerRepository) {}
+  constructor(private webhookRepository: WebhookTriggerRepository, private genId: GenID) {}
 
   @InstrumentUsecase()
   async execute(command: SpecificWebhookCommand) {
@@ -17,22 +18,16 @@ export class RegenWebhook {
       throw new NotFoundException('Webhook not found');
     }
 
-    let newID = '';
-    let idCount = 0;
-
-    do {
-      newID = 'wh-' + createId();
-      idCount = await this.webhookRepository.count({
-        _id: command.webhookId,
-      });
-    } while (idCount != 0);
-
     return await this.webhookRepository.update(
       {
         _id: command.webhookId,
       },
       {
-        token: newID,
+        token: this.genId.execute(
+          SpecificWebhookCommand.create({
+            webhookId: command.webhookId,
+          })
+        ),
       }
     );
   }
