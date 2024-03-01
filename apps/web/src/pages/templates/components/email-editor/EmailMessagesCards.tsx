@@ -24,18 +24,20 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
-import { InputVariables } from '../InputVariables';
 
 export enum ViewEnum {
   EDIT = 'Edit',
   PREVIEW = 'Preview',
+  CODE = 'Code',
   TEST = 'Test',
 }
 const templateFields = ['content', 'htmlContent', 'subject', 'preheader', 'senderName'];
 
 export function EmailMessagesCards() {
   const { currentOrganization } = useAuthContext();
-  const [view, setView] = useState<ViewEnum>(ViewEnum.EDIT);
+  const { template } = useTemplateEditorForm();
+  const { environment, chimera } = useEnvController({}, template?.chimera);
+  const [view, setView] = useState<ViewEnum>(chimera ? ViewEnum.PREVIEW : ViewEnum.EDIT);
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();
   const [modalOpen, setModalOpen] = useState(false);
@@ -47,8 +49,6 @@ export function EmailMessagesCards() {
   const { primaryIntegration } = useGetPrimaryIntegration({
     channelType: ChannelTypeEnum.EMAIL,
   });
-  const { template } = useTemplateEditorForm();
-  const { environment, chimera } = useEnvController({}, template?.chimera);
   const stepFormPath = useStepFormPath();
 
   useHotkeys([
@@ -99,7 +99,7 @@ export function EmailMessagesCards() {
         <StepSettings />
         <Grid m={0} mt={24}>
           <Grid.Col p={0} mr={20} span={7}>
-            <EditorPreviewSwitch view={view} setView={setView} />
+            <EditorPreviewSwitch view={view} setView={setView} chimera={chimera} />
           </Grid.Col>
           <Grid.Col p={0} span={2}>
             <When truthy={view === ViewEnum.PREVIEW}>
@@ -155,12 +155,7 @@ export function EmailMessagesCards() {
       <When truthy={view === ViewEnum.EDIT}>
         <Grid grow>
           <Grid.Col span={9}>
-            <When truthy={!chimera}>
-              <EmailContentCard organization={currentOrganization} />
-            </When>
-            <When truthy={chimera}>
-              <InputVariables />
-            </When>
+            <EmailContentCard organization={currentOrganization} />
           </Grid.Col>
           <Grid.Col
             span={3}

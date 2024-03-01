@@ -1,9 +1,20 @@
 import { SegmentedControl, useMantineTheme } from '@mantine/core';
 import { colors } from '@novu/design-system';
+import { useMemo } from 'react';
 import { ViewEnum } from './email-editor/EmailMessagesCards';
 
-export const EditorPreviewSwitch = ({ view, setView }) => {
+export const EditorPreviewSwitch = ({ view, setView, chimera = false }) => {
   const theme = useMantineTheme();
+
+  const views = useMemo(() => {
+    const all = Object.values(ViewEnum);
+
+    if (chimera) {
+      return all.filter((item) => item !== ViewEnum.EDIT);
+    }
+
+    return all.filter((item) => item !== ViewEnum.CODE);
+  }, [chimera]);
 
   return (
     <SegmentedControl
@@ -33,7 +44,7 @@ export const EditorPreviewSwitch = ({ view, setView }) => {
           lineHeight: '24px',
         },
       }}
-      data={Object.values(ViewEnum)}
+      data={views}
       value={view}
       onChange={(value) => {
         setView(value);

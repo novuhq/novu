@@ -16,6 +16,7 @@ import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePr
 import { useMutation } from '@tanstack/react-query';
 import { api, useEnvController } from '@novu/shared-web';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
+import { InputVariables } from '../../../../pages/templates/components/InputVariables';
 
 const PreviewContainer = styled.div`
   display: flex;
@@ -93,70 +94,85 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
           <When truthy={view === 'web'}>
             <PreviewWeb
               loading={isLoading}
-              subject={chimeraSubject}
-              content={chimeraContent}
+              subject={chimeraSubject || subject}
+              content={chimeraContent || previewContent}
               integration={integration}
               error={error}
               showEditOverlay={false}
               onLocaleChange={onLocaleChange}
               locales={locales || []}
               selectedLocale={selectedLocale}
+              chimera={chimera}
             />
           </When>
           <When truthy={view === 'mobile'}>
             <PreviewMobile
               loading={isLoading}
-              subject={subject}
-              content={chimeraContent}
+              subject={chimeraSubject || subject}
+              content={chimeraContent || previewContent}
               integration={integration}
               error={error}
               onLocaleChange={onLocaleChange}
               locales={locales || []}
               selectedLocale={selectedLocale}
+              chimera={chimera}
             />
           </When>
-          <JSONContainer>
-            <JsonInput
-              data-test-id="preview-json-param"
-              formatOnBlur
-              autosize
-              styles={inputStyles}
-              label="Payload:"
-              value={payloadValue}
-              onChange={setPayloadValue}
-              minRows={6}
-              mb={20}
-              validationError="Invalid JSON"
-            />
-            <Button
-              fullWidth
-              onClick={() => {
-                if (chimera) {
-                  mutateAsync(JSON.parse(payloadValue));
+          <When truthy={!chimera}>
+            <JSONContainer>
+              <JsonInput
+                data-test-id="preview-json-param"
+                formatOnBlur
+                autosize
+                styles={inputStyles}
+                label="Payload:"
+                value={payloadValue}
+                onChange={setPayloadValue}
+                minRows={6}
+                mb={20}
+                validationError="Invalid JSON"
+              />
+              <Button
+                fullWidth
+                onClick={() => {
+                  if (chimera) {
+                    mutateAsync(JSON.parse(payloadValue));
 
-                  return;
-                }
+                    return;
+                  }
 
-                getEmailPreview(payloadValue);
+                  getEmailPreview(payloadValue);
+                }}
+                variant="outline"
+                data-test-id="apply-variables"
+              >
+                Apply Variables
+              </Button>
+            </JSONContainer>
+          </When>
+          <When truthy={chimera}>
+            <InputVariables
+              onSubmit={(values) => {
+                mutateAsync(values);
               }}
-              variant="outline"
-              data-test-id="apply-variables"
-            >
-              Apply Variables
-            </Button>
-          </JSONContainer>
+              onChange={(values: any) => {
+                mutateAsync(values);
+              }}
+            />
+          </When>
         </PreviewContainer>
       ) : (
         <PreviewWeb
           loading={isLoading}
-          subject={subject}
-          content={previewContent}
+          subject={chimeraSubject || subject}
+          content={chimeraContent || previewContent}
           integration={integration}
           error={error}
           showEditOverlay={!showVariables}
           onLocaleChange={onLocaleChange}
           locales={locales || []}
           selectedLocale={selectedLocale}
+          chimera={chimera}
         />
       )}
     </>

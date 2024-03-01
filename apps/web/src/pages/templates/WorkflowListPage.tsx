@@ -97,9 +97,9 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     Header: 'Group',
     width: 240,
     maxWidth: 240,
-    Cell: withCellLoading(({ row: { original } }) => (
-      <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
-    )),
+    Cell: withCellLoading(({ row: { original } }) =>
+      original.chimera ? null : <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
+    ),
   },
   {
     accessor: 'createdAt',
