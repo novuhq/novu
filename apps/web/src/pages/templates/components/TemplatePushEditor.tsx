@@ -24,6 +24,7 @@ export function TemplatePushEditor() {
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);
+  const [inputVariables, setInputVariables] = useState();
 
   const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
   const { hasActiveIntegration } = useHasActiveIntegrations({
@@ -62,7 +63,7 @@ export function TemplatePushEditor() {
                     />
                   </When>
                   <When truthy={chimera}>
-                    <InputVariables />
+                    <InputVariables onChange={setInputVariables} onSubmit={setInputVariables} />
                   </When>
                 </Stack>
               )}
@@ -94,7 +95,7 @@ export function TemplatePushEditor() {
         </Grid.Col>
         <Grid.Col span={'content'}>
           <Flex justify="center">
-            <PushPreview showLoading={isPreviewLoading} showOverlay={false} />
+            <PushPreview inputVariables={inputVariables} showLoading={isPreviewLoading} showOverlay={false} />
           </Flex>
         </Grid.Col>
       </Grid>

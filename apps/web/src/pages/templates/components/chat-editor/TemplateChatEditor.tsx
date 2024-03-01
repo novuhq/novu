@@ -28,6 +28,7 @@ export function TemplateChatEditor() {
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.CHAT,
   });
+  const [inputVariables, setInputVariables] = useState();
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const { template } = useTemplateEditorForm();
   const { chimera } = useEnvController({}, template?.chimera);
@@ -59,14 +60,14 @@ export function TemplateChatEditor() {
                   />
                 </When>
                 <When truthy={chimera}>
-                  <InputVariables />
+                  <InputVariables onChange={setInputVariables} onSubmit={setInputVariables} />
                 </When>
               </Stack>
             )}
           />
         </Grid.Col>
         <Grid.Col span={6}>
-          <ChatPreview showLoading={isPreviewLoading} />
+          <ChatPreview inputVariables={inputVariables} showLoading={isPreviewLoading} />
         </Grid.Col>
       </Grid>
       <EditVariablesModal

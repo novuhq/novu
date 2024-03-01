@@ -37,6 +37,7 @@ export function TemplateSMSEditor() {
     channelType: ChannelTypeEnum.SMS,
   });
   const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
+  const [inputVariables, setInputVariables] = useState();
 
   return (
     <>
@@ -72,14 +73,14 @@ export function TemplateSMSEditor() {
                   />
                 </When>
                 <When truthy={chimera}>
-                  <InputVariables />
+                  <InputVariables onChange={setInputVariables} onSubmit={setInputVariables} />
                 </When>
               </Stack>
             )}
           />
         </Grid.Col>
         <Grid.Col span={'content'}>
-          <SmsPreview showPreviewAsLoading={isPreviewLoading} />
+          <SmsPreview inputVariables={inputVariables} showPreviewAsLoading={isPreviewLoading} />
         </Grid.Col>
       </Grid>
       <EditVariablesModal

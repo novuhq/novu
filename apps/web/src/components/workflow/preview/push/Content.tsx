@@ -24,9 +24,11 @@ import {
 export default function Content({
   showLoading = false,
   showOverlay = true,
+  inputVariables,
 }: {
   showLoading?: boolean;
   showOverlay?: boolean;
+  inputVariables?: any;
 }) {
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
   const { colorScheme } = useMantineColorScheme();
@@ -66,9 +68,9 @@ export default function Content({
 
   useEffect(() => {
     if (chimera) {
-      mutateAsync();
+      mutateAsync(inputVariables);
     }
-  }, [chimera]);
+  }, [chimera, inputVariables]);
 
   return (
     <ContentWrapperStyled>

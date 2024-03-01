@@ -21,7 +21,7 @@ const ChatPreviewContainer = styled.div`
   max-width: 37.5em;
 `;
 
-export function ChatPreview({ showLoading = false }: { showLoading?: boolean }) {
+export function ChatPreview({ showLoading = false, inputVariables }: { showLoading?: boolean; inputVariables?: any }) {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
 
@@ -46,9 +46,9 @@ export function ChatPreview({ showLoading = false }: { showLoading?: boolean }) 
 
   useEffect(() => {
     if (chimera) {
-      mutateAsync();
+      mutateAsync(inputVariables);
     }
-  }, [chimera]);
+  }, [chimera, inputVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,

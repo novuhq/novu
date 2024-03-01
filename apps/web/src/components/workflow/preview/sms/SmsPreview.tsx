@@ -31,7 +31,13 @@ const LocaleSelectStyled = styled(LocaleSelect)`
   }
 `;
 
-export const SmsPreview = ({ showPreviewAsLoading = false }: { showPreviewAsLoading?: boolean }) => {
+export const SmsPreview = ({
+  showPreviewAsLoading = false,
+  inputVariables,
+}: {
+  showPreviewAsLoading?: boolean;
+  inputVariables?: any;
+}) => {
   const { navigateToStepEditor } = useNavigateToStepEditor();
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
@@ -54,9 +60,9 @@ export const SmsPreview = ({ showPreviewAsLoading = false }: { showPreviewAsLoad
 
   useEffect(() => {
     if (chimera) {
-      mutateAsync();
+      mutateAsync(inputVariables);
     }
-  }, [chimera]);
+  }, [chimera, inputVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: templateContent as string,
