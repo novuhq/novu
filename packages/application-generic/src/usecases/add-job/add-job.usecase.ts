@@ -30,6 +30,7 @@ import {
 } from '../execution-log-route';
 import { ModuleRef } from '@nestjs/core';
 import {
+  ExecuteOutput,
   IChimeraDigestResponse,
   IUseCaseInterfaceInline,
   requireInject,
@@ -109,7 +110,7 @@ export class AddJob {
     if (job.type === StepTypeEnum.DIGEST) {
       const chimeraResponse = await this.chimeraConnector.execute<
         AddJobCommand,
-        IChimeraDigestResponse
+        ExecuteOutput<IChimeraDigestResponse>
       >(command);
 
       validateDigest(job);
@@ -118,7 +119,7 @@ export class AddJob {
         stepMetadata: job.digest,
         payload: job.payload,
         overrides: job.overrides,
-        chimeraResponse,
+        chimeraResponse: chimeraResponse.outputs,
       });
 
       Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
@@ -127,7 +128,7 @@ export class AddJob {
         MergeOrCreateDigestCommand.create({
           job,
           filtered,
-          chimeraData: chimeraResponse,
+          chimeraData: chimeraResponse.outputs,
         })
       );
 

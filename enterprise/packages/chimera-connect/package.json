@@ -15,15 +15,17 @@
     "@novu/dal": "^0.23.1",
     "@novu/shared": "^0.23.1",
     "@novu/testing": "^0.23.1",
-    "class-validator": "^0.14.0",
+    "axios": "^1.6.2",
     "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.0",
+    "got": "^11.8.6",
     "shortid": "^2.2.16",
-    "slugify": "^1.4.6",
-    "axios": "^1.6.2"
+    "slugify": "^1.4.6"
   },
   "devDependencies": {
-    "@types/json-schema": "^7.0.15",
+    "@types/got": "^9.6.12",
     "@types/chai": "^4.2.11",
+    "@types/json-schema": "^7.0.15",
     "@types/mocha": "^8.0.1",
     "@types/node": "^14.6.0",
     "@types/sinon": "^9.0.0",

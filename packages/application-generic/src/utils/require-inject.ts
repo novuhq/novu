@@ -83,6 +83,14 @@ export type IChimeraChannelResponse =
   | IChimeraPushResponse
   | IChimeraSmsResponse;
 
+export type IChimeraActionResponse =
+  | IChimeraDelayResponse
+  | IChimeraDigestResponse;
+
+export type IChimeraStepResponse =
+  | IChimeraChannelResponse
+  | IChimeraActionResponse;
+
 export interface IUseCaseInterface<TInput, TResponse> {
   execute: (arg0: TInput) => TResponse;
 }
@@ -90,3 +98,17 @@ export interface IUseCaseInterface<TInput, TResponse> {
 export interface IUseCaseInterfaceInline {
   execute: <TInput, TResponse>(arg0: TInput) => Promise<TResponse>;
 }
+
+export type ExecuteOutputMetadata = {
+  status: string;
+  error: boolean;
+  /**
+   * The duration of the step in milliseconds
+   */
+  duration: number;
+};
+
+export type ExecuteOutput<OutputResult> = {
+  outputs: OutputResult;
+  metadata: ExecuteOutputMetadata;
+};

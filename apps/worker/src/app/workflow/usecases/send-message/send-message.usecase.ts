@@ -29,6 +29,7 @@ import {
   IChimeraChannelResponse,
   IUseCaseInterfaceInline,
   requireInject,
+  ExecuteOutput,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -134,7 +135,7 @@ export class SendMessage {
 
     const chimeraResponse = await this.chimeraConnector.execute<
       SendMessageCommand & { variables: IFilterVariables },
-      IChimeraChannelResponse
+      ExecuteOutput<IChimeraChannelResponse>
     >({
       ...command,
       variables: shouldRun.variables,
@@ -162,7 +163,7 @@ export class SendMessage {
     const sendMessageCommand = SendMessageCommand.create({
       ...command,
       compileContext: payload,
-      chimeraData: chimeraResponse,
+      chimeraData: chimeraResponse.outputs,
     });
 
     switch (stepType) {

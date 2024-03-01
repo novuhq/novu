@@ -18,6 +18,7 @@ import {
 } from '../execution-log-route';
 import { ModuleRef } from '@nestjs/core';
 import {
+  ExecuteOutput,
   IChimeraDelayResponse,
   IUseCaseInterfaceInline,
   requireInject,
@@ -55,14 +56,14 @@ export class AddDelayJob {
     try {
       const chimeraResponse = await this.chimeraConnector.execute<
         AddJobCommand,
-        IChimeraDelayResponse
+        ExecuteOutput<IChimeraDelayResponse>
       >(command);
 
       delay = this.calculateDelayService.calculateDelay({
         stepMetadata: data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
-        chimeraResponse,
+        chimeraResponse: chimeraResponse.outputs,
       });
 
       await this.jobRepository.updateStatus(
