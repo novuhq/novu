@@ -73,6 +73,8 @@ export class NotificationTemplateEntity implements INotificationTemplate {
   data?: NotificationTemplateCustomData;
 
   type?: NotificationTemplateTypeEnum;
+
+  rawData?: any;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<
