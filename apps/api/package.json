@@ -120,7 +120,8 @@
     "@novu/ee-chimera": "^0.23.1",
     "@novu/ee-auth": "^0.23.1",
     "@novu/ee-billing": "^0.23.1",
-    "@novu/ee-translation": "^0.23.1"
+    "@novu/ee-translation": "^0.23.1",
+    "@novu/ee-chimera": "^0.23.1"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
