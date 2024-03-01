@@ -86,6 +86,13 @@ export class WorkflowController {
   }
 
   @Post('/webhook')
+  @ApiOperation({
+    summary: 'Create new webhooks',
+    description: `
+      Using this endpoint you can create a new webhook for a workflow.
+      ID is guaranteed to be unique over all organizations and environments.
+    `,
+  })
   async createWebhookMethod(@Body() body: ICreateWebhookBody) {
     // TODO add variable validation
 
