@@ -89,13 +89,16 @@ export class AddDelayJob {
         process.env.NOVU_ENTERPRISE === 'true' ||
         process.env.CI_EE_TEST === 'true'
       ) {
-        if (!require('@novu/ee-auth')?.ChimeraConnector) {
+        if (!require('@novu/ee-chimera')?.ChimeraConnector) {
           throw new PlatformException('ChimeraConnector module is not loaded');
         }
 
-        return this.moduleRef.get(require('@novu/ee-auth')?.ChimeraConnector, {
-          strict: false,
-        });
+        return this.moduleRef.get(
+          require('@novu/ee-chimera')?.ChimeraConnector,
+          {
+            strict: false,
+          }
+        );
       }
     } catch (e) {
       Logger.error(

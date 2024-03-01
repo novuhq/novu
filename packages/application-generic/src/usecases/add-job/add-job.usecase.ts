@@ -30,6 +30,7 @@ import {
 } from '../execution-log-route';
 import { ModuleRef } from '@nestjs/core';
 import { PlatformException } from '../..';
+import { requireInject } from '../../utils/require-inject';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -39,7 +40,7 @@ const LOG_CONTEXT = 'AddJob';
 
 @Injectable()
 export class AddJob {
-  private chimeraConnector: any = this.initiateChimeraConnector();
+  private chimeraConnector: any;
 
   constructor(
     private jobRepository: JobRepository,
@@ -54,7 +55,9 @@ export class AddJob {
     @Inject(forwardRef(() => ConditionsFilter))
     private conditionsFilter: ConditionsFilter,
     private moduleRef: ModuleRef
-  ) {}
+  ) {
+    this.chimeraConnector = requireInject('ChimeraConnector', this.moduleRef);
+  }
 
   @InstrumentUsecase()
   @LogDecorator()
@@ -146,12 +149,13 @@ export class AddJob {
     let delayAmount;
 
     if (job.type === StepTypeEnum.DELAY) {
-      const chimeraResponse = await this.chimeraConnector.execute(command);
+      const chimeraResponse =
+        // await this.chimeraConnector.execute<IChimeraDelayResponse>(command);
 
-      delayAmount =
-        job.type === StepTypeEnum.DELAY
-          ? await this.addDelayJob.execute(command)
-          : undefined;
+        (delayAmount =
+          job.type === StepTypeEnum.DELAY
+            ? await this.addDelayJob.execute(command)
+            : undefined);
 
       // eslint-disable-next-line no-console
       console.log();
@@ -269,28 +273,5 @@ export class AddJob {
         return child.on === onFilter;
       });
     });
-  }
-
-  private initiateChimeraConnector() {
-    try {
-      if (
-        process.env.NOVU_ENTERPRISE === 'true' ||
-        process.env.CI_EE_TEST === 'true'
-      ) {
-        if (!require('@novu/ee-auth')?.ChimeraConnector) {
-          throw new PlatformException('ChimeraConnector module is not loaded');
-        }
-
-        return this.moduleRef.get(require('@novu/ee-auth')?.ChimeraConnector, {
-          strict: false,
-        });
-      }
-    } catch (e) {
-      Logger.error(
-        e,
-        `Unexpected error while importing enterprise modules`,
-        'ChimeraConnector'
-      );
-    }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "name": "@novu/ee-auth",
+  "name": "@novu/ee-chimera",
   "version": "0.23.1",
   "private": true,
   "main": "dist/index.js",
@@ -15,9 +15,17 @@
     "@novu/application-generic": "^0.23.1",
     "@novu/dal": "^0.23.1",
     "@novu/shared": "^0.23.1",
+    "@novu/stateless": "^0.23.1",
+    "@novu/testing": "^0.23.1",
+    "class-validator": "^0.14.0",
+    "class-transformer": "^0.5.1",
+    "shortid": "^2.2.16",
+    "slugify": "^1.4.6",
+    "axios": "^1.6.2",
     "passport-google-oauth": "^2.0.0"
   },
   "devDependencies": {
+    "@types/json-schema": "^7.0.15",
     "@types/chai": "^4.2.11",
     "@types/mocha": "^8.0.1",
     "@types/node": "^14.6.0",
