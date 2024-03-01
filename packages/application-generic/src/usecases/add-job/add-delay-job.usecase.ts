@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import {
@@ -7,7 +7,7 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 
-import { ApiException } from '../../utils/exceptions';
+import { ApiException, PlatformException } from '../../utils/exceptions';
 import { AddJobCommand } from './add-job.command';
 import { CalculateDelayService } from '../../services';
 import { InstrumentUsecase } from '../../instrumentation';
@@ -16,15 +16,19 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '../execution-log-route';
+import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class AddDelayJob {
+  private chimeraConnector: any = this.initiateChimeraConnector();
+
   constructor(
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => CalculateDelayService))
     private calculateDelayService: CalculateDelayService,
     @Inject(forwardRef(() => ExecutionLogRoute))
-    private executionLogRoute: ExecutionLogRoute
+    private executionLogRoute: ExecutionLogRoute,
+    private moduleRef: ModuleRef
   ) {}
 
   @InstrumentUsecase()
@@ -42,6 +46,8 @@ export class AddDelayJob {
     let delay;
 
     try {
+      const chimeraResponse = await this.chimeraConnector.execute(command);
+
       delay = this.calculateDelayService.calculateDelay({
         stepMetadata: data.step.metadata,
         payload: data.payload,
@@ -76,5 +82,27 @@ export class AddDelayJob {
     }
 
     return delay;
+  }
+  private initiateChimeraConnector() {
+    try {
+      if (
+        process.env.NOVU_ENTERPRISE === 'true' ||
+        process.env.CI_EE_TEST === 'true'
+      ) {
+        if (!require('@novu/ee-auth')?.ChimeraConnector) {
+          throw new PlatformException('ChimeraConnector module is not loaded');
+        }
+
+        return this.moduleRef.get(require('@novu/ee-auth')?.ChimeraConnector, {
+          strict: false,
+        });
+      }
+    } catch (e) {
+      Logger.error(
+        e,
+        `Unexpected error while importing enterprise modules`,
+        'ChimeraConnector'
+      );
+    }
   }
 }

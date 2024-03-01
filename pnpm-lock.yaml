@@ -3068,6 +3068,9 @@ importers:
         specifier: 7.8.1
         version: 7.8.1
     optionalDependencies:
+      '@novu/ee-auth':
+        specifier: ^0.23.1
+        version: link:../../enterprise/packages/auth
       '@taskforcesh/bullmq-pro':
         specifier: 5.1.14
         version: 5.1.14

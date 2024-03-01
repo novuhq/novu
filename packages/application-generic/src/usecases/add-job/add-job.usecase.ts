@@ -28,6 +28,8 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '../execution-log-route';
+import { ModuleRef } from '@nestjs/core';
+import { PlatformException } from '../..';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -37,6 +39,8 @@ const LOG_CONTEXT = 'AddJob';
 
 @Injectable()
 export class AddJob {
+  private chimeraConnector: any = this.initiateChimeraConnector();
+
   constructor(
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => StandardQueueService))
@@ -48,7 +52,8 @@ export class AddJob {
     @Inject(forwardRef(() => CalculateDelayService))
     private calculateDelayService: CalculateDelayService,
     @Inject(forwardRef(() => ConditionsFilter))
-    private conditionsFilter: ConditionsFilter
+    private conditionsFilter: ConditionsFilter,
+    private moduleRef: ModuleRef
   ) {}
 
   @InstrumentUsecase()
@@ -96,6 +101,8 @@ export class AddJob {
     let digestAmount: number | undefined;
     let digestCreationResult: DigestCreationResultEnum | undefined;
     if (job.type === StepTypeEnum.DIGEST) {
+      const chimeraResponse = await this.chimeraConnector.execute(command);
+
       validateDigest(job);
       digestAmount = this.calculateDelayService.calculateDelay({
         stepMetadata: job.digest,
@@ -136,12 +143,19 @@ export class AddJob {
       }
     }
 
-    const delayAmount =
-      job.type === StepTypeEnum.DELAY
-        ? await this.addDelayJob.execute(command)
-        : undefined;
+    let delayAmount;
 
     if (job.type === StepTypeEnum.DELAY) {
+      const chimeraResponse = await this.chimeraConnector.execute(command);
+
+      delayAmount =
+        job.type === StepTypeEnum.DELAY
+          ? await this.addDelayJob.execute(command)
+          : undefined;
+
+      // eslint-disable-next-line no-console
+      console.log();
+
       Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
 
       if (delayAmount === undefined) {
@@ -255,5 +269,28 @@ export class AddJob {
         return child.on === onFilter;
       });
     });
+  }
+
+  private initiateChimeraConnector() {
+    try {
+      if (
+        process.env.NOVU_ENTERPRISE === 'true' ||
+        process.env.CI_EE_TEST === 'true'
+      ) {
+        if (!require('@novu/ee-auth')?.ChimeraConnector) {
+          throw new PlatformException('ChimeraConnector module is not loaded');
+        }
+
+        return this.moduleRef.get(require('@novu/ee-auth')?.ChimeraConnector, {
+          strict: false,
+        });
+      }
+    } catch (e) {
+      Logger.error(
+        e,
+        `Unexpected error while importing enterprise modules`,
+        'ChimeraConnector'
+      );
+    }
   }
 }

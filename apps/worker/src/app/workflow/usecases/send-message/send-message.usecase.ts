@@ -1,4 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -44,7 +46,6 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
-import { ModuleRef } from '@nestjs/core';
 
 @Injectable()
 export class SendMessage {
@@ -126,7 +127,10 @@ export class SendMessage {
       });
     }
 
-    const chimeraResponse = await this.chimeraConnector.execute(command, shouldRun);
+    const chimeraResponse = await this.chimeraConnector.execute({
+      ...command,
+      variables: shouldRun.variables,
+    });
 
     if (!shouldRun?.passed || !preferred) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);

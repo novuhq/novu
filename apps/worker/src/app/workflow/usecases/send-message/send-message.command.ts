@@ -44,5 +44,6 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   job: JobEntity;
 
+  @IsOptional()
   chimeraData?: any;
 }

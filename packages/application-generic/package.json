@@ -159,7 +159,8 @@
     "rxjs": "7.8.1"
   },
   "optionalDependencies": {
-    "@taskforcesh/bullmq-pro": "5.1.14"
+    "@taskforcesh/bullmq-pro": "5.1.14",
+    "@novu/ee-auth": "^0.23.1"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
