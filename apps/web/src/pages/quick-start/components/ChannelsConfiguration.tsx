@@ -73,7 +73,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                   </When>
                 </TitleRow>
                 <Description>{channel.description}</Description>
-               <StyledButton
+                <StyledButton
                   loading={isLoading}
                   pulse={isOnboardingExperiment}
                   fullWidth={isOnboardingExperiment}

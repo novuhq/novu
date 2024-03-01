@@ -1,5 +1,6 @@
 import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { useIntegrations } from './integrations';
+import { IS_DOCKER_HOSTED } from '../config';
 
 export function useOnboardingExperiment() {
   const { integrations } = useIntegrations();
@@ -10,6 +11,6 @@ export function useOnboardingExperiment() {
   );
 
   return {
-    isOnboardingExperimentEnabled: !emailIntegrationOtherThanNovu,
+    isOnboardingExperimentEnabled: !emailIntegrationOtherThanNovu && !IS_DOCKER_HOSTED,
   };
 }

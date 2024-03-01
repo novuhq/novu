@@ -3,17 +3,18 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { EmailProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import type { IResponseError, ICreateNotificationTemplateDto, INotificationTemplate } from '@novu/shared';
+import { QueryKeys } from '@novu/shared-web';
+import { v4 as uuid4 } from 'uuid';
 
 import { createTemplate } from '../../notification-templates';
 import { parseUrl } from '../../../utils/routeUtils';
 import { ROUTES } from '../../../constants/routes.enum';
 import { errorMessage } from '../../../utils/notifications';
 import { useNotificationGroup, useTemplates, useIntegrations } from '../../../hooks';
-import { v4 as uuid4 } from 'uuid';
+
 import { FIRST_100_WORKFLOWS } from '../../../constants/workflowConstants';
 import { IntegrationEntity } from '../../../pages/integrations/types';
 import { setIntegrationAsPrimary } from '../../../api/integration';
-import { QueryKeys } from '@novu/shared-web';
 
 export const useCreateOnboardingExperimentWorkflow = () => {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export const useCreateOnboardingExperimentWorkflow = () => {
     },
   });
 
-  const { mutate: makePrimaryIntegration, ...rest } = useMutation<IntegrationEntity, IResponseError, { id: string }>(
+  const { mutate: makePrimaryIntegration } = useMutation<IntegrationEntity, IResponseError, { id: string }>(
     ({ id }) => setIntegrationAsPrimary(id),
     {
       onSuccess: () => {
@@ -51,7 +52,7 @@ export const useCreateOnboardingExperimentWorkflow = () => {
 
   const { templates = [], loading: templatesLoading } = useTemplates(FIRST_100_WORKFLOWS);
 
-  const { integrations, loading: areIntegrationsLoading } = useIntegrations();
+  const { integrations } = useIntegrations();
 
   const onboardingExperimentWorkflow = 'Onboarding Workflow';
 
