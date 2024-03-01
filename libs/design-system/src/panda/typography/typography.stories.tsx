@@ -3,6 +3,7 @@ import { StoryFn, Meta } from '@storybook/react';
 import { Text } from './Text';
 import { styled } from '../../../styled-system/jsx';
 import { text } from '../../../styled-system/recipes';
+import { css } from '../../../styled-system/css';
 
 export default {
   title: 'Panda/Components/Typography',
@@ -14,10 +15,14 @@ const Template: StoryFn<typeof Text> = ({ ...args }) => <Text {...args}>Example 
 
 const MyText = styled('p', text);
 
+const styles = css({
+  color: 'button.background',
+});
+
 export const all = () => (
   <div>
     <Text>Default Body</Text>
-    <MyText variant="strong" fontWeight="bold">
+    <MyText variant="main" className={styles}>
       Testing
     </MyText>
     <Text variant="main">Main text</Text>
