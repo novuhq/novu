@@ -22,7 +22,7 @@ import { useLocalThemePreference, useDebounce, useBootIntercom } from '../../../
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
 import { useAuthContext } from '../../providers/AuthProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
-import { HEADER_HEIGHT } from '../constants';
+import { HEADER_NAV_HEIGHT } from '../constants';
 import { NotificationCenterWidget } from './NotificationCenterWidget';
 import { useSegment } from '../../providers/SegmentProvider';
 
@@ -154,7 +154,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
 
   return (
     <Header
-      height={`${HEADER_HEIGHT}px`}
+      height={`${HEADER_NAV_HEIGHT}px`}
       sx={{
         position: 'sticky',
         top: 0,
@@ -164,7 +164,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
     >
       <Container
         fluid
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', height: `${HEADER_HEIGHT}px` }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', height: `${HEADER_NAV_HEIGHT}px` }}
       >
         <Group>
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
