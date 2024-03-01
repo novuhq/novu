@@ -1,5 +1,3 @@
-import type { Preset } from '@pandacss/types';
-
 /**
  * Represents the size of an element.
  *
