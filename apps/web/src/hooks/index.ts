@@ -24,4 +24,4 @@ export * from './useHoverOverItem';
 export * from './useCreateWorkflowFromBlueprint';
 export * from './useHover';
 export * from './useBootIntercom';
-export * from './useTrackThemeChange';
+export * from './useThemeChange';

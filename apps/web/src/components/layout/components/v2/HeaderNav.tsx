@@ -1,26 +1,22 @@
 import { ActionIcon, Avatar, Group, Header, useMantineColorScheme } from '@mantine/core';
-import * as capitalize from 'lodash.capitalize';
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
 import {
   colors,
   Dropdown,
-  IconDarkMode,
   IconHelpOutline,
-  IconLightMode,
   IconLogout,
   IconOutlineGroupAdd,
   IconSettings,
-  IconTonality,
   Text,
   Tooltip,
   When,
 } from '@novu/design-system';
 import { CONTEXT_PATH, IS_DOCKER_HOSTED, REACT_APP_VERSION } from '../../../../config';
 import { ROUTES } from '../../../../constants/routes.enum';
-import { useBootIntercom, useLocalThemePreference } from '../../../../hooks';
-import useTrackThemeChange from '../../../../hooks/useTrackThemeChange';
+import { useBootIntercom } from '../../../../hooks';
+import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { useAuthContext } from '../../../providers/AuthProvider';
 import { useSpotlightContext } from '../../../providers/SpotlightProvider';
@@ -29,45 +25,22 @@ import { NotificationCenterWidget } from '../NotificationCenterWidget';
 
 const FALLBACK_AVATAR = CONTEXT_PATH + '/static/images/avatar.png';
 
-const getThemeTitle = (themeStatus: string) => {
-  if (themeStatus === 'dark') {
-    return 'Dark Theme';
-  } else if (themeStatus === 'light') {
-    return 'Light Theme';
-  } else {
-    return 'Match System Appearance';
-  }
-};
-
-const menuItem = (iconColor: string) => [
+const menuItems = [
   {
     title: 'Settings',
-    icon: <IconSettings color={iconColor} />,
+    icon: <IconSettings color="inherit" />,
     path: ROUTES.SETTINGS,
   },
   {
     title: 'Invite Members',
-    icon: <IconOutlineGroupAdd color={iconColor} />,
+    icon: <IconOutlineGroupAdd color="inherit" />,
     path: ROUTES.TEAM,
   },
 ];
 
-const Icon = () => {
-  const { themeStatus } = useLocalThemePreference();
-
-  if (themeStatus === 'dark') {
-    return <IconDarkMode />;
-  }
-  if (themeStatus === 'light') {
-    return <IconLightMode />;
-  }
-
-  return <IconTonality />;
-};
-
 export function HeaderNav() {
   const { currentOrganization, currentUser, logout } = useAuthContext();
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+  const { colorScheme } = useMantineColorScheme();
 
   const { addItem, removeItems } = useSpotlightContext();
   const isSelfHosted = IS_DOCKER_HOSTED;
@@ -75,16 +48,14 @@ export function HeaderNav() {
   const iconColor = isDark ? colors.white : colors.B40;
 
   useBootIntercom();
-  useTrackThemeChange();
-
-  const themeTitle = useMemo(() => getThemeTitle(colorScheme), [colorScheme]);
+  const { themeIcon, themeLabel, toggleColorScheme } = useThemeChange();
 
   useEffect(() => {
     const spotlightMenuItems = [
       {
         id: 'toggle-theme',
-        title: themeTitle,
-        icon: <Icon />,
+        title: themeLabel,
+        icon: themeIcon,
         onTrigger: () => {
           toggleColorScheme();
         },
@@ -98,12 +69,9 @@ export function HeaderNav() {
         },
       },
     ];
-    removeItems(spotlightMenuItems.map((item) => item.id));
 
     addItem(spotlightMenuItems);
-  }, [addItem, removeItems, themeTitle, toggleColorScheme, logout]);
-
-  const menuItems = useMemo(() => menuItem(iconColor), [iconColor]);
+  }, [addItem, removeItems, themeLabel, toggleColorScheme, logout, themeIcon]);
 
   const profileMenuMantine = [
     <Dropdown.Item disabled key="user">
@@ -127,7 +95,7 @@ export function HeaderNav() {
     </Dropdown.Item>,
     ...menuItems.map(({ title, icon, path }) => (
       <Link to={path} key={`link-${title}`}>
-        <Dropdown.Item key={`item-${title}`} icon={icon} component="div">
+        <Dropdown.Item key={`item-${title}`} icon={icon} component="div" color="green">
           {title}
         </Dropdown.Item>
       </Link>
@@ -154,10 +122,8 @@ export function HeaderNav() {
           <NotificationCenterWidget user={currentUser} />
 
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
-            <Tooltip label={themeTitle}>
-              <div>
-                <Icon />
-              </div>
+            <Tooltip label={themeLabel}>
+              <div>{themeIcon}</div>
             </Tooltip>
           </ActionIcon>
           {isSelfHosted ? (
