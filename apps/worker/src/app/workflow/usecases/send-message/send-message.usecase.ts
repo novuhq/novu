@@ -26,6 +26,9 @@ import {
   IFilterVariables,
   Instrument,
   InstrumentUsecase,
+  IChimeraChannelResponse,
+  IUseCaseInterfaceInline,
+  requireInject,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -49,7 +52,7 @@ import { PlatformException } from '../../../shared/utils';
 
 @Injectable()
 export class SendMessage {
-  protected chimeraConnector: any = this.initiateChimeraConnector();
+  private chimeraConnector: IUseCaseInterfaceInline;
 
   constructor(
     private sendMessageEmail: SendMessageEmail,
@@ -69,7 +72,9 @@ export class SendMessage {
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     protected moduleRef: ModuleRef
-  ) {}
+  ) {
+    this.chimeraConnector = requireInject('chimera_connector', this.moduleRef);
+  }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
@@ -127,7 +132,10 @@ export class SendMessage {
       });
     }
 
-    const chimeraResponse = await this.chimeraConnector.execute({
+    const chimeraResponse = await this.chimeraConnector.execute<
+      SendMessageCommand & { variables: IFilterVariables },
+      IChimeraChannelResponse
+    >({
       ...command,
       variables: shouldRun.variables,
     });
@@ -413,21 +421,5 @@ export class SendMessage {
     }
 
     return tenant;
-  }
-
-  private initiateChimeraConnector() {
-    try {
-      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-chimera')?.ChimeraConnector) {
-          throw new PlatformException('ChimeraConnector module is not loaded');
-        }
-
-        return this.moduleRef.get(require('@novu/ee-chimera')?.ChimeraConnector, { strict: false });
-      }
-
-      return null;
-    } catch (e) {
-      Logger.error(e, `Unexpected error while importing enterprise modules`, 'ChimeraConnector');
-    }
   }
 }

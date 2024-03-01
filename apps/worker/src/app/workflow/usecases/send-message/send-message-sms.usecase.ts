@@ -272,7 +272,7 @@ export class SendMessageSms extends SendMessageBase {
       const result = await smsHandler.send({
         to: overrides.to || phone,
         from: overrides.from || integration.credentials.from,
-        content: command.chimeraData.content || overrides.content || content,
+        content: command.chimeraData?.body || overrides.content || content,
         id: message._id,
         customData: overrides.customData || {},
       });

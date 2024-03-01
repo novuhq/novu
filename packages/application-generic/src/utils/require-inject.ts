@@ -54,6 +54,35 @@ export interface IChimeraDelayResponse {
   type: 'regular';
 }
 
+export interface IChimeraInAppResponse {
+  body: string;
+}
+
+export interface IChimeraChatResponse {
+  body: string;
+}
+
+export interface IChimeraEmailResponse {
+  subject: string;
+  body: string;
+}
+
+export interface IChimeraPushResponse {
+  subject: string;
+  body: string;
+}
+
+export interface IChimeraSmsResponse {
+  body: string;
+}
+
+export type IChimeraChannelResponse =
+  | IChimeraInAppResponse
+  | IChimeraChatResponse
+  | IChimeraEmailResponse
+  | IChimeraPushResponse
+  | IChimeraSmsResponse;
+
 export interface IUseCaseInterface<TInput, TResponse> {
   execute: (arg0: TInput) => TResponse;
 }

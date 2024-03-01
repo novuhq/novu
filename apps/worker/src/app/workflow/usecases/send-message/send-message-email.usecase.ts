@@ -31,6 +31,7 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  IChimeraEmailResponse,
 } from '@novu/application-generic';
 import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
@@ -263,8 +264,8 @@ export class SendMessageEmail extends SendMessageBase {
     const mailData: IEmailOptions = createMailData(
       {
         to: email,
-        subject: command.chimeraData.subject || subject,
-        html: command.chimeraData.body || html,
+        subject: (command.chimeraData as IChimeraEmailResponse)?.subject || subject,
+        html: (command.chimeraData as IChimeraEmailResponse)?.body || html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
         senderName,

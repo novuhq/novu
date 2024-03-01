@@ -31,6 +31,7 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  IChimeraPushResponse,
 } from '@novu/application-generic';
 import type { IPushOptions } from '@novu/stateless';
 
@@ -287,8 +288,8 @@ export class SendMessagePush extends SendMessageBase {
 
       const result = await pushHandler.send({
         target: [deviceToken],
-        title: command.chimeraData.subject || title,
-        content: command.chimeraData.content || content,
+        title: (command.chimeraData as IChimeraPushResponse)?.subject || title,
+        content: (command.chimeraData as IChimeraPushResponse)?.body || content,
         payload: command.payload,
         overrides,
         subscriber,
