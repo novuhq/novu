@@ -1,10 +1,11 @@
 import { InstrumentUsecase } from '@novu/application-generic';
 import { ApiException } from '../../shared/exceptions/api.exception';
-import { CreateWebhookCommand, UpdateWebhookCommand } from '../dtos/webhook-request.dto';
+import { CreateWebhookCommand, SpecificWebhookCommand, UpdateWebhookCommand } from '../dtos/webhook-request.dto';
 import { WebhookTriggerRepository } from '@novu/dal/src/repositories/webhook-trigger/webhook-trigger.repository';
+import { GenID } from './gen-id.usecase';
 
 export class CreateWebhook {
-  constructor(private webhookRepository: WebhookTriggerRepository) {}
+  constructor(private webhookRepository: WebhookTriggerRepository, private genId: GenID) {}
 
   @InstrumentUsecase()
   async execute(command: CreateWebhookCommand) {
@@ -17,6 +18,12 @@ export class CreateWebhook {
       description: command.description,
       active: command.active ?? false,
       variables: command.variables ?? [],
+      token: this.genId.execute(
+        SpecificWebhookCommand.create({
+          webhookId: command.webhookId,
+        })
+      ),
+      subscribers: command.subscribers,
     });
   }
 }

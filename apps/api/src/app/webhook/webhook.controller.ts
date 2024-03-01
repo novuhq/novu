@@ -87,6 +87,8 @@ export class WorkflowController {
 
   @Post('/webhook')
   async createWebhookMethod(@Body() body: ICreateWebhookBody) {
+    // TODO add variable validation
+
     await this.createWebhook.execute(
       CreateWebhookCommand.create({
         webhookId: body.webhookId,
@@ -128,6 +130,8 @@ export class WorkflowController {
       })
     );
 
+    // TODO add variable validation
+
     return await this.getWebhook.execute(
       SpecificWebhookCommand.create({
         webhookId: body.webhookId,
@@ -165,6 +169,10 @@ export class WorkflowController {
     `,
   })
   async triggerWebhook(@Param('webhookId') webhookId: string): Promise<string> {
+    // Get webhook
+
+    // Pass webhook to trigger event
+
     return 'TODO';
   }
 }
