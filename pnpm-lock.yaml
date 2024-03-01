@@ -433,6 +433,9 @@ importers:
       '@novu/ee-billing':
         specifier: ^0.23.1
         version: link:../../enterprise/packages/billing
+      '@novu/ee-chimera':
+        specifier: ^0.23.1
+        version: link:../../enterprise/packages/chimera
       '@novu/ee-translation':
         specifier: ^0.23.1
         version: link:../../enterprise/packages/translation

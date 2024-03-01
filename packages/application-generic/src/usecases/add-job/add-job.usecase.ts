@@ -29,8 +29,11 @@ import {
   ExecutionLogRouteCommand,
 } from '../execution-log-route';
 import { ModuleRef } from '@nestjs/core';
-import { PlatformException } from '../..';
-import { requireInject } from '../../utils/require-inject';
+import {
+  IChimeraDigestResponse,
+  IUseCaseInterfaceInline,
+  requireInject,
+} from '../../utils/require-inject';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -40,7 +43,7 @@ const LOG_CONTEXT = 'AddJob';
 
 @Injectable()
 export class AddJob {
-  private chimeraConnector: any;
+  private chimeraConnector: IUseCaseInterfaceInline;
 
   constructor(
     private jobRepository: JobRepository,
@@ -56,7 +59,7 @@ export class AddJob {
     private conditionsFilter: ConditionsFilter,
     private moduleRef: ModuleRef
   ) {
-    this.chimeraConnector = requireInject('ChimeraConnector', this.moduleRef);
+    this.chimeraConnector = requireInject('chimera_connector', this.moduleRef);
   }
 
   @InstrumentUsecase()
@@ -104,18 +107,28 @@ export class AddJob {
     let digestAmount: number | undefined;
     let digestCreationResult: DigestCreationResultEnum | undefined;
     if (job.type === StepTypeEnum.DIGEST) {
-      const chimeraResponse = await this.chimeraConnector.execute(command);
+      const chimeraResponse = await this.chimeraConnector.execute<
+        AddJobCommand,
+        IChimeraDigestResponse
+      >(command);
 
       validateDigest(job);
+
       digestAmount = this.calculateDelayService.calculateDelay({
         stepMetadata: job.digest,
         payload: job.payload,
         overrides: job.overrides,
+        chimeraResponse,
       });
+
       Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
 
       digestCreationResult = await this.mergeOrCreateDigestUsecase.execute(
-        MergeOrCreateDigestCommand.create({ job, filtered })
+        MergeOrCreateDigestCommand.create({
+          job,
+          filtered,
+          chimeraData: chimeraResponse,
+        })
       );
 
       if (digestCreationResult === DigestCreationResultEnum.MERGED) {
@@ -146,19 +159,13 @@ export class AddJob {
       }
     }
 
-    let delayAmount;
+    let delayAmount: number | undefined = undefined;
 
     if (job.type === StepTypeEnum.DELAY) {
-      const chimeraResponse =
-        // await this.chimeraConnector.execute<IChimeraDelayResponse>(command);
-
-        (delayAmount =
-          job.type === StepTypeEnum.DELAY
-            ? await this.addDelayJob.execute(command)
-            : undefined);
-
-      // eslint-disable-next-line no-console
-      console.log();
+      delayAmount =
+        job.type === StepTypeEnum.DELAY
+          ? await this.addDelayJob.execute(command)
+          : undefined;
 
       Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
 

@@ -37,11 +37,27 @@ const initiateChimeraConnector = (moduleRef: ModuleRef) => {
 type RequireInject = `${RequireInjectEnum}`;
 
 enum RequireInjectEnum {
-  CHIMERA_CONNECT = 'ChimeraConnector',
+  CHIMERA_CONNECT = 'chimera_connector',
+}
+
+export interface IChimeraDigestResponse {
+  amount: number;
+  unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
+  type: 'regular';
+  backoff: boolean;
+  digestKey: string;
 }
 
 export interface IChimeraDelayResponse {
   amount: number;
   unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
   type: 'regular';
+}
+
+export interface IUseCaseInterface<TInput, TResponse> {
+  execute: (arg0: TInput) => TResponse;
+}
+
+export interface IUseCaseInterfaceInline {
+  execute: <TInput, TResponse>(arg0: TInput) => Promise<TResponse>;
 }

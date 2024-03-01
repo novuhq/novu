@@ -7,7 +7,7 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 
-import { ApiException, PlatformException } from '../../utils/exceptions';
+import { ApiException } from '../../utils/exceptions';
 import { AddJobCommand } from './add-job.command';
 import { CalculateDelayService } from '../../services';
 import { InstrumentUsecase } from '../../instrumentation';
@@ -17,10 +17,15 @@ import {
   ExecutionLogRouteCommand,
 } from '../execution-log-route';
 import { ModuleRef } from '@nestjs/core';
+import {
+  IChimeraDelayResponse,
+  IUseCaseInterfaceInline,
+  requireInject,
+} from '../../utils/require-inject';
 
 @Injectable()
 export class AddDelayJob {
-  private chimeraConnector: any = this.initiateChimeraConnector();
+  private chimeraConnector: IUseCaseInterfaceInline;
 
   constructor(
     private jobRepository: JobRepository,
@@ -29,7 +34,9 @@ export class AddDelayJob {
     @Inject(forwardRef(() => ExecutionLogRoute))
     private executionLogRoute: ExecutionLogRoute,
     private moduleRef: ModuleRef
-  ) {}
+  ) {
+    this.chimeraConnector = requireInject('chimera_connector', this.moduleRef);
+  }
 
   @InstrumentUsecase()
   public async execute(command: AddJobCommand): Promise<number | undefined> {
@@ -46,12 +53,16 @@ export class AddDelayJob {
     let delay;
 
     try {
-      const chimeraResponse = await this.chimeraConnector.execute(command);
+      const chimeraResponse = await this.chimeraConnector.execute<
+        AddJobCommand,
+        IChimeraDelayResponse
+      >(command);
 
       delay = this.calculateDelayService.calculateDelay({
         stepMetadata: data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
+        chimeraResponse,
       });
 
       await this.jobRepository.updateStatus(
@@ -82,30 +93,5 @@ export class AddDelayJob {
     }
 
     return delay;
-  }
-  private initiateChimeraConnector() {
-    try {
-      if (
-        process.env.NOVU_ENTERPRISE === 'true' ||
-        process.env.CI_EE_TEST === 'true'
-      ) {
-        if (!require('@novu/ee-chimera')?.ChimeraConnector) {
-          throw new PlatformException('ChimeraConnector module is not loaded');
-        }
-
-        return this.moduleRef.get(
-          require('@novu/ee-chimera')?.ChimeraConnector,
-          {
-            strict: false,
-          }
-        );
-      }
-    } catch (e) {
-      Logger.error(
-        e,
-        `Unexpected error while importing enterprise modules`,
-        'ChimeraConnector'
-      );
-    }
   }
 }
