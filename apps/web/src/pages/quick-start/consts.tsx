@@ -281,7 +281,7 @@ export enum OnBoardingAnalyticsEnum {
   CONFIGURE_LATER_CLICK = 'Configure Later Click',
 
   // Onboarding Experiment
-  ONBOARDING_EXPERIMENT_TEST_NOTIFICATION = 'Buton Clicked - [Onboarding]',
+  ONBOARDING_EXPERIMENT_TEST_NOTIFICATION = 'Button Clicked - [Onboarding]',
 }
 
 export enum FlowTypeEnum {
