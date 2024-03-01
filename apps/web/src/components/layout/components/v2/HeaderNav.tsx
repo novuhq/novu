@@ -24,7 +24,7 @@ import useTrackThemeChange from '../../../../hooks/useTrackThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { useAuthContext } from '../../../providers/AuthProvider';
 import { useSpotlightContext } from '../../../providers/SpotlightProvider';
-import { HEADER_HEIGHT } from '../../constants';
+import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
 
 const FALLBACK_AVATAR = CONTEXT_PATH + '/static/images/avatar.png';
@@ -108,7 +108,7 @@ export function HeaderNav() {
   const profileMenuMantine = [
     <Dropdown.Item disabled key="user">
       <Group spacing={16} noWrap>
-        <Avatar radius="sm" size={40} src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'} />
+        <Avatar radius="sm" size={40} src={currentUser?.profilePicture || FALLBACK_AVATAR} />
         <div style={{ flex: 1 }}>
           <Text data-test-id="header-dropdown-username" rows={1} weight="bold" transform="capitalize">
             {currentUser?.firstName as string} {currentUser?.lastName as string}
@@ -139,7 +139,7 @@ export function HeaderNav() {
 
   return (
     <Header
-      height={`${HEADER_HEIGHT}px`}
+      height={`${HEADER_NAV_HEIGHT}px`}
       sx={{
         position: 'sticky',
         top: 0,
