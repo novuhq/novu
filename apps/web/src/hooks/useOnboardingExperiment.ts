@@ -1,4 +1,5 @@
-import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
+
 import { useIntegrations } from './integrations';
 import { IS_DOCKER_HOSTED } from '../config';
 

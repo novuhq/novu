@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Grid } from '@mantine/core';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ActiveLabel, Button, colors } from '@novu/design-system';
 
 import { IQuickStartChannelConfiguration, OnBoardingAnalyticsEnum, quickStartChannels } from '../consts';
 import { When } from '../../../components/utils/When';
-import { ActiveLabel, Button, colors } from '@novu/design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useActiveIntegrations, useIntegrationLimit } from '../../../hooks';
 import type { IntegrationEntity } from '../../integrations/types';
@@ -78,8 +78,10 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                 </TitleRow>
                 <Description>{channel.description}</Description>
                 <StyledButton
-                  loading={isLoading || IsCreateOnboardingExpWorkflowLoading}
-                  disabled={isIsCreateOnboardingExpWorkflowDisabled}
+                  loading={
+                    isLoading || (channel.type === ChannelTypeEnum.EMAIL && IsCreateOnboardingExpWorkflowLoading)
+                  }
+                  disabled={channel.type === ChannelTypeEnum.EMAIL && isIsCreateOnboardingExpWorkflowDisabled}
                   pulse={isOnboardingExperiment}
                   fullWidth={isOnboardingExperiment}
                   variant={isOnboardingExperiment ? 'gradient' : 'outline'}
