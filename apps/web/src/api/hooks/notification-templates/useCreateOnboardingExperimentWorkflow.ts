@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuid4 } from 'uuid';
 import { EmailProviderIdEnum, StepTypeEnum } from '@novu/shared';
-import type { IResponseError, ICreateNotificationTemplateDto, INotificationTemplate } from '@novu/shared';
+import type { ICreateNotificationTemplateDto, INotificationTemplate } from '@novu/shared';
 import { QueryKeys } from '@novu/shared-web';
 
 import { createTemplate } from '../../notification-templates';
@@ -22,7 +22,11 @@ export const useCreateOnboardingExperimentWorkflow = () => {
 
   const { mutateAsync: createNotificationTemplate, isLoading: isCreating } = useMutation<
     INotificationTemplate & { __source?: string },
-    IResponseError,
+    {
+      error: string;
+      message: string;
+      statusCode: number;
+    },
     { template: ICreateNotificationTemplateDto; params: { __source?: string } }
   >((data) => createTemplate(data.template, data.params), {
     onSuccess: (template) => {
@@ -35,7 +39,11 @@ export const useCreateOnboardingExperimentWorkflow = () => {
 
   const { mutate: makePrimaryIntegration, isLoading: isPrimaryEmailIntegrationLoading } = useMutation<
     IntegrationEntity,
-    IResponseError,
+    {
+      error: string;
+      message: string;
+      statusCode: number;
+    },
     { id: string }
   >(({ id }) => setIntegrationAsPrimary(id), {
     onSuccess: () => {
