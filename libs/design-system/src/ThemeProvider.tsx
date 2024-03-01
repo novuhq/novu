@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { MantineProvider, Global, ColorSchemeProvider, ColorScheme, MantineTheme } from '@mantine/core';
 import { NotificationsProvider } from '@mantine/notifications';
 import { useColorScheme } from '@mantine/hooks';
-import { useLocalThemePreference } from '@novu/shared-web';
+import { ColorSchemePreferenceEnum, useLocalThemePreference } from '@novu/shared-web';
 
 import { mantineConfig } from './config/theme.config';
 import { colors, shadows } from './config';
@@ -68,22 +68,22 @@ export function ThemeProvider({ children }: { children: ReactNode | ReactNode[];
   const { themeStatus, setThemeStatus } = useLocalThemePreference();
 
   const toggleColorScheme = () => {
-    if (themeStatus === 'system') {
-      setThemeStatus('light');
-    } else if (themeStatus === 'light') {
-      setThemeStatus('dark');
+    if (themeStatus === ColorSchemePreferenceEnum.SYSTEM) {
+      setThemeStatus(ColorSchemePreferenceEnum.LIGHT);
+    } else if (themeStatus === ColorSchemePreferenceEnum.LIGHT) {
+      setThemeStatus(ColorSchemePreferenceEnum.DARK);
     } else {
-      setThemeStatus('system');
+      setThemeStatus(ColorSchemePreferenceEnum.SYSTEM);
     }
   };
 
   useEffect(() => {
-    if (themeStatus === 'system') {
+    if (themeStatus === ColorSchemePreferenceEnum.SYSTEM) {
       setColorScheme(preferredColorScheme);
-    } else if (themeStatus === 'light') {
-      setColorScheme('light');
+    } else if (themeStatus === ColorSchemePreferenceEnum.LIGHT) {
+      setColorScheme(ColorSchemePreferenceEnum.LIGHT);
     } else {
-      setColorScheme('dark');
+      setColorScheme(ColorSchemePreferenceEnum.DARK);
     }
   }, [themeStatus, preferredColorScheme]);
 
