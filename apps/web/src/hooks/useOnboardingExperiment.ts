@@ -4,7 +4,7 @@ import { useIntegrations } from './integrations';
 import { IS_DOCKER_HOSTED } from '../config';
 
 export function useOnboardingExperiment() {
-  const { integrations } = useIntegrations();
+  const { integrations, loading: areIntegrationsLoading } = useIntegrations();
 
   const emailIntegrationOtherThanNovu = integrations?.find(
     (integration) =>
@@ -12,6 +12,6 @@ export function useOnboardingExperiment() {
   );
 
   return {
-    isOnboardingExperimentEnabled: !emailIntegrationOtherThanNovu && !IS_DOCKER_HOSTED,
+    isOnboardingExperimentEnabled: !areIntegrationsLoading && !emailIntegrationOtherThanNovu && !IS_DOCKER_HOSTED,
   };
 }
