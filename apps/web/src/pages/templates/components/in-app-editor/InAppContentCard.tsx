@@ -19,47 +19,49 @@ export function InAppContentCard({ openVariablesModal }: { openVariablesModal: (
   const { readonly, chimera } = useEnvController({}, template?.chimera);
   const theme = useMantineTheme();
 
-  const [activeTab, setActiveTab] = useState<string>(EDITOR);
+  const [activeTab, setActiveTab] = useState<string>(chimera ? PREVIEW : EDITOR);
   const stepFormPath = useStepFormPath();
 
   return (
     <div data-test-id="editor-type-selector">
-      <SegmentedControl
-        data-test-id="editor-mode-switch"
-        styles={{
-          root: {
-            background: 'transparent',
-            border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
-            borderRadius: '30px',
-            width: '100%',
-            maxWidth: '300px',
-          },
-          label: {
-            fontSize: '14px',
-            lineHeight: '24px',
-          },
-          control: {
-            minWidth: '80px',
-          },
-          active: {
-            background: theme.colorScheme === 'dark' ? colors.B40 : colors.B98,
-            borderRadius: '30px',
-          },
-          labelActive: {
-            color: `${theme.colorScheme === 'dark' ? colors.white : colors.B40} !important`,
-            fontSize: '14px',
-            lineHeight: '24px',
-          },
-        }}
-        data={[EDITOR, PREVIEW]}
-        value={activeTab}
-        onChange={(value) => {
-          setActiveTab(value);
-        }}
-        defaultValue={activeTab}
-        fullWidth
-        radius={'xl'}
-      />
+      <When truthy={!chimera}>
+        <SegmentedControl
+          data-test-id="editor-mode-switch"
+          styles={{
+            root: {
+              background: 'transparent',
+              border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
+              borderRadius: '30px',
+              width: '100%',
+              maxWidth: '300px',
+            },
+            label: {
+              fontSize: '14px',
+              lineHeight: '24px',
+            },
+            control: {
+              minWidth: '80px',
+            },
+            active: {
+              background: theme.colorScheme === 'dark' ? colors.B40 : colors.B98,
+              borderRadius: '30px',
+            },
+            labelActive: {
+              color: `${theme.colorScheme === 'dark' ? colors.white : colors.B40} !important`,
+              fontSize: '14px',
+              lineHeight: '24px',
+            },
+          }}
+          data={[EDITOR, PREVIEW]}
+          value={activeTab}
+          onChange={(value) => {
+            setActiveTab(value);
+          }}
+          defaultValue={activeTab}
+          fullWidth
+          radius={'xl'}
+        />
+      </When>
       <When truthy={activeTab === PREVIEW}>
         <div style={{ marginTop: '1.5rem' }}>
           <InAppPreview showVariables />
@@ -68,13 +70,8 @@ export function InAppContentCard({ openVariablesModal }: { openVariablesModal: (
       <When truthy={activeTab === EDITOR}>
         <Grid mt={24} grow>
           <Grid.Col span={9}>
-            <When truthy={!chimera}>
-              <InAppEditorBlock readonly={readonly} />
-              <AvatarFeedFields />
-            </When>
-            <When truthy={chimera}>
-              <InputVariables />
-            </When>
+            <InAppEditorBlock readonly={readonly} />
+            <AvatarFeedFields />
           </Grid.Col>
           <Grid.Col
             span={3}

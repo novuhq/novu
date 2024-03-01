@@ -10,17 +10,44 @@ import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplat
 import Content from './Content';
 import { Header } from './Header';
 import { useProcessVariables } from '../../../../hooks';
+import { api, useEnvController } from '@novu/shared-web';
+import { useMutation } from '@tanstack/react-query';
+import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
+import { InputVariables } from '../../../../pages/templates/components/InputVariables';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
   const theme = useMantineTheme();
   const [payloadValue, setPayloadValue] = useState('{}');
-  const { watch } = useFormContext<IForm>();
+  const { watch, formState } = useFormContext<IForm>();
+  const { template } = useTemplateEditorForm();
+  const { chimera } = useEnvController({}, template?.chimera);
   const path = useStepFormPath();
 
   const content = watch(`${path}.template.content`);
   const variables = watch(`${path}.template.variables`);
   const enableAvatar = watch(`${path}.template.enableAvatar`);
   const processedVariables = useProcessVariables(variables);
+
+  const stepId = watch(`${path}.template.name`);
+  const [chimeraContent, setChimeraContent] = useState({ content: '', ctaButtons: [] });
+
+  const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
+    (data) => api.post('/v1/chimera/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setChimeraContent({
+          content: data.outputs.body,
+          ctaButtons: [],
+        });
+      },
+    }
+  );
+
+  useEffect(() => {
+    if (chimera) {
+      mutateAsync();
+    }
+  }, [chimera]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
@@ -41,13 +68,13 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
           <Header
             selectedLocale={selectedLocale}
             locales={locales}
-            areLocalesLoading={areLocalesLoading}
+            areLocalesLoading={areLocalesLoading || isChimeraLoading}
             onLocaleChange={onLocaleChange}
           />
           <Content
-            isPreviewLoading={isPreviewLoading}
-            parsedPreviewState={parsedPreviewState}
-            templateError={templateError}
+            isPreviewLoading={isPreviewLoading || isChimeraLoading}
+            parsedPreviewState={chimera ? chimeraContent : parsedPreviewState}
+            templateError={chimera ? '' : templateError}
             showOverlay={!showVariables}
             enableAvatar={enableAvatar}
           />
@@ -66,28 +93,40 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
               paddingTop: 0,
             }}
           >
-            <JsonInput
-              data-test-id="preview-json-param"
-              formatOnBlur
-              autosize
-              styles={inputStyles}
-              label="Payload"
-              value={payloadValue}
-              onChange={setPayloadValue}
-              minRows={6}
-              mb={20}
-              validationError="Invalid JSON"
-            />
-            <Button
-              fullWidth
-              onClick={() => {
-                parseInAppContent(payloadValue);
-              }}
-              variant="outline"
-              data-test-id="apply-variables"
-            >
-              Apply Variables
-            </Button>
+            <When truthy={!chimera}>
+              <JsonInput
+                data-test-id="preview-json-param"
+                formatOnBlur
+                autosize
+                styles={inputStyles}
+                label="Payload"
+                value={payloadValue}
+                onChange={setPayloadValue}
+                minRows={6}
+                mb={20}
+                validationError="Invalid JSON"
+              />
+              <Button
+                fullWidth
+                onClick={() => {
+                  parseInAppContent(payloadValue);
+                }}
+                variant="outline"
+                data-test-id="apply-variables"
+              >
+                Apply Variables
+              </Button>
+            </When>
+            <When truthy={chimera}>
+              <InputVariables
+                onSubmit={(values) => {
+                  mutateAsync(values);
+                }}
+                onChange={(values: any) => {
+                  mutateAsync(values);
+                }}
+              />
+            </When>
           </div>
         </Grid.Col>
       </When>
