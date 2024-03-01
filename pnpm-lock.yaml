@@ -1693,9 +1693,6 @@ importers:
       '@novu/dal':
         specifier: ^0.23.1
         version: link:../../../libs/dal
-      '@novu/ee-dal':
-        specifier: ^0.23.1
-        version: link:../libs/dal
       '@novu/shared':
         specifier: ^0.23.1
         version: link:../../../libs/shared
@@ -1948,6 +1945,9 @@ importers:
       '@novu/dal':
         specifier: ^0.23.1
         version: link:../../../libs/dal
+      '@novu/ee-dal':
+        specifier: ^0.23.1
+        version: link:../libs/dal
       '@novu/shared':
         specifier: ^0.23.1
         version: link:../../../libs/shared
@@ -1966,6 +1966,9 @@ importers:
       class-validator:
         specifier: ^0.14.0
         version: 0.14.0
+      json-schema-defaults:
+        specifier: ^0.4.0
+        version: 0.4.0
       passport:
         specifier: 0.6.0
         version: 0.6.0
@@ -43860,6 +43863,13 @@ packages:
     resolution: {integrity: sha512-c4WYmDKyJXhs7WWvAWm3uIYnfyWFoIp+JEoX34rctVvEkMYCPGhXtvmFFXiffBbxfZsvQ0RNnV5H7GvDF5HCqQ==}
     dependencies:
       lodash: 4.17.21
+    dev: false
+
+  /json-schema-defaults@0.4.0:
+    resolution: {integrity: sha512-UsUrkDVNvHTneyeQOYHH9ZHb3+6OjwYfJ831SdO0yjtXtYZ7Jh8BKWsuJYUQW7qckP5JhHawsg4GI6A5fMaR/Q==}
+    hasBin: true
+    dependencies:
+      argparse: 1.0.10
     dev: false
 
   /json-schema-merge-allof@0.8.1:
