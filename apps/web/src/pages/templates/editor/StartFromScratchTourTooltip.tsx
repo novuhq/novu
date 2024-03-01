@@ -1,14 +1,8 @@
 import { Group, Stack, UnstyledButton, useMantineColorScheme } from '@mantine/core';
-import { IUserEntity } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
-import { use } from 'chai';
 import { TooltipRenderProps } from 'react-joyride';
 import { useNavigate, useParams } from 'react-router-dom';
-import { updateUserOnBoardingTour } from '../../../api/user';
-import { useAuthContext } from '../../../components/providers/AuthProvider';
-
-import { useSegment } from '../../../components/providers/SegmentProvider';
-import { When } from '../../../components/utils/When';
+import type { IResponseError, IUserEntity } from '@novu/shared';
 import {
   Button,
   colors,
@@ -20,6 +14,11 @@ import {
   RunTestBell,
   WorkflowSettings,
 } from '@novu/design-system';
+
+import { updateUserOnBoardingTour } from '../../../api/user';
+import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { When } from '../../../components/utils/When';
 import { errorMessage } from '../../../utils/notifications';
 import { ordinalNumbers, SCRATCH_HINT_INDEX_TO_CLICK_ANALYTICS, StartFromScratchTourAnalyticsEnum } from '../constants';
 import { useBasePath } from '../hooks/useBasePath';
@@ -57,7 +56,7 @@ export const StartFromScratchTourTooltip = ({
 }: TooltipRenderProps) => {
   const { mutateAsync: updateOnBoardingTourStatus } = useMutation<
     IUserEntity,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { showOnBoardingTour: number }
   >(({ showOnBoardingTour }) => updateUserOnBoardingTour(showOnBoardingTour), {
     onError: (err) => {

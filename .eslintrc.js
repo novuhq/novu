@@ -27,7 +27,7 @@ module.exports = {
     '@typescript-eslint/lines-between-class-members': 'off',
     'react/jsx-wrap-multilines': 'off',
     'react/jsx-filename-extension': 'off',
-    'multiline-comment-style': ['error', 'starred-block'],
+    'multiline-comment-style': ['warn', 'starred-block'],
     'promise/catch-or-return': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/no-unused-expressions': 'off',

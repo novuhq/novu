@@ -1,6 +1,7 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { INotificationTemplate } from '@novu/shared';
 import { useEffect, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { IResponseError, INotificationTemplate } from '@novu/shared';
+
 import { updateTemplateStatus } from '../../../api/notification-templates';
 import { QueryKeys } from '../../../api/query.keys';
 import { successMessage } from '../../../utils/notifications';
@@ -10,7 +11,7 @@ export function useStatusChangeControllerHook(templateId: string, template: INot
   const [isTemplateActive, setIsTemplateActive] = useState<boolean>();
   const { isLoading: isStatusChangeLoading, mutateAsync: updateNotificationStatus } = useMutation<
     INotificationTemplate,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { id: string; active: boolean }
   >(({ id, active }) => updateTemplateStatus(id, active), {
     onSuccess: () => {

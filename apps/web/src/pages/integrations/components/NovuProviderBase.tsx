@@ -1,10 +1,11 @@
 import React from 'react';
 import styled from '@emotion/styled';
 import { Stack, Text, useMantineColorScheme } from '@mantine/core';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import { colors, Close } from '@novu/design-system';
+
 import { When } from '../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../config';
-import { colors, Close } from '@novu/design-system';
 import { useIntegrationLimit } from '../../../hooks';
 import { LimitBar } from './LimitBar';
 
@@ -53,7 +54,7 @@ export function NovuProviderBase({ onClose, senderInformation, channel }: NovuPr
           <InlineDiv>
             <span>Read more about Integrations in</span>
             <a
-              href="https://docs.novu.co/channels-and-providers/integration-store"
+              href={`https://docs.novu.co/channels-and-providers/integration-store${UTM_CAMPAIGN_QUERY_PARAM}`}
               target="_blank"
               rel="noreferrer"
               style={{ color: '#DD2476 ', textDecoration: 'underline' }}

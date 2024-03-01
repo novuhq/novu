@@ -43,7 +43,7 @@ const FooterHolder = styled.div`
   margin-top: auto;
 `;
 
-const COLLAPSED_WIDTH = 480;
+const COLLAPSED_WIDTH = 600;
 const NAVIGATION_WIDTH = 300;
 
 const useDrawerStyles = createStyles((theme: MantineTheme) => {

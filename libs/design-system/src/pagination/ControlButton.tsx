@@ -29,7 +29,11 @@ const getBackgroundColor = ({ theme, isCurrentPage }: { theme: any } & StylingPr
   return isCurrentPage ? (theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight) : 'none';
 };
 
-const StyledButton = styled(Button)<StylingProps>(
+const StyledButton = styled(Button, {
+  shouldForwardProp: (propName: string) => {
+    return propName !== 'isCurrentPage';
+  },
+})<StylingProps>(
   ({ theme, isCurrentPage }) => `
   font-weight: ${getFontWeight({ theme, isCurrentPage })};
   background: ${getBackgroundColor({ theme, isCurrentPage })};

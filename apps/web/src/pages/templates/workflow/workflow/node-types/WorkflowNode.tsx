@@ -42,6 +42,7 @@ interface IWorkflowNodeProps {
   errors?: boolean | string;
   id?: string;
   index?: number;
+  onClick?: MouseEventHandler<HTMLDivElement>;
   onDelete?: () => void;
   onAddVariant?: () => void;
   onEdit?: MouseEventHandler<HTMLButtonElement>;
@@ -71,6 +72,7 @@ export function WorkflowNode({
   variantsCount = 0,
   conditionsCount = 0,
   id = undefined,
+  onClick,
   onDelete,
   onAddVariant,
   onEdit,
@@ -155,6 +157,7 @@ export function WorkflowNode({
     <>
       <WorkflowNodeButton
         role={'button'}
+        onClick={onClick}
         onMouseEnter={() => {
           setPopoverOpened(true);
           setHover(true);
@@ -169,7 +172,7 @@ export function WorkflowNode({
           classes.button,
           { [classes.active]: active },
           { [classes.variant]: isStepRoot },
-          { [classes.variantRoot]: isVariantRoot }
+          { [classes.variantRoot]: isVariantRoot && !active }
         )}
       >
         <WorkflowNodeWrapper>

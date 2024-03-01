@@ -7,7 +7,7 @@ import { Input } from '@novu/design-system';
 import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
-import { VariableManagerModal } from '../VariableManagerModal';
+import { EditVariablesModal } from '../EditVariablesModal';
 import { InAppContentCard } from './InAppContentCard';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import type { IForm, ITemplates } from '../formTypes';
@@ -64,7 +64,7 @@ export function TemplateInAppEditor() {
           }}
         />
       </Stack>
-      <VariableManagerModal open={modalOpen} setOpen={setModalOpen} variablesArray={variablesArray} />
+      <EditVariablesModal open={modalOpen} setOpen={setModalOpen} variablesArray={variablesArray} />
     </>
   );
 }

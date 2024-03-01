@@ -1,9 +1,9 @@
-import styled from '@emotion/styled';
-import { ChannelTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
+import styled from '@emotion/styled';
+import { ChannelTypeEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import { ArrowRight } from '@novu/design-system';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { ArrowRight } from '@novu/design-system';
 import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
 import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
@@ -73,7 +73,7 @@ function LearnMoreRef() {
 
   return (
     <a
-      href={'https://docs.novu.co/quickstarts/01-introduction'}
+      href={`https://docs.novu.co/quickstarts/01-introduction${UTM_CAMPAIGN_QUERY_PARAM}`}
       style={{ color: '#DD2476', textDecoration: 'underline', fontSize: '18px' }}
       onClick={() => handleOnClick}
       target="_blank"

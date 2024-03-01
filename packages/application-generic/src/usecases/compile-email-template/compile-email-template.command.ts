@@ -28,4 +28,8 @@ export class CompileEmailTemplateCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsOptional()
   senderName?: string | null;
+
+  @IsString()
+  @IsOptional()
+  locale?: string;
 }
