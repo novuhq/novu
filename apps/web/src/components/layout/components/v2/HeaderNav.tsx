@@ -1,5 +1,4 @@
 import { ActionIcon, Avatar, Group, Header, useMantineColorScheme } from '@mantine/core';
-import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
 import {
@@ -19,7 +18,6 @@ import { useBootIntercom } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { useAuthContext } from '../../../providers/AuthProvider';
-import { useSpotlightContext } from '../../../providers/SpotlightProvider';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
 import { ProfileMenuItem } from './ProfileMenuItem';
@@ -43,36 +41,12 @@ export function HeaderNav() {
   const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme } = useMantineColorScheme();
 
-  const { addItem, removeItems } = useSpotlightContext();
   const isSelfHosted = IS_DOCKER_HOSTED;
   const isDark = colorScheme === 'dark';
   const iconColor = isDark ? colors.white : colors.B40;
 
   useBootIntercom();
   const { themeIcon, themeLabel, toggleColorScheme } = useThemeChange();
-
-  useEffect(() => {
-    const spotlightMenuItems = [
-      {
-        id: 'toggle-theme',
-        title: themeLabel,
-        icon: themeIcon,
-        onTrigger: () => {
-          toggleColorScheme();
-        },
-      },
-      {
-        id: 'sign-out',
-        title: 'Sign out',
-        icon: <IconLogout />,
-        onTrigger: () => {
-          logout();
-        },
-      },
-    ];
-
-    addItem(spotlightMenuItems);
-  }, [addItem, removeItems, themeLabel, toggleColorScheme, logout, themeIcon]);
 
   const profileMenuMantine = [
     <Dropdown.Item disabled key="user">

@@ -22,8 +22,6 @@ export default function useThemeChange() {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const segment = useSegment();
 
-  const themeLabel = THEME_TITLE_LOOKUP[themeStatus];
-
   const trackThemeChange = useDebounce<ThemeChange>((args) => {
     segment.track('Theme is set - [Theme]', args);
   }, 500);
@@ -33,6 +31,8 @@ export default function useThemeChange() {
   }, [colorScheme, themeStatus, trackThemeChange]);
 
   const themeIcon = useMemo(() => getThemeIcon(themeStatus), [themeStatus]);
+
+  const themeLabel = THEME_TITLE_LOOKUP[themeStatus];
 
   return {
     themeIcon,
