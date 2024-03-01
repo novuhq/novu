@@ -25,6 +25,9 @@ import AddNode from './workflow/node-types/AddNode';
 import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
 import { NodeType, NodeData } from '../../../components/workflow/types';
+import { useSegment } from '@novu/shared-web';
+import { useOnboardingExperiment } from '../../../hooks/useOnboardingExperiment';
+import { OnBoardingAnalyticsEnum } from '../../quick-start/consts';
 
 export const TOP_ROW_HEIGHT = 74;
 
@@ -42,6 +45,8 @@ const WorkflowEditor = () => {
     channel: StepTypeEnum | undefined;
   }>();
   const [dragging, setDragging] = useState(false);
+  const segment = useSegment();
+  const { isOnboardingExperimentEnabled } = useOnboardingExperiment();
 
   const {
     control,
@@ -53,6 +58,9 @@ const WorkflowEditor = () => {
     name: 'steps',
     control,
   });
+  const tags = useWatch({ name: 'tags' });
+
+  const tagsIncludesOnboarding = tags?.includes('onboarding') && isOnboardingExperimentEnabled;
 
   const [toDelete, setToDelete] = useState<string>('');
   const basePath = useBasePath();
@@ -245,20 +253,23 @@ const WorkflowEditor = () => {
               >
                 <Group>
                   <NameInput />
-                  <When truthy={!channel}>
-                    <Group>
-                      <UpdateButton />
-                    </Group>
-                  </When>
                   <When truthy={pathname === basePath}>
                     <Button
-                      pulse={shouldPulse}
+                      pulse={tagsIncludesOnboarding || shouldPulse}
                       onClick={() => {
-                        navigate(basePath + '/snippet');
+                        if (tagsIncludesOnboarding) {
+                          segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
+                            action: 'Workflow - Send test notification',
+                            experiment_id: '2024-w9-onb',
+                          });
+                          navigate(basePath + '/test-workflow');
+                        } else {
+                          navigate(basePath + '/snippet');
+                        }
                       }}
                       data-test-id="get-snippet-btn"
                     >
-                      Get Snippet
+                      {tagsIncludesOnboarding ? 'Test Notification Now' : 'Get Snippet'}
                     </Button>
                     <Link data-test-id="settings-page" to="settings">
                       <Settings />
