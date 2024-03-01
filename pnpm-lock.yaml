@@ -1693,6 +1693,9 @@ importers:
       '@novu/dal':
         specifier: ^0.23.1
         version: link:../../../libs/dal
+      '@novu/ee-dal':
+        specifier: ^0.23.1
+        version: link:../libs/dal
       '@novu/shared':
         specifier: ^0.23.1
         version: link:../../../libs/shared
