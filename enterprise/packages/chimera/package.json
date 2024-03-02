@@ -22,6 +22,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "json-schema-defaults": "^0.4.0",
+    "lodash": "^4.17.15",
     "passport-google-oauth": "^2.0.0",
     "shortid": "^2.2.16",
     "slugify": "^1.4.6"
