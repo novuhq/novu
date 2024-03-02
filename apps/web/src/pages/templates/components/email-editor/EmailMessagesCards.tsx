@@ -24,11 +24,13 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
+import { InputVariablesForm } from '../InputVariablesForm';
 
 export enum ViewEnum {
   EDIT = 'Edit',
   PREVIEW = 'Preview',
   CODE = 'Code',
+  INPUTS = 'Inputs',
   TEST = 'Test',
 }
 const templateFields = ['content', 'htmlContent', 'subject', 'preheader', 'senderName'];
@@ -146,6 +148,9 @@ export function EmailMessagesCards() {
           </Grid.Col>
         </Grid>
       </div>
+      <When truthy={view === ViewEnum.INPUTS}>
+        <InputVariablesForm />
+      </When>
       <When truthy={view === ViewEnum.PREVIEW}>
         <EmailPreview view={preview} />
       </When>

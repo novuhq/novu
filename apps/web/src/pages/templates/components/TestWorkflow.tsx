@@ -1,6 +1,8 @@
 import { useMemo, useEffect, useState } from 'react';
 import { Group, JsonInput, Text } from '@mantine/core';
 import { useForm } from '@mantine/form';
+import { useWatch } from 'react-hook-form';
+
 import { useMutation } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import * as capitalize from 'lodash.capitalize';
@@ -15,6 +17,9 @@ import { testTrigger } from '../../../api/notification-templates';
 import { ExecutionDetailsModalWrapper } from './ExecutionDetailsModalWrapper';
 import { TriggerSegmentControl } from './TriggerSegmentControl';
 import { WorkflowSidebar } from './WorkflowSidebar';
+import { useSegment } from '@novu/shared-web';
+import { useOnboardingExperiment } from '../../../hooks/useOnboardingExperiment';
+import { OnBoardingAnalyticsEnum } from '../../quick-start/consts';
 
 const makeToValue = (subscriberVariables: INotificationTriggerVariable[], currentUser?: IUserEntity) => {
   const subsVars = getSubscriberValue(
@@ -39,6 +44,13 @@ export function TestWorkflow({ trigger }) {
   const { currentUser } = useAuthContext();
   const { mutateAsync: triggerTestEvent, isLoading } = useMutation(testTrigger);
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
+
+  const tags = useWatch({ name: 'tags' });
+
+  const segment = useSegment();
+  const { isOnboardingExperimentEnabled } = useOnboardingExperiment();
+
+  const tagsIncludesOnboarding = tags?.includes('onboarding') && isOnboardingExperimentEnabled;
 
   const subscriberVariables = useMemo(() => {
     if (trigger?.subscriberVariables && subscriberExist(trigger?.subscriberVariables)) {
@@ -176,6 +188,12 @@ export function TestWorkflow({ trigger }) {
               loading={isLoading}
               onClick={() => {
                 onTrigger(form.values);
+                if (tagsIncludesOnboarding) {
+                  segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
+                    action: 'Workflow - Run trigger',
+                    experiment_id: '2024-w9-onb',
+                  });
+                }
               }}
             >
               Run Trigger

@@ -62,6 +62,7 @@ export const SmsPreview = ({
     if (chimera) {
       mutateAsync(inputVariables);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chimera, inputVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
@@ -71,7 +72,7 @@ export const SmsPreview = ({
 
   const { isPreviewContentLoading, previewContent, templateError } = usePreviewSmsTemplate(
     selectedLocale,
-    showPreviewAsLoading
+    showPreviewAsLoading || chimera
   );
 
   return (
@@ -86,7 +87,7 @@ export const SmsPreview = ({
         />
         <SmsBubble
           onEditClick={navigateToStepEditor}
-          isLoading={isPreviewContentLoading || areLocalesLoading || isChimeraLoading}
+          isLoading={chimera ? isChimeraLoading : isPreviewContentLoading || areLocalesLoading}
           text={previewContent || chimeraContent}
           error={chimera ? undefined : templateError}
           withOverlay={isPreviewPath}

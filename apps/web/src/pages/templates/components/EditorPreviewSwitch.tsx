@@ -13,7 +13,7 @@ export const EditorPreviewSwitch = ({ view, setView, chimera = false }) => {
       return all.filter((item) => item !== ViewEnum.EDIT);
     }
 
-    return all.filter((item) => item !== ViewEnum.CODE);
+    return all.filter((item) => item !== ViewEnum.CODE && item !== ViewEnum.INPUTS);
   }, [chimera]);
 
   return (
@@ -25,7 +25,7 @@ export const EditorPreviewSwitch = ({ view, setView, chimera = false }) => {
           border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
           borderRadius: '30px',
           width: '100%',
-          maxWidth: '300px',
+          maxWidth: chimera ? '400px' : '300px',
         },
         label: {
           fontSize: '14px',
