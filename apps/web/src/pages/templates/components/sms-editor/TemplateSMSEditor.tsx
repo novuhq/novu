@@ -92,7 +92,10 @@ export function TemplateSMSEditor() {
         {hasActiveIntegration && !primaryIntegration ? (
           <LackIntegrationAlert
             channelType={ChannelTypeEnum.SMS}
-            text={`You have multiple provider instances for SMS in the ${environment?.name} environment. Please select the primary instance.`}
+            text={
+              `You have multiple provider instances for SMS in the ${environment?.name} environment.` +
+              ` Please select the primary instance.`
+            }
             isPrimaryMissing
           />
         ) : null}

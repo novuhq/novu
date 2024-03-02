@@ -62,6 +62,7 @@ export const SmsPreview = ({
     if (chimera) {
       mutateAsync(inputVariables);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chimera, inputVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({

@@ -79,6 +79,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
     if (chimera) {
       mutateAsync(JSON.parse(processedVariables));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [processedVariables, chimera]);
 
   useEffect(() => {
