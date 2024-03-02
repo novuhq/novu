@@ -32,7 +32,7 @@ import {
   IProvidersOverride,
   ExecuteOutput,
   IChimeraChannelResponse,
-  Nullable,
+  IBlock,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -387,12 +387,12 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   private getOverrideContent(
-    chimeraData: Nullable<ExecuteOutput<IChimeraChannelResponse>> | undefined,
+    chimeraData: ExecuteOutput<IChimeraChannelResponse> | undefined | null,
     integration: IntegrationEntity
-  ): { content: string | undefined; blocks: IBlock | undefined } | { content: string | undefined } {
+  ): { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined } {
     const chimeraProviderOverride = this.getChimeraOverride(chimeraData?.providers, integration);
 
-    let chimeraContent: { content: string | undefined; blocks: IBlock | undefined } | { content: string | undefined };
+    let chimeraContent: { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined };
     if (chimeraProviderOverride) {
       chimeraContent = { content: chimeraProviderOverride.text, blocks: chimeraProviderOverride.blocks };
     } else {
@@ -403,4 +403,4 @@ export class SendMessageChat extends SendMessageBase {
   }
 }
 
-type DefinedContent = { content: string; blocks: IBlock | undefined } | { content: string };
+type DefinedContent = { content: string; blocks: IBlock[] | undefined } | { content: string };
