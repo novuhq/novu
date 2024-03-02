@@ -16,7 +16,7 @@ const Template: StoryFn<typeof Text> = ({ ...args }) => <Text {...args}>Example 
 const MyText = styled('p', text);
 
 const styles = css({
-  color: 'button.background',
+  color: 'typography.text.accent',
 });
 
 export const all = () => (
