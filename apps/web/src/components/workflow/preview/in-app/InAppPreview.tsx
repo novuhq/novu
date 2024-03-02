@@ -47,6 +47,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
     if (chimera) {
       mutateAsync();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chimera]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({

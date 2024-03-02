@@ -257,8 +257,6 @@ const TemplateEditorFormProvider = ({ children }) => {
   );
 
   const onInvalid = useCallback((errors: FieldErrors<IForm>) => {
-    console.log(errors);
-
     errorMessage(getExplicitErrors(errors));
   }, []);
 
