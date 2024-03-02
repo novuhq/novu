@@ -266,7 +266,9 @@ const WorkflowEditor = () => {
                 }}
               >
                 <Group>
-                  <Bolt color="#4c6dd4" width="24px" height="24px" />
+                  <When truthy={chimera}>
+                    <Bolt color="#4c6dd4" width="24px" height="24px" />
+                  </When>
                   <NameInput />
                   <When truthy={!channel}>
                     <Group>
