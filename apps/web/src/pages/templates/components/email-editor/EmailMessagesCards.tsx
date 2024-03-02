@@ -155,7 +155,7 @@ export function EmailMessagesCards() {
         <EmailPreview view={preview} />
       </When>
       <When truthy={view === ViewEnum.TEST}>
-        <TestSendEmail isIntegrationActive={hasActiveIntegration} />
+        <TestSendEmail chimera={chimera} isIntegrationActive={hasActiveIntegration} />
       </When>
       <When truthy={view === ViewEnum.EDIT}>
         <Grid grow>

@@ -25,11 +25,20 @@ import { useProcessVariables, useIntegrationLimit } from '../../../../hooks';
 import { testSendEmailMessage } from '../../../../api/notification-templates';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import type { IForm } from '../formTypes';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 
-export function TestSendEmail({ isIntegrationActive }: { isIntegrationActive: boolean }) {
+export function TestSendEmail({
+  isIntegrationActive,
+  chimera = false,
+}: {
+  isIntegrationActive: boolean;
+  chimera?: boolean;
+}) {
   const { currentUser } = useAuthContext();
-  const { control } = useFormContext<IForm>();
+  const { control, watch } = useFormContext<IForm>();
   const path = useStepFormPath();
+  const stepId = watch(`${path}.template.name`);
+  const { template: workflow } = useTemplateEditorForm();
 
   const clipboardJson = useClipboard({ timeout: 1000 });
   const { classes } = useSelectStyles();
@@ -69,10 +78,19 @@ export function TestSendEmail({ isIntegrationActive }: { isIntegrationActive: bo
 
     try {
       await testSendEmailEvent({
+        stepId,
+        workflowId: workflow?.triggers[0].identifier,
+        contentType: 'customHtml',
+        subject: '',
         ...template,
         payload,
         to: sendTo,
-        content: template.contentType === 'customHtml' ? (template.htmlContent as string) : template.content,
+        chimera,
+        content: chimera
+          ? ''
+          : template.contentType === 'customHtml'
+          ? (template.htmlContent as string)
+          : template.content,
         layoutId: template.layoutId,
       });
       successMessage('Test sent successfully!');
