@@ -74,7 +74,9 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
             <div>
               {original.workflowIntegrationStatus?.hasActiveIntegrations &&
               original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
-                <Bolt color={colors.B40} width="24px" height="24px" />
+                !original.chimera ? (
+                  <Bolt color={colors.B40} width="24px" height="24px" />
+                ) : null
               ) : (
                 <ProviderMissing width="24px" height="24px" />
               )}
