@@ -135,7 +135,7 @@ export class SendMessage {
 
     const chimeraResponse = await this.chimeraConnector.execute<
       SendMessageCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraChannelResponse>
+      ExecuteOutput<IChimeraChannelResponse> | null
     >({
       ...command,
       variables: shouldRun.variables,
@@ -163,7 +163,7 @@ export class SendMessage {
     const sendMessageCommand = SendMessageCommand.create({
       ...command,
       compileContext: payload,
-      chimeraData: chimeraResponse.outputs,
+      chimeraData: chimeraResponse?.outputs,
     });
 
     switch (stepType) {
