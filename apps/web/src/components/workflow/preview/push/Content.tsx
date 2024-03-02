@@ -58,11 +58,11 @@ export default function Content({
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
     title: title,
-    disabled: showLoading,
+    disabled: showLoading || chimera,
   });
 
   const { isPreviewLoading, parsedPreviewState, templateError } = usePreviewPushTemplate({
-    disabled: showLoading,
+    disabled: showLoading || chimera,
     locale: selectedLocale,
   });
 

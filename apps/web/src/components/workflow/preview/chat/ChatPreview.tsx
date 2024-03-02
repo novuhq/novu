@@ -52,12 +52,12 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
-    disabled: showLoading,
+    disabled: showLoading || chimera,
   });
 
   const { isPreviewContentLoading, previewContent, templateError } = usePreviewChatTemplate({
     locale: selectedLocale,
-    disabled: showLoading,
+    disabled: showLoading || chimera,
   });
 
   return (

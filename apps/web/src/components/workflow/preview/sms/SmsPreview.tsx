@@ -71,7 +71,7 @@ export const SmsPreview = ({
 
   const { isPreviewContentLoading, previewContent, templateError } = usePreviewSmsTemplate(
     selectedLocale,
-    showPreviewAsLoading
+    showPreviewAsLoading || chimera
   );
 
   return (
@@ -86,7 +86,7 @@ export const SmsPreview = ({
         />
         <SmsBubble
           onEditClick={navigateToStepEditor}
-          isLoading={isPreviewContentLoading || areLocalesLoading || isChimeraLoading}
+          isLoading={chimera ? isChimeraLoading : isPreviewContentLoading || areLocalesLoading}
           text={previewContent || chimeraContent}
           error={chimera ? undefined : templateError}
           withOverlay={isPreviewPath}
