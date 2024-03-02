@@ -31,7 +31,7 @@ export class CalculateDelayService {
     chimeraResponse?: IChimeraDigestResponse | IChimeraDelayResponse;
   }): number {
     const digestType =
-      (chimeraResponse.type as DigestTypeEnum) ?? stepMetadata.type;
+      (chimeraResponse?.type as DigestTypeEnum) ?? stepMetadata.type;
     if (!stepMetadata) throw new ApiException(`Step metadata not found`);
 
     if (digestType === DelayTypeEnum.SCHEDULED) {
@@ -51,12 +51,12 @@ export class CalculateDelayService {
       return delay;
     }
 
-    const chimeraUnit = castToDigestUnitEnum(chimeraResponse.unit);
+    const chimeraUnit = castToDigestUnitEnum(chimeraResponse?.unit);
 
     if (isRegularDigest(digestType)) {
       if (this.checkValidDelayOverride(overrides)) {
         return this.toMilliseconds(
-          chimeraResponse.amount ?? (overrides.delay.amount as number),
+          chimeraResponse?.amount ?? (overrides.delay.amount as number),
           chimeraUnit ?? (overrides.delay.unit as DigestUnitEnum)
         );
       }
@@ -64,7 +64,7 @@ export class CalculateDelayService {
       const regularDigestMeta = stepMetadata as IDigestRegularMetadata;
 
       return this.toMilliseconds(
-        chimeraResponse.amount ?? regularDigestMeta.amount,
+        chimeraResponse?.amount ?? regularDigestMeta.amount,
         chimeraUnit ?? regularDigestMeta.unit
       );
     }

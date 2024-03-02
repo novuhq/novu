@@ -1,6 +1,7 @@
 import { PlatformException } from './exceptions';
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
+import { ChatProviderIdEnum } from '@novu/shared';
 
 export const requireInject = (inject: RequireInject, moduleRef?: ModuleRef) => {
   if (inject === RequireInjectEnum.CHIMERA_CONNECT) {
@@ -24,6 +25,12 @@ const initiateChimeraConnector = (moduleRef: ModuleRef) => {
           strict: false,
         }
       );
+    } else {
+      return {
+        execute: () => {
+          return null;
+        },
+      };
     }
   } catch (e) {
     Logger.error(
@@ -31,6 +38,7 @@ const initiateChimeraConnector = (moduleRef: ModuleRef) => {
       `Unexpected error while importing enterprise modules`,
       'ChimeraConnector'
     );
+    throw e;
   }
 };
 
@@ -108,7 +116,33 @@ export type ExecuteOutputMetadata = {
   duration: number;
 };
 
+enum BlocksTypeEnum {
+  SECTION = 'section',
+  SECTION1 = 'header',
+}
+
+enum TextTypeEnum {
+  MARKDOWN = 'mrkdwn',
+}
+
+export interface IProviderOverride {
+  webhookUrl: string;
+  text: string;
+  blocks: IBlock[];
+}
+
+export interface IBlock {
+  type: `${BlocksTypeEnum}`;
+  text: {
+    type: `${TextTypeEnum}`;
+    text: string;
+  };
+}
+
+export type IProvidersOverride = Record<ChatProviderIdEnum, IProviderOverride>;
+
 export type ExecuteOutput<OutputResult> = {
   outputs: OutputResult;
   metadata: ExecuteOutputMetadata;
+  providers?: IProvidersOverride;
 };

@@ -285,11 +285,12 @@ export class SendMessagePush extends SendMessageBase {
   ): Promise<boolean> {
     try {
       const pushHandler = this.getIntegrationHandler(integration);
+      const chimeraOutputs = command.chimeraData?.outputs;
 
       const result = await pushHandler.send({
         target: [deviceToken],
-        title: (command.chimeraData as IChimeraPushResponse)?.subject || title,
-        content: (command.chimeraData as IChimeraPushResponse)?.body || content,
+        title: (chimeraOutputs as IChimeraPushResponse)?.subject || title,
+        content: (chimeraOutputs as IChimeraPushResponse)?.body || content,
         payload: command.payload,
         overrides,
         subscriber,

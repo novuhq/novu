@@ -261,11 +261,12 @@ export class SendMessageEmail extends SendMessageBase {
         }
     );
 
+    const chimeraOutputs = command.chimeraData?.outputs;
     const mailData: IEmailOptions = createMailData(
       {
         to: email,
-        subject: (command.chimeraData as IChimeraEmailResponse)?.subject || subject,
-        html: (command.chimeraData as IChimeraEmailResponse)?.body || html,
+        subject: (chimeraOutputs as IChimeraEmailResponse)?.subject || subject,
+        html: (chimeraOutputs as IChimeraEmailResponse)?.body || html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
         senderName,

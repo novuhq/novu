@@ -56,14 +56,14 @@ export class AddDelayJob {
     try {
       const chimeraResponse = await this.chimeraConnector.execute<
         AddJobCommand,
-        ExecuteOutput<IChimeraDelayResponse>
+        ExecuteOutput<IChimeraDelayResponse> | null
       >(command);
 
       delay = this.calculateDelayService.calculateDelay({
         stepMetadata: data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
-        chimeraResponse: chimeraResponse.outputs,
+        chimeraResponse: chimeraResponse?.outputs,
       });
 
       await this.jobRepository.updateStatus(

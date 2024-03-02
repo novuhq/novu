@@ -119,7 +119,7 @@ export class AddJob {
         stepMetadata: job.digest,
         payload: job.payload,
         overrides: job.overrides,
-        chimeraResponse: chimeraResponse.outputs,
+        chimeraResponse: chimeraResponse?.outputs,
       });
 
       Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
@@ -128,7 +128,7 @@ export class AddJob {
         MergeOrCreateDigestCommand.create({
           job,
           filtered,
-          chimeraData: chimeraResponse.outputs,
+          chimeraData: chimeraResponse?.outputs,
         })
       );
 
