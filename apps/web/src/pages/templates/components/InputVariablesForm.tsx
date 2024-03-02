@@ -28,7 +28,11 @@ export const InputVariablesForm = () => {
     const module = require('@novu/ee-billing-web');
     const InputVariablesComponent = module.InputVariablesForm;
 
-    return <InputVariablesComponent schema={inputs} formData={formData} />;
+    return (
+      <>
+        <InputVariablesComponent schema={inputs} formData={formData} />
+      </>
+    );
   } catch (e) {}
 
   return null;
