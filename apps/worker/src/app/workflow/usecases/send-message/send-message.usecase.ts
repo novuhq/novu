@@ -88,6 +88,14 @@ export class SendMessage {
 
     const stepType = command.step?.template?.type;
 
+    const chimeraResponse = await this.chimeraConnector.execute<
+      SendMessageCommand & { variables: IFilterVariables },
+      ExecuteOutput<IChimeraChannelResponse> | null
+    >({
+      ...command,
+      variables: shouldRun.variables,
+    });
+
     if (!command.payload?.$on_boarding_trigger) {
       const usedFilters = shouldRun?.conditions.reduce(ConditionsFilter.sumFilters, {
         filters: [],
@@ -113,6 +121,7 @@ export class SendMessage {
        * This is intentional, so that mixpanel can automatically reshard it.
        */
       this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
+        workflowType: chimeraResponse?.outputs ? 'CHIMERA' : 'REGULAR',
         _template: command.job._templateId,
         _organization: command.organizationId,
         _environment: command.environmentId,
@@ -132,14 +141,6 @@ export class SendMessage {
         source: command.payload.__source || 'api',
       });
     }
-
-    const chimeraResponse = await this.chimeraConnector.execute<
-      SendMessageCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraChannelResponse> | null
-    >({
-      ...command,
-      variables: shouldRun.variables,
-    });
 
     if (!shouldRun?.passed || !preferred) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
