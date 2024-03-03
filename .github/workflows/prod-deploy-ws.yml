@@ -18,7 +18,7 @@ jobs:
   # This workflow contains a single job called "build"
   build_prod_image:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     timeout-minutes: 80
     environment: Production
     needs:
@@ -46,6 +46,26 @@ jobs:
       - name: build api
         run: pnpm build:ws
 
+      - uses: crazy-max/ghaction-setup-docker@v2
+        with:
+          version: v24.0.6
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: 'image=moby/buildkit:v0.12.4'
+
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
         env:
@@ -56,7 +76,7 @@ jobs:
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 
-          BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG --platform=linux/amd64,linux/arm64 --provenance=false -f apps/ws/Dockerfile .
+          BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN -t ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG --load --platform=linux/amd64,linux/arm64 --provenance=false -f apps/ws/Dockerfile .
           docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1340/v1/health-check | grep 'ok'
           docker tag ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod

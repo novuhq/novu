@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
 
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     timeout-minutes: 80
 
     permissions:
@@ -150,7 +150,7 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
 
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     timeout-minutes: 80
 
     # Steps represent a sequence of tasks that will be executed as part of the job

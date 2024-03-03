@@ -110,7 +110,7 @@ jobs:
 
   build_docker_api:
     name: Build Docker API
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     timeout-minutes: 80
     needs: [get-affected]
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
@@ -134,7 +134,7 @@ jobs:
 
   test_providers:
     name: Unit Test Providers
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-providers)[0] }}
     timeout-minutes: 80
@@ -152,7 +152,7 @@ jobs:
 
   test_packages:
     name: Unit Test Packages
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-packages)[0] }}
     timeout-minutes: 80
@@ -186,7 +186,7 @@ jobs:
 
   test_libs:
     name: Unit Test Libs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-libs)[0] }}
     timeout-minutes: 80
@@ -216,7 +216,7 @@ jobs:
 
   test_unit:
     name: Unit Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
     timeout-minutes: 80
@@ -245,7 +245,7 @@ jobs:
 
   validate_openapi:
     name: Validate OpenAPI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
     timeout-minutes: 10
