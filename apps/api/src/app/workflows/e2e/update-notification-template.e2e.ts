@@ -7,6 +7,7 @@ import {
   FilterPartTypeEnum,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
+  INotificationTemplateStep,
 } from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dto';
@@ -92,22 +93,26 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     expect(foundTemplate.steps.length).to.equal(1);
 
     const updateRequestStep = update.steps ? update.steps[0] : undefined;
-    expect(foundTemplate.steps[0].template?.content).to.equal(updateRequestStep?.template?.content);
+    const step = foundTemplate.steps[0] as INotificationTemplateStep;
+    expect(step.template?.content).to.equal(updateRequestStep?.template?.content);
 
-    const fountVariant = foundTemplate.steps[0].variants ? foundTemplate.steps[0].variants[0] : undefined;
+    const fountVariant = step.variants ? step.variants[0] : undefined;
     const updateRequestStepVariant = updateRequestStep?.variants ? updateRequestStep?.variants[0] : undefined;
     expect(fountVariant?.template?.content).to.equal(updateRequestStepVariant?.template?.content);
 
     // test variant parent id
-    const firstVariant = foundTemplate.steps[0].variants ? foundTemplate.steps[0].variants[0] : undefined;
+    const firstVariant = step.variants ? step.variants[0] : undefined;
     expect(firstVariant?._parentId).to.equal(null);
-    const secondVariant = foundTemplate.steps[0].variants ? foundTemplate.steps[0].variants[1] : undefined;
+    const secondVariant = step.variants ? step.variants[1] : undefined;
     expect(secondVariant?._parentId).to.equal(firstVariant?._id);
 
     const change = await changeRepository.findOne({
       _environmentId: session.environment._id,
       _entityId: foundTemplate._id,
     });
+    if (!change) {
+      throw new Error('Change not found');
+    }
     expect(change._entityId).to.eq(foundTemplate._id);
   });
 
@@ -157,6 +162,10 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
       _environmentId: session.environment._id,
       _entityId: foundTemplate._id,
     });
+    if (!change) {
+      throw new Error('Change not found');
+    }
+
     expect(change._entityId).to.eq(foundTemplate._id);
   });
 
@@ -226,12 +235,13 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     const foundTemplate: INotificationTemplate = body.data;
 
     expect(foundTemplate._id).to.equal(template._id);
-    expect(foundTemplate.steps[0].active).to.equal(false);
-    expect(foundTemplate.steps[0].template.contentType).to.equal('customHtml');
+    const step = foundTemplate.steps[0] as INotificationTemplateStep;
+    expect(step.active).to.equal(false);
+    expect(step.template?.contentType).to.equal('customHtml');
   });
 
   it('should update the steps', async () => {
-    const testTemplate: Partial<CreateWorkflowRequestDto> = {
+    const testTemplate: CreateWorkflowRequestDto = {
       name: 'test email template',
       description: 'This is a test description',
       tags: ['test-tag'],
@@ -277,10 +287,9 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
               senderName: 'updated sender name',
               type: StepTypeEnum.EMAIL,
               content: [],
-              cta: null,
             },
             _parentId: step._parentId,
-          };
+          } as INotificationTemplateStep;
         }),
         {
           template: {
@@ -288,7 +297,6 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
             subject: 'Test email subject',
             type: StepTypeEnum.EMAIL,
             content: [],
-            cta: null,
           },
         },
       ],
