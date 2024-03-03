@@ -31,7 +31,6 @@ describe('Preview web', () => {
 
     cy.getByTestId('preview-subject').contains('Subject');
     cy.getByTestId('preview-from').contains('novu@novu');
-    cy.getByTestId('preview-content').contains('');
   });
 
   it('should render with basic content', () => {
