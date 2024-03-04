@@ -23,6 +23,7 @@ import { api } from './api/api.client';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import { AppLayout } from './components/layout/AppLayout';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
+import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
 import QuestionnairePage from './pages/auth/QuestionnairePage';
 import { ENV, LAUNCH_DARKLY_CLIENT_SIDE_ID, SENTRY_DSN, CONTEXT_PATH } from './config';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
@@ -183,7 +184,7 @@ function App() {
                     <Route path="" element={<ApiKeysCard />} />
                     <Route path="billing/*" element={<BillingRoutes />} />
                     <Route path="email" element={<EmailSettings />} />
-                    <Route path="team" element={<MembersInvitePage />} />
+                    <Route path="team" element={<MembersInvitePageNew />} />
                     <Route path="brand" element={<BrandingForm />} />
                     <Route
                       path="permissions"
