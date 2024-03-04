@@ -58,7 +58,6 @@
   },
   "devDependencies": {
     "@pandacss/dev": "^0.32.1",
-    "@pandacss/eslint-plugin": "^0.1.0",
     "@storybook/addon-actions": "^7.5.0",
     "@storybook/addon-docs": "^7.4.2",
     "@storybook/client-api": "^7.6.10",

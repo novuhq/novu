@@ -32,11 +32,7 @@ module.exports = {
     'cypress/globals': true,
   },
   ignorePatterns: ['craco.config.js', 'cypress/*', 'styled-system/*'],
-  extends: [
-    'plugin:cypress/recommended',
-    '../../.eslintrc.js',
-    // 'plugin:@pandacss/recommended'
-  ],
+  extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
   plugins: ['cypress', '@pandacss'],
   parserOptions: {
     project: './tsconfig.json',
