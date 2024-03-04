@@ -1,6 +1,6 @@
 import { defineRecipe } from '@pandacss/dev';
 
-export const textRecipe = defineRecipe({
+export const TEXT_RECIPE = defineRecipe({
   className: 'text',
   description: 'Styles for text including: body and labels',
   jsx: ['Text'],

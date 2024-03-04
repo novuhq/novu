@@ -1,6 +1,6 @@
 import { defineRecipe } from '@pandacss/dev';
 
-export const titleRecipe = defineRecipe({
+export const TITLE_RECIPE = defineRecipe({
   className: 'title',
   description: 'Styles for title including: body and labels',
   jsx: ['Title'],

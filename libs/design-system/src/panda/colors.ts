@@ -1,4 +1,4 @@
-export const COLOR_PALLETTE_TOKENS = {
+export const COLOR_PALETTE_TOKENS = {
   amber: {
     '10': {
       light: { value: '#4e2009ff' },
