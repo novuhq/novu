@@ -29,6 +29,7 @@ import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { ROUTES } from './constants/routes.enum';
 import { BrandPage } from './pages/brand/BrandPage';
+import { LayoutPage } from './pages/brand/v2/LayoutPage';
 import { SegmentProvider } from './components/providers/SegmentProvider';
 import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
@@ -233,7 +234,7 @@ function App() {
                     <Route path="" element={<BrandingForm />} />
                     <Route path="layouts" element={<LayoutsListPage />} />
                   </Route>
-                  <Route path={ROUTES.LAYOUT} element={<BrandPage />}>
+                  <Route path={ROUTES.LAYOUT} element={<LayoutPage />}>
                     <Route path="" element={<LayoutsListPage />} />
                   </Route>
                   <Route path="/translations/*" element={<TranslationRoutes />} />
