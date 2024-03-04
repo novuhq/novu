@@ -4,11 +4,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import PageContainer from '../../../../components/layout/components/PageContainer';
 import { ROUTES } from '../../../../constants/routes.enum';
+import { title } from '../../../../styled-system/recipes';
+import { styled as pandaStyled } from '../../../../styled-system/jsx';
 import { currentOnboardingStep } from '../route/store';
 import { BodyLayout } from './BodyLayout';
 import { FooterLayout } from './FooterLayout';
 import { HeaderLayout } from './HeaderLayout';
-import { Title } from '@novu/design-system';
+import { css } from '../../../../styled-system/css';
 
 interface IGetStartedLayoutProps {
   children?: React.ReactNode;
@@ -41,7 +43,7 @@ export function GetStartedLayout({ children, footer }: IGetStartedLayoutProps) {
       <PageContainer style={{ display: 'flex' }}>
         <PageWrapper>
           <HeaderLayout>
-            <Title>Get started</Title>
+            <h2 className={title({ variant: 'section' })}>Get started</h2>
           </HeaderLayout>
           <BodyLayout>{children}</BodyLayout>
           <FooterLayout leftSide={footer.leftSide} rightSide={footer.rightSide} />

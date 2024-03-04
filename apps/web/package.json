@@ -3,7 +3,8 @@
   "version": "0.24.0",
   "private": true,
   "scripts": {
-    "start": "cross-env PORT=4200 react-app-rewired start",
+    "postinstall": "panda codegen --clean",
+    "start": "panda --watch & cross-env PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false react-app-rewired --max_old_space_size=4096 build",
     "precommit": "lint-staged",
@@ -136,6 +137,7 @@
     "@babel/runtime": "^7.20.13",
     "@novu/dal": "^0.24.0",
     "@novu/testing": "^0.24.0",
+    "@pandacss/dev": "^0.32.1",
     "@storybook/addon-actions": "^7.4.2",
     "@storybook/addon-essentials": "^7.4.2",
     "@storybook/addon-links": "^7.4.2",
