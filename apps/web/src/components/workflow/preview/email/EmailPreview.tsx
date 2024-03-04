@@ -41,7 +41,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   const { template } = useTemplateEditorForm();
   const { chimera } = useEnvController({}, template?.chimera);
 
-  const stepId = watch(`${path}.template.name`);
+  const stepId = watch(`${path}.uuid`);
 
   const contentType = watch(`${path}.template.contentType`);
   const htmlContent = watch(`${path}.template.htmlContent`);
