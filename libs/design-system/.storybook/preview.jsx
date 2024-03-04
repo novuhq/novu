@@ -21,10 +21,6 @@ export const parameters = {
       date: /Date$/,
     },
   },
-  darkMode: {
-    current: 'dark',
-    classTarget: 'html',
-  },
 };
 
 const channel = addons.getChannel();

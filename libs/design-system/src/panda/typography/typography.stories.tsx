@@ -1,9 +1,8 @@
+import { Meta } from '@storybook/react';
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
+import { Divider, Flex } from '../../../styled-system/jsx';
 import { Text } from './Text';
-import { styled } from '../../../styled-system/jsx';
-import { text } from '../../../styled-system/recipes';
-import { css } from '../../../styled-system/css';
+import { Title } from './Title';
 
 export default {
   title: 'Panda/Components/Typography',
@@ -11,42 +10,17 @@ export default {
   argTypes: {},
 } as Meta<typeof Text>;
 
-const Template: StoryFn<typeof Text> = ({ ...args }) => <Text {...args}>Example Text</Text>;
-
-const MyText = styled('p', text);
-
-const styles = css({
-  color: 'typography.text.accent',
-});
-
 export const all = () => (
-  <div>
+  <Flex direction="column" gap="100">
     <Text>Default Body</Text>
-    <MyText variant="main" className={styles}>
-      Testing
-    </MyText>
-    <Text variant="main">Main text</Text>
-    <Text variant="secondary">Secondary text</Text>
-    <Text variant="strong">Strong text</Text>
-    <Text variant="mono">Mono text</Text>
-  </div>
+    <Text variant="text.main">Main text</Text>
+    <Text variant="text.secondary">Secondary text</Text>
+    <Text variant="text.strong">Strong text</Text>
+    <Text variant="text.mono">Mono text</Text>
+    <Divider />
+    <Title>Default title</Title>
+    <Title variant="title.page">Page title</Title>
+    <Title variant="title.section">Section title</Title>
+    <Title variant="title.subsection">Subsection title</Title>
+  </Flex>
 );
-
-export const Body = Template.bind({});
-Body.args = {};
-
-export const BodyLarge = Template.bind({});
-BodyLarge.args = {
-  size: 'lg',
-};
-
-export const BodyBold = Template.bind({});
-BodyBold.args = {
-  weight: 'bold',
-};
-
-export const BodyLargeBold = Template.bind({});
-BodyLargeBold.args = {
-  size: 'lg',
-  weight: 'bold',
-};

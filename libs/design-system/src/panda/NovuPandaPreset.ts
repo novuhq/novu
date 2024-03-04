@@ -2,8 +2,15 @@ import { definePreset } from '@pandacss/dev';
 import { COLOR_PALLETTE_TOKENS, COLOR_SEMANTIC_TOKENS } from './colors';
 import { SIZES_TOKENS } from './sizes';
 import { SPACING_TOKENS } from './spacing';
-import { textStyles } from './textStyles';
-import { titleRecipe, textRecipe } from './typography/typography.recipe';
+import { TEXT_STYLES } from './textStyles';
+import { textRecipe } from './recipes/typography.recipe';
+import {
+  FONT_FAMILY_TOKENS,
+  FONT_SIZE_TOKENS,
+  FONT_WEIGHT_TOKENS,
+  LETTER_SPACING_TOKENS,
+  LINE_HEIGHT_TOKENS,
+} from './typography';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -19,16 +26,20 @@ export const NovuPandaPreset = definePreset({
       sizes: SIZES_TOKENS,
       spacing: SPACING_TOKENS,
       colors: COLOR_PALLETTE_TOKENS,
-      fontSizes: SIZES_TOKENS,
+      // typography tokens
+      fonts: FONT_FAMILY_TOKENS,
+      fontSizes: FONT_SIZE_TOKENS,
+      lineHeights: LINE_HEIGHT_TOKENS,
+      fontWeights: FONT_WEIGHT_TOKENS,
+      letterSpacings: LETTER_SPACING_TOKENS,
     },
     semanticTokens: {
       colors: COLOR_SEMANTIC_TOKENS,
     },
-    textStyles,
+    textStyles: TEXT_STYLES,
     extend: {
       recipes: {
         text: textRecipe,
-        title: titleRecipe,
       },
     },
   },
