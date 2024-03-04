@@ -1,4 +1,6 @@
-export const FONT_FAMILY_TOKENS = {
+import { defineTokens } from '@pandacss/dev';
+
+export const FONT_FAMILY_TOKENS = defineTokens.fonts({
   system: {
     type: 'fontFamilies',
     value: '-apple-system, "SF Pro Text", BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
@@ -7,9 +9,9 @@ export const FONT_FAMILY_TOKENS = {
     type: 'fontFamilies',
     value: 'ui-monospace, "SFMono-Regular", "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
   },
-};
+});
 
-export const FONT_SIZE_TOKENS = {
+export const FONT_SIZE_TOKENS = defineTokens.fontSizes({
   '75': {
     type: 'fontSizes',
     value: '0.75rem',
@@ -38,9 +40,9 @@ export const FONT_SIZE_TOKENS = {
     type: 'fontSizes',
     value: '2.25rem',
   },
-};
+});
 
-export const FONT_WEIGHT_TOKENS = {
+export const FONT_WEIGHT_TOKENS = defineTokens.fontWeights({
   regular: {
     type: 'fontWeights',
     value: '400',
@@ -49,16 +51,16 @@ export const FONT_WEIGHT_TOKENS = {
     type: 'fontWeights',
     value: '600',
   },
-};
+});
 
-export const LETTER_SPACING_TOKENS = {
+export const LETTER_SPACING_TOKENS = defineTokens.letterSpacings({
   '0': {
     type: 'letterSpacing',
     value: '0',
   },
-};
+});
 
-export const LINE_HEIGHT_TOKENS = {
+export const LINE_HEIGHT_TOKENS = defineTokens.lineHeights({
   '100': {
     type: 'lineHeights',
     value: '1rem',
@@ -87,4 +89,4 @@ export const LINE_HEIGHT_TOKENS = {
     type: 'lineHeights',
     value: '3rem',
   },
-};
+});

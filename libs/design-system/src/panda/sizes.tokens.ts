@@ -1,9 +1,11 @@
+import { defineTokens } from '@pandacss/dev';
+
 /**
  * Represents the size of an element.
  *
  * Used for properties like width and height.
  */
-export const SIZES_TOKENS = {
+export const SIZES_TOKENS = defineTokens.sizes({
   '25': {
     value: '0.25rem',
     type: 'sizes',
@@ -28,8 +30,12 @@ export const SIZES_TOKENS = {
     value: '1.5rem',
     type: 'sizes',
   },
+  '175': {
+    value: '1.75rem',
+    type: 'sizes',
+  },
   '200': {
     value: '2rem',
     type: 'sizes',
   },
-};
+});

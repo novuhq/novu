@@ -1,17 +1,18 @@
 import { definePreset } from '@pandacss/dev';
-import { COLOR_PALETTE_TOKENS, COLOR_SEMANTIC_TOKENS } from './colors';
+import { COLOR_PALETTE_TOKENS } from './colors.tokens';
+import { COLOR_SEMANTIC_TOKENS } from './semanticColors.tokens';
 import { TEXT_RECIPE } from './recipes/text.recipe';
 import { TITLE_RECIPE } from './recipes/title.recipe';
-import { SIZES_TOKENS } from './sizes';
-import { SPACING_TOKENS } from './spacing';
-import { TEXT_STYLES } from './textStyles';
+import { SIZES_TOKENS } from './sizes.tokens';
+import { SPACING_TOKENS } from './spacing.tokens';
+import { TEXT_STYLES } from './textStyles.tokens';
 import {
   FONT_FAMILY_TOKENS,
   FONT_SIZE_TOKENS,
   FONT_WEIGHT_TOKENS,
   LETTER_SPACING_TOKENS,
   LINE_HEIGHT_TOKENS,
-} from './typography';
+} from './typography.tokens';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).

@@ -1,4 +1,6 @@
-export const COLOR_PALETTE_TOKENS = {
+import { defineTokens, defineSemanticTokens } from '@pandacss/dev';
+
+export const COLOR_PALETTE_TOKENS = defineTokens.colors({
   amber: {
     '10': {
       light: { value: '#4e2009ff' },
@@ -249,9 +251,9 @@ export const COLOR_PALETTE_TOKENS = {
       dark: { value: '#1f1315' },
     },
   },
-};
+});
 
-export const COLOR_SEMANTIC_TOKENS = {
+export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
   typography: {
     text: {
       feedback: {
@@ -361,4 +363,4 @@ export const COLOR_SEMANTIC_TOKENS = {
       type: 'color',
     },
   },
-};
+});
