@@ -71,7 +71,7 @@ export function SettingsPage() {
             <Tabs.Tab value="/billing">Billing Plans</Tabs.Tab>
           </When>
           <When truthy={isInformationArchitectureEnabled}>
-            <Tabs.Tab value="/brand">Brand</Tabs.Tab>
+            <Tabs.Tab value="/brand">Branding</Tabs.Tab>
             <Tabs.Tab value="/team">Team</Tabs.Tab>
           </When>
           <Tabs.Tab value="/permissions">Permissions</Tabs.Tab>
