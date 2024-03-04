@@ -33,7 +33,7 @@ module.exports = {
   },
   ignorePatterns: ['craco.config.js', 'cypress/*', 'styled-system/*'],
   extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
-  plugins: ['cypress', '@pandacss'],
+  plugins: ['cypress'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,
