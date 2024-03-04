@@ -1,9 +1,10 @@
 import { definePreset } from '@pandacss/dev';
 import { COLOR_PALLETTE_TOKENS, COLOR_SEMANTIC_TOKENS } from './colors';
+import { textRecipe } from './recipes/text.recipe';
+import { titleRecipe } from './recipes/title.recipe';
 import { SIZES_TOKENS } from './sizes';
 import { SPACING_TOKENS } from './spacing';
 import { TEXT_STYLES } from './textStyles';
-import { textRecipe } from './recipes/typography.recipe';
 import {
   FONT_FAMILY_TOKENS,
   FONT_SIZE_TOKENS,
@@ -40,6 +41,7 @@ export const NovuPandaPreset = definePreset({
     extend: {
       recipes: {
         text: textRecipe,
+        title: titleRecipe,
       },
     },
   },

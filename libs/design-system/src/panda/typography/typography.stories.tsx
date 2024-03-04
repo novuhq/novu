@@ -1,8 +1,10 @@
 import { Meta } from '@storybook/react';
 import React from 'react';
-import { Divider, Flex } from '../../../styled-system/jsx';
-import { Text } from './Text';
-import { Title } from './Title';
+import { Divider, Flex, styled } from '../../../styled-system/jsx';
+import { text, title } from '../../../styled-system/recipes';
+
+const Text = styled('p', text);
+const Title = styled('h2', title);
 
 export default {
   title: 'Panda/Components/Typography',
@@ -13,14 +15,14 @@ export default {
 export const all = () => (
   <Flex direction="column" gap="100">
     <Text>Default Body</Text>
-    <Text variant="text.main">Main text</Text>
-    <Text variant="text.secondary">Secondary text</Text>
-    <Text variant="text.strong">Strong text</Text>
-    <Text variant="text.mono">Mono text</Text>
+    <Text variant="main">Main text</Text>
+    <Text variant="secondary">Secondary text</Text>
+    <Text variant="strong">Strong text</Text>
+    <Text variant="mono">Mono text</Text>
     <Divider />
     <Title>Default title</Title>
-    <Title variant="title.page">Page title</Title>
-    <Title variant="title.section">Section title</Title>
-    <Title variant="title.subsection">Subsection title</Title>
+    <Title variant="page">Page title</Title>
+    <Title variant="section">Section title</Title>
+    <Title variant="subsection">Subsection title</Title>
   </Flex>
 );
