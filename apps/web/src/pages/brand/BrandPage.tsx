@@ -16,7 +16,6 @@ const LAYOUT = 'Layouts';
 export function BrandPage() {
   const { currentOrganization, currentUser } = useAuthContext();
   const { environment } = useEnvController();
-
   const segment = useSegment();
   const { classes } = useTabsStyles(false);
   const navigate = useNavigate();
@@ -69,7 +68,6 @@ export function BrandPage() {
             <Tabs.Tab value="/layouts">Layouts</Tabs.Tab>
           </Tabs.List>
         </Tabs>
-
         <Outlet
           context={{
             currentOrganization,
