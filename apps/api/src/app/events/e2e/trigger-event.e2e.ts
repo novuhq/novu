@@ -34,8 +34,8 @@ import {
   DelayTypeEnum,
   PreviousStepTypeEnum,
   InAppProviderIdEnum,
-  MESSAGE_IN_APP_RETENTION_DAYS,
-  MESSAGE_GENERIC_RETENTION_DAYS,
+  DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
+  DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
   ActorTypeEnum,
   SystemAvatarIconEnum,
 } from '@novu/shared';
@@ -1319,7 +1319,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       let expireAt = new Date(message?.expireAt as string);
       let createdAt = new Date(message?.createdAt as string);
 
-      const subExpireYear = subDays(expireAt, MESSAGE_IN_APP_RETENTION_DAYS);
+      const subExpireYear = subDays(expireAt, DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS);
       let diff = differenceInMilliseconds(subExpireYear, createdAt);
 
       expect(diff).to.approximately(0, 100);
@@ -1336,7 +1336,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expireAt = new Date(email?.expireAt as string);
       createdAt = new Date(email?.createdAt as string);
 
-      const subExpireMonth = subDays(expireAt, MESSAGE_GENERIC_RETENTION_DAYS);
+      const subExpireMonth = subDays(expireAt, DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS);
       diff = differenceInMilliseconds(subExpireMonth, createdAt);
 
       expect(diff).to.approximately(0, 100);
