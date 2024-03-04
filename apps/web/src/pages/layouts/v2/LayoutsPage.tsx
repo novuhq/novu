@@ -11,7 +11,7 @@ import { useEnvController, useFeatureFlag } from '../../../hooks';
 
 const LAYOUT = 'Layouts';
 
-export function LayoutPage() {
+export function LayoutsPage() {
   const { currentOrganization, currentUser } = useAuthContext();
   const { environment } = useEnvController();
   const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
