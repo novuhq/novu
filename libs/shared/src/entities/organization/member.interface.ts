@@ -21,7 +21,7 @@ export interface IMemberEntity {
   user?: IUserEntity | null;
   _userId: string | null;
   memberStatus: MemberStatusEnum;
-  rolea: MemberRoleEnum[];
+  roles: MemberRoleEnum[];
   invite?: IMemberInvite;
   organizationId: string;
   createdAt: string;
