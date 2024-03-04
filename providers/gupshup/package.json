@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@novu/stateless": "^0.23.1",
+    "axios": "^1.6.7",
     "node-fetch": "^3.2.10"
   },
   "devDependencies": {
