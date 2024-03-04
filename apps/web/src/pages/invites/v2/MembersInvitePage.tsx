@@ -1,9 +1,9 @@
 import { Container, Group } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
-import { MemberRoleEnum } from '@novu/shared';
+import { IMemberEntity, IUserEntity, MemberRoleEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 
-import { Title, UserAccess } from '@novu/design-system';
+import { errorMessage, successMessage, Title, UserAccess } from '@novu/design-system';
 import { changeMemberRole, getOrganizationMembers, removeMember, resendInviteMember } from '../../../api/organization';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { ProductLead } from '../../../components/utils/ProductLead';
@@ -22,46 +22,37 @@ export function MembersInvitePage() {
     data: members,
     isLoading: loadingMembers,
     refetch,
-  } = useQuery<any[]>(['getOrganizationMembers'], getOrganizationMembers);
+  } = useQuery<IMemberEntity[]>(['getOrganizationMembers'], getOrganizationMembers);
 
-  async function removeMemberClick(member) {
+  async function removeMemberClick(member: IMemberEntity) {
     try {
       await removeMember(member._id);
 
-      showNotification({
-        message: `Successfully deleted member .`,
-        color: 'green',
-      });
+      successMessage(`Successfully deleted member.`);
 
       refetch();
-    } catch (err: any) {
-      showNotification({
-        message: err.message,
-        color: 'red',
-      });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        errorMessage(err.message);
+      }
     }
   }
 
-  async function changeMemberRoleClick(member, memberRole: MemberRoleEnum) {
+  async function changeMemberRoleClick(member: IMemberEntity, memberRole: MemberRoleEnum) {
     try {
       await changeMemberRole(member._id, memberRole);
-
-      showNotification({
-        message: `Successfully changed role of member.`,
-        color: 'green',
-      });
+      successMessage(`Successfully changed role of member.`);
 
       refetch();
-    } catch (err: any) {
-      showNotification({
-        message: err.message,
-        color: 'red',
-      });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        errorMessage(err.message);
+      }
     }
   }
 
-  async function resendInviteMemberClick(member) {
-    if (isSelfHosted) {
+  async function resendInviteMemberClick(member: IMemberEntity) {
+    if (isSelfHosted && member.invite?.email) {
       inviteByLink(member.invite.email);
 
       return;
@@ -70,25 +61,26 @@ export function MembersInvitePage() {
     try {
       await resendInviteMember(member._id);
 
-      showNotification({
-        message: `Successfully resent invite.`,
-        color: 'green',
-      });
-    } catch (err: any) {
-      showNotification({
-        message: err.message,
-        color: 'red',
-      });
+      successMessage(`Successfully resent invite.`);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        errorMessage(err.message);
+      }
     }
   }
 
   const inviteByLink = (invitedEmail: string) => {
     const currentMember = members?.find((member) => member?.invite?.email === invitedEmail);
-    if (!currentMember) return;
+    if (!currentMember || !currentMember.invite?.token) return;
 
     const inviteLink = generateInviteLink(currentMember.invite.token);
 
-    const inviteHref = buildInviteHref(currentMember, currentOrganization?.name, currentUser, inviteLink);
+    const inviteHref = buildInviteHref({
+      organizationName: currentOrganization?.name,
+      currentUser,
+      copyLink: inviteLink,
+      invitedMemberEmail: invitedEmail,
+    });
 
     showNotification({
       message: <CopyInviteLink copyLink={inviteLink} inviteEmailLink={inviteHref} />,
@@ -125,11 +117,21 @@ export function MembersInvitePage() {
   );
 }
 
-function buildInviteHref(currentMember, currentOrganization, currentUser, copyLink) {
-  const mailTo = `mailto:${currentMember.invite.email}`;
-  const subject = `You've been invited to ${currentOrganization}`;
+function buildInviteHref({
+  invitedMemberEmail,
+  organizationName,
+  currentUser,
+  copyLink,
+}: {
+  invitedMemberEmail: string;
+  organizationName?: string;
+  currentUser?: IUserEntity;
+  copyLink: string;
+}) {
+  const mailTo = `mailto:${invitedMemberEmail}`;
+  const subject = `You've been invited to ${organizationName}`;
   // eslint-disable-next-line max-len
-  const body = `\nHi!\n\nYou have been invited to ${currentOrganization} by ${currentUser?.firstName} ${currentUser?.lastName}.\n\nClick on the link below to accept ${copyLink}.`;
+  const body = `\nHi!\n\nYou have been invited to ${organizationName} by ${currentUser?.firstName} ${currentUser?.lastName}.\n\nClick on the link below to accept ${copyLink}.`;
 
   return `${mailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
