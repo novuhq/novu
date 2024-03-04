@@ -32,7 +32,7 @@ export function MemberInviteForm({
     (email) => inviteMember(email)
   );
 
-  async function onSubmit(data) {
+  async function onSubmit(data: IInviteMemberForm) {
     const email = data.email;
     if (!email) return;
 
@@ -42,15 +42,17 @@ export function MemberInviteForm({
 
     try {
       await sendInvite(email);
-      await onSuccess();
+      onSuccess();
       if (!IS_DOCKER_HOSTED) {
         successMessage(`Invite sent to ${email}`);
       }
-    } catch (e: any) {
-      if (e?.message === 'Already invited') {
-        errorMessage(`User with email: ${email} is already invited`);
-      } else {
-        errorMessage('Failed to send invite');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        if (err.message === 'Already invited') {
+          errorMessage(`User with email: ${email} is already invited`);
+        } else {
+          errorMessage(err.message);
+        }
       }
     }
 
