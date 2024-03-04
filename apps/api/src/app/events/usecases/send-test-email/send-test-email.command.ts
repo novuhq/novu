@@ -40,6 +40,9 @@ export class SendTestEmailCommand extends EnvironmentWithUserCommand {
   stepId?: string | null;
 
   @IsOptional()
+  inputs: any;
+
+  @IsOptional()
   @IsString()
   workflowId?: string | null;
 }

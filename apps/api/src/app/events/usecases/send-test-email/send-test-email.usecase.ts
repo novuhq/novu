@@ -88,24 +88,27 @@ export class SendTestEmail {
     }
 
     if (command.chimera) {
-      try {
-        if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-          if (!require('@novu/ee-chimera')?.PreviewStep) {
-            throw new ApiException('Chimera module is not loaded');
-          }
-          const service = this.moduleRef.get(require('@novu/ee-chimera')?.PreviewStep, { strict: false });
-          const data = await service.execute({
-            workflowId: command.workflowId,
-            stepId: command.stepId,
-            inputs: command.payload,
-            environmentId: command.environmentId,
-            organizationId: command.organizationId,
-            userId: command.userId,
-          });
-          console.log(data);
+      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+        if (!require('@novu/ee-chimera')?.PreviewStep) {
+          throw new ApiException('Chimera module is not loaded');
         }
-      } catch (e) {
-        Logger.error(e, `Unexpected error while importing enterprise modules`, 'PreviewStep');
+        const service = this.moduleRef.get(require('@novu/ee-chimera')?.PreviewStep, { strict: false });
+        const data = await service.execute({
+          workflowId: command.workflowId,
+          stepId: command.stepId,
+          inputs: command.inputs,
+          data: command.payload,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+        });
+
+        if (!data.outputs) {
+          throw new ApiException('Could not retrieve content from edge');
+        }
+
+        html = data.outputs.body;
+        subject = data.outputs.subject;
       }
     }
 

@@ -10,7 +10,7 @@ export const EditorPreviewSwitch = ({ view, setView, chimera = false }) => {
     const all = Object.values(ViewEnum);
 
     if (chimera) {
-      return all.filter((item) => item !== ViewEnum.EDIT);
+      return all.filter((item) => item !== ViewEnum.CODE && item !== ViewEnum.EDIT && item !== ViewEnum.INPUTS);
     }
 
     return all.filter((item) => item !== ViewEnum.CODE && item !== ViewEnum.INPUTS);

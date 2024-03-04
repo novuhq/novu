@@ -37,7 +37,7 @@ export function TestSendEmail({
   const { currentUser } = useAuthContext();
   const { control, watch } = useFormContext<IForm>();
   const path = useStepFormPath();
-  const stepId = watch(`${path}.template.name`);
+  const stepId = watch(`${path}.uuid`);
   const { template: workflow } = useTemplateEditorForm();
 
   const clipboardJson = useClipboard({ timeout: 1000 });
@@ -68,6 +68,7 @@ export function TestSendEmail({
 
   const processedVariables = useProcessVariables(template.variables);
   const [payloadValue, setPayloadValue] = useState('{}');
+  const [stepInputs, setStepInputs] = useState('{}');
 
   useEffect(() => {
     setPayloadValue(processedVariables);
@@ -75,6 +76,7 @@ export function TestSendEmail({
 
   const onTestEmail = async () => {
     const payload = JSON.parse(payloadValue);
+    const inputs = JSON.parse(stepInputs);
 
     try {
       await testSendEmailEvent({
@@ -84,6 +86,7 @@ export function TestSendEmail({
         subject: '',
         ...template,
         payload,
+        inputs,
         to: sendTo,
         chimera,
         content: chimera
@@ -139,7 +142,7 @@ export function TestSendEmail({
           mt={20}
           autosize
           styles={inputStyles}
-          label="Variables"
+          label={chimera ? 'Trigger Data' : 'Variables'}
           value={payloadValue}
           onChange={setPayloadValue}
           minRows={12}
@@ -154,6 +157,30 @@ export function TestSendEmail({
             </Tooltip>
           }
         />
+
+        {chimera ? (
+          <JsonInput
+            data-test-id="test-email-json-inputs"
+            formatOnBlur
+            mt={20}
+            autosize
+            styles={inputStyles}
+            label="Step Inputs"
+            value={stepInputs}
+            onChange={setStepInputs}
+            minRows={12}
+            validationError="Invalid JSON"
+            rightSectionWidth={50}
+            rightSectionProps={{ style: { alignItems: 'start', padding: '5px' } }}
+            rightSection={
+              <Tooltip label={clipboardJson.copied ? 'Copied!' : 'Copy Json'}>
+                <ActionIcon variant="transparent" onClick={() => clipboardJson.copy(payloadValue)}>
+                  {clipboardJson.copied ? <Check /> : <Copy />}
+                </ActionIcon>
+              </Tooltip>
+            }
+          />
+        ) : null}
 
         <span
           style={{

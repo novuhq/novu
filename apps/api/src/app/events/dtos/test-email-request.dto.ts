@@ -38,4 +38,7 @@ export class TestSendEmailRequestDto {
   @IsOptional()
   @IsString()
   workflowId?: string | null;
+
+  @IsOptional()
+  inputs: any;
 }

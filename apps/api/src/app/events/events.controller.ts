@@ -157,6 +157,7 @@ export class EventsController {
         workflowId: body.workflowId,
         stepId: body.stepId,
         chimera: body.chimera,
+        inputs: body.inputs,
       })
     );
   }
