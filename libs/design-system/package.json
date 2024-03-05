@@ -16,7 +16,7 @@
     "dist/types"
   ],
   "scripts": {
-    "postinstall": "panda codegen --clean",
+    "prepare": "panda codegen --clean",
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
     "lint": "eslint --ext .ts,.tsx src",
