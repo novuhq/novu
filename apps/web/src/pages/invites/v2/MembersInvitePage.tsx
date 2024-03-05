@@ -14,7 +14,6 @@ import { MemberInviteForm } from './MemberInviteForm';
 import { buildInviteHref, generateInviteLink } from './MembersInvitePage.utils';
 
 export function MembersInvitePage() {
-  const isSelfHosted = IS_DOCKER_HOSTED;
   const { currentOrganization, currentUser } = useAuthContext();
 
   const {
@@ -51,7 +50,7 @@ export function MembersInvitePage() {
   }
 
   async function resendInviteMemberClick(member: IMemberEntity) {
-    if (isSelfHosted && member.invite?.email) {
+    if (IS_DOCKER_HOSTED && member.invite?.email) {
       inviteByLink(member.invite.email);
 
       return;
