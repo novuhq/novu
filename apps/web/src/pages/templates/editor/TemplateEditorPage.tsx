@@ -19,7 +19,7 @@ function BaseTemplateEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { template, isCreating, onSubmit, onInvalid } = useTemplateEditorForm();
-  const { environment, chimera } = useEnvController({}, template?.chimera || true);
+  const { environment, chimera } = useEnvController({}, template?.chimera);
   const methods = useFormContext<IForm>();
   const { handleSubmit } = methods;
   const tourStorage = useTourStorage();
