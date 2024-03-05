@@ -10,17 +10,28 @@ interface IGetStartedAnimationProps {
   useCase: OnboardingUseCasesTabsEnum;
 }
 
+/**
+ * The animation theme enum is used to determine which color scheme to use for the animation.
+ * The values are defined in the Rive file, which are following:
+ * 0 - dark theme
+ * 1 - new dark theme
+ * 2 - light theme
+ */
+enum AnimationThemeEnum {
+  LIGHT = 2,
+  DARK = 0,
+  NEW_DARK = 1,
+}
+
 // uses `public` as the default base directory
 const ROOT_ANIMATION_PATH = `animations/get-started`;
 const STATE_MACHINE_NAME = 'SM';
 const STATE_MACHINE_INPUT_NAME = 'theme';
-const LIGHT_THEME_INPUT = 2;
-const DARK_THEME_INPUT = 0;
-// const NEW_DARK_THEME_INPUT = 1;
 
 const getAnimationPath = (useCase: OnboardingUseCasesTabsEnum) => `${ROOT_ANIMATION_PATH}/${useCase}.riv`;
 
-const getInputNumber = (colorScheme: ColorScheme) => (colorScheme === 'light' ? LIGHT_THEME_INPUT : DARK_THEME_INPUT);
+const getInputNumber = (colorScheme: ColorScheme) =>
+  colorScheme === 'light' ? AnimationThemeEnum.LIGHT : AnimationThemeEnum.DARK;
 
 const AnimationContainer = styled.div`
   /* taken from Figma to try to get a good estimate on aspect ratio */
