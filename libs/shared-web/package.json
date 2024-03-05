@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared-web",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "private": true,
@@ -29,7 +29,7 @@
   },
   "dependencies": {
     "@mantine/hooks": "^5.7.1",
-    "@novu/shared": "^0.23.1",
+    "@novu/shared": "^0.24.0",
     "@segment/analytics-next": "1.59.0",
     "@sentry/react": "^7.40.0",
     "@tanstack/react-query": "^4.20.4",
