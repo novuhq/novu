@@ -16,6 +16,7 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
       default: true,
     },
     name: Schema.Types.String,
+    stepId: Schema.Types.String,
     subject: Schema.Types.String,
     variables: [
       {

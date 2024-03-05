@@ -53,10 +53,12 @@ export function useTemplates({
 
   return {
     ...paginatedQueryResp,
-    templates: data?.data.map((template) => ({
-      ...template,
-      chimera: template.type === NotificationTemplateTypeEnum.CHIMERA,
-    })),
+    templates: data?.data.map((template) => {
+      return {
+        ...template,
+        chimera: template.type === NotificationTemplateTypeEnum.ECHO,
+      };
+    }),
     loading: isLoading,
     totalCount: data?.totalCount,
     totalItemCount,

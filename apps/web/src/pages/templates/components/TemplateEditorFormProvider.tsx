@@ -303,7 +303,7 @@ const TemplateEditorFormProvider = ({ children }) => {
     () => ({
       template: {
         ...template,
-        chimera: template?.type === NotificationTemplateTypeEnum.CHIMERA,
+        chimera: template?.type === NotificationTemplateTypeEnum.ECHO,
       } as INotificationTemplateWithChimera,
       isLoading: isLoading || loadingGroups,
       isCreating,

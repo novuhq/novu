@@ -49,7 +49,7 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
         type: Schema.Types.String,
       },
     },
-    chimera: {
+    echo: {
       url: Schema.Types.String,
     },
     _parentId: {

@@ -44,7 +44,7 @@ export class EnvironmentEntity {
 
   _parentId: string;
 
-  chimera: {
+  echo: {
     url: string;
   };
 }

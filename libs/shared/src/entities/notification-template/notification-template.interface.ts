@@ -7,7 +7,7 @@ import { IWorkflowStepMetadata } from '../step';
 
 export enum NotificationTemplateTypeEnum {
   REGULAR = 'REGULAR',
-  CHIMERA = 'CHIMERA',
+  ECHO = 'ECHO',
 }
 
 export interface INotificationTemplate {

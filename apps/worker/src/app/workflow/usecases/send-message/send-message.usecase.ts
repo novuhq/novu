@@ -121,7 +121,7 @@ export class SendMessage {
        * This is intentional, so that mixpanel can automatically reshard it.
        */
       this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
-        workflowType: chimeraResponse?.outputs ? 'CHIMERA' : 'REGULAR',
+        workflowType: chimeraResponse?.outputs ? 'ECHO' : 'REGULAR',
         _template: command.job._templateId,
         _organization: command.organizationId,
         _environment: command.environmentId,

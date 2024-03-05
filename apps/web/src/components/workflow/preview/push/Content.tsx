@@ -46,7 +46,7 @@ export default function Content({
   const [chimeraSubject, setChimeraSubject] = useState('');
 
   const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
-    (data) => api.post('/v1/chimera/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    (data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
     {
       onSuccess(data) {
         setChimeraContent(data.outputs.body);
