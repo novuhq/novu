@@ -3,15 +3,14 @@ import styled from '@emotion/styled';
 import { Input } from '@novu/design-system';
 
 export const StyledInput = styled(Input)`
-  width: 300px;
+  width: 18.75rem;
 
   .mantine-TextInput-wrapper,
   input {
     min-height: auto;
-    height: 42px;
+    height: 2.625rem;
   }
-  position: relative;
-  top: -2px;
+  margin-top: -2px;
 `;
 
 export const StyledButton = styled.button`
