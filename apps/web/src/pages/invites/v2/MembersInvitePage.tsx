@@ -1,18 +1,17 @@
 import { Container, Group } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
-import { IMemberEntity, IUserEntity, MemberRoleEnum } from '@novu/shared';
+import { IMemberEntity, MemberRoleEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 
 import { errorMessage, successMessage, Title, UserAccess } from '@novu/design-system';
+import { IS_DOCKER_HOSTED } from '@novu/shared-web';
 import { changeMemberRole, getOrganizationMembers, removeMember, resendInviteMember } from '../../../api/organization';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { ProductLead } from '../../../components/utils/ProductLead';
-import { ROUTES } from '../../../constants/routes.enum';
-import { parseUrl } from '../../../utils/routeUtils';
 import { MembersTable } from '../components/MembersTable';
 import { CopyInviteLink } from './CopyInviteLink';
 import { MemberInviteForm } from './MemberInviteForm';
-import { IS_DOCKER_HOSTED } from '@novu/shared-web';
+import { buildInviteHref, generateInviteLink } from './MembersInvitePage.utils';
 
 export function MembersInvitePage() {
   const isSelfHosted = IS_DOCKER_HOSTED;
@@ -116,26 +115,3 @@ export function MembersInvitePage() {
     </div>
   );
 }
-
-function buildInviteHref({
-  invitedMemberEmail,
-  organizationName,
-  currentUser,
-  copyLink,
-}: {
-  invitedMemberEmail: string;
-  organizationName?: string;
-  currentUser?: IUserEntity;
-  copyLink: string;
-}) {
-  const mailTo = `mailto:${invitedMemberEmail}`;
-  const subject = `You've been invited to ${organizationName}`;
-  // eslint-disable-next-line max-len
-  const body = `\nHi!\n\nYou have been invited to ${organizationName} by ${currentUser?.firstName} ${currentUser?.lastName}.\n\nClick on the link below to accept ${copyLink}.`;
-
-  return `${mailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
-const generateInviteLink = (memberToken: string) => {
-  return `${window.location.origin.toString()}` + parseUrl(ROUTES.AUTH_INVITATION_TOKEN, { token: memberToken });
-};
