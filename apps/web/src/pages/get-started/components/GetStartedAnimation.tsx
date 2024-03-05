@@ -27,6 +27,15 @@ const AnimationContainer = styled.div`
   aspect-ratio: 540 / 472;
   max-width: 62.5rem;
   margin: auto;
+  margin-top: -2.25rem;
+
+  @media screen and (min-width: 1440px) {
+    margin-top: -3rem;
+  }
+
+  @media screen and (min-width: 1600px) {
+    margin-top: -4rem;
+  }
 `;
 
 export const GetStartedAnimation: FC<IGetStartedAnimationProps> = ({ useCase }) => {
