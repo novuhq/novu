@@ -53,11 +53,14 @@ jobs:
       # else checkout without submodules if the token is not provided
       - uses: actions/checkout@v3
         if: steps.setup.outputs.has_token != 'true'
+
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
           cypress_version: 12.9.0
           cypress: true
+          submodules: ${{ inputs.ee && steps.setup.outputs.has_token == 'true' }}
+          
       - uses: ./.github/actions/setup-redis-cluster
 
       - uses: mansagroup/nrwl-nx-action@v3
