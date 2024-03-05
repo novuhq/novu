@@ -3,6 +3,10 @@
 set -eux
 
 df -h
+echo "::group::apt clean"
+sudo apt clean
+echo "::endgroup::"
+
 echo "::group::/usr/local/*"
 du -hsc /usr/local/*
 echo "::endgroup::"
