@@ -39,7 +39,7 @@ export class AnalyticsService {
     user: IUser
   ) {
     if (this.segmentEnabled) {
-      const traits: Record<string, unknown> = {
+      const traits: Record<string, string | string[]> = {
         _organization: organizationId,
         id: organizationId,
         name: organization.name,
@@ -48,7 +48,14 @@ export class AnalyticsService {
       };
 
       if (organization.productUseCases) {
-        traits.productUseCases = organization.productUseCases;
+        const productUseCases: string[] = [];
+
+        for (const key in organization.productUseCases) {
+          if (organization.productUseCases[key]) {
+            productUseCases.push(key);
+          }
+        }
+        traits.productUseCases = productUseCases;
       }
 
       this.segment.group({
