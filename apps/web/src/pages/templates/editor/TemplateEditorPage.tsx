@@ -48,7 +48,7 @@ function BaseTemplateEditorPage() {
   };
 
   useEffect(() => {
-    if (environment && template) {
+    if (environment && template && template._environmentId) {
       if (environment._id !== template._environmentId) {
         navigate(ROUTES.WORKFLOWS);
       }
