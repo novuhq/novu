@@ -11,7 +11,12 @@ export function CopyInviteLink({ inviteEmailLink, copyLink }: { inviteEmailLink:
   return (
     <div>
       The invite link was successfully created. You can send it by clicking
-      <a href={inviteEmailLink} style={{ color: '#0000FF', paddingLeft: '3px' }}>
+      <a
+        href={inviteEmailLink}
+        style={{ color: '#0000FF', paddingLeft: '3px' }}
+        rel="noopener noreferrer"
+        target="_blank"
+      >
         here
       </a>
       . Or copy it directly clicking
