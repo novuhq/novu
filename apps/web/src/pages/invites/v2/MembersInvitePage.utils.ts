@@ -15,8 +15,10 @@ export const buildInviteHref = ({
 }) => {
   const mailTo = `mailto:${invitedMemberEmail}`;
   const subject = `You've been invited to ${organizationName}`;
-  // eslint-disable-next-line max-len
-  const body = `\nHi!\n\nYou have been invited to ${organizationName} by ${currentUser?.firstName} ${currentUser?.lastName}.\n\nClick on the link below to accept ${copyLink}.`;
+  const body =
+    `\nHi!\n\n` +
+    `You have been invited to ${organizationName} by ${currentUser?.firstName} ${currentUser?.lastName}.\n\n` +
+    `Click on the link below to accept ${copyLink}.`;
 
   return `${mailTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 };
