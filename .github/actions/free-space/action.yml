@@ -57,9 +57,5 @@ echo "::endgroup::"
 sudo rm -rf /opt/hostedtoolcache/CodeQL || :
 # 1.4GB
 sudo rm -rf /opt/hostedtoolcache/go || :
-# Remove Web browser packages
-sudo apt purge -y \
-firefox \
-google-chrome-stable \
-microsoft-edge-stable
+
 df -h
