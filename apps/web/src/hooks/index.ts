@@ -24,3 +24,4 @@ export * from './useHoverOverItem';
 export * from './useHover';
 export * from './useBootIntercom';
 export * from './useThemeChange';
+export * from './useIsDarkTheme';
