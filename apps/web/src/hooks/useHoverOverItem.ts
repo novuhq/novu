@@ -1,8 +1,13 @@
 import { useRef, useState } from 'react';
 
-export const useHoverOverItem = <T>() => {
+interface IProps {
+  enterDelay?: number;
+}
+
+export const useHoverOverItem = <T>(props: IProps = {}) => {
   const [item, setItem] = useState<T | undefined>(undefined);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const enterDelay = props.enterDelay || props.enterDelay === 0 ? props.enterDelay : 500;
 
   const onMouseEnter = (newItem?: T) => {
     if (timeoutRef.current) {
@@ -10,7 +15,7 @@ export const useHoverOverItem = <T>() => {
     }
     timeoutRef.current = setTimeout(() => {
       setItem(newItem);
-    }, 500);
+    }, enterDelay);
   };
 
   const onMouseLeave = () => {

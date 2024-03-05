@@ -16,5 +16,7 @@ overrides:
   - files:
       - "**#/paths/~1v1~1subscribers~1%7BsubscriberId%7D~1preferences~1%7BtemplateId%7D"
       - "**#/paths/~1v1~1subscribers~1%7BsubscriberId%7D~1preferences~1%7Blevel%7D"
+      - "**#/paths/~1v1~1workflows~1%7BworkflowIdOrIdentifier%7D"
+      - "**#/paths/~1v1~1notification-templates~1%7BworkflowIdOrIdentifier%7D"
     rules:
       path-params: "off"
