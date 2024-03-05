@@ -1,8 +1,9 @@
 // load the global Cypress types
 /// <reference types="cypress" />
 
-import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { MemberRoleEnum, MemberStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import 'cypress-wait-until';
+import 'cypress-file-upload';
 
 Cypress.Commands.add('getByTestId', (selector, ...args) => {
   return cy.get(`[data-test-id=${selector}]`, ...args);
@@ -13,8 +14,8 @@ Cypress.Commands.add('getBySelectorLike', (selector, ...args) => {
 });
 
 Cypress.Commands.add('waitLoadEnv', (beforeWait: () => void): void => {
-  cy.intercept('GET', 'http://127.0.0.1:1336/v1/environments').as('environments');
-  cy.intercept('GET', 'http://127.0.0.1:1336/v1/environments/me').as('environments-me');
+  cy.intercept('GET', '**/v1/environments').as('environments');
+  cy.intercept('GET', '**/v1/environments/me').as('environments-me');
 
   beforeWait && beforeWait();
 
@@ -22,13 +23,13 @@ Cypress.Commands.add('waitLoadEnv', (beforeWait: () => void): void => {
 });
 
 Cypress.Commands.add('waitLoadTemplatePage', (beforeWait: () => void): void => {
-  cy.intercept('GET', 'http://127.0.0.1:1336/v1/environments').as('environments');
-  cy.intercept('GET', 'http://127.0.0.1:1336/v1/organizations').as('organizations');
-  cy.intercept('GET', 'http://127.0.0.1:1336/v1/environments/me').as('environments-me');
-  cy.intercept('GET', 'http://127.0.0.1:1336/v1/notification-groups').as('notification-groups');
-  cy.intercept('GET', 'http://127.0.0.1:1336/v1/changes/count').as('changes-count');
-  cy.intercept('GET', 'http://127.0.0.1:1336/v1/integrations/active').as('active-integrations');
-  cy.intercept('GET', 'http://127.0.0.1:1336/v1/users/me').as('me');
+  cy.intercept('GET', '**/v1/environments').as('environments');
+  cy.intercept('GET', '**/v1/organizations').as('organizations');
+  cy.intercept('GET', '**/v1/environments/me').as('environments-me');
+  cy.intercept('GET', '**/v1/notification-groups').as('notification-groups');
+  cy.intercept('GET', '**/v1/changes/count').as('changes-count');
+  cy.intercept('GET', '**/v1/integrations/active').as('active-integrations');
+  cy.intercept('GET', '**/v1/users/me').as('me');
 
   beforeWait && beforeWait();
 
@@ -165,6 +166,33 @@ Cypress.Commands.add('loginWithGitHub', () => {
       });
     }
   );
+});
+
+/**
+ * Intercept feature flags from LaunchDarkly and mock their response.
+ *
+ * Must be in beforeEach (vs before) because intercepts are cleared before each test run.
+ * https://medium.com/@kutnickclose/how-to-use-cypress-with-launchdarkly-897349b7f976
+ */
+Cypress.Commands.add('mockFeatureFlags', (featureFlags: Partial<Record<FeatureFlagsKeysEnum, boolean>>) => {
+  // turn off push (EventSource) updates from LaunchDarkly
+  cy.intercept({ hostname: /clientstream\.launchdarkly\.com/ }, (req) => {
+    req.reply('data: no streaming feature flag data here\n\n', {
+      'content-type': 'text/event-stream; charset=utf-8',
+    });
+  });
+
+  // ignore api calls to events endpoint
+  cy.intercept({ hostname: /events\.launchdarkly\.com/ }, { body: {} });
+
+  // return feature flag values in format expected by launchdarkly client
+  cy.intercept({ hostname: /app\.launchdarkly\.com/ }, (req) => {
+    const body = {};
+    Object.entries(featureFlags).forEach(([featureFlagName, featureFlagValue]) => {
+      body[featureFlagName] = { value: featureFlagValue };
+    });
+    req.reply({ body });
+  });
 });
 
 export {};

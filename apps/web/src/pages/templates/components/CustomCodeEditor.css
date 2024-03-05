@@ -41,6 +41,13 @@
   color: #fff !important;
 }
 
+
+.custom-code-editor
+  .monaco-editor
+  .overflow-guard {
+  border-radius: 10px !important;
+}
+
 .custom-code-editor
   .monaco-editor
   .suggest-widget

@@ -1,5 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ICreateNotificationTemplateDto, INotificationTemplate, IUpdateNotificationTemplateDto } from '@novu/shared';
+import type {
+  IResponseError,
+  ICreateNotificationTemplateDto,
+  INotificationTemplate,
+  IUpdateNotificationTemplateDto,
+} from '@novu/shared';
 
 import { useTemplateFetcher } from '../../../api/hooks';
 import { QueryKeys } from '../../../api/query.keys';
@@ -18,7 +23,7 @@ export function useTemplateController(
 
   const { isLoading: isCreating, mutateAsync: createNotificationTemplate } = useMutation<
     INotificationTemplate & { __source?: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { template: ICreateNotificationTemplateDto } & { params: { __source?: string } }
   >((data) => createTemplate(data.template, data.params), {
     onSuccess: async () => {
@@ -28,7 +33,7 @@ export function useTemplateController(
 
   const { isLoading: isUpdating, mutateAsync: updateNotificationTemplate } = useMutation<
     INotificationTemplate,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { id: string; data: Partial<IUpdateNotificationTemplateDto> }
   >(({ id, data }) => updateTemplate(id, data), {
     onSuccess: async () => {
@@ -37,10 +42,7 @@ export function useTemplateController(
     },
   });
 
-  const { isLoading: isDeleting, mutate: deleteNotificationTemplate } = useMutation<
-    unknown,
-    { error: string; message: string; statusCode: number }
-  >(() => {
+  const { isLoading: isDeleting, mutate: deleteNotificationTemplate } = useMutation<unknown, IResponseError>(() => {
     if (!templateId) {
       return Promise.resolve();
     }

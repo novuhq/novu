@@ -25,13 +25,13 @@ describe('Creation functionality', function () {
       .parent()
       .click()
       .find('textarea')
-      .type('<p>{{firstName}} someone assigned you to {{taskName}}', {
+      .type('<p>{{firstName}} someone assigned you to {{taskName}}</p>', {
         parseSpecialCharSequences: false,
         force: true,
       });
     cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('editor-mode-switch').find('label').last().click();
-    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName');
+    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName', { timeout: 1000 });
 
     goBack();
     cy.getByTestId('notification-template-submit-btn').click();
@@ -203,6 +203,9 @@ describe('Creation functionality', function () {
     cy.clickWorkflowNode('node-emailSelector');
     cy.waitForNetworkIdle(500);
 
+    cy.getByTestId('edit-action').click();
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('emailSubject').type('this is email subject');
     cy.getByTestId('email-editor').getByTestId('editor-row').click();
     cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
@@ -223,16 +226,26 @@ describe('Creation functionality', function () {
     cy.waitForNetworkIdle(500);
 
     cy.clickWorkflowNode('node-smsSelector');
+    cy.getByTestId('edit-action').click();
     cy.waitForNetworkIdle(500);
 
-    cy.getByTestId('smsNotificationContent').type('This text is written from a test {{var}}', {
-      parseSpecialCharSequences: false,
-    });
+    cy.get('.monaco-editor textarea:first', { timeout: 7000 })
+      .parent()
+      .click()
+      .find('textarea')
+      .type('This text is written from a test {{var}}', {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
+    cy.getByTestId('open-variable-management').click();
+    cy.getByTestId('open-edit-variables-btn').click();
     cy.getByTestId('variable-default-value').type('Test');
+    cy.getByTestId('close-var-manager-modal').click();
 
     cy.getByTestId('notification-template-submit-btn').click();
     cy.waitForNetworkIdle(500);
-
+    cy.getByTestId('open-variable-management').click();
+    cy.getByTestId('open-edit-variables-btn').click();
     cy.getByTestId('variable-default-value').should('have.value', 'Test');
   });
 
@@ -240,11 +253,12 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     dragAndDrop('email');
     cy.waitForNetworkIdle(500);
 
-    cy.clickWorkflowNode('node-emailSelector');
+    editChannel('email');
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('emailSubject').type('this is email subject');

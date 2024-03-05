@@ -9,7 +9,7 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_webhook:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     timeout-minutes: 80
 
     # Steps represent a sequence of tasks that will be executed as part of the job

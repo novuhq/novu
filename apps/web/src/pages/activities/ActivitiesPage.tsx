@@ -15,6 +15,7 @@ import { ActivityList } from './components/ActivityList';
 import { ExecutionDetailsModal } from '../../components/execution-detail/ExecutionDetailsModal';
 import { IActivityGraphStats } from './interfaces';
 import { Flex } from '@mantine/core';
+import { FIRST_100_WORKFLOWS } from '../../constants/workflowConstants';
 
 const FiltersContainer = styled.div`
   gap: 15px;
@@ -38,7 +39,7 @@ const initialFormState: IFiltersForm = {
 };
 
 export function ActivitiesPage() {
-  const { templates, loading: loadingTemplates } = useTemplates(0, 100);
+  const { templates, loading: loadingTemplates } = useTemplates(FIRST_100_WORKFLOWS);
   const [page, setPage] = useState<number>(0);
   const [isModalOpen, setToggleModal] = useState<boolean>(false);
   const [notificationId, setNotificationId] = useState<string>('');
@@ -52,10 +53,6 @@ export function ActivitiesPage() {
   function onFiltersChange(formData: Partial<IFiltersForm>) {
     setFilters((old) => ({ ...old, ...formData }));
   }
-
-  const debouncedTransactionIdChange = useDebounce((transactionId: string) => {
-    onFiltersChange({ transactionId });
-  }, 500);
 
   function handleTableChange(pageIndex) {
     setPage(pageIndex);

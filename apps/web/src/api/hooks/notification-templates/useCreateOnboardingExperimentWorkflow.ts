@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuid4 } from 'uuid';
 import { EmailProviderIdEnum, StepTypeEnum } from '@novu/shared';
-import type { ICreateNotificationTemplateDto, INotificationTemplate } from '@novu/shared';
+import type { IResponseError, ICreateNotificationTemplateDto, INotificationTemplate } from '@novu/shared';
 import { QueryKeys } from '@novu/shared-web';
 
 import { createTemplate } from '../../notification-templates';
@@ -11,6 +11,7 @@ import { parseUrl } from '../../../utils/routeUtils';
 import { ROUTES } from '../../../constants/routes.enum';
 import { errorMessage } from '../../../utils/notifications';
 import { useNotificationGroup, useTemplates, useIntegrations } from '../../../hooks';
+import { FIRST_100_WORKFLOWS } from '../../../constants/workflowConstants';
 import { IntegrationEntity } from '../../../pages/integrations/types';
 import { setIntegrationAsPrimary } from '../../../api/integration';
 
@@ -22,11 +23,7 @@ export const useCreateOnboardingExperimentWorkflow = () => {
 
   const { mutateAsync: createNotificationTemplate, isLoading: isCreating } = useMutation<
     INotificationTemplate & { __source?: string },
-    {
-      error: string;
-      message: string;
-      statusCode: number;
-    },
+    IResponseError,
     { template: ICreateNotificationTemplateDto; params: { __source?: string } }
   >((data) => createTemplate(data.template, data.params), {
     onSuccess: (template) => {
@@ -39,11 +36,7 @@ export const useCreateOnboardingExperimentWorkflow = () => {
 
   const { mutate: makePrimaryIntegration, isLoading: isPrimaryEmailIntegrationLoading } = useMutation<
     IntegrationEntity,
-    {
-      error: string;
-      message: string;
-      statusCode: number;
-    },
+    IResponseError,
     { id: string }
   >(({ id }) => setIntegrationAsPrimary(id), {
     onSuccess: () => {
@@ -57,7 +50,7 @@ export const useCreateOnboardingExperimentWorkflow = () => {
     },
   });
 
-  const { templates = [], loading: templatesLoading } = useTemplates(0, 100);
+  const { templates = [], loading: templatesLoading } = useTemplates(FIRST_100_WORKFLOWS);
 
   const { integrations, loading: isIntegrationsLoading } = useIntegrations();
 

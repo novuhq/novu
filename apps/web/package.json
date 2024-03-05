@@ -57,6 +57,7 @@
     "@novu/notification-center": "^0.23.1",
     "@novu/shared": "^0.23.1",
     "@novu/shared-web": "^0.23.1",
+    "@rive-app/react-canvas": "^4.8.1",
     "@segment/analytics-next": "^1.48.0",
     "@sentry/react": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
@@ -125,8 +126,8 @@
     "zod": "^3.22.4"
   },
   "optionalDependencies": {
-    "@novu/ee-translation-web": "^0.23.1",
-    "@novu/ee-billing-web": "^0.23.1"
+    "@novu/ee-billing-web": "^0.23.1",
+    "@novu/ee-translation-web": "^0.23.1"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",
@@ -148,6 +149,7 @@
     "@types/react": "^17.0.0",
     "@types/testing-library__jest-dom": "^5.14.5",
     "cypress": "^13.3.1",
+    "cypress-file-upload": "^5.0.8",
     "cypress-localstorage-commands": "^2.2.4",
     "cypress-network-idle": "^1.14.2",
     "cypress-wait-until": "^2.0.1",

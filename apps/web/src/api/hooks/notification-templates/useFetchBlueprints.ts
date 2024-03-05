@@ -1,5 +1,4 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
-import { IconName } from '@fortawesome/fontawesome-svg-core';
 import localforage from 'localforage';
 import { addWeeks } from 'date-fns';
 import { IGroupedBlueprint } from '@novu/shared';
@@ -7,6 +6,7 @@ import { IGroupedBlueprint } from '@novu/shared';
 import { getBlueprintsGroupedByCategory } from '../../notification-templates';
 import { QueryKeys } from '../../query.keys';
 import { IBlueprintTemplate } from '../../types';
+import { getWorkflowBlueprintDetails } from '../../../utils';
 
 export interface IBlueprintsGrouped {
   name: string;
@@ -18,22 +18,10 @@ interface IBlueprintsGroupedAndPopular {
   popular: IBlueprintsGrouped;
 }
 
-const getTemplateDetails = (templateName: string): { name: string; iconName: IconName } => {
-  const regexResult = /^:.{1,}:/.exec(templateName);
-  let name = '';
-  let iconName = 'fa-solid fa-question';
-  if (regexResult !== null) {
-    name = templateName.replace(regexResult[0], '').trim();
-    iconName = regexResult[0].replace(/:/g, '').trim();
-  }
-
-  return { name, iconName: iconName as IconName };
-};
-
 const mapGroup = (group: IGroupedBlueprint): IBlueprintsGrouped => ({
   name: group.name,
   blueprints: group.blueprints.map((template) => {
-    const { name, iconName } = getTemplateDetails(template.name);
+    const { name, iconName } = getWorkflowBlueprintDetails(template.name);
 
     return {
       ...template,

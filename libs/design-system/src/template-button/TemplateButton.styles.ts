@@ -16,7 +16,7 @@ export const useTemplateButtonStyles = createStyles((theme) => {
       height: '120px',
     },
     variantRoot: {
-      border: `2px dashed ${dark ? colors.B40 : colors.B60}`,
+      border: `1px dashed ${dark ? colors.B40 : colors.B60}`,
     },
     button: {
       height: '80px',

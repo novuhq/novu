@@ -53,9 +53,7 @@ export function getStepErrors(index: number | string, stepsErrors?: FieldErrors<
     const stepErrors = stepsErrors[index]?.template;
 
     if (stepErrors) {
-      const keys = Object.keys(stepErrors);
-
-      return keys.map((key) => stepErrors[key]?.message);
+      return mapStepErrors(stepErrors);
     }
 
     const digestMetadataErrors = stepsErrors[index]?.digestMetadata;
@@ -68,6 +66,16 @@ export function getStepErrors(index: number | string, stepsErrors?: FieldErrors<
     if (delayMetadataErrors) {
       return findMessages(delayMetadataErrors);
     }
+  }
+
+  return [];
+}
+
+export function mapStepErrors(stepErrors) {
+  if (stepErrors) {
+    const keys = Object.keys(stepErrors);
+
+    return keys.map((key) => stepErrors[key]?.message);
   }
 
   return [];
