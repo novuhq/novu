@@ -68,22 +68,28 @@ export function ThemeProvider({ children }: { children: ReactNode | ReactNode[];
   const { themeStatus, setThemeStatus } = useLocalThemePreference();
 
   const toggleColorScheme = () => {
-    if (themeStatus === ColorSchemePreferenceEnum.SYSTEM) {
-      setThemeStatus(ColorSchemePreferenceEnum.LIGHT);
-    } else if (themeStatus === ColorSchemePreferenceEnum.LIGHT) {
-      setThemeStatus(ColorSchemePreferenceEnum.DARK);
-    } else {
-      setThemeStatus(ColorSchemePreferenceEnum.SYSTEM);
+    switch (themeStatus) {
+      case ColorSchemePreferenceEnum.SYSTEM:
+        setThemeStatus(ColorSchemePreferenceEnum.LIGHT);
+        break;
+      case ColorSchemePreferenceEnum.LIGHT:
+        setThemeStatus(ColorSchemePreferenceEnum.DARK);
+        break;
+      default:
+        setThemeStatus(ColorSchemePreferenceEnum.SYSTEM);
     }
   };
 
   useEffect(() => {
-    if (themeStatus === ColorSchemePreferenceEnum.SYSTEM) {
-      setColorScheme(preferredColorScheme);
-    } else if (themeStatus === ColorSchemePreferenceEnum.LIGHT) {
-      setColorScheme(ColorSchemePreferenceEnum.LIGHT);
-    } else {
-      setColorScheme(ColorSchemePreferenceEnum.DARK);
+    switch (themeStatus) {
+      case ColorSchemePreferenceEnum.SYSTEM:
+        setColorScheme(preferredColorScheme);
+        break;
+      case ColorSchemePreferenceEnum.LIGHT:
+        setColorScheme(ColorSchemePreferenceEnum.LIGHT);
+        break;
+      default:
+        setColorScheme(ColorSchemePreferenceEnum.DARK);
     }
   }, [themeStatus, preferredColorScheme]);
 
