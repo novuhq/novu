@@ -50,7 +50,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   const processedVariables = useProcessVariables(variables);
   const content = contentType === 'editor' ? editorContent : htmlContent;
   const [payloadValue, setPayloadValue] = useState(processedVariables ?? '{}');
-  const [chimeraContent, setChimeraContent] = useState('<html><head></head><body><div></div></body></html>');
+  const [chimeraContent, setChimeraContent] = useState('');
   const [chimeraSubject, setChimeraSubject] = useState('');
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
