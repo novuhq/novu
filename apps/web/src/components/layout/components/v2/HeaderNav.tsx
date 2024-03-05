@@ -39,7 +39,7 @@ export function HeaderNav() {
             </Tooltip>
           </ActionIcon>
           {isSelfHosted ? (
-            <a href={discordInviteUrl} target="_blank" rel="noreferrer">
+            <a href={discordInviteUrl} target="_blank" rel="noopener noreferrer">
               <ActionIcon variant="transparent">
                 <IconHelpOutline color={colors.B60} />
               </ActionIcon>
