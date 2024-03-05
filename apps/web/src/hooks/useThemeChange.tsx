@@ -4,7 +4,7 @@ import { ColorSchemePreferenceEnum, THEME_TITLE_LOOKUP, useLocalThemePreference,
 import { useEffect, useMemo } from 'react';
 import { useDebounce } from './useDebounce';
 
-type ThemeChange = { colorScheme: ColorScheme; themeStatus: string };
+type ThemeChange = { colorScheme: ColorScheme; themeStatus: ColorSchemePreferenceEnum };
 
 const getThemeIcon = (themeStatus: ColorSchemePreferenceEnum) => {
   if (themeStatus === ColorSchemePreferenceEnum.DARK) {
