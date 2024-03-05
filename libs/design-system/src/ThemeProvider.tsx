@@ -62,7 +62,13 @@ declare module '@mantine/core' {
   export type MantineColor = MantineColor | 'gradient';
 }
 
-export function ThemeProvider({ children }: { children: ReactNode | ReactNode[]; dark?: Boolean }) {
+export function ThemeProvider({
+  children,
+  shouldDisableGlobals,
+}: {
+  children: ReactNode | ReactNode[];
+  shouldDisableGlobals?: Boolean;
+}) {
   const preferredColorScheme = useColorScheme();
   const [colorScheme, setColorScheme] = useState<ColorScheme>(preferredColorScheme);
   const { themeStatus, setThemeStatus } = useLocalThemePreference();
@@ -90,8 +96,8 @@ export function ThemeProvider({ children }: { children: ReactNode | ReactNode[];
   return (
     <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
       <MantineProvider
-        withGlobalStyles
-        withNormalizeCSS
+        withGlobalStyles={!shouldDisableGlobals}
+        withNormalizeCSS={!shouldDisableGlobals}
         theme={{
           // Override any other properties from default theme
           colorScheme,
@@ -109,21 +115,23 @@ export function ThemeProvider({ children }: { children: ReactNode | ReactNode[];
           },
         }}
       >
-        <Global
-          styles={(theme) => ({
-            body: {
-              ...theme.fn.fontStyles(),
-              backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
-              color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
-              marginRight: `calc(-1 * var(--removed-scroll-width, 0))`,
-              overflow: 'hidden',
-            },
-            a: {
-              textDecoration: 'none',
-              color: 'inherit',
-            },
-          })}
-        />
+        {!shouldDisableGlobals && (
+          <Global
+            styles={(theme) => ({
+              body: {
+                ...theme.fn.fontStyles(),
+                backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
+                color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+                marginRight: `calc(-1 * var(--removed-scroll-width, 0))`,
+                overflow: 'hidden',
+              },
+              a: {
+                textDecoration: 'none',
+                color: 'inherit',
+              },
+            })}
+          />
+        )}
         <NotificationsProvider>
           <IconProvider>{children}</IconProvider>
         </NotificationsProvider>
