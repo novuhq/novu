@@ -6,6 +6,7 @@ export default createStyles((theme: MantineTheme) => {
     spotlight: {
       backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
       boxShadow: theme.colorScheme === 'dark' ? shadows.dark : shadows.medium,
+      borderRadius: '0.75rem',
     },
     searchInput: {
       backgroundColor: theme.colorScheme === 'dark' ? colors.B15 : colors.white,
