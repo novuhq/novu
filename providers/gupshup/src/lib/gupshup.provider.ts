@@ -12,7 +12,7 @@ if (!globalThis.fetch) {
 
 export class GupshupSmsProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  public static BASE_URL = 'http://enterprise.smsgupshup.com/GatewayAPI/rest';
+  public static BASE_URL = 'https://enterprise.smsgupshup.com/GatewayAPI/rest';
 
   constructor(
     private config: {
@@ -46,9 +46,9 @@ export class GupshupSmsProvider implements ISmsProvider {
     const opts = {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      body: JSON.stringify(params),
+      body: new URLSearchParams(params),
     };
 
     const response = await fetch(GupshupSmsProvider.BASE_URL, opts);

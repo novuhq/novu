@@ -20,5 +20,6 @@ export * from './useVercelParams';
 export * from './useEffectOnce';
 export * from './useInlineComponent';
 export * from './useHoverOverItem';
+export * from './useCreateWorkflowFromBlueprint';
 export * from './useHover';
 export { useDataRef, useKeyDown, useLocalThemePreference } from '@novu/shared-web';

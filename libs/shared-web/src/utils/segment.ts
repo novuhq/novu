@@ -29,6 +29,14 @@ export class SegmentService {
     this._segment?.track(event + ' - [WEB]', data);
   }
 
+  pageView(url: string) {
+    if (!this.isSegmentEnabled()) {
+      return;
+    }
+
+    this._segment?.pageView(url);
+  }
+
   reset() {
     if (!this.isSegmentEnabled()) {
       return;

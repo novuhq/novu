@@ -25,7 +25,7 @@ export const CustomCodeEditor = ({
 
   if (isLoadingVariables) {
     return (
-      <Card withBorder sx={styledCard}>
+      <Card data-test-id={'custom-code-editor'} withBorder sx={styledCard}>
         <Loader />
       </Card>
     );
@@ -173,4 +173,5 @@ const styledCard = (theme) => ({
   borderColor: theme.colorScheme === 'dark' ? colors.B30 : colors.B80,
   padding: '30px',
   overflow: 'visible',
+  height: '300px',
 });

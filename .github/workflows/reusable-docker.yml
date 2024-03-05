@@ -46,7 +46,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   reusable_docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
     outputs:
