@@ -711,6 +711,9 @@ importers:
       '@novu/shared-web':
         specifier: ^0.23.1
         version: link:../../libs/shared-web
+      '@rive-app/react-canvas':
+        specifier: ^4.8.1
+        version: 4.8.1(react@17.0.2)
       '@segment/analytics-next':
         specifier: ^1.48.0
         version: 1.51.3
@@ -22270,6 +22273,19 @@ packages:
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
+    dev: false
+
+  /@rive-app/canvas@2.10.1:
+    resolution: {integrity: sha512-zVEDQr+JjYYLR+G4iuJJecP5mG+RCix92I9+YcxE+YeDPUIMXJdiH7OAHj3rlRl634d9wi8SEeB0fay6/RUHpg==}
+    dev: false
+
+  /@rive-app/react-canvas@4.8.1(react@17.0.2):
+    resolution: {integrity: sha512-IuWXpnp8QEOXoEdDHLolIklRXrAGtzj3XODVD3sfNvH9ewvBCKGqPbiFbJkmm8AwWtZToCX/oOyfPnis6QtDpg==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@rive-app/canvas': 2.10.1
+      react: 17.0.2
     dev: false
 
   /@rollup/plugin-babel@5.3.1(@babel/core@7.23.2)(rollup@2.79.1):

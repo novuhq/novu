@@ -20,7 +20,7 @@ jobs:
   build_prod_image:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-large
     needs: test_api
     timeout-minutes: 80
     environment: Production
@@ -45,6 +45,26 @@ jobs:
 
       - name: build api
         run: pnpm build:api --skip-nx-cache
+
+      - uses: crazy-max/ghaction-setup-docker@v2
+        with:
+          version: v24.0.6
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: 'image=moby/buildkit:v0.12.4'
 
       - name: Set Bull MQ Env variable for EE
         if: contains(matrix.name, 'ee')

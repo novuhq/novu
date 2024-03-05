@@ -35,6 +35,9 @@ declare global {
       SEGMENT_TOKEN?: string;
       LAUNCH_DARKLY_SDK_KEY?: string;
       STRIPE_API_KEY: string;
+      NOTIFICATION_RETENTION_DAYS?: number;
+      MESSAGE_GENERIC_RETENTION_DAYS?: number;
+      MESSAGE_IN_APP_RETENTION_DAYS?: number;
     }
   }
 }

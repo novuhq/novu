@@ -47,13 +47,27 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(item);
   }
 
-  async findBlueprint(id: string) {
+  async findBlueprintById(id: string) {
     if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
 
     const requestQuery: NotificationTemplateQuery = {
-      _id: id,
       isBlueprint: true,
       _organizationId: this.blueprintOrganizationId,
+      _id: id,
+    };
+
+    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
+
+    return this.mapEntity(item);
+  }
+
+  async findBlueprintByTriggerIdentifier(identifier: string) {
+    if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
+
+    const requestQuery: NotificationTemplateQuery = {
+      isBlueprint: true,
+      _organizationId: this.blueprintOrganizationId,
+      triggers: { $elemMatch: { identifier: identifier } },
     };
 
     const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
@@ -197,7 +211,7 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   private get blueprintOrganizationId(): string | undefined {
-    return process.env.BLUEPRINT_CREATOR;
+    return NotificationTemplateRepository.getBlueprintOrganizationId();
   }
 
   public static getBlueprintOrganizationId(): string | undefined {

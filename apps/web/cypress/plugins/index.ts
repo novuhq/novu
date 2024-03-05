@@ -12,7 +12,14 @@ import {
   EnvironmentService,
 } from '@novu/testing';
 import { JobsService } from '@novu/testing';
-import { ChannelTypeEnum, getPopularTemplateIds, ProvidersIdEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  getPopularTemplateIds,
+  getGetStartedTemplateIds,
+  ProvidersIdEnum,
+  TriggerTypeEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 
 const jobsService = new JobsService();
 
@@ -198,10 +205,22 @@ module.exports = (on, config) => {
         _environmentId: productionEnvironmentId,
         _organizationId: organizationId,
       });
+      const productionGetStartedGroup = await notificationGroupRepository.findOne({
+        name: 'Get started',
+        _environmentId: productionEnvironmentId,
+        _organizationId: organizationId,
+      });
 
       if (!productionGeneralGroup) {
         await notificationGroupRepository.create({
           name: 'General',
+          _environmentId: productionEnvironmentId,
+          _organizationId: organizationId,
+        });
+      }
+      if (!productionGetStartedGroup) {
+        await notificationGroupRepository.create({
+          name: 'Get started',
           _environmentId: productionEnvironmentId,
           _organizationId: organizationId,
         });
@@ -214,6 +233,7 @@ module.exports = (on, config) => {
       );
 
       const popularTemplateIds = getPopularTemplateIds({ production: false });
+      const getStartedTemplateIds = getGetStartedTemplateIds({ production: false });
 
       const blueprintTemplates = await productionNotificationTemplateService.getBlueprintTemplates(
         organizationId,
@@ -235,6 +255,76 @@ module.exports = (on, config) => {
             noLayoutId: true,
             name: ':fa-solid fa-lock: Password reset',
             isBlueprint: true,
+          }),
+          productionNotificationTemplateService.createTemplate({
+            _id: getStartedTemplateIds[0],
+            noFeedId: true,
+            noLayoutId: true,
+            name: ':fa-solid fa-clock: Delay',
+            isBlueprint: true,
+            steps: [
+              {
+                type: StepTypeEnum.DELAY,
+                name: 'Delay',
+                content: '',
+              },
+            ],
+            triggers: [
+              {
+                identifier: 'get-started-delay',
+                type: TriggerTypeEnum.EVENT,
+                variables: [],
+              },
+            ],
+          }),
+          productionNotificationTemplateService.createTemplate({
+            _id: getStartedTemplateIds[1],
+            noFeedId: true,
+            noLayoutId: true,
+            name: ':fa-solid fa-layer-group: Digest',
+            isBlueprint: true,
+            steps: [
+              {
+                type: StepTypeEnum.DIGEST,
+                name: 'Digest',
+                content: '',
+              },
+            ],
+            triggers: [
+              {
+                identifier: 'get-started-digest',
+                type: TriggerTypeEnum.EVENT,
+                variables: [],
+              },
+            ],
+          }),
+          productionNotificationTemplateService.createTemplate({
+            _id: getStartedTemplateIds[2],
+            noFeedId: true,
+            noLayoutId: true,
+            name: ':fa-solid fa-bell: In-App',
+            isBlueprint: true,
+            triggers: [
+              {
+                identifier: 'get-started-in-app',
+                type: TriggerTypeEnum.EVENT,
+                variables: [],
+              },
+            ],
+          }),
+          productionNotificationTemplateService.createTemplate({
+            _id: getStartedTemplateIds[3],
+            noFeedId: true,
+            noLayoutId: true,
+            name: ':fa-solid fa-earth-americas: Multi-channel',
+            isBlueprint: true,
+            triggers: [
+              {
+                identifier: 'get-started-multi-channel',
+                type: TriggerTypeEnum.EVENT,
+                variables: [],
+              },
+            ],
           }),
         ]);
       }

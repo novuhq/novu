@@ -2,6 +2,7 @@
 
 type IMountType = import('cypress/react').mount;
 type ICreateNotificationTemplateDto = import('@novu/shared').ICreateNotificationTemplateDto;
+type FeatureFlagsKeysEnum = import('@novu/shared').FeatureFlagsKeysEnum;
 
 declare namespace Cypress {
   interface Chainable {
@@ -44,6 +45,13 @@ declare namespace Cypress {
      * Invites a user by given email
      */
     inviteUser(email: string): Chainable<Response>;
+
+    /**
+     * Intercept feature flags from LaunchDarkly and mock their response.
+     *
+     * Must be in beforeEach (vs before) because intercepts are cleared before each test run.
+     */
+    mockFeatureFlags(featureFlags: Partial<Record<FeatureFlagsKeysEnum, boolean>>): Chainable<void>;
 
     loginWithGitHub(): Chainable<any>;
 

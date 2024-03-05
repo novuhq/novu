@@ -9,14 +9,15 @@ import { JobTitleEnum, jobTitleToLabelMapper, ProductUseCasesEnum } from '@novu/
 import type { ProductUseCases, IResponseError, ICreateOrganizationDto, IJwtPayload } from '@novu/shared';
 import {
   Button,
-  Input,
-  Select,
+  colors,
   Digest,
-  Translation,
-  MultiChannel,
-  inputStyles,
   HalfClock,
+  Input,
+  inputStyles,
+  MultiChannel,
   RingingBell,
+  Select,
+  Translation,
 } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
@@ -24,10 +25,15 @@ import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
+import styled from '@emotion/styled/macro';
 
 export function QuestionnaireForm() {
   const [loading, setLoading] = useState<boolean>();
-
+  const {
+    handleSubmit,
+    formState: { errors },
+    control,
+  } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
   const { setToken, token } = useAuthContext();
   const { startVercelSetup } = useVercelIntegration();
@@ -39,12 +45,6 @@ export function QuestionnaireForm() {
     ICreateOrganizationDto
   >((data: ICreateOrganizationDto) => api.post(`/v1/organizations`, data));
 
-  const {
-    handleSubmit,
-    formState: { errors },
-    control,
-  } = useForm<IOrganizationCreateForm>({});
-
   useEffect(() => {
     if (token) {
       const userData = decode<IJwtPayload>(token);
@@ -55,6 +55,7 @@ export function QuestionnaireForm() {
 
           return;
         }
+
         navigate(ROUTES.HOME);
       }
     }
@@ -91,8 +92,22 @@ export function QuestionnaireForm() {
 
       return;
     }
-    navigate(ROUTES.GET_STARTED);
+
+    const firstUsecase = findFirstUsecase(data.productUseCases) ?? '';
+    const mappedUsecase = firstUsecase.replace('_', '-');
+    navigate(`${ROUTES.GET_STARTED}?tab=${mappedUsecase}`);
   };
+
+  /**
+   * This is a temporary fix for making the form cohesive.
+   * However, in the long term it should be addressed at the Design System level.
+   */
+  const StyledSelect = styled(Select)`
+    .mantine-Select-invalid {
+      /* TODO: our current error color isn't from our color configs :/ */
+      border-color: #e03131;
+    }
+  `;
 
   return (
     <form noValidate name="create-app-form" onSubmit={handleSubmit(onCreateOrganization)}>
@@ -100,11 +115,11 @@ export function QuestionnaireForm() {
         name="jobTitle"
         control={control}
         rules={{
-          required: 'Required - Job title',
+          required: 'Please specify your job title',
         }}
         render={({ field }) => {
           return (
-            <Select
+            <StyledSelect
               label="Job title"
               data-test-id="questionnaire-job-title"
               error={errors.jobTitle?.message}
@@ -125,7 +140,7 @@ export function QuestionnaireForm() {
         name="organizationName"
         control={control}
         rules={{
-          required: 'Required - Company name',
+          required: 'Please specify your company name',
         }}
         render={({ field }) => {
           return (
@@ -145,11 +160,18 @@ export function QuestionnaireForm() {
       <Controller
         name="domain"
         control={control}
+        rules={{
+          pattern: {
+            value: /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/,
+            message: 'Please make sure you specified a valid domain',
+          },
+        }}
         render={({ field }) => {
           return (
             <Input
               label="Company domain"
               {...field}
+              error={errors.domain?.message}
               placeholder="my-company.com"
               data-test-id="questionnaire-company-domain"
               mt={32}
@@ -162,7 +184,7 @@ export function QuestionnaireForm() {
         name="productUseCases"
         control={control}
         rules={{
-          required: 'Required - Product use-case',
+          required: 'Please specify your use case',
         }}
         render={({ field, fieldState }) => {
           function handleCheckboxChange(e, channelType) {
@@ -220,4 +242,14 @@ interface IOrganizationCreateForm {
   jobTitle: JobTitleEnum;
   domain?: string;
   productUseCases?: ProductUseCases;
+}
+
+function findFirstUsecase(useCases: ProductUseCases | undefined): ProductUseCasesEnum | undefined {
+  if (useCases) {
+    const keys = Object.keys(useCases) as ProductUseCasesEnum[];
+
+    return keys.find((key) => useCases[key] === true);
+  }
+
+  return undefined;
 }
