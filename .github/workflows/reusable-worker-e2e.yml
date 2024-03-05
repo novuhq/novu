@@ -15,7 +15,7 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_worker_service:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest-large
+    runs-on: ubuntu-latest
     timeout-minutes: 80
 
     permissions:
