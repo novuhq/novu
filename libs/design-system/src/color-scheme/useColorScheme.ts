@@ -1,20 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocalThemePreference } from '@novu/shared-web';
 import { useColorScheme as useMantineColorScheme } from '@mantine/hooks';
+import { ColorScheme } from './ColorScheme';
+import { mapThemeStatusToColorScheme } from './mapThemeStatusToColorScheme';
 
-export type ColorScheme = 'light' | 'dark';
-
-const getColorSchemeFromThemeStatus = (themeStatus: string, preferredColorScheme: ColorScheme): ColorScheme => {
-  switch (themeStatus) {
-    case 'light':
-      return 'light';
-    case 'dark':
-      return 'dark';
-    default:
-      return preferredColorScheme;
-  }
-};
-
+/**
+ * Handle behavior for changing ColorSchemes or ThemeStatuses
+ */
 export const useColorScheme = () => {
   const { themeStatus, setThemeStatus } = useLocalThemePreference();
   const preferredColorScheme = useMantineColorScheme();
@@ -43,7 +35,7 @@ export const useColorScheme = () => {
   };
 
   useEffect(() => {
-    setColorScheme(getColorSchemeFromThemeStatus(themeStatus, preferredColorScheme));
+    setColorScheme(mapThemeStatusToColorScheme(themeStatus, preferredColorScheme));
   }, [themeStatus, preferredColorScheme, setColorScheme]);
 
   return {
