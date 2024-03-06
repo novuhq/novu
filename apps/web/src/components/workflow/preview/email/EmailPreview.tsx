@@ -57,6 +57,10 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
     content,
   });
 
+  const { mutateAsync: saveInputs, isLoading: isSavingInputs } = useMutation((data) =>
+    api.put('/v1/echo/inputs/' + formState?.defaultValues?.identifier + '/' + stepId, { variables: data })
+  );
+
   const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
     (data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
     {
@@ -154,6 +158,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
           <When truthy={chimera}>
             <InputVariables
               onSubmit={(values) => {
+                saveInputs(values);
                 mutateAsync(values);
               }}
               onChange={(values: any) => {
