@@ -28,6 +28,7 @@ import {
   iSendSmsConfig,
   ringCentralConfig,
   brevoSmsConfig,
+  smsmodeConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -270,5 +271,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: brevoSmsConfig,
     docReference: 'https://developers.brevo.com/reference/sendtransacsms',
     logoFileName: { light: 'brevo.svg', dark: 'brevo.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.Smsmode,
+    displayName: `smsmode`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: smsmodeConfig,
+    docReference: 'https://dev.smsmode.com/sms/v1/home',
+    logoFileName: { light: 'smsmode.png', dark: 'smsmode.png' },
   },
 ];

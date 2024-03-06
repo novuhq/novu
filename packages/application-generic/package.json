@@ -110,6 +110,7 @@
     "@novu/slack": "^0.23.1",
     "@novu/sms-central": "^0.23.1",
     "@novu/sms77": "^0.23.1",
+    "@novu/smsmode":"^0.23.1",
     "@novu/sns": "^0.23.1",
     "@novu/sparkpost": "^0.23.1",
     "@novu/stateless": "^0.23.1",
