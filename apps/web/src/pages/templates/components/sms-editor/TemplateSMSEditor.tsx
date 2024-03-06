@@ -46,62 +46,60 @@ export function TemplateSMSEditor() {
 
   return (
     <>
-      <When truthy={chimera}>
-        {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.SMS} /> : null}
-        {hasActiveIntegration && !primaryIntegration ? (
-          <LackIntegrationAlert
-            channelType={ChannelTypeEnum.SMS}
-            text={
-              `You have multiple provider instances for SMS in the ${environment?.name} environment.` +
-              ` Please select the primary instance.`
-            }
-            isPrimaryMissing
-          />
-        ) : null}
-        <StepSettings />
-        <Grid gutter={24}>
-          <Grid.Col span={'auto'}>
-            <Controller
-              name={`${stepFormPath}.template.content` as any}
-              defaultValue=""
-              control={control}
-              render={({ field }) => (
-                <Stack spacing={8}>
-                  <VariableManagementButton
-                    openEditVariablesModal={() => {
-                      setEditVariablesModalOpen(true);
-                    }}
-                    label={chimera ? 'Input variables' : undefined}
-                  />
-                  <When truthy={!chimera}>
-                    <CustomCodeEditor
-                      value={(field.value as string) || ''}
-                      onChange={(value) => {
-                        handleContentChange(value, field.onChange);
-                      }}
-                    />
-                  </When>
-                  <When truthy={chimera}>
-                    <InputVariablesForm
-                      onChange={(values) => {
-                        setInputVariables(values);
-                      }}
-                    />
-                  </When>
-                </Stack>
-              )}
-            />
-          </Grid.Col>
-          <Grid.Col span={'content'}>
-            <SmsPreview inputVariables={inputVariables} showPreviewAsLoading={isPreviewLoading} />
-          </Grid.Col>
-        </Grid>
-        <EditVariablesModal
-          open={editVariablesModalOpened}
-          setOpen={setEditVariablesModalOpen}
-          variablesArray={variablesArray}
+      {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.SMS} /> : null}
+      {hasActiveIntegration && !primaryIntegration ? (
+        <LackIntegrationAlert
+          channelType={ChannelTypeEnum.SMS}
+          text={
+            `You have multiple provider instances for SMS in the ${environment?.name} environment.` +
+            ` Please select the primary instance.`
+          }
+          isPrimaryMissing
         />
-      </When>
+      ) : null}
+      <StepSettings />
+      <Grid gutter={24}>
+        <Grid.Col span={'auto'}>
+          <Controller
+            name={`${stepFormPath}.template.content` as any}
+            defaultValue=""
+            control={control}
+            render={({ field }) => (
+              <Stack spacing={8}>
+                <VariableManagementButton
+                  openEditVariablesModal={() => {
+                    setEditVariablesModalOpen(true);
+                  }}
+                  label={chimera ? 'Input variables' : undefined}
+                />
+                <When truthy={!chimera}>
+                  <CustomCodeEditor
+                    value={(field.value as string) || ''}
+                    onChange={(value) => {
+                      handleContentChange(value, field.onChange);
+                    }}
+                  />
+                </When>
+                <When truthy={chimera}>
+                  <InputVariablesForm
+                    onChange={(values) => {
+                      setInputVariables(values);
+                    }}
+                  />
+                </When>
+              </Stack>
+            )}
+          />
+        </Grid.Col>
+        <Grid.Col span={'content'}>
+          <SmsPreview inputVariables={inputVariables} showPreviewAsLoading={isPreviewLoading} />
+        </Grid.Col>
+      </Grid>
+      <EditVariablesModal
+        open={editVariablesModalOpened}
+        setOpen={setEditVariablesModalOpen}
+        variablesArray={variablesArray}
+      />
     </>
   );
 }
