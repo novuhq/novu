@@ -485,10 +485,10 @@ export class SubscribersController {
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      page: query.page != null ? parseInt(query.page) : 0,
+      page: query.page != null ? parseInt(query.page as any) : 0,
       feedId: feedsQuery,
       query: { seen: query.seen, read: query.read },
-      limit: query.limit != null ? parseInt(query.limit) : 10,
+      limit: query.limit != null ? parseInt(query.limit as any) : 10,
       payload: query.payload,
     });
 
