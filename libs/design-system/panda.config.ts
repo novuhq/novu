@@ -13,6 +13,12 @@ export default defineConfig({
 
   presets: [NovuPandaPreset],
 
+  /**
+   * Prefixes generated classes with the specified string (e.g. `nv-text_blue`)
+   * https://panda-css.com/docs/references/config#prefix
+   */
+  prefix: 'nv',
+
   /*
    * Any additional configuration that is specific to design-system, but SHOULD NOT be propagated to
    * other apps or consumers. Use this sparingly!
