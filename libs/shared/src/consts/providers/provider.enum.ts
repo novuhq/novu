@@ -107,6 +107,7 @@ export enum ChatProviderIdEnum {
   Discord = 'discord',
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
+  GoogleChat = 'google-chat',
   Ryver = 'ryver',
   Zulip = 'zulip',
   GrafanaOnCall = 'grafana-on-call',

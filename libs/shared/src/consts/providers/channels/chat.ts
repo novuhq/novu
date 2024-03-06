@@ -47,6 +47,14 @@ export const chatProviders: IProviderConfig[] = [
     logoFileName: { light: 'mattermost.svg', dark: 'mattermost.svg' },
   },
   {
+    id: ChatProviderIdEnum.GoogleChat,
+    displayName: 'Google Chat',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredentials[],
+    docReference: 'https://developers.google.com/chat/how-tos/webhooks',
+    logoFileName: { light: 'google-chat.svg', dark: 'google-chat.svg' },
+  },
+  {
     id: ChatProviderIdEnum.Ryver,
     displayName: 'Ryver',
     channel: ChannelTypeEnum.CHAT,
