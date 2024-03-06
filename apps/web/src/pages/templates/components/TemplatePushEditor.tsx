@@ -41,113 +41,70 @@ export function TemplatePushEditor() {
 
   return (
     <>
-      <When truthy={chimera}>
-        <SegmentedControl
-          data-test-id="editor-mode-switch"
-          styles={{
-            root: {
-              background: 'transparent',
-              border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
-              borderRadius: '30px',
-              width: '100%',
-              maxWidth: '300px',
-            },
-            label: {
-              fontSize: '14px',
-              lineHeight: '24px',
-            },
-            control: {
-              minWidth: '80px',
-            },
-            active: {
-              background: theme.colorScheme === 'dark' ? colors.B40 : colors.B98,
-              borderRadius: '30px',
-            },
-            labelActive: {
-              color: `${theme.colorScheme === 'dark' ? colors.white : colors.B40} !important`,
-              fontSize: '14px',
-              lineHeight: '24px',
-            },
-          }}
-          data={[PREVIEW, INPUTS]}
-          value={activeTab}
-          onChange={(value) => {
-            setActiveTab(value);
-          }}
-          defaultValue={activeTab}
-          fullWidth
-          radius={'xl'}
-        />
-      </When>
-      <When truthy={activeTab === INPUTS}>
-        <InputVariablesForm />
-      </When>
-      <When truthy={activeTab === PREVIEW}>
-        {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.PUSH} /> : null}
-        <StepSettings />
+      {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.PUSH} /> : null}
+      <StepSettings />
 
-        <Grid gutter={24}>
-          <Grid.Col span={'auto'}>
-            <Stack spacing={32}>
+      <Grid gutter={24}>
+        <Grid.Col span={'auto'}>
+          <Stack spacing={32}>
+            <Controller
+              name={`${stepFormPath}.template.title` as any}
+              defaultValue=""
+              control={control}
+              render={({ field }) => (
+                <Stack spacing={8} data-test-id="push-title-container">
+                  <VariableManagementButton
+                    openEditVariablesModal={() => {
+                      setEditVariablesModalOpen(true);
+                    }}
+                    label={chimera ? 'Input variables' : 'Title'}
+                  />
+                  <When truthy={!chimera}>
+                    <CustomCodeEditor
+                      value={(field.value as string) || ''}
+                      onChange={(value) => {
+                        handleContentChange(value, field.onChange);
+                      }}
+                      height="128px"
+                    />
+                  </When>
+                  <When truthy={chimera}>
+                    <InputVariablesForm onChange={setInputVariables} />
+                  </When>
+                </Stack>
+              )}
+            />
+            <When truthy={!chimera}>
               <Controller
-                name={`${stepFormPath}.template.title` as any}
+                name={`${stepFormPath}.template.content` as any}
                 defaultValue=""
                 control={control}
                 render={({ field }) => (
-                  <Stack spacing={8} data-test-id="push-title-container">
-                    <VariableManagementButton
-                      openEditVariablesModal={() => {
-                        setEditVariablesModalOpen(true);
+                  <Stack spacing={8} data-test-id="push-content-container">
+                    <Text weight="bold">Message</Text>
+                    <CustomCodeEditor
+                      value={(field.value as string) || ''}
+                      onChange={(value) => {
+                        handleContentChange(value, field.onChange);
                       }}
-                      label={chimera ? 'Input variables' : 'Title'}
                     />
-                    <When truthy={!chimera}>
-                      <CustomCodeEditor
-                        value={(field.value as string) || ''}
-                        onChange={(value) => {
-                          handleContentChange(value, field.onChange);
-                        }}
-                        height="128px"
-                      />
-                    </When>
-                    <When truthy={chimera}>
-                      <InputVariables onChange={setInputVariables} onSubmit={setInputVariables} />
-                    </When>
                   </Stack>
                 )}
               />
-              <When truthy={!chimera}>
-                <Controller
-                  name={`${stepFormPath}.template.content` as any}
-                  defaultValue=""
-                  control={control}
-                  render={({ field }) => (
-                    <Stack spacing={8} data-test-id="push-content-container">
-                      <Text weight="bold">Message</Text>
-                      <CustomCodeEditor
-                        value={(field.value as string) || ''}
-                        onChange={(value) => {
-                          handleContentChange(value, field.onChange);
-                        }}
-                      />
-                    </Stack>
-                  )}
-                />
-              </When>
-            </Stack>
-            <EditVariablesModal
-              open={editVariablesModalOpened}
-              setOpen={setEditVariablesModalOpen}
-              variablesArray={variablesArray}
-            />
-          </Grid.Col>
-          <Grid.Col span={'content'}>
-            <Flex justify="center">
-              <PushPreview inputVariables={inputVariables} showLoading={isPreviewLoading} showOverlay={false} />
-            </Flex>
-          </Grid.Col>
-        </Grid>
-      </When>
+            </When>
+          </Stack>
+          <EditVariablesModal
+            open={editVariablesModalOpened}
+            setOpen={setEditVariablesModalOpen}
+            variablesArray={variablesArray}
+          />
+        </Grid.Col>
+        <Grid.Col span={'content'}>
+          <Flex justify="center">
+            <PushPreview inputVariables={inputVariables} showLoading={isPreviewLoading} showOverlay={false} />
+          </Flex>
+        </Grid.Col>
+      </Grid>
     </>
   );
 }

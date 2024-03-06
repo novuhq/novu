@@ -14,6 +14,7 @@ import { api, useEnvController } from '@novu/shared-web';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { InputVariables } from '../../../../pages/templates/components/InputVariables';
+import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
   const theme = useMantineTheme();
@@ -119,11 +120,8 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
               </Button>
             </When>
             <When truthy={chimera}>
-              <InputVariables
-                onSubmit={(values) => {
-                  mutateAsync(values);
-                }}
-                onChange={(values: any) => {
+              <InputVariablesForm
+                onChange={(values) => {
                   mutateAsync(values);
                 }}
               />

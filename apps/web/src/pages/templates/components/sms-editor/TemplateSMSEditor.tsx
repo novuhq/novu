@@ -82,7 +82,11 @@ export function TemplateSMSEditor() {
                     />
                   </When>
                   <When truthy={chimera}>
-                    <InputVariables onChange={setInputVariables} onSubmit={setInputVariables} />
+                    <InputVariablesForm
+                      onChange={(values) => {
+                        setInputVariables(values);
+                      }}
+                    />
                   </When>
                 </Stack>
               )}

@@ -88,7 +88,7 @@ export const SmsPreview = ({
         <SmsBubble
           onEditClick={navigateToStepEditor}
           isLoading={chimera ? isChimeraLoading : isPreviewContentLoading || areLocalesLoading}
-          text={previewContent || chimeraContent}
+          text={chimera ? chimeraContent : previewContent}
           error={chimera ? undefined : templateError}
           withOverlay={isPreviewPath}
         />

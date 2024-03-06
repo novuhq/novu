@@ -16,7 +16,6 @@ import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePr
 import { useMutation } from '@tanstack/react-query';
 import { api, useEnvController } from '@novu/shared-web';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
-import { InputVariables } from '../../../../pages/templates/components/InputVariables';
 import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
 
 const PreviewContainer = styled.div`
