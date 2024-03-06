@@ -149,7 +149,7 @@ export function EmailMessagesCards() {
         </Grid>
       </div>
       <When truthy={view === ViewEnum.INPUTS}>
-        <InputVariablesForm />
+        <InputVariablesForm onChange={(data) => console.log(data)} />
       </When>
       <When truthy={view === ViewEnum.PREVIEW}>
         <EmailPreview view={preview} />

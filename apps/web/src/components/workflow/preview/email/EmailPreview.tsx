@@ -17,6 +17,7 @@ import { useMutation } from '@tanstack/react-query';
 import { api, useEnvController } from '@novu/shared-web';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { InputVariables } from '../../../../pages/templates/components/InputVariables';
+import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
 
 const PreviewContainer = styled.div`
   display: flex;
@@ -156,12 +157,8 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
             </JSONContainer>
           </When>
           <When truthy={chimera}>
-            <InputVariables
-              onSubmit={(values) => {
-                saveInputs(values);
-                mutateAsync(values);
-              }}
-              onChange={(values: any) => {
+            <InputVariablesForm
+              onChange={(values) => {
                 mutateAsync(values);
               }}
             />
