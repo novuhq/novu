@@ -68,7 +68,8 @@ function BaseTemplateEditorPage() {
 
   return (
     <>
-      <TourProvider />
+      {!chimera && <TourProvider />}
+
       <PageContainer title={template?.name ?? 'Create Template'}>
         <form
           name="template-form"
