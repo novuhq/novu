@@ -90,7 +90,7 @@ jobs:
           TZ: 'UTC'
         run: |
           cp apps/ws/src/.env.test apps/ws/dist/src/.env.test
-          cd apps/ws && pnpm start:prod &
+          cd apps/ws && pnpm start:prod
 
       - name: Wait on Widget and WS Services
         run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check http://127.0.0.1:3500/

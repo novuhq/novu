@@ -39,7 +39,7 @@ runs:
         TZ: "UTC"
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
         CI_EE_TEST: "true"
-      run: cd apps/worker && pnpm start:prod &
+      run: cd apps/worker && pnpm start:prod 
 
     - name: Wait on API and Worker
       shell: bash
