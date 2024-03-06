@@ -562,7 +562,13 @@
     "spyon",
     "restapi",
     "ringcentral",
-    "reshard"
+    "reshard",
+    "endgroup",
+    "aliyun",
+    "azcopy",
+    "cpack",
+    "pulumi",
+    "hostedtoolcache"
   ],
   "flagWords": [],
   "patterns": [
