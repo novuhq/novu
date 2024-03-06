@@ -6,4 +6,5 @@ export enum TemplateCreationSourceEnum {
   ONBOARDING_IN_APP = 'onboarding_in_app',
   EMPTY_STATE = 'empty_state',
   DROPDOWN = 'dropdown',
+  ONBOARDING_GET_STARTED = 'onboarding_get_started',
 }

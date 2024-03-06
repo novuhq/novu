@@ -32,7 +32,7 @@ export async function getBlueprintsGroupedByCategory(): Promise<{
   return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/group-by-category`, { absoluteUrl: true });
 }
 
-export async function getBlueprintTemplateById(id: string) {
+export async function getBlueprintTemplateById(id: string): Promise<INotificationTemplate> {
   return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/${id}`, { absoluteUrl: true });
 }
 

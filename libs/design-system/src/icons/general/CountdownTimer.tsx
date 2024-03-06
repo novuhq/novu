@@ -3,7 +3,7 @@ import React from 'react';
 
 export function CountdownTimer(props: React.ComponentPropsWithoutRef<'svg'>) {
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 25 25">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 25 25" {...props}>
       <mask id="a" x="0" y="0" maskUnits="userSpaceOnUse" style={{ maskType: 'alpha' }}>
         <path fill="currentColor" d="M.504.5h24v24h-24z" />
       </mask>
