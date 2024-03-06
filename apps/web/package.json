@@ -137,7 +137,7 @@
     "@babel/runtime": "^7.20.13",
     "@novu/dal": "^0.24.0",
     "@novu/testing": "^0.24.0",
-    "@pandacss/dev": "^0.32.1",
+    "@pandacss/dev": "^0.34.0",
     "@storybook/addon-actions": "^7.4.2",
     "@storybook/addon-essentials": "^7.4.2",
     "@storybook/addon-links": "^7.4.2",
