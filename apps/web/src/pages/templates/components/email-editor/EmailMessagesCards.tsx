@@ -148,9 +148,6 @@ export function EmailMessagesCards() {
           </Grid.Col>
         </Grid>
       </div>
-      <When truthy={view === ViewEnum.INPUTS}>
-        <InputVariablesForm onChange={(data) => console.log(data)} />
-      </When>
       <When truthy={view === ViewEnum.PREVIEW}>
         <EmailPreview view={preview} />
       </When>
