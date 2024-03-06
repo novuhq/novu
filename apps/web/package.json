@@ -3,7 +3,7 @@
   "version": "0.24.0",
   "private": true,
   "scripts": {
-    "postinstall": "panda codegen --clean",
+    "prepare": "pnpm panda",
     "start": "panda --watch & cross-env PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false react-app-rewired --max_old_space_size=4096 build",

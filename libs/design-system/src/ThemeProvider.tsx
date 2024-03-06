@@ -1,13 +1,13 @@
-import { ReactNode, useEffect, useState } from 'react';
-import { MantineProvider, Global, ColorSchemeProvider, ColorScheme, MantineTheme } from '@mantine/core';
+import { ReactNode } from 'react';
+import { MantineProvider, Global, ColorSchemeProvider, MantineTheme } from '@mantine/core';
 import { NotificationsProvider } from '@mantine/notifications';
-import { useColorScheme } from '@mantine/hooks';
-import { useLocalThemePreference } from '@novu/shared-web';
 
 import { mantineConfig } from './config/theme.config';
 import { colors, shadows } from './config';
 import { ChevronDown } from './icons';
 import { IconProvider } from './iconsV2/IconProvider';
+
+import { useColorScheme } from './useColorScheme';
 
 const accordionStyles = (theme: MantineTheme) => ({
   item: {
@@ -69,29 +69,7 @@ export function ThemeProvider({
   children: ReactNode | ReactNode[];
   shouldDisableGlobals?: Boolean;
 }) {
-  const preferredColorScheme = useColorScheme();
-  const [colorScheme, setColorScheme] = useState<ColorScheme>(preferredColorScheme);
-  const { themeStatus, setThemeStatus } = useLocalThemePreference();
-
-  const toggleColorScheme = () => {
-    if (themeStatus === 'system') {
-      setThemeStatus('light');
-    } else if (themeStatus === 'light') {
-      setThemeStatus('dark');
-    } else {
-      setThemeStatus('system');
-    }
-  };
-
-  useEffect(() => {
-    if (themeStatus === 'system') {
-      setColorScheme(preferredColorScheme);
-    } else if (themeStatus === 'light') {
-      setColorScheme('light');
-    } else {
-      setColorScheme('dark');
-    }
-  }, [themeStatus, preferredColorScheme]);
+  const { colorScheme, toggleColorScheme } = useColorScheme();
 
   return (
     <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
