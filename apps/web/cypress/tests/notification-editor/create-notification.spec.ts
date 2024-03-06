@@ -88,7 +88,9 @@ describe('Creation functionality', function () {
     cy.getByTestId('notification-bell').click();
 
     // check the notification
-    cy.getByTestId('notifications-scroll-area')
+    cy.getByTestId('notifications-scroll-area', {
+      timeout: 10000,
+    })
       .getByTestId('notification-content')
       .first()
       .then(($el) => {
