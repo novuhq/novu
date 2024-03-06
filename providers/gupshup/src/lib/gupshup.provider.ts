@@ -4,8 +4,6 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-import { Agent } from 'https';
-import crypto from 'crypto';
 import axios from 'axios';
 
 if (!globalThis.fetch) {
