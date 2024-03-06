@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
-import { IOrganizationEntity } from '@novu/shared';
+import type { IResponseError, IOrganizationEntity } from '@novu/shared';
 
 import { Select } from '@novu/design-system';
 import { addOrganization, switchOrganization } from '../../../api/organization';
@@ -20,15 +20,13 @@ export default function OrganizationSelect() {
 
   const { isLoading: loadingAddOrganization, mutateAsync: createOrganization } = useMutation<
     IOrganizationEntity,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     string
   >((name) => addOrganization(name));
 
-  const { mutateAsync: changeOrganization } = useMutation<
-    string,
-    { error: string; message: string; statusCode: number },
-    string
-  >((id) => switchOrganization(id));
+  const { mutateAsync: changeOrganization } = useMutation<string, IResponseError, string>((id) =>
+    switchOrganization(id)
+  );
 
   const switchOrgCallback = useCallback(
     async (organizationId: string | string[] | null) => {

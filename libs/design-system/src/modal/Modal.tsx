@@ -9,6 +9,7 @@ interface IModalProps extends ModalProps {
   onClose: () => void;
   size?: 'lg' | 'xl' | 'md';
   zIndex?: number;
+  centered?: boolean;
 }
 
 export function Modal({ children, ...props }: IModalProps) {

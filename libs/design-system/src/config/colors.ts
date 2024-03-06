@@ -4,6 +4,7 @@ const error = '#E54545';
 
 export const colors = {
   white: '#FFFFFF',
+  black: '#000000',
   BGLight: '#EDF0F2',
   BGDark: '#13131A',
   B98: '#F5F8FA',

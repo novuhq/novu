@@ -23,6 +23,11 @@ declare global {
       FRONT_BASE_URL: string;
       API_ROOT_URL: string;
       SENTRY_DSN: string;
+      STRIPE_API_KEY: string;
+      STRIPE_CONNECT_SECRET: string;
+      NOTIFICATION_RETENTION_DAYS?: number;
+      MESSAGE_GENERIC_RETENTION_DAYS?: number;
+      MESSAGE_IN_APP_RETENTION_DAYS?: number;
     }
   }
 }

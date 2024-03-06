@@ -1,6 +1,6 @@
 {
   "name": "@novu/api",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "description": "description",
   "author": "",
   "private": "true",
@@ -10,7 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --load -t novu-api --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api -",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --load --platform=linux/amd64,linux/arm64 --provenance=false -t novu-api --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api -",
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api - -t novu-api --load",
     "start": "pnpm start:dev",
     "start:dev": "cross-env TZ=UTC nest start --watch",
@@ -25,7 +25,7 @@
     "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e.ts",
     "test:e2e:ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --require ts-node/register --exit --file e2e/setup.ts src/**/*.e2e-ee.ts",
     "migration": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly",
-    "link:submodules": "pnpm link ../../enterprise/packages/auth && pnpm link ../../enterprise/packages/translation",
+    "link:submodules": "pnpm link ../../enterprise/packages/auth && pnpm link ../../enterprise/packages/translation && pnpm link ../../enterprise/packages/billing",
     "admin:remove-user-account": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-user-account.ts",
     "admin:remove-organization": "cross-env NODE_ENV=local MIGRATION=true ts-node --transpileOnly ./admin/remove-organization.ts"
   },
@@ -41,12 +41,12 @@
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/terminus": "^10.0.1",
     "@nestjs/throttler": "^5.0.1",
-    "@novu/application-generic": "^0.23.1",
-    "@novu/dal": "^0.23.1",
-    "@novu/node": "^0.23.1",
-    "@novu/shared": "^0.23.1",
-    "@novu/stateless": "^0.23.1",
-    "@novu/testing": "^0.23.1",
+    "@novu/application-generic": "^0.24.0",
+    "@novu/dal": "^0.24.0",
+    "@novu/node": "^0.24.0",
+    "@novu/shared": "^0.24.0",
+    "@novu/stateless": "^0.24.0",
+    "@novu/testing": "^0.24.0",
     "@sendgrid/mail": "^8.1.0",
     "@sentry/hub": "^7.40.0",
     "@sentry/node": "^7.40.0",
@@ -117,8 +117,9 @@
     "typescript": "4.9.5"
   },
   "optionalDependencies": {
-    "@novu/ee-auth": "^0.23.1",
-    "@novu/ee-translation": "^0.23.1"
+    "@novu/ee-auth": "^0.24.0",
+    "@novu/ee-billing": "^0.24.0",
+    "@novu/ee-translation": "^0.24.0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

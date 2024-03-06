@@ -58,6 +58,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       imageUrl: Schema.Types.String,
       state: Schema.Types.String,
       externalLink: Schema.Types.String,
+      apiToken: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,

@@ -44,7 +44,7 @@ export class ISendSmsProvider implements ISmsProvider {
     }
   ) {
     this.Instance = axios.create({
-      baseURL: 'https://send.com.ly/',
+      baseURL: 'https://send.com.ly',
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',

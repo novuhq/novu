@@ -1,6 +1,7 @@
-FROM nikolaik/python-nodejs:python3.10-nodejs20-alpine
+FROM node:20-alpine3.19
 
 RUN npm install -g pnpm@8.9.0 --loglevel notice --force
+RUN apk --update --no-cache add curl g++ make py3-pip
 
 USER 1000
 WORKDIR /usr/src/app

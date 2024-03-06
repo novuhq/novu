@@ -271,6 +271,35 @@ export class SubscribersController {
         credentials: body.credentials,
         integrationIdentifier: body.integrationIdentifier,
         oauthHandler: OAuthHandlerEnum.EXTERNAL,
+        isIdempotentOperation: true,
+      })
+    );
+  }
+
+  @Patch('/:subscriberId/credentials')
+  @ExternalApiAccessible()
+  @UseGuards(UserAuthGuard)
+  @ApiResponse(SubscriberResponseDto)
+  @ApiOperation({
+    summary: 'Modify subscriber credentials',
+    description: `Subscriber credentials associated to the delivery methods such as slack and push tokens.
+    This endpoint appends provided credentials and deviceTokens to the existing ones.`,
+  })
+  async modifySubscriberChannel(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateSubscriberChannelRequestDto
+  ): Promise<SubscriberResponseDto> {
+    return await this.updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        providerId: body.providerId,
+        credentials: body.credentials,
+        integrationIdentifier: body.integrationIdentifier,
+        oauthHandler: OAuthHandlerEnum.EXTERNAL,
+        isIdempotentOperation: false,
       })
     );
   }

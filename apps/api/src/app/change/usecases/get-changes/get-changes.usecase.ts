@@ -11,6 +11,8 @@ import {
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import { ChangesResponseDto } from '../../dtos/change-response.dto';
 import { GetChangesCommand } from './get-changes.command';
+import { ApiException } from '../../../shared/exceptions/api.exception';
+import { ModuleRef } from '@nestjs/core';
 
 interface IViewEntity {
   templateName: string;
@@ -32,7 +34,8 @@ export class GetChanges {
     private messageTemplateRepository: MessageTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
     private feedRepository: FeedRepository,
-    private layoutRepository: LayoutRepository
+    private layoutRepository: LayoutRepository,
+    protected moduleRef: ModuleRef
   ) {}
 
   async execute(command: GetChangesCommand): Promise<ChangesResponseDto> {
@@ -64,6 +67,12 @@ export class GetChanges {
       }
       if (change.type === ChangeEntityTypeEnum.DEFAULT_LAYOUT) {
         item = await this.getTemplateDataForDefaultLayout(change._entityId, command.environmentId);
+      }
+      if (change.type === ChangeEntityTypeEnum.TRANSLATION) {
+        item = await this.getTemplateDataForTranslation(change._entityId, command.environmentId);
+      }
+      if (change.type === ChangeEntityTypeEnum.TRANSLATION_GROUP) {
+        item = await this.getTemplateDataForTranslationGroup(change._entityId, command.environmentId);
       }
 
       list.push({
@@ -131,6 +140,54 @@ export class GetChanges {
       templateId: item._id,
       templateName: item.name,
     };
+  }
+
+  private async getTemplateDataForTranslationGroup(
+    entityId: string,
+    environmentId: string
+  ): Promise<IViewEntity | Record<string, unknown>> {
+    try {
+      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+        if (!require('@novu/ee-translation')?.TranslationsService) {
+          throw new ApiException('Translation module is not loaded');
+        }
+        const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
+        const { name, identifier } = await service.getTranslationGroupData(environmentId, entityId);
+
+        return {
+          templateId: identifier,
+          templateName: name,
+        };
+      }
+    } catch (e) {
+      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+    }
+
+    return {};
+  }
+
+  private async getTemplateDataForTranslation(
+    entityId: string,
+    environmentId: string
+  ): Promise<IViewEntity | Record<string, unknown>> {
+    try {
+      if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+        if (!require('@novu/ee-translation')?.TranslationsService) {
+          throw new ApiException('Translation module is not loaded');
+        }
+        const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
+        const { name, group } = await service.getTranslationData(environmentId, entityId);
+
+        return {
+          templateName: name,
+          translationGroup: group,
+        };
+      }
+    } catch (e) {
+      Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');
+    }
+
+    return {};
   }
 
   private async getTemplateDataForNotificationGroup(

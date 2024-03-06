@@ -1,13 +1,13 @@
 {
   "name": "@novu/web",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "private": true,
   "scripts": {
     "start": "cross-env PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
     "build": "cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false react-app-rewired --max_old_space_size=4096 build",
     "precommit": "lint-staged",
-    "docker:build": "docker buildx build -f ./Dockerfile -t novu-web ./../..",
+    "docker:build": "docker buildx build --load --platform=linux/amd64,linux/arm64 --provenance=false -f ./Dockerfile -t novu-web ./../..",
     "docker:build:depot": "depot build -f ./Dockerfile -t novu-web ./../.. --load",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
     "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
@@ -24,7 +24,7 @@
     "build-storybook": "storybook build -s public",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "link:submodules": "pnpm link ../../enterprise/packages/translation-web"
+    "link:submodules": "pnpm link ../../enterprise/packages/translation-web && pnpm link ../../enterprise/packages/billing-web"
   },
   "dependencies": {
     "@ant-design/icons": "4.6.2",
@@ -53,10 +53,11 @@
     "@mantine/prism": "^5.7.1",
     "@mantine/spotlight": "^5.7.1",
     "@monaco-editor/react": "^4.6.0",
-    "@novu/design-system": "^0.23.1",
-    "@novu/notification-center": "^0.23.1",
-    "@novu/shared": "^0.23.1",
-    "@novu/shared-web": "^0.23.1",
+    "@novu/design-system": "^0.24.0",
+    "@novu/notification-center": "^0.24.0",
+    "@novu/shared": "^0.24.0",
+    "@novu/shared-web": "^0.24.0",
+    "@rive-app/react-canvas": "^4.8.1",
     "@segment/analytics-next": "^1.48.0",
     "@sentry/react": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
@@ -121,11 +122,11 @@
     "uniqid": "^5.3.0",
     "uuid": "8.3.2",
     "web-vitals": "^1.0.1",
-    "webpack-dev-server": "4.11.1",
     "zod": "^3.22.4"
   },
   "optionalDependencies": {
-    "@novu/ee-translation-web": "^0.23.1"
+    "@novu/ee-billing-web": "^0.24.0",
+    "@novu/ee-translation-web": "^0.24.0"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",
@@ -133,8 +134,8 @@
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
     "@babel/runtime": "^7.20.13",
-    "@novu/dal": "^0.23.1",
-    "@novu/testing": "^0.23.1",
+    "@novu/dal": "^0.24.0",
+    "@novu/testing": "^0.24.0",
     "@storybook/addon-actions": "^7.4.2",
     "@storybook/addon-essentials": "^7.4.2",
     "@storybook/addon-links": "^7.4.2",
@@ -147,6 +148,7 @@
     "@types/react": "^17.0.0",
     "@types/testing-library__jest-dom": "^5.14.5",
     "cypress": "^13.3.1",
+    "cypress-file-upload": "^5.0.8",
     "cypress-localstorage-commands": "^2.2.4",
     "cypress-network-idle": "^1.14.2",
     "cypress-wait-until": "^2.0.1",
@@ -161,6 +163,7 @@
     "storybook": "^7.4.2",
     "typescript": "4.9.5",
     "webpack": "5.78.0",
+    "webpack-dev-server": "4.11.1",
     "webpack-bundle-analyzer": "^4.9.0"
   },
   "browserslist": {
