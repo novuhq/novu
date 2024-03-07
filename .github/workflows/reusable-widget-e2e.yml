@@ -18,17 +18,6 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
-
-    strategy:
-      # when one test fails, DO NOT cancel the other
-      # containers, because this will kill Cypress processes
-      # leaving the Dashboard hanging ...
-      # https://github.com/cypress-io/github-action/issues/48
-      fail-fast: false
-      matrix:
-        # run 3 copies of the current job in parallel
-        containers: [1, 2]
-
     permissions:
       contents: read
       packages: write
@@ -112,7 +101,7 @@ jobs:
           browser: chrome
           install: false
           record: true
-          parallel: true
+          parallel: false
           config-file: cypress.config.ts
 
       - uses: actions/upload-artifact@v3
