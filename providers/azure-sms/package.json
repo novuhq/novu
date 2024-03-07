@@ -1,6 +1,6 @@
 {
   "name": "@novu/azure-sms",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "description": "A azure-sms wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@azure/communication-sms": "^1.0.0",
-    "@novu/stateless": "^0.23.1"
+    "@novu/stateless": "^0.24.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "~1.0.1",

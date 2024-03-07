@@ -67,6 +67,7 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
   ({ label, firstPageNumber = FIRST_PAGE_NUMBER, ...inputProps }, forwardedRef) => {
     const { onPageChange, totalPageCount } = useContext(PaginationContext);
     const [hasError, setHasError] = useState<boolean>(false);
+    const [goToValue, setGoToValue] = useState<number | undefined>(undefined);
 
     const validateValue = (val: number | string) => {
       const numVal = +val;
@@ -97,7 +98,7 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
         return;
       }
       onPageChange(+val);
-      internalRef.current.value = undefined;
+      setGoToValue(undefined);
       setHasError(false);
     };
 
@@ -119,6 +120,8 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
         >
           <NumberInput
             onKeyDown={handleKeyPress}
+            value={goToValue}
+            onChange={setGoToValue}
             id={'goToPage'}
             ref={internalRef}
             onBlur={handleBlurEvent}
@@ -127,6 +130,9 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
             maxLength={`${totalPageCount}`.length}
             hideControls
             noClampOnBlur
+            autoCorrect={'none'}
+            aria-autocomplete={'none'}
+            autoComplete={'none'}
             disabled={totalPageCount === 1}
             {...inputProps}
           />

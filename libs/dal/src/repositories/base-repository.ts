@@ -2,9 +2,9 @@
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { addDays } from 'date-fns';
 import {
-  MESSAGE_GENERIC_RETENTION_DAYS,
-  MESSAGE_IN_APP_RETENTION_DAYS,
-  NOTIFICATION_RETENTION_DAYS,
+  DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
+  DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
+  DEFAULT_NOTIFICATION_RETENTION_DAYS,
 } from '@novu/shared';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
 import { DalException } from '../shared';
@@ -18,6 +18,15 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
 
   public static createObjectId() {
     return new Types.ObjectId().toString();
+  }
+
+  public static isInternalId(id: string) {
+    const isValidMongoId = Types.ObjectId.isValid(id);
+    if (!isValidMongoId) {
+      return false;
+    }
+
+    return id === new Types.ObjectId(id).toString();
   }
 
   protected convertObjectIdToString(value: Types.ObjectId): string {
@@ -101,12 +110,21 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     switch (modelName) {
       case 'Message':
         if (data.channel === 'in_app') {
-          return addDays(startDate, MESSAGE_IN_APP_RETENTION_DAYS);
+          return addDays(
+            startDate,
+            Number(process.env.MESSAGE_IN_APP_RETENTION_DAYS || DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS)
+          );
         } else {
-          return addDays(startDate, MESSAGE_GENERIC_RETENTION_DAYS);
+          return addDays(
+            startDate,
+            Number(process.env.MESSAGE_GENERIC_RETENTION_DAYS || DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS)
+          );
         }
       case 'Notification':
-        return addDays(startDate, NOTIFICATION_RETENTION_DAYS);
+        return addDays(
+          startDate,
+          Number(process.env.NOTIFICATION_RETENTION_DAYS || DEFAULT_NOTIFICATION_RETENTION_DAYS)
+        );
       default:
         return null;
     }

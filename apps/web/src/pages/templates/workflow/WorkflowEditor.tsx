@@ -5,11 +5,12 @@ import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-
 import { Node, NodeProps } from 'react-flow-renderer';
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
+import { useSegment } from '@novu/shared-web';
 
 import { When } from '../../../components/utils/When';
 import type { IFlowEditorProps } from '../../../components/workflow';
 import { FlowEditor } from '../../../components/workflow';
-import { Button, Settings } from '@novu/design-system';
+import { Bolt, Button, Settings } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
 import { channels } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';
@@ -27,6 +28,8 @@ import TriggerNode from './workflow/node-types/TriggerNode';
 import { NodeType, NodeData } from '../../../components/workflow/types';
 import { useStepInfoPath } from '../hooks/useStepInfoPath';
 import { useNavigateToVariantPreview } from '../hooks/useNavigateToVariantPreview';
+import { useOnboardingExperiment } from '../../../hooks/useOnboardingExperiment';
+import { OnBoardingAnalyticsEnum } from '../../quick-start/consts';
 
 export const TOP_ROW_HEIGHT = 74;
 
@@ -39,24 +42,29 @@ const nodeTypes: Record<string, ComponentType<NodeProps>> = {
 const edgeTypes = { special: AddNodeEdge };
 
 const WorkflowEditor = () => {
-  const { addStep, deleteStep } = useTemplateEditorForm();
+  const { addStep, deleteStep, template } = useTemplateEditorForm();
   const { isUnderVariantsListPath } = useStepInfoPath();
   const { channel } = useParams<{
     channel: StepTypeEnum | undefined;
   }>();
   const { navigateToVariantPreview } = useNavigateToVariantPreview();
   const [dragging, setDragging] = useState(false);
+  const segment = useSegment();
+  const { isOnboardingExperimentEnabled } = useOnboardingExperiment();
 
   const {
     control,
     trigger,
     formState: { errors, isDirty },
   } = useFormContext<IForm>();
-  const { readonly } = useEnvController();
+  const { readonly, chimera } = useEnvController({}, template?.chimera);
   const steps = useWatch({
     name: 'steps',
     control,
   });
+  const tags = useWatch({ name: 'tags' });
+
+  const tagsIncludesOnboarding = tags?.includes('onboarding') && isOnboardingExperimentEnabled;
 
   const [toDelete, setToDelete] = useState<string>('');
   const basePath = useBasePath();
@@ -184,6 +192,7 @@ const WorkflowEditor = () => {
               }}
             >
               <Group>
+                <Bolt color="#4c6dd4" width="24px" height="24px" />
                 <NameInput />
                 <UpdateButton />
                 <Button
@@ -257,6 +266,9 @@ const WorkflowEditor = () => {
                 }}
               >
                 <Group>
+                  <When truthy={chimera}>
+                    <Bolt color="#4c6dd4" width="24px" height="24px" />
+                  </When>
                   <NameInput />
                   <When truthy={!channel}>
                     <Group>
@@ -265,13 +277,21 @@ const WorkflowEditor = () => {
                   </When>
                   <When truthy={pathname === basePath}>
                     <Button
-                      pulse={shouldPulse}
+                      pulse={tagsIncludesOnboarding || shouldPulse}
                       onClick={() => {
-                        navigate(basePath + '/snippet');
+                        if (tagsIncludesOnboarding) {
+                          segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
+                            action: 'Workflow - Send test notification',
+                            experiment_id: '2024-w9-onb',
+                          });
+                          navigate(basePath + '/test-workflow');
+                        } else {
+                          navigate(basePath + '/snippet');
+                        }
                       }}
                       data-test-id="get-snippet-btn"
                     >
-                      Get Snippet
+                      {tagsIncludesOnboarding ? 'Test Notification Now' : 'Get Snippet'}
                     </Button>
                     <Link data-test-id="settings-page" to="settings">
                       <Settings />

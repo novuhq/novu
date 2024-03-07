@@ -1,4 +1,4 @@
-import { INotificationTemplate, WorkflowIntegrationStatus } from '@novu/shared';
+import { INotificationTemplate, WorkflowIntegrationStatus, NotificationTemplateTypeEnum } from '@novu/shared';
 import { IUsePaginationStateOptions } from '@novu/design-system';
 
 import { useEnvController } from './useEnvController';
@@ -10,6 +10,7 @@ export type INotificationTemplateExtended = INotificationTemplate & {
   status: string;
   notificationGroup: { name: string };
   workflowIntegrationStatus?: WorkflowIntegrationStatus;
+  chimera?: boolean;
 };
 
 /** allow override of paginated inputs */
@@ -52,7 +53,12 @@ export function useTemplates({
 
   return {
     ...paginatedQueryResp,
-    templates: data?.data,
+    templates: data?.data.map((template) => {
+      return {
+        ...template,
+        chimera: template.type === NotificationTemplateTypeEnum.ECHO,
+      };
+    }),
     loading: isLoading,
     totalCount: data?.totalCount,
     totalItemCount,

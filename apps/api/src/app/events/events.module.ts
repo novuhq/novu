@@ -6,7 +6,6 @@ import {
   EventsDistributedLockService,
   GetNovuProviderCredentials,
   StorageHelperService,
-  SendTestEmail,
 } from '@novu/application-generic';
 
 import { EventsController } from './events.controller';
@@ -24,6 +23,7 @@ import { TopicsModule } from '../topics/topics.module';
 import { LayoutsModule } from '../layouts/layouts.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { JobTopicNameEnum } from '@novu/shared';
+import { SendTestEmail } from './usecases/send-test-email';
 
 const PROVIDERS = [
   CreateExecutionDetails,

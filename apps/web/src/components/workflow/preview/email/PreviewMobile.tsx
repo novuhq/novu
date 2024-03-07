@@ -66,6 +66,7 @@ export const PreviewMobile = ({
   onLocaleChange,
   selectedLocale,
   locales,
+  chimera = false,
 }: {
   integration: any;
   subject?: string;
@@ -76,6 +77,7 @@ export const PreviewMobile = ({
   onLocaleChange: (locale: string) => void;
   selectedLocale?: string;
   locales: any[];
+  chimera?: boolean;
 }) => {
   const { classes } = useStyles({ error: !!(error && error.template?.content && error.template?.content?.message) });
 
@@ -119,7 +121,7 @@ export const PreviewMobile = ({
                 <When truthy={!loading}>
                   <PreviewUserIcon />
                   <div>
-                    {error && error.template?.subject && error.template?.subject?.message ? (
+                    {!chimera && error && error.template?.subject && error.template?.subject?.message ? (
                       <Text color={colors.error}>{error.template.subject.message}</Text>
                     ) : (
                       <>
