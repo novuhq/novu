@@ -1,4 +1,5 @@
 import { Tooltip, Dropdown, CardTile } from '@novu/design-system';
+import { Badge } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBolt } from '@fortawesome/free-solid-svg-icons';
 
@@ -15,6 +16,28 @@ const segmentEventAction = {
 const handleClick = (event: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
   event.preventDefault();
   window.open('https://novu.co/novu-echo-coming-soon/', '_blank');
+};
+
+const NewBadge = (props) => {
+  return (
+    <>
+      <Badge
+        sx={{
+          padding: 5,
+          pointerEvents: 'none',
+          border: 'none',
+          background: '#dd2476',
+          color: 'white',
+          fontWeight: 'bold',
+          fontSize: '12px',
+          marginRight: props.marginRight ?? 10,
+        }}
+      >
+        NEW
+      </Badge>
+      Code Based
+    </>
+  );
 };
 
 const ToolTip = ({ children }) => {
@@ -35,7 +58,6 @@ export const EchoProjectDropDownItem = () => {
   return (
     <ToolTip>
       <Dropdown.Item
-        icon={<FontAwesomeIcon icon={faBolt} />}
         onClick={(event) => {
           segment.track(SEGMENT_EVENT, {
             action: segmentEventAction.dropDownItem,
@@ -45,7 +67,7 @@ export const EchoProjectDropDownItem = () => {
         }}
         data-test-id="echo-project-demand-check-experiment-dropdown-item"
       >
-        NEW: Work locally
+        <NewBadge />
       </Dropdown.Item>
     </ToolTip>
   );
@@ -68,8 +90,7 @@ export const EchoProjectModalItem = () => {
             handleClick(event);
           }}
         >
-          <FontAwesomeIcon icon={faBolt} />
-          <span>NEW: Work locally</span>
+          <NewBadge marginRight={1} />
         </TemplateItem>
       </ToolTip>
     </TemplatesGroup>
@@ -92,8 +113,7 @@ export const EchoProjectCardTile = () => {
           handleClick(event);
         }}
       >
-        <FontAwesomeIcon icon={faBolt} />
-        <span>NEW: Work locally</span>
+        <NewBadge marginRight={0} />
       </CardTile>
     </ToolTip>
   );
