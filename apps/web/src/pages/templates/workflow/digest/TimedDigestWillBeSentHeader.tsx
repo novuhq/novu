@@ -221,7 +221,7 @@ export const TimedDigestWillBeSentHeader = ({ isHighlight = true }: { isHighligh
           ?.map((item) => getOrdinal(item))
           .join(', ');
 
-  if (amount !== '' && amount !== '1') {
+  if (amount !== '' && amount !== '1' && amount !== undefined) {
     return (
       <>
         Every <Highlight isHighlight={isHighlight}>{getOrdinal(amount)} </Highlight> month on{' '}
@@ -236,16 +236,20 @@ export const TimedDigestWillBeSentHeader = ({ isHighlight = true }: { isHighligh
     );
   }
 
-  return (
-    <>
-      <Highlight isHighlight={isHighlight}>Monthly</Highlight> on{' '}
-      <Highlight isHighlight={isHighlight}>{monthDaysString}</Highlight>
-      {atTime && (
-        <>
-          {' '}
-          at <Highlight isHighlight={isHighlight}>{atTime}</Highlight>
-        </>
-      )}
-    </>
-  );
+  if (amount !== undefined) {
+    return (
+      <>
+        <Highlight isHighlight={isHighlight}>Monthly</Highlight> on{' '}
+        <Highlight isHighlight={isHighlight}>{monthDaysString}</Highlight>
+        {atTime && (
+          <>
+            {' '}
+            at <Highlight isHighlight={isHighlight}>{atTime}</Highlight>
+          </>
+        )}
+      </>
+    );
+  }
+
+  return <></>;
 };
