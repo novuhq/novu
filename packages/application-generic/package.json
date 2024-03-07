@@ -160,7 +160,7 @@
   },
   "optionalDependencies": {
     "@taskforcesh/bullmq-pro": "5.1.14",
-    "@novu/ee-chimera-connect": "^0.23.1"
+    "@novu/ee-chimera-connect": "^0.24.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

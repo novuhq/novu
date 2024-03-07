@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-chimera-connect",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -12,10 +12,10 @@
     "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
-    "@novu/ee-dal": "^0.23.1",
-    "@novu/dal": "^0.23.1",
-    "@novu/shared": "^0.23.1",
-    "@novu/testing": "^0.23.1",
+    "@novu/ee-dal": "^0.24.0",
+    "@novu/dal": "^0.24.0",
+    "@novu/shared": "^0.24.0",
+    "@novu/testing": "^0.24.0",
     "axios": "^1.6.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
