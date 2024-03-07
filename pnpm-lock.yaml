@@ -1764,7 +1764,7 @@ importers:
         specifier: ^0.24.0
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: workspace:latest
+        specifier: ^0.24.0
         version: link:../../../libs/dal
       '@novu/ee-dal':
         specifier: ^0.24.0
@@ -2177,7 +2177,7 @@ importers:
         specifier: ^0.24.0
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: workspace:latest
+        specifier: ^0.24.0
         version: link:../../../libs/dal
       '@novu/ee-dal':
         specifier: ^0.24.0
@@ -38083,7 +38083,7 @@ packages:
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)
-      has: 1.0.3
+      has: 1.0.4
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -38161,7 +38161,7 @@ packages:
       damerau-levenshtein: 1.0.8
       emoji-regex: 9.2.2
       eslint: 8.51.0
-      has: 1.0.3
+      has: 1.0.4
       jsx-ast-utils: 3.3.3
       language-tags: 1.0.5
       minimatch: 3.1.2
