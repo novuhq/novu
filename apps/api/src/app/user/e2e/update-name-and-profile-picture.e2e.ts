@@ -23,7 +23,6 @@ describe('Update user name and profile picture - /users/profile (PUT)', async ()
 
     expect(statusCode).to.equal(204);
 
-    // verify by fetching the user profile using userRepository
     const user = (await userRepository.findOne({ _id: session.user._id })) as UserEntity;
     expect(user.firstName).to.equal('John');
     expect(user.lastName).to.equal('Doe');
