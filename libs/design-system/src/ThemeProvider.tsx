@@ -6,8 +6,7 @@ import { mantineConfig } from './config/theme.config';
 import { colors, shadows } from './config';
 import { ChevronDown } from './icons';
 import { IconProvider } from './iconsV2/IconProvider';
-
-import { useColorScheme } from './useColorScheme';
+import { useColorScheme } from './color-scheme';
 
 const accordionStyles = (theme: MantineTheme) => ({
   item: {
