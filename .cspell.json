@@ -564,6 +564,13 @@
     "ringcentral",
     "reshard",
     "WaitList",
+    "userid",
+    "endgroup",
+    "aliyun",
+    "azcopy",
+    "cpack",
+    "pulumi",
+    "hostedtoolcache"
   ],
   "flagWords": [],
   "patterns": [
