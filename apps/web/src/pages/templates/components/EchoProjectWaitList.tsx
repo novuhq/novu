@@ -13,7 +13,7 @@ const segmentEventAction = {
 
 const handleClick = (event: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
   event.preventDefault();
-  window.open('https://novu.co/novu-echo-coming-soon/', '_blank');
+  window.open('https://novu.co/novu-echo-coming-soon?utm_campaign=echo_workflows', '_blank');
 };
 
 const NewBadge = (props) => {
