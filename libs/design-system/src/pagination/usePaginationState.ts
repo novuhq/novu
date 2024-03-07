@@ -22,7 +22,6 @@ export const usePaginationState = ({
   pageSizeParamName = URL_PARAM_NAME_PAGE_SIZE,
 }: IUsePaginationStateOptions) => {
   const [searchParams, setSearchParams] = useSearchParams();
-
   const [pageSize, setPageSize] = useState<number>(
     getValidatedPageSizeFromUrl(searchParams.get(pageSizeParamName), startingPageSize, pageSizes)
   );
@@ -35,13 +34,11 @@ export const usePaginationState = ({
       return;
     }
 
-    setSearchParams(
-      {
-        [pageNumberParamName]: `${currentPageNumber}`,
-        [pageSizeParamName]: `${pageSize}`,
-      },
-      { replace: true }
-    );
+    const newSearchParams = new URLSearchParams(document.location.search);
+    newSearchParams.set(pageNumberParamName, `${currentPageNumber}`);
+    newSearchParams.set(pageSizeParamName, `${pageSize}`);
+
+    setSearchParams(newSearchParams, { replace: true });
   }, [pageSize, currentPageNumber, setSearchParams, pageNumberParamName, pageSizeParamName]);
 
   return {

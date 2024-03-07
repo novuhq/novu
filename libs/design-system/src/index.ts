@@ -38,6 +38,7 @@ export * from './dots-navigation';
 export * from './sidebar';
 export * from './when';
 export * from './ThemeProvider';
+export * from './search-input';
 /** @deprecated */
 export * from './icons';
 export * from './iconsV2';

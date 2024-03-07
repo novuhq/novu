@@ -3,9 +3,12 @@ import { ICreateNotificationTemplateDto, INotificationTemplate, IGroupedBlueprin
 import { api } from './api.client';
 import { BLUEPRINTS_API_URL } from '../config';
 
-export function getNotificationsList(page = 0, limit = 10) {
-  return api.getFullResponse(`/v1/notification-templates`, { page, limit });
+export function getNotificationsList(page = 0, limit = 10, search?: string) {
+  const params = { page, limit, ...(search && { query: search }) };
+
+  return api.getFullResponse(`/v1/notification-templates`, params);
 }
+
 export async function createTemplate(
   data: ICreateNotificationTemplateDto,
   params?: { __source?: string }

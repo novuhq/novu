@@ -42,7 +42,7 @@ export default function OrganizationSelect() {
       setLoadingSwitch(true);
       const token = await changeOrganization(organizationId);
       setToken(token);
-      await queryClient.refetchQueries();
+      await queryClient.clear();
       setLoadingSwitch(false);
     },
     [currentOrganization, search, setToken, changeOrganization, queryClient]

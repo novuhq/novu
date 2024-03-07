@@ -10,6 +10,7 @@ import {
   OrganizationService,
   UserService,
   EnvironmentService,
+  CreateTemplatePayload,
 } from '@novu/testing';
 import { JobsService } from '@novu/testing';
 import {
@@ -330,6 +331,25 @@ module.exports = (on, config) => {
       }
 
       return blueprintTemplates;
+    },
+
+    async createWorkflows({
+      userId,
+      organizationId,
+      environmentId,
+      workflows,
+    }: {
+      userId: string;
+      organizationId: string;
+      environmentId: string;
+      workflows: Partial<CreateTemplatePayload>[];
+    }) {
+      const dal = new DalService();
+      await dal.connect('mongodb://127.0.0.1:27017/novu-test');
+
+      const notificationTemplateService = new NotificationTemplateService(userId, organizationId, environmentId);
+
+      return Promise.all(workflows.map((workflow) => notificationTemplateService.createTemplate(workflow)));
     },
   });
 };

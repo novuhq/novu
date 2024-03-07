@@ -1,7 +1,8 @@
 import { QueryFunction, QueryKey, UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { IUsePaginationStateOptions, usePaginationState } from '@novu/design-system';
+import { IUsePaginationStateOptions, usePaginationState, useSearchState } from '@novu/design-system';
 
 interface IPaginatedQueryContext {
+  search: string;
   pageSize: number;
   pageIndex: number;
 }
@@ -34,13 +35,16 @@ export const usePaginatedQuery = <TResponse extends object>({
   paginationOptions = {},
 }: UsePaginatedQueryProps<TResponse>) => {
   const { currentPageNumber, pageSize, setCurrentPageNumber, setPageSize } = usePaginationState(paginationOptions);
+  const { search, setSearch } = useSearchState(paginationOptions);
   const pageIndex = currentPageNumber - 1;
 
   const queryKeyToUse =
-    typeof queryKey === 'function' ? queryKey({ pageIndex, pageSize }) : [...queryKey, pageIndex, pageSize];
+    typeof queryKey === 'function'
+      ? queryKey({ pageIndex, pageSize, search })
+      : [...queryKey, pageIndex, pageSize, search];
 
   // hydrate the function with the pagination context so that the caller can include it in the request
-  const hydratedQueryFn = buildQueryFn({ pageIndex, pageSize });
+  const hydratedQueryFn = buildQueryFn({ pageIndex, pageSize, search });
 
   const queryResponse = useQuery<TResponse>(queryKeyToUse, hydratedQueryFn, queryOptions);
 
@@ -55,7 +59,9 @@ export const usePaginatedQuery = <TResponse extends object>({
     totalPageCount,
     currentPageNumber,
     pageSize,
+    search,
     setCurrentPageNumber,
     setPageSize,
+    setSearch,
   };
 };

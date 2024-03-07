@@ -36,9 +36,9 @@ export function useTemplates({
   }>({
     queryKey: ['notification-templates', environment?._id],
     buildQueryFn:
-      ({ pageIndex: ctxPageIndex, pageSize: ctxPageSize }) =>
+      ({ pageIndex: ctxPageIndex, pageSize: ctxPageSize, search }) =>
       () =>
-        getNotificationsList(ctxPageIndex, ctxPageSize),
+        getNotificationsList(ctxPageIndex, ctxPageSize, search),
     getTotalItemCount: (resp) => resp.totalCount,
     queryOptions: {
       keepPreviousData: true,
