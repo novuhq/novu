@@ -2,6 +2,9 @@ import { defineConfig } from '@pandacss/dev';
 import { NovuPandaPreset } from '@novu/design-system';
 
 export default defineConfig({
+  // use CSS reset
+  preflight: true,
+
   /**
    * https://panda-css.com/docs/guides/component-library#include-the-src-files
    *
