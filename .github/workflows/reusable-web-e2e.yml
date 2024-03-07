@@ -29,7 +29,7 @@ jobs:
         containers: [1, 2, 3, 4, 5]
 
     # The type of runner that the job will run on
-    runs-on: blacksmith-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
     timeout-minutes: 80
 
     permissions:
