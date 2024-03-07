@@ -134,8 +134,9 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
 }
 
 const ContainerStyled = styled.div<{ removePadding: boolean }>`
+  width: 27.5rem;
   display: flex;
-  padding: 1rem 5rem;
+  margin: 1rem auto;
   flex-direction: column;
   gap: 1rem;
 
