@@ -137,8 +137,8 @@ jobs:
         with:
           working-directory: apps/web
           browser: "${{ env.BROWSER_PATH }}"
-          record: false
-          parallel: false
+          record: true
+          parallel: true
           install: false
           config-file: cypress.config.ts
           spec: "cypress/tests/**/*.spec.{js,jsx,ts,tsx}"
