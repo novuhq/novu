@@ -9,7 +9,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { IBlueprintTemplate } from '../../api/types';
 import { TemplateCreationSourceEnum } from './shared';
 import { useHoverOverItem } from '../../hooks';
-import { EchoProjectCardTile } from './components/EchoProjectWaitlist';
+import { EchoProjectCardTile } from './components/EchoProjectWaitList';
 
 const NoDataHolder = styled.div`
   display: flex;

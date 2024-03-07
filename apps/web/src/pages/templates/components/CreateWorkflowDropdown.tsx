@@ -9,7 +9,7 @@ import { IBlueprintTemplate } from '../../../api/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { TemplateCreationSourceEnum } from '../shared';
 import { useHoverOverItem } from '../../../hooks';
-import { EchoProjectDropDownItem } from './EchoProjectWaitlist';
+import { EchoProjectDropDownItem } from './EchoProjectWaitList';
 
 const WIDTH = 172;
 
