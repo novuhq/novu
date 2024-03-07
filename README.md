@@ -137,8 +137,6 @@ await novu.trigger('<TRIGGER_NAME>', {
 ```
 
 ## GitOps & React Email Integration
--- Early Access Beta --
-
 Create notification workflows right from your IDE and integrate with MJML/React Email/Maizzle and others
 
 - Fully managed GitOps Flow, deployed from your CI
