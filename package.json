@@ -13,7 +13,7 @@
     "commit": "cz",
     "nx": "nx",
     "lint-staged": "lint-staged",
-    "generate:provider": "npx hygen provider new --version 0.23.1",
+    "generate:provider": "npx hygen provider new --version 0.24.0",
     "lint": "nx run-many --target=lint --all",
     "test": "cross-env CI=true lerna run test:watch --parallel",
     "start:dev": "cross-env TZ=UTC lerna run start:dev --parallel --concurrency=20 --scope=@novu/{api,worker,web,widget,ws,notification-center}",
