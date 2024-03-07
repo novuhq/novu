@@ -14,6 +14,7 @@ export interface IFlowStep {
   id?: string;
   _id?: string;
   name?: string;
+  stepId?: string;
   uuid?: string;
   active?: boolean;
   template?: {

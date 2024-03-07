@@ -34,6 +34,7 @@ import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { IBlueprintTemplate } from '../../../../api/types';
 import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { TemplateAnalyticsEnum } from '../../constants';
+import { INotificationTemplateStep } from '@novu/shared';
 
 const nodeTypes = {
   triggerNode: TriggerNode,
@@ -175,7 +176,7 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
             <ReactFlowProvider>
               <FlowEditor
                 key={selectedTemplate._id}
-                steps={selectedTemplate.steps}
+                steps={selectedTemplate.steps as INotificationTemplateStep[]}
                 nodeTypes={nodeTypes}
                 zoomOnScroll={false}
                 zoomOnPinch={false}

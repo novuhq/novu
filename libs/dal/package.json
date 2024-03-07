@@ -48,6 +48,7 @@
   },
   "devDependencies": {
     "@types/async": "^3.2.1",
+    "@types/json-schema": "^7.0.15",
     "@types/bluebird": "^3.5.30",
     "@types/node": "^14.6.0",
     "@typescript-eslint/parser": "^4.14.2",
