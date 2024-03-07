@@ -572,7 +572,8 @@
     "pulumi",
     "hostedtoolcache",
     "HeaderNavNew",
-    "reshard"
+    "reshard",
+    "hostedtoolcache"
   ],
   "flagWords": [],
   "patterns": [
