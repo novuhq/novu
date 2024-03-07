@@ -15,6 +15,7 @@ import {
   UseInterceptors,
   Logger,
   Header,
+  HttpStatus,
 } from '@nestjs/common';
 import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
@@ -43,6 +44,9 @@ import {
   SwitchOrganizationCommand,
 } from '@novu/application-generic';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
+import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
+import { UpdatePassword } from './usecases/update-password/update-password.usecase';
+import { UpdatePasswordCommand } from './usecases/update-password/update-password.command';
 
 @ApiCommonResponses()
 @Controller('/auth')
@@ -60,7 +64,8 @@ export class AuthController {
     private switchOrganizationUsecase: SwitchOrganization,
     private memberRepository: MemberRepository,
     private passwordResetRequestUsecase: PasswordResetRequest,
-    private passwordResetUsecase: PasswordReset
+    private passwordResetUsecase: PasswordReset,
+    private updatePasswordUsecase: UpdatePassword
   ) {}
 
   @Get('/github')
@@ -178,6 +183,23 @@ export class AuthController {
     return {
       token: await this.switchEnvironmentUsecase.execute(command),
     };
+  }
+
+  @Post('/update-password')
+  @Header('Cache-Control', 'no-store')
+  @UseGuards(UserAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updatePassword(@UserSession() user: IJwtPayload, @Body() body: UpdatePasswordBodyDto) {
+    return await this.updatePasswordUsecase.execute(
+      UpdatePasswordCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        currentPassword: body.currentPassword,
+        newPassword: body.newPassword,
+        confirmPassword: body.confirmPassword,
+      })
+    );
   }
 
   @Get('/test/token/:userId')
