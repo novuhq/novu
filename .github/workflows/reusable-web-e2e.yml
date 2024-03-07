@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
 
     # The type of runner that the job will run on
-    runs-on: blacksmith-4vcpu-ubuntu-2204
+    runs-on: ubuntu-latest
     timeout-minutes: 80
 
     permissions:
