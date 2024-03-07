@@ -1,4 +1,9 @@
 import { bool, cleanEnv, json, makeValidator, port, str, num, url, ValidatorSpec } from 'envalid';
+import {
+  DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
+  DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
+  DEFAULT_NOTIFICATION_RETENTION_DAYS,
+} from '@novu/shared';
 
 const str32 = makeValidator((variable) => {
   if (!(typeof variable === 'string') || variable.length != 32) {
@@ -87,6 +92,15 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   ENABLE_OTEL: str({
     default: 'false',
     choices: ['false', 'true'],
+  }),
+  NOTIFICATION_RETENTION_DAYS: num({
+    default: DEFAULT_NOTIFICATION_RETENTION_DAYS,
+  }),
+  MESSAGE_GENERIC_RETENTION_DAYS: num({
+    default: DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
+  }),
+  MESSAGE_IN_APP_RETENTION_DAYS: num({
+    default: DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
   }),
 };
 

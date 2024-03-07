@@ -23,8 +23,8 @@ export function GetStartedLayout({ children, footer }: IGetStartedLayoutProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    currentOnboardingStep().set(location.pathname);
-  }, [location.pathname]);
+    currentOnboardingStep().set(`${location.pathname}${location.search}`);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     const route = currentOnboardingStep().get();

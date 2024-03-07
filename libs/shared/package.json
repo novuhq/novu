@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
@@ -31,6 +31,7 @@
     "class-validator": "0.14.0"
   },
   "devDependencies": {
+    "@types/json-schema": "^7.0.15",
     "@types/bluebird": "^3.5.24",
     "@types/jest": "29.5.2",
     "jest": "^27.1.0",

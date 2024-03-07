@@ -19,6 +19,7 @@ export * from './utils/digest';
 export * from './utils/object';
 export * from './utils/hmac';
 export * from './utils/novu-integrations';
+export * from './utils/require-inject';
 export * from './decorators/external-api.decorator';
 export * from './decorators/user-session.decorator';
 export * from './tracing';

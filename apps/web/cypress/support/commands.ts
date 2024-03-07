@@ -1,7 +1,7 @@
 // load the global Cypress types
 /// <reference types="cypress" />
 
-import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { MemberRoleEnum, MemberStatusEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import 'cypress-wait-until';
 import 'cypress-file-upload';
 
@@ -166,6 +166,33 @@ Cypress.Commands.add('loginWithGitHub', () => {
       });
     }
   );
+});
+
+/**
+ * Intercept feature flags from LaunchDarkly and mock their response.
+ *
+ * Must be in beforeEach (vs before) because intercepts are cleared before each test run.
+ * https://medium.com/@kutnickclose/how-to-use-cypress-with-launchdarkly-897349b7f976
+ */
+Cypress.Commands.add('mockFeatureFlags', (featureFlags: Partial<Record<FeatureFlagsKeysEnum, boolean>>) => {
+  // turn off push (EventSource) updates from LaunchDarkly
+  cy.intercept({ hostname: /clientstream\.launchdarkly\.com/ }, (req) => {
+    req.reply('data: no streaming feature flag data here\n\n', {
+      'content-type': 'text/event-stream; charset=utf-8',
+    });
+  });
+
+  // ignore api calls to events endpoint
+  cy.intercept({ hostname: /events\.launchdarkly\.com/ }, { body: {} });
+
+  // return feature flag values in format expected by launchdarkly client
+  cy.intercept({ hostname: /app\.launchdarkly\.com/ }, (req) => {
+    const body = {};
+    Object.entries(featureFlags).forEach(([featureFlagName, featureFlagValue]) => {
+      body[featureFlagName] = { value: featureFlagValue };
+    });
+    req.reply({ body });
+  });
 });
 
 export {};

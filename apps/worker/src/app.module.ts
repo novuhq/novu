@@ -1,8 +1,6 @@
-import { DynamicModule, HttpException, Module, Logger, Provider } from '@nestjs/common';
+import { DynamicModule, HttpException, Module, Logger, Provider, Type, ForwardReference } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { Type } from '@nestjs/common/interfaces/type.interface';
-import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 
 import { SharedModule } from './app/shared/shared.module';
 import { HealthModule } from './app/health/health.module';
