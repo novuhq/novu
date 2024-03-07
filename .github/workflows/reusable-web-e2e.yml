@@ -24,6 +24,9 @@ jobs:
       # leaving the Dashboard hanging ...
       # https://github.com/cypress-io/github-action/issues/48
       fail-fast: false
+      matrix:
+        # run copies of the current job in parallel
+        containers: [1, 2, 3, 4, 5]
 
     # The type of runner that the job will run on
     runs-on: blacksmith-4vcpu-ubuntu-2204
@@ -117,8 +120,8 @@ jobs:
           working-directory: apps/web
           browser: "${{ env.BROWSER_PATH }}"
           record: false
-          parallel: false
           install: false
+          parallel: true
           config-file: cypress.config.ts
           spec: "cypress/tests/**/*.spec-ee.{js,jsx,ts,tsx}"
 
