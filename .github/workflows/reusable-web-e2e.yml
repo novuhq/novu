@@ -64,7 +64,6 @@ jobs:
         with:
           targets: lint,build
           projects: '@novu/web,@novu/api,@novu/worker'
-          args: --skip-nx-cache
 
       - uses: ./.github/actions/start-localstack
       - uses: ./.github/actions/setup-redis-cluster
