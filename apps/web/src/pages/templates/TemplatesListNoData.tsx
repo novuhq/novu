@@ -3,12 +3,13 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faDiagramNext } from '@fortawesome/free-solid-svg-icons';
 import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { Skeleton } from '@mantine/core';
-import { useSegment } from '../../components/providers/SegmentProvider';
-
 import { CardTile, colors, Popover } from '@novu/design-system';
+
+import { useSegment } from '../../components/providers/SegmentProvider';
 import { IBlueprintTemplate } from '../../api/types';
 import { TemplateCreationSourceEnum } from './shared';
 import { useHoverOverItem } from '../../hooks';
+import { EchoProjectCardTile } from './components/EchoProjectWaitlist';
 
 const NoDataHolder = styled.div`
   display: flex;
@@ -74,6 +75,7 @@ export const TemplatesListNoData = ({
     <NoDataHolder data-test-id="no-workflow-templates-placeholder">
       <NoDataSubHeading>Start from a blank workflow or use a template</NoDataSubHeading>
       <CardsContainer>
+        <EchoProjectCardTile />
         <CardTile
           disabled={readonly}
           data-test-id="create-workflow-tile"

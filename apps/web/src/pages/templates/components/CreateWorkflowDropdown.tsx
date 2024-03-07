@@ -9,6 +9,7 @@ import { IBlueprintTemplate } from '../../../api/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { TemplateCreationSourceEnum } from '../shared';
 import { useHoverOverItem } from '../../../hooks';
+import { EchoProjectDropDownItem } from './EchoProjectWaitlist';
 
 const WIDTH = 172;
 
@@ -56,6 +57,7 @@ export const CreateWorkflowDropdown = ({
       }
       data-test-id="create-workflow-dropdown"
     >
+      <EchoProjectDropDownItem />
       {isLoading
         ? Array.from({ length: 3 }).map((_, index) => <DropdownItemSkeleton key={index} />)
         : blueprints?.map((template, index) => (
