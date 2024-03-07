@@ -280,22 +280,22 @@ importers:
         specifier: ^5.0.1
         version: 5.1.1(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/dal
       '@novu/node':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/node
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/testing
       '@sendgrid/mail':
         specifier: ^8.1.0
@@ -428,13 +428,16 @@ importers:
         version: 8.3.2
     optionalDependencies:
       '@novu/ee-auth':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../enterprise/packages/auth
       '@novu/ee-billing':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../enterprise/packages/billing
+      '@novu/ee-chimera':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/chimera
       '@novu/ee-translation':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
@@ -510,10 +513,10 @@ importers:
   apps/inbound-mail:
     dependencies:
       '@novu/application-generic':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/application-generic
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       '@sentry/node':
         specifier: ^7.12.1
@@ -565,7 +568,7 @@ importers:
         version: 3.10.0
     devDependencies:
       '@novu/testing':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/testing
       '@types/chai':
         specifier: ^4.2.11
@@ -700,17 +703,20 @@ importers:
         specifier: ^4.6.0
         version: 4.6.0(monaco-editor@0.45.0)(react-dom@17.0.2)(react@17.0.2)
       '@novu/design-system':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/design-system
       '@novu/notification-center':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/notification-center
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       '@novu/shared-web':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared-web
+      '@rive-app/react-canvas':
+        specifier: ^4.8.1
+        version: 4.8.3(react@17.0.2)
       '@segment/analytics-next':
         specifier: ^1.48.0
         version: 1.51.3
@@ -903,18 +909,15 @@ importers:
       web-vitals:
         specifier: ^1.0.1
         version: 1.1.2
-      webpack-dev-server:
-        specifier: 4.11.1
-        version: 4.11.1(webpack@5.78.0)
       zod:
         specifier: ^3.22.4
         version: 3.22.4
     optionalDependencies:
       '@novu/ee-billing-web':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../enterprise/packages/billing-web
       '@novu/ee-translation-web':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../enterprise/packages/translation-web
     devDependencies:
       '@babel/polyfill':
@@ -933,10 +936,10 @@ importers:
         specifier: ^7.20.13
         version: 7.21.0
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/dal
       '@novu/testing':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/testing
       '@storybook/addon-actions':
         specifier: ^7.4.2
@@ -1016,6 +1019,9 @@ importers:
       webpack-bundle-analyzer:
         specifier: ^4.9.0
         version: 4.9.0
+      webpack-dev-server:
+        specifier: 4.11.1
+        version: 4.11.1(webpack@5.78.0)
 
   apps/webhook:
     dependencies:
@@ -1035,19 +1041,19 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@nestjs/axios@2.0.0)(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.66.0
@@ -1177,10 +1183,10 @@ importers:
         specifier: 4.2.12
         version: 4.2.12(react@17.0.2)
       '@novu/notification-center':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/notification-center
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       antd:
         specifier: ^4.10.0
@@ -1268,10 +1274,10 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/dal
       '@novu/testing':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/testing
       '@types/jest':
         specifier: ^29.5.0
@@ -1355,19 +1361,19 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@nestjs/axios@2.0.0)(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.40.0
@@ -1442,11 +1448,17 @@ importers:
         specifier: ^8.3.2
         version: 8.3.2
     optionalDependencies:
+      '@novu/ee-auth':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/auth
       '@novu/ee-billing':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../enterprise/packages/billing
+      '@novu/ee-chimera-connect':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/chimera-connect
       '@novu/ee-translation':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
@@ -1543,16 +1555,16 @@ importers:
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(@nestjs/platform-socket.io@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       '@novu/testing':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.30.0
@@ -1679,13 +1691,13 @@ importers:
         specifier: 9.0.3
         version: 9.0.3(@nestjs/common@10.2.2)(passport@0.6.0)
       '@novu/application-generic':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/dal
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/shared
       passport:
         specifier: 0.6.0
@@ -1749,16 +1761,16 @@ importers:
         specifier: ^5.0.1
         version: 5.1.1(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/dal
       '@novu/ee-dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../libs/dal
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/shared
       class-transformer:
         specifier: ^0.5.1
@@ -1818,6 +1830,9 @@ importers:
 
   enterprise/packages/billing-web:
     dependencies:
+      '@chakra-ui/react':
+        specifier: ^1.7
+        version: 1.8.9(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(@types/react@17.0.62)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2)
       '@emotion/css':
         specifier: ^11.10.5
         version: 11.10.6
@@ -1834,17 +1849,29 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/client':
-        specifier: 0.23.1
+        specifier: ^0.24.0
         version: link:../../../packages/client
       '@novu/design-system':
-        specifier: 0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/design-system
       '@novu/shared':
-        specifier: 0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/shared
       '@novu/shared-web':
-        specifier: 0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/shared-web
+      '@rjsf/chakra-ui':
+        specifier: ^5.17.1
+        version: 5.17.1(@chakra-ui/icons@2.1.1)(@chakra-ui/react@1.8.9)(@chakra-ui/system@2.6.2)(@rjsf/core@5.17.1)(@rjsf/utils@5.17.1)(@types/react@17.0.62)(chakra-react-select@4.7.6)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2)
+      '@rjsf/core':
+        specifier: ^5.17.1
+        version: 5.17.1(@rjsf/utils@5.17.1)(react@17.0.2)
+      '@rjsf/utils':
+        specifier: ^5.17.1
+        version: 5.17.1(react@17.0.2)
+      '@rjsf/validator-ajv8':
+        specifier: ^5.17.1
+        version: 5.17.1(@rjsf/utils@5.17.1)
       '@stripe/react-stripe-js':
         specifier: ^2.5.0
         version: 2.5.0(@stripe/stripe-js@2.4.0)(react-dom@17.0.2)(react@17.0.2)
@@ -1866,6 +1893,9 @@ importers:
       eslint-plugin-react-hooks:
         specifier: ^4.4.0
         version: 4.6.0(eslint@8.51.0)
+      framer-motion:
+        specifier: ^5
+        version: 5.6.0(react-dom@17.0.2)(react@17.0.2)
       react-hook-form:
         specifier: 7.43.9
         version: 7.43.9(react@17.0.2)
@@ -1901,16 +1931,201 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
+  enterprise/packages/chimera:
+    dependencies:
+      '@nestjs/common':
+        specifier: 10.2.2
+        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@nestjs/jwt':
+        specifier: 10.2.0
+        version: 10.2.0(@nestjs/common@10.2.2)
+      '@nestjs/passport':
+        specifier: 9.0.3
+        version: 9.0.3(@nestjs/common@10.2.2)(passport@0.6.0)
+      '@novu/application-generic':
+        specifier: ^0.24.0
+        version: link:../../../packages/application-generic
+      '@novu/dal':
+        specifier: ^0.24.0
+        version: link:../../../libs/dal
+      '@novu/ee-dal':
+        specifier: ^0.24.0
+        version: link:../libs/dal
+      '@novu/shared':
+        specifier: ^0.24.0
+        version: link:../../../libs/shared
+      '@novu/stateless':
+        specifier: ^0.24.0
+        version: link:../../../packages/stateless
+      '@novu/testing':
+        specifier: ^0.24.0
+        version: link:../../../libs/testing
+      axios:
+        specifier: ^1.6.2
+        version: 1.6.7
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.14.0
+        version: 0.14.0
+      json-schema-defaults:
+        specifier: ^0.4.0
+        version: 0.4.0
+      lodash:
+        specifier: ^4.17.15
+        version: 4.17.21
+      passport:
+        specifier: 0.6.0
+        version: 0.6.0
+      passport-google-oauth:
+        specifier: ^2.0.0
+        version: 2.0.0
+      passport-oauth2:
+        specifier: ^1.6.1
+        version: 1.7.0
+      shortid:
+        specifier: ^2.2.16
+        version: 2.2.16
+      slugify:
+        specifier: ^1.4.6
+        version: 1.6.6
+    devDependencies:
+      '@types/chai':
+        specifier: ^4.2.11
+        version: 4.3.4
+      '@types/json-schema':
+        specifier: ^7.0.15
+        version: 7.0.15
+      '@types/mocha':
+        specifier: ^8.0.1
+        version: 8.2.3
+      '@types/node':
+        specifier: ^14.6.0
+        version: 14.18.42
+      '@types/sinon':
+        specifier: ^9.0.0
+        version: 9.0.11
+      chai:
+        specifier: ^4.2.0
+        version: 4.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      mocha:
+        specifier: ^8.1.1
+        version: 8.4.0
+      nodemon:
+        specifier: ^2.0.3
+        version: 2.0.22
+      sinon:
+        specifier: ^9.2.4
+        version: 9.2.4
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  enterprise/packages/chimera-connect:
+    dependencies:
+      '@nestjs/common':
+        specifier: 10.2.2
+        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@nestjs/jwt':
+        specifier: 10.2.0
+        version: 10.2.0(@nestjs/common@10.2.2)
+      '@nestjs/passport':
+        specifier: 9.0.3
+        version: 9.0.3(@nestjs/common@10.2.2)(passport@0.6.0)
+      '@novu/dal':
+        specifier: ^0.24.0
+        version: link:../../../libs/dal
+      '@novu/ee-dal':
+        specifier: ^0.24.0
+        version: link:../libs/dal
+      '@novu/shared':
+        specifier: ^0.24.0
+        version: link:../../../libs/shared
+      '@novu/testing':
+        specifier: ^0.24.0
+        version: link:../../../libs/testing
+      axios:
+        specifier: ^1.6.2
+        version: 1.6.7
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.14.0
+        version: 0.14.0
+      got:
+        specifier: ^11.8.6
+        version: 11.8.6
+      passport:
+        specifier: 0.6.0
+        version: 0.6.0
+      passport-oauth2:
+        specifier: ^1.6.1
+        version: 1.7.0
+      shortid:
+        specifier: ^2.2.16
+        version: 2.2.16
+      slugify:
+        specifier: ^1.4.6
+        version: 1.6.6
+    devDependencies:
+      '@types/chai':
+        specifier: ^4.2.11
+        version: 4.3.4
+      '@types/got':
+        specifier: ^9.6.12
+        version: 9.6.12
+      '@types/json-schema':
+        specifier: ^7.0.15
+        version: 7.0.15
+      '@types/mocha':
+        specifier: ^8.0.1
+        version: 8.2.3
+      '@types/node':
+        specifier: ^14.6.0
+        version: 14.18.42
+      '@types/sinon':
+        specifier: ^9.0.0
+        version: 9.0.11
+      chai:
+        specifier: ^4.2.0
+        version: 4.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      mocha:
+        specifier: ^8.1.1
+        version: 8.4.0
+      nodemon:
+        specifier: ^2.0.3
+        version: 2.0.22
+      sinon:
+        specifier: ^9.2.4
+        version: 9.2.4
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
   enterprise/packages/libs/dal:
     dependencies:
       '@nestjs/common':
         specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../../libs/dal
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../../libs/shared
       mongoose:
         specifier: ^7.5.0
@@ -1959,16 +2174,16 @@ importers:
         specifier: ^7.1.8
         version: 7.1.9(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: workspace:latest
+        specifier: ^0.24.0
         version: link:../../../libs/dal
       '@novu/ee-dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../libs/dal
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/shared
       class-transformer:
         specifier: ^0.5.1
@@ -2053,16 +2268,16 @@ importers:
         specifier: ^4.6.0
         version: 4.6.0(monaco-editor@0.45.0)(react-dom@17.0.2)(react@17.0.2)
       '@novu/client':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../packages/client
       '@novu/design-system':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/design-system
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/shared
       '@novu/shared-web':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../libs/shared-web
       '@tanstack/react-query':
         specifier: ^4.20.4
@@ -2132,7 +2347,7 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../shared
       JSONStream:
         specifier: ^1.3.5
@@ -2201,6 +2416,9 @@ importers:
       '@types/bluebird':
         specifier: ^3.5.30
         version: 3.5.38
+      '@types/json-schema':
+        specifier: ^7.0.15
+        version: 7.0.15
       '@types/node':
         specifier: ^14.6.0
         version: 14.18.42
@@ -2247,13 +2465,13 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(@mantine/core@5.10.5)(@mantine/hooks@5.10.5)(react-dom@17.0.2)(react@17.0.2)
       '@novu/client':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/client
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../shared
       '@novu/shared-web':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../shared-web
       '@segment/analytics-next':
         specifier: 1.59.0
@@ -2380,7 +2598,7 @@ importers:
   libs/embed:
     dependencies:
       '@novu/notification-center':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/notification-center
       '@types/iframe-resizer':
         specifier: ^3.5.8
@@ -2498,6 +2716,9 @@ importers:
       '@types/jest':
         specifier: 29.5.2
         version: 29.5.2
+      '@types/json-schema':
+        specifier: ^7.0.15
+        version: 7.0.15
       jest:
         specifier: ^27.1.0
         version: 27.5.1(ts-node@10.9.1)
@@ -2514,7 +2735,7 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../shared
       '@segment/analytics-next':
         specifier: 1.59.0
@@ -2569,10 +2790,10 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../dal
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../shared
       JSONStream:
         specifier: ^1.3.5
@@ -2702,202 +2923,202 @@ importers:
         specifier: '>=10'
         version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(@nestjs/platform-express@10.2.2)
       '@novu/africas-talking':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/africas-talking
       '@novu/apns':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/apns
       '@novu/azure-sms':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/azure-sms
       '@novu/bandwidth':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/bandwidth
       '@novu/braze':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/braze
       '@novu/brevo-sms':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/brevo-sms
       '@novu/bulk-sms':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/bulk-sms
       '@novu/burst-sms':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/burst-sms
       '@novu/clickatell':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/clickatell
       '@novu/clicksend':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/clicksend
       '@novu/dal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/dal
       '@novu/discord':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/discord
       '@novu/email-webhook':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/email-webhook
       '@novu/emailjs':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/emailjs
       '@novu/expo':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/expo
       '@novu/fcm':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/fcm
       '@novu/firetext':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/firetext
       '@novu/forty-six-elks':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/forty-six-elks
       '@novu/generic-sms':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/generic-sms
       '@novu/getstream':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/getstream
       '@novu/grafana-on-call':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/grafana-on-call
       '@novu/gupshup':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/gupshup
       '@novu/infobip':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/infobip
       '@novu/isend-sms':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/isend-sms
       '@novu/kannel':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/kannel
       '@novu/mailersend':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/mailersend
       '@novu/mailgun':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/mailgun
       '@novu/mailjet':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/mailjet
       '@novu/mailtrap':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/mailtrap
       '@novu/mandrill':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/mandrill
       '@novu/maqsam':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/maqsam
       '@novu/mattermost':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/mattermost
       '@novu/messagebird':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/messagebird
       '@novu/ms-teams':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/ms-teams
       '@novu/netcore':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/netcore
       '@novu/nexmo':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/nexmo
       '@novu/nodemailer':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/nodemailer
       '@novu/one-signal':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/one-signal
       '@novu/outlook365':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/outlook365
       '@novu/plivo':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/plivo
       '@novu/plunk':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/plunk
       '@novu/postmark':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/postmark
       '@novu/push-webhook':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/push-webhook
       '@novu/pusher-beams':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/pusher-beams
       '@novu/pushpad':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/pushpad
       '@novu/resend':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/resend
       '@novu/ring-central':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/ring-central
       '@novu/rocket-chat':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/rocket-chat
       '@novu/ryver':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/ryver
       '@novu/sendchamp':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/sendchamp
       '@novu/sendgrid':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/sendgrid
       '@novu/sendinblue':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/sendinblue
       '@novu/ses':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/ses
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       '@novu/simpletexting':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/simpletexting
       '@novu/slack':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/slack
       '@novu/sms-central':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/sms-central
       '@novu/sms77':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/sms77
       '@novu/sns':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/sns
       '@novu/sparkpost':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/sparkpost
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../stateless
       '@novu/telnyx':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/telnyx
       '@novu/termii':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/termii
       '@novu/testing':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/testing
       '@novu/twilio':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/twilio
       '@novu/zulip':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../providers/zulip
       '@opentelemetry/api':
         specifier: ^1.7.0
@@ -3020,6 +3241,9 @@ importers:
         specifier: 7.8.1
         version: 7.8.1
     optionalDependencies:
+      '@novu/ee-chimera-connect':
+        specifier: ^0.24.0
+        version: link:../../enterprise/packages/chimera-connect
       '@taskforcesh/bullmq-pro':
         specifier: 5.1.14
         version: 5.1.14
@@ -3082,7 +3306,7 @@ importers:
   packages/cli:
     dependencies:
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       '@segment/analytics-node':
         specifier: ^1.1.4
@@ -3149,7 +3373,7 @@ importers:
   packages/client:
     dependencies:
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
     devDependencies:
       '@types/jest':
@@ -3183,10 +3407,10 @@ importers:
   packages/headless:
     dependencies:
       '@novu/client':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../client
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       '@tanstack/query-core':
         specifier: ^4.15.1
@@ -3229,7 +3453,7 @@ importers:
         specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -3281,7 +3505,7 @@ importers:
   packages/node:
     dependencies:
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       axios-retry:
         specifier: ^3.8.0
@@ -3366,10 +3590,10 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/client':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../client
       '@novu/shared':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../libs/shared
       '@tanstack/react-query':
         specifier: ^4.20.4
@@ -3544,7 +3768,7 @@ importers:
         specifier: ^16.2.0
         version: 16.2.11(@angular/common@16.2.11)(@angular/core@16.2.11)(@angular/platform-browser@16.2.11)(rxjs@7.8.1)
       '@novu/notification-center':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../notification-center
       rxjs:
         specifier: ~7.8.0
@@ -3608,7 +3832,7 @@ importers:
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0
         version: 16.2.11(@angular/common@16.2.11)(@angular/compiler@16.2.11)(@angular/core@16.2.11)(@angular/platform-browser@16.2.11)
       '@novu/notification-center':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../../notification-center
       '@types/react':
         specifier: ^17.0.0
@@ -3632,7 +3856,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3(vue@3.2.47)
       '@novu/notification-center':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../notification-center
       react:
         specifier: ^17.0.1
@@ -3742,7 +3966,7 @@ importers:
   providers/africas-talking:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       africastalking:
         specifier: ^0.6.2
@@ -3785,7 +4009,7 @@ importers:
   providers/apns:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       '@parse/node-apn':
         specifier: ^5.2.3
@@ -3840,7 +4064,7 @@ importers:
         specifier: ^1.0.0
         version: 1.0.0
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -3883,7 +4107,7 @@ importers:
         specifier: ^4.1.3
         version: 4.1.3
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -3923,7 +4147,7 @@ importers:
   providers/braze:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       braze-api:
         specifier: ^2.5.6
@@ -3966,7 +4190,7 @@ importers:
   providers/brevo-sms:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       cross-fetch:
         specifier: ^4.0.0
@@ -4015,7 +4239,7 @@ importers:
   providers/bulk-sms:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.0
@@ -4058,7 +4282,7 @@ importers:
   providers/burst-sms:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -4119,7 +4343,7 @@ importers:
   providers/clickatell:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -4171,7 +4395,7 @@ importers:
   providers/clicksend:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.0
@@ -4214,7 +4438,7 @@ importers:
   providers/discord:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -4269,7 +4493,7 @@ importers:
   providers/email-webhook:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -4312,7 +4536,7 @@ importers:
   providers/emailjs:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       emailjs:
         specifier: ^3.6.0
@@ -4367,7 +4591,7 @@ importers:
   providers/expo:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       expo-server-sdk:
         specifier: ^3.6.0
@@ -4422,7 +4646,7 @@ importers:
   providers/fcm:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       firebase-admin:
         specifier: ^11.10.1
@@ -4486,7 +4710,7 @@ importers:
   providers/firetext:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       node-fetch:
         specifier: ^3.2.10
@@ -4550,7 +4774,7 @@ importers:
   providers/forty-six-elks:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -4593,7 +4817,7 @@ importers:
   providers/generic-sms:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -4636,7 +4860,7 @@ importers:
   providers/getstream:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -4679,7 +4903,7 @@ importers:
   providers/grafana-on-call:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -4726,7 +4950,10 @@ importers:
     dependencies:
       '@novu/stateless':
         specifier: ^0.23.1
-        version: link:../../packages/stateless
+        version: 0.23.1
+      axios:
+        specifier: ^1.6.7
+        version: 1.6.7
       node-fetch:
         specifier: ^3.2.10
         version: 3.3.1
@@ -4786,7 +5013,7 @@ importers:
         specifier: ^0.3.2
         version: 0.3.2
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -4838,7 +5065,7 @@ importers:
   providers/isend-sms:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.0
@@ -4881,7 +5108,7 @@ importers:
   providers/kannel:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -4936,7 +5163,7 @@ importers:
   providers/mailersend:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       mailersend:
         specifier: ^1.3.1
@@ -4991,7 +5218,7 @@ importers:
   providers/mailgun:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       form-data:
         specifier: ^4.0.0
@@ -5052,7 +5279,7 @@ importers:
   providers/mailjet:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       node-mailjet:
         specifier: ^6.0.5
@@ -5110,7 +5337,7 @@ importers:
   providers/mailtrap:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       mailtrap:
         specifier: ^3.1.1
@@ -5156,7 +5383,7 @@ importers:
         specifier: ^1.0.50
         version: 1.0.50
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -5214,7 +5441,7 @@ importers:
   providers/maqsam:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -5263,7 +5490,7 @@ importers:
   providers/mattermost:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -5306,7 +5533,7 @@ importers:
   providers/messagebird:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       messagebird:
         specifier: ^4.0.1
@@ -5349,7 +5576,7 @@ importers:
   providers/ms-teams:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -5407,7 +5634,7 @@ importers:
   providers/netcore:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -5462,7 +5689,7 @@ importers:
   providers/nexmo:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       '@vonage/auth':
         specifier: ^1.7.0
@@ -5520,7 +5747,7 @@ importers:
   providers/nodemailer:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       nodemailer:
         specifier: ^6.6.5
@@ -5578,7 +5805,7 @@ importers:
   providers/one-signal:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.0
@@ -5621,7 +5848,7 @@ importers:
   providers/outlook365:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       nodemailer:
         specifier: ^6.6.5
@@ -5679,7 +5906,7 @@ importers:
   providers/plivo:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       plivo:
         specifier: ^4.60.1
@@ -5734,7 +5961,7 @@ importers:
   providers/plunk:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       '@plunk/node':
         specifier: 2.0.0
@@ -5777,7 +6004,7 @@ importers:
   providers/postmark:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -5835,7 +6062,7 @@ importers:
   providers/push-webhook:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -5878,7 +6105,7 @@ importers:
   providers/pusher-beams:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.0
@@ -5921,7 +6148,7 @@ importers:
   providers/pushpad:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       pushpad:
         specifier: 1.0.0
@@ -5964,7 +6191,7 @@ importers:
   providers/resend:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       resend:
         specifier: ^2.1.0
@@ -6019,7 +6246,7 @@ importers:
   providers/ring-central:
     dependencies:
       '@novu/stateless':
-        specifier: 0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       '@ringcentral/sdk':
         specifier: ^5.0.1
@@ -6062,7 +6289,7 @@ importers:
   providers/rocket-chat:
     dependencies:
       '@novu/stateless':
-        specifier: 0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -6105,7 +6332,7 @@ importers:
   providers/ryver:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -6148,7 +6375,7 @@ importers:
   providers/sendchamp:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -6191,7 +6418,7 @@ importers:
   providers/sendgrid:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       '@sendgrid/mail':
         specifier: ^8.1.0
@@ -6246,7 +6473,7 @@ importers:
   providers/sendinblue:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -6304,7 +6531,7 @@ importers:
         specifier: 3.382.0
         version: 3.382.0
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       nodemailer:
         specifier: ^6.6.5
@@ -6359,7 +6586,7 @@ importers:
   providers/simpletexting:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -6402,7 +6629,7 @@ importers:
   providers/slack:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -6457,7 +6684,7 @@ importers:
   providers/sms-central:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -6500,7 +6727,7 @@ importers:
   providers/sms77:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       node-fetch:
         specifier: ^2.6.7
@@ -6564,7 +6791,7 @@ importers:
         specifier: ^3.382.0
         version: 3.388.0
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -6616,7 +6843,7 @@ importers:
   providers/sparkpost:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -6674,7 +6901,7 @@ importers:
   providers/telnyx:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       telnyx:
         specifier: ^1.23.0
@@ -6729,7 +6956,7 @@ importers:
   providers/termii:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       node-fetch:
         specifier: ^3.2.10
@@ -6787,7 +7014,7 @@ importers:
   providers/twilio:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       twilio:
         specifier: ^4.19.3
@@ -6842,7 +7069,7 @@ importers:
   providers/zulip:
     dependencies:
       '@novu/stateless':
-        specifier: ^0.23.1
+        specifier: ^0.24.0
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.2
@@ -7008,7 +7235,7 @@ packages:
       tslib: 2.6.1
       typescript: 4.9.5
       vite: 4.4.7(@types/node@16.11.7)(less@4.1.3)(sass@1.64.1)(terser@5.19.2)
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
       webpack-dev-middleware: 6.1.1(webpack@5.88.2)
       webpack-dev-server: 4.15.1(webpack@5.88.2)
       webpack-merge: 5.9.0
@@ -7043,7 +7270,7 @@ packages:
     dependencies:
       '@angular-devkit/architect': 0.1602.8(chokidar@3.5.3)
       rxjs: 7.8.1
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
       webpack-dev-server: 4.15.1(webpack@5.88.2)
     transitivePeerDependencies:
       - chokidar
@@ -7397,7 +7624,7 @@ packages:
   /@asyncapi/specs@4.3.1:
     resolution: {integrity: sha512-EfexhJu/lwF8OdQDm28NKLJHFkx0Gb6O+rcezhZYLPIoNYKXJMh2J1vFGpwmfAcTTh+ffK44Oc2Hs1Q4sLBp+A==}
     dependencies:
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
     dev: true
 
   /@auto-it/bot-list@10.44.0:
@@ -13473,7 +13700,7 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       '@apimatic/schema': 0.6.0
-      axios: 1.6.2
+      axios: 1.6.7
       detect-node: 2.1.0
       form-data: 3.0.1
       json-bigint: 1.0.0
@@ -13490,6 +13717,1192 @@ packages:
   /@bcoe/v8-coverage@0.2.3:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
+
+  /@chakra-ui/accordion@1.4.12(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2):
+    resolution: {integrity: sha512-Hq5Ie1SI4mmtgBmeuir+f7QKgopZEyQOojgufo/A20keMSy5Yk9WZjkXNQgvoIRl1AsoziIPUlubQOtkBZjjbA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      framer-motion: 3.x || 4.x || 5.x || 6.x
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/descendant': 2.1.4(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/icon': 2.0.5(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/transition': 1.4.8(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/alert@1.3.7(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-fFpJYBpHOIK/BX4BVl/xafYiDBUW+Bq/gUYDOo4iAiO4vHgxo74oa+yOwSRNlNjAgIX7pi2ridsYQALKyWyxxQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/icon': 2.0.5(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/anatomy@1.3.0(@chakra-ui/system@2.6.2):
+    resolution: {integrity: sha512-vj/lcHkCuq/dtbl69DkNsftZTnrGEegB90ODs1B6rxw8iVMdDSYkthPPFAkqzNs4ppv1y2IBjELuVzpeta1OHA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+    dependencies:
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/theme-tools': 1.3.6(@chakra-ui/system@2.6.2)
+    dev: false
+
+  /@chakra-ui/anatomy@2.2.2:
+    resolution: {integrity: sha512-MV6D4VLRIHr4PkW4zMyqfrNS1mPlCTiCXwvYGtDFQYr+xHFfonhAuf9WjsSc0nyp2m0OdkSLnzmVKkZFLo25Tg==}
+    dev: false
+
+  /@chakra-ui/avatar@1.3.11(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-/eRRK48Er92/QWAfWhxsJIN0gZBBvk+ew4Hglo+pxt3/NDnfTF2yPE7ZN29Dl6daPNbyTOpoksMwaU2mZIqLgA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/image': 1.1.10(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/breadcrumb@1.3.6(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-iXxienBO6RUnJEcDvyDWyRt+mzPyl7/b6N8i0vrjGKGLpgtayJFvIdo33tFcvx6TCy7V9hiE3HTtZnNomWdR6A==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/breakpoint-utils@2.0.8:
+    resolution: {integrity: sha512-Pq32MlEX9fwb5j5xx8s18zJMARNHlQZH2VH1RZgfgRDpp7DcEgtRW5AInfN5CfqdHLO1dGxA7I3MqEuL5JnIsA==}
+    dependencies:
+      '@chakra-ui/shared-utils': 2.0.5
+    dev: false
+
+  /@chakra-ui/button@1.5.10(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-IVEOrleI378CckAa3b3CTUHMPZRfpy6LPwn1Mx3sMpHEkDTKu8zJcjgEvCE8HYzNC1KbwBsa1PfTgk40ui6EtA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/spinner': 1.2.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/checkbox@1.7.1(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2):
+    resolution: {integrity: sha512-9Io97yn8OrdaIynCj+3Z/neJV7lTT1MtcdYh3BKMd7WnoJDkRY/GlBM8zsdgC5Wvm+ZQ1M83t0YvRPKLLzusyA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      framer-motion: 3.x || 4.x || 5.x || 6.x
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/form-control': 1.6.0(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      '@chakra-ui/visually-hidden': 1.1.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/clickable@1.2.6(react@17.0.2):
+    resolution: {integrity: sha512-89SsrQwwwAadcl/bN8nZqqaaVhVNFdBXqQnxVy1t07DL5ezubmNb5SgFh9LDznkm9YYPQhaGr3W6HFro7iAHMg==}
+    peerDependencies:
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/clickable@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-flRA/ClPUGPYabu+/GLREZVZr9j2uyyazCAUHAdrTUEdDYCr31SVGhgh7dgKdtq23bOvAQJpIJjw/0Bs0WvbXw==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/react-use-merge-refs': 2.1.0(react@17.0.2)
+      '@chakra-ui/shared-utils': 2.0.5
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/close-button@1.2.7(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-cYTxfgrIlPU4IZm1sehZXxx/TNQBk9c3LBPvTpywEM8GVRGINh4YLq8WiMaPtO+TDNBnKoWS/jS4IHnR+abADw==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/icon': 2.0.5(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/color-mode@1.4.8(react@17.0.2):
+    resolution: {integrity: sha512-iD4126DVQi06c6ARr3uf3R2rtEu8aBVjW8rhZ+lOsV26Z15iCJA7OAut13Xu06fcZvgjSB/ChDy6Sx9sV9UjHA==}
+    peerDependencies:
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/react-env': 1.1.6(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/color-mode@2.2.0(react@17.0.2):
+    resolution: {integrity: sha512-niTEA8PALtMWRI9wJ4LL0CSBDo8NBfLNp4GD6/0hstcm3IlbBHTVKxN6HwSaoNYfphDQLxCjT4yG+0BJA5tFpg==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/react-use-safe-layout-effect': 2.1.0(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/control-box@1.1.6(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-EUcq5f854puG6ZA6wAWl4107OPl8+bj4MMHJCa48BB0qec0U8HCEtxQGnFwJmaYLalIAjMfHuY3OwO2A3Hi9hA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/counter@1.2.10(react@17.0.2):
+    resolution: {integrity: sha512-HQd09IuJ4z8M8vWajH+99jBWWSHDesQZmnN95jUg3HKOuNleLaipf2JFdrqbO1uWQyHobn2PM6u+B+JCAh2nig==}
+    peerDependencies:
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/css-reset@1.1.3(@emotion/react@11.10.6)(react@17.0.2):
+    resolution: {integrity: sha512-AgfrE7bRTJvNi/4zIfacI/kBHmHmHEIeQtHwCvk/0qM9V2gK1VM3ctYlnibf7BTh17F/UszweOGRb1lHSPfWjw==}
+    peerDependencies:
+      '@emotion/react': '>=10.0.35'
+      react: '>=16.8.6'
+    dependencies:
+      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/descendant@2.1.4(react@17.0.2):
+    resolution: {integrity: sha512-k1olHM6c0fcI5fQxO9rqg9rxripcfHMEm2LkORgH0CAzFn/U75CxCw5ec0IMedNWCdiv740enVfnfhBAoSg7gw==}
+    peerDependencies:
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/descendant@3.1.0(react@17.0.2):
+    resolution: {integrity: sha512-VxCIAir08g5w27klLyi7PVo8BxhW4tgU/lxQyujkmi4zx7hT9ZdrcQLAted/dAa+aSIZ14S1oV0Q9lGjsAdxUQ==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/react-context': 2.1.0(react@17.0.2)
+      '@chakra-ui/react-use-merge-refs': 2.1.0(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/dom-utils@2.1.0:
+    resolution: {integrity: sha512-ZmF2qRa1QZ0CMLU8M1zCfmw29DmPNtfjR9iTo74U5FPr3i1aoAh7fbJ4qAlZ197Xw9eAW28tvzQuoVWeL5C7fQ==}
+    dev: false
+
+  /@chakra-ui/editable@1.4.2(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-a5zKghA/IvG7yNkmFl7Z9c2KSsf0FgyijsNPTg/4S5jxyz13QJtoTg40tdpyaxHHCT25y25iUcV4FYCj6Jd01w==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/focus-lock@1.2.6(@types/react@17.0.62)(react@17.0.2):
+    resolution: {integrity: sha512-ZJNE1oNdUM1aGWuCJ+bxFa/d3EwxzfMWzTKzSvKDK50GWoUQQ10xFTT9nY/yFpkcwhBvx1KavxKf44mIhIbSog==}
+    peerDependencies:
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+      react-focus-lock: 2.5.2(@types/react@17.0.62)(react@17.0.2)
+    transitivePeerDependencies:
+      - '@types/react'
+    dev: false
+
+  /@chakra-ui/form-control@1.6.0(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-MtUE98aocP2QTgvyyJ/ABuG33mhT3Ox56phKreG3HzbUKByMwrbQSm1QcAgyYdqSZ9eKB2tXx+qgGNh+avAfDA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/icon': 2.0.5(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/form-control@2.2.0(@chakra-ui/system@2.6.2)(react@17.0.2):
+    resolution: {integrity: sha512-wehLC1t4fafCVJ2RvJQT2jyqsAwX7KymmiGqBu7nQoQz8ApTkGABWpo/QwDh3F/dBLrouHDoOvGmYTqft3Mirw==}
+    peerDependencies:
+      '@chakra-ui/system': '>=2.0.0'
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/icon': 3.2.0(@chakra-ui/system@2.6.2)(react@17.0.2)
+      '@chakra-ui/react-context': 2.1.0(react@17.0.2)
+      '@chakra-ui/react-types': 2.0.7(react@17.0.2)
+      '@chakra-ui/react-use-merge-refs': 2.1.0(react@17.0.2)
+      '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/hooks@1.9.1(react@17.0.2):
+    resolution: {integrity: sha512-SEeh1alDKzrP9gMLWMnXOUDBQDKF/URL6iTmkumTn6vhawWNla6sPrcMyoCzWdMzwUhZp3QNtCKbUm7dxBXvPw==}
+    peerDependencies:
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      compute-scroll-into-view: 1.0.14
+      copy-to-clipboard: 3.3.1
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/icon@2.0.5(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-ZrqRvCCIxGr4qFd/r1pmtd9tobRmv8KAxV7ygFoc/t4vOSKTcVIjhE12gsI3FzgvXM15ZFVwsxa1zodwgo5neQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/icon@3.2.0(@chakra-ui/system@2.6.2)(react@17.0.2):
+    resolution: {integrity: sha512-xxjGLvlX2Ys4H0iHrI16t74rG9EBcpFvJ3Y3B7KMQTrnW34Kf7Da/UC8J67Gtx85mTHW020ml85SVPKORWNNKQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=2.0.0'
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/icons@2.1.1(@chakra-ui/system@2.6.2)(react@17.0.2):
+    resolution: {integrity: sha512-3p30hdo4LlRZTT5CwoAJq3G9fHI0wDc0pBaMHj4SUn0yomO+RcDRlzhdXqdr5cVnzax44sqXJVnf3oQG0eI+4g==}
+    peerDependencies:
+      '@chakra-ui/system': '>=2.0.0'
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/icon': 3.2.0(@chakra-ui/system@2.6.2)(react@17.0.2)
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/image@1.1.10(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-PJZmhQ/R1PgdMyCRjALfoyq1FNh/WzMAw70sliHLtLcb9hBXniwQZuckYfUshCkUoFBj/ow9d4byn9Culdpk7Q==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/input@1.4.6(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-Ljy/NbOhh9cNQxKTWQRsT4aQiXs2vVya+Cj5NpMAz08NFFjPZovsTawhI7m6ejT5Vsh76QYjh2rOLLI3fWqQQw==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/form-control': 1.6.0(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/layout@1.8.0(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-GJtEKez5AZu0XQTxI6a6jwA/hMDD36pP0HBxBOGuHP1hWCebDzMjraiMfWiP9w7hKERFE4j19kocHxIXyocfJA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/icon': 2.0.5(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/layout@2.3.1(@chakra-ui/system@2.6.2)(react@17.0.2):
+    resolution: {integrity: sha512-nXuZ6WRbq0WdgnRgLw+QuxWAHuhDtVX8ElWqcTK+cSMFg/52eVP47czYBE5F35YhnoW2XBwfNoNgZ7+e8Z01Rg==}
+    peerDependencies:
+      '@chakra-ui/system': '>=2.0.0'
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/breakpoint-utils': 2.0.8
+      '@chakra-ui/icon': 3.2.0(@chakra-ui/system@2.6.2)(react@17.0.2)
+      '@chakra-ui/object-utils': 2.1.0
+      '@chakra-ui/react-children-utils': 2.0.6(react@17.0.2)
+      '@chakra-ui/react-context': 2.1.0(react@17.0.2)
+      '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/lazy-utils@2.0.5:
+    resolution: {integrity: sha512-UULqw7FBvcckQk2n3iPO56TMJvDsNv0FKZI6PlUNJVaGsPbsYxK/8IQ60vZgaTVPtVcjY6BE+y6zg8u9HOqpyg==}
+    dev: false
+
+  /@chakra-ui/live-region@1.1.6(react@17.0.2):
+    resolution: {integrity: sha512-9gPQHXf7oW0jXyT5R/JzyDMfJ3hF70TqhN8bRH4fMyfNr2Se+SjztMBqCrv5FS5rPjcCeua+e0eArpoB3ROuWQ==}
+    peerDependencies:
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/media-query@2.0.4(@chakra-ui/system@1.12.1)(@chakra-ui/theme@1.14.1)(react@17.0.2):
+    resolution: {integrity: sha512-kn6g/L0IFFUHz2v4yiCsBnhg9jUeA7525Z+AWl+BPtvryi7i9J+AJ27y/QAge7vUGy4dwDeFyxOZTs2oZ9/BsA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      '@chakra-ui/theme': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/react-env': 1.1.6(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/theme': 1.14.1(@chakra-ui/system@2.6.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/media-query@3.3.0(@chakra-ui/system@2.6.2)(react@17.0.2):
+    resolution: {integrity: sha512-IsTGgFLoICVoPRp9ykOgqmdMotJG0CnPsKvGQeSFOB/dZfIujdVb14TYxDU4+MURXry1MhJ7LzZhv+Ml7cr8/g==}
+    peerDependencies:
+      '@chakra-ui/system': '>=2.0.0'
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/breakpoint-utils': 2.0.8
+      '@chakra-ui/react-env': 3.1.0(react@17.0.2)
+      '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/menu@1.8.12(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2):
+    resolution: {integrity: sha512-X/s74VpOReQW4fCRCa21f/VOe++cXhPz2Sh7pDjtaT3zmKjrJwgk1Kw75cXfNX1eke6hf/wZ0FGweu/m7+C3OA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      framer-motion: 3.x || 4.x || 5.x || 6.x
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/clickable': 1.2.6(react@17.0.2)
+      '@chakra-ui/descendant': 2.1.4(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/popper': 2.4.3(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/transition': 1.4.8(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/menu@2.2.1(@chakra-ui/system@2.6.2)(framer-motion@5.6.0)(react@17.0.2):
+    resolution: {integrity: sha512-lJS7XEObzJxsOwWQh7yfG4H8FzFPRP5hVPN/CL+JzytEINCSBvsCDHrYPQGp7jzpCi8vnTqQQGQe0f8dwnXd2g==}
+    peerDependencies:
+      '@chakra-ui/system': '>=2.0.0'
+      framer-motion: '>=4.0.0'
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/clickable': 2.1.0(react@17.0.2)
+      '@chakra-ui/descendant': 3.1.0(react@17.0.2)
+      '@chakra-ui/lazy-utils': 2.0.5
+      '@chakra-ui/popper': 3.1.0(react@17.0.2)
+      '@chakra-ui/react-children-utils': 2.0.6(react@17.0.2)
+      '@chakra-ui/react-context': 2.1.0(react@17.0.2)
+      '@chakra-ui/react-use-animation-state': 2.1.0(react@17.0.2)
+      '@chakra-ui/react-use-controllable-state': 2.1.0(react@17.0.2)
+      '@chakra-ui/react-use-disclosure': 2.1.0(react@17.0.2)
+      '@chakra-ui/react-use-focus-effect': 2.1.0(react@17.0.2)
+      '@chakra-ui/react-use-merge-refs': 2.1.0(react@17.0.2)
+      '@chakra-ui/react-use-outside-click': 2.2.0(react@17.0.2)
+      '@chakra-ui/react-use-update-effect': 2.1.0(react@17.0.2)
+      '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/transition': 2.1.0(framer-motion@5.6.0)(react@17.0.2)
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/modal@1.11.1(@chakra-ui/system@1.12.1)(@types/react@17.0.62)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-B2BBDonHb04vbPLAWgko1JYBwgW8ZNSLyhTJK+rbrCsRSgazuLTcwq4hdyJqrYNWtaQEfSwpAXqJ7joMZdv59A==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      framer-motion: 3.x || 4.x || 5.x || 6.x
+      react: '>=16.8.6'
+      react-dom: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/close-button': 1.2.7(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/focus-lock': 1.2.6(@types/react@17.0.62)(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/portal': 1.3.10(react-dom@17.0.2)(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/transition': 1.4.8(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      aria-hidden: 1.2.3
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      react-remove-scroll: 2.4.1(@types/react@17.0.62)(react@17.0.2)
+    transitivePeerDependencies:
+      - '@types/react'
+    dev: false
+
+  /@chakra-ui/number-input@1.4.7(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-LorGRZFMipom8vCUEbLi2s7bTHF2Fgiu766W0jTbzMje+8Z1ZoRQunH9OZWQnxnWQTUfUM2KBW8KwToYh1ojfQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/counter': 1.2.10(react@17.0.2)
+      '@chakra-ui/form-control': 1.6.0(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/icon': 2.0.5(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/object-utils@2.1.0:
+    resolution: {integrity: sha512-tgIZOgLHaoti5PYGPTwK3t/cqtcycW0owaiOXoZOcpwwX/vlVb+H1jFsQyWiiwQVPt9RkoSLtxzXamx+aHH+bQ==}
+    dev: false
+
+  /@chakra-ui/pin-input@1.7.11(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-KEVUHHmf22tI4F7gzT9+pHi4E5cCyte6M8rPEwRyuc0kUBo48D8OW0BJwGdESWOKMkQXazDF6Zg4o32t45tbpg==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/descendant': 2.1.4(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/popover@1.11.9(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2):
+    resolution: {integrity: sha512-hJ1/Lwukox3ryTN7W1wnj+nE44utfLwQYvfUSdatt5dznnh8k0P6Wx7Hmjm1cYffRavBhqzwua/QZDWjJN9N0g==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      framer-motion: 3.x || 4.x || 5.x || 6.x
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/close-button': 1.2.7(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/popper': 2.4.3(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/popper@2.4.3(react@17.0.2):
+    resolution: {integrity: sha512-TGzFnYt3mtIVkIejtYIAu4Ka9DaYLzMR4NgcqI6EtaTvgK7Xep+6RTiY/Nq+ZT3l/eaNUwqHRFoNrDUg1XYasA==}
+    peerDependencies:
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@popperjs/core': 2.11.7
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/popper@3.1.0(react@17.0.2):
+    resolution: {integrity: sha512-ciDdpdYbeFG7og6/6J8lkTFxsSvwTdMLFkpVylAF6VNC22jssiWfquj2eyD4rJnzkRFPvIWJq8hvbfhsm+AjSg==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/react-types': 2.0.7(react@17.0.2)
+      '@chakra-ui/react-use-merge-refs': 2.1.0(react@17.0.2)
+      '@popperjs/core': 2.11.7
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/portal@1.3.10(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-t2KQ6MXbyf1qFYxWw/bs//CnwD+Clq7mbsP1Y7g+THCz2FvlLlMj45BWocLB30NoNyA8WCS2zyMBszW2/qvDiA==}
+    peerDependencies:
+      react: '>=16.8.6'
+      react-dom: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+    dev: false
+
+  /@chakra-ui/progress@1.2.6(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-thaHRIYTVktgV78vJMNwzfCX+ickhSpn2bun6FtGVUphFx4tjV+ggz+IGohm6AH2hapskoR1mQU2iNZb6BK0hQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/theme-tools': 1.3.6(@chakra-ui/system@1.12.1)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/provider@1.7.14(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-FCA33CZy/jFzExglKMioeri8sr9NtDTcNVPnx95ZJiA7WpfFo0xuZ6/fMC4DwIQPkJKbSIZBXYLZ3U10Ntylrw==}
+    peerDependencies:
+      '@emotion/react': ^11.0.0
+      '@emotion/styled': ^11.0.0
+      react: '>=16.8.6'
+      react-dom: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/css-reset': 1.1.3(@emotion/react@11.10.6)(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/portal': 1.3.10(react-dom@17.0.2)(react@17.0.2)
+      '@chakra-ui/react-env': 1.1.6(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@emotion/styled': 11.10.6(@emotion/react@11.10.6)(@types/react@17.0.62)(react@17.0.2)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+    dev: false
+
+  /@chakra-ui/radio@1.5.1(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-zO5eShz+j68A7935jJ2q5u3brX/bjPEGh9Pj2+bnKbmC9Vva6jEzBSJsAx9n4WbkAzR3xDMGWsbpivFp8X1tJw==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/form-control': 1.6.0(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      '@chakra-ui/visually-hidden': 1.1.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-children-utils@2.0.6(react@17.0.2):
+    resolution: {integrity: sha512-QVR2RC7QsOsbWwEnq9YduhpqSFnZGvjjGREV8ygKi8ADhXh93C8azLECCUVgRJF2Wc+So1fgxmjLcbZfY2VmBA==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-context@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-iahyStvzQ4AOwKwdPReLGfDesGG+vWJfEsn0X/NoGph/SkN+HXtv2sCfYFFR9k7bb+Kvc6YfpLlSuLvKMHi2+w==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-env@1.1.6(react@17.0.2):
+    resolution: {integrity: sha512-L90LNvCfe04FTkN9OPok/o2e60zLJNBH8Im/5dUHvqy7dXLXok8ZDad5vEL46XmGbhe7O8fbxhG6FmAYdcCHrQ==}
+    peerDependencies:
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-env@3.1.0(react@17.0.2):
+    resolution: {integrity: sha512-Vr96GV2LNBth3+IKzr/rq1IcnkXv+MLmwjQH6C8BRtn3sNskgDFD5vLkVXcEhagzZMCh8FR3V/bzZPojBOyNhw==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/react-use-safe-layout-effect': 2.1.0(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-types@2.0.7(react@17.0.2):
+    resolution: {integrity: sha512-12zv2qIZ8EHwiytggtGvo4iLT0APris7T0qaAWqzpUGS0cdUtR8W+V1BJ5Ocq+7tA6dzQ/7+w5hmXih61TuhWQ==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-use-animation-state@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-CFZkQU3gmDBwhqy0vC1ryf90BVHxVN8cTLpSyCpdmExUEtSEInSCGMydj2fvn7QXsz/za8JNdO2xxgJwxpLMtg==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/dom-utils': 2.1.0
+      '@chakra-ui/react-use-event-listener': 2.1.0(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-use-callback-ref@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-efnJrBtGDa4YaxDzDE90EnKD3Vkh5a1t3w7PhnRQmsphLy3g2UieasoKTlT2Hn118TwDjIv5ZjHJW6HbzXA9wQ==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-use-controllable-state@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-QR/8fKNokxZUs4PfxjXuwl0fj/d71WPrmLJvEpCTkHjnzu7LnYvzoe2wB867IdooQJL0G1zBxl0Dq+6W1P3jpg==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/react-use-callback-ref': 2.1.0(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-use-disclosure@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-Ax4pmxA9LBGMyEZJhhUZobg9C0t3qFE4jVF1tGBsrLDcdBeLR9fwOogIPY9Hf0/wqSlAryAimICbr5hkpa5GSw==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/react-use-callback-ref': 2.1.0(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-use-event-listener@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-U5greryDLS8ISP69DKDsYcsXRtAdnTQT+jjIlRYZ49K/XhUR/AqVZCK5BkR1spTDmO9H8SPhgeNKI70ODuDU/Q==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/react-use-callback-ref': 2.1.0(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-use-focus-effect@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-xzVboNy7J64xveLcxTIJ3jv+lUJKDwRM7Szwn9tNzUIPD94O3qwjV7DDCUzN2490nSYDF4OBMt/wuDBtaR3kUQ==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/dom-utils': 2.1.0
+      '@chakra-ui/react-use-event-listener': 2.1.0(react@17.0.2)
+      '@chakra-ui/react-use-safe-layout-effect': 2.1.0(react@17.0.2)
+      '@chakra-ui/react-use-update-effect': 2.1.0(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-use-merge-refs@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-lERa6AWF1cjEtWSGjxWTaSMvneccnAVH4V4ozh8SYiN9fSPZLlSG3kNxfNzdFvMEhM7dnP60vynF7WjGdTgQbQ==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-use-outside-click@2.2.0(react@17.0.2):
+    resolution: {integrity: sha512-PNX+s/JEaMneijbgAM4iFL+f3m1ga9+6QK0E5Yh4s8KZJQ/bLwZzdhMz8J/+mL+XEXQ5J0N8ivZN28B82N1kNw==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/react-use-callback-ref': 2.1.0(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-use-safe-layout-effect@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-Knbrrx/bcPwVS1TorFdzrK/zWA8yuU/eaXDkNj24IrKoRlQrSBFarcgAEzlCHtzuhufP3OULPkELTzz91b0tCw==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-use-update-effect@2.1.0(react@17.0.2):
+    resolution: {integrity: sha512-ND4Q23tETaR2Qd3zwCKYOOS1dfssojPLJMLvUtUbW5M9uW1ejYWgGUobeAiOVfSplownG8QYMmHTP86p/v0lbA==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-utils@1.2.3(react@17.0.2):
+    resolution: {integrity: sha512-r8pUwCVVB7UPhb0AiRa9ZzSp4xkMz64yIeJ4O4aGy4WMw7TRH4j4QkbkE1YC9tQitrXrliOlvx4WWJR4VyiGpw==}
+    peerDependencies:
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react-utils@2.0.12(react@17.0.2):
+    resolution: {integrity: sha512-GbSfVb283+YA3kA8w8xWmzbjNWk14uhNpntnipHCftBibl0lxtQ9YqMFQLwuFOO0U2gYVocszqqDWX+XNKq9hw==}
+    peerDependencies:
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/utils': 2.0.15
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/react@1.8.9(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(@types/react@17.0.62)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-NfR5XKVqEWhchFLiWaTWkWeYZJK1SNF2O6sQxFVrX6M+nAgJ3Q9tfMk6/I3II+xc4hXJUcYmUvmw37vT92yMaQ==}
+    peerDependencies:
+      '@emotion/react': ^11.0.0
+      '@emotion/styled': ^11.0.0
+      framer-motion: 3.x || 4.x || 5.x || 6.x
+      react: '>=16.8.6'
+      react-dom: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/accordion': 1.4.12(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/alert': 1.3.7(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/avatar': 1.3.11(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/breadcrumb': 1.3.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/button': 1.5.10(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/checkbox': 1.7.1(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/close-button': 1.2.7(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/control-box': 1.1.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/counter': 1.2.10(react@17.0.2)
+      '@chakra-ui/css-reset': 1.1.3(@emotion/react@11.10.6)(react@17.0.2)
+      '@chakra-ui/editable': 1.4.2(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/form-control': 1.6.0(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/icon': 2.0.5(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/image': 1.1.10(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/input': 1.4.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/layout': 1.8.0(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/live-region': 1.1.6(react@17.0.2)
+      '@chakra-ui/media-query': 2.0.4(@chakra-ui/system@1.12.1)(@chakra-ui/theme@1.14.1)(react@17.0.2)
+      '@chakra-ui/menu': 1.8.12(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/modal': 1.11.1(@chakra-ui/system@1.12.1)(@types/react@17.0.62)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2)
+      '@chakra-ui/number-input': 1.4.7(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/pin-input': 1.7.11(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/popover': 1.11.9(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/popper': 2.4.3(react@17.0.2)
+      '@chakra-ui/portal': 1.3.10(react-dom@17.0.2)(react@17.0.2)
+      '@chakra-ui/progress': 1.2.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/provider': 1.7.14(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react-dom@17.0.2)(react@17.0.2)
+      '@chakra-ui/radio': 1.5.1(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/react-env': 1.1.6(react@17.0.2)
+      '@chakra-ui/select': 1.2.11(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/skeleton': 1.2.14(@chakra-ui/theme@1.14.1)(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/slider': 1.5.11(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/spinner': 1.2.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/stat': 1.2.7(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/switch': 1.3.10(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/table': 1.3.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/tabs': 1.6.11(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/tag': 1.2.7(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/textarea': 1.2.11(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/theme': 1.14.1(@chakra-ui/system@2.6.2)
+      '@chakra-ui/toast': 1.5.9(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2)
+      '@chakra-ui/tooltip': 1.5.1(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2)
+      '@chakra-ui/transition': 1.4.8(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      '@chakra-ui/visually-hidden': 1.1.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@emotion/styled': 11.10.6(@emotion/react@11.10.6)(@types/react@17.0.62)(react@17.0.2)
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+    transitivePeerDependencies:
+      - '@types/react'
+    dev: false
+
+  /@chakra-ui/select@1.2.11(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-6Tis1+ZrRjQeWhQfziQn3ZdPphV5ccafpZOhiPdTcM2J1XcXOlII+9rHxvaW+jx7zQ5ly5o8kd7iXzalDgl5wA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/form-control': 1.6.0(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/shared-utils@2.0.5:
+    resolution: {integrity: sha512-4/Wur0FqDov7Y0nCXl7HbHzCg4aq86h+SXdoUeuCMD3dSj7dpsVnStLYhng1vxvlbUnLpdF4oz5Myt3i/a7N3Q==}
+    dev: false
+
+  /@chakra-ui/skeleton@1.2.14(@chakra-ui/theme@1.14.1)(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2):
+    resolution: {integrity: sha512-R0v4DfQ2yjXCJf9SzhTmDb2PLx5//LxsRbjjgRa8qJCR4MZaGswPrekp4dP8YjY8aEYzuZbvHU12T3vqZBk2GA==}
+    peerDependencies:
+      '@chakra-ui/theme': '>=1.0.0'
+      '@emotion/react': ^11.0.0
+      '@emotion/styled': ^11.0.0
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/media-query': 2.0.4(@chakra-ui/system@1.12.1)(@chakra-ui/theme@1.14.1)(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/theme': 1.14.1(@chakra-ui/system@2.6.2)
+      '@chakra-ui/utils': 1.10.4
+      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@emotion/styled': 11.10.6(@emotion/react@11.10.6)(@types/react@17.0.62)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/slider@1.5.11(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-THkGU2BsA6XMosXcEVQkWVRftqUIAKCb+y4iEpR3C2ztqL7Fl/CbIGwyr5majhPhKc275rb8dfxwp8R0L0ZIiQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/spinner@1.2.6(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-GoUCccN120fGRVgUtfuwcEjeoaxffB+XsgpxX7jhWloXf8b6lkqm68bsxX4Ybb2vGN1fANI98/45JmrnddZO/A==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      '@chakra-ui/visually-hidden': 1.1.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/spinner@2.1.0(@chakra-ui/system@2.6.2)(react@17.0.2):
+    resolution: {integrity: sha512-hczbnoXt+MMv/d3gE+hjQhmkzLiKuoTo42YhUG7Bs9OSv2lg1fZHW1fGNRFP3wTi6OIbD044U1P9HK+AOgFH3g==}
+    peerDependencies:
+      '@chakra-ui/system': '>=2.0.0'
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/stat@1.2.7(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-m76jumFW1N+mCG4ytrUz9Mh09nZtS4OQcADEvOslfdI5StwwuzasTA1tueaelPzdhBioMwFUWL05Fr1fXbPJ/Q==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/icon': 2.0.5(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      '@chakra-ui/visually-hidden': 1.1.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/styled-system@1.19.0:
+    resolution: {integrity: sha512-z+bMfWs6jQGkpgarge1kmk78DuDhJIXRUMyRqZ3+CiIkze88bIIsww6mV2i8tEfUfTAvALeMnlYZ1DYsHsTTJw==}
+    dependencies:
+      '@chakra-ui/utils': 1.10.4
+      csstype: 3.0.9
+    dev: false
+
+  /@chakra-ui/styled-system@2.9.2:
+    resolution: {integrity: sha512-To/Z92oHpIE+4nk11uVMWqo2GGRS86coeMmjxtpnErmWRdLcp1WVCVRAvn+ZwpLiNR+reWFr2FFqJRsREuZdAg==}
+    dependencies:
+      '@chakra-ui/shared-utils': 2.0.5
+      csstype: 3.1.2
+      lodash.mergewith: 4.6.2
+    dev: false
+
+  /@chakra-ui/switch@1.3.10(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2):
+    resolution: {integrity: sha512-V6qDLY6oECCbPyu7alWWOAhSBI4+SAuT6XW/zEQbelkwuUOiGO1ax67rTXOmZ59A2AaV1gqQFxDh8AcbvwO5XQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      framer-motion: 3.x || 4.x || 5.x || 6.x
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/checkbox': 1.7.1(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/system@1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2):
+    resolution: {integrity: sha512-Rp09/rMuPA3hF38OJxeQciGO9N0Ie1GxwHRAw1AFA/TY3fVyK9pNI5oN+J/1cAxq7v9yKdIr1YfnruJTI9xfEg==}
+    peerDependencies:
+      '@emotion/react': ^11.0.0
+      '@emotion/styled': ^11.0.0
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/color-mode': 1.4.8(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/styled-system': 1.19.0
+      '@chakra-ui/utils': 1.10.4
+      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@emotion/styled': 11.10.6(@emotion/react@11.10.6)(@types/react@17.0.62)(react@17.0.2)
+      react: 17.0.2
+      react-fast-compare: 3.2.0
+    dev: false
+
+  /@chakra-ui/system@2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2):
+    resolution: {integrity: sha512-EGtpoEjLrUu4W1fHD+a62XR+hzC5YfsWm+6lO0Kybcga3yYEij9beegO0jZgug27V+Rf7vns95VPVP6mFd/DEQ==}
+    peerDependencies:
+      '@emotion/react': ^11.0.0
+      '@emotion/styled': ^11.0.0
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/color-mode': 2.2.0(react@17.0.2)
+      '@chakra-ui/object-utils': 2.1.0
+      '@chakra-ui/react-utils': 2.0.12(react@17.0.2)
+      '@chakra-ui/styled-system': 2.9.2
+      '@chakra-ui/theme-utils': 2.0.21
+      '@chakra-ui/utils': 2.0.15
+      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@emotion/styled': 11.10.6(@emotion/react@11.10.6)(@types/react@17.0.62)(react@17.0.2)
+      react: 17.0.2
+      react-fast-compare: 3.2.2
+    dev: false
+
+  /@chakra-ui/table@1.3.6(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-7agZAgAeDFKviqStvixqnLAH54+setzhx67EztioZTr5Xu+6hQ4rotfJbu8L4i587pcbNg98kCEXEkidjw0XRQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/tabs@1.6.11(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-hGs2REEVVWyfgs+qEkPiUsNnqwv3QwXfKYyXaMnGS7CCkGgUiEvIO7n9968/KGnGbM4GuEHX+BxG2suIUf24yg==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/clickable': 1.2.6(react@17.0.2)
+      '@chakra-ui/descendant': 2.1.4(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/tag@1.2.7(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-RKrKOol4i/CnpFfo3T9LMm1abaqM+5Bs0soQLbo1iJBbBACY09sWXrQYvveQ2GYzU/OrAUloHqqmKjyVGOlNtg==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/icon': 2.0.5(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/textarea@1.2.11(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-RDWbMyC87/AFRX98EnVum5eig/7hhcvS1BrqW5lvmTgrpr7KVr80Dfa8hUj58Iq37Z7AqZijDPkBn/zg7bPdIg==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/form-control': 1.6.0(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/theme-tools@1.3.6(@chakra-ui/system@1.12.1):
+    resolution: {integrity: sha512-Wxz3XSJhPCU6OwCHEyH44EegEDQHwvlsx+KDkUDGevOjUU88YuNqOVkKtgTpgMLNQcsrYZ93oPWZUJqqCVNRew==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+    dependencies:
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      '@ctrl/tinycolor': 3.6.0
+    dev: false
+
+  /@chakra-ui/theme-tools@1.3.6(@chakra-ui/system@2.6.2):
+    resolution: {integrity: sha512-Wxz3XSJhPCU6OwCHEyH44EegEDQHwvlsx+KDkUDGevOjUU88YuNqOVkKtgTpgMLNQcsrYZ93oPWZUJqqCVNRew==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+    dependencies:
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      '@ctrl/tinycolor': 3.6.0
+    dev: false
+
+  /@chakra-ui/theme-tools@2.1.2(@chakra-ui/styled-system@2.9.2):
+    resolution: {integrity: sha512-Qdj8ajF9kxY4gLrq7gA+Azp8CtFHGO9tWMN2wfF9aQNgG9AuMhPrUzMq9AMQ0MXiYcgNq/FD3eegB43nHVmXVA==}
+    peerDependencies:
+      '@chakra-ui/styled-system': '>=2.0.0'
+    dependencies:
+      '@chakra-ui/anatomy': 2.2.2
+      '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/styled-system': 2.9.2
+      color2k: 2.0.3
+    dev: false
+
+  /@chakra-ui/theme-utils@2.0.21:
+    resolution: {integrity: sha512-FjH5LJbT794r0+VSCXB3lT4aubI24bLLRWB+CuRKHijRvsOg717bRdUN/N1fEmEpFnRVrbewttWh/OQs0EWpWw==}
+    dependencies:
+      '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/styled-system': 2.9.2
+      '@chakra-ui/theme': 3.3.1(@chakra-ui/styled-system@2.9.2)
+      lodash.mergewith: 4.6.2
+    dev: false
+
+  /@chakra-ui/theme@1.14.1(@chakra-ui/system@1.12.1):
+    resolution: {integrity: sha512-VeNZi+zD3yDwzvZm234Cy3vnalCzQ+dhAgpHdIYzGO1CYO8DPa+ROcQ70rUueL7dSvUz15KOiGTw6DAl7LXlGA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+    dependencies:
+      '@chakra-ui/anatomy': 1.3.0(@chakra-ui/system@2.6.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/theme-tools': 1.3.6(@chakra-ui/system@2.6.2)
+      '@chakra-ui/utils': 1.10.4
+    dev: false
+
+  /@chakra-ui/theme@1.14.1(@chakra-ui/system@2.6.2):
+    resolution: {integrity: sha512-VeNZi+zD3yDwzvZm234Cy3vnalCzQ+dhAgpHdIYzGO1CYO8DPa+ROcQ70rUueL7dSvUz15KOiGTw6DAl7LXlGA==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+    dependencies:
+      '@chakra-ui/anatomy': 1.3.0(@chakra-ui/system@2.6.2)
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/theme-tools': 1.3.6(@chakra-ui/system@2.6.2)
+      '@chakra-ui/utils': 1.10.4
+    dev: false
+
+  /@chakra-ui/theme@3.3.1(@chakra-ui/styled-system@2.9.2):
+    resolution: {integrity: sha512-Hft/VaT8GYnItGCBbgWd75ICrIrIFrR7lVOhV/dQnqtfGqsVDlrztbSErvMkoPKt0UgAkd9/o44jmZ6X4U2nZQ==}
+    peerDependencies:
+      '@chakra-ui/styled-system': '>=2.8.0'
+    dependencies:
+      '@chakra-ui/anatomy': 2.2.2
+      '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/styled-system': 2.9.2
+      '@chakra-ui/theme-tools': 2.1.2(@chakra-ui/styled-system@2.9.2)
+    dev: false
+
+  /@chakra-ui/toast@1.5.9(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-rns04bGdMcG7Ijg45L+PfuEW4rCd0Ycraix4EJQhcl9RXI18G9sphmlp9feidhZAkI6Ukafq1YvyvkBfkKnIzQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      framer-motion: 3.x || 4.x || 5.x || 6.x
+      react: '>=16.8.6'
+      react-dom: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/alert': 1.3.7(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/close-button': 1.2.7(@chakra-ui/system@1.12.1)(react@17.0.2)
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/theme': 1.14.1(@chakra-ui/system@1.12.1)
+      '@chakra-ui/transition': 1.4.8(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      '@reach/alert': 0.13.2(react-dom@17.0.2)(react@17.0.2)
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+    dev: false
+
+  /@chakra-ui/tooltip@1.5.1(@chakra-ui/system@1.12.1)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-EUAlDdlCBt63VpEVtj/RkFjHQVN/xA9gEAumngQdi1Sp+OXPYCBM9GwSY0NwrM1RfKBnhPSH9wz7FwredJWeaw==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      framer-motion: 3.x || 4.x || 5.x || 6.x
+      react: '>=16.8.6'
+      react-dom: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/hooks': 1.9.1(react@17.0.2)
+      '@chakra-ui/popper': 2.4.3(react@17.0.2)
+      '@chakra-ui/portal': 1.3.10(react-dom@17.0.2)(react@17.0.2)
+      '@chakra-ui/react-utils': 1.2.3(react@17.0.2)
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      '@chakra-ui/visually-hidden': 1.1.6(@chakra-ui/system@1.12.1)(react@17.0.2)
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+    dev: false
+
+  /@chakra-ui/transition@1.4.8(framer-motion@5.6.0)(react@17.0.2):
+    resolution: {integrity: sha512-5uc8LEuCH7+0h++wqAav/EktTHOjbLDSTXQlU9fzPIlNNgyf2eXrHVN2AGMGKiMR9Z4gS7umQjZ54r0w/mZ/Fw==}
+    peerDependencies:
+      framer-motion: 3.x || 4.x || 5.x || 6.x
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/utils': 1.10.4
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/transition@2.1.0(framer-motion@5.6.0)(react@17.0.2):
+    resolution: {integrity: sha512-orkT6T/Dt+/+kVwJNy7zwJ+U2xAZ3EU7M3XCs45RBvUnZDr/u9vdmaM/3D/rOpmQJWgQBwKPJleUXrYWUagEDQ==}
+    peerDependencies:
+      framer-motion: '>=4.0.0'
+      react: '>=18'
+    dependencies:
+      '@chakra-ui/shared-utils': 2.0.5
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+    dev: false
+
+  /@chakra-ui/utils@1.10.4:
+    resolution: {integrity: sha512-AM91VQQxw8F4F1WDA28mqKY6NFIOuzc2Ekkna88imy2OiqqmYH0xkq8J16L2qj4cLiLozpYqba3C79pWioy6FA==}
+    dependencies:
+      '@types/lodash.mergewith': 4.6.6
+      css-box-model: 1.2.1
+      framesync: 5.3.0
+      lodash.mergewith: 4.6.2
+    dev: false
+
+  /@chakra-ui/utils@2.0.15:
+    resolution: {integrity: sha512-El4+jL0WSaYYs+rJbuYFDbjmfCcfGDmRY95GO4xwzit6YAPZBLcR65rOEwLps+XWluZTy1xdMrusg/hW0c1aAA==}
+    dependencies:
+      '@types/lodash.mergewith': 4.6.7
+      css-box-model: 1.2.1
+      framesync: 6.1.2
+      lodash.mergewith: 4.6.2
+    dev: false
+
+  /@chakra-ui/visually-hidden@1.1.6(@chakra-ui/system@1.12.1)(react@17.0.2):
+    resolution: {integrity: sha512-Xzy5bA0UA+IyMgwJizQYSEdgz8cC/tHdmFB3CniXzmpKTSK8mJddeEBl+cGbXHBzxEUhH7xF1eaS41O+0ezWEQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=1.0.0'
+      react: '>=16.8.6'
+    dependencies:
+      '@chakra-ui/system': 1.12.1(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@chakra-ui/utils': 1.10.4
+      react: 17.0.2
+    dev: false
 
   /@codexteam/icons@0.0.4:
     resolution: {integrity: sha512-V8N/TY2TGyas4wLrPIFq7bcow68b3gu8DfDt1+rrHPtXxcexadKauRJL6eQgfG7Z0LCrN4boLRawR4S9gjIh/Q==}
@@ -14611,11 +16024,25 @@ packages:
   /@emotion/hash@0.9.0:
     resolution: {integrity: sha512-14FtKiHhy2QoPIzdTcvh//8OyBlknNs2nXRwIhG904opCby3l+9Xaf/wuPvICBF0rc1ZCNBd3nKe9cd2mecVkQ==}
 
+  /@emotion/is-prop-valid@0.8.8:
+    resolution: {integrity: sha512-u5WtneEAr5IDG2Wv65yhunPSMLIpuKsbuOktRojfrEiEvRyC85LgPMZI63cr7NUqT8ZIGdSVg8ZKGxIug4lXcA==}
+    requiresBuild: true
+    dependencies:
+      '@emotion/memoize': 0.7.4
+    dev: false
+    optional: true
+
   /@emotion/is-prop-valid@1.2.0:
     resolution: {integrity: sha512-3aDpDprjM0AwaxGE09bOPkNxHpBd+kA6jty3RnaEXdweX1DF1U3VQpPYb0g1IStAuK7SVQ1cy+bNBBKp4W3Fjg==}
     dependencies:
       '@emotion/memoize': 0.8.0
     dev: false
+
+  /@emotion/memoize@0.7.4:
+    resolution: {integrity: sha512-Ja/Vfqe3HpuzRsG1oBtWTHk2PGZ7GR+2Vz5iYGelAw8dx32K0y7PjVuxK6z1nMpZOqAFsRUPCkK1YjJ56qJlgw==}
+    requiresBuild: true
+    dev: false
+    optional: true
 
   /@emotion/memoize@0.7.5:
     resolution: {integrity: sha512-igX9a37DR2ZPGYtV6suZ6whr8pTFtyHL3K/oLUotxpSVO2ASaprmAe2Dkq7tBo7CRY7MMDrAa9nuQP9/YG8FxQ==}
@@ -15533,10 +16960,6 @@ packages:
     resolution: {integrity: sha512-ensKY7Ub59u16qsVIFEo2hwTCqZ/r9oZZFh51ivcLGHfUwTn8l1Xzng8RJUe91H/UP8PeqeBronAGx0qmzwk2g==}
     dev: false
 
-  /@floating-ui/core@1.2.6:
-    resolution: {integrity: sha512-EvYTiXet5XqweYGClEmpu3BoxmsQ4hkj3QaYA6qEnigCWffTP3vNRwBReTdrwDwo7OoJ3wM8Uoe9Uk4n+d4hfg==}
-    dev: false
-
   /@floating-ui/core@1.5.0:
     resolution: {integrity: sha512-kK1h4m36DQ0UHGj5Ah4db7R0rHemTqqO0QLvUqi1/mUUp3LuAWbWxdxSIf/XsnH9VS6rRVPLJCncjRzUvyCLXg==}
     dependencies:
@@ -15546,12 +16969,6 @@ packages:
     resolution: {integrity: sha512-4kAVoogvQm2N0XE0G6APQJuCNuErjOfPW8Ux7DFxh8+AfugWflwVJ5LDlHOwrwut7z/30NUvdtHzQ3zSip4EzQ==}
     dependencies:
       '@floating-ui/core': 0.3.1
-    dev: false
-
-  /@floating-ui/dom@1.2.6:
-    resolution: {integrity: sha512-02vxFDuvuVPs22iJICacezYJyf7zwwOCWkPNkWNBr1U0Qt1cKFYzWvxts0AmqcOQGwt/3KJWcWIgtbUU38keyw==}
-    dependencies:
-      '@floating-ui/core': 1.2.6
     dev: false
 
   /@floating-ui/dom@1.5.3:
@@ -15566,7 +16983,7 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
     dependencies:
-      '@floating-ui/dom': 1.2.6
+      '@floating-ui/dom': 1.5.3
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
     dev: false
@@ -16024,7 +17441,7 @@ packages:
     resolution: {integrity: sha512-Jj/FSBWLvt7KLVsx1fZOfIoO68AtTvi/sEv0HEOMUehssuM7/AJSLeRerQNHtBMULBKrgYIRRAU4Y3QiwUbyOg==}
     engines: {node: '>=10'}
     dependencies:
-      axios: 1.6.2
+      axios: 1.6.7
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
@@ -17756,7 +19173,7 @@ packages:
       tsconfig-paths: 4.2.0
       tsconfig-paths-webpack-plugin: 4.1.0
       typescript: 5.1.6
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
       webpack-node-externals: 3.0.0
     transitivePeerDependencies:
       - esbuild
@@ -18161,7 +19578,7 @@ packages:
     dependencies:
       '@angular/compiler-cli': 16.2.11(@angular/compiler@16.2.11)(typescript@4.9.5)
       typescript: 4.9.5
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /@nicolo-ribaudo/eslint-scope-5-internals@5.1.1-v1:
@@ -18196,6 +19613,15 @@ packages:
       '@floating-ui/dom': 0.1.10
       vue: 3.2.47
       vue-resize: 2.0.0-alpha.1(vue@3.2.47)
+    dev: false
+
+  /@novu/stateless@0.23.1:
+    resolution: {integrity: sha512-eb0uMvAHyjvabx4+7TaZQ77gfdHDAJh9UJmBQ98lilB5/2+hH30LAC8Co7sVZOpwrhBy0LUpQn5/xaTqyd8oVQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      handlebars: 4.7.7
+      lodash.get: 4.4.2
+      lodash.merge: 4.6.2
     dev: false
 
   /@npmcli/arborist@5.3.0:
@@ -22269,6 +23695,45 @@ packages:
       react-dom: 17.0.2(react@17.0.2)
     dev: false
 
+  /@reach/alert@0.13.2(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-LDz83AXCrClyq/MWe+0vaZfHp1Ytqn+kgL5VxG7rirUvmluWaj/snxzfNPWn0Ma4K2YENmXXRC/iHt5X95SqIg==}
+    peerDependencies:
+      react: ^16.8.0 || 17.x
+      react-dom: ^16.8.0 || 17.x
+    dependencies:
+      '@reach/utils': 0.13.2(react-dom@17.0.2)(react@17.0.2)
+      '@reach/visually-hidden': 0.13.2(react-dom@17.0.2)(react@17.0.2)
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      tslib: 2.6.2
+    dev: false
+
+  /@reach/utils@0.13.2(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-3ir6cN60zvUrwjOJu7C6jec/samqAeyAB12ZADK+qjnmQPdzSYldrFWwDVV5H0WkhbYXR3uh+eImu13hCetNPQ==}
+    peerDependencies:
+      react: ^16.8.0 || 17.x
+      react-dom: ^16.8.0 || 17.x
+    dependencies:
+      '@types/warning': 3.0.3
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      tslib: 2.6.2
+      warning: 4.0.3
+    dev: false
+
+  /@reach/visually-hidden@0.13.2(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-sPZwNS0/duOuG0mYwE5DmgEAzW9VhgU3aIt1+mrfT/xiT9Cdncqke+kRBQgU708q/Ttm9tWsoHni03nn/SuPTQ==}
+    peerDependencies:
+      react: ^16.8.0 || 17.x
+      react-dom: ^16.8.0 || 17.x
+    dependencies:
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      tslib: 2.6.2
+    dev: false
+
   /@react-email/render@0.0.9:
     resolution: {integrity: sha512-nrim7wiACnaXsGtL7GF6jp3Qmml8J6vAjAH88jkC8lIbfNZaCyuPQHANjyYIXlvQeAbsWADQJFZgOHUqFqjh/A==}
     engines: {node: '>=18.0.0'}
@@ -22288,6 +23753,89 @@ packages:
       node-fetch: 2.7.0
     transitivePeerDependencies:
       - encoding
+    dev: false
+
+  /@rive-app/canvas@2.10.3:
+    resolution: {integrity: sha512-m81uwl3HuZ9p4v7/PJnA6JIO1eS3Ht0d01wYAYGNpfYlaT6bcTfwczKWUIywKgPpS8ZcH5SAkMe5P1f0R5tUGg==}
+    dev: false
+
+  /@rive-app/react-canvas@4.8.3(react@17.0.2):
+    resolution: {integrity: sha512-TkjFtwQd/2Q0GVaSQrlkn1mjd+gbtY2gcABSav0rigY5DCCXx7caGM237dfZz4Em/DCcFtZlU0s2Ftg3hIYZ9w==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@rive-app/canvas': 2.10.3
+      react: 17.0.2
+    dev: false
+
+  /@rjsf/chakra-ui@5.17.1(@chakra-ui/icons@2.1.1)(@chakra-ui/react@1.8.9)(@chakra-ui/system@2.6.2)(@rjsf/core@5.17.1)(@rjsf/utils@5.17.1)(@types/react@17.0.62)(chakra-react-select@4.7.6)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-OJEdnC62eEo+ib222tAykUC3fV7hcCZIbTsGx7cNlQgZdY+Sy6UraZh+dMjddIOUnoysvuilByOSLy4LOurqGA==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      '@chakra-ui/icons': '>=1.1.1'
+      '@chakra-ui/react': '>=1.7.3'
+      '@chakra-ui/system': '>=1.12.1'
+      '@rjsf/core': ^5.16.x
+      '@rjsf/utils': ^5.16.x
+      chakra-react-select: '>=3.3.8'
+      framer-motion: '>=5.6.0'
+      react: ^16.14.0 || >=17
+    dependencies:
+      '@chakra-ui/icons': 2.1.1(@chakra-ui/system@2.6.2)(react@17.0.2)
+      '@chakra-ui/react': 1.8.9(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(@types/react@17.0.62)(framer-motion@5.6.0)(react-dom@17.0.2)(react@17.0.2)
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@rjsf/core': 5.17.1(@rjsf/utils@5.17.1)(react@17.0.2)
+      '@rjsf/utils': 5.17.1(react@17.0.2)
+      chakra-react-select: 4.7.6(@chakra-ui/form-control@2.2.0)(@chakra-ui/icon@3.2.0)(@chakra-ui/layout@2.3.1)(@chakra-ui/media-query@3.3.0)(@chakra-ui/menu@2.2.1)(@chakra-ui/spinner@2.1.0)(@chakra-ui/system@2.6.2)(@emotion/react@11.10.6)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
+      framer-motion: 5.6.0(react-dom@17.0.2)(react@17.0.2)
+      react: 17.0.2
+      react-select: 5.8.0(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
+    transitivePeerDependencies:
+      - '@types/react'
+      - react-dom
+    dev: false
+
+  /@rjsf/core@5.17.1(@rjsf/utils@5.17.1)(react@17.0.2):
+    resolution: {integrity: sha512-COZSuumwHskWN8Pz3RxdxvuQUP6M/qBMXAkIi+TSWLFLaF6SUugpLiceMT1jGemDCr7fOSTiPxjkToSsgpvueQ==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      '@rjsf/utils': ^5.16.x
+      react: ^16.14.0 || >=17
+    dependencies:
+      '@rjsf/utils': 5.17.1(react@17.0.2)
+      lodash: 4.17.21
+      lodash-es: 4.17.21
+      markdown-to-jsx: 7.4.1(react@17.0.2)
+      nanoid: 3.3.7
+      prop-types: 15.8.1
+      react: 17.0.2
+    dev: false
+
+  /@rjsf/utils@5.17.1(react@17.0.2):
+    resolution: {integrity: sha512-q1Igz/cuM2hi+jiXFkoaXqdRTUFB+a0jfVKNmZlHmvPmfYeeJfcfyOTzO8dQ41fHNHUFb15ryxa/TblDQimwkA==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      react: ^16.14.0 || >=17
+    dependencies:
+      json-schema-merge-allof: 0.8.1
+      jsonpointer: 5.0.1
+      lodash: 4.17.21
+      lodash-es: 4.17.21
+      react: 17.0.2
+      react-is: 18.2.0
+    dev: false
+
+  /@rjsf/validator-ajv8@5.17.1(@rjsf/utils@5.17.1):
+    resolution: {integrity: sha512-KdvHsjDQ60b04fqnoqhfkiCv7E4n4NIHli8QU8dtpuUAVS/TOqDuOtDJVz6bv/rd/QNROGpxlO/OCccE0rmxLQ==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      '@rjsf/utils': ^5.16.x
+    dependencies:
+      '@rjsf/utils': 5.17.1(react@17.0.2)
+      ajv: 8.12.0
+      ajv-formats: 2.1.1(ajv@8.12.0)
+      lodash: 4.17.21
+      lodash-es: 4.17.21
     dev: false
 
   /@rollup/plugin-babel@5.3.1(@babel/core@7.23.2)(rollup@2.79.1):
@@ -22890,7 +24438,7 @@ packages:
     engines: {node: '>=12.*'}
     dependencies:
       '@sendgrid/helpers': 8.0.0
-      axios: 1.6.2
+      axios: 1.6.7
     transitivePeerDependencies:
       - debug
     dev: false
@@ -23118,6 +24666,11 @@ packages:
 
   /@sinclair/typebox@0.27.8:
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
+
+  /@sindresorhus/is@4.6.0:
+    resolution: {integrity: sha512-t09vSN3MdfsyCHoFcTRCH/iUtG7OJ0CsjzB8cjAmKc/va/kIgeDI/TxsigdncE/4be734m0cvIYwNaV4i2XqAw==}
+    engines: {node: '>=10'}
+    dev: false
 
   /@sinonjs/commons@1.8.6:
     resolution: {integrity: sha512-Ky+XkAkqPZSm3NLBeUng77EBQl3cmeJhITaGHdYH8kjVB+aun3S4XBRti2zt17mtt0mIUDiNxYeoJm6drVvBJQ==}
@@ -25511,7 +27064,7 @@ packages:
       '@stoplight/spectral-runtime': 1.1.2
       '@stoplight/types': 13.6.0
       '@types/es-aggregate-error': 1.0.6
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       ajv: 8.12.0
       ajv-errors: 3.0.0(ajv@8.12.0)
       ajv-formats: 2.1.1(ajv@8.12.0)
@@ -25534,7 +27087,7 @@ packages:
     dependencies:
       '@stoplight/json': 3.21.0
       '@stoplight/spectral-core': 1.18.3
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       tslib: 2.6.2
     transitivePeerDependencies:
       - encoding
@@ -25659,7 +27212,7 @@ packages:
       '@stoplight/spectral-functions': 1.7.2
       '@stoplight/spectral-runtime': 1.1.2
       '@stoplight/types': 13.20.0
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       ajv: 8.12.0
       ajv-formats: 2.1.1(ajv@8.12.0)
       json-schema-traverse: 1.0.0
@@ -25688,7 +27241,7 @@ packages:
     resolution: {integrity: sha512-dwqYcDrGmEyUv5TWrDam5TGOxU72ufyQ7hnOIIDdmW5ezOwZaBFoR5XQ9AsH49w7wgvOqB2Bmo799pJPWnpCbg==}
     engines: {node: '>=8'}
     dependencies:
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       utility-types: 3.10.0
     dev: true
 
@@ -25696,7 +27249,7 @@ packages:
     resolution: {integrity: sha512-2FNTv05If7ib79VPDA/r9eUet76jewXFH2y2K5vuge6SXbRHtWBhcaRmu+6QpF4/WRNoJj5XYRSwLGXDxysBGA==}
     engines: {node: ^12.20 || >=14.13}
     dependencies:
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       utility-types: 3.10.0
     dev: true
 
@@ -25704,7 +27257,7 @@ packages:
     resolution: {integrity: sha512-dzyuzvUjv3m1wmhPfq82lCVYGcXG0xUYgqnWfCq3PCVR4BKFhjdkHrnJ+jIDoMKvXb05AZP/ObQF6+NpDo29IQ==}
     engines: {node: ^12.20 || >=14.13}
     dependencies:
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       utility-types: 3.10.0
     dev: true
 
@@ -27554,6 +29107,13 @@ packages:
       '@swc/core-win32-ia32-msvc': 1.3.49
       '@swc/core-win32-x64-msvc': 1.3.49
 
+  /@szmarczak/http-timer@4.0.6:
+    resolution: {integrity: sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w==}
+    engines: {node: '>=10'}
+    dependencies:
+      defer-to-connect: 2.0.1
+    dev: false
+
   /@tanstack/match-sorter-utils@8.8.4:
     resolution: {integrity: sha512-rKH8LjZiszWEvmi01NR72QWZ8m4xmXre0OOwlRGnjU01Eqz/QnN+cqpty2PJ0efHblq09+KilvyR7lsbzmXVEw==}
     engines: {node: '>=12'}
@@ -27961,6 +29521,15 @@ packages:
       '@types/node': 14.18.42
     dev: false
 
+  /@types/cacheable-request@6.0.3:
+    resolution: {integrity: sha512-IQ3EbTzGxIigb1I3qPZc1rWJnH0BmSKv5QYTalEwweFvyBDLSAe24zP0le/hyi7ecGfZVlIVAg4BZqb8WBwKqw==}
+    dependencies:
+      '@types/http-cache-semantics': 4.0.4
+      '@types/keyv': 3.1.4
+      '@types/node': 14.18.42
+      '@types/responselike': 1.0.3
+    dev: false
+
   /@types/caseless@0.12.2:
     resolution: {integrity: sha512-6ckxMjBBD8URvjB6J3NcnuAn5Pkl7t3TizAg+xdlzzQGSPSmBcXf8KoIH0ua/i+tio+ZRUHEXp0HEmvaR4kt0w==}
     dev: true
@@ -28255,7 +29824,7 @@ packages:
     resolution: {integrity: sha512-sdPRb9K6iL5XZOmBubg8yiFp5yS/JdUDQsq5e6h95km91MCYMuvp7mh1fjPEYUhvHepKpZOjnEaMBR4PxjWDzg==}
     dependencies:
       '@types/estree': 1.0.5
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
 
   /@types/estree@0.0.39:
     resolution: {integrity: sha512-EYNwp3bU+98cpU4lAWYYL7Zz+2gryWH1qbdDTidVd6hkiR6weksdbMadyXKXNPEkQFhXM+hVO9ZygomHXp+AIw==}
@@ -28304,6 +29873,14 @@ packages:
       '@types/node': 14.18.42
     dev: false
     optional: true
+
+  /@types/got@9.6.12:
+    resolution: {integrity: sha512-X4pj/HGHbXVLqTpKjA2ahI4rV/nNBc9mGO2I/0CgAra+F2dKgMXnENv2SRpemScBzBAI4vMelIVYViQxlSE6xA==}
+    dependencies:
+      '@types/node': 14.18.42
+      '@types/tough-cookie': 4.0.2
+      form-data: 2.5.1
+    dev: true
 
   /@types/graceful-fs@4.1.6:
     resolution: {integrity: sha512-Sig0SNORX9fdW+bQuTEovKj3uHcUL6LQKbCrrqb1X7J6/ReAbhCXRAhc+SMejhLELFj2QcyuxmUooZ4bt5ReSw==}
@@ -28362,6 +29939,10 @@ packages:
 
   /@types/http-assert@1.5.5:
     resolution: {integrity: sha512-4+tE/lwdAahgZT1g30Jkdm9PzFRde0xwxBNUyRsCitRvCQB90iuA2uJYdUnhnANRcqGXaWOGY4FEoxeElNAK2g==}
+    dev: false
+
+  /@types/http-cache-semantics@4.0.4:
+    resolution: {integrity: sha512-1m0bIFVc7eJWyve9S0RnuRgcQqF/Xd5QsUZAZeQFr1Q3/p9JWoQQEqmVy+DPTNpGXwhgIetAoYF8JSc33q29QA==}
     dev: false
 
   /@types/http-errors@2.0.4:
@@ -28465,8 +30046,8 @@ packages:
       parse5: 7.1.2
     dev: true
 
-  /@types/json-schema@7.0.12:
-    resolution: {integrity: sha512-Hr5Jfhc9eYOQNPYO5WLDq/n4jqijdHNlDXjuAQkkt+mWdQR+XJToOHrsD4cPaMXpn6KO7y2+wM8AZEs8VpBLVA==}
+  /@types/json-schema@7.0.15:
+    resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
   /@types/json5@0.0.29:
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
@@ -28486,6 +30067,12 @@ packages:
 
   /@types/keygrip@1.0.6:
     resolution: {integrity: sha512-lZuNAY9xeJt7Bx4t4dx0rYCDqGPW8RXhQZK1td7d4H6E9zYbLoOtjBvfwdTKpsyxQI/2jv+armjX/RW+ZNpXOQ==}
+    dev: false
+
+  /@types/keyv@3.1.4:
+    resolution: {integrity: sha512-BQ5aZNSCpj7D6K2ksrRCTmKRLEpnPvWDiLPfoGyhZ++8YtiK9d/3DBKPJgry359X/P1PfruyYwvnvwFjuEiEIg==}
+    dependencies:
+      '@types/node': 14.18.42
     dev: false
 
   /@types/koa-compose@3.2.8:
@@ -28530,6 +30117,18 @@ packages:
     dependencies:
       '@types/lodash': 4.14.192
     dev: true
+
+  /@types/lodash.mergewith@4.6.6:
+    resolution: {integrity: sha512-RY/8IaVENjG19rxTZu9Nukqh0W2UrYgmBj5sdns4hWRZaV8PqR7wIKHFKzvOTjo4zVRV7sVI+yFhAJql12Kfqg==}
+    dependencies:
+      '@types/lodash': 4.14.192
+    dev: false
+
+  /@types/lodash.mergewith@4.6.7:
+    resolution: {integrity: sha512-3m+lkO5CLRRYU0fhGRp7zbsGi6+BZj0uTVSwvcKU+nSlhjA9/QRNfuSGnD2mX6hQA7ZbmcCkzk5h4ZYGOtk14A==}
+    dependencies:
+      '@types/lodash': 4.14.192
+    dev: false
 
   /@types/lodash@4.14.192:
     resolution: {integrity: sha512-km+Vyn3BYm5ytMO13k9KTp27O75rbQ0NFw+U//g+PX7VZyjCioXaRFisqSIJRECljcTv73G3i6BpglNGHgUQ5A==}
@@ -28796,6 +30395,12 @@ packages:
       '@types/react': 17.0.62
     dev: false
 
+  /@types/react-transition-group@4.4.10:
+    resolution: {integrity: sha512-hT/+s0VQs2ojCX823m60m5f0sL5idt9SO6Tj6Dg+rdphGPIeJbJ6CxvBYkgkGKrYeDjvIpKTR38UzmtHJOGW3Q==}
+    dependencies:
+      '@types/react': 17.0.62
+    dev: false
+
   /@types/react@17.0.53:
     resolution: {integrity: sha512-1yIpQR2zdYu1Z/dc1OxC+MA6GR240u3gcnP4l6mvj/PJiVaqHsQPmWttsvHsfnhfPbU2FuGmo0wSITPygjBmsw==}
     dependencies:
@@ -28844,6 +30449,12 @@ packages:
   /@types/resolve@1.20.2:
     resolution: {integrity: sha512-60BCwRFOZCQhDncwQdxxeOEEkbc5dIMccYLwbxsS4TUNeVECQ/pBJ0j09mrHOl/JJvpRPGwO9SvE4nR2Nb/a4Q==}
     dev: true
+
+  /@types/responselike@1.0.3:
+    resolution: {integrity: sha512-H/+L+UkTV33uf49PH5pCAUBVPNj2nDBXTN+qS1dOwyyg24l3CcicicCA7ca+HMvJBZcFgl5r8e+RR6elsb4Lyw==}
+    dependencies:
+      '@types/node': 14.18.42
+    dev: false
 
   /@types/retry@0.12.0:
     resolution: {integrity: sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==}
@@ -29024,6 +30635,10 @@ packages:
   /@types/validator@13.7.14:
     resolution: {integrity: sha512-J6OAed6rhN6zyqL9Of6ZMamhlsOEU/poBVvbHr/dKOYKTeuYYMlDkMv+b6UUV0o2i0tw73cgyv/97WTWaUl0/g==}
 
+  /@types/warning@3.0.3:
+    resolution: {integrity: sha512-D1XC7WK8K+zZEveUPY+cf4+kgauk8N4eHr/XIHXGlGYkHLud6hK9lYfZk1ry1TNh798cZUCgb6MqGEG8DkJt6Q==}
+    dev: false
+
   /@types/webidl-conversions@7.0.0:
     resolution: {integrity: sha512-xTE1E+YF4aWPJJeUzaZI5DRntlkY3+BCVJi0axFptnjGmAoWxkyREIh/XMrfxVLejwQxMCfDXdICo0VLxThrog==}
     dev: false
@@ -29163,7 +30778,7 @@ packages:
     peerDependencies:
       eslint: '*'
     dependencies:
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       '@typescript-eslint/scope-manager': 4.33.0
       '@typescript-eslint/types': 4.33.0
       '@typescript-eslint/typescript-estree': 4.33.0(typescript@4.9.5)
@@ -29417,7 +31032,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.38.0)
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       '@types/semver': 7.3.13
       '@typescript-eslint/scope-manager': 5.58.0
       '@typescript-eslint/types': 5.58.0
@@ -29437,7 +31052,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.51.0)
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       '@types/semver': 7.3.13
       '@typescript-eslint/scope-manager': 5.58.0
       '@typescript-eslint/types': 5.58.0
@@ -29457,7 +31072,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.38.0)
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       '@types/semver': 7.3.13
       '@typescript-eslint/scope-manager': 5.62.0
       '@typescript-eslint/types': 5.62.0
@@ -29477,7 +31092,7 @@ packages:
       eslint: ^6.0.0 || ^7.0.0 || ^8.0.0
     dependencies:
       '@eslint-community/eslint-utils': 4.4.0(eslint@8.51.0)
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       '@types/semver': 7.3.13
       '@typescript-eslint/scope-manager': 5.62.0
       '@typescript-eslint/types': 5.62.0
@@ -30551,7 +32166,7 @@ packages:
     engines: {node: '>=6'}
     dependencies:
       '@hapi/joi': 16.1.8
-      axios: 1.6.2
+      axios: 1.6.7
       body-parser: 1.20.2
       lodash: 4.17.21
       phone: 3.1.37
@@ -31558,6 +33173,15 @@ packages:
     transitivePeerDependencies:
       - debug
 
+  /axios@1.6.7:
+    resolution: {integrity: sha512-/hDJGff6/c7u0hDkvkGxR/oy6CbCs8ziCsC7SqmhjfozqiJGc8Z11wrv9z9lYfY4K8l+H9TpjcMDX0xOZmx+RA==}
+    dependencies:
+      follow-redirects: 1.15.5
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
   /axobject-query@3.1.1:
     resolution: {integrity: sha512-goKlv8DZrK9hUh975fnHzhNIO4jUnFCfv/dszV5VwUGDFjI6vQ2VwoyjYjYNEbBE8AH87TduWP5uyDR1D+Iteg==}
     dependencies:
@@ -31681,7 +33305,7 @@ packages:
       '@babel/core': 7.22.9
       find-cache-dir: 4.0.0
       schema-utils: 4.0.0
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /babel-plugin-add-react-displayname@0.0.5:
@@ -32584,6 +34208,24 @@ packages:
       unset-value: 1.0.0
     dev: true
 
+  /cacheable-lookup@5.0.4:
+    resolution: {integrity: sha512-2/kNscPhpcxrOigMZzbiWF7dz8ilhb/nIHU3EyZiXWXpeq/au8qJ8VhdftMkty3n7Gj6HIGalQG8oiBNB3AJgA==}
+    engines: {node: '>=10.6.0'}
+    dev: false
+
+  /cacheable-request@7.0.4:
+    resolution: {integrity: sha512-v+p6ongsrp0yTGbJXjgxPow2+DL93DASP4kXCDKb8/bwRtt9OEF3whggkkDkGNzgcWy2XaF4a8nZglC7uElscg==}
+    engines: {node: '>=8'}
+    dependencies:
+      clone-response: 1.0.3
+      get-stream: 5.2.0
+      http-cache-semantics: 4.1.1
+      keyv: 4.5.3
+      lowercase-keys: 2.0.0
+      normalize-url: 6.1.0
+      responselike: 2.0.1
+    dev: false
+
   /cachedir@2.3.0:
     resolution: {integrity: sha512-A+Fezp4zxnit6FanDmv9EqXNAi3vt9DWp51/71UEhXukb7QUuvtv9344h91dyAxuTLoSYJFU299qzR3tzwPAhw==}
     engines: {node: '>=6'}
@@ -32763,6 +34405,35 @@ packages:
       pathval: 1.1.1
       type-detect: 4.0.8
     dev: true
+
+  /chakra-react-select@4.7.6(@chakra-ui/form-control@2.2.0)(@chakra-ui/icon@3.2.0)(@chakra-ui/layout@2.3.1)(@chakra-ui/media-query@3.3.0)(@chakra-ui/menu@2.2.1)(@chakra-ui/spinner@2.1.0)(@chakra-ui/system@2.6.2)(@emotion/react@11.10.6)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-ZL43hyXPnWf1g/HjsZDecbeJ4F2Q6tTPYJozlKWkrQ7lIX7ORP0aZYwmc5/Wly4UNzMimj2Vuosl6MmIXH+G2g==}
+    peerDependencies:
+      '@chakra-ui/form-control': ^2.0.0
+      '@chakra-ui/icon': ^3.0.0
+      '@chakra-ui/layout': ^2.0.0
+      '@chakra-ui/media-query': ^3.0.0
+      '@chakra-ui/menu': ^2.0.0
+      '@chakra-ui/spinner': ^2.0.0
+      '@chakra-ui/system': ^2.0.0
+      '@emotion/react': ^11.8.1
+      react: ^18.0.0
+      react-dom: ^18.0.0
+    dependencies:
+      '@chakra-ui/form-control': 2.2.0(@chakra-ui/system@2.6.2)(react@17.0.2)
+      '@chakra-ui/icon': 3.2.0(@chakra-ui/system@2.6.2)(react@17.0.2)
+      '@chakra-ui/layout': 2.3.1(@chakra-ui/system@2.6.2)(react@17.0.2)
+      '@chakra-ui/media-query': 3.3.0(@chakra-ui/system@2.6.2)(react@17.0.2)
+      '@chakra-ui/menu': 2.2.1(@chakra-ui/system@2.6.2)(framer-motion@5.6.0)(react@17.0.2)
+      '@chakra-ui/spinner': 2.1.0(@chakra-ui/system@2.6.2)(react@17.0.2)
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.10.6)(@emotion/styled@11.10.6)(react@17.0.2)
+      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      react-select: 5.7.7(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
+    transitivePeerDependencies:
+      - '@types/react'
+    dev: false
 
   /chalk-animation@1.6.0:
     resolution: {integrity: sha512-Q8vVq6eD5IOhWI0s9WdUawDzMRjNrR4rOCiu409eZRTIHID5OjoTTEkpGZngL/BPQnL7yYmBhlXXpPJ9SYuARw==}
@@ -33146,6 +34817,12 @@ packages:
       kind-of: 6.0.3
       shallow-clone: 3.0.1
 
+  /clone-response@1.0.3:
+    resolution: {integrity: sha512-ROoL94jJH2dUVML2Y/5PEDNaSHgeOdSDicUyS7izcF63G6sTc/FTjLub4b8Il9S8S0beOfYt0TaA5qvFK+w0wA==}
+    dependencies:
+      mimic-response: 1.0.1
+    dev: false
+
   /clone@1.0.4:
     resolution: {integrity: sha512-JQHZ2QMW6l3aH/j6xCqQThY/9OH4D/9ls34cgkUBiEeocRTU04tHfKPBsUK1PqZCUQM7GiA0IIXJSuXHI64Kbg==}
     engines: {node: '>=0.8'}
@@ -33257,6 +34934,10 @@ packages:
   /color-support@1.1.3:
     resolution: {integrity: sha512-qiBjkpbMLO/HL68y+lh4q0/O1MZFj2RX6X/KmMa3+gJD3z+WwI1ZzDHysvqHGS3mP6mznPckpXmw1nI9cJjyRg==}
     hasBin: true
+
+  /color2k@2.0.3:
+    resolution: {integrity: sha512-zW190nQTIoXcGCaU08DvVNFTmQhUpnJfVuAKfWqUQkflXKpaDdpaYoM0iluLS9lgJNHyBF58KKA2FBEwkD7wog==}
+    dev: false
 
   /color@3.2.1:
     resolution: {integrity: sha512-aBl7dZI9ENN6fUGC7mWpMTPNHmWUSNan9tuWN6ahh5ZLNk9baLJOnSMlrQkHcrfFgz2/RigjUVAjdx36VcemKA==}
@@ -33482,6 +35163,27 @@ packages:
       vary: 1.1.2
     transitivePeerDependencies:
       - supports-color
+
+  /compute-gcd@1.2.1:
+    resolution: {integrity: sha512-TwMbxBNz0l71+8Sc4czv13h4kEqnchV9igQZBi6QUaz09dnz13juGnnaWWJTRsP3brxOoxeB4SA2WELLw1hCtg==}
+    dependencies:
+      validate.io-array: 1.0.6
+      validate.io-function: 1.0.2
+      validate.io-integer-array: 1.0.0
+    dev: false
+
+  /compute-lcm@1.1.2:
+    resolution: {integrity: sha512-OFNPdQAXnQhDSKioX8/XYT6sdUlXwpeMjfd6ApxMJfyZ4GxmLR1xvMERctlYhlHwIiz6CSpBc2+qYKjHGZw4TQ==}
+    dependencies:
+      compute-gcd: 1.2.1
+      validate.io-array: 1.0.6
+      validate.io-function: 1.0.2
+      validate.io-integer-array: 1.0.0
+    dev: false
+
+  /compute-scroll-into-view@1.0.14:
+    resolution: {integrity: sha512-mKDjINe3tc6hGelUMNDzuhorIUZ7kS7BwyY0r2wQd2HOH2tRuJykiC06iSEX8y1TuhNzvz4GcJnK16mM2J1NMQ==}
+    dev: false
 
   /compute-scroll-into-view@1.0.20:
     resolution: {integrity: sha512-UCB0ioiyj8CRjtrvaceBLqqhZCVP+1B8+NWQhmdsm0VXOJtobBCf1dBQmebCCo34qZmUwZfIH2MZLqNHazrfjg==}
@@ -33736,6 +35438,12 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /copy-to-clipboard@3.3.1:
+    resolution: {integrity: sha512-i13qo6kIHTTpCm8/Wup+0b1mVWETvu2kIMzKoK8FpkLkFxlt0znUAHcMzox+T8sPlqtZXq3CulEjQHsYiGFJUw==}
+    dependencies:
+      toggle-selection: 1.0.6
+    dev: false
+
   /copy-to-clipboard@3.3.3:
     resolution: {integrity: sha512-2KV8NhB5JqC3ky0r9PMCAZKbUHSwtEo4CwCs0KXgruG43gX5PMqDEBbVU4OUzw2MuAWUfsuFmWvEKG5QRfSnJA==}
     dependencies:
@@ -33754,7 +35462,7 @@ packages:
       normalize-path: 3.0.0
       schema-utils: 4.0.0
       serialize-javascript: 6.0.1
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /core-js-compat@3.32.2:
@@ -34303,6 +36011,12 @@ packages:
       postcss-selector-parser: 6.0.13
     dev: true
 
+  /css-box-model@1.2.1:
+    resolution: {integrity: sha512-a7Vr4Q/kd/aw96bnJG332W9V9LkJO69JRcaCYDUqjp6/z0w6VcZjgAcTbgFxEPfBgdnAwlh3iwu+hLopa+flJw==}
+    dependencies:
+      tiny-invariant: 1.3.1
+    dev: false
+
   /css-declaration-sorter@6.4.0(postcss@8.4.31):
     resolution: {integrity: sha512-jDfsatwWMWN0MODAFuHszfjphEXfNw9JUAhmY4pLu3TyTU+ohUpsbVtbU+1MZn4a47D9kqh03i4eyOm+74+zew==}
     engines: {node: ^10 || ^12 || >=14}
@@ -34354,7 +36068,7 @@ packages:
       postcss-modules-values: 4.0.0(postcss@8.4.31)
       postcss-value-parser: 4.2.0
       semver: 7.5.4
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /css-minimizer-webpack-plugin@3.4.1(esbuild@0.18.20)(webpack@5.78.0):
@@ -34943,6 +36657,10 @@ packages:
     resolution: {integrity: sha512-e/1zu3xH5MQryN2zdVaF0OrdNLUbvWxzMbi+iNA6Bky7l1RoP8a2fIbRocyHclXt/arDrrR6lL3TqFD9pMQTsg==}
     dev: true
 
+  /debounce@1.2.1:
+    resolution: {integrity: sha512-XRRe6Glud4rd/ZGQfiV1ruXSfbvfJedlV9Y6zOlP+2K04vBYiJEte6stfFkCP03aMnY5tsipamumUjL14fofug==}
+    dev: false
+
   /debug@2.6.9:
     resolution: {integrity: sha512-bC7ElrdJaJnPbAP+1EotYvqZsb3ecl5wi6Bfi6BJTUcNowp6cvspg0jXznRTKDjm/E7AdgFBVeAPVMNcKGsHMA==}
     peerDependencies:
@@ -35065,6 +36783,13 @@ packages:
     engines: {node: '>=0.10'}
     dev: true
 
+  /decompress-response@6.0.0:
+    resolution: {integrity: sha512-aW35yZM6Bb/4oJlZncMH2LCoZtJXTRxES17vE3hoRiowU2kWHaJKFkSBDnDR+cm9J+9QhXmREyIfv0pji9ejCQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      mimic-response: 3.1.0
+    dev: false
+
   /dedent@0.7.0:
     resolution: {integrity: sha512-Q6fKUPqnAHAyhiUgFU7BUzLiv0kd8saH9al7tnu5Q/okj6dnupxyTgFIBjVzJATdfIAm9NAsvXNzjaKa+bxVyA==}
     dev: true
@@ -35134,6 +36859,11 @@ packages:
     resolution: {integrity: sha512-eFuaLoy/Rxalv2kr+lqMlUnrDWV+3j4pljOIJgLIhI058IQfWJ7vXhyEIHu+HtC738klGALYxOKDO0bQP3tg8A==}
     dependencies:
       clone: 1.0.4
+
+  /defer-to-connect@2.0.1:
+    resolution: {integrity: sha512-4tvttepXG1VaYGrRibk5EwJd1t4udunSOVMdLSAL6mId1ix438oPwPZMALY41FCijukO1L0twNcGsdzS7dHgDg==}
+    engines: {node: '>=10'}
+    dev: false
 
   /define-data-property@1.1.1:
     resolution: {integrity: sha512-E7uGkTzkk1d0ByLeSc6ZsFS79Axg+m1P/VsgYsxHgiuc3tFSj+MjMIwe90FC4lOAZzNBdY7kkO2P2wKdsQ1vgQ==}
@@ -37769,6 +39499,13 @@ packages:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
     dev: false
 
+  /focus-lock@0.9.2:
+    resolution: {integrity: sha512-YtHxjX7a0IC0ZACL5wsX8QdncXofWpGPNoVMuI/nZUrPGp6LmNI6+D5j0pPj+v8Kw5EpweA+T5yImK0rnWf7oQ==}
+    engines: {node: '>=10'}
+    dependencies:
+      tslib: 2.6.2
+    dev: false
+
   /follow-redirects@1.15.2(debug@4.3.4):
     resolution: {integrity: sha512-VQLG33o04KaQ8uYi2tVNbdrWp1QWxNNea+nmIB4EVM28v0hmP17z7aG1+wAkNzVq4KeXTq3221ye5qTJP91JwA==}
     engines: {node: '>=4.0'}
@@ -37779,6 +39516,15 @@ packages:
         optional: true
     dependencies:
       debug: 4.3.4(supports-color@8.1.1)
+
+  /follow-redirects@1.15.5:
+    resolution: {integrity: sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==}
+    engines: {node: '>=4.0'}
+    peerDependencies:
+      debug: '*'
+    peerDependenciesMeta:
+      debug:
+        optional: true
 
   /for-each@0.3.3:
     resolution: {integrity: sha512-jqYfLp7mo9vIyQf8ykW2v7A+2N4QjeCeI5+Dz9XraiO1ign81wjiH7Fb9vSOWvQfNtmSa4H2RoQTrrXivdUZmw==}
@@ -37830,7 +39576,7 @@ packages:
         optional: true
     dependencies:
       '@babel/code-frame': 7.22.13
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       chalk: 4.1.2
       chokidar: 3.5.3
       cosmiconfig: 6.0.0
@@ -37890,7 +39636,7 @@ packages:
       semver: 7.5.4
       tapable: 2.2.1
       typescript: 5.1.6
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /form-data@2.3.3:
@@ -37967,6 +39713,50 @@ packages:
     dependencies:
       map-cache: 0.2.2
     dev: true
+
+  /framer-motion@5.6.0(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-Y4FtwUU+LUWLKSzoT6Sq538qluvhpe6izdQK8/xZeVjQZ/ORKGfZzyhzcUxNfscqnfEa3dUOA47s+dwrSipdGA==}
+    peerDependencies:
+      '@react-three/fiber': '*'
+      react: '>=16.8 || ^17.0.0'
+      react-dom: '>=16.8 || ^17.0.0'
+      three: ^0.135.0
+    peerDependenciesMeta:
+      '@react-three/fiber':
+        optional: true
+      three:
+        optional: true
+    dependencies:
+      framesync: 6.0.1
+      hey-listen: 1.0.8
+      popmotion: 11.0.3
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      react-merge-refs: 1.1.0
+      react-use-measure: 2.1.1(react-dom@17.0.2)(react@17.0.2)
+      style-value-types: 5.0.0
+      tslib: 2.6.2
+    optionalDependencies:
+      '@emotion/is-prop-valid': 0.8.8
+    dev: false
+
+  /framesync@5.3.0:
+    resolution: {integrity: sha512-oc5m68HDO/tuK2blj7ZcdEBRx3p1PjrgHazL8GYEpvULhrtGIFbQArN6cQS2QhW8mitffaB+VYzMjDqBxxQeoA==}
+    dependencies:
+      tslib: 2.6.2
+    dev: false
+
+  /framesync@6.0.1:
+    resolution: {integrity: sha512-fUY88kXvGiIItgNC7wcTOl0SNRCVXMKSWW2Yzfmn7EKNc+MpCzcz9DhdHcdjbrtN3c6R4H5dTY2jiCpPdysEjA==}
+    dependencies:
+      tslib: 2.6.2
+    dev: false
+
+  /framesync@6.1.2:
+    resolution: {integrity: sha512-jBTqhX6KaQVDyus8muwZbBeGGP0XgujBRbQ7gM7BRdS3CadCZIHiawyzYLnafYcvZIh5j8WE7cxZKFn7dXhu9g==}
+    dependencies:
+      tslib: 2.4.0
+    dev: false
 
   /fresh@0.5.2:
     resolution: {integrity: sha512-zJ2mQYM18rEFOudeV4GShTGIQ7RbzA7ozbU9I/XBpm7kqgMywgmylMwXHxZJmkVoYkna9d2pVXVXPdYTP9ej8Q==}
@@ -38871,6 +40661,23 @@ packages:
     dependencies:
       get-intrinsic: 1.2.1
 
+  /got@11.8.6:
+    resolution: {integrity: sha512-6tfZ91bOr7bOXnK7PRDCGBLa1H4U080YHNaAQ2KsMGlLEzRbk44nsZF2E1IeRc3vtJHPVbKCYgdFbaGO2ljd8g==}
+    engines: {node: '>=10.19.0'}
+    dependencies:
+      '@sindresorhus/is': 4.6.0
+      '@szmarczak/http-timer': 4.0.6
+      '@types/cacheable-request': 6.0.3
+      '@types/responselike': 1.0.3
+      cacheable-lookup: 5.0.4
+      cacheable-request: 7.0.4
+      decompress-response: 6.0.0
+      http2-wrapper: 1.0.3
+      lowercase-keys: 2.0.0
+      p-cancelable: 2.1.1
+      responselike: 2.0.1
+    dev: false
+
   /graceful-fs@4.2.10:
     resolution: {integrity: sha512-9ByhssR2fPVsNZj478qUUbKfmL0+t5BDVyjShtyZZLiK7ZDAArFFfopyOTj0M05wE2tJPisA4iTnnXl2YoPvOA==}
     dev: true
@@ -39191,6 +40998,10 @@ packages:
     resolution: {integrity: sha512-QFLV0taWQOZtvIRIAdBChesmogZrtuXvVWsFHZTk2SU+anspqZ2vMnoLg7IE1+Uk16N19APic1BuF8bC8c2m5g==}
     engines: {node: '>=8'}
 
+  /hey-listen@1.0.8:
+    resolution: {integrity: sha512-COpmrF2NOg4TBWUJ5UVyaCU2A88wEMkUPK4hNqyCkqHbxT92BbvfjoSozkAIIm6XhicGlJHhFdullInrdhwU8Q==}
+    dev: false
+
   /highlight.js@10.7.3:
     resolution: {integrity: sha512-tzcUFauisWKNHaRkN4Wjl/ZA07gENAjFl3J/c480dprkGTg5EQstgaNFqBfUqCq54kZRIEcreTsAgF/m2quD7A==}
     dev: false
@@ -39407,7 +41218,6 @@ packages:
 
   /http-cache-semantics@4.1.1:
     resolution: {integrity: sha512-er295DKPVsV82j5kw1Gjt+ADA/XYHsajl82cGNQG2eyoPkvgUhX+nDIyelzhIWbbsXP39EHcI6l5tYs2FYqYXQ==}
-    dev: true
 
   /http-deceiver@1.2.7:
     resolution: {integrity: sha512-LmpOGxTfbpgtGVxJrj5k7asXHCgNZp5nLfp+hWc8QQRqtb7fUy6kRY3BO1h9ddF6yIPYUARgxGOwB42DnxIaNw==}
@@ -39521,6 +41331,14 @@ packages:
       assert-plus: 1.0.0
       jsprim: 2.0.2
       sshpk: 1.17.0
+
+  /http2-wrapper@1.0.3:
+    resolution: {integrity: sha512-V+23sDMr12Wnz7iTcDeJr3O6AIxlnvT/bmaAAAP/Xda35C90p9599p0F1eHR/N1KILWSoWVAiOMFjBBXaXSMxg==}
+    engines: {node: '>=10.19.0'}
+    dependencies:
+      quick-lru: 5.1.1
+      resolve-alpn: 1.2.1
+    dev: false
 
   /https-proxy-agent@4.0.0:
     resolution: {integrity: sha512-zoDhWrkR3of1l9QAL8/scJZyLu8j/gBkcwcaQOZh7Gyh/+uJQzGVETdgT30akuwkpL8HTRfssqI3BZuV18teDg==}
@@ -42237,6 +44055,28 @@ packages:
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
     dev: true
 
+  /json-schema-compare@0.2.2:
+    resolution: {integrity: sha512-c4WYmDKyJXhs7WWvAWm3uIYnfyWFoIp+JEoX34rctVvEkMYCPGhXtvmFFXiffBbxfZsvQ0RNnV5H7GvDF5HCqQ==}
+    dependencies:
+      lodash: 4.17.21
+    dev: false
+
+  /json-schema-defaults@0.4.0:
+    resolution: {integrity: sha512-UsUrkDVNvHTneyeQOYHH9ZHb3+6OjwYfJ831SdO0yjtXtYZ7Jh8BKWsuJYUQW7qckP5JhHawsg4GI6A5fMaR/Q==}
+    hasBin: true
+    dependencies:
+      argparse: 1.0.10
+    dev: false
+
+  /json-schema-merge-allof@0.8.1:
+    resolution: {integrity: sha512-CTUKmIlPJbsWfzRRnOXz+0MjIqvnleIXwFTzz+t9T86HnYX/Rozria6ZVGLktAU9e+NygNljveP+yxqtQp/Q4w==}
+    engines: {node: '>=12.0.0'}
+    dependencies:
+      compute-lcm: 1.1.2
+      json-schema-compare: 0.2.2
+      lodash: 4.17.21
+    dev: false
+
   /json-schema-traverse@0.4.1:
     resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
 
@@ -42321,7 +44161,6 @@ packages:
   /jsonpointer@5.0.1:
     resolution: {integrity: sha512-p/nXbhSEcu3pZRdkW1OfJhpsVtW1gd4Wa1fnQc9YLiTfAjn0312eMKimbdIQzuZl9aa9xUGaRlP9T/CJE/ditQ==}
     engines: {node: '>=0.10.0'}
-    dev: true
 
   /jsonwebtoken@9.0.0:
     resolution: {integrity: sha512-tuGfYXxkQGDPnLJ7SibiQgVgeDgfbPq2k2ICcbgqW8WxWLBAxKQM/ZCu/IT8SOSwmaYl4dpTFCW5xZv7YbbWUw==}
@@ -42712,7 +44551,7 @@ packages:
     dependencies:
       klona: 2.0.6
       less: 4.1.3
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /less-loader@4.1.0(less@4.1.3)(webpack@5.78.0):
@@ -42807,10 +44646,8 @@ packages:
     peerDependenciesMeta:
       webpack:
         optional: true
-      webpack-sources:
-        optional: true
     dependencies:
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
       webpack-sources: 3.2.3
     dev: true
 
@@ -43162,7 +44999,6 @@ packages:
 
   /lodash.mergewith@4.6.2:
     resolution: {integrity: sha512-GK3g5RPZWTRSeLSpgP8Xhra+pnjBC56q9FZYe1d5RN3TJ35dbkGy3YqBSMbyCrlbi+CM9Z3Jk5yTL7RCsqboyQ==}
-    dev: true
 
   /lodash.omit@4.5.0:
     resolution: {integrity: sha512-XeqSp49hNGmlkj2EJlfrQFIzQ6lXdNro9sddtQzcJY8QaoC2GO0DT7xaIokHeyM+mIT0mPMlPvkYzg2xCuHdZg==}
@@ -43337,6 +45173,11 @@ packages:
     dependencies:
       tslib: 2.6.2
 
+  /lowercase-keys@2.0.0:
+    resolution: {integrity: sha512-tqNXrS78oMOE73NMxK4EMLQsQowWf8jKooH9g7xPavRT706R6bkQJ6DY2Te7QukaZsulxa30wQ7bk0pm4XiHmA==}
+    engines: {node: '>=8'}
+    dev: false
+
   /lowlight@1.20.0:
     resolution: {integrity: sha512-8Ktj+prEb1RoCPkEOrPMYUN/nCggB7qAWe3a7OpMjWQkh3l2RD5wKRQ+o8Q8YuI9RG/xs95waaI/E6ym/7NsTw==}
     dependencies:
@@ -43455,7 +45296,7 @@ packages:
   /mailgun.js@8.2.1:
     resolution: {integrity: sha512-iKHCMehdUcWzBAp8KU2idLP7AbsTxQ8DjJev4Gvm430Dujul+ZkzKPgn40uYpb9BXGL5l8/w5jpf2pvw51df/w==}
     dependencies:
-      axios: 1.6.2
+      axios: 1.6.7
       base-64: 1.0.0
       url-join: 4.0.1
     transitivePeerDependencies:
@@ -43484,7 +45325,7 @@ packages:
       nodemailer:
         optional: true
     dependencies:
-      axios: 1.6.2
+      axios: 1.6.7
     transitivePeerDependencies:
       - debug
     dev: false
@@ -43671,6 +45512,15 @@ packages:
       react: '>= 0.14.0'
     dependencies:
       react: 17.0.2
+
+  /markdown-to-jsx@7.4.1(react@17.0.2):
+    resolution: {integrity: sha512-GbrbkTnHp9u6+HqbPRFJbObi369AgJNXi/sGqq5HRsoZW063xR1XDCaConqq+whfEIAlzB1YPnOgsPc7B7bc/A==}
+    engines: {node: '>= 10'}
+    peerDependencies:
+      react: '>= 0.14.0'
+    dependencies:
+      react: 17.0.2
+    dev: false
 
   /markdownlint-cli@0.33.0:
     resolution: {integrity: sha512-zMK1oHpjYkhjO+94+ngARiBBrRDEUMzooDHBAHtmEIJ9oYddd9l3chCReY2mPlecwH7gflQp1ApilTo+o0zopQ==}
@@ -43882,6 +45732,10 @@ packages:
     engines: {node: '>= 4.0.0'}
     dependencies:
       fs-monkey: 1.0.3
+
+  /memoize-one@6.0.0:
+    resolution: {integrity: sha512-rkpe71W0N0c0Xz6QD0eJETuWAJGnJ9afsl1srmwPrI+yBCkge5EycXXbYRyvL29zZVUWQCY7InPRCv3GDXuZNw==}
+    dev: false
 
   /memoizerific@1.11.3:
     resolution: {integrity: sha512-/EuHYwAPdLtXwAwSZkh/Gutery6pD2KYd44oQLhAvQp/50mpyduZh8Q7PYHXTCJ+wuXxt7oij2LXyIJOOYFPog==}
@@ -44351,6 +46205,16 @@ packages:
     engines: {node: '>=12'}
     dev: true
 
+  /mimic-response@1.0.1:
+    resolution: {integrity: sha512-j5EctnkH7amfV/q5Hgmoal1g2QHFJRraOtmx0JpIqkxhBhI/lJSl1nMpQ45hVarwNETOoWEimndZ4QK0RHxuxQ==}
+    engines: {node: '>=4'}
+    dev: false
+
+  /mimic-response@3.1.0:
+    resolution: {integrity: sha512-z0yWI+4FDrrweS8Zmt4Ej5HdJmky15+L2e6Wgn3+iK5fWzb6T3fhNFq2+MeTRb064c6Wr4N/wv0DzQTjNzHNGQ==}
+    engines: {node: '>=10'}
+    dev: false
+
   /min-indent@1.0.1:
     resolution: {integrity: sha512-I9jwMn07Sy/IwOj3zVkVik2JTvgpaykDZEigL6Rx6N9LbMywwUSMtxET+7lVoDLLd3O3IXwJwvuuns8UB/HeAg==}
     engines: {node: '>=4'}
@@ -44373,7 +46237,7 @@ packages:
       webpack: ^5.0.0
     dependencies:
       schema-utils: 4.0.0
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /minimalistic-assert@1.0.1:
@@ -44677,7 +46541,7 @@ packages:
       log-symbols: 4.0.0
       minimatch: 3.1.2
       ms: 2.1.3
-      nanoid: 3.3.6
+      nanoid: 3.3.7
       serialize-javascript: 5.0.1
       strip-json-comments: 3.1.1
       supports-color: 8.1.1
@@ -44925,6 +46789,7 @@ packages:
     resolution: {integrity: sha512-BGcqMMJuToF7i1rt+2PWSNVnWIkGCU78jBG3RxO/bZlnZPK2Cmi2QaffxGO/2RvWi9sL+FAiRiXMgsyxQ1DIDA==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
+    dev: false
 
   /nanoid@3.3.7:
     resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
@@ -45507,7 +47372,6 @@ packages:
   /normalize-url@6.1.0:
     resolution: {integrity: sha512-DlL+XwOy3NxAQ8xuC0okPgK46iuVNAK01YN7RueYBqqFeGsBjV9XmCAzAdgt+667bCl5kPh9EqKKDwnaPG1I7A==}
     engines: {node: '>=10'}
-    dev: true
 
   /notepack.io@2.2.0:
     resolution: {integrity: sha512-9b5w3t5VSH6ZPosoYnyDONnUTF8o0UkBw7JLA6eBlYJWyGT1Q3vQa8Hmuj1/X6RYvHjjygBDgw6fJhe0JEojfw==}
@@ -45868,7 +47732,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.2
+      axios: 1.6.7
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -45930,7 +47794,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.2
+      axios: 1.6.7
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -45991,7 +47855,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.2
+      axios: 1.6.7
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -46386,6 +48250,11 @@ packages:
 
   /ospath@1.2.2:
     resolution: {integrity: sha512-o6E5qJV5zkAbIDNhGSIlyOhScKXgQrSRMilfph0clDfM0nEnBOlKlH4sWDmG95BW/CvwNz0vmm7dJVtU2KlMiA==}
+
+  /p-cancelable@2.1.1:
+    resolution: {integrity: sha512-BZOr3nRQHOntUjTrH8+Lh54smKHoHyur8We1V8DSMVrl5A2malOOwuJRnKRDjSnkoeBh4at6BwEnb5I7Jl31wg==}
+    engines: {node: '>=8'}
+    dev: false
 
   /p-defer@1.0.0:
     resolution: {integrity: sha512-wB3wfAxZpk2AzOfUMJNL+d36xothRSyj8EXOa4f6GMqYDN9BJaaSISbsk+wS9abmnebVw95C2Kb5t85UmpCxuw==}
@@ -47322,6 +49191,15 @@ packages:
     engines: {node: '>=12.0.0'}
     dev: true
 
+  /popmotion@11.0.3:
+    resolution: {integrity: sha512-Y55FLdj3UxkR7Vl3s7Qr4e9m0onSnP8W7d/xQLsoJM40vs6UKHFdygs6SWryasTZYqugMjm3BepCF4CWXDiHgA==}
+    dependencies:
+      framesync: 6.0.1
+      hey-listen: 1.0.8
+      style-value-types: 5.0.0
+      tslib: 2.6.2
+    dev: false
+
   /popper.js@1.16.1:
     resolution: {integrity: sha512-Wb4p1J4zyFTbM+u6WuO4XstYx4Ky9Cewe4DWrel7B0w6VVICvPwdOpotjzcf6eD8TsckVnIMNONQyPIUFOUbCQ==}
     deprecated: You can find the new Popper v2 at @popperjs/core, this package is dedicated to the legacy v1
@@ -47674,7 +49552,7 @@ packages:
       jiti: 1.18.2
       postcss: 8.4.31
       semver: 7.5.4
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /postcss-logical@5.0.4(postcss@8.4.31):
@@ -48192,7 +50070,7 @@ packages:
   /postmark@4.0.2:
     resolution: {integrity: sha512-2zlCv+KVVQ0KoamXZHE7d+gXzLlr8tPE+PxQmtUaIZhbHzZAq4D6yH2b+ykhA8wYCc5ISodcx8U1aNLenXBs9g==}
     dependencies:
-      axios: 1.6.2
+      axios: 1.6.7
     transitivePeerDependencies:
       - debug
     dev: false
@@ -48730,7 +50608,6 @@ packages:
   /quick-lru@5.1.1:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
-    dev: true
 
   /raf@3.4.1:
     resolution: {integrity: sha512-Sq4CW4QhwOHE8ucn6J34MqtZCeWFP2aQSmrlroYgqAV1PjStIhJXxYuTgUIfkEk7zTLjmIjLmU5q+fbD1NnOJA==}
@@ -49351,6 +51228,15 @@ packages:
       react: 17.0.2
     dev: false
 
+  /react-clientside-effect@1.2.6(react@17.0.2):
+    resolution: {integrity: sha512-XGGGRQAKY+q25Lz9a/4EPqom7WRjz3z9R2k4jhVKA/puQFH/5Nt27vFZYql4m4NVNdUvX8PS3O7r/Zzm7cjUlg==}
+    peerDependencies:
+      react: ^15.3.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@babel/runtime': 7.23.2
+      react: 17.0.2
+    dev: false
+
   /react-color@2.19.3(react@17.0.2):
     resolution: {integrity: sha512-LEeGE/ZzNLIsFWa1TMe8y5VYqr7bibneWmvJwm1pCn/eNmrabWDh659JSPn9BuaMpEfU83WTOJfnCcjDZwNQTA==}
     peerDependencies:
@@ -49534,8 +51420,16 @@ packages:
     resolution: {integrity: sha512-/6UZ2qgEyH2aqzYZgQPxEnz33NJ2gNsnHA2o5+o4wW9bLM/JYQitNP9xPhsXwC08hMMovfGe/8retsdDsczPRg==}
     dev: true
 
+  /react-fast-compare@3.2.0:
+    resolution: {integrity: sha512-rtGImPZ0YyLrscKI9xTpV8psd6I8VAtjKCzQDlzyDvqJA8XOW78TXYQwNRNd8g8JZnDu8q9Fu/1v4HPAVwVdHA==}
+    dev: false
+
   /react-fast-compare@3.2.1:
     resolution: {integrity: sha512-xTYf9zFim2pEif/Fw16dBiXpe0hoy5PxcD8+OwBnTtNLfIm3g6WxhKNurY+6OmdH1u6Ta/W/Vl6vjbYP1MFnDg==}
+    dev: false
+
+  /react-fast-compare@3.2.2:
+    resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
     dev: false
 
   /react-floater@0.7.6(react-dom@17.0.2)(react@17.0.2):
@@ -49573,6 +51467,22 @@ packages:
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
       zustand: 3.7.2(react@17.0.2)
+    dev: false
+
+  /react-focus-lock@2.5.2(@types/react@17.0.62)(react@17.0.2):
+    resolution: {integrity: sha512-WzpdOnEqjf+/A3EH9opMZWauag7gV0BxFl+EY4ElA4qFqYsUsBLnmo2sELbN5OC30S16GAWMy16B9DLPpdJKAQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0
+    dependencies:
+      '@babel/runtime': 7.23.2
+      focus-lock: 0.9.2
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-clientside-effect: 1.2.6(react@17.0.2)
+      use-callback-ref: 1.3.0(@types/react@17.0.62)(react@17.0.2)
+      use-sidecar: 1.1.2(@types/react@17.0.62)(react@17.0.2)
+    transitivePeerDependencies:
+      - '@types/react'
     dev: false
 
   /react-frame-component@5.2.6(prop-types@15.8.1)(react-dom@17.0.2)(react@17.0.2):
@@ -49677,6 +51587,10 @@ packages:
       tree-changes: 0.9.3
     dev: false
 
+  /react-merge-refs@1.1.0:
+    resolution: {integrity: sha512-alTKsjEL0dKH/ru1Iyn7vliS2QRcBp9zZPGoWxUOvRGWPUYgjo+V01is7p04It6KhgrzhJGnIj9GgX8W4bZoCQ==}
+    dev: false
+
   /react-password-strength-bar@0.4.1(react-dom@17.0.2)(react@17.0.2):
     resolution: {integrity: sha512-2NvYz4IUU8k7KDZgsXKoJWreKCZLKGaqF5QhIVhc09OsPBFXFMh0BeghNkBIRkaxLeI7/xjivknDCYfluBCXKA==}
     peerDependencies:
@@ -49744,7 +51658,25 @@ packages:
       react: 17.0.2
       react-style-singleton: 2.2.1(@types/react@17.0.62)(react@17.0.2)
       tslib: 2.6.2
-    dev: true
+
+  /react-remove-scroll@2.4.1(@types/react@17.0.62)(react@17.0.2):
+    resolution: {integrity: sha512-K7XZySEzOHMTq7dDwcHsZA6Y7/1uX5RsWhRXVYv8rdh+y9Qz2nMwl9RX/Mwnj/j7JstCGmxyfyC0zbVGXYh3mA==}
+    engines: {node: '>=8.5.0'}
+    peerDependencies:
+      '@types/react': ^16.8.0 || ^17.0.0
+      react: ^16.8.0 || ^17.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+    dependencies:
+      '@types/react': 17.0.62
+      react: 17.0.2
+      react-remove-scroll-bar: 2.3.4(@types/react@17.0.62)(react@17.0.2)
+      react-style-singleton: 2.2.1(@types/react@17.0.62)(react@17.0.2)
+      tslib: 1.14.1
+      use-callback-ref: 1.3.0(@types/react@17.0.62)(react@17.0.2)
+      use-sidecar: 1.1.2(@types/react@17.0.62)(react@17.0.2)
+    dev: false
 
   /react-remove-scroll@2.5.5(@types/react@17.0.53)(react@17.0.2):
     resolution: {integrity: sha512-ImKhrzJJsyXJfBZ4bzu8Bwpka14c/fQt0k+cyFp/PBhTfyDnU5hjOtM4AG/0AMyy8oKzOTR0lDgJIM7pYXI0kw==}
@@ -49996,6 +51928,48 @@ packages:
       - webpack-plugin-serve
     dev: true
 
+  /react-select@5.7.7(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-HhashZZJDRlfF/AKj0a0Lnfs3sRdw/46VJIRd8IbB9/Ovr74+ZIwkAdSBjSPXsFMG+u72c5xShqwLSKIJllzqw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@babel/runtime': 7.23.2
+      '@emotion/cache': 11.10.7
+      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@floating-ui/dom': 1.5.3
+      '@types/react-transition-group': 4.4.10
+      memoize-one: 6.0.0
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      react-transition-group: 4.4.2(react-dom@17.0.2)(react@17.0.2)
+      use-isomorphic-layout-effect: 1.1.2(@types/react@17.0.62)(react@17.0.2)
+    transitivePeerDependencies:
+      - '@types/react'
+    dev: false
+
+  /react-select@5.8.0(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-TfjLDo58XrhP6VG5M/Mi56Us0Yt8X7xD6cDybC7yoRMUNm7BGO7qk8J0TLQOua/prb8vUOtsfnXZwfm30HGsAA==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
+    dependencies:
+      '@babel/runtime': 7.23.2
+      '@emotion/cache': 11.10.7
+      '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
+      '@floating-ui/dom': 1.5.3
+      '@types/react-transition-group': 4.4.10
+      memoize-one: 6.0.0
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      react-transition-group: 4.4.2(react-dom@17.0.2)(react@17.0.2)
+      use-isomorphic-layout-effect: 1.1.2(@types/react@17.0.62)(react@17.0.2)
+    transitivePeerDependencies:
+      - '@types/react'
+    dev: false
+
   /react-simple-animate@3.5.2(react-dom@17.0.2):
     resolution: {integrity: sha512-xLE65euP920QMTOmv5haPlml+hmOPDkbIr5WeF7ADIXWBYt5kW/vwpNfWg8EKMab8aeDxIZ6QjffVh8v2dUyhg==}
     peerDependencies:
@@ -50035,7 +52009,6 @@ packages:
       invariant: 2.2.4
       react: 17.0.2
       tslib: 2.6.2
-    dev: true
 
   /react-syntax-highlighter@15.5.0(react@17.0.2):
     resolution: {integrity: sha512-+zq2myprEnQmH5yw6Gqc8lD55QHnpKaU8TOcFeC/Lg/MQSs8UknEA0JC4nTZGFAXC2J2Hyj/ijJ7NlabyPi2gg==}
@@ -50121,6 +52094,17 @@ packages:
       react: '>=16.8.0'
       react-dom: '>=16.8.0'
     dependencies:
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+    dev: false
+
+  /react-use-measure@2.1.1(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-nocZhN26cproIiIduswYpV5y5lQpSQS1y/4KuvUCjSKmw7ZWIS/+g3aFnX3WdBkyuGUtTLif3UTqnLLhbDoQig==}
+    peerDependencies:
+      react: '>=16.13'
+      react-dom: '>=16.13'
+    dependencies:
+      debounce: 1.2.1
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
     dev: false
@@ -50733,6 +52717,10 @@ packages:
     resolution: {integrity: sha512-LwZrotdHOo12nQuZlHEmtuXdqGoOD0OhaxopaNFxWzInpEgaLWoVuAMbTzixuosCx2nEG58ngzW3vxdWoxIgdg==}
     dev: false
 
+  /resolve-alpn@1.2.1:
+    resolution: {integrity: sha512-0a1F4l73/ZFZOakJnQ3FvkJ2+gSTQWz/r2KE5OdDY0TxPm5h4GkqkWWfM47T7HsbnOtcJVEF4epCVy6u7Q3K+g==}
+    dev: false
+
   /resolve-cwd@3.0.0:
     resolution: {integrity: sha512-OrZaX2Mb+rJCpH/6CpSqt9xFVpN++x01XnN2ie9g6P5/3xelLAkXWVADpdz1IHD/KFfEXyE6V0U01OQ3UO2rEg==}
     engines: {node: '>=8'}
@@ -50853,6 +52841,12 @@ packages:
     dependencies:
       depd: 1.1.2
       on-headers: 1.0.2
+    dev: false
+
+  /responselike@2.0.1:
+    resolution: {integrity: sha512-4gl03wn3hj1HP3yzgdI7d3lCkF95F21Pz4BPGvKHinyQzALR5CapwC8yIi0Rh58DEMQ/SguC03wFj2k0M/mHhw==}
+    dependencies:
+      lowercase-keys: 2.0.0
     dev: false
 
   /restore-cursor@2.0.0:
@@ -50985,7 +52979,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.16.9
+      terser: 5.22.0
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
@@ -51238,7 +53232,7 @@ packages:
     dependencies:
       neo-async: 2.6.2
       sass: 1.64.1
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /sass@1.61.0:
@@ -51298,7 +53292,7 @@ packages:
     resolution: {integrity: sha512-0ilKFI6QQF5nxDZLFn2dMjvc4hjg/Wkg7rHd3jK6/A4a1Hl9VFdQWvgB1UMGoU94pad1P/8N7fMcEnLnSiju8A==}
     engines: {node: '>= 8.9.0'}
     dependencies:
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       ajv: 6.12.6
       ajv-keywords: 3.5.2(ajv@6.12.6)
     dev: true
@@ -51307,7 +53301,7 @@ packages:
     resolution: {integrity: sha512-SHiNtMOUGWBQJwzISiVYKu82GiV4QYGePp3odlY1tuKO7gPtphAT5R/py0fA6xtbgLL/RvtJZnU9b8s0F1q0Xg==}
     engines: {node: '>= 8.9.0'}
     dependencies:
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       ajv: 6.12.6
       ajv-keywords: 3.5.2(ajv@6.12.6)
     dev: true
@@ -51316,7 +53310,7 @@ packages:
     resolution: {integrity: sha512-pvjEHOgWc9OWA/f/DE3ohBWTD6EleVLf7iFUkoSwAxttdBhB9QUebQgxER2kWueOvRJXPHNnyrvvh9eZINB8Eg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       ajv: 6.12.6
       ajv-keywords: 3.5.2(ajv@6.12.6)
 
@@ -51324,7 +53318,7 @@ packages:
     resolution: {integrity: sha512-pN/yOAvcC+5rQ5nERGuwrjLlYvLTbCibnZ1I7B1LaiAz9BRBlE9GMgE/eqV30P7aJQUf7Ddimy/RsbYO/GrVGg==}
     engines: {node: '>= 10.13.0'}
     dependencies:
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       ajv: 6.12.6
       ajv-keywords: 3.5.2(ajv@6.12.6)
 
@@ -51332,7 +53326,7 @@ packages:
     resolution: {integrity: sha512-1edyXKgh6XnJsJSQ8mKWXnN/BVaIbFMLpouRUrXgVq7WYne5kw3MW7UPhO44uRXQSIpTSXoJbmrR2X0w9kUTyg==}
     engines: {node: '>= 12.13.0'}
     dependencies:
-      '@types/json-schema': 7.0.12
+      '@types/json-schema': 7.0.15
       ajv: 8.12.0
       ajv-formats: 2.1.1(ajv@8.12.0)
       ajv-keywords: 5.1.0(ajv@8.12.0)
@@ -51985,7 +53979,7 @@ packages:
       abab: 2.0.6
       iconv-lite: 0.6.3
       source-map-js: 1.0.2
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /source-map-resolve@0.5.3:
@@ -52612,7 +54606,7 @@ packages:
   /strip-literal@1.3.0:
     resolution: {integrity: sha512-PugKzOsyXpArk0yWmUwqOZecSO0GH0bPoctLcqNDH9J04pVW3lflYE0ujElBGTloevcxF5MofAOZ7C5l2b+wLg==}
     dependencies:
-      acorn: 8.10.0
+      acorn: 8.11.3
     dev: true
 
   /strip-outer@1.0.1:
@@ -52678,6 +54672,13 @@ packages:
     dependencies:
       webpack: 5.78.0(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
     dev: true
+
+  /style-value-types@5.0.0:
+    resolution: {integrity: sha512-08yq36Ikn4kx4YU6RD7jWEv27v4V+PUsOGa4n/as8Et3CuODMJQ00ENeAVXAeydX4Z2j1XHZF1K2sX4mGl18fA==}
+    dependencies:
+      hey-listen: 1.0.8
+      tslib: 2.6.2
+    dev: false
 
   /stylehacks@5.1.1(postcss@8.4.31):
     resolution: {integrity: sha512-sBpcd5Hx7G6seo7b1LkpttvTz7ikD0LlH5RmdcBNb6fFR0Fl7LQwHDFr300q4cwUqi+IYrFGmsIHieMBfnN/Bw==}
@@ -53270,7 +55271,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       '@swc/core': 1.3.49
       esbuild: 0.18.20
       jest-worker: 27.5.1
@@ -53320,13 +55321,13 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       esbuild: 0.18.17
       jest-worker: 27.5.1
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
       terser: 5.22.0
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /terser-webpack-plugin@5.3.9(webpack@5.78.0):
@@ -53345,7 +55346,7 @@ packages:
       uglify-js:
         optional: true
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
+      '@jridgewell/trace-mapping': 0.3.19
       jest-worker: 27.5.1
       schema-utils: 3.3.0
       serialize-javascript: 6.0.1
@@ -53991,8 +55992,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 16.11.7
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
@@ -54022,8 +56023,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 16.11.7
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
@@ -54053,8 +56054,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 20.5.1
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
@@ -54147,6 +56148,10 @@ packages:
     resolution: {integrity: sha512-77EbyPPpMz+FRFRuAFlWMtmgUWGe9UOG2Z25NqCwiIjRhOf5iKGuzSe5P2w1laq+FkRy4p+PCuVkJSGkzTEKVw==}
     dev: false
 
+  /tslib@2.4.0:
+    resolution: {integrity: sha512-d6xOpEDfsi2CZVlPQzGeux8XMwLT9hssAsaPYExaQMuYskwb+x1x7J371tWlbBdWHroy99KnVB6qIkUbs5X3UQ==}
+    dev: false
+
   /tslib@2.5.0:
     resolution: {integrity: sha512-336iVw3rtn2BUK7ORdIAHTyxHGRIHVReokCR3XjbckJMK7ms8FysBfhLR8IXnAgy7T0PTPNBWKiH514FOW/WSg==}
 
@@ -54217,7 +56222,7 @@ packages:
     resolution: {integrity: sha512-Dl49awVTgv9LOLrmXi7elKa2mb69rtkwJHlKNbIR9HjXN7q66gEEaiZsE6gdr+Wfk/zInOvPDVBCdQM+SYXqkA==}
     engines: {node: '>=14.0'}
     dependencies:
-      axios: 1.6.2
+      axios: 1.6.7
       dayjs: 1.11.9
       https-proxy-agent: 5.0.1
       jsonwebtoken: 9.0.0
@@ -54679,7 +56684,7 @@ packages:
   /uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
     dependencies:
-      punycode: 2.3.0
+      punycode: 2.3.1
 
   /uri-parser@1.0.1:
     resolution: {integrity: sha512-TRjjM2M83RD9jIIYttNj7ghUQTKSov+WXZbQIMM8DxY1R1QdJEGWNKKMYCxyeOw1p9re2nQ85usM6dPTVtox1g==}
@@ -54790,7 +56795,6 @@ packages:
       '@types/react': 17.0.62
       react: 17.0.2
       tslib: 2.6.2
-    dev: true
 
   /use-composed-ref@1.3.0(react@17.0.2):
     resolution: {integrity: sha512-GLMG0Jc/jiKov/3Ulid1wbv3r54K9HlMW29IWcDFPEqFkSO2nS0MuefWgMJpeHQ9YJeXDL3ZUF+P3jdXlZX/cQ==}
@@ -54904,7 +56908,6 @@ packages:
       detect-node-es: 1.1.0
       react: 17.0.2
       tslib: 2.6.2
-    dev: true
 
   /use-sync-external-store@1.2.0(react@17.0.2):
     resolution: {integrity: sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==}
@@ -55061,6 +57064,31 @@ packages:
     dependencies:
       builtins: 5.0.1
     dev: true
+
+  /validate.io-array@1.0.6:
+    resolution: {integrity: sha512-DeOy7CnPEziggrOO5CZhVKJw6S3Yi7e9e65R1Nl/RTN1vTQKnzjfvks0/8kQ40FP/dsjRAOd4hxmJ7uLa6vxkg==}
+    dev: false
+
+  /validate.io-function@1.0.2:
+    resolution: {integrity: sha512-LlFybRJEriSuBnUhQyG5bwglhh50EpTL2ul23MPIuR1odjO7XaMLFV8vHGwp7AZciFxtYOeiSCT5st+XSPONiQ==}
+    dev: false
+
+  /validate.io-integer-array@1.0.0:
+    resolution: {integrity: sha512-mTrMk/1ytQHtCY0oNO3dztafHYyGU88KL+jRxWuzfOmQb+4qqnWmI+gykvGp8usKZOM0H7keJHEbRaFiYA0VrA==}
+    dependencies:
+      validate.io-array: 1.0.6
+      validate.io-integer: 1.0.5
+    dev: false
+
+  /validate.io-integer@1.0.5:
+    resolution: {integrity: sha512-22izsYSLojN/P6bppBqhgUDjCkr5RY2jd+N2a3DCAUey8ydvrZ/OkGvFPR7qfOpwR2LC5p4Ngzxz36g5Vgr/hQ==}
+    dependencies:
+      validate.io-number: 1.0.3
+    dev: false
+
+  /validate.io-number@1.0.3:
+    resolution: {integrity: sha512-kRAyotcbNaSYoDnXvb4MHg/0a1egJdLwS6oJ38TJY7aw9n93Fl/3blIXdyYvPOp55CNxywooG/3BcrwNrBpcSg==}
+    dev: false
 
   /validate.js@0.13.1:
     resolution: {integrity: sha512-PnFM3xiZ+kYmLyTiMgTYmU7ZHkjBZz2/+F0DaALc/uUtVzdCt1wAosvYJ5hFQi/hz8O4zb52FQhHZRC+uVkJ+g==}
@@ -55634,7 +57662,7 @@ packages:
       mime-types: 2.1.35
       range-parser: 1.2.1
       schema-utils: 4.0.0
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /webpack-dev-middleware@6.1.1(webpack@5.78.0):
@@ -55668,7 +57696,7 @@ packages:
       mime-types: 2.1.35
       range-parser: 1.2.1
       schema-utils: 4.0.0
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /webpack-dev-server@4.11.1(webpack@5.78.0):
@@ -55759,7 +57787,7 @@ packages:
       serve-index: 1.9.1
       sockjs: 0.3.24
       spdy: 4.0.2
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
       webpack-dev-middleware: 5.3.3(webpack@5.88.2)
       ws: 8.13.0
     transitivePeerDependencies:
@@ -55838,7 +57866,7 @@ packages:
         optional: true
     dependencies:
       typed-assert: 1.0.9
-      webpack: 5.88.2(esbuild@0.18.17)
+      webpack: 5.88.2
     dev: true
 
   /webpack-virtual-modules@0.5.0:
@@ -55964,7 +57992,7 @@ packages:
       - esbuild
       - uglify-js
 
-  /webpack@5.88.2(esbuild@0.18.17):
+  /webpack@5.88.2:
     resolution: {integrity: sha512-JmcgNZ1iKj+aiR0OvTYtWQqJwq37Pf683dY9bVORwVbUrDhLhdn/PlO2sHsFHPkj7sHNQF3JwaAkp49V+Sq1tQ==}
     engines: {node: '>=10.13.0'}
     hasBin: true
