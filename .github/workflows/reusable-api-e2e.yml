@@ -29,7 +29,7 @@ jobs:
   check_submodule_token:
     if: ${{ inputs.ee }}
     name: Check if the secret exists or not.
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2204
     outputs:
       has_token: ${{ steps.secret-check.outputs.has_token }}
     steps:
