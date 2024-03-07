@@ -518,6 +518,8 @@
     "Myśliwiec",
     "nestframework",
     "ryver",
+    "Mailchain",
+    "mailchain",
     "idempotency",
     "IDEMPOTENCY",
     "Idempotency",
@@ -534,6 +536,7 @@
     "tspan",
     "maildata",
     "brevo",
+    "initialise"
     "Getstream",
     "getstream",
     "upstash",

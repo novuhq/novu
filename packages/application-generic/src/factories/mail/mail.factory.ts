@@ -19,6 +19,7 @@ import {
   EmailWebhookHandler,
   NovuEmailHandler,
   PlunkHandler,
+  MailchainHandler,
   BrazeEmailHandler,
 } from './handlers';
 import { IMailHandler } from './interfaces/send.handler.interface';
@@ -44,6 +45,7 @@ export class MailFactory {
     new SparkPostHandler(),
     new EmailWebhookHandler(),
     new NovuEmailHandler(),
+    new MailchainHandler(),
     new BrazeEmailHandler(),
   ];
 
