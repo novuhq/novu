@@ -119,7 +119,7 @@ jobs:
         with:
           working-directory: apps/web
           browser: "${{ env.BROWSER_PATH }}"
-          record: false
+          record: true
           install: false
           parallel: true
           config-file: cypress.config.ts
