@@ -16,6 +16,7 @@ import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { GetStartedPage } from './pages/get-started/GetStartedPage';
 import HomePage from './pages/HomePage';
+import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
 import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
@@ -50,6 +51,7 @@ import { TranslationRoutes } from './pages/TranslationPages';
 import { BillingRoutes } from './pages/BillingPages';
 import { ChannelPreview } from './pages/templates/components/ChannelPreview';
 import { useFeatureFlag } from './hooks';
+import { LayoutsPage } from './pages/layouts/v2/LayoutsPage';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
@@ -115,6 +117,8 @@ export const AppRoutes = () => {
           <Route path="" element={<ApiKeysCard />} />
           <Route path="billing/*" element={<BillingRoutes />} />
           <Route path="email" element={<EmailSettings />} />
+          <Route path="team" element={<MembersInvitePageNew />} />
+          <Route path="brand" element={<BrandingForm />} />
           <Route
             path="permissions"
             element={
@@ -163,6 +167,9 @@ export const AppRoutes = () => {
         <Route path={ROUTES.BRAND} element={<BrandPage />}>
           <Route path="" element={<BrandingForm />} />
           <Route path="layouts" element={<LayoutsListPage />} />
+        </Route>
+        <Route path={ROUTES.LAYOUT} element={<LayoutsPage />}>
+          <Route path="" element={<LayoutsListPage />} />
         </Route>
         <Route path="/translations/*" element={<TranslationRoutes />} />
       </Route>
