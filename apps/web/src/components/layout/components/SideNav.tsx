@@ -80,12 +80,6 @@ export function SideNav({}: Props) {
   } = useUserOnboardingStatus();
   const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
   const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
-  const {
-    showOnboarding: showOnBoardingState,
-    isLoading: isLoadingShowOnBoarding,
-    updateOnboardingStatus,
-  } = useUserOnboardingStatus();
-  const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -154,7 +148,6 @@ export function SideNav({}: Props) {
       testId: 'side-nav-settings-organization',
     },
     {
-      label: 'Changes',
       condition: isInformationArchitectureEnabled,
       icon: <IconViewQuilt />,
       link: ROUTES.LAYOUT,
@@ -162,6 +155,7 @@ export function SideNav({}: Props) {
       testId: 'side-nav-layouts-link',
     },
     {
+      label: 'Changes',
       icon: <Repeat />,
       link: ROUTES.CHANGES,
       testId: 'side-nav-changes-link',
