@@ -37,6 +37,9 @@ runs:
       shell: bash
       run: pnpm build:api
 
+    # TODO Removed when migrated to action matrix for each build type
+    - uses: ./.github/actions/free-space
+
     - uses: crazy-max/ghaction-setup-docker@v2
       with:
         version: v24.0.6
