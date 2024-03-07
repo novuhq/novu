@@ -1,7 +1,5 @@
 import { Tooltip, Dropdown, CardTile } from '@novu/design-system';
 import { Badge } from '@mantine/core';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBolt } from '@fortawesome/free-solid-svg-icons';
 
 import { TemplatesGroup, TemplateItem, GroupName } from './templates-store/templateStoreStyles';
 import { useSegment } from '../../../components/providers/SegmentProvider';
