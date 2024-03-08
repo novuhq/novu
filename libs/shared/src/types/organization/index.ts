@@ -3,6 +3,7 @@ export type OrganizationId = string;
 export enum ApiServiceLevelEnum {
   FREE = 'free',
   BUSINESS = 'business',
+  ENTERPRISE = 'enterprise',
   // TODO: NV-3067 - Remove unlimited tier once all organizations have a service level
   UNLIMITED = 'unlimited',
 }
@@ -17,10 +18,10 @@ export enum ProductUseCasesEnum {
 
 export enum JobTitleEnum {
   ENGINEER = 'engineer',
+  ENGINEERING_MANAGER = 'engineering_manager',
   ARCHITECT = 'architect',
   PRODUCT_MANAGER = 'product_manager',
   DESIGNER = 'designer',
-  ENGINEERING_MANAGER = 'engineering_manager',
   OTHER = 'other',
 }
 

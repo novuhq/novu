@@ -3,7 +3,7 @@ import { StepTypeEnum } from '@novu/shared';
 
 import { EmailMessagesCards } from './email-editor/EmailMessagesCards';
 import { TemplateInAppEditor } from './in-app-editor/TemplateInAppEditor';
-import { TemplateSMSEditor } from './TemplateSMSEditor';
+import { TemplateSMSEditor } from './sms-editor/TemplateSMSEditor';
 import { TemplatePushEditor } from './TemplatePushEditor';
 import { TemplateChatEditor } from './chat-editor/TemplateChatEditor';
 import { StepEditorSidebar } from './StepEditorSidebar';

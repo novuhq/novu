@@ -22,6 +22,11 @@ export const DEFAULT_API_RATE_LIMIT_SERVICE_MAXIMUM_CONFIG: IApiRateLimitService
     [ApiRateLimitCategoryEnum.CONFIGURATION]: 150,
     [ApiRateLimitCategoryEnum.GLOBAL]: 300,
   },
+  [ApiServiceLevelEnum.ENTERPRISE]: {
+    [ApiRateLimitCategoryEnum.TRIGGER]: 6000,
+    [ApiRateLimitCategoryEnum.CONFIGURATION]: 1500,
+    [ApiRateLimitCategoryEnum.GLOBAL]: 3000,
+  },
   [ApiServiceLevelEnum.UNLIMITED]: {
     [ApiRateLimitCategoryEnum.TRIGGER]: 6000,
     [ApiRateLimitCategoryEnum.CONFIGURATION]: 1500,

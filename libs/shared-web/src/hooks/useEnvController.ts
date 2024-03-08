@@ -9,6 +9,7 @@ import { QueryKeys } from '../api/query.keys';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes.enum';
 import { api } from '../api';
+import { IS_DOCKER_HOSTED } from '../config';
 
 export type EnvironmentContext = {
   readonly: boolean;
@@ -16,10 +17,12 @@ export type EnvironmentContext = {
   environment: IEnvironment | undefined;
   setEnvironment: (environment: string) => void;
   refetchEnvironment: () => void;
+  chimera: boolean;
 };
 
 export const useEnvController = (
-  options: UseQueryOptions<IEnvironment, any, IEnvironment> = {}
+  options: UseQueryOptions<IEnvironment, any, IEnvironment> = {},
+  chimera = false
 ): EnvironmentContext => {
   const navigate = useNavigate();
 
@@ -69,7 +72,8 @@ export const useEnvController = (
   return {
     refetchEnvironment,
     environment,
-    readonly: environment?._parentId !== undefined,
+    readonly: environment?._parentId !== undefined || (!IS_DOCKER_HOSTED && chimera),
+    chimera: !IS_DOCKER_HOSTED && chimera,
     setEnvironment: setEnvironmentCallback,
     isLoading: isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading,
   };

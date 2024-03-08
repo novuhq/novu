@@ -82,6 +82,7 @@ With Novu, you can create custom workflows and define conditions for each channe
 ## 📚 Table Of Contents
 
 - [Getting Started](https://github.com/novuhq/novu#-getting-started)
+- [GitOps & React Email Integration](https://github.com/novuhq/novu#-gitops)
 - [Embeddable notification center](https://github.com/novuhq/novu#embeddable-notification-center)
 - [Providers](https://github.com/novuhq/novu#providers)
   - [Email](https://github.com/novuhq/novu#-email)
@@ -133,6 +134,70 @@ await novu.trigger('<TRIGGER_NAME>', {
     },
   },
 });
+```
+
+## GitOps & React Email Integration
+Create notification workflows right from your IDE and integrate with MJML/React Email/Maizzle and others
+
+- Fully managed GitOps Flow, deployed from your CI
+- Local Dev Studio to develop and debug workflows in your IDE
+- React Email/Maizzle/MJML integrations
+- Runs in your VPC
+- Debug cloud triggers in your IDE
+- Type safety with your favorite programming language
+- Define workflow and step validations with Zod or JSON Schema
+- Modify content and behavior via Web management input panel
+
+[Request Early Access](https://novu.co/novu-echo-coming-soon/?utm_campaign=github)
+
+```ts
+
+client.workflow('comment-on-post', async ({step, subscriber}) => {
+  const inAppResponse = await step.inApp('in-app-step', async (inputs) => {
+    return {
+      // body: renderReactComponent(inputs)
+    };
+  }, {
+    inputs: {
+      // ...JSON Schema or ZOD/Ajv/Class Validators definition
+    }
+  });
+
+  // Novu Worker Engine will manage the state and durability of each step in isolation
+  const {digestedEvents} = await step.digest('1 day');
+
+  await step.email('email-step', async () => {
+    return {
+      subject: 'E-mail Subject',
+      body: renderReactEmail(<ReactEmailComponent events={digestedEvents} />);
+    }
+  }, {
+    // Step-level inputs defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
+    inputs: {
+      // ...JSON Schema
+    },
+    providers: {
+      sendgrid: async (inputs) => {
+        // Echo runs as part of your application, so you have access to your database or resources
+
+        return {
+          to: email,
+          ipPoolName: 'custom-pool'
+        };
+      }
+    },
+    skip: () => {
+      // Write custom skip logic
+      return inAppResponse.seen || subscriber.isOnline;
+    }
+  });
+// Define your workflow trigger payload using json schema and custom validation;
+}, {
+  dataSchema: {
+    // ...JSON Schema
+  }
+});
+
 ```
 
 ## Embeddable Notification Center

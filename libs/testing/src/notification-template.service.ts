@@ -9,6 +9,8 @@ import {
   FeedRepository,
   LayoutRepository,
 } from '@novu/dal';
+import { v4 as uuid } from 'uuid';
+
 import { CreateTemplatePayload } from './create-notification-template.interface';
 
 export class NotificationTemplateService {
@@ -136,7 +138,8 @@ export class NotificationTemplateService {
           active: message.active,
           metadata: message.metadata as any,
           replyCallback: message.replyCallback,
-          uuid: message.uuid,
+          uuid: message.uuid ?? uuid(),
+          name: message.name,
         });
       }
     }
@@ -152,7 +155,7 @@ export class NotificationTemplateService {
       draft: false,
       tags: ['test-tag'],
       description: faker.commerce.productDescription().slice(0, 90),
-      triggers: [
+      triggers: override.triggers ?? [
         {
           identifier: `test-event-${faker.datatype.uuid()}`,
           type: 'event',

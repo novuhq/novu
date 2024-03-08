@@ -1,9 +1,9 @@
 import styled from '@emotion/styled';
+import { useMantineTheme } from '@mantine/core';
 import { CSSProperties, forwardRef, useContext } from 'react';
-import { colors } from '../config';
 import { Button, IButtonProps } from '../button/Button';
+import { colors } from '../config';
 import { IPaginationContext, PaginationContext } from './PaginationContext';
-
 export type TPageButtonClickHandler = (ctx: IPaginationContext) => void;
 
 type StylingProps = Pick<IControlButtonProps, 'isCurrentPage'>;
@@ -29,11 +29,19 @@ const getBackgroundColor = ({ theme, isCurrentPage }: { theme: any } & StylingPr
   return isCurrentPage ? (theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight) : 'none';
 };
 
-const StyledButton = styled(Button)<StylingProps>(
+const StyledButton = styled(Button, {
+  shouldForwardProp: (propName: string) => {
+    return propName !== 'isCurrentPage';
+  },
+})<StylingProps>(
   ({ theme, isCurrentPage }) => `
   font-weight: ${getFontWeight({ theme, isCurrentPage })};
   background: ${getBackgroundColor({ theme, isCurrentPage })};
   color: ${getFontColor({ theme, isCurrentPage })};
+
+  & .mantine-Button-label {
+    background-image: none;
+  }
 
   &:disabled {
     background: ${getBackgroundColor({ theme, isCurrentPage })};
@@ -70,6 +78,7 @@ export const ControlButton: React.FC<IControlButtonProps> = forwardRef<HTMLButto
 
     return (
       <StyledButton
+        theme={useMantineTheme()}
         isCurrentPage={isCurrentPage}
         id={id}
         onClick={handleClick}

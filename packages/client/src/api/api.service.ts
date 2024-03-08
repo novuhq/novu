@@ -71,9 +71,9 @@ export class ApiService {
     return await this.httpClient.delete(`/widgets/messages/${messageId}`, {});
   }
 
-  async removeMessages(messageId: string[]): Promise<any> {
+  async removeMessages(messageIds: string[]): Promise<any> {
     return await this.httpClient.post(`/widgets/messages/bulk/delete`, {
-      messageId: messageId,
+      messageIds: messageIds,
     });
   }
 

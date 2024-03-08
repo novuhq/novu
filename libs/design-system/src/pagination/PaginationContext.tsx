@@ -6,7 +6,7 @@ export interface IPaginationContext {
   /** Note: this is a page *number*, not index */
   currentPageNumber: number;
   pageSize: number;
-  onPageChange: (pageNumber: number) => void;
+  onPageChange: (pageNumber: number, shouldSkipPageValidation?: boolean) => void;
 }
 
 const DEFAULT_PAGINATION_CONTEXT: IPaginationContext = {

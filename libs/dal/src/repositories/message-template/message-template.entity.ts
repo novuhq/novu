@@ -7,6 +7,7 @@ import {
   OrganizationId,
   MessageTemplateContentType,
 } from '@novu/shared';
+import { JSONSchema7 } from 'json-schema';
 
 import { IEmailBlock, ITemplateVariable } from './types';
 import type { ChangePropsValueType } from '../../types/helpers';
@@ -39,6 +40,8 @@ export class MessageTemplateEntity implements IMessageTemplate {
 
   name?: string;
 
+  stepId?: string;
+
   preheader?: string;
 
   senderName?: string;
@@ -52,6 +55,10 @@ export class MessageTemplateEntity implements IMessageTemplate {
   actor?: IActor;
 
   deleted?: boolean;
+
+  inputs?: {
+    schema: JSONSchema7;
+  };
 }
 
 export type MessageTemplateDBModel = ChangePropsValueType<

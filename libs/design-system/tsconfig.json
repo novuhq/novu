@@ -24,6 +24,7 @@
     "src/**/*.stories.*",
     "src/*.test.*",
     "node_modules",
-    "**/node_modules/*"
+    "**/node_modules/*",
+    "setup-tests.ts"
   ]
 }

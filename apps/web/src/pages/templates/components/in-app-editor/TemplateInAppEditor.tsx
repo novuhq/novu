@@ -7,10 +7,12 @@ import { Input } from '@novu/design-system';
 import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
-import { VariableManagerModal } from '../VariableManagerModal';
+import { EditVariablesModal } from '../EditVariablesModal';
 import { InAppContentCard } from './InAppContentCard';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import type { IForm, ITemplates } from '../formTypes';
+import { When } from '../../../../components/utils/When';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 
 const getVariableContents = (template: ITemplates) => {
   const baseContent = ['content'];
@@ -27,7 +29,8 @@ const getVariableContents = (template: ITemplates) => {
 };
 
 export function TemplateInAppEditor() {
-  const { readonly } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { readonly, chimera } = useEnvController({}, template?.chimera);
   const { control, watch } = useFormContext<IForm>();
   const [modalOpen, setModalOpen] = useState(false);
   const stepFormPath = useStepFormPath();
@@ -42,29 +45,31 @@ export function TemplateInAppEditor() {
       {!hasActiveIntegration && <LackIntegrationAlert channelType={ChannelTypeEnum.IN_APP} />}
       <StepSettings />
       <Stack spacing={24}>
-        <Controller
-          name={`${stepFormPath}.template.cta.data.url` as any}
-          defaultValue=""
-          control={control}
-          render={({ field, fieldState }) => (
-            <Input
-              {...field}
-              error={fieldState.error?.message}
-              value={field.value || ''}
-              disabled={readonly}
-              data-test-id="inAppRedirect"
-              label="Redirect URL"
-              placeholder="i.e /tasks/{{taskId}}"
-            />
-          )}
-        />
+        <When truthy={!chimera}>
+          <Controller
+            name={`${stepFormPath}.template.cta.data.url` as any}
+            defaultValue=""
+            control={control}
+            render={({ field, fieldState }) => (
+              <Input
+                {...field}
+                error={fieldState.error?.message}
+                value={field.value || ''}
+                disabled={readonly}
+                data-test-id="inAppRedirect"
+                label="Redirect URL"
+                placeholder="i.e /tasks/{{taskId}}"
+              />
+            )}
+          />
+        </When>
         <InAppContentCard
           openVariablesModal={() => {
             setModalOpen(true);
           }}
         />
       </Stack>
-      <VariableManagerModal open={modalOpen} setOpen={setModalOpen} variablesArray={variablesArray} />
+      <EditVariablesModal open={modalOpen} setOpen={setModalOpen} variablesArray={variablesArray} />
     </>
   );
 }

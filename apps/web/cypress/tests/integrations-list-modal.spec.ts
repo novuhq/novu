@@ -29,10 +29,10 @@ describe('Integrations List Modal', function () {
       .as('session');
   });
 
-  const navigateToGetStarted = () => {
+  const navigateToGetStarted = (card = 'channel-card-email') => {
     cy.visit('/get-started');
     cy.location('pathname').should('equal', '/get-started');
-    cy.getByTestId('channel-card-email').find('button').contains('Change Provider').click();
+    cy.getByTestId(card).find('button').contains('Change Provider').click();
     cy.getByTestId('integrations-list-modal').should('be.visible').contains('Integrations Store');
   };
 
@@ -128,7 +128,7 @@ describe('Integrations List Modal', function () {
     cy.intercept('*/environments', async () => {
       await new Promise((resolve) => setTimeout(resolve, 3500));
     }).as('getEnvironments');
-    navigateToGetStarted();
+    navigateToGetStarted('channel-card-sms');
     cy.getByTestId('select-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible').click();
 
@@ -152,7 +152,7 @@ describe('Integrations List Modal', function () {
       await new Promise((resolve) => setTimeout(resolve, 3500));
     }).as('getIntegrations');
 
-    navigateToGetStarted();
+    navigateToGetStarted('channel-card-sms');
     cy.getByTestId('select-provider-sidebar').should('be.visible');
     cy.getByTestId('sidebar-close').should('be.visible').click();
 
@@ -773,7 +773,7 @@ describe('Integrations List Modal', function () {
       'Select a framework to set up credentials to start sending notifications.'
     );
     cy.getByTestId('update-provider-sidebar')
-      .find('a[href="https://docs.novu.co/notification-center/introduction"]')
+      .find('a[href="https://docs.novu.co/notification-center/introduction?utm_campaign=in-app"]')
       .contains('Explore set-up guide');
     cy.getByTestId('is_active_id').should('have.value', 'true');
     cy.window().then((win) => {

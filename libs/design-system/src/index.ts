@@ -9,6 +9,7 @@ export { Input } from './input/Input';
 export { Textarea } from './textarea/Textarea';
 export { Radio } from './radio/Radio';
 export { Select } from './select/Select';
+export type { ISelectProps } from './select/Select.types';
 export { Switch } from './switch/Switch';
 export * from './table';
 export { Tag } from './tag/Tag';
@@ -37,7 +38,9 @@ export * from './dots-navigation';
 export * from './sidebar';
 export * from './when';
 export * from './ThemeProvider';
+/** @deprecated */
 export * from './icons';
+export * from './iconsV2';
 export * from './config/inputs.styles';
 export * from './config/helper';
 export * from './tabs/Tabs.styles';

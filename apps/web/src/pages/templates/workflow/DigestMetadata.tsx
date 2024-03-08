@@ -13,13 +13,15 @@ import { RegularDigestMetadata } from './RegularDigestMetadata';
 import { StepSettings } from './SideBar/StepSettings';
 import { useEnvController } from '../../../hooks';
 import { useStepFormPath } from '../hooks/useStepFormPath';
+import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 
 const GroupStyled = styled(Group)`
   gap: 18px;
 `;
 
 export const DigestMetadata = () => {
-  const { readonly } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { readonly } = useEnvController({}, template?.chimera);
   const stepFormPath = useStepFormPath();
   const { control, watch } = useFormContext();
 

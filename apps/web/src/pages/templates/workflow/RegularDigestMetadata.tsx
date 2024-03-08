@@ -7,11 +7,13 @@ import { IntervalSelect } from './digest/IntervalSelect';
 import { BackOffFields } from './digest/BackOffFields';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { useEnvController } from '../../../hooks';
+import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 
 const amountDefaultValue = '5';
 
 export const RegularDigestMetadata = () => {
-  const { readonly } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { readonly } = useEnvController({}, template?.chimera);
   const {
     control,
     formState: { errors, isSubmitted },
