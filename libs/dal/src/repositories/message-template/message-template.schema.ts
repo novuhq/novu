@@ -89,6 +89,13 @@ messageTemplateSchema.index({
   'triggers.identifier': 1,
 });
 
+messageTemplateSchema.index({
+  _environmentId: 1,
+  _layoutId: 1,
+  _feedId: 1,
+  deleted: 1,
+});
+
 messageTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
