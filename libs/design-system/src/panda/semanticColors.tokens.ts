@@ -1,4 +1,48 @@
-import { defineTokens, defineSemanticTokens } from '@pandacss/dev';
+import { defineSemanticTokens } from '@pandacss/dev';
+
+/** @deprecated */
+export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
+  surface: {
+    page: {
+      value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B15}' },
+      type: 'color',
+    },
+    panel: {
+      value: { base: '{colors.legacy.BGDark}', _dark: '{colors.legacy.BGLight}' },
+      type: 'color',
+    },
+    popover: {
+      value: { base: '{colors.mauve.120.light}', _dark: '{colors.mauve.120.dark}' },
+      type: 'color',
+    },
+  },
+  typography: {
+    text: {
+      main: {
+        value: { base: '{colors.legacy.B40}', _dark: '{colors.legacy.white}' },
+        type: 'color',
+      },
+      secondary: {
+        value: { base: '{colors.legacy.B60}', _dark: '{colors.legacy.B60}' },
+        type: 'color',
+      },
+      tertiary: {
+        value: { base: '{colors.legacy.B70}', _dark: '{colors.legacy.B40}' },
+        type: 'color',
+      },
+      /*
+       * disabled: {
+       *   value: { base: '{colors.legacy.mauve.30.light}', _dark: '{colors.legacy.mauve.30.dark}' },
+       *   type: 'color',
+       * },
+       * accent: {
+       *   value: { base: '{colors.legacy.blue.20.light}', _dark: '{colors.legacy.blue.20.dark}' },
+       *   type: 'color',
+       * },
+       */
+    },
+  },
+});
 
 export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
   typography: {
