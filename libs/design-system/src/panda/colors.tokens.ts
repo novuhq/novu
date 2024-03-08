@@ -1,5 +1,33 @@
 import { defineTokens, defineSemanticTokens } from '@pandacss/dev';
 
+/**
+ * @deprecated
+ */
+export const LEGACY_COLOR_TOKENS = defineTokens.colors({
+  legacy: {
+    white: { value: '#FFFFFF', description: '@deprecated', type: 'color' },
+    black: { value: '#000000', description: '@deprecated', type: 'color' },
+    BGLight: { value: '#EDF0F2', description: '@deprecated', type: 'color' },
+    BGDark: { value: '#13131A', description: '@deprecated', type: 'color' },
+    B98: { value: '#F5F8FA', description: '@deprecated', type: 'color' },
+    B85: { value: '#D5D5D9', description: '@deprecated', type: 'color' },
+    B80: { value: '#BEBECC', description: '@deprecated', type: 'color' },
+    B70: { value: '#A1A1B2', description: '@deprecated', type: 'color' },
+    B60: { value: '#828299', description: '@deprecated', type: 'color' },
+    B40: { value: '#525266', description: '@deprecated', type: 'color' },
+    B30: { value: '#3D3D4D', description: '@deprecated', type: 'color' },
+    B20: { value: '#292933', description: '@deprecated', type: 'color' },
+    B15: { value: '#1E1E26', description: '@deprecated', type: 'color' },
+    B17: { value: '#23232B', description: '@deprecated', type: 'color' },
+    gradientStart: { value: '#FF512F', description: '@deprecated', type: 'color' },
+    gradientMiddle: { value: '#ef3f5a', description: '@deprecated', type: 'color' },
+    gradientEnd: { value: '#DD2476', description: '@deprecated', type: 'color' },
+    success: { value: '#4D9980', description: '@deprecated', type: 'color' },
+    warning: { value: '#FF8000', description: '@deprecated', type: 'color' },
+    error: { value: '#E54545', description: '@deprecated', type: 'color' },
+  },
+});
+
 export const COLOR_PALETTE_TOKENS = defineTokens.colors({
   amber: {
     '10': {

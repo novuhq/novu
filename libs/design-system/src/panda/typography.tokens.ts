@@ -11,6 +11,14 @@ export const FONT_FAMILY_TOKENS = defineTokens.fonts({
   },
 });
 
+/** @deprecated */
+export const LEGACY_FONT_FAMILY_TOKENS = defineTokens.fonts({
+  system: {
+    type: 'fontFamilies',
+    value: '"Lato", BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
+  },
+});
+
 export const FONT_SIZE_TOKENS = defineTokens.fontSizes({
   '75': {
     type: 'fontSizes',
