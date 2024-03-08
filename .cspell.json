@@ -570,7 +570,11 @@
     "azcopy",
     "cpack",
     "pulumi",
-    "hostedtoolcache"
+    "hostedtoolcache",
+    "pyroscope",
+    "HEAY",
+    "Pyroscope",
+    "PYROSCOPE"
   ],
   "flagWords": [],
   "patterns": [
