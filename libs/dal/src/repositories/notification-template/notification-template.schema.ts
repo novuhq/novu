@@ -250,6 +250,13 @@ notificationTemplateSchema.index({
   'triggers.identifier': 1,
 });
 
+notificationTemplateSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  createdAt: -1,
+  deleted: 1,
+});
+
 notificationTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
