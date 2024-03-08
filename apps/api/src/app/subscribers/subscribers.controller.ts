@@ -141,8 +141,8 @@ export class SubscribersController {
       GetSubscribersCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        page: query.page ? Number(query.page) : 0,
-        limit: query.limit ? Number(query.limit) : 10,
+        page: query.page,
+        limit: query.limit,
       })
     );
   }
@@ -485,10 +485,10 @@ export class SubscribersController {
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      page: query.page != null ? parseInt(query.page as any) : 0,
+      page: query.page,
       feedId: feedsQuery,
       query: { seen: query.seen, read: query.read },
-      limit: query.limit != null ? parseInt(query.limit as any) : 10,
+      limit: query.limit,
       payload: query.payload,
     });
 

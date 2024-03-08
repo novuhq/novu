@@ -5,8 +5,8 @@ import { IsInt, Max, Min } from 'class-validator';
 import { Constructor } from '../types';
 
 export interface IPagination {
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -18,7 +18,7 @@ export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constru
     })
     @Type(() => Number)
     @IsInt()
-    page?: number = 0;
+    page = 0;
 
     @ApiPropertyOptional({
       type: Number,
@@ -30,7 +30,7 @@ export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constru
     @IsInt()
     @Min(1)
     @Max(maxLimit)
-    limit?: number = defaultLimit;
+    limit = defaultLimit;
   }
 
   return PaginationRequest;

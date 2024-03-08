@@ -69,8 +69,8 @@ export class NotificationTemplateController {
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
-        page: queryParams.page ? queryParams.page : 0,
-        limit: queryParams.limit ? queryParams.limit : 10,
+        page: queryParams.page,
+        limit: queryParams.limit,
         query: queryParams.query,
       })
     );
