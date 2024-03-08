@@ -5,6 +5,7 @@ import {
   ISmsProvider,
   IChatProvider,
   IPushProvider,
+  IVoiceProvider,
 } from './provider.interface';
 
 export class ProviderStore {
@@ -13,12 +14,18 @@ export class ProviderStore {
       | ISmsProvider
       | IEmailProvider
       | IChatProvider
-      | IPushProvider;
+      | IPushProvider
+      | IVoiceProvider;
   } = {};
 
   async addProvider(
     providerId: string,
-    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
+    provider:
+      | IEmailProvider
+      | ISmsProvider
+      | IChatProvider
+      | IPushProvider
+      | IVoiceProvider
   ) {
     this.providers[providerId] = provider;
   }

@@ -4,6 +4,7 @@ export enum ChannelTypeEnum {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  VOICE = 'voice',
 }
 
 export enum StepTypeEnum {
@@ -12,6 +13,7 @@ export enum StepTypeEnum {
   SMS = 'sms',
   CHAT = 'chat',
   PUSH = 'push',
+  VOICE = 'voice',
   DIGEST = 'digest',
   TRIGGER = 'trigger',
   DELAY = 'delay',

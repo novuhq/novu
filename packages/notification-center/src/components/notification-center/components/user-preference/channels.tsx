@@ -1,4 +1,4 @@
-import { Bell, Chat, Mail, Mobile, Sms } from '../../../../shared/icons';
+import { Bell, Chat, Mail, Mobile, Voice, Sms } from '../../../../shared/icons';
 import React from 'react';
 
 export const channels = [
@@ -7,6 +7,7 @@ export const channels = [
   { type: 'email', label: 'Email', Icon: Mail, description: 'This is a mail' },
   { type: 'in_app', label: 'In App', Icon: Bell, description: 'This is an in app' },
   { type: 'chat', label: 'Chat', Icon: Chat, description: 'This is a chat' },
+  { type: 'voice', label: 'Voice', Icon: Voice, description: 'This is a voice' },
 ];
 
 export const getChannel = (channelKey: string) => {

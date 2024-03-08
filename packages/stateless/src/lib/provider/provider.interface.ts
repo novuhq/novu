@@ -35,6 +35,15 @@ export interface ISmsOptions {
   id?: string;
   customData?: Record<string, any>;
 }
+
+export interface IVoiceOptions {
+  to: string;
+  content: string;
+  from?: string;
+  record?: boolean;
+  voice?: string;
+  language?: string;
+}
 export interface IPushOptions {
   target: string[];
   title: string;
@@ -172,6 +181,11 @@ export interface ISmsProvider extends IProvider {
     body: any | any[],
     identifier: string
   ) => ISMSEventBody | undefined;
+}
+
+export interface IVoiceProvider extends IProvider {
+  sendMessage(options: IVoiceOptions): Promise<ISendMessageSuccessResponse>;
+  channelType: ChannelTypeEnum.VOICE;
 }
 
 export interface IChatProvider extends IProvider {

@@ -14,6 +14,7 @@ import {
   colors,
   Dropdown,
   Text,
+  Voice,
 } from '@novu/design-system';
 import { StepTypeEnum } from '@novu/shared';
 
@@ -81,6 +82,9 @@ export default memo(({ data }: { data: NodeData }) => {
         </Dropdown.Item>
         <Dropdown.Item data-test-id={`add-push-node`} icon={<Mobile />} onClick={() => addNewNode(StepTypeEnum.PUSH)}>
           Push
+        </Dropdown.Item>
+        <Dropdown.Item data-test-id={`add-voice-node`} icon={<Voice />} onClick={() => addNewNode(StepTypeEnum.VOICE)}>
+          Voice
         </Dropdown.Item>
         <Dropdown.Item
           data-test-id={`add-digest-node`}

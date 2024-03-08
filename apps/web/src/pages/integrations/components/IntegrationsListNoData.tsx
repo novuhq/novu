@@ -38,6 +38,7 @@ export const CHANNELS_ORDER = [
   ChannelTypeEnum.CHAT,
   ChannelTypeEnum.PUSH,
   ChannelTypeEnum.SMS,
+  ChannelTypeEnum.VOICE,
 ];
 
 interface IntegrationsListNoDataProps {

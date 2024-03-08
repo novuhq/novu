@@ -6,6 +6,7 @@ import {
   ISmsProvider,
   IChatProvider,
   IPushProvider,
+  IVoiceProvider,
 } from './provider/provider.interface';
 import { ProviderStore } from './provider/provider.store';
 import { ITemplate, ITriggerPayload } from './template/template.interface';
@@ -58,12 +59,22 @@ export class NovuStateless extends EventEmitter {
   }
 
   async registerProvider(
-    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
+    provider:
+      | IEmailProvider
+      | ISmsProvider
+      | IChatProvider
+      | IPushProvider
+      | IVoiceProvider
   );
 
   async registerProvider(
     providerId: string,
-    provider: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
+    provider:
+      | IEmailProvider
+      | ISmsProvider
+      | IChatProvider
+      | IPushProvider
+      | IVoiceProvider
   );
 
   async registerProvider(
@@ -72,8 +83,14 @@ export class NovuStateless extends EventEmitter {
       | IEmailProvider
       | ISmsProvider
       | IChatProvider
-      | IPushProvider,
-    provider?: IEmailProvider | ISmsProvider | IChatProvider | IPushProvider
+      | IPushProvider
+      | IVoiceProvider,
+    provider?:
+      | IEmailProvider
+      | ISmsProvider
+      | IChatProvider
+      | IPushProvider
+      | IVoiceProvider
   ) {
     await this.providerStore.addProvider(
       typeof providerOrProviderId === 'string'

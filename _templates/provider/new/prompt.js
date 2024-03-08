@@ -3,7 +3,7 @@ module.exports = [
     type: 'select',
     name: 'type',
     message: 'What type of provider is this?',
-    choices: ['EMAIL', 'SMS', 'PUSH', 'CHAT'],
+    choices: ['EMAIL', 'SMS', 'PUSH', 'CHAT','VOICE'],
   },
   {
     type: 'input',

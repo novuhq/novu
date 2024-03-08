@@ -8,6 +8,7 @@ import {
   InAppFilled,
   PushFilled,
   SmsFilled,
+  VoiceFilled,
 } from '@novu/design-system';
 
 export enum NodeTypeEnum {
@@ -31,6 +32,7 @@ export const CHANNEL_TYPE_TO_STRING: Record<ChannelTypeEnum, string> = {
   [ChannelTypeEnum.SMS]: 'SMS',
   [ChannelTypeEnum.CHAT]: 'Chat',
   [ChannelTypeEnum.PUSH]: 'Push',
+  [ChannelTypeEnum.VOICE]: 'Voice',
 };
 
 export const channels: IChannelDefinition[] = [
@@ -59,6 +61,15 @@ export const channels: IChannelDefinition[] = [
     Icon: SmsFilled,
     testId: 'smsSelector',
     channelType: StepTypeEnum.SMS,
+    type: NodeTypeEnum.CHANNEL,
+  },
+  {
+    tabKey: ChannelTypeEnum.VOICE,
+    label: 'Voice',
+    description: "Send a one way Voice call directly to the user's phone",
+    Icon: VoiceFilled,
+    testId: 'voiceSelector',
+    channelType: StepTypeEnum.VOICE,
     type: NodeTypeEnum.CHANNEL,
   },
   {

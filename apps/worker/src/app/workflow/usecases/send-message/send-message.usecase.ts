@@ -50,6 +50,7 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
+import { SendMessageVoice } from './send-message-voice.usecase';
 
 @Injectable()
 export class SendMessage {
@@ -61,6 +62,7 @@ export class SendMessage {
     private sendMessageInApp: SendMessageInApp,
     private sendMessageChat: SendMessageChat,
     private sendMessagePush: SendMessagePush,
+    private sendMessageVoice: SendMessageVoice,
     private digest: Digest,
     private executionLogRoute: ExecutionLogRoute,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
@@ -178,6 +180,8 @@ export class SendMessage {
         return await this.sendMessageChat.execute(sendMessageCommand);
       case StepTypeEnum.PUSH:
         return await this.sendMessagePush.execute(sendMessageCommand);
+      case StepTypeEnum.VOICE:
+        return await this.sendMessageVoice.execute(sendMessageCommand);
       case StepTypeEnum.DIGEST:
         return await this.digest.execute(command);
       case StepTypeEnum.DELAY:
