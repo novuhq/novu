@@ -16,7 +16,7 @@ This library contains a wrapper for the Novu Notification Center web component, 
 
 ## 📖 Client Installation
 
-For our client installation guide, visit our [Angular Client docs](https://docs.novu.co/notification-center/client/angular).
+For our client installation guide, visit our [Angular Client docs](https://docs.novu.co/notification-center/client/angular?utm_campaign=github-nc-readme).
 
 ## 🏃‍♂️ Quickstart
 
