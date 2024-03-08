@@ -14,6 +14,7 @@ import { SpotLightProvider } from '../providers/SpotlightProvider';
 import { useFeatureFlag } from '@novu/shared-web';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { HeaderNav as HeaderNavNew } from './components/v2/HeaderNav';
+import { MainNav } from '../nav/MainNav';
 
 const AppShellNew = styled.div`
   display: flex;
@@ -61,7 +62,7 @@ export function AppLayout() {
             >
               <SpotLight>
                 <AppShellNew>
-                  <SideNav />
+                  {isInformationArchitectureEnabled ? <MainNav /> : <SideNav />}
                   <ContentShell>
                     {isInformationArchitectureEnabled ? (
                       <HeaderNavNew />

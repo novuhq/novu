@@ -36,7 +36,7 @@ import { useEnvController, useFeatureFlag } from '../../../hooks';
 import { useSegment } from '../../providers/SegmentProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
-import OrganizationSelect from './OrganizationSelect';
+import OrganizationSelect from '../../nav/OrganizationSelect/OrganizationSelect';
 import { VisibilityOff } from './VisibilityOff';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
@@ -58,6 +58,7 @@ const usePopoverStyles = createStyles(({ colorScheme }) => ({
 
 type Props = {};
 
+/** @deprecated Use `MainNav` instead */
 export function SideNav({}: Props) {
   const navigate = useNavigate();
   const segment = useSegment();

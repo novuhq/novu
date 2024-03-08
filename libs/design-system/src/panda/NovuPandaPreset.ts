@@ -15,6 +15,7 @@ import {
   LINE_HEIGHT_TOKENS,
 } from './typography.tokens';
 import { LEGACY_GRADIENT_TOKENS } from './gradients.tokens';
+import { LEGACY_SHADOW_TOKENS } from './shadow.tokens';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -49,6 +50,7 @@ export const NovuPandaPreset = definePreset({
         ...LEGACY_COLOR_SEMANTIC_TOKENS,
       },
       gradients: LEGACY_GRADIENT_TOKENS,
+      shadows: LEGACY_SHADOW_TOKENS,
     },
     textStyles: TEXT_STYLES,
     extend: {
