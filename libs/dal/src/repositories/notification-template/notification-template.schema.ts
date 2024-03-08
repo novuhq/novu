@@ -248,6 +248,7 @@ notificationTemplateSchema.virtual('notificationGroup', {
 notificationTemplateSchema.index({
   _organizationId: 1,
   'triggers.identifier': 1,
+  deleted: 1,
 });
 
 notificationTemplateSchema.index({
