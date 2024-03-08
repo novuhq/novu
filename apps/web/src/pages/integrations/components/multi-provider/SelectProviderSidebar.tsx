@@ -99,8 +99,10 @@ export function SelectProviderSidebar({
   };
 
   useEffect(() => {
-    onTabChange(scrollTo?.toString());
-  }, [onTabChange, scrollTo]);
+    setTimeout(() => {
+      onTabChange(scrollTo?.toString());
+    }, 100);
+  }, []);
 
   return (
     <Sidebar
