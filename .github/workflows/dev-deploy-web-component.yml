@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Download the artifact
-        uses: actions/download-artifact@master
+        uses: actions/download-artifact@4
         with:
           name: notification-center-web-component
           path: packages/notification-center/dist/umd
