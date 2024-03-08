@@ -572,7 +572,12 @@
     "pulumi",
     "hostedtoolcache",
     "OTLP",
-    "otlp"
+    "otlp",
+    "hostedtoolcache",
+    "pyroscope",
+    "HEAY",
+    "Pyroscope",
+    "PYROSCOPE"
   ],
   "flagWords": [],
   "patterns": [
