@@ -1,8 +1,12 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
+import { api, useEnvController } from '@novu/shared-web';
+import { useMutation } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { IForm } from '../../../../pages/templates/components/formTypes';
+import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { useNavigateToStepEditor } from '../../../../pages/templates/hooks/useNavigateToStepEditor';
 import { usePreviewSmsTemplate } from '../../../../pages/templates/hooks/usePreviewSmsTemplate';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
@@ -27,13 +31,39 @@ const LocaleSelectStyled = styled(LocaleSelect)`
   }
 `;
 
-export const SmsPreview = ({ showPreviewAsLoading = false }: { showPreviewAsLoading?: boolean }) => {
+export const SmsPreview = ({
+  showPreviewAsLoading = false,
+  inputVariables,
+}: {
+  showPreviewAsLoading?: boolean;
+  inputVariables?: any;
+}) => {
   const { navigateToStepEditor } = useNavigateToStepEditor();
-  const { watch } = useFormContext<IForm>();
+  const { watch, formState } = useFormContext<IForm>();
+  const { template } = useTemplateEditorForm();
+  const { chimera } = useEnvController({}, template?.chimera);
   const path = useStepFormPath();
   const templateContent = watch(`${path}.template.content`);
   const { pathname } = useLocation();
   const isPreviewPath = pathname.endsWith('/preview');
+  const stepId = watch(`${path}.template.name`);
+  const [chimeraContent, setChimeraContent] = useState('');
+
+  const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
+    (data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setChimeraContent(data.outputs.body);
+      },
+    }
+  );
+
+  useEffect(() => {
+    if (chimera) {
+      mutateAsync(inputVariables);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chimera, inputVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: templateContent as string,
@@ -42,7 +72,7 @@ export const SmsPreview = ({ showPreviewAsLoading = false }: { showPreviewAsLoad
 
   const { isPreviewContentLoading, previewContent, templateError } = usePreviewSmsTemplate(
     selectedLocale,
-    showPreviewAsLoading
+    showPreviewAsLoading || chimera
   );
 
   return (
@@ -57,9 +87,9 @@ export const SmsPreview = ({ showPreviewAsLoading = false }: { showPreviewAsLoad
         />
         <SmsBubble
           onEditClick={navigateToStepEditor}
-          isLoading={isPreviewContentLoading || areLocalesLoading}
-          text={previewContent}
-          error={templateError}
+          isLoading={chimera ? isChimeraLoading : isPreviewContentLoading || areLocalesLoading}
+          text={chimera ? chimeraContent : previewContent}
+          error={chimera ? undefined : templateError}
           withOverlay={isPreviewPath}
         />
       </BodyContainer>

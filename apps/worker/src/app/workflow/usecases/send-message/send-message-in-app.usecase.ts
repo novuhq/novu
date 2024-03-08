@@ -164,6 +164,8 @@ export class SendMessageInApp extends SendMessageBase {
       }),
     });
 
+    const chimeraBody = command.chimeraData?.outputs.body;
+
     if (!oldMessage) {
       message = await this.messageRepository.create({
         _notificationId: command.notificationId,
@@ -176,7 +178,7 @@ export class SendMessageInApp extends SendMessageBase {
         cta: step.template.cta,
         _feedId: step.template._feedId,
         transactionId: command.transactionId,
-        content: this.storeContent() ? content : null,
+        content: this.storeContent() ? chimeraBody || content : null,
         payload: messagePayload,
         providerId: integration.providerId,
         templateIdentifier: command.identifier,

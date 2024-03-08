@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -8,29 +10,33 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import {
-  InstrumentUsecase,
   AnalyticsService,
   buildNotificationTemplateKey,
-  CachedEntity,
-  DetailEnum,
-  GetSubscriberTemplatePreference,
-  GetSubscriberTemplatePreferenceCommand,
-  Instrument,
-  ConditionsFilterCommand,
-  ConditionsFilter,
-  IFilterVariables,
-  GetSubscriberGlobalPreference,
-  GetSubscriberGlobalPreferenceCommand,
   buildSubscriberKey,
+  CachedEntity,
+  ConditionsFilter,
+  ConditionsFilterCommand,
+  DetailEnum,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
+  IFilterVariables,
+  Instrument,
+  InstrumentUsecase,
+  IChimeraChannelResponse,
+  IUseCaseInterfaceInline,
+  requireInject,
+  ExecuteOutput,
 } from '@novu/application-generic';
 import {
-  SubscriberRepository,
   JobEntity,
-  NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
+  NotificationTemplateRepository,
+  SubscriberRepository,
   TenantEntity,
   TenantRepository,
 } from '@novu/dal';
@@ -47,6 +53,8 @@ import { PlatformException } from '../../../shared/utils';
 
 @Injectable()
 export class SendMessage {
+  private chimeraConnector: IUseCaseInterfaceInline;
+
   constructor(
     private sendMessageEmail: SendMessageEmail,
     private sendMessageSms: SendMessageSms,
@@ -63,8 +71,11 @@ export class SendMessage {
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
-    private analyticsService: AnalyticsService
-  ) {}
+    private analyticsService: AnalyticsService,
+    protected moduleRef: ModuleRef
+  ) {
+    this.chimeraConnector = requireInject('chimera_connector', this.moduleRef);
+  }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
@@ -76,6 +87,14 @@ export class SendMessage {
     ]);
 
     const stepType = command.step?.template?.type;
+
+    const chimeraResponse = await this.chimeraConnector.execute<
+      SendMessageCommand & { variables: IFilterVariables },
+      ExecuteOutput<IChimeraChannelResponse> | null
+    >({
+      ...command,
+      variables: shouldRun.variables,
+    });
 
     if (!command.payload?.$on_boarding_trigger) {
       const usedFilters = shouldRun?.conditions.reduce(ConditionsFilter.sumFilters, {
@@ -102,6 +121,7 @@ export class SendMessage {
        * This is intentional, so that mixpanel can automatically reshard it.
        */
       this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
+        workflowType: chimeraResponse?.outputs ? 'ECHO' : 'REGULAR',
         _template: command.job._templateId,
         _organization: command.organizationId,
         _environment: command.environmentId,
@@ -141,7 +161,11 @@ export class SendMessage {
       );
     }
 
-    const sendMessageCommand = SendMessageCommand.create({ ...command, compileContext: payload });
+    const sendMessageCommand = SendMessageCommand.create({
+      ...command,
+      compileContext: payload,
+      chimeraData: chimeraResponse,
+    });
 
     switch (stepType) {
       case StepTypeEnum.SMS:

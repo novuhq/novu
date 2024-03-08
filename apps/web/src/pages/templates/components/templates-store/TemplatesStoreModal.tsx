@@ -5,6 +5,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
 import { Button, colors, shadows, Close } from '@novu/design-system';
 import { faFile } from '@fortawesome/free-regular-svg-icons';
+import { INotificationTemplateStep } from '@novu/shared';
 
 import {
   CanvasHolder,
@@ -177,7 +178,7 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
             <ReactFlowProvider>
               <FlowEditor
                 key={selectedTemplate._id}
-                steps={selectedTemplate.steps}
+                steps={selectedTemplate.steps as INotificationTemplateStep[]}
                 nodeTypes={nodeTypes}
                 zoomOnScroll={false}
                 zoomOnPinch={false}

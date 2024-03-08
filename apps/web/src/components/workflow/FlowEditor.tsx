@@ -24,6 +24,7 @@ import { colors } from '@novu/design-system';
 import { getChannel } from '../../utils/channels';
 import { useEnvController } from '../../hooks';
 import type { IEdge, IFlowStep, INode } from './types';
+import { useTemplateEditorForm } from '../../pages/templates/components/TemplateEditorFormProvider';
 
 const triggerNode: Node = {
   id: '1',
@@ -91,7 +92,8 @@ export function FlowEditor({
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<IEdge>([]);
   const reactFlowInstance = useReactFlow();
-  const { readonly } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { readonly } = useEnvController({}, template?.chimera);
 
   useEffect(() => {
     const clientWidth = reactFlowWrapper.current?.clientWidth;
