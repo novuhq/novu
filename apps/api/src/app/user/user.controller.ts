@@ -7,6 +7,8 @@ import {
   UseGuards,
   UseInterceptors,
   Logger,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { IJwtPayload } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -22,10 +24,13 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ChangeProfileEmailDto } from './dtos/change-profile-email.dto';
 import { UpdateProfileEmail } from './usecases/update-profile-email/update-profile-email.usecase';
 import { UpdateProfileEmailCommand } from './usecases/update-profile-email/update-profile-email.command';
-import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiResponse, ApiNoContentResponse } from '../shared/framework/response.decorator';
 import { UserOnboardingTourRequestDto } from './dtos/user-onboarding-tour-request.dto';
 import { UpdateOnBoardingTourUsecase } from './usecases/update-on-boarding-tour/update-on-boarding-tour.usecase';
 import { UpdateOnBoardingTourCommand } from './usecases/update-on-boarding-tour/update-on-boarding-tour.command';
+import { UpdateNameAndProfilePicture } from './usecases/update-name-and-profile-picture/update-name-and-profile-picture.usecase';
+import { UpdateNameAndProfilePictureCommand } from './usecases/update-name-and-profile-picture/update-name-and-profile-picture.command';
+import { UpdateProfileRequestDto } from './dtos/update-profile-request.dto';
 
 @ApiCommonResponses()
 @Controller('/users')
@@ -38,7 +43,8 @@ export class UsersController {
     private getMyProfileUsecase: GetMyProfileUsecase,
     private updateOnBoardingUsecase: UpdateOnBoardingUsecase,
     private updateOnBoardingTourUsecase: UpdateOnBoardingTourUsecase,
-    private updateProfileEmailUsecase: UpdateProfileEmail
+    private updateProfileEmailUsecase: UpdateProfileEmail,
+    private updateNameAndProfilePictureUsecase: UpdateNameAndProfilePicture
   ) {}
 
   @Get('/me')
@@ -100,6 +106,28 @@ export class UsersController {
       UpdateOnBoardingTourCommand.create({
         userId: user._id,
         showOnBoardingTour: body.showOnBoardingTour,
+      })
+    );
+  }
+
+  @Put('/profile')
+  @ApiOperation({
+    summary: 'Update user name and profile picture',
+  })
+  @ExternalApiAccessible()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse({
+    description: 'Profile updated successfully.',
+  })
+  async updateProfile(@UserSession() user: IJwtPayload, @Body() body: UpdateProfileRequestDto) {
+    return await this.updateNameAndProfilePictureUsecase.execute(
+      UpdateNameAndProfilePictureCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        firstName: body.firstName,
+        lastName: body.lastName,
+        imageUrl: body.imageUrl,
+        organizationId: user.organizationId,
       })
     );
   }
