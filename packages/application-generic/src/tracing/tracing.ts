@@ -46,10 +46,6 @@ export function initializeOtelSdk(serviceName: string, version: string) {
         }),
       ],
     }),
-    instrumentations: [
-      getNodeAutoInstrumentations({
-        '@opentelemetry/instrumentation-pino': {},
-      }),
-    ],
+    instrumentations: [getNodeAutoInstrumentations()],
   });
 }
