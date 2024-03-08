@@ -221,7 +221,7 @@ const validateTemplate = (template, ctx) => {
       template.type === ChannelTypeEnum.IN_APP ||
       template.type === ChannelTypeEnum.PUSH ||
       template.type === ChannelTypeEnum.CHAT) &&
-    template.content.length === 0
+    template.content?.length === 0
   ) {
     ctx.addIssue({
       code: z.ZodIssueCode.too_small,

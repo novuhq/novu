@@ -1,33 +1,43 @@
 import { ChannelTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { Text } from '@novu/design-system';
-import { useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
+import { colors, Text, When } from '@novu/design-system';
+import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
 
-import { Flex, Grid, Stack } from '@mantine/core';
+import { Flex, Grid, SegmentedControl, Stack, useMantineTheme } from '@mantine/core';
 import { useState } from 'react';
 import { PushPreview } from '../../../components/workflow/preview';
 import { useEditTemplateContent } from '../hooks/useEditTemplateContent';
 import { CustomCodeEditor } from './CustomCodeEditor';
 import { EditVariablesModal } from './EditVariablesModal';
-import { TranslateProductLead } from './TranslateProductLead';
 import { VariableManagementButton } from './VariableManagementButton';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
+import { InputVariables } from './InputVariables';
+import { InputVariablesForm } from './InputVariablesForm';
 
 const templateFields = ['content', 'title'];
+
+const PREVIEW = 'Preview';
+const INPUTS = 'Inputs';
 
 export function TemplatePushEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);
+  const [inputVariables, setInputVariables] = useState();
 
   const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.PUSH,
   });
+  const { template } = useTemplateEditorForm();
+  const { chimera } = useEnvController({}, template?.chimera);
+  const [activeTab, setActiveTab] = useState<string>(PREVIEW);
+  const theme = useMantineTheme();
 
   return (
     <>
@@ -47,34 +57,41 @@ export function TemplatePushEditor() {
                     openEditVariablesModal={() => {
                       setEditVariablesModalOpen(true);
                     }}
-                    label="Title"
+                    label={chimera ? 'Input variables' : 'Title'}
                   />
-                  <CustomCodeEditor
-                    value={(field.value as string) || ''}
-                    onChange={(value) => {
-                      handleContentChange(value, field.onChange);
-                    }}
-                    height="128px"
-                  />
+                  <When truthy={!chimera}>
+                    <CustomCodeEditor
+                      value={(field.value as string) || ''}
+                      onChange={(value) => {
+                        handleContentChange(value, field.onChange);
+                      }}
+                      height="128px"
+                    />
+                  </When>
+                  <When truthy={chimera}>
+                    <InputVariablesForm onChange={setInputVariables} />
+                  </When>
                 </Stack>
               )}
             />
-            <Controller
-              name={`${stepFormPath}.template.content` as any}
-              defaultValue=""
-              control={control}
-              render={({ field }) => (
-                <Stack spacing={8} data-test-id="push-content-container">
-                  <Text weight="bold">Message</Text>
-                  <CustomCodeEditor
-                    value={(field.value as string) || ''}
-                    onChange={(value) => {
-                      handleContentChange(value, field.onChange);
-                    }}
-                  />
-                </Stack>
-              )}
-            />
+            <When truthy={!chimera}>
+              <Controller
+                name={`${stepFormPath}.template.content` as any}
+                defaultValue=""
+                control={control}
+                render={({ field }) => (
+                  <Stack spacing={8} data-test-id="push-content-container">
+                    <Text weight="bold">Message</Text>
+                    <CustomCodeEditor
+                      value={(field.value as string) || ''}
+                      onChange={(value) => {
+                        handleContentChange(value, field.onChange);
+                      }}
+                    />
+                  </Stack>
+                )}
+              />
+            </When>
           </Stack>
           <EditVariablesModal
             open={editVariablesModalOpened}
@@ -84,7 +101,7 @@ export function TemplatePushEditor() {
         </Grid.Col>
         <Grid.Col span={'content'}>
           <Flex justify="center">
-            <PushPreview showLoading={isPreviewLoading} showOverlay={false} />
+            <PushPreview inputVariables={inputVariables} showLoading={isPreviewLoading} showOverlay={false} />
           </Flex>
         </Grid.Col>
       </Grid>
