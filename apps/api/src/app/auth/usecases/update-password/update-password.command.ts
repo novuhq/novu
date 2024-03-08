@@ -1,19 +1,21 @@
-import { IsDefined, IsString, MinLength } from 'class-validator';
+import { passwordConstraints } from '@novu/shared';
+import { IsNotEmpty, Matches, MaxLength, MinLength } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class UpdatePasswordCommand extends EnvironmentWithUserCommand {
-  @IsString()
-  @IsDefined()
-  @MinLength(8)
-  currentPassword: string;
+  @IsNotEmpty()
+  @MinLength(passwordConstraints.minLength)
+  @MaxLength(passwordConstraints.maxLength)
+  @Matches(passwordConstraints.pattern, {
+    message:
+      'The new password must contain minimum 8 and maximum 64 characters,' +
+      ' at least one uppercase letter, one lowercase letter, one number and one special character #?!@$%^&*()-',
+  })
+  newPassword: string;
 
-  @IsString()
-  @IsDefined()
-  @MinLength(8)
+  @IsNotEmpty()
   confirmPassword: string;
 
-  @IsString()
-  @IsDefined()
-  @MinLength(8)
-  newPassword: string;
+  @IsNotEmpty()
+  currentPassword: string;
 }

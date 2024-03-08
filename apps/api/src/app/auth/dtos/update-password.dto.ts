@@ -1,7 +1,8 @@
 import { passwordConstraints } from '@novu/shared';
-import { IsDefined, Matches, MaxLength, MinLength } from 'class-validator';
+import { IsNotEmpty, Matches, MaxLength, MinLength } from 'class-validator';
+
 export class UpdatePasswordBodyDto {
-  @IsDefined()
+  @IsNotEmpty()
   @MinLength(passwordConstraints.minLength)
   @MaxLength(passwordConstraints.maxLength)
   @Matches(passwordConstraints.pattern, {
@@ -11,9 +12,9 @@ export class UpdatePasswordBodyDto {
   })
   newPassword: string;
 
-  @IsDefined()
+  @IsNotEmpty()
   confirmPassword: string;
 
-  @IsDefined()
+  @IsNotEmpty()
   currentPassword: string;
 }

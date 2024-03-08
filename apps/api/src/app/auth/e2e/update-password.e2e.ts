@@ -65,4 +65,26 @@ describe('User update password - /auth/update-password (POST)', async () => {
     expect(body.statusCode).to.equal(400);
     expect(body.message[0]).to.contain('The new password must contain minimum 8 and maximum 64 characters');
   });
+
+  it('should fail if password length is less than 8 or more then 64', async () => {
+    const { body: minimumLengthBody } = await session.testAgent.post('/v1/auth/update-password').send({
+      currentPassword: CYPRESS_USER_PASSWORD,
+      newPassword: '123',
+      confirmPassword: '123',
+    });
+
+    expect(minimumLengthBody.statusCode).to.equal(400);
+    expect(minimumLengthBody.message[0]).to.contain(
+      'The new password must contain minimum 8 and maximum 64 characters'
+    );
+
+    const { body: maxLengthBody } = await session.testAgent.post('/v1/auth/update-password').send({
+      currentPassword: CYPRESS_USER_PASSWORD,
+      newPassword: 'Ab1@'.repeat(20),
+      confirmPassword: 'Ab1@'.repeat(20),
+    });
+
+    expect(maxLengthBody.statusCode).to.equal(400);
+    expect(maxLengthBody.message[0]).to.contain('The new password must contain minimum 8 and maximum 64 characters');
+  });
 });
