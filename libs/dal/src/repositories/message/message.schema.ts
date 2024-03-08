@@ -286,6 +286,15 @@ messageSchema.index({
   deleted: 1,
 });
 
+messageSchema.index({
+  _environmentId: 1,
+  _subscriberId: 1,
+  channel: 1,
+  seen: 1,
+  read: 1,
+  deleted: 1,
+});
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Message =
   (mongoose.models.Message as mongoose.Model<MessageDBModel>) ||
