@@ -53,22 +53,15 @@ export class MarkAllMessagesAs {
       channel: ChannelTypeEnum.IN_APP,
     });
 
-    const isUnreadCountChanged =
-      command.markAs === MarkMessagesAsEnum.READ || command.markAs === MarkMessagesAsEnum.UNREAD;
-
-    const countQuery = isUnreadCountChanged ? { read: false } : { seen: false };
-
-    const count = await this.messageRepository.getCount(
-      command.environmentId,
-      subscriber._id,
-      ChannelTypeEnum.IN_APP,
-      countQuery
-    );
+    const eventMessage =
+      command.markAs === MarkMessagesAsEnum.READ || command.markAs === MarkMessagesAsEnum.UNREAD
+        ? WebSocketEventEnum.UNREAD
+        : WebSocketEventEnum.UNSEEN;
 
     this.webSocketsQueueService.add({
       name: 'sendMessage',
       data: {
-        event: isUnreadCountChanged ? WebSocketEventEnum.UNREAD : WebSocketEventEnum.UNSEEN,
+        event: eventMessage,
         userId: subscriber._id,
         _environmentId: command.environmentId,
       },
