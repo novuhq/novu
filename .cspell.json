@@ -570,7 +570,9 @@
     "azcopy",
     "cpack",
     "pulumi",
-    "hostedtoolcache"
+    "hostedtoolcache",
+    "OTLP",
+    "otlp"
   ],
   "flagWords": [],
   "patterns": [
