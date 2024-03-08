@@ -15,10 +15,13 @@ import { Resource } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function initializeOtelSdk(serviceName: string, version: string) {
+export function initializeOtelSdk(serviceName: string) {
   return new NodeSDK({
     resource: new Resource({
-      'service.version': version,
+      /*
+       *  Will need to find a way to dynamically pass this through env variables on through the service somehow
+       * 'service.version': version,
+       */
       'service.group': 'instrumentation-group',
       [SemanticResourceAttributes.SERVICE_NAME]: serviceName,
     }),
