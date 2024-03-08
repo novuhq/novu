@@ -14,7 +14,7 @@ const packageJson = require('../package.json');
 const modules = [
   SharedModule,
   HealthModule,
-  TracingModule.register(packageJson.name),
+  TracingModule.register(packageJson.name, packageJson.version),
   SocketModule,
   LoggerModule.forRoot(
     createNestLoggingModuleOptions({

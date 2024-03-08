@@ -91,7 +91,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   TenantModule,
   WorkflowOverridesModule,
   RateLimitingModule,
-  TracingModule.register(packageJson.name),
+  TracingModule.register(packageJson.name, packageJson.version),
 ];
 
 const enterpriseModules = enterpriseImports();

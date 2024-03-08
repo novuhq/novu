@@ -14,7 +14,7 @@ const modules = [
   SharedModule,
   HealthModule,
   WebhooksModule,
-  TracingModule.register(packageJson.name),
+  TracingModule.register(packageJson.name, packageJson.version),
   LoggerModule.forRoot(
     createNestLoggingModuleOptions({
       serviceName: packageJson.name,
