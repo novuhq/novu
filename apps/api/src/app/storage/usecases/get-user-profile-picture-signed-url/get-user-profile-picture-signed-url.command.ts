@@ -12,7 +12,7 @@ export class GetUserProfilePictureSignedUrlCommand extends EnvironmentWithUserCo
   extension: string;
 }
 
-export const MIME_TYPES_LOOKUP = {
+export const MIME_TYPES_LOOKUP: Record<MimeTypesEnum, string> = {
   [MimeTypesEnum.JPEG]: 'image/jpeg',
   [MimeTypesEnum.PNG]: 'image/png',
   [MimeTypesEnum.JPG]: 'image/jpeg',
