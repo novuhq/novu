@@ -283,6 +283,7 @@ messageSchema.index({
   _environmentId: 1,
   providerId: 1,
   createdAt: 1,
+  deleted: 1,
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
