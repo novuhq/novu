@@ -51,28 +51,38 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     maxWidth: 340,
     Cell: withCellLoading(({ row: { original } }) => (
       <Group spacing={8}>
-        <Tooltip
-          error
-          label="Some steps are missing a provider configuration or a primary provider,
+        <Group spacing={4}>
+          <When truthy={original.chimera}>
+            <Tooltip label="Workflow is handled by Chimera" position="top">
+              <div>
+                <Bolt color="#4c6dd4" width="24px" height="24px" />
+              </div>
+            </Tooltip>
+          </When>
+          <Tooltip
+            error
+            label="Some steps are missing a provider configuration or a primary provider,
           causing some notifications to fail."
-          width={300}
-          multiline
-          disabled={
-            original.workflowIntegrationStatus?.hasActiveIntegrations &&
-            original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false
-          }
-          position="top"
-        >
-          <div>
-            {original.workflowIntegrationStatus?.hasActiveIntegrations &&
-            original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
-              <Bolt color={colors.B40} width="24px" height="24px" />
-            ) : (
-              <ProviderMissing width="24px" height="24px" />
-            )}
-          </div>
-        </Tooltip>
-
+            width={300}
+            multiline
+            disabled={
+              original.workflowIntegrationStatus?.hasActiveIntegrations &&
+              original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false
+            }
+            position="top"
+          >
+            <div>
+              {original.workflowIntegrationStatus?.hasActiveIntegrations &&
+              original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
+                !original.chimera ? (
+                  <Bolt color={colors.B40} width="24px" height="24px" />
+                ) : null
+              ) : (
+                <ProviderMissing width="24px" height="24px" />
+              )}
+            </div>
+          </Tooltip>
+        </Group>
         <Tooltip label={original.name}>
           <div>
             <Text rows={1}>{original.name}</Text>
@@ -89,9 +99,9 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     Header: 'Group',
     width: 240,
     maxWidth: 240,
-    Cell: withCellLoading(({ row: { original } }) => (
-      <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
-    )),
+    Cell: withCellLoading(({ row: { original } }) =>
+      original.chimera ? null : <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
+    ),
   },
   {
     accessor: 'createdAt',

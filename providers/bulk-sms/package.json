@@ -1,6 +1,6 @@
 {
   "name": "@novu/bulk-sms",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "description": "A bulk-sms wrapper for novu",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -29,7 +29,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@novu/stateless": "^0.23.1",
+    "@novu/stateless": "^0.24.0",
     "axios": "^1.6.0"
   },
   "devDependencies": {

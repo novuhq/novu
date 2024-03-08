@@ -4,6 +4,7 @@
   "language": "en",
   "words": [
     "cacheable",
+    "mrkdwn",
     "Springboot",
     "tmproj",
     "hgignore",
@@ -563,7 +564,14 @@
     "spyon",
     "restapi",
     "ringcentral",
-    "reshard"
+    "reshard",
+    "userid",
+    "endgroup",
+    "aliyun",
+    "azcopy",
+    "cpack",
+    "pulumi",
+    "hostedtoolcache"
   ],
   "flagWords": [],
   "patterns": [
@@ -646,6 +654,7 @@
     ".gitignore",
     "angular.json",
     "ng-package.json",
-    "libs/shared/src/types/timezones/timezones.types.ts"
+    "libs/shared/src/types/timezones/timezones.types.ts",
+    "*.riv"
   ]
 }

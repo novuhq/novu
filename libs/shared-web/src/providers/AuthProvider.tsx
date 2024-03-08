@@ -5,6 +5,7 @@ import { useAuthController, useFeatureFlags } from '../hooks';
 type UserContext = {
   token: string | null;
   currentUser: IUserEntity | undefined;
+  isUserLoading: boolean;
   currentOrganization: IOrganizationEntity | undefined;
   organizations: IOrganizationEntity[] | undefined;
   setToken: (token: string, refetch?: boolean) => void;
@@ -15,6 +16,7 @@ type UserContext = {
 const AuthContext = React.createContext<UserContext>({
   token: null,
   currentUser: undefined,
+  isUserLoading: true,
   setToken: undefined as any,
   logout: undefined as any,
   currentOrganization: undefined as any,
@@ -25,13 +27,14 @@ const AuthContext = React.createContext<UserContext>({
 export const useAuthContext = (): UserContext => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const { token, setToken, user, organization, logout, jwtPayload, organizations } = useAuthController();
+  const { token, setToken, user, organization, isUserLoading, logout, jwtPayload, organizations } = useAuthController();
   useFeatureFlags(organization);
 
   return (
     <AuthContext.Provider
       value={{
         currentUser: user,
+        isUserLoading,
         currentOrganization: organization,
         organizations,
         token,

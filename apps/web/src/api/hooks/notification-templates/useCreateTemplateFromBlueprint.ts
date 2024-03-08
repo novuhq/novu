@@ -1,5 +1,5 @@
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
-import { ICreateNotificationTemplateDto, INotificationTemplate } from '@novu/shared';
+import { ICreateNotificationTemplateDto, INotificationTemplate, INotificationTemplateStep } from '@novu/shared';
 
 import { createTemplate } from '../../notification-templates';
 
@@ -7,7 +7,7 @@ const mapBlueprintToTemplate = (blueprint: INotificationTemplate): ICreateNotifi
   name: blueprint.name,
   tags: blueprint.tags,
   description: blueprint.description,
-  steps: blueprint.steps,
+  steps: blueprint.steps as INotificationTemplateStep[],
   notificationGroupId: blueprint._notificationGroupId,
   active: blueprint.active,
   draft: blueprint.draft,

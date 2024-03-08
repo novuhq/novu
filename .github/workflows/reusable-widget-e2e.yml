@@ -16,19 +16,8 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_widget:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest-large
+    runs-on: ubuntu-latest
     timeout-minutes: 80
-
-    strategy:
-      # when one test fails, DO NOT cancel the other
-      # containers, because this will kill Cypress processes
-      # leaving the Dashboard hanging ...
-      # https://github.com/cypress-io/github-action/issues/48
-      fail-fast: false
-      matrix:
-        # run 3 copies of the current job in parallel
-        containers: [1, 2]
-
     permissions:
       contents: read
       packages: write
@@ -53,11 +42,14 @@ jobs:
       # else checkout without submodules if the token is not provided
       - uses: actions/checkout@v3
         if: steps.setup.outputs.has_token != 'true'
+
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
           cypress_version: 12.9.0
           cypress: true
+          submodules: ${{ inputs.ee && steps.setup.outputs.has_token == 'true' }}
+
       - uses: ./.github/actions/setup-redis-cluster
 
       - uses: mansagroup/nrwl-nx-action@v3
@@ -68,6 +60,7 @@ jobs:
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: build
+          args: --skip-nx-cache
           projects: '@novu/widget,@novu/embed,@novu/api,@novu/worker,@novu/ws'
 
       - uses: ./.github/actions/run-backend
@@ -108,7 +101,7 @@ jobs:
           browser: chrome
           install: false
           record: true
-          parallel: true
+          parallel: false
           config-file: cypress.config.ts
 
       - uses: actions/upload-artifact@v3

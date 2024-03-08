@@ -5,6 +5,7 @@ import { colors } from '@novu/design-system';
 
 import { useEnvController } from '../../../hooks';
 import type { IForm } from './formTypes';
+import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 
 export const StepNameInput = ({
   path,
@@ -20,7 +21,8 @@ export const StepNameInput = ({
     formState: { errors, isSubmitted },
   } = useFormContext<IForm>();
 
-  const { readonly } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { readonly } = useEnvController({}, template?.chimera);
   const showErrors = isSubmitted && errors?.steps;
   const { colorScheme } = useMantineColorScheme();
 

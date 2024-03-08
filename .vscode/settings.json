@@ -25,5 +25,11 @@
   },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "files.exclude": {
+    "**/.source": true
+  },
+  "search.exclude": {
+    "**/.source": true
   }
 }

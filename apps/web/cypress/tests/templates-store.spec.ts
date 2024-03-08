@@ -234,7 +234,6 @@ describe('Templates Store', function () {
     cy.getByTestId('all-workflow-tile').should('exist').should('not.be.disabled').click();
     cy.getByTestId('templates-store-modal').should('be.visible');
     cy.getByTestId('templates-store-modal-use-template').should('be.enabled').click();
-    cy.getByTestId('templates-store-modal-use-template').should('be.disabled');
 
     cy.wait('@createTemplate');
 

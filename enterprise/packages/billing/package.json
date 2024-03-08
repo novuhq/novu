@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-billing",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -15,9 +15,9 @@
   "dependencies": {
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/throttler": "^5.0.1",
-    "@novu/application-generic": "^0.23.1",
-    "@novu/ee-dal": "^0.23.1",
-    "@novu/shared": "^0.23.1",
+    "@novu/application-generic": "^0.24.0",
+    "@novu/ee-dal": "^0.24.0",
+    "@novu/shared": "^0.24.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "date-fns": "^2.29.2",
@@ -43,6 +43,6 @@
     "@nestjs/common": "10.2.2",
     "@nestjs/jwt": "10.2.0",
     "@nestjs/platform-express": "^10.2.2",
-    "@novu/dal": "^0.23.1"
+    "@novu/dal": "^0.24.0"
   }
 }
