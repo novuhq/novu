@@ -4,7 +4,18 @@
  *
  * E.g. instead of using <Md10k />, use <Icon10k />
  */
-
+export {
+  /** @deprecated - Use https://react-icons.github.io/react-icons/icons/md/ for names with "Icon" instead of "Md" */
+  AppleIcon,
+} from './general/AppleIcon';
+export {
+  /** @deprecated - Use https://react-icons.github.io/react-icons/icons/md/ for names with "Icon" instead of "Md" */
+  AndroidIcon,
+} from './general/AndroidIcon';
+export {
+  /** @deprecated - Use https://react-icons.github.io/react-icons/icons/md/ for names with "Icon" instead of "Md" */
+  CurlyBrackets,
+} from './general/CurlyBrackets';
 export {
   /** @deprecated - Use https://react-icons.github.io/react-icons/icons/md/ for names with "Icon" instead of "Md" */
   ActiveLabel,

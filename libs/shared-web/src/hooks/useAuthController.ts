@@ -57,7 +57,7 @@ export function useAuthController() {
   const [organization, setOrganization] = useState<IOrganizationEntity>();
   const isLoggedIn = !!token;
 
-  const { data: user } = useQuery<IUserEntity>(['/v1/users/me'], getUser, {
+  const { data: user, isLoading: isUserLoading } = useQuery<IUserEntity>(['/v1/users/me'], getUser, {
     enabled: Boolean(isLoggedIn && axios.defaults.headers.common.Authorization),
   });
 
@@ -129,6 +129,7 @@ export function useAuthController() {
   return {
     isLoggedIn,
     user,
+    isUserLoading,
     organizations,
     organization,
     token,

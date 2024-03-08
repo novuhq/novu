@@ -3,7 +3,8 @@ import styled from '@emotion/styled/macro';
 import { Title, Text, Grid, Stack, useMantineColorScheme } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
-import { ICredentialsDto, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import type { IResponseError, ICredentialsDto } from '@novu/shared';
+import { UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import { Switch, Button, colors, CircleArrowRight } from '@novu/design-system';
 
 import { IIntegratedProvider } from '../types';
@@ -26,7 +27,7 @@ export const NovuInAppForm = ({
 
   const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
     { res: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     {
       integrationId: string;
       data: { credentials: ICredentialsDto; active: boolean; check: boolean };

@@ -5,8 +5,17 @@ import { useLayouts } from '../../../../hooks';
 import { useEffect } from 'react';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useStepFormErrors } from '../../hooks/useStepFormErrors';
+import { When } from '../../../../components/utils/When';
 
-export const EmailInboxContent = ({ integration, readonly }: { readonly: boolean; integration: any }) => {
+export const EmailInboxContent = ({
+  integration,
+  chimera,
+  readonly,
+}: {
+  readonly: boolean;
+  chimera: boolean;
+  integration: any;
+}) => {
   const theme = useMantineTheme();
   const {
     control,
@@ -87,47 +96,51 @@ export const EmailInboxContent = ({ integration, readonly }: { readonly: boolean
           </div>
         </Grid.Col>
         <Grid.Col span={4}>
-          <Controller
-            name={`${stepFormPath}.template.preheader`}
-            defaultValue=""
-            control={control}
-            render={({ field, fieldState }) => {
-              return (
-                <Input
-                  {...field}
-                  label="Preheader"
-                  error={fieldState.error?.message}
-                  disabled={readonly}
-                  value={field.value}
-                  placeholder="Preheader..."
-                  data-test-id="emailPreheader"
-                />
-              );
-            }}
-          />
+          <When truthy={!chimera}>
+            <Controller
+              name={`${stepFormPath}.template.preheader`}
+              defaultValue=""
+              control={control}
+              render={({ field, fieldState }) => {
+                return (
+                  <Input
+                    {...field}
+                    label="Preheader"
+                    error={fieldState.error?.message}
+                    disabled={readonly}
+                    value={field.value}
+                    placeholder="Preheader..."
+                    data-test-id="emailPreheader"
+                  />
+                );
+              }}
+            />
+          </When>
         </Grid.Col>
       </Grid>
-      <Controller
-        name={`${stepFormPath}.template.layoutId`}
-        defaultValue=""
-        control={control}
-        render={({ field }) => {
-          return (
-            <Select
-              {...field}
-              label="Email Layout"
-              data-test-id="templates-layout"
-              loading={isLoading}
-              disabled={readonly}
-              required={(layouts || [])?.length > 0}
-              error={stepFormErrors ? stepFormErrors.template?.layoutId?.message : undefined}
-              searchable
-              placeholder="Select layout"
-              data={(layouts || []).map((layout) => ({ value: layout._id as string, label: layout.name }))}
-            />
-          );
-        }}
-      />
+      <When truthy={!chimera}>
+        <Controller
+          name={`${stepFormPath}.template.layoutId`}
+          defaultValue=""
+          control={control}
+          render={({ field }) => {
+            return (
+              <Select
+                {...field}
+                label="Email Layout"
+                data-test-id="templates-layout"
+                loading={isLoading}
+                disabled={readonly}
+                required={(layouts || [])?.length > 0}
+                error={stepFormErrors ? stepFormErrors.template?.layoutId?.message : undefined}
+                searchable
+                placeholder="Select layout"
+                data={(layouts || []).map((layout) => ({ value: layout._id as string, label: layout.name }))}
+              />
+            );
+          }}
+        />
+      </When>
     </div>
   );
 };

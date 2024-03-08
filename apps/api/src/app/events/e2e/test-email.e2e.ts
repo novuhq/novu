@@ -12,6 +12,7 @@ describe('Events - Test email - /v1/events/test/email (POST)', function () {
   const requestDto: TestSendEmailRequestDto = {
     contentType: 'customHtml',
     payload: {},
+    inputs: {},
     subject: 'subject',
     preheader: 'preheader',
     content: '<html><head></head><body>Hello world!</body></html>',
@@ -40,7 +41,7 @@ describe('Events - Test email - /v1/events/test/email (POST)', function () {
       channel: ChannelTypeEnum.EMAIL,
       _organizationId: session.organization._id,
     });
-    await integrationRepository.delete({ _id: emailIntegration._id, _organizationId: session.organization._id });
+    await integrationRepository.delete({ _id: emailIntegration?._id, _organizationId: session.organization._id });
   };
 
   const deactivateEmailIntegration = async () => {
@@ -50,7 +51,7 @@ describe('Events - Test email - /v1/events/test/email (POST)', function () {
     });
     await integrationRepository.update(
       {
-        _id: emailIntegration._id,
+        _id: emailIntegration?._id,
         _environmentId: session.environment._id,
       },
       { active: false }

@@ -17,8 +17,8 @@ import { WorkflowSidebar } from './WorkflowSidebar';
 
 export const TemplateSettings = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
-  const { readonly } = useEnvController();
-  const { trigger } = useTemplateEditorForm();
+  const { trigger, template } = useTemplateEditorForm();
+  const { readonly } = useEnvController({}, template?.chimera);
   const [toDelete, setToDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isError, setIsError] = useState<string | undefined>(undefined);

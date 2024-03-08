@@ -28,6 +28,7 @@ import { DisplayPrimaryProviderIcon } from '../../DisplayPrimaryProviderIcon';
 import { NodeErrorPopover } from '../../NodeErrorPopover';
 import { NODE_ERROR_TYPES } from './utils';
 import { WorkflowNodeActions } from './WorkflowNodeActions';
+import { useTemplateEditorForm } from '../../../components/TemplateEditorFormProvider';
 
 export type NodeType = 'step' | 'stepRoot' | 'variant' | 'variantRoot';
 
@@ -42,6 +43,7 @@ interface IWorkflowNodeProps {
   errors?: boolean | string;
   id?: string;
   index?: number;
+  onClick?: MouseEventHandler<HTMLDivElement>;
   onDelete?: () => void;
   onAddVariant?: () => void;
   onEdit?: MouseEventHandler<HTMLButtonElement>;
@@ -71,6 +73,7 @@ export function WorkflowNode({
   variantsCount = 0,
   conditionsCount = 0,
   id = undefined,
+  onClick,
   onDelete,
   onAddVariant,
   onEdit,
@@ -85,7 +88,8 @@ export function WorkflowNode({
 }: IWorkflowNodeProps) {
   const segment = useSegment();
 
-  const { readonly: readonlyEnv, environment } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { readonly: readonlyEnv, environment, chimera } = useEnvController({}, template?.chimera);
   const { cx, classes, theme } = useTemplateButtonStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);
@@ -155,6 +159,7 @@ export function WorkflowNode({
     <>
       <WorkflowNodeButton
         role={'button'}
+        onClick={onClick}
         onMouseEnter={() => {
           setPopoverOpened(true);
           setHover(true);
@@ -169,7 +174,7 @@ export function WorkflowNode({
           classes.button,
           { [classes.active]: active },
           { [classes.variant]: isStepRoot },
-          { [classes.variantRoot]: isVariantRoot }
+          { [classes.variantRoot]: isVariantRoot && !active }
         )}
       >
         <WorkflowNodeWrapper>
@@ -246,12 +251,12 @@ export function WorkflowNode({
                 {label}
               </Text>
 
-              {Object.keys(stepErrorContent).length > 0 && (
+              {Object.keys(stepErrorContent).length > 0 && !chimera && (
                 <Text {...disabledColor} size={12} color={colors.error} rows={1} data-test-id="workflow-node-error">
                   {stepErrorContent}
                 </Text>
               )}
-              {!(Object.keys(stepErrorContent).length > 0) && subtitle && (
+              {!(Object.keys(stepErrorContent).length > 0) && !chimera && subtitle && (
                 <Text {...disabledColor} size={12} color={colors.B60} rows={1} data-test-id="workflow-node-subtitle">
                   {subtitle}
                 </Text>
@@ -333,9 +338,9 @@ export function WorkflowNode({
                 titleIcon={<ProviderMissing />}
                 title="Select primary provider"
                 content={
-                  'You have multiple provider instances for' +
+                  'You have multiple provider instances for ' +
                   CHANNEL_TYPE_TO_STRING[channelKey] +
-                  `in the ${environment?.name} environment. Please select the primary instance.
+                  ` in the ${environment?.name} environment. Please select the primary instance.
             `
                 }
                 actionItem={
@@ -359,7 +364,8 @@ export function WorkflowNode({
             {((isVariantRoot && nodeErrorType === NODE_ERROR_TYPES.TEMPLATE_ERROR) ||
               isVariant ||
               hasActiveIntegration) &&
-              stepErrorContent && (
+              stepErrorContent &&
+              !chimera && (
                 <NodeErrorPopover
                   withinPortal
                   opened={popoverOpened && Object.keys(stepErrorContent).length > 0}

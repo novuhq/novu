@@ -1,7 +1,8 @@
 import styled from '@emotion/styled';
 import { Input, useMantineTheme } from '@mantine/core';
 import { forwardRef, useContext, useMemo } from 'react';
-import { ISelectProps, Select } from '../select/Select';
+import { ISelectProps } from '../select/Select.types';
+import { Select } from '../select/Select';
 import { DEFAULT_PAGINATION_PAGE_SIZES } from './Pagination.const';
 import { PaginationContext } from './PaginationContext';
 import { getPageNumberForNewPageSize } from './util';
