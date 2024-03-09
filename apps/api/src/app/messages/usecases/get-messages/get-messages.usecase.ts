@@ -1,13 +1,18 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberEntity } from '@novu/dal';
-import { ActorTypeEnum } from '@novu/shared';
+import { ActorTypeEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { GetMessagesCommand } from './get-messages.command';
 import { GetSubscriber, GetSubscriberCommand } from '../../../subscribers/usecases/get-subscriber';
+import { GetFeatureFlag, GetFeatureFlagCommand } from '@novu/application-generic';
 
 @Injectable()
 export class GetMessages {
-  constructor(private messageRepository: MessageRepository, private getSubscriberUseCase: GetSubscriber) {}
+  constructor(
+    private messageRepository: MessageRepository,
+    private getSubscriberUseCase: GetSubscriber,
+    private getFeatureFlag: GetFeatureFlag
+  ) {}
 
   async execute(command: GetMessagesCommand) {
     const LIMIT = command.limit;
@@ -51,6 +56,24 @@ export class GetMessages {
       if (message._actorId && message.actor?.type === ActorTypeEnum.USER) {
         message.actor.data = this.processUserAvatar(message.actorSubscriber);
       }
+    }
+
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        key: FeatureFlagsKeysEnum.IS_NEW_MESSAGES_API_RESPONSE_ENABLED,
+        organizationId: command.organizationId,
+        userId: 'api',
+        environmentId: command.environmentId,
+      })
+    );
+
+    if (isEnabled) {
+      return {
+        hasMore: data?.length === command.limit,
+        page: command.page,
+        pageSize: LIMIT,
+        data,
+      };
     }
 
     const totalCount = await this.messageRepository.count(query);
