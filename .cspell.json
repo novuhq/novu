@@ -562,7 +562,19 @@
     "spyon",
     "restapi",
     "ringcentral",
-    "reshard"
+    "reshard",
+    "userid",
+    "endgroup",
+    "aliyun",
+    "azcopy",
+    "cpack",
+    "pulumi",
+    "hostedtoolcache",
+    "pyroscope",
+    "HEAY",
+    "Pyroscope",
+    "PYROSCOPE",
+    "usecases"
   ],
   "flagWords": [],
   "patterns": [
