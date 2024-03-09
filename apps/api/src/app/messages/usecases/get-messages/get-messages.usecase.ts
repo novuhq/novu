@@ -60,7 +60,7 @@ export class GetMessages {
 
     const isEnabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
-        key: FeatureFlagsKeysEnum.IS_NEW_MESSAGES_API_RESPONSE_ENABLES,
+        key: FeatureFlagsKeysEnum.IS_NEW_MESSAGES_API_RESPONSE_ENABLED,
         organizationId: command.organizationId,
         userId: 'api',
         environmentId: command.environmentId,
