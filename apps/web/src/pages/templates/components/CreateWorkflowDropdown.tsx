@@ -57,7 +57,21 @@ export const CreateWorkflowDropdown = ({
       }
       data-test-id="create-workflow-dropdown"
     >
-      <EchoProjectDropDownItem />
+      <Dropdown.Item
+        icon={<FontAwesomeIcon icon={faFile} />}
+        onClick={(event) => {
+          segment.track('[Template Store] Click Create Notification Template', {
+            templateIdentifier: 'Blank Workflow',
+            location: TemplateCreationSourceEnum.DROPDOWN,
+          });
+
+          onBlankWorkflowClick(event);
+        }}
+        data-test-id="create-workflow-blank"
+      >
+        Blank workflow
+      </Dropdown.Item>
+      <Dropdown.Divider />
       {isLoading
         ? Array.from({ length: 3 }).map((_, index) => <DropdownItemSkeleton key={index} />)
         : blueprints?.map((template, index) => (
@@ -109,21 +123,7 @@ export const CreateWorkflowDropdown = ({
       >
         All templates
       </Dropdown.Item>
-      <Dropdown.Divider />
-      <Dropdown.Item
-        icon={<FontAwesomeIcon icon={faFile} />}
-        onClick={(event) => {
-          segment.track('[Template Store] Click Create Notification Template', {
-            templateIdentifier: 'Blank Workflow',
-            location: TemplateCreationSourceEnum.DROPDOWN,
-          });
-
-          onBlankWorkflowClick(event);
-        }}
-        data-test-id="create-workflow-blank"
-      >
-        Blank workflow
-      </Dropdown.Item>
+      <EchoProjectDropDownItem />
     </Dropdown>
   );
 };

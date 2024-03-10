@@ -75,7 +75,6 @@ export const TemplatesListNoData = ({
     <NoDataHolder data-test-id="no-workflow-templates-placeholder">
       <NoDataSubHeading>Start from a blank workflow or use a template</NoDataSubHeading>
       <CardsContainer>
-        <EchoProjectCardTile />
         <CardTile
           disabled={readonly}
           data-test-id="create-workflow-tile"
@@ -148,6 +147,7 @@ export const TemplatesListNoData = ({
           <FontAwesomeIcon icon={faDiagramNext} />
           <span>All templates</span>
         </CardTile>
+        <EchoProjectCardTile />
       </CardsContainer>
     </NoDataHolder>
   );

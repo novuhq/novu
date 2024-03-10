@@ -111,6 +111,22 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
     >
       <ModalBodyHolder data-test-id="templates-store-modal">
         <TemplatesSidebarHolder data-test-id="templates-store-modal-sidebar">
+          <TemplatesGroup key="blank-workflow">
+            <GroupName>Blank Workflow</GroupName>
+            <TemplateItem
+              key="temp-blank-workflow"
+              onClick={() => {
+                segment.track('[Template Store] Click Create Notification Template', {
+                  templateIdentifier: 'Blank Workflow',
+                  location: TemplateCreationSourceEnum.DROPDOWN,
+                });
+                handleRedirectToCreateBlankTemplate(false);
+              }}
+            >
+              <FontAwesomeIcon icon={faFile} />
+              <span>Blank Workflow</span>
+            </TemplateItem>
+          </TemplatesGroup>
           <EchoProjectModalItem />
           {popular.map((group) => (
             <TemplatesGroup key={group.name}>
@@ -142,22 +158,6 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
               })}
             </TemplatesGroup>
           ))}
-          <TemplatesGroup key="blank-workflow">
-            <GroupName>Blank Workflow</GroupName>
-            <TemplateItem
-              key="temp-blank-workflow"
-              onClick={() => {
-                segment.track('[Template Store] Click Create Notification Template', {
-                  templateIdentifier: 'Blank Workflow',
-                  location: TemplateCreationSourceEnum.DROPDOWN,
-                });
-                handleRedirectToCreateBlankTemplate(false);
-              }}
-            >
-              <FontAwesomeIcon icon={faFile} />
-              <span>Blank Workflow</span>
-            </TemplateItem>
-          </TemplatesGroup>
         </TemplatesSidebarHolder>
         <TemplatesDetailsHolder>
           <TemplateHeader>

@@ -3,6 +3,7 @@ import { Badge } from '@mantine/core';
 
 import { TemplatesGroup, TemplateItem, GroupName } from './templates-store/templateStoreStyles';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { useAuthContext } from '@novu/shared-web';
 
 const SEGMENT_EVENT = 'Button Clicked - [Echo promotion]';
 const segmentEventAction = {
@@ -11,7 +12,7 @@ const segmentEventAction = {
   cardTile: 'Workflows > No workflows yet > Echo item',
 };
 
-const handleClick = (event: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
+const handleEchoClick = (event: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
   event.preventDefault();
   window.open('https://novu.co/novu-echo-coming-soon?utm_campaign=echo_workflows', '_blank');
 };
@@ -52,6 +53,7 @@ const ToolTip = ({ children }) => {
 
 export const EchoProjectDropDownItem = () => {
   const segment = useSegment();
+  const { currentOrganization } = useAuthContext();
 
   return (
     <ToolTip>
@@ -59,9 +61,10 @@ export const EchoProjectDropDownItem = () => {
         onClick={(event) => {
           segment.track(SEGMENT_EVENT, {
             action: segmentEventAction.dropDownItem,
+            _organizationId: currentOrganization?._id,
           });
 
-          handleClick(event);
+          handleEchoClick(event);
         }}
         data-test-id="echo-project-demand-check-experiment-dropdown-item"
       >
@@ -73,6 +76,7 @@ export const EchoProjectDropDownItem = () => {
 
 export const EchoProjectModalItem = () => {
   const segment = useSegment();
+  const { currentOrganization } = useAuthContext();
 
   return (
     <TemplatesGroup key="new">
@@ -83,9 +87,10 @@ export const EchoProjectModalItem = () => {
           onClick={(event) => {
             segment.track(SEGMENT_EVENT, {
               action: segmentEventAction.dropDownItem,
+              _organizationId: currentOrganization?._id,
             });
 
-            handleClick(event);
+            handleEchoClick(event);
           }}
         >
           <NewBadge marginRight={1} />
@@ -97,6 +102,7 @@ export const EchoProjectModalItem = () => {
 
 export const EchoProjectCardTile = () => {
   const segment = useSegment();
+  const { currentOrganization } = useAuthContext();
 
   return (
     <ToolTip>
@@ -106,9 +112,10 @@ export const EchoProjectCardTile = () => {
         onClick={(event) => {
           segment.track(SEGMENT_EVENT, {
             action: segmentEventAction.dropDownItem,
+            _organizationId: currentOrganization?._id,
           });
 
-          handleClick(event);
+          handleEchoClick(event);
         }}
       >
         <NewBadge marginRight={0} />
