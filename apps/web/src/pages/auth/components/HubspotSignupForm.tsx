@@ -46,8 +46,8 @@ export function HubspotSignupForm() {
   }, [token, navigate, isFromVercel, startVercelSetup]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
-    const { organizationName, ...rest } = data;
-    const createDto: ICreateOrganizationDto = { ...rest, name: organizationName };
+    const { organizationName, jobTitle, ...rest } = data;
+    const createDto: ICreateOrganizationDto = { ...rest, name: organizationName, jobTitle };
     const organization = await createOrganizationMutation(createDto);
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
 
@@ -99,10 +99,13 @@ export function HubspotSignupForm() {
         readonlyProperties={['email', 'firstname', 'lastname']}
         focussedProperty="company"
         onFormSubmitted={($form, values) => {
-          const submissionValues = values?.submissionValues as unknown as { company: string; role__onboarding: string };
+          const submissionValues = values?.submissionValues as unknown as {
+            company: string;
+            role___onboarding: string;
+          };
           onCreateOrganization({
             organizationName: submissionValues?.company,
-            jobTitle: submissionValues?.role__onboarding,
+            jobTitle: submissionValues?.role___onboarding,
           });
         }}
         colorScheme="dark"

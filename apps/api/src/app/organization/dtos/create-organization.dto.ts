@@ -1,5 +1,5 @@
-import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
-import { ICreateOrganizationDto, JobTitleEnum, ProductUseCases, ProductUseCasesEnum } from '@novu/shared';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { ICreateOrganizationDto, JobTitleEnum, ProductUseCases } from '@novu/shared';
 
 export class CreateOrganizationDto implements ICreateOrganizationDto {
   @IsString()
@@ -11,8 +11,8 @@ export class CreateOrganizationDto implements ICreateOrganizationDto {
   logo?: string;
 
   @IsOptional()
-  @IsEnum(JobTitleEnum)
-  jobTitle?: JobTitleEnum;
+  @IsString()
+  jobTitle?: string | JobTitleEnum;
 
   @IsString()
   @IsOptional()
