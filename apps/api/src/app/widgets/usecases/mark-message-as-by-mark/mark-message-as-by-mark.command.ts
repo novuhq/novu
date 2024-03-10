@@ -1,4 +1,4 @@
-import { IsArray, IsDefined, IsEnum, IsString } from 'class-validator';
+import { IsArray, IsDefined, IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { MarkMessagesAsEnum } from '@novu/shared';
 
@@ -10,7 +10,7 @@ export class MarkMessageAsByMarkCommand extends EnvironmentWithSubscriber {
   @IsEnum(MarkMessagesAsEnum)
   markAs: MarkMessagesAsEnum;
 
-  @IsDefined()
+  @IsNotEmpty()
   @IsString()
   __source: 'notification_center' | 'api';
 }

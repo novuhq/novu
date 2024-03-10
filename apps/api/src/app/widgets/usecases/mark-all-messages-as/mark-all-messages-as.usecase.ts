@@ -10,6 +10,7 @@ import {
 import { ChannelTypeEnum, MarkMessagesAsEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { MarkAllMessagesAsCommand } from './mark-all-messages-as.command';
+import { mapMarkMessageToWebSocketEvent } from '../../../shared/helpers';
 
 @Injectable()
 export class MarkAllMessagesAs {
@@ -53,20 +54,19 @@ export class MarkAllMessagesAs {
       channel: ChannelTypeEnum.IN_APP,
     });
 
-    const eventMessage =
-      command.markAs === MarkMessagesAsEnum.READ || command.markAs === MarkMessagesAsEnum.UNREAD
-        ? WebSocketEventEnum.UNREAD
-        : WebSocketEventEnum.UNSEEN;
+    const eventMessage = mapMarkMessageToWebSocketEvent(command.markAs);
 
-    this.webSocketsQueueService.add({
-      name: 'sendMessage',
-      data: {
-        event: eventMessage,
-        userId: subscriber._id,
-        _environmentId: command.environmentId,
-      },
-      groupId: subscriber._organizationId,
-    });
+    if (eventMessage !== undefined) {
+      this.webSocketsQueueService.add({
+        name: 'sendMessage',
+        data: {
+          event: eventMessage,
+          userId: subscriber._id,
+          _environmentId: command.environmentId,
+        },
+        groupId: subscriber._organizationId,
+      });
+    }
 
     this.analyticsService.track(
       `Mark all messages as ${command.markAs}- [Notification Center]`,

@@ -569,6 +569,7 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Mark a subscriber messages as seen, read, unseen or unread',
   })
+  @ExternalApiAccessible()
   @UseGuards(UserAuthGuard)
   @Post('/:subscriberId/messages/mark-as')
   async markMessagesAs(
@@ -577,7 +578,7 @@ export class SubscribersController {
     @Body() body: MessageMarkAsRequestDto
   ): Promise<MessageEntity[]> {
     const messageIds = this.toArray(body.messageId);
-    if (!messageIds) throw new BadRequestException('messageId is required');
+    if (!messageIds || messageIds.length === 0) throw new BadRequestException('messageId is required');
 
     return await this.markMessageAsByMarkUsecase.execute(
       MarkMessageAsByMarkCommand.create({

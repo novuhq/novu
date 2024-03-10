@@ -13,6 +13,7 @@ import {
 } from '@novu/application-generic';
 
 import { MarkMessageAsByMarkCommand } from './mark-message-as-by-mark.command';
+import { mapMarkMessageToWebSocketEvent } from '../../../shared/helpers';
 
 @Injectable()
 export class MarkMessageAsByMark {
@@ -25,6 +26,13 @@ export class MarkMessageAsByMark {
   ) {}
 
   async execute(command: MarkMessageAsByMarkCommand): Promise<MessageEntity[]> {
+    const subscriber = await this.fetchSubscriber({
+      _environmentId: command.environmentId,
+      subscriberId: command.subscriberId,
+    });
+
+    if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
+
     await this.invalidateCache.invalidateQuery({
       key: buildFeedKey().invalidate({
         subscriberId: command.subscriberId,
@@ -38,13 +46,6 @@ export class MarkMessageAsByMark {
         _environmentId: command.environmentId,
       }),
     });
-
-    const subscriber = await this.fetchSubscriber({
-      _environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
-    });
-
-    if (!subscriber) throw new NotFoundException(`Subscriber ${command.subscriberId} not found`);
 
     await this.messageRepository.changeMessagesStatus({
       environmentId: command.environmentId,
@@ -82,10 +83,11 @@ export class MarkMessageAsByMark {
   }
 
   private updateSocketCount(subscriber: SubscriberEntity, markAs: MarkMessagesAsEnum) {
-    const eventMessage =
-      markAs === MarkMessagesAsEnum.READ || markAs === MarkMessagesAsEnum.UNREAD
-        ? WebSocketEventEnum.UNREAD
-        : WebSocketEventEnum.UNSEEN;
+    const eventMessage = mapMarkMessageToWebSocketEvent(markAs);
+
+    if (eventMessage === undefined) {
+      return;
+    }
 
     this.webSocketsQueueService.add({
       name: 'sendMessage',
@@ -97,6 +99,7 @@ export class MarkMessageAsByMark {
       groupId: subscriber._organizationId,
     });
   }
+
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({
