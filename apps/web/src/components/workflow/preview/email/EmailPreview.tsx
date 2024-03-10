@@ -68,7 +68,6 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
     error: previewError,
   } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
     onSuccess(data) {
-      console.log({ data });
       setChimeraContent(data.outputs.body);
       setChimeraSubject(data.outputs.subject);
     },
