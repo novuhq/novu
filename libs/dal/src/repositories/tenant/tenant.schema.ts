@@ -56,8 +56,8 @@ tenantSchema.index({
  */
 tenantSchema.index(
   {
-    identifier: 1,
     _environmentId: 1,
+    identifier: 1,
   },
   { unique: true }
 );
