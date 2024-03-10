@@ -93,7 +93,7 @@ jobs:
   test_web:
     name: Test Web Cypress
     needs: [get-affected]
-    if: true
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
     with:
@@ -209,8 +209,8 @@ jobs:
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
       ee: ${{ contains (matrix.name,'-ee') }}
-      test-e2e-affected: true
-      test-e2e-ee-affected: true
+      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
+      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') }}
       job-name: ${{ matrix.name }}
     secrets: inherit
 
