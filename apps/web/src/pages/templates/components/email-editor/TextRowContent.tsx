@@ -71,7 +71,7 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
 
   const checkPreviousChar = (data: string, anchorPos: number) => {
     if (anchorPos > 1) {
-      const endContent = data.slice(anchorPos);
+      const endContent = data.slice(anchorPos - 2);
 
       const contentToUse = endContent ? endContent : data;
       const slicePositions = contentToUse.indexOf('{{') + 2;
