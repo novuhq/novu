@@ -181,6 +181,21 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     };
   }
 
+  async updateOne(
+    query: FilterQuery<T_DBModel> & T_Enforcement,
+    updateBody: UpdateQuery<T_DBModel>
+  ): Promise<{
+    matched: number;
+    modified: number;
+  }> {
+    const saved = await this.MongooseModel.updateOne(query, updateBody);
+
+    return {
+      matched: saved.matchedCount,
+      modified: saved.modifiedCount,
+    };
+  }
+
   async upsertMany(data: (FilterQuery<T_DBModel> & T_Enforcement)[]) {
     const promises = data.map((entry) => this.MongooseModel.findOneAndUpdate(entry, entry, { upsert: true }));
 
