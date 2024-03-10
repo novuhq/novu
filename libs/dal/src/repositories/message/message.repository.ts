@@ -397,6 +397,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       limit: options?.limit,
       skip: options?.skip,
     })
+      .read('secondaryPreferred')
       .populate('subscriber', '_id firstName lastName avatar subscriberId')
       .populate('actorSubscriber', '_id firstName lastName avatar subscriberId');
 
