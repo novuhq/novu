@@ -284,7 +284,7 @@ const WorkflowEditor = () => {
                           segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
                             action: 'Workflow - Send test notification',
                             experiment_id: '2024-w9-onb',
-                            _organizationId: currentOrganization?._id,
+                            _organization: currentOrganization?._id,
                           });
                           navigate(basePath + '/test-workflow');
                         } else {

@@ -192,7 +192,7 @@ export function TestWorkflow({ trigger }) {
                   segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
                     action: 'Workflow - Run trigger',
                     experiment_id: '2024-w9-onb',
-                    _organizationId: currentOrganization?._id,
+                    _organization: currentOrganization?._id,
                   });
                 }
               }}

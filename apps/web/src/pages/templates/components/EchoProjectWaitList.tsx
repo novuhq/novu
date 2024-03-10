@@ -61,7 +61,7 @@ export const EchoProjectDropDownItem = () => {
         onClick={(event) => {
           segment.track(SEGMENT_EVENT, {
             action: segmentEventAction.dropDownItem,
-            _organizationId: currentOrganization?._id,
+            _organization: currentOrganization?._id,
           });
 
           handleEchoClick(event);
@@ -87,7 +87,7 @@ export const EchoProjectModalItem = () => {
           onClick={(event) => {
             segment.track(SEGMENT_EVENT, {
               action: segmentEventAction.dropDownItem,
-              _organizationId: currentOrganization?._id,
+              _organization: currentOrganization?._id,
             });
 
             handleEchoClick(event);
@@ -112,7 +112,7 @@ export const EchoProjectCardTile = () => {
         onClick={(event) => {
           segment.track(SEGMENT_EVENT, {
             action: segmentEventAction.dropDownItem,
-            _organizationId: currentOrganization?._id,
+            _organization: currentOrganization?._id,
           });
 
           handleEchoClick(event);

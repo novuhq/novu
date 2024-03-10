@@ -34,7 +34,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
       segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
         action: 'Get started - Send test notification',
         experiment_id: '2024-w9-onb',
-        _organizationId: currentOrganization?._id,
+        _organization: currentOrganization?._id,
       });
     } else {
       if (integrationActive) {
