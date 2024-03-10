@@ -20,6 +20,7 @@ import {
   ContentStyled,
   ContentWrapperStyled,
 } from './Content.styles';
+import { ErrorPrettyRender } from '../ErrorPrettyRender';
 
 export default function Content({
   showLoading = false,
@@ -45,15 +46,16 @@ export default function Content({
   const [chimeraContent, setChimeraContent] = useState('');
   const [chimeraSubject, setChimeraSubject] = useState('');
 
-  const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
-    (data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
-    {
-      onSuccess(data) {
-        setChimeraContent(data.outputs.body);
-        setChimeraSubject(data.outputs.subject);
-      },
-    }
-  );
+  const {
+    mutateAsync,
+    isLoading: isChimeraLoading,
+    error: previewError,
+  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
+    onSuccess(data) {
+      setChimeraContent(data.outputs.body);
+      setChimeraSubject(data.outputs.subject);
+    },
+  });
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
@@ -72,6 +74,14 @@ export default function Content({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chimera, inputVariables]);
+
+  if (previewError) {
+    return (
+      <div style={{ marginTop: 20, padding: 10 }}>
+        <ErrorPrettyRender error={previewError} />
+      </div>
+    );
+  }
 
   return (
     <ContentWrapperStyled>
