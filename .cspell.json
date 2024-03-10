@@ -603,7 +603,10 @@
     "HEAY",
     "Pyroscope",
     "PYROSCOPE",
-    "usecases"
+    "usecases",
+    "hbspt", 
+    "prepopulating",
+    "fieldtype",
   ],
   "flagWords": [],
   "patterns": [

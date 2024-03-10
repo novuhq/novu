@@ -11,7 +11,7 @@ import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 import { HubspotForm } from '@novu/shared-web';
-import { HUBSPOT_FORM_IDS } from '../../../constants/hupspotForms';
+import { HUBSPOT_FORM_IDS } from '../../../constants/hubspotForms';
 import SetupLoader from './SetupLoader';
 
 export function HubspotSignupForm() {
