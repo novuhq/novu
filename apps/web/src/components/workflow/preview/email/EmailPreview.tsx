@@ -162,7 +162,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
             </JSONContainer>
           </When>
           <When truthy={chimera}>
-            <div style={{ minWidth: 300, maxWidth: 300 }}>
+            <div style={{ minWidth: 300, maxWidth: 300, marginLeft: 'auto' }}>
               <InputVariablesForm
                 onChange={(values) => {
                   mutateAsync(values);
