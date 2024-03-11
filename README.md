@@ -148,7 +148,7 @@ Create notification workflows right from your IDE and integrate with MJML/React 
 - Define workflow and step validations with Zod or JSON Schema
 - Modify content and behavior via Web management input panel
 
-[Request Early Access](https://novu.co/novu-echo-coming-soon/?utm_campaign=github)
+[Request Early Access](https://novu.co/novu-echo-coming-soon/?utm_campaign=echo_github)
 
 ```ts
 
