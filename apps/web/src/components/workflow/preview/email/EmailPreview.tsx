@@ -17,6 +17,7 @@ import { useMutation } from '@tanstack/react-query';
 import { api, useEnvController } from '@novu/shared-web';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
+import { ErrorPrettyRender } from '../ErrorPrettyRender';
 
 const PreviewContainer = styled.div`
   display: flex;
@@ -61,15 +62,17 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
     api.put('/v1/echo/inputs/' + formState?.defaultValues?.identifier + '/' + stepId, { variables: data })
   );
 
-  const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
-    (data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
-    {
-      onSuccess(data) {
-        setChimeraContent(data.outputs.body);
-        setChimeraSubject(data.outputs.subject);
-      },
-    }
-  );
+  const {
+    mutateAsync,
+    isLoading: isChimeraLoading,
+    error: previewError,
+  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
+    onSuccess(data) {
+      setChimeraContent(data.outputs.body);
+      setChimeraSubject(data.outputs.subject);
+    },
+  });
+
   const { getEmailPreview, previewContent, subject, isPreviewContentLoading } = usePreviewEmailTemplate({
     locale: selectedLocale,
     payload: processedVariables,
@@ -96,7 +99,10 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
     <>
       {showVariables ? (
         <PreviewContainer>
-          <When truthy={view === 'web'}>
+          <When truthy={previewError}>
+            <ErrorPrettyRender error={previewError} />
+          </When>
+          <When truthy={view === 'web' && !previewError}>
             <PreviewWeb
               loading={isLoading}
               subject={chimeraSubject || subject}
@@ -110,7 +116,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
               chimera={chimera}
             />
           </When>
-          <When truthy={view === 'mobile'}>
+          <When truthy={view === 'mobile' && !previewError}>
             <PreviewMobile
               loading={isLoading}
               subject={chimeraSubject || subject}
@@ -156,11 +162,13 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
             </JSONContainer>
           </When>
           <When truthy={chimera}>
-            <InputVariablesForm
-              onChange={(values) => {
-                mutateAsync(values);
-              }}
-            />
+            <div style={{ minWidth: 300, maxWidth: 300, marginLeft: 'auto' }}>
+              <InputVariablesForm
+                onChange={(values) => {
+                  mutateAsync(values);
+                }}
+              />
+            </div>
           </When>
         </PreviewContainer>
       ) : (

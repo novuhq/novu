@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { api, useEnvController } from '@novu/shared-web';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
+import { ErrorPrettyRender } from '../ErrorPrettyRender';
 
 const ChatPreviewContainer = styled.div`
   width: 100%;
@@ -35,14 +36,15 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
   const stepId = watch(`${path}.template.name`);
   const [chimeraContent, setChimeraContent] = useState('');
 
-  const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
-    (data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
-    {
-      onSuccess(data) {
-        setChimeraContent(data.outputs.body);
-      },
-    }
-  );
+  const {
+    mutateAsync,
+    isLoading: isChimeraLoading,
+    error: previewError,
+  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
+    onSuccess(data) {
+      setChimeraContent(data.outputs.body);
+    },
+  });
 
   useEffect(() => {
     if (chimera) {
@@ -60,6 +62,10 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
     locale: selectedLocale,
     disabled: showLoading || chimera,
   });
+
+  if (previewError) {
+    return <ErrorPrettyRender error={previewError} />;
+  }
 
   return (
     <ChatPreviewContainer>

@@ -13,6 +13,7 @@ import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPa
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { LocaleSelect, MobileSimulator } from '../common';
 import { SmsBubble } from './SmsBubble';
+import { ErrorPrettyRender } from '../ErrorPrettyRender';
 
 const BodyContainer = styled.div`
   display: flex;
@@ -49,14 +50,15 @@ export const SmsPreview = ({
   const stepId = watch(`${path}.template.name`);
   const [chimeraContent, setChimeraContent] = useState('');
 
-  const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
-    (data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
-    {
-      onSuccess(data) {
-        setChimeraContent(data.outputs.body);
-      },
-    }
-  );
+  const {
+    mutateAsync,
+    isLoading: isChimeraLoading,
+    error: previewError,
+  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
+    onSuccess(data) {
+      setChimeraContent(data.outputs.body);
+    },
+  });
 
   useEffect(() => {
     if (chimera) {
@@ -85,13 +87,20 @@ export const SmsPreview = ({
           onLocaleChange={onLocaleChange}
           dropdownPosition="top"
         />
-        <SmsBubble
-          onEditClick={navigateToStepEditor}
-          isLoading={chimera ? isChimeraLoading : isPreviewContentLoading || areLocalesLoading}
-          text={chimera ? chimeraContent : previewContent}
-          error={chimera ? undefined : templateError}
-          withOverlay={isPreviewPath}
-        />
+
+        {previewError && chimera ? (
+          <div style={{ marginTop: 20, padding: 10 }}>
+            <ErrorPrettyRender error={previewError} />
+          </div>
+        ) : (
+          <SmsBubble
+            onEditClick={navigateToStepEditor}
+            isLoading={chimera ? isChimeraLoading : isPreviewContentLoading || areLocalesLoading}
+            text={chimera ? chimeraContent : previewContent}
+            error={chimera ? undefined : templateError}
+            withOverlay={isPreviewPath}
+          />
+        )}
       </BodyContainer>
     </MobileSimulator>
   );
