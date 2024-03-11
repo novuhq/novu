@@ -15,6 +15,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { InputVariables } from '../../../../pages/templates/components/InputVariables';
 import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
+import { ErrorPrettyRender } from '../ErrorPrettyRender';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
   const theme = useMantineTheme();
@@ -32,17 +33,18 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   const stepId = watch(`${path}.template.name`);
   const [chimeraContent, setChimeraContent] = useState({ content: '', ctaButtons: [] });
 
-  const { mutateAsync, isLoading: isChimeraLoading } = useMutation(
-    (data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
-    {
-      onSuccess(data) {
-        setChimeraContent({
-          content: data.outputs.body,
-          ctaButtons: [],
-        });
-      },
-    }
-  );
+  const {
+    mutateAsync,
+    isLoading: isChimeraLoading,
+    error: previewError,
+  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
+    onSuccess(data) {
+      setChimeraContent({
+        content: data.outputs.body,
+        ctaButtons: [],
+      });
+    },
+  });
 
   useEffect(() => {
     if (chimera) {
@@ -73,13 +75,17 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
             areLocalesLoading={areLocalesLoading || isChimeraLoading}
             onLocaleChange={onLocaleChange}
           />
-          <Content
-            isPreviewLoading={isPreviewLoading || isChimeraLoading}
-            parsedPreviewState={chimera ? chimeraContent : parsedPreviewState}
-            templateError={chimera ? '' : templateError}
-            showOverlay={!showVariables}
-            enableAvatar={enableAvatar}
-          />
+          {previewError && chimera ? (
+            <ErrorPrettyRender error={previewError} />
+          ) : (
+            <Content
+              isPreviewLoading={isPreviewLoading || isChimeraLoading}
+              parsedPreviewState={chimera ? chimeraContent : parsedPreviewState}
+              templateError={chimera ? '' : templateError}
+              showOverlay={!showVariables}
+              enableAvatar={enableAvatar}
+            />
+          )}
         </ContainerStyled>
       </Grid.Col>
 

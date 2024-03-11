@@ -215,8 +215,8 @@ export class WorkflowOverridesController {
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         userId: user._id,
-        page: query.page ? query.page : 0,
-        limit: query.limit ? query.limit : 10,
+        page: query.page,
+        limit: query.limit,
       })
     );
   }

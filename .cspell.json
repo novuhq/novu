@@ -605,7 +605,9 @@
     "pyroscope",
     "HEAY",
     "Pyroscope",
-    "PYROSCOPE"
+    "PYROSCOPE",
+    "usecases",
+    "usecase"
   ],
   "flagWords": [],
   "patterns": [
