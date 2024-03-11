@@ -19,7 +19,12 @@ const variantSchemePart = {
     default: false,
   },
   uuid: Schema.Types.String,
+  stepId: Schema.Types.String,
   name: Schema.Types.String,
+  type: {
+    type: Schema.Types.String,
+    default: 'REGULAR',
+  },
   filters: [
     {
       isNegated: Schema.Types.Boolean,
@@ -102,6 +107,10 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     active: {
       type: Schema.Types.Boolean,
       default: false,
+    },
+    type: {
+      type: Schema.Types.String,
+      default: 'REGULAR',
     },
     draft: {
       type: Schema.Types.Boolean,
@@ -204,6 +213,8 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
       ref: 'NotificationTemplate',
     },
     data: Schema.Types.Mixed,
+    rawData: Schema.Types.Mixed,
+    payloadSchema: Schema.Types.Mixed,
   },
   schemaOptions
 );
@@ -242,7 +253,13 @@ notificationTemplateSchema.index({
 
 notificationTemplateSchema.index({
   _environmentId: 1,
-  name: 'text',
+  name: 1,
+});
+
+notificationTemplateSchema.index({
+  _environmentId: 1,
+  'triggers.identifier': 1,
+  name: 1,
 });
 
 notificationTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
