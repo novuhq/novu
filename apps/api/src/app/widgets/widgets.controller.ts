@@ -123,10 +123,10 @@ export class WidgetsController {
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      page: query.page != null ? parseInt(query.page) : 0,
+      page: query.page,
       feedId: feedsQuery,
       query: { seen: query.seen, read: query.read },
-      limit: query.limit != null ? parseInt(query.limit) : 10,
+      limit: query.limit,
       payload: query.payload,
     });
 
