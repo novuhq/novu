@@ -12,7 +12,7 @@ export class CreateOrganizationDto implements ICreateOrganizationDto {
 
   @IsOptional()
   @IsString()
-  jobTitle?: string | JobTitleEnum;
+  jobTitle?: JobTitleEnum;
 
   @IsString()
   @IsOptional()

@@ -95,6 +95,8 @@ export function HubspotSignupForm() {
           role___onboarding: '',
           heard_about_novu: '',
           use_case___onboarding: '',
+          role___onboarding__other_: '',
+          heard_about_novu__other_: '',
         }}
         readonlyProperties={['email', 'firstname', 'lastname']}
         focussedProperty="company"
@@ -103,9 +105,10 @@ export function HubspotSignupForm() {
             company: string;
             role___onboarding: string;
           };
+
           onCreateOrganization({
             organizationName: submissionValues?.company,
-            jobTitle: submissionValues?.role___onboarding,
+            jobTitle: hubspotRoleToJobTitleMapping[submissionValues?.role___onboarding],
           });
         }}
         colorScheme="dark"
@@ -116,7 +119,18 @@ export function HubspotSignupForm() {
 
 interface IOrganizationCreateForm {
   organizationName: string;
-  jobTitle: string | JobTitleEnum;
+  jobTitle: JobTitleEnum;
   domain?: string;
   productUseCases?: ProductUseCases;
 }
+
+const hubspotRoleToJobTitleMapping: Record<string, JobTitleEnum> = {
+  'Engineer/developer': JobTitleEnum.ENGINEER,
+  Product: JobTitleEnum.PRODUCT_MANAGER,
+  Architect: JobTitleEnum.ARCHITECT,
+  'Engineering Manager': JobTitleEnum.ENGINEERING_MANAGER,
+  Designer: JobTitleEnum.DESIGNER,
+  'CxO/Founder': JobTitleEnum.CXO_FOUNDER,
+  Marketing: JobTitleEnum.MARKETING_MANAGER,
+  'Other (specify)': JobTitleEnum.OTHER,
+};

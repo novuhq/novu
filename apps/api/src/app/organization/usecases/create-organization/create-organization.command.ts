@@ -15,7 +15,7 @@ export class CreateOrganizationCommand extends AuthenticatedCommand {
 
   @IsOptional()
   @IsString()
-  jobTitle?: string | JobTitleEnum;
+  jobTitle?: JobTitleEnum;
 
   @IsString()
   @IsOptional()

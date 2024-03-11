@@ -6,7 +6,7 @@ export interface ICreateOrganizationDto {
   name: string;
   logo?: string;
   taxIdentifier?: string;
-  jobTitle?: string | JobTitleEnum;
+  jobTitle?: JobTitleEnum;
   domain?: string;
   productUseCases?: ProductUseCases;
 }

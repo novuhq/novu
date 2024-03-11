@@ -102,7 +102,7 @@ export class CreateOrganization {
     return organizationAfterChanges as OrganizationEntity;
   }
 
-  private async updateJobTitle(user, jobTitle: string | JobTitleEnum) {
+  private async updateJobTitle(user, jobTitle: JobTitleEnum) {
     await this.userRepository.update(
       {
         _id: user._id,
