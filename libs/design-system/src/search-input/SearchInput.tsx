@@ -15,9 +15,6 @@ export interface ISearchInputProps {
   'data-test-id'?: string;
 }
 
-const ICONS_SIZE = '20';
-const ICONS_COLOR = colors.B60;
-
 const StyledInput = styled(Input)<InputProps & ISearchInputProps>`
   max-width: 15rem;
 
@@ -29,6 +26,10 @@ const StyledInput = styled(Input)<InputProps & ISearchInputProps>`
     &::placeholder {
       color: ${colors.B40};
     }
+  }
+
+  .mantine-Input-icon:has(~ input:disabled) {
+    opacity: 0.6;
   }
 `;
 
@@ -44,15 +45,14 @@ export const SearchInput = forwardRef<HTMLInputElement, ISearchInputProps>(
         {...restSearchInputProps}
         ref={ref}
         value={value}
-        icon={<IconSearch size={ICONS_SIZE} color={ICONS_COLOR} title="search" />}
+        icon={<IconSearch title="search" />}
         rightSection={
           <IconCloseStyled
             isVisible={!!value}
-            size={ICONS_SIZE}
-            color={ICONS_COLOR}
             title="clear"
             onClick={onClearClick}
             data-test-id="search-input-clear"
+            role="button"
           />
         }
       />

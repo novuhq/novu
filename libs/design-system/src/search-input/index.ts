@@ -1,2 +1,2 @@
 export * from './SearchInput';
-export * from './useSearchState';
+export * from './useSearchQueryParamState';

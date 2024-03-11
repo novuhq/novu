@@ -25,7 +25,7 @@ import {
   useEnvController,
   useNotificationGroup,
   INotificationTemplateExtended,
-  useDebounce,
+  useDebouncedSearch,
 } from '../../hooks';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
@@ -161,14 +161,14 @@ function WorkflowListPage() {
     isFetching,
     totalItemCount,
     totalPageCount,
-    currentPageNumber,
-    pageSize,
-    search,
-    setSearch,
-    setCurrentPageNumber,
-    setPageSize,
+    currentPageNumberQueryParam,
+    pageSizeQueryParam,
+    searchQueryParam,
+    setSearchQueryParam,
+    setCurrentPageNumberQueryParam,
+    setPageSizeQueryParam,
   } = useTemplates({ areSearchParamsEnabled: true });
-  const [searchValue, setSearchValue] = useState(search ?? '');
+  const [searchValue, setSearchValue] = useState(searchQueryParam ?? '');
   const navigate = useNavigate();
   const { blueprintsGroupedAndPopular: { general, popular } = {}, isLoading: areBlueprintsLoading } =
     useFetchBlueprints();
@@ -190,7 +190,7 @@ function WorkflowListPage() {
   const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ general, popular });
 
   function handleTableChange(pageIndex: number) {
-    setCurrentPageNumber(pageIndex);
+    setCurrentPageNumberQueryParam(pageIndex);
   }
 
   const handleRedirectToCreateTemplate = (isFromHeader: boolean) => {
@@ -209,12 +209,12 @@ function WorkflowListPage() {
     navigate(parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: row.values._id }));
   }
 
-  const debouncedSearchChange = useDebounce((value: string) => setSearch(value), 2000);
+  const debouncedSearchChange = useDebouncedSearch(setSearchQueryParam);
 
   const onSearchClearClick = () => {
     debouncedSearchChange.cancel();
     setSearchValue('');
-    setSearch('');
+    setSearchQueryParam('');
   };
 
   const onSearchChange: ChangeEventHandler<HTMLInputElement> = ({ target: { value } }) => {
@@ -232,11 +232,11 @@ function WorkflowListPage() {
       title="Workflows"
       paginationInfo={{
         totalItemCount,
-        pageSize,
+        pageSize: pageSizeQueryParam,
         totalPageCount,
-        currentPageNumber,
+        currentPageNumber: currentPageNumberQueryParam,
         onPageChange: handleTableChange,
-        onPageSizeChange: setPageSize,
+        onPageSizeChange: setPageSizeQueryParam,
       }}
     >
       <Container fluid sx={{ padding: '0 24px 8px 24px' }}>

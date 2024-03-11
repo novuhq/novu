@@ -1,5 +1,5 @@
 import { INotificationTemplate, WorkflowIntegrationStatus } from '@novu/shared';
-import { IUsePaginationStateOptions } from '@novu/design-system';
+import { IUsePaginationQueryParamsStateOptions } from '@novu/design-system';
 
 import { useEnvController } from './useEnvController';
 import { getNotificationsList } from '../api/notification-templates';
@@ -18,9 +18,9 @@ export function useTemplates({
   pageSize,
   areSearchParamsEnabled = false,
 }: {
-  pageIndex?: IUsePaginationStateOptions['startingPageNumber'];
-  pageSize?: IUsePaginationStateOptions['startingPageSize'];
-} & Pick<IUsePaginationStateOptions, 'areSearchParamsEnabled'> = {}) {
+  pageIndex?: IUsePaginationQueryParamsStateOptions['initialPageNumber'];
+  pageSize?: IUsePaginationQueryParamsStateOptions['initialPageSize'];
+} & Pick<IUsePaginationQueryParamsStateOptions, 'areSearchParamsEnabled'> = {}) {
   const { environment } = useEnvController();
 
   const {
@@ -36,17 +36,17 @@ export function useTemplates({
   }>({
     queryKey: ['notification-templates', environment?._id],
     buildQueryFn:
-      ({ pageIndex: ctxPageIndex, pageSize: ctxPageSize, search }) =>
+      ({ page, limit, query }) =>
       () =>
-        getNotificationsList(ctxPageIndex, ctxPageSize, search),
+        getNotificationsList({ page, limit, query }),
     getTotalItemCount: (resp) => resp.totalCount,
     queryOptions: {
       keepPreviousData: true,
     },
     paginationOptions: {
       areSearchParamsEnabled,
-      startingPageNumber: (pageIndex ?? 0) + 1,
-      startingPageSize: pageSize,
+      initialPageNumber: (pageIndex ?? 0) + 1,
+      initialPageSize: pageSize,
     },
   });
 
