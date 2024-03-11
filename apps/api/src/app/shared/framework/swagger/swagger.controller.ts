@@ -21,7 +21,7 @@ const options = new DocumentBuilder()
   .addTag(
     'Events',
     `Events represent a change in state of a subscriber. They are used to trigger workflows, and enable you to send notifications to subscribers based on their actions.`,
-    { url: 'https://docs.novu.co/workflows?utm_campaign=inapp-swagger' }
+    { url: 'https://docs.novu.co/workflows' }
   )
   .addTag(
     'Subscribers',
