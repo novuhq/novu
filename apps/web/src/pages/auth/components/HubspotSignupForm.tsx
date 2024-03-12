@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import decode from 'jwt-decode';
+import { useMantineColorScheme } from '@mantine/core';
 
 import { JobTitleEnum } from '@novu/shared';
 import type { ProductUseCases, IResponseError, ICreateOrganizationDto, IJwtPayload } from '@novu/shared';
+import { HubspotForm } from '@novu/shared-web';
 
 import { api } from '../../../api/api.client';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
-import { HubspotForm } from '@novu/shared-web';
 import { HUBSPOT_FORM_IDS } from '../../../constants/hubspotForms';
 import SetupLoader from './SetupLoader';
 
@@ -20,6 +21,7 @@ export function HubspotSignupForm() {
   const { setToken, token, currentUser } = useAuthContext();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
+  const { colorScheme } = useMantineColorScheme();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
@@ -59,7 +61,7 @@ export function HubspotSignupForm() {
     return jwt && jwt[key];
   }
 
-  const onCreateOrganization = async (data: IOrganizationCreateForm) => {
+  const handleCreateOrganization = async (data: IOrganizationCreateForm) => {
     if (!data?.organizationName) return;
 
     setLoading(true);
@@ -104,12 +106,12 @@ export function HubspotSignupForm() {
             role___onboarding: string;
           };
 
-          onCreateOrganization({
+          handleCreateOrganization({
             organizationName: submissionValues?.company,
             jobTitle: hubspotRoleToJobTitleMapping[submissionValues?.role___onboarding],
           });
         }}
-        colorScheme="dark"
+        colorScheme={colorScheme}
       />
     );
   }

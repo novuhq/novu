@@ -14,7 +14,6 @@ import {
   MAIL_SERVER_DOMAIN,
   LAUNCH_DARKLY_CLIENT_SIDE_ID,
   FEATURE_FLAGS,
-  HUBSPOT_PORTAL_ID,
 } from '@novu/shared-web';
 
 export {
@@ -33,7 +32,6 @@ export {
   MAIL_SERVER_DOMAIN,
   LAUNCH_DARKLY_CLIENT_SIDE_ID,
   FEATURE_FLAGS,
-  HUBSPOT_PORTAL_ID,
 };
 
 export const IS_EU_ENV = (ENV === 'production' || ENV === 'prod') && API_ROOT.includes('eu.api.novu.co');

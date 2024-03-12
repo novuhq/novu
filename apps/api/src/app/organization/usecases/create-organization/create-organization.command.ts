@@ -1,4 +1,4 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 
 import { JobTitleEnum, ProductUseCases } from '@novu/shared';
 
@@ -14,7 +14,7 @@ export class CreateOrganizationCommand extends AuthenticatedCommand {
   public readonly logo?: string;
 
   @IsOptional()
-  @IsString()
+  @IsEnum(JobTitleEnum)
   jobTitle?: JobTitleEnum;
 
   @IsString()

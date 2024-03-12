@@ -50,7 +50,6 @@ export type HubspotFormProps<
   onFormSubmitted?: ($form?: any, values?: Record<string, unknown>) => void;
   /**
    * colorScheme
-   *
    */
   colorScheme: 'dark' | 'light';
 };
