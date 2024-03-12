@@ -40,7 +40,7 @@ export default function Content({
   const { watch, formState } = useFormContext<IForm>();
   const path = useStepFormPath();
 
-  const stepId = watch(`${path}.template.name`);
+  const stepId = watch(`${path}.uuid`);
   const title = watch(`${path}.template.title`);
   const content = watch(`${path}.template.content`);
   const [chimeraContent, setChimeraContent] = useState('');
