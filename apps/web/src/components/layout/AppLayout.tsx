@@ -43,7 +43,7 @@ export function AppLayout() {
               fallback={({ error, resetError, eventId }) => (
                 <>
                   Sorry, but something went wrong. <br />
-                  Our team been notified about it and we will look at it asap.
+                  Our team has been notified and we are investigating.
                   <br />
                   <code>
                     <small style={{ color: 'lightGrey' }}>
