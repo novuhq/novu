@@ -1,7 +1,7 @@
 import { Tooltip, Dropdown, CardTile } from '@novu/design-system';
 import { Badge } from '@mantine/core';
 
-import { TemplatesGroup, TemplateItem, GroupName } from './templates-store/templateStoreStyles';
+import { TemplateItem } from './templates-store/templateStoreStyles';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useAuthContext } from '@novu/shared-web';
 
@@ -42,8 +42,10 @@ const NewBadge = (props) => {
 const ToolTip = ({ children }) => {
   return (
     <Tooltip
+      multiline
+      width={220}
       label="Discover a new way that allows you to build powerful, highly customizable workflows on your local machine."
-      position="bottom"
+      position="right"
       offset={10}
     >
       {children}
@@ -79,24 +81,21 @@ export const EchoProjectModalItem = () => {
   const { currentOrganization } = useAuthContext();
 
   return (
-    <TemplatesGroup key="new">
-      <GroupName>New</GroupName>
-      <ToolTip>
-        <TemplateItem
-          key="new-echo-project"
-          onClick={(event) => {
-            segment.track(SEGMENT_EVENT, {
-              action: segmentEventAction.dropDownItem,
-              _organization: currentOrganization?._id,
-            });
+    <ToolTip>
+      <TemplateItem
+        key="new-echo-project"
+        onClick={(event) => {
+          segment.track(SEGMENT_EVENT, {
+            action: segmentEventAction.dropDownItem,
+            _organization: currentOrganization?._id,
+          });
 
-            handleEchoClick(event);
-          }}
-        >
-          <NewBadge marginRight={1} />
-        </TemplateItem>
-      </ToolTip>
-    </TemplatesGroup>
+          handleEchoClick(event);
+        }}
+      >
+        <NewBadge marginRight={1} />
+      </TemplateItem>
+    </ToolTip>
   );
 };
 

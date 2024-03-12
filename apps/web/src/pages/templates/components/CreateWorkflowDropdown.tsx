@@ -71,6 +71,7 @@ export const CreateWorkflowDropdown = ({
       >
         Blank workflow
       </Dropdown.Item>
+      <EchoProjectDropDownItem />
       <Dropdown.Divider />
       {isLoading
         ? Array.from({ length: 3 }).map((_, index) => <DropdownItemSkeleton key={index} />)
@@ -123,7 +124,6 @@ export const CreateWorkflowDropdown = ({
       >
         All templates
       </Dropdown.Item>
-      <EchoProjectDropDownItem />
     </Dropdown>
   );
 };

@@ -112,7 +112,7 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
       <ModalBodyHolder data-test-id="templates-store-modal">
         <TemplatesSidebarHolder data-test-id="templates-store-modal-sidebar">
           <TemplatesGroup key="blank-workflow">
-            <GroupName>Blank Workflow</GroupName>
+            <GroupName>Workflow</GroupName>
             <TemplateItem
               key="temp-blank-workflow"
               onClick={() => {
@@ -126,8 +126,9 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
               <FontAwesomeIcon icon={faFile} />
               <span>Blank Workflow</span>
             </TemplateItem>
+            <EchoProjectModalItem />
           </TemplatesGroup>
-          <EchoProjectModalItem />
+
           {popular.map((group) => (
             <TemplatesGroup key={group.name}>
               <GroupName>{group.name}</GroupName>
