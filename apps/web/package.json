@@ -160,12 +160,13 @@
     "nodemon": "^3.0.1",
     "react-app-rewired": "^2.2.1",
     "react-error-overlay": "6.0.11",
+    "react-scanner": "^1.1.0",
     "react-scripts": "^5.0.1",
     "storybook": "^7.4.2",
     "typescript": "4.9.5",
     "webpack": "5.78.0",
-    "webpack-dev-server": "4.11.1",
-    "webpack-bundle-analyzer": "^4.9.0"
+    "webpack-bundle-analyzer": "^4.9.0",
+    "webpack-dev-server": "4.11.1"
   },
   "browserslist": {
     "production": [
