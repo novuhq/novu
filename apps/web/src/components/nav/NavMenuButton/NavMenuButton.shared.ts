@@ -5,12 +5,18 @@ import { css } from '../../../styled-system/css';
 import { styled } from '../../../styled-system/jsx';
 import { text } from '../../../styled-system/recipes';
 
+export type RightSideTrigger = 'hover';
+
+export interface INavMenuButtonRightSideConfig {
+  node: ReactNode;
+  tooltip?: LocalizedMessage;
+  triggerOn?: RightSideTrigger;
+}
 export interface INavMenuButtonProps {
   icon: React.ReactElement<IIconProps>;
   label: LocalizedMessage;
-  rightSide?: ReactNode;
+  rightSide?: INavMenuButtonRightSideConfig;
   isVisible?: boolean;
-  tooltipLabel?: LocalizedMessage;
   testId?: string;
 }
 

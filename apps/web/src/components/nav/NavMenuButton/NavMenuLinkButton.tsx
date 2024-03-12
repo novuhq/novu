@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { css } from '../../../styled-system/css';
 import { HStack } from '../../../styled-system/jsx';
 import { INavMenuButtonProps, rawButtonBaseStyles, ButtonLabel } from './NavMenuButton.shared';
+import { NavMenuRightSide } from './NavMenuButtonRightSide';
 
 const rawLinkButtonStyles = css.raw({
   '& _active, &.active': {
@@ -14,7 +15,8 @@ const rawLinkButtonStyles = css.raw({
       right: 0,
       bottom: 0,
       left: 0,
-      borderRadius: '7px 0px 0px 7px',
+      borderTopLeftRadius: '8px',
+      borderBottomLeftRadius: '8px',
       bgGradient: 'vertical',
     },
   },
@@ -32,8 +34,11 @@ export const NavMenuLinkButton: FC<PropsWithChildren<INavMenuLinkButtonProps>> =
   label,
   isVisible = true,
 }) => {
-  const [popoverOpened, setPopoverOpened] = useState(false);
   const [isHovered, setIsHovered] = useState<boolean>(false);
+
+  const shouldShowRightSide = Boolean(
+    rightSide && (!rightSide.triggerOn || (rightSide.triggerOn === 'hover' && isHovered))
+  );
 
   return isVisible ? (
     <NavLink
@@ -49,7 +54,9 @@ export const NavMenuLinkButton: FC<PropsWithChildren<INavMenuLinkButtonProps>> =
           {label}
         </ButtonLabel>
       </HStack>
-      {rightSide ? rightSide : null}
+      <NavMenuRightSide tooltip={rightSide?.tooltip} isMounted={shouldShowRightSide}>
+        {rightSide?.node}
+      </NavMenuRightSide>
     </NavLink>
   ) : null;
 };
