@@ -24,7 +24,8 @@
     "build-storybook": "storybook build -s public",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "link:submodules": "pnpm link ../../enterprise/packages/translation-web && pnpm link ../../enterprise/packages/billing-web"
+    "link:submodules": "pnpm link ../../enterprise/packages/translation-web && pnpm link ../../enterprise/packages/billing-web",
+    "audit-components": "pnpm react-scanner -c './react-scanner.config.js'"
   },
   "dependencies": {
     "@ant-design/icons": "4.6.2",
