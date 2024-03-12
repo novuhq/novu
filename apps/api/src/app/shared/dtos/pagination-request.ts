@@ -2,10 +2,15 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, Max, Min } from 'class-validator';
 
-export type Constructor<I> = new (...args: any[]) => I;
+import { Constructor } from '../types';
+
+export interface IPagination {
+  page: number;
+  limit: number;
+}
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constructor<any> {
+export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constructor<IPagination> {
   class PaginationRequest {
     @ApiPropertyOptional({
       type: Number,
@@ -13,7 +18,7 @@ export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constru
     })
     @Type(() => Number)
     @IsInt()
-    page?: number = 0;
+    page = 0;
 
     @ApiPropertyOptional({
       type: Number,
@@ -25,7 +30,7 @@ export function PaginationRequestDto(defaultLimit = 10, maxLimit = 100): Constru
     @IsInt()
     @Min(1)
     @Max(maxLimit)
-    limit?: number = defaultLimit;
+    limit = defaultLimit;
   }
 
   return PaginationRequest;

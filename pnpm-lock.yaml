@@ -2051,6 +2051,9 @@ importers:
       '@novu/shared':
         specifier: ^0.24.0
         version: link:../../../libs/shared
+      '@novu/stateless':
+        specifier: ^0.24.0
+        version: link:../../../packages/stateless
       '@novu/testing':
         specifier: ^0.24.0
         version: link:../../../libs/testing
