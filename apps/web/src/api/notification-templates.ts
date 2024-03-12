@@ -1,4 +1,4 @@
-import { ICreateNotificationTemplateDto, INotificationTemplate, IGroupedBlueprint } from '@novu/shared';
+import { ICreateNotificationTemplateDto, INotificationTemplate, IGroupedBlueprint, IBlueprint } from '@novu/shared';
 
 import { api } from './api.client';
 import { BLUEPRINTS_API_URL } from '../config';
@@ -32,7 +32,7 @@ export async function getBlueprintsGroupedByCategory(): Promise<{
   return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/group-by-category`, { absoluteUrl: true });
 }
 
-export async function getBlueprintTemplateById(id: string): Promise<INotificationTemplate> {
+export async function getBlueprintTemplateById(id: string): Promise<IBlueprint> {
   return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/${id}`, { absoluteUrl: true });
 }
 
