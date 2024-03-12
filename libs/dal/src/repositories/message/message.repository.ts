@@ -277,6 +277,35 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     );
   }
 
+  async changeMessagesStatus({
+    environmentId,
+    subscriberId,
+    messageIds,
+    markAs,
+  }: {
+    environmentId: string;
+    subscriberId: string;
+    messageIds: string[];
+    markAs: MarkMessagesAsEnum;
+  }) {
+    const updatePayload = this.getReadSeenUpdatePayload(markAs);
+
+    await this.update(
+      {
+        _environmentId: environmentId,
+        _subscriberId: subscriberId,
+        _id: {
+          $in: messageIds.map((id) => {
+            return new Types.ObjectId(id);
+          }),
+        },
+      },
+      {
+        $set: updatePayload,
+      }
+    );
+  }
+
   async changeStatus(
     environmentId: string,
     subscriberId: string,
