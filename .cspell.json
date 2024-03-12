@@ -607,7 +607,8 @@
     "Pyroscope",
     "PYROSCOPE",
     "usecases",
-    "usecase"
+    "usecase",
+    "zulip"
   ],
   "flagWords": [],
   "patterns": [
