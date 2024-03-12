@@ -83,7 +83,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   }, [integrations]);
 
   useEffect(() => {
-    if (chimera) {
+    if (chimera && !showVariables) {
       mutateAsync(JSON.parse(processedVariables));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -146,12 +146,6 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
               <Button
                 fullWidth
                 onClick={() => {
-                  if (chimera) {
-                    mutateAsync(JSON.parse(payloadValue));
-
-                    return;
-                  }
-
                   getEmailPreview(payloadValue);
                 }}
                 variant="outline"
