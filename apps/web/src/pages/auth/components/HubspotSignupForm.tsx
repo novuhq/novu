@@ -17,11 +17,9 @@ import SetupLoader from './SetupLoader';
 export function HubspotSignupForm() {
   const [loading, setLoading] = useState<boolean>();
   const navigate = useNavigate();
-  const { setToken, token } = useAuthContext();
+  const { setToken, token, currentUser } = useAuthContext();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
-
-  const { currentUser } = useAuthContext();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
@@ -130,7 +128,7 @@ const hubspotRoleToJobTitleMapping: Record<string, JobTitleEnum> = {
   Architect: JobTitleEnum.ARCHITECT,
   'Engineering Manager': JobTitleEnum.ENGINEERING_MANAGER,
   Designer: JobTitleEnum.DESIGNER,
-  'CxO/Founder': JobTitleEnum.CXO_FOUNDER,
+  'CxO/Founder': JobTitleEnum.FOUNDER,
   Marketing: JobTitleEnum.MARKETING_MANAGER,
   'Other (specify)': JobTitleEnum.OTHER,
 };
