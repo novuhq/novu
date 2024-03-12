@@ -126,7 +126,6 @@ module.exports = (on, config) => {
         showOnBoardingTour?: boolean;
       } = {}
     ) {
-      console.log({ on, config });
       const dal = new DalService();
       await dal.connect(config.env.MONGODB_URL);
 
