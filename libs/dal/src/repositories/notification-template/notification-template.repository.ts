@@ -56,7 +56,10 @@ export class NotificationTemplateRepository extends BaseRepository<
       _id: id,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
+    const item = await this.MongooseModel.findOne(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
 
     return this.mapEntity(item);
   }
@@ -70,7 +73,10 @@ export class NotificationTemplateRepository extends BaseRepository<
       triggers: { $elemMatch: { identifier: identifier } },
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
+    const item = await this.MongooseModel.findOne(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
 
     return this.mapEntity(item);
   }

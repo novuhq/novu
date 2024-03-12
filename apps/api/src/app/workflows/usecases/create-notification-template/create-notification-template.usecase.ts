@@ -15,11 +15,14 @@ import {
   INotificationTrigger,
   TriggerTypeEnum,
   IStepVariant,
-  StepTypeEnum,
 } from '@novu/shared';
 import { AnalyticsService, CreateChange, CreateChangeCommand, PlatformException } from '@novu/application-generic';
 
-import { CreateNotificationTemplateCommand, NotificationStepVariant } from './create-notification-template.command';
+import {
+  CreateNotificationTemplateCommand,
+  NotificationStep,
+  NotificationStepVariant,
+} from './create-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -326,7 +329,7 @@ export class CreateNotificationTemplate {
     if (!command.blueprintId) return null;
 
     const group: NotificationGroupEntity = await this.handleGroup(command);
-    const steps: NotificationStepEntity[] = await this.handleFeeds(command.steps as any, command);
+    const steps: NotificationStep[] = this.normalizeSteps(command.steps);
 
     return CreateNotificationTemplateCommand.create({
       organizationId: command.organizationId,
@@ -343,6 +346,22 @@ export class CreateNotificationTemplate {
       preferenceSettings: command.preferenceSettings,
       blueprintId: command.blueprintId,
       __source: command.__source,
+    });
+  }
+
+  private normalizeSteps(commandSteps: NotificationStep[]): NotificationStep[] {
+    const steps = JSON.parse(JSON.stringify(commandSteps)) as NotificationStep[];
+
+    return steps.map((step) => {
+      const template = step.template;
+      if (template) {
+        template.feedId = undefined;
+      }
+
+      return {
+        ...step,
+        ...(template ? { template } : {}),
+      };
     });
   }
 
