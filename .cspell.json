@@ -605,7 +605,9 @@
     "PYROSCOPE",
     "usecases",
     "usecase",
-    "zulip"
+    "zulip",
+    "uuidv",
+    "Vonage"
   ],
   "flagWords": [],
   "patterns": [
