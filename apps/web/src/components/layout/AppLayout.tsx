@@ -13,7 +13,7 @@ import { SpotLight } from '../utils/Spotlight';
 import { SpotLightProvider } from '../providers/SpotlightProvider';
 import { FreeTrialBanner } from './components/FreeTrialBanner';
 
-const AppShellNew = styled.div`
+const AppShell = styled.div`
   display: flex;
   width: 100vw;
   height: 100vh;
@@ -56,14 +56,14 @@ export function AppLayout() {
               )}
             >
               <SpotLight>
-                <AppShellNew>
+                <AppShell>
                   <SideNav />
                   <ContentShell>
                     <FreeTrialBanner />
                     <HeaderNav isIntercomOpened={isIntercomOpened} />
                     <Outlet />
                   </ContentShell>
-                </AppShellNew>
+                </AppShell>
               </SpotLight>
             </Sentry.ErrorBoundary>
           </IntercomProvider>
