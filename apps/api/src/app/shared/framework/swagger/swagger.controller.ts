@@ -61,7 +61,9 @@ const options = new DocumentBuilder()
   .addTag(
     'Changes',
     `Changes represent a change in state of an environment. They are analagous to a pending pull request in git, enabling you to test changes before they are applied to your environment and atomically apply them when you are ready.`,
-    { url: 'https://docs.novu.co/platform/environments#promoting-pending-changes-to-production?utm_campaign=inapp-swagger' }
+    {
+      url: 'https://docs.novu.co/platform/environments#promoting-pending-changes-to-production?utm_campaign=inapp-swagger',
+    }
   )
   .addTag(
     'Environments',
