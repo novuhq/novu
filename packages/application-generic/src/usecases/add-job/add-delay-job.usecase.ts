@@ -16,28 +16,16 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '../execution-log-route';
-import { ModuleRef } from '@nestjs/core';
-import {
-  ExecuteOutput,
-  IChimeraDelayResponse,
-  IUseCaseInterfaceInline,
-  requireInject,
-} from '../../utils/require-inject';
 
 @Injectable()
 export class AddDelayJob {
-  private chimeraConnector: IUseCaseInterfaceInline;
-
   constructor(
     private jobRepository: JobRepository,
     @Inject(forwardRef(() => CalculateDelayService))
     private calculateDelayService: CalculateDelayService,
     @Inject(forwardRef(() => ExecutionLogRoute))
-    private executionLogRoute: ExecutionLogRoute,
-    private moduleRef: ModuleRef
-  ) {
-    this.chimeraConnector = requireInject('chimera_connector', this.moduleRef);
-  }
+    private executionLogRoute: ExecutionLogRoute
+  ) {}
 
   @InstrumentUsecase()
   public async execute(command: AddJobCommand): Promise<number | undefined> {
@@ -54,16 +42,11 @@ export class AddDelayJob {
     let delay;
 
     try {
-      const chimeraResponse = await this.chimeraConnector.execute<
-        AddJobCommand,
-        ExecuteOutput<IChimeraDelayResponse> | null
-      >(command);
-
       delay = this.calculateDelayService.calculateDelay({
         stepMetadata: data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
-        chimeraResponse: chimeraResponse?.outputs,
+        chimeraResponse: command.chimeraResponse?.outputs,
       });
 
       await this.jobRepository.updateStatus(

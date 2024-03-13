@@ -33,7 +33,7 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
   const content = watch(`${path}.template.content`);
   const { pathname } = useLocation();
   const isPreviewPath = pathname.endsWith('/preview');
-  const stepId = watch(`${path}.template.name`);
+  const stepId = watch(`${path}.uuid`);
   const [chimeraContent, setChimeraContent] = useState('');
 
   const {
