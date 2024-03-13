@@ -98,7 +98,7 @@ const options = new DocumentBuilder()
   .addTag(
     'Execution Details',
     `Execution details are used to track the execution of a workflow. They provided detailed information on the execution of a workflow, including the status of each step, the input and output of each step, and the overall status of the execution.`,
-    { url: 'https://docs.novu.co/activity-feeds' }
+    { url: 'https://docs.novu.co/activity-feed' }
   )
   .build();
 
