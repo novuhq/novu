@@ -30,7 +30,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   const enableAvatar = watch(`${path}.template.enableAvatar`);
   const processedVariables = useProcessVariables(variables);
 
-  const stepId = watch(`${path}.template.name`);
+  const stepId = watch(`${path}.uuid`);
   const [chimeraContent, setChimeraContent] = useState({ content: '', ctaButtons: [] });
 
   const {
