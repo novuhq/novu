@@ -5,7 +5,7 @@ import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-
 import { Node, NodeProps } from 'react-flow-renderer';
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
-import { useSegment } from '@novu/shared-web';
+import { useAuthContext, useSegment } from '@novu/shared-web';
 
 import { When } from '../../../components/utils/When';
 import type { IFlowEditorProps } from '../../../components/workflow';
@@ -51,6 +51,7 @@ const WorkflowEditor = () => {
   const [dragging, setDragging] = useState(false);
   const segment = useSegment();
   const { isOnboardingExperimentEnabled } = useOnboardingExperiment();
+  const { currentOrganization } = useAuthContext();
 
   const {
     control,
@@ -283,6 +284,7 @@ const WorkflowEditor = () => {
                           segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
                             action: 'Workflow - Send test notification',
                             experiment_id: '2024-w9-onb',
+                            _organization: currentOrganization?._id,
                           });
                           navigate(basePath + '/test-workflow');
                         } else {

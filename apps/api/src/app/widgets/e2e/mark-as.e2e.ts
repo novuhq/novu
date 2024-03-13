@@ -4,7 +4,7 @@ import axios from 'axios';
 import { ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-describe('Mark as Seen - /widgets/messages/:messageId/seen (POST)', async () => {
+describe('Mark as Seen - /widgets/messages/markAs (POST)', async () => {
   const messageRepository = new MessageRepository();
   let session: UserSession;
   let template: NotificationTemplateEntity;

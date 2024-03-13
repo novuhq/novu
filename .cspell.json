@@ -592,6 +592,7 @@
     "restapi",
     "ringcentral",
     "reshard",
+    "WaitList",
     "userid",
     "endgroup",
     "aliyun",
@@ -602,7 +603,16 @@
     "pyroscope",
     "HEAY",
     "Pyroscope",
-    "PYROSCOPE"
+    "PYROSCOPE",
+    "usecases",
+    "hbspt", 
+    "prepopulating",
+    "Vonage",
+    "fieldtype",
+    "usecase",
+    "zulip",
+    "uuidv",
+    "Vonage"
   ],
   "flagWords": [],
   "patterns": [

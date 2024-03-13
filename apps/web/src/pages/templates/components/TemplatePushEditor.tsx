@@ -53,13 +53,14 @@ export function TemplatePushEditor() {
               control={control}
               render={({ field }) => (
                 <Stack spacing={8} data-test-id="push-title-container">
-                  <VariableManagementButton
-                    openEditVariablesModal={() => {
-                      setEditVariablesModalOpen(true);
-                    }}
-                    label={chimera ? 'Input variables' : 'Title'}
-                  />
                   <When truthy={!chimera}>
+                    <VariableManagementButton
+                      openEditVariablesModal={() => {
+                        setEditVariablesModalOpen(true);
+                      }}
+                      label={chimera ? 'Input variables' : 'Title'}
+                    />
+
                     <CustomCodeEditor
                       value={(field.value as string) || ''}
                       onChange={(value) => {

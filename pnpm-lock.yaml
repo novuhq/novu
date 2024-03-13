@@ -2051,6 +2051,9 @@ importers:
       '@novu/shared':
         specifier: ^0.24.0
         version: link:../../../libs/shared
+      '@novu/stateless':
+        specifier: ^0.24.0
+        version: link:../../../packages/stateless
       '@novu/testing':
         specifier: ^0.24.0
         version: link:../../../libs/testing
@@ -2737,6 +2740,9 @@ importers:
 
   libs/shared-web:
     dependencies:
+      '@emotion/styled':
+        specifier: ^11.6.0
+        version: 11.10.6(@emotion/react@11.10.6)(@types/react@17.0.62)(react@17.0.2)
       '@mantine/hooks':
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
@@ -16222,7 +16228,7 @@ packages:
       '@types/react':
         optional: true
     dependencies:
-      '@babel/runtime': 7.21.0
+      '@babel/runtime': 7.23.2
       '@emotion/babel-plugin': 11.10.6
       '@emotion/is-prop-valid': 1.2.0
       '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)

@@ -75,6 +75,8 @@ export class NotificationTemplateEntity implements INotificationTemplate {
   type?: NotificationTemplateTypeEnum;
 
   rawData?: any;
+
+  payloadSchema?: any;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<
