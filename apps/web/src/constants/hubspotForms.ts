@@ -1,3 +1,3 @@
 export const HUBSPOT_FORM_IDS = {
-  SIGN_UP: 'ae2194a3-2b9d-4625-9c64-454187c42e8b',
+  SIGN_UP: 'c551a45f-a9fe-47eb-a2e5-4e8540d27695',
 };

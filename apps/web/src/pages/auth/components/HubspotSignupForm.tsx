@@ -6,7 +6,7 @@ import { useMantineColorScheme } from '@mantine/core';
 
 import { JobTitleEnum } from '@novu/shared';
 import type { ProductUseCases, IResponseError, ICreateOrganizationDto, IJwtPayload } from '@novu/shared';
-import { HubspotForm } from '@novu/shared-web';
+import { HubspotForm, useSegment } from '@novu/shared-web';
 
 import { api } from '../../../api/api.client';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
@@ -22,6 +22,8 @@ export function HubspotSignupForm() {
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { colorScheme } = useMantineColorScheme();
+
+  const segment = useSegment();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
@@ -63,6 +65,8 @@ export function HubspotSignupForm() {
 
   const handleCreateOrganization = async (data: IOrganizationCreateForm) => {
     if (!data?.organizationName) return;
+
+    segment.track('Button Clicked - [Signup]', { action: 'hubspot questionnaire form submit' });
 
     setLoading(true);
 
