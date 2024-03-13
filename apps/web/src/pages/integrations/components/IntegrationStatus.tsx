@@ -28,11 +28,11 @@ const STATUS_TO_ICON = {
   Disabled: 'bolt',
 };
 
-export const IntegrationStatus = ({ active }: { active: boolean }) => {
+export const IntegrationStatus = ({ active, className }: { active: boolean; className?: string }) => {
   const status = active ? 'Active' : 'Disabled';
 
   return (
-    <StatusHolder data-disabled={status === 'Disabled'} data-test-id="integration-status-cell">
+    <StatusHolder className={className} data-disabled={status === 'Disabled'} data-test-id="integration-status-cell">
       <StatusIcon icon={STATUS_TO_ICON[status] as any} />
       <StatusName>{status}</StatusName>
     </StatusHolder>

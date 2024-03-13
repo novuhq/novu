@@ -37,31 +37,31 @@ export function ProvidersPage() {
             channel={ChannelTypeEnum.IN_APP}
             setProvider={setProvider}
             setConfigureChannel={setConfigureChannel}
-            providers={inAppProvider}
+            channelProviders={inAppProvider}
           />
           <ListProviders
             channel={ChannelTypeEnum.EMAIL}
             setProvider={setProvider}
             setConfigureChannel={setConfigureChannel}
-            providers={emailProviders}
+            channelProviders={emailProviders}
           />
           <ListProviders
             channel={ChannelTypeEnum.CHAT}
             setProvider={setProvider}
             setConfigureChannel={setConfigureChannel}
-            providers={chatProvider}
+            channelProviders={chatProvider}
           />
           <ListProviders
             channel={ChannelTypeEnum.PUSH}
             setProvider={setProvider}
             setConfigureChannel={setConfigureChannel}
-            providers={pushProvider}
+            channelProviders={pushProvider}
           />
           <ListProviders
             channel={ChannelTypeEnum.SMS}
             setProvider={setProvider}
             setConfigureChannel={setConfigureChannel}
-            providers={smsProvider}
+            channelProviders={smsProvider}
           />
         </ScrollArea>
       </WorkflowSidebar>
