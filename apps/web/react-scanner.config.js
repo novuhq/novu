@@ -22,85 +22,108 @@ const getOutputFilePath = (suffix) => {
 };
 
 const NOVU_ICON_REGEX = /^Icon(?!Button)[A-Z0-9]{1}[a-zA-Z0-9]+$/;
+const RELATIVE_PATH_REGEX = /^(\.(\.){0,}\/)/;
 const ANTD_ICON_MODULE_NAME = '@ant-design/icons';
 
 module.exports = {
   /** directory to scan */
   crawlFrom: './src',
   includeSubComponents: true,
-  /** Regex for determining which imports to include */
+  /**
+   * Regex for determining which imports to include.
+   * Currently includes: novu, antd, mantine, and local imports
+   *
+   * To see only local imports, replace with: /(\.(\.){0,}\/.*)/gim
+   */
   importedFrom:
-    /(@novu\/(design-system|shared-web|notification-center)|@mantine\/core|@ant-design)(\/[a-z0-9\-)]+){0,}/gim,
-  exclude: ['/src/api', '/src/styled-system', ''],
-  processors: [countComponentsAndPropsProcessor, groupByNamespaceProcessor],
+    /(@novu\/(design-system|shared-web|notification-center)|@mantine\/core|@ant-design)(\/[a-z0-9\-)]+){0,}|(\.(\.){0,}\/.*)/gim,
+  exclude: ['/src/api', '/src/styled-system'],
+  processors: [countComponentsAndPropsProcessor({ minNumInstances: 1 }), groupByNamespaceProcessor],
   /** file patterns to scan */
   globs: ['**/!(*.test|*.spec|*.stories).@(js|ts)x'],
   /** function for naming components -- we use the returned name as the "group by" key. */
-  getComponentName: ({ imported, local, moduleName, importType }) => {
-    if (!imported) {
-      return local;
-    }
-    // get the module namespace / org (AKA novu or mantine), but remove @
-    const moduleOrg = moduleName.split('/')[0].replace('@', '');
-
-    // group Icons if from Novu Design System or AntD
-    const name =
-      (moduleName === '@novu/design-system' && NOVU_ICON_REGEX.test(imported)) || moduleName === ANTD_ICON_MODULE_NAME
-        ? 'Icon'
-        : imported;
-
-    return `${moduleOrg}/${name}`;
-  },
+  getComponentName,
 };
 
-/**
- * Based on built-in processor from react-scanner to make it easier to customize.
- * https://github.com/moroshko/react-scanner/blob/master/src/processors/count-components-and-props.js
- */
-function countComponentsAndPropsProcessor({ forEachComponent, sortObjectKeysByValue, output }) {
-  let result = {};
+function getComponentName({ imported, local, moduleName, importType }) {
+  const importedName = imported ?? local;
 
-  forEachComponent(({ componentName, component }) => {
-    const { instances } = component;
+  // any relative imports should return early and be scoped to "web"
+  if (RELATIVE_PATH_REGEX.test(moduleName)) {
+    return `web/${importedName}`;
+  }
 
-    if (!instances) {
-      return;
-    }
+  // get the module namespace / org (AKA novu or mantine), but remove @
+  const moduleOrg = moduleName.split('/').join('_').replace('@', '');
 
-    result[componentName] = {
-      instances: instances.length,
-      props: {},
-    };
+  // group Icons if from Novu Design System or AntD
+  const name =
+    (moduleName === '@novu/design-system' && NOVU_ICON_REGEX.test(importedName)) || moduleName === ANTD_ICON_MODULE_NAME
+      ? 'Icon'
+      : importedName;
 
-    instances.forEach((instance) => {
-      for (const prop in instance.props) {
-        if (result[componentName].props[prop] === undefined) {
-          result[componentName].props[prop] = 0;
-        }
-
-        result[componentName].props[prop] += 1;
-      }
-
-      // aggregate icon names and output as a prop to stay consistent across all output components.
-      if (componentName.includes('/Icon')) {
-        const iconName = instance.importInfo.imported;
-        const existingIconNames = result[componentName].props.iconNames;
-
-        result[componentName].props.iconNames = existingIconNames ? existingIconNames.concat(iconName) : [iconName];
-      }
-    });
-
-    result[componentName].props = sortObjectKeysByValue(result[componentName].props);
-  });
-
-  result = sortObjectKeysByValue(result, (component) => component.instances);
-
-  output(result, getOutputFilePath());
-
-  return result;
+  return `${moduleOrg}/${name}`;
 }
 
 /**
+ * @param {object} _ with the following properties:
+ * @param {number} minNumInstances Minimum instance count (inclusive) of a component to include it in the output
+ * @default 1
+ *
+ * Extension of a built-in processor from react-scanner to make it easier to customize.
+ * https://github.com/moroshko/react-scanner/blob/master/src/processors/count-components-and-props.js
+ */
+function countComponentsAndPropsProcessor({ minNumInstances = 1 } = {}) {
+  return function ({ forEachComponent, sortObjectKeysByValue, output }) {
+    let result = {};
+
+    forEachComponent(({ componentName, component }) => {
+      const { instances } = component;
+
+      if (!instances || instances.length < minNumInstances) {
+        return;
+      }
+
+      // include the package source as a prop
+      const [srcPkg] = componentName.split('/');
+
+      result[componentName] = {
+        instances: instances.length,
+        props: {},
+        srcPkg,
+      };
+
+      instances.forEach((instance) => {
+        for (const prop in instance.props) {
+          if (result[componentName].props[prop] === undefined) {
+            result[componentName].props[prop] = 0;
+          }
+
+          result[componentName].props[prop] += 1;
+        }
+
+        // aggregate icon names and output as a prop to stay consistent across all output components.
+        if (componentName.includes('/Icon')) {
+          const iconName = instance.importInfo.imported;
+          const existingIconNames = result[componentName].props.iconNames;
+
+          result[componentName].props.iconNames = existingIconNames ? existingIconNames.concat(iconName) : [iconName];
+        }
+      });
+
+      result[componentName].props = sortObjectKeysByValue(result[componentName].props);
+    });
+
+    result = sortObjectKeysByValue(result, (component) => component.instances);
+
+    output(result, getOutputFilePath());
+
+    return result;
+  };
+}
+
+/**
+ * @precondition Must be called after `countComponentsAndPropsProcessor` in the processors array.
  * Processor for grouping by namespace (i.e. Novu, Mantine, etc)
  */
 function groupByNamespaceProcessor({ prevResult, output }) {
