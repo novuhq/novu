@@ -1,6 +1,6 @@
-import { Button, IButtonProps } from '@novu/design-system';
-import { Tooltip } from '@novu/design-system';
-import { ComponentProps, PropsWithChildren, useState } from 'react';
+import { ComponentProps, PropsWithChildren } from 'react';
+import { Tooltip, Button, IButtonProps } from '@novu/design-system';
+
 import { useHover } from '../hooks';
 import { css, cx } from '../styled-system/css';
 
