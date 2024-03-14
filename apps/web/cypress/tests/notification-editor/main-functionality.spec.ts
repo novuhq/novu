@@ -55,6 +55,53 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('emailPreheader').should('have.value', 'this is email preheader');
   });
 
+  it('should update to empty data when switching from editor to customHtml', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+    fillBasicNotificationDetails('Test Notification');
+    cy.waitForNetworkIdle(500);
+
+    addAndEditChannel('email');
+
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('editor-type-selector')
+      .find('.mantine-Tabs-tabsList')
+      .contains('Custom Code', { matchCase: false })
+      .click();
+
+    cy.getByTestId('emailSubject').clear().type('new email subject');
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('side-nav-templates-link').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('template-edit-link');
+    cy.getByTestId('notifications-template')
+      .get('tbody tr td')
+      .contains('Test notification', {
+        matchCase: false,
+      })
+      .click();
+    cy.waitForNetworkIdle(500);
+
+    editChannel('email');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('editor-type-selector')
+      .find('.mantine-Tabs-tabsList')
+      .find('[data-active="true"]')
+      .contains('Custom Code', { matchCase: false });
+  });
+
   it('should save avatar enabled and content for in app', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
