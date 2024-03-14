@@ -17,6 +17,8 @@ const TableWrapper = ({ children }: { children: React.ReactNode }) => {
       className={css({
         overflowX: 'auto',
         maxWidth: '100%',
+        overflowY: 'auto',
+        maxHeight: '95dvh',
       })}
     >
       {children}
@@ -25,14 +27,16 @@ const TableWrapper = ({ children }: { children: React.ReactNode }) => {
 };
 
 const Template: StoryFn<typeof ComponentAuditTable> = ({ ...args }) => (
-  <TableWrapper>
+  <>
     <h3>
       If no data is appearing below, please run `pnpm audit-components` in your terminal in the `design-system`
       directory
     </h3>
     <br />
-    <ComponentAuditTable data={scanJson ?? {}} />
-  </TableWrapper>
+    <TableWrapper>
+      <ComponentAuditTable data={scanJson ?? {}} />
+    </TableWrapper>
+  </>
 );
 
 export const ComponentAudit = Template.bind({});

@@ -13,11 +13,12 @@ interface JsonData {
 
 interface ComponentAuditTableProps {
   data: JsonData;
+  className?: string;
 }
 
 type SortableKey = keyof Omit<JsonData[string], 'props'> | 'name';
 
-export const ComponentAuditTable: React.FC<ComponentAuditTableProps> = ({ data: jsonData }) => {
+export const ComponentAuditTable: React.FC<ComponentAuditTableProps> = ({ data: jsonData, className }) => {
   const [expandedRows, setExpandedRows] = useState<string[]>([]);
   const [sortColumn, setSortColumn] = useState<SortableKey | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | null>(null);
@@ -67,7 +68,7 @@ export const ComponentAuditTable: React.FC<ComponentAuditTableProps> = ({ data: 
     : data;
 
   return (
-    <table className={css({ width: '100%', borderCollapse: 'collapse' })}>
+    <table className={`${css({ width: '100%', borderCollapse: 'collapse' })} ${className ?? ''}`}>
       <thead>
         <tr className={css({ bg: 'gray.200', fontSize: '100', fontWeight: 'strong' })}>
           <th
@@ -94,7 +95,7 @@ export const ComponentAuditTable: React.FC<ComponentAuditTableProps> = ({ data: 
       <tbody>
         {sortedData.map(({ name, instances, props, srcPkg }) => (
           <React.Fragment key={`${srcPkg}-${name}`}>
-            <tr className={css({ bg: 'surface.page', _even: { bg: '#222222' } })}>
+            <tr className={css({ bg: 'surface.page', _even: { bg: { base: '#DDDDDD', _dark: '#222233' } } })}>
               <td className={css({ py: 2, px: 4, borderBottom: '1px solid #ddd' })}>{name}</td>
               <td className={css({ py: 2, px: 4, borderBottom: '1px solid #ddd' })}>{instances}</td>
               <td className={css({ py: 2, px: 4, borderBottom: '1px solid #ddd' })}>{srcPkg}</td>

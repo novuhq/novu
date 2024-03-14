@@ -25,6 +25,8 @@ const NOVU_ICON_REGEX = /^Icon(?!Button)[A-Z0-9]{1}[a-zA-Z0-9]+$/;
 const RELATIVE_PATH_REGEX = /^(\.(\.){0,}\/)/;
 const ANTD_ICON_MODULE_NAME = '@ant-design/icons';
 
+const COMPONENT_NAME_EXCLUSION_REGEX = /^web\/.*(Page|Container|Provider|Sidebar|Modal)$/;
+
 module.exports = {
   /** directory to scan */
   crawlFrom: '../../apps/web/src/',
@@ -81,6 +83,12 @@ function countComponentsAndPropsProcessor({ minNumInstances = 1 } = {}) {
       const { instances } = component;
 
       if (!instances || instances.length < minNumInstances) {
+        return;
+      }
+
+      if (COMPONENT_NAME_EXCLUSION_REGEX.test(componentName)) {
+        console.log('Excluding component ' + componentName);
+
         return;
       }
 
