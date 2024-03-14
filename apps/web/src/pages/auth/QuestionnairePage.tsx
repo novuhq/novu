@@ -3,9 +3,12 @@ import AuthContainer from '../../components/layout/components/AuthContainer';
 import { QuestionnaireForm } from './components/QuestionnaireForm';
 import { useVercelIntegration } from '../../hooks';
 import SetupLoader from './components/SetupLoader';
+import { ENV, IS_DOCKER_HOSTED } from '@novu/shared-web';
+import { HubspotSignupForm } from './components/HubspotSignupForm';
 
 export default function QuestionnairePage() {
   const { isLoading } = useVercelIntegration();
+  const isNovuProd = !IS_DOCKER_HOSTED && ENV === 'production';
 
   return (
     <AuthLayout>
@@ -14,9 +17,9 @@ export default function QuestionnairePage() {
       ) : (
         <AuthContainer
           title="Customize your experience"
-          description="Your answers can decrease the time to get started"
+          description={!isNovuProd ? 'Your answers can decrease the time to get started' : ''}
         >
-          <QuestionnaireForm />
+          {!isNovuProd ? <QuestionnaireForm /> : <HubspotSignupForm />}
         </AuthContainer>
       )}
     </AuthLayout>
