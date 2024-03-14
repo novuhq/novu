@@ -131,7 +131,7 @@ export const NovuInAppForm = ({
           <CircleArrowRightStyled
             onClick={() => {
               window.open(
-                `https://docs.novu.co/notification-center/client/iframe${UTM_CAMPAIGN_QUERY_PARAM}#enabling-hmac-encryption`
+                `https://docs.novu.co/notification-center/client/iframe#enabling-hmac-encryption${UTM_CAMPAIGN_QUERY_PARAM}`
               );
             }}
           />

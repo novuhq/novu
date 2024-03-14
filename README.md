@@ -105,7 +105,7 @@ npx novu init
 
 After setting up your account using the cloud or docker version, you can trigger the API using the `@novu/node` package.
 
-For API documentation and reference, please visit [Novu API Reference] (https://docs.novu.co/api-reference/events/trigger-event).
+For API documentation and reference, please visit [Novu API Reference] (https://docs.novu.co/api-reference/events/trigger-event?utm_campaign=github-readme).
 
 To get started with the Node.js package, you can install it using npm:
 
@@ -148,7 +148,7 @@ Create notification workflows right from your IDE and integrate with MJML/React 
 - Define workflow and step validations with Zod or JSON Schema
 - Modify content and behavior via Web management input panel
 
-[Request Early Access](https://novu.co/novu-echo-coming-soon/?utm_campaign=echo_github)
+[Request Early Access](https://novu.co/novu-echo-coming-soon/?utm_campaign=github-readme)
 
 ```ts
 
@@ -202,17 +202,17 @@ client.workflow('comment-on-post', async ({step, subscriber}) => {
 
 ## Embeddable Notification Center
 
-Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/notification-center/client/react/get-started) / [Vue](https://docs.novu.co/notification-center/client/vue) / [Angular](https://docs.novu.co/notification-center/client/angular) components or an [iframe embed](https://docs.novu.co/notification-center/client/iframe), as well as a [Web component](https://docs.novu.co/notification-center/client/web-component).
+Using the Novu API and admin panel, you can easily add a real-time notification center to your web app without building it yourself. You can use our [React](https://docs.novu.co/notification-center/client/react/get-started?utm_campaign=github-readme) / [Vue](https://docs.novu.co/notification-center/client/vue?utm_campaign=github-readme) / [Angular](https://docs.novu.co/notification-center/client/angular?utm_campaign=github-readme) components or an [iframe embed](https://docs.novu.co/notification-center/client/iframe?utm_campaign=github-readme), as well as a [Web component](https://docs.novu.co/notification-center/client/web-component?utm_campaign=github-readme).
 
 <div align="center">
 <img width="762" alt="notification-center-912bb96e009fb3a69bafec23bcde00b0" src="https://user-images.githubusercontent.com/80174214/193887395-f1c95042-b4e6-480e-a89c-a78aa247fa90.gif" alt-text="GIF of Novu's Embeddable Notification Center">
 
-Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started)
+Read more about how to add a notification center to your app with the Novu API [here](https://docs.novu.co/notification-center/getting-started?utm_campaign=github-readme)
 
 <p align="center">
-  <a href="https://docs.novu.co/sdks/react">React Component</a>
-  · <a href="https://docs.novu.co/sdks/vue">Vue Component</a>
-  · <a href="https://docs.novu.co/sdks/angular">Angular Component</a>
+  <a href="https://docs.novu.co/sdks/react?utm_campaign=github-readme">React Component</a>
+  · <a href="https://docs.novu.co/sdks/vue?utm_campaign=github-readme">Vue Component</a>
+  · <a href="https://docs.novu.co/sdks/angular?utm_campaign=github-readme">Angular Component</a>
   </p>
   
 </div>
@@ -277,7 +277,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 In-App
 
-- [x] [Novu](https://docs.novu.co/notification-center/getting-started)
+- [x] [Novu](https://docs.novu.co/notification-center/getting-started?utm_campaign=github-readme)
 - [ ] MagicBell
 
 #### Other (Coming Soon...)
@@ -298,9 +298,9 @@ We are more than happy to help you. If you are getting any errors or facing prob
 
 ## 🔗 Links
 
-- [Home page](https://novu.co?utm_source=github)
+- [Home page](https://novu.co?utm_campaign=github-readme)
 - [Contribution Guidelines](https://github.com/novuhq/novu/blob/main/CONTRIBUTING.md)
-- [Run Novu Locally](https://docs.novu.co/community/run-in-local-machine)
+- [Run Novu Locally](https://docs.novu.co/community/run-in-local-machine?utm_campaign=github-readme)
 
 ## 🛡️ License
 
