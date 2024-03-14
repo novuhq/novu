@@ -32,7 +32,8 @@
     "cypress:install": "cypress install",
     "cypress:open": "cross-env NODE_ENV=test cypress open",
     "cypress:run": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component",
-    "test": "vitest"
+    "test": "vitest",
+    "audit-components": "pnpm react-scanner -c './react-scanner.config.js'"
   },
   "dependencies": {
     "@cypress/react": "^7.0.3",
@@ -80,6 +81,7 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-router-dom": "6.2.2",
+    "react-scanner": "^1.1.0",
     "rimraf": "^3.0.2",
     "storybook": "^7.4.2",
     "ts-loader": "~9.4.0",
