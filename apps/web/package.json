@@ -24,8 +24,7 @@
     "build-storybook": "storybook build -s public",
     "lint": "eslint src",
     "lint:fix": "pnpm lint -- --fix",
-    "link:submodules": "pnpm link ../../enterprise/packages/translation-web && pnpm link ../../enterprise/packages/billing-web",
-    "audit-components": "pnpm react-scanner -c './react-scanner.config.js'"
+    "link:submodules": "pnpm link ../../enterprise/packages/translation-web && pnpm link ../../enterprise/packages/billing-web"
   },
   "dependencies": {
     "@ant-design/icons": "4.6.2",
@@ -161,7 +160,6 @@
     "nodemon": "^3.0.1",
     "react-app-rewired": "^2.2.1",
     "react-error-overlay": "6.0.11",
-    "react-scanner": "^1.1.0",
     "react-scripts": "^5.0.1",
     "storybook": "^7.4.2",
     "typescript": "4.9.5",

@@ -1,0 +1,3457 @@
+{
+  "web/When": {
+    "instances": 92,
+    "props": {
+      "truthy": 92
+    },
+    "srcPkg": "web"
+  },
+  "novu_design-system/Text": {
+    "instances": 88,
+    "props": {
+      "color": 53,
+      "size": 19,
+      "weight": 14,
+      "data-test-id": 11,
+      "rows": 11,
+      "gradient": 7,
+      "mt": 7,
+      "align": 5,
+      "mr": 5,
+      "ml": 3,
+      "mb": 2,
+      "my": 1,
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "mantine_core/Group": {
+    "instances": 85,
+    "props": {
+      "spacing": 51,
+      "position": 31,
+      "align": 14,
+      "noWrap": 14,
+      "sx": 9,
+      "mt": 5,
+      "data-test-id": 4,
+      "h": 4,
+      "ml": 4,
+      "style": 4,
+      "grow": 3,
+      "mb": 3,
+      "w": 2,
+      "className": 1,
+      "color": 1,
+      "pb": 1,
+      "pt": 1,
+      "px": 1,
+      "py": 1,
+      "ref": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Grid.Col": {
+    "instances": 48,
+    "props": {
+      "span": 42,
+      "lg": 4,
+      "md": 4,
+      "sm": 4,
+      "key": 3,
+      "style": 3,
+      "sx": 3,
+      "data-test-id": 2,
+      "mt": 2,
+      "xl": 2,
+      "xs": 2,
+      "miw": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "novu_design-system/Button": {
+    "instances": 46,
+    "props": {
+      "onClick": 34,
+      "data-test-id": 26,
+      "variant": 22,
+      "submit": 12,
+      "disabled": 11,
+      "loading": 11,
+      "mt": 10,
+      "size": 6,
+      "inherit": 5,
+      "fullWidth": 4,
+      "icon": 3,
+      "mb": 2,
+      "key": 1,
+      "style": 1,
+      "sx": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "web/TestWrapper": {
+    "instances": 38,
+    "props": {
+      "initialEntries": 1
+    },
+    "srcPkg": "web"
+  },
+  "mantine_core/Stack": {
+    "instances": 30,
+    "props": {
+      "spacing": 20,
+      "sx": 5,
+      "align": 4,
+      "justify": 3,
+      "data-test-id": 1,
+      "h": 1,
+      "hidden": 1,
+      "id": 1,
+      "mb": 1,
+      "mt": 1,
+      "my": 1,
+      "pb": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "novu_design-system/Input": {
+    "instances": 30,
+    "props": {
+      "data-test-id": 25,
+      "placeholder": 22,
+      "value": 22,
+      "label": 21,
+      "error": 19,
+      "disabled": 14,
+      "rightSection": 11,
+      "type": 9,
+      "required": 6,
+      "mb": 5,
+      "mt": 5,
+      "readOnly": 5,
+      "onChange": 3,
+      "description": 2,
+      "max": 2,
+      "min": 2,
+      "onBlur": 2,
+      "styles": 2,
+      "rightSectionWidth": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Tooltip": {
+    "instances": 20,
+    "props": {
+      "label": 20,
+      "position": 5,
+      "multiline": 4,
+      "width": 4,
+      "disabled": 3,
+      "classNames": 2,
+      "offset": 2,
+      "withinPortal": 2,
+      "arrowSize": 1,
+      "data-test-id": 1,
+      "opened": 1,
+      "sx": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "web/StepDescription": {
+    "instances": 19,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "mantine_core/ActionIcon": {
+    "instances": 18,
+    "props": {
+      "variant": 17,
+      "onClick": 13,
+      "data-test-id": 6,
+      "sx": 2,
+      "color": 1,
+      "component": 1,
+      "disabled": 1,
+      "id": 1,
+      "mr": 1,
+      "mt": 1,
+      "onMouseLeave": 1,
+      "onMouseOver": 1,
+      "radius": 1,
+      "size": 1,
+      "to": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Center": {
+    "instances": 15,
+    "props": {
+      "inline": 6,
+      "mt": 3,
+      "data-test-id": 1,
+      "mb": 1,
+      "ml": 1,
+      "onClick": 1,
+      "style": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Grid": {
+    "instances": 14,
+    "props": {
+      "align": 4,
+      "gutter": 4,
+      "m": 3,
+      "mt": 3,
+      "columns": 2,
+      "grow": 2,
+      "justify": 2,
+      "style": 2,
+      "mx": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Text": {
+    "instances": 14,
+    "props": {
+      "color": 7,
+      "data-test-id": 2,
+      "mt": 2,
+      "sx": 2,
+      "className": 1,
+      "display": 1,
+      "mb": 1,
+      "ml": 1,
+      "size": 1,
+      "truncate": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "novu_design-system/Dropdown.Item": {
+    "instances": 13,
+    "props": {
+      "icon": 13,
+      "onClick": 12,
+      "data-test-id": 10,
+      "key": 6,
+      "disabled": 4,
+      "component": 1,
+      "data-critical": 1,
+      "onMouseEnter": 1,
+      "onMouseLeave": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Select": {
+    "instances": 13,
+    "props": {
+      "data": 13,
+      "data-test-id": 8,
+      "placeholder": 7,
+      "disabled": 6,
+      "error": 6,
+      "label": 4,
+      "onChange": 4,
+      "value": 4,
+      "description": 3,
+      "type": 3,
+      "creatable": 2,
+      "getCreateLabel": 2,
+      "loading": 2,
+      "mb": 2,
+      "mt": 2,
+      "searchable": 2,
+      "dataTestId": 1,
+      "inputProps": 1,
+      "itemComponent": 1,
+      "onCreate": 1,
+      "required": 1,
+      "rightSectionWidth": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Title": {
+    "instances": 13,
+    "props": {
+      "size": 8,
+      "data-test-id": 2,
+      "color": 1,
+      "ml": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "web/StepText": {
+    "instances": 13,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "ant-design_icons/Icon": {
+    "instances": 11,
+    "props": {
+      "style": 1,
+      "iconNames": [
+        "EyeInvisibleOutlined",
+        "WarningOutlined",
+        "EyeOutlined",
+        "EyeInvisibleOutlined",
+        "WarningOutlined",
+        "WarningOutlined",
+        "AlignLeftOutlined",
+        "AlignRightOutlined",
+        "WarningFilled",
+        "UpCircleFilled",
+        "CheckCircleFilled"
+      ],
+      "size": 5,
+      "key": 2
+    },
+    "srcPkg": "ant-design_icons"
+  },
+  "novu_design-system/Switch": {
+    "instances": 11,
+    "props": {
+      "checked": 11,
+      "data-test-id": 10,
+      "onChange": 9,
+      "disabled": 4,
+      "label": 3,
+      "loading": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/When": {
+    "instances": 11,
+    "props": {
+      "truthy": 11
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "mantine_core/Container": {
+    "instances": 10,
+    "props": {
+      "fluid": 8,
+      "mt": 5,
+      "sx": 4,
+      "ml": 3,
+      "px": 2,
+      "style": 2,
+      "id": 1,
+      "mb": 1,
+      "onMouseEnter": 1,
+      "onMouseLeave": 1,
+      "p": 1,
+      "pl": 1,
+      "pr": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Skeleton": {
+    "instances": 10,
+    "props": {
+      "height": 10,
+      "width": 10,
+      "radius": 6,
+      "animate": 1,
+      "mt": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/UnstyledButton": {
+    "instances": 10,
+    "props": {
+      "onClick": 10,
+      "data-test-id": 4,
+      "sx": 4,
+      "className": 2,
+      "component": 1,
+      "disabled": 1,
+      "key": 1,
+      "style": 1,
+      "type": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "novu_design-system/Check": {
+    "instances": 9,
+    "props": {
+      "style": 2,
+      "color": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Copy": {
+    "instances": 9,
+    "props": {
+      "style": 3,
+      "color": 1,
+      "height": 1,
+      "viewBox": 1,
+      "width": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "web/PageContainer": {
+    "instances": 9,
+    "props": {
+      "title": 7,
+      "style": 3
+    },
+    "srcPkg": "web"
+  },
+  "novu_design-system/ActionButton": {
+    "instances": 8,
+    "props": {
+      "Icon": 8,
+      "onClick": 8,
+      "data-test-id": 7,
+      "tooltip": 6,
+      "text": 3,
+      "sx": 2,
+      "tooltipPosition": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Close": {
+    "instances": 8,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "mantine_core/Divider": {
+    "instances": 7,
+    "props": {
+      "color": 4,
+      "label": 4,
+      "labelPosition": 3,
+      "my": 2,
+      "size": 2,
+      "style": 2,
+      "variant": 2,
+      "data-test-id": 1,
+      "ml": 1,
+      "mr": 1,
+      "mx": 1,
+      "orientation": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Input.Wrapper": {
+    "instances": 7,
+    "props": {
+      "label": 6,
+      "styles": 6,
+      "description": 4,
+      "error": 1,
+      "mt": 1,
+      "required": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "web/LackIntegrationAlert": {
+    "instances": 7,
+    "props": {
+      "channelType": 7,
+      "text": 3,
+      "isPrimaryMissing": 1,
+      "type": 1
+    },
+    "srcPkg": "web"
+  },
+  "mantine_core/Box": {
+    "instances": 6,
+    "props": {
+      "mt": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Popover": {
+    "instances": 6,
+    "props": {
+      "classNames": 6,
+      "opened": 5,
+      "position": 5,
+      "withArrow": 5,
+      "middlewares": 3,
+      "onClose": 3,
+      "transition": 3,
+      "withinPortal": 3,
+      "radius": 2,
+      "shadow": 2,
+      "transitionDuration": 2,
+      "width": 2,
+      "clickOutsideEvents": 1,
+      "closeOnClickOutside": 1,
+      "disabled": 1,
+      "offset": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Popover.Dropdown": {
+    "instances": 6,
+    "props": {
+      "onClick": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Tabs.Tab": {
+    "instances": 6,
+    "props": {
+      "value": 6,
+      "icon": 1,
+      "key": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Title": {
+    "instances": 6,
+    "props": {
+      "color": 3,
+      "mb": 3,
+      "size": 3,
+      "sx": 3,
+      "order": 2,
+      "ta": 1,
+      "weight": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "novu_design-system/Trash": {
+    "instances": 6,
+    "props": {
+      "style": 3,
+      "height": 1,
+      "width": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "web/GetStartedLink": {
+    "instances": 6,
+    "props": {
+      "href": 6,
+      "rel": 6,
+      "target": 6,
+      "children": 3
+    },
+    "srcPkg": "web"
+  },
+  "web/OpenWorkflowButton": {
+    "instances": 6,
+    "props": {
+      "blueprintIdentifier": 6,
+      "node": 2
+    },
+    "srcPkg": "web"
+  },
+  "mantine_core/JsonInput": {
+    "instances": 5,
+    "props": {
+      "autosize": 5,
+      "data-test-id": 5,
+      "formatOnBlur": 5,
+      "label": 5,
+      "minRows": 5,
+      "styles": 5,
+      "validationError": 5,
+      "onChange": 2,
+      "value": 2,
+      "description": 1,
+      "key": 1,
+      "mb": 1,
+      "mt": 1,
+      "placeholder": 1,
+      "rightSection": 1,
+      "rightSectionProps": 1,
+      "rightSectionWidth": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "novu_design-system/Dropdown": {
+    "instances": 5,
+    "props": {
+      "control": 5,
+      "position": 4,
+      "middlewares": 3,
+      "offset": 2,
+      "withArrow": 2,
+      "disabled": 1,
+      "onClose": 1,
+      "onOpen": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ErrorIcon": {
+    "instances": 5,
+    "props": {
+      "color": 5,
+      "height": 3,
+      "width": 3,
+      "data-test-id": 1,
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "web/Conditions": {
+    "instances": 5,
+    "props": {
+      "conditions": 5,
+      "isOpened": 5,
+      "name": 5,
+      "onClose": 5,
+      "updateConditions": 5,
+      "defaultFilter": 4,
+      "filterPartsList": 4,
+      "isReadonly": 4,
+      "shouldDisallowEmptyConditions": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/OrganizationSelect": {
+    "instances": 5,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/PageHeader": {
+    "instances": 5,
+    "props": {
+      "title": 5,
+      "actions": 2
+    },
+    "srcPkg": "web"
+  },
+  "mantine_core/Accordion.Item": {
+    "instances": 4,
+    "props": {
+      "value": 4,
+      "data-test-id": 3,
+      "sx": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Flex": {
+    "instances": 4,
+    "props": {
+      "align": 3,
+      "justify": 3,
+      "gap": 2,
+      "direction": 1,
+      "h": 1,
+      "mih": 1,
+      "onClick": 1,
+      "style": 1,
+      "wrap": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Loader": {
+    "instances": 4,
+    "props": {
+      "color": 3,
+      "size": 3,
+      "mb": 1,
+      "mt": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/LoadingOverlay": {
+    "instances": 4,
+    "props": {
+      "visible": 4,
+      "loaderProps": 3,
+      "overlayColor": 3
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Modal": {
+    "instances": 4,
+    "props": {
+      "onClose": 4,
+      "opened": 4,
+      "overlayColor": 4,
+      "overlayOpacity": 4,
+      "radius": 4,
+      "shadow": 4,
+      "size": 4,
+      "styles": 4,
+      "sx": 4,
+      "title": 4,
+      "centered": 2,
+      "overflow": 2,
+      "closeOnClickOutside": 1,
+      "withCloseButton": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "novu_design-system/Digest": {
+    "instances": 4,
+    "props": {
+      "color": 3,
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/PasswordInput": {
+    "instances": 4,
+    "props": {
+      "data-test-id": 4,
+      "error": 4,
+      "label": 4,
+      "placeholder": 4,
+      "required": 4,
+      "mt": 3,
+      "description": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Popover": {
+    "instances": 4,
+    "props": {
+      "opened": 4,
+      "target": 4,
+      "withArrow": 4,
+      "content": 3,
+      "position": 3,
+      "transitionDuration": 3,
+      "width": 3,
+      "withinPortal": 3,
+      "offset": 2,
+      "styles": 2,
+      "className": 1,
+      "description": 1,
+      "key": 1,
+      "onDropdownMouseEnter": 1,
+      "onDropdownMouseLeave": 1,
+      "onUrlClick": 1,
+      "opacity": 1,
+      "title": 1,
+      "titleGradient": 1,
+      "transition": 1,
+      "url": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Table": {
+    "instances": 4,
+    "props": {
+      "columns": 4,
+      "data": 4,
+      "loading": 4,
+      "data-test-id": 3,
+      "onRowClick": 3,
+      "pagination": 3
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "web/CustomCodeEditor": {
+    "instances": 4,
+    "props": {
+      "onChange": 4,
+      "value": 4,
+      "height": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/EditVariablesModal": {
+    "instances": 4,
+    "props": {
+      "open": 4,
+      "setOpen": 4,
+      "variablesArray": 4
+    },
+    "srcPkg": "web"
+  },
+  "web/ExecutionDetailsConditions": {
+    "instances": 4,
+    "props": {
+      "conditions": 4
+    },
+    "srcPkg": "web"
+  },
+  "web/InputVariablesForm": {
+    "instances": 4,
+    "props": {
+      "onChange": 3
+    },
+    "srcPkg": "web"
+  },
+  "web/NodeStep": {
+    "instances": 4,
+    "props": {
+      "Handlers": 4,
+      "Icon": 4,
+      "data": 4,
+      "ActionItem": 1
+    },
+    "srcPkg": "web"
+  },
+  "mantine_core/Accordion.Panel": {
+    "instances": 3,
+    "props": {},
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Avatar": {
+    "instances": 3,
+    "props": {
+      "radius": 3,
+      "src": 2,
+      "data-test-id": 1,
+      "size": 1,
+      "style": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Card": {
+    "instances": 3,
+    "props": {
+      "sx": 3,
+      "withBorder": 3
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Popover.Target": {
+    "instances": 3,
+    "props": {},
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Tabs.List": {
+    "instances": 3,
+    "props": {},
+    "srcPkg": "mantine_core"
+  },
+  "novu_design-system/Bolt": {
+    "instances": 3,
+    "props": {
+      "color": 2,
+      "height": 2,
+      "width": 2
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/CardTile": {
+    "instances": 3,
+    "props": {
+      "data-test-id": 3,
+      "data-can-be-hidden": 2,
+      "key": 2,
+      "onClick": 2,
+      "disabled": 1,
+      "onMouseEnter": 1,
+      "onMouseLeave": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Container": {
+    "instances": 3,
+    "props": {
+      "sx": 2,
+      "fluid": 1,
+      "mt": 1,
+      "p": 1,
+      "size": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/SegmentedControl": {
+    "instances": 3,
+    "props": {
+      "data": 3,
+      "data-test-id": 3,
+      "onChange": 3,
+      "sx": 3,
+      "disabled": 2,
+      "fullWidth": 2,
+      "defaultValue": 1,
+      "loading": 1,
+      "size": 1,
+      "value": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Settings": {
+    "instances": 3,
+    "props": {
+      "data-test-id": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Sidebar": {
+    "instances": 3,
+    "props": {
+      "customHeader": 3,
+      "data-test-id": 3,
+      "isLoading": 3,
+      "isOpened": 3,
+      "onClose": 3,
+      "customFooter": 2,
+      "isExpanded": 2,
+      "key": 1,
+      "onBack": 1,
+      "onSubmit": 1,
+      "styles": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Timer": {
+    "instances": 3,
+    "props": {
+      "height": 3,
+      "width": 3,
+      "color": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "web/ActivityStatistics": {
+    "instances": 3,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ContentStyled": {
+    "instances": 3,
+    "props": {
+      "isBlur": 3,
+      "isExampleNotification": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/EmailIntegrationInfo": {
+    "instances": 3,
+    "props": {
+      "field": 3,
+      "integration": 3
+    },
+    "srcPkg": "web"
+  },
+  "web/Faq": {
+    "instances": 3,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/IntegrationEnvironmentPill": {
+    "instances": 3,
+    "props": {
+      "name": 3,
+      "testId": 3,
+      "isLoading": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ListProviders": {
+    "instances": 3,
+    "props": {
+      "channel": 3,
+      "providers": 3,
+      "setConfigureChannel": 3,
+      "setProvider": 3
+    },
+    "srcPkg": "web"
+  },
+  "web/NavButton": {
+    "instances": 3,
+    "props": {
+      "handleOnClick": 3,
+      "navigateTo": 3,
+      "variant": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NodeStepWithPopover": {
+    "instances": 3,
+    "props": {
+      "Handlers": 3,
+      "Icon": 3,
+      "data": 3,
+      "id": 3,
+      "ActionItem": 2,
+      "ContentItem": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/ProviderCard": {
+    "instances": 3,
+    "props": {
+      "onConnectClick": 3,
+      "provider": 3
+    },
+    "srcPkg": "web"
+  },
+  "web/StepEditorSidebar": {
+    "instances": 3,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TemplateItem": {
+    "instances": 3,
+    "props": {
+      "key": 3,
+      "onClick": 3,
+      "data-test-id": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TemplatesGroup": {
+    "instances": 3,
+    "props": {
+      "key": 3
+    },
+    "srcPkg": "web"
+  },
+  "web/WorkflowSidebar": {
+    "instances": 3,
+    "props": {
+      "title": 3
+    },
+    "srcPkg": "web"
+  },
+  "mantine_core/Accordion": {
+    "instances": 2,
+    "props": {
+      "chevronPosition": 1,
+      "classNames": 1,
+      "key": 1,
+      "mt": 1,
+      "styles": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Code": {
+    "instances": 2,
+    "props": {
+      "sx": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/List.Item": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Radio": {
+    "instances": 2,
+    "props": {
+      "value": 2,
+      "key": 1,
+      "label": 1,
+      "styles": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Radio.Group": {
+    "instances": 2,
+    "props": {
+      "spacing": 2,
+      "data-test-id": 1,
+      "defaultValue": 1,
+      "error": 1,
+      "onChange": 1,
+      "value": 1,
+      "withAsterisk": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/SegmentedControl": {
+    "instances": 2,
+    "props": {
+      "onChange": 2,
+      "data": 1,
+      "data-test-id": 1,
+      "defaultValue": 1,
+      "fullWidth": 1,
+      "radius": 1,
+      "ref": 1,
+      "styles": 1,
+      "value": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Space": {
+    "instances": 2,
+    "props": {
+      "h": 2
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Tabs": {
+    "instances": 2,
+    "props": {
+      "classNames": 2,
+      "keepMounted": 2,
+      "mb": 2,
+      "onTabChange": 2,
+      "orientation": 2,
+      "value": 2,
+      "variant": 2
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/TextInput": {
+    "instances": 2,
+    "props": {
+      "data-test-id": 2,
+      "disabled": 2,
+      "error": 2,
+      "placeholder": 2,
+      "styles": 2,
+      "type": 2,
+      "value": 2,
+      "label": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Timeline": {
+    "instances": 2,
+    "props": {
+      "bulletSize": 2,
+      "lineWidth": 2,
+      "active": 1,
+      "className": 1,
+      "classNames": 1,
+      "styles": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "novu_design-system/Activity": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Avatar": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Buildings": {
+    "instances": 2,
+    "props": {
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ChevronDown": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ChevronUp": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Icon": {
+    "instances": 2,
+    "props": {
+      "iconNames": ["IconMenuBook", "IconOutlineNotificationsActive"],
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Invite": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Mail": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Mobile": {
+    "instances": 2,
+    "props": {
+      "height": 1,
+      "width": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/PlusButton": {
+    "instances": 2,
+    "props": {
+      "data-test-id": 2,
+      "disabled": 2,
+      "label": 2,
+      "onClick": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/PlusCircleOutlined": {
+    "instances": 2,
+    "props": {
+      "color": 1,
+      "fillColor": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Sms": {
+    "instances": 2,
+    "props": {
+      "height": 1,
+      "width": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Tag": {
+    "instances": 2,
+    "props": {
+      "mr": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Textarea": {
+    "instances": 2,
+    "props": {
+      "data-test-id": 2,
+      "description": 2,
+      "error": 2,
+      "label": 2,
+      "placeholder": 2,
+      "required": 2,
+      "disabled": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ThemeProvider": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Translation": {
+    "instances": 2,
+    "props": {
+      "height": 1,
+      "style": 1,
+      "width": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/UserAccess": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "web/AuthContainer": {
+    "instances": 2,
+    "props": {
+      "description": 2,
+      "title": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/AvatarContainer": {
+    "instances": 2,
+    "props": {
+      "opened": 2,
+      "readonly": 2,
+      "setOpened": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/BlueprintModal": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/BrandingForm": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/Card": {
+    "instances": 2,
+    "props": {
+      "title": 2,
+      "mb": 1,
+      "space": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/CardStatusBar": {
+    "instances": 2,
+    "props": {
+      "active": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/ChannelStepEditor": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ChannelTitle": {
+    "instances": 2,
+    "props": {
+      "channel": 2,
+      "spacing": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/CreateProviderInstanceSidebar": {
+    "instances": 2,
+    "props": {
+      "channel": 2,
+      "isOpened": 2,
+      "onClose": 2,
+      "onGoBack": 2,
+      "onIntegrationCreated": 2,
+      "providerId": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/DigestMetadata": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/EditorSidebarHeaderActions": {
+    "instances": 2,
+    "props": {
+      "preview": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ErrorPrettyRender": {
+    "instances": 2,
+    "props": {
+      "error": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/GetStartedLayout": {
+    "instances": 2,
+    "props": {
+      "footer": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/IconHolder": {
+    "instances": 2,
+    "props": {
+      "isSelected": 2,
+      "iconNames": ["IconHolder", "IconHolder"]
+    },
+    "srcPkg": "web"
+  },
+  "web/IconWrapper": {
+    "instances": 2,
+    "props": {
+      "containerBgColor": 2,
+      "data-test-id": 2,
+      "iconColor": 2,
+      "size": 2,
+      "key": 1,
+      "onClick": 1,
+      "iconNames": ["IconWrapper", "IconWrapper"]
+    },
+    "srcPkg": "web"
+  },
+  "web/InAppWidgetPreview": {
+    "instances": 2,
+    "props": {
+      "enableAvatar": 2,
+      "readonly": 2,
+      "onChange": 1,
+      "preview": 1,
+      "value": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/IntegrationInput": {
+    "instances": 2,
+    "props": {
+      "credential": 2,
+      "errors": 2,
+      "field": 2,
+      "register": 2,
+      "ignoreTls": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/IntegrationsList": {
+    "instances": 2,
+    "props": {
+      "onAddProviderClick": 2,
+      "onChannelClick": 2,
+      "onRowClickCallback": 2,
+      "withOutlet": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/IntegrationsListModal": {
+    "instances": 2,
+    "props": {
+      "isOpen": 2,
+      "onClose": 2,
+      "scrollTo": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/IntervalSelect": {
+    "instances": 2,
+    "props": {
+      "control": 2,
+      "name": 2,
+      "readonly": 2,
+      "showErrors": 2,
+      "testId": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/LimitBar": {
+    "instances": 2,
+    "props": {
+      "channel": 2,
+      "count": 2,
+      "limit": 2,
+      "loading": 2,
+      "showDescription": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/LocaleSelect": {
+    "instances": 2,
+    "props": {
+      "isLoading": 2,
+      "locales": 2,
+      "onLocaleChange": 2,
+      "value": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/MobileSimulator": {
+    "instances": 2,
+    "props": {
+      "withBackground": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/NameInput": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/NovuIntegrationCard": {
+    "instances": 2,
+    "props": {
+      "onConnectClick": 2,
+      "provider": 2,
+      "selected": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/OAuth": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/PasswordResetPage": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/PreviewMobile": {
+    "instances": 2,
+    "props": {
+      "content": 2,
+      "integration": 2,
+      "locales": 2,
+      "onLocaleChange": 2,
+      "subject": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/PreviewWeb": {
+    "instances": 2,
+    "props": {
+      "content": 2,
+      "integration": 2,
+      "locales": 2,
+      "onLocaleChange": 2,
+      "subject": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/ProviderImage": {
+    "instances": 2,
+    "props": {
+      "providerId": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/QuickStartWrapper": {
+    "instances": 2,
+    "props": {
+      "goBackPath": 2,
+      "secondaryTitle": 2,
+      "faq": 1,
+      "footer": 1,
+      "title": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/RequiredAuth": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SetupLoader": {
+    "instances": 2,
+    "props": {
+      "title": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/SetupTimeline": {
+    "instances": 2,
+    "props": {
+      "framework": 2,
+      "onConfigureLater": 2,
+      "onDone": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/TemplateEditorPage": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TenantFormCommonFields": {
+    "instances": 2,
+    "props": {
+      "control": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/UpdateIntegrationSidebarHeader": {
+    "instances": 2,
+    "props": {
+      "onSuccessDelete": 2,
+      "openConditions": 2,
+      "provider": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/VariableManager": {
+    "instances": 2,
+    "props": {
+      "path": 2,
+      "variablesArray": 2,
+      "hideLabel": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/VariantsPage": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/WorkflowNodeActions": {
+    "instances": 2,
+    "props": {
+      "channelType": 2,
+      "conditionsCount": 2,
+      "isReadOnly": 2,
+      "menuPosition": 2,
+      "nodeType": 2,
+      "onAddConditions": 2,
+      "onAddVariant": 2,
+      "onDelete": 2,
+      "onEdit": 2,
+      "showMenu": 2
+    },
+    "srcPkg": "web"
+  },
+  "web/WorkflowSettingsTabs": {
+    "instances": 2,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "mantine_core/Accordion.Control": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Button": {
+    "instances": 1,
+    "props": {
+      "color": 1,
+      "onClick": 1,
+      "sx": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Button.Group": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/CloseButton": {
+    "instances": 1,
+    "props": {
+      "iconSize": 1,
+      "onClick": 1,
+      "size": 1,
+      "title": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/ColorSchemeProvider": {
+    "instances": 1,
+    "props": {
+      "colorScheme": 1,
+      "toggleColorScheme": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Highlight": {
+    "instances": 1,
+    "props": {
+      "highlight": 1,
+      "inline": 1,
+      "span": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Indicator": {
+    "instances": 1,
+    "props": {
+      "inline": 1,
+      "label": 1,
+      "offset": 1,
+      "position": 1,
+      "size": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Navbar": {
+    "instances": 1,
+    "props": {
+      "sx": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/NumberInput": {
+    "instances": 1,
+    "props": {
+      "classNames": 1,
+      "disabled": 1,
+      "formatter": 1,
+      "icon": 1,
+      "max": 1,
+      "min": 1,
+      "onChange": 1,
+      "parser": 1,
+      "value": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/SimpleGrid": {
+    "instances": 1,
+    "props": {
+      "cols": 1,
+      "spacing": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Table": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Timeline.Item": {
+    "instances": 1,
+    "props": {
+      "bullet": 1,
+      "key": 1,
+      "title": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "mantine_core/Tooltip": {
+    "instances": 1,
+    "props": {
+      "closeDelay": 1,
+      "label": 1,
+      "opened": 1
+    },
+    "srcPkg": "mantine_core"
+  },
+  "novu_design-system/ActiveLabel": {
+    "instances": 1,
+    "props": {
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/AngularGradient": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/AppleIcon": {
+    "instances": 1,
+    "props": {
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ArrowDown": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ArrowLeftGradient": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Bell": {
+    "instances": 1,
+    "props": {
+      "color": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/BoltFilled": {
+    "instances": 1,
+    "props": {
+      "color": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/BoltGradient": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Brand": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Calendar": {
+    "instances": 1,
+    "props": {
+      "color": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Camera": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Cards": {
+    "instances": 1,
+    "props": {
+      "cells": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Chat": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/CheckCircle": {
+    "instances": 1,
+    "props": {
+      "color": 1,
+      "height": 1,
+      "width": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Checkbox": {
+    "instances": 1,
+    "props": {
+      "checked": 1,
+      "data-test-id": 1,
+      "disabled": 1,
+      "label": 1,
+      "labelPosition": 1,
+      "onChange": 1,
+      "styles": 1,
+      "sx": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ChevronLeft": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ChevronPlainDown": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ChevronRight": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/CircleArrowRight": {
+    "instances": 1,
+    "props": {
+      "onClick": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Cloud": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/CodeGradient": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ColorInput": {
+    "instances": 1,
+    "props": {
+      "data-test-id": 1,
+      "description": 1,
+      "disallowInput": 1,
+      "label": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ConditionPlus": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/CountdownTimer": {
+    "instances": 1,
+    "props": {
+      "height": 1,
+      "width": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/DotsHorizontal": {
+    "instances": 1,
+    "props": {
+      "onClick": 1,
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/EmptySearch": {
+    "instances": 1,
+    "props": {
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Folder": {
+    "instances": 1,
+    "props": {
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/HoverCard.Target": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/InApp": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/InviteMembers": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/JsGradient": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Label": {
+    "instances": 1,
+    "props": {
+      "color": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Logout": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Modal": {
+    "instances": 1,
+    "props": {
+      "data-test-id": 1,
+      "onClose": 1,
+      "opened": 1,
+      "size": 1,
+      "title": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/NavMenu": {
+    "instances": 1,
+    "props": {
+      "menuItems": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/NovuLogo": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/PageContainer": {
+    "instances": 1,
+    "props": {
+      "title": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Pagination": {
+    "instances": 1,
+    "props": {
+      "currentPageNumber": 1,
+      "onPageChange": 1,
+      "pageSize": 1,
+      "totalItemCount": 1,
+      "totalPageCount": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Pagination.ControlBar": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/PencilOutlined": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/PlusGradient": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ProviderMissing": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ReactGradient": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Repeat": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/SSO": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Star": {
+    "instances": 1,
+    "props": {
+      "data-test-id": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Sun": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Tabs": {
+    "instances": 1,
+    "props": {
+      "data-test-id": 1,
+      "defaultValue": 1,
+      "menuTabs": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Team": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/TextAlignment": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Upload": {
+    "instances": 1,
+    "props": {
+      "style": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/User": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/VariantPlus": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/VariantsFile": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/ViewportWide": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/VueGradient": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Warning": {
+    "instances": 1,
+    "props": {
+      "color": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/WarningIcon": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_design-system"
+  },
+  "novu_design-system/Wifi": {
+    "instances": 1,
+    "props": {
+      "height": 1,
+      "width": 1
+    },
+    "srcPkg": "novu_design-system"
+  },
+  "novu_notification-center/NotificationBell": {
+    "instances": 1,
+    "props": {
+      "colorScheme": 1,
+      "unseenCount": 1
+    },
+    "srcPkg": "novu_notification-center"
+  },
+  "novu_notification-center/NotificationCenter": {
+    "instances": 1,
+    "props": {
+      "colorScheme": 1,
+      "footer": 1,
+      "showUserPreferences": 1
+    },
+    "srcPkg": "novu_notification-center"
+  },
+  "novu_notification-center/NovuProvider": {
+    "instances": 1,
+    "props": {
+      "applicationIdentifier": 1,
+      "backendUrl": 1,
+      "socketUrl": 1,
+      "subscriberId": 1
+    },
+    "srcPkg": "novu_notification-center"
+  },
+  "novu_shared-web/SegmentProvider": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "novu_shared-web"
+  },
+  "web/ActionBlockContainer": {
+    "instances": 1,
+    "props": {
+      "isButtonsTemplateSelected": 1,
+      "onButtonAddClickHandle": 1,
+      "onChange": 1,
+      "onRemoveTemplate": 1,
+      "readonly": 1,
+      "value": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ActivitiesPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ActivityGraphGlobalStyles": {
+    "instances": 1,
+    "props": {
+      "isDark": 1,
+      "isTriggerSent": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ActivityList": {
+    "instances": 1,
+    "props": {
+      "data": 1,
+      "loading": 1,
+      "onRowClick": 1,
+      "pagination": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ActivityStep": {
+    "instances": 1,
+    "props": {
+      "isOld": 1,
+      "job": 1,
+      "key": 1,
+      "span": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/AddNode": {
+    "instances": 1,
+    "props": {
+      "data": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/AndroidIndicatorsIcon": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ApiKeysCard": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/App": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/AppLayout": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/AuthLayout": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/AuthProvider": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/BillingRoutes": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/BrandPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ButtonsContainer": {
+    "instances": 1,
+    "props": {
+      "htmlFor": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ButtonsTemplates": {
+    "instances": 1,
+    "props": {
+      "setIsPopoverVisible": 1,
+      "setSelectedTemplate": 1,
+      "setTemplateSelected": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ButtonsTemplatesPopover": {
+    "instances": 1,
+    "props": {
+      "isVisible": 1,
+      "onChange": 1,
+      "setIsPopoverVisible": 1,
+      "setTemplateSelected": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/Camera": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ChangesCountBadge": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ChangesTable": {
+    "instances": 1,
+    "props": {
+      "changes": 1,
+      "dataTestId": 1,
+      "handleTableChange": 1,
+      "key": 1,
+      "loading": 1,
+      "page": 1,
+      "pageSize": 1,
+      "totalCount": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ChannelPreview": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ChannelPreviewSidebar": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ChannelsConfiguration": {
+    "instances": 1,
+    "props": {
+      "setClickedChannel": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ChatInput": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ChatPreview": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ConditionIconButton": {
+    "instances": 1,
+    "props": {
+      "conditions": 1,
+      "onClick": 1,
+      "primary": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ConfirmRegenerationModal": {
+    "instances": 1,
+    "props": {
+      "cancelAction": 1,
+      "confirmAction": 1,
+      "isOpen": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/Content": {
+    "instances": 1,
+    "props": {
+      "enableAvatar": 1,
+      "isPreviewLoading": 1,
+      "parsedPreviewState": 1,
+      "showOverlay": 1,
+      "templateError": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ContentAndOVerlayWrapperStyled": {
+    "instances": 1,
+    "props": {
+      "isError": 1,
+      "onMouseEnter": 1,
+      "onMouseLeave": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ContentAndOverlayWrapperStyled": {
+    "instances": 1,
+    "props": {
+      "isError": 1,
+      "onMouseEnter": 1,
+      "onMouseLeave": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ControlBar": {
+    "instances": 1,
+    "props": {
+      "onBlockAdd": 1,
+      "top": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/CopyButton": {
+    "instances": 1,
+    "props": {
+      "className": 1,
+      "onCopy": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/CreateProviderPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/CreateTenantPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/CreateTenantSidebar": {
+    "instances": 1,
+    "props": {
+      "isOpened": 1,
+      "onClose": 1,
+      "onTenantCreated": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/CreateWorkflowDropdown": {
+    "instances": 1,
+    "props": {
+      "allTemplatesDisabled": 1,
+      "blueprints": 1,
+      "isCreating": 1,
+      "isLoading": 1,
+      "onAllTemplatesClick": 1,
+      "onBlankWorkflowClick": 1,
+      "onTemplateClick": 1,
+      "readonly": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/DeleteConfirmModal": {
+    "instances": 1,
+    "props": {
+      "cancel": 1,
+      "cancelButtonText": 1,
+      "confirm": 1,
+      "confirmButtonText": 1,
+      "description": 1,
+      "isOpen": 1,
+      "target": 1,
+      "title": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/DigestDemoFlow": {
+    "instances": 1,
+    "props": {
+      "isReadOnly": 1,
+      "onDigestIntervalChange": 1,
+      "onRunTriggerClick": 1,
+      "templateId": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/DigestPreview": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/DigestedStep": {
+    "instances": 1,
+    "props": {
+      "digestedId": 1,
+      "onClick": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/DotsNavigationStyled": {
+    "instances": 1,
+    "props": {
+      "onClick": 1,
+      "selectedIndex": 1,
+      "size": 1,
+      "testId": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/DynamicCheckBox": {
+    "instances": 1,
+    "props": {
+      "Icon": 1,
+      "key": 1,
+      "label": 1,
+      "onChange": 1,
+      "type": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/EditorPreviewSwitch": {
+    "instances": 1,
+    "props": {
+      "chimera": 1,
+      "setView": 1,
+      "view": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/EmailInboxContent": {
+    "instances": 1,
+    "props": {
+      "chimera": 1,
+      "integration": 1,
+      "readonly": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/EmailMobile": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/EmailSettings": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/EmojiIcon": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/EnableAvatarSwitch": {
+    "instances": 1,
+    "props": {
+      "control": 1,
+      "name": 1,
+      "readonly": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/Error": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ExecutionDetailRawSnippet": {
+    "instances": 1,
+    "props": {
+      "onClose": 1,
+      "raw": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ExecutionDetailShowRaw": {
+    "instances": 1,
+    "props": {
+      "onHideExecutionDetail": 1,
+      "onShowExecutionDetail": 1,
+      "showTriggerSnippet": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ExecutionDetailTrigger": {
+    "instances": 1,
+    "props": {
+      "identifier": 1,
+      "step": 1,
+      "subscriberVariables": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ExecutionDetailsAccordion": {
+    "instances": 1,
+    "props": {
+      "identifier": 1,
+      "steps": 1,
+      "subscriberVariables": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ExecutionDetailsConditionItem": {
+    "instances": 1,
+    "props": {
+      "condition": 1,
+      "key": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ExecutionDetailsFooter": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ExecutionDetailsWebhookFeedback": {
+    "instances": 1,
+    "props": {
+      "executionDetails": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/FeedItems": {
+    "instances": 1,
+    "props": {
+      "field": 1,
+      "setValue": 1,
+      "showFeed": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/FloatingButton": {
+    "instances": 1,
+    "props": {
+      "isUp": 1,
+      "onClick": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/FlowEditor": {
+    "instances": 1,
+    "props": {
+      "data-template-store-editor": 1,
+      "elementsSelectable": 1,
+      "key": 1,
+      "nodeTypes": 1,
+      "nodesConnectable": 1,
+      "nodesDraggable": 1,
+      "panOnDrag": 1,
+      "panOnScroll": 1,
+      "preventScrolling": 1,
+      "selectNodesOnDrag": 1,
+      "steps": 1,
+      "wrapperStyles": 1,
+      "zoomOnDoubleClick": 1,
+      "zoomOnPinch": 1,
+      "zoomOnScroll": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/FooterLayout": {
+    "instances": 1,
+    "props": {
+      "leftSide": 1,
+      "rightSide": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/FrameworkSetup": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/GetStarted": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/GetStartedAnimation": {
+    "instances": 1,
+    "props": {
+      "useCase": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/GetStartedPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/GetStartedTab": {
+    "instances": 1,
+    "props": {
+      "currentView": 1,
+      "setView": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/GotAQuestionButton": {
+    "instances": 1,
+    "props": {
+      "mt": 1,
+      "size": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/Header": {
+    "instances": 1,
+    "props": {
+      "areLocalesLoading": 1,
+      "locales": 1,
+      "onLocaleChange": 1,
+      "selectedLocale": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/HeaderNav": {
+    "instances": 1,
+    "props": {
+      "isIntercomOpened": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/HeaderSkeleton": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/HomePage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/IOSKeyboard": {
+    "instances": 1,
+    "props": {
+      "isDarkMode": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/InAppContentCard": {
+    "instances": 1,
+    "props": {
+      "openVariablesModal": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/InAppEditorBlock": {
+    "instances": 1,
+    "props": {
+      "readonly": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/InAppPreview": {
+    "instances": 1,
+    "props": {
+      "showVariables": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/InAppSandbox": {
+    "instances": 1,
+    "props": {
+      "showOverlay": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/InAppSuccess": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/Indicator": {
+    "instances": 1,
+    "props": {
+      "isShown": 1,
+      "value": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/IntegrationStatus": {
+    "instances": 1,
+    "props": {
+      "active": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/IntegrationsListNoData": {
+    "instances": 1,
+    "props": {
+      "onChannelClick": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/IntegrationsListPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/IntegrationsListToolbar": {
+    "instances": 1,
+    "props": {
+      "areIntegrationsLoading": 1,
+      "onAddProviderClick": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/InvitationPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ItemSkeleton": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/LayoutsListPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/LinkMoreProjectRow": {
+    "instances": 1,
+    "props": {
+      "addMoreProjectRow": 1,
+      "disableMoreProjectsBtn": 1,
+      "organizationLength": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ListPage": {
+    "instances": 1,
+    "props": {
+      "paginationInfo": 1,
+      "title": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/LoginForm": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/LoginPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/MadeByNovuStyled": {
+    "instances": 1,
+    "props": {
+      "height": 1,
+      "width": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/MembersInvitePage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/MobileIcon": {
+    "instances": 1,
+    "props": {
+      "color": 1,
+      "style": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/MobileSimulatorBody": {
+    "instances": 1,
+    "props": {
+      "isIOS": 1,
+      "withBackground": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ModalBodyHolder": {
+    "instances": 1,
+    "props": {
+      "data-test-id": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NavigateValidatorModal": {
+    "instances": 1,
+    "props": {
+      "isOpen": 1,
+      "onCancel": 1,
+      "onConfirm": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NavigationItemContainer": {
+    "instances": 1,
+    "props": {
+      "position": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NodeErrorPopover": {
+    "instances": 1,
+    "props": {
+      "actionItem": 1,
+      "content": 1,
+      "offset": 1,
+      "opened": 1,
+      "position": 1,
+      "target": 1,
+      "title": 1,
+      "titleIcon": 1,
+      "transition": 1,
+      "transitionDuration": 1,
+      "withinPortal": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NotificationCenter": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/NotificationCenterWidget": {
+    "instances": 1,
+    "props": {
+      "user": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NotificationSettingsForm": {
+    "instances": 1,
+    "props": {
+      "trigger": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NotificationTextStyled": {
+    "instances": 1,
+    "props": {
+      "dangerouslySetInnerHTML": 1,
+      "data-test-id": 1,
+      "isExampleNotification": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NovuInAppForm": {
+    "instances": 1,
+    "props": {
+      "provider": 1,
+      "showModal": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NovuInAppFrameworkHeader": {
+    "instances": 1,
+    "props": {
+      "framework": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NovuInAppFrameworks": {
+    "instances": 1,
+    "props": {
+      "onFrameworkClick": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NovuProviderBase": {
+    "instances": 1,
+    "props": {
+      "channel": 1,
+      "onClose": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/NovuProviderSidebarContent": {
+    "instances": 1,
+    "props": {
+      "provider": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/OnlineConditionRow": {
+    "instances": 1,
+    "props": {
+      "control": 1,
+      "fieldOn": 1,
+      "index": 1,
+      "isReadonly": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/PasswordRequirementPopover": {
+    "instances": 1,
+    "props": {
+      "control": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/PasswordResetForm": {
+    "instances": 1,
+    "props": {
+      "token": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/PhonePlatformSwitch": {
+    "instances": 1,
+    "props": {
+      "isIOS": 1,
+      "onChange": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/PreviewComponent": {
+    "instances": 1,
+    "props": {
+      "channel": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/PreviewUserIcon": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/PreviousStepsConditionRow": {
+    "instances": 1,
+    "props": {
+      "control": 1,
+      "customData": 1,
+      "index": 1,
+      "isReadonly": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/ProductLead": {
+    "instances": 1,
+    "props": {
+      "icon": 1,
+      "id": 1,
+      "style": 1,
+      "text": 1,
+      "title": 1,
+      "variant": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/PromoteChangesPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/Providers": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ProvidersPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/QuestionnaireForm": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/QuestionnairePage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/ReplyCallback": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SegmentProvider": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SelectProviderPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SelectProviderSidebar": {
+    "instances": 1,
+    "props": {
+      "isOpened": 1,
+      "onClose": 1,
+      "onNextStepClick": 1,
+      "scrollTo": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/SettingsPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/Setup": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SetupStatus": {
+    "instances": 1,
+    "props": {
+      "appInitialized": 1,
+      "onConfigureLater": 1,
+      "onDone": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/SetupWarning": {
+    "instances": 1,
+    "props": {
+      "docReference": 1,
+      "message": 1,
+      "show": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/Sidebar": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SignUpPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SkeletonContainer": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SkeletonSecondRect": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SkeletonStyled": {
+    "instances": 1,
+    "props": {
+      "height": 1,
+      "radius": 1,
+      "width": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/SmsBubble": {
+    "instances": 1,
+    "props": {
+      "error": 1,
+      "isLoading": 1,
+      "onEditClick": 1,
+      "text": 1,
+      "withOverlay": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/SmsBubbleHolder": {
+    "instances": 1,
+    "props": {
+      "className": 1,
+      "onMouseEnter": 1,
+      "onMouseLeave": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/SmsPreview": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SnippetPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SpotLight": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SpotLightProvider": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/StepActiveSwitch": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/StepName": {
+    "instances": 1,
+    "props": {
+      "channel": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/StepNameLabel": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/StepSettings": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/StyledLink": {
+    "instances": 1,
+    "props": {
+      "href": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/SubscribersList": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/SwitchContainer": {
+    "instances": 1,
+    "props": {
+      "className": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TemplateDescription": {
+    "instances": 1,
+    "props": {
+      "data-test-id": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TemplateDetails": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TemplateEditorFormProvider": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TemplatePushEditor": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TemplateSettings": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TemplatesDetailsHolder": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TemplatesDigestPlaygroundPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TemplatesListNoDataOld": {
+    "instances": 1,
+    "props": {
+      "onCreateClick": 1,
+      "onTryDigestClick": 1,
+      "tryDigestDisabled": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TenantsListNoData": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TenantsPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TestWorkflow": {
+    "instances": 1,
+    "props": {
+      "trigger": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TestWorkflowPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TextRowContent": {
+    "instances": 1,
+    "props": {
+      "blockIndex": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TimeIconStyled": {
+    "instances": 1,
+    "props": {
+      "isVisible": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TimeTextStyled": {
+    "instances": 1,
+    "props": {
+      "isExampleNotification": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TimedDigestMetadata": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TimerControl": {
+    "instances": 1,
+    "props": {
+      "min": 1,
+      "mt": 1,
+      "setValue": 1,
+      "unitLabel": 1,
+      "value": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/Toolbar": {
+    "instances": 1,
+    "props": {
+      "onAddTenantClick": 1,
+      "tenantLoading": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TooltipContainer": {
+    "instances": 1,
+    "props": {
+      "data-test-id": 1,
+      "ref": 1,
+      "width": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TranslationRoutes": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TriggerSegmentControl": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/TriggerSnippetTabs": {
+    "instances": 1,
+    "props": {
+      "trigger": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/TypeSegmented": {
+    "instances": 1,
+    "props": {
+      "data": 1,
+      "data-test-id": 1,
+      "disabled": 1,
+      "fullWidth": 1,
+      "sx": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/UnsavedChangesModal": {
+    "instances": 1,
+    "props": {
+      "cancelNavigation": 1,
+      "confirmNavigation": 1,
+      "isOpen": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/UpdateButton": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/UpdateIntegrationCommonFields": {
+    "instances": 1,
+    "props": {
+      "provider": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/UpdateProviderPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/UpdateTenantPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/UpdateTenantSidebar": {
+    "instances": 1,
+    "props": {
+      "isOpened": 1,
+      "onClose": 1,
+      "tenantIdentifier": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/UserPreference": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/VarItem": {
+    "instances": 1,
+    "props": {
+      "highlight": 1,
+      "name": 1,
+      "type": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/VarItemTooltip": {
+    "instances": 1,
+    "props": {
+      "highlight": 1,
+      "key": 1,
+      "name": 1,
+      "pathToCopy": 1,
+      "type": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/VarItemsDropdown": {
+    "instances": 1,
+    "props": {
+      "highlight": 1,
+      "key": 1,
+      "name": 1,
+      "path": 1,
+      "type": 1,
+      "withFolders": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/VariableManagementButton": {
+    "instances": 1,
+    "props": {
+      "label": 1,
+      "openEditVariablesModal": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/VariantItemCard": {
+    "instances": 1,
+    "props": {
+      "data-test-id": 1,
+      "errorMessage": 1,
+      "isFirst": 1,
+      "isReadonly": 1,
+      "key": 1,
+      "nodeType": 1,
+      "stepIndex": 1,
+      "variant": 1,
+      "variantIndex": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/VariantPreview": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/VariantsListErrors": {
+    "instances": 1,
+    "props": {
+      "error": 1,
+      "errorsCount": 1,
+      "onErrorDown": 1,
+      "onErrorMessageClick": 1,
+      "onErrorUp": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/VariantsListSidebar": {
+    "instances": 1,
+    "props": {
+      "isLoading": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/VisibilityOff": {
+    "instances": 1,
+    "props": {
+      "onClick": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/WeekDaySelect": {
+    "instances": 1,
+    "props": {
+      "disabled": 1,
+      "onChange": 1,
+      "value": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/WillBeSentHeader": {
+    "instances": 1,
+    "props": {
+      "isHighlight": 1,
+      "path": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/WorkflowEditor": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/WorkflowListPage": {
+    "instances": 1,
+    "props": {},
+    "srcPkg": "web"
+  },
+  "web/WorkflowNode": {
+    "instances": 1,
+    "props": {
+      "Icon": 1,
+      "active": 1,
+      "channelType": 1,
+      "conditionsCount": 1,
+      "disabled": 1,
+      "dragging": 1,
+      "errors": 1,
+      "id": 1,
+      "index": 1,
+      "label": 1,
+      "nodeType": 1,
+      "onAddConditions": 1,
+      "onAddVariant": 1,
+      "onDelete": 1,
+      "onEdit": 1,
+      "subtitle": 1,
+      "tabKey": 1,
+      "testId": 1,
+      "variantsCount": 1
+    },
+    "srcPkg": "web"
+  },
+  "web/WorkflowWrapper": {
+    "instances": 1,
+    "props": {
+      "className": 1,
+      "height": 1,
+      "ref": 1
+    },
+    "srcPkg": "web"
+  }
+}
