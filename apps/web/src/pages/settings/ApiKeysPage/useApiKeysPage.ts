@@ -24,7 +24,7 @@ export const useApiKeysPage = () => {
   const clipboardApiKey = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentId = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
-  const { data: apiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
+  const { data: apiKeys, refetch: refetchApiKeys } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const { environment } = useEnvController();
 
   const apiKey = apiKeys?.length ? apiKeys[0].key : '';
@@ -48,5 +48,6 @@ export const useApiKeysPage = () => {
     clipboardEnvironmentId,
     pageEnv: environment?.name ?? '',
     regenerationModalProps,
+    refetchApiKeys,
   };
 };
