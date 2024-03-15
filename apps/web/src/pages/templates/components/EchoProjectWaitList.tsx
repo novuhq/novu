@@ -44,7 +44,10 @@ const ToolTip = ({ children }) => {
     <Tooltip
       multiline
       width={220}
-      label="Discover a new way that allows you to build powerful, highly customizable workflows in your IDE. Integrated with React Email and MJML"
+      label={
+        'Discover a new way that allows you to build powerful, highly customizable workflows in your IDE.' +
+        'Integrated with React Email and MJML.'
+      }
       position="right"
       offset={10}
     >
