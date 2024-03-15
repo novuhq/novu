@@ -71,10 +71,10 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
 
   const checkPreviousChar = (data: string, anchorPos: number) => {
     if (anchorPos > 1) {
-      const endContent = data.slice(anchorPos);
+      const endContent = data.slice(anchorPos - 2);
 
       const contentToUse = endContent ? endContent : data;
-      const slicePositions = contentToUse.indexOf('{{') + 2;
+      const slicePositions = contentToUse.lastIndexOf('{') + 1;
 
       const currentChar = contentToUse.charAt(slicePositions - 1);
       const previousChar = contentToUse.charAt(slicePositions - 2);
@@ -114,7 +114,7 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
 
     const endContent = data.slice(anchorPosition);
 
-    const slicePositions = endContent.indexOf('{{') + 2;
+    const slicePositions = endContent.lastIndexOf('{{') + 2;
     const newEndContent = `${endContent.slice(0, slicePositions)}${value}${endContent.slice(slicePositions)}`;
 
     const newContent = `${data.slice(0, anchorPosition)}${newEndContent}`;

@@ -65,6 +65,9 @@ import { ApiCommonResponses, ApiNoContentResponse } from '../shared/framework/re
 import { RemoveMessagesBulkCommand } from './usecases/remove-messages-bulk/remove-messages-bulk.command';
 import { RemoveMessagesBulk } from './usecases/remove-messages-bulk/remove-messages-bulk.usecase';
 import { RemoveMessagesBulkRequestDto } from './dtos/remove-messages-bulk-request.dto';
+import { MessageMarkAsRequestDto } from './dtos/mark-as-request.dto';
+import { MarkMessageAsByMark } from './usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
+import { MarkMessageAsByMarkCommand } from './usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
 
 @ApiCommonResponses()
 @Controller('/widgets')
@@ -75,6 +78,7 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
+    private markMessageAsByMarkUsecase: MarkMessageAsByMark,
     private removeMessageUsecase: RemoveMessage,
     private removeAllMessagesUsecase: RemoveAllMessages,
     private removeMessagesBulkUsecase: RemoveMessagesBulk,
@@ -123,10 +127,10 @@ export class WidgetsController {
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      page: query.page != null ? parseInt(query.page) : 0,
+      page: query.page,
       feedId: feedsQuery,
       query: { seen: query.seen, read: query.read },
-      limit: query.limit != null ? parseInt(query.limit) : 10,
+      limit: query.limit,
       payload: query.payload,
     });
 
@@ -212,7 +216,10 @@ export class WidgetsController {
   }
 
   @ApiOperation({
-    summary: 'Mark a subscriber feed message or messages as seen or as read',
+    summary: 'Mark a subscriber feed messages as seen or as read',
+    description: `Introducing '/messages/mark-as endpoint for consistent read and seen message handling,
+     deprecating old legacy endpoint.`,
+    deprecated: true,
   })
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/messages/markAs')
@@ -232,6 +239,30 @@ export class WidgetsController {
     });
 
     return await this.markMessageAsUsecase.execute(command);
+  }
+
+  @ApiOperation({
+    summary: 'Mark a subscriber messages as seen, read, unseen or unread',
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/mark-as')
+  async markMessagesAs(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: MessageMarkAsRequestDto
+  ): Promise<MessageEntity[]> {
+    const messageIds = this.toArray(body.messageId);
+    if (!messageIds || messageIds.length === 0) throw new BadRequestException('messageId is required');
+
+    return await this.markMessageAsByMarkUsecase.execute(
+      MarkMessageAsByMarkCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        messageIds,
+        markAs: body.markAs,
+        __source: 'notification_center',
+      })
+    );
   }
 
   @ApiOperation({

@@ -15,7 +15,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
     'Notifies subscribers using a wide range of channels: In-App, Email, Chat, Push, and SMS.\n' +
     '\n' +
     'Configure as many providers as you like to Customize notification experience.',
-  useCaseLink: 'https://docs.novu.co/channels-and-providers/introduction',
+  useCaseLink: 'https://docs.novu.co/channels-and-providers/introduction?utm_campaign=inapp-usecase-multichannel',
   steps: [
     {
       title: 'Configure providers',
