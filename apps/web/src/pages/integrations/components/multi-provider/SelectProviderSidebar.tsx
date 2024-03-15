@@ -102,7 +102,7 @@ export function SelectProviderSidebar({
     setTimeout(() => {
       onTabChange(scrollTo?.toString());
     }, 100);
-  }, []);
+  }, [onTabChange, scrollTo]);
 
   return (
     <Sidebar
