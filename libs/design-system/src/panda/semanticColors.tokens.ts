@@ -8,7 +8,7 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
     panel: {
-      value: { base: '{colors.legacy.BGDark}', _dark: '{colors.legacy.BGLight}' },
+      value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.BGDark}' },
       type: 'color',
     },
     popover: {
