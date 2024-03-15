@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { useClipboard } from '@mantine/hooks';
+
 import { getApiKeys } from '../../../api/environment';
 import { useEnvController } from '../../../hooks';
-import { useClipboard } from '@mantine/hooks';
 import { useRegenerateApiKeyModal } from './useRegenerateApiKeyModal';
 
 const CLIPBOARD_TIMEOUT_MS = 2000;
@@ -46,8 +47,8 @@ export const useApiKeysPage = () => {
     clipboardApiKey,
     clipboardEnvironmentIdentifier,
     clipboardEnvironmentId,
+    refetchApiKeys,
     pageEnv: environment?.name ?? '',
     regenerationModalProps,
-    refetchApiKeys,
   };
 };
