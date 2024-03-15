@@ -1,13 +1,13 @@
 import { IS_DOCKER_HOSTED } from '@novu/shared-web';
 
-export const FreeTrialWidget = () => {
+export const FreeTrialSidebarWidget = () => {
   if (IS_DOCKER_HOSTED) {
     return null;
   }
 
   try {
     const module = require('@novu/ee-billing-web');
-    const Component = module.FreeTrialWidget;
+    const Component = module.FreeTrialSidebarWidget;
 
     return <Component />;
   } catch (e) {}

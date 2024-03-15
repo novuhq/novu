@@ -34,10 +34,10 @@ import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
 import { FeatureFlagsKeysEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import { FreeTrialSidebarWidget } from './FreeTrialSidebarWidget';
 import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
 import { VisibilityOff } from './VisibilityOff';
 import { useSegment } from '../../providers/SegmentProvider';
-import { FreeTrialWidget } from './FreeTrailWidget';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -220,7 +220,7 @@ export function SideNav({}: Props) {
           </Popover.Dropdown>
         </Popover>
         <NavMenu menuItems={menuItems} />
-        <FreeTrialWidget />
+        <FreeTrialSidebarWidget />
         <OrganizationSelect />
         <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
           <a
