@@ -214,6 +214,7 @@ const notificationTemplateSchema = new Schema<NotificationTemplateDBModel>(
     },
     data: Schema.Types.Mixed,
     rawData: Schema.Types.Mixed,
+    payloadSchema: Schema.Types.Mixed,
   },
   schemaOptions
 );
@@ -248,6 +249,17 @@ notificationTemplateSchema.virtual('notificationGroup', {
 notificationTemplateSchema.index({
   _organizationId: 1,
   'triggers.identifier': 1,
+});
+
+notificationTemplateSchema.index({
+  _environmentId: 1,
+  name: 1,
+});
+
+notificationTemplateSchema.index({
+  _environmentId: 1,
+  'triggers.identifier': 1,
+  name: 1,
 });
 
 notificationTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });

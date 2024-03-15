@@ -41,7 +41,7 @@ module.exports = {
   env: {
     'cypress/globals': true,
   },
-  ignorePatterns: ['craco.config.js', 'cypress/*'],
+  ignorePatterns: ['craco.config.js', 'cypress/*', '**/styled-system/**/*'],
   extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
   plugins: ['cypress', 'react-hooks'],
   parserOptions: {

@@ -28,6 +28,7 @@ export interface INotificationTemplate {
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
   type?: NotificationTemplateTypeEnum;
+  payloadSchema?: any;
 }
 
 export class IGroupedBlueprint {

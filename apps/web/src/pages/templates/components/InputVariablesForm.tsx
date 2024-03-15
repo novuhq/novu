@@ -9,6 +9,8 @@ export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => voi
   const { watch } = useFormContext();
   const { template } = useTemplateEditorForm();
   const inputs = watch(`${stepFormPath}.template.inputs.schema`) || {};
+  const workflowPayloadSchema = watch(`payloadSchema`) || {};
+
   const stepId = watch(`${stepFormPath}.stepId`);
   const _stepId = watch(`${stepFormPath}._id`);
   const formData = useMemo(() => {
@@ -30,7 +32,12 @@ export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => voi
 
     return (
       <>
-        <InputVariablesComponent schema={inputs} formData={formData} onChange={onChange} />
+        <InputVariablesComponent
+          payloadSchema={workflowPayloadSchema}
+          schema={inputs}
+          formData={formData}
+          onChange={onChange}
+        />
       </>
     );
   } catch (e) {}
