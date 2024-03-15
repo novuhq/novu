@@ -3,10 +3,18 @@ import { useState } from 'react';
 import { getApiKeys } from '../../../api/environment';
 import { useEnvController } from '../../../hooks';
 import { useClipboard } from '@mantine/hooks';
+import { useParams } from 'react-router-dom';
 
 const CLIPBOARD_TIMEOUT_MS = 1000;
 
+type ApiKeysPageUrlParams = {
+  // FIXME: find a better source for ths union type
+  env: 'production' | 'development';
+};
+
 export const useApiKeysPage = () => {
+  const { env } = useParams<ApiKeysPageUrlParams>();
+
   const clipboardApiKey = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentId = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
@@ -31,5 +39,6 @@ export const useApiKeysPage = () => {
     clipboardEnvironmentIdentifier,
     clipboardEnvironmentId,
     refetchApiKeys,
+    pageEnv: env,
   };
 };
