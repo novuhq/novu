@@ -22,10 +22,13 @@ export class DeleteSubscriberCredentials {
       })
     );
 
-    const foundIntegration = await this.integrationRepository.findOne({
-      _environmentId: command.environmentId,
-      providerId: command.providerId,
-    });
+    const foundIntegration = await this.integrationRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        providerId: command.providerId,
+      },
+      '_id'
+    );
 
     if (!foundIntegration) {
       throw new NotFoundException(
@@ -33,16 +36,26 @@ export class DeleteSubscriberCredentials {
       );
     }
 
-    await this.deleteSubscriberCredentials(foundSubscriber.subscriberId, command.environmentId, foundIntegration._id);
+    await this.deleteSubscriberCredentials(
+      foundSubscriber.subscriberId,
+      command.environmentId,
+      foundIntegration._id,
+      foundSubscriber._id
+    );
 
-    this.analyticsService.track('Delete Subscriber Credentials - [Subscribers]', command.organizationId, {
+    this.analyticsService.mixpanelTrack('Delete Subscriber Credentials - [Subscribers]', '', {
       providerId: command.providerId,
       _organization: command.organizationId,
       _subscriberId: foundSubscriber._id,
     });
   }
 
-  private async deleteSubscriberCredentials(subscriberId: string, environmentId: string, integrationId: string) {
+  private async deleteSubscriberCredentials(
+    subscriberId: string,
+    environmentId: string,
+    integrationId: string,
+    _subscriberId: string
+  ) {
     await this.invalidateCache.invalidateByKey({
       key: buildSubscriberKey({
         subscriberId: subscriberId,
@@ -50,10 +63,10 @@ export class DeleteSubscriberCredentials {
       }),
     });
 
-    return await this.subscriberRepository.update(
+    return await this.subscriberRepository.updateOne(
       {
+        _id: _subscriberId,
         _environmentId: environmentId,
-        subscriberId: subscriberId,
       },
       { $pull: { channels: { _integrationId: integrationId } } }
     );

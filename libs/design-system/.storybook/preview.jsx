@@ -5,6 +5,9 @@ import { ThemeProvider } from '../src/ThemeProvider';
 import { DocsContainer } from './Doc.container';
 import { useLocalThemePreference } from '@novu/shared-web';
 
+// Bring in the Panda-generated stylesheets
+import '../styled-system/styles.css';
+
 export const parameters = {
   layout: 'fullscreen',
   viewMode: 'docs',
@@ -17,10 +20,6 @@ export const parameters = {
       color: /(background|color)$/i,
       date: /Date$/,
     },
-  },
-  darkMode: {
-    current: 'dark',
-    classTarget: 'html',
   },
 };
 
