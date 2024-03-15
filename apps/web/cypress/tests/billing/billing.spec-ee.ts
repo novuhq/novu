@@ -104,11 +104,29 @@ describe('Billing', function () {
       },
     }).as('getSubscription');
 
+    cy.intercept('GET', '**/v1/organizations', (request) => {
+      request.reply((response) => {
+        if (!response.body.data) {
+          return response;
+        }
+
+        response.body['data'] = [
+          {
+            ...response.body.data[0],
+            apiServiceLevel: 'business',
+          },
+        ];
+        return response;
+      });
+    }).as('organizations');
+
     cy.visit('/settings/billing');
 
     cy.wait(['@getSubscription']);
 
     cy.getByTestId('plan-title').should('have.text', 'Plans');
     cy.getByTestId('free-trial-plan-widget').should('have.text', '30 days left on your trial');
+    cy.getByTestId('plan-business-current').should('exist');
+    cy.getByTestId('plan-business-add-payment').should('exist');
   });
 });
