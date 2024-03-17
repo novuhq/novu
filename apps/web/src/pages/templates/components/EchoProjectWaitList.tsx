@@ -14,7 +14,7 @@ const segmentEventAction = {
 
 const handleEchoClick = (event: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
   event.preventDefault();
-  window.open('https://novu.co/novu-echo-coming-soon?utm_campaign=echo_workflows', '_blank');
+  window.open('https://docs.novu.co/echo/introduction', '_blank');
 };
 
 const NewBadge = (props) => {
@@ -44,7 +44,10 @@ const ToolTip = ({ children }) => {
     <Tooltip
       multiline
       width={220}
-      label="Discover a new way that allows you to build powerful, highly customizable workflows on your local machine."
+      label={
+        'Discover a new way that allows you to build powerful, highly customizable workflows in your IDE.' +
+        'Integrated with React Email and MJML.'
+      }
       position="right"
       offset={10}
     >

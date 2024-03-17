@@ -17,7 +17,7 @@ function overrideConfig(config, env) {
     plugins,
     ignoreWarnings: [
       {
-        message: /Module not found: Error: Can't resolve \'@novu\/ee-translation-web\' .*/,
+        message: /Module not found: Error: Can't resolve \'@novu\/ee-.*\' .*/,
       },
     ],
   };
