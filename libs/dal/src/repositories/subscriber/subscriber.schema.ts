@@ -10,12 +10,10 @@ const subscriberSchema = new Schema<SubscriberDBModel>(
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      index: true,
     },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
-      index: true,
     },
     firstName: Schema.Types.String,
     lastName: Schema.Types.String,
