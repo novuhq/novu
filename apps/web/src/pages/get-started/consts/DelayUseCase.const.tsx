@@ -9,7 +9,7 @@ import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-delay';
 
 export const DelayUseCaseConst: OnboardingUseCase = {
-  useCaseLink: 'https://docs.novu.co/workflows/delay-action',
+  useCaseLink: 'https://docs.novu.co/workflows/delay-action?utm_campaign=inapp-usecase-delay',
   type: OnboardingUseCasesTabsEnum.DELAY,
   title: 'Delay step execution',
   description: 'Introduces a specified time delay between workflow steps, ensuring a well-paced progression of events.',

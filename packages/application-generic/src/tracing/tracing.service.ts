@@ -13,6 +13,7 @@ export class TracingService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     @Inject('TRACING_SERVICE_NAME') private readonly serviceName: string,
+    @Inject('TRACING_SERVICE_VERSION') private readonly version: string,
     @Inject('TRACING_ENABLE_OTEL') private readonly otelEnabled: boolean
   ) {}
 
@@ -24,7 +25,7 @@ export class TracingService implements OnModuleInit, OnModuleDestroy {
   onModuleInit() {
     if (!this.hasValidParameters()) return;
 
-    this.otelSDKInstance = initializeOtelSdk(this.serviceName);
+    this.otelSDKInstance = initializeOtelSdk(this.serviceName, this.version);
     this.otelSDKInstance.start();
   }
 

@@ -44,6 +44,7 @@ export default defineConfig({
     GITHUB_USER_EMAIL: '',
     GITHUB_USER_PASSWORD: '',
     BLUEPRINT_CREATOR: '645b648b36dd6d25f8650d37',
+    MONGODB_URL: 'mongodb://127.0.0.1:27017/novu-test',
     IS_CI: false,
     coverage: false,
   },

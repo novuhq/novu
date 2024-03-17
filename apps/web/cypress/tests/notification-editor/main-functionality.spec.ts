@@ -55,6 +55,53 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.getByTestId('emailPreheader').should('have.value', 'this is email preheader');
   });
 
+  it('should update to empty data when switching from editor to customHtml', function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+    fillBasicNotificationDetails('Test Notification');
+    cy.waitForNetworkIdle(500);
+
+    addAndEditChannel('email');
+
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('editor-type-selector')
+      .find('.mantine-Tabs-tabsList')
+      .contains('Custom Code', { matchCase: false })
+      .click();
+
+    cy.getByTestId('emailSubject').clear().type('new email subject');
+    cy.getByTestId('notification-template-submit-btn').click();
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('side-nav-templates-link').click();
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('template-edit-link');
+    cy.getByTestId('notifications-template')
+      .get('tbody tr td')
+      .contains('Test notification', {
+        matchCase: false,
+      })
+      .click();
+    cy.waitForNetworkIdle(500);
+
+    editChannel('email');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('editor-type-selector')
+      .find('.mantine-Tabs-tabsList')
+      .find('[data-active="true"]')
+      .contains('Custom Code', { matchCase: false });
+  });
+
   it('should save avatar enabled and content for in app', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
@@ -368,29 +415,39 @@ describe('Workflow Editor - Main Functionality', function () {
     cy.get('.monaco-editor textarea:first').parent().click().contains('Hello world code {{name}} <div>Test</div>');
   });
 
-  it('should redirect to dev env for edit template', function () {
+  it('should redirect to the templates page when switching environments', function () {
+    cy.intercept('GET', '*/notification-templates?*').as('getTemplates');
+    cy.intercept('GET', '*/notification-templates/*').as('getTemplate');
     cy.intercept('POST', '*/notification-templates?__source=editor').as('createTemplate');
+    cy.intercept('POST', '*/changes/*/apply').as('applyChanges');
+    const title = 'Environment Switching';
+
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
 
-    fillBasicNotificationDetails();
+    fillBasicNotificationDetails(title);
+    goBack();
+    cy.getByTestId('notification-template-submit-btn').click();
 
     cy.wait('@createTemplate').then((res) => {
       cy.intercept('GET', '/v1/changes?promoted=false').as('unpromoted-changes');
       cy.visit('/changes');
 
-      cy.waitLoadTemplatePage(() => {
-        cy.getByTestId('promote-btn').eq(0).click({ force: true });
-        cy.getByTestId('environment-switch').find(`input[value="Production"]`).click({ force: true });
-        cy.getByTestId('notifications-template').find('tbody tr').first().click();
+      cy.getByTestId('promote-btn').eq(0).click({ force: true });
+      cy.wait('@applyChanges');
 
-        cy.location('pathname').should('not.equal', `/workflows`);
+      cy.getByTestId('environment-switch').find(`input[value="Production"]`).click({ force: true });
+      cy.location('pathname').should('equal', `/workflows`);
+      cy.wait('@getTemplates');
 
-        cy.getByTestId('environment-switch').find(`input[value="Development"]`).click({ force: true });
+      cy.getByTestId('notifications-template').find('tbody tr').contains(title).click();
+      cy.wait('@getTemplate');
+      cy.waitForNetworkIdle(500);
+      cy.location('pathname').should('not.equal', `/workflows`);
 
-        cy.location('pathname').should('equal', `/workflows`);
-      });
+      cy.getByTestId('environment-switch').find(`input[value="Development"]`).click({ force: true });
+      cy.location('pathname').should('equal', `/workflows`);
     });
   });
 

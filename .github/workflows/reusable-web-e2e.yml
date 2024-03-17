@@ -74,6 +74,7 @@ jobs:
           cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
           cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          ci_ee_test: ${{ steps.setup.outputs.has_token }}
 
       - name: Start Client
         working-directory: apps/web
@@ -104,7 +105,7 @@ jobs:
           echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
 
       - name: Cypress run EE e2e
-        if: ${{ inputs.ee }}
+        if: ${{ steps.setup.outputs.has_token == 'true' && inputs.ee }}
         uses: cypress-io/github-action@v6
         env:
           NODE_ENV: test

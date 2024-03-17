@@ -19,7 +19,7 @@ import * as packageJson from '../package.json';
 const modules = [
   SharedModule,
   HealthModule,
-  TracingModule.register(packageJson.name),
+  TracingModule.register(packageJson.name, packageJson.version),
   ProfilingModule.register(packageJson.name),
   SocketModule,
   LoggerModule.forRoot(

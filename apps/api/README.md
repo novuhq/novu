@@ -27,7 +27,7 @@ The command will return warnings and errors that must be fixed before the Github
 
 ## Running the API
 
-See the docs for [Run in Local Machine](https://docs.novu.co/community/run-in-local-machine) to get setup. Then run:
+See the docs for [Run in Local Machine](https://docs.novu.co/community/run-in-local-machine?utm_campaign=github-api-readme) to get setup. Then run:
 
 ```bash
 # Run the API in watch mode
@@ -43,7 +43,7 @@ $ npm run test
 ```
 
 ### E2E tests
-See the docs for [Running on Local Machine - API Tests](https://docs.novu.co/community/run-in-local-machine#api).
+See the docs for [Running on Local Machine - API Tests](https://docs.novu.co/community/run-in-local-machine#api?utm_campaign=github-api-readme).
 
 ## Migrations
 Database migrations are included for features that have a hard dependency on specific data being available on database entities. These migrations are run by both Novu Cloud and Novu Self-Hosted users to support new feature releases.
