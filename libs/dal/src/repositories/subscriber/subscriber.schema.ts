@@ -163,11 +163,14 @@ subscriberSchema.index({
  *    subscriberId: /on-boarding-subscriber/i,
  *  });
  */
-subscriberSchema.index({
-  subscriberId: 1,
-  _environmentId: 1,
-  _id: 1,
-});
+subscriberSchema.index(
+  {
+    subscriberId: 1,
+    _environmentId: 1,
+    _id: 1,
+  },
+  { unique: true }
+);
 
 subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 
