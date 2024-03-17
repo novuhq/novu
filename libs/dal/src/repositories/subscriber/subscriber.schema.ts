@@ -1,9 +1,10 @@
 import * as mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import { IndexOptions, Schema } from 'mongoose';
 import * as mongooseDelete from 'mongoose-delete';
 
 import { schemaOptions } from '../schema-default.options';
-import { SubscriberDBModel } from './subscriber.entity';
+import { SubscriberDBModel, SubscriberEntity } from './subscriber.entity';
+import { IndexDefinition } from '../../shared/types';
 
 const subscriberSchema = new Schema<SubscriberDBModel>(
   {
@@ -163,10 +164,12 @@ subscriberSchema.index({
  *    subscriberId: /on-boarding-subscriber/i,
  *  });
  */
-subscriberSchema.index(
+
+index(
   {
     subscriberId: 1,
     _environmentId: 1,
+    deleted: 1,
     _id: 1,
   },
   { unique: true }
@@ -178,3 +181,7 @@ subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, over
 export const Subscriber =
   (mongoose.models.Subscriber as mongoose.Model<SubscriberDBModel>) ||
   mongoose.model<SubscriberDBModel>('Subscriber', subscriberSchema);
+
+function index(fields: IndexDefinition<SubscriberEntity>, options?: IndexOptions) {
+  subscriberSchema.index(fields, options);
+}
