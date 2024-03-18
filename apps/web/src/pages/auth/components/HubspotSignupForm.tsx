@@ -134,7 +134,7 @@ const hubspotRoleToJobTitleMapping: Record<string, JobTitleEnum> = {
   Architect: JobTitleEnum.ARCHITECT,
   'Engineering Manager': JobTitleEnum.ENGINEERING_MANAGER,
   Designer: JobTitleEnum.DESIGNER,
-  'CxO/Founder': JobTitleEnum.FOUNDER,
+  'CxO/founder': JobTitleEnum.FOUNDER,
   Marketing: JobTitleEnum.MARKETING_MANAGER,
   'Other (specify)': JobTitleEnum.OTHER,
 };
