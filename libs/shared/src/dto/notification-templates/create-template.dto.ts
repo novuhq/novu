@@ -1,6 +1,7 @@
 import { NotificationStepDto } from '../workflows';
 import { IPreferenceChannels } from '../../entities/subscriber-preference';
 import { NotificationTemplateCustomData } from '../../types';
+import { INotificationGroup } from '../../entities/notification-group';
 
 export interface ICreateNotificationTemplateDto {
   name: string;
@@ -11,7 +12,9 @@ export interface ICreateNotificationTemplateDto {
 
   steps: NotificationStepDto[];
 
-  notificationGroupId: string;
+  notificationGroupId?: string;
+
+  notificationGroup?: INotificationGroup;
 
   active?: boolean;
 
