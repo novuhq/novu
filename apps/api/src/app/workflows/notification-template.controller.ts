@@ -178,6 +178,7 @@ export class NotificationTemplateController {
         description: body.description,
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
+        notificationGroup: body.notificationGroup,
         active: body.active ?? false,
         draft: !body.active,
         critical: body.critical ?? false,

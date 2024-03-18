@@ -21,8 +21,8 @@ import {
   MessageTemplateRepository,
   EnvironmentRepository,
   SubscriberEntity,
-  NotificationGroupRepository,
   OrganizationRepository,
+  NotificationTemplateEntity,
 } from '@novu/dal';
 import { isSameDay } from 'date-fns';
 import { CreateWorkflowRequestDto } from '../dto';
@@ -509,7 +509,6 @@ describe('Create Notification template from blueprint - /notification-templates 
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
-  const notificationGroupRepository: NotificationGroupRepository = new NotificationGroupRepository();
   const organizationRepository: OrganizationRepository = new OrganizationRepository();
 
   before(async () => {
@@ -548,11 +547,8 @@ describe('Create Notification template from blueprint - /notification-templates 
     const blueprint = (await session.testAgent.get(`/v1/blueprints/${blueprintId}`).send()).body.data;
     const blueprintOrg = await organizationRepository.create({ name: 'Blueprint Org' });
     process.env.BLUEPRINT_CREATOR = blueprintOrg._id;
-    const group = await notificationGroupRepository.create({
-      _organizationId: blueprintOrg._id,
-      name: 'Test name',
-    });
-    blueprint.notificationGroupId = group._id;
+    blueprint.notificationGroupId = blueprint._notificationGroupId;
+    blueprint.notificationGroup.name = 'New Group Name';
     blueprint.blueprintId = blueprint._id;
 
     const noChanges = (await session.testAgent.get(`/v1/changes?promoted=false`)).body.data;
@@ -562,6 +558,22 @@ describe('Create Notification template from blueprint - /notification-templates 
     expect(newWorkflowChanges.length).to.equal(2);
     expect(newWorkflowChanges[0].type).to.equal(ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE);
     expect(newWorkflowChanges[1].type).to.equal(ChangeEntityTypeEnum.NOTIFICATION_GROUP);
+  });
+
+  it('should create workflow from blueprint (full blueprint mock)', async function () {
+    const createdTemplate: NotificationTemplateEntity = (
+      await session.testAgent.post(`/v1/workflows`).send(blueprintTemplateMock)
+    ).body.data;
+
+    expect(createdTemplate.blueprintId).to.equal(blueprintTemplateMock.blueprintId);
+    expect(createdTemplate.isBlueprint).to.equal(false);
+    expect(createdTemplate.name).to.equal(blueprintTemplateMock.name);
+    expect(createdTemplate.steps.length).to.equal(blueprintTemplateMock.steps.length);
+    expect(createdTemplate._notificationGroupId).to.not.equal(blueprintTemplateMock.notificationGroupId);
+
+    const inAppStep = createdTemplate.steps.find((step) => step.template?.type === StepTypeEnum.IN_APP);
+
+    expect(inAppStep?.template?._feedId).to.be.equal(null);
   });
 
   async function getProductionEnvironment() {
@@ -663,3 +675,277 @@ export async function createTemplateFromBlueprint({
     createdTemplate,
   };
 }
+
+const blueprintTemplateMock = {
+  // _id: '64731d4e1084f5a48293ceab',
+  blueprintId: '64731d4e1084f5a48293ceab',
+  name: 'Mention in a comment',
+  active: true,
+  draft: false,
+  critical: false,
+  isBlueprint: true,
+  notificationGroupId: '64731d4e1084f5a48293ce85',
+  tags: [],
+  triggers: [
+    {
+      type: 'event',
+      identifier: 'fa-solid-fa-comment-mention-in-a-comment',
+      variables: [
+        {
+          name: 'commenterName',
+          type: 'String',
+          _id: '65ee069a319fc6a92cf436d5',
+        },
+        {
+          name: 'commentSnippet',
+          type: 'String',
+          _id: '65ee069a319fc6a92cf436d6',
+        },
+        {
+          name: 'commentLink',
+          type: 'String',
+          _id: '65ee069a319fc6a92cf436d7',
+        },
+      ],
+      reservedVariables: [],
+      subscriberVariables: [
+        {
+          name: 'email',
+          _id: '65ee069a319fc6a92cf436d4',
+        },
+      ],
+      _id: '64731d1c1084f5a48293cd4a',
+    },
+  ],
+  steps: [
+    {
+      active: true,
+      shouldStopOnFail: false,
+      uuid: 'b6944995-a283-46bd-b55a-18625fd1d4fd',
+      name: 'In-App',
+      type: 'REGULAR',
+      filters: [
+        {
+          children: [],
+          _id: '6485b9052a50bb49867584a0',
+        },
+      ],
+      _templateId: '6485b92e2a50bb4986758656',
+      _parentId: null,
+      metadata: {
+        timed: {
+          weekDays: [],
+          monthDays: [],
+        },
+      },
+      variants: [],
+      _id: '6485b9052a50bb498675846d',
+      template: {
+        _id: '6485b92e2a50bb4986758656',
+        type: 'in_app',
+        active: true,
+        subject: '',
+        variables: [
+          {
+            name: 'commenterName',
+            type: 'String',
+            required: false,
+            _id: '6485b9052a50bb498675846e',
+          },
+          {
+            name: 'commentSnippet',
+            type: 'String',
+            required: false,
+            _id: '6485b9052a50bb498675846f',
+          },
+        ],
+        content: '{{commenterName}} has mentioned you in <b> "{{commentSnippet}}" </b>',
+        contentType: 'editor',
+        cta: {
+          data: {
+            url: '',
+          },
+          type: 'redirect',
+        },
+        _environmentId: '64731b391084f5a48293cb87',
+        _organizationId: '64731b391084f5a48293cb5b',
+        _creatorId: '64731b331084f5a48293cb52',
+        _parentId: '6485b9052a50bb498675846d',
+        _layoutId: null,
+        _feedId: '64731b331084f5a48293cb52',
+        feedId: '64731b331084f5a48293cb52',
+        deleted: false,
+        createdAt: '2023-06-11T12:08:14.446Z',
+        updatedAt: '2024-03-10T19:14:45.347Z',
+        __v: 0,
+        actor: {
+          type: 'none',
+          data: null,
+        },
+      },
+    },
+    {
+      active: true,
+      shouldStopOnFail: false,
+      uuid: '642e42b5-51e6-4d3b-8a91-067c29e902d4',
+      name: 'Digest',
+      type: 'REGULAR',
+      filters: [],
+      _templateId: '6485b92e2a50bb4986758662',
+      _parentId: '6485b9052a50bb498675846d',
+      metadata: {
+        amount: 30,
+        unit: 'minutes',
+        type: 'regular',
+        backoffUnit: 'minutes',
+        backoffAmount: 5,
+        backoff: true,
+        timed: {
+          weekDays: [],
+          monthDays: [],
+        },
+      },
+      variants: [],
+      _id: '6485b9052a50bb4986758479',
+      template: {
+        _id: '6485b92e2a50bb4986758662',
+        type: 'digest',
+        active: true,
+        subject: '',
+        variables: [],
+        content: '',
+        contentType: 'editor',
+        _environmentId: '64731b391084f5a48293cb87',
+        _organizationId: '64731b391084f5a48293cb5b',
+        _creatorId: '64731b331084f5a48293cb52',
+        _parentId: '6485b9052a50bb4986758479',
+        _layoutId: null,
+        deleted: false,
+        createdAt: '2023-06-11T12:08:14.520Z',
+        updatedAt: '2024-03-10T19:14:45.377Z',
+        __v: 0,
+      },
+    },
+    {
+      active: true,
+      replyCallback: {
+        active: true,
+        url: 'https://webhook.com/reply-callback',
+      },
+      shouldStopOnFail: false,
+      uuid: '671d86ec-dc27-413c-a666-ec4aeb191691',
+      name: 'Email',
+      type: 'REGULAR',
+      filters: [
+        {
+          value: 'AND',
+          children: [
+            {
+              operator: 'EQUAL',
+              on: 'previousStep',
+              step: 'b6944995-a283-46bd-b55a-18625fd1d4fd',
+              stepType: 'unseen',
+              _id: '6485b9052a50bb49867584a4',
+            },
+          ],
+          _id: '6485b9052a50bb49867584a3',
+        },
+      ],
+      _templateId: '6485b92e2a50bb4986758671',
+      _parentId: '6485b9052a50bb4986758479',
+      metadata: {
+        timed: {
+          weekDays: [],
+          monthDays: [],
+        },
+      },
+      variants: [],
+      _id: '6485b9052a50bb4986758481',
+      template: {
+        _id: '6485b92e2a50bb4986758671',
+        type: 'email',
+        active: true,
+        subject: '{{mentionedUser}} mention you in {{resourceName}}',
+        variables: [
+          {
+            name: 'mentionedUser',
+            type: 'String',
+            required: false,
+            _id: '6485b9052a50bb4986758482',
+          },
+          {
+            name: 'resourceName',
+            type: 'String',
+            required: false,
+            _id: '6485b9052a50bb4986758483',
+          },
+          {
+            name: 'commentLink',
+            type: 'String',
+            required: false,
+            _id: '6485b9052a50bb4986758484',
+          },
+          {
+            name: 'step.digest',
+            type: 'Boolean',
+            required: false,
+            defaultValue: true,
+            _id: '6485b9052a50bb4986758485',
+          },
+          {
+            name: 'step.events.0.mentionedUser',
+            type: 'String',
+            required: false,
+            _id: '6485b9052a50bb4986758486',
+          },
+          {
+            name: 'step.total_count',
+            type: 'String',
+            required: false,
+            _id: '6485b9052a50bb4986758487',
+          },
+        ],
+        content:
+          '{{#if step.digest}}\n    {{step.events.0.mentionedUser}} and {{step.total_count}} others mentioned you in a comment. \n{{else}}\n   {{mentionedUser}} mentioned you in a comment. \n{{/if}}\n \n<br/><br/>\n\n<div style="font-family:inherit;text-align:center">\n <a href="{{commentLink}}" style="line-height:30px;display:inline-block;font-weight:400;white-space:nowrap;text-align:center;border:1px solid transparent;height:32px;padding:4px 15px;font-size:14px;border-radius:4px;color:white;background:#f47373;border-color:#f47373;text-decoration:none">\n  Reply to comment\n </a>\n</div>\n\n<br/>\n\n{{#unless step.digest}}\n  You can reply to this email, and the email contents will be posted as a comment reply to this post.\n{{/unless}}\n',
+        contentType: 'customHtml',
+        _environmentId: '64731b391084f5a48293cb87',
+        _organizationId: '64731b391084f5a48293cb5b',
+        _creatorId: '64731b331084f5a48293cb52',
+        _parentId: '6485b9052a50bb4986758481',
+        _layoutId: '64731d4e1084f5a48293ce8f',
+        deleted: false,
+        createdAt: '2023-06-11T12:08:14.551Z',
+        updatedAt: '2024-03-10T19:14:45.409Z',
+        __v: 0,
+        preheader: '',
+        senderName: '',
+      },
+    },
+  ],
+  preferenceSettings: {
+    email: true,
+    sms: true,
+    in_app: true,
+    chat: true,
+    push: true,
+  },
+  _environmentId: '64731b391084f5a48293cb87',
+  _organizationId: '64731b391084f5a48293cb5b',
+  _creatorId: '64731b331084f5a48293cb52',
+  _parentId: '64731d1c1084f5a48293cd49',
+  deleted: false,
+  createdAt: '2023-05-28T09:22:22.586Z',
+  updatedAt: '2024-03-10T19:14:45.442Z',
+  __v: 0,
+  deletedAt: '2023-05-30T12:55:34.842Z',
+  notificationGroup: {
+    _id: '64731d4e1084f5a48293ce85',
+    name: 'General',
+    _organizationId: '64731b391084f5a48293cb5b',
+    _environmentId: '64731b391084f5a48293cb87',
+    _parentId: '64731b391084f5a48293cb65',
+    createdAt: '2023-05-28T09:22:22.381Z',
+    updatedAt: '2023-05-28T09:22:22.381Z',
+    __v: 0,
+  },
+};

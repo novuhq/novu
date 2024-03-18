@@ -3,6 +3,7 @@ import {
   INotificationTemplate,
   IGroupedBlueprint,
   IPaginationWithQueryParams,
+  IBlueprint,
 } from '@novu/shared';
 
 import { api } from './api.client';
@@ -40,7 +41,7 @@ export async function getBlueprintsGroupedByCategory(): Promise<{
   return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/group-by-category`, { absoluteUrl: true });
 }
 
-export async function getBlueprintTemplateById(id: string): Promise<INotificationTemplate> {
+export async function getBlueprintTemplateById(id: string): Promise<IBlueprint> {
   return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/${id}`, { absoluteUrl: true });
 }
 
