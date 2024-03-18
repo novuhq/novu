@@ -259,6 +259,7 @@ const validateTemplate = (template, ctx) => {
 
 export const schema = z
   .object({
+    payloadSchema: z.any().optional(),
     name: z
       .string({
         required_error: 'Required - Workflow Name',

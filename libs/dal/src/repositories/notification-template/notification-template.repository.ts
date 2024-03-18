@@ -56,7 +56,10 @@ export class NotificationTemplateRepository extends BaseRepository<
       _id: id,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
+    const item = await this.MongooseModel.findOne(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
 
     return this.mapEntity(item);
   }
@@ -70,7 +73,10 @@ export class NotificationTemplateRepository extends BaseRepository<
       triggers: { $elemMatch: { identifier: identifier } },
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
+    const item = await this.MongooseModel.findOne(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
 
     return this.mapEntity(item);
   }
@@ -165,15 +171,31 @@ export class NotificationTemplateRepository extends BaseRepository<
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
 
-  async getList(organizationId: string, environmentId: string, skip = 0, limit = 10) {
-    const totalItemsCount = await this.count({ _environmentId: environmentId });
+  async getList(organizationId: string, environmentId: string, skip = 0, limit = 10, query?: string) {
+    let searchQuery: FilterQuery<NotificationTemplateDBModel> = {};
+    if (query) {
+      searchQuery = {
+        $or: [
+          { name: { $regex: regExpEscape(query), $options: 'i' } },
+          { 'triggers.identifier': { $regex: regExpEscape(query), $options: 'i' } },
+        ],
+      };
+    }
+
+    const totalItemsCount = await this.count({
+      _environmentId: environmentId,
+      ...searchQuery,
+    });
 
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
     };
 
-    const items = await this.MongooseModel.find(requestQuery)
+    const items = await this.MongooseModel.find({
+      ...requestQuery,
+      ...searchQuery,
+    })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -217,4 +239,8 @@ export class NotificationTemplateRepository extends BaseRepository<
   public static getBlueprintOrganizationId(): string | undefined {
     return process.env.BLUEPRINT_CREATOR;
   }
+}
+
+function regExpEscape(literalString: string): string {
+  return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
 }

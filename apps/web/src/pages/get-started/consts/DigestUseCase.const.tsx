@@ -15,7 +15,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
   type: OnboardingUseCasesTabsEnum.DIGEST,
   description:
     'Aggregates multiple events into a single, concise message, preventing user overload with excessive notifications.',
-  useCaseLink: 'https://docs.novu.co/workflows/digest',
+  useCaseLink: 'https://docs.novu.co/workflows/digest?utm_campaign=inapp-usecase-digest',
   steps: [
     {
       title: 'Configure providers',

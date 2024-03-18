@@ -15,11 +15,14 @@ import {
   INotificationTrigger,
   TriggerTypeEnum,
   IStepVariant,
-  StepTypeEnum,
 } from '@novu/shared';
 import { AnalyticsService, CreateChange, CreateChangeCommand, PlatformException } from '@novu/application-generic';
 
-import { CreateNotificationTemplateCommand, NotificationStepVariant } from './create-notification-template.command';
+import {
+  CreateNotificationTemplateCommand,
+  NotificationStep,
+  NotificationStepVariant,
+} from './create-notification-template.command';
 import { ContentService } from '../../../shared/helpers/content.service';
 import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -325,8 +328,8 @@ export class CreateNotificationTemplate {
   private async processBlueprint(command: CreateNotificationTemplateCommand) {
     if (!command.blueprintId) return null;
 
-    const group: NotificationGroupEntity = await this.handleGroup(command.notificationGroupId, command);
-    const steps: NotificationStepEntity[] = await this.handleFeeds(command.steps as any, command);
+    const group: NotificationGroupEntity = await this.handleGroup(command);
+    const steps: NotificationStep[] = this.normalizeSteps(command.steps);
 
     return CreateNotificationTemplateCommand.create({
       organizationId: command.organizationId,
@@ -343,6 +346,22 @@ export class CreateNotificationTemplate {
       preferenceSettings: command.preferenceSettings,
       blueprintId: command.blueprintId,
       __source: command.__source,
+    });
+  }
+
+  private normalizeSteps(commandSteps: NotificationStep[]): NotificationStep[] {
+    const steps = JSON.parse(JSON.stringify(commandSteps)) as NotificationStep[];
+
+    return steps.map((step) => {
+      const template = step.template;
+      if (template) {
+        template.feedId = undefined;
+      }
+
+      return {
+        ...step,
+        ...(template ? { template } : {}),
+      };
     });
   }
 
@@ -400,34 +419,25 @@ export class CreateNotificationTemplate {
     return steps;
   }
 
-  private async handleGroup(
-    notificationGroupId: string,
-    command: CreateNotificationTemplateCommand
-  ): Promise<NotificationGroupEntity> {
-    const blueprintNotificationGroup = await this.notificationGroupRepository.findOne({
-      _id: notificationGroupId,
-      _organizationId: this.getBlueprintOrganizationId,
-    });
+  private async handleGroup(command: CreateNotificationTemplateCommand): Promise<NotificationGroupEntity> {
+    if (!command.notificationGroup?.name) throw new NotFoundException(`Notification group was not provided`);
 
-    if (!blueprintNotificationGroup)
-      throw new NotFoundException(`Blueprint workflow group with id ${notificationGroupId} is not found`);
-
-    let group = await this.notificationGroupRepository.findOne({
-      name: blueprintNotificationGroup.name,
+    let notificationGroup = await this.notificationGroupRepository.findOne({
+      name: command.notificationGroup.name,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
 
-    if (!group) {
-      group = await this.notificationGroupRepository.create({
+    if (!notificationGroup) {
+      notificationGroup = await this.notificationGroupRepository.create({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
-        name: blueprintNotificationGroup.name,
+        name: command.notificationGroup.name,
       });
 
       await this.createChange.execute(
         CreateChangeCommand.create({
-          item: group,
+          item: notificationGroup,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           userId: command.userId,
@@ -437,7 +447,7 @@ export class CreateNotificationTemplate {
       );
     }
 
-    return group;
+    return notificationGroup;
   }
   private get getBlueprintOrganizationId(): string {
     return NotificationTemplateRepository.getBlueprintOrganizationId() as string;

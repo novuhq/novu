@@ -1,6 +1,6 @@
 import { IconName } from '@fortawesome/fontawesome-svg-core';
-import { INotificationTemplate } from '@novu/shared';
+import { IBlueprint } from '@novu/shared';
 
-export interface IBlueprintTemplate extends INotificationTemplate {
+export interface IBlueprintTemplate extends IBlueprint {
   iconName: IconName;
 }

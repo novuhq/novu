@@ -48,11 +48,13 @@ export class CompileInAppTemplate extends CompileTemplateBase {
     let url;
 
     try {
-      content = await this.compileInAppTemplate(
-        command.content,
-        payload,
-        organization
-      );
+      content = command.content
+        ? await this.compileInAppTemplate(
+            command.content,
+            payload,
+            organization
+          )
+        : '';
 
       if (command.cta?.data?.url) {
         url = await this.compileInAppTemplate(

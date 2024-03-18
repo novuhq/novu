@@ -104,7 +104,7 @@ describe('Create Organization - /organizations (POST)', async () => {
       expect(user?.jobTitle).to.eq(testOrganization.jobTitle);
     });
 
-    it('should create organization with built in Novu integrations', async () => {
+    it('should create organization with built in Novu integrations and set them as primary', async () => {
       const testOrganization: ICreateOrganizationDto = {
         name: 'Org Name',
       };
@@ -120,14 +120,30 @@ describe('Create Organization - /organizations (POST)', async () => {
       const novuSmsIntegration = integrations.filter(
         (i) => i.active && i.name === 'Novu SMS' && i.providerId === SmsProviderIdEnum.Novu
       );
+      const novuEmailIntegrationProduction = novuEmailIntegration.filter(
+        (el) => el._environmentId === productionEnv?._id
+      );
+      const novuEmailIntegrationDevelopment = novuEmailIntegration.filter(
+        (el) => el._environmentId === developmentEnv?._id
+      );
+      const novuSmsIntegrationProduction = novuSmsIntegration.filter((el) => el._environmentId === productionEnv?._id);
+      const novuSmsIntegrationDevelopment = novuSmsIntegration.filter(
+        (el) => el._environmentId === developmentEnv?._id
+      );
 
       expect(integrations.length).to.eq(4);
       expect(novuEmailIntegration?.length).to.eq(2);
       expect(novuSmsIntegration?.length).to.eq(2);
-      expect(novuEmailIntegration.filter((el) => el._environmentId === productionEnv?._id).length).to.eq(1);
-      expect(novuSmsIntegration.filter((el) => el._environmentId === productionEnv?._id).length).to.eq(1);
-      expect(novuEmailIntegration.filter((el) => el._environmentId === developmentEnv?._id).length).to.eq(1);
-      expect(novuSmsIntegration.filter((el) => el._environmentId === developmentEnv?._id).length).to.eq(1);
+
+      expect(novuEmailIntegrationProduction.length).to.eq(1);
+      expect(novuSmsIntegrationProduction.length).to.eq(1);
+      expect(novuEmailIntegrationDevelopment.length).to.eq(1);
+      expect(novuSmsIntegrationDevelopment.length).to.eq(1);
+
+      expect(novuEmailIntegrationProduction[0].primary).to.eq(true);
+      expect(novuSmsIntegrationProduction[0].primary).to.eq(true);
+      expect(novuEmailIntegrationDevelopment[0].primary).to.eq(true);
+      expect(novuSmsIntegrationDevelopment[0].primary).to.eq(true);
     });
 
     it('when Novu Email credentials are not set it should not create Novu Email integration', async () => {

@@ -4,8 +4,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import * as packageJson from '../package.json';
-import { TracingModule } from '@novu/application-generic';
-
+import { ProfilingModule, TracingModule } from '@novu/application-generic';
 import { SharedModule } from './app/shared/shared.module';
 import { UserModule } from './app/user/user.module';
 import { AuthModule } from './app/auth/auth.module';
@@ -91,7 +90,8 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   TenantModule,
   WorkflowOverridesModule,
   RateLimitingModule,
-  TracingModule.register(packageJson.name),
+  ProfilingModule.register(packageJson.name),
+  TracingModule.register(packageJson.name, packageJson.version),
 ];
 
 const enterpriseModules = enterpriseImports();
