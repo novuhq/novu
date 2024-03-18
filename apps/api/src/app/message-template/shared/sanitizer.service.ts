@@ -16,7 +16,7 @@ const sanitizeOptions: sanitize.IOptions = {
     /**
      * Additional attributes to allow on all tags.
      */
-    '*': ['style'],
+    '*': ['style', 'img'],
   },
   /**
    * Required to disable console warnings when allowing style tags.
