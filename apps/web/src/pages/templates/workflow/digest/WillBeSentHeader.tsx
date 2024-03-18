@@ -37,7 +37,7 @@ export const WillBeSentHeader = ({ path, isHighlight = true }: { path: string; i
   const type = watch(`${path}.digestMetadata.type`);
 
   if (type === DigestTypeEnum.TIMED) {
-    return <TimedDigestWillBeSentHeader isHighlight={isHighlight} />;
+    return <TimedDigestWillBeSentHeader path={path} isHighlight={isHighlight} />;
   }
 
   const unit = watch(`${path}.digestMetadata.regular.unit`);

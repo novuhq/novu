@@ -5,12 +5,12 @@ import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-
 import { Node, NodeProps } from 'react-flow-renderer';
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
-import { useSegment } from '@novu/shared-web';
+import { useAuthContext, useSegment } from '@novu/shared-web';
 
 import { When } from '../../../components/utils/When';
 import type { IFlowEditorProps } from '../../../components/workflow';
 import { FlowEditor } from '../../../components/workflow';
-import { Button, Settings } from '@novu/design-system';
+import { Bolt, Button, Settings } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
 import { channels } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';
@@ -42,7 +42,7 @@ const nodeTypes: Record<string, ComponentType<NodeProps>> = {
 const edgeTypes = { special: AddNodeEdge };
 
 const WorkflowEditor = () => {
-  const { addStep, deleteStep } = useTemplateEditorForm();
+  const { addStep, deleteStep, template } = useTemplateEditorForm();
   const { isUnderVariantsListPath } = useStepInfoPath();
   const { channel } = useParams<{
     channel: StepTypeEnum | undefined;
@@ -51,13 +51,14 @@ const WorkflowEditor = () => {
   const [dragging, setDragging] = useState(false);
   const segment = useSegment();
   const { isOnboardingExperimentEnabled } = useOnboardingExperiment();
+  const { currentOrganization } = useAuthContext();
 
   const {
     control,
     trigger,
     formState: { errors, isDirty },
   } = useFormContext<IForm>();
-  const { readonly } = useEnvController();
+  const { readonly, chimera } = useEnvController({}, template?.chimera);
   const steps = useWatch({
     name: 'steps',
     control,
@@ -192,6 +193,7 @@ const WorkflowEditor = () => {
               }}
             >
               <Group>
+                <Bolt color="#4c6dd4" width="24px" height="24px" />
                 <NameInput />
                 <UpdateButton />
                 <Button
@@ -265,6 +267,9 @@ const WorkflowEditor = () => {
                 }}
               >
                 <Group>
+                  <When truthy={chimera}>
+                    <Bolt color="#4c6dd4" width="24px" height="24px" />
+                  </When>
                   <NameInput />
                   <When truthy={!channel}>
                     <Group>
@@ -279,6 +284,7 @@ const WorkflowEditor = () => {
                           segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
                             action: 'Workflow - Send test notification',
                             experiment_id: '2024-w9-onb',
+                            _organization: currentOrganization?._id,
                           });
                           navigate(basePath + '/test-workflow');
                         } else {

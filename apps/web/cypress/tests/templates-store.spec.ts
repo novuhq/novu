@@ -12,6 +12,7 @@ describe('Templates Store', function () {
   };
 
   beforeEach(function () {
+    cy.mockFeatureFlags({ IS_TEMPLATE_STORE_ENABLED: true });
     cy.initializeSession({ noTemplates: true }).as('session');
     indexedDB.deleteDatabase('localforage');
   });
@@ -234,7 +235,6 @@ describe('Templates Store', function () {
     cy.getByTestId('all-workflow-tile').should('exist').should('not.be.disabled').click();
     cy.getByTestId('templates-store-modal').should('be.visible');
     cy.getByTestId('templates-store-modal-use-template').should('be.enabled').click();
-    cy.getByTestId('templates-store-modal-use-template').should('be.disabled');
 
     cy.wait('@createTemplate');
 

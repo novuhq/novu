@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import {
@@ -46,6 +46,7 @@ export class AddDelayJob {
         stepMetadata: data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
+        chimeraResponse: command.chimeraResponse?.outputs,
       });
 
       await this.jobRepository.updateStatus(

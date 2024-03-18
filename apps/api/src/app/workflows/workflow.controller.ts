@@ -41,6 +41,7 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
 import { ApiOkResponse } from '../shared/framework/response.decorator';
+import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
 import { GetWorkflowVariables } from './usecases/get-workflow-variables/get-workflow-variables.usecase';
 import { GetWorkflowVariablesCommand } from './usecases/get-workflow-variables/get-workflow-variables.command';
 
@@ -67,14 +68,18 @@ export class WorkflowController {
     description: `Workflows were previously named notification templates`,
   })
   @ExternalApiAccessible()
-  getWorkflows(@UserSession() user: IJwtPayload, @Query() query: WorkflowsRequestDto): Promise<WorkflowsResponseDto> {
+  getWorkflows(
+    @UserSession() user: IJwtPayload,
+    @Query() queryParams: WorkflowsRequestDto
+  ): Promise<WorkflowsResponseDto> {
     return this.getWorkflowsUsecase.execute(
       GetNotificationTemplatesCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
-        page: query.page ? query.page : 0,
-        limit: query.limit ? query.limit : 10,
+        page: queryParams.page,
+        limit: queryParams.limit,
+        query: queryParams.query,
       })
     );
   }
@@ -123,7 +128,7 @@ export class WorkflowController {
   @ExternalApiAccessible()
   deleteWorkflowById(@UserSession() user: IJwtPayload, @Param('workflowId') workflowId: string): Promise<boolean> {
     return this.deleteWorkflowByIdUsecase.execute(
-      GetNotificationTemplateCommand.create({
+      DeleteNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -149,7 +154,7 @@ export class WorkflowController {
     );
   }
 
-  @Get('/:workflowId')
+  @Get('/:workflowIdOrIdentifier')
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Get workflow',
@@ -158,14 +163,14 @@ export class WorkflowController {
   @ExternalApiAccessible()
   getWorkflowById(
     @UserSession() user: IJwtPayload,
-    @Param('workflowId') workflowId: string
+    @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string
   ): Promise<WorkflowResponse> {
     return this.getWorkflowUsecase.execute(
       GetNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        templateId: workflowId,
+        workflowIdOrIdentifier: workflowIdOrIdentifier,
       })
     );
   }
@@ -193,6 +198,7 @@ export class WorkflowController {
         description: body.description,
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
+        notificationGroup: body.notificationGroup,
         active: body.active ?? false,
         draft: !body.active,
         critical: body.critical ?? false,

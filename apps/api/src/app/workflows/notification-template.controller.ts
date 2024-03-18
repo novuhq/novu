@@ -35,6 +35,7 @@ import { Roles } from '../auth/framework/roles.decorator';
 import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
+import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
 
 @ApiCommonResponses()
 @Controller('/notification-templates')
@@ -61,15 +62,16 @@ export class NotificationTemplateController {
   @ExternalApiAccessible()
   getNotificationTemplates(
     @UserSession() user: IJwtPayload,
-    @Query() query: WorkflowsRequestDto
+    @Query() queryParams: WorkflowsRequestDto
   ): Promise<WorkflowsResponseDto> {
     return this.getNotificationTemplatesUsecase.execute(
       GetNotificationTemplatesCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
-        page: query.page ? query.page : 0,
-        limit: query.limit ? query.limit : 10,
+        page: queryParams.page,
+        limit: queryParams.limit,
+        query: queryParams.query,
       })
     );
   }
@@ -120,7 +122,7 @@ export class NotificationTemplateController {
   @ExternalApiAccessible()
   deleteTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string): Promise<boolean> {
     return this.deleteTemplateByIdUsecase.execute(
-      GetNotificationTemplateCommand.create({
+      DeleteNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -129,7 +131,7 @@ export class NotificationTemplateController {
     );
   }
 
-  @Get('/:templateId')
+  @Get('/:workflowIdOrIdentifier')
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Get Notification template',
@@ -139,14 +141,14 @@ export class NotificationTemplateController {
   @ExternalApiAccessible()
   getNotificationTemplateById(
     @UserSession() user: IJwtPayload,
-    @Param('templateId') templateId: string
+    @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string
   ): Promise<WorkflowResponse> {
     return this.getNotificationTemplateUsecase.execute(
       GetNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        templateId,
+        workflowIdOrIdentifier,
       })
     );
   }
@@ -176,6 +178,7 @@ export class NotificationTemplateController {
         description: body.description,
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
+        notificationGroup: body.notificationGroup,
         active: body.active ?? false,
         draft: !body.active,
         critical: body.critical ?? false,

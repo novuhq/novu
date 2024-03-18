@@ -201,8 +201,8 @@ export class MessageResponseDto {
 }
 
 export class MessagesResponseDto {
-  @ApiProperty()
-  totalCount: number;
+  @ApiPropertyOptional()
+  totalCount?: number;
 
   @ApiProperty()
   hasMore: boolean;

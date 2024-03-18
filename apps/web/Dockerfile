@@ -5,6 +5,7 @@ ENV NX_DAEMON=false
 
 WORKDIR /usr/src/app
 
+
 RUN apk add --no-cache bash
 RUN npm install -g pnpm@8.9.0 --loglevel notice
 

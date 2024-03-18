@@ -5,6 +5,7 @@ import useStyles from './Tooltip.styles';
 export interface ITooltipProps
   extends Pick<
     TooltipProps,
+    | 'arrowSize'
     | 'multiline'
     | 'width'
     | 'label'
@@ -23,7 +24,14 @@ export interface ITooltipProps
  * Tooltip component
  *
  */
-export function Tooltip({ children, label, opened = undefined, error = false, ...props }: ITooltipProps) {
+export function Tooltip({
+  children,
+  label,
+  opened = undefined,
+  error = false,
+  arrowSize = 3.5,
+  ...props
+}: ITooltipProps) {
   const { classes } = useStyles({ error });
 
   return (
@@ -33,7 +41,7 @@ export function Tooltip({ children, label, opened = undefined, error = false, ..
       opened={opened}
       classNames={classes}
       withArrow
-      arrowSize={3.5}
+      arrowSize={arrowSize}
       radius="md"
       label={label}
       {...props}
