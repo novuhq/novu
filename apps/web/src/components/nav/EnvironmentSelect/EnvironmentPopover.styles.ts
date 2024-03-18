@@ -1,18 +1,17 @@
 import { css } from '../../../styled-system/css';
 
 export const popoverDropdownStyle = css({
-  py: '75 !important',
-  pl: '100 !important',
+  p: '100 !important',
   pr: '125 !important',
-  backgroundColor: 'surface.popover',
+  backgroundColor: 'surface.popover !important',
+  color: 'typography.text.secondary',
   position: 'absolute',
-  color: 'typography.text.main',
   border: 'none',
   shadow: 'medium !important',
 });
 
 export const popoverArrowStyle = css({
-  backgroundColor: 'typography.text.main',
+  backgroundColor: 'surface.popover !important',
   height: '50',
   border: 'none',
   margin: '0',

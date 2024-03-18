@@ -12,7 +12,7 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
     popover: {
-      value: { base: '{colors.legacy.B20}', _dark: '{colors.legacy.white}' },
+      value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B20}' },
       type: 'color',
     },
   },
