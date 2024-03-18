@@ -102,7 +102,7 @@ export function HubspotSignupForm() {
           role___onboarding__other_: '',
           heard_about_novu__other_: '',
         }}
-        readonlyProperties={['email', 'firstname', 'lastname']}
+        readonlyProperties={['email']}
         focussedProperty="company"
         onFormSubmitted={($form, values) => {
           const submissionValues = values?.submissionValues as unknown as {
