@@ -70,6 +70,6 @@ describe('HTML Sanitizer', function () {
       },
     ]);
 
-    expect(result[0].content).to.equal('<img src="https://example.com/image.jpg" alt="Example Image">');
+    expect(result[0].content).to.equal('<img src="https://example.com/image.jpg" alt="Example Image" />');
   });
 });
