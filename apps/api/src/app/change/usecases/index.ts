@@ -11,6 +11,7 @@ import { PromoteFeedChange } from './promote-feed-change/promote-feed-change';
 import { PromoteLayoutChange } from './promote-layout-change/promote-layout-change.use-case';
 import { CreateChange } from '@novu/application-generic';
 import { PromoteTranslationChange } from './promote-translation-change';
+import { PromoteTranslationGroupChange } from './promote-translation-group-change';
 
 export * from './apply-change';
 export * from './promote-change-to-environment';
@@ -30,4 +31,5 @@ export const USE_CASES = [
   CountChanges,
   UpdateChange,
   PromoteTranslationChange,
+  PromoteTranslationGroupChange,
 ];
