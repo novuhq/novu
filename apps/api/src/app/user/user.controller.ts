@@ -28,7 +28,7 @@ import { UpdateOnBoardingTourUsecase } from './usecases/update-on-boarding-tour/
 import { UpdateOnBoardingTourCommand } from './usecases/update-on-boarding-tour/update-on-boarding-tour.command';
 import { UpdateProfileUseCase } from './usecases/update-profile/update-profile.usecase';
 import { UpdateProfileCommand } from './usecases/update-profile/update-profile.command';
-import { UpdateProfilelDto } from './dtos/update-profile.dto';
+import { UpdateProfileDto } from './dtos/update-profile.dto';
 
 @ApiCommonResponses()
 @Controller('/users')
@@ -64,7 +64,7 @@ export class UsersController {
   }
 
   @Put('/profile')
-  async updateProfile(@UserSession() user: IJwtPayload, @Body() body: UpdateProfilelDto): Promise<UserResponseDto> {
+  async updateProfile(@UserSession() user: IJwtPayload, @Body() body: UpdateProfileDto): Promise<UserResponseDto> {
     const { firstName, lastName, jobTitle } = body;
 
     return await this.updateProfileUsecase.execute(

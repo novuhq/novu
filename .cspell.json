@@ -618,7 +618,9 @@
     "usecase",
     "zulip",
     "uuidv",
-    "Vonage"
+    "Vonage",
+    "firstname",
+    "lastname"
   ],
   "flagWords": [],
   "patterns": [

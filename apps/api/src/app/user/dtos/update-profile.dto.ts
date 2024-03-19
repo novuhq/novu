@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { JobTitleEnum } from '@novu/shared';
 
-export class UpdateProfilelDto {
+export class UpdateProfileDto {
   @ApiProperty()
   @IsOptional()
   @IsString()
