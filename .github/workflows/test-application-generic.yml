@@ -1,0 +1,13 @@
+name: Test application-generic package
+on:
+  pull_request:
+    paths:
+      - 'packages/application-generic/**'
+      - 'libs/dal/**'
+      - 'libs/testing/**'
+      - 'libs/shared/**'
+      - 'providers/**'
+  workflow_dispatch:
+jobs:
+  test_application_generic:
+    uses: ./.github/workflows/reusable-application-generic.yml
