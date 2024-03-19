@@ -1,8 +1,8 @@
 # Reference: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
 
 # By default we assume that the novu-devs should review most changes
-# Remove for now until consensus is assured
-@novuhq/novu-devs
+# Removed for now until consensus is made by the team
+# @novuhq/novu-devs
 
 # Except for the following exceptions
 # Novu infra team ownership
