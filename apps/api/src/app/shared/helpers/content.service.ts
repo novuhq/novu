@@ -38,8 +38,6 @@ export class ContentService {
 
       return getTemplateVariables(ast.body);
     } catch (e) {
-      console.log(e);
-
       throw new ApiException('Failed to extract variables');
     }
   }
