@@ -1,9 +1,13 @@
-import Redis, { RedisOptions, ScanStream } from 'ioredis';
-import { ConnectionOptions } from 'tls';
-
-export { Redis, RedisOptions, ScanStream };
-
 import { convertStringValues } from './variable-mappers';
+
+import {
+  ConnectionOptions,
+  IEnvironmentConfigOptions,
+  IRedisConfigOptions,
+  Redis,
+  RedisOptions,
+  ScanStream,
+} from '../types';
 
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
@@ -25,6 +29,7 @@ interface IRedisConfig {
   port?: string;
   tls?: ConnectionOptions;
   ttl?: string;
+  username?: string;
 }
 
 export interface IRedisProviderConfig {
@@ -34,20 +39,40 @@ export interface IRedisProviderConfig {
   host?: string;
   keepAlive: number;
   keyPrefix: string;
-  password?: string;
   username?: string;
+  options?: IRedisConfigOptions;
+  password?: string;
   port?: number;
   tls?: ConnectionOptions;
   ttl: number;
 }
 
-export const getRedisProviderConfig = (): IRedisProviderConfig => {
-  const redisConfig: IRedisConfig = {
+export const getRedisProviderConfig = (
+  envOptions?: IEnvironmentConfigOptions,
+  options?: IRedisConfigOptions
+): IRedisProviderConfig => {
+  let redisConfig: Partial<IRedisConfig>;
+
+  if (envOptions) {
+    redisConfig = {
+      host: convertStringValues(envOptions.host),
+      password: convertStringValues(envOptions.password),
+      port: convertStringValues(envOptions.ports),
+      username: convertStringValues(envOptions.username),
+    };
+  } else {
+    redisConfig = {
+      host: convertStringValues(process.env.REDIS_HOST),
+      password: convertStringValues(process.env.REDIS_PASSWORD),
+      port: convertStringValues(process.env.REDIS_PORT),
+      username: convertStringValues(process.env.REDIS_USERNAME),
+    };
+  }
+
+  redisConfig = {
+    ...redisConfig,
     db: convertStringValues(process.env.REDIS_DB_INDEX),
-    host: convertStringValues(process.env.REDIS_HOST),
-    port: convertStringValues(process.env.REDIS_PORT),
     ttl: convertStringValues(process.env.REDIS_TTL),
-    password: convertStringValues(process.env.REDIS_PASSWORD),
     connectTimeout: convertStringValues(process.env.REDIS_CONNECT_TIMEOUT),
     keepAlive: convertStringValues(process.env.REDIS_KEEP_ALIVE),
     family: convertStringValues(process.env.REDIS_FAMILY),
@@ -59,6 +84,7 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
   const port = redisConfig.port ? Number(redisConfig.port) : DEFAULT_PORT;
   const host = redisConfig.host || DEFAULT_HOST;
   const password = redisConfig.password;
+  const username = redisConfig.username;
   const connectTimeout = redisConfig.connectTimeout
     ? Number(redisConfig.connectTimeout)
     : DEFAULT_CONNECT_TIMEOUT;
@@ -77,37 +103,39 @@ export const getRedisProviderConfig = (): IRedisProviderConfig => {
     host,
     port,
     password,
+    username,
     connectTimeout,
     family,
     keepAlive,
     keyPrefix,
     ttl,
     tls,
+    ...(options && { options }),
   };
 };
 
-export const getRedisInstance = (): Redis | undefined => {
-  const { port, host, ...configOptions } = getRedisProviderConfig();
+export const getRedisInstance = (
+  config: IRedisProviderConfig
+): Redis | undefined => {
+  const { port, host, options, ...configRest } = config;
+  const { showFriendlyErrorStack } = options || {};
 
-  const options = {
-    ...configOptions,
+  const redisOptions = {
     maxRetriesPerRequest: null,
-    /*
-     *  Disabled in Prod as affects performance
-     */
-    showFriendlyErrorStack: process.env.NODE_ENV !== 'production',
+    ...configRest,
+    showFriendlyErrorStack,
   };
 
   if (port && host) {
-    return new Redis(port, host, options);
+    return new Redis(port, host, redisOptions);
   }
 
   return undefined;
 };
 
-export const validateRedisProviderConfig = (): boolean => {
-  const config = getRedisProviderConfig();
-
+export const validateRedisProviderConfig = (
+  config: IRedisProviderConfig
+): boolean => {
   return !!config.host && !!config.port;
 };
 

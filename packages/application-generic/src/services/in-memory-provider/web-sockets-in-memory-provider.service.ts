@@ -5,9 +5,16 @@ import {
   InMemoryProviderEnum,
   InMemoryProviderClient,
   ScanStream,
+  IProviderClusterConfigOptions,
 } from './types';
 
 import { GetIsInMemoryClusterModeEnabled } from '../../usecases';
+import {
+  getClusterProvider,
+  getSingleInstanceProvider,
+  IProviderCluster,
+  IProviderRedis,
+} from './providers';
 
 const LOG_CONTEXT = 'WebSocketsInMemoryProviderService';
 
@@ -15,49 +22,57 @@ export class WebSocketsInMemoryProviderService {
   public inMemoryProviderService: InMemoryProviderService;
   public isCluster: boolean;
   private getIsInMemoryClusterModeEnabled: GetIsInMemoryClusterModeEnabled;
+  private loadedProvider: IProviderCluster | IProviderRedis;
 
   constructor() {
     this.getIsInMemoryClusterModeEnabled =
       new GetIsInMemoryClusterModeEnabled();
 
-    const provider = this.selectProvider();
     this.isCluster = this.isClusterMode();
+    this.loadedProvider = this.selectProvider();
 
     this.inMemoryProviderService = new InMemoryProviderService(
-      provider,
+      this.loadedProvider,
+      this.loadedProvider.getConfig(this.getCacheConfigOptions()),
       this.isCluster
     );
   }
 
-  /**
-   * Rules for the provider selection:
-   * - For our self hosted users we assume all of them have a single node Redis
-   * instance.
-   * - For Novu we will use Elasticache. We fallback to a Redis Cluster configuration
-   * if Elasticache not configured properly. That's happening in the provider
-   * mapping in the /in-memory-provider/providers/index.ts
-   */
-  private selectProvider(): InMemoryProviderEnum {
-    if (process.env.IS_DOCKER_HOSTED) {
-      return InMemoryProviderEnum.REDIS;
+  private selectProvider(): IProviderCluster | IProviderRedis {
+    if (this.isClusterMode()) {
+      const providerIds = [
+        InMemoryProviderEnum.ELASTICACHE,
+        InMemoryProviderEnum.REDIS_CLUSTER,
+      ];
+
+      let selectedProvider = undefined;
+      for (const providerId of providerIds) {
+        const clusterProvider = getClusterProvider(providerId);
+        const clusterProviderConfig = clusterProvider.getConfig(
+          this.getCacheConfigOptions()
+        );
+
+        if (clusterProvider.validate(clusterProviderConfig)) {
+          selectedProvider = clusterProvider;
+          break;
+        }
+      }
+
+      if (selectedProvider) {
+        return selectedProvider;
+      }
     }
 
-    return InMemoryProviderEnum.ELASTICACHE;
-  }
-
-  private descriptiveLogMessage(message) {
-    return `[Provider: ${this.selectProvider()}] ${message}`;
+    return getSingleInstanceProvider();
   }
 
   private isClusterMode(): boolean {
     const isClusterModeEnabled = this.getIsInMemoryClusterModeEnabled.execute();
 
     Logger.log(
-      this.descriptiveLogMessage(
-        `Cluster mode ${
-          isClusterModeEnabled ? 'IS' : 'IS NOT'
-        } enabled for ${LOG_CONTEXT}`
-      ),
+      `Cluster mode ${
+        isClusterModeEnabled ? 'IS' : 'IS NOT'
+      } enabled for ${LOG_CONTEXT}`,
       LOG_CONTEXT
     );
 
@@ -88,11 +103,20 @@ export class WebSocketsInMemoryProviderService {
     return this.inMemoryProviderService.isClientReady();
   }
 
-  public providerInUseIsInClusterMode(): boolean {
-    const providerConfigured =
-      this.inMemoryProviderService.getProvider.configured;
+  private getCacheConfigOptions(): IProviderClusterConfigOptions {
+    /*
+     *  Disabled in Prod as affects performance
+     */
+    const showFriendlyErrorStack = process.env.NODE_ENV !== 'production';
 
-    return this.isCluster || providerConfigured !== InMemoryProviderEnum.REDIS;
+    return {
+      enableAutoPipelining: false,
+      showFriendlyErrorStack,
+    };
+  }
+
+  public providerInUseIsInClusterMode(): boolean {
+    return this.loadedProvider.provider !== InMemoryProviderEnum.REDIS;
   }
 
   public async shutdown(): Promise<void> {
