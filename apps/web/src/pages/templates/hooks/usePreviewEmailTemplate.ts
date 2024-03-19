@@ -5,6 +5,7 @@ import { usePreviewEmail } from '../../../api/hooks';
 import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
+import { parsePayload } from '../../../utils';
 
 export const usePreviewEmailTemplate = ({ locale, payload }: { locale?: string; payload: string }) => {
   const { watch } = useFormContext<IForm>();
@@ -39,7 +40,7 @@ export const usePreviewEmailTemplate = ({ locale, payload }: { locale?: string; 
         contentType: contentType,
         content,
         layoutId: layoutId,
-        payload: JSON.parse(payloadArg),
+        payload: parsePayload(payloadArg),
         subject: subject ?? '',
         locale,
       });
