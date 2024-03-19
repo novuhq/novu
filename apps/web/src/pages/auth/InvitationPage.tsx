@@ -45,7 +45,7 @@ export default function InvitationPage() {
   useEffect(() => {
     // auto accept invitation when logged in as invited user
     if (isLoggedInAsInvitedUser) {
-      submitToken(tokensRef.current.token as string, tokensRef.current.invitationToken as string, true);
+      submitToken(tokensRef.current.token as string, tokensRef.current.invitationToken as string, true, false);
     }
   }, [isLoggedInAsInvitedUser, submitToken]);
 

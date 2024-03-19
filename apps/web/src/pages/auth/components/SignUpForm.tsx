@@ -77,7 +77,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
     applyToken(token);
 
     if (invitationToken) {
-      submitToken(token, invitationToken);
+      submitToken(token, invitationToken, false, true);
     } else {
       setToken(token);
     }
