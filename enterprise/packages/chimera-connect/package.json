@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@novu/ee-dal": "^0.24.0",
+    "@novu/stateless": "^0.24.0",
     "@novu/dal": "^0.24.0",
     "@novu/shared": "^0.24.0",
     "@novu/testing": "^0.24.0",

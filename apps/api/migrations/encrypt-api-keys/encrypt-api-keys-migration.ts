@@ -1,13 +1,22 @@
+/* eslint-disable */
+import '../../src/config';
+
 import { EnvironmentRepository, IApiKey } from '@novu/dal';
 import { encryptSecret } from '@novu/application-generic';
 import { EncryptedSecret } from '@novu/shared';
 import { createHash } from 'crypto';
+import { NestFactory } from '@nestjs/core';
+
+import { AppModule } from '../../src/app.module';
 
 export async function encryptApiKeysMigration() {
   // eslint-disable-next-line no-console
   console.log('start migration - encrypt api keys');
 
-  const environmentRepository = new EnvironmentRepository();
+  const app = await NestFactory.create(AppModule, {
+    logger: false,
+  });
+  const environmentRepository = app.get(EnvironmentRepository);
   const environments = await environmentRepository.find({});
 
   for (const environment of environments) {
@@ -68,3 +77,5 @@ export interface IEncryptedApiKey {
   _userId: string;
   hash: string;
 }
+
+encryptApiKeysMigration();

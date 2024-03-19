@@ -1,3 +1,3 @@
-import { BaseCommand } from '@novu/application-generic';
+import { EnvironmentLevelCommand } from '@novu/application-generic';
 
-export class GetGroupedBlueprintsCommand extends BaseCommand {}
+export class GetGroupedBlueprintsCommand extends EnvironmentLevelCommand {}

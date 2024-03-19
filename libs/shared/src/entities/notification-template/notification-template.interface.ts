@@ -4,6 +4,7 @@ import type { BuilderFieldType, BuilderGroupValues, TemplateVariableTypeEnum, Fi
 import { IMessageTemplate } from '../message-template';
 import { IPreferenceChannels } from '../subscriber-preference';
 import { IWorkflowStepMetadata } from '../step';
+import { INotificationGroup } from '../notification-group';
 
 export enum NotificationTemplateTypeEnum {
   REGULAR = 'REGULAR',
@@ -28,11 +29,16 @@ export interface INotificationTemplate {
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
   type?: NotificationTemplateTypeEnum;
+  payloadSchema?: any;
 }
 
 export class IGroupedBlueprint {
   name: string;
-  blueprints: INotificationTemplate[];
+  blueprints: IBlueprint[];
+}
+
+export interface IBlueprint extends INotificationTemplate {
+  notificationGroup: INotificationGroup;
 }
 
 export enum TriggerTypeEnum {

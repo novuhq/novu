@@ -773,7 +773,7 @@ describe('Integrations List Modal', function () {
       'Select a framework to set up credentials to start sending notifications.'
     );
     cy.getByTestId('update-provider-sidebar')
-      .find('a[href="https://docs.novu.co/notification-center/introduction?utm_campaign=in-app"]')
+      .find('a[href^="https://docs.novu.co/notification-center/introduction"]')
       .contains('Explore set-up guide');
     cy.getByTestId('is_active_id').should('have.value', 'true');
     cy.window().then((win) => {
