@@ -4,7 +4,7 @@ import { expect } from 'chai';
 describe('Create translation group - /translations/groups (POST)', async () => {
   let session: UserSession;
 
-  before(async () => {
+  beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
     await session.testAgent.put(`/v1/organizations/language`).send({
@@ -66,6 +66,7 @@ describe('Create translation group - /translations/groups (POST)', async () => {
     expect(group.identifier).to.eq('test');
     expect(locales).to.deep.eq(['en_US', 'sv_SE']);
     expect(id).to.equal(group.id);
+
     await session.applyChanges({
       enabled: false,
       _entityId: group.id,
