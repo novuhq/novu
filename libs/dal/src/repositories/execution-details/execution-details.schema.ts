@@ -110,6 +110,10 @@ executionDetailsSchema.index({
 });
 
 executionDetailsSchema.index({
+  transactionId: 1,
+});
+
+executionDetailsSchema.index({
   _environmentId: 1,
 });
 
