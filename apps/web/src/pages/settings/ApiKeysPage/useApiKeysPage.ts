@@ -3,17 +3,23 @@ import { useState } from 'react';
 import { getApiKeys } from '../../../api/environment';
 import { useEnvController } from '../../../hooks';
 import { useClipboard } from '@mantine/hooks';
-import { useParams } from 'react-router-dom';
+import { useRegenerateApiKeyModal } from './useRegenerateApiKeyModal';
+import { BaseEnvironmentEnum } from '@novu/shared-web';
 
-const CLIPBOARD_TIMEOUT_MS = 1000;
+const CLIPBOARD_TIMEOUT_MS = 2000;
 
 type ApiKeysPageUrlParams = {
   // FIXME: find a better source for ths union type
-  env: 'production' | 'development';
+  env: BaseEnvironmentEnum;
 };
 
 export const useApiKeysPage = () => {
-  const { env } = useParams<ApiKeysPageUrlParams>();
+  /**
+   * TODO: we will eventually want to use the URL params instead of the current environment, but
+   * this will come at a later time once we have the APIs to support it.
+   *
+   * const { env } = useParams<ApiKeysPageUrlParams>();
+   */
 
   const clipboardApiKey = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });
@@ -29,6 +35,8 @@ export const useApiKeysPage = () => {
 
   const toggleApiKeyVisibility = () => setIsApiKeyMasked((prevHidden) => !prevHidden);
 
+  const regenerationModalProps = useRegenerateApiKeyModal();
+
   return {
     apiKey,
     environmentIdentifier,
@@ -39,6 +47,7 @@ export const useApiKeysPage = () => {
     clipboardEnvironmentIdentifier,
     clipboardEnvironmentId,
     refetchApiKeys,
-    pageEnv: env,
+    pageEnv: environment?.name ?? '',
+    regenerationModalProps,
   };
 };
