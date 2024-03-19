@@ -163,10 +163,13 @@ export class AddJob {
     let delayAmount: number | undefined = undefined;
 
     if (job.type === StepTypeEnum.DELAY) {
-      delayAmount =
-        job.type === StepTypeEnum.DELAY
-          ? await this.addDelayJob.execute(command)
-          : undefined;
+      const chimeraResponse = await this.chimeraConnector.execute<
+        AddJobCommand,
+        ExecuteOutput<IChimeraDigestResponse>
+      >(command);
+
+      command.chimeraResponse = chimeraResponse;
+      delayAmount = await this.addDelayJob.execute(command);
 
       Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
 

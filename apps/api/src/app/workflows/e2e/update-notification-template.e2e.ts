@@ -8,6 +8,7 @@ import {
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
   INotificationTemplateStep,
+  EmailBlockTypeEnum,
 } from '@novu/shared';
 import { ChangeRepository } from '@novu/dal';
 import { CreateWorkflowRequestDto, UpdateWorkflowRequestDto } from '../dto';
@@ -238,6 +239,50 @@ describe('Update workflow by id - /workflows/:workflowId (PUT)', async () => {
     const step = foundTemplate.steps[0] as INotificationTemplateStep;
     expect(step.active).to.equal(false);
     expect(step.template?.contentType).to.equal('customHtml');
+  });
+
+  it('should be able to update empty message content', async function () {
+    const notificationTemplateService = new NotificationTemplateService(
+      session.user._id,
+      session.organization._id,
+      session.environment._id
+    );
+
+    const template = await notificationTemplateService.createTemplate({
+      steps: [
+        {
+          type: StepTypeEnum.EMAIL,
+          contentType: 'editor',
+          content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+        },
+        {
+          type: StepTypeEnum.EMAIL,
+          contentType: 'customHtml',
+          content: 'This is a sample text block',
+        },
+      ],
+    });
+
+    const update: IUpdateNotificationTemplateDto = {
+      steps: [
+        ...template.steps.map((step) => {
+          return {
+            _templateId: step._templateId,
+            template: {
+              type: StepTypeEnum.EMAIL,
+              contentType: 'customHtml',
+              content: '',
+            },
+          } as INotificationTemplateStep;
+        }),
+      ],
+    };
+    const { body } = await session.testAgent.put(`/v1/workflows/${template._id}`).send(update);
+    const steps = body.data.steps;
+
+    expect(steps[0].template?.contentType).to.equal('customHtml');
+    expect(steps[0].template?.content).to.equal('');
+    expect(steps[1].template?.content).to.equal('');
   });
 
   it('should update the steps', async () => {

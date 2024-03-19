@@ -1,6 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import * as _ from 'lodash';
-
 import {
   TopicEntity,
   TopicRepository,
@@ -84,6 +83,11 @@ export class TriggerMulticast {
       );
 
       if (!isEnabled) {
+        Logger.log(
+          `The IS_TOPIC_NOTIFICATION_ENABLED feature flag is disabled, skipping trigger multicast`,
+          LOG_CONTEXT
+        );
+
         return;
       }
 
