@@ -78,8 +78,6 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
 
     if (invitationToken) {
       submitToken(token, invitationToken);
-
-      return true;
     } else {
       setToken(token);
     }

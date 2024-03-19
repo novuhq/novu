@@ -26,6 +26,9 @@ import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framew
 import { UserOnboardingTourRequestDto } from './dtos/user-onboarding-tour-request.dto';
 import { UpdateOnBoardingTourUsecase } from './usecases/update-on-boarding-tour/update-on-boarding-tour.usecase';
 import { UpdateOnBoardingTourCommand } from './usecases/update-on-boarding-tour/update-on-boarding-tour.command';
+import { UpdateProfileUseCase } from './usecases/update-profile/update-profile.usecase';
+import { UpdateProfileCommand } from './usecases/update-profile/update-profile.command';
+import { UpdateProfilelDto } from './dtos/update-profile.dto';
 
 @ApiCommonResponses()
 @Controller('/users')
@@ -38,7 +41,8 @@ export class UsersController {
     private getMyProfileUsecase: GetMyProfileUsecase,
     private updateOnBoardingUsecase: UpdateOnBoardingUsecase,
     private updateOnBoardingTourUsecase: UpdateOnBoardingTourUsecase,
-    private updateProfileEmailUsecase: UpdateProfileEmail
+    private updateProfileEmailUsecase: UpdateProfileEmail,
+    private updateProfileUsecase: UpdateProfileUseCase
   ) {}
 
   @Get('/me')
@@ -57,6 +61,20 @@ export class UsersController {
     });
 
     return await this.getMyProfileUsecase.execute(command);
+  }
+
+  @Put('/profile')
+  async updateProfile(@UserSession() user: IJwtPayload, @Body() body: UpdateProfilelDto): Promise<UserResponseDto> {
+    const { firstName, lastName, jobTitle } = body;
+
+    return await this.updateProfileUsecase.execute(
+      UpdateProfileCommand.create({
+        userId: user._id,
+        firstName: firstName,
+        lastName: lastName,
+        jobTitle: jobTitle,
+      })
+    );
   }
 
   @Put('/profile/email')

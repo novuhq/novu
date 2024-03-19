@@ -33,15 +33,13 @@ export function useAcceptInvite() {
             predicate: (query) => query.queryKey.includes('/v1/organizations'),
           });
         }
-
-        navigate(ROUTES.WORKFLOWS);
       } catch (e: unknown) {
         errorMessage('Failed to accept an invite.');
 
         Sentry.captureException(e);
       }
     },
-    [mutateAsync, navigate, queryClient, setToken]
+    [mutateAsync, queryClient, setToken]
   );
 
   return {
