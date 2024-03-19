@@ -69,12 +69,17 @@ const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
           rightSection={
             // this is ugly, but we define the width of rightSection explicitly, which messes with larger elements
             <Flex gap="125" position={'absolute'} right="100">
-              <IconButton onClick={openModal} tooltipProps={{ label: 'Regenerate API Key' }}>
+              <IconButton
+                onClick={openModal}
+                tooltipProps={{ label: 'Regenerate API Key' }}
+                id={'api-key-regenerate-btn'}
+              >
                 <IconRefresh size={INPUT_ICON_SIZE} />
               </IconButton>
               <IconButton
                 onClick={toggleApiKeyVisibility}
                 tooltipProps={{ label: isApiKeyMasked ? 'Show API Key' : 'Hide API Key' }}
+                id={'api-key-toggle-visibility-btn'}
               >
                 {isApiKeyMasked ? (
                   <IconOutlineVisibility size={INPUT_ICON_SIZE} />
@@ -91,7 +96,7 @@ const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
             </Flex>
           }
           value={apiKey}
-          data-test-id="api-key-container"
+          data-test-id="api-key"
         />
         <Input
           readOnly
@@ -106,7 +111,7 @@ const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
             />
           }
           value={environmentIdentifier}
-          data-test-id="api-identifier"
+          data-test-id="application-identifier"
         />
         <Input
           readOnly
