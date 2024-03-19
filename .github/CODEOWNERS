@@ -9,6 +9,7 @@
 .github @novuhq/novu-infra
 .husky @novuhq/novu-infra
 docker @novuhq/novu-infra
+**/Dockerfile @novuhq/novu-infra
 
 # Novu community team ownership
 apps/web @novuhq/novu-web
