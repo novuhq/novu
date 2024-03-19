@@ -12,6 +12,7 @@ describe('Templates Store', function () {
   };
 
   beforeEach(function () {
+    cy.mockFeatureFlags({ IS_TEMPLATE_STORE_ENABLED: true });
     cy.initializeSession({ noTemplates: true }).as('session');
     indexedDB.deleteDatabase('localforage');
   });
