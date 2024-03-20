@@ -1,4 +1,5 @@
 import { Select, Tooltip } from '@novu/design-system';
+import { useState } from 'react';
 import { css } from '../../../../styled-system/css';
 import { arrowStyles, navSelectStyles, tooltipStyles } from '../../NavSelect.styles';
 import { useOrganizationSelect } from '../useOrganizationSelect';
@@ -25,9 +26,12 @@ export const OrganizationSelectRenderer: React.FC<INavOrganizationSelectRenderer
   setSearch,
   data,
 }) => {
+  const [canShowTooltip, setCanShowTooltip] = useState<boolean>(false);
+
   return (
     <Tooltip
       label="Type a name to add organization"
+      sx={{ visibility: canShowTooltip ? 'visible' : 'hidden' }}
       position="left"
       classNames={{
         tooltip: tooltipStyles,
@@ -47,6 +51,12 @@ export const OrganizationSelectRenderer: React.FC<INavOrganizationSelectRenderer
         onChange={switchOrgCallback}
         allowDeselect={false}
         onSearchChange={setSearch}
+        onDropdownOpen={() => {
+          setCanShowTooltip(true);
+        }}
+        onDropdownClose={() => {
+          setCanShowTooltip(false);
+        }}
         data={data}
         icon={
           <img
