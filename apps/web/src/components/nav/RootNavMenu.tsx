@@ -56,7 +56,7 @@ export const RootNavMenu: React.FC = () => {
         <NavMenuLinkButton
           label="Settings"
           icon={<IconSettings />}
-          link={ROUTES.SETTINGS}
+          link={ROUTES.PROFILE}
           testId="side-nav-settings-link"
         />
       </NavMenuSection>
