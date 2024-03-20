@@ -14,7 +14,7 @@ import { BaseEnvironmentEnum } from 'src/constants';
 
 interface ISetEnvironmentOptions {
   /** using null will prevent a reroute */
-  route?: ROUTES | null;
+  route?: ROUTES | string | null;
 }
 
 export type EnvironmentName = BaseEnvironmentEnum | IEnvironment['name'];

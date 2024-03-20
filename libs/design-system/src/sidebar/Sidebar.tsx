@@ -44,7 +44,7 @@ const FooterHolder = styled.div`
 `;
 
 const COLLAPSED_WIDTH = 600;
-const NAVIGATION_WIDTH = 300;
+const NAVIGATION_WIDTH = 272;
 
 const useDrawerStyles = createStyles((theme: MantineTheme) => {
   return {
