@@ -13,6 +13,7 @@ const sidebarStyle = css({
   height: '100%',
   p: '100',
   bg: 'surface.panel',
+  overflowY: 'auto',
 });
 
 type RouteValue = (typeof ROUTES)[keyof typeof ROUTES];

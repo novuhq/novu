@@ -32,7 +32,6 @@ const navStyles = css({
   h: '100%',
   display: 'flex',
   flexDirection: 'column',
-  overflowY: 'auto',
 });
 
 const Title = styled('h2', titleRecipe);
