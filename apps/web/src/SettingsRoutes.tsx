@@ -9,8 +9,8 @@ import { BillingRoutes } from './pages/BillingPages';
 import { BrandingForm } from './pages/brand/tabs';
 import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
 import { ApiKeysPage, UserProfilePage } from './pages/settings';
-import { SettingsPageOld } from './pages/settings/SettingsPageOld';
-import { SettingsPage } from './pages/settings/SettingsPage';
+import { SettingsPage as SettingsPageOld } from './pages/settings/SettingsPage';
+import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { ApiKeysCard } from './pages/settings/tabs';
 import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 
