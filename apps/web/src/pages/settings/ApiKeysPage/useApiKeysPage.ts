@@ -8,10 +8,11 @@ import { BaseEnvironmentEnum } from '@novu/shared-web';
 
 const CLIPBOARD_TIMEOUT_MS = 2000;
 
-type ApiKeysPageUrlParams = {
-  // FIXME: find a better source for ths union type
-  env: BaseEnvironmentEnum;
-};
+/*
+ * type ApiKeysPageUrlParams = {
+ *   env: BaseEnvironmentEnum;
+ * };
+ */
 
 export const useApiKeysPage = () => {
   /**

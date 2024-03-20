@@ -1,6 +1,7 @@
 import { Button, IButtonProps } from '@novu/design-system';
 import { Tooltip } from '@novu/design-system';
 import { ComponentProps, PropsWithChildren, useState } from 'react';
+import { useHover } from '../hooks';
 import { css, cx } from '../styled-system/css';
 
 // Mantine styles take precedence over Panda :(, so have to use !important
@@ -32,20 +33,6 @@ const iconButtonStyles = css({
 export interface IIconButtonProps extends IButtonProps {
   tooltipProps?: Omit<ComponentProps<typeof Tooltip>, 'children'>;
 }
-
-export const useHover = () => {
-  const [isHovered, setIsHovered] = useState<boolean>(false);
-
-  return {
-    isHovered,
-    onMouseEnter: () => {
-      setIsHovered(true);
-    },
-    onMouseLeave: () => {
-      setIsHovered(false);
-    },
-  };
-};
 
 /**
  * Clickable Icon Button. Pass the desired Icon* as a child
