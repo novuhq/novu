@@ -1,6 +1,6 @@
+import { MouseEventHandler } from 'react';
 import { FC } from 'react';
 import { Button, IconLockPerson } from '@novu/design-system';
-
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { css } from '../../../styled-system/css';
 import { styled } from '../../../styled-system/jsx';
@@ -8,6 +8,10 @@ import { title } from '../../../styled-system/recipes';
 import { InputPlain } from '../components';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { UserProfileForm } from './UserProfileForm';
+import { UserProfilePasswordSidebar } from './UserProfilePasswordSidebar';
+import { UserProfilePasswordSidebarEnum } from './UserProfilePasswordSidebarEnum';
+import { useUserProfileSearchParams } from './useUserProfileSearchParams';
+import { useUserProfileSetPassword } from './useUserProfileSetPassword';
 
 const Title = styled('h2', title);
 
@@ -15,6 +19,19 @@ const inputStyles = css({ minWidth: '18.75rem' });
 
 export const UserProfilePage: FC = () => {
   const { currentUser } = useAuthContext();
+
+  const { sidebarType, updateSidebarParam, token } = useUserProfileSearchParams();
+
+  const closeSidebar = () => {
+    updateSidebarParam(null);
+  };
+
+  const { handleSendLinkEmail, countdownTimerSeconds, email } = useUserProfileSetPassword();
+
+  const handleSetPasswordClick: MouseEventHandler<HTMLButtonElement> = async () => {
+    handleSendLinkEmail();
+    updateSidebarParam(UserProfilePasswordSidebarEnum.SET_PASSWORD);
+  };
 
   return (
     <SettingsPageContainer title="User profile">
@@ -50,6 +67,14 @@ export const UserProfilePage: FC = () => {
           </Button>
         </div>
       </section>
+      <UserProfilePasswordSidebar
+        isOpened={!!sidebarType}
+        onClose={closeSidebar}
+        countdownTimerSeconds={countdownTimerSeconds}
+        handleSendLinkEmail={handleSendLinkEmail}
+        email={email}
+        token={token ?? undefined}
+      />
     </SettingsPageContainer>
   );
 };
