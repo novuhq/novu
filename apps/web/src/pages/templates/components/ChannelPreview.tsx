@@ -32,6 +32,9 @@ export const PreviewComponent = ({ channel }: { channel: StepTypeEnum }) => {
     case StepTypeEnum.DIGEST:
       return <>DIGEST</>;
 
+    case StepTypeEnum.CUSTOM:
+      return <>Coming soon!</>;
+
     default:
       return <>dummy</>;
   }
