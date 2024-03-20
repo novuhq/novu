@@ -171,19 +171,19 @@ export function SideNav({}: Props) {
         borderRight: 'none',
         width: '300px',
         minHeight: '100vh',
-        padding: '16px 24px',
+        padding: '16px 0',
         paddingBottom: '0px',
         '@media (max-width: 768px)': {
           width: '100%',
         },
       }}
     >
-      <Navbar.Section mb={24}>
+      <Navbar.Section sx={{ marginBottom: '24px', padding: '0 24px' }}>
         <Link to="/">
           <NovuLogo />
         </Link>
       </Navbar.Section>
-      <Navbar.Section sx={{ overflowY: 'auto', flex: 1 }}>
+      <Navbar.Section sx={{ overflowY: 'auto', flex: 1, padding: '0 24px' }}>
         <Popover
           classNames={classes}
           withArrow
