@@ -1,16 +1,6 @@
-import {
-  IconCheck,
-  IconContentCopy,
-  IconOutlineVisibility,
-  IconOutlineVisibilityOff,
-  IconRefresh,
-  IconSize,
-  IIconProps,
-  Input,
-} from '@novu/design-system';
-import { LocalizedMessage } from '@novu/shared-web';
+import { IconOutlineVisibility, IconOutlineVisibilityOff, IconRefresh, IconSize, Input } from '@novu/design-system';
 import { FC } from 'react';
-import { IconButton } from '../../../components/IconButton';
+import { IconButton, ClipboardIconButton } from '../../../components/';
 import { Flex } from '../../../styled-system/jsx';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { ConfirmRegenerationModal } from '../tabs/components/ConfirmRegenerationModal';
@@ -19,31 +9,6 @@ import { useApiKeysPage } from './useApiKeysPage';
 type ApiKeysRendererProps = ReturnType<typeof useApiKeysPage>;
 
 const INPUT_ICON_SIZE: IconSize = '16';
-
-interface IClipboardIconButtonProps extends Pick<IIconProps, 'color' | 'size'> {
-  handleCopy: () => void;
-  isCopied: boolean;
-  testId?: string;
-  tooltipLabel?: LocalizedMessage;
-}
-
-export const ClipboardIconButton: FC<IClipboardIconButtonProps> = ({
-  handleCopy,
-  isCopied,
-  testId,
-  tooltipLabel,
-  ...iconProps
-}) => {
-  return (
-    <IconButton
-      onClick={handleCopy}
-      data-test-id={testId}
-      tooltipProps={{ label: tooltipLabel ?? isCopied ? 'Copied!' : 'Copy key' }}
-    >
-      {isCopied ? <IconCheck {...iconProps} /> : <IconContentCopy {...iconProps} />}
-    </IconButton>
-  );
-};
 
 const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
   apiKey,
