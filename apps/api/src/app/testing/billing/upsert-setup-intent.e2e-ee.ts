@@ -2,13 +2,13 @@ import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 
-describe('Create setup intent', () => {
+describe('Upsert setup intent', () => {
   const eeBilling = require('@novu/ee-billing');
-  if (!eeBilling.CreateSetupIntent) {
-    throw new Error("CreateSetupIntent doesn't exist");
+  if (!eeBilling.UpsertSetupIntent) {
+    throw new Error("UpsertSetupIntent doesn't exist");
   }
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  const { CreateSetupIntent } = eeBilling;
+  const { UpsertSetupIntent } = eeBilling;
 
   const stubObject = {
     setupIntents: {
@@ -54,7 +54,7 @@ describe('Create setup intent', () => {
   });
 
   const createUseCase = () => {
-    const useCase = new CreateSetupIntent(stubObject, getCustomerUsecase, userRepository);
+    const useCase = new UpsertSetupIntent(stubObject, getCustomerUsecase, userRepository);
 
     return useCase;
   };
