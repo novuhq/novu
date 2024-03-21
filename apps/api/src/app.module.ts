@@ -100,7 +100,10 @@ const enterpriseModules = enterpriseImports();
 const modules = baseModules.concat(enterpriseModules);
 
 const providers: Provider[] = [
-  ProductFeatureInterceptor,
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: ProductFeatureInterceptor,
+  },
   {
     provide: APP_INTERCEPTOR,
     useClass: ApiRateLimitInterceptor,
