@@ -1,4 +1,11 @@
-import { CallHandler, ExecutionContext, HttpException, Injectable, NestInterceptor } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  HttpException,
+  Injectable,
+  NestInterceptor,
+  NotFoundException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { OrganizationRepository } from '@novu/dal';
 import {
@@ -22,19 +29,25 @@ export class ProductFeatureInterceptor implements NestInterceptor {
 
       const organization = await this.organizationRepository.findById(organizationId);
 
+      if (!organization) {
+        throw new NotFoundException();
+      }
+
       const handler = context.getHandler();
       const classRef = context.getClass();
-      const requestedFeature: ProductFeatureKeyEnum = this.reflector.getAllAndOverride(ProductFeature, [
+      const requestedFeature: ProductFeatureKeyEnum | undefined = this.reflector.getAllAndOverride(ProductFeature, [
         handler,
         classRef,
       ]);
 
-      const enabled = productFeatureEnabledForServiceLevel[requestedFeature].includes(
-        organization?.apiServiceLevel as ApiServiceLevelEnum
-      );
+      if (requestedFeature !== undefined) {
+        const enabled = productFeatureEnabledForServiceLevel[requestedFeature].includes(
+          organization.apiServiceLevel as ApiServiceLevelEnum
+        );
 
-      if (!enabled) {
-        throw new HttpException('Payment Required', 402);
+        if (!enabled) {
+          throw new HttpException('Payment Required', 402);
+        }
       }
 
       return next.handle();
