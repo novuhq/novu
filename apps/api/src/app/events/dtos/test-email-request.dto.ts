@@ -1,4 +1,4 @@
-import { IsDefined, IsString, IsOptional } from 'class-validator';
+import { IsDefined, IsString, IsOptional, IsBoolean } from 'class-validator';
 import { IEmailBlock, MessageTemplateContentType } from '@novu/shared';
 
 export class TestSendEmailRequestDto {
@@ -26,4 +26,19 @@ export class TestSendEmailRequestDto {
   @IsOptional()
   @IsString()
   layoutId?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  chimera?: boolean = false;
+
+  @IsOptional()
+  @IsString()
+  stepId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  workflowId?: string | null;
+
+  @IsOptional()
+  inputs: any;
 }

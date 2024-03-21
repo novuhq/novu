@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 import { RavenInterceptor, RavenModule } from 'nest-raven';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { createNestLoggingModuleOptions, LoggerModule, TracingModule } from '@novu/application-generic';
+import {
+  createNestLoggingModuleOptions,
+  LoggerModule,
+  ProfilingModule,
+  TracingModule,
+} from '@novu/application-generic';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -9,12 +14,13 @@ import { SharedModule } from './shared/shared.module';
 import { HealthModule } from './health/health.module';
 import { SocketModule } from './socket/socket.module';
 
-const packageJson = require('../package.json');
+import * as packageJson from '../package.json';
 
 const modules = [
   SharedModule,
   HealthModule,
   TracingModule.register(packageJson.name),
+  ProfilingModule.register(packageJson.name),
   SocketModule,
   LoggerModule.forRoot(
     createNestLoggingModuleOptions({

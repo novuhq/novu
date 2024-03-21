@@ -56,7 +56,7 @@ export default memo((node: INode) => {
     return null;
   }
 
-  const { active, uuid, name, filters: conditions } = step;
+  const { active, uuid, name, stepId, filters: conditions } = step;
   const variantsCount = step.variants?.length;
   const conditionsCount = conditions && conditions.length > 0 ? conditions[0].children?.length ?? 0 : 0;
 
@@ -94,7 +94,7 @@ export default memo((node: INode) => {
         tabKey={tabKey}
         channelType={channelType}
         Icon={Icon}
-        label={name ? name : label + (count > 0 ? ` (${count})` : '')}
+        label={name || stepId ? name || (stepId as string) : label + (count > 0 ? ` (${count})` : '')}
         active={stepUuid === uuid}
         disabled={!active}
         id={id}

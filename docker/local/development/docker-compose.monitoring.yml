@@ -1,0 +1,45 @@
+version: '3.1'
+
+services:
+  localstack:
+    container_name: "${LOCALSTACK_DOCKER_NAME-localstack_main}"
+    image: "localstack/localstack:0.14.5"
+    network_mode: bridge
+    environment:
+      - SERVICES=s3
+    ports:
+      - "4566:4566"
+    volumes:
+      - "${TMPDIR:-/tmp/localstack}:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    healthcheck:
+      test: "bash -c 'AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test aws --endpoint-url=http://127.0.0.1:4566 s3 ls'"
+      retries: 5
+      interval: 10s
+  mongo:
+    container_name: "${MONGO_DOCKER_NAME-mongo_main}"
+    image: mongo
+    network_mode: bridge
+    ports:
+      - "27017:27017"
+    volumes:
+      - "${TMPDIR:-/tmp/mongo}:/db/data"
+    healthcheck:
+      test: "bash -c 'mongo --host 127.0.0.1:27017 --eval \"printjson(rs.status())\"'"
+      retries: 5
+      interval: 10s
+  redis:
+    container_name: "${REDIS_DOCKER_NAME-redis_main}"
+    image: redis
+    network_mode: bridge
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: "bash -c 'redis-cli ping'"
+      retries: 5
+      interval: 10s
+
+  pyroscope:
+    image: grafana/pyroscope:latest
+    ports:
+      - "4040:4040"

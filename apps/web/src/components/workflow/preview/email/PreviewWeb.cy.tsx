@@ -31,9 +31,6 @@ describe('Preview web', () => {
 
     cy.getByTestId('preview-subject').contains('Subject');
     cy.getByTestId('preview-from').contains('novu@novu');
-    cy.getByTestId('preview-content').contains(
-      "Oops! We've recognized some glitch in this HTML. Please give it another look!"
-    );
   });
 
   it('should render with basic content', () => {

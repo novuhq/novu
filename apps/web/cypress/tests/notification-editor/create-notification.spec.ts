@@ -45,57 +45,6 @@ describe('Creation functionality', function () {
     cy.getByTestId('trigger-curl-snippet').contains('taskName');
   });
 
-  it('should create multiline in-app notification, send it and receive', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/workflows/create');
-    });
-    cy.waitForNetworkIdle(500);
-
-    cy.getByTestId('settings-page').click();
-
-    cy.getByTestId('title').first().clear().type('Test Notification Title');
-    cy.getByTestId('description').type('This is a test description for a test title');
-    cy.get('body').click();
-
-    addAndEditChannel('inApp');
-    cy.waitForNetworkIdle(500);
-
-    // put the multiline notification message
-    cy.get('.monaco-editor textarea:first')
-      .parent()
-      .click()
-      .find('textarea')
-      .type('{{firstName}} someone assigned you to {{taskName}}', {
-        parseSpecialCharSequences: false,
-        force: true,
-      })
-      .type('{enter}Please check it.', {
-        force: true,
-      });
-    cy.getByTestId('inAppRedirect').type('/example/test');
-
-    goBack();
-    cy.getByTestId('notification-template-submit-btn').click();
-
-    // trigger the notification
-    cy.task('createNotifications', {
-      identifier: 'test-notification-title',
-      token: this.session.token,
-      subscriberId: this.session.user.id,
-    });
-
-    // click on the notifications bell
-    cy.getByTestId('notification-bell').click();
-
-    // check the notification
-    cy.getByTestId('notifications-scroll-area')
-      .getByTestId('notification-content')
-      .first()
-      .then(($el) => {
-        expect($el[0].innerText).to.contain('Please check it.');
-      });
-  });
-
   it('should manage variables', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');

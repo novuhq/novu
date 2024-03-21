@@ -12,17 +12,24 @@ import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useState } from 'react';
 import { useEditTemplateContent } from '../../hooks/useEditTemplateContent';
-import { Grid, Stack } from '@mantine/core';
+import { Grid, SegmentedControl, Stack, useMantineTheme } from '@mantine/core';
 import { VariableManagementButton } from '../VariableManagementButton';
 import { CustomCodeEditor } from '../CustomCodeEditor';
 import { SmsPreview } from '../../../../components/workflow/preview';
 import { EditVariablesModal } from '../EditVariablesModal';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
+import { colors, When } from '@novu/design-system';
+import { InputVariables } from '../InputVariables';
+import { InputVariablesForm } from '../InputVariablesForm';
 
 const templateFields = ['content'];
+const PREVIEW = 'Preview';
+const INPUTS = 'Inputs';
 
 export function TemplateSMSEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
-  const { environment } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { environment, chimera } = useEnvController({}, template?.chimera);
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);
@@ -33,6 +40,9 @@ export function TemplateSMSEditor() {
     channelType: ChannelTypeEnum.SMS,
   });
   const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
+  const [inputVariables, setInputVariables] = useState();
+  const [activeTab, setActiveTab] = useState<string>(PREVIEW);
+  const theme = useMantineTheme();
 
   return (
     <>
@@ -40,7 +50,10 @@ export function TemplateSMSEditor() {
       {hasActiveIntegration && !primaryIntegration ? (
         <LackIntegrationAlert
           channelType={ChannelTypeEnum.SMS}
-          text={`You have multiple provider instances for SMS in the ${environment?.name} environment. Please select the primary instance.`}
+          text={
+            `You have multiple provider instances for SMS in the ${environment?.name} environment.` +
+            ` Please select the primary instance.`
+          }
           isPrimaryMissing
         />
       ) : null}
@@ -57,19 +70,29 @@ export function TemplateSMSEditor() {
                   openEditVariablesModal={() => {
                     setEditVariablesModalOpen(true);
                   }}
+                  label={chimera ? 'Input variables' : undefined}
                 />
-                <CustomCodeEditor
-                  value={(field.value as string) || ''}
-                  onChange={(value) => {
-                    handleContentChange(value, field.onChange);
-                  }}
-                />
+                <When truthy={!chimera}>
+                  <CustomCodeEditor
+                    value={(field.value as string) || ''}
+                    onChange={(value) => {
+                      handleContentChange(value, field.onChange);
+                    }}
+                  />
+                </When>
+                <When truthy={chimera}>
+                  <InputVariablesForm
+                    onChange={(values) => {
+                      setInputVariables(values);
+                    }}
+                  />
+                </When>
               </Stack>
             )}
           />
         </Grid.Col>
         <Grid.Col span={'content'}>
-          <SmsPreview showPreviewAsLoading={isPreviewLoading} />
+          <SmsPreview inputVariables={inputVariables} showPreviewAsLoading={isPreviewLoading} />
         </Grid.Col>
       </Grid>
       <EditVariablesModal
@@ -77,7 +100,6 @@ export function TemplateSMSEditor() {
         setOpen={setEditVariablesModalOpen}
         variablesArray={variablesArray}
       />
-      ]
     </>
   );
 }

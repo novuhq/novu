@@ -13,6 +13,7 @@ describe('Shell Embed', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
 
     cy.get('#notification-bell').click();
@@ -58,6 +59,7 @@ describe('Shell Embed', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
     cy.get('#notification-bell .ntf-counter').should('be.visible');
   });
@@ -68,6 +70,7 @@ describe('Shell Embed', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
 
     cy.get('#notification-bell').click();
@@ -88,6 +91,7 @@ describe('Shell Embed', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
 
     cy.get('#notification-bell').click();
@@ -126,6 +130,7 @@ describe('Shell Embed', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
 
     cy.get('#notification-bell').click();

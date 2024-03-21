@@ -68,14 +68,18 @@ export class WorkflowController {
     description: `Workflows were previously named notification templates`,
   })
   @ExternalApiAccessible()
-  getWorkflows(@UserSession() user: IJwtPayload, @Query() query: WorkflowsRequestDto): Promise<WorkflowsResponseDto> {
+  getWorkflows(
+    @UserSession() user: IJwtPayload,
+    @Query() queryParams: WorkflowsRequestDto
+  ): Promise<WorkflowsResponseDto> {
     return this.getWorkflowsUsecase.execute(
       GetNotificationTemplatesCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
-        page: query.page ? query.page : 0,
-        limit: query.limit ? query.limit : 10,
+        page: queryParams.page,
+        limit: queryParams.limit,
+        query: queryParams.query,
       })
     );
   }

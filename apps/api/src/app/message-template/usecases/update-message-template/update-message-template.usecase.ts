@@ -33,7 +33,7 @@ export class UpdateMessageTemplate {
       updatePayload.name = command.name;
     }
 
-    if (command.content) {
+    if (command.content !== null) {
       updatePayload.content =
         command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content;
     }

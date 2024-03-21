@@ -66,7 +66,7 @@ export class InitializeSession {
     });
     const subscriber = await this.createSubscriber.execute(commandos);
 
-    this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
+    this.analyticsService.mixpanelTrack('Initialize Widget Session - [Notification Center]', '', {
       _organization: environment._organizationId,
       environmentName: environment.name,
       _subscriber: subscriber._id,

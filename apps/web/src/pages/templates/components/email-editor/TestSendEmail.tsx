@@ -25,11 +25,20 @@ import { useProcessVariables, useIntegrationLimit } from '../../../../hooks';
 import { testSendEmailMessage } from '../../../../api/notification-templates';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import type { IForm } from '../formTypes';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 
-export function TestSendEmail({ isIntegrationActive }: { isIntegrationActive: boolean }) {
+export function TestSendEmail({
+  isIntegrationActive,
+  chimera = false,
+}: {
+  isIntegrationActive: boolean;
+  chimera?: boolean;
+}) {
   const { currentUser } = useAuthContext();
-  const { control } = useFormContext<IForm>();
+  const { control, watch } = useFormContext<IForm>();
   const path = useStepFormPath();
+  const stepId = watch(`${path}.uuid`);
+  const { template: workflow } = useTemplateEditorForm();
 
   const clipboardJson = useClipboard({ timeout: 1000 });
   const { classes } = useSelectStyles();
@@ -59,6 +68,7 @@ export function TestSendEmail({ isIntegrationActive }: { isIntegrationActive: bo
 
   const processedVariables = useProcessVariables(template.variables);
   const [payloadValue, setPayloadValue] = useState('{}');
+  const [stepInputs, setStepInputs] = useState('{}');
 
   useEffect(() => {
     setPayloadValue(processedVariables);
@@ -66,13 +76,24 @@ export function TestSendEmail({ isIntegrationActive }: { isIntegrationActive: bo
 
   const onTestEmail = async () => {
     const payload = JSON.parse(payloadValue);
+    const inputs = JSON.parse(stepInputs);
 
     try {
       await testSendEmailEvent({
+        stepId,
+        workflowId: workflow?.triggers[0].identifier,
+        contentType: 'customHtml',
+        subject: '',
         ...template,
         payload,
+        inputs,
         to: sendTo,
-        content: template.contentType === 'customHtml' ? (template.htmlContent as string) : template.content,
+        chimera,
+        content: chimera
+          ? ''
+          : template.contentType === 'customHtml'
+          ? (template.htmlContent as string)
+          : template.content,
         layoutId: template.layoutId,
       });
       successMessage('Test sent successfully!');
@@ -121,7 +142,7 @@ export function TestSendEmail({ isIntegrationActive }: { isIntegrationActive: bo
           mt={20}
           autosize
           styles={inputStyles}
-          label="Variables"
+          label={chimera ? 'Trigger Data' : 'Variables'}
           value={payloadValue}
           onChange={setPayloadValue}
           minRows={12}
@@ -136,6 +157,30 @@ export function TestSendEmail({ isIntegrationActive }: { isIntegrationActive: bo
             </Tooltip>
           }
         />
+
+        {chimera ? (
+          <JsonInput
+            data-test-id="test-email-json-inputs"
+            formatOnBlur
+            mt={20}
+            autosize
+            styles={inputStyles}
+            label="Step Inputs"
+            value={stepInputs}
+            onChange={setStepInputs}
+            minRows={12}
+            validationError="Invalid JSON"
+            rightSectionWidth={50}
+            rightSectionProps={{ style: { alignItems: 'start', padding: '5px' } }}
+            rightSection={
+              <Tooltip label={clipboardJson.copied ? 'Copied!' : 'Copy Json'}>
+                <ActionIcon variant="transparent" onClick={() => clipboardJson.copy(payloadValue)}>
+                  {clipboardJson.copied ? <Check /> : <Copy />}
+                </ActionIcon>
+              </Tooltip>
+            }
+          />
+        ) : null}
 
         <span
           style={{

@@ -16,6 +16,7 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
       default: true,
     },
     name: Schema.Types.String,
+    stepId: Schema.Types.String,
     subject: Schema.Types.String,
     variables: [
       {
@@ -78,6 +79,7 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
       },
       data: Schema.Types.Mixed,
     },
+    inputs: { schema: Schema.Types.Mixed },
   },
   schemaOptions
 );

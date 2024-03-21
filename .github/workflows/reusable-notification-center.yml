@@ -17,7 +17,7 @@ jobs:
           projects: '@novu/notification-center'
           nxCloud: true
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: notification-center-web-component
           path: packages/notification-center/dist/umd

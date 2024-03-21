@@ -34,6 +34,15 @@ describe('Notifications List', function () {
       .then((session: any) => {
         cy.wait(500);
 
+        cy.log('Creating 5 notifications', {
+          identifier: session.templates[0].triggers[0].identifier,
+          token: session.token,
+          subscriberId: session.subscriber.subscriberId,
+          count: 5,
+          organizationId: session.organization._id,
+          templateId: session.templates[0]._id,
+        });
+
         cy.task('createNotifications', {
           identifier: session.templates[0].triggers[0].identifier,
           token: session.token,

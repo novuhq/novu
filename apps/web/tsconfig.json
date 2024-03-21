@@ -18,6 +18,6 @@
     "noImplicitAny": false,
     "types": ["cypress"]
   },
-  "include": ["src", "cypress/global.d.ts"],
+  "include": ["src", "cypress/global.d.ts", "styled-system"],
   "exclude": ["node_modules"]
 }

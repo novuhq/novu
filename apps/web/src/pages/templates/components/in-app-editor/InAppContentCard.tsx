@@ -6,57 +6,67 @@ import { InAppPreview } from '../../../../components/workflow/preview';
 import { useEnvController } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
+import { InputVariablesForm } from '../InputVariablesForm';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 import { AvatarFeedFields } from './AvatarFeedFields';
 import { InAppEditorBlock } from './InAppEditorBlock';
 
 const EDITOR = 'Editor';
 const PREVIEW = 'Preview';
+const INPUTS = 'Inputs';
 
 export function InAppContentCard({ openVariablesModal }: { openVariablesModal: () => void }) {
-  const { readonly } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { readonly, chimera } = useEnvController({}, template?.chimera);
   const theme = useMantineTheme();
 
-  const [activeTab, setActiveTab] = useState<string>(EDITOR);
+  const [activeTab, setActiveTab] = useState<string>(chimera ? PREVIEW : EDITOR);
   const stepFormPath = useStepFormPath();
 
   return (
     <div data-test-id="editor-type-selector">
-      <SegmentedControl
-        data-test-id="editor-mode-switch"
-        styles={{
-          root: {
-            background: 'transparent',
-            border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
-            borderRadius: '30px',
-            width: '100%',
-            maxWidth: '300px',
-          },
-          label: {
-            fontSize: '14px',
-            lineHeight: '24px',
-          },
-          control: {
-            minWidth: '80px',
-          },
-          active: {
-            background: theme.colorScheme === 'dark' ? colors.B40 : colors.B98,
-            borderRadius: '30px',
-          },
-          labelActive: {
-            color: `${theme.colorScheme === 'dark' ? colors.white : colors.B40} !important`,
-            fontSize: '14px',
-            lineHeight: '24px',
-          },
-        }}
-        data={[EDITOR, PREVIEW]}
-        value={activeTab}
-        onChange={(value) => {
-          setActiveTab(value);
-        }}
-        defaultValue={activeTab}
-        fullWidth
-        radius={'xl'}
-      />
+      {!chimera ? (
+        <SegmentedControl
+          data-test-id="editor-mode-switch"
+          styles={{
+            root: {
+              background: 'transparent',
+              border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
+              borderRadius: '30px',
+              width: '100%',
+              maxWidth: '300px',
+            },
+            label: {
+              fontSize: '14px',
+              lineHeight: '24px',
+            },
+            control: {
+              minWidth: '80px',
+            },
+            active: {
+              background: theme.colorScheme === 'dark' ? colors.B40 : colors.B98,
+              borderRadius: '30px',
+            },
+            labelActive: {
+              color: `${theme.colorScheme === 'dark' ? colors.white : colors.B40} !important`,
+              fontSize: '14px',
+              lineHeight: '24px',
+            },
+          }}
+          data={chimera ? [PREVIEW] : [EDITOR, PREVIEW]}
+          value={activeTab}
+          onChange={(value) => {
+            setActiveTab(value);
+          }}
+          defaultValue={activeTab}
+          fullWidth
+          radius={'xl'}
+        />
+      ) : null}
+
+      <When truthy={activeTab === INPUTS}>
+        <InputVariablesForm />
+      </When>
       <When truthy={activeTab === PREVIEW}>
         <div style={{ marginTop: '1.5rem' }}>
           <InAppPreview showVariables />
@@ -74,7 +84,11 @@ export function InAppContentCard({ openVariablesModal }: { openVariablesModal: (
               maxWidth: '350px',
             }}
           >
-            <VariablesManagement path={`${stepFormPath}.template.variables`} openVariablesModal={openVariablesModal} />
+            <VariablesManagement
+              chimera={chimera}
+              path={`${stepFormPath}.template.variables`}
+              openVariablesModal={openVariablesModal}
+            />
           </Grid.Col>
         </Grid>
       </When>

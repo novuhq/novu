@@ -82,8 +82,8 @@ export class TenantController {
       GetTenantsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        page: query.page ? Number(query.page) : 0,
-        limit: query.limit ? Number(query.limit) : 10,
+        page: query.page,
+        limit: query.limit,
       })
     );
   }

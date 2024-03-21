@@ -6,10 +6,16 @@ import { CreateNovuIntegrationsCommand } from './create-novu-integrations.comman
 import { CreateIntegration } from '../create-integration/create-integration.usecase';
 import { CreateIntegrationCommand } from '../create-integration/create-integration.command';
 import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { SetIntegrationAsPrimary } from '../set-integration-as-primary/set-integration-as-primary.usecase';
+import { SetIntegrationAsPrimaryCommand } from '../set-integration-as-primary/set-integration-as-primary.command';
 
 @Injectable()
 export class CreateNovuIntegrations {
-  constructor(private createIntegration: CreateIntegration, private integrationRepository: IntegrationRepository) {}
+  constructor(
+    private createIntegration: CreateIntegration,
+    private integrationRepository: IntegrationRepository,
+    private setIntegrationAsPrimary: SetIntegrationAsPrimary
+  ) {}
 
   private async createEmailIntegration(command: CreateNovuIntegrationsCommand) {
     if (!areNovuEmailCredentialsSet()) {
@@ -24,7 +30,7 @@ export class CreateNovuIntegrations {
     });
 
     if (emailIntegrationCount === 0) {
-      await this.createIntegration.execute(
+      const novuEmailIntegration = await this.createIntegration.execute(
         CreateIntegrationCommand.create({
           providerId: EmailProviderIdEnum.Novu,
           channel: ChannelTypeEnum.EMAIL,
@@ -34,6 +40,14 @@ export class CreateNovuIntegrations {
           userId: command.userId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
+        })
+      );
+      await this.setIntegrationAsPrimary.execute(
+        SetIntegrationAsPrimaryCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          integrationId: novuEmailIntegration._id,
+          userId: command.userId,
         })
       );
     }
@@ -52,7 +66,7 @@ export class CreateNovuIntegrations {
     });
 
     if (smsIntegrationCount === 0) {
-      await this.createIntegration.execute(
+      const novuSmsIntegration = await this.createIntegration.execute(
         CreateIntegrationCommand.create({
           providerId: SmsProviderIdEnum.Novu,
           channel: ChannelTypeEnum.SMS,
@@ -62,6 +76,14 @@ export class CreateNovuIntegrations {
           userId: command.userId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
+        })
+      );
+      await this.setIntegrationAsPrimary.execute(
+        SetIntegrationAsPrimaryCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          integrationId: novuSmsIntegration._id,
+          userId: command.userId,
         })
       );
     }

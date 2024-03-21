@@ -9,6 +9,7 @@ import {
   FieldOperatorEnum,
   FilterPartTypeEnum,
   INotificationTemplate,
+  INotificationTemplateStep,
   StepTypeEnum,
 } from '@novu/shared';
 import {
@@ -70,10 +71,11 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
         expect(blueprint.active).to.equal(false);
         expect(blueprint.critical).to.equal(false);
         expect(blueprint.steps).to.be.exist;
-        expect(blueprint.steps[0].active).to.equal(true);
-        expect(blueprint.steps[0].template).to.exist;
-        expect(blueprint.steps[0].template?.name).to.be.equal('Message Name');
-        expect(blueprint.steps[0].template?.subject).to.be.equal('Test email subject');
+        const step: INotificationTemplateStep = blueprint.steps[0] as INotificationTemplateStep;
+        expect(step.active).to.equal(true);
+        expect(step.template).to.exist;
+        expect(step.template?.name).to.be.equal('Message Name');
+        expect(step.template?.subject).to.be.equal('Test email subject');
       }
     }
   });

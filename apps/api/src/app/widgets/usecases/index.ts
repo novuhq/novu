@@ -8,6 +8,7 @@ import { RemoveMessage } from './remove-message/remove-message.usecase';
 import { MarkAllMessagesAs } from './mark-all-messages-as/mark-all-messages-as.usecase';
 import { RemoveAllMessages } from './remove-messages/remove-all-messages.usecase';
 import { RemoveMessagesBulk } from './remove-messages-bulk/remove-messages-bulk.usecase';
+import { MarkMessageAsByMark } from './mark-message-as-by-mark/mark-message-as-by-mark.usecase';
 
 export const USE_CASES = [
   GetOrganizationData,
@@ -20,5 +21,6 @@ export const USE_CASES = [
   RemoveAllMessages,
   MarkAllMessagesAs,
   RemoveMessagesBulk,
+  MarkMessageAsByMark,
   //
 ];

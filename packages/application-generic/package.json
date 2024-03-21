@@ -133,6 +133,7 @@
     "@opentelemetry/sdk-trace-base": "^1.19.0",
     "@opentelemetry/sdk-trace-node": "^1.19.0",
     "@opentelemetry/semantic-conventions": "^1.19.0",
+    "@pyroscope/nodejs": "^0.2.9",
     "@segment/analytics-node": "^1.1.4",
     "@sentry/node": "^7.12.1",
     "axios": "^1.6.2",
@@ -159,7 +160,8 @@
     "rxjs": "7.8.1"
   },
   "optionalDependencies": {
-    "@taskforcesh/bullmq-pro": "5.1.14"
+    "@taskforcesh/bullmq-pro": "5.1.14",
+    "@novu/ee-chimera-connect": "^0.24.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

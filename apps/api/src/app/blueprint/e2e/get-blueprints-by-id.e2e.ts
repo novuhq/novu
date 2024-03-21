@@ -7,6 +7,7 @@ import {
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
   FilterPartTypeEnum,
+  INotificationTemplateStep,
   StepTypeEnum,
 } from '@novu/shared';
 
@@ -43,10 +44,14 @@ describe('Get blueprints by id - /blueprints/:templateId (GET)', async () => {
     expect(blueprint.active).to.equal(blueprintById.active);
     expect(blueprint.critical).to.equal(blueprintById.critical);
     expect(blueprintById.steps).to.be.exist;
-    expect(blueprint.steps[0].active).to.equal(blueprintById.steps[0].active);
+    expect((blueprint.steps[0] as INotificationTemplateStep).active).to.equal(blueprintById.steps[0].active);
     expect(blueprintById.steps[0].template).to.exist;
-    expect(blueprint.steps[0].template?.name).to.be.equal(blueprintById.steps[0].template?.name);
-    expect(blueprint.steps[0].template?.subject).to.be.equal(blueprintById.steps[0].template?.subject);
+    expect((blueprint.steps[0] as INotificationTemplateStep).template?.name).to.be.equal(
+      blueprintById.steps[0].template?.name
+    );
+    expect((blueprint.steps[0] as INotificationTemplateStep).template?.subject).to.be.equal(
+      blueprintById.steps[0].template?.subject
+    );
   });
 
   it('should get the blueprint by trigger identifier', async function () {
@@ -70,10 +75,14 @@ describe('Get blueprints by id - /blueprints/:templateId (GET)', async () => {
     expect(blueprint.active).to.equal(blueprintById.active);
     expect(blueprint.critical).to.equal(blueprintById.critical);
     expect(blueprintById.steps).to.be.exist;
-    expect(blueprint.steps[0].active).to.equal(blueprintById.steps[0].active);
+    expect((blueprint.steps[0] as INotificationTemplateStep).active).to.equal(blueprintById.steps[0].active);
     expect(blueprintById.steps[0].template).to.exist;
-    expect(blueprint.steps[0].template?.name).to.be.equal(blueprintById.steps[0].template?.name);
-    expect(blueprint.steps[0].template?.subject).to.be.equal(blueprintById.steps[0].template?.subject);
+    expect((blueprint.steps[0] as INotificationTemplateStep).template?.name).to.be.equal(
+      blueprintById.steps[0].template?.name
+    );
+    expect((blueprint.steps[0] as INotificationTemplateStep).template?.subject).to.be.equal(
+      blueprintById.steps[0].template?.subject
+    );
   });
 
   async function getProductionEnvironment() {

@@ -80,6 +80,7 @@ const CustomCodeEditorBase = ({
 
   return (
     <Editor
+      value={value}
       height={height}
       onChange={(newValue) => {
         if (!onChange) {
@@ -90,7 +91,7 @@ const CustomCodeEditorBase = ({
         decoratorsRef.current?.set(decorators);
       }}
       defaultLanguage="handlebars"
-      defaultValue={value}
+      defaultValue={''}
       theme={isDark ? 'vs-dark' : 'vs'}
       onMount={(editor, monaco) => {
         const decorators = editor.createDecorationsCollection([]);

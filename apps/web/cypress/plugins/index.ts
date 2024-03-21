@@ -10,6 +10,7 @@ import {
   OrganizationService,
   UserService,
   EnvironmentService,
+  CreateTemplatePayload,
 } from '@novu/testing';
 import { JobsService } from '@novu/testing';
 import {
@@ -67,13 +68,13 @@ module.exports = (on, config) => {
     },
     async clearDatabase() {
       const dal = new DalService();
-      await dal.connect('mongodb://127.0.0.1:27017/novu-test');
+      await dal.connect(config.env.MONGODB_URL);
       await dal.destroy();
       return true;
     },
     async seedDatabase() {
       const dal = new DalService();
-      await dal.connect('mongodb://127.0.0.1:27017/novu-test');
+      await dal.connect(config.env.MONGODB_URL);
 
       const userService = new UserService();
       await userService.createCypressTestUser();
@@ -82,7 +83,7 @@ module.exports = (on, config) => {
     },
     async passwordResetToken(id: string) {
       const dal = new DalService();
-      await dal.connect('mongodb://127.0.0.1:27017/novu-test');
+      await dal.connect(config.env.MONGODB_URL);
 
       const userService = new UserService();
       const user = await userService.getUser(id);
@@ -91,7 +92,7 @@ module.exports = (on, config) => {
     },
     async addOrganization(userId: string) {
       const dal = new DalService();
-      await dal.connect('mongodb://127.0.0.1:27017/novu-test');
+      await dal.connect(config.env.MONGODB_URL);
       const organizationService = new OrganizationService();
 
       const organization = await organizationService.createOrganization();
@@ -106,7 +107,7 @@ module.exports = (on, config) => {
       organizationId: string;
     }) {
       const dal = new DalService();
-      await dal.connect('mongodb://127.0.0.1:27017/novu-test');
+      await dal.connect(config.env.MONGODB_URL);
 
       const repository = new IntegrationRepository();
 
@@ -126,7 +127,7 @@ module.exports = (on, config) => {
       } = {}
     ) {
       const dal = new DalService();
-      await dal.connect('mongodb://127.0.0.1:27017/novu-test');
+      await dal.connect(config.env.MONGODB_URL);
 
       const session = new UserSession('http://127.0.0.1:1336');
       await session.initialize({
@@ -167,7 +168,7 @@ module.exports = (on, config) => {
     },
     async makeBlueprints() {
       const dal = new DalService();
-      await dal.connect('mongodb://127.0.0.1:27017/novu-test');
+      await dal.connect(config.env.MONGODB_URL);
 
       const userService = new UserService();
       const user = await userService.createUser();
@@ -330,6 +331,25 @@ module.exports = (on, config) => {
       }
 
       return blueprintTemplates;
+    },
+
+    async createWorkflows({
+      userId,
+      organizationId,
+      environmentId,
+      workflows,
+    }: {
+      userId: string;
+      organizationId: string;
+      environmentId: string;
+      workflows: Partial<CreateTemplatePayload>[];
+    }) {
+      const dal = new DalService();
+      await dal.connect(config.env.MONGODB_URL);
+
+      const notificationTemplateService = new NotificationTemplateService(userId, organizationId, environmentId);
+
+      return Promise.all(workflows.map((workflow) => notificationTemplateService.createTemplate(workflow)));
     },
   });
 };

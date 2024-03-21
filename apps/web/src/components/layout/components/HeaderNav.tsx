@@ -1,4 +1,4 @@
-import { ActionIcon, Avatar, ColorScheme, Container, Group, Header, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Avatar, Badge, ColorScheme, Container, Group, Header, useMantineColorScheme } from '@mantine/core';
 import * as capitalize from 'lodash.capitalize';
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -26,6 +26,7 @@ import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_HEIGHT } from '../constants';
 import { NotificationCenterWidget } from './NotificationCenterWidget';
 import { useSegment } from '../../providers/SegmentProvider';
+import { EchoStatus } from './EchoStatus';
 
 type Props = { isIntercomOpened: boolean };
 const menuItem = [
@@ -181,6 +182,8 @@ export function HeaderNav({ isIntercomOpened }: Props) {
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', height: `${HEADER_HEIGHT}px` }}
       >
         <Group>
+          <EchoStatus />
+
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
             <Tooltip label={themeTitle}>
               <div>

@@ -41,7 +41,7 @@ function subscriberExist(subscriberVariables: INotificationTriggerVariable[]) {
 
 export function TestWorkflow({ trigger }) {
   const [transactionId, setTransactionId] = useState<string>('');
-  const { currentUser } = useAuthContext();
+  const { currentUser, currentOrganization } = useAuthContext();
   const { mutateAsync: triggerTestEvent, isLoading } = useMutation(testTrigger);
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
 
@@ -192,6 +192,7 @@ export function TestWorkflow({ trigger }) {
                   segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
                     action: 'Workflow - Run trigger',
                     experiment_id: '2024-w9-onb',
+                    _organization: currentOrganization?._id,
                   });
                 }
               }}

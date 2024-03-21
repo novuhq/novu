@@ -41,6 +41,6 @@
     "@nestjs/common": "10.2.2",
     "@nestjs/jwt": "10.2.0",
     "@nestjs/platform-express": "^10.2.2",
-    "@novu/dal": "workspace:latest"
+    "@novu/dal": "^0.24.0"
   }
 }

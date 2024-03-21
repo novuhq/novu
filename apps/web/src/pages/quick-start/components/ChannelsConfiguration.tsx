@@ -13,9 +13,11 @@ import type { IntegrationEntity } from '../../integrations/types';
 import { useCreateInAppIntegration } from '../../../hooks/useCreateInAppIntegration';
 import { useCreateOnboardingExperimentWorkflow } from '../../../api/hooks/notification-templates/useCreateOnboardingExperimentWorkflow';
 import { useOnboardingExperiment } from '../../../hooks/useOnboardingExperiment';
+import { useAuthContext } from '@novu/shared-web';
 
 export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel: Dispatch<any> }) {
   const segment = useSegment();
+  const { currentOrganization } = useAuthContext();
   const navigate = useNavigate();
   const { integrations } = useActiveIntegrations();
   const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
@@ -32,6 +34,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
       segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
         action: 'Get started - Send test notification',
         experiment_id: '2024-w9-onb',
+        _organization: currentOrganization?._id,
       });
     } else {
       if (integrationActive) {

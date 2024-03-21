@@ -7,4 +7,7 @@ module.exports = {
     '^.+\\.js$': 'babel-jest',
   },
   transformIgnorePatterns: ['<rootDir>/node_modules/'],
+  moduleNameMapper: {
+    axios: 'axios/dist/node/axios.cjs',
+  }
 };

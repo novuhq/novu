@@ -17,8 +17,6 @@ import {
   GetSubscriberTemplatePreference,
   ProcessTenant,
   SelectIntegration,
-  SendTestEmail,
-  SendTestEmailCommand,
   StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
@@ -71,10 +69,17 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
         Logger.log('Importing enterprise translations module', 'EnterpriseImport');
         modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers);
       }
+
       if (require('@novu/ee-billing')?.BillingModule) {
         Logger.log('Importing enterprise billing module', 'EnterpriseImport');
         const activeWorkers = workersToProcess.length ? workersToProcess : Object.values(JobTopicNameEnum);
         modules.push(require('@novu/ee-billing')?.BillingModule.forRoot(activeWorkers));
+      }
+
+      if (require('@novu/ee-chimera-connect')?.ChimeraConnectorModule) {
+        Logger.log('Importing enterprise chimera connector module', 'EnterpriseImport');
+
+        modules.push(require('@novu/ee-chimera-connect')?.ChimeraConnectorModule);
       }
     }
   } catch (e) {
@@ -118,8 +123,6 @@ const USE_CASES = [
   SendMessageInApp,
   SendMessagePush,
   SendMessageSms,
-  SendTestEmail,
-  SendTestEmailCommand,
   StoreSubscriberJobs,
   SetJobAsCompleted,
   SetJobAsFailed,

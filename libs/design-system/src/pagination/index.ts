@@ -1,2 +1,2 @@
 export * from './Pagination';
-export * from './usePaginationState';
+export * from './usePaginationQueryParamsState';

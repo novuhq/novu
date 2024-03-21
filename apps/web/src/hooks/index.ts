@@ -22,4 +22,5 @@ export * from './useInlineComponent';
 export * from './useHoverOverItem';
 export * from './useCreateWorkflowFromBlueprint';
 export * from './useHover';
+export * from './useDebouncedSearch';
 export { useDataRef, useKeyDown, useLocalThemePreference } from '@novu/shared-web';

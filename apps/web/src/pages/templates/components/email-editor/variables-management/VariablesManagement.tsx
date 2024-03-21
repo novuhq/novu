@@ -69,12 +69,14 @@ export const VariablesManagement = ({
   control,
   path,
   isPopover = false,
+  chimera = false,
 }: {
   openVariablesModal?: () => void;
   closeVariablesManagement?: () => void;
   control?: any;
   path: string;
   isPopover?: boolean;
+  chimera?: boolean;
 }) => {
   const variableArray = useWatch({
     name: path,
@@ -116,7 +118,7 @@ export const VariablesManagement = ({
 
   return (
     <VariablesContainer isPopover={isPopover}>
-      <When truthy={openVariablesModal !== undefined}>
+      <When truthy={openVariablesModal !== undefined && !chimera}>
         <Group
           px={16}
           h={40}
@@ -197,7 +199,7 @@ const VariablesSection = ({ variablesList, searchVal }: { variablesList: IVariab
   );
 };
 
-const VariableSectionItem = ({
+export const VariableSectionItem = ({
   variableList,
   search,
   sectionName,

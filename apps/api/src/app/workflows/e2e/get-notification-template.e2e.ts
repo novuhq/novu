@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { NotificationTemplateService, UserSession } from '@novu/testing';
-import { INotificationTemplate } from '@novu/shared';
+import { INotificationTemplate, INotificationTemplateStep } from '@novu/shared';
 
 describe('Get workflow by id - /workflows/:workflowId (GET)', async () => {
   let session: UserSession;
@@ -24,9 +24,10 @@ describe('Get workflow by id - /workflows/:workflowId (GET)', async () => {
     expect(foundTemplate._id).to.equal(template._id);
     expect(foundTemplate.name).to.equal(template.name);
     expect(foundTemplate.steps.length).to.equal(template.steps.length);
-    expect(foundTemplate.steps[0].template).to.be.ok;
-    expect(foundTemplate.steps[0].template?.content).to.equal(template.steps[0].template?.content);
-    expect(foundTemplate.steps[0]._templateId).to.be.ok;
+    const step = foundTemplate.steps[0] as INotificationTemplateStep;
+    expect(step.template).to.be.ok;
+    expect(step.template?.content).to.equal(template.steps[0].template?.content);
+    expect(step._templateId).to.be.ok;
     expect(foundTemplate.triggers.length).to.equal(template.triggers.length);
   });
 });

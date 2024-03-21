@@ -1,4 +1,4 @@
-import { INotificationTemplate } from '@novu/shared';
+import { INotificationTemplate, INotificationTemplateStep } from '@novu/shared';
 
 import { OnboardingWorkflowRouteEnum } from '../consts/types';
 import { parseUrl } from '../../../utils/routeUtils';
@@ -11,7 +11,9 @@ export const buildWorkflowEditorUrl = (workflow: INotificationTemplate, step?: O
     return `${baseUrl}/${OnboardingWorkflowRouteEnum.TEST_WORKFLOW}`;
   }
 
-  const stepUuid = workflow.steps.find((el) => el.name?.toLowerCase() === step?.toLowerCase())?.uuid;
+  const stepUuid = (workflow.steps as INotificationTemplateStep[]).find(
+    (el) => el.name?.toLowerCase() === step?.toLowerCase()
+  )?.uuid;
   if (step && stepUuid) {
     return `${baseUrl}/${step}/${stepUuid}`;
   }

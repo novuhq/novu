@@ -10,6 +10,7 @@ import {
   DigestUnitEnum,
   INotificationTemplate,
   INotificationTrigger,
+  NotificationTemplateTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
@@ -123,8 +124,12 @@ interface AddVariantResult {
   variantIndex: number;
 }
 
+interface INotificationTemplateWithChimera extends INotificationTemplate {
+  chimera?: boolean;
+}
+
 interface ITemplateEditorFormContext {
-  template?: INotificationTemplate;
+  template?: INotificationTemplateWithChimera;
   isLoading: boolean;
   isCreating: boolean;
   isUpdating: boolean;
@@ -296,7 +301,10 @@ const TemplateEditorFormProvider = ({ children }) => {
 
   const value = useMemo<ITemplateEditorFormContext>(
     () => ({
-      template,
+      template: {
+        ...template,
+        chimera: template?.type === NotificationTemplateTypeEnum.ECHO,
+      } as INotificationTemplateWithChimera,
       isLoading: isLoading || loadingGroups,
       isCreating,
       isUpdating,

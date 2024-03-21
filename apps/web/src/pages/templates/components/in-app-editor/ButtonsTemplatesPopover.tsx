@@ -53,6 +53,7 @@ export function ButtonsTemplatesPopover({
       position={'bottom'}
       withArrow
       classNames={classes}
+      middlewares={{ flip: false, shift: false }}
     >
       <Popover.Target>{children}</Popover.Target>
       <Popover.Dropdown>

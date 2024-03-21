@@ -18,6 +18,10 @@ export interface IEnvironment {
     contentBackground: string;
     direction: 'ltr' | 'rtl';
   };
+
+  echo?: {
+    url?: string;
+  };
 }
 
 export interface IWidgetSettings {

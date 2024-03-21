@@ -5,7 +5,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import type { IResponseError, INotificationTrigger } from '@novu/shared';
 
 import { api } from '../../../../api/api.client';
-import { Input, Select, Switch, Tooltip, Check, Copy } from '@novu/design-system';
+import { Input, Select, Switch, Tooltip, Check, Copy, When } from '@novu/design-system';
 import { useEnvController, useNotificationGroup } from '../../../../hooks';
 import type { IForm } from '../formTypes';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
@@ -15,7 +15,6 @@ import { useStatusChangeControllerHook } from '../useStatusChangeController';
 export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationTrigger }) => {
   const idClipboard = useClipboard({ timeout: 1000 });
   const queryClient = useQueryClient();
-  const { readonly } = useEnvController();
   const {
     formState: { errors },
     setValue,
@@ -23,6 +22,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
   } = useFormContext<IForm>();
 
   const { template } = useTemplateEditorForm();
+  const { readonly, chimera } = useEnvController({}, template?.chimera);
   const { templateId = '' } = useParams<{ templateId: string }>();
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
@@ -61,53 +61,55 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
 
   return (
     <>
-      <Grid gutter={0} mt={-8} mb={-8}>
-        <Grid.Col span={6}>
-          <Stack
-            justify="center"
-            sx={{
-              height: '100%',
-            }}
-          >
-            <Switch
-              label={isTemplateActive ? 'Active' : 'Inactive'}
-              loading={isStatusChangeLoading}
-              disabled={readonly}
-              data-test-id="active-toggle-switch"
-              onChange={(e) => changeActiveStatus(e.target.checked)}
-              checked={isTemplateActive || false}
+      <When truthy={!chimera}>
+        <Grid gutter={0} mt={-8} mb={-8}>
+          <Grid.Col span={6}>
+            <Stack
+              justify="center"
+              sx={{
+                height: '100%',
+              }}
+            >
+              <Switch
+                label={isTemplateActive ? 'Active' : 'Inactive'}
+                loading={isStatusChangeLoading}
+                disabled={readonly}
+                data-test-id="active-toggle-switch"
+                onChange={(e) => changeActiveStatus(e.target.checked)}
+                checked={isTemplateActive || false}
+              />
+            </Stack>
+          </Grid.Col>
+          <Grid.Col span={6}>
+            <Controller
+              name="notificationGroupId"
+              defaultValue=""
+              control={control}
+              render={({ field }) => {
+                return (
+                  <>
+                    <Select
+                      {...field}
+                      data-test-id="groupSelector"
+                      loading={loadingGroups || loadingCreateGroup}
+                      disabled={readonly}
+                      creatable
+                      searchable
+                      error={errors.notificationGroupId?.message}
+                      getCreateLabel={(newGroup) => (
+                        <div data-test-id="submit-category-btn">+ Create group {newGroup}</div>
+                      )}
+                      onCreate={addGroupItem}
+                      placeholder="Attach workflow to group"
+                      data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}
+                    />
+                  </>
+                );
+              }}
             />
-          </Stack>
-        </Grid.Col>
-        <Grid.Col span={6}>
-          <Controller
-            name="notificationGroupId"
-            defaultValue=""
-            control={control}
-            render={({ field }) => {
-              return (
-                <>
-                  <Select
-                    {...field}
-                    data-test-id="groupSelector"
-                    loading={loadingGroups || loadingCreateGroup}
-                    disabled={readonly}
-                    creatable
-                    searchable
-                    error={errors.notificationGroupId?.message}
-                    getCreateLabel={(newGroup) => (
-                      <div data-test-id="submit-category-btn">+ Create group {newGroup}</div>
-                    )}
-                    onCreate={addGroupItem}
-                    placeholder="Attach workflow to group"
-                    data={(groups || []).map((item) => ({ label: item.name, value: item._id }))}
-                  />
-                </>
-              );
-            }}
-          />
-        </Grid.Col>
-      </Grid>
+          </Grid.Col>
+        </Grid>
+      </When>
 
       <Controller
         control={control}

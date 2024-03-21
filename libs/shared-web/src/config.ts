@@ -65,3 +65,5 @@ export const FEATURE_FLAGS = Object.values(FeatureFlagsKeysEnum).reduce((acc, ke
 
   return acc;
 }, {} as Record<FeatureFlagsKeysEnum, string | undefined>);
+
+export const HUBSPOT_PORTAL_ID = window._env_.REACT_APP_HUBSPOT_EMBED || process.env.REACT_APP_HUBSPOT_EMBED;

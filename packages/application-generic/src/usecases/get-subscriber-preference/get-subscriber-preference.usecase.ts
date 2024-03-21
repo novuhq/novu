@@ -41,9 +41,9 @@ export class GetSubscriberPreference {
       );
 
     if (admin) {
-      this.analyticsService.track(
+      this.analyticsService.mixpanelTrack(
         'Fetch User Preferences - [Notification Center]',
-        admin._userId,
+        '',
         {
           _organization: command.organizationId,
           templatesSize: templateList.length,

@@ -16,6 +16,7 @@
     "dist/types"
   ],
   "scripts": {
+    "prepare": "panda codegen --clean",
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
     "lint": "eslint --ext .ts,.tsx src",
@@ -26,7 +27,7 @@
     "build:esm": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json",
     "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "pnpm panda --watch & storybook dev -p 6006",
     "build-storybook": "storybook build",
     "cypress:install": "cypress install",
     "cypress:open": "cross-env NODE_ENV=test cypress open",
@@ -56,6 +57,7 @@
     "tslib": "^2.3.1"
   },
   "devDependencies": {
+    "@pandacss/dev": "^0.34.0",
     "@storybook/addon-actions": "^7.5.0",
     "@storybook/addon-docs": "^7.4.2",
     "@storybook/client-api": "^7.6.10",
@@ -84,7 +86,7 @@
     "tslib": "^2.3.1",
     "typescript": "4.9.5",
     "url-loader": "^4.1.1",
-    "vite": "^4.4.5",
+    "vite": "^4.5.2",
     "vite-plugin-dts": "^3.6.0",
     "vitest": "^1.2.1"
   },

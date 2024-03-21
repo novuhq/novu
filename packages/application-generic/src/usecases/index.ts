@@ -10,7 +10,6 @@ export * from './compile-email-template';
 export * from './get-layout';
 export * from './get-novu-layout';
 export * from './add-job';
-export * from './send-test-email';
 export * from './update-subscriber';
 export * from './create-subscriber';
 export * from './store-subscriber-jobs';

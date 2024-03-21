@@ -1,13 +1,12 @@
-import { ReactNode, useEffect, useState } from 'react';
-import { MantineProvider, Global, ColorSchemeProvider, ColorScheme, MantineTheme } from '@mantine/core';
+import { ReactNode } from 'react';
+import { MantineProvider, Global, ColorSchemeProvider, MantineTheme } from '@mantine/core';
 import { NotificationsProvider } from '@mantine/notifications';
-import { useColorScheme } from '@mantine/hooks';
-import { useLocalThemePreference } from '@novu/shared-web';
 
 import { mantineConfig } from './config/theme.config';
 import { colors, shadows } from './config';
 import { ChevronDown } from './icons';
 import { IconProvider } from './iconsV2/IconProvider';
+import { useColorScheme } from './color-scheme';
 
 const accordionStyles = (theme: MantineTheme) => ({
   item: {
@@ -62,36 +61,20 @@ declare module '@mantine/core' {
   export type MantineColor = MantineColor | 'gradient';
 }
 
-export function ThemeProvider({ children }: { children: ReactNode | ReactNode[]; dark?: Boolean }) {
-  const preferredColorScheme = useColorScheme();
-  const [colorScheme, setColorScheme] = useState<ColorScheme>(preferredColorScheme);
-  const { themeStatus, setThemeStatus } = useLocalThemePreference();
-
-  const toggleColorScheme = () => {
-    if (themeStatus === 'system') {
-      setThemeStatus('light');
-    } else if (themeStatus === 'light') {
-      setThemeStatus('dark');
-    } else {
-      setThemeStatus('system');
-    }
-  };
-
-  useEffect(() => {
-    if (themeStatus === 'system') {
-      setColorScheme(preferredColorScheme);
-    } else if (themeStatus === 'light') {
-      setColorScheme('light');
-    } else {
-      setColorScheme('dark');
-    }
-  }, [themeStatus, preferredColorScheme]);
+export function ThemeProvider({
+  children,
+  shouldDisableGlobals,
+}: {
+  children: ReactNode | ReactNode[];
+  shouldDisableGlobals?: Boolean;
+}) {
+  const { colorScheme, toggleColorScheme } = useColorScheme();
 
   return (
     <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
       <MantineProvider
-        withGlobalStyles
-        withNormalizeCSS
+        withGlobalStyles={!shouldDisableGlobals}
+        withNormalizeCSS={!shouldDisableGlobals}
         theme={{
           // Override any other properties from default theme
           colorScheme,
@@ -109,21 +92,23 @@ export function ThemeProvider({ children }: { children: ReactNode | ReactNode[];
           },
         }}
       >
-        <Global
-          styles={(theme) => ({
-            body: {
-              ...theme.fn.fontStyles(),
-              backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
-              color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
-              marginRight: `calc(-1 * var(--removed-scroll-width, 0))`,
-              overflow: 'hidden',
-            },
-            a: {
-              textDecoration: 'none',
-              color: 'inherit',
-            },
-          })}
-        />
+        {!shouldDisableGlobals && (
+          <Global
+            styles={(theme) => ({
+              body: {
+                ...theme.fn.fontStyles(),
+                backgroundColor: theme.colorScheme === 'dark' ? colors.BGDark : colors.BGLight,
+                color: theme.colorScheme === 'dark' ? colors.white : colors.B40,
+                marginRight: `calc(-1 * var(--removed-scroll-width, 0))`,
+                overflow: 'hidden',
+              },
+              a: {
+                textDecoration: 'none',
+                color: 'inherit',
+              },
+            })}
+          />
+        )}
         <NotificationsProvider>
           <IconProvider>{children}</IconProvider>
         </NotificationsProvider>

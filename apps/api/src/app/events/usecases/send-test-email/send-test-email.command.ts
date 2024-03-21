@@ -1,7 +1,6 @@
-import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 import { IEmailBlock } from '@novu/shared';
-
-import { EnvironmentWithUserCommand } from '../../commands/project.command';
+import { EnvironmentWithUserCommand } from '@novu/application-generic';
 
 export class SendTestEmailCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -31,4 +30,19 @@ export class SendTestEmailCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   layoutId?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  chimera?: boolean;
+
+  @IsOptional()
+  @IsString()
+  stepId?: string | null;
+
+  @IsOptional()
+  inputs: any;
+
+  @IsOptional()
+  @IsString()
+  workflowId?: string | null;
 }

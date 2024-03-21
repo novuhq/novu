@@ -31,6 +31,7 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  IChimeraEmailResponse,
 } from '@novu/application-generic';
 import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
@@ -201,35 +202,37 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
-        CompileEmailTemplateCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-          ...payload,
-        }),
-        this.initiateTranslations.bind(this)
-      ));
+      if (!command.chimeraData) {
+        ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
+          CompileEmailTemplateCommand.create({
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
+            ...payload,
+          }),
+          this.initiateTranslations.bind(this)
+        ));
 
-      if (this.storeContent()) {
-        await this.messageRepository.update(
-          {
-            _id: message._id,
-            _environmentId: command.environmentId,
-          },
-          {
-            $set: {
-              subject,
-              content,
+        if (this.storeContent()) {
+          await this.messageRepository.update(
+            {
+              _id: message._id,
+              _environmentId: command.environmentId,
             },
-          }
-        );
-      }
+            {
+              $set: {
+                subject,
+                content,
+              },
+            }
+          );
+        }
 
-      html = await inlineCss(html, {
-        // Used for style sheet links that starts with / so should not be needed in our case.
-        url: ' ',
-      });
+        html = await inlineCss(html, {
+          // Used for style sheet links that starts with / so should not be needed in our case.
+          url: ' ',
+        });
+      }
     } catch (e) {
       Logger.error({ payload }, 'Compiling the email template or storing it or inlining it has failed', LOG_CONTEXT);
       await this.sendErrorHandlebars(command.job, e.message);
@@ -260,11 +263,12 @@ export class SendMessageEmail extends SendMessageBase {
         }
     );
 
+    const chimeraOutputs = command.chimeraData?.outputs;
     const mailData: IEmailOptions = createMailData(
       {
         to: email,
-        subject,
-        html,
+        subject: (chimeraOutputs as IChimeraEmailResponse)?.subject || subject,
+        html: (chimeraOutputs as IChimeraEmailResponse)?.body || html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
         senderName,

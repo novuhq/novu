@@ -1,21 +1,24 @@
 import { QueryFunction, QueryKey, UseQueryOptions, useQuery } from '@tanstack/react-query';
-import { IUsePaginationStateOptions, usePaginationState } from '@novu/design-system';
+import {
+  IUsePaginationQueryParamsStateOptions,
+  usePaginationQueryParamsState,
+  IUseSearchQueryParamStateOptions,
+  useSearchQueryParamState,
+} from '@novu/design-system';
+import { IPaginationWithQueryParams } from '@novu/shared';
 
-interface IPaginatedQueryContext {
-  pageSize: number;
-  pageIndex: number;
-}
+type IPaginatedQueryContext = Required<IPaginationWithQueryParams>;
 
 /** Enhanced query function with pagination context */
 type TPaginatedQueryFunction<TResponse extends object> = (ctx: IPaginatedQueryContext) => QueryFunction<TResponse>;
 
 const calculateTotalPageCount = ({
   totalItemCount,
-  pageSize,
+  pageSizeQueryParam,
 }: {
   totalItemCount: number | undefined;
-  pageSize: number;
-}) => (totalItemCount === undefined ? undefined : Math.ceil(totalItemCount / pageSize));
+  pageSizeQueryParam: number;
+}) => (totalItemCount === undefined ? undefined : Math.ceil(totalItemCount / pageSizeQueryParam));
 
 export interface UsePaginatedQueryProps<TResponse extends object> {
   queryKey: QueryKey | ((paginationCtx: IPaginatedQueryContext) => QueryKey);
@@ -23,7 +26,7 @@ export interface UsePaginatedQueryProps<TResponse extends object> {
   /** Return the *total* number of items for the query */
   getTotalItemCount: (resp: TResponse) => number;
   queryOptions?: Omit<UseQueryOptions<TResponse>, 'queryKey' | 'queryFn'>;
-  paginationOptions?: IUsePaginationStateOptions;
+  paginationOptions?: IUsePaginationQueryParamsStateOptions & IUseSearchQueryParamStateOptions;
 }
 
 export const usePaginatedQuery = <TResponse extends object>({
@@ -33,19 +36,29 @@ export const usePaginatedQuery = <TResponse extends object>({
   getTotalItemCount,
   paginationOptions = {},
 }: UsePaginatedQueryProps<TResponse>) => {
-  const { currentPageNumber, pageSize, setCurrentPageNumber, setPageSize } = usePaginationState(paginationOptions);
-  const pageIndex = currentPageNumber - 1;
+  const { currentPageNumberQueryParam, pageSizeQueryParam, setCurrentPageNumberQueryParam, setPageSizeQueryParam } =
+    usePaginationQueryParamsState(paginationOptions);
+  const { searchQueryParam, setSearchQueryParam } = useSearchQueryParamState(paginationOptions);
+  const page = currentPageNumberQueryParam - 1;
 
+  const paginationParams = { page, limit: pageSizeQueryParam, query: searchQueryParam };
   const queryKeyToUse =
-    typeof queryKey === 'function' ? queryKey({ pageIndex, pageSize }) : [...queryKey, pageIndex, pageSize];
+    typeof queryKey === 'function'
+      ? queryKey(paginationParams)
+      : [...queryKey, page, pageSizeQueryParam, searchQueryParam];
 
   // hydrate the function with the pagination context so that the caller can include it in the request
-  const hydratedQueryFn = buildQueryFn({ pageIndex, pageSize });
+  const hydratedQueryFn = buildQueryFn(paginationParams);
 
   const queryResponse = useQuery<TResponse>(queryKeyToUse, hydratedQueryFn, queryOptions);
 
   const totalItemCount = queryResponse.data ? getTotalItemCount(queryResponse.data) : undefined;
-  const totalPageCount = calculateTotalPageCount({ totalItemCount, pageSize });
+  const totalPageCount = calculateTotalPageCount({ totalItemCount, pageSizeQueryParam });
+
+  const setSearchQueryParamCallback = (search: string) => {
+    setSearchQueryParam(search);
+    setCurrentPageNumberQueryParam(1);
+  };
 
   return {
     // return all the React Query fields so that the caller can use them
@@ -53,9 +66,11 @@ export const usePaginatedQuery = <TResponse extends object>({
     // forward the pagination state
     totalItemCount,
     totalPageCount,
-    currentPageNumber,
-    pageSize,
-    setCurrentPageNumber,
-    setPageSize,
+    currentPageNumberQueryParam,
+    pageSizeQueryParam,
+    searchQueryParam,
+    setCurrentPageNumberQueryParam,
+    setPageSizeQueryParam,
+    setSearchQueryParam: setSearchQueryParamCallback,
   };
 };

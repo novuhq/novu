@@ -51,7 +51,7 @@ export class MergeOrCreateDigest {
     const { job } = command;
 
     const digestMeta = job.digest as IDigestBaseMetadata | undefined;
-    const digestKey = digestMeta?.digestKey;
+    const digestKey = command.chimeraData?.digestKey ?? digestMeta?.digestKey;
     const digestValue = getNestedValue(job.payload, digestKey);
 
     const digestAction = command.filtered

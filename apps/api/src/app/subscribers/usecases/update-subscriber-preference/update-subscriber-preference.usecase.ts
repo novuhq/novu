@@ -42,7 +42,7 @@ export class UpdateSubscriberPreference {
 
     const admin = await this.memberRepository.getOrganizationAdminAccount(command.organizationId);
     if (admin) {
-      this.analyticsService.track('Update User Preference - [Notification Center]', admin._userId, {
+      this.analyticsService.mixpanelTrack('Update User Preference - [Notification Center]', '', {
         _organization: command.organizationId,
         _subscriber: subscriber._id,
         _template: command.templateId,

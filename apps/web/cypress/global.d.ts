@@ -3,6 +3,7 @@
 type IMountType = import('cypress/react').mount;
 type ICreateNotificationTemplateDto = import('@novu/shared').ICreateNotificationTemplateDto;
 type FeatureFlagsKeysEnum = import('@novu/shared').FeatureFlagsKeysEnum;
+type CreateTemplatePayload = import('@novu/testing').CreateTemplatePayload;
 
 declare namespace Cypress {
   interface Chainable {
@@ -56,6 +57,13 @@ declare namespace Cypress {
     loginWithGitHub(): Chainable<any>;
 
     makeBlueprints(): Chainable<any>;
+
+    createWorkflows(args: {
+      userId: string;
+      organizationId: string;
+      environmentId: string;
+      workflows: Partial<CreateTemplatePayload>[];
+    }): Chainable<any>;
 
     mount: typeof IMountType;
   }

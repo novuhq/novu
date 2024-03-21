@@ -13,6 +13,7 @@ import {
   FilterPartTypeEnum,
   EmailProviderIdEnum,
   ChangeEntityTypeEnum,
+  INotificationTemplateStep,
 } from '@novu/shared';
 import {
   ChangeRepository,
@@ -135,12 +136,13 @@ describe('Create Workflow - /workflows (POST)', async () => {
     const templateRequestResult: INotificationTemplate = body.data;
 
     expect(templateRequestResult._notificationGroupId).to.equal(templateRequestPayload.notificationGroupId);
-    const message = templateRequestResult.steps[0];
+    const message = templateRequestResult.steps[0] as INotificationTemplateStep;
 
     const messageRequest = templateRequestPayload?.steps ? templateRequestPayload?.steps[0] : null;
     const filtersTest = messageRequest?.filters ? messageRequest.filters[0] : null;
 
     const children: IFieldFilterPart = filtersTest?.children[0] as IFieldFilterPart;
+    const template = message?.template;
 
     expect(message?.template?.name).to.equal(`${messageRequest?.template?.name}`);
     expect(message?.template?.active).to.equal(defaultMessageIsActive);
@@ -157,7 +159,9 @@ describe('Create Workflow - /workflows (POST)', async () => {
     expect(templateRequestResult.tags[0]).to.equal('test-tag');
 
     const variantRequest = messageRequest?.variants ? messageRequest?.variants[0] : null;
-    const variantResult = templateRequestResult.steps[0]?.variants ? templateRequestResult.steps[0]?.variants[0] : null;
+    const variantResult = (templateRequestResult.steps[0] as INotificationTemplateStep)?.variants
+      ? (templateRequestResult.steps as INotificationTemplateStep)[0]?.variants[0]
+      : null;
     expect(variantResult?.template?.name).to.equal(variantRequest?.template?.name);
     expect(variantResult?.template?.active).to.equal(variantRequest?.active);
     expect(variantResult?.template?.subject).to.equal(variantRequest?.template?.subject);
@@ -261,10 +265,11 @@ describe('Create Workflow - /workflows (POST)', async () => {
     expect(template.active).to.equal(false);
     expect(isSameDay(new Date(template?.createdAt ? template?.createdAt : '1970'), new Date()));
 
+    const step = template?.steps[0] as INotificationTemplateStep;
     expect(template.steps.length).to.equal(1);
-    expect(template?.steps?.[0]?.template?.type).to.equal(ChannelTypeEnum.IN_APP);
-    expect(template?.steps?.[0]?.template?.content).to.equal(testTemplate?.steps?.[0]?.template?.content);
-    expect(template?.steps?.[0]?.template?.cta?.data.url).to.equal(testTemplate?.steps?.[0]?.template?.cta?.data.url);
+    expect(step?.template?.type).to.equal(ChannelTypeEnum.IN_APP);
+    expect(step?.template?.content).to.equal(testTemplate?.steps?.[0]?.template?.content);
+    expect(step?.template?.cta?.data.url).to.equal(testTemplate?.steps?.[0]?.template?.cta?.data.url);
   });
 
   it('should create event trigger', async () => {
@@ -368,7 +373,7 @@ describe('Create Workflow - /workflows (POST)', async () => {
     expect(body.data).to.be.ok;
 
     const template: INotificationTemplate = body.data;
-    const steps = template.steps;
+    const steps = template.steps as INotificationTemplateStep[];
     expect(steps[0]._parentId).to.equal(null);
     expect(steps[0]._id).to.equal(steps[1]._parentId);
   });
@@ -400,7 +405,7 @@ describe('Create Workflow - /workflows (POST)', async () => {
     const template: INotificationTemplate = body.data;
 
     expect(template._notificationGroupId).to.equal(testTemplate.notificationGroupId);
-    const message = template.steps[0];
+    const message = template.steps[0] as INotificationTemplateStep;
     expect(message.template?.senderName).to.equal('test');
   });
 

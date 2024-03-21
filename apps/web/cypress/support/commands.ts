@@ -195,4 +195,8 @@ Cypress.Commands.add('mockFeatureFlags', (featureFlags: Partial<Record<FeatureFl
   });
 });
 
+Cypress.Commands.add('createWorkflows', (args) => {
+  return cy.task('createWorkflows', args);
+});
+
 export {};
