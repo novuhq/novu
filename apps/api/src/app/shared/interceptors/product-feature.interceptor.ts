@@ -5,6 +5,7 @@ import {
   Injectable,
   NestInterceptor,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { OrganizationRepository } from '@novu/dal';
@@ -23,7 +24,22 @@ export class ProductFeatureInterceptor implements NestInterceptor {
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     try {
+      const handler = context.getHandler();
+      const classRef = context.getClass();
+      const requestedFeature: ProductFeatureKeyEnum | undefined = this.reflector.getAllAndOverride(ProductFeature, [
+        handler,
+        classRef,
+      ]);
+
+      if (requestedFeature === undefined) {
+        return next.handle();
+      }
+
       const user = this.getReqUser(context);
+
+      if (!user) {
+        throw new UnauthorizedException();
+      }
 
       const { organizationId } = user;
 
@@ -33,21 +49,12 @@ export class ProductFeatureInterceptor implements NestInterceptor {
         throw new NotFoundException();
       }
 
-      const handler = context.getHandler();
-      const classRef = context.getClass();
-      const requestedFeature: ProductFeatureKeyEnum | undefined = this.reflector.getAllAndOverride(ProductFeature, [
-        handler,
-        classRef,
-      ]);
+      const enabled = productFeatureEnabledForServiceLevel[requestedFeature].includes(
+        organization.apiServiceLevel as ApiServiceLevelEnum
+      );
 
-      if (requestedFeature !== undefined) {
-        const enabled = productFeatureEnabledForServiceLevel[requestedFeature].includes(
-          organization.apiServiceLevel as ApiServiceLevelEnum
-        );
-
-        if (!enabled) {
-          throw new HttpException('Payment Required', 402);
-        }
+      if (!enabled) {
+        throw new HttpException('Payment Required', 402);
       }
 
       return next.handle();
