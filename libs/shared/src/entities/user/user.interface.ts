@@ -14,4 +14,5 @@ export interface IUserEntity {
   showOnBoardingTour?: number;
   servicesHashes?: IServicesHashes;
   jobTitle?: JobTitleEnum;
+  hasPassword: boolean;
 }
