@@ -11,7 +11,7 @@ export class ExecuteStepCustom {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
-    this.jobRepository.updateOne(
+    await this.jobRepository.updateOne(
       { _id: command.job._id, _environmentId: command.environmentId },
       {
         $set: { 'overrides.customStep': command.chimeraData?.outputs },
