@@ -36,6 +36,9 @@ import { NovuProviderSidebarContent } from './NovuProviderSidebarContent';
 import { useSelectPrimaryIntegrationModal } from './useSelectPrimaryIntegrationModal';
 import { ShareableUrl } from '../Modal/ConnectIntegrationForm';
 import { Conditions, IConditions } from '../../../../components/conditions';
+import { useDisclosure } from '@mantine/hooks';
+import { useDisablePrimaryStatusModal } from './useDisablePrimaryStatusModal';
+import { HEADER_HEIGHT } from '../../../../components/layout/constants';
 import { useWebhookSupportStatus } from '../../../../api/hooks';
 import { defaultIntegrationConditionsProps } from '../../constants';
 
@@ -177,6 +180,8 @@ export function UpdateProviderSidebar({
     onClose();
   };
 
+  const { DisablePrimaryStatusModal, openModal: openDisablePrimaryStatusModal } = useDisablePrimaryStatusModal();
+
   const updateAndSelectPrimaryIntegration = async (data: IConstructIntegrationDto) => {
     if (!selectedProvider) {
       return;
@@ -204,13 +209,8 @@ export function UpdateProviderSidebar({
 
     const hasConditionsAndIsPrimary = hasUpdatedConditions && primary && dirtyFields.conditions;
 
-    if (
-      (hasNoConditions && isChangedToActive) ||
-      isChangedToInactiveAndIsPrimary ||
-      isPrimaryAndHasConditionsApplied ||
-      hasConditionsAndIsPrimary
-    ) {
-      openSelectPrimaryIntegrationModal({
+    const selectPrimaryIntegration = () => {
+      return openSelectPrimaryIntegrationModal({
         environmentId: selectedProvider?.environmentId,
         channelType: selectedProvider?.channel,
         exclude: !isActive || hasConditionsAndIsPrimary ? (el) => el._id === selectedProvider.integrationId : undefined,
@@ -218,6 +218,18 @@ export function UpdateProviderSidebar({
           updateIntegration(data);
         },
       });
+    };
+
+    if (isChangedToInactiveAndIsPrimary) {
+      openDisablePrimaryStatusModal({
+        onConfirm: () => selectPrimaryIntegration(),
+      });
+
+      return;
+    }
+
+    if ((hasNoConditions && isChangedToActive) || isPrimaryAndHasConditionsApplied || hasConditionsAndIsPrimary) {
+      selectPrimaryIntegration();
 
       return;
     }
@@ -293,6 +305,7 @@ export function UpdateProviderSidebar({
           <NovuProviderSidebarContent provider={selectedProvider} />
           <UpdateIntegrationCommonFields provider={selectedProvider} />
         </Sidebar>
+        <DisablePrimaryStatusModal />
         <SelectPrimaryIntegrationModal />
       </FormProvider>
     );
@@ -401,6 +414,7 @@ export function UpdateProviderSidebar({
           </Box>
         </When>
       </Sidebar>
+      <DisablePrimaryStatusModal />
       <SelectPrimaryIntegrationModal />
     </FormProvider>
   );
