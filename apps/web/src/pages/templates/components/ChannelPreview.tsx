@@ -5,6 +5,7 @@ import { ChatPreview, EmailPreview, InAppPreview, PushPreview, SmsPreview } from
 import { useNavigateFromEditor } from '../hooks/useNavigateFromEditor';
 import { useStepIndex } from '../hooks/useStepIndex';
 import { ChannelPreviewSidebar } from './ChannelPreviewSidebar';
+import { TemplateCustomEditor } from './custom-editor/TemplateCustomEditor';
 
 export const PreviewComponent = ({ channel }: { channel: StepTypeEnum }) => {
   switch (channel) {
@@ -33,10 +34,10 @@ export const PreviewComponent = ({ channel }: { channel: StepTypeEnum }) => {
       return <>DIGEST</>;
 
     case StepTypeEnum.CUSTOM:
-      return <>Coming soon!</>;
+      return <TemplateCustomEditor />;
 
     default:
-      return <>dummy</>;
+      return <>Unknown Step</>;
   }
 };
 

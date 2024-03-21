@@ -8,6 +8,7 @@ import {
   InAppFilled,
   PushFilled,
   SmsFilled,
+  Bolt,
 } from '@novu/design-system';
 
 export enum NodeTypeEnum {
@@ -82,8 +83,8 @@ export const channels: IChannelDefinition[] = [
   {
     tabKey: StepTypeEnum.CUSTOM,
     label: 'Custom',
-    description: 'Customize your own action',
-    Icon: InAppFilled,
+    description: 'Run custom code',
+    Icon: Bolt,
     testId: 'customSelector',
     channelType: StepTypeEnum.CUSTOM,
     type: NodeTypeEnum.ACTION,
