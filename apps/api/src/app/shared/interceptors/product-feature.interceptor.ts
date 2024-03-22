@@ -45,10 +45,6 @@ export class ProductFeatureInterceptor implements NestInterceptor {
 
       const organization = await this.organizationRepository.findById(organizationId);
 
-      if (!organization) {
-        throw new NotFoundException();
-      }
-
       const enabled = productFeatureEnabledForServiceLevel[requestedFeature].includes(
         organization.apiServiceLevel as ApiServiceLevelEnum
       );
