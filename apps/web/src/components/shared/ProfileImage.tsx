@@ -19,20 +19,20 @@ interface ProfileImageProps {
   name: ControllerRenderProps['name'];
 }
 
-export function ProfileImage({ ...field }: ProfileImageProps) {
+export function ProfileImage({ name, onChange, value }: ProfileImageProps) {
   return (
     <div className={previewContainerStyles} data-test-id="profile-image">
-      {field.value ? (
-        <img src={field.value} alt="image" data-test-id="preview-img" />
+      {value ? (
+        <img src={value} alt="image" data-test-id="preview-img" />
       ) : (
         <IconPerson size="76" data-test-id="person-icon" />
       )}
-      <UploadInputContainer {...field} />
+      <UploadInputContainer name={name} onChange={onChange} />
     </div>
   );
 }
 
-const UploadInputContainer = ({ ...field }: ProfileImageProps) => {
+const UploadInputContainer = ({ name, onChange }: Omit<ProfileImageProps, 'value'>) => {
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -51,8 +51,8 @@ const UploadInputContainer = ({ ...field }: ProfileImageProps) => {
         ref={fileInputRef}
         accept="image/png, image/jpeg"
         data-test-id="image-file-input"
-        name={field.name}
-        onChange={field.onChange}
+        name={name}
+        onChange={onChange}
       />
       <Text data-test-id="upload-text">Upload</Text>
     </div>
