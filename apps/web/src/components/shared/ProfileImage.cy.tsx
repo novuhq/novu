@@ -1,13 +1,17 @@
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { TestWrapper } from '../../testing';
 import { ProfileImage } from './ProfileImage';
 
 const TestWrapperWithForm = ({ imageUrl }: { imageUrl: string }) => {
-  const { control } = useForm();
+  const { control } = useForm({
+    defaultValues: {
+      image: imageUrl,
+    },
+  });
 
   return (
     <TestWrapper>
-      <ProfileImage control={control} name="name" onImageSubmit={async () => {}} imageUrl={imageUrl} />
+      <Controller control={control} name="image" render={({ field }) => <ProfileImage {...field} />} />
     </TestWrapper>
   );
 };
@@ -42,6 +46,6 @@ it('should render the input container on hover', () => {
   cy.getByTestId('image-input-container').should('be.visible');
   cy.getByTestId('file-upload-icon').should('be.visible');
   cy.getByTestId('upload-text').should('have.text', 'Upload');
-  cy.getByTestId('image-file-input').should('have.attr', 'name', 'name');
+  cy.getByTestId('image-file-input').should('have.attr', 'name', 'image');
   cy.getByTestId('image-file-input').should('have.attr', 'accept', 'image/png, image/jpeg');
 });

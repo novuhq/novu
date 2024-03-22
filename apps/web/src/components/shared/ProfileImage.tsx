@@ -1,54 +1,42 @@
 import { IconOutlineFileUpload, IconPerson, Text } from '@novu/design-system';
 import React from 'react';
-import { Control } from 'react-hook-form';
+import { ControllerRenderProps } from 'react-hook-form';
 import { cx } from '../../styled-system/css';
 
 import { imageUploadStyles, previewContainerStyles } from './ProfileImage.styles';
-import useProfileImageForm from './useProfileImageForm';
-type ProfileImageProps = {
+
+interface ProfileImageProps {
   /**
-   * The URL of the image to display
+   * **NOTE**: Value should be URL string
    */
-  imageUrl?: string;
-  /**
-   *
-   * @param image The image file to submit
-   * @returns A promise that resolves when the image is submitted
-   */
-  onImageSubmit: (image: File | null) => Promise<void>;
+  value: string;
 
   /**
-   * The react-hook-form control object
+   * **NOTE**: convert the File value to string URL to display the image
    */
-  control: Control<any>;
-  /**
-   * The name of the image input field that is used in react-hook-form
-   */
-  name: string;
-};
+  onChange: ControllerRenderProps['onChange'];
 
-type UploadInputContainerProps = Pick<ProfileImageProps, 'control' | 'onImageSubmit' | 'name'>;
+  name: ControllerRenderProps['name'];
+}
 
-export function ProfileImage({ onImageSubmit, imageUrl, control, name }: ProfileImageProps) {
+export function ProfileImage({ ...field }: ProfileImageProps) {
   return (
     <div className={previewContainerStyles} data-test-id="profile-image">
-      {imageUrl ? (
-        <img src={imageUrl} alt="image" data-test-id="preview-img" />
+      {field.value ? (
+        <img src={field.value} alt="image" data-test-id="preview-img" />
       ) : (
         <IconPerson size="76" data-test-id="person-icon" />
       )}
-      <UploadInputContainer control={control} onImageSubmit={onImageSubmit} name={name} />
+      <UploadInputContainer {...field} />
     </div>
   );
 }
 
-const UploadInputContainer = ({ control, onImageSubmit, name }: UploadInputContainerProps) => {
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+const UploadInputContainer = ({ ...field }: ProfileImageProps) => {
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
-
-  const { name: fieldName, onSubmit } = useProfileImageForm({ control, name, onSubmit: onImageSubmit });
 
   return (
     <div
@@ -61,10 +49,10 @@ const UploadInputContainer = ({ control, onImageSubmit, name }: UploadInputConta
         type="file"
         hidden
         ref={fileInputRef}
-        name={fieldName}
-        onChange={onSubmit}
         accept="image/png, image/jpeg"
         data-test-id="image-file-input"
+        name={field.name}
+        onChange={field.onChange}
       />
       <Text data-test-id="upload-text">Upload</Text>
     </div>
