@@ -1,0 +1,15 @@
+# Reference: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners#codeowners-syntax
+
+# By default we assume that the novu-devs should review most changes
+# Removed for now until consensus is made by the team
+# @novuhq/novu-devs
+
+# Except for the following exceptions
+# Novu infra team ownership
+.github @novuhq/novu-infra
+.husky @novuhq/novu-infra
+docker @novuhq/novu-infra
+**/Dockerfile @novuhq/novu-infra
+
+# Novu community team ownership
+apps/web @novuhq/novu-web
