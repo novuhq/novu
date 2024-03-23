@@ -59,6 +59,7 @@ import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { JobTopicNameEnum } from '@novu/shared';
+import { ExecuteStepCustom } from './usecases/send-message/execute-step-custom.usecase';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -123,6 +124,7 @@ const USE_CASES = [
   SendMessageInApp,
   SendMessagePush,
   SendMessageSms,
+  ExecuteStepCustom,
   StoreSubscriberJobs,
   SetJobAsCompleted,
   SetJobAsFailed,

@@ -50,6 +50,7 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
+import { ExecuteStepCustom } from './execute-step-custom.usecase';
 
 @Injectable()
 export class SendMessage {
@@ -68,6 +69,7 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
+    private executeStepCustom: ExecuteStepCustom,
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
@@ -182,6 +184,8 @@ export class SendMessage {
         return await this.digest.execute(command);
       case StepTypeEnum.DELAY:
         return await this.sendMessageDelay.execute(command);
+      case StepTypeEnum.CUSTOM:
+        return await this.executeStepCustom.execute(sendMessageCommand);
     }
   }
 

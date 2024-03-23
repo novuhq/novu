@@ -113,7 +113,10 @@ export class GetActiveIntegrationsStatus {
     for (const step of uniqueSteps) {
       const stepType = step.template?.type;
       const skipStep =
-        stepType === StepTypeEnum.DELAY || stepType === StepTypeEnum.DIGEST || stepType === StepTypeEnum.TRIGGER;
+        stepType === StepTypeEnum.DELAY ||
+        stepType === StepTypeEnum.DIGEST ||
+        stepType === StepTypeEnum.TRIGGER ||
+        stepType === StepTypeEnum.CUSTOM;
       const isStepWithPrimaryIntegration = stepType === StepTypeEnum.EMAIL || stepType === StepTypeEnum.SMS;
       if (stepType && !skipStep) {
         const hasActiveIntegrations = activeChannelsStatus[stepType].hasActiveIntegrations;

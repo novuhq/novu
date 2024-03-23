@@ -8,6 +8,7 @@ import {
   InAppFilled,
   PushFilled,
   SmsFilled,
+  Bolt,
 } from '@novu/design-system';
 
 export enum NodeTypeEnum {
@@ -16,7 +17,7 @@ export enum NodeTypeEnum {
 }
 
 interface IChannelDefinition {
-  tabKey: StepTypeEnum | ChannelTypeEnum;
+  tabKey: StepTypeEnum;
   label: string;
   description: string;
   Icon: React.FC<any>;
@@ -35,7 +36,7 @@ export const CHANNEL_TYPE_TO_STRING: Record<ChannelTypeEnum, string> = {
 
 export const channels: IChannelDefinition[] = [
   {
-    tabKey: ChannelTypeEnum.IN_APP,
+    tabKey: StepTypeEnum.IN_APP,
     label: 'In-App',
     description: 'Send notifications to the in-app notification center',
     Icon: InAppFilled,
@@ -44,7 +45,7 @@ export const channels: IChannelDefinition[] = [
     type: NodeTypeEnum.CHANNEL,
   },
   {
-    tabKey: ChannelTypeEnum.EMAIL,
+    tabKey: StepTypeEnum.EMAIL,
     label: 'Email',
     description: 'Send using one of our email integrations',
     Icon: EmailFilled,
@@ -53,7 +54,7 @@ export const channels: IChannelDefinition[] = [
     type: NodeTypeEnum.CHANNEL,
   },
   {
-    tabKey: ChannelTypeEnum.SMS,
+    tabKey: StepTypeEnum.SMS,
     label: 'SMS',
     description: "Send an SMS directly to the user's phone",
     Icon: SmsFilled,
@@ -80,7 +81,16 @@ export const channels: IChannelDefinition[] = [
     type: NodeTypeEnum.ACTION,
   },
   {
-    tabKey: ChannelTypeEnum.CHAT,
+    tabKey: StepTypeEnum.CUSTOM,
+    label: 'Custom',
+    description: 'Run custom code',
+    Icon: Bolt,
+    testId: 'customSelector',
+    channelType: StepTypeEnum.CUSTOM,
+    type: NodeTypeEnum.ACTION,
+  },
+  {
+    tabKey: StepTypeEnum.CHAT,
     label: 'Chat',
     description: 'Send a chat message',
     Icon: ChatFilled,
@@ -89,7 +99,7 @@ export const channels: IChannelDefinition[] = [
     type: NodeTypeEnum.CHANNEL,
   },
   {
-    tabKey: ChannelTypeEnum.PUSH,
+    tabKey: StepTypeEnum.PUSH,
     label: 'Push',
     description: "Send an Push Notification to a user's device",
     Icon: PushFilled,
