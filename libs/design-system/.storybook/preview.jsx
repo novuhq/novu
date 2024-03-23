@@ -4,6 +4,7 @@ import { DARK_MODE_EVENT_NAME } from 'storybook-dark-mode';
 import { ThemeProvider } from '../src/ThemeProvider';
 import { DocsContainer } from './Doc.container';
 import { useLocalThemePreference } from '@novu/shared-web';
+import { lightTheme, darkTheme } from './NovuTheme';
 
 // Bring in the Panda-generated stylesheets
 import '../styled-system/styles.css';
@@ -21,6 +22,12 @@ export const parameters = {
       date: /Date$/,
     },
   },
+  darkMode: {
+    // Override the default dark theme
+    dark: darkTheme,
+    // Override the default light theme
+    light: lightTheme
+  }
 };
 
 const channel = addons.getChannel();
