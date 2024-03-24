@@ -1,4 +1,4 @@
-import { defineTokens, defineSemanticTokens } from '@pandacss/dev';
+import { defineTokens } from '@pandacss/dev';
 
 /**
  * @deprecated
