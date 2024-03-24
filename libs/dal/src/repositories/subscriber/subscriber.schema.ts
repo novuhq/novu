@@ -165,12 +165,19 @@ subscriberSchema.index({
  *  });
  */
 
+/*
+ * This index needs to be unique and exclude "_id" to prevent duplicate subscribers during concurrent creation attempts.
+ * This situation could occur if two attempts are made to create a subscriber with the same subscriberId (e.g., 2022) simultaneously.
+ * We want to ensure that the _id field is not included in the index to avoid scenarios where MongoDB's unique validation fails to prevent duplicates, such as:
+ * subscriberId_2022:environmentId_123:_id_123
+ * subscriberId_2022:environmentId_123:_id_1234
+ * We expect an exception to be thrown when attempting to create two subscribers with the same subscriberId (e.g., 2022) within the same environment.
+ */
 index(
   {
     subscriberId: 1,
     _environmentId: 1,
     deleted: 1,
-    _id: 1,
   },
   { unique: true }
 );
