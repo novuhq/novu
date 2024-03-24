@@ -15,7 +15,6 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      index: true,
     },
     apiKeys: [
       {
@@ -59,6 +58,22 @@ const environmentSchema = new Schema<EnvironmentDBModel>(
   },
   schemaOptions
 );
+
+/*
+ * Path: ./get-platform-notification-usage.usecase.ts
+ *    Context: execute()
+ *        Query: organizationRepository.aggregate(
+ *                $lookup:
+ *        {
+ *          from: 'environments',
+ *          localField: '_id',
+ *          foreignField: '_organizationId',
+ *          as: 'environments',
+ *        }
+ */
+environmentSchema.index({
+  _organizationId: 1,
+});
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Environment =
