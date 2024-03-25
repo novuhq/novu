@@ -1,8 +1,7 @@
-export enum UserProfilePasswordSidebarEnum {
-  SET_PASSWORD = 'set-password',
-  UPDATE_PASSWORD = 'update-password',
+export enum UserProfileSidebarTypeEnum {
+  PASSWORD = 'password',
 }
 
-export const USER_PROFILE_PASSWORD_SIDEBAR_VALUE_SET = new Set<UserProfilePasswordSidebarEnum>(
-  Object.values(UserProfilePasswordSidebarEnum)
+export const USER_PROFILE_SIDEBAR_TYPE_SET = new Set<UserProfileSidebarTypeEnum>(
+  Object.values(UserProfileSidebarTypeEnum)
 );

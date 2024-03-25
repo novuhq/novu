@@ -11,4 +11,5 @@ export interface IUserProfilePasswordSidebarProps
     IUserProfilePasswordEmailVerificationProps {
   setIsOpened?: (prevIsOpened: boolean) => void;
   token?: string;
+  hasPassword: boolean;
 }

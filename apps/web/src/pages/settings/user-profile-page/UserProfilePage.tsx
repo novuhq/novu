@@ -9,9 +9,10 @@ import { InputPlain } from '../components';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { UserProfileForm } from './UserProfileForm';
 import { UserProfilePasswordSidebar } from './UserProfilePasswordSidebar';
-import { UserProfilePasswordSidebarEnum } from './UserProfilePasswordSidebarEnum';
+import { UserProfileSidebarTypeEnum } from './UserProfilePasswordSidebarEnum';
 import { useUserProfileSearchParams } from './useUserProfileSearchParams';
 import { useUserProfileSetPassword } from './useUserProfileSetPassword';
+import { UserProfileFlow } from './UserProfileFlow.const';
 
 const Title = styled('h2', title);
 
@@ -30,7 +31,7 @@ export const UserProfilePage: FC = () => {
 
   const handleSetPasswordClick: MouseEventHandler<HTMLButtonElement> = async () => {
     handleSendLinkEmail();
-    updateSidebarParam(UserProfilePasswordSidebarEnum.SET_PASSWORD);
+    updateSidebarParam(UserProfileSidebarTypeEnum.PASSWORD);
   };
 
   return (
@@ -61,7 +62,7 @@ export const UserProfilePage: FC = () => {
             autoComplete="none"
             readOnly
           />
-          <Button variant="outline" className={css({ color: '' })}>
+          <Button variant="outline" className={css({ color: '' })} onClick={handleSetPasswordClick}>
             <IconLockPerson className={css({ color: 'button.text.outline !important' })} />
             {currentUser?.hasPassword ? 'Update password' : 'Set password'}
           </Button>
@@ -74,6 +75,7 @@ export const UserProfilePage: FC = () => {
         handleSendLinkEmail={handleSendLinkEmail}
         email={email}
         token={token ?? undefined}
+        hasPassword={!!currentUser?.hasPassword}
       />
     </SettingsPageContainer>
   );

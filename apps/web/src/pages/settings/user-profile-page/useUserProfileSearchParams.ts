@@ -1,21 +1,18 @@
 import { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import {
-  UserProfilePasswordSidebarEnum,
-  USER_PROFILE_PASSWORD_SIDEBAR_VALUE_SET,
-} from './UserProfilePasswordSidebarEnum';
+import { UserProfileSidebarTypeEnum, USER_PROFILE_SIDEBAR_TYPE_SET } from './UserProfilePasswordSidebarEnum';
 
 const TOKEN_PARAM = 'token';
 const SIDEBAR_PARAM = 'view';
 
-const getValidatedSidebarType = (sidebarParam: string | null): sidebarParam is UserProfilePasswordSidebarEnum => {
-  return !!sidebarParam && USER_PROFILE_PASSWORD_SIDEBAR_VALUE_SET.has(sidebarParam as UserProfilePasswordSidebarEnum);
+const getValidatedSidebarType = (sidebarParam: string | null): sidebarParam is UserProfileSidebarTypeEnum => {
+  return !!sidebarParam && USER_PROFILE_SIDEBAR_TYPE_SET.has(sidebarParam as UserProfileSidebarTypeEnum);
 };
 
 export const useUserProfileSearchParams = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const updateSidebarParam = (sidebarParam: UserProfilePasswordSidebarEnum | null) => {
+  const updateSidebarParam = (sidebarParam: UserProfileSidebarTypeEnum | null) => {
     const newSearchParams = new URLSearchParams(document.location.search);
 
     if (sidebarParam) {

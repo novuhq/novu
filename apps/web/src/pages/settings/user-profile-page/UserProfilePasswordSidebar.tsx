@@ -1,74 +1,15 @@
-import {
-  Button,
-  IconOutlineForwardToInbox,
-  IconOutlineLockPerson,
-  IconOutlineMarkunreadMailbox,
-  Sidebar,
-} from '@novu/design-system';
-import { css, cx } from '../../../styled-system/css';
-import { HStack, Stack, styled } from '../../../styled-system/jsx';
+import { IconOutlineLockPerson, Sidebar } from '@novu/design-system';
+import { de } from 'date-fns/locale';
+import { HStack, styled } from '../../../styled-system/jsx';
 import { text, title } from '../../../styled-system/recipes';
+import { selectUserProfileFlow } from './selectUserProfileFlow';
+import { UserProfilePasswordEmailVerificationSection } from './UserProfilePasswordEmailVerificationSection';
 import { UserProfilePasswordForm } from './UserProfilePasswordForm';
-import {
-  IUserProfilePasswordEmailVerificationProps,
-  IUserProfilePasswordSidebarProps,
-} from './UserProfilePasswordSidebar.shared';
+import { IUserProfilePasswordSidebarProps } from './UserProfilePasswordSidebar.shared';
 
 // TODO: replace with design-system components in future iteration
 const Title = styled('h2', title);
-const Text = styled('p', text);
-
-const UserProfilePasswordEmailVerificationSection: React.FC<IUserProfilePasswordEmailVerificationProps> = ({
-  email,
-  handleSendLinkEmail,
-  countdownTimerSeconds,
-}) => {
-  const isButtonDisabled = countdownTimerSeconds > 0;
-
-  return (
-    <Stack direction={'column'} gap={'200'} mt="150">
-      <HStack gap="100">
-        {/* TODO: this is a different Icon from designs since the one from React Icons doesn't match the name */}
-        <IconOutlineMarkunreadMailbox size="40" className={css({ flexShrink: 0 })} />
-        <Text variant="main" color="typography.text.secondary">
-          We have just sent a verification link to your email address{' '}
-          <span className={text({ variant: 'main' })}>{email}</span>.<br />
-          Please verify your email address to proceed with setting a password.
-        </Text>
-      </HStack>
-      <HStack gap={'200'} justifyContent="flex-end">
-        <Text>
-          Didn't get the link? Resend in{' '}
-          <strong
-            className={cx(
-              text({ variant: 'strong' }),
-              // prevent layout from shifting when timer changes from 2 digits to 1 digit.
-              css({ minWidth: '2ch', display: 'inline-block', textAlign: 'center' })
-            )}
-          >
-            {countdownTimerSeconds}
-          </strong>{' '}
-          seconds
-        </Text>
-        <Button
-          onClick={handleSendLinkEmail}
-          disabled={isButtonDisabled}
-          icon={
-            <IconOutlineForwardToInbox
-              aria-disabled={isButtonDisabled}
-              className={css({
-                fill: 'typography.text.main',
-                '&[aria-disabled="true"]': { fill: 'typography.text.tertiary' },
-              })}
-            />
-          }
-        >
-          Resend link
-        </Button>
-      </HStack>
-    </Stack>
-  );
-};
+export const Text = styled('p', text);
 
 export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarProps> = ({
   onClose,
@@ -77,7 +18,33 @@ export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarPro
   countdownTimerSeconds,
   handleSendLinkEmail,
   token,
+  hasPassword,
 }) => {
+  const currentFlow = selectUserProfileFlow({ token, hasPassword });
+
+  const getSidebarContent = () => {
+    switch (currentFlow.rootFlow) {
+      case 'UPDATE_PASSWORD':
+        // FIXME: Replace in update password feature
+        return <div>Update password content here</div>;
+      case 'SET_PASSWORD':
+      default:
+        switch (currentFlow.subFlow) {
+          case 'CREATE_PASSWORD':
+            return <UserProfilePasswordForm token={token!} />;
+          case 'EMAIL_VERIFICATION':
+          default:
+            return (
+              <UserProfilePasswordEmailVerificationSection
+                email={email}
+                countdownTimerSeconds={countdownTimerSeconds}
+                handleSendLinkEmail={handleSendLinkEmail}
+              />
+            );
+        }
+    }
+  };
+
   return (
     <Sidebar
       isOpened={isOpened}
@@ -89,15 +56,7 @@ export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarPro
         </HStack>
       }
     >
-      {token ? (
-        <UserProfilePasswordForm token={token} />
-      ) : (
-        <UserProfilePasswordEmailVerificationSection
-          email={email}
-          countdownTimerSeconds={countdownTimerSeconds}
-          handleSendLinkEmail={handleSendLinkEmail}
-        />
-      )}
+      {getSidebarContent()}
     </Sidebar>
   );
 };
