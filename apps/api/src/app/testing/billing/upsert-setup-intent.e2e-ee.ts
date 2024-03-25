@@ -1,7 +1,7 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
-import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types'; // Adjust the import path as necessary
+import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
 
 describe('Upsert setup intent', () => {
   const eeBilling = require('@novu/ee-billing');
