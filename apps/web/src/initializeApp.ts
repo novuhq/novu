@@ -26,7 +26,14 @@ export const initializeApp = () => {
         }),
       ],
       environment: ENV,
-
+      ignoreErrors: [
+        'Network Error',
+        'network error (Error)',
+        'ResizeObserver loop limit exceeded',
+        'ResizeObserver loop completed with undelivered notifications',
+        'Non-Error exception captured',
+        'Non-Error promise rejection captured',
+      ],
       /*
        * This sets the sample rate to be 10%. You may want this to be 100% while
        * in development and sample at a lower rate in production
