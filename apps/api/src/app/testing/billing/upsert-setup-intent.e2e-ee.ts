@@ -15,7 +15,7 @@ describe('Upsert setup intent', () => {
     setupIntents: {
       list: () => {},
       create: () => {},
-      update: () => {}, // Added for update case
+      update: () => {},
     },
   };
 
@@ -30,7 +30,7 @@ describe('Upsert setup intent', () => {
   let spyGetCustomer: sinon.SinonSpy;
   let stubCreateSetupIntent: sinon.SinonStub;
   let stubListSetupIntents: sinon.SinonStub;
-  let stubUpdateSetupIntent: sinon.SinonStub; // Added for update case
+  let stubUpdateSetupIntent: sinon.SinonStub;
   let stubGetUser: sinon.SinonStub;
 
   beforeEach(() => {
@@ -48,7 +48,7 @@ describe('Upsert setup intent', () => {
         },
       ],
     });
-    stubUpdateSetupIntent = sinon.stub(stubObject.setupIntents, 'update').resolves({}); // Added for update case
+    stubUpdateSetupIntent = sinon.stub(stubObject.setupIntents, 'update').resolves({});
     stubGetUser = sinon.stub(userRepository, 'findById').resolves({ email: 'user_email' });
   });
 
@@ -56,7 +56,7 @@ describe('Upsert setup intent', () => {
     spyGetCustomer.resetHistory();
     stubCreateSetupIntent.reset();
     stubListSetupIntents.reset();
-    stubUpdateSetupIntent.reset(); // Added for update case
+    stubUpdateSetupIntent.reset();
   });
 
   const createUseCase = () => {
