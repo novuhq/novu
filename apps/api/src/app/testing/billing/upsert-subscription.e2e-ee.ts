@@ -235,6 +235,10 @@ describe('UpsertSubscription', () => {
                 id: 'item_id_usage_notifications',
                 price: 'price_id_notifications',
               },
+              {
+                id: 'item_id_flat',
+                deleted: true,
+              },
             ],
           },
         ]);
@@ -346,6 +350,10 @@ describe('UpsertSubscription', () => {
             'subscription_id_2',
             {
               items: [
+                {
+                  id: 'item_id_flat',
+                  deleted: true,
+                },
                 {
                   id: 'item_id_usage_notifications',
                   price: 'price_id_notifications',
