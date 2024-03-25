@@ -156,16 +156,16 @@ describe('CreateUsageRecords', () => {
     ]);
   });
 
-  it('should set the usage timestamp to the subscription start date if the subscription is new', async () => {
+  it('should set the usage timestamp to the subscription current period start if the subscription is new', async () => {
     const mockSubscriptionStartDate = new Date('2021-02-01T00:00:00Z');
-    const mockSubscriptionCreated = mockSubscriptionStartDate.getTime() / 1000;
+    const mockSubscriptionCurrentPeriodStart = mockSubscriptionStartDate.getTime() / 1000;
     const mockUsageStartDate = new Date('2021-01-15T00:00:00Z');
     getCustomerStub.resolves({
       subscriptions: {
         data: [
           {
-            created: mockSubscriptionCreated,
             ...mockMonthlyBusinessSubscription,
+            current_period_start: mockSubscriptionCurrentPeriodStart,
           },
         ],
       },
@@ -178,7 +178,7 @@ describe('CreateUsageRecords', () => {
       })
     );
 
-    expect(createUsageRecordStub.lastCall.args[1].timestamp).to.equal(mockSubscriptionCreated);
+    expect(createUsageRecordStub.lastCall.args[1].timestamp).to.equal(mockSubscriptionCurrentPeriodStart);
   });
 
   it('should set the usage timestamp to the usage start date if the subscription is not new', async () => {
@@ -189,8 +189,8 @@ describe('CreateUsageRecords', () => {
       subscriptions: {
         data: [
           {
-            created: mockSubscriptionCreated,
             ...mockMonthlyBusinessSubscription,
+            current_period_start: mockSubscriptionCreated,
           },
         ],
       },

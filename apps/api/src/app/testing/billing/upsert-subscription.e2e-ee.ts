@@ -55,12 +55,14 @@ describe('UpsertSubscription', () => {
     getPricesStub = sinon.stub(GetPrices.prototype, 'execute').resolves({
       metered: [
         {
-          id: 'price_id_metered',
+          id: 'price_id_notifications',
+          recurring: { usage_type: StripeUsageTypeEnum.METERED },
         },
       ],
       licensed: [
         {
-          id: 'price_id_licensed',
+          id: 'price_id_flat',
+          recurring: { usage_type: StripeUsageTypeEnum.LICENSED },
         },
       ],
     } as any);
@@ -107,10 +109,10 @@ describe('UpsertSubscription', () => {
             customer: 'customer_id',
             items: [
               {
-                price: 'price_id_metered',
+                price: 'price_id_notifications',
               },
               {
-                price: 'price_id_licensed',
+                price: 'price_id_flat',
               },
             ],
           },
@@ -129,23 +131,27 @@ describe('UpsertSubscription', () => {
         );
 
         expect(createSubscriptionStub.callCount).to.equal(2);
-        expect(createSubscriptionStub.getCalls().flatMap((call) => call.args)).to.deep.equal([
-          {
-            customer: 'customer_id',
-            items: [
-              {
-                price: 'price_id_licensed',
-              },
-            ],
-          },
-          {
-            customer: 'customer_id',
-            items: [
-              {
-                price: 'price_id_metered',
-              },
-            ],
-          },
+        expect(createSubscriptionStub.getCalls().map((call) => call.args)).to.deep.equal([
+          [
+            {
+              customer: 'customer_id',
+              items: [
+                {
+                  price: 'price_id_flat',
+                },
+              ],
+            },
+          ],
+          [
+            {
+              customer: 'customer_id',
+              items: [
+                {
+                  price: 'price_id_notifications',
+                },
+              ],
+            },
+          ],
         ]);
       });
     });
@@ -187,10 +193,12 @@ describe('UpsertSubscription', () => {
           {
             items: [
               {
-                price: 'price_id_metered',
+                id: 'item_id_usage_notifications',
+                price: 'price_id_notifications',
               },
               {
-                price: 'price_id_licensed',
+                id: 'item_id_flat',
+                price: 'price_id_flat',
               },
             ],
           },
@@ -213,7 +221,7 @@ describe('UpsertSubscription', () => {
             customer: 'customer_id',
             items: [
               {
-                price: 'price_id_licensed',
+                price: 'price_id_flat',
               },
             ],
           },
@@ -224,7 +232,8 @@ describe('UpsertSubscription', () => {
           {
             items: [
               {
-                price: 'price_id_metered',
+                id: 'item_id_usage_notifications',
+                price: 'price_id_notifications',
               },
             ],
           },
@@ -298,10 +307,12 @@ describe('UpsertSubscription', () => {
           {
             items: [
               {
-                price: 'price_id_metered',
+                id: 'item_id_flat',
+                price: 'price_id_flat',
               },
               {
-                price: 'price_id_licensed',
+                id: 'item_id_usage_notifications',
+                price: 'price_id_notifications',
               },
             ],
           },
@@ -325,7 +336,8 @@ describe('UpsertSubscription', () => {
             {
               items: [
                 {
-                  price: 'price_id_licensed',
+                  id: 'item_id_flat',
+                  price: 'price_id_flat',
                 },
               ],
             },
@@ -335,7 +347,8 @@ describe('UpsertSubscription', () => {
             {
               items: [
                 {
-                  price: 'price_id_metered',
+                  id: 'item_id_usage_notifications',
+                  price: 'price_id_notifications',
                 },
               ],
             },
