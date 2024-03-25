@@ -22,5 +22,6 @@ export * from './types';
 export * from './dto';
 export * from './consts';
 export * from './ui';
+export * from './utils';
 export * from './services';
 export * from './config';
