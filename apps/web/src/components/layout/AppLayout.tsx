@@ -11,8 +11,9 @@ import { INTERCOM_APP_ID } from '../../config';
 import { RequiredAuth } from './RequiredAuth';
 import { SpotLight } from '../utils/Spotlight';
 import { SpotLightProvider } from '../providers/SpotlightProvider';
+import { FreeTrialBanner } from './components/FreeTrialBanner';
 
-const AppShellNew = styled.div`
+const AppShell = styled.div`
   display: flex;
   width: 100vw;
   height: 100vh;
@@ -42,7 +43,7 @@ export function AppLayout() {
               fallback={({ error, resetError, eventId }) => (
                 <>
                   Sorry, but something went wrong. <br />
-                  Our team been notified about it and we will look at it asap.
+                  Our team has been notified and we are investigating.
                   <br />
                   <code>
                     <small style={{ color: 'lightGrey' }}>
@@ -55,13 +56,14 @@ export function AppLayout() {
               )}
             >
               <SpotLight>
-                <AppShellNew>
+                <AppShell>
                   <SideNav />
                   <ContentShell>
+                    <FreeTrialBanner />
                     <HeaderNav isIntercomOpened={isIntercomOpened} />
                     <Outlet />
                   </ContentShell>
-                </AppShellNew>
+                </AppShell>
               </SpotLight>
             </Sentry.ErrorBoundary>
           </IntercomProvider>

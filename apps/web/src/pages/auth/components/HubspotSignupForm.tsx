@@ -14,6 +14,7 @@ import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 import { HUBSPOT_FORM_IDS } from '../../../constants/hubspotForms';
 import SetupLoader from './SetupLoader';
+import { successMessage } from '@novu/design-system';
 
 export function HubspotSignupForm() {
   const [loading, setLoading] = useState<boolean>();
@@ -51,6 +52,9 @@ export function HubspotSignupForm() {
     const { organizationName, jobTitle, ...rest } = data;
     const createDto: ICreateOrganizationDto = { ...rest, name: organizationName, jobTitle };
     const organization = await createOrganizationMutation(createDto);
+
+    successMessage('Your Business trial has started');
+
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
 
     setToken(organizationResponseToken);
