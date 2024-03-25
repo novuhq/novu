@@ -7,6 +7,7 @@ import { useFeatureFlag } from './hooks';
 import { BillingRoutes } from './pages/BillingPages';
 import { BrandingForm } from './pages/brand/tabs';
 import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
+import { ApiKeysPage } from './pages/settings';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import { ApiKeysCard } from './pages/settings/tabs';
 import { EmailSettings } from './pages/settings/tabs/EmailSettings';
@@ -15,8 +16,13 @@ import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 export const useSettingsRoutes = () => {
   const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
-  return isInformationArchitectureEnabled ? (
+  /*
+   * FIXME: reload doesn't work properly with conditional routes,
+   * so replace with isInformationArchitectureEnabled before merging
+   */
+  return true ? (
     <>
+      <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
       {/* TODO: this should redirect to Profile */}
       <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
         {/* TODO: replace with actual component */}
@@ -28,7 +34,6 @@ export const useSettingsRoutes = () => {
         <Route path={ROUTES.ORGANIZATION} element={<ApiKeysCard />} />
         <Route path={ROUTES.TEAM_SETTINGS} element={<MembersInvitePageNew />} />
         <Route path={ROUTES.BILLING} element={<BillingRoutes />} />
-        <Route path={ROUTES.API_KEYS} element={<ApiKeysCard />} />
         <Route path={ROUTES.WEBHOOK} element={<EmailSettings />} />
         <Route
           path={ROUTES.SECURITY}
