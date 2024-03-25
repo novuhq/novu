@@ -43,7 +43,7 @@ describe('Upsert setup intent', () => {
           status: 'succeeded',
           metadata: {
             apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-            billingInterval: StripeBillingIntervalEnum.MONTH, // Adjusted to include billingInterval
+            billingInterval: StripeBillingIntervalEnum.MONTH,
           },
         },
       ],
@@ -94,7 +94,7 @@ describe('Upsert setup intent', () => {
           status: 'requires_payment_method',
           metadata: {
             apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-            billingInterval: StripeBillingIntervalEnum.YEAR, // Different from the command to trigger an update
+            billingInterval: StripeBillingIntervalEnum.YEAR,
           },
         },
       ],
@@ -105,7 +105,7 @@ describe('Upsert setup intent', () => {
       organizationId: 'organization_id',
       userId: 'user_id',
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-      billingInterval: StripeBillingIntervalEnum.MONTH, // Triggering an update due to different billingInterval
+      billingInterval: StripeBillingIntervalEnum.MONTH,
     });
 
     expect(
@@ -128,7 +128,7 @@ describe('Upsert setup intent', () => {
           status: 'requires_payment_method',
           metadata: {
             apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-            billingInterval: StripeBillingIntervalEnum.MONTH, // Matches the command, no update needed
+            billingInterval: StripeBillingIntervalEnum.MONTH,
           },
         },
       ],
