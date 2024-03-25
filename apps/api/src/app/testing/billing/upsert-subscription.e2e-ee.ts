@@ -230,6 +230,29 @@ describe('UpsertSubscription', () => {
           },
         ]);
       });
+
+      it('should throw an error if the licensed subscription is not found', async () => {
+        const useCase = createUseCase();
+        const customer = {
+          ...mockCustomerBase,
+          subscriptions: {
+            data: [{ items: { data: [{ price: { recurring: { usage_type: 'invalid' } } }] } }],
+          },
+        };
+
+        try {
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: customer as any,
+              apiServiceLevel: ApiServiceLevelEnum.FREE,
+              billingInterval: StripeBillingIntervalEnum.MONTH,
+            })
+          );
+          throw new Error('Should not reach here');
+        } catch (e) {
+          expect(e.message).to.equal(`No licensed subscription found for customer with id: 'customer_id'`);
+        }
+      });
     });
 
     describe('TWO active subscriptions', () => {
@@ -318,6 +341,58 @@ describe('UpsertSubscription', () => {
             },
           ],
         ]);
+      });
+
+      it('should throw an error if the licensed subscription is not found', async () => {
+        const useCase = createUseCase();
+        const customer = {
+          ...mockCustomerBase,
+          subscriptions: {
+            data: [
+              { items: { data: [{ price: { recurring: { usage_type: StripeUsageTypeEnum.METERED } } }] } },
+              { items: { data: [{ price: { recurring: { usage_type: 'invalid' } } }] } },
+            ],
+          },
+        };
+
+        try {
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: customer as any,
+              apiServiceLevel: ApiServiceLevelEnum.FREE,
+              billingInterval: StripeBillingIntervalEnum.MONTH,
+            })
+          );
+          throw new Error('Should not reach here');
+        } catch (e) {
+          expect(e.message).to.equal(`No licensed subscription found for customer with id: 'customer_id'`);
+        }
+      });
+
+      it('should throw an error if the metered subscription is not found', async () => {
+        const useCase = createUseCase();
+        const customer = {
+          ...mockCustomerBase,
+          subscriptions: {
+            data: [
+              { items: { data: [{ price: { recurring: { usage_type: StripeUsageTypeEnum.LICENSED } } }] } },
+              { items: { data: [{ price: { recurring: { usage_type: 'invalid' } } }] } },
+            ],
+          },
+        };
+
+        try {
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: customer as any,
+              apiServiceLevel: ApiServiceLevelEnum.FREE,
+              billingInterval: StripeBillingIntervalEnum.MONTH,
+            })
+          );
+          throw new Error('Should not reach here');
+        } catch (e) {
+          expect(e.message).to.equal(`No metered subscription found for customer with id: 'customer_id'`);
+        }
       });
     });
 
