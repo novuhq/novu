@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
+import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
 
 describe('GetPrices', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -36,7 +37,7 @@ describe('GetPrices', () => {
   const expectedPrices = [
     {
       apiServiceLevel: ApiServiceLevelEnum.FREE,
-      billingInterval: 'month', // Example billing interval
+      billingInterval: StripeBillingIntervalEnum.MONTH,
       prices: {
         licensed: ['free_flat_monthly'],
         metered: ['free_usage_notifications'],
@@ -44,7 +45,7 @@ describe('GetPrices', () => {
     },
     {
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-      billingInterval: 'month', // Example billing interval
+      billingInterval: StripeBillingIntervalEnum.MONTH,
       prices: {
         licensed: ['business_flat_monthly'],
         metered: ['business_usage_notifications'],
@@ -52,7 +53,7 @@ describe('GetPrices', () => {
     },
     {
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-      billingInterval: 'year', // Example billing interval
+      billingInterval: StripeBillingIntervalEnum.YEAR,
       prices: {
         licensed: ['business_flat_annually'],
         metered: ['business_usage_notifications'],
@@ -60,7 +61,7 @@ describe('GetPrices', () => {
     },
     {
       apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE,
-      billingInterval: 'month', // Example billing interval
+      billingInterval: StripeBillingIntervalEnum.MONTH,
       prices: {
         licensed: ['enterprise_flat_monthly'],
         metered: ['enterprise_usage_notifications'],
@@ -68,7 +69,7 @@ describe('GetPrices', () => {
     },
     {
       apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE,
-      billingInterval: 'year', // Example billing interval
+      billingInterval: StripeBillingIntervalEnum.YEAR,
       prices: {
         licensed: ['enterprise_flat_annually'],
         metered: ['enterprise_usage_notifications'],
@@ -114,7 +115,7 @@ describe('GetPrices', () => {
       await useCase.execute(
         GetPricesCommand.create({
           apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-          billingInterval: 'month',
+          billingInterval: StripeBillingIntervalEnum.MONTH,
         })
       );
     } catch (e) {
