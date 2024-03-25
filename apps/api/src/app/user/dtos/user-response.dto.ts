@@ -1,5 +1,4 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-
 import { JobTitleEnum } from '@novu/shared';
 
 export class ServicesHashesDto {
@@ -40,4 +39,7 @@ export class UserResponseDto {
 
   @ApiPropertyOptional()
   jobTitle?: JobTitleEnum;
+
+  @ApiProperty()
+  hasPassword: boolean;
 }

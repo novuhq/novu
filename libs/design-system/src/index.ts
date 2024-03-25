@@ -5,6 +5,7 @@ export type { IButtonProps } from './button/Button';
 export type { Size } from './button/Button';
 export { Checkbox } from './checkbox/Checkbox';
 export { colors, shadows } from './config';
+export type { IInputProps } from './input/Input';
 export { Input } from './input/Input';
 export { Textarea } from './textarea/Textarea';
 export { Radio } from './radio/Radio';

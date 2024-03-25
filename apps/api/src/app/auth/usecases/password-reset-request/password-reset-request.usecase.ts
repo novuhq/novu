@@ -7,6 +7,7 @@ import { buildUserKey, InvalidateCacheService } from '@novu/application-generic'
 
 import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
+import { PasswordResetFlowEnum } from '@novu/shared';
 
 @Injectable()
 export class PasswordResetRequest {
@@ -37,6 +38,7 @@ export class PasswordResetRequest {
 
       if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
         const novu = new Novu(process.env.NOVU_API_KEY);
+        const resetPasswordLink = PasswordResetRequest.getResetRedirectLink(token, command.src);
 
         novu.trigger(process.env.NOVU_TEMPLATEID_PASSWORD_RESET || 'password-reset-llS-wzWMq', {
           to: {
@@ -44,7 +46,7 @@ export class PasswordResetRequest {
             email: foundUser.email,
           },
           payload: {
-            resetPasswordLink: `${process.env.FRONT_BASE_URL}/auth/reset/${token}`,
+            resetPasswordLink,
           },
         });
       }
@@ -53,6 +55,16 @@ export class PasswordResetRequest {
     return {
       success: true,
     };
+  }
+
+  private static getResetRedirectLink(token: string, src?: PasswordResetFlowEnum): string {
+    switch (src) {
+      case PasswordResetFlowEnum.USER_PROFILE:
+        return `${process.env.FRONT_BASE_URL}/settings/profile?token=${token}`;
+      case PasswordResetFlowEnum.FORGOT_PASSWORD:
+      default:
+        return `${process.env.FRONT_BASE_URL}/auth/reset/${token}`;
+    }
   }
 
   private isRequestBlocked(user: UserEntity) {

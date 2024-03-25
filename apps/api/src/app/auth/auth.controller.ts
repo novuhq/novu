@@ -19,7 +19,7 @@ import {
 } from '@nestjs/common';
 import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
-import { IJwtPayload } from '@novu/shared';
+import { IJwtPayload, PasswordResetFlowEnum } from '@novu/shared';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
 import { UserRegister } from './usecases/register/user-register.usecase';
 import { UserRegisterCommand } from './usecases/register/user-register.command';
@@ -121,10 +121,11 @@ export class AuthController {
   }
 
   @Post('/reset/request')
-  async forgotPasswordRequest(@Body() body: { email: string }) {
+  async forgotPasswordRequest(@Body() body: { email: string }, @Query('src') src?: PasswordResetFlowEnum) {
     return await this.passwordResetRequestUsecase.execute(
       PasswordResetRequestCommand.create({
         email: body.email,
+        src,
       })
     );
   }

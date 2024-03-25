@@ -42,6 +42,14 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
        */
     },
   },
+  button: {
+    text: {
+      outline: {
+        value: { base: '{colors.legacy.gradientMiddle}', _dark: '{colors.legacy.white}' },
+        type: 'color',
+      },
+    },
+  },
 });
 
 export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
