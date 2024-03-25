@@ -11,6 +11,7 @@ describe('Billing', function () {
         trialStart: null,
         trialEnd: null,
         hasPaymentMethod: false,
+        status: 'active',
       },
     }).as('getSubscription');
 
@@ -27,6 +28,7 @@ describe('Billing', function () {
         trialStart: startOfDay(new Date()),
         trialEnd: addDays(endOfDay(new Date()), 30),
         hasPaymentMethod: false,
+        status: 'trialing',
       },
     }).as('getSubscription');
 
@@ -44,6 +46,7 @@ describe('Billing', function () {
         trialStart: subDays(startOfDay(new Date()), 10),
         trialEnd: addDays(endOfDay(new Date()), 20),
         hasPaymentMethod: false,
+        status: 'trialing',
       },
     }).as('getSubscription');
 
@@ -63,6 +66,7 @@ describe('Billing', function () {
         trialStart: subDays(startOfDay(new Date()), 20),
         trialEnd: addDays(endOfDay(new Date()), 10),
         hasPaymentMethod: false,
+        status: 'trialing',
       },
     }).as('getSubscription');
 
@@ -85,6 +89,7 @@ describe('Billing', function () {
         trialStart: null,
         trialEnd: null,
         hasPaymentMethod: false,
+        status: 'active',
       },
     }).as('getSubscription');
 
@@ -101,6 +106,7 @@ describe('Billing', function () {
         trialStart: startOfDay(new Date()),
         trialEnd: addDays(endOfDay(new Date()), 30),
         hasPaymentMethod: false,
+        status: 'trialing',
       },
     }).as('getSubscription');
 
