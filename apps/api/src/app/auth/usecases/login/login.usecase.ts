@@ -41,7 +41,8 @@ export class Login {
       throw new UnauthorizedException(`Account blocked, Please try again after ${blockedMinutesLeft} minutes`);
     }
 
-    if (!user.password) throw new ApiException('OAuth user login attempt');
+    // TODO: Trigger a password reset flow automatically for existing OAuth users instead of throwing an error
+    if (!user.password) throw new ApiException('Please sign in using Github.');
 
     const isMatching = await bcrypt.compare(command.password, user.password);
     if (!isMatching) {
