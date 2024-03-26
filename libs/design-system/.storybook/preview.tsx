@@ -5,15 +5,17 @@ import { ThemeProvider } from '../src/ThemeProvider';
 import { DocsContainer } from './Doc.container';
 import { useLocalThemePreference } from '@novu/shared-web';
 import { lightTheme, darkTheme } from './NovuTheme';
+import { Parameters, Decorator } from '@storybook/react'
 
 // Bring in the Panda-generated stylesheets
 import '../styled-system/styles.css';
 
-export const parameters = {
+export const parameters: Parameters = {
   layout: 'fullscreen',
   viewMode: 'docs',
   docs: {
-    container: DocsContainer,
+    // @TODO: fix the container context
+    // container: DocsContainer,
   },
   actions: { argTypesRegex: '^on[A-Z].*' },
   controls: {
@@ -50,4 +52,4 @@ function ColorSchemeThemeWrapper({ children }) {
   );
 }
 
-export const decorators = [(renderStory) => <ColorSchemeThemeWrapper>{renderStory()}</ColorSchemeThemeWrapper>];
+export const decorators: Decorator[] = [(renderStory) => <ColorSchemeThemeWrapper>{renderStory()}</ColorSchemeThemeWrapper>];
