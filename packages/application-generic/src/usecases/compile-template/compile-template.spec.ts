@@ -209,4 +209,148 @@ describe('Compile Template', function () {
       expect(result).toEqual('<div>Not a number</div>');
     });
   });
+
+  describe('gt helper', () => {
+    const template = `{{#gt steps 5 }}<span>gt block</span>{{else}}<span>else block</span>{{/gt}}`;
+    it('shoud render gt block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 6 },
+        template,
+      });
+
+      expect(result).toEqual('<span>gt block</span>');
+    });
+
+    it('shoud render alternative block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 5 },
+        template,
+      });
+
+      expect(result).toEqual('<span>else block</span>');
+    });
+  });
+
+  describe('gte helper', () => {
+    const template = `{{#gte steps 5 }}<span>gte block</span>{{else}}<span>else block</span>{{/gte}}`;
+    it('shoud render gte block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 5 },
+        template,
+      });
+
+      expect(result).toEqual('<span>gte block</span>');
+    });
+
+    it('shoud render alternative block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 4 },
+        template,
+      });
+
+      expect(result).toEqual('<span>else block</span>');
+    });
+  });
+
+  describe('lt helper', () => {
+    const template = `{{#lt steps 5 }}<span>lt block</span>{{else}}<span>else block</span>{{/lt}}`;
+    it('shoud render lt block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 4 },
+        template,
+      });
+
+      expect(result).toEqual('<span>lt block</span>');
+    });
+
+    it('shoud render alternative block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 5 },
+        template,
+      });
+
+      expect(result).toEqual('<span>else block</span>');
+    });
+  });
+
+  describe('lte helper', () => {
+    const template = `{{#lte steps 5 }}<span>lte block</span>{{else}}<span>else block</span>{{/lte}}`;
+    it('shoud render lte block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 5 },
+        template,
+      });
+
+      expect(result).toEqual('<span>lte block</span>');
+    });
+
+    it('shoud render alternative block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 6 },
+        template,
+      });
+
+      expect(result).toEqual('<span>else block</span>');
+    });
+  });
+
+  describe('eq helper', () => {
+    const template = `{{#eq steps 5 }}<span>eq block</span>{{else}}<span>else block</span>{{/eq}}`;
+    it('shoud render eq block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 5 },
+        template,
+      });
+
+      expect(result).toEqual('<span>eq block</span>');
+    });
+
+    it('shoud use strict check and render alternative block', async () => {
+      const result = await useCase.execute({
+        data: { steps: '5' },
+        template,
+      });
+
+      expect(result).toEqual('<span>else block</span>');
+    });
+
+    it('shoud render alternative block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 6 },
+        template,
+      });
+
+      expect(result).toEqual('<span>else block</span>');
+    });
+  });
+
+  describe('ne helper', () => {
+    const template = `{{#ne steps 5 }}<span>ne block</span>{{else}}<span>else block</span>{{/ne}}`;
+    it('shoud render ne block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 6 },
+        template,
+      });
+
+      expect(result).toEqual('<span>ne block</span>');
+    });
+
+    it('shoud use strict check and render ne block', async () => {
+      const result = await useCase.execute({
+        data: { steps: '5' },
+        template,
+      });
+
+      expect(result).toEqual('<span>ne block</span>');
+    });
+
+    it('shoud render alternative block', async () => {
+      const result = await useCase.execute({
+        data: { steps: 5 },
+        template,
+      });
+
+      expect(result).toEqual('<span>else block</span>');
+    });
+  });
 });

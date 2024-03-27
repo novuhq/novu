@@ -158,6 +158,60 @@ Handlebars.registerHelper(
   }
 );
 
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.GT,
+  function (arg1, arg2, options) {
+    // eslint-disable-next-line
+    // @ts-expect-error
+    return arg1 > arg2 ? options.fn(this) : options.inverse(this);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.GTE,
+  function (arg1, arg2, options) {
+    // eslint-disable-next-line
+    // @ts-expect-error
+    return arg1 >= arg2 ? options.fn(this) : options.inverse(this);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.LT,
+  function (arg1, arg2, options) {
+    // eslint-disable-next-line
+    // @ts-expect-error
+    return arg1 < arg2 ? options.fn(this) : options.inverse(this);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.LTE,
+  function (arg1, arg2, options) {
+    // eslint-disable-next-line
+    // @ts-expect-error
+    return arg1 <= arg2 ? options.fn(this) : options.inverse(this);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.EQ,
+  function (arg1, arg2, options) {
+    // eslint-disable-next-line
+    // @ts-expect-error
+    return arg1 === arg2 ? options.fn(this) : options.inverse(this);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.NE,
+  function (arg1, arg2, options) {
+    // eslint-disable-next-line
+    // @ts-expect-error
+    return arg1 !== arg2 ? options.fn(this) : options.inverse(this);
+  }
+);
+
 @Injectable()
 export class CompileTemplate {
   async execute(command: CompileTemplateCommand): Promise<string> {
