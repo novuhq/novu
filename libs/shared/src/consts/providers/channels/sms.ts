@@ -28,6 +28,7 @@ import {
   iSendSmsConfig,
   ringCentralConfig,
   brevoSmsConfig,
+  whatsaAppBusinessConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -270,5 +271,13 @@ export const smsProviders: IProviderConfig[] = [
     credentials: brevoSmsConfig,
     docReference: 'https://developers.brevo.com/reference/sendtransacsms',
     logoFileName: { light: 'brevo.svg', dark: 'brevo.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.WhatsAppBusiness,
+    displayName: 'WhatsApp Business',
+    channel: ChannelTypeEnum.SMS,
+    credentials: whatsaAppBusinessConfig,
+    docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
+    logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
   },
 ];

@@ -44,6 +44,7 @@ export enum CredentialsKeyEnum {
   imageUrl = 'imageUrl',
   state = 'state',
   externalLink = 'externalLink',
+  phoneNumberIdentification = 'phoneNumberIdentification',
 }
 
 export enum EmailProviderIdEnum {
@@ -100,6 +101,7 @@ export enum SmsProviderIdEnum {
   AzureSms = 'azure-sms',
   RingCentral = 'ring-central',
   BrevoSms = 'brevo-sms',
+  WhatsAppBusiness = 'whatsapp-business',
 }
 
 export enum ChatProviderIdEnum {

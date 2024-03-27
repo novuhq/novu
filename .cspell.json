@@ -611,14 +611,16 @@
     "Pyroscope",
     "PYROSCOPE",
     "usecases",
-    "hbspt", 
+    "hbspt",
     "prepopulating",
     "Vonage",
     "fieldtype",
     "usecase",
     "zulip",
     "uuidv",
-    "Vonage"
+    "Vonage",
+    "whatsapp",
+    "whatsappbusiness",
   ],
   "flagWords": [],
   "patterns": [
