@@ -283,6 +283,43 @@ messageSchema.index({
   _environmentId: 1,
   providerId: 1,
   createdAt: 1,
+  deleted: 1,
+});
+
+/*
+ * This index was initially created to optimize:
+ *
+ * Path: apps/api/src/app/messages/usecases/get-messages.usecase.ts
+ * Context: execute()
+ * Query:  const query: Partial<Omit<MessageEntity, 'transactionId'>> & { _environmentId: string; transactionId?: string[] } =
+ *    {
+ *      _environmentId: command.environmentId,
+ *    };
+ *
+ *  if (command.subscriberId) {
+ *    const subscriber = await this.getSubscriberUseCase.execute(
+ *      GetSubscriberCommand.create({
+ *        subscriberId: command.subscriberId,
+ *        environmentId: command.environmentId,
+ *        organizationId: command.organizationId,
+ *      })
+ *    );
+ *
+ *    query._subscriberId = subscriber._id;
+ *  }
+ */
+messageSchema.index({
+  _environmentId: 1,
+  _subscriberId: 1,
+  channel: 1,
+  seen: 1,
+  read: 1,
+  deleted: 1,
+});
+
+messageSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
 });
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

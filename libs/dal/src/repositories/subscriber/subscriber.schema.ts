@@ -169,6 +169,14 @@ subscriberSchema.index({
   subscriberId: 1,
   _environmentId: 1,
   _id: 1,
+  deleted: 1,
+});
+
+subscriberSchema.index({
+  _environmentId: 1,
+  _organizationId: 1,
+  createdAt: -1,
+  deleted: 1,
 });
 
 subscriberSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
