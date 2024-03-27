@@ -8,7 +8,7 @@ import {
   InAppFilled,
   PushFilled,
   SmsFilled,
-} from '../design-system/icons';
+} from '@novu/design-system';
 
 export enum NodeTypeEnum {
   CHANNEL = 'channel',

@@ -4,12 +4,12 @@ import { faFile } from '@fortawesome/free-regular-svg-icons';
 import { faDiagramNext } from '@fortawesome/free-solid-svg-icons';
 import styled from '@emotion/styled';
 
-import { Button, Dropdown, PlusButton, Popover } from '../../../design-system';
-import { PlusCircle } from '../../../design-system/icons';
+import { Dropdown, PlusButton, Popover } from '@novu/design-system';
 import { IBlueprintTemplate } from '../../../api/types';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { TemplateCreationSourceEnum } from '../shared';
 import { useHoverOverItem } from '../../../hooks';
+import { EchoProjectDropDownItem } from './EchoProjectWaitList';
 
 const WIDTH = 172;
 
@@ -57,6 +57,22 @@ export const CreateWorkflowDropdown = ({
       }
       data-test-id="create-workflow-dropdown"
     >
+      <Dropdown.Item
+        icon={<FontAwesomeIcon icon={faFile} />}
+        onClick={(event) => {
+          segment.track('[Template Store] Click Create Notification Template', {
+            templateIdentifier: 'Blank Workflow',
+            location: TemplateCreationSourceEnum.DROPDOWN,
+          });
+
+          onBlankWorkflowClick(event);
+        }}
+        data-test-id="create-workflow-blank"
+      >
+        Blank workflow
+      </Dropdown.Item>
+      <EchoProjectDropDownItem />
+      <Dropdown.Divider />
       {isLoading
         ? Array.from({ length: 3 }).map((_, index) => <DropdownItemSkeleton key={index} />)
         : blueprints?.map((template, index) => (
@@ -107,21 +123,6 @@ export const CreateWorkflowDropdown = ({
         data-test-id="create-workflow-all-templates"
       >
         All templates
-      </Dropdown.Item>
-      <Dropdown.Divider />
-      <Dropdown.Item
-        icon={<FontAwesomeIcon icon={faFile} />}
-        onClick={(event) => {
-          segment.track('[Template Store] Click Create Notification Template', {
-            templateIdentifier: 'Blank Workflow',
-            location: TemplateCreationSourceEnum.DROPDOWN,
-          });
-
-          onBlankWorkflowClick(event);
-        }}
-        data-test-id="create-workflow-blank"
-      >
-        Blank workflow
       </Dropdown.Item>
     </Dropdown>
   );

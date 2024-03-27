@@ -1,6 +1,5 @@
 import * as dotenv from 'dotenv';
-import * as envalid from 'envalid';
-import { json, str, port } from 'envalid';
+import { cleanEnv, json, num, str, port } from 'envalid';
 import { getContextPath, NovuComponentEnum } from '@novu/shared';
 
 dotenv.config();
@@ -31,7 +30,7 @@ const { error } = dotenv.config({ path });
 
 if (error && !process.env.LAMBDA_TASK_ROOT) throw error;
 
-envalid.cleanEnv(process.env, {
+cleanEnv(process.env, {
   NODE_ENV: str({
     choices: ['dev', 'test', 'production', 'ci', 'local'],
     default: 'local',
@@ -43,6 +42,12 @@ envalid.cleanEnv(process.env, {
     default: undefined,
   }),
   JWT_SECRET: str(),
+  WORKER_DEFAULT_CONCURRENCY: num({
+    default: undefined,
+  }),
+  WORKER_DEFAULT_LOCK_DURATION: num({
+    default: undefined,
+  }),
 });
 
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.WS);

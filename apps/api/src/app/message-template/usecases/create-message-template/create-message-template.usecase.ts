@@ -1,23 +1,36 @@
 import { Injectable } from '@nestjs/common';
-import { MessageTemplateEntity, MessageTemplateRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { MessageTemplateEntity, MessageTemplateRepository, LayoutEntity, LayoutRepository } from '@novu/dal';
+import { ChangeEntityTypeEnum, IMessageAction, StepTypeEnum } from '@novu/shared';
 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { sanitizeMessageContent } from '../../shared/sanitizer.service';
-import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { UpdateChange } from '../../../change/usecases/update-change/update-change';
 import { UpdateChangeCommand } from '../../../change/usecases/update-change/update-change.command';
 import { UpdateMessageTemplate } from '../update-message-template/update-message-template.usecase';
+import { ApiException, CreateChange, CreateChangeCommand } from '@novu/application-generic';
 
 @Injectable()
 export class CreateMessageTemplate {
   constructor(
     private messageTemplateRepository: MessageTemplateRepository,
+    private layoutRepository: LayoutRepository,
     private createChange: CreateChange,
     private updateChange: UpdateChange
   ) {}
 
   async execute(command: CreateMessageTemplateCommand): Promise<MessageTemplateEntity> {
+    if ((command?.cta?.action as IMessageAction | undefined | '') === '') {
+      throw new ApiException('Please provide a valid CTA action');
+    }
+
+    let layoutId: string | undefined | null;
+    if (command.type === StepTypeEnum.EMAIL && !command.layoutId) {
+      const defaultLayout = await this.layoutRepository.findDefault(command.environmentId, command.organizationId);
+      layoutId = defaultLayout?._id;
+    } else {
+      layoutId = command.layoutId;
+    }
+
     let item: MessageTemplateEntity = await this.messageTemplateRepository.create({
       cta: command.cta,
       name: command.name,
@@ -28,7 +41,7 @@ export class CreateMessageTemplate {
       title: command.title,
       type: command.type,
       _feedId: command.feedId ? command.feedId : null,
-      _layoutId: command.layoutId || null,
+      _layoutId: layoutId,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
       _creatorId: command.userId,
@@ -38,7 +51,10 @@ export class CreateMessageTemplate {
     });
 
     if (item?._id) {
-      item = (await this.messageTemplateRepository.findById(item._id)) as MessageTemplateEntity;
+      item = (await this.messageTemplateRepository.findOne({
+        _id: item._id,
+        _organizationId: command.organizationId,
+      })) as MessageTemplateEntity;
     }
 
     await this.createChange.execute(

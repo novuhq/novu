@@ -1,6 +1,7 @@
 import * as _ from 'lodash';
 import {
   IBaseFieldFilterPart,
+  FieldOperatorEnum,
   FILTER_TO_LABEL,
   ICondition,
 } from '@novu/shared';
@@ -23,31 +24,31 @@ export abstract class Filter {
     const filterValue = this.parseValue(actualValue, fieldFilter.value);
     let result = false;
 
-    if (fieldFilter.operator === 'EQUAL') {
+    if (fieldFilter.operator === FieldOperatorEnum.EQUAL) {
       result = actualValue === filterValue;
     }
-    if (fieldFilter.operator === 'NOT_EQUAL') {
+    if (fieldFilter.operator === FieldOperatorEnum.NOT_EQUAL) {
       result = actualValue !== filterValue;
     }
-    if (fieldFilter.operator === 'LARGER') {
+    if (fieldFilter.operator === FieldOperatorEnum.LARGER) {
       result = actualValue > filterValue;
     }
-    if (fieldFilter.operator === 'SMALLER') {
+    if (fieldFilter.operator === FieldOperatorEnum.SMALLER) {
       result = actualValue < filterValue;
     }
-    if (fieldFilter.operator === 'LARGER_EQUAL') {
+    if (fieldFilter.operator === FieldOperatorEnum.LARGER_EQUAL) {
       result = actualValue >= filterValue;
     }
-    if (fieldFilter.operator === 'SMALLER_EQUAL') {
+    if (fieldFilter.operator === FieldOperatorEnum.SMALLER_EQUAL) {
       result = actualValue <= filterValue;
     }
-    if (fieldFilter.operator === 'NOT_IN') {
+    if (fieldFilter.operator === FieldOperatorEnum.NOT_IN) {
       result = !actualValue.includes(filterValue);
     }
-    if (fieldFilter.operator === 'IN') {
+    if (fieldFilter.operator === FieldOperatorEnum.IN) {
       result = actualValue.includes(filterValue);
     }
-    if (fieldFilter.operator === 'IS_DEFINED') {
+    if (fieldFilter.operator === FieldOperatorEnum.IS_DEFINED) {
       result = actualValue !== undefined;
     }
     const actualValueString: string = Array.isArray(actualValue)
@@ -59,7 +60,7 @@ export abstract class Filter {
       field: fieldFilter.field,
       expected: `${filterValue}`,
       actual: `${actualValueString}`,
-      operator: `${fieldFilter.operator}`,
+      operator: fieldFilter.operator,
       passed: result,
     });
 

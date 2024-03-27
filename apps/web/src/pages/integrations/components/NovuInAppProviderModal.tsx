@@ -2,8 +2,7 @@ import { useState } from 'react';
 import styled from '@emotion/styled/macro';
 import { Accordion, Box, Center, Loader, useMantineTheme } from '@mantine/core';
 
-import { colors } from '../../../design-system';
-import { Close } from '../../../design-system/icons/actions/Close';
+import { colors, Close } from '@novu/design-system';
 import { IIntegratedProvider } from '../types';
 import { SetupTimeline } from '../../quick-start/components/SetupTimeline';
 import { NovuInAppForm } from './NovuInAppForm';

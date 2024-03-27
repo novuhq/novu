@@ -1,5 +1,5 @@
 import { Loader, Paper } from '@mantine/core';
-import { colors, Text } from '../../../design-system';
+import { colors, Text } from '@novu/design-system';
 
 type Props = {
   title: string;

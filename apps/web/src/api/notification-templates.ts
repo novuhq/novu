@@ -1,11 +1,20 @@
-import { ICreateNotificationTemplateDto, INotificationTemplate, IGroupedBlueprint } from '@novu/shared';
+import {
+  ICreateNotificationTemplateDto,
+  INotificationTemplate,
+  IGroupedBlueprint,
+  IPaginationWithQueryParams,
+  IBlueprint,
+} from '@novu/shared';
 
 import { api } from './api.client';
 import { BLUEPRINTS_API_URL } from '../config';
 
-export function getNotificationsList(page = 0, limit = 10) {
-  return api.getFullResponse(`/v1/notification-templates`, { page, limit });
+export function getNotificationsList({ page = 0, limit = 10, query }: IPaginationWithQueryParams) {
+  const params = { page, limit, ...(query && { query }) };
+
+  return api.getFullResponse(`/v1/notification-templates`, params);
 }
+
 export async function createTemplate(
   data: ICreateNotificationTemplateDto,
   params?: { __source?: string }
@@ -21,6 +30,10 @@ export async function getTemplateById(id: string) {
   return api.get(`/v1/notification-templates/${id}`);
 }
 
+export async function getWorkflowVariables() {
+  return api.get(`/v1/workflows/variables`);
+}
+
 export async function getBlueprintsGroupedByCategory(): Promise<{
   general: IGroupedBlueprint[];
   popular: IGroupedBlueprint;
@@ -28,7 +41,7 @@ export async function getBlueprintsGroupedByCategory(): Promise<{
   return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/group-by-category`, { absoluteUrl: true });
 }
 
-export async function getBlueprintTemplateById(id: string) {
+export async function getBlueprintTemplateById(id: string): Promise<IBlueprint> {
   return api.get(`${BLUEPRINTS_API_URL}/v1/blueprints/${id}`, { absoluteUrl: true });
 }
 

@@ -1,42 +1,47 @@
-import { useCallback, useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import { parse } from '@handlebars/parser';
 import isEqual from 'lodash.isequal';
 import { getTemplateVariables } from '@novu/shared';
+
 import { IForm, ITemplates } from '../pages/templates/components/formTypes';
+import { useStepFormPath } from '../pages/templates/hooks/useStepFormPath';
+import { useStepIndex } from '../pages/templates/hooks/useStepIndex';
 
-export const useVariablesManager = (index: number, contents: string[]) => {
+const getTextContent = ({ templateToParse, fields }: { templateToParse?: ITemplates; fields: string[] }): string => {
+  return fields
+    .map((con) => con.split('.').reduce((a, b) => a && a[b], templateToParse ?? {}))
+    .map((con) => (Array.isArray(con) ? con.map((innerCon) => `${innerCon.content} ${innerCon?.url}`).join(' ') : con))
+    .join(' ');
+};
+
+export const useVariablesManager = (contents: string[]) => {
+  const { stepIndex, variantIndex } = useStepIndex();
   const { watch, control, getValues } = useFormContext<IForm>();
-  const variablesArray = useFieldArray({ control, name: `steps.${index}.template.variables` });
-  const variableArray = watch(`steps.${index}.template.variables`);
-
-  const getTextContent = useCallback(
-    ({ templateToParse, fields }: { templateToParse?: ITemplates; fields: string[] }): string => {
-      return fields
-        .map((con) => con.split('.').reduce((a, b) => a && a[b], templateToParse ?? {}))
-        .map((con) =>
-          Array.isArray(con) ? con.map((innerCon) => `${innerCon.content} ${innerCon?.url}`).join(' ') : con
-        )
-        .join(' ');
-    },
-    []
-  );
+  const stepFormPath = useStepFormPath();
+  const variablesArray = useFieldArray({ control, name: `${stepFormPath}.template.variables` });
+  const variableArray = watch(`${stepFormPath}.template.variables`);
 
   const [textContent, setTextContent] = useState<string>(() =>
-    getTextContent({ templateToParse: getValues(`steps.${index}.template`), fields: contents })
+    getTextContent({ templateToParse: getValues(`${stepFormPath}.template`), fields: contents })
   );
 
   useLayoutEffect(() => {
     const subscription = watch((values) => {
       const steps = values.steps ?? [];
-      if (!steps.length || !steps[index]) return;
+      if (!steps.length || !steps[stepIndex]) return;
 
-      const step = steps[index];
-      setTextContent(getTextContent({ templateToParse: step?.template as ITemplates, fields: contents }));
+      const step = steps[stepIndex];
+      let template = step?.template;
+      if (step && typeof variantIndex !== 'undefined' && variantIndex > -1) {
+        template = step.variants?.[variantIndex]?.template;
+      }
+
+      setTextContent(getTextContent({ templateToParse: template as ITemplates, fields: contents }));
     });
 
     return () => subscription.unsubscribe();
-  }, [index, watch, setTextContent, getTextContent, contents]);
+  }, [stepIndex, variantIndex, watch, setTextContent, contents]);
 
   useLayoutEffect(() => {
     try {

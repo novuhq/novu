@@ -1,15 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MessageRepository, JobRepository, JobStatusEnum } from '@novu/dal';
+import { MessageRepository, JobRepository, JobStatusEnum, JobEntity } from '@novu/dal';
 import {
   StepTypeEnum,
-  DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  DigestTypeEnum,
   IDigestRegularMetadata,
+  FeatureFlagsKeysEnum,
 } from '@novu/shared';
-import { DetailEnum, CreateExecutionDetails, CreateExecutionDetailsCommand } from '@novu/application-generic';
+import {
+  DetailEnum,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
+  ExecutionLogRoute,
+  ExecutionLogRouteCommand,
+} from '@novu/application-generic';
 
-import { DigestEventsCommand } from './digest-events.command';
 import { GetDigestEventsRegular } from './get-digest-events-regular.usecase';
 import { GetDigestEventsBackoff } from './get-digest-events-backoff.usecase';
 
@@ -18,6 +24,7 @@ import { PlatformException } from '../../../../shared/utils';
 
 import { SendMessageCommand } from '../send-message.command';
 import { SendMessageType } from '../send-message-type.usecase';
+import { DigestEventsCommand } from './digest-events.command';
 
 const LOG_CONTEXT = 'Digest';
 
@@ -26,27 +33,41 @@ export class Digest extends SendMessageType {
   constructor(
     protected messageRepository: MessageRepository,
     protected createLogUsecase: CreateLog,
-    protected createExecutionDetails: CreateExecutionDetails,
+    protected executionLogRoute: ExecutionLogRoute,
     protected jobRepository: JobRepository,
     private getDigestEventsRegular: GetDigestEventsRegular,
-    private getDigestEventsBackoff: GetDigestEventsBackoff
+    private getDigestEventsBackoff: GetDigestEventsBackoff,
+    private getFeatureFlag: GetFeatureFlag
   ) {
-    super(messageRepository, createLogUsecase, createExecutionDetails);
+    super(messageRepository, createLogUsecase, executionLogRoute);
   }
 
   public async execute(command: SendMessageCommand) {
-    const events = await this.getEvents(command);
+    const currentJob = await this.getCurrentJob(command);
+
+    const useMergedDigestId = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        key: FeatureFlagsKeysEnum.IS_USE_MERGED_DIGEST_ID_ENABLED,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+      })
+    );
+
+    const getEvents = useMergedDigestId ? this.getEvents.bind(this) : this.backwardCompatibleGetEvents.bind(this);
+
+    const events = await getEvents(command, currentJob);
     const nextJobs = await this.getJobsToUpdate(command);
 
-    await this.createExecutionDetails.execute(
-      CreateExecutionDetailsCommand.create({
-        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-        detail: DetailEnum.DIGESTED_EVENTS_PROVIDED,
+    await this.executionLogRoute.execute(
+      ExecutionLogRouteCommand.create({
+        ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+        detail: DetailEnum.DIGEST_TRIGGERED_EVENTS,
         source: ExecutionDetailsSourceEnum.INTERNAL,
         status: ExecutionDetailsStatusEnum.SUCCESS,
         isTest: false,
         isRetry: false,
-        raw: JSON.stringify(nextJobs),
+        raw: JSON.stringify(events),
       })
     );
 
@@ -59,27 +80,31 @@ export class Digest extends SendMessageType {
       },
       {
         $set: {
-          digest: {
-            events,
-          },
+          'digest.events': events,
         },
       }
     );
   }
 
-  private async getEvents(command: SendMessageCommand) {
-    const currentJob = await this.jobRepository.findOne({ _environmentId: command.environmentId, _id: command.jobId });
+  private async getEvents(command: SendMessageCommand, currentJob: JobEntity) {
+    const jobs = await this.jobRepository.find(
+      {
+        _mergedDigestId: currentJob._id,
+        status: JobStatusEnum.MERGED,
+        type: StepTypeEnum.DIGEST,
+        _environmentId: currentJob._environmentId,
+        _subscriberId: command._subscriberId,
+      },
+      'payload'
+    );
 
-    if (!currentJob) {
-      const message = `Digest job ${command.jobId} is not found`;
-      Logger.error(message, LOG_CONTEXT);
-      throw new PlatformException(message);
-    }
+    return [currentJob.payload, ...jobs.map((job) => job.payload)];
+  }
 
+  private async backwardCompatibleGetEvents(command: SendMessageCommand, currentJob: JobEntity) {
     const digestEventsCommand = DigestEventsCommand.create({
       currentJob,
-      // backward compatibility - ternary needed to be removed once the queue renewed
-      _subscriberId: command._subscriberId ? command._subscriberId : command.subscriberId,
+      _subscriberId: command._subscriberId,
     });
 
     if (
@@ -90,6 +115,18 @@ export class Digest extends SendMessageType {
     }
 
     return this.getDigestEventsRegular.execute(digestEventsCommand);
+  }
+
+  private async getCurrentJob(command: SendMessageCommand) {
+    const currentJob = await this.jobRepository.findOne({ _environmentId: command.environmentId, _id: command.jobId });
+
+    if (!currentJob) {
+      const message = `Digest job ${command.jobId} is not found`;
+      Logger.error(message, LOG_CONTEXT);
+      throw new PlatformException(message);
+    }
+
+    return currentJob;
   }
 
   private async getJobsToUpdate(command: SendMessageCommand) {

@@ -14,24 +14,30 @@ import {
   IntegrationRepository,
   ExecutionDetailsRepository,
   EnvironmentRepository,
+  TenantRepository,
+  NotificationTemplateRepository,
 } from '@novu/dal';
-import { UserSession, SubscribersService } from '@novu/testing';
+import { UserSession, SubscribersService, WorkflowOverrideService } from '@novu/testing';
 import {
   ChannelTypeEnum,
   EmailBlockTypeEnum,
+  FieldLogicalOperatorEnum,
+  FieldOperatorEnum,
+  FilterPartTypeEnum,
   StepTypeEnum,
   IEmailBlock,
   ISubscribersDefine,
   TemplateVariableTypeEnum,
   EmailProviderIdEnum,
   SmsProviderIdEnum,
-  FilterPartTypeEnum,
   DigestUnitEnum,
   DelayTypeEnum,
   PreviousStepTypeEnum,
   InAppProviderIdEnum,
-  MESSAGE_IN_APP_RETENTION_DAYS,
-  MESSAGE_GENERIC_RETENTION_DAYS,
+  DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
+  DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
+  ActorTypeEnum,
+  SystemAvatarIconEnum,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
@@ -41,8 +47,6 @@ const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
 
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-
 const promiseTimeout = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
@@ -50,21 +54,29 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
+  let workflowOverrideService: WorkflowOverrideService;
   const notificationRepository = new NotificationRepository();
+  const notificationTemplateRepository = new NotificationTemplateRepository();
   const messageRepository = new MessageRepository();
   const subscriberRepository = new SubscriberRepository();
   const integrationRepository = new IntegrationRepository();
   const jobRepository = new JobRepository();
   const executionDetailsRepository = new ExecutionDetailsRepository();
   const environmentRepository = new EnvironmentRepository();
+  const tenantRepository = new TenantRepository();
 
   describe(`Trigger Event - ${eventTriggerPath} (POST)`, function () {
     beforeEach(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       session = new UserSession();
       await session.initialize();
       template = await session.createTemplate();
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
       subscriber = await subscriberService.createSubscriber();
+      workflowOverrideService = new WorkflowOverrideService({
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+      });
     });
 
     it('should filter delay step', async function () {
@@ -83,18 +95,18 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -136,6 +148,78 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       });
 
       expect(messagesAfter.length).to.equal(2);
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DELAY,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails.length).to.equal(1);
+    });
+
+    it('should filter a delay that is the first step in the workflow', async function () {
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.DELAY,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: FieldOperatorEnum.IS_DEFINED,
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messagesAfter.length).to.equal(1);
 
       const executionDetails = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
@@ -163,18 +247,18 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -227,6 +311,136 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(executionDetails.length).to.equal(1);
     });
 
+    it('should filter multiple digest steps', async function () {
+      const firstStepUuid = uuid();
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            uuid: firstStepUuid,
+          },
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    field: 'digest_type',
+                    value: '1',
+                    operator: FieldOperatorEnum.EQUAL,
+                    on: FilterPartTypeEnum.PAYLOAD,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    field: 'digest_type',
+                    value: '2',
+                    operator: FieldOperatorEnum.EQUAL,
+                    on: FilterPartTypeEnum.PAYLOAD,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    field: 'digest_type',
+                    value: '3',
+                    operator: FieldOperatorEnum.EQUAL,
+                    on: FilterPartTypeEnum.PAYLOAD,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            customVar: 'Testing of User Name',
+            digest_type: '2',
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _templateId: template?._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.EMAIL,
+      });
+
+      expect(messagesAfter.length).to.equal(2);
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DIGEST,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails.length).to.equal(2);
+    });
+
     it('should not filter digest step', async function () {
       const firstStepUuid = uuid();
       template = await session.createTemplate({
@@ -243,18 +457,18 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -298,14 +512,185 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       expect(messagesAfter.length).to.equal(2);
 
-      const executionDetails = await executionDetailsRepository.findOne({
+      const executionDetails = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DIGEST,
         detail: DetailEnum.FILTER_STEPS,
       });
 
-      expect(executionDetails).to.not.be.ok;
+      expect(executionDetails.length).to.equal(0);
+    });
+
+    it('should digest events with filters', async function () {
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: FieldOperatorEnum.IS_DEFINED,
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.SMS,
+            content: 'total digested: {{step.total_count}}',
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            exclude: false,
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            exclude: false,
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.SMS,
+      });
+
+      expect(messagesAfter.length).to.equal(1);
+      expect(messagesAfter && messagesAfter[0].content).to.include('total digested: 2');
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DIGEST,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails.length).to.equal(0);
+    });
+
+    it('should not aggregate a filtered digest into a non filtered digest', async function () {
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.DIGEST,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: FieldOperatorEnum.IS_DEFINED,
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.SMS,
+            content: 'total digested: {{step.total_count}}',
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {
+            exclude: false,
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId],
+          payload: {},
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template?._id, true, 0);
+
+      const messagesAfter = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber._id,
+        channel: StepTypeEnum.SMS,
+      });
+
+      expect(messagesAfter.length).to.equal(2);
+      expect(messagesAfter && messagesAfter[0].content).to.include('total digested: 1');
+      expect(messagesAfter && messagesAfter[1].content).to.include('total digested: 0');
+
+      const executionDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DIGEST,
+        detail: DetailEnum.FILTER_STEPS,
+      });
+
+      expect(executionDetails.length).to.equal(1);
     });
 
     it('should not filter delay step', async function () {
@@ -324,18 +709,18 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
             content: '',
             metadata: {
               unit: DigestUnitEnum.SECONDS,
-              amount: 1,
+              amount: 2,
               type: DelayTypeEnum.REGULAR,
             },
             filters: [
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     on: FilterPartTypeEnum.PAYLOAD,
-                    operator: 'IS_DEFINED',
+                    operator: FieldOperatorEnum.IS_DEFINED,
                     field: 'exclude',
                     value: '',
                   },
@@ -379,14 +764,14 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       expect(messagesAfter.length).to.equal(2);
 
-      const executionDetails = await executionDetailsRepository.findOne({
+      const executionDetails = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
         _notificationTemplateId: template?._id,
         channel: StepTypeEnum.DELAY,
         detail: DetailEnum.FILTER_STEPS,
       });
 
-      expect(executionDetails).to.not.be.ok;
+      expect(executionDetails.length).to.equal(0);
     });
 
     it('should use conditions to select integration', async function () {
@@ -397,7 +782,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _environmentId: session.environment._id,
         conditions: [
           {
-            children: [{ field: 'identifier', value: 'test', operator: 'EQUAL', on: 'tenant' }],
+            children: [{ field: 'identifier', value: 'test', operator: FieldOperatorEnum.EQUAL, on: 'tenant' }],
           },
         ],
         active: true,
@@ -436,10 +821,10 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _environmentId: session.environment._id,
         conditions: [
           {
-            value: 'OR',
+            value: FieldLogicalOperatorEnum.OR,
             children: [
-              { field: 'identifier', value: 'test3', operator: 'EQUAL', on: 'tenant' },
-              { field: 'identifier', value: 'test2', operator: 'EQUAL', on: 'tenant' },
+              { field: 'identifier', value: 'test3', operator: FieldOperatorEnum.EQUAL, on: 'tenant' },
+              { field: 'identifier', value: 'test2', operator: FieldOperatorEnum.EQUAL, on: 'tenant' },
             ],
           },
         ],
@@ -496,7 +881,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _environmentId: session.environment._id,
         conditions: [
           {
-            children: [{ field: 'identifier', value: 'test1', operator: 'EQUAL', on: 'tenant' }],
+            children: [{ field: 'identifier', value: 'test1', operator: FieldOperatorEnum.EQUAL, on: 'tenant' }],
           },
         ],
         active: true,
@@ -934,7 +1319,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       let expireAt = new Date(message?.expireAt as string);
       let createdAt = new Date(message?.createdAt as string);
 
-      const subExpireYear = subDays(expireAt, MESSAGE_IN_APP_RETENTION_DAYS);
+      const subExpireYear = subDays(expireAt, DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS);
       let diff = differenceInMilliseconds(subExpireYear, createdAt);
 
       expect(diff).to.approximately(0, 100);
@@ -951,7 +1336,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expireAt = new Date(email?.expireAt as string);
       createdAt = new Date(email?.createdAt as string);
 
-      const subExpireMonth = subDays(expireAt, MESSAGE_GENERIC_RETENTION_DAYS);
+      const subExpireMonth = subDays(expireAt, DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS);
       diff = differenceInMilliseconds(subExpireMonth, createdAt);
 
       expect(diff).to.approximately(0, 100);
@@ -1176,6 +1561,44 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(message!.subject).to.equal('Test email a subject nested');
     });
 
+    it('should trigger E-Mail notification with actor data', async function () {
+      const newSubscriberId = SubscriberRepository.createObjectId();
+      const channelType = ChannelTypeEnum.EMAIL;
+      const actorSubscriber = await subscriberService.createSubscriber({ firstName: 'Actor' });
+
+      template = await session.createTemplate({
+        steps: [
+          {
+            name: 'Message Name',
+            subject: 'Test email',
+            type: StepTypeEnum.EMAIL,
+            content: [
+              {
+                type: EmailBlockTypeEnum.TEXT,
+                content: 'Hello {{actor.firstName}}, Welcome to {{organizationName}}' as string,
+              },
+            ],
+          },
+        ],
+      });
+
+      await sendTrigger(session, template, newSubscriberId, {}, {}, '', actorSubscriber.subscriberId);
+
+      await session.awaitRunningJobs(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, newSubscriberId);
+
+      const message = await messageRepository.findOne({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: channelType,
+      });
+
+      const block = message!.content[0] as IEmailBlock;
+
+      expect(block.content).to.equal('Hello Actor, Welcome to Umbrella Corp');
+    });
+
     it('should not trigger notification with subscriber data if integration is inactive', async function () {
       const newSubscriberIdInAppNotification = SubscriberRepository.createObjectId();
       const channelType = ChannelTypeEnum.SMS;
@@ -1368,14 +1791,18 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
       await session.awaitRunningJobs(template._id);
 
-      messages = await messageRepository.find({
-        _environmentId: session.environment._id,
-        _subscriberId: createdSubscriber?._id,
-        channel: channelType,
-      });
+      messages = await messageRepository.find(
+        {
+          _environmentId: session.environment._id,
+          _subscriberId: createdSubscriber?._id,
+          channel: channelType,
+        },
+        '',
+        { sort: { createdAt: -1 } }
+      );
 
       expect(messages.length).to.be.equal(2);
-      expect(messages[1].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
+      expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
     });
 
     it('should fail to trigger with missing variables', async function () {
@@ -1663,13 +2090,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
                 type: 'GROUP',
 
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
 
                 children: [
                   {
                     field: 'run',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.PAYLOAD,
                   },
                 ],
@@ -1696,13 +2123,13 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
                 type: 'GROUP',
 
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
 
                 children: [
                   {
                     field: 'subscriberId',
                     value: subscriber.subscriberId,
-                    operator: 'NOT_EQUAL',
+                    operator: FieldOperatorEnum.NOT_EQUAL,
                     on: FilterPartTypeEnum.SUBSCRIBER,
                   },
                 ],
@@ -1761,12 +2188,12 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     field: 'isOnline',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.WEBHOOK,
                     webhookUrl: 'www.user.com/webhook',
                   },
@@ -1863,12 +2290,12 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     field: 'isOnline',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.WEBHOOK,
                     webhookUrl: 'www.user.com/webhook',
                   },
@@ -1928,12 +2355,12 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               {
                 isNegated: false,
                 type: 'GROUP',
-                value: 'AND',
+                value: FieldLogicalOperatorEnum.AND,
                 children: [
                   {
                     field: 'isOnline',
                     value: 'true',
-                    operator: 'EQUAL',
+                    operator: FieldOperatorEnum.EQUAL,
                     on: FilterPartTypeEnum.WEBHOOK,
                     webhookUrl: 'www.user.com/webhook',
                   },
@@ -2022,6 +2449,558 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       // axiosPostStub.restore();
     });
 
+    it('should choose variant by tenant data', async function () {
+      const tenant = await tenantRepository.create({
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+        identifier: 'one_123',
+        name: 'The one and only tenant',
+        data: { value1: 'Best fighter', value2: 'Ever' },
+      });
+
+      const templateWithVariants = await session.createTemplate({
+        name: 'test email template',
+        description: 'This is a test description',
+        steps: [
+          {
+            name: 'Root Message Name',
+            subject: 'Root Test email subject',
+            preheader: 'Root Test email preheader',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'Root This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+            filters: [],
+            variants: [
+              {
+                name: 'Bad Variant Message Template',
+                subject: 'Bad Variant subject',
+                preheader: 'Bad Variant pre header',
+                content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample of Bad Variant text block' }],
+                type: StepTypeEnum.EMAIL,
+                active: true,
+                filters: [
+                  {
+                    isNegated: false,
+                    type: 'GROUP',
+                    value: FieldLogicalOperatorEnum.AND,
+                    children: [
+                      {
+                        on: FilterPartTypeEnum.TENANT,
+                        field: 'name',
+                        value: 'Titans',
+                        operator: FieldOperatorEnum.EQUAL,
+                      },
+                    ],
+                  },
+                ],
+              },
+              {
+                name: 'Better Variant Message Template',
+                subject: 'Better Variant subject',
+                preheader: 'Better Variant pre header',
+                content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample of Better Variant text block' }],
+                type: StepTypeEnum.EMAIL,
+                active: true,
+                filters: [
+                  {
+                    isNegated: false,
+                    type: 'GROUP',
+                    value: FieldLogicalOperatorEnum.AND,
+                    children: [
+                      {
+                        on: FilterPartTypeEnum.TENANT,
+                        field: 'name',
+                        value: 'The one and only tenant',
+                        operator: FieldOperatorEnum.EQUAL,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: templateWithVariants.triggers[0].identifier,
+          to: subscriber.subscriberId,
+          payload: {},
+          tenant: { identifier: tenant.identifier },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(templateWithVariants._id);
+
+      const messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _templateId: templateWithVariants._id,
+      });
+
+      expect(messages.length).to.equal(1);
+      expect(messages[0].subject).to.equal('Better Variant subject');
+    });
+  });
+
+  describe('filters logic', () => {
+    beforeEach(async () => {
+      process.env.LAUNCH_DARKLY_SDK_KEY = '';
+      session = new UserSession();
+      await session.initialize();
+      subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+      subscriber = await subscriberService.createSubscriber();
+    });
+
+    it('should filter a message with variables', async function () {
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            subject: 'Password reset',
+            content: [
+              {
+                type: EmailBlockTypeEnum.TEXT,
+                content: 'This are the text contents of the template for {{firstName}}',
+              },
+              {
+                type: EmailBlockTypeEnum.BUTTON,
+                content: 'SIGN UP',
+                url: 'https://url-of-app.com/{{urlVariable}}',
+              },
+            ],
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    field: 'run',
+                    value: '{{payload.var}}',
+                    operator: FieldOperatorEnum.EQUAL,
+                    on: FilterPartTypeEnum.PAYLOAD,
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            subject: 'Password reset',
+            content: [
+              {
+                type: EmailBlockTypeEnum.TEXT,
+                content: 'This are the text contents of the template for {{firstName}}',
+              },
+            ],
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    field: 'subscriberId',
+                    value: subscriber.subscriberId,
+                    operator: FieldOperatorEnum.NOT_EQUAL,
+                    on: FilterPartTypeEnum.SUBSCRIBER,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: subscriber.subscriberId,
+          payload: {
+            firstName: 'Testing of User Name',
+            urlVariable: '/test/url/path',
+            run: true,
+            var: true,
+          },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template._id);
+
+      const messages = await messageRepository.count({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+      });
+
+      expect(messages).to.equal(1);
+    });
+
+    it('should filter a message with value that includes variables and strings', async function () {
+      const actorSubscriber = await subscriberService.createSubscriber({
+        firstName: 'Actor',
+      });
+
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.EMAIL,
+            subject: 'Password reset',
+            content: [
+              {
+                type: EmailBlockTypeEnum.TEXT,
+                content: 'This are the text contents of the template for {{firstName}}',
+              },
+            ],
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    field: 'name',
+                    value: 'Test {{actor.firstName}}',
+                    operator: FieldOperatorEnum.EQUAL,
+                    on: FilterPartTypeEnum.PAYLOAD,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: template.triggers[0].identifier,
+          to: subscriber.subscriberId,
+          payload: {
+            firstName: 'Testing of User Name',
+            urlVariable: '/test/url/path',
+            name: 'Test Actor',
+          },
+          actor: actorSubscriber.subscriberId,
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(template._id);
+
+      const messages = await messageRepository.count({
+        _environmentId: session.environment._id,
+        _templateId: template._id,
+      });
+
+      expect(messages).to.equal(1);
+    });
+
+    it('should filter by tenant variables data', async function () {
+      const tenant = await tenantRepository.create({
+        _organizationId: session.organization._id,
+        _environmentId: session.environment._id,
+        identifier: 'one_123',
+        name: 'The one and only tenant',
+        data: { value1: 'Best fighter', value2: 'Ever', count: 4 },
+      });
+
+      const templateWithVariants = await session.createTemplate({
+        name: 'test email template',
+        description: 'This is a test description',
+        steps: [
+          {
+            name: 'Message Name',
+            subject: 'Test email subject',
+            preheader: 'Test email preheader',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+            type: StepTypeEnum.EMAIL,
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    on: FilterPartTypeEnum.TENANT,
+                    field: 'data.count',
+                    value: '{{payload.count}}',
+                    operator: FieldOperatorEnum.LARGER,
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: templateWithVariants.triggers[0].identifier,
+          to: subscriber.subscriberId,
+          payload: { count: 5 },
+          tenant: { identifier: tenant.identifier },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+
+      await session.awaitRunningJobs(templateWithVariants._id);
+
+      let messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _templateId: templateWithVariants._id,
+      });
+
+      expect(messages.length).to.equal(0);
+
+      await axiosInstance.post(
+        `${session.serverUrl}${eventTriggerPath}`,
+        {
+          name: templateWithVariants.triggers[0].identifier,
+          to: subscriber.subscriberId,
+          payload: { count: 1 },
+          tenant: { identifier: tenant.identifier },
+        },
+        {
+          headers: {
+            authorization: `ApiKey ${session.apiKey}`,
+          },
+        }
+      );
+      await session.awaitRunningJobs(templateWithVariants._id);
+
+      messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _templateId: templateWithVariants._id,
+      });
+
+      expect(messages.length).to.equal(1);
+    });
+    it('should trigger message with override integration identifier', async function () {
+      const newSubscriberId = SubscriberRepository.createObjectId();
+      const channelType = ChannelTypeEnum.EMAIL;
+
+      template = await createTemplate(session, channelType);
+
+      await sendTrigger(session, template, newSubscriberId);
+
+      await session.awaitRunningJobs(template._id);
+
+      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, newSubscriberId);
+
+      let messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: createdSubscriber?._id,
+        channel: channelType,
+      });
+
+      expect(messages.length).to.be.equal(1);
+      expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.SendGrid);
+
+      const prodEnv = await environmentRepository.findOne({
+        name: 'Production',
+        _organizationId: session.organization._id,
+      });
+
+      const payload = {
+        providerId: EmailProviderIdEnum.Mailgun,
+        channel: 'email',
+        credentials: { apiKey: '123', secretKey: 'abc' },
+        _environmentId: prodEnv?._id,
+        active: true,
+        check: false,
+      };
+
+      const {
+        body: { data: newIntegration },
+      } = await session.testAgent.post('/v1/integrations').send(payload);
+
+      await sendTrigger(
+        session,
+        template,
+        newSubscriberId,
+        {},
+        { email: { integrationIdentifier: newIntegration.identifier } }
+      );
+
+      await session.awaitRunningJobs(template._id);
+
+      messages = await messageRepository.find(
+        {
+          _environmentId: session.environment._id,
+          _subscriberId: createdSubscriber?._id,
+          channel: channelType,
+        },
+        '',
+        { sort: { createdAt: -1 } }
+      );
+
+      expect(messages.length).to.be.equal(2);
+      expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
+    });
+
+    describe('in-app avatar', () => {
+      it('should send the message with choosed system avatar', async () => {
+        const firstStepUuid = uuid();
+        template = await session.createTemplate({
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              content: 'Hello world!',
+              uuid: firstStepUuid,
+              actor: {
+                type: ActorTypeEnum.SYSTEM_ICON,
+                data: SystemAvatarIconEnum.WARNING,
+              },
+            },
+          ],
+        });
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: [subscriber.subscriberId],
+            payload: {},
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs(template?._id, true, 1);
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(messages.length).to.equal(1);
+        expect(messages[0].actor).to.be.ok;
+        expect(messages[0].actor?.type).to.eq(ActorTypeEnum.SYSTEM_ICON);
+        expect(messages[0].actor?.data).to.eq(SystemAvatarIconEnum.WARNING);
+      });
+
+      it('should send the message with custom system avatar url', async () => {
+        const firstStepUuid = uuid();
+        const avatarUrl = 'https://gravatar.com/avatar/5246ec47a6a90ef2bcd29f0ef7d2faa6?s=400&d=robohash&r=x';
+
+        template = await session.createTemplate({
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              content: 'Hello world!',
+              uuid: firstStepUuid,
+              actor: {
+                type: ActorTypeEnum.SYSTEM_CUSTOM,
+                data: avatarUrl,
+              },
+            },
+          ],
+        });
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: [subscriber.subscriberId],
+            payload: {},
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs(template?._id, true, 1);
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(messages.length).to.equal(1);
+        expect(messages[0].actor).to.be.ok;
+        expect(messages[0].actor?.type).to.eq(ActorTypeEnum.SYSTEM_CUSTOM);
+        expect(messages[0].actor?.data).to.eq(avatarUrl);
+      });
+
+      it('should send the message with the actor avatar', async () => {
+        const firstStepUuid = uuid();
+        const avatarUrl = 'https://gravatar.com/avatar/5246ec47a6a90ef2bcd29f0ef7d2faa6?s=400&d=robohash&r=x';
+
+        const actor = await subscriberService.createSubscriber({ avatar: avatarUrl });
+
+        template = await session.createTemplate({
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              content: 'Hello world!',
+              uuid: firstStepUuid,
+              actor: {
+                type: ActorTypeEnum.USER,
+                data: null,
+              },
+            },
+          ],
+        });
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: [subscriber.subscriberId],
+            payload: {},
+            actor: actor.subscriberId,
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs(template?._id, true, 1);
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _subscriberId: subscriber._id,
+          channel: StepTypeEnum.IN_APP,
+        });
+
+        expect(messages.length).to.equal(1);
+        expect(messages[0].actor).to.be.ok;
+        expect(messages[0].actor?.type).to.eq(ActorTypeEnum.USER);
+        expect(messages[0].actor?.data).to.eq(null);
+        expect(messages[0]._actorId).to.eq(actor._id);
+      });
+    });
+
     describe('seen/read filter', () => {
       it('should filter in app seen/read step', async function () {
         const firstStepUuid = uuid();
@@ -2037,7 +3016,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               content: '',
               metadata: {
                 unit: DigestUnitEnum.SECONDS,
-                amount: 1,
+                amount: 2,
                 type: DelayTypeEnum.REGULAR,
               },
             },
@@ -2048,7 +3027,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
                 {
                   isNegated: false,
                   type: 'GROUP',
-                  value: 'AND',
+                  value: FieldLogicalOperatorEnum.AND,
                   children: [
                     {
                       on: FilterPartTypeEnum.PREVIOUS_STEP,
@@ -2127,7 +3106,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
               content: '',
               metadata: {
                 unit: DigestUnitEnum.SECONDS,
-                amount: 1,
+                amount: 2,
                 type: DelayTypeEnum.REGULAR,
               },
             },
@@ -2140,7 +3119,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
                 {
                   isNegated: false,
                   type: 'GROUP',
-                  value: 'AND',
+                  value: FieldLogicalOperatorEnum.AND,
                   children: [
                     {
                       on: FilterPartTypeEnum.PREVIOUS_STEP,
@@ -2207,76 +3186,287 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         expect(messagesAfter.length).to.equal(1);
       });
     });
-  });
-  describe.skip('Trigger Event - [IS_MULTI_PROVIDER_CONFIGURATION_ENABLED=true]', function () {
-    beforeEach(async () => {
-      process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
-      session = new UserSession();
-      await session.initialize();
-    });
 
-    afterEach(async () => {
-      process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-    });
+    describe('workflow override', () => {
+      beforeEach(async () => {
+        process.env.LAUNCH_DARKLY_SDK_KEY = '';
+        session = new UserSession();
+        await session.initialize();
 
-    it('should trigger message with override integration identifier', async function () {
-      const newSubscriberId = SubscriberRepository.createObjectId();
-      const channelType = ChannelTypeEnum.EMAIL;
-
-      template = await createTemplate(session, channelType);
-
-      await sendTrigger(session, template, newSubscriberId);
-
-      await session.awaitRunningJobs(template._id);
-
-      const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, newSubscriberId);
-
-      let messages = await messageRepository.find({
-        _environmentId: session.environment._id,
-        _subscriberId: createdSubscriber?._id,
-        channel: channelType,
+        workflowOverrideService = new WorkflowOverrideService({
+          organizationId: session.organization._id,
+          environmentId: session.environment._id,
+        });
       });
 
-      expect(messages.length).to.be.equal(1);
-      expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.SendGrid);
+      it('should override - active false', async function () {
+        const subscriberOverride = SubscriberRepository.createObjectId();
 
-      const prodEnv = await environmentRepository.findOne({
-        name: 'Production',
-        _organizationId: session.organization._id,
+        // Create active workflow
+        const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
+
+        // Create workflow override with active false
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
+          workflowId: workflow._id,
+          active: false,
+        });
+
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
+
+        const triggerResponse = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        expect(triggerResponse.status).to.equal(201);
+        expect(triggerResponse.data.data.status).to.equal('trigger_not_active');
+
+        await session.awaitRunningJobs();
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages.length).to.equal(0);
+
+        // Disable workflow - should not take effect, test for anomalies
+        await notificationTemplateRepository.update(
+          { _id: workflow._id, _environmentId: session.environment._id },
+          { $set: { active: false } }
+        );
+
+        const triggerResponse2 = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        expect(triggerResponse2.status).to.equal(201);
+        expect(triggerResponse2.data.data.status).to.equal('trigger_not_active');
+
+        await session.awaitRunningJobs();
+
+        const messages2 = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages2.length).to.equal(0);
       });
 
-      const payload = {
-        providerId: EmailProviderIdEnum.Mailgun,
-        channel: 'email',
-        credentials: { apiKey: '123', secretKey: 'abc' },
-        _environmentId: prodEnv?._id,
-        active: true,
-        check: false,
-      };
+      it('should override - active true', async function () {
+        const subscriberOverride = SubscriberRepository.createObjectId();
 
-      const {
-        body: { data: newIntegration },
-      } = await session.testAgent.post('/v1/integrations').send(payload);
+        // Create active workflow
+        const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
 
-      await sendTrigger(
-        session,
-        template,
-        newSubscriberId,
-        {},
-        { email: { integrationIdentifier: newIntegration.identifier } }
-      );
+        // Create active workflow override
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
+          workflowId: workflow._id,
+          active: true,
+        });
 
-      await session.awaitRunningJobs(template._id);
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
 
-      messages = await messageRepository.find({
-        _environmentId: session.environment._id,
-        _subscriberId: createdSubscriber?._id,
-        channel: channelType,
+        const triggerResponse = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        expect(triggerResponse.status).to.equal(201);
+        expect(triggerResponse.data.data.status).to.equal('processed');
+
+        await session.awaitRunningJobs();
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages.length).to.equal(1);
+
+        // Disable workflow - should not take effect as override is active
+        await notificationTemplateRepository.update(
+          { _id: workflow._id, _environmentId: session.environment._id },
+          { $set: { active: false } }
+        );
+
+        const triggerResponse2 = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        expect(triggerResponse2.status).to.equal(201);
+        expect(triggerResponse2.data.data.status).to.equal('processed');
+
+        await session.awaitRunningJobs();
+
+        const messages2 = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages2.length).to.equal(2);
       });
 
-      expect(messages.length).to.be.equal(2);
-      expect(messages[1].providerId).to.be.equal(EmailProviderIdEnum.Mailgun);
+      it('should override - preference - should disable in app channel', async function () {
+        const subscriberOverride = SubscriberRepository.createObjectId();
+
+        // Create a workflow with in app channel enabled
+        const workflow = await createTemplate(session, ChannelTypeEnum.IN_APP);
+
+        // Create a workflow with in app channel disabled
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
+          workflowId: workflow._id,
+          active: true,
+          preferenceSettings: { in_app: false },
+        });
+
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
+        const triggerResponse = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        expect(triggerResponse.status).to.equal(201);
+        expect(triggerResponse.data.data.status).to.equal('processed');
+
+        await session.awaitRunningJobs();
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages.length).to.equal(0);
+      });
+
+      it('should override - preference - should enable in app channel', async function () {
+        const subscriberOverride = SubscriberRepository.createObjectId();
+
+        // Create a workflow with in-app channel disabled
+        const workflow = await session.createTemplate({
+          steps: [
+            {
+              type: StepTypeEnum.IN_APP,
+              content: 'Hello' as string,
+            },
+          ],
+          preferenceSettingsOverride: { in_app: false },
+        });
+
+        // Create workflow override with in app channel enabled
+        const { tenant } = await workflowOverrideService.createWorkflowOverride({
+          workflowId: workflow._id,
+          active: true,
+          preferenceSettings: { in_app: true },
+        });
+
+        if (!tenant) {
+          throw new Error('Tenant not found');
+        }
+
+        const triggerResponse = await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: workflow.triggers[0].identifier,
+            to: subscriberOverride,
+            tenant: tenant.identifier,
+            payload: {
+              firstName: 'Testing of User Name',
+              urlVariable: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        expect(triggerResponse.status).to.equal(201);
+        expect(triggerResponse.data.data.status).to.equal('processed');
+
+        await session.awaitRunningJobs();
+
+        const messages = await messageRepository.find({
+          _environmentId: session.environment._id,
+          _templateId: workflow._id,
+        });
+
+        expect(messages.length).to.equal(1);
+      });
     });
   });
 });
@@ -2298,7 +3488,8 @@ export async function sendTrigger(
   newSubscriberIdInAppNotification: string,
   payload: Record<string, unknown> = {},
   overrides: Record<string, unknown> = {},
-  tenant?: string
+  tenant?: string,
+  actor?: string
 ): Promise<AxiosResponse> {
   return await axiosInstance.post(
     `${session.serverUrl}${eventTriggerPath}`,
@@ -2312,6 +3503,7 @@ export async function sendTrigger(
       },
       overrides,
       tenant,
+      actor,
     },
     {
       headers: {

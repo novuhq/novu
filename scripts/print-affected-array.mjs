@@ -76,7 +76,7 @@ function commaSeparatedListToArray(str) {
 function getAffectedCommandResult(str) {
   const outputLines = str.trim().split(/\r?\n/);
   if (outputLines.length > 2) {
-    return outputLines.slice(-1)[0];
+    return outputLines.slice(2).join('');
   }
 
   return '';
@@ -91,12 +91,21 @@ async function affectedProjectsContainingTask(taskName, baseBranch) {
 
     return JSON.parse(cache);
   }
-  // pnpm nx print-affected --target=[task] --base [base branch] --select=tasks.target.project
-  const result = commaSeparatedListToArray(
-    getAffectedCommandResult(
-      await pnpmRun('nx', 'print-affected', '--target', taskName, '--base', baseBranch, '--select=tasks.target.project')
-    )
+
+  const affectedCommandResult = await pnpmRun(
+    'nx',
+    'show',
+    'projects',
+    '--affected',
+    '--withTarget',
+    taskName,
+    '--base',
+    baseBranch,
+    '--json'
   );
+
+  // pnpm nx show projects --affected --withTarget=[task] --base [base branch] --json
+  const result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
 
   fs.writeFileSync(cachePath, JSON.stringify(result));
 
@@ -113,20 +122,20 @@ async function allProjectsContainingTask(taskName) {
     return JSON.parse(cache);
   }
 
-  // pnpm nx print-affected --target=[task] --files package.json --select=tasks.target.project
-  const result = commaSeparatedListToArray(
-    getAffectedCommandResult(
-      await pnpmRun(
-        'nx',
-        'print-affected',
-        '--target',
-        taskName,
-        '--files',
-        'package.json',
-        '--select=tasks.target.project'
-      )
-    )
+  // pnpm nx show projects --affected --withTarget=[task] --files package.json --json
+  const affectedCommandResult = await pnpmRun(
+    'nx',
+    'show',
+    'projects',
+    '--affected',
+    '--withTarget',
+    taskName,
+    '--files',
+    'package.json',
+    '--json'
   );
+
+  const result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
 
   fs.writeFileSync(cachePath, JSON.stringify(result));
 

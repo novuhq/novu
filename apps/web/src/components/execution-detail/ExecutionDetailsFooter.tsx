@@ -2,7 +2,7 @@ import { Group } from '@mantine/core';
 import styled from '@emotion/styled';
 
 import { GotAQuestionButton } from '../utils/GotAQuestionButton';
-import { Container } from '../../design-system';
+import { Container } from '@novu/design-system';
 
 const ActionsWrapper = styled(Container)`
   margin: 0;

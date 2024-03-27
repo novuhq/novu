@@ -84,6 +84,9 @@ export class UpdateMessageActions {
       });
     }
 
-    return (await this.messageRepository.findById(command.messageId)) as MessageEntity;
+    return (await this.messageRepository.findOne({
+      _environmentId: command.environmentId,
+      _id: command.messageId,
+    })) as MessageEntity;
   }
 }

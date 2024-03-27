@@ -15,6 +15,7 @@ export enum CredentialsKeyEnum {
   Token = 'token',
   From = 'from',
   SenderName = 'senderName',
+  ContentType = 'contentType',
   ApplicationId = 'applicationId',
   ClientId = 'clientId',
   ProjectName = 'projectName',
@@ -27,6 +28,22 @@ export enum CredentialsKeyEnum {
   RedirectUrl = 'redirectUrl',
   Hmac = 'hmac',
   IpPoolName = 'ipPoolName',
+  ApiKeyRequestHeader = 'apiKeyRequestHeader',
+  SecretKeyRequestHeader = 'secretKeyRequestHeader',
+  IdPath = 'idPath',
+  DatePath = 'datePath',
+  AuthenticateByToken = 'authenticateByToken',
+  AuthenticationTokenKey = 'authenticationTokenKey',
+  AccessKey = 'accessKey',
+  InstanceId = 'instanceId',
+  ApiToken = 'apiToken',
+  ApiURL = 'apiURL',
+  AppID = 'appID',
+  alertUid = 'alertUid',
+  title = 'title',
+  imageUrl = 'imageUrl',
+  state = 'state',
+  externalLink = 'externalLink',
 }
 
 export enum EmailProviderIdEnum {
@@ -50,6 +67,7 @@ export enum EmailProviderIdEnum {
   Novu = 'novu-email',
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
+  Braze = 'braze',
 }
 
 export enum SmsProviderIdEnum {
@@ -64,6 +82,8 @@ export enum SmsProviderIdEnum {
   Firetext = 'firetext',
   Infobip = 'infobip-sms',
   BurstSms = 'burst-sms',
+  BulkSms = 'bulk-sms',
+  ISendSms = 'isend-sms',
   Clickatell = 'clickatell',
   FortySixElks = 'forty-six-elks',
   Kannel = 'kannel',
@@ -72,6 +92,14 @@ export enum SmsProviderIdEnum {
   AfricasTalking = 'africas-talking',
   Novu = 'novu-sms',
   Sendchamp = 'sendchamp',
+  GenericSms = 'generic-sms',
+  Clicksend = 'clicksend',
+  Bandwidth = 'bandwidth',
+  MessageBird = 'messagebird',
+  Simpletexting = 'simpletexting',
+  AzureSms = 'azure-sms',
+  RingCentral = 'ring-central',
+  BrevoSms = 'brevo-sms',
 }
 
 export enum ChatProviderIdEnum {
@@ -79,6 +107,11 @@ export enum ChatProviderIdEnum {
   Discord = 'discord',
   MsTeams = 'msteams',
   Mattermost = 'mattermost',
+  Ryver = 'ryver',
+  Zulip = 'zulip',
+  GrafanaOnCall = 'grafana-on-call',
+  GetStream = 'getstream',
+  RocketChat = 'rocket-chat',
 }
 
 export enum PushProviderIdEnum {
@@ -86,7 +119,9 @@ export enum PushProviderIdEnum {
   APNS = 'apns',
   EXPO = 'expo',
   OneSignal = 'one-signal',
+  Pushpad = 'pushpad',
   PushWebhook = 'push-webhook',
+  PusherBeams = 'pusher-beams',
 }
 
 export enum InAppProviderIdEnum {

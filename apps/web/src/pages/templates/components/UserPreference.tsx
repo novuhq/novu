@@ -1,12 +1,12 @@
 import { TemplatePreference } from './notification-setting-form/TemplatePreference';
-import { SubPageWrapper } from './SubPageWrapper';
 import { WorkflowSettingsTabs } from './WorkflowSettingsTabs';
+import { WorkflowSidebar } from './WorkflowSidebar';
 
 export function UserPreference() {
   return (
-    <SubPageWrapper title="Workflow Settings">
+    <WorkflowSidebar title="Workflow Settings">
       <WorkflowSettingsTabs />
       <TemplatePreference />
-    </SubPageWrapper>
+    </WorkflowSidebar>
   );
 }

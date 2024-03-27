@@ -9,12 +9,12 @@ Novu provides a unified API that makes it simple to send notifications through m
 ## TL;DR
 
 ```console
-helm install my-release ./
+helm install my-novu ./ --set store.encryptionKey=$(openssl rand -base64 32)
 ```
 
 ## Introduction
 
-This Helm chart is inspired by Bitnami charts and make use of Bitnami charts for its depencencies.
+This Helm chart is inspired by Bitnami charts and make use of Bitnami charts for its dependencies.
 
 This chart bootstraps a [Novu](https://github.com/novuhq/novu) deployment on a [Kubernetes](https://kubernetes.io) cluster using the [Helm](https://helm.sh) package manager.
 
@@ -25,10 +25,10 @@ This chart bootstraps a [Novu](https://github.com/novuhq/novu) deployment on a [
 
 ## Installing the Chart
 
-To install the chart with the release name `my-release`:
+To install the chart with the release name `my-novu`:
 
 ```console
-helm install my-release ./
+helm install my-novu ./ --set store.encryptionKey=$(openssl rand -base64 32)
 ```
 
 These commands deploy a Keycloak application on the Kubernetes cluster in the default configuration.
@@ -40,7 +40,7 @@ These commands deploy a Keycloak application on the Kubernetes cluster in the de
 To uninstall/delete the `my-release` deployment:
 
 ```console
-helm delete my-release
+helm delete my-novu
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
@@ -156,6 +156,7 @@ The command removes all the Kubernetes components associated with the chart and 
 | `api.env.API_ROOT_URL`                                | Define the required env for novu                                                                                                                | `http://novu-api:3000`   |
 | `api.env.DISABLE_USER_REGISTRATION`                   | If users should not be able to create new accounts. Possible values are: true, false                                                            | `true`                   |
 | `api.env.FRONT_BASE_URL`                              | The base url on which your frontend is accessible for the user. (e.g. web.novu.co)                                                              | `http://novu-web:4200`   |
+| `api.env.MONGO_MIN_POOL_SIZE`                         | The min pool size of the MongoDB connection                                                                                                     | `10`                     |
 | `api.env.MONGO_MAX_POOL_SIZE`                         | The max pool size of the MongoDB connection                                                                                                     | `50`                     |
 | `api.ingress.enabled`                                 | Enable ingress record generation for novu api                                                                                                   | `false`                  |
 | `api.ingress.pathType`                                | Ingress path type                                                                                                                               | `ImplementationSpecific` |

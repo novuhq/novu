@@ -1,0 +1,105 @@
+.custom-code-editor-dark .monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused {
+  color: #fff !important;
+}
+
+.custom-code-editor-dark .monaco-editor .suggest-widget .monaco-list .monaco-list-row:hover {
+  background-color: #828299 !important;
+}
+
+.custom-code-editor-dark
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row:not(.focused)
+  > .contents
+  > .main
+  .monaco-icon-label {
+  color: #fff !important;
+}
+
+.custom-code-editor-dark
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row
+  > .contents
+  > .main
+  .monaco-highlighted-label
+  .highlight {
+  color: #fff !important;
+}
+
+.custom-code-editor-dark
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row.focused
+  > .contents
+  > .main
+  .monaco-highlighted-label
+  .highlight {
+  color: #fff !important;
+}
+
+
+.custom-code-editor
+  .monaco-editor
+  .overflow-guard {
+  border-radius: 10px !important;
+}
+
+.custom-code-editor
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row.focused
+  > .contents
+  > .main
+  .monaco-highlighted-label
+  .highlight {
+  color: #525266 !important;
+}
+
+.custom-code-editor
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row
+  > .contents
+  > .main
+  .monaco-highlighted-label
+  .highlight {
+  color: #525266 !important;
+}
+
+.custom-code-editor
+  .monaco-editor
+  .suggest-widget
+  .monaco-list
+  .monaco-list-row:not(.focused)
+  > .contents
+  > .main
+  .monaco-icon-label {
+  color: #525266 !important;
+}
+
+.custom-code-editor .monaco-editor .suggest-widget .monaco-list .monaco-list-row.focused {
+  color: #525266 !important;
+}
+
+.markerWarningText {
+  color: #eaa900 !important;
+}
+
+.markerWiggledLine {
+  background-image: url('/public/warning-underline.png');
+  background-repeat: repeat-x;
+  background-position-x: center;
+  background-position-y: 1.1em;
+}
+
+.markerGlyphWarning {
+  background-image: url('/public/warning.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+}

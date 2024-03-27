@@ -1,6 +1,5 @@
 import styled from '@emotion/styled';
-import { BoltGradient } from '../../../design-system/icons';
-import { colors, Text } from '../../../design-system';
+import { BoltGradient, colors, Text } from '@novu/design-system';
 
 export function CardStatusBar({ active }: { active: boolean }) {
   const iconProps = active ? { fill: colors.success } : {};

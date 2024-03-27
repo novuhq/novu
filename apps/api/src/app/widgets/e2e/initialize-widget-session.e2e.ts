@@ -2,14 +2,15 @@ import { IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { createHash } from '../../shared/helpers/hmac.service';
 import {
   buildIntegrationKey,
+  CacheInMemoryProviderService,
   CacheService,
-  InMemoryProviderService,
+  createHash,
   InvalidateCacheService,
-  InMemoryProviderEnum,
 } from '@novu/application-generic';
+
+import { encryptApiKeysMigration } from '../../../../migrations/encrypt-api-keys/encrypt-api-keys-migration';
 
 const integrationRepository = new IntegrationRepository();
 const subscriberId = '12345';
@@ -19,8 +20,8 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
   let invalidateCache: InvalidateCacheService;
 
   before(async () => {
-    const inMemoryProviderService = new InMemoryProviderService(InMemoryProviderEnum.REDIS);
-    const cacheService = new CacheService(inMemoryProviderService);
+    const cacheInMemoryProviderService = new CacheInMemoryProviderService();
+    const cacheService = new CacheService(cacheInMemoryProviderService);
     await cacheService.initialize();
     invalidateCache = new InvalidateCacheService(cacheService);
   });
@@ -98,10 +99,22 @@ describe('Initialize Session - /widgets/session/initialize (POST)', async () => 
     const invalidSecretKey = 'invalid-secret-key';
     const invalidSubscriberHmacHash = createHash(invalidSecretKey, subscriberId);
 
-    const responseInvalidSecretKey = await initWidgetSession(subscriberId, session, invalidSecretKey);
+    const responseInvalidSecretKey = await initWidgetSession(subscriberId, session, invalidSubscriberHmacHash);
 
     expect(responseInvalidSecretKey.body?.data?.profile).to.not.exist;
     expect(responseInvalidSecretKey.body.message).to.contain('Please provide a valid HMAC hash');
+  });
+
+  it('should pass api key migration regression tests', async function () {
+    const validSecretKey = session.environment.apiKeys[0].key;
+
+    const invalidSubscriberHmacHash = createHash(validSecretKey, subscriberId);
+
+    await encryptApiKeysMigration();
+
+    const response = await initWidgetSession(subscriberId, session, invalidSubscriberHmacHash);
+
+    expect(response.status).to.equal(201);
   });
 });
 

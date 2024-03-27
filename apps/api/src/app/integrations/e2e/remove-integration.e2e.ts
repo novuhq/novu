@@ -10,8 +10,6 @@ import {
 } from '@novu/shared';
 import { HttpStatus } from '@nestjs/common';
 
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-
 describe('Delete Integration - /integration/:integrationId (DELETE)', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
@@ -19,11 +17,6 @@ describe('Delete Integration - /integration/:integrationId (DELETE)', function (
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-  });
-
-  afterEach(async () => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should throw not found exception when integration is not found', async function () {

@@ -25,7 +25,7 @@ export class SmsCentralSmsProvider implements ISmsProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const data = {
       ACTION: 'send',
-      ORIGINATOR: this.config.from,
+      ORIGINATOR: options.from || this.config.from,
       USERNAME: this.config.username,
       PASSWORD: this.config.password,
       RECIPIENT: options.to,

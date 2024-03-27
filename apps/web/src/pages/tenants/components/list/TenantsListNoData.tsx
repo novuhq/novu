@@ -1,7 +1,6 @@
 import styled from '@emotion/styled';
 
-import { Buildings } from '../../../../design-system/icons';
-import { colors } from '../../../../design-system';
+import { Buildings, colors } from '@novu/design-system';
 import { useEnvController } from '../../../../hooks';
 import { When } from '../../../../components/utils/When';
 

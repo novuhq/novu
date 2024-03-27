@@ -1,14 +1,16 @@
-import { Container, Group, Stack, useMantineColorScheme } from '@mantine/core';
-import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
-import { useCallback, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { Container, Group, Stack } from '@mantine/core';
+import { ComponentType, useCallback, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom';
-
+import { Node, NodeProps } from 'react-flow-renderer';
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
+import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
+import { useAuthContext, useSegment } from '@novu/shared-web';
+
 import { When } from '../../../components/utils/When';
+import type { IFlowEditorProps } from '../../../components/workflow';
 import { FlowEditor } from '../../../components/workflow';
-import { Button } from '../../../design-system';
-import { Settings } from '../../../design-system/icons';
+import { Bolt, Button, Settings } from '@novu/design-system';
 import { useEnvController } from '../../../hooks';
 import { channels } from '../../../utils/channels';
 import { errorMessage } from '../../../utils/notifications';
@@ -23,52 +25,86 @@ import { AddNodeEdge } from './workflow/edge-types/AddNodeEdge';
 import AddNode from './workflow/node-types/AddNode';
 import ChannelNode from './workflow/node-types/ChannelNode';
 import TriggerNode from './workflow/node-types/TriggerNode';
+import { NodeType, NodeData } from '../../../components/workflow/types';
+import { useStepInfoPath } from '../hooks/useStepInfoPath';
+import { useNavigateToVariantPreview } from '../hooks/useNavigateToVariantPreview';
+import { useOnboardingExperiment } from '../../../hooks/useOnboardingExperiment';
+import { OnBoardingAnalyticsEnum } from '../../quick-start/consts';
 
 export const TOP_ROW_HEIGHT = 74;
 
-const nodeTypes = {
-  channelNode: ChannelNode,
-  triggerNode: TriggerNode,
-  addNode: AddNode,
+const nodeTypes: Record<string, ComponentType<NodeProps>> = {
+  [NodeType.CHANNEL]: ChannelNode,
+  [NodeType.TRIGGER]: TriggerNode,
+  [NodeType.ADD_NODE]: AddNode,
 };
 
 const edgeTypes = { special: AddNodeEdge };
 
 const WorkflowEditor = () => {
-  const { addStep, deleteStep } = useTemplateEditorForm();
+  const { addStep, deleteStep, template } = useTemplateEditorForm();
+  const { isUnderVariantsListPath } = useStepInfoPath();
   const { channel } = useParams<{
     channel: StepTypeEnum | undefined;
   }>();
+  const { navigateToVariantPreview } = useNavigateToVariantPreview();
   const [dragging, setDragging] = useState(false);
+  const segment = useSegment();
+  const { isOnboardingExperimentEnabled } = useOnboardingExperiment();
+  const { currentOrganization } = useAuthContext();
 
   const {
+    control,
     trigger,
-    watch,
     formState: { errors, isDirty },
   } = useFormContext<IForm>();
-  const { readonly } = useEnvController();
-  const steps = watch('steps');
+  const { readonly, chimera } = useEnvController({}, template?.chimera);
+  const steps = useWatch({
+    name: 'steps',
+    control,
+  });
+  const tags = useWatch({ name: 'tags' });
+
+  const tagsIncludesOnboarding = tags?.includes('onboarding') && isOnboardingExperimentEnabled;
 
   const [toDelete, setToDelete] = useState<string>('');
   const basePath = useBasePath();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { colorScheme } = useMantineColorScheme();
-  const dark = colorScheme === 'dark';
 
   const onNodeClick = useCallback(
-    (event, node) => {
+    (event, node: Node<NodeData>) => {
       event.preventDefault();
-
-      if (node.type === 'channelNode') {
-        navigate(basePath + `/${node.data.channelType}/${node.data.uuid}`);
-      }
-      if (node.type === 'triggerNode') {
+      const { step, channelType } = node.data;
+      const isVariant = step && step.variants && step.variants?.length > 0;
+      if (isVariant) {
+        navigateToVariantPreview({
+          channel: channelType,
+          stepUuid: step.uuid,
+          variantUuid: step.uuid,
+        });
+      } else if (node.type === NodeType.CHANNEL) {
+        navigate(basePath + `/${channelType}/${step?.uuid ?? ''}/preview`);
+      } else if (node.type === NodeType.TRIGGER) {
         navigate(basePath + '/test-workflow');
       }
     },
-    [navigate, basePath]
+    [navigate, basePath, navigateToVariantPreview]
   );
+
+  const onEdit: IFlowEditorProps['onEdit'] = (_, node) => {
+    if (node.type === NodeType.CHANNEL) {
+      navigate(basePath + `/${node.data.channelType}/${node.data.step?.uuid ?? ''}`);
+    }
+  };
+
+  const onAddVariant = (uuid: string) => {
+    const channelStep = steps.find((step) => step.uuid === uuid);
+
+    if (channelStep) {
+      navigate(basePath + `/${channelStep.template.type}/${uuid}/variants/create`);
+    }
+  };
 
   const confirmDelete = () => {
     const index = steps.findIndex((item) => item.uuid === toDelete);
@@ -157,6 +193,7 @@ const WorkflowEditor = () => {
               }}
             >
               <Group>
+                <Bolt color="#4c6dd4" width="24px" height="24px" />
                 <NameInput />
                 <UpdateButton />
                 <Button
@@ -174,6 +211,7 @@ const WorkflowEditor = () => {
             </Stack>
           </Container>
           <FlowEditor
+            isReadonly
             onDelete={onDelete}
             dragging={dragging}
             errors={errors}
@@ -184,15 +222,20 @@ const WorkflowEditor = () => {
             onStepInit={onStepInit}
             onGetStepError={onGetStepError}
             onNodeClick={onNodeClick}
+            onEdit={onEdit}
+            onAddVariant={onAddVariant}
           />
         </div>
       </div>
     );
   }
 
+  const isEmailChannel = channel && [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel);
+  const isPreviewPath = pathname.endsWith('/preview');
+
   return (
     <>
-      <When truthy={channel && [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
+      <When truthy={!isUnderVariantsListPath && !isPreviewPath && isEmailChannel}>
         <Outlet
           context={{
             setDragging,
@@ -200,13 +243,20 @@ const WorkflowEditor = () => {
           }}
         />
       </When>
-      <When truthy={!channel || ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel)}>
+      <When
+        truthy={
+          !channel ||
+          ![StepTypeEnum.EMAIL, StepTypeEnum.IN_APP].includes(channel) ||
+          isUnderVariantsListPath ||
+          isPreviewPath
+        }
+      >
         <div style={{ display: 'flex', flexFlow: 'row', position: 'relative' }}>
           <div
             style={{
               flex: '1 1 auto',
               display: 'flex',
-              flexFlow: 'column',
+              flexFlow: 'Column',
             }}
           >
             <Container fluid sx={{ width: '100%', height: `${TOP_ROW_HEIGHT}px` }}>
@@ -217,19 +267,33 @@ const WorkflowEditor = () => {
                 }}
               >
                 <Group>
+                  <When truthy={chimera}>
+                    <Bolt color="#4c6dd4" width="24px" height="24px" />
+                  </When>
                   <NameInput />
-                  <Group>
-                    <UpdateButton />
-                  </Group>
+                  <When truthy={!channel}>
+                    <Group>
+                      <UpdateButton />
+                    </Group>
+                  </When>
                   <When truthy={pathname === basePath}>
                     <Button
-                      pulse={shouldPulse}
+                      pulse={tagsIncludesOnboarding || shouldPulse}
                       onClick={() => {
-                        navigate(basePath + '/snippet');
+                        if (tagsIncludesOnboarding) {
+                          segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
+                            action: 'Workflow - Send test notification',
+                            experiment_id: '2024-w9-onb',
+                            _organization: currentOrganization?._id,
+                          });
+                          navigate(basePath + '/test-workflow');
+                        } else {
+                          navigate(basePath + '/snippet');
+                        }
                       }}
                       data-test-id="get-snippet-btn"
                     >
-                      Get Snippet
+                      {tagsIncludesOnboarding ? 'Test Notification Now' : 'Get Snippet'}
                     </Button>
                     <Link data-test-id="settings-page" to="settings">
                       <Settings />
@@ -239,6 +303,8 @@ const WorkflowEditor = () => {
               </Stack>
             </Container>
             <FlowEditor
+              isReadonly={readonly}
+              onEdit={onEdit}
               onDelete={onDelete}
               dragging={dragging}
               errors={errors}
@@ -249,6 +315,8 @@ const WorkflowEditor = () => {
               onStepInit={onStepInit}
               onGetStepError={onGetStepError}
               onNodeClick={onNodeClick}
+              onAddVariant={onAddVariant}
+              sidebarOpen={!(pathname === basePath)}
             />
           </div>
           <Outlet

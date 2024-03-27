@@ -3,10 +3,8 @@ import { useClipboard } from '@mantine/hooks';
 import { useQuery } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 
-import { Input, Tooltip, colors } from '../../../design-system';
-import { Check, Copy } from '../../../design-system/icons';
+import { Input, Tooltip, colors, Check, Copy, inputStyles } from '@novu/design-system';
 import { getApiKeys } from '../../../api/environment';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
 import { useEnvController } from '../../../hooks';
 import { Regenerate } from './components/Regenerate';
 import { When } from '../../../components/utils/When';

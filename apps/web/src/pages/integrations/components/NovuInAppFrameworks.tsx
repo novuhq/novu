@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
+import { colors, Text, ReactLogo, AngularLogo, JavaScriptLogo, VueLogo, IframeLogo } from '@novu/design-system';
+import { UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 
-import { colors, Text } from '../../../design-system';
-import { ReactLogo, AngularLogo, JavaScriptLogo, VueLogo, IframeLogo } from '../../../design-system/icons';
 import { FrameworkEnum } from '../../quick-start/consts';
 
 const NovuInAppFrameworksHolder = styled.div`
@@ -47,12 +47,12 @@ const frameworks = [
   {
     icon: JavaScriptLogo,
     name: 'Web Component',
-    href: 'https://docs.novu.co/notification-center/client/web-component',
+    href: `https://docs.novu.co/notification-center/client/web-component${UTM_CAMPAIGN_QUERY_PARAM}`,
   },
   {
     icon: JavaScriptLogo,
     name: 'Headless',
-    href: 'https://docs.novu.co/notification-center/client/headless/get-started',
+    href: `https://docs.novu.co/notification-center/client/headless/get-started${UTM_CAMPAIGN_QUERY_PARAM}`,
   },
   { icon: VueLogo, name: 'Vue', frameworkEnum: FrameworkEnum.VUE },
   { icon: IframeLogo, name: 'iFrame', frameworkEnum: FrameworkEnum.JS },

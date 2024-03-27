@@ -1,16 +1,29 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import {
+  EnvironmentRepository,
+  ExecutionDetailsRepository,
   IntegrationEntity,
   IntegrationRepository,
+  JobRepository,
+  SubscriberRepository,
   TenantRepository,
+  MessageRepository,
 } from '@novu/dal';
 
 import { SelectIntegration } from './select-integration.usecase';
 import { SelectIntegrationCommand } from './select-integration.command';
-import { GetIsMultiProviderConfigurationEnabled } from '../get-feature-flag';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilter } from '../conditions-filter';
+import { CompileTemplate } from '../compile-template';
+import {
+  ExecutionLogQueueService,
+  FeatureFlagsService,
+  WorkflowInMemoryProviderService,
+} from '../../services';
+import { ExecutionLogRoute } from '../execution-log-route';
+import { CreateExecutionDetails } from '../create-execution-details';
+import { GetFeatureFlag } from '../get-feature-flag';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -73,13 +86,6 @@ jest.mock('@novu/dal', () => ({
   })),
 }));
 
-jest.mock('../get-feature-flag', () => ({
-  ...jest.requireActual('../get-feature-flag'),
-  GetIsMultiProviderConfigurationEnabled: jest.fn(() => ({
-    execute: jest.fn(() => true),
-  })),
-}));
-
 jest.mock('../get-decrypted-integrations', () => ({
   ...jest.requireActual('../get-decrypted-integrations'),
   GetDecryptedIntegrations: jest.fn(() => ({
@@ -89,17 +95,31 @@ jest.mock('../get-decrypted-integrations', () => ({
 
 describe('select integration', function () {
   let useCase: SelectIntegration;
-  let integrationRepository: IntegrationRepository;
+  const integrationRepository: IntegrationRepository =
+    new IntegrationRepository();
+  const executionDetailsRepository: ExecutionDetailsRepository =
+    new ExecutionDetailsRepository();
 
   beforeEach(async function () {
+    // @ts-ignore
     useCase = new SelectIntegration(
-      new IntegrationRepository() as any,
-      // @ts-ignore
-      new GetDecryptedIntegrations(),
-      new ConditionsFilter(),
-      new TenantRepository(),
-      // @ts-ignore
-      new GetIsMultiProviderConfigurationEnabled()
+      integrationRepository,
+      new GetDecryptedIntegrations(integrationRepository),
+      new ConditionsFilter(
+        new SubscriberRepository(),
+        new MessageRepository(),
+        executionDetailsRepository,
+        new JobRepository(),
+        new TenantRepository(),
+        new EnvironmentRepository(),
+        new ExecutionLogRoute(
+          new CreateExecutionDetails(new ExecutionDetailsRepository()),
+          new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
+          new GetFeatureFlag(new FeatureFlagsService())
+        ),
+        new CompileTemplate()
+      ),
+      new TenantRepository()
     );
     jest.clearAllMocks();
   });

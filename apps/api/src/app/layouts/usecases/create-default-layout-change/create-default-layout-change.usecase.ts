@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
+import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
 import { ChangeRepository, LayoutEntity, LayoutRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { CreateChange, CreateChangeCommand } from '../../../change/usecases';
 import { LayoutDto } from '../../dtos';
 import { FindDeletedLayoutCommand, FindDeletedLayoutUseCase } from '../find-deleted-layout';
 import { CreateDefaultLayoutChangeCommand } from './create-default-layout-change.command';

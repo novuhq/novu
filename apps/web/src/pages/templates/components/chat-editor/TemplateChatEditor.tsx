@@ -1,47 +1,86 @@
 import { ChannelTypeEnum } from '@novu/shared';
-import { Control, Controller, useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
+import { Grid, SegmentedControl, Stack, useMantineTheme } from '@mantine/core';
+import { useState } from 'react';
 
-import { Textarea } from '../../../../design-system';
 import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm } from '../formTypes';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
-import { VariableManager } from '../VariableManager';
+import { CustomCodeEditor } from '../CustomCodeEditor';
+import { ChatPreview } from '../../../../components/workflow/preview';
+
+import { EditVariablesModal } from '../EditVariablesModal';
+import { VariableManagementButton } from '../VariableManagementButton';
+import { useEditTemplateContent } from '../../hooks/useEditTemplateContent';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
+import { colors, When } from '@novu/design-system';
+import { InputVariables } from '../InputVariables';
+import { InputVariablesForm } from '../InputVariablesForm';
 
 const templateFields = ['content'];
 
-export function TemplateChatEditor({ control, index }: { control: Control<IForm>; index: number; errors: any }) {
-  const { readonly } = useEnvController();
-  const {
-    formState: { errors },
-  } = useFormContext<IForm>();
-  const variablesArray = useVariablesManager(index, templateFields);
+const PREVIEW = 'Preview';
+const INPUTS = 'Inputs';
+
+export function TemplateChatEditor() {
+  const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
+  const stepFormPath = useStepFormPath();
+  const { control } = useFormContext<IForm>();
+  const variablesArray = useVariablesManager(templateFields);
   const { hasActiveIntegration } = useHasActiveIntegrations({
     channelType: ChannelTypeEnum.CHAT,
   });
+  const [inputVariables, setInputVariables] = useState();
+  const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
+  const { template } = useTemplateEditorForm();
+  const { chimera } = useEnvController({}, template?.chimera);
+  const [activeTab, setActiveTab] = useState<string>(PREVIEW);
+  const theme = useMantineTheme();
 
   return (
     <>
       {!hasActiveIntegration ? <LackIntegrationAlert channelType={ChannelTypeEnum.CHAT} /> : null}
-      <StepSettings index={index} />
-      <Controller
-        name={`steps.${index}.template.content`}
-        defaultValue=""
-        control={control}
-        render={({ field }) => (
-          <Textarea
-            {...field}
-            data-test-id="chatNotificationContent"
-            error={errors?.steps ? errors.steps[index]?.template?.content?.message : undefined}
-            disabled={readonly}
-            minRows={4}
-            value={(field.value as string) || ''}
-            label="Chat message content"
-            placeholder="Add notification content here..."
+      <StepSettings />
+      <Grid>
+        <Grid.Col span={6}>
+          <Controller
+            name={`${stepFormPath}.template.content`}
+            defaultValue=""
+            control={control}
+            render={({ field }) => (
+              <Stack spacing={8}>
+                <VariableManagementButton
+                  openEditVariablesModal={() => {
+                    setEditVariablesModalOpen(true);
+                  }}
+                  label={chimera ? 'Input variables' : undefined}
+                />
+                <When truthy={!chimera}>
+                  <CustomCodeEditor
+                    value={(field.value as string) || ''}
+                    onChange={(value) => {
+                      handleContentChange(value, field.onChange);
+                    }}
+                  />
+                </When>
+                <When truthy={chimera}>
+                  <InputVariablesForm onChange={setInputVariables} />
+                </When>
+              </Stack>
+            )}
           />
-        )}
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <ChatPreview inputVariables={inputVariables} showLoading={isPreviewLoading} />
+        </Grid.Col>
+      </Grid>
+      <EditVariablesModal
+        open={editVariablesModalOpened}
+        setOpen={setEditVariablesModalOpen}
+        variablesArray={variablesArray}
       />
-      <VariableManager index={index} variablesArray={variablesArray} />
     </>
   );
 }

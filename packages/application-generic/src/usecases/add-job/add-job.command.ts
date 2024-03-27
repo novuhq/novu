@@ -1,7 +1,7 @@
-import { IsDefined, IsOptional } from 'class-validator';
+import { IsDefined } from 'class-validator';
 import { JobEntity } from '@novu/dal';
 
-import { EnvironmentWithUserCommand } from '../../commands/project.command';
+import { EnvironmentWithUserCommand } from '../../commands';
 
 export class AddJobCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -10,6 +10,5 @@ export class AddJobCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   job: JobEntity;
 
-  @IsOptional()
-  filtered?: boolean;
+  chimeraResponse?: any;
 }

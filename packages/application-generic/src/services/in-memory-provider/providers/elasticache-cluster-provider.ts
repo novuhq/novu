@@ -4,6 +4,8 @@ import { Logger } from '@nestjs/common';
 
 export { Cluster, ClusterOptions };
 
+import { convertStringValues } from './variable-mappers';
+
 export const CLIENT_READY = 'ready';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 2;
 const DEFAULT_CONNECT_TIMEOUT = 50000;
@@ -40,15 +42,23 @@ export interface IElasticacheClusterProviderConfig {
 export const getElasticacheClusterProviderConfig =
   (): IElasticacheClusterProviderConfig => {
     const redisClusterConfig: IElasticacheClusterConfig = {
-      host: process.env.ELASTICACHE_CLUSTER_SERVICE_HOST,
-      port: process.env.ELASTICACHE_CLUSTER_SERVICE_PORT,
-      ttl: process.env.REDIS_CLUSTER_TTL,
-      password: process.env.REDIS_CLUSTER_PASSWORD,
-      connectTimeout: process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT,
-      keepAlive: process.env.REDIS_CLUSTER_KEEP_ALIVE,
-      family: process.env.REDIS_CLUSTER_FAMILY,
-      keyPrefix: process.env.REDIS_CLUSTER_KEY_PREFIX,
-      tls: process.env.REDIS_CLUSTER_TLS as ConnectionOptions,
+      host: convertStringValues(process.env.ELASTICACHE_CLUSTER_SERVICE_HOST),
+      port: convertStringValues(process.env.ELASTICACHE_CLUSTER_SERVICE_PORT),
+      ttl: convertStringValues(process.env.REDIS_CLUSTER_TTL),
+      password: convertStringValues(process.env.REDIS_CLUSTER_PASSWORD),
+      connectTimeout: convertStringValues(
+        process.env.REDIS_CLUSTER_CONNECTION_TIMEOUT
+      ),
+      keepAlive: convertStringValues(process.env.REDIS_CLUSTER_KEEP_ALIVE),
+      family: convertStringValues(process.env.REDIS_CLUSTER_FAMILY),
+      keyPrefix: convertStringValues(process.env.REDIS_CLUSTER_KEY_PREFIX),
+      tls: (process.env.ELASTICACHE_CLUSTER_SERVICE_TLS as ConnectionOptions)
+        ? {
+            servername: convertStringValues(
+              process.env.ELASTICACHE_CLUSTER_SERVICE_HOST
+            ),
+          }
+        : {},
     };
 
     const host = redisClusterConfig.host;
@@ -82,13 +92,14 @@ export const getElasticacheClusterProviderConfig =
       keepAlive,
       keyPrefix,
       ttl,
+      tls: redisClusterConfig.tls,
     };
   };
 
 export const getElasticacheCluster = (
   enableAutoPipelining?: boolean
 ): Cluster | undefined => {
-  const { instances } = getElasticacheClusterProviderConfig();
+  const { instances, password, tls } = getElasticacheClusterProviderConfig();
 
   const options: ClusterOptions = {
     dnsLookup: (address, callback) => callback(null, address),
@@ -96,7 +107,8 @@ export const getElasticacheCluster = (
     enableOfflineQueue: false,
     enableReadyCheck: true,
     redisOptions: {
-      tls: {},
+      tls,
+      ...(password && { password }),
       connectTimeout: 10000,
     },
     scaleReads: 'slave',

@@ -3,9 +3,10 @@ import * as Sentry from '@sentry/react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Center } from '@mantine/core';
+import { Button, colors, Input, Text } from '@novu/design-system';
+import type { IResponseError } from '@novu/shared';
 
 import { api } from '../../../api/api.client';
-import { Button, colors, Input, Text } from '../../../design-system';
 import { useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 
@@ -16,7 +17,7 @@ type Props = {
 export function PasswordResetRequestForm({ onSent }: Props) {
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { success: boolean },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     {
       email: string;
     }

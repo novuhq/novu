@@ -6,15 +6,20 @@ import axios from 'axios';
 
 const axiosInstance = axios.create();
 
-const callSendgridWebhook = async (environmentId, organizationId, webhookBody) => {
-  const serverUrl = `http://localhost:${process.env.PORT}`;
+const callWebhook = async (
+  environmentId: string,
+  organizationId: string,
+  webhookBody: object,
+  providerOrIntegrationId = 'sendgrid'
+) => {
+  const serverUrl = `http://127.0.0.1:${process.env.PORT}`;
 
-  const { data } = await axiosInstance.post(
-    `${serverUrl}/webhooks/organizations/${organizationId}/environments/${environmentId}/email/sendgrid`,
+  const { data, status } = await axiosInstance.post(
+    `${serverUrl}/webhooks/organizations/${organizationId}/environments/${environmentId}/email/${providerOrIntegrationId}`,
     webhookBody
   );
 
-  return data;
+  return { data, status };
 };
 
 describe('Email webhook - /organizations/:organizationId/environments/:environmentId/email/:providerId (POST)', function () {
@@ -68,14 +73,114 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
       id: message._id,
     };
 
-    const body = await callSendgridWebhook(envId, orgId, webhookBody);
+    const { data } = await callWebhook(envId, orgId, webhookBody);
 
-    const event: IEmailEventBody = body[0].event;
-    expect(body[0].id).to.equal(webhookBody.id);
+    const event: IEmailEventBody = data[0].event;
+    expect(data[0].id).to.equal(webhookBody.id);
     expect(event.externalId).to.equal(webhookBody.id);
     expect(event.attempts).to.equal(5);
     expect(event.response).to.equal('400 try again later');
     expect(event.row).to.eql(webhookBody);
+  });
+
+  it('should allow calling webhook with the integrationId', async function () {
+    const envId = MessageRepository.createObjectId();
+    const orgId = MessageRepository.createObjectId();
+    const id = MessageRepository.createObjectId();
+
+    const message = await messageRepository.create({
+      _id: id,
+      _notificationId: MessageRepository.createObjectId(),
+      _environmentId: envId,
+      _organizationId: orgId,
+      _subscriberId: MessageRepository.createObjectId(),
+      _templateId: MessageRepository.createObjectId(),
+      _messageTemplateId: MessageRepository.createObjectId(),
+      channel: ChannelTypeEnum.EMAIL,
+      _feedId: MessageRepository.createObjectId(),
+      transactionId: MessageRepository.createObjectId(),
+      content: '',
+      payload: {},
+      templateIdentifier: '',
+      identifier: id,
+    });
+
+    const sendgridIntegration = await integrationRepository.create({
+      _environmentId: envId,
+      _organizationId: orgId,
+      providerId: 'sendgrid',
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: {
+        apiKey: 'SG.123',
+      },
+      active: true,
+    });
+
+    const webhookBody = {
+      email: 'example@test.com',
+      timestamp: 1513299569,
+      'smtp-id': '<14c5d75ce93.dfd.64b469@ismtpd-555>',
+      event: 'delivered',
+      ip: '168.1.1.1',
+      category: 'cat facts',
+      sg_event_id: 'sg_event_id',
+      sg_message_id: 'sg_message_id',
+      response: 'success',
+      attempt: '5',
+      id: message._id,
+    };
+
+    const { data } = await callWebhook(envId, orgId, webhookBody, sendgridIntegration._id);
+
+    const event: IEmailEventBody = data[0].event;
+    expect(data[0].id).to.equal(webhookBody.id);
+    expect(event.externalId).to.equal(webhookBody.id);
+    expect(event.attempts).to.equal(5);
+    expect(event.response).to.equal(webhookBody.response);
+    expect(event.row).to.eql(webhookBody);
+  });
+
+  it("should throw bad request error when integration doesn't have credentials configured", async function () {
+    const envId = MessageRepository.createObjectId();
+    const orgId = MessageRepository.createObjectId();
+
+    const sendgridIntegration = await integrationRepository.create({
+      _environmentId: envId,
+      _organizationId: orgId,
+      providerId: 'sendgrid',
+      channel: ChannelTypeEnum.EMAIL,
+      active: true,
+    });
+
+    const webhookBody = {};
+
+    try {
+      await callWebhook(envId, orgId, webhookBody, sendgridIntegration._id);
+      expect.fail();
+    } catch (error) {
+      expect(error).to.be.ok;
+      expect(error.response.status).to.equal(400);
+      expect(error.response.data.message).to.equal(
+        `Integration ${sendgridIntegration._id} doesn't have credentials set up`
+      );
+    }
+  });
+
+  it("should throw not found error when integration doesn't exist", async function () {
+    const envId = MessageRepository.createObjectId();
+    const orgId = MessageRepository.createObjectId();
+    const notExistingIntegrationId = MessageRepository.createObjectId();
+
+    const webhookBody = {};
+
+    try {
+      await callWebhook(envId, orgId, webhookBody, notExistingIntegrationId);
+      expect.fail();
+    } catch (error) {
+      expect(error).to.be.ok;
+      expect(error.response.status).to.equal(404);
+      expect(error.response.data.message).to.equal(`Integration for ${notExistingIntegrationId} was not found`);
+    }
   });
 
   it('should create execution details after processing the response of a webhook', async function () {
@@ -131,7 +236,7 @@ describe('Email webhook - /organizations/:organizationId/environments/:environme
       id: message._id,
     };
 
-    const body = await callSendgridWebhook(environmentId, organizationId, webhookBody);
+    await callWebhook(environmentId, organizationId, webhookBody);
 
     const executionDetailsRepository = new ExecutionDetailsRepository();
     const [executionDetails] = await executionDetailsRepository.find({

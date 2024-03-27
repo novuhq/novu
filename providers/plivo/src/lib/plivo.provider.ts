@@ -28,7 +28,7 @@ export class PlivoSmsProvider implements ISmsProvider {
     options: ISmsOptions
   ): Promise<ISendMessageSuccessResponse> {
     const plivoResponse = await this.plivoClient.messages.create(
-      this.config.from,
+      options.from || this.config.from,
       options.to,
       options.content
     );

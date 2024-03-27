@@ -10,6 +10,7 @@ export interface IMandrilInterface {
 export interface IMandrillSendOptions {
   message: {
     from_email: string;
+    from_name: string;
     subject: string;
     html: string;
     to: { email: string; type: 'to' | string }[];

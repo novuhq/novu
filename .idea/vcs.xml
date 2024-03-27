@@ -18,6 +18,6 @@
   </component>
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/enterprise/packages" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/.source" vcs="Git" />
   </component>
 </project>

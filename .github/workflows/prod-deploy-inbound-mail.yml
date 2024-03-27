@@ -12,9 +12,7 @@ jobs:
         name: [ 'novu/inbound-mail-ee', 'novu/inbound-mail' ]
     uses: ./.github/workflows/reusable-inbound-mail-e2e.yml
     with:
-      ee: ${{ contains (matrix.name,'ee') }}
-      submodules: ${{ contains (matrix.name,'ee') }}
-      submodule_branch: "main"
+      ee: ${{ contains (matrix.name,'-ee') }}
     secrets: inherit
 
   build_prod_image:
@@ -38,10 +36,25 @@ jobs:
       - name: build api
         run: pnpm build:inbound-mail
 
-      - name: Setup Depot
-        uses: depot/setup-action@v1
+      - uses: crazy-max/ghaction-setup-docker@v2
         with:
-          oidc: true
+          version: v24.0.6
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: 'image=moby/buildkit:v0.12.4'
 
       - name: Set Bull MQ Env variable for EE
         if: contains(matrix.name, 'ee')
@@ -57,10 +70,9 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
-          DEPOT_PROJECT_ID: 6sj0jfv0n7
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/inbound-mail && pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | depot build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/inbound-mail - -t novu-inbound-mail --load
+          cd apps/inbound-mail && pnpm --silent --workspace-root pnpm-context -- apps/inbound-mail/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/inbound-mail - -t novu-inbound-mail --load --platform=linux/amd64,linux/arm64 --provenance=false
           docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-inbound-mail ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG

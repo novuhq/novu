@@ -1,0 +1,66 @@
+name: Deploy Embed to Netlify
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      widget_url:
+        required: true
+        type: string
+      # Netlify inputs
+      netlify_deploy_message:
+        required: true
+        type: string
+      netlify_alias:
+        required: true
+        type: string
+      netlify_gh_env:
+        required: true
+        type: string
+      netlify_site_id:
+        required: true
+        type: string
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  reusable_embed_deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ./.github/actions/setup-project
+        with:
+          slim: 'true'
+
+      - name: Build
+        run: CI='' npm run build:embed
+
+      - name: Build
+        working-directory: libs/embed
+        env:
+          WIDGET_URL: ${{ inputs.widget_url }}
+        run: CI='' npm run build:prod
+
+      - name: Deploy Embed
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: libs/embed/dist
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: ${{ inputs.netlify_deploy_message }}
+          production-deploy: true
+          alias: ${{ inputs.netlify_alias }}
+          github-deployment-environment: ${{ inputs.netlify_gh_env }}
+          github-deployment-description: Embed Deployment
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ inputs.netlify_site_id }}
+        timeout-minutes: 1

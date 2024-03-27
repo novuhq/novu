@@ -1,10 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { NotificationTemplateRepository, NotificationTemplateEntity } from '@novu/dal';
 import { buildGroupedBlueprintsKey, CachedEntity } from '@novu/application-generic';
-import { INotificationTemplate, IGroupedBlueprint } from '@novu/shared';
+import { IGroupedBlueprint } from '@novu/shared';
 
 import { GroupedBlueprintResponse } from '../../dto/grouped-blueprint.response.dto';
-import { POPULAR_GROUPED_NAME, POPULAR_TEMPLATES_ID_LIST } from './index';
+import { GetGroupedBlueprintsCommand, POPULAR_GROUPED_NAME, POPULAR_TEMPLATES_ID_LIST } from './index';
 
 const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
 
@@ -13,17 +13,17 @@ export class GetGroupedBlueprints {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
   @CachedEntity({
-    builder: () => buildGroupedBlueprintsKey(),
+    builder: (command: GetGroupedBlueprintsCommand) => buildGroupedBlueprintsKey(command.environmentId),
     options: { ttl: WEEK_IN_SECONDS },
   })
-  async execute(): Promise<GroupedBlueprintResponse> {
-    const groups = await this.fetchGroupedBlueprints();
+  async execute(command: GetGroupedBlueprintsCommand): Promise<GroupedBlueprintResponse> {
+    const generalGroups = await this.fetchGroupedBlueprints();
 
-    const updatePopularBlueprints = this.updatePopularBlueprints(groups);
+    const updatePopularBlueprints = this.getPopularGroupBlueprints(generalGroups);
 
-    const popular = { name: POPULAR_GROUPED_NAME, blueprints: updatePopularBlueprints };
+    const popularGroup = { name: POPULAR_GROUPED_NAME, blueprints: updatePopularBlueprints };
 
-    return { general: groups as IGroupedBlueprint[], popular };
+    return { general: generalGroups as IGroupedBlueprint[], popular: popularGroup as IGroupedBlueprint };
   }
 
   private async fetchGroupedBlueprints() {
@@ -41,27 +41,28 @@ export class GetGroupedBlueprints {
     return groups.map((group) => group.blueprints).flat();
   }
 
-  private updatePopularBlueprints(
+  private getPopularGroupBlueprints(
     groups: { name: string; blueprints: NotificationTemplateEntity[] }[]
-  ): INotificationTemplate[] {
+  ): NotificationTemplateEntity[] {
     const storedBlueprints = this.groupedToBlueprintsArray(groups);
 
     const localPopularIds = [...POPULAR_TEMPLATES_ID_LIST];
 
-    const result: INotificationTemplate[] = [];
+    const result: NotificationTemplateEntity[] = [];
 
     for (const localPopularId of localPopularIds) {
       const storedBlueprint = storedBlueprints.find((blueprint) => blueprint._id === localPopularId);
 
       if (!storedBlueprint) {
         Logger.warn(
-          `Could not find stored popular blueprint id: ${localPopularId}, BLUEPRINT_CREATOR: ${NotificationTemplateRepository.getBlueprintOrganizationId()}`
+          `Could not find stored popular blueprint id: ${localPopularId}, BLUEPRINT_CREATOR: 
+          ${NotificationTemplateRepository.getBlueprintOrganizationId()}`
         );
 
         continue;
       }
 
-      result.push(storedBlueprint as INotificationTemplate);
+      result.push(storedBlueprint);
     }
 
     return result;

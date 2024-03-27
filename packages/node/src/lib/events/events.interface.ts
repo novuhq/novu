@@ -18,12 +18,12 @@ export interface IBroadcastPayloadOptions {
   payload: ITriggerPayload;
   overrides?: ITriggerOverrides;
   tenant?: ITriggerTenant;
+  transactionId?: string;
 }
 
 export interface ITriggerPayloadOptions extends IBroadcastPayloadOptions {
   to: TriggerRecipientsPayload;
   actor?: TriggerRecipientSubscriber;
-  transactionId?: string;
 }
 export interface IIntegrationOverride {
   integrationIdentifier?: string;
@@ -36,7 +36,7 @@ export interface IEmailOverrides extends IIntegrationOverride {
   cc?: string[];
   bcc?: string[];
   senderName?: string;
-  customData?: Record<string, Record<string, unknown>>;
+  customData?: Record<string, any>;
 }
 
 export type ITriggerTenant = string | ITenantDefine;
@@ -134,6 +134,7 @@ export type ITriggerOverrideSMS = {
   to?: string;
   content?: string;
   from?: string;
+  customData?: Record<string, any>;
 };
 
 export type ITriggerOverrideExpo = {

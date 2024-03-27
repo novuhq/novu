@@ -2,9 +2,9 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 
 import { ChannelTypeEnum } from '@novu/stateless';
 import { IntegrationEntity, IntegrationRepository, EnvironmentRepository, ICredentialsEntity } from '@novu/dal';
+import { createHash } from '@novu/application-generic';
 
 import { ChatOauthCommand } from './chat-oauth.command';
-import { createHash } from '../../../shared/helpers/hmac.service';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 
 @Injectable()

@@ -95,6 +95,8 @@ spec:
               value : {{print .Values.api.env.NODE_ENV | quote }}
             - name: PORT
               value : {{print  .Values.ws.port | quote }}
+            - name: MONGO_MIN_POOL_SIZE
+              value : {{print  .Values.api.env.MONGO_MIN_POOL_SIZE | quote }}
             - name: MONGO_MAX_POOL_SIZE
               value : {{print  .Values.api.env.MONGO_MAX_POOL_SIZE | quote }}
             - name: REDIS_HOST

@@ -1,5 +1,5 @@
 import { Handle, Position } from 'react-flow-renderer';
-import { InAppFilled } from '../../../design-system/icons';
+import { InAppFilled } from '@novu/design-system';
 import { NodeStep } from '../../workflow';
 
 export function InAppNode({ data }: { data: { label: string; email?: string } }) {

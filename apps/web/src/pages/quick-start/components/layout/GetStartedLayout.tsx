@@ -8,7 +8,7 @@ import { currentOnboardingStep } from '../route/store';
 import { BodyLayout } from './BodyLayout';
 import { FooterLayout } from './FooterLayout';
 import { HeaderLayout } from './HeaderLayout';
-import { Title } from '../../../../design-system';
+import { Title } from '@novu/design-system';
 
 interface IGetStartedLayoutProps {
   children?: React.ReactNode;
@@ -23,8 +23,8 @@ export function GetStartedLayout({ children, footer }: IGetStartedLayoutProps) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    currentOnboardingStep().set(location.pathname);
-  }, [location.pathname]);
+    currentOnboardingStep().set(`${location.pathname}${location.search}`);
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     const route = currentOnboardingStep().get();

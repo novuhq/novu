@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes.enum';
-import { Cards } from '../../../design-system';
+import { Cards } from '@novu/design-system';
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { frameworkSetupTitle, OnBoardingAnalyticsEnum } from '../consts';
 

@@ -17,6 +17,8 @@ export interface IAttachmentOptions {
   file: Buffer;
   name?: string;
   channels?: ChannelTypeEnum[];
+  cid?: string;
+  disposition?: string;
 }
 
 export interface IEmailOptions {
@@ -33,7 +35,8 @@ export interface IEmailOptions {
   payloadDetails?: any;
   notificationDetails?: any;
   ipPoolName?: string;
-  customData?: Record<string, Record<string, unknown>>;
+  customData?: Record<string, any>;
+  senderName?: string;
 }
 
 export interface ITriggerPayload {
@@ -60,3 +63,13 @@ export interface ITopic {
 }
 
 export type TriggerRecipientTopics = ITopic[];
+
+export enum AddressingTypeEnum {
+  BROADCAST = 'broadcast',
+  MULTICAST = 'multicast',
+}
+
+export enum TriggerRequestCategoryEnum {
+  SINGLE = 'single',
+  BULK = 'bulk',
+}

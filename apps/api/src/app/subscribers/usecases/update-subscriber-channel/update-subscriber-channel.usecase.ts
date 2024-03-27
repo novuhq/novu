@@ -61,13 +61,14 @@ export class UpdateSubscriberChannel {
         command.environmentId,
         existingChannel,
         updatePayload,
-        foundSubscriber
+        foundSubscriber,
+        command.isIdempotentOperation
       );
     } else {
       await this.addChannelToSubscriber(updatePayload, foundIntegration, command, foundSubscriber);
     }
 
-    this.analyticsService.track('Set Subscriber Credentials - [Subscribers]', command.organizationId, {
+    this.analyticsService.mixpanelTrack('Set Subscriber Credentials - [Subscribers]', '', {
       providerId: command.providerId,
       _organization: command.organizationId,
       oauthHandler: command.oauthHandler,
@@ -110,7 +111,8 @@ export class UpdateSubscriberChannel {
     environmentId: string,
     existingChannel: IChannelSettings,
     updatePayload: Partial<IChannelSettings>,
-    foundSubscriber: SubscriberEntity
+    foundSubscriber: SubscriberEntity,
+    isIdempotentOperation: boolean
   ) {
     const equal = isEqual(existingChannel.credentials, updatePayload.credentials);
 
@@ -121,10 +123,14 @@ export class UpdateSubscriberChannel {
     let deviceTokens: string[] = [];
 
     if (updatePayload.credentials?.deviceTokens) {
-      deviceTokens = this.unionDeviceTokens(
-        existingChannel.credentials.deviceTokens ?? [],
-        updatePayload.credentials.deviceTokens
-      );
+      if (isIdempotentOperation) {
+        deviceTokens = this.unionDeviceTokens([], updatePayload.credentials.deviceTokens);
+      } else {
+        deviceTokens = this.unionDeviceTokens(
+          existingChannel.credentials.deviceTokens ?? [],
+          updatePayload.credentials.deviceTokens
+        );
+      }
     }
 
     await this.invalidateCache.invalidateByKey({

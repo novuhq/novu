@@ -1,5 +1,6 @@
 export * from './useSocket';
 export * from './useUnseenCount';
+export * from './useUnreadCount';
 export * from './useNotifications';
 export * from './useNovuContext';
 export * from './useNovuTheme';
@@ -15,4 +16,5 @@ export * from './useFetchUserPreferences';
 export * from './useFetchUserGlobalPreferences';
 export * from './useMarkNotificationsAs';
 export * from './useRemoveNotification';
+export * from './useRemoveNotifications';
 export * from './useRemoveAllNotifications';

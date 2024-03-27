@@ -3,7 +3,7 @@ import * as capitalize from 'lodash.capitalize';
 import { useMantineColorScheme } from '@mantine/core';
 import { DigestUnitEnum, MonthlyTypeEnum } from '@novu/shared';
 
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 import { pluralizeTime } from '../../../../utils';
 
 const Highlight = ({ children, isHighlight }) => {
@@ -60,18 +60,12 @@ const sortWeekdays = (weekdays: string[]): string[] => {
   return weekdays.sort((a, b) => WEEKDAYS_ORDER.indexOf(a) - WEEKDAYS_ORDER.indexOf(b));
 };
 
-export const TimedDigestWillBeSentHeader = ({
-  index,
-  isHighlight = true,
-}: {
-  index: number;
-  isHighlight?: boolean;
-}) => {
+export const TimedDigestWillBeSentHeader = ({ path, isHighlight = true }: { path: string; isHighlight?: boolean }) => {
   const { watch } = useFormContext();
 
-  const unit = watch(`steps.${index}.digestMetadata.timed.unit`);
+  const unit = watch(`${path}.digestMetadata.timed.unit`);
   if (unit == DigestUnitEnum.MINUTES) {
-    const amount = watch(`steps.${index}.digestMetadata.timed.minutes.amount`);
+    const amount = watch(`${path}.digestMetadata.timed.minutes.amount`);
 
     return (
       <>
@@ -81,7 +75,7 @@ export const TimedDigestWillBeSentHeader = ({
   }
 
   if (unit == DigestUnitEnum.HOURS) {
-    const amount = watch(`steps.${index}.digestMetadata.timed.hours.amount`);
+    const amount = watch(`${path}.digestMetadata.timed.hours.amount`);
 
     return (
       <>
@@ -91,8 +85,8 @@ export const TimedDigestWillBeSentHeader = ({
   }
 
   if (unit === DigestUnitEnum.DAYS) {
-    const amount = watch(`steps.${index}.digestMetadata.timed.days.amount`);
-    const atTime = watch(`steps.${index}.digestMetadata.timed.days.atTime`);
+    const amount = watch(`${path}.digestMetadata.timed.days.amount`);
+    const atTime = watch(`${path}.digestMetadata.timed.days.atTime`);
 
     if (amount !== '' && amount !== '1') {
       return (
@@ -122,9 +116,9 @@ export const TimedDigestWillBeSentHeader = ({
   }
 
   if (unit === DigestUnitEnum.WEEKS) {
-    const amount = watch(`steps.${index}.digestMetadata.timed.weeks.amount`);
-    const atTime = watch(`steps.${index}.digestMetadata.timed.weeks.atTime`);
-    const weekDays = watch(`steps.${index}.digestMetadata.timed.weeks.weekDays`) || [];
+    const amount = watch(`${path}.digestMetadata.timed.weeks.amount`);
+    const atTime = watch(`${path}.digestMetadata.timed.weeks.atTime`);
+    const weekDays = watch(`${path}.digestMetadata.timed.weeks.weekDays`) || [];
 
     const weekDaysString =
       weekDays?.length > 2
@@ -166,14 +160,14 @@ export const TimedDigestWillBeSentHeader = ({
     );
   }
 
-  const amount = watch(`steps.${index}.digestMetadata.timed.months.amount`);
-  const monthlyType = watch(`steps.${index}.digestMetadata.timed.months.monthlyType`);
-  const atTime = watch(`steps.${index}.digestMetadata.timed.months.atTime`);
-  const monthDays = watch(`steps.${index}.digestMetadata.timed.months.monthDays`) || [];
+  const amount = watch(`${path}.digestMetadata.timed.months.amount`);
+  const monthlyType = watch(`${path}.digestMetadata.timed.months.monthlyType`);
+  const atTime = watch(`${path}.digestMetadata.timed.months.atTime`);
+  const monthDays = watch(`${path}.digestMetadata.timed.months.monthDays`) || [];
 
   if (monthlyType === MonthlyTypeEnum.ON) {
-    const ordinal = watch(`steps.${index}.digestMetadata.timed.months.ordinal`);
-    const ordinalValue = watch(`steps.${index}.digestMetadata.timed.months.ordinalValue`);
+    const ordinal = watch(`${path}.digestMetadata.timed.months.ordinal`);
+    const ordinalValue = watch(`${path}.digestMetadata.timed.months.ordinalValue`);
 
     if (!ordinal || !ordinalValue) {
       return null;

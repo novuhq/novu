@@ -4,6 +4,7 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
+import axios from 'axios';
 
 if (!globalThis.fetch) {
   // eslint-disable-next-line global-require
@@ -12,7 +13,7 @@ if (!globalThis.fetch) {
 
 export class GupshupSmsProvider implements ISmsProvider {
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
-  public static BASE_URL = 'http://enterprise.smsgupshup.com/GatewayAPI/rest';
+  public static BASE_URL = 'https://enterprise.smsgupshup.com/GatewayAPI/rest';
 
   constructor(
     private config: {
@@ -33,20 +34,19 @@ export class GupshupSmsProvider implements ISmsProvider {
       method: 'sendMessage',
       format: 'text',
       v: '1.1',
-      userId: this.config.userId,
+      userid: this.config.userId,
       password: this.config.password,
+      ...(options.customData?.principalEntityId && {
+        principalEntityId: options.customData?.principalEntityId,
+      }),
+      ...(options.customData?.dltTemplateId && {
+        dltTemplateId: options.customData?.dltTemplateId,
+      }),
     };
 
-    const opts = {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(params),
-    };
+    const response = await axios.post(GupshupSmsProvider.BASE_URL, params);
 
-    const response = await fetch(GupshupSmsProvider.BASE_URL, opts);
-    const body = await response.text();
+    const body = response.data;
     const result = body.split(' | ');
 
     if (result[0] === 'error') {

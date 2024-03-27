@@ -3,10 +3,9 @@ import { Group, Stack } from '@mantine/core';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
+import type { IResponseError, ITenantEntity, IUpdateTenantDto } from '@novu/shared';
+import { Button, colors, NameInput, Sidebar, Text } from '@novu/design-system';
 
-import { ITenantEntity, IUpdateTenantDto } from '@novu/shared';
-
-import { Button, colors, NameInput, Sidebar, Text } from '../../../design-system';
 import { getTenantByIdentifier, updateTenant } from '../../../api/tenants';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { QueryKeys } from '../../../api/query.keys';
@@ -43,7 +42,7 @@ export function UpdateTenantSidebar({
 
   const { mutateAsync: updateTenantMutate, isLoading: isLoadingUpdate } = useMutation<
     ITenantEntity,
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { identifier: string; data: IUpdateTenantDto }
   >(({ identifier, data }) => updateTenant(identifier, data), {
     onSuccess: async () => {

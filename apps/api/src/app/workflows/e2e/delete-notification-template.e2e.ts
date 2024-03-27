@@ -65,10 +65,13 @@ describe('Delete workflow by id - /workflows/:workflowId (DELETE)', async () => 
       enabled: false,
     });
 
-    const prodEvn = await getProductionEnvironment(session.environment._id);
+    const prodEnv = await getProductionEnvironment(session.environment._id);
+    if (!prodEnv) {
+      throw new Error('No env found');
+    }
 
     const isCreated = await notificationTemplateRepository.findOne({
-      _environmentId: prodEvn._id,
+      _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
     });
 
@@ -87,7 +90,7 @@ describe('Delete workflow by id - /workflows/:workflowId (DELETE)', async () => 
     });
 
     const isDeleted = await notificationTemplateRepository.findOne({
-      _environmentId: prodEvn._id,
+      _environmentId: prodEnv._id,
       _parentId: notificationTemplateId,
     });
 

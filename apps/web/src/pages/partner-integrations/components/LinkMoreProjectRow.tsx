@@ -1,6 +1,5 @@
 import { Group } from '@mantine/core';
-import { Button } from '../../../design-system';
-import { PlusCircle } from '../../../design-system/icons';
+import { Button, PlusCircle } from '@novu/design-system';
 
 type LinkMoreProjectRowProps = {
   addMoreProjectRow: VoidFunction;

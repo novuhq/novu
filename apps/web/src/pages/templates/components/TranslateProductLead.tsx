@@ -1,6 +1,6 @@
 import { CSSProperties } from 'react';
 import { ProductLead, ProductLeadVariants } from '../../../components/utils/ProductLead';
-import { Translate } from '../../../design-system/icons';
+import { Translate } from '@novu/design-system';
 
 export const TranslateProductLead = ({ id, style = {} }: { id: string; style?: CSSProperties }) => {
   return (

@@ -23,9 +23,9 @@ export class SwitchEnvironment {
   ) {}
 
   async execute(command: SwitchEnvironmentCommand) {
-    const project = await this.environmentRepository.findById(
-      command.newEnvironmentId
-    );
+    const project = await this.environmentRepository.findOne({
+      _id: command.newEnvironmentId,
+    });
     if (!project) throw new NotFoundException('Environment not found');
     if (project._organizationId !== command.organizationId) {
       throw new UnauthorizedException('Not authorized for organization');

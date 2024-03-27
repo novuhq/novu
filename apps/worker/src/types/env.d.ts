@@ -11,6 +11,7 @@ declare global {
       MAX_NOVU_INTEGRATION_MAIL_REQUESTS?: string;
       NOVU_EMAIL_INTEGRATION_API_KEY?: string;
       STORAGE_SERVICE?: string;
+      METRICS_SERVICE?: string;
       REDIS_HOST: string;
       REDIS_PORT: number;
       REDIS_PASSWORD?: string;
@@ -27,11 +28,16 @@ declare global {
       REDIS_CACHE_KEY_PREFIX?: string;
       REDIS_CACHE_SERVICE_TLS?: ConnectionOptions;
       MONGO_URL: string;
+      MONGO_MIN_POOL_SIZE: number;
       MONGO_MAX_POOL_SIZE: number;
       NEW_RELIC_APP_NAME: string;
       NEW_RELIC_LICENSE_KEY: string;
       SEGMENT_TOKEN?: string;
       LAUNCH_DARKLY_SDK_KEY?: string;
+      STRIPE_API_KEY: string;
+      NOTIFICATION_RETENTION_DAYS?: number;
+      MESSAGE_GENERIC_RETENTION_DAYS?: number;
+      MESSAGE_IN_APP_RETENTION_DAYS?: number;
     }
   }
 }

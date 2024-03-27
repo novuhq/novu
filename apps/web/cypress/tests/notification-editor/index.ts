@@ -1,4 +1,4 @@
-type Channel = 'inApp' | 'email' | 'sms' | 'digest' | 'delay';
+export type Channel = 'inApp' | 'email' | 'sms' | 'chat' | 'push' | 'digest' | 'delay';
 
 export function addAndEditChannel(channel: Channel) {
   cy.waitForNetworkIdle(500);
@@ -18,10 +18,13 @@ export function dragAndDrop(channel: Channel, dropTestId = 'addNodeButton') {
 
 export function editChannel(channel: Channel, last = false) {
   cy.clickWorkflowNode(`node-${channel}Selector`, last);
+  if (['inApp', 'email', 'sms', 'chat', 'push'].includes(channel)) {
+    cy.getByTestId('edit-action').click();
+  }
 }
 
 export function goBack() {
-  cy.getByTestId('close-step-page').click();
+  cy.getByTestId('sidebar-close').click();
   cy.waitForNetworkIdle(500);
 }
 

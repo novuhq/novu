@@ -1,17 +1,27 @@
+import { useEffect } from 'react';
+import { ActionIcon, Center, Input as MantineInput } from '@mantine/core';
+import { Control, Controller, useForm } from 'react-hook-form';
 import { useClipboard } from '@mantine/hooks';
 import styled from '@emotion/styled';
-import { inputStyles } from '../../../design-system/config/inputs.styles';
-import Card from '../../../components/layout/components/Card';
-import { ActionIcon, Center, Input as MantineInput } from '@mantine/core';
-import { colors, Text, Input, Tooltip, Button } from '../../../design-system';
-import { Check, CheckCircle, Copy } from '../../../design-system/icons';
-import React, { useEffect } from 'react';
-import { Control, Controller, useForm } from 'react-hook-form';
-import { useEffectOnce, useEnvController } from '../../../hooks';
 import { useMutation } from '@tanstack/react-query';
-import { updateDnsSettings } from '../../../api/environment';
 import { showNotification } from '@mantine/notifications';
-import { WarningIcon } from '../../../design-system/icons/general/WarningIcon';
+import {
+  colors,
+  Text,
+  Input,
+  Tooltip,
+  Button,
+  Check,
+  CheckCircle,
+  Copy,
+  WarningIcon,
+  inputStyles,
+} from '@novu/design-system';
+import type { IResponseError } from '@novu/shared';
+
+import Card from '../../../components/layout/components/Card';
+import { useEffectOnce, useEnvController } from '../../../hooks';
+import { updateDnsSettings } from '../../../api/environment';
 import { validateMxRecord } from '../../../api/inbound-parse';
 import { MAIL_SERVER_DOMAIN } from '../../../config';
 
@@ -23,7 +33,7 @@ export const EmailSettings = () => {
 
   const { mutateAsync: updateDnsSettingsMutation, isLoading: isUpdateDnsSettingsLoading } = useMutation<
     { dns: { mxRecordConfigured: boolean; inboundParseDomain: string } },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { payload: { inboundParseDomain: string | undefined }; environmentId: string }
   >(({ payload, environmentId }) => updateDnsSettings(payload, environmentId));
 

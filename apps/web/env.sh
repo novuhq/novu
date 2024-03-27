@@ -2,6 +2,7 @@
 
 # Recreate config file
 rm -rf ./env-config.js
+
 touch ./env-config.js
 
 # Add assignment

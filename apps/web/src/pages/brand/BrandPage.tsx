@@ -7,8 +7,7 @@ import PageHeader from '../../components/layout/components/PageHeader';
 import { useAuthContext } from '../../components/providers/AuthProvider';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { ROUTES } from '../../constants/routes.enum';
-import { colors } from '../../design-system';
-import useStyles from '../../design-system/tabs/Tabs.styles';
+import { colors, useTabsStyles } from '@novu/design-system';
 import { useEnvController } from '../../hooks';
 
 const BRANDING = 'Assets';
@@ -18,7 +17,7 @@ export function BrandPage() {
   const { currentOrganization, currentUser } = useAuthContext();
   const { environment } = useEnvController();
   const segment = useSegment();
-  const { classes } = useStyles(false);
+  const { classes } = useTabsStyles(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const tabValue = useMemo(() => {

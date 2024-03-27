@@ -71,6 +71,21 @@ describe('test use of novus node package - Events', () => {
             test: 'test-data',
           },
         },
+        email: {
+          customData: {
+            templateId: 'template-id-123',
+            nestedObject: {
+              firstChild: {
+                secondChild: {
+                  name: 'Second Child',
+                },
+              },
+            },
+            fourthChild: {
+              name: 'Fourth Child',
+            },
+          },
+        },
       },
     });
 
@@ -83,6 +98,21 @@ describe('test use of novus node package - Events', () => {
           type: 'notification',
           data: {
             test: 'test-data',
+          },
+        },
+        email: {
+          customData: {
+            templateId: 'template-id-123',
+            nestedObject: {
+              firstChild: {
+                secondChild: {
+                  name: 'Second Child',
+                },
+              },
+            },
+            fourthChild: {
+              name: 'Fourth Child',
+            },
           },
         },
       },

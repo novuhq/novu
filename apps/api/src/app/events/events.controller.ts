@@ -1,14 +1,13 @@
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
-import { ApiOkResponse, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { v4 as uuidv4 } from 'uuid';
 import {
+  AddressingTypeEnum,
+  ApiRateLimitCategoryEnum,
+  ApiRateLimitCostEnum,
   IJwtPayload,
-  ISubscribersDefine,
-  ITenantDefine,
-  TriggerRecipientSubscriber,
-  TriggerTenantContext,
+  TriggerRequestCategoryEnum,
 } from '@novu/shared';
-import { SendTestEmail, SendTestEmailCommand } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
@@ -18,17 +17,20 @@ import {
   TriggerEventToAllRequestDto,
 } from './dtos';
 import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
-import { MapTriggerRecipients } from './usecases/map-trigger-recipients';
-import { ParseEventRequest, ParseEventRequestCommand } from './usecases/parse-event-request';
+import { ParseEventRequest, ParseEventRequestMulticastCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
 import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { JwtAuthGuard } from '../auth/framework/auth.guard';
-import { ApiResponse } from '../shared/framework/response.decorator';
+import { UserAuthGuard } from '../auth/framework/user.auth.guard';
+import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
+import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
+import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email';
 
+@ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
+@ApiCommonResponses()
 @Controller({
   path: 'events',
   scope: Scope.REQUEST,
@@ -36,7 +38,6 @@ import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 @ApiTags('Events')
 export class EventsController {
   constructor(
-    private mapTriggerRecipients: MapTriggerRecipients,
     private cancelDelayedUsecase: CancelDelayed,
     private triggerEventToAll: TriggerEventToAll,
     private sendTestEmail: SendTestEmail,
@@ -45,7 +46,7 @@ export class EventsController {
   ) {}
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Post('/trigger')
   @ApiResponse(TriggerEventResponseDto, 201)
   @ApiOperation({
@@ -60,10 +61,8 @@ export class EventsController {
     @UserSession() user: IJwtPayload,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
-    const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
-
     const result = await this.parseEventRequest.execute(
-      ParseEventRequestCommand.create({
+      ParseEventRequestMulticastCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
@@ -72,8 +71,10 @@ export class EventsController {
         overrides: body.overrides || {},
         to: body.to,
         actor: body.actor,
-        tenant: mappedTenant,
+        tenant: body.tenant,
         transactionId: body.transactionId,
+        addressingType: AddressingTypeEnum.MULTICAST,
+        requestCategory: TriggerRequestCategoryEnum.SINGLE,
       })
     );
 
@@ -81,7 +82,8 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
+  @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/bulk')
   @ApiResponse(TriggerEventResponseDto, 201, true)
   @ApiOperation({
@@ -106,7 +108,8 @@ export class EventsController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
+  @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/trigger/broadcast')
   @ApiResponse(TriggerEventResponseDto)
   @ApiOperation({
@@ -119,8 +122,6 @@ export class EventsController {
     @Body() body: TriggerEventToAllRequestDto
   ): Promise<TriggerEventResponseDto> {
     const transactionId = body.transactionId || uuidv4();
-    const mappedActor = body.actor ? this.mapActor(body.actor) : null;
-    const mappedTenant = body.tenant ? this.mapTenant(body.tenant) : null;
 
     return this.triggerEventToAll.execute(
       TriggerEventToAllCommand.create({
@@ -129,15 +130,15 @@ export class EventsController {
         organizationId: user.organizationId,
         identifier: body.name,
         payload: body.payload,
-        tenant: mappedTenant,
+        tenant: body.tenant,
         transactionId,
         overrides: body.overrides || {},
-        actor: mappedActor,
+        actor: body.actor,
       })
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Post('/test/email')
   @ApiExcludeEndpoint()
   async testEmailMessage(@UserSession() user: IJwtPayload, @Body() body: TestSendEmailRequestDto): Promise<void> {
@@ -153,12 +154,16 @@ export class EventsController {
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
+        workflowId: body.workflowId,
+        stepId: body.stepId,
+        chimera: body.chimera,
+        inputs: body.inputs,
       })
     );
   }
 
   @ExternalApiAccessible()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(UserAuthGuard)
   @Delete('/trigger/:transactionId')
   @ApiOkResponse({
     type: DataBooleanDto,
@@ -182,17 +187,5 @@ export class EventsController {
         transactionId,
       })
     );
-  }
-
-  private mapActor(actor?: TriggerRecipientSubscriber | null): ISubscribersDefine | null {
-    if (!actor) return null;
-
-    return this.mapTriggerRecipients.mapSubscriber(actor);
-  }
-
-  private mapTenant(tenant?: TriggerTenantContext | null): ITenantDefine | null {
-    if (!tenant) return null;
-
-    return this.parseEventRequest.mapTenant(tenant);
   }
 }

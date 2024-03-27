@@ -3,5 +3,5 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 
 export class GetWebhookSupportStatusCommand extends EnvironmentWithUserCommand {
   @IsString()
-  providerId: string;
+  providerOrIntegrationId: string;
 }

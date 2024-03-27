@@ -14,7 +14,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ApiExcludeController, ApiNoContentResponse, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { AnalyticsService, GetSubscriberPreference, GetSubscriberPreferenceCommand } from '@novu/application-generic';
 import { MessageEntity, PreferenceLevelEnum, SubscriberEntity } from '@novu/dal';
 import { MarkMessagesAsEnum, ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
@@ -61,7 +61,15 @@ import {
 import { UpdateSubscriberGlobalPreferencesRequestDto } from '../subscribers/dtos/update-subscriber-global-preferences-request.dto';
 import { GetPreferencesByLevel } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.usecase';
 import { GetPreferencesByLevelCommand } from '../subscribers/usecases/get-preferences-by-level/get-preferences-by-level.command';
+import { ApiCommonResponses, ApiNoContentResponse } from '../shared/framework/response.decorator';
+import { RemoveMessagesBulkCommand } from './usecases/remove-messages-bulk/remove-messages-bulk.command';
+import { RemoveMessagesBulk } from './usecases/remove-messages-bulk/remove-messages-bulk.usecase';
+import { RemoveMessagesBulkRequestDto } from './dtos/remove-messages-bulk-request.dto';
+import { MessageMarkAsRequestDto } from './dtos/mark-as-request.dto';
+import { MarkMessageAsByMark } from './usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
+import { MarkMessageAsByMarkCommand } from './usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
 
+@ApiCommonResponses()
 @Controller('/widgets')
 @ApiExcludeController()
 export class WidgetsController {
@@ -70,8 +78,10 @@ export class WidgetsController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
+    private markMessageAsByMarkUsecase: MarkMessageAsByMark,
     private removeMessageUsecase: RemoveMessage,
     private removeAllMessagesUsecase: RemoveAllMessages,
+    private removeMessagesBulkUsecase: RemoveMessagesBulk,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private getOrganizationUsecase: GetOrganizationData,
     private getSubscriberPreferenceUsecase: GetSubscriberPreference,
@@ -117,10 +127,10 @@ export class WidgetsController {
       organizationId: subscriberSession._organizationId,
       subscriberId: subscriberSession.subscriberId,
       environmentId: subscriberSession._environmentId,
-      page: query.page != null ? parseInt(query.page) : 0,
+      page: query.page,
       feedId: feedsQuery,
       query: { seen: query.seen, read: query.read },
-      limit: query.limit != null ? parseInt(query.limit) : 10,
+      limit: query.limit,
       payload: query.payload,
     });
 
@@ -206,7 +216,10 @@ export class WidgetsController {
   }
 
   @ApiOperation({
-    summary: 'Mark a subscriber feed message or messages as seen or as read',
+    summary: 'Mark a subscriber feed messages as seen or as read',
+    description: `Introducing '/messages/mark-as endpoint for consistent read and seen message handling,
+     deprecating old legacy endpoint.`,
+    deprecated: true,
   })
   @UseGuards(AuthGuard('subscriberJwt'))
   @Post('/messages/markAs')
@@ -226,6 +239,30 @@ export class WidgetsController {
     });
 
     return await this.markMessageAsUsecase.execute(command);
+  }
+
+  @ApiOperation({
+    summary: 'Mark a subscriber messages as seen, read, unseen or unread',
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/mark-as')
+  async markMessagesAs(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: MessageMarkAsRequestDto
+  ): Promise<MessageEntity[]> {
+    const messageIds = this.toArray(body.messageId);
+    if (!messageIds || messageIds.length === 0) throw new BadRequestException('messageId is required');
+
+    return await this.markMessageAsByMarkUsecase.execute(
+      MarkMessageAsByMarkCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        messageIds,
+        markAs: body.markAs,
+        __source: 'notification_center',
+      })
+    );
   }
 
   @ApiOperation({
@@ -268,6 +305,26 @@ export class WidgetsController {
     });
 
     await this.removeAllMessagesUsecase.execute(command);
+  }
+
+  @ApiOperation({
+    summary: 'Remove subscriber messages in bulk',
+  })
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Post('/messages/bulk/delete')
+  @HttpCode(HttpStatus.OK)
+  async removeMessagesBulk(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Body() body: RemoveMessagesBulkRequestDto
+  ) {
+    return await this.removeMessagesBulkUsecase.execute(
+      RemoveMessagesBulkCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        messageIds: body.messageIds,
+      })
+    );
   }
 
   @ApiOperation({
@@ -431,7 +488,7 @@ export class WidgetsController {
     let paramArray: string[] | undefined = undefined;
 
     if (param) {
-      paramArray = Array.isArray(param) ? param : param.split(',');
+      paramArray = Array.isArray(param) ? param : String(param).split(',');
     }
 
     return paramArray as string[];

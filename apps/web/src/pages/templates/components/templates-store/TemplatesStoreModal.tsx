@@ -3,9 +3,10 @@ import { ReactFlowProvider } from 'react-flow-renderer';
 import { ActionIcon, Modal, useMantineTheme } from '@mantine/core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
+import { Button, colors, shadows, Close } from '@novu/design-system';
+import { faFile } from '@fortawesome/free-regular-svg-icons';
+import { INotificationTemplateStep } from '@novu/shared';
 
-import { Button, colors, shadows } from '../../../../design-system';
-import { Close } from '../../../../design-system/icons';
 import {
   CanvasHolder,
   GroupName,
@@ -33,6 +34,8 @@ import { ROUTES } from '../../../../constants/routes.enum';
 import { TemplateCreationSourceEnum } from '../../shared';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { IBlueprintTemplate } from '../../../../api/types';
+import { TemplateAnalyticsEnum } from '../../constants';
+import { EchoProjectModalItem } from '../EchoProjectWaitList';
 
 const nodeTypes = {
   triggerNode: TriggerNode,
@@ -72,6 +75,11 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
     setTemplate(template);
   };
 
+  const handleRedirectToCreateBlankTemplate = (isFromHeader: boolean) => {
+    segment.track(TemplateAnalyticsEnum.CREATE_TEMPLATE_CLICK, { isFromHeader });
+    navigate(ROUTES.WORKFLOWS_CREATE);
+  };
+
   const handleCreateTemplateClick = (blueprint: IBlueprintTemplate) => {
     segment.track('[Template Store] Click Create Notification Template', {
       templateIdentifier: blueprint.triggers[0]?.identifier,
@@ -103,6 +111,24 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
     >
       <ModalBodyHolder data-test-id="templates-store-modal">
         <TemplatesSidebarHolder data-test-id="templates-store-modal-sidebar">
+          <TemplatesGroup key="blank-workflow">
+            <GroupName>Workflow</GroupName>
+            <TemplateItem
+              key="temp-blank-workflow"
+              onClick={() => {
+                segment.track('[Template Store] Click Create Notification Template', {
+                  templateIdentifier: 'Blank Workflow',
+                  location: TemplateCreationSourceEnum.DROPDOWN,
+                });
+                handleRedirectToCreateBlankTemplate(false);
+              }}
+            >
+              <FontAwesomeIcon icon={faFile} />
+              <span>Blank Workflow</span>
+            </TemplateItem>
+            <EchoProjectModalItem />
+          </TemplatesGroup>
+
           {popular.map((group) => (
             <TemplatesGroup key={group.name}>
               <GroupName>{group.name}</GroupName>
@@ -153,7 +179,7 @@ export const TemplatesStoreModal = ({ general, popular, isOpened, onClose }: ITe
             <ReactFlowProvider>
               <FlowEditor
                 key={selectedTemplate._id}
-                steps={selectedTemplate.steps}
+                steps={selectedTemplate.steps as INotificationTemplateStep[]}
                 nodeTypes={nodeTypes}
                 zoomOnScroll={false}
                 zoomOnPinch={false}

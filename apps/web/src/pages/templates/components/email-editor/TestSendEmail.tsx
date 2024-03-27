@@ -1,31 +1,51 @@
 import { useEffect, useState } from 'react';
-import { JsonInput, MultiSelect, Group, ActionIcon } from '@mantine/core';
+import { JsonInput, MultiSelect, ActionIcon } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useFormContext, useWatch } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
-import { Button, Text, colors, Tooltip } from '../../../../design-system';
 import { errorMessage, successMessage } from '../../../../utils/notifications';
 import { useAuthContext } from '../../../../components/providers/AuthProvider';
-import { ArrowDown, Check, Copy, Invite } from '../../../../design-system/icons';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
-import useStyles from '../../../../design-system/select/Select.styles';
+import {
+  Button,
+  Text,
+  colors,
+  Tooltip,
+  ArrowDown,
+  Check,
+  Copy,
+  Invite,
+  inputStyles,
+  useSelectStyles,
+} from '@novu/design-system';
 import { getOrganizationMembers } from '../../../../api/organization';
 import { useProcessVariables, useIntegrationLimit } from '../../../../hooks';
 import { testSendEmailMessage } from '../../../../api/notification-templates';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
+import type { IForm } from '../formTypes';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 
-export function TestSendEmail({ index, isIntegrationActive }: { index: number; isIntegrationActive: boolean }) {
+export function TestSendEmail({
+  isIntegrationActive,
+  chimera = false,
+}: {
+  isIntegrationActive: boolean;
+  chimera?: boolean;
+}) {
   const { currentUser } = useAuthContext();
-  const { control } = useFormContext();
+  const { control, watch } = useFormContext<IForm>();
+  const path = useStepFormPath();
+  const stepId = watch(`${path}.uuid`);
+  const { template: workflow } = useTemplateEditorForm();
 
   const clipboardJson = useClipboard({ timeout: 1000 });
-  const { classes } = useStyles();
+  const { classes } = useSelectStyles();
 
   const { mutateAsync: testSendEmailEvent, isLoading } = useMutation(testSendEmailMessage);
   const template = useWatch({
-    name: `steps.${index}.template`,
+    name: `${path}.template`,
     control,
   });
 
@@ -48,6 +68,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 
   const processedVariables = useProcessVariables(template.variables);
   const [payloadValue, setPayloadValue] = useState('{}');
+  const [stepInputs, setStepInputs] = useState('{}');
 
   useEffect(() => {
     setPayloadValue(processedVariables);
@@ -55,13 +76,24 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
 
   const onTestEmail = async () => {
     const payload = JSON.parse(payloadValue);
+    const inputs = JSON.parse(stepInputs);
 
     try {
       await testSendEmailEvent({
+        stepId,
+        workflowId: workflow?.triggers[0].identifier,
+        contentType: 'customHtml',
+        subject: '',
         ...template,
         payload,
+        inputs,
         to: sendTo,
-        content: template.contentType === 'customHtml' ? (template.htmlContent as string) : template.content,
+        chimera,
+        content: chimera
+          ? ''
+          : template.contentType === 'customHtml'
+          ? (template.htmlContent as string)
+          : template.content,
         layoutId: template.layoutId,
       });
       successMessage('Test sent successfully!');
@@ -110,7 +142,7 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
           mt={20}
           autosize
           styles={inputStyles}
-          label="Variables"
+          label={chimera ? 'Trigger Data' : 'Variables'}
           value={payloadValue}
           onChange={setPayloadValue}
           minRows={12}
@@ -125,6 +157,30 @@ export function TestSendEmail({ index, isIntegrationActive }: { index: number; i
             </Tooltip>
           }
         />
+
+        {chimera ? (
+          <JsonInput
+            data-test-id="test-email-json-inputs"
+            formatOnBlur
+            mt={20}
+            autosize
+            styles={inputStyles}
+            label="Step Inputs"
+            value={stepInputs}
+            onChange={setStepInputs}
+            minRows={12}
+            validationError="Invalid JSON"
+            rightSectionWidth={50}
+            rightSectionProps={{ style: { alignItems: 'start', padding: '5px' } }}
+            rightSection={
+              <Tooltip label={clipboardJson.copied ? 'Copied!' : 'Copy Json'}>
+                <ActionIcon variant="transparent" onClick={() => clipboardJson.copy(payloadValue)}>
+                  {clipboardJson.copied ? <Check /> : <Copy />}
+                </ActionIcon>
+              </Tooltip>
+            }
+          />
+        ) : null}
 
         <span
           style={{

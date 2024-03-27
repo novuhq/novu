@@ -1,5 +1,9 @@
-import { json, port, str, num, ValidatorSpec, makeValidator } from 'envalid';
-import * as envalid from 'envalid';
+import { cleanEnv, json, port, str, num, ValidatorSpec, makeValidator } from 'envalid';
+import {
+  DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
+  DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
+  DEFAULT_NOTIFICATION_RETENTION_DAYS,
+} from '@novu/shared';
 
 const str32 = makeValidator((variable) => {
   if (!(typeof variable === 'string') || variable.length != 32) {
@@ -39,6 +43,9 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   REDIS_DB_INDEX: num(),
   MONGO_URL: str(),
+  MONGO_MIN_POOL_SIZE: num({
+    default: 10,
+  }),
   MONGO_MAX_POOL_SIZE: num({
     default: 500,
   }),
@@ -47,6 +54,18 @@ const validators: { [K in keyof any]: ValidatorSpec<any[K]> } = {
   }),
   LAUNCH_DARKLY_SDK_KEY: str({
     default: '',
+  }),
+  STRIPE_API_KEY: str({
+    default: undefined,
+  }),
+  NOTIFICATION_RETENTION_DAYS: num({
+    default: DEFAULT_NOTIFICATION_RETENTION_DAYS,
+  }),
+  MESSAGE_GENERIC_RETENTION_DAYS: num({
+    default: DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
+  }),
+  MESSAGE_IN_APP_RETENTION_DAYS: num({
+    default: DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
   }),
 };
 
@@ -89,5 +108,5 @@ if (process.env.NODE_ENV !== 'local' && process.env.NODE_ENV !== 'test') {
 }
 
 export function validateEnv() {
-  envalid.cleanEnv(process.env, validators);
+  cleanEnv(process.env, validators);
 }

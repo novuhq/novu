@@ -1,125 +1,82 @@
-import { useFormContext, useWatch } from 'react-hook-form';
-import { colors } from '../../../../design-system';
-import { useEnvController, useProcessVariables } from '../../../../hooks';
-import { InAppEditorBlock } from './InAppEditorBlock';
-import { Grid, useMantineTheme, JsonInput, SegmentedControl } from '@mantine/core';
+import { Grid, SegmentedControl, useMantineTheme } from '@mantine/core';
+import { colors, When } from '@novu/design-system';
+import { useState } from 'react';
+
+import { InAppPreview } from '../../../../components/workflow/preview';
+import { useEnvController } from '../../../../hooks';
+import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
-import { inputStyles } from '../../../../design-system/config/inputs.styles';
-import { useState, useEffect } from 'react';
+import { InputVariablesForm } from '../InputVariablesForm';
+import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 import { AvatarFeedFields } from './AvatarFeedFields';
-import { When } from '../../../../components/utils/When';
-import { TranslateProductLead } from '../TranslateProductLead';
+import { InAppEditorBlock } from './InAppEditorBlock';
 
 const EDITOR = 'Editor';
 const PREVIEW = 'Preview';
+const INPUTS = 'Inputs';
 
-export function InAppContentCard({ index, openVariablesModal }: { index: number; openVariablesModal: () => void }) {
-  const { readonly } = useEnvController();
-  const { control } = useFormContext();
+export function InAppContentCard({ openVariablesModal }: { openVariablesModal: () => void }) {
+  const { template } = useTemplateEditorForm();
+  const { readonly, chimera } = useEnvController({}, template?.chimera);
   const theme = useMantineTheme();
-  const [payloadValue, setPayloadValue] = useState('{}');
-  const [activeTab, setActiveTab] = useState<string>(EDITOR);
 
-  const variables = useWatch({
-    name: `steps.${index}.template.variables`,
-    control,
-  });
-
-  const processedVariables = useProcessVariables(variables);
-
-  useEffect(() => {
-    setPayloadValue(processedVariables);
-  }, [processedVariables, setPayloadValue]);
+  const [activeTab, setActiveTab] = useState<string>(chimera ? PREVIEW : EDITOR);
+  const stepFormPath = useStepFormPath();
 
   return (
     <div data-test-id="editor-type-selector">
-      <SegmentedControl
-        data-test-id="editor-mode-switch"
-        styles={{
-          root: {
-            background: 'transparent',
-            border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
-            borderRadius: '30px',
-            width: '100%',
-            maxWidth: '300px',
-          },
-          label: {
-            fontSize: '14px',
-            lineHeight: '24px',
-          },
-          control: {
-            minWidth: '80px',
-          },
-          active: {
-            background: theme.colorScheme === 'dark' ? colors.B40 : colors.B98,
-            borderRadius: '30px',
-          },
-          labelActive: {
-            color: `${theme.colorScheme === 'dark' ? colors.white : colors.B40} !important`,
-            fontSize: '14px',
-            lineHeight: '24px',
-          },
-        }}
-        data={[EDITOR, PREVIEW]}
-        value={activeTab}
-        onChange={(value) => {
-          setActiveTab(value);
-        }}
-        defaultValue={activeTab}
-        fullWidth
-        radius={'xl'}
-      />
+      {!chimera ? (
+        <SegmentedControl
+          data-test-id="editor-mode-switch"
+          styles={{
+            root: {
+              background: 'transparent',
+              border: `1px solid ${theme.colorScheme === 'dark' ? colors.B40 : colors.B70}`,
+              borderRadius: '30px',
+              width: '100%',
+              maxWidth: '300px',
+            },
+            label: {
+              fontSize: '14px',
+              lineHeight: '24px',
+            },
+            control: {
+              minWidth: '80px',
+            },
+            active: {
+              background: theme.colorScheme === 'dark' ? colors.B40 : colors.B98,
+              borderRadius: '30px',
+            },
+            labelActive: {
+              color: `${theme.colorScheme === 'dark' ? colors.white : colors.B40} !important`,
+              fontSize: '14px',
+              lineHeight: '24px',
+            },
+          }}
+          data={chimera ? [PREVIEW] : [EDITOR, PREVIEW]}
+          value={activeTab}
+          onChange={(value) => {
+            setActiveTab(value);
+          }}
+          defaultValue={activeTab}
+          fullWidth
+          radius={'xl'}
+        />
+      ) : null}
+
+      <When truthy={activeTab === INPUTS}>
+        <InputVariablesForm />
+      </When>
       <When truthy={activeTab === PREVIEW}>
-        <Grid mt={24} mb={0}>
-          <Grid.Col span={9} p={0}>
-            <div style={{ margin: '0 10px' }}>
-              <InAppEditorBlock
-                control={control as any}
-                payload={payloadValue}
-                index={index}
-                readonly={true}
-                preview={true}
-              />
-            </div>
-          </Grid.Col>
-          <Grid.Col span={3} p={0}>
-            <div
-              style={{
-                width: '100%',
-                height: '100%',
-                background: theme.colorScheme === 'dark' ? colors.B17 : colors.B98,
-                borderRadius: 7,
-                padding: 15,
-                paddingTop: 0,
-              }}
-            >
-              <JsonInput
-                data-test-id="preview-json-param"
-                formatOnBlur
-                autosize
-                styles={inputStyles}
-                label="Payload"
-                value={payloadValue}
-                onChange={setPayloadValue}
-                minRows={6}
-                mb={20}
-                validationError="Invalid JSON"
-              />
-            </div>
-          </Grid.Col>
-        </Grid>
+        <div style={{ marginTop: '1.5rem' }}>
+          <InAppPreview showVariables />
+        </div>
       </When>
       <When truthy={activeTab === EDITOR}>
         <Grid mt={24} grow>
           <Grid.Col span={9}>
-            <InAppEditorBlock control={control as any} index={index} readonly={readonly} />
-            <TranslateProductLead
-              id="translate-in-app-editor"
-              style={{
-                marginTop: 32,
-              }}
-            />
-            <AvatarFeedFields control={control} index={index} />
+            <InAppEditorBlock readonly={readonly} />
+            <AvatarFeedFields />
           </Grid.Col>
           <Grid.Col
             span={3}
@@ -127,7 +84,11 @@ export function InAppContentCard({ index, openVariablesModal }: { index: number;
               maxWidth: '350px',
             }}
           >
-            <VariablesManagement openVariablesModal={openVariablesModal} index={index} />
+            <VariablesManagement
+              chimera={chimera}
+              path={`${stepFormPath}.template.variables`}
+              openVariablesModal={openVariablesModal}
+            />
           </Grid.Col>
         </Grid>
       </When>

@@ -64,7 +64,7 @@ body:
     attributes:
       label: node version
       description: In case of self-hosting or local installation mention the node version. If using our cloud-managed solution, mention NA.
-      placeholder: 16.0.0
+      placeholder: 20.0.0
   - type: textarea
     id: additional-context
     validations:

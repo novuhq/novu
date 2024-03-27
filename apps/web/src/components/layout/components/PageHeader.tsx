@@ -1,5 +1,5 @@
 import { Group } from '@mantine/core';
-import { Title, Container } from '../../../design-system';
+import { Title, Container } from '@novu/design-system';
 
 function PageHeader({ actions, title }: { actions?: JSX.Element; title: string }) {
   return (

@@ -23,7 +23,8 @@ export interface IEmailOptions {
   payloadDetails?: any;
   notificationDetails?: any;
   ipPoolName?: string;
-  customData?: Record<string, Record<string, unknown>>;
+  customData?: Record<string, any>;
+  senderName?: string;
 }
 
 export interface ISmsOptions {
@@ -32,6 +33,7 @@ export interface ISmsOptions {
   from?: string;
   attachments?: IAttachmentOptions[];
   id?: string;
+  customData?: Record<string, any>;
 }
 export interface IPushOptions {
   target: string[];
@@ -81,6 +83,15 @@ export interface IChatOptions {
   webhookUrl: string;
   channel?: string;
   content: string;
+  blocks?: IBlock[];
+}
+
+export interface IBlock {
+  type: 'section' | 'header';
+  text: {
+    type: 'mrkdwn';
+    text: string;
+  };
 }
 
 export interface ISendMessageSuccessResponse {

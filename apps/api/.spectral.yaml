@@ -1,0 +1,22 @@
+# cSpell:disable
+
+# Spectral is a flexible JSON/YAML linter and validator, which can be used for OpenAPI, AsyncAPI, or any other purpose.
+# To run Spectral locally:
+# > pnpm lint:openapi
+
+# For information on creating custom rulesets, see:
+# https://meta.stoplight.io/docs/spectral/01baf06bdd05a-create-a-ruleset
+
+# Base rulesets to extend from:
+extends: [[spectral:oas, all]]
+
+# Override rules from base ruleset. Useful to incrementally enable rules on legacy files.
+# https://meta.stoplight.io/docs/spectral/293426e270fac-overrides
+overrides:
+  - files:
+      - "**#/paths/~1v1~1subscribers~1%7BsubscriberId%7D~1preferences~1%7BtemplateId%7D"
+      - "**#/paths/~1v1~1subscribers~1%7BsubscriberId%7D~1preferences~1%7Blevel%7D"
+      - "**#/paths/~1v1~1workflows~1%7BworkflowIdOrIdentifier%7D"
+      - "**#/paths/~1v1~1notification-templates~1%7BworkflowIdOrIdentifier%7D"
+    rules:
+      path-params: "off"

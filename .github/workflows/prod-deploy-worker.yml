@@ -13,9 +13,7 @@ jobs:
         name: [ 'novu/worker-ee', 'novu/worker' ]
     uses: ./.github/workflows/reusable-worker-e2e.yml
     with:
-      ee: ${{ contains (matrix.name,'ee') }}
-      submodules: ${{ contains (matrix.name,'ee') }}
-      submodule_branch: "main"
+      ee: ${{ contains (matrix.name,'-ee') }}
     secrets: inherit
 
   build_prod_image:
@@ -38,15 +36,35 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
 
       - name: build worker
-        run: pnpm build:worker
+        run: pnpm build:worker --skip-nx-cache
 
-      - name: Setup Depot
-        uses: depot/setup-action@v1
+      - uses: crazy-max/ghaction-setup-docker@v2
         with:
-          oidc: true
+          version: v24.0.6
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: 'image=moby/buildkit:v0.12.4'
 
       - name: Set Bull MQ Env variable for EE
         if: contains(matrix.name, 'ee')
@@ -62,23 +80,23 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
-          DEPOT_PROJECT_ID: 6sj0jfv0n7
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/worker && pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | depot build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load
+          cd apps/worker && pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load --platform=linux/amd64,linux/arm64 --provenance=false
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
 
           docker run --network=host --name worker -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1342/v1/health-check | grep 'ok'
+          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1342/v1/health-check | grep 'ok'
 
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  deploy_prod_worker_eu:
+  # Temporary for the migration phase
+  deploy_general_worker_eu:
     needs: build_prod_image
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
@@ -89,9 +107,21 @@ jobs:
       # This is a workaround to an issue with matrix outputs
       docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
 
-  deploy_prod_worker_us:
+  deploy_prod_workers_eu:
+    needs: deploy_general_worker_eu
+    uses: ./.github/workflows/reusable-workers-service-deploy.yml
+    secrets: inherit
+    with:
+      environment: Production
+      terraform_workspace: novu-prod-eu
+      # This is a workaround to an issue with matrix outputs
+      docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
+
+
+  # Temporary for the migration phase
+  deploy_general_worker_us:
     needs:
-      - deploy_prod_worker_eu
+      - deploy_prod_workers_eu
       - build_prod_image
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
@@ -101,13 +131,25 @@ jobs:
       terraform_workspace: novu-prod
       # This is a workaround to an issue with matrix outputs
       docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
+
+  deploy_prod_workers_us:
+    needs:
+      - deploy_general_worker_us
+      - build_prod_image
+    uses: ./.github/workflows/reusable-workers-service-deploy.yml
+    secrets: inherit
+    with:
+      environment: Production
+      terraform_workspace: novu-prod
+      # This is a workaround to an issue with matrix outputs
+      docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
       deploy_sentry_release: true
       sentry_project: worker
 
   newrelic:
     runs-on: ubuntu-latest
     name: New Relic Deploy
-    needs: deploy_prod_worker_us
+    needs: deploy_prod_workers_us
     environment: Production
     steps:
       # This step builds a var with the release tag value to use later

@@ -12,7 +12,6 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '../../../constants/routes.enum';
-import { colors, NavMenu, SegmentedControl, shadows } from '../../../design-system';
 import {
   Activity,
   Bolt,
@@ -20,16 +19,24 @@ import {
   Brand,
   Buildings,
   CheckCircleOutlined,
+  colors,
+  NavMenu,
   NovuLogo,
   Repeat,
+  SegmentedControl,
   Settings,
+  shadows,
   Team,
-} from '../../../design-system/icons';
-import { useEnvController, useIsMultiTenancyEnabled } from '../../../hooks';
-import { currentOnboardingStep } from '../../../pages/quick-start/components/route/store';
+  Translation,
+} from '@novu/design-system';
+import { useEnvController, useFeatureFlag } from '../../../hooks';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from './OrganizationSelect';
+import { FeatureFlagsKeysEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
+import { VisibilityOff } from './VisibilityOff';
+import { useSegment } from '../../providers/SegmentProvider';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -52,6 +59,7 @@ type Props = {};
 
 export function SideNav({}: Props) {
   const navigate = useNavigate();
+  const segment = useSegment();
   const [opened, setOpened] = useState(false);
   const { setEnvironment, isLoading, environment, readonly } = useEnvController({
     onSuccess: (newEnvironment) => {
@@ -62,7 +70,14 @@ export function SideNav({}: Props) {
   const dark = colorScheme === 'dark';
   const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
-  const isMultiTenancyEnabled = useIsMultiTenancyEnabled();
+  const isMultiTenancyEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MULTI_TENANCY_ENABLED);
+  const isTranslationManagerEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_MANAGER_ENABLED);
+  const {
+    showOnboarding: showOnBoardingState,
+    isLoading: isLoadingShowOnBoarding,
+    updateOnboardingStatus,
+  } = useUserOnboardingStatus();
+  const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -78,54 +93,65 @@ export function SideNav({}: Props) {
     ]);
   }, [environment, addItem, removeItems, setEnvironment]);
 
-  const lastStep = currentOnboardingStep().get();
-  const getStartedRoute = lastStep === ROUTES.GET_STARTED_PREVIEW ? ROUTES.GET_STARTED : lastStep;
+  const handleHideOnboardingClick = async () => {
+    segment.track('Click Hide Get Started Page - [Get Started]');
+    await updateOnboardingStatus({ showOnboarding: false });
+  };
 
   const menuItems = [
     {
-      condition: !readonly,
-      icon: <CheckCircleOutlined />,
-      link: getStartedRoute ?? ROUTES.GET_STARTED,
       label: 'Get Started',
+      condition: !readonly && showOnBoarding,
+      icon: <CheckCircleOutlined />,
+      link: ROUTES.GET_STARTED,
+      rightSide: { component: <VisibilityOff onClick={handleHideOnboardingClick} />, displayOnHover: true },
       testId: 'side-nav-quickstart-link',
+      tooltipLabel: 'Hide this page from menu',
     },
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
     {
+      label: 'Tenants',
       condition: isMultiTenancyEnabled,
       icon: <Buildings />,
       link: ROUTES.TENANTS,
-      label: 'Tenants',
       testId: 'side-nav-tenants-link',
     },
     {
+      label: 'Subscribers',
       icon: <Team />,
       link: ROUTES.SUBSCRIBERS,
-      label: 'Subscribers',
       testId: 'side-nav-subscribers-link',
     },
     {
+      label: 'Translations',
+      condition: isTranslationManagerEnabled,
+      icon: <Translation width={20} height={20} />,
+      link: ROUTES.TRANSLATIONS,
+      testId: 'side-nav-translations-link',
+    },
+    {
+      label: 'Brand',
       icon: <Brand />,
       link: '/brand',
-      label: 'Brand',
       testId: 'side-nav-brand-link',
     },
     { icon: <Activity />, link: ROUTES.ACTIVITIES, label: 'Activity Feed', testId: 'side-nav-activities-link' },
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
     {
+      label: 'Team Members',
       icon: <Team />,
       link: ROUTES.TEAM,
-      label: 'Team Members',
       testId: 'side-nav-settings-organization',
     },
     {
+      label: 'Changes',
       icon: <Repeat />,
       link: ROUTES.CHANGES,
-      label: 'Changes',
       testId: 'side-nav-changes-link',
       rightSide: <ChangesCountBadge />,
       condition: !readonly,
     },
-    { icon: <Settings />, link: ROUTES.SETTINGS, label: 'Settings', testId: 'side-nav-settings-link' },
+    { label: 'Settings', icon: <Settings />, link: ROUTES.SETTINGS, testId: 'side-nav-settings-link' },
   ];
 
   async function handlePopoverForChanges(e) {
@@ -145,19 +171,19 @@ export function SideNav({}: Props) {
         borderRight: 'none',
         width: '300px',
         minHeight: '100vh',
-        padding: '16px 24px',
+        padding: '16px 0',
         paddingBottom: '0px',
         '@media (max-width: 768px)': {
           width: '100%',
         },
       }}
     >
-      <Navbar.Section mb={24}>
+      <Navbar.Section sx={{ marginBottom: '24px', padding: '0 24px' }}>
         <Link to="/">
           <NovuLogo />
         </Link>
       </Navbar.Section>
-      <Navbar.Section sx={{ overflowY: 'auto', flex: 1 }}>
+      <Navbar.Section sx={{ overflowY: 'auto', flex: 1, padding: '0 24px' }}>
         <Popover
           classNames={classes}
           withArrow
@@ -209,7 +235,7 @@ export function SideNav({}: Props) {
           <a
             target="_blank"
             rel="noopener noreferrer"
-            href="https://docs.novu.co"
+            href={`https://docs.novu.co${UTM_CAMPAIGN_QUERY_PARAM}`}
             data-test-id="side-nav-bottom-link-documentation"
           >
             Docs

@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { ICreateNotificationTemplateDto, INotificationTemplate, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
+import type { IResponseError, ICreateNotificationTemplateDto, INotificationTemplate } from '@novu/shared';
 
 import { createTemplate } from '../../notification-templates';
 import { parseUrl } from '../../../utils/routeUtils';
@@ -10,13 +11,14 @@ import { errorMessage } from '../../../utils/notifications';
 import { useNotificationGroup, useTemplates } from '../../../hooks';
 import { v4 as uuid4 } from 'uuid';
 import { TemplateCreationSourceEnum } from '../../../pages/templates/shared';
+import { FIRST_100_WORKFLOWS } from '../../../constants/workflowConstants';
 
 export const useCreateDigestDemoWorkflow = () => {
   const navigate = useNavigate();
   const { groups, loading: areNotificationGroupLoading } = useNotificationGroup();
   const { mutateAsync: createNotificationTemplate, isLoading: isCreating } = useMutation<
     INotificationTemplate & { __source?: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { template: ICreateNotificationTemplateDto; params: { __source?: string } }
   >((data) => createTemplate(data.template, data.params), {
     onSuccess: (template) => {
@@ -26,7 +28,7 @@ export const useCreateDigestDemoWorkflow = () => {
       errorMessage('Failed to create Digest Workflow');
     },
   });
-  const { templates = [], loading: templatesLoading } = useTemplates();
+  const { templates = [], loading: templatesLoading } = useTemplates(FIRST_100_WORKFLOWS);
   const digestOnboardingTemplate = 'Digest Workflow Example';
 
   const createDigestDemoWorkflow = useCallback(() => {

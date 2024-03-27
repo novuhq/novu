@@ -63,7 +63,7 @@ describe('Delete Message - /messages/:messageId (DELETE)', function () {
       },
     });
 
-    const result = await messageRepository.findById(message._id);
+    const result = await messageRepository.findOne({ _id: message._id, _environmentId: message._environmentId });
     expect(result).to.not.be.ok;
   });
 });

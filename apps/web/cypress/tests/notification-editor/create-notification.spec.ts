@@ -21,13 +21,17 @@ describe('Creation functionality', function () {
     addAndEditChannel('inApp');
     cy.waitForNetworkIdle(500);
 
-    cy.get('.ace_text-input').first().type('<p>{{firstName}} someone assigned you to {{taskName}}', {
-      parseSpecialCharSequences: false,
-      force: true,
-    });
+    cy.get('.monaco-editor textarea:first', { timeout: 10000 })
+      .parent()
+      .click()
+      .find('textarea')
+      .type('<p>{{firstName}} someone assigned you to {{taskName}}</p>', {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
     cy.getByTestId('inAppRedirect').type('/example/test');
     cy.getByTestId('editor-mode-switch').find('label').last().click();
-    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName');
+    cy.getByTestId('in-app-content-preview').contains('firstName someone assigned you to taskName', { timeout: 1000 });
 
     goBack();
     cy.getByTestId('notification-template-submit-btn').click();
@@ -39,55 +43,6 @@ describe('Creation functionality', function () {
     cy.get('.mantine-Tabs-tabsList').contains('Curl').click();
     cy.getByTestId('trigger-curl-snippet').contains("--header 'Authorization: ApiKey");
     cy.getByTestId('trigger-curl-snippet').contains('taskName');
-  });
-
-  it('should create multiline in-app notification, send it and receive', function () {
-    cy.waitLoadTemplatePage(() => {
-      cy.visit('/workflows/create');
-    });
-    cy.waitForNetworkIdle(500);
-
-    cy.getByTestId('settings-page').click();
-
-    cy.getByTestId('title').first().clear().type('Test Notification Title');
-    cy.getByTestId('description').type('This is a test description for a test title');
-    cy.get('body').click();
-
-    addAndEditChannel('inApp');
-    cy.waitForNetworkIdle(500);
-
-    // put the multiline notification message
-    cy.get('.ace_text-input')
-      .first()
-      .type('{{firstName}} someone assigned you to {{taskName}}', {
-        parseSpecialCharSequences: false,
-        force: true,
-      })
-      .type('{enter}Please check it.', {
-        force: true,
-      });
-    cy.getByTestId('inAppRedirect').type('/example/test');
-
-    goBack();
-    cy.getByTestId('notification-template-submit-btn').click();
-
-    // trigger the notification
-    cy.task('createNotifications', {
-      identifier: 'test-notification-title',
-      token: this.session.token,
-      subscriberId: this.session.user.id,
-    });
-
-    // click on the notifications bell
-    cy.getByTestId('notification-bell').click();
-
-    // check the notification
-    cy.getByTestId('notifications-scroll-area')
-      .getByTestId('notification-content')
-      .first()
-      .then(($el) => {
-        expect($el[0].innerText).to.contain('Please check it.');
-      });
   });
 
   it('should manage variables', function () {
@@ -131,13 +86,16 @@ describe('Creation functionality', function () {
     cy.getByTestId('emailSubject').type('this is email subject');
     cy.getByTestId('emailPreheader').type('this is email preheader');
 
-    cy.getByTestId('var-label').first().contains('System Variables');
+    cy.getByTestId('var-label').first().contains('System Variables').click();
     cy.getByTestId('var-label').last().contains('Step Variables');
-    cy.getByTestId('var-items-step').contains('step').contains('object');
+    cy.getByTestId('var-items-step').contains('step');
+    cy.getByTestId('var-items-step').contains('object');
     cy.getByTestId('var-items-branding').contains('branding');
     cy.getByTestId('var-items-subscriber').contains('subscriber');
-    cy.getByTestId('var-item-firstName-string').contains('firstName').contains('string');
-    cy.getByTestId('var-item-customVariable-string').contains('customVariable').contains('string');
+    cy.getByTestId('var-item-firstName-string').contains('firstName');
+    cy.getByTestId('var-item-firstName-string').contains('string');
+    cy.getByTestId('var-item-customVariable-string').contains('customVariable');
+    cy.getByTestId('var-item-customVariable-string').contains('string');
     cy.getByTestId('var-items-subscriber').click();
     cy.getByTestId('var-item-phone-string').contains('string');
 
@@ -194,6 +152,9 @@ describe('Creation functionality', function () {
     cy.clickWorkflowNode('node-emailSelector');
     cy.waitForNetworkIdle(500);
 
+    cy.getByTestId('edit-action').click();
+    cy.waitForNetworkIdle(500);
+
     cy.getByTestId('emailSubject').type('this is email subject');
     cy.getByTestId('email-editor').getByTestId('editor-row').click();
     cy.getByTestId('editable-text-content').clear().type('This text is written from a test {{firstName}}', {
@@ -214,16 +175,26 @@ describe('Creation functionality', function () {
     cy.waitForNetworkIdle(500);
 
     cy.clickWorkflowNode('node-smsSelector');
+    cy.getByTestId('edit-action').click();
     cy.waitForNetworkIdle(500);
 
-    cy.getByTestId('smsNotificationContent').type('This text is written from a test {{var}}', {
-      parseSpecialCharSequences: false,
-    });
+    cy.get('.monaco-editor textarea:first', { timeout: 7000 })
+      .parent()
+      .click()
+      .find('textarea')
+      .type('This text is written from a test {{var}}', {
+        parseSpecialCharSequences: false,
+        force: true,
+      });
+    cy.getByTestId('open-variable-management').click();
+    cy.getByTestId('open-edit-variables-btn').click();
     cy.getByTestId('variable-default-value').type('Test');
+    cy.getByTestId('close-var-manager-modal').click();
 
     cy.getByTestId('notification-template-submit-btn').click();
     cy.waitForNetworkIdle(500);
-
+    cy.getByTestId('open-variable-management').click();
+    cy.getByTestId('open-edit-variables-btn').click();
     cy.getByTestId('variable-default-value').should('have.value', 'Test');
   });
 
@@ -231,11 +202,12 @@ describe('Creation functionality', function () {
     cy.waitLoadTemplatePage(() => {
       cy.visit('/workflows/create');
     });
+    cy.waitForNetworkIdle(500);
 
     dragAndDrop('email');
     cy.waitForNetworkIdle(500);
 
-    cy.clickWorkflowNode('node-emailSelector');
+    editChannel('email');
     cy.waitForNetworkIdle(500);
 
     cy.getByTestId('emailSubject').type('this is email subject');
@@ -244,7 +216,8 @@ describe('Creation functionality', function () {
       parseSpecialCharSequences: false,
     });
 
-    cy.getByTestId('var-items-array').contains('array').contains('object');
+    cy.getByTestId('var-items-array').contains('array');
+    cy.getByTestId('var-items-array').contains('object');
   });
 
   it('should create email notification', function () {

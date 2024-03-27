@@ -1,11 +1,11 @@
 {
   "name": "@novu/notification-center-vue",
   "sideEffects": false,
-  "version": "0.20.0-alpha.0",
+  "version": "0.24.0",
   "description": "Vue specific wrapper for notification-center",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ionic-team/ionic.git"
+    "url": "https://github.com/novuhq/novu.git"
   },
   "scripts": {
     "prebuild": "rimraf dist",
@@ -22,7 +22,7 @@
   "dependencies": {
     "@emotion/css": "^11.10.5",
     "@novu/floating-vue": "^2.0.3",
-    "@novu/notification-center": "^0.20.0-alpha.0",
+    "@novu/notification-center": "^0.24.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1"
   },
@@ -42,7 +42,7 @@
     "npm-run-all": "^4.1.5",
     "prettier": "~2.8.0",
     "typescript": "4.9.5",
-    "vite": "^4.4.9",
+    "vite": "^4.5.2",
     "vue": "^3.2.45",
     "vue-tsc": "^1.2.0"
   },

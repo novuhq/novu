@@ -2,14 +2,14 @@
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { addDays } from 'date-fns';
 import {
-  MESSAGE_GENERIC_RETENTION_DAYS,
-  MESSAGE_IN_APP_RETENTION_DAYS,
-  NOTIFICATION_RETENTION_DAYS,
+  DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
+  DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
+  DEFAULT_NOTIFICATION_RETENTION_DAYS,
 } from '@novu/shared';
 import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
 import { DalException } from '../shared';
 
-export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
+export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   public _model: Model<T_DBModel>;
 
   constructor(protected MongooseModel: Model<T_DBModel>, protected entity: ClassConstructor<T_MappedEntity>) {
@@ -18,6 +18,15 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
 
   public static createObjectId() {
     return new Types.ObjectId().toString();
+  }
+
+  public static isInternalId(id: string) {
+    const isValidMongoId = Types.ObjectId.isValid(id);
+    if (!isValidMongoId) {
+      return false;
+    }
+
+    return id === new Types.ObjectId(id).toString();
   }
 
   protected convertObjectIdToString(value: Types.ObjectId): string {
@@ -36,13 +45,6 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
 
   async aggregate(query: any[], options: { readPreference?: 'secondaryPreferred' | 'primary' } = {}): Promise<any> {
     return await this.MongooseModel.aggregate(query).read(options.readPreference || 'primary');
-  }
-
-  async findById(id: string, select?: string): Promise<T_MappedEntity | null> {
-    const data = await this.MongooseModel.findById(id, select);
-    if (!data) return null;
-
-    return this.mapEntity(data.toObject());
   }
 
   async findOne(
@@ -108,12 +110,21 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     switch (modelName) {
       case 'Message':
         if (data.channel === 'in_app') {
-          return addDays(startDate, MESSAGE_IN_APP_RETENTION_DAYS);
+          return addDays(
+            startDate,
+            Number(process.env.MESSAGE_IN_APP_RETENTION_DAYS || DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS)
+          );
         } else {
-          return addDays(startDate, MESSAGE_GENERIC_RETENTION_DAYS);
+          return addDays(
+            startDate,
+            Number(process.env.MESSAGE_GENERIC_RETENTION_DAYS || DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS)
+          );
         }
       case 'Notification':
-        return addDays(startDate, NOTIFICATION_RETENTION_DAYS);
+        return addDays(
+          startDate,
+          Number(process.env.NOTIFICATION_RETENTION_DAYS || DEFAULT_NOTIFICATION_RETENTION_DAYS)
+        );
       default:
         return null;
     }
@@ -163,6 +174,21 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement = object> {
     const saved = await this.MongooseModel.updateMany(query, updateBody, {
       multi: true,
     });
+
+    return {
+      matched: saved.matchedCount,
+      modified: saved.modifiedCount,
+    };
+  }
+
+  async updateOne(
+    query: FilterQuery<T_DBModel> & T_Enforcement,
+    updateBody: UpdateQuery<T_DBModel>
+  ): Promise<{
+    matched: number;
+    modified: number;
+  }> {
+    const saved = await this.MongooseModel.updateOne(query, updateBody);
 
     return {
       matched: saved.matchedCount,

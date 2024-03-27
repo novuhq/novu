@@ -1,7 +1,3 @@
-export function isBrowser() {
-  return typeof window !== 'undefined';
-}
-
 export function formatNumber(num: number, digits: number) {
   const lookup = [
     { value: 1, symbol: '' },
@@ -21,4 +17,12 @@ export function formatNumber(num: number, digits: number) {
     });
 
   return item ? (num / item.value).toFixed(digits).replace(rx, '$1') + item.symbol : '0';
+}
+
+export function parsePayload(payload: string) {
+  try {
+    return JSON.parse(payload);
+  } catch (e) {
+    return {};
+  }
 }

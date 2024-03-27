@@ -1,4 +1,4 @@
-import { IExtendedCellProps, withCellLoading } from '../../../design-system';
+import { IExtendedCellProps, withCellLoading } from '@novu/design-system';
 import type { ITableIntegration } from '../types';
 import { IntegrationChannel } from './IntegrationChannel';
 

@@ -1,7 +1,7 @@
 import { Popover, createStyles } from '@mantine/core';
-import { IMessageAction, IMessageButton, MessageActionStatusEnum } from '@novu/shared';
+import { IMessageButton, MessageActionStatusEnum } from '@novu/shared';
 
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 import { ButtonsTemplates } from './ButtonsTemplates';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
@@ -53,6 +53,7 @@ export function ButtonsTemplatesPopover({
       position={'bottom'}
       withArrow
       classNames={classes}
+      middlewares={{ flip: false, shift: false }}
     >
       <Popover.Target>{children}</Popover.Target>
       <Popover.Dropdown>

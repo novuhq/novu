@@ -21,6 +21,7 @@ export class JobEntity {
   _notificationId: string;
   subscriberId: string;
   _subscriberId: string;
+  _mergedDigestId?: string | null;
   _environmentId: EnvironmentId;
   _organizationId: OrganizationId;
   providerId?: string;
@@ -39,6 +40,7 @@ export class JobEntity {
   };
   type?: StepTypeEnum;
   _actorId?: string;
+  actorId?: string;
 }
 
 export type JobDBModel = ChangePropsValueType<

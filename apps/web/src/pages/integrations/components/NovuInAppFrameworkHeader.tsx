@@ -1,7 +1,6 @@
 import styled from '@emotion/styled';
 
-import { Text } from '../../../design-system';
-import { AngularLogo, IframeLogo, ReactLogo, VueLogo } from '../../../design-system/icons';
+import { Text, AngularLogo, IframeLogo, ReactLogo, VueLogo } from '@novu/design-system';
 import { FrameworkEnum } from '../../quick-start/consts';
 
 const NovuInAppFrameworkHeaderHolder = styled.div`

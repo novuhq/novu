@@ -1,21 +1,12 @@
 import {
   AnalyticsService,
-  BullMqService,
+  CacheInMemoryProviderService,
   CacheService,
   DistributedLockService,
   FeatureFlagsService,
-  InMemoryProviderEnum,
-  InMemoryProviderService,
-  ReadinessService,
-  OldInstanceBullMqService,
-  StandardQueueService,
-  WebSocketsQueueService,
-  WorkflowQueueService,
 } from '../services';
-import {
-  GetIsMultiProviderConfigurationEnabled,
-  GetIsTopicNotificationEnabled,
-} from '../usecases';
+import { GetFeatureFlag } from '../usecases';
+import { DalService } from '@novu/dal';
 
 export const featureFlagsService = {
   provide: FeatureFlagsService,
@@ -27,77 +18,44 @@ export const featureFlagsService = {
   },
 };
 
-export const getIsMultiProviderConfigurationEnabled = {
-  provide: GetIsMultiProviderConfigurationEnabled,
-  useFactory: async (
-    featureFlagServiceItem: FeatureFlagsService
-  ): Promise<GetIsMultiProviderConfigurationEnabled> => {
-    const useCase = new GetIsMultiProviderConfigurationEnabled(
-      featureFlagServiceItem
-    );
-
-    return useCase;
-  },
-  inject: [FeatureFlagsService],
-};
-
-export const getIsTopicNotificationEnabled = {
-  provide: GetIsTopicNotificationEnabled,
+export const getFeatureFlag = {
+  provide: GetFeatureFlag,
   useFactory: async (
     featureFlagsServiceItem: FeatureFlagsService
-  ): Promise<GetIsTopicNotificationEnabled> => {
-    const useCase = new GetIsTopicNotificationEnabled(featureFlagsServiceItem);
+  ): Promise<GetFeatureFlag> => {
+    const useCase = new GetFeatureFlag(featureFlagsServiceItem);
 
     return useCase;
   },
   inject: [FeatureFlagsService],
 };
 
-export const inMemoryProviderService = {
-  provide: InMemoryProviderService,
-  useFactory: (
-    provider: InMemoryProviderEnum,
-    enableAutoPipelining?: boolean
-  ): InMemoryProviderService => {
-    return new InMemoryProviderService(provider, enableAutoPipelining);
-  },
-};
-
-export const bullMqService = {
-  provide: BullMqService,
-  useFactory: async (): Promise<BullMqService> => {
-    const service = new BullMqService();
-
-    await service.initialize();
-
-    return service;
-  },
-};
-
-export const oldInstanceBullMqService = {
-  provide: OldInstanceBullMqService,
-  useFactory: async (): Promise<OldInstanceBullMqService> => {
-    const service = new OldInstanceBullMqService();
-
-    await service.initialize();
-
-    return service;
+export const cacheInMemoryProviderService = {
+  provide: CacheInMemoryProviderService,
+  useFactory: (): CacheInMemoryProviderService => {
+    return new CacheInMemoryProviderService();
   },
 };
 
 export const cacheService = {
   provide: CacheService,
   useFactory: async (): Promise<CacheService> => {
-    const enableAutoPipelining =
-      process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'false';
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
-      InMemoryProviderEnum.ELASTICACHE,
-      enableAutoPipelining
-    );
+    const factoryCacheInMemoryProviderService =
+      cacheInMemoryProviderService.useFactory();
 
-    const service = new CacheService(factoryInMemoryProviderService);
+    const service = new CacheService(factoryCacheInMemoryProviderService);
 
     await service.initialize();
+
+    return service;
+  },
+};
+
+export const dalService = {
+  provide: DalService,
+  useFactory: async () => {
+    const service = new DalService();
+    await service.connect(String(process.env.MONGO_URL));
 
     return service;
   },
@@ -116,26 +74,15 @@ export const analyticsService = {
 export const distributedLockService = {
   provide: DistributedLockService,
   useFactory: async (): Promise<DistributedLockService> => {
-    const factoryInMemoryProviderService = inMemoryProviderService.useFactory(
-      InMemoryProviderEnum.ELASTICACHE
-    );
+    const factoryCacheInMemoryProviderService =
+      cacheInMemoryProviderService.useFactory();
 
-    const service = new DistributedLockService(factoryInMemoryProviderService);
+    const service = new DistributedLockService(
+      factoryCacheInMemoryProviderService
+    );
 
     await service.initialize();
 
     return service;
   },
-};
-
-export const bullMqTokenList = {
-  provide: 'BULLMQ_LIST',
-  useFactory: (
-    standardQueueService: StandardQueueService,
-    webSocketsQueueService: WebSocketsQueueService,
-    workflowQueueService: WorkflowQueueService
-  ) => {
-    return [standardQueueService, webSocketsQueueService, workflowQueueService];
-  },
-  inject: [StandardQueueService, WebSocketsQueueService, WorkflowQueueService],
 };

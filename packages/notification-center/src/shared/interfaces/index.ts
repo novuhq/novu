@@ -59,7 +59,7 @@ export interface INotificationCenterContext {
   onTabClick?: (tab: ITab) => void;
   preferenceFilter?: (userPreference: IUserPreferenceSettings) => boolean;
   isLoading: boolean;
-  header: ({ setScreen }: { setScreen: (screen: ScreensEnum) => void }) => JSX.Element;
+  header: ({ setScreen, screen }: { setScreen: (screen: ScreensEnum) => void; screen: ScreensEnum }) => JSX.Element;
   footer: () => JSX.Element;
   emptyState: JSX.Element;
   listItem: ListItem;
@@ -75,6 +75,7 @@ export interface IStore {
 
 export interface IFetchingStrategy {
   fetchUnseenCount: boolean;
+  fetchUnreadCount: boolean;
   fetchOrganization: boolean;
   fetchNotifications: boolean;
   fetchUserPreferences: boolean;
@@ -105,6 +106,7 @@ export interface IStoreContext {
 
 export interface INotificationsContext extends IStoreContext {
   unseenCount: number;
+  unreadCount: number;
   notifications: IMessage[];
   hasNextPage: boolean;
   isLoading: boolean;

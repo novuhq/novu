@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 
 export const WorkflowWrapper = styled.div<{ height: string }>`
   height: ${({ height }) => height};

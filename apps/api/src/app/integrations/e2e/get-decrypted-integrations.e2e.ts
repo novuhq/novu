@@ -3,8 +3,6 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { IntegrationRepository } from '@novu/dal';
 
-const ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
-
 describe('Get Decrypted Integrations - /integrations (GET)', function () {
   let session: UserSession;
   const integrationRepository = new IntegrationRepository();
@@ -12,11 +10,6 @@ describe('Get Decrypted Integrations - /integrations (GET)', function () {
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = 'true';
-  });
-
-  afterEach(async () => {
-    process.env.IS_MULTI_PROVIDER_CONFIGURATION_ENABLED = ORIGINAL_IS_MULTI_PROVIDER_CONFIGURATION_ENABLED;
   });
 
   it('should get active decrypted integration', async function () {

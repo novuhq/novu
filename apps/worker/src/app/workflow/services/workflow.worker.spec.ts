@@ -2,7 +2,12 @@ import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { setTimeout } from 'timers/promises';
 
-import { TriggerEvent, WorkflowQueueService } from '@novu/application-generic';
+import {
+  BullMqService,
+  TriggerEvent,
+  WorkflowInMemoryProviderService,
+  WorkflowQueueService,
+} from '@novu/application-generic';
 
 import { WorkflowWorker } from './workflow.worker';
 
@@ -21,9 +26,12 @@ describe('Workflow Worker', () => {
     }).compile();
 
     const triggerEventUseCase = moduleRef.get<TriggerEvent>(TriggerEvent);
-    workflowWorker = new WorkflowWorker(triggerEventUseCase);
+    const workflowInMemoryProviderService = moduleRef.get<WorkflowInMemoryProviderService>(
+      WorkflowInMemoryProviderService
+    );
+    workflowWorker = new WorkflowWorker(triggerEventUseCase, workflowInMemoryProviderService);
 
-    workflowQueueService = new WorkflowQueueService();
+    workflowQueueService = new WorkflowQueueService(workflowInMemoryProviderService);
     await workflowQueueService.queue.obliterate();
   });
 
@@ -34,7 +42,6 @@ describe('Workflow Worker', () => {
 
   it('should be initialised properly', async () => {
     expect(workflowWorker).to.be.ok;
-    expect(workflowWorker).to.have.all.keys('DEFAULT_ATTEMPTS', 'instance', 'topic', 'triggerEventUsecase');
     expect(await workflowWorker.bullMqService.getStatus()).to.deep.equal({
       queueIsPaused: undefined,
       queueName: undefined,
@@ -62,9 +69,9 @@ describe('Workflow Worker', () => {
       _environmentId,
       _organizationId,
       _userId,
-    };
+    } as any;
 
-    await workflowQueueService.add(jobId, jobData, _organizationId);
+    await workflowQueueService.add({ name: jobId, data: jobData, groupId: _organizationId });
 
     expect(await workflowQueueService.queue.getActiveCount()).to.equal(1);
     expect(await workflowQueueService.queue.getWaitingCount()).to.equal(0);

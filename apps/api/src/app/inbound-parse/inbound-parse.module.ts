@@ -1,23 +1,35 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { CompileTemplate, QueuesModule } from '@novu/application-generic';
+import { MiddlewareConsumer, Module, NestModule, OnApplicationShutdown } from '@nestjs/common';
+import { CompileTemplate, WorkflowInMemoryProviderService } from '@novu/application-generic';
 
 import { USE_CASES } from './usecases';
 import { InboundParseController } from './inbound-parse.controller';
-import { InboundParseQueueService } from './services/inbound-parse.queue.service';
-import { GetMxRecord } from './usecases/get-mx-record/get-mx-record.usecase';
-import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 
 import { SharedModule } from '../shared/shared.module';
 import { AuthModule } from '../auth/auth.module';
 
-const PROVIDERS = [InboundParseQueueService, GetMxRecord, CompileTemplate];
+const PROVIDERS = [CompileTemplate];
 
+const memoryQueueService = {
+  provide: WorkflowInMemoryProviderService,
+  useFactory: async () => {
+    const memoryService = new WorkflowInMemoryProviderService();
+
+    await memoryService.initialize();
+
+    return memoryService;
+  },
+};
 @Module({
-  imports: [SharedModule, AuthModule, QueuesModule],
+  imports: [SharedModule, AuthModule],
   controllers: [InboundParseController],
-  providers: [...PROVIDERS, ...USE_CASES],
-  exports: [...USE_CASES, QueuesModule],
+  providers: [...PROVIDERS, ...USE_CASES, memoryQueueService],
+  exports: [...USE_CASES],
 })
-export class InboundParseModule implements NestModule {
+export class InboundParseModule implements NestModule, OnApplicationShutdown {
+  constructor(private workflowInMemoryProviderService: WorkflowInMemoryProviderService) {}
   configure(consumer: MiddlewareConsumer): MiddlewareConsumer | void {}
+
+  async onApplicationShutdown() {
+    await this.workflowInMemoryProviderService.shutdown();
+  }
 }

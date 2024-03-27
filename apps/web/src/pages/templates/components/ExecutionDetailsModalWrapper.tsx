@@ -3,7 +3,7 @@ import { LoadingOverlay, useMantineTheme } from '@mantine/core';
 
 import { getActivityList } from '../../../api/activity';
 import { ExecutionDetailsModal } from '../../../components/execution-detail/ExecutionDetailsModal';
-import { colors } from '../../../design-system';
+import { colors } from '@novu/design-system';
 
 interface Props {
   transactionId: string;

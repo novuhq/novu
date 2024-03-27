@@ -25,4 +25,4 @@ runs:
 
     - name: Wait on worker
       shell: bash
-      run: wait-on --timeout=180000 http://localhost:1342/v1/health-check
+      run: wait-on --timeout=180000 http://127.0.0.1:1342/v1/health-check

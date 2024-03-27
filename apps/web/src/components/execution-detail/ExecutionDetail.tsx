@@ -5,7 +5,7 @@ import styled from '@emotion/styled';
 import { ExecutionDetailShowRaw } from './ExecutionDetailShowRaw';
 import { getColorByStatus, getLogoByType, getLogoByStatus } from './helpers';
 
-import { colors, Text } from '../../design-system';
+import { colors, Text } from '@novu/design-system';
 import { When } from '../utils/When';
 
 const ExecutionDetailStatusWrapper = styled(Container)`

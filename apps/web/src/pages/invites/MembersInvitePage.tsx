@@ -5,6 +5,7 @@ import { showNotification } from '@mantine/notifications';
 import { Container, Group } from '@mantine/core';
 import { useClipboard } from '@mantine/hooks';
 import { MemberRoleEnum } from '@novu/shared';
+import type { IResponseError } from '@novu/shared';
 
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
@@ -16,8 +17,7 @@ import {
   resendInviteMember,
 } from '../../api/organization';
 import { MembersTable } from './components/MembersTable';
-import { Button, Input } from '../../design-system';
-import { Invite, UserAccess } from '../../design-system/icons';
+import { Button, Input, Invite, UserAccess } from '@novu/design-system';
 import { useAuthContext } from '../../components/providers/AuthProvider';
 import { parseUrl } from '../../utils/routeUtils';
 import { ROUTES } from '../../constants/routes.enum';
@@ -35,11 +35,9 @@ export function MembersInvitePage() {
     refetch,
   } = useQuery<any[]>(['getOrganizationMembers'], getOrganizationMembers);
 
-  const { isLoading: loadingSendInvite, mutateAsync: sendInvite } = useMutation<
-    string,
-    { error: string; message: string; statusCode: number },
-    string
-  >((email) => inviteMember(email));
+  const { isLoading: loadingSendInvite, mutateAsync: sendInvite } = useMutation<string, IResponseError, string>(
+    (email) => inviteMember(email)
+  );
 
   async function onSubmit({ email }) {
     if (!email) return;

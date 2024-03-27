@@ -6,6 +6,8 @@ import {
   MessageTemplateRepository,
   NotificationStepEntity,
   NotificationGroupRepository,
+  StepVariantEntity,
+  EnvironmentRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
@@ -23,6 +25,7 @@ export class PromoteNotificationTemplateChange {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private environmentRepository: EnvironmentRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
     @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
@@ -42,13 +45,40 @@ export class PromoteNotificationTemplateChange {
     const messages = await this.messageTemplateRepository.find({
       _environmentId: command.environmentId,
       _parentId: {
-        $in: newItem.steps ? newItem.steps.map((step) => step._templateId) : [],
+        $in: (newItem.steps || []).flatMap((step) => [
+          step._templateId,
+          ...(step.variants || []).flatMap((variant) => variant._templateId),
+        ]),
       },
     });
 
     const missingMessages: string[] = [];
 
     const mapNewStepItem = (step: NotificationStepEntity) => {
+      const oldMessage = messages.find((message) => {
+        return message._parentId === step._templateId;
+      });
+
+      if (step.variants && step.variants.length > 0) {
+        step.variants = step.variants
+          ?.map(mapNewVariantItem)
+          .filter((variant): variant is StepVariantEntity => variant !== undefined);
+      }
+
+      if (!oldMessage) {
+        missingMessages.push(step._templateId);
+
+        return undefined;
+      }
+
+      if (step?._templateId && oldMessage._id) {
+        step._templateId = oldMessage._id;
+      }
+
+      return step;
+    };
+
+    const mapNewVariantItem = (step: StepVariantEntity) => {
       const oldMessage = messages.find((message) => {
         return message._parentId === step._templateId;
       });
@@ -189,9 +219,15 @@ export class PromoteNotificationTemplateChange {
 
   private async invalidateBlueprints(command: PromoteTypeChangeCommand) {
     if (command.organizationId === this.blueprintOrganizationId) {
-      await this.invalidateCache.invalidateByKey({
-        key: buildGroupedBlueprintsKey(),
-      });
+      const productionEnvironmentId = (
+        await this.environmentRepository.findOrganizationEnvironments(this.blueprintOrganizationId)
+      )?.find((env) => env.name === 'Production')?._id;
+
+      if (productionEnvironmentId) {
+        await this.invalidateCache.invalidateByKey({
+          key: buildGroupedBlueprintsKey(productionEnvironmentId),
+        });
+      }
     }
   }
 

@@ -32,7 +32,7 @@ export class TelnyxSmsProvider implements ISmsProvider {
     const telynxResponse = await this.telnyxClient.messages.create({
       to: options.to,
       text: options.content,
-      from: this.config.from,
+      from: options.from || this.config.from,
       messaging_profile_id: this.config.messageProfileId,
     });
 

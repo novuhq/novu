@@ -1,21 +1,16 @@
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@novu/testing';
 
 import { CompileTemplate } from './compile-template.usecase';
 import { CompileTemplateCommand } from './compile-template.command';
 
 describe('Compile Template', function () {
   let useCase: CompileTemplate;
-  let session: UserSession;
 
   beforeEach(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [CompileTemplate],
-      providers: [],
+      imports: [],
+      providers: [CompileTemplate],
     }).compile();
-
-    session = new UserSession();
-    await session.initialize();
 
     useCase = moduleRef.get<CompileTemplate>(CompileTemplate);
   });
@@ -88,11 +83,11 @@ describe('Compile Template', function () {
           ],
         },
         template:
-          '{{#each (groupby names "name")}}<h1>{{key}}</h1>{{#each items}}{{age}}-{{/each}}{{/each}}>',
+          '{{#each (groupBy names "name")}}<h1>{{key}}</h1>{{#each items}}{{age}}-{{/each}}{{/each}}',
       })
     );
 
-    expect(result).toEqual('<h1>Name1</h1>30-32-<h1>Name2</h1>31-');
+    expect(result).toEqual('<h1>Name 1</h1>30-32-<h1>Name 2</h1>31-');
   });
 
   it('should render sortBy values of array', async function () {
@@ -186,6 +181,32 @@ describe('Compile Template', function () {
         })
       );
       expect(result).toEqual('<div>ABCD</div>');
+    });
+  });
+
+  describe('Number formating', () => {
+    it('should format number', async () => {
+      const result = await useCase.execute(
+        CompileTemplateCommand.create({
+          data: { number: 1000000000 },
+          template:
+            '<div>{{numberFormat number decimalSep="," decimalLength="2" thousandsSep="|"}}</div>',
+        })
+      );
+
+      expect(result).toEqual('<div>1|000|000|000,00</div>');
+    });
+
+    it('should not fail and return passed value', async () => {
+      const result = await useCase.execute(
+        CompileTemplateCommand.create({
+          data: { number: 'Not a number' },
+          template:
+            '<div>{{numberFormat number decimalSep="," decimalLength="2" thousandsSep="|"}}</div>',
+        })
+      );
+
+      expect(result).toEqual('<div>Not a number</div>');
     });
   });
 });

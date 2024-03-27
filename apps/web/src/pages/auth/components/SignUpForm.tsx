@@ -2,21 +2,20 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
-import styled from '@emotion/styled';
-import { Divider, Button as MantineButton, Center } from '@mantine/core';
+import { Center } from '@mantine/core';
 import { showNotification } from '@mantine/notifications';
-import { passwordConstraints } from '@novu/shared';
+import { passwordConstraints, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import type { IResponseError } from '@novu/shared';
+import { PasswordInput, Button, colors, Input, Text, Checkbox } from '@novu/design-system';
 
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { api } from '../../../api/api.client';
-import { PasswordInput, Button, colors, Input, Text, Checkbox } from '../../../design-system';
-import { GitHub } from '../../../design-system/icons';
-import { IS_DOCKER_HOSTED } from '../../../config';
 import { applyToken, useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
 import { ROUTES } from '../../../constants/routes.enum';
+import { OAuth } from './OAuth';
 
 type SignUpFormProps = {
   invitationToken?: string;
@@ -43,7 +42,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
 
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     {
       firstName: string;
       lastName: string;
@@ -125,24 +124,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
 
   return (
     <>
-      {!IS_DOCKER_HOSTED && (
-        <>
-          <GitHubButton
-            my={30}
-            component="a"
-            href={githubLink}
-            variant="white"
-            fullWidth
-            radius="md"
-            leftIcon={<GitHub />}
-            sx={{ color: colors.B40, fontSize: '16px', fontWeight: 700, height: '50px' }}
-            data-test-id="github-button"
-          >
-            Sign Up with GitHub
-          </GitHubButton>
-          <Divider label={<Text color={colors.B40}>Or</Text>} color={colors.B30} labelPosition="center" my="md" />
-        </>
-      )}
+      <OAuth />
       <form noValidate name="login-form" onSubmit={handleSubmit(onSubmit)}>
         <Input
           error={errors.fullName?.message}
@@ -241,13 +223,18 @@ function Accept() {
   return (
     <>
       <span>I accept the </span>
-      <a style={{ textDecoration: 'underline' }} href="https://novu.co/terms" target="_blank" rel="noopener noreferrer">
+      <a
+        style={{ textDecoration: 'underline' }}
+        href={`https://novu.co/terms${UTM_CAMPAIGN_QUERY_PARAM}`}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         Terms and Conditions
       </a>
       <span> and have read the </span>
       <a
         style={{ textDecoration: 'underline' }}
-        href="https://novu.co/privacy"
+        href={`https://novu.co/privacy${UTM_CAMPAIGN_QUERY_PARAM}`}
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -256,18 +243,3 @@ function Accept() {
     </>
   );
 }
-
-const GitHubButton = styled(MantineButton)<{
-  component: 'a';
-  my: number;
-  href: string;
-  variant: 'white';
-  fullWidth: boolean;
-  radius: 'md';
-  leftIcon: any;
-  sx: any;
-}>`
-  :hover {
-    color: ${colors.B40};
-  }
-`;

@@ -365,6 +365,9 @@ api:
     ## @param api.env.FRONT_BASE_URL The base url on which your frontend is accessible for the user. (e.g. web.novu.co)
     ##
     FRONT_BASE_URL: http://novu-web:4200
+    ## @param api.env.MONGO_MIN_POOL_SIZE The min pool size of the MongoDB connection
+    ##
+    MONGO_MIN_POOL_SIZE: 10
     ## @param api.env.MONGO_MAX_POOL_SIZE The max pool size of the MongoDB connection
     ##
     MONGO_MAX_POOL_SIZE: 50
@@ -1560,12 +1563,17 @@ web:
   ##
   port: 4200
 
+  env:
+    ## @param web.env.NODE_ENV The environment of the app.
+    ##
+    NODE_ENV: production
+
   ## @param web.apiExternalEndpoint The external endpoint of the API
   ##
-  apiExternalEndpoint: http://localhost:3000
+  apiExternalEndpoint: http://127.0.0.1:3000
 
   ## @param web.wsExternalEndpoint The external websocket endpoint of the API
-  wsExternalEndpoint: ws://localhost:3002
+  wsExternalEndpoint: ws://127.0.0.1:3002
 
 ## @section Persistence Parameters
 ##
@@ -1697,7 +1705,7 @@ store:
   ## @param store.encryption-key The encryption key used to encrypt/decrypt provider credentials
   ## Please change this for production use !
   ##
-  encryption-key: ekwUKf9yLjGPLOz939Y1GM0nJckVoVyF # you need to change this !
+  encryption-key: '' # you need to change this !
 
 ## @section Mongodb configuration
 ##

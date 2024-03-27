@@ -1,7 +1,7 @@
 import { Group } from '@mantine/core';
 import { Control, useController } from 'react-hook-form';
 
-import { Text, Switch } from '../../../../design-system';
+import { Text, Switch } from '@novu/design-system';
 import type { IForm } from '../formTypes';
 
 export function EnableAvatarSwitch({

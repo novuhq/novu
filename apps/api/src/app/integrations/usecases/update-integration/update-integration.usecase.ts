@@ -5,13 +5,10 @@ import {
   encryptCredentials,
   buildIntegrationKey,
   InvalidateCacheService,
-  GetIsMultiProviderConfigurationEnabled,
-  FeatureFlagCommand,
 } from '@novu/application-generic';
-import { ChannelTypeEnum, CHANNELS_WITH_PRIMARY } from '@novu/shared';
+import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { UpdateIntegrationCommand } from './update-integration.command';
-import { DeactivateSimilarChannelIntegrations } from '../deactivate-integration/deactivate-integration.usecase';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 
@@ -22,9 +19,7 @@ export class UpdateIntegration {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
-    private deactivateSimilarChannelIntegrations: DeactivateSimilarChannelIntegrations,
-    private analyticsService: AnalyticsService,
-    private getIsMultiProviderConfigurationEnabled: GetIsMultiProviderConfigurationEnabled
+    private analyticsService: AnalyticsService
   ) {}
 
   private async calculatePriorityAndPrimaryForActive({
@@ -101,7 +96,10 @@ export class UpdateIntegration {
   async execute(command: UpdateIntegrationCommand): Promise<IntegrationEntity> {
     Logger.verbose('Executing Update Integration Command');
 
-    const existingIntegration = await this.integrationRepository.findById(command.integrationId);
+    const existingIntegration = await this.integrationRepository.findOne({
+      _id: command.integrationId,
+      _organizationId: command.organizationId,
+    });
     if (!existingIntegration) {
       throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
     }
@@ -177,18 +175,10 @@ export class UpdateIntegration {
       throw new BadRequestException('No properties found for update');
     }
 
-    const isMultiProviderConfigurationEnabled = await this.getIsMultiProviderConfigurationEnabled.execute(
-      FeatureFlagCommand.create({
-        userId: command.userId,
-        organizationId: command.organizationId,
-        environmentId: command.userEnvironmentId,
-      })
-    );
-
     const haveConditions = updatePayload.conditions && updatePayload.conditions?.length > 0;
 
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
-    if (isMultiProviderConfigurationEnabled && isActiveChanged && isChannelSupportsPrimary) {
+    if (isActiveChanged && isChannelSupportsPrimary) {
       const { primary, priority } = await this.calculatePriorityAndPrimary({
         existingIntegration,
         active: !!command.active,
@@ -219,20 +209,6 @@ export class UpdateIntegration {
         _organizationId: existingIntegration._organizationId,
         _environmentId: existingIntegration._organizationId,
         channel: existingIntegration.channel,
-      });
-    }
-
-    if (
-      !isMultiProviderConfigurationEnabled &&
-      command.active &&
-      ![ChannelTypeEnum.CHAT, ChannelTypeEnum.PUSH].includes(existingIntegration.channel)
-    ) {
-      await this.deactivateSimilarChannelIntegrations.execute({
-        environmentId,
-        organizationId: command.organizationId,
-        integrationId: command.integrationId,
-        channel: existingIntegration.channel,
-        userId: command.userId,
       });
     }
 

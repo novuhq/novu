@@ -4,7 +4,8 @@ For a full guide on running novu locally for development needs, please read our 
 
 ### Advanced - Running with a Redis Cluster
 
-Novu has support for redis cluster, however you must set the following env variables to enable it:
+Novu has support for [redis cluster](https://redis.io/docs/management/scaling/), however you must set the following env variables to enable it:
+
 // To be determined
 
 In the local development example in the docker-compose.redis-cluster.yml file, the primary nodes are hard coded to 6391 through 6393 and

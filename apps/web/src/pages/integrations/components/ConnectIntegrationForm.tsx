@@ -6,22 +6,15 @@ import { showNotification } from '@mantine/notifications';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
 import { WarningOutlined } from '@ant-design/icons';
-import {
-  ChannelTypeEnum,
-  ICredentialsDto,
-  IConfigCredentials,
-  ICreateIntegrationBodyDto,
-  CredentialsKeyEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, CredentialsKeyEnum } from '@novu/shared';
+import type { IResponseError, ICredentialsDto, IConfigCredentials, ICreateIntegrationBodyDto } from '@novu/shared';
 
-import { Button, colors, Input, Switch, Text } from '../../../design-system';
+import { Button, colors, Input, Switch, Text, Close, Check, Copy } from '@novu/design-system';
 import type { IIntegratedProvider } from '../types';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
-import { Close } from '../../../design-system/icons';
 import { IntegrationInput } from './IntegrationInput';
 import { IS_DOCKER_HOSTED, WEBHOOK_URL } from '../../../config';
 import { useEnvController, useAuthController } from '../../../hooks';
-import { Check, Copy } from '../../../design-system/icons';
 import { CONTEXT_PATH } from '../../../config';
 import { ShareableUrl } from './Modal/ConnectIntegrationForm';
 
@@ -107,13 +100,13 @@ export function ConnectIntegrationForm({
 
   const { mutateAsync: createIntegrationApi, isLoading: isLoadingCreate } = useMutation<
     { res: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     ICreateIntegrationBodyDto
   >(createIntegration);
 
   const { mutateAsync: updateIntegrationApi, isLoading: isLoadingUpdate } = useMutation<
     { res: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     {
       integrationId: string;
       data: { credentials: ICredentialsDto; active: boolean; check: boolean };

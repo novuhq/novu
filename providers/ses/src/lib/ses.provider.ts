@@ -32,6 +32,7 @@ export class SESEmailProvider implements IEmailProvider {
     text,
     to,
     from,
+    senderName,
     subject,
     attachments,
     cc,
@@ -50,7 +51,7 @@ export class SESEmailProvider implements IEmailProvider {
       attachments,
       from: {
         address: from,
-        name: this.config.senderName,
+        name: senderName,
       },
       cc,
       bcc,
@@ -68,9 +69,11 @@ export class SESEmailProvider implements IEmailProvider {
     cc,
     bcc,
     replyTo,
+    senderName,
   }: IEmailOptions): Promise<ISendMessageSuccessResponse> {
     const info = await this.sendMail({
       from: from || this.config.from,
+      senderName: senderName || this.config.senderName,
       to: to,
       subject: subject,
       html: html,
@@ -162,6 +165,7 @@ export class SESEmailProvider implements IEmailProvider {
         bcc: [],
         cc: [],
         replyTo: 'support@novu.co',
+        senderName: 'Novu Support',
       });
 
       return {

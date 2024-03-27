@@ -1,4 +1,4 @@
-import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { faker } from '@faker-js/faker';
 import { MemberRepository, OrganizationRepository } from '@novu/dal';
 
@@ -34,5 +34,9 @@ export class OrganizationService {
     return await this.organizationRepository.findOne({
       _id: organizationId,
     });
+  }
+
+  async updateServiceLevel(organizationId: string, serviceLevel: ApiServiceLevelEnum) {
+    await this.organizationRepository.updateServiceLevel(organizationId, serviceLevel);
   }
 }

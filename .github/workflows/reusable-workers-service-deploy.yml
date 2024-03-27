@@ -1,0 +1,134 @@
+name: Deploy Workers Job
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      terraform_workspace:
+        required: true
+        type: string
+      docker_image:
+        required: true
+        type: string
+      sentry_project:
+        required: false
+        type: string
+      deploy_sentry_release:
+        required: false
+        default: false
+        type: boolean
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  infrastructure_data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    env:
+      TF_WORKSPACE: ${{ inputs.terraform_workspace }}
+    permissions:
+      contents: read
+      deployments: write
+    outputs:
+      services_to_deploy: ${{ steps.terraform.outputs.queue_workers_services }}
+      ecs_cluster: ${{ steps.terraform.outputs.ecs_cluster }}
+      aws_region: ${{ steps.terraform.outputs.aws_region }}
+    steps:
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
+      - name: Checkout cloud infra
+        uses: actions/checkout@master
+        with:
+          repository: novuhq/cloud-infra
+          token: ${{ secrets.GH_PACKAGES }}
+          path: cloud-infra
+
+      - name: Terraform setup
+        uses: hashicorp/setup-terraform@v1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_version: 1.5.5
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: cloud-infra/terraform/novu/aws
+        run: terraform init
+
+      - name: Terraform get output
+        working-directory: cloud-infra/terraform/novu/aws
+        id: terraform
+        run: |
+          echo "queue_workers_services=$(terraform output -json queue_workers_services)" >> $GITHUB_OUTPUT
+          echo "ecs_cluster=$(terraform output -json worker_ecs_cluster | jq -r .)" >> $GITHUB_OUTPUT
+          echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_OUTPUT
+
+
+  deploy_worker_queue:
+    needs: infrastructure_data
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    env:
+      TF_WORKSPACE: ${{ inputs.terraform_workspace }}
+    permissions:
+      contents: read
+      deployments: write
+    strategy:
+      matrix:
+        worker: ${{fromJson(needs.infrastructure_data.outputs.services_to_deploy)}}
+    steps:
+      - run: echo "Deploying ${{ matrix.name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ needs.infrastructure_data.outputs.aws_region }}
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition --task-definition ${{ matrix.worker.task_name }} \
+          --query taskDefinition > task-definition.json
+
+      - name: Render Amazon ECS task definition
+        id: render-web-container
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: task-definition.json
+          container-name: ${{ matrix.worker.container_name }}
+          image: ${{ inputs.docker_image }}
+
+      - name: Deploy to Amazon ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          service: ${{ matrix.worker.service }}
+          cluster: ${{ needs.infrastructure_data.outputs.ecs_cluster }}
+          wait-for-service-stability: true
+
+      - uses: actions/checkout@v3
+        if: ${{ inputs.deploy_sentry_release }}
+
+      - name: get-npm-version
+        if: ${{ inputs.deploy_sentry_release }}
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@main
+        with:
+          path: apps/${{ inputs.sentry_project }}
+
+      - name: Create Sentry release
+        if: ${{ inputs.deploy_sentry_release }}
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: novu-r9
+          SENTRY_PROJECT: ${{ inputs.sentry_project }}
+        with:
+          version: ${{ steps.package-version.outputs.current-version}}
+          version_prefix: v
+          environment: prod
+          ignore_empty: true
+          ignore_missing: true

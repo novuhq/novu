@@ -8,24 +8,24 @@ import {
   CachedEntity,
   Instrument,
   InstrumentUsecase,
+  IWorkflowDataDto,
+  IWorkflowJobDto,
   StorageHelperService,
   WorkflowQueueService,
 } from '@novu/application-generic';
-import { NotificationTemplateRepository, NotificationTemplateEntity, TenantRepository } from '@novu/dal';
+import { ReservedVariablesMap, TriggerContextTypeEnum, TriggerEventStatusEnum } from '@novu/shared';
 import {
-  ISubscribersDefine,
-  ITenantDefine,
-  ReservedVariablesMap,
-  TriggerContextTypeEnum,
-  TriggerEventStatusEnum,
-  TriggerTenantContext,
-} from '@novu/shared';
+  WorkflowOverrideRepository,
+  TenantEntity,
+  WorkflowOverrideEntity,
+  NotificationTemplateRepository,
+  NotificationTemplateEntity,
+  TenantRepository,
+} from '@novu/dal';
 
 import { ParseEventRequestCommand } from './parse-event-request.command';
-
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
-import { MapTriggerRecipients, MapTriggerRecipientsCommand } from '../map-trigger-recipients';
 
 const LOG_CONTEXT = 'ParseEventRequest';
 
@@ -36,28 +36,13 @@ export class ParseEventRequest {
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
-    private mapTriggerRecipients: MapTriggerRecipients,
-    private tenantRepository: TenantRepository
+    private tenantRepository: TenantRepository,
+    private workflowOverrideRepository: WorkflowOverrideRepository
   ) {}
 
   @InstrumentUsecase()
   async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
-
-    const mappedActor = command.actor ? this.mapTriggerRecipients.mapSubscriber(command.actor) : undefined;
-
-    const mappedRecipients = await this.mapTriggerRecipients.execute(
-      MapTriggerRecipientsCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        recipients: command.to,
-        transactionId,
-        userId: command.userId,
-        actor: mappedActor,
-      })
-    );
-
-    await this.validateSubscriberIdProperty(mappedRecipients);
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
       environmentId: command.environmentId,
@@ -71,7 +56,38 @@ export class ParseEventRequest {
     const reservedVariablesTypes = this.getReservedVariablesTypes(template);
     this.validateTriggerContext(command, reservedVariablesTypes);
 
-    if (!template.active) {
+    let tenant: TenantEntity | null = null;
+    if (command.tenant) {
+      tenant = await this.tenantRepository.findOne({
+        _environmentId: command.environmentId,
+        identifier: typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier,
+      });
+
+      if (!tenant) {
+        return {
+          acknowledged: true,
+          status: TriggerEventStatusEnum.TENANT_MISSING,
+        };
+      }
+    }
+
+    let workflowOverride: WorkflowOverrideEntity | null = null;
+    if (tenant) {
+      workflowOverride = await this.workflowOverrideRepository.findOne({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _workflowId: template._id,
+        _tenantId: tenant._id,
+      });
+    }
+
+    const inactiveWorkflow = !workflowOverride && !template.active;
+    const inactiveWorkflowOverride = workflowOverride && !workflowOverride.active;
+
+    if (inactiveWorkflowOverride || inactiveWorkflow) {
+      const message = workflowOverride ? 'Workflow is not active by workflow override' : 'Workflow is not active';
+      Logger.log(message, LOG_CONTEXT);
+
       return {
         acknowledged: true,
         status: TriggerEventStatusEnum.NOT_ACTIVE,
@@ -90,17 +106,6 @@ export class ParseEventRequest {
         acknowledged: true,
         status: TriggerEventStatusEnum.NO_WORKFLOW_ACTIVE_STEPS,
       };
-    }
-
-    if (command.tenant) {
-      try {
-        await this.validateTenant(typeof command.tenant === 'string' ? command.tenant : command.tenant.identifier);
-      } catch (e) {
-        return {
-          acknowledged: true,
-          status: TriggerEventStatusEnum.TENANT_MISSING,
-        };
-      }
     }
 
     Sentry.addBreadcrumb({
@@ -126,13 +131,13 @@ export class ParseEventRequest {
 
     command.payload = merge({}, defaultPayload, command.payload);
 
-    const jobData = {
+    const jobData: IWorkflowDataDto = {
       ...command,
-      to: mappedRecipients,
-      actor: mappedActor,
+      actor: command.actor,
       transactionId,
     };
-    await this.workflowQueueService.add(transactionId, jobData, command.organizationId);
+
+    await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
 
     return {
       acknowledged: true,
@@ -157,36 +162,6 @@ export class ParseEventRequest {
       command.environmentId,
       command.triggerIdentifier
     );
-  }
-
-  private async validateTenant(identifier: string) {
-    const found = await this.tenantRepository.findOne({
-      identifier,
-    });
-    if (!found) {
-      throw new ApiException(`Tenant with identifier ${identifier} could not be found`);
-    }
-  }
-
-  @Instrument()
-  private async validateSubscriberIdProperty(to: ISubscribersDefine[]): Promise<boolean> {
-    for (const subscriber of to) {
-      const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
-
-      if (Array.isArray(subscriberIdExists)) {
-        throw new ApiException(
-          'subscriberId under property to is type array, which is not allowed please make sure all subscribers ids are strings'
-        );
-      }
-
-      if (!subscriberIdExists) {
-        throw new ApiException(
-          'subscriberId under property to is not configured, please make sure all subscribers contains subscriberId property'
-        );
-      }
-    }
-
-    return true;
   }
 
   @Instrument()
@@ -224,14 +199,6 @@ export class ParseEventRequest {
       file: Buffer.from(attachment.file, 'base64'),
       storagePath: `${command.organizationId}/${command.environmentId}/${hat()}/${attachment.name}`,
     }));
-  }
-
-  public mapTenant(tenant: TriggerTenantContext): ITenantDefine {
-    if (typeof tenant === 'string') {
-      return { identifier: tenant };
-    }
-
-    return tenant;
   }
 
   public getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {

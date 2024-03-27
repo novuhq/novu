@@ -1,4 +1,4 @@
-import { ICondition } from '@novu/shared';
+import { FieldOperatorEnum, ICondition } from '@novu/shared';
 import { TestWrapper } from '../../testing';
 import { ExecutionDetailsConditionItem } from './ExecutionDetailsConditionItem';
 
@@ -7,7 +7,7 @@ const condition: ICondition = {
   field: 'test',
   expected: '1000',
   actual: '100000000',
-  operator: 'LARGER',
+  operator: FieldOperatorEnum.LARGER,
   passed: true,
 };
 

@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, FILTER_TO_LABEL, FilterPartTypeEnum } from '@novu/shared';
 
 export enum IntegrationsStoreModalAnalytics {
   CREATE_INTEGRATION_FORM_SUBMIT = 'Create Integration Form Submit - [Integrations Store Modal]',
@@ -14,4 +14,9 @@ export const CHANNEL_TYPE_TO_ICON_NAME = {
   [ChannelTypeEnum.PUSH]: 'mobile',
   [ChannelTypeEnum.CHAT]: 'paper-plane',
   [ChannelTypeEnum.IN_APP]: 'bell',
+};
+
+export const defaultIntegrationConditionsProps = {
+  label: 'provider instance',
+  filterPartsList: [{ value: FilterPartTypeEnum.TENANT, label: FILTER_TO_LABEL[FilterPartTypeEnum.TENANT] }],
 };

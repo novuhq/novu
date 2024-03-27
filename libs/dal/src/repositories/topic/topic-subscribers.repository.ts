@@ -23,6 +23,42 @@ export class TopicSubscribersRepository extends BaseRepository<
     await this.upsertMany(subscribers);
   }
 
+  async *getTopicDistinctSubscribers({
+    query,
+    batchSize = 500,
+  }: {
+    query: {
+      _environmentId: EnvironmentId;
+      _organizationId: OrganizationId;
+      topicIds: string[];
+      excludeSubscribers: string[];
+    };
+    batchSize?: number;
+  }) {
+    const { _organizationId, _environmentId, topicIds, excludeSubscribers } = query;
+    const mappedTopicIds = topicIds.map((id) => this.convertStringToObjectId(id));
+
+    const aggregatePipeline = [
+      {
+        $match: {
+          _organizationId: this.convertStringToObjectId(_organizationId),
+          _environmentId: this.convertStringToObjectId(_environmentId),
+          _topicId: { $in: mappedTopicIds },
+          externalSubscriberId: { $nin: excludeSubscribers },
+        },
+      },
+      {
+        $group: {
+          _id: '$externalSubscriberId',
+        },
+      },
+    ];
+
+    for await (const doc of this._model.aggregate(aggregatePipeline, { batchSize: batchSize }).cursor()) {
+      yield this.mapEntity(doc);
+    }
+  }
+
   async findOneByTopicKeyAndExternalSubscriberId(
     _environmentId: EnvironmentId,
     _organizationId: OrganizationId,

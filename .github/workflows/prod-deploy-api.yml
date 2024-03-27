@@ -13,48 +13,9 @@ jobs:
         name: [ 'novu/api-ee', 'novu/api' ]
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
-      ee: ${{ contains (matrix.name,'ee') }}
-      submodules: ${{ contains (matrix.name,'ee') }}
-      submodule_branch: "main"
+      ee: ${{ contains (matrix.name,'-ee') }}
+      job-name: ${{ matrix.name }}
     secrets: inherit
-
-  test_e2e_ee:
-    name: Test E2E EE
-    runs-on: ubuntu-latest
-    timeout-minutes: 80
-    permissions:
-      contents: read
-      packages: write
-      deployments: write
-      id-token: write
-    steps:
-      - run: echo ${{ matrix.projectName }}
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-project
-      - uses: ./.github/actions/setup-redis-cluster
-      - uses: mansagroup/nrwl-nx-action@v3
-        name: Lint and build
-        with:
-          targets: lint,build
-          projects: ${{matrix.projectName}}
-
-      - uses: ./.github/actions/start-localstack
-
-      - uses: ./.github/actions/run-worker
-        if: ${{matrix.projectName == '@novu/api' }}
-        with:
-          launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-
-      - uses: mansagroup/nrwl-nx-action@v3
-        name: Running the E2E tests
-        env:
-          LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
-          CI_EE_TEST: true
-        with:
-          targets: test:e2e:ee
-          projects: ${{matrix.projectName}}
 
   build_prod_image:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -75,15 +36,35 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v3
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
       - uses: ./.github/actions/setup-project
+        with:
+          submodules: ${{ contains (matrix.name,'-ee') }}
 
       - name: build api
-        run: pnpm build:api
+        run: pnpm build:api --skip-nx-cache
 
-      - name: Setup Depot
-        uses: depot/setup-action@v1
+      - uses: crazy-max/ghaction-setup-docker@v2
         with:
-          oidc: true
+          version: v24.0.6
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: 'image=moby/buildkit:v0.12.4'
 
       - name: Set Bull MQ Env variable for EE
         if: contains(matrix.name, 'ee')
@@ -99,16 +80,15 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
-          DEPOT_PROJECT_ID: 6sj0jfv0n7
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg BULL_MQ_PRO_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} --build-arg PACKAGE_PATH=apps/api - -t novu-api --load
+          cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api - -t novu-api --load --platform=linux/amd64,linux/arm64 --provenance=false
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
 
           docker run --network=host --name api -dit --env NODE_ENV=test ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
-          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://localhost:1337/v1/health-check | grep 'ok'
+          docker run --network=host appropriate/curl --retry 10 --retry-delay 5 --retry-connrefused http://127.0.0.1:1337/v1/health-check | grep 'ok'
 
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest

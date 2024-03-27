@@ -3,7 +3,7 @@ import { Grid, Timeline } from '@mantine/core';
 import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 
-import { colors } from '../../../../design-system';
+import { colors } from '@novu/design-system';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../../consts';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../../constants/routes.enum';

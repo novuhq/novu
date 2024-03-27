@@ -13,14 +13,7 @@ export class RootEnvironmentGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-    if (!request.headers.authorization) return false;
-
-    const token = request.headers.authorization.split(' ')[1];
-    if (!token) return false;
-
-    const user = jwt.decode(token) as IJwtPayload;
-    if (!user) return false;
-    if (!user.environmentId) return false;
+    const user = request.user;
 
     const environment = await this.authService.isRootEnvironment(user);
 

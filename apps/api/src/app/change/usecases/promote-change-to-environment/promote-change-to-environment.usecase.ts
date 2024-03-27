@@ -1,8 +1,8 @@
 import { forwardRef, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ChangeRepository, EnvironmentRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
-import { applyDiff } from 'recursive-diff';
 
+import { applyDiff } from 'recursive-diff';
 import { PromoteChangeToEnvironmentCommand } from './promote-change-to-environment.command';
 import { PromoteTypeChangeCommand } from '../promote-type-change.command';
 import { PromoteLayoutChange } from '../promote-layout-change';
@@ -10,6 +10,8 @@ import { PromoteNotificationTemplateChange } from '../promote-notification-templ
 import { PromoteMessageTemplateChange } from '../promote-message-template-change/promote-message-template-change';
 import { PromoteNotificationGroupChange } from '../promote-notification-group-change/promote-notification-group-change';
 import { PromoteFeedChange } from '../promote-feed-change/promote-feed-change';
+import { PromoteTranslationChange } from '../promote-translation-change';
+import { PromoteTranslationGroupChange } from '../promote-translation-group-change';
 
 @Injectable()
 export class PromoteChangeToEnvironment {
@@ -21,7 +23,9 @@ export class PromoteChangeToEnvironment {
     private promoteNotificationTemplateChange: PromoteNotificationTemplateChange,
     private promoteMessageTemplateChange: PromoteMessageTemplateChange,
     private promoteNotificationGroupChange: PromoteNotificationGroupChange,
-    private promoteFeedChange: PromoteFeedChange
+    private promoteFeedChange: PromoteFeedChange,
+    private promoteTranslationChange: PromoteTranslationChange,
+    private promoteTranslationGroupChange: PromoteTranslationGroupChange
   ) {}
 
   async execute(command: PromoteChangeToEnvironmentCommand) {
@@ -60,6 +64,12 @@ export class PromoteChangeToEnvironment {
       case ChangeEntityTypeEnum.LAYOUT:
       case ChangeEntityTypeEnum.DEFAULT_LAYOUT:
         await this.promoteLayoutChange.execute(typeCommand);
+        break;
+      case ChangeEntityTypeEnum.TRANSLATION:
+        await this.promoteTranslationChange.execute(typeCommand);
+        break;
+      case ChangeEntityTypeEnum.TRANSLATION_GROUP:
+        await this.promoteTranslationGroupChange.execute(typeCommand);
         break;
       default:
         Logger.error(`Change with type ${command.type} could not be enabled from environment ${command.environmentId}`);

@@ -1,7 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
+import { initializeApp } from './initializeApp';
 import reportWebVitals from './reportWebVitals';
+
+import './styled-system/styles.css';
+
+initializeApp();
 
 ReactDOM.render(
   <React.StrictMode>
@@ -15,5 +20,4 @@ ReactDOM.render(
  * to log results (for example: reportWebVitals(console.log))
  * or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals .
  */
-
 reportWebVitals();

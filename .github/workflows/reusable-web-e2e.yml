@@ -6,16 +6,11 @@ name: Test WEB
 on:
   workflow_call:
     inputs:
-      submodules:
-        description: 'The flag controlling whether we want submodules to checkout'
+      ee:
+        description: 'use the ee version of worker'
         required: false
         default: false
         type: boolean
-      submodule_branch:
-        description: 'Submodule branch to checkout to'
-        required: false
-        default: 'main'
-        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -50,17 +45,26 @@ jobs:
             echo "has_token=false" >> $GITHUB_OUTPUT
           fi
 
-      - uses: actions/checkout@v3
       # checkout with submodules if token is provided
+      - uses: actions/checkout@v3
+        if: steps.setup.outputs.has_token == 'true'
+        with:
+          submodules: ${{ inputs.ee }}
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+      # else checkout without submodules if the token is not provided
+      - uses: actions/checkout@v3
+        if: steps.setup.outputs.has_token != 'true'
       - uses: ./.github/actions/setup-project
         id: setup-project
         with:
           cypress: true
+          submodules: true
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint,build
           projects: '@novu/web,@novu/api,@novu/worker'
+          args: --skip-nx-cache
 
       - uses: ./.github/actions/start-localstack
       - uses: ./.github/actions/setup-redis-cluster
@@ -70,13 +74,14 @@ jobs:
           cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
           cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          ci_ee_test: ${{ steps.setup.outputs.has_token }}
 
       - name: Start Client
         working-directory: apps/web
         env:
-          REACT_APP_API_URL: http://localhost:1336
-          REACT_APP_WS_URL: http://localhost:1340
-          REACT_APP_WEBHOOK_URL: http://localhost:1341
+          REACT_APP_API_URL: http://127.0.0.1:1336
+          REACT_APP_WS_URL: http://127.0.0.1:1340
+          REACT_APP_WEBHOOK_URL: http://127.0.0.1:1341
           REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ${{ secrets.TEST_LAUNCH_DARKLY_CLIENT_SIDE_ID }}
         run: pnpm start:static:build &
 
@@ -85,7 +90,7 @@ jobs:
           cd apps/ws && pnpm start:test &
 
       - name: Wait on Services
-        run: wait-on --timeout=180000 http://localhost:1340/v1/health-check http://localhost:4200
+        run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check http://127.0.0.1:4200/
 
       # run cypress install only when cache was not hit
       - name: Cypress install
@@ -99,8 +104,9 @@ jobs:
       - run: |
           echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
 
-      - name: Cypress run e2e
-        uses: cypress-io/github-action@v5
+      - name: Cypress run EE e2e
+        if: ${{ steps.setup.outputs.has_token == 'true' && inputs.ee }}
+        uses: cypress-io/github-action@v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -111,10 +117,29 @@ jobs:
         with:
           working-directory: apps/web
           browser: "${{ env.BROWSER_PATH }}"
-          record: true
+          record: false
+          install: false
+          parallel: false
+          config-file: cypress.config.ts
+          spec: "cypress/tests/**/*.spec-ee.{js,jsx,ts,tsx}"
+
+      - name: Cypress run e2e
+        uses: cypress-io/github-action@v6
+        env:
+          NODE_ENV: test
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
+          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
+          CYPRESS_IS_CI: true
+        with:
+          working-directory: apps/web
+          browser: "${{ env.BROWSER_PATH }}"
+          record: false
           parallel: false
           install: false
           config-file: cypress.config.ts
+          spec: "cypress/tests/**/*.spec.{js,jsx,ts,tsx}"
 
       - uses: actions/upload-artifact@v3
         if: failure()
@@ -139,7 +164,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Build
-        run: CI='' pnpm build:web
+        run: CI='' pnpm build:web --skip-nx-cache
 
       # run cypress install only when cache was not hit
       - name: Cypress install
@@ -148,7 +173,7 @@ jobs:
         run: pnpm cypress install
 
       - name: Run Component tests 🧪
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v6
         env:
           NODE_ENV: test
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

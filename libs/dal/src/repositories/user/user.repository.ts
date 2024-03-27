@@ -4,7 +4,7 @@ import { BaseRepository } from '../base-repository';
 import { IUserResetTokenCount, UserEntity, UserDBModel } from './user.entity';
 import { User } from './user.schema';
 
-export class UserRepository extends BaseRepository<UserDBModel, UserEntity> {
+export class UserRepository extends BaseRepository<UserDBModel, UserEntity, object> {
   constructor() {
     super(User, UserEntity);
   }
@@ -13,6 +13,13 @@ export class UserRepository extends BaseRepository<UserDBModel, UserEntity> {
     return this.findOne({
       email,
     });
+  }
+
+  async findById(id: string, select?: string): Promise<UserEntity | null> {
+    const data = await this.MongooseModel.findById(id, select);
+    if (!data) return null;
+
+    return this.mapEntity(data.toObject());
   }
 
   private hashResetToken(token: string) {

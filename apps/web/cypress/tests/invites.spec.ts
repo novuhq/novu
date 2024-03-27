@@ -48,7 +48,7 @@ describe('Invites module', function () {
       cy.loginWithGitHub();
 
       cy.location('pathname').should('equal', '/auth/application');
-      cy.getByTestId('app-creation').type('Organization Name');
+      cy.getByTestId('questionnaire-company-name').type('Organization Name');
       cy.getByTestId('submit-btn').click();
       cy.url().should('include', '/quickstart');
 

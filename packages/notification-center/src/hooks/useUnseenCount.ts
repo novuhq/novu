@@ -46,9 +46,6 @@ export const useUnseenCount = ({ onSuccess, ...restOptions }: UseQueryOptions<IC
             count: data?.unseenCount ?? oldData.count,
           }));
 
-          queryClient.refetchQueries(queryKeysRef.current.unseenCountQueryKey, {
-            exact: false,
-          });
           queryClient.refetchQueries(queryKeysRef.current.fetchNotificationsQueryKey, {
             exact: false,
           });

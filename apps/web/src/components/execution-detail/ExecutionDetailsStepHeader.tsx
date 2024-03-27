@@ -5,8 +5,7 @@ import { StepTypeEnum, DelayTypeEnum, JobStatusEnum } from '@novu/shared';
 
 import { ExecutionDetailsWebhookFeedback } from './ExecutionDetailsWebhookFeedback';
 import { getLogoByType } from './helpers';
-import { colors, Text } from '../../design-system';
-import { CheckCircle, ErrorIcon } from '../../design-system/icons';
+import { colors, Text, CheckCircle, ErrorIcon } from '@novu/design-system';
 
 const StepName = styled(Text)`
   color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B40)};
@@ -87,6 +86,9 @@ const generateDetailByStepAndStatus = (status, step) => {
   }
 
   if (step.type === StepTypeEnum.DIGEST) {
+    if (status === JobStatusEnum.SKIPPED) {
+      return step.executionDetails?.at(-1)?.detail;
+    }
     const { digest } = step;
 
     return `Digesting events for ${digest.amount} ${digest.unit}`;

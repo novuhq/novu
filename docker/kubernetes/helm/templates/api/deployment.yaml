@@ -101,6 +101,8 @@ spec:
               value : {{print  .Values.api.port | quote }}
             - name: FRONT_BASE_URL
               value : {{print  .Values.api.env.FRONT_BASE_URL | quote }}
+            - name: MONGO_MIN_POOL_SIZE
+              value : {{print  .Values.api.env.MONGO_MIN_POOL_SIZE | quote }}
             - name: MONGO_MAX_POOL_SIZE
               value : {{print  .Values.api.env.MONGO_MAX_POOL_SIZE | quote }}
             - name: REDIS_HOST

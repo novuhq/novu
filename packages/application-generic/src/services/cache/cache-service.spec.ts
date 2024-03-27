@@ -4,14 +4,10 @@ import {
   ICacheService,
   splitKey,
 } from './cache.service';
+import * as sinon from 'sinon';
 
-import {
-  InMemoryProviderEnum,
-  InMemoryProviderService,
-} from '../in-memory-provider';
-
-const enableAutoPipelining =
-  process.env.REDIS_CACHE_ENABLE_AUTOPIPELINING === 'true';
+import { CacheInMemoryProviderService } from '../in-memory-provider';
+import { MockCacheService } from './cache-service.mock';
 
 /**
  * TODO: Maybe create a Test single Redis instance to be able to run it in the
@@ -19,24 +15,20 @@ const enableAutoPipelining =
  */
 describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
   let cacheService: CacheService;
-  let inMemoryProviderService: InMemoryProviderService;
+  let cacheInMemoryProviderService: CacheInMemoryProviderService;
 
   beforeAll(async () => {
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'false';
 
-    inMemoryProviderService = new InMemoryProviderService(
-      InMemoryProviderEnum.REDIS,
-      enableAutoPipelining
-    );
-    await inMemoryProviderService.delayUntilReadiness();
-    expect(inMemoryProviderService.isClusterMode()).toBe(false);
+    cacheInMemoryProviderService = new CacheInMemoryProviderService();
+    expect(cacheInMemoryProviderService.isCluster).toBe(false);
 
-    cacheService = new CacheService(inMemoryProviderService);
+    cacheService = new CacheService(cacheInMemoryProviderService);
     await cacheService.initialize();
   });
 
   afterAll(async () => {
-    await inMemoryProviderService.shutdown();
+    await cacheInMemoryProviderService.shutdown();
   });
 
   it('should be instantiated properly', async () => {
@@ -80,24 +72,20 @@ describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
 
 describe('Cache Service - Cluster Mode', () => {
   let cacheService: CacheService;
-  let inMemoryProviderService: InMemoryProviderService;
+  let cacheInMemoryProviderService: CacheInMemoryProviderService;
 
   beforeAll(async () => {
     process.env.IS_IN_MEMORY_CLUSTER_MODE_ENABLED = 'true';
 
-    inMemoryProviderService = new InMemoryProviderService(
-      InMemoryProviderEnum.REDIS,
-      enableAutoPipelining
-    );
-    await inMemoryProviderService.delayUntilReadiness();
-    expect(inMemoryProviderService.isClusterMode()).toBe(true);
+    cacheInMemoryProviderService = new CacheInMemoryProviderService();
+    expect(cacheInMemoryProviderService.isCluster).toBe(true);
 
-    cacheService = new CacheService(inMemoryProviderService);
+    cacheService = new CacheService(cacheInMemoryProviderService);
     await cacheService.initialize();
   });
 
   afterAll(async () => {
-    await inMemoryProviderService.shutdown();
+    await cacheInMemoryProviderService.shutdown();
   });
 
   it('should be instantiated properly', async () => {
@@ -111,6 +99,16 @@ describe('Cache Service - Cluster Mode', () => {
     expect(result).toBe('OK');
     const value = await cacheService.get('key1');
     expect(value).toBe('value1');
+  });
+
+  it('should be able to add a key / value in the Redis Cluster if key not exist', async () => {
+    const result = await cacheService.setIfNotExist('key1-not-exist', 'value1');
+    expect(result).toBeDefined();
+    const result1 = await cacheService.setIfNotExist(
+      'key1-not-exist',
+      'value1'
+    );
+    expect(result1).toBeFalsy();
   });
 
   it('should be able to delete a key / value in the Redis Cluster', async () => {
@@ -176,6 +174,31 @@ describe('cache-service', function () {
     expect(res3).toEqual(undefined);
   });
 
+  it('should invoke the SADD method correctly', async function () {
+    const key = '123:456';
+    const data = [1, 2, 3];
+    const res = await cacheService.sadd(key, ...data);
+    const res2 = await cacheService.sadd(key, ...data);
+
+    expect(res).toEqual(3);
+    expect(res2).toEqual(0);
+  });
+
+  it('should invoke the EVAL function correctly', async function () {
+    const dataString = JSON.stringify({ array: [1, 2, 3] });
+    const evalMock = sinon.mock().resolves(dataString);
+    cacheService = MockCacheService.createClient({ eval: evalMock });
+
+    const script = 'return redis.call("get", KEYS[1])';
+    const key = '123:456';
+    const args = ['arg1', 'arg2'];
+    cacheService.set(key, dataString);
+    const res = await cacheService.eval(script, [key], args);
+
+    expect(res).toEqual(dataString);
+    expect(evalMock.calledWith(script, 1, key, 'arg1', 'arg2')).toEqual(true);
+  });
+
   describe('splitKey', () => {
     it('should split the key into credentials and query parts', () => {
       const key =
@@ -208,48 +231,3 @@ describe('cache-service', function () {
     });
   });
 });
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const MockCacheService = {
-  createClient(): ICacheService {
-    const data = {};
-
-    return {
-      set(key: string, value: string, options?: CachingConfig) {
-        data[key] = value;
-      },
-      get(key: string) {
-        return data[key];
-      },
-      del(key: string) {
-        delete data[key];
-
-        return;
-      },
-      delByPattern(pattern?: string) {
-        const preFixSuffixTuple = pattern?.split('*');
-
-        if (!preFixSuffixTuple) return;
-
-        for (const key in data) {
-          if (
-            key.startsWith(preFixSuffixTuple[0]) &&
-            key.endsWith(preFixSuffixTuple[1])
-          )
-            delete data[key];
-        }
-
-        return;
-      },
-      keys(pattern?: string) {
-        return Object.keys(data);
-      },
-      getStatus() {
-        return 'ready';
-      },
-      cacheEnabled() {
-        return true;
-      },
-    };
-  },
-};

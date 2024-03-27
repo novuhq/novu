@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStyles, Box } from '@mantine/core';
-import { ThemeProvider } from '../../../design-system/ThemeProvider';
+import { ThemeProvider } from '@novu/design-system';
 import { CONTEXT_PATH } from '../../../config';
 
 export default function AuthLayout({ children }: { children?: React.ReactNode }) {

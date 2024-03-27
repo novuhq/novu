@@ -1,7 +1,7 @@
 import { Handle, Position } from 'react-flow-renderer';
 
 import { NodeStepWithPopover } from './NodeStepWithPopover';
-import { EmailFilled } from '../../../design-system/icons';
+import { EmailFilled } from '@novu/design-system';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
 import { useAuthContext } from '../../providers/AuthProvider';

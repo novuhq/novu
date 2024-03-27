@@ -12,6 +12,8 @@
   - apps/webhook/**/*
 '@novu/dal':
   - libs/dal/**/*
+'@novu/design-system':
+  - libs/design-system/**/*
 '@novu/shared':
   - libs/shared/**/*
 '@novu/notification-center':

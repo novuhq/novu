@@ -1,21 +1,32 @@
-import { useState } from 'react';
+import { ChangeEventHandler, useState } from 'react';
 import { ActionIcon, useMantineTheme, Group } from '@mantine/core';
 import { Link, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
+import {
+  Tag,
+  Table,
+  colors,
+  Text,
+  IExtendedColumn,
+  withCellLoading,
+  Container,
+  Bolt,
+  BoltFilled,
+  BoltOffFilled,
+  Edit,
+  ProviderMissing,
+  Tooltip,
+  SearchInput,
+} from '@novu/design-system';
 
 import {
   useTemplates,
   useEnvController,
   useNotificationGroup,
-  useIsTemplateStoreEnabled,
   INotificationTemplateExtended,
+  useDebouncedSearch,
 } from '../../hooks';
-import PageHeader from '../../components/layout/components/PageHeader';
-import PageContainer from '../../components/layout/components/PageContainer';
-import { Tag, Table, colors, Text, IExtendedColumn, withCellLoading, PlusButton, Container } from '../../design-system';
-import { Bolt, BoltFilled, BoltOffFilled, Edit, ProviderMissing } from '../../design-system/icons';
-import { Tooltip } from '../../design-system';
 import { ROUTES } from '../../constants/routes.enum';
 import { parseUrl } from '../../utils/routeUtils';
 import { TemplatesListNoData } from './TemplatesListNoData';
@@ -27,9 +38,9 @@ import { CreateWorkflowDropdown } from './components/CreateWorkflowDropdown';
 import { IBlueprintTemplate } from '../../api/types';
 import { errorMessage } from '../../utils/notifications';
 import { TemplateCreationSourceEnum } from './shared';
-import { TemplatesListNoDataOld } from './TemplatesListNoDataOld';
-import { useCreateDigestDemoWorkflow } from '../../api/hooks/notification-templates/useCreateDigestDemoWorkflow';
 import { When } from '../../components/utils/When';
+import { ListPage } from '../../components/layout/components/ListPage';
+import { WorkflowListNoMatches } from './WorkflowListNoMatches';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -39,32 +50,44 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     maxWidth: 340,
     Cell: withCellLoading(({ row: { original } }) => (
       <Group spacing={8}>
-        <Tooltip
-          error
-          label="Some steps are missing a provider configuration or a primary provider,
+        <Group spacing={4}>
+          <When truthy={original.chimera}>
+            <Tooltip label="Workflow is handled by Chimera" position="top">
+              <div>
+                <Bolt color="#4c6dd4" width="24px" height="24px" />
+              </div>
+            </Tooltip>
+          </When>
+          <Tooltip
+            error
+            label="Some steps are missing a provider configuration or a primary provider,
           causing some notifications to fail."
-          width={300}
-          multiline
-          disabled={
-            original.workflowIntegrationStatus?.hasActiveIntegrations &&
-            original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false
-          }
-          position="top"
-        >
-          <div>
-            {original.workflowIntegrationStatus?.hasActiveIntegrations &&
-            original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
-              <Bolt color={colors.B40} width="24px" height="24px" />
-            ) : (
-              <ProviderMissing width="24px" height="24px" />
-            )}
-          </div>
-        </Tooltip>
-
+            width={300}
+            multiline
+            disabled={
+              original.workflowIntegrationStatus?.hasActiveIntegrations &&
+              original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false
+            }
+            position="top"
+          >
+            <div>
+              {original.workflowIntegrationStatus?.hasActiveIntegrations &&
+              original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
+                !original.chimera ? (
+                  <Bolt color={colors.B40} width="24px" height="24px" />
+                ) : null
+              ) : (
+                <ProviderMissing width="24px" height="24px" />
+              )}
+            </div>
+          </Tooltip>
+        </Group>
         <Tooltip label={original.name}>
           <div>
-            <Text rows={1}>{original.name}</Text>
-            <Text rows={1} size="xs" color={colors.B40}>
+            <Text rows={1} data-test-id="workflow-row-name">
+              {original.name}
+            </Text>
+            <Text rows={1} size="xs" color={colors.B40} data-test-id="workflow-row-trigger-identifier">
               {original.triggers ? original.triggers[0].identifier : 'Unknown'}
             </Text>
           </div>
@@ -77,9 +100,9 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     Header: 'Group',
     width: 240,
     maxWidth: 240,
-    Cell: withCellLoading(({ row: { original } }) => (
-      <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
-    )),
+    Cell: withCellLoading(({ row: { original } }) =>
+      original.chimera ? null : <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
+    ),
   },
   {
     accessor: 'createdAt',
@@ -141,10 +164,21 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
 function WorkflowListPage() {
   const segment = useSegment();
   const { readonly } = useEnvController();
-  const [page, setPage] = useState<number>(0);
   const { loading: areNotificationGroupLoading } = useNotificationGroup();
-  const { templates, loading, totalCount: totalTemplatesCount, pageSize } = useTemplates(page);
-  const isLoading = areNotificationGroupLoading || loading;
+  const {
+    templates,
+    loading: areWorkflowsLoading,
+    isFetching,
+    totalItemCount,
+    totalPageCount,
+    currentPageNumberQueryParam,
+    pageSizeQueryParam,
+    searchQueryParam,
+    setSearchQueryParam,
+    setCurrentPageNumberQueryParam,
+    setPageSizeQueryParam,
+  } = useTemplates({ areSearchParamsEnabled: true });
+  const [searchValue, setSearchValue] = useState(searchQueryParam ?? '');
   const navigate = useNavigate();
   const { blueprintsGroupedAndPopular: { general, popular } = {}, isLoading: areBlueprintsLoading } =
     useFetchBlueprints();
@@ -158,13 +192,15 @@ function WorkflowListPage() {
   });
   const hasGroups = general && general.length > 0;
   const hasTemplates = templates && templates.length > 0;
+  const isLoading = areNotificationGroupLoading || areWorkflowsLoading;
+  const shouldShowEmptyState = !isLoading && !isFetching && !hasTemplates && searchValue === '';
+  const shouldShowNoResults = !isLoading && !isFetching && !hasTemplates && searchValue !== '';
+  const isSearchInputDisabled = isLoading || (!hasTemplates && searchValue === '');
 
   const { TemplatesStoreModal, openModal } = useTemplatesStoreModal({ general, popular });
-  const { createDigestDemoWorkflow, isDisabled: isTryDigestDisabled } = useCreateDigestDemoWorkflow();
-  const isTemplateStoreEnabled = useIsTemplateStoreEnabled();
 
-  function handleTableChange(pageIndex) {
-    setPage(pageIndex);
+  function handleTableChange(pageIndex: number) {
+    setCurrentPageNumberQueryParam(pageIndex);
   }
 
   const handleRedirectToCreateTemplate = (isFromHeader: boolean) => {
@@ -179,100 +215,88 @@ function WorkflowListPage() {
     });
   };
 
-  const handleCreateDigestDemoWorkflow = () => {
-    segment.track(TemplateAnalyticsEnum.TRY_DIGEST_CLICK);
-    createDigestDemoWorkflow();
-  };
-
   function onRowClick(row) {
     navigate(parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: row.values._id }));
   }
 
-  return (
-    <PageContainer title="Workflows">
-      <PageHeader title="Workflows" />
-      <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
-        {isTemplateStoreEnabled ? (
-          <div>
-            <CreateWorkflowDropdown
-              readonly={readonly}
-              blueprints={popular?.blueprints}
-              isLoading={areBlueprintsLoading}
-              isCreating={isCreatingTemplateFromBlueprint}
-              allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-              onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-              onTemplateClick={handleOnBlueprintClick}
-              onAllTemplatesClick={openModal}
-            />
-          </div>
-        ) : (
-          <>
-            <PlusButton
-              label="Add a workflow"
-              disabled={readonly}
-              onClick={() => handleRedirectToCreateTemplate(true)}
-              data-test-id="create-workflow-btn"
-            />
-          </>
-        )}
-      </Container>
+  const debouncedSearchChange = useDebouncedSearch(setSearchQueryParam);
 
+  const onSearchClearClick = () => {
+    debouncedSearchChange.cancel();
+    setSearchValue('');
+    setSearchQueryParam('');
+  };
+
+  const onSearchChange: ChangeEventHandler<HTMLInputElement> = ({ target: { value } }) => {
+    if (value === '') {
+      onSearchClearClick();
+
+      return;
+    }
+    setSearchValue(value);
+    debouncedSearchChange(value);
+  };
+
+  return (
+    <ListPage
+      title="Workflows"
+      paginationInfo={{
+        totalItemCount,
+        pageSize: pageSizeQueryParam,
+        totalPageCount,
+        currentPageNumber: currentPageNumberQueryParam,
+        onPageChange: handleTableChange,
+        onPageSizeChange: setPageSizeQueryParam,
+      }}
+    >
+      <Container fluid sx={{ padding: '0 24px 8px 24px' }}>
+        <TableActionsContainer>
+          <CreateWorkflowDropdown
+            readonly={readonly}
+            blueprints={popular?.blueprints}
+            isLoading={areBlueprintsLoading}
+            isCreating={isCreatingTemplateFromBlueprint}
+            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+            onTemplateClick={handleOnBlueprintClick}
+            onAllTemplatesClick={openModal}
+          />
+          <SearchInput
+            value={searchValue}
+            placeholder="Type name or identifier..."
+            onChange={onSearchChange}
+            onClearClick={onSearchClearClick}
+            disabled={isSearchInputDisabled}
+            data-test-id="workflows-search-input"
+          />
+        </TableActionsContainer>
+      </Container>
       <TemplateListTableWrapper>
-        {isTemplateStoreEnabled ? (
-          <>
-            <When truthy={hasTemplates}>
-              <Table
-                onRowClick={onRowClick}
-                loading={isLoading}
-                data-test-id="notifications-template"
-                columns={columns}
-                data={templates}
-                pagination={{
-                  pageSize: pageSize,
-                  current: page,
-                  total: totalTemplatesCount,
-                  onPageChange: handleTableChange,
-                }}
-              />
-            </When>
-            <When truthy={!hasTemplates}>
-              <TemplatesListNoData
-                readonly={readonly}
-                blueprints={popular?.blueprints}
-                isLoading={areBlueprintsLoading}
-                isCreating={isCreatingTemplateFromBlueprint}
-                allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
-                onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
-                onTemplateClick={handleOnBlueprintClick}
-                onAllTemplatesClick={openModal}
-              />
-            </When>
-          </>
-        ) : (
+        <When truthy={!shouldShowEmptyState}>
           <Table
             onRowClick={onRowClick}
             loading={isLoading}
             data-test-id="notifications-template"
             columns={columns}
             data={templates}
-            pagination={{
-              pageSize: pageSize,
-              current: page,
-              total: totalTemplatesCount,
-              onPageChange: handleTableChange,
-            }}
-            noDataPlaceholder={
-              <TemplatesListNoDataOld
-                onCreateClick={() => handleRedirectToCreateTemplate(false)}
-                onTryDigestClick={handleCreateDigestDemoWorkflow}
-                tryDigestDisabled={isTryDigestDisabled}
-              />
-            }
+            noDataPlaceholder={shouldShowNoResults && <WorkflowListNoMatches />}
           />
-        )}
+        </When>
+        <When truthy={shouldShowEmptyState}>
+          <TemplatesListNoData
+            readonly={readonly}
+            blueprints={popular?.blueprints}
+            isLoading={areBlueprintsLoading}
+            isCreating={isCreatingTemplateFromBlueprint}
+            allTemplatesDisabled={areBlueprintsLoading || !hasGroups}
+            onBlankWorkflowClick={() => handleRedirectToCreateTemplate(false)}
+            onTemplateClick={handleOnBlueprintClick}
+            onAllTemplatesClick={openModal}
+          />
+        </When>
         <TemplatesStoreModal />
       </TemplateListTableWrapper>
-    </PageContainer>
+    </ListPage>
   );
 }
 
@@ -304,4 +328,10 @@ const StyledTag = styled(Tag)`
   span {
     max-width: 100%;
   }
+`;
+
+const TableActionsContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;

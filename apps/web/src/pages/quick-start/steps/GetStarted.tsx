@@ -1,12 +1,10 @@
-import styled from '@emotion/styled';
-import { ChannelTypeEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
+import styled from '@emotion/styled';
+import { ChannelTypeEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import { ArrowRight } from '@novu/design-system';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { ArrowRight } from '../../../design-system/icons/arrows/ArrowRight';
-import { useIsMultiProviderConfigurationEnabled } from '../../../hooks';
 import { IntegrationsListModal } from '../../integrations/IntegrationsListModal';
-import { IntegrationsStoreModal } from '../../integrations/IntegrationsStoreModal';
 import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 import { NavButton } from '../components/NavButton';
@@ -27,7 +25,6 @@ const ChannelsConfigurationHolder = styled.div`
 
 export function GetStarted() {
   const segment = useSegment();
-  const isMultiProviderConfigurationEnabled = useIsMultiProviderConfigurationEnabled();
   const [clickedChannel, setClickedChannel] = useState<{
     open: boolean;
     channelType?: ChannelTypeEnum;
@@ -56,20 +53,11 @@ export function GetStarted() {
       }}
     >
       <ChannelsConfigurationHolder>
-        {isMultiProviderConfigurationEnabled ? (
-          <IntegrationsListModal
-            isOpen={clickedChannel.open}
-            onClose={onIntegrationModalClose}
-            scrollTo={clickedChannel.channelType}
-          />
-        ) : (
-          <IntegrationsStoreModal
-            openIntegration={clickedChannel.open}
-            closeIntegration={onIntegrationModalClose}
-            scrollTo={clickedChannel.channelType}
-          />
-        )}
-
+        <IntegrationsListModal
+          isOpen={clickedChannel.open}
+          onClose={onIntegrationModalClose}
+          scrollTo={clickedChannel.channelType}
+        />
         <ChannelsConfiguration setClickedChannel={setClickedChannel} />
       </ChannelsConfigurationHolder>
     </GetStartedLayout>
@@ -85,7 +73,7 @@ function LearnMoreRef() {
 
   return (
     <a
-      href={'https://docs.novu.co/quickstarts/01-introduction'}
+      href={`https://docs.novu.co/quickstarts/01-introduction${UTM_CAMPAIGN_QUERY_PARAM}`}
       style={{ color: '#DD2476', textDecoration: 'underline', fontSize: '18px' }}
       onClick={() => handleOnClick}
       target="_blank"

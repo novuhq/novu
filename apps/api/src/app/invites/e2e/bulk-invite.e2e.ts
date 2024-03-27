@@ -65,38 +65,12 @@ describe('Bulk invite members - /invites/bulk (POST)', async () => {
     expect(member.memberStatus).to.equal(MemberStatusEnum.INVITED);
   });
 
-  it('should invite member as member', async () => {
-    session = new UserSession();
-    await session.initialize();
-
-    const { body } = await session.testAgent
-      .post('/v1/invites/bulk')
-      .send({
-        invitees: [
-          {
-            email: 'aaaaa2@asdas.com',
-            role: 'member',
-          },
-        ],
-      })
-      .expect(201);
-
-    const members = await memberRepository.getOrganizationMembers(session.organization._id);
-
-    expect(members.length).to.eq(2);
-
-    const member = members.find((i) => !i._userId);
-
-    expect(member.roles[0]).to.equal(MemberRoleEnum.MEMBER);
-    expect(member.memberStatus).to.equal(MemberStatusEnum.INVITED);
-  });
-
   describe('send valid invites', () => {
     let inviteResponse: IBulkInviteResponse[];
 
     const invitee = {
       email: 'asdasda@asdas.com',
-      role: 'member',
+      role: 'admin',
     };
 
     before(async () => {
@@ -129,7 +103,7 @@ describe('Bulk invite members - /invites/bulk (POST)', async () => {
       expect(member.invite.email).to.equal(invitee.email);
       expect(member.invite._inviterId).to.equal(session.user._id);
       expect(member.roles.length).to.equal(1);
-      expect(member.roles[0]).to.equal(MemberRoleEnum.MEMBER);
+      expect(member.roles[0]).to.equal(MemberRoleEnum.ADMIN);
 
       expect(member.memberStatus).to.equal(MemberStatusEnum.INVITED);
       expect(member._userId).to.be.not.ok;

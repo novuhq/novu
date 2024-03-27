@@ -35,6 +35,7 @@ export class MandrillProvider implements IEmailProvider {
     private config: {
       apiKey: string;
       from: string;
+      senderName: string;
     }
   ) {
     this.transporter = mailchimp(this.config.apiKey);
@@ -45,7 +46,8 @@ export class MandrillProvider implements IEmailProvider {
   ): Promise<ISendMessageSuccessResponse> {
     const mandrillSendOption = {
       message: {
-        from_email: this.config.from,
+        from_email: emailOptions.from || this.config.from,
+        from_name: emailOptions.senderName || this.config.senderName,
         subject: emailOptions.subject,
         html: emailOptions.html,
         to: this.mapTo(emailOptions),

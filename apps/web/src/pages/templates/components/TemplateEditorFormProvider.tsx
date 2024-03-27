@@ -1,19 +1,21 @@
 import { createContext, useEffect, useMemo, useCallback, useContext, useState } from 'react';
 import slugify from 'slugify';
-import { FormProvider, useForm, useFieldArray } from 'react-hook-form';
+import { FormProvider, useForm, useFieldArray, FieldErrors } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'react-router-dom';
+import * as cloneDeep from 'lodash.clonedeep';
 import {
   DelayTypeEnum,
   DigestTypeEnum,
   DigestUnitEnum,
   INotificationTemplate,
   INotificationTrigger,
+  NotificationTemplateTypeEnum,
 } from '@novu/shared';
 import * as Sentry from '@sentry/react';
 import { StepTypeEnum, ActorTypeEnum, EmailBlockTypeEnum, IEmailBlock, TextAlignEnum } from '@novu/shared';
 
-import type { IForm, IFormStep } from './formTypes';
+import type { IForm, IFormStep, ITemplates } from './formTypes';
 import { useTemplateController } from './useTemplateController';
 import { mapNotificationTemplateToForm, mapFormToCreateNotificationTemplate } from './templateToFormMappers';
 import { errorMessage, successMessage } from '../../../utils/notifications';
@@ -22,6 +24,7 @@ import { v4 as uuid4 } from 'uuid';
 import { useEffectOnce, useNotificationGroup } from '../../../hooks';
 import { useCreate } from '../hooks/useCreate';
 import { stepNames } from '../constants';
+import { getExplicitErrors } from '../shared/errors';
 
 const defaultEmailBlocks: IEmailBlock[] = [
   {
@@ -55,6 +58,7 @@ const makeStep = (channelType: StepTypeEnum, id: string): IFormStep => {
     active: true,
     shouldStopOnFail: false,
     filters: [],
+    variants: [],
     ...(channelType === StepTypeEnum.EMAIL && {
       replyCallback: {
         active: false,
@@ -83,16 +87,59 @@ const makeStep = (channelType: StepTypeEnum, id: string): IFormStep => {
   };
 };
 
+const makeTemplateCopy = ({
+  _id,
+  id,
+  _environmentId,
+  _organizationId,
+  _creatorId,
+  _parentId,
+  createdAt,
+  updatedAt,
+  ...rest
+}: ITemplates) => ({
+  ...rest,
+});
+
+export const makeVariantFromStep = (
+  stepToVariant: IFormStep,
+  { conditions }: { conditions: IFormStep['filters'] }
+): IFormStep => {
+  const { id: _, variants, template, _templateId, ...rest } = stepToVariant;
+  const variantsCount = variants?.length ?? 0;
+  const variantName = `V${variantsCount + 1} ${stepToVariant?.name}`;
+
+  return {
+    ...rest,
+    _id: uuid4(),
+    uuid: uuid4(),
+    name: variantName,
+    filters: conditions,
+    template: cloneDeep(makeTemplateCopy(template)),
+  };
+};
+
+interface AddVariantResult {
+  variant: IFormStep;
+  variantIndex: number;
+}
+
+interface INotificationTemplateWithChimera extends INotificationTemplate {
+  chimera?: boolean;
+}
+
 interface ITemplateEditorFormContext {
-  template?: INotificationTemplate;
+  template?: INotificationTemplateWithChimera;
   isLoading: boolean;
   isCreating: boolean;
   isUpdating: boolean;
   isDeleting: boolean;
   trigger?: INotificationTrigger;
   onSubmit: (data: IForm) => Promise<void>;
+  onInvalid: (errors: FieldErrors<IForm>) => void;
   addStep: (channelType: StepTypeEnum, id: string, stepIndex?: number) => void;
   deleteStep: (index: number) => void;
+  deleteVariant: (stepUuid: string, variantUuid: string) => void;
 }
 
 const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
@@ -102,8 +149,10 @@ const TemplateEditorFormContext = createContext<ITemplateEditorFormContext>({
   isDeleting: false,
   trigger: undefined,
   onSubmit: (() => {}) as any,
+  onInvalid: () => {},
   addStep: () => {},
   deleteStep: () => {},
+  deleteVariant: () => {},
 });
 
 const defaultValues: IForm = {
@@ -112,7 +161,7 @@ const defaultValues: IForm = {
   description: '',
   identifier: '',
   tags: [],
-  critical: false,
+  critical: true,
   steps: [],
   preferenceSettings: {
     email: true,
@@ -207,6 +256,10 @@ const TemplateEditorFormProvider = ({ children }) => {
     [templateId, updateNotificationTemplate, setTrigger, reset]
   );
 
+  const onInvalid = useCallback((errors: FieldErrors<IForm>) => {
+    errorMessage(getExplicitErrors(errors));
+  }, []);
+
   const addStep = useCallback(
     (channelType: StepTypeEnum, id: string, stepIndex?: number) => {
       const newStep: IFormStep = makeStep(channelType, id);
@@ -227,19 +280,56 @@ const TemplateEditorFormProvider = ({ children }) => {
     [steps]
   );
 
+  const deleteVariant = useCallback(
+    (stepUuid: string, variantUuid: string) => {
+      const workflowSteps = methods.getValues('steps');
+      const stepToVariant = workflowSteps.find((step) => step.uuid === stepUuid);
+      const index = workflowSteps.findIndex((item) => item.uuid === stepUuid);
+      if (!stepToVariant) {
+        return;
+      }
+      // remove the variant with the variantUuid
+      const newVariants = stepToVariant?.variants?.filter((variant) => variant.uuid !== variantUuid);
+
+      methods.setValue(`steps.${index}.variants`, newVariants, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    },
+    [methods]
+  );
+
   const value = useMemo<ITemplateEditorFormContext>(
     () => ({
-      template,
+      template: {
+        ...template,
+        chimera: template?.type === NotificationTemplateTypeEnum.ECHO,
+      } as INotificationTemplateWithChimera,
       isLoading: isLoading || loadingGroups,
       isCreating,
       isUpdating,
       isDeleting,
       trigger: trigger,
       onSubmit,
+      onInvalid,
       addStep,
       deleteStep,
+      deleteVariant,
     }),
-    [template, isLoading, isCreating, isUpdating, isDeleting, trigger, onSubmit, addStep, deleteStep, loadingGroups]
+    [
+      template,
+      isLoading,
+      isCreating,
+      isUpdating,
+      isDeleting,
+      trigger,
+      onSubmit,
+      onInvalid,
+      addStep,
+      deleteStep,
+      loadingGroups,
+      deleteVariant,
+    ]
   );
 
   return (
