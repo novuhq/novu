@@ -16,7 +16,10 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_widget:
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        runner: [ubuntu-latest, blacksmith-4vcpu-ubuntu-2204]
     timeout-minutes: 80
     permissions:
       contents: read
