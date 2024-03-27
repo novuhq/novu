@@ -18,6 +18,9 @@ interface IMenuItem {
   tooltipLabel?: string;
 }
 
+/**
+ * @deprecated
+ */
 export function NavMenu({ menuItems }: INavMenuProps) {
   return (
     <div>

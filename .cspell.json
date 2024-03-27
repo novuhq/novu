@@ -618,7 +618,10 @@
     "usecase",
     "zulip",
     "uuidv",
-    "Vonage"
+    "Vonage",
+    "HeaderNavNew",
+    "reshard",
+    "hstack"
   ],
   "flagWords": [],
   "patterns": [

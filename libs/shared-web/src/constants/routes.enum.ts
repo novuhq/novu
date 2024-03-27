@@ -25,7 +25,6 @@ export enum ROUTES {
   QUICK_START_SETUP_TRIGGER = '/quickstart/notification-center/set-up/:framework/trigger',
   QUICK_START_SETUP_SUCCESS = '/quickstart/notification-center/set-up/:framework/success',
   ACTIVITIES = '/activities',
-  SETTINGS = '/settings',
   INTEGRATIONS = '/integrations',
   INTEGRATIONS_CREATE = '/integrations/create',
   TEAM = '/team',
@@ -35,4 +34,16 @@ export enum ROUTES {
   CONTACT = '/contact',
   BRAND = '/brand',
   TRANSLATIONS = '/translations',
+  LAYOUT = '/layouts',
+
+  /** Settings nested routes */
+  SETTINGS = '/settings',
+  PROFILE = '/settings/profile',
+  TEAM_SETTINGS = '/settings/team',
+  BRAND_SETTINGS = '/settings/brand',
+  ORGANIZATION = '/settings/organization',
+  SECURITY = '/settings/security',
+  BILLING = '/settings/billing',
+  API_KEYS = '/settings/api-keys/:env',
+  WEBHOOK = '/settings/webhook/:env',
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocalThemePreference } from '@novu/shared-web';
+import { useLocalThemePreference, ColorSchemePreferenceEnum } from '@novu/shared-web';
 import { useColorScheme as useMantineColorScheme } from '@mantine/hooks';
 import { ColorScheme } from './ColorScheme';
 import { mapThemeStatusToColorScheme } from './mapThemeStatusToColorScheme';
@@ -25,12 +25,16 @@ export const useColorScheme = () => {
   );
 
   const toggleColorScheme = () => {
-    if (themeStatus === 'system') {
-      setThemeStatus('light');
-    } else if (themeStatus === 'light') {
-      setThemeStatus('dark');
-    } else {
-      setThemeStatus('system');
+    switch (themeStatus) {
+      case ColorSchemePreferenceEnum.SYSTEM:
+        setThemeStatus(ColorSchemePreferenceEnum.LIGHT);
+        break;
+      case ColorSchemePreferenceEnum.LIGHT:
+        setThemeStatus(ColorSchemePreferenceEnum.DARK);
+        break;
+      default:
+        setThemeStatus(ColorSchemePreferenceEnum.SYSTEM);
+        break;
     }
   };
 

@@ -1,10 +1,9 @@
-import { Cloud, SSO, UserAccess } from '@novu/design-system';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
 import { RequiredAuth } from './components/layout/RequiredAuth';
-import { ProductLead } from './components/utils/ProductLead';
 import { ROUTES } from './constants/routes.enum';
+import { useFeatureFlag } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import InvitationPage from './pages/auth/InvitationPage';
 import LoginPage from './pages/auth/LoginPage';
@@ -21,6 +20,7 @@ import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
 import { UpdateProviderPage } from './pages/integrations/UpdateProviderPage';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
+import { LayoutsPage } from './pages/layouts/v2/LayoutsPage';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
@@ -28,10 +28,8 @@ import { GetStarted } from './pages/quick-start/steps/GetStarted';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
 import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
 import { Setup } from './pages/quick-start/steps/Setup';
-import { SettingsPage } from './pages/settings/SettingsPage';
-import { ApiKeysCard } from './pages/settings/tabs';
-import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
+import { ChannelPreview } from './pages/templates/components/ChannelPreview';
 import { ChannelStepEditor } from './pages/templates/components/ChannelStepEditor';
 import { ProvidersPage } from './pages/templates/components/ProvidersPage';
 import { SnippetPage } from './pages/templates/components/SnippetPage';
@@ -47,9 +45,7 @@ import { CreateTenantPage } from './pages/tenants/CreateTenantPage';
 import { TenantsPage } from './pages/tenants/TenantsPage';
 import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
-import { BillingRoutes } from './pages/BillingPages';
-import { ChannelPreview } from './pages/templates/components/ChannelPreview';
-import { useFeatureFlag } from './hooks';
+import { useSettingsRoutes } from './SettingsRoutes';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
@@ -111,47 +107,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
         <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
         <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
-        <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
-          <Route path="" element={<ApiKeysCard />} />
-          <Route path="billing/*" element={<BillingRoutes />} />
-          <Route path="email" element={<EmailSettings />} />
-          <Route
-            path="permissions"
-            element={
-              <ProductLead
-                icon={<UserAccess />}
-                id="rbac-permissions"
-                title="Role-based access control"
-                text="Securely manage users' permissions to access system resources."
-                closeable={false}
-              />
-            }
-          />
-          <Route
-            path="sso"
-            element={
-              <ProductLead
-                icon={<SSO />}
-                id="sso-settings"
-                title="Single Sign-On (SSO)"
-                text="Simplify user authentication and enhance security."
-                closeable={false}
-              />
-            }
-          />
-          <Route
-            path="data-integrations"
-            element={
-              <ProductLead
-                icon={<Cloud />}
-                id="data-integrations-settings"
-                title="Data Integrations"
-                text="Share data with 3rd party services via Segment and Datadog integrations to monitor analytics."
-                closeable={false}
-              />
-            }
-          />
-        </Route>
+        {useSettingsRoutes()}
         <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />}>
           <Route path="create" element={<SelectProviderPage />} />
           <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />
@@ -163,6 +119,9 @@ export const AppRoutes = () => {
         <Route path={ROUTES.BRAND} element={<BrandPage />}>
           <Route path="" element={<BrandingForm />} />
           <Route path="layouts" element={<LayoutsListPage />} />
+        </Route>
+        <Route path={ROUTES.LAYOUT} element={<LayoutsPage />}>
+          <Route path="" element={<LayoutsListPage />} />
         </Route>
         <Route path="/translations/*" element={<TranslationRoutes />} />
       </Route>

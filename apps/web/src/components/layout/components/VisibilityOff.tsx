@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 
 import { colors } from '@novu/design-system';
 
+/** @deprecated */
 export const VisibilityOff = ({ onClick }: { onClick: React.MouseEventHandler<HTMLDivElement> }) => {
   return (
     <IconContainer onClick={onClick}>

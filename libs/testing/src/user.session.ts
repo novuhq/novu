@@ -43,6 +43,8 @@ const EMAIL_BLOCK: IEmailBlock[] = [
   },
 ];
 
+export const CYPRESS_USER_PASSWORD = '123Qwe!@#';
+
 export class UserSession {
   private notificationGroupRepository = new NotificationGroupRepository();
   private feedRepository = new FeedRepository();
@@ -100,7 +102,7 @@ export class UserSession {
       email: `${card.firstName}_${card.lastName}_${faker.datatype.uuid()}@gmail.com`.toLowerCase(),
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
       tokens: [],
-      password: '123Qwe!@#',
+      password: CYPRESS_USER_PASSWORD,
       showOnBoarding: true,
       showOnBoardingTour: options.showOnBoardingTour ? 0 : 2,
     };

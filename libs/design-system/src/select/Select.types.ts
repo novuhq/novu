@@ -15,6 +15,7 @@ export interface ISelectProps extends SpacingProps {
   description?: string;
   getCreateLabel?: (query: string) => React.ReactNode;
   onDropdownOpen?: () => void;
+  onDropdownClose?: () => void;
   onSearchChange?: (query: string) => void;
   onCreate?: SelectProps['onCreate'];
   searchable?: boolean;
