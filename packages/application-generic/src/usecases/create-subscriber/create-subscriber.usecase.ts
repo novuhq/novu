@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { SubscriberRepository } from '@novu/dal';
-import { SubscriberEntity } from '@novu/dal';
+import { SubscriberEntity, ErrorCodesEnum } from '@novu/dal';
 
 import {
   CachedEntity,
@@ -30,6 +30,30 @@ export class CreateSubscriber {
       }));
 
     if (!subscriber) {
+      subscriber = await this.createSubscriber(command);
+    } else {
+      subscriber = await this.updateSubscriber.execute(
+        UpdateSubscriberCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          firstName: command.firstName,
+          lastName: command.lastName,
+          subscriberId: command.subscriberId,
+          email: command.email,
+          phone: command.phone,
+          avatar: command.avatar,
+          locale: command.locale,
+          data: command.data,
+          subscriber,
+        })
+      );
+    }
+
+    return subscriber;
+  }
+
+  private async createSubscriber(command: CreateSubscriberCommand) {
+    try {
       await this.invalidateCache.invalidateByKey({
         key: buildSubscriberKey({
           subscriberId: command.subscriberId,
@@ -50,26 +74,20 @@ export class CreateSubscriber {
         data: command.data,
       };
 
-      subscriber = await this.subscriberRepository.create(subscriberPayload);
-    } else {
-      subscriber = await this.updateSubscriber.execute(
-        UpdateSubscriberCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          firstName: command.firstName,
-          lastName: command.lastName,
+      return await this.subscriberRepository.create(subscriberPayload);
+    } catch (err: any) {
+      /*
+       * Possible race condition on subscriber creation, try fetch newly created the subscriber
+       */
+      if (err.code === ErrorCodesEnum.DUPLICATE_KEY) {
+        return await this.fetchSubscriber({
+          _environmentId: command.environmentId,
           subscriberId: command.subscriberId,
-          email: command.email,
-          phone: command.phone,
-          avatar: command.avatar,
-          locale: command.locale,
-          data: command.data,
-          subscriber,
-        })
-      );
+        });
+      } else {
+        throw err;
+      }
     }
-
-    return subscriber;
   }
 
   @CachedEntity({

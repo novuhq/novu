@@ -10,6 +10,8 @@ import type { EnforceEnvOrOrgIds } from '../../types';
 import { EnvironmentId, ISubscribersDefine, OrganizationId } from '@novu/shared';
 
 type SubscriberQuery = FilterQuery<SubscriberDBModel> & EnforceEnvOrOrgIds;
+type SubscriberDeleteQuery = Pick<SubscriberQuery, 'subscriberId' | '_environmentId'> & EnforceEnvOrOrgIds;
+type SubscriberDeleteManyQuery = Pick<SubscriberQuery, 'subscriberId' | '_id' | '_environmentId'> & EnforceEnvOrOrgIds;
 
 export class SubscriberRepository extends BaseRepository<SubscriberDBModel, SubscriberEntity, EnforceEnvOrOrgIds> {
   private subscriber: SoftDeleteModel;
@@ -151,20 +153,30 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     );
   }
 
-  async delete(query: SubscriberQuery) {
-    const foundSubscriber = await this.findOne({
+  async delete(query: SubscriberDeleteQuery) {
+    const requestQuery: SubscriberDeleteQuery = {
       _environmentId: query._environmentId,
       subscriberId: query.subscriberId,
-    });
+    };
+
+    const foundSubscriber = await this.findOne(requestQuery);
 
     if (!foundSubscriber) {
       throw new DalException(`Could not find subscriber ${query.subscriberId} to delete`);
     }
 
-    const requestQuery: SubscriberQuery = {
-      _environmentId: foundSubscriber._environmentId,
-      subscriberId: foundSubscriber.subscriberId,
+    return await this.subscriber.delete(requestQuery);
+  }
+
+  async deleteMany(query: SubscriberDeleteManyQuery) {
+    const requestQuery: SubscriberDeleteManyQuery = {
+      _environmentId: query._environmentId,
+      subscriberId: query.subscriberId,
     };
+
+    if (query._id) {
+      requestQuery._id = query._id;
+    }
 
     return await this.subscriber.delete(requestQuery);
   }

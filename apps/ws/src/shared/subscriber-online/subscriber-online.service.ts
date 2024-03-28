@@ -30,7 +30,7 @@ export class SubscriberOnlineService {
 
   private async updateOnlineStatus(subscriber: ISubscriberJwt, updatePayload: IUpdateSubscriberPayload) {
     await this.subscriberRepository.update(
-      { _id: subscriber._id, _organizationId: subscriber.organizationId },
+      { _id: subscriber._id, _environmentId: subscriber.environmentId },
       {
         $set: updatePayload,
       }
