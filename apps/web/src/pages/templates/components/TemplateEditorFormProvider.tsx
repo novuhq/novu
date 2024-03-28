@@ -45,7 +45,7 @@ const makeStep = (channelType: StepTypeEnum, id: string): IFormStep => {
       subject: '',
       type: channelType,
       content: channelType === StepTypeEnum.EMAIL ? defaultEmailBlocks : '',
-      contentType: 'editor',
+      contentType: channelType === StepTypeEnum.CHAT ? 'customHtml' : 'editor',
       variables: [],
       ...(channelType === StepTypeEnum.IN_APP && {
         actor: {
