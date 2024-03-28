@@ -37,6 +37,7 @@ type SelectedPopoverProps = Pick<
   | 'showUserPreferences'
   | 'allowedNotificationActions'
   | 'preferenceFilter'
+  | 'opened'
 > & {
   popoverConfig?: {
     offset?: IPopoverNotificationCenterProps['offset'];

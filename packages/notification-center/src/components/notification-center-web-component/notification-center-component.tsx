@@ -39,6 +39,7 @@ export const NOTIFICATION_CENTER_PROPS = [
   'onTabClick',
   'tabClicked',
   'preferenceFilter',
+  'opened',
 ];
 
 export const NotificationCenterComponent: FunctionComponent<NotificationCenterComponentProps> = ({
@@ -114,6 +115,7 @@ function PopoverWrapper({
   unseenBadgeColor,
   unseenBadgeBackgroundColor,
   preferenceFilter,
+  opened,
 }: PopoverWrapperProps) {
   const { updateAction } = useUpdateAction();
 
@@ -136,6 +138,7 @@ function PopoverWrapper({
       allowedNotificationActions={allowedNotificationActions}
       offset={popoverConfig?.offset || popover?.offset}
       position={popoverConfig?.position || popover?.position}
+      opened={opened}
     >
       {({ unseenCount }) => (
         <NotificationBell

@@ -32,6 +32,7 @@ export interface IPopoverNotificationCenterProps {
   onTabClick?: (tab: ITab) => void;
   offset?: number;
   position?: PopoverProps['position'];
+  opened?: boolean;
 }
 
 export function PopoverNotificationCenter({ children, ...props }: IPopoverNotificationCenterProps) {
@@ -44,6 +45,7 @@ export function PopoverNotificationCenter({ children, ...props }: IPopoverNotifi
       bell={(bellProps) => children({ ...bellProps, unseenCount, theme })}
       position={props.position}
       offset={props.offset}
+      opened={props.opened}
     >
       <NotificationCenter
         onNotificationClick={props.onNotificationClick}
