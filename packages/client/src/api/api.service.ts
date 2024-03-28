@@ -112,19 +112,29 @@ export class ApiService {
       }
     );
   }
-
   async initializeSession(
     appId: string,
     subscriberId: string,
-    hmacHash = null
+    hmacHash = null,
+    firstName: string,
+    lastName: string,
+    email: string,
+    phone: string,
+    locale: string,
+    data: Record<string, any>
   ) {
     return await this.httpClient.post(`/widgets/session/initialize`, {
       applicationIdentifier: appId,
       subscriberId: subscriberId,
-      hmacHash,
+      hmacHash:hmacHash,
+      firstName: firstName,
+      lastName: lastName,
+      email: email,
+      phone: phone,
+      locale: locale,
+      data: data,
     });
   }
-
   async postUsageLog(
     name: string,
     payload: { [key: string]: string | boolean | undefined }

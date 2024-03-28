@@ -38,6 +38,12 @@ export interface INovuProviderProps {
   children: React.ReactNode;
   backendUrl?: string;
   subscriberId?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  locale?: string;
+  data?: Record<string, any>;
   applicationIdentifier: string;
   socketUrl?: string;
   onLoad?: (data: { organization: IOrganizationEntity }) => void;
@@ -52,6 +58,12 @@ export function NovuProvider({
   socketUrl: initialSocketUrl,
   applicationIdentifier,
   subscriberId,
+  firstName,
+  lastName,
+  email,
+  phone,
+  locale,
+  data,
   subscriberHash,
   stores: initialStores,
   i18n,
@@ -71,6 +83,12 @@ export function NovuProvider({
     isSessionInitialized: false,
     applicationIdentifier,
     subscriberId,
+    firstName,
+    lastName,
+    email,
+    phone,
+    locale,
+    data,
     subscriberHash,
   });
 
@@ -111,6 +129,12 @@ export function NovuProvider({
       applicationIdentifier: sessionInfo.applicationIdentifier,
       subscriberId: sessionInfo.subscriberId,
       subscriberHash: sessionInfo.subscriberHash,
+      firstName: sessionInfo.firstName,
+      lastName: sessionInfo.lastName,
+      email: sessionInfo.email,
+      phone: sessionInfo.phone,
+      locale: sessionInfo.locale,
+      data: sessionInfo.data,
       isSessionInitialized: sessionInfo.isSessionInitialized,
       apiService,
       socket,
