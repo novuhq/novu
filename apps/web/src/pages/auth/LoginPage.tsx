@@ -62,7 +62,7 @@ export default function LoginPage() {
       }
 
       if (invitationToken) {
-        submitToken(token, invitationToken);
+        submitToken(token, invitationToken, false, false);
 
         return;
       }

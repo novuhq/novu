@@ -65,7 +65,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       }
 
       if (invitationToken) {
-        submitToken(token, invitationToken);
+        submitToken(token, invitationToken, false, false);
 
         return;
       }
