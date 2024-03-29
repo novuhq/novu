@@ -128,6 +128,7 @@ export class SendgridEmailProvider implements IEmailProvider {
         },
       ],
       templateId: templateId,
+      headers: options.headers,
     };
 
     if (options.replyTo) {

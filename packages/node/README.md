@@ -541,7 +541,10 @@ await novu.events.trigger("workflowIdentifier", {
       // customData will work only for sendgrid
       customData: {
         "customKey": "customValue"
-      }
+      },
+      headers: {
+        'X-Novu-Custom-Header': 'Novu-Custom-Header-Value',
+      },
     }
   },
   // actorId is subscriberId of actor
