@@ -575,6 +575,23 @@ export const expoConfig: IConfigCredentials[] = [
   ...pushConfigBase,
 ];
 
+export const ntfyConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    description: 'The base URL of the ntfy server, change it if you are self-hosting ntfy',
+    type: 'text',
+    required: false,
+  },
+  {
+    key: CredentialsKeyEnum.Topic,
+    displayName: 'Topic',
+    type: 'text',
+    required: true,
+  },
+  ...pushConfigBase,
+];
+
 export const pushWebhookConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.WebhookUrl,

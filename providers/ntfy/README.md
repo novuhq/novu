@@ -5,5 +5,11 @@ A Ntfy push provider library for [@novu/node](https://github.com/novuhq/novu)
 ## Usage
 
 ```javascript
-    FILL IN THE INITIALIZATION USAGE
+import { NtfyPushProvider } from '@novu/ntfy';
+
+const provider = new NtfyPushProvider({
+  topic: 'YOUR_TOPIC',
+  baseUrl: 'IGNORE_IF_NOT_SELF-HOSTING'
+});
 ```
+

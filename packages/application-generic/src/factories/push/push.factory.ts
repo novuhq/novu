@@ -3,6 +3,7 @@ import {
   APNSHandler,
   ExpoHandler,
   FCMHandler,
+  NtfyHandler,
   OneSignalHandler,
   PusherBeamsHandler,
   PushpadHandler,
@@ -19,6 +20,7 @@ export class PushFactory implements IPushFactory {
     new PushpadHandler(),
     new PushWebhookHandler(),
     new PusherBeamsHandler(),
+    new NtfyHandler(),
   ];
 
   getHandler(integration: IntegrationEntity): IPushHandler {

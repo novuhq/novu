@@ -2,6 +2,7 @@ import {
   apnsConfig,
   expoConfig,
   fcmConfig,
+  ntfyConfig,
   oneSignalConfig,
   pusherBeamsConfig,
   pushpadConfig,
@@ -38,6 +39,14 @@ export const pushProviders: IProviderConfig[] = [
     credentials: fcmConfig,
     docReference: `https://docs.novu.co/channels-and-providers/push/fcm${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'fcm.svg', dark: 'fcm.svg' },
+  },
+  {
+    id: PushProviderIdEnum.Ntfy,
+    displayName: 'Ntfy',
+    channel: ChannelTypeEnum.PUSH,
+    credentials: ntfyConfig,
+    docReference: `https://docs.novu.co/channels-and-providers/push/ntfy${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'ntfy.svg', dark: 'ntfy.svg' },
   },
   {
     id: PushProviderIdEnum.EXPO,

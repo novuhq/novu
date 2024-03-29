@@ -89,6 +89,7 @@
     "@novu/netcore": "^0.24.0",
     "@novu/nexmo": "^0.24.0",
     "@novu/nodemailer": "^0.24.0",
+    "@novu/ntfy": "^0.24.0",
     "@novu/one-signal": "^0.24.0",
     "@novu/outlook365": "^0.24.0",
     "@novu/plivo": "^0.24.0",
