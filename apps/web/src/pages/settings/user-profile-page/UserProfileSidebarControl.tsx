@@ -15,7 +15,7 @@ export const UserProfileSidebarControl: FC = () => {
   const { sidebarType, updateSidebarParam, token } = useUserProfileSearchParams();
 
   const handleSetPasswordClick: MouseEventHandler<HTMLButtonElement> = async () => {
-    // don't do anything the sidebar type is already open.
+    // don't do anything a sidebar is already open (signified by non-null sidebarType).
     if (sidebarType) {
       return;
     }

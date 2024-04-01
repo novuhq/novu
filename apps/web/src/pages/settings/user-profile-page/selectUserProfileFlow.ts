@@ -5,6 +5,7 @@ interface IUserProfilePageState {
   token?: string;
 }
 
+/** Determine which flow is active on the User Profile page based on supplied state */
 export const selectUserProfileFlow = ({ hasPassword, token }: IUserProfilePageState): UserProfileFlow => {
   if (hasPassword) {
     return { rootFlow: 'UPDATE_PASSWORD' };

@@ -26,6 +26,7 @@ export const useUserProfileSearchParams = () => {
 
   const sidebarParam = searchParams.get(SIDEBAR_PARAM);
   const sidebarType = useMemo(() => {
+    // prevent from setting an invalid sidebar type if someone tampers with the URL
     return getValidatedSidebarType(sidebarParam) ? sidebarParam : null;
   }, [sidebarParam]);
 
