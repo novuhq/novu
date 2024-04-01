@@ -30,7 +30,7 @@ export const useUserProfileSearchParams = () => {
   }, [sidebarParam]);
 
   return {
-    token: searchParams.get(TOKEN_PARAM),
+    token: searchParams.get(TOKEN_PARAM) ?? undefined,
     sidebarType,
     updateSidebarParam,
   };

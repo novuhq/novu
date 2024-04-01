@@ -8,20 +8,31 @@ const COUNTDOWN_TIMER_START_SECONDS = 60;
 
 export const useUserProfileSetPassword = () => {
   const { currentUser } = useAuthContext();
-  const { timeRemaining: countdownTimerSeconds, resetTimer } = useCountdownTimer({
+  const {
+    timeRemaining: countdownTimerSeconds,
+    resetTimer,
+    stopTimer,
+  } = useCountdownTimer({
     // start at 0 in the event the user opens the page directly to the set password flow via URL
     startTimeSeconds: 0,
   });
 
-  const { isLoading, mutateAsync, isError, error } = useMutation<
+  const { mutateAsync } = useMutation<
     { success: boolean },
     IResponseError,
     {
       email: string;
     }
-  >((data) => api.post(`/v1/auth/reset/request`, data, { src: PasswordResetFlowEnum.USER_PROFILE }));
+  >((data) => api.post(`/v1/auth/reset/request`, data, { src: PasswordResetFlowEnum.USER_PROFILE }), {
+    onError: (err) => {
+      showNotification({
+        color: 'red',
+        message: `There was an error sending your email. Please refresh and try again. Error: ${err.message}`,
+      });
+    },
+  });
 
-  const handleSendLinkEmail = async () => {
+  const sendVerificationEmail = async () => {
     // don't allow to reset the timer if it is running
     if (countdownTimerSeconds > 0) {
       return;
@@ -36,21 +47,12 @@ export const useUserProfileSetPassword = () => {
       return;
     }
 
-    /*
-     *try {
-     *  await mutateAsync({ email: currentUser.email });
-     *} catch (e: unknown) {
-     *  showNotification({
-     *    color: 'red',
-     *    message: `There was an error sending your email. Please refresh and try again. Error: ${e.message}`,
-     *  });
-     *}
-     */
+    await mutateAsync({ email: currentUser.email });
   };
 
   return {
-    email: currentUser?.email ?? '',
-    handleSendLinkEmail,
+    sendVerificationEmail,
     countdownTimerSeconds,
+    stopTimer,
   };
 };

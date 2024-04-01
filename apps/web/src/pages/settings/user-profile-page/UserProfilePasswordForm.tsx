@@ -1,18 +1,18 @@
 import { showNotification } from '@mantine/notifications';
-import { Button, colors, IconOutlineForwardToInbox, IconOutlineLockPerson, PasswordInput } from '@novu/design-system';
-import { IResponseError, passwordConstraints } from '@novu/shared';
-import { useAuthContext, api, ROUTES } from '@novu/shared-web';
+import { Button, IconOutlineLockPerson, PasswordInput } from '@novu/design-system';
+import { checkIsResponseError, IResponseError, passwordConstraints } from '@novu/shared';
+import { api, useAuthContext } from '@novu/shared-web';
+import * as Sentry from '@sentry/react';
 import { useMutation } from '@tanstack/react-query';
 import { RegisterOptions, useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
-import { cx, css } from '../../../styled-system/css';
+import { css, cx } from '../../../styled-system/css';
 import { Stack } from '../../../styled-system/jsx';
 import { text } from '../../../styled-system/recipes';
 import { PasswordRequirementPopover } from '../../auth/components/PasswordRequirementPopover';
-import * as Sentry from '@sentry/react';
 
 type UserProfilePasswordFormProps = {
   token: string;
+  onSuccess?: () => void;
 };
 
 const SHARED_REGISTER_OPTIONS: RegisterOptions = {
@@ -31,10 +31,9 @@ const SHARED_REGISTER_OPTIONS: RegisterOptions = {
   },
 };
 
-export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = ({ token }) => {
+export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = ({ token, onSuccess }) => {
   const { setToken } = useAuthContext();
 
-  const navigate = useNavigate();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
     IResponseError,
@@ -46,10 +45,12 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
 
   const onSubmitPasswords = async (data) => {
     if (data.password !== data.passwordRepeat) {
-      return showNotification({
+      showNotification({
         message: 'Passwords do not match',
         color: 'red',
       });
+
+      return;
     }
 
     const itemData = {
@@ -63,14 +64,20 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
       setToken(response.token);
 
       showNotification({
-        message: 'Password was changed successfully',
+        message: 'Password was set successfully',
         color: 'green',
       });
-      // navigate(ROUTES.WORKFLOWS);
-    } catch (e: any) {
-      if (e.statusCode !== 400) {
-        Sentry.captureException(e);
+      onSuccess?.();
+    } catch (err: unknown) {
+      if (checkIsResponseError(err)) {
+        if (err.statusCode !== 400) {
+          Sentry.captureException(err);
+        }
       }
+      showNotification({
+        message: 'Error while setting password: ',
+        color: 'red',
+      });
     }
 
     return true;
@@ -80,13 +87,15 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isValid },
   } = useForm({
     defaultValues: {
       password: '',
       passwordRepeat: '',
     },
   });
+
+  const isSubmitDisabled = !isValid;
 
   return (
     <form noValidate name="reset-form" onSubmit={handleSubmit(onSubmitPasswords)}>
@@ -118,10 +127,11 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
           inherit
           loading={isLoading}
           submit
+          disabled={isSubmitDisabled}
           data-test-id="submit-btn"
           className={css({ alignSelf: 'flex-end', width: 'fit-content !important' })}
         >
-          Reset Password
+          Set Password
         </Button>
         {isError && (
           <p

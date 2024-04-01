@@ -1,15 +1,15 @@
 import { type Sidebar } from '@novu/design-system';
 import { type ComponentProps } from 'react';
+import { UserProfileFlow } from './UserProfileFlow.const';
 
 export interface IUserProfilePasswordEmailVerificationProps {
   email: string;
-  handleSendLinkEmail: () => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
   countdownTimerSeconds: number;
 }
 export interface IUserProfilePasswordSidebarProps
   extends Pick<ComponentProps<typeof Sidebar>, 'isOpened' | 'onClose'>,
-    IUserProfilePasswordEmailVerificationProps {
+    Pick<IUserProfilePasswordEmailVerificationProps, 'email'> {
   setIsOpened?: (prevIsOpened: boolean) => void;
-  token?: string;
-  hasPassword: boolean;
+  currentFlow: UserProfileFlow;
 }

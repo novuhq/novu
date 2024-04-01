@@ -57,5 +57,6 @@ export const useCountdownTimer = ({
     resetTimer,
     stopTimer: interval.stop,
     startTimer,
+    isRunning: interval.active,
   };
 };

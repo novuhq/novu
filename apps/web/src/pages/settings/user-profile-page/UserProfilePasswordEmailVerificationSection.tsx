@@ -3,11 +3,10 @@ import { css, cx } from '../../../styled-system/css';
 import { HStack, Stack } from '../../../styled-system/jsx';
 import { text } from '../../../styled-system/recipes';
 import { IUserProfilePasswordEmailVerificationProps } from './UserProfilePasswordSidebar.shared';
-import { Text } from './UserProfilePasswordSidebar';
 
 export const UserProfilePasswordEmailVerificationSection: React.FC<IUserProfilePasswordEmailVerificationProps> = ({
   email,
-  handleSendLinkEmail,
+  sendVerificationEmail,
   countdownTimerSeconds,
 }) => {
   const isButtonDisabled = countdownTimerSeconds > 0;
@@ -17,14 +16,14 @@ export const UserProfilePasswordEmailVerificationSection: React.FC<IUserProfileP
       <HStack gap="100">
         {/* TODO: this is a different Icon from designs since the one from React Icons doesn't match the name */}
         <IconOutlineMarkunreadMailbox size="40" className={css({ flexShrink: 0 })} />
-        <Text variant="main" color="typography.text.secondary">
+        <p className={cx(text(), css({ color: 'typography.text.secondary' }))}>
           We have just sent a verification link to your email address{' '}
           <span className={text({ variant: 'main' })}>{email}</span>.<br />
           Please verify your email address to proceed with setting a password.
-        </Text>
+        </p>
       </HStack>
       <HStack gap={'200'} justifyContent="flex-end">
-        <Text>
+        <span className={text()}>
           Didn't get the link? Resend in{' '}
           <strong
             className={cx(
@@ -36,9 +35,9 @@ export const UserProfilePasswordEmailVerificationSection: React.FC<IUserProfileP
             {countdownTimerSeconds}
           </strong>{' '}
           seconds
-        </Text>
+        </span>
         <Button
-          onClick={handleSendLinkEmail}
+          onClick={sendVerificationEmail}
           disabled={isButtonDisabled}
           icon={
             <IconOutlineForwardToInbox
