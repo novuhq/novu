@@ -10,13 +10,7 @@ export const Regenerate = () => {
   return (
     <>
       <Group position="right">
-        <Button
-          mb={20}
-          mt={10}
-          data-test-id="show-regenerate-api-key-modal"
-          onClick={openModal}
-          variant={'outline'}
-        >
+        <Button mb={20} mt={10} data-test-id="show-regenerate-api-key-modal" onClick={openModal} variant={'outline'}>
           Regenerate API Key
         </Button>
       </Group>
