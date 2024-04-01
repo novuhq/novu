@@ -51,6 +51,19 @@ const Icon = () => {
   return <Ellipse {...headerIconsSettings} />;
 };
 
+/** Get the title to show based on the specified color mode preference **/
+const getThemeTitleByColorMode = (mode) => {
+  switch (mode) {
+    case 'light':
+      return 'Light Theme';
+    case 'dark':
+      return 'Dark Theme';
+    case 'system':
+    default: 
+      return 'Match System Appearance';
+  }
+};
+
 export function HeaderNav({ isIntercomOpened }: Props) {
   const { currentOrganization, currentUser, logout } = useAuthContext();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
@@ -59,6 +72,15 @@ export function HeaderNav({ isIntercomOpened }: Props) {
   const { boot } = useIntercom();
   const segment = useSegment();
   const isSelfHosted = IS_DOCKER_HOSTED;
+
+  // Determine if the gizmo is visible
+  const [toggled, setToggled] = useState();
+
+  useEffect(() => {
+    if (!toggled) {
+      setToggled(!toggled);
+    }
+  }, [toggled, setToggled]);
 
   const debounceThemeChange = useDebounce((args: { colorScheme: ColorScheme; themeStatus: string }) => {
     segment.track('Theme is set - [Theme]', args);
@@ -87,18 +109,11 @@ export function HeaderNav({ isIntercomOpened }: Props) {
     }
   }, [boot, currentUser, currentOrganization]);
 
-  let themeTitle = 'Match System Appearance';
-  if (themeStatus === 'dark') {
-    themeTitle = 'Dark Theme';
-  } else if (themeStatus === 'light') {
-    themeTitle = 'Light Theme';
-  }
-
   const additionalMenuItems = useMemo(() => {
     return [
       {
         id: 'toggle-theme',
-        title: themeTitle,
+        title: getThemeTitleByColorMode(themeStatus),
         icon: <Icon />,
         onTrigger: () => {
           toggleColorScheme();
