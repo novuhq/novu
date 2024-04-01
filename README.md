@@ -119,7 +119,7 @@ client.workflow('comment-on-post', async ({step, subscriber}) => {
   });
 
   // Novu Worker Engine will manage the state and durability of each step in isolation
-  const { events } = await step.digest('1 day');
+  const {digestedEvents} = await step.digest('1 day');
 
   await step.email('email-step', async () => {
     return {
@@ -128,7 +128,7 @@ client.workflow('comment-on-post', async ({step, subscriber}) => {
     }
   }, {
     // Step-level inputs defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
-    inputSchema: {
+    inputs: {
       // ...JSON Schema
     },
     providers: {
