@@ -10,11 +10,12 @@ import {
 } from '@novu/design-system';
 import { BaseEnvironmentEnum, ROUTES, useAuthContext, useEnvController } from '@novu/shared-web';
 import { useNavigate } from 'react-router-dom';
+import { parseUrl } from '../../utils/routeUtils';
 import { NavMenu } from './NavMenu';
 import { NavMenuLinkButton } from './NavMenuButton/NavMenuLinkButton';
 import { NavMenuSection } from './NavMenuSection';
 
-const getEnvSettingsRoute = (route: ROUTES, env: BaseEnvironmentEnum) => `${route.replace(':env', env)}`;
+const getEnvSettingsRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });
 
 // TODO: Parentheses were not part of designs, but I believe it's much clearer this way
 const getScopedTitle = (label: string, scope?: string) => `${label} ${`(${scope})` ?? ''}`;
