@@ -14,7 +14,7 @@ export const Regenerate = () => {
           mb={20}
           mt={10}
           data-test-id="show-regenerate-api-key-modal"
-          onClick={() => openModal()}
+          onClick={openModal}
           variant={'outline'}
         >
           Regenerate API Key
