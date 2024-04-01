@@ -5,26 +5,25 @@ import {
   IconGroup,
   IconWorkspacePremium,
   IconCreditCard,
-  IconConstruction,
   IconKey,
   IconWebhook,
-  IconRocketLaunch,
 } from '@novu/design-system';
-import { ROUTES, useAuthContext } from '@novu/shared-web';
+import { BaseEnvironmentEnum, ROUTES, useAuthContext, useEnvController } from '@novu/shared-web';
 import { useNavigate } from 'react-router-dom';
+import { parseUrl } from '../../utils/routeUtils';
 import { NavMenu } from './NavMenu';
 import { NavMenuLinkButton } from './NavMenuButton/NavMenuLinkButton';
-import { NavMenuToggleButton } from './NavMenuButton/NavMenuToggleButton';
 import { NavMenuSection } from './NavMenuSection';
 
-const getEnvSettingsRoute = (route: ROUTES, env: 'development' | 'production') => `${route.replace(':env', env)}`;
+const getEnvSettingsRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });
+
+// TODO: Parentheses were not part of designs, but I believe it's much clearer this way
+const getScopedTitle = (label: string, scope?: string) => `${label} ${`(${scope})` ?? ''}`;
 
 export const SettingsNavMenu: React.FC = () => {
   const navigate = useNavigate();
   const { currentOrganization } = useAuthContext();
-
-  // TODO: Parentheses were not part of designs, but I believe it's much clearer this way
-  const getOrgScopedTitle = (title: string) => `${title} ${`(${currentOrganization?.name})` ?? ''}`;
+  const { environment } = useEnvController();
 
   const onBackButtonClick = () => {
     navigate(ROUTES.HOME);
@@ -41,7 +40,7 @@ export const SettingsNavMenu: React.FC = () => {
           testId="side-nav-settings-user-profile"
         ></NavMenuLinkButton>
       </NavMenuSection>
-      <NavMenuSection title={getOrgScopedTitle('Organization')}>
+      <NavMenuSection title={getScopedTitle('Organization', currentOrganization?.name)}>
         <NavMenuLinkButton
           label="Organization profile"
           isVisible
@@ -78,8 +77,30 @@ export const SettingsNavMenu: React.FC = () => {
           testId="side-nav-settings-billing-link"
         ></NavMenuLinkButton>
       </NavMenuSection>
-      <NavMenuSection title={getOrgScopedTitle('Environments')}>
-        <NavMenuToggleButton
+      <NavMenuSection title={getScopedTitle('Environment', environment?.name)}>
+        <NavMenuLinkButton
+          label="API keys"
+          isVisible
+          icon={<IconKey />}
+          link={getEnvSettingsRoute(
+            ROUTES.API_KEYS,
+            (environment?.name as BaseEnvironmentEnum) ?? BaseEnvironmentEnum.DEVELOPMENT
+          )}
+          testId="side-nav-settings-api-keys-development"
+        ></NavMenuLinkButton>
+        <NavMenuLinkButton
+          label="Inbound webhook"
+          isVisible
+          icon={<IconWebhook />}
+          link={getEnvSettingsRoute(
+            ROUTES.WEBHOOK,
+            (environment?.name as BaseEnvironmentEnum) ?? BaseEnvironmentEnum.DEVELOPMENT
+          )}
+          testId="side-nav-settings-inbound-webhook-development"
+        ></NavMenuLinkButton>
+        {/** TODO: we will reinstate the toggle buttons w/ different envs once we have APIs to support the pages */}
+        {/*
+          <NavMenuToggleButton
           icon={<IconConstruction />}
           label={'Development'}
           testId="side-nav-settings-toggle-development"
@@ -88,14 +109,14 @@ export const SettingsNavMenu: React.FC = () => {
             label="API keys"
             isVisible
             icon={<IconKey />}
-            link={getEnvSettingsRoute(ROUTES.API_KEYS, 'development')}
+            link={getEnvSettingsRoute(ROUTES.API_KEYS, BaseEnvironmentEnum.DEVELOPMENT)}
             testId="side-nav-settings-api-keys-development"
           ></NavMenuLinkButton>
           <NavMenuLinkButton
             label="Inbound webhook"
             isVisible
             icon={<IconWebhook />}
-            link={getEnvSettingsRoute(ROUTES.WEBHOOK, 'development')}
+            link={getEnvSettingsRoute(ROUTES.WEBHOOK, BaseEnvironmentEnum.DEVELOPMENT)}
             testId="side-nav-settings-inbound-webhook-development"
           ></NavMenuLinkButton>
         </NavMenuToggleButton>
@@ -108,17 +129,17 @@ export const SettingsNavMenu: React.FC = () => {
             label="API keys"
             isVisible
             icon={<IconKey />}
-            link={getEnvSettingsRoute(ROUTES.API_KEYS, 'production')}
+            link={getEnvSettingsRoute(ROUTES.API_KEYS, BaseEnvironmentEnum.PRODUCTION)}
             testId="side-nav-settings-api-keys-production"
           ></NavMenuLinkButton>
           <NavMenuLinkButton
             label="Inbound webhook"
             isVisible
             icon={<IconWebhook />}
-            link={getEnvSettingsRoute(ROUTES.WEBHOOK, 'production')}
+            link={getEnvSettingsRoute(ROUTES.WEBHOOK, BaseEnvironmentEnum.PRODUCTION)}
             testId="side-nav-settings-inbound-webhook-production"
           ></NavMenuLinkButton>
-        </NavMenuToggleButton>
+        </NavMenuToggleButton>*/}
       </NavMenuSection>
     </NavMenu>
   );

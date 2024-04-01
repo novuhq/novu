@@ -199,4 +199,18 @@ Cypress.Commands.add('createWorkflows', (args) => {
   return cy.task('createWorkflows', args);
 });
 
+/**
+ * Get the value from the clipboard. Must use `.then((value) => ...)` to access the value.
+ *
+ * NOTE: In order for this to work while running the Cypress UI, the Cypress browser
+ * window must remain in focus. Otherwise, you'll see an exception: `Document is not focused`
+ */
+Cypress.Commands.add('getClipboardValue', () => {
+  return cy
+    .window()
+    .its('navigator.clipboard')
+    .should('exist')
+    .then((clipboard) => clipboard?.readText());
+});
+
 export {};
