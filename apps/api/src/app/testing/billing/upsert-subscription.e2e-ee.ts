@@ -174,8 +174,6 @@ describe('UpsertSubscription', () => {
               },
             },
           ],
-          trial_period_days: undefined,
-          trial_settings: undefined,
         },
       };
 
@@ -226,8 +224,6 @@ describe('UpsertSubscription', () => {
                 price: 'price_id_flat',
               },
             ],
-            trial_period_days: undefined,
-            trial_settings: undefined,
           },
         ]);
 
