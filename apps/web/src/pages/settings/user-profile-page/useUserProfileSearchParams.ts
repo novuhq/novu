@@ -24,6 +24,14 @@ export const useUserProfileSearchParams = () => {
     setSearchParams(newSearchParams, { replace: true });
   };
 
+  const clearTokenParam = () => {
+    const newSearchParams = new URLSearchParams(document.location.search);
+
+    newSearchParams.delete(TOKEN_PARAM);
+
+    setSearchParams(newSearchParams, { replace: true });
+  };
+
   const sidebarParam = searchParams.get(SIDEBAR_PARAM);
   const sidebarType = useMemo(() => {
     // prevent from setting an invalid sidebar type if someone tampers with the URL
@@ -34,5 +42,6 @@ export const useUserProfileSearchParams = () => {
     token: searchParams.get(TOKEN_PARAM) ?? undefined,
     sidebarType,
     updateSidebarParam,
+    clearTokenParam,
   };
 };

@@ -4,6 +4,7 @@ import { checkIsResponseError, IResponseError, passwordConstraints } from '@novu
 import { api, useAuthContext } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
 import { useMutation } from '@tanstack/react-query';
+import { FormEventHandler } from 'react';
 import { RegisterOptions, useForm } from 'react-hook-form';
 import { css, cx } from '../../../styled-system/css';
 import { Stack } from '../../../styled-system/jsx';
@@ -43,7 +44,7 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
     }
   >((data) => api.post(`/v1/auth/reset`, data));
 
-  const onSubmitPasswords = async (data) => {
+  const onSubmitPasswords = async (data: { password: string; passwordRepeat: string }) => {
     if (data.password !== data.passwordRepeat) {
       showNotification({
         message: 'Passwords do not match',
@@ -97,8 +98,15 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
 
   const isSubmitDisabled = !isValid;
 
+  const handlePasswordSubmit: FormEventHandler = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    return handleSubmit(onSubmitPasswords)(event);
+  };
+
   return (
-    <form noValidate name="reset-form" onSubmit={handleSubmit(onSubmitPasswords)}>
+    <form noValidate name="reset-form" onSubmit={handlePasswordSubmit}>
       <Stack direction={'column'} gap={'200'}>
         <PasswordRequirementPopover control={control}>
           <PasswordInput
