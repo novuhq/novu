@@ -611,14 +611,17 @@
     "Pyroscope",
     "PYROSCOPE",
     "usecases",
-    "hbspt", 
+    "hbspt",
     "prepopulating",
     "Vonage",
     "fieldtype",
     "usecase",
     "zulip",
     "uuidv",
-    "Vonage"
+    "Vonage",
+    "seti",
+    "NXDI",
+    "Wmkbff"
   ],
   "flagWords": [],
   "patterns": [
