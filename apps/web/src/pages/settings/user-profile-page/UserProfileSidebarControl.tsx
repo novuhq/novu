@@ -10,6 +10,8 @@ import { selectUserProfileFlow } from './selectUserProfileFlow';
 
 export const UserProfileSidebarControl: FC = () => {
   const { currentUser } = useAuthContext();
+  const email = currentUser?.email ?? '';
+  const hasPassword = currentUser?.hasPassword ?? false;
 
   const { sendVerificationEmail } = useContext(UserProfileSidebarContext);
   const { sidebarType, updateSidebarParam, token } = useUserProfileSearchParams();
@@ -19,12 +21,15 @@ export const UserProfileSidebarControl: FC = () => {
     if (sidebarType) {
       return;
     }
-    updateSidebarParam(UserProfileSidebarTypeEnum.PASSWORD);
-    sendVerificationEmail();
-  };
 
-  const email = currentUser?.email ?? '';
-  const hasPassword = currentUser?.hasPassword ?? false;
+    // open the sidebar
+    updateSidebarParam(UserProfileSidebarTypeEnum.PASSWORD);
+
+    // only send verification for users who haven't previously set a password
+    if (!hasPassword) {
+      sendVerificationEmail();
+    }
+  };
 
   const currentFlow = useMemo(() => selectUserProfileFlow({ token, hasPassword }), [token, hasPassword]);
 
