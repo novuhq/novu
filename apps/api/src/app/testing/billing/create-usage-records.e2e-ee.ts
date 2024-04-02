@@ -3,13 +3,20 @@ import { Logger } from '@nestjs/common';
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
+import { StripeBillingIntervalEnum, StripeUsageTypeEnum } from '@novu/ee-billing/src/stripe/types';
 
-const mockBusinessSubscription = {
+const mockMonthlyBusinessSubscription = {
   id: 'subscription_id',
   items: {
     data: [
-      { id: 'item_id_usage_notifications', price: { lookup_key: 'business_usage_notifications' } },
-      { id: 'item_id_flat', price: { lookup_key: 'business_flat_monthly' } },
+      {
+        id: 'item_id_usage_notifications',
+        price: { lookup_key: 'business_usage_notifications', recurring: { usage_type: StripeUsageTypeEnum.METERED } },
+      },
+      {
+        id: 'item_id_flat',
+        price: { lookup_key: 'business_flat_monthly', recurring: { usage_type: StripeUsageTypeEnum.LICENSED } },
+      },
     ],
   },
 };
@@ -53,7 +60,10 @@ describe('CreateUsageRecords', () => {
       },
     ] as any);
     getFeatureFlagStub = sinon.stub(getFeatureFlagUsecase, 'execute').resolves(true);
-    upsertSubscriptionStub = sinon.stub(upsertSubscriptionUsecase, 'execute').resolves(mockBusinessSubscription as any);
+    upsertSubscriptionStub = sinon.stub(upsertSubscriptionUsecase, 'execute').resolves({
+      licensed: mockMonthlyBusinessSubscription,
+      metered: mockMonthlyBusinessSubscription,
+    } as any);
     getCustomerStub = sinon.stub(getCustomerUsecase, 'execute').resolves({
       id: 'customer_id',
       deleted: false,
@@ -61,7 +71,7 @@ describe('CreateUsageRecords', () => {
         organizationId: 'organization_id',
       },
       subscriptions: {
-        data: [mockBusinessSubscription],
+        data: [mockMonthlyBusinessSubscription],
       },
     } as any);
   });
@@ -141,20 +151,21 @@ describe('CreateUsageRecords', () => {
       {
         customer: mockNoSubscriptionsCustomer,
         apiServiceLevel: ApiServiceLevelEnum.FREE,
+        billingInterval: StripeBillingIntervalEnum.MONTH,
       },
     ]);
   });
 
-  it('should set the usage timestamp to the subscription start date if the subscription is new', async () => {
+  it('should set the usage timestamp to the subscription current period start if the subscription is new', async () => {
     const mockSubscriptionStartDate = new Date('2021-02-01T00:00:00Z');
-    const mockSubscriptionCreated = mockSubscriptionStartDate.getTime() / 1000;
+    const mockSubscriptionCurrentPeriodStart = mockSubscriptionStartDate.getTime() / 1000;
     const mockUsageStartDate = new Date('2021-01-15T00:00:00Z');
     getCustomerStub.resolves({
       subscriptions: {
         data: [
           {
-            created: mockSubscriptionCreated,
-            ...mockBusinessSubscription,
+            ...mockMonthlyBusinessSubscription,
+            current_period_start: mockSubscriptionCurrentPeriodStart,
           },
         ],
       },
@@ -167,7 +178,7 @@ describe('CreateUsageRecords', () => {
       })
     );
 
-    expect(createUsageRecordStub.lastCall.args[1].timestamp).to.equal(mockSubscriptionCreated);
+    expect(createUsageRecordStub.lastCall.args[1].timestamp).to.equal(mockSubscriptionCurrentPeriodStart);
   });
 
   it('should set the usage timestamp to the usage start date if the subscription is not new', async () => {
@@ -178,8 +189,8 @@ describe('CreateUsageRecords', () => {
       subscriptions: {
         data: [
           {
-            created: mockSubscriptionCreated,
-            ...mockBusinessSubscription,
+            ...mockMonthlyBusinessSubscription,
+            current_period_start: mockSubscriptionCreated,
           },
         ],
       },

@@ -16,7 +16,9 @@
     "dist/types"
   ],
   "scripts": {
-    "prepare": "panda codegen --clean",
+    "prepare": "pnpm prepare:panda && pnpm prepare:audit",
+    "prepare:panda": "panda codegen --clean",
+    "prepare:audit": "pnpm audit-components",
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
     "lint": "eslint --ext .ts,.tsx src",
@@ -28,7 +30,7 @@
     "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
     "storybook": "pnpm panda --watch & storybook dev -p 6006",
-    "build-storybook": "storybook build",
+    "build-storybook": "pnpm panda && storybook build",
     "cypress:install": "cypress install",
     "cypress:open": "cross-env NODE_ENV=test cypress open",
     "cypress:run": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component",
@@ -95,5 +97,14 @@
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0",
     "react-dom": "^16.8.0 || ^17.0.0"
+  },
+  "nx": {
+    "targets": {
+      "build-storybook": {
+        "dependsOn": ["^build"],
+        "outputs": ["{projectRoot}/storybook-static"],
+        "inputs": ["{projectRoot}/.storybook", "{projectRoot}/src"]
+      }
+    }
   }
 }
