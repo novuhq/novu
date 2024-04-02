@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
+import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
 
 describe('Upsert setup intent', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -14,6 +15,7 @@ describe('Upsert setup intent', () => {
     setupIntents: {
       list: () => {},
       create: () => {},
+      update: () => {},
     },
   };
 
@@ -28,6 +30,7 @@ describe('Upsert setup intent', () => {
   let spyGetCustomer: sinon.SinonSpy;
   let stubCreateSetupIntent: sinon.SinonStub;
   let stubListSetupIntents: sinon.SinonStub;
+  let stubUpdateSetupIntent: sinon.SinonStub;
   let stubGetUser: sinon.SinonStub;
 
   beforeEach(() => {
@@ -40,10 +43,12 @@ describe('Upsert setup intent', () => {
           status: 'succeeded',
           metadata: {
             apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+            billingInterval: StripeBillingIntervalEnum.MONTH,
           },
         },
       ],
     });
+    stubUpdateSetupIntent = sinon.stub(stubObject.setupIntents, 'update').resolves({});
     stubGetUser = sinon.stub(userRepository, 'findById').resolves({ email: 'user_email' });
   });
 
@@ -51,6 +56,7 @@ describe('Upsert setup intent', () => {
     spyGetCustomer.resetHistory();
     stubCreateSetupIntent.reset();
     stubListSetupIntents.reset();
+    stubUpdateSetupIntent.reset();
   });
 
   const createUseCase = () => {
@@ -64,36 +70,31 @@ describe('Upsert setup intent', () => {
     const result = await useCase.execute({
       organizationId: 'organization_id',
       userId: 'user_id',
+      apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      billingInterval: StripeBillingIntervalEnum.MONTH,
     });
 
     expect(stubCreateSetupIntent.lastCall.args.at(0)).to.deep.equal({
       customer: 'customer_id',
       metadata: {
         apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+        billingInterval: StripeBillingIntervalEnum.MONTH,
       },
     });
 
-    expect(spyGetCustomer.lastCall.args.at(0)).to.deep.equal({
-      organizationId: 'organization_id',
-      email: 'user_email',
-    });
-
-    expect(stubListSetupIntents.lastCall.args.at(0)).to.deep.equal({
-      customer: 'customer_id',
-      limit: 1,
-    });
-
-    expect(result).to.equal('client_secret');
+    expect(result).to.deep.equal({ clientSecret: 'client_secret' });
   });
 
-  it('should setup intent with existing intent', async () => {
+  it('should setup intent with existing intent requiring update', async () => {
     stubListSetupIntents.resolves({
       data: [
         {
+          id: 'intent_id',
           client_secret: 'client_secret',
           status: 'requires_payment_method',
           metadata: {
             apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+            billingInterval: StripeBillingIntervalEnum.YEAR,
           },
         },
       ],
@@ -103,20 +104,47 @@ describe('Upsert setup intent', () => {
     const result = await useCase.execute({
       organizationId: 'organization_id',
       userId: 'user_id',
+      apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      billingInterval: StripeBillingIntervalEnum.MONTH,
+    });
+
+    expect(
+      stubUpdateSetupIntent.calledWith('intent_id', {
+        metadata: {
+          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+          billingInterval: StripeBillingIntervalEnum.MONTH,
+        },
+      })
+    ).to.be.true;
+
+    expect(result).to.deep.equal({ clientSecret: 'client_secret' });
+  });
+
+  it('should not create or update setup intent if existing intent matches', async () => {
+    stubListSetupIntents.resolves({
+      data: [
+        {
+          client_secret: 'client_secret',
+          status: 'requires_payment_method',
+          metadata: {
+            apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+            billingInterval: StripeBillingIntervalEnum.MONTH,
+          },
+        },
+      ],
+    });
+
+    const useCase = createUseCase();
+    const result = await useCase.execute({
+      organizationId: 'organization_id',
+      userId: 'user_id',
+      apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      billingInterval: StripeBillingIntervalEnum.MONTH,
     });
 
     expect(stubCreateSetupIntent.callCount).to.equal(0);
-    expect(spyGetCustomer.lastCall.args.at(0)).to.deep.equal({
-      organizationId: 'organization_id',
-      email: 'user_email',
-    });
-
-    expect(stubListSetupIntents.lastCall.args.at(0)).to.deep.equal({
-      customer: 'customer_id',
-      limit: 1,
-    });
-
-    expect(result).to.equal('client_secret');
+    expect(stubUpdateSetupIntent.callCount).to.equal(0);
+    expect(result).to.deep.equal({ clientSecret: 'client_secret' });
   });
 
   it('should throw an error if user is not found', async () => {
@@ -128,6 +156,8 @@ describe('Upsert setup intent', () => {
       await useCase.execute({
         organizationId: 'organization_id',
         userId: 'user_id',
+        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+        billingInterval: StripeBillingIntervalEnum.MONTH,
       });
       throw new Error('Should not reach here');
     } catch (e) {
@@ -141,11 +171,43 @@ describe('Upsert setup intent', () => {
     await useCase.execute({
       organizationId: 'organization_id',
       userId: 'user_id',
+      apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      billingInterval: StripeBillingIntervalEnum.MONTH,
     });
 
     expect(spyGetCustomer.lastCall.args.at(0)).to.deep.equal({
       organizationId: 'organization_id',
       email: 'user_email',
     });
+  });
+
+  it('should throw an error when the apiServiceLevel is not BUSINESS', async () => {
+    const useCase = createUseCase();
+    try {
+      await useCase.execute({
+        organizationId: 'organization_id',
+        userId: 'user_id',
+        apiServiceLevel: ApiServiceLevelEnum.FREE,
+        billingInterval: StripeBillingIntervalEnum.MONTH,
+      });
+      throw new Error('Should not reach here');
+    } catch (e) {
+      expect(e.message).to.equal(`API service level not allowed: ${ApiServiceLevelEnum.FREE}`);
+    }
+  });
+
+  it('should throw an error when given an invalid billing interval', async () => {
+    const useCase = createUseCase();
+    try {
+      await useCase.execute({
+        organizationId: 'organization_id',
+        userId: 'user_id',
+        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+        billingInterval: 'invalid',
+      });
+      throw new Error('Should not reach here');
+    } catch (e) {
+      expect(e.message).to.equal(`Invalid billing interval: 'invalid'`);
+    }
   });
 });
