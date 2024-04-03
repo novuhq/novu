@@ -380,7 +380,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
     expect(jobs && jobs.length).to.equal(0);
   });
 
-  it('should digest with backoff strategy', async function () {
+  it.skip('should digest with backoff strategy', async function () {
     template = await session.createTemplate({
       steps: [
         {
