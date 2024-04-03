@@ -151,6 +151,7 @@ describe('Upsert setup intent', () => {
     stubGetUser.rejects(new Error('User not found: user_id'));
 
     const useCase = createUseCase();
+
     try {
       await useCase.execute({
         organizationId: 'organization_id',
