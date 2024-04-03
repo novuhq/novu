@@ -11,7 +11,7 @@ export const previewContainerStyles = css({
   '& > img': {
     width: '100%',
     height: '100%',
-    objectFit: 'contain',
+    objectFit: 'cover',
   },
 
   '& > svg': {
