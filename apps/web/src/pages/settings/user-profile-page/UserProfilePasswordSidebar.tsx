@@ -20,10 +20,6 @@ export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarPro
   const { countdownTimerSeconds, sendVerificationEmail, stopTimer } = useContext(UserProfileSidebarContext);
   const { token, clearTokenParam } = useUserProfileSearchParams();
 
-  const handlePasswordSuccess = () => {
-    clearTokenParam();
-  };
-
   // ensure the timer is not running if we are in an unrelated flow
   useEffect(() => {
     if (currentFlow.rootFlow !== 'SET_PASSWORD' || currentFlow.subFlow !== 'EMAIL_VERIFICATION') {
@@ -41,7 +37,7 @@ export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarPro
         switch (currentFlow.subFlow) {
           case 'CREATE_PASSWORD':
             // token is already validated at this point
-            return token ? <UserProfilePasswordForm token={token} onSuccess={handlePasswordSuccess} /> : null;
+            return token ? <UserProfilePasswordForm token={token} onSuccess={clearTokenParam} /> : null;
           case 'EMAIL_VERIFICATION':
           default:
             return (
@@ -53,7 +49,15 @@ export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarPro
             );
         }
     }
-  }, [currentFlow.rootFlow, currentFlow.subFlow, token, email, countdownTimerSeconds, sendVerificationEmail]);
+  }, [
+    currentFlow.rootFlow,
+    currentFlow.subFlow,
+    token,
+    email,
+    countdownTimerSeconds,
+    sendVerificationEmail,
+    clearTokenParam,
+  ]);
 
   const sidebarTitle = `${currentFlow.rootFlow === 'SET_PASSWORD' ? 'Set' : 'Update'} password`;
 

@@ -67,15 +67,6 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
   };
 });
 
-const Form = styled.form<{ isParentScrollable: boolean }>`
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  ${(props) => props.isParentScrollable && scrollable};
-`;
-
 const sidebarDrawerContentClassName = css`
   height: 100%;
   overflow: hidden;
