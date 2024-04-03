@@ -1,6 +1,5 @@
 import type { IResponseError } from '@novu/shared';
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
-
 import { errorMessage } from '../../utils/notifications';
 import { updateBrandingSettings } from '../organization';
 
