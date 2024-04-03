@@ -4,11 +4,9 @@ import { checkIsResponseError, IResponseError, passwordConstraints } from '@novu
 import { api, useAuthContext } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
 import { useMutation } from '@tanstack/react-query';
-import { FormEventHandler } from 'react';
 import { RegisterOptions, useForm } from 'react-hook-form';
-import { css, cx } from '../../../styled-system/css';
+import { css } from '../../../styled-system/css';
 import { Stack } from '../../../styled-system/jsx';
-import { text } from '../../../styled-system/recipes';
 import { PasswordRequirementPopover } from '../../auth/components/PasswordRequirementPopover';
 
 type UserProfilePasswordFormProps = {
@@ -35,7 +33,7 @@ const SHARED_REGISTER_OPTIONS: RegisterOptions = {
 export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = ({ token, onSuccess }) => {
   const { setToken } = useAuthContext();
 
-  const { isLoading, mutateAsync, isError, error } = useMutation<
+  const { isLoading, mutateAsync, error, isError } = useMutation<
     { token: string },
     IResponseError,
     {
@@ -44,12 +42,22 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
     }
   >((data) => api.post(`/v1/auth/reset`, data));
 
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isValid },
+    setError,
+  } = useForm({
+    defaultValues: {
+      password: '',
+      passwordRepeat: '',
+    },
+  });
+
   const onSubmitPasswords = async (data: { password: string; passwordRepeat: string }) => {
     if (data.password !== data.passwordRepeat) {
-      showNotification({
-        message: 'Passwords do not match',
-        color: 'red',
-      });
+      setError('passwordRepeat', { message: 'Passwords do not match' });
 
       return;
     }
@@ -70,13 +78,17 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
       });
       onSuccess?.();
     } catch (err: unknown) {
+      let errMessage = 'Error while setting password';
       if (checkIsResponseError(err)) {
         if (err.statusCode !== 400) {
           Sentry.captureException(err);
         }
+
+        errMessage = `${errMessage}: ${err.message}`;
       }
+
       showNotification({
-        message: 'Error while setting password: ',
+        message: errMessage,
         color: 'red',
       });
     }
@@ -84,29 +96,10 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
     return true;
   };
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isValid },
-  } = useForm({
-    defaultValues: {
-      password: '',
-      passwordRepeat: '',
-    },
-  });
-
   const isSubmitDisabled = !isValid;
 
-  const handlePasswordSubmit: FormEventHandler = async (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-
-    return handleSubmit(onSubmitPasswords)(event);
-  };
-
   return (
-    <form noValidate name="reset-form" onSubmit={handlePasswordSubmit}>
+    <form noValidate name="reset-form" onSubmit={handleSubmit(onSubmitPasswords)}>
       <Stack direction={'column'} gap={'200'}>
         <PasswordRequirementPopover control={control}>
           <PasswordInput
@@ -141,16 +134,21 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
         >
           Set Password
         </Button>
-        {isError && (
-          <p
-            data-test-id="error-alert-banner"
-            className={cx(text({ variant: 'strong' }), css({ mt: '125', color: 'typography.text.feedback.alert' }))}
-          >
-            {' '}
-            {error?.message}
-          </p>
-        )}
       </Stack>
+      {isError && (
+        <p
+          data-test-id="error-alert-banner"
+          className={css({
+            mt: '125',
+            textAlign: 'right',
+            color: 'typography.text.feedback.alert',
+            fontWeight: 'strong',
+          })}
+        >
+          {' '}
+          {error?.message}
+        </p>
+      )}
     </form>
   );
 };
