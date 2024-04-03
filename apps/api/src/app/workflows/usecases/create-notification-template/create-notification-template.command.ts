@@ -17,6 +17,7 @@ import {
   FilterParts,
   IWorkflowStepMetadata,
   NotificationTemplateCustomData,
+  INotificationGroup,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -31,6 +32,9 @@ export class CreateNotificationTemplateCommand extends EnvironmentWithUserComman
   @IsMongoId()
   @IsDefined()
   notificationGroupId: string;
+
+  @IsOptional()
+  notificationGroup?: INotificationGroup;
 
   @IsOptional()
   @IsArray()

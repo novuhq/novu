@@ -1,5 +1,7 @@
 import { dirname, join } from 'path';
-module.exports = {
+import { StorybookConfig } from '@storybook/react-webpack5';
+
+export default {
   stories: ['../src/**/*.stories.mdx', '../src/**/*.stories.@(js|jsx|ts|tsx)'],
 
   addons: [
@@ -10,7 +12,7 @@ module.exports = {
   ],
 
   framework: {
-    name: getAbsolutePath('@storybook/react-webpack5'),
+    name: '@storybook/react-webpack5',
     options: {},
   },
 
@@ -21,7 +23,9 @@ module.exports = {
   docs: {
     autodocs: true,
   },
-};
+
+  staticDirs: ['./public'],
+} satisfies StorybookConfig;
 
 function getAbsolutePath(value) {
   return dirname(require.resolve(join(value, 'package.json')));
