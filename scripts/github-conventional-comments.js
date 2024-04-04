@@ -42,6 +42,17 @@
       'Issues highlight specific problems with the subject under review. These problems can be user-facing or behind the scenes. It is strongly recommended to pair this comment with a suggestion. If you are not sure if a problem exists or not, consider leaving a question.',
   };
 
+  const EMOJII = {
+    [LABEL.praise]: '\u{1F44F}',
+    [LABEL.note]: '\u{1F5D2}',
+    [LABEL.nitpick]: '\u{1F913}',
+    [LABEL.thought]: '\u{1F4AD}',
+    [LABEL.suggestion]: '\u{270F}',
+    [LABEL.question]: '\u{2753}',
+    [LABEL.chore]: '\u{2611}',
+    [LABEL.issue]: '\u{26A0}',
+  };
+
   function post(key, token) {
     const blockingText = NON_BLOCKING.includes(key) ? ' (non-blocking)' : '';
 
@@ -51,7 +62,7 @@
       mode: 'cors',
       credentials: 'include',
       body: new URLSearchParams({
-        body: `<!-- ${COMMENT[key]}  -->\n**${key}${blockingText}:** ‏`,
+        body: `<!-- ${COMMENT[key]}  -->\n${EMOJII[key]} **${key}${blockingText}:** ‏`,
         authenticity_token: token,
         title: `${key[0].toUpperCase()}${key.slice(1)}${blockingText}`,
       }).toString(),
