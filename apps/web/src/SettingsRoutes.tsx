@@ -13,6 +13,7 @@ import { SettingsPage as SettingsPageOld } from './pages/settings/SettingsPage';
 import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { ApiKeysCard } from './pages/settings/tabs';
 import { EmailSettings } from './pages/settings/tabs/EmailSettings';
+import { SettingsPage as SettingsPageNew } from './pages/settings/v2/SettingsPage';
 
 /** Note: using a hook is the only way to separate routes */
 export const useSettingsRoutes = () => {
