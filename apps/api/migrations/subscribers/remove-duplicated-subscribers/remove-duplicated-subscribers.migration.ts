@@ -1,9 +1,7 @@
 import '../../../src/config';
-import { AppModule } from '../../../src/app.module';
-
 import { NestFactory } from '@nestjs/core';
-
 import { SubscriberRepository } from '@novu/dal';
+import { AppModule } from '../../../src/app.module';
 
 export async function removeDuplicatedSubscribers() {
   // eslint-disable-next-line no-console
@@ -22,7 +20,7 @@ export async function removeDuplicatedSubscribers() {
       $group: {
         _id: { subscriberId: '$subscriberId', environmentId: '$_environmentId' },
         count: { $sum: 1 },
-        docs: { $push: '$_id' }, // Store document IDs for removal
+        subscribers: { $push: '$$ROOT' }, // Store all documents of each group
       },
     },
     // Filter groups having more than one document (duplicates)
@@ -40,32 +38,113 @@ export async function removeDuplicatedSubscribers() {
   });
 
   for (const group of cursor) {
-    const docsToRemove = group.docs.slice(0, -1); // Keep the last created document, remove others
     const { subscriberId, environmentId } = group._id;
+    const subscribers = group.subscribers;
 
+    if (subscribers.length <= 1) {
+      continue;
+    }
+
+    // sort oldest subscriber first
+    const sortedSubscribers = subscribers.sort((a, b) => a.updatedAt - b.updatedAt);
+    const mergedSubscriber = mergeSubscribers(sortedSubscribers);
+    const subscribersToRemove = sortedSubscribers.filter((subscriber) => subscriber._id !== mergedSubscriber._id);
+
+    // eslint-disable-next-line no-console
     console.log(
-      'deleting',
-      docsToRemove.length,
-      'duplicates for subscriberId:',
+      'Merged subscriber:',
+      mergedSubscriber._id.toString(),
+      'subscriberId:',
       subscriberId,
       'environmentId:',
-      environmentId
+      environmentId.toString()
     );
 
     try {
-      const result = await subscriberRepository.deleteMany({
-        _id: { $in: docsToRemove },
+      await subscriberRepository.update(
+        {
+          _id: mergedSubscriber._id,
+          subscriberId: subscriberId,
+          _environmentId: environmentId,
+        },
+        {
+          $set: mergedSubscriber,
+        }
+      );
+
+      // eslint-disable-next-line no-console
+      console.log(
+        'Remaining subscriber updated with merged data for subscriberId:',
+        subscriberId,
+        'subscriberId:',
+        mergedSubscriber._id.toString(),
+        'environmentId:',
+        environmentId.toString()
+      );
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('Error updating remaining subscribers:', err);
+    }
+
+    try {
+      // Delete all duplicates except the merged one
+      await subscriberRepository.deleteMany({
+        _id: { $in: subscribersToRemove.map((subscriber) => subscriber._id) },
         subscriberId: subscriberId,
         _environmentId: environmentId,
       });
-      console.log('Documents deleted:', result.modifiedCount);
+      // eslint-disable-next-line no-console
+      console.log(
+        'Duplicates deleted for subscriberId:',
+        subscriberId,
+        'environmentId:',
+        environmentId.toString(),
+        'ids:',
+        subscribersToRemove.map((subscriber) => subscriber._id).join()
+      );
     } catch (err) {
-      console.error('Error deleting documents:', err);
+      // eslint-disable-next-line no-console
+      console.error('Error deleting duplicates:', err);
     }
   }
 
   // eslint-disable-next-line no-console
-  console.log('end migration- remove duplicated subscribers');
+  console.log('end migration - remove duplicated subscribers');
 
   app.close();
+}
+
+// Function to merge subscriber information
+function mergeSubscribers(subscribers) {
+  const mergedSubscriber = { ...subscribers[0] }; // Start with the first subscriber
+
+  // Merge information from other subscribers
+  for (const subscriber of subscribers) {
+    const currentSubscriber = subscriber;
+    for (const key in currentSubscriber) {
+      // Skip internal and irrelevant fields
+      if (
+        [
+          '_id',
+          '_organizationId',
+          '_environmentId',
+          'deleted',
+          'createdAt',
+          'updatedAt',
+          '__v',
+          'isOnline',
+          'lastOnlineAt',
+        ].includes(key)
+      ) {
+        continue;
+      }
+
+      // Update with non-null/undefined values from subsequent subscribers
+      if (currentSubscriber[key] !== null && currentSubscriber[key] !== undefined) {
+        mergedSubscriber[key] = currentSubscriber[key];
+      }
+    }
+  }
+
+  return mergedSubscriber;
 }
