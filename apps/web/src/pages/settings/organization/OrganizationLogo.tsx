@@ -5,7 +5,7 @@ import axios from 'axios';
 import React from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useUpdateOrganizationBranding } from '../../../api/hooks';
-import { getSignedUrlForProfileImage } from '../../../api/storage';
+import { getSignedUrl } from '../../../api/storage';
 import { ProfileImage } from '../../../components/shared';
 
 type FormValues = {
@@ -29,7 +29,7 @@ export function OrganizationLogo({ logo }: { logo?: string }) {
     { signedUrl: string; path: string; additionalHeaders: object },
     IResponseError,
     string
-  >(getSignedUrlForProfileImage);
+  >(getSignedUrl);
 
   async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files ? event.target.files[0] : null;

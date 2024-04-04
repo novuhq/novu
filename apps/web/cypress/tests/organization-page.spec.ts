@@ -7,7 +7,7 @@ describe('Organization Page', function () {
   });
 
   it('should update logo', function () {
-    cy.intercept('*/storage/upload-url/profile*').as('uploadLogo');
+    cy.intercept('*/storage/upload-url*').as('uploadLogo');
 
     cy.fixture('test-logo.png', {}).then((contents) => {
       cy.getByTestId('image-input-container')
@@ -25,9 +25,6 @@ describe('Organization Page', function () {
     cy.wait('@uploadLogo');
 
     cy.wait('@updateOrganization');
-
-    cy.getByTestId('preview-img').should('have.attr', 'src').should('include', '.png');
-    cy.getByTestId('preview-img').should('have.attr', 'src').should('include', this.session.organization._id);
 
     cy.getByTestId('preview-img').should('have.attr', 'src').should('include', '.png');
     cy.getByTestId('preview-img').should('have.attr', 'src').should('include', this.session.organization._id);
