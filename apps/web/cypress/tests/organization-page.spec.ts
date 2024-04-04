@@ -1,4 +1,4 @@
-describe('Brand Screen', function () {
+describe('Organization Page', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
     cy.visit('/settings/organization');
