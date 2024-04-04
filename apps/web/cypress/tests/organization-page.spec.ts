@@ -23,9 +23,7 @@ describe('Organization Page', function () {
     });
 
     cy.wait('@uploadLogo');
-
-    cy.wait('@updateOrganization');
-
+    cy.waitForNetworkIdle(500);
     cy.getByTestId('preview-img').should('have.attr', 'src').should('include', '.png');
     cy.getByTestId('preview-img').should('have.attr', 'src').should('include', this.session.organization._id);
   });
