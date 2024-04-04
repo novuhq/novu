@@ -63,8 +63,8 @@ export function OrganizationLogo({ logo }: { logo?: string }) {
       ],
     });
 
-    await updateOrganizationBranding({ logo: path });
     reset({ logo: path });
+    await updateOrganizationBranding({ logo: path });
     successMessage('Logo updated');
   }
 
