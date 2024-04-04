@@ -50,11 +50,12 @@ export function OrganizationName({ organizationName }: { organizationName?: stri
               }}
               placeholder="Organization name"
               error={errors.name?.message}
+              data-test-id="organization-name-input"
             />
           )}
         />
 
-        <Button submit loading={isSubmitting || isLoading} disabled={!isDirty || !isValid}>
+        <Button submit loading={isSubmitting || isLoading} disabled={!isDirty || !isValid} data-test-id="update-button">
           Update name
         </Button>
       </HStack>
