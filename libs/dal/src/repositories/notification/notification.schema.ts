@@ -158,21 +158,6 @@ notificationSchema.index({
   createdAt: -1,
 });
 
-/*
- * Path: ./get-platform-notification-usage.usecase.ts
- *    Context: execute()
- *        Query: organizationRepository.aggregate(
- *                $match: {
- *          'notifications.createdAt': {
- *            $gte: command.startDate,
- *            $lt: command.endDate,
- *          },
- *        }
- */
-notificationSchema.index({
-  createdAt: -1,
-});
-
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const Notification =
   (mongoose.models.Notification as mongoose.Model<NotificationDBModel>) ||
