@@ -33,6 +33,7 @@ module.exports = (on, config) => {
       count = 1,
       organizationId,
       enumerate = false,
+      ordered = false,
     }) {
       const triggerIdentifier = identifier;
       const service = new NotificationsService(token);
@@ -44,6 +45,9 @@ module.exports = (on, config) => {
         await service.triggerEvent(triggerIdentifier, subscriberId, {
           firstName: `John${num}`,
         });
+        if (ordered) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
       }
 
       if (organizationId) {

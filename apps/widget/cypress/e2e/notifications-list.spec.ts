@@ -162,11 +162,12 @@ describe('Notifications List', function () {
     cy.getByTestId('unseen-count-label').should('contain', '99+');
   });
 
-  it('pagination check', async function () {
+  it('pagination check', function () {
     cy.wait('@getNotificationsFirstPage');
     cy.task('createNotifications', {
       organizationId: this.session.organization._id,
       enumerate: true,
+      ordered: true,
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
@@ -197,5 +198,5 @@ describe('Notifications List', function () {
 });
 
 function scrollToBottom() {
-  cy.getByTestId('notifications-scroll-area').get('.infinite-scroll-component').scrollTo('bottom');
+  cy.getByTestId('notifications-scroll-area').scrollTo('bottom', { ensureScrollable: true });
 }
