@@ -71,10 +71,10 @@ With Novu, you can create custom workflows and define conditions for each channe
 ## ✨ Features
 
 - 🌈 Single API for all messaging providers (In-App, Email, SMS, Push, Chat)
-- 💅 Fully managed GitOps Flow, deployed from your CI
-- 🔥 Define workflow and step validations with Zod or JSON Schema
-- 💌 React Email/Maizzle/MJML integrations
+- 💅 Easily manage notifications over multiple channels
 - 🚀 Equipped with a CMS for advanced layouts and design management
+- 🛡 Built-in protection for missing variables (Coming Soon)
+- 📦 Easy to set up and integrate
 - 🛡 Debug and analyze multi-channel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community-driven
@@ -99,27 +99,72 @@ With Novu, you can create custom workflows and define conditions for each channe
 
 We are excited to launch the complete Novu API and admin panel. Do you want to give it a test before the official release? Here is how:
 
-```bash
-npx novu-labs@latest echo
+```
+npx novu init
 ```
 
-For API documentation and reference, please visit [Echo API Reference](https://docs.novu.co/echo/quickstart?utm_campaign=github-readme).
+After setting up your account using the cloud or docker version, you can trigger the API using the `@novu/node` package.
+
+For API documentation and reference, please visit [Novu API Reference] (https://docs.novu.co/api-reference/events/trigger-event?utm_campaign=github-readme).
+
+To get started with the Node.js package, you can install it using npm:
+
+```bash
+npm install @novu/node
+```
+
+```ts
+import { Novu } from '@novu/node';
+
+const novu = new Novu(process.env.NOVU_API_KEY);
+
+await novu.trigger('<TRIGGER_NAME>', {
+  to: [
+    {
+      subscriberId: '<UNIQUE_IDENTIFIER>',
+      email: 'john1@doemail.com',
+      firstName: 'John',
+      lastName: 'Doe',
+    },
+  ],
+  payload: {
+    name: 'Hello World',
+    organization: {
+      logo: 'https://happycorp.com/logo.png',
+    },
+  },
+});
+```
+
+## GitOps & React Email Integration
+Create notification workflows right from your IDE and integrate with MJML/React Email/Maizzle and others
+
+- Fully managed GitOps Flow, deployed from your CI
+- Local Dev Studio to develop and debug workflows in your IDE
+- React Email/Maizzle/MJML integrations
+- Runs in your VPC
+- Debug cloud triggers in your IDE
+- Type safety with your favorite programming language
+- Define workflow and step validations with Zod or JSON Schema
+- Modify content and behavior via Web management input panel
+
+[Request Early Access](https://novu.co/novu-echo-coming-soon/?utm_campaign=github-readme)
 
 ```ts
 
 client.workflow('comment-on-post', async ({step, subscriber}) => {
   const inAppResponse = await step.inApp('in-app-step', async (inputs) => {
     return {
-      body: renderReactComponent(inputs)
+      // body: renderReactComponent(inputs)
     };
   }, {
-    inputSchema: {
+    inputs: {
       // ...JSON Schema or ZOD/Ajv/Class Validators definition
     }
   });
 
   // Novu Worker Engine will manage the state and durability of each step in isolation
-  const { events } = await step.digest('1 day');
+  const {digestedEvents} = await step.digest('1 day');
 
   await step.email('email-step', async () => {
     return {
@@ -128,7 +173,7 @@ client.workflow('comment-on-post', async ({step, subscriber}) => {
     }
   }, {
     // Step-level inputs defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
-    inputSchema: {
+    inputs: {
       // ...JSON Schema
     },
     providers: {
@@ -148,7 +193,7 @@ client.workflow('comment-on-post', async ({step, subscriber}) => {
   });
 // Define your workflow trigger payload using json schema and custom validation;
 }, {
-  payloadSchema: {
+  dataSchema: {
     // ...JSON Schema
   }
 });
