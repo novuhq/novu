@@ -1026,148 +1026,6 @@ importers:
         specifier: 4.11.1
         version: 4.11.1(webpack@5.78.0)
 
-  apps/webhook:
-    dependencies:
-      '@nestjs/axios':
-        specifier: ~2.0.0
-        version: 2.0.0(@nestjs/common@10.2.2)(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@nestjs/common':
-        specifier: 10.2.2
-        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@nestjs/core':
-        specifier: ^10.2.2
-        version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@nestjs/platform-express':
-        specifier: ^10.2.2
-        version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)
-      '@nestjs/terminus':
-        specifier: ^10.0.1
-        version: 10.0.1(@nestjs/axios@2.0.0)(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@novu/application-generic':
-        specifier: ^0.24.0
-        version: link:../../packages/application-generic
-      '@novu/dal':
-        specifier: ^0.24.0
-        version: link:../../libs/dal
-      '@novu/shared':
-        specifier: ^0.24.0
-        version: link:../../libs/shared
-      '@novu/stateless':
-        specifier: ^0.24.0
-        version: link:../../packages/stateless
-      '@novu/testing':
-        specifier: ^0.24.0
-        version: link:../../libs/testing
-      '@sentry/node':
-        specifier: ^7.66.0
-        version: 7.66.0
-      axios:
-        specifier: ^1.6.2
-        version: 1.6.2
-      class-transformer:
-        specifier: ^0.5.1
-        version: 0.5.1
-      class-validator:
-        specifier: ^0.14.0
-        version: 0.14.0
-      dotenv:
-        specifier: ^8.2.0
-        version: 8.6.0
-      envalid:
-        specifier: ^7.1.0
-        version: 7.3.1
-      jsonwebtoken:
-        specifier: 9.0.0
-        version: 9.0.0
-      lodash:
-        specifier: ^4.17.15
-        version: 4.17.21
-      nest-raven:
-        specifier: ^10.0.0
-        version: 10.0.0(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(@sentry/node@7.66.0)(class-transformer@0.5.1)(class-validator@0.14.0)(graphql@16.8.1)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      newrelic:
-        specifier: ^9.15.0
-        version: 9.15.0
-      reflect-metadata:
-        specifier: ^0.1.13
-        version: 0.1.13
-      rimraf:
-        specifier: ^3.0.2
-        version: 3.0.2
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
-    devDependencies:
-      '@nestjs/cli':
-        specifier: ^10.1.16
-        version: 10.1.16
-      '@nestjs/schematics':
-        specifier: ^10.0.2
-        version: 10.0.2(typescript@4.9.5)
-      '@nestjs/testing':
-        specifier: ^10.2.2
-        version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(@nestjs/platform-express@10.2.2)
-      '@types/chai':
-        specifier: ^4.3.4
-        version: 4.3.4
-      '@types/express':
-        specifier: ^4.17.8
-        version: 4.17.17
-      '@types/jest':
-        specifier: ^29.5.0
-        version: 29.5.1
-      '@types/mocha':
-        specifier: ^10.0.2
-        version: 10.0.2
-      '@types/node':
-        specifier: ^14.14.6
-        version: 14.18.42
-      '@types/sinon':
-        specifier: ^9.0.0
-        version: 9.0.11
-      '@types/supertest':
-        specifier: ^2.0.10
-        version: 2.0.12
-      chai:
-        specifier: ^4.2.0
-        version: 4.3.7
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      jest:
-        specifier: ^27.0.6
-        version: 27.5.1(ts-node@10.9.1)
-      mocha:
-        specifier: ^10.2.0
-        version: 10.2.0
-      nodemon:
-        specifier: ^3.0.1
-        version: 3.0.1
-      prettier:
-        specifier: ~2.8.0
-        version: 2.8.7
-      sinon:
-        specifier: ^9.2.4
-        version: 9.2.4
-      supertest:
-        specifier: ^6.0.0
-        version: 6.3.3
-      ts-jest:
-        specifier: ^27.0.7
-        version: 27.1.5(@babel/core@7.24.3)(@types/jest@29.5.1)(jest@27.5.1)(typescript@4.9.5)
-      ts-loader:
-        specifier: ~9.4.0
-        version: 9.4.2(typescript@4.9.5)(webpack@5.78.0)
-      ts-node:
-        specifier: ~10.9.1
-        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
-      tsconfig-paths:
-        specifier: ~4.1.0
-        version: 4.1.2
-      typescript:
-        specifier: 4.9.5
-        version: 4.9.5
-
   apps/widget:
     dependencies:
       '@ant-design/icons':
@@ -26509,16 +26367,6 @@ packages:
       tslib: 1.14.1
     dev: false
 
-  /@sentry-internal/tracing@7.66.0:
-    resolution: {integrity: sha512-3vCgC2hC3T45pn53yTDVcRpHoJTBxelDPPZVsipAbZnoOVPkj7n6dNfDhj3I3kwWCBPahPkXmE+R4xViR8VqJg==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@sentry/core': 7.66.0
-      '@sentry/types': 7.66.0
-      '@sentry/utils': 7.66.0
-      tslib: 2.6.2
-    dev: false
-
   /@sentry/browser@7.47.0:
     resolution: {integrity: sha512-L0t07kS/G1UGVZ9fpD6HLuaX8vVBqAGWgu+1uweXthYozu/N7ZAsakjU/Ozu6FSXj1mO3NOJZhOn/goIZLSj5A==}
     engines: {node: '>=8'}
@@ -26538,15 +26386,6 @@ packages:
       '@sentry/types': 7.47.0
       '@sentry/utils': 7.47.0
       tslib: 1.14.1
-    dev: false
-
-  /@sentry/core@7.66.0:
-    resolution: {integrity: sha512-WMAEPN86NeCJ1IT48Lqiz4MS5gdDjBwP4M63XP4msZn9aujSf2Qb6My5uT87AJr9zBtgk8MyJsuHr35F0P3q1w==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@sentry/types': 7.66.0
-      '@sentry/utils': 7.66.0
-      tslib: 2.6.2
     dev: false
 
   /@sentry/hub@7.47.0:
@@ -26571,22 +26410,6 @@ packages:
       https-proxy-agent: 5.0.1
       lru_map: 0.3.3
       tslib: 1.14.1
-    transitivePeerDependencies:
-      - supports-color
-    dev: false
-
-  /@sentry/node@7.66.0:
-    resolution: {integrity: sha512-PxqIqLr4Sh5xcDfECiBQ4PuZ7v8yTgLhaRkruWrZPYxQrcJFPkwbFkw/IskzVnhT2VwXUmeWEIlRMQKBJ0t83A==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@sentry-internal/tracing': 7.66.0
-      '@sentry/core': 7.66.0
-      '@sentry/types': 7.66.0
-      '@sentry/utils': 7.66.0
-      cookie: 0.4.2
-      https-proxy-agent: 5.0.1
-      lru_map: 0.3.3
-      tslib: 2.6.2
     transitivePeerDependencies:
       - supports-color
     dev: false
@@ -26626,25 +26449,12 @@ packages:
     engines: {node: '>=8'}
     dev: false
 
-  /@sentry/types@7.66.0:
-    resolution: {integrity: sha512-uUMSoSiar6JhuD8p7ON/Ddp4JYvrVd2RpwXJRPH1A4H4Bd4DVt1mKJy1OLG6HdeQv39XyhB1lPZckKJg4tATPw==}
-    engines: {node: '>=8'}
-    dev: false
-
   /@sentry/utils@7.47.0:
     resolution: {integrity: sha512-A89SaOLp6XeZfByeYo2C8Ecye/YAtk/gENuyOUhQEdMulI6mZdjqtHAp7pTMVgkBc/YNARVuoa+kR/IdRrTPkQ==}
     engines: {node: '>=8'}
     dependencies:
       '@sentry/types': 7.47.0
       tslib: 1.14.1
-    dev: false
-
-  /@sentry/utils@7.66.0:
-    resolution: {integrity: sha512-9GYUVgXjK66uXXcLXVMXVzlptqMtq1eJENCuDeezQiEFrNA71KkLDg00wESp+LL+bl3wpVTBApArpbF6UEG5hQ==}
-    engines: {node: '>=8'}
-    dependencies:
-      '@sentry/types': 7.66.0
-      tslib: 2.6.2
     dev: false
 
   /@sideway/address@4.1.4:
@@ -34185,6 +33995,7 @@ packages:
       acorn: ^8
     dependencies:
       acorn: 8.10.0
+    dev: true
 
   /acorn-import-assertions@1.9.0(acorn@8.11.3):
     resolution: {integrity: sha512-cmMwop9x+8KFhxvKrKfPYmN6/pKTYYHBqLa0DfvVZcKMJWNyWLnaqND7dx/qn66R7ewM1UX5XMaDVP5wlVTaVA==}
@@ -34192,7 +34003,6 @@ packages:
       acorn: ^8
     dependencies:
       acorn: 8.11.3
-    dev: false
 
   /acorn-jsx@5.3.2(acorn@7.4.1):
     resolution: {integrity: sha512-rq9s+JNhf0IChjtDXxllJ7g41oZk5SlXtp0LHwyA5cejwn7vKmKp4pPri6YEePv2PU65sAsegbXtIinmDFDXgQ==}
@@ -40487,7 +40297,7 @@ packages:
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)
-      has: 1.0.3
+      has: 1.0.4
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -40555,7 +40365,7 @@ packages:
     peerDependencies:
       eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
     dependencies:
-      '@babel/runtime': 7.23.2
+      '@babel/runtime': 7.21.0
       aria-query: 5.1.3
       array-includes: 3.1.6
       array.prototype.flatmap: 1.3.1
@@ -49866,30 +49676,6 @@ packages:
       - utf-8-validate
     dev: false
 
-  /nest-raven@10.0.0(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(@sentry/node@7.66.0)(class-transformer@0.5.1)(class-validator@0.14.0)(graphql@16.8.1)(reflect-metadata@0.1.13)(rxjs@7.8.1):
-    resolution: {integrity: sha512-MnemxfEjYU1+JFt16epeUx1DwibxhhRinzgfJXNhPPeV7AzlZXHrFlrjpxA1hUkha6tWkFxa444S1wC2j5PpKQ==}
-    peerDependencies:
-      '@nestjs/common': ^10.0.0
-      '@sentry/node': '*'
-      rxjs: '*'
-    dependencies:
-      '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@sentry/node': 7.66.0
-      rxjs: 7.8.1
-    optionalDependencies:
-      '@nestjs/graphql': 12.0.9(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(class-transformer@0.5.1)(class-validator@0.14.0)(graphql@16.8.1)(reflect-metadata@0.1.13)
-    transitivePeerDependencies:
-      - '@apollo/subgraph'
-      - '@nestjs/core'
-      - bufferutil
-      - class-transformer
-      - class-validator
-      - graphql
-      - reflect-metadata
-      - ts-morph
-      - utf-8-validate
-    dev: false
-
   /nested-error-stacks@2.0.1:
     resolution: {integrity: sha512-SrQrok4CATudVzBS7coSz26QRSmlK9TzzoFbeKfcPBUFPjcQM9Rqvr/DlJkOrwI/0KcgvMub1n1g5Jt9EgRn4A==}
     dev: true
@@ -56077,7 +55863,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.16.9
+      terser: 5.22.0
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
@@ -61092,8 +60878,8 @@ packages:
       '@webassemblyjs/ast': 1.11.1
       '@webassemblyjs/wasm-edit': 1.11.1
       '@webassemblyjs/wasm-parser': 1.11.1
-      acorn: 8.10.0
-      acorn-import-assertions: 1.9.0(acorn@8.10.0)
+      acorn: 8.11.3
+      acorn-import-assertions: 1.9.0(acorn@8.11.3)
       browserslist: 4.23.0
       chrome-trace-event: 1.0.3
       enhanced-resolve: 5.15.0
@@ -61132,8 +60918,8 @@ packages:
       '@webassemblyjs/ast': 1.11.1
       '@webassemblyjs/wasm-edit': 1.11.1
       '@webassemblyjs/wasm-parser': 1.11.1
-      acorn: 8.10.0
-      acorn-import-assertions: 1.9.0(acorn@8.10.0)
+      acorn: 8.11.3
+      acorn-import-assertions: 1.9.0(acorn@8.11.3)
       browserslist: 4.23.0
       chrome-trace-event: 1.0.3
       enhanced-resolve: 5.15.0
