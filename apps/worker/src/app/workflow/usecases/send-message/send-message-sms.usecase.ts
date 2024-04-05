@@ -96,15 +96,15 @@ export class SendMessageSms extends SendMessageBase {
             data: this.getCompilePayload(command.compileContext),
           })
         );
+
+        if (!content) {
+          throw new PlatformException(`Unexpected error: SMS content is missing`);
+        }
       }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return;
-    }
-
-    if (!content) {
-      throw new PlatformException(`Unexpected error: SMS content is missing`);
     }
 
     const phone = command.payload.phone || subscriber.phone;
