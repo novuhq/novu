@@ -89,12 +89,14 @@ export class SendMessageSms extends SendMessageBase {
     let content: string | null = '';
 
     try {
-      content = await this.compileTemplate.execute(
-        CompileTemplateCommand.create({
-          template: step.template.content as string,
-          data: this.getCompilePayload(command.compileContext),
-        })
-      );
+      if (!command.chimeraData) {
+        content = await this.compileTemplate.execute(
+          CompileTemplateCommand.create({
+            template: step.template.content as string,
+            data: this.getCompilePayload(command.compileContext),
+          })
+        );
+      }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
