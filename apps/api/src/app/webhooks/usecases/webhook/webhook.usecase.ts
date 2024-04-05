@@ -103,6 +103,7 @@ export class Webhook {
       throw new Error('Provider is undefined');
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const messageIdentifiers: string[] = this.provider.getMessageId(body);
 
@@ -143,6 +144,7 @@ export class Webhook {
       throw new Error('Provider is undefined');
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     const event = this.provider.parseEventBody(command.body, messageIdentifier);
 
