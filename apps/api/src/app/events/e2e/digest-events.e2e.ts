@@ -112,7 +112,7 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST)', 
       },
     });
 
-    const digestJob = jobs.find((job) => job.step?.template?.type === StepTypeEnum.DIGEST);
+    const digestJob = jobs.find((job) => job.type === StepTypeEnum.DIGEST);
     expect((digestJob && (digestJob?.digest as IDigestRegularMetadata))?.amount).to.equal(digestAmount);
     expect((digestJob && (digestJob?.digest as IDigestRegularMetadata))?.unit).to.equal(digestUnit);
     const job = jobs.find((item) => item.digest?.events?.length && item.digest.events.length > 0);

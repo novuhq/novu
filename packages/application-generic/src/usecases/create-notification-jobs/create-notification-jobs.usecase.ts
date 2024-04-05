@@ -23,7 +23,10 @@ import { PlatformException } from '../../utils/exceptions';
 import { CalculateDelayService } from '../../services';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
-type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
+type NotificationJob = Omit<
+  JobEntity,
+  '_id' | 'createdAt' | 'updatedAt' | 'step'
+>;
 
 @Injectable()
 export class CreateNotificationJobs {
@@ -87,7 +90,6 @@ export class CreateNotificationJobs {
         payload: command.payload,
         overrides: command.overrides,
         tenant: command.tenant,
-        step,
         transactionId: command.transactionId,
         _notificationId: notification._id,
         _environmentId: command.environmentId,
@@ -98,6 +100,13 @@ export class CreateNotificationJobs {
         status: JobStatusEnum.PENDING,
         _templateId: notification._templateId,
         digest: step.metadata,
+        step: {
+          _id: step._id,
+          filters: step.filters,
+          stepId: step.stepId,
+          uuid: step.uuid,
+          shouldStopOnFail: step.shouldStopOnFail,
+        },
         type: step.template.type,
         providerId: providerId,
         expireAt: notification.expireAt,
