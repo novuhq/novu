@@ -51,7 +51,7 @@ export class Webhook {
       _organizationId: command.organizationId,
     };
 
-    const integration: IntegrationEntity = await this.integrationRepository.findOne(query);
+    const integration: IntegrationEntity | null = await this.integrationRepository.findOne(query);
     if (!integration) {
       throw new NotFoundException(`Integration for ${providerOrIntegrationId} was not found`);
     }
@@ -98,6 +98,12 @@ export class Webhook {
     channel: ChannelTypeEnum
   ): Promise<IWebhookResult[]> {
     const body = command.body;
+
+    if (this.provider === undefined) {
+      throw new Error('Provider is undefined');
+    }
+
+    // @ts-ignore
     const messageIdentifiers: string[] = this.provider.getMessageId(body);
 
     const events: IWebhookResult[] = [];
@@ -133,6 +139,11 @@ export class Webhook {
       return;
     }
 
+    if (this.provider === undefined) {
+      throw new Error('Provider is undefined');
+    }
+
+    // @ts-ignore
     const event = this.provider.parseEventBody(command.body, messageIdentifier);
 
     if (event === undefined) {
