@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ChannelTypeEnum } from '@novu/shared';
 
 import { getWebhookSupportStatus } from '../integration';
-import { IS_DOCKER_HOSTED, WEBHOOK_URL } from '../../config';
+import { IS_DOCKER_HOSTED, API_ROOT } from '../../config';
 import { useAuthController, useEnvController } from '../../hooks';
 
 export const useWebhookSupportStatus = ({
@@ -37,7 +37,7 @@ export const useWebhookSupportStatus = ({
   );
 
   const webhookUrl =
-    `${WEBHOOK_URL}/webhooks/organizations/${organization?._id}` +
+    `${API_ROOT}/webhooks/organizations/${organization?._id}` +
     `/environments/${environment?._id}/${channel}/${integrationId}`;
 
   return {
