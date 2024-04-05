@@ -30,7 +30,7 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     super(Job, JobEntity);
   }
 
-  public async storeJobs(jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>[]): Promise<JobEntity[]> {
+  public async storeJobs(jobs: Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt' | 'step'>[]): Promise<JobEntity[]> {
     const stored: JobEntity[] = [];
     for (let index = 0; index < jobs.length; index++) {
       if (index > 0) {

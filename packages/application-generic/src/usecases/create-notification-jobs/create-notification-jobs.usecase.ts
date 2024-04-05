@@ -106,6 +106,8 @@ export class CreateNotificationJobs {
           stepId: step.stepId,
           uuid: step.uuid,
           shouldStopOnFail: step.shouldStopOnFail,
+          metadata: step.metadata,
+          replyCallback: step.replyCallback,
         },
         type: step.template.type,
         providerId: providerId,

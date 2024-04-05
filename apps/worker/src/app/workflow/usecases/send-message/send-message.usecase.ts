@@ -86,7 +86,7 @@ export class SendMessage {
       this.filterPreferredChannels(command.job),
     ]);
 
-    const stepType = command.step?.template?.type;
+    const stepType = command.job?.type;
 
     const chimeraResponse = await this.chimeraConnector.execute<
       SendMessageCommand & { variables: IFilterVariables },

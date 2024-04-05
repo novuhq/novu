@@ -15,7 +15,7 @@ export class JobEntity {
   payload: any;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   overrides: Record<string, Record<string, unknown>>;
-  step: NotificationStepEntity;
+  step: Pick<NotificationStepEntity, '_id' | 'stepId' | 'uuid' | 'shouldStopOnFail' | 'filters' | 'metadata'>;
   tenant?: ITenantDefine;
   transactionId: string;
   _notificationId: string;

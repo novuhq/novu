@@ -1,7 +1,7 @@
 const nr = require('newrelic');
 
 import { Injectable, Logger } from '@nestjs/common';
-import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { JobEntity, JobRepository, JobStatusEnum, NotificationTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import {
@@ -26,6 +26,7 @@ export class RunJob {
     private sendMessage: SendMessage,
     private queueNextJob: QueueNextJob,
     private storageHelperService: StorageHelperService,
+    private notificationTemplateRepository: NotificationTemplateRepository,
     private logger?: PinoLogger
   ) {}
 
@@ -64,6 +65,21 @@ export class RunJob {
       jobType: job.type,
     });
 
+    const workflow = await this.notificationTemplateRepository.findOne(
+      {
+        _id: job._templateId,
+        _environmentId: command.environmentId,
+        'steps._id': job.step._id,
+      },
+      '_id steps.$'
+    );
+    if (!workflow) throw new Error('Workflow not found with step id');
+
+    const step = workflow.steps.find((stepEntity) => stepEntity._id === job?.step._id);
+    if (!step) {
+      throw new Error('Step not found');
+    }
+
     let shouldQueueNextJob = true;
 
     try {
@@ -76,7 +92,7 @@ export class RunJob {
           identifier: job.identifier,
           payload: job.payload ?? {},
           overrides: job.overrides ?? {},
-          step: job.step,
+          step: step,
           transactionId: job.transactionId,
           notificationId: job._notificationId,
           _templateId: job._templateId,
