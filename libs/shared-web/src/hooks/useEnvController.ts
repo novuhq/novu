@@ -2,12 +2,12 @@ import { useCallback, useState } from 'react';
 import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { IEnvironment } from '@novu/shared';
 
-import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
+import { getCurrentEnvironment, getMyEnvironments } from '../api';
 
-import { useAuthContext } from '../providers/AuthProvider';
-import { QueryKeys } from '../api/query.keys';
+import { useAuthContext } from '../providers';
+import { QueryKeys } from '../api';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../constants/routes.enum';
+import { ROUTES } from '../constants';
 import { api } from '../api';
 import { IS_DOCKER_HOSTED } from '../config';
 
