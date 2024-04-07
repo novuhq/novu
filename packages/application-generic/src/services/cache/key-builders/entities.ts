@@ -84,12 +84,12 @@ const buildEnvironmentByApiKey = ({ apiKey }: { apiKey: string }): string =>
     identifierPrefix: IdentifierPrefixEnum.API_KEY,
   });
 
-const buildGroupedBlueprintsKey = (): string =>
+const buildGroupedBlueprintsKey = (environmentId: string): string =>
   buildCommonKey({
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.GROUPED_BLUEPRINTS,
     environmentIdPrefix: OrgScopePrefixEnum.ORGANIZATION_ID,
-    environmentId: process.env.BLUEPRINT_CREATOR,
+    environmentId: environmentId,
     identifierPrefix: IdentifierPrefixEnum.GROUPED_BLUEPRINT,
     identifier: BLUEPRINT_IDENTIFIER,
   });

@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
+import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
 
 describe('GetPrices', () => {
   const eeBilling = require('@novu/ee-billing');
@@ -12,21 +13,18 @@ describe('GetPrices', () => {
 
   const stripeStub = {
     prices: {
-      list: () => {},
+      list: sinon.stub(),
     },
   };
   let listPricesStub: sinon.SinonStub;
 
   beforeEach(() => {
-    listPricesStub = sinon.stub(stripeStub.prices, 'list').resolves({
-      data: [
-        {
-          id: 'price_id_1',
-        },
-        {
-          id: 'price_id_2',
-        },
-      ],
+    listPricesStub = stripeStub.prices.list;
+    listPricesStub.onFirstCall().resolves({
+      data: [{ id: 'licensed_price_id_1' }],
+    });
+    listPricesStub.onSecondCall().resolves({
+      data: [{ id: 'metered_price_id_1' }],
     });
   });
 
@@ -34,56 +32,94 @@ describe('GetPrices', () => {
     listPricesStub.reset();
   });
 
-  const createUseCase = () => {
-    const useCase = new GetPrices(stripeStub as any);
-
-    return useCase;
-  };
+  const createUseCase = () => new GetPrices(stripeStub as any);
 
   const expectedPrices = [
     {
       apiServiceLevel: ApiServiceLevelEnum.FREE,
-      prices: ['free_usage_notifications'],
+      billingInterval: StripeBillingIntervalEnum.MONTH,
+      prices: {
+        licensed: ['free_flat_monthly'],
+        metered: ['free_usage_notifications'],
+      },
     },
     {
       apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-      prices: ['business_flat_monthly', 'business_usage_notifications'],
+      billingInterval: StripeBillingIntervalEnum.MONTH,
+      prices: {
+        licensed: ['business_flat_monthly'],
+        metered: ['business_usage_notifications'],
+      },
+    },
+    {
+      apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+      billingInterval: StripeBillingIntervalEnum.YEAR,
+      prices: {
+        licensed: ['business_flat_annually'],
+        metered: ['business_usage_notifications'],
+      },
+    },
+    {
+      apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE,
+      billingInterval: StripeBillingIntervalEnum.MONTH,
+      prices: {
+        licensed: ['enterprise_flat_monthly'],
+        metered: ['enterprise_usage_notifications'],
+      },
+    },
+    {
+      apiServiceLevel: ApiServiceLevelEnum.ENTERPRISE,
+      billingInterval: StripeBillingIntervalEnum.YEAR,
+      prices: {
+        licensed: ['enterprise_flat_annually'],
+        metered: ['enterprise_usage_notifications'],
+      },
     },
   ];
+
   expectedPrices
-    .map(({ apiServiceLevel, prices }) => {
+    .map(({ apiServiceLevel, billingInterval, prices }) => {
       return () => {
-        describe(`apiServiceLevel of ${apiServiceLevel}`, () => {
-          it(`should fetch the prices list with the expected values`, async () => {
+        describe(`apiServiceLevel of ${apiServiceLevel} and billingInterval of ${billingInterval}`, () => {
+          it(`should fetch the prices list with the expected lookup keys`, async () => {
             const useCase = createUseCase();
 
             await useCase.execute(
               GetPricesCommand.create({
-                apiServiceLevel: apiServiceLevel,
+                apiServiceLevel,
+                billingInterval,
               })
             );
 
-            expect(listPricesStub.lastCall.args[0].lookup_keys).to.contain.members(prices);
-          });
-
-          it(`should throw an error if no prices are found`, async () => {
-            listPricesStub.resolves({ data: [] });
-            const useCase = createUseCase();
-
-            try {
-              await useCase.execute(
-                GetPricesCommand.create({
-                  apiServiceLevel: apiServiceLevel,
-                })
-              );
-            } catch (e) {
-              expect(e.message).to.equal(
-                `No price found for apiServiceLevel: '${apiServiceLevel}' and lookup_keys: '${prices}'`
-              );
-            }
+            const allCallsArgs = listPricesStub.getCalls().map((call) => call.args[0]);
+            expect(allCallsArgs).to.deep.equal([
+              {
+                lookup_keys: prices.licensed,
+              },
+              {
+                lookup_keys: prices.metered,
+              },
+            ]);
           });
         });
       };
     })
     .forEach((test) => test());
+
+  it(`should throw an error if no prices are found`, async () => {
+    listPricesStub.onFirstCall().resolves({ data: [] });
+    listPricesStub.onSecondCall().resolves({ data: [] });
+    const useCase = createUseCase();
+
+    try {
+      await useCase.execute(
+        GetPricesCommand.create({
+          apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+          billingInterval: StripeBillingIntervalEnum.MONTH,
+        })
+      );
+    } catch (e) {
+      expect(e.message).to.include(`No prices found for apiServiceLevel: '${ApiServiceLevelEnum.BUSINESS}'`);
+    }
+  });
 });
