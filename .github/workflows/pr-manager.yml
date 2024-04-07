@@ -11,11 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Process stale PRs
-        uses: Sonia-corporation/stale@2.5.0
+        uses: actions/stale@v9
         with:
-          issue-processing: false
-          pull-request-days-before-stale: 14
-          pull-request-days-before-close: 180
-          pull-request-ignore-draft: true
-          pull-request-ignore-all-milestones: true
-          pull-request-stale-label: 'stale'
+          # Get issues in descending (newest first) order.
+          ascending: false
+          # Operations (roughly API calls) per run. Adjust to avoid using up the rate limit (1000/hr shared across all jobs in the repo for the token used here).
+          operations-per-run: 50
+          # After 6 months, mark issue as stale.
+          days-before-issue-stale: 180
+          # Do not auto-close issues marked as stale.
+          days-before-issue-close: -1
+          # After 3 months, mark PR as stale.
+          days-before-pr-stale: 90
+          # Auto-close PRs marked as stale a month later.
+          days-before-pr-close: 31
+          # Delete the branch when closing PRs. GitHub's "restore branch" function works indefinitely, so no reason not to.
+          delete-branch: true
