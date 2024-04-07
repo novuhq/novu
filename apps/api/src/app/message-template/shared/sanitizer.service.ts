@@ -10,13 +10,14 @@ const sanitizeOptions: sanitize.IOptions = {
   /**
    * Additional tags to allow.
    */
-  allowedTags: sanitize.defaults.allowedTags.concat(['style']),
+  allowedTags: sanitize.defaults.allowedTags.concat(['style', 'img']),
   allowedAttributes: {
     ...sanitize.defaults.allowedAttributes,
     /**
      * Additional attributes to allow on all tags.
      */
     '*': ['style'],
+    img: ['src', 'srcset', 'alt', 'title', 'width', 'height', 'loading'],
   },
   /**
    * Required to disable console warnings when allowing style tags.

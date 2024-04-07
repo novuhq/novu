@@ -18,3 +18,11 @@ export function formatNumber(num: number, digits: number) {
 
   return item ? (num / item.value).toFixed(digits).replace(rx, '$1') + item.symbol : '0';
 }
+
+export function parsePayload(payload: string) {
+  try {
+    return JSON.parse(payload);
+  } catch (e) {
+    return {};
+  }
+}
