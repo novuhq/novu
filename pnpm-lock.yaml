@@ -79,8 +79,8 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       '@types/inquirer':
-        specifier: 8.2.9
-        version: 8.2.9
+        specifier: 8.2.10
+        version: 8.2.10
       '@types/jest':
         specifier: 29.5.2
         version: 29.5.2
@@ -30904,15 +30904,15 @@ packages:
     resolution: {integrity: sha512-RQUBI75F+uXruB95BFpC/8V8lPgJg4MQ6HxOCtAZYBB/h0FNCfrFfb4I+u2pZJIV7sKeszZbFqy1UnGeBMrvsA==}
     dev: false
 
-  /@types/inquirer@8.2.6:
-    resolution: {integrity: sha512-3uT88kxg8lNzY8ay2ZjP44DKcRaTGztqeIvN2zHvhzIBH/uAPaL75aBtdNRKbA7xXoMbBt5kX0M00VKAnfOYlA==}
+  /@types/inquirer@8.2.10:
+    resolution: {integrity: sha512-IdD5NmHyVjWM8SHWo/kPBgtzXatwPkfwzyP3fN1jF2g9BWt5WO+8hL2F4o2GKIYsU40PpqeevuUWvkS/roXJkA==}
     dependencies:
       '@types/through': 0.0.30
       rxjs: 7.8.1
     dev: true
 
-  /@types/inquirer@8.2.9:
-    resolution: {integrity: sha512-5IEO2PwCy4NZDgj977dho4Qbdiw6dJZJzD4ZaB/9j7dfppf7z0xxFPKZz/FtTAUQbDjmWHJ6Jlz/gn0YzWHPsw==}
+  /@types/inquirer@8.2.6:
+    resolution: {integrity: sha512-3uT88kxg8lNzY8ay2ZjP44DKcRaTGztqeIvN2zHvhzIBH/uAPaL75aBtdNRKbA7xXoMbBt5kX0M00VKAnfOYlA==}
     dependencies:
       '@types/through': 0.0.30
       rxjs: 7.8.1
@@ -44153,7 +44153,7 @@ packages:
       pretty-format: 27.5.1
       slash: 3.0.0
       strip-json-comments: 3.1.1
-      ts-node: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      ts-node: 10.9.1(@types/node@16.11.7)(typescript@4.9.5)
     transitivePeerDependencies:
       - bufferutil
       - canvas
