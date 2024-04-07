@@ -618,7 +618,9 @@
     "usecase",
     "zulip",
     "uuidv",
-    "Vonage"
+    "Vonage",
+    "runtimes",
+    "cafebabe"
   ],
   "flagWords": [],
   "patterns": [
@@ -702,6 +704,6 @@
     "angular.json",
     "ng-package.json",
     "libs/shared/src/types/timezones/timezones.types.ts",
-    "*.riv"
+    "*.riv",
   ]
 }

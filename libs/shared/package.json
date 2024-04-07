@@ -1,6 +1,6 @@
 {
   "name": "@novu/shared",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "description": "",
   "scripts": {
     "start": "npm run start:dev",
@@ -25,6 +25,18 @@
   "files": [
     "dist/"
   ],
+  "exports": {
+    ".": {
+      "require": "./dist/cjs/index.js",
+      "import": "./dist/esm/index.js",
+      "types": "./dist/esm/index.d.js"
+    },
+    "./utils": {
+      "require": "./dist/cjs/utils/index.js",
+      "import": "./dist/esm/utils/index.js",
+      "types": "./dist/esm/utils/index.d.js"
+    }
+  },
   "dependencies": {
     "axios": "^1.6.2",
     "class-transformer": "0.5.1",
