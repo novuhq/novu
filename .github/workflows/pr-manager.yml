@@ -15,8 +15,6 @@ jobs:
         with:
           # Get issues in descending (newest first) order.
           ascending: false
-          # Operations (roughly API calls) per run. Adjust to avoid using up the rate limit (1000/hr shared across all jobs in the repo for the token used here).
-          operations-per-run: 50
           # After 6 months, mark issue as stale.
           days-before-issue-stale: 180
           # Do not auto-close issues marked as stale.
@@ -27,3 +25,6 @@ jobs:
           days-before-pr-close: 31
           # Delete the branch when closing PRs. GitHub's "restore branch" function works indefinitely, so no reason not to.
           delete-branch: true
+          stale-pr-message: "This PR is being marked as stale due to inactivity."
+          close-pr-message: "This PR is being closed due to inactivity. Please reopen if work is intended to be continued."
+          operations-per-run: 100
