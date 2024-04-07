@@ -453,7 +453,7 @@ export class SendMessageEmail extends SendMessageBase {
         message,
         'error',
         'mail_unexpected_error',
-        'Error while sending email with provider',
+        error.message || error.name || 'Error while sending email with provider',
         command,
         LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
         error
@@ -468,7 +468,7 @@ export class SendMessageEmail extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(error),
+          raw: JSON.stringify(error) === '{}' ? JSON.stringify({ message: error.message }) : JSON.stringify(error),
         })
       );
 

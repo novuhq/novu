@@ -4,7 +4,7 @@ import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 import type { IResponseError, IOrganizationEntity } from '@novu/shared';
-import { Select } from '@novu/design-system';
+import { Select, successMessage } from '@novu/design-system';
 
 import { addOrganization, switchOrganization } from '../../../api/organization';
 import { useAuthContext } from '../../providers/AuthProvider';
@@ -25,7 +25,11 @@ export default function OrganizationSelect() {
     IOrganizationEntity,
     IResponseError,
     string
-  >((name) => addOrganization(name));
+  >((name) => addOrganization(name), {
+    onSuccess: () => {
+      successMessage('Your Business trial has started');
+    },
+  });
 
   const { mutateAsync: changeOrganization } = useMutation<string, IResponseError, string>((id) =>
     switchOrganization(id)
