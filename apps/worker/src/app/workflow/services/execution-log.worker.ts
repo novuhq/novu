@@ -48,7 +48,9 @@ export class ExecutionLogWorker extends ExecutionLogWorkerService {
               _this.createExecutionDetails
                 .execute(data)
                 .then(resolve)
-                .catch(reject)
+                .catch((e) => {
+                  reject(e);
+                })
                 .finally(() => {
                   transaction.end();
                 });

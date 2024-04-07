@@ -181,19 +181,7 @@ export class PromoteNotificationTemplateChange {
       return;
     }
 
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateKey({
-        _id: newItem._id,
-        _environmentId: command.environmentId,
-      }),
-    });
-
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateIdentifierKey({
-        templateIdentifier: newItem.triggers[0].identifier,
-        _environmentId: command.environmentId,
-      }),
-    });
+    await this.invalidateNotificationTemplate(item, command.organizationId);
 
     return await this.notificationTemplateRepository.update(
       {
@@ -217,11 +205,25 @@ export class PromoteNotificationTemplateChange {
     );
   }
 
+  private async getProductionEnvironmentId(organizationId: string) {
+    const productionEnvironmentId = (
+      await this.environmentRepository.findOrganizationEnvironments(organizationId)
+    )?.find((env) => env.name === 'Production')?._id;
+
+    if (!productionEnvironmentId) {
+      throw new NotFoundException('Production environment not found');
+    }
+
+    return productionEnvironmentId;
+  }
+
+  private get blueprintOrganizationId() {
+    return NotificationTemplateRepository.getBlueprintOrganizationId();
+  }
+
   private async invalidateBlueprints(command: PromoteTypeChangeCommand) {
     if (command.organizationId === this.blueprintOrganizationId) {
-      const productionEnvironmentId = (
-        await this.environmentRepository.findOrganizationEnvironments(this.blueprintOrganizationId)
-      )?.find((env) => env.name === 'Production')?._id;
+      const productionEnvironmentId = await this.getProductionEnvironmentId(this.blueprintOrganizationId);
 
       if (productionEnvironmentId) {
         await this.invalidateCache.invalidateByKey({
@@ -231,7 +233,25 @@ export class PromoteNotificationTemplateChange {
     }
   }
 
-  private get blueprintOrganizationId() {
-    return NotificationTemplateRepository.getBlueprintOrganizationId();
+  private async invalidateNotificationTemplate(item: NotificationTemplateEntity, organizationId: string) {
+    const productionEnvironmentId = await this.getProductionEnvironmentId(organizationId);
+
+    /**
+     * Only invalidate cache of Production environment cause the development environment cache invalidation is handled
+     * during the CRUD operations itself
+     */
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateKey({
+        _id: item._id,
+        _environmentId: productionEnvironmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateIdentifierKey({
+        templateIdentifier: item.triggers[0].identifier,
+        _environmentId: productionEnvironmentId,
+      }),
+    });
   }
 }
