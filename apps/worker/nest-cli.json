@@ -21,7 +21,8 @@
       }
     ],
     "plugins": [],
-    "webpack": true
+    "webpack": true,
+    "typeCheck": true
   },
   "projects": {
     "dal": {
