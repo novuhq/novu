@@ -12,6 +12,9 @@ import {
 
 let session;
 
+const isMac = os.platform() === 'darwin';
+const modifier = isMac ? 'Meta' : 'Control';
+
 test.beforeEach(async ({ context }) => {
   session = await initializeSession(context);
 });
@@ -149,8 +152,6 @@ test('should edit in-app notification', async ({ page }) => {
 
   const monacoEditor = page.locator('.monaco-editor').nth(0);
   await monacoEditor.click();
-  const isMac = os.platform() === 'darwin';
-  const modifier = isMac ? 'Meta' : 'Control';
   await monacoEditor.press(`${modifier}+KeyX`);
   await page.keyboard.type('new content for notification');
 
@@ -173,4 +174,64 @@ test('should edit in-app notification', async ({ page }) => {
   const addFeedButton = getByTestId(page, 'add-feed-button');
   await addFeedButton.click();
   await expect(getByTestId(page, 'feed-button-2-checked')).toBeVisible();
+});
+
+test('should unset feedId for in app step', async ({ page }) => {
+  const template = session.templates[0];
+
+  await page.goto(`/workflows/edit/${template._id}`);
+  await editChannel(page, 'inApp');
+
+  let feedsCheckbox = getByTestId(page, 'use-feeds-checkbox');
+  await expect(feedsCheckbox).toBeChecked();
+  await feedsCheckbox.click();
+
+  await updateWorkflowButtonClick(page);
+
+  await page.goto(`/workflows`);
+
+  const notificationsTemplate = getByTestId(page, 'notifications-template');
+  await expect(notificationsTemplate.getByText(template.name, { exact: false })).toBeVisible();
+
+  await page.goto(`/workflows/edit/${template._id}`);
+  await editChannel(page, 'inApp');
+
+  feedsCheckbox = getByTestId(page, 'use-feeds-checkbox');
+  await expect(feedsCheckbox).not.toBeChecked();
+});
+
+test('should edit email notification', async ({ page }) => {
+  const template = session.templates[0];
+
+  await page.goto(`/workflows/edit/${template._id}`);
+  await editChannel(page, 'email');
+
+  const emailEditor = getByTestId(page, 'email-editor');
+  const firstEditorRow = getByTestId(emailEditor, 'editor-row').first();
+  await firstEditorRow.click();
+  await firstEditorRow.press(`${modifier}+KeyA`);
+  await firstEditorRow.press(`${modifier}+KeyX`);
+  await page.keyboard.type('Hello world!');
+});
+
+test('should update notification active status', async ({ page }) => {
+  const template = session.templates[0];
+
+  await page.goto(`/workflows/edit/${template._id}`);
+
+  let settingsPage = getByTestId(page, 'settings-page');
+  await settingsPage.click();
+
+  const toggleSwitch = getByTestId(page, 'active-toggle-switch');
+  await expect(toggleSwitch).toBeVisible();
+  await expect(page.getByText('Active')).toBeVisible();
+  await toggleSwitch.locator('~ label').click({ force: true });
+  await expect(page.getByText('Inactive')).toBeVisible();
+
+  await page.goto(`/workflows/edit/${template._id}`);
+
+  settingsPage = getByTestId(page, 'settings-page');
+  await settingsPage.click();
+
+  await expect(page.getByText('Inactive')).toBeVisible();
 });
