@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "1.0.2",
-    "@types/jest": "29.5.2",
+    "@types/jest": "29.5.12",
     "@types/nodemailer": "^6.4.4",
     "codecov": "^3.5.0",
     "cspell": "^4.1.0",

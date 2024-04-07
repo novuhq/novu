@@ -89,7 +89,7 @@
     "@commitlint/config-conventional": "^17.0.0",
     "@rollup/plugin-node-resolve": "^6.0.0",
     "@rollup/plugin-replace": "^5.0.2",
-    "@types/jest": "29.5.2",
+    "@types/jest": "29.5.12",
     "@types/node": "^14.14.16",
     "colors": "1.4.0",
     "concurrently": "^5.3.0",
