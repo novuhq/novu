@@ -47,4 +47,5 @@ export function NotificationsList({
 
 const notificationsListCss = css`
   height: 400px;
+  overflow-y: auto;
 `;

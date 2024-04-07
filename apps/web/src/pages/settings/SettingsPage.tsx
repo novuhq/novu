@@ -66,7 +66,7 @@ export function SettingsPage() {
           <Tabs.Tab value="/">API Keys</Tabs.Tab>
           <Tabs.Tab value="/email">Email Settings</Tabs.Tab>
           <When truthy={billingEnabled}>
-            <Tabs.Tab value="/billing">Billing Plans</Tabs.Tab>
+            <Tabs.Tab value="/billing">Billing</Tabs.Tab>
           </When>
           <Tabs.Tab value="/permissions">Permissions</Tabs.Tab>
           <Tabs.Tab value="/sso">SSO</Tabs.Tab>

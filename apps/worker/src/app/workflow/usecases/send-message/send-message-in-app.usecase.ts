@@ -107,25 +107,27 @@ export class SendMessageInApp extends SendMessageBase {
     }
 
     try {
-      const compiled = await this.compileInAppTemplate.execute(
-        CompileInAppTemplateCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          payload: this.getCompilePayload(command.compileContext),
-          content: step.template.content as string,
-          cta: step.template.cta,
-          userId: command.userId,
-        }),
-        this.initiateTranslations.bind(this)
-      );
-      content = compiled.content;
+      if (!command.chimeraData) {
+        const compiled = await this.compileInAppTemplate.execute(
+          CompileInAppTemplateCommand.create({
+            organizationId: command.organizationId,
+            environmentId: command.environmentId,
+            payload: this.getCompilePayload(command.compileContext),
+            content: step.template.content as string,
+            cta: step.template.cta,
+            userId: command.userId,
+          }),
+          this.initiateTranslations.bind(this)
+        );
+        content = compiled.content;
 
-      if (step.template.cta?.data?.url) {
-        step.template.cta.data.url = compiled.url;
-      }
+        if (step.template.cta?.data?.url) {
+          step.template.cta.data.url = compiled.url;
+        }
 
-      if (step.template.cta?.action?.buttons) {
-        step.template.cta.action.buttons = compiled.ctaButtons;
+        if (step.template.cta?.action?.buttons) {
+          step.template.cta.action.buttons = compiled.ctaButtons;
+        }
       }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
