@@ -7,6 +7,27 @@ const mockConfig = {
 
 jest.mock('axios');
 
+describe('test initialization of novu node package', () => {
+  let novu: Novu;
+
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = {
+      ...originalEnv,
+      NOVU_API_KEY: 'cafebabe',
+    };
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
+  test('should use the NOVU_API_KEY when defined', async () => {
+    expect(new Novu().apiKey).toBe('cafebabe');
+  });
+});
+
 describe('test use of novu node package', () => {
   const mockedAxios = axios as jest.Mocked<typeof axios>;
   let novu: Novu;

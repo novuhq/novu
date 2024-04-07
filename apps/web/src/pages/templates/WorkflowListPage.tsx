@@ -52,7 +52,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
       <Group spacing={8}>
         <Group spacing={4}>
           <When truthy={original.chimera}>
-            <Tooltip label="Workflow is handled by Chimera" position="top">
+            <Tooltip label="Workflow is handled by Echo" position="top">
               <div>
                 <Bolt color="#4c6dd4" width="24px" height="24px" />
               </div>

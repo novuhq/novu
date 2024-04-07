@@ -153,6 +153,8 @@ export class StandardWorker extends StandardWorkerService {
   private async jobHasFailed(job: Job<IStandardDataDto, void, string>, error: Error): Promise<void> {
     let jobId;
 
+    nr.noticeError(error);
+
     try {
       const minimalData = this.extractMinimalJobData(job.data);
       jobId = minimalData.jobId;
