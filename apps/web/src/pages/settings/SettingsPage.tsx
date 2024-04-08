@@ -69,7 +69,7 @@ export function SettingsPage() {
           <Tabs.Tab value="/">API Keys</Tabs.Tab>
           <Tabs.Tab value="/email">Email Settings</Tabs.Tab>
           <When truthy={billingEnabled}>
-            <Tabs.Tab value="/billing">Billing Plans</Tabs.Tab>
+            <Tabs.Tab value="/billing">Billing</Tabs.Tab>
           </When>
           <When truthy={isInformationArchitectureEnabled}>
             <Tabs.Tab value="/brand">Branding</Tabs.Tab>

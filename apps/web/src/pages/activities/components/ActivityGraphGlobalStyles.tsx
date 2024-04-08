@@ -38,11 +38,9 @@ function chartStyles(isTriggerSent: boolean, isDark: boolean) {
 
     .tooltip-title {
       display: flex;
-
       justify-content: center;
       height: 17px;
       margin-bottom: 4px;
-      border-width: 22px;
       color: ${colors.B60};
     }
 
@@ -51,10 +49,7 @@ function chartStyles(isTriggerSent: boolean, isDark: boolean) {
       display: flex;
       justify-content: center;
       font-weight: 700;
-
       height: 17px;
-      border-width: 22px;
-
       color: #ff512f;
       background: -webkit-linear-gradient(90deg, #dd2476 0%, #ff512f 100%);
       -webkit-background-clip: text;

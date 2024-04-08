@@ -6,6 +6,7 @@ import { useProcessVariables } from '../../../hooks';
 import { IForm } from '../components/formTypes';
 import { useStepFormCombinedErrors } from './useStepFormCombinedErrors';
 import { useStepFormPath } from './useStepFormPath';
+import { parsePayload } from '../../../utils';
 
 export type ParsedPreviewStateType = {
   ctaButtons: IMessageButton[];
@@ -42,7 +43,7 @@ export const usePreviewInAppTemplate = ({ locale }: { locale?: string }) => {
       getInAppPreview({
         locale,
         content: templateContent as string,
-        payload: JSON.parse(payloadArg),
+        payload: parsePayload(payloadArg),
         cta: templateCta,
       });
     },

@@ -15,8 +15,9 @@ import { useFeatureFlag } from '@novu/shared-web';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { HeaderNav as HeaderNavNew } from './components/v2/HeaderNav';
 import { MainNav } from '../nav/MainNav';
+import { FreeTrialBanner } from './components/FreeTrialBanner';
 
-const AppShellNew = styled.div`
+const AppShell = styled.div`
   display: flex;
   width: 100vw;
   height: 100vh;
@@ -48,7 +49,7 @@ export function AppLayout() {
               fallback={({ error, resetError, eventId }) => (
                 <>
                   Sorry, but something went wrong. <br />
-                  Our team been notified about it and we will look at it asap.
+                  Our team has been notified and we are investigating.
                   <br />
                   <code>
                     <small style={{ color: 'lightGrey' }}>
@@ -61,9 +62,10 @@ export function AppLayout() {
               )}
             >
               <SpotLight>
-                <AppShellNew>
+                <AppShell>
                   {isInformationArchitectureEnabled ? <MainNav /> : <SideNav />}
                   <ContentShell>
+                    <FreeTrialBanner />
                     {isInformationArchitectureEnabled ? (
                       <HeaderNavNew />
                     ) : (
@@ -71,7 +73,7 @@ export function AppLayout() {
                     )}
                     <Outlet />
                   </ContentShell>
-                </AppShellNew>
+                </AppShell>
               </SpotLight>
             </Sentry.ErrorBoundary>
           </IntercomProvider>
