@@ -1,3 +1,4 @@
+/** cspell:disable */
 describe('Billing - Annual subscription', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
