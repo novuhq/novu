@@ -17,7 +17,7 @@ export interface IUserResetTokenCount {
   reqInDay: number;
 }
 
-export class UserEntity implements IUserEntity {
+export class UserEntity {
   _id: UserId;
 
   resetToken?: string;
