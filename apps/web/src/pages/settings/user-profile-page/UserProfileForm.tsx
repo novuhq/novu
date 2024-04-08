@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { SubmitHandler, useForm } from 'react-hook-form';
+import { SubmitHandler, useForm, ValidationRule } from 'react-hook-form';
 import * as capitalize from 'lodash.capitalize';
 import { Button, errorMessage, Input, successMessage } from '@novu/design-system';
 import type { IUserEntity } from '@novu/shared';
@@ -20,13 +20,16 @@ interface IUserProfileFormProps {
 const formInputStyles = css({
   minWidth: '18.75rem',
   '& label': { marginTop: '0 !important' },
+  /**
+   * show the error message absolutely positioned below the input, otherwise it will push the input up
+   */
   '& .mantine-TextInput-error': { position: 'absolute', marginTop: '0.5rem' },
   '& input, .mantine-TextInput-wrapper': { marginBottom: '0 !important' },
 });
 
 const FIRST_NAME_LABEL = 'First name';
 const LAST_NAME_LABEL = 'Last name';
-const MIN_LENGTH_RULE = { value: 2, message: 'Should be longer than 2 characters' };
+const MIN_LENGTH_RULE: ValidationRule<number> = { value: 2, message: 'Should be longer than 2 characters' };
 
 const makeFormData = (data?: IUserEntity | null): IUserProfileForm => ({
   firstName: capitalize(data?.firstName ?? ''),

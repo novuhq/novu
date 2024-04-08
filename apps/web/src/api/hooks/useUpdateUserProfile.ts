@@ -1,23 +1,17 @@
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
-import type { IResponseError, IUserEntity } from '@novu/shared';
+import type { IResponseError, IUpdateUserProfile, IUserEntity } from '@novu/shared';
 
 import { updateUserProfile } from '../user';
 
-interface IUpdateUserProfileVariables {
-  firstName: string;
-  lastName: string;
-  profilePicture?: string | null;
-}
-
 export const useUpdateUserProfile = (
-  options: UseMutationOptions<IUserEntity, IResponseError, IUpdateUserProfileVariables> = {}
+  options: UseMutationOptions<IUserEntity, IResponseError, IUpdateUserProfile> = {}
 ) => {
   const queryClient = useQueryClient();
 
-  const { mutate: updateUserProfileMutation, ...rest } = useMutation<
+  const { mutate: updateUserProfileMutation, ...mutationData } = useMutation<
     IUserEntity,
     IResponseError,
-    IUpdateUserProfileVariables
+    IUpdateUserProfile
   >(updateUserProfile, {
     ...options,
     onSuccess: async (data, variables, context) => {
@@ -30,6 +24,6 @@ export const useUpdateUserProfile = (
 
   return {
     updateUserProfile: updateUserProfileMutation,
-    ...rest,
+    ...mutationData,
   };
 };

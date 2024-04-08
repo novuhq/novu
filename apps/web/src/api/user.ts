@@ -1,4 +1,4 @@
-import { IUserEntity } from '@novu/shared';
+import { IUserEntity, IUpdateUserProfile } from '@novu/shared';
 
 import { api } from './api.client';
 
@@ -18,10 +18,6 @@ export async function updateUserProfile({
   firstName,
   lastName,
   profilePicture,
-}: {
-  firstName: string;
-  lastName: string;
-  profilePicture?: string | null;
-}): Promise<IUserEntity> {
+}: IUpdateUserProfile): Promise<IUserEntity> {
   return api.put('/v1/users/profile', { firstName, lastName, profilePicture });
 }

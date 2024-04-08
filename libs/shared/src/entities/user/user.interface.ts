@@ -16,3 +16,9 @@ export interface IUserEntity {
   jobTitle?: JobTitleEnum;
   hasPassword: boolean;
 }
+
+export interface IUpdateUserProfile {
+  firstName: string;
+  lastName: string;
+  profilePicture?: string;
+}
