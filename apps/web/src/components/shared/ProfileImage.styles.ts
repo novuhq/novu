@@ -1,7 +1,7 @@
 import { css } from '../../styled-system/css';
 
 export const previewContainerStyles = css({
-  bg: 'surface.page',
+  bgColor: 'surface.popover',
   borderRadius: '0.75rem',
   position: 'relative',
   overflow: 'hidden',

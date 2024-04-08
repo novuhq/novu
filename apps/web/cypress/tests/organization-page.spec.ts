@@ -31,7 +31,7 @@ describe('Organization Page', function () {
   it('update the organization name', function () {
     cy.getByTestId('organization-name-input').should('have.value', this.session.organization.name);
     cy.getByTestId('organization-name-input').clear().type('New Name');
-    cy.getByTestId('update-button').click();
+    cy.getByTestId('organization-update-button').click();
 
     cy.wait('@renameOrganization');
 

@@ -25,7 +25,7 @@ export function ProfileImage({ name, onChange, value }: ProfileImageProps) {
       {value ? (
         <img src={value} alt="image" data-test-id="preview-img" />
       ) : (
-        <IconPerson size="76" data-test-id="person-icon" />
+        <IconPerson size="72" data-test-id="person-icon" />
       )}
       <UploadInputContainer name={name} onChange={onChange} />
     </div>

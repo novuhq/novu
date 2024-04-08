@@ -1,8 +1,6 @@
-import { PageContainer } from '@novu/design-system';
 import { useAuthContext } from '@novu/shared-web';
-import PageHeader from '../../../components/layout/components/PageHeader';
-import { css } from '../../../styled-system/css';
-import { HStack } from '../../../styled-system/jsx';
+import { Stack } from '../../../styled-system/jsx';
+import { SettingsPageContainer } from '../SettingsPageContainer';
 import { OrganizationLogo } from './OrganizationLogo';
 import { OrganizationName } from './OrganizationName';
 
@@ -12,15 +10,11 @@ export function OrganizationPage() {
   const { currentOrganization } = useAuthContext();
 
   return (
-    <PageContainer title={PAGE_TITLE}>
-      <PageHeader title={PAGE_TITLE} />
-
-      <div className={css({ p: 24 })}>
-        <HStack gap={24} alignItems="flex-end" h={72}>
-          <OrganizationLogo logo={currentOrganization?.branding?.logo} />
-          <OrganizationName organizationName={currentOrganization?.name} />
-        </HStack>
-      </div>
-    </PageContainer>
+    <SettingsPageContainer title={PAGE_TITLE}>
+      <Stack gap={150} direction="row" h={72} align="flex-end">
+        <OrganizationLogo logo={currentOrganization?.branding?.logo} />
+        <OrganizationName organizationName={currentOrganization?.name} />
+      </Stack>
+    </SettingsPageContainer>
   );
 }

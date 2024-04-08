@@ -1,8 +1,9 @@
 import { Button, Input, successMessage } from '@novu/design-system';
+import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useRenameOrganization } from '../../../api/hooks';
-import { HStack } from '../../../styled-system/jsx';
-import { InputStyles, InputWrapperStyles } from './OrganizationName.styles';
+import { css } from '../../../styled-system/css';
+import { Stack } from '../../../styled-system/jsx';
 
 type FormValues = {
   name: string;
@@ -26,6 +27,14 @@ export function OrganizationName({ organizationName }: { organizationName?: stri
     },
   });
 
+  /**
+   * Reset the form when the organization changes
+   * Useful in the scenario when the user switches to a different organization
+   */
+  useEffect(() => {
+    reset({ name: organizationName });
+  }, [organizationName, reset]);
+
   const onSubmit = async (data: FormValues) => {
     renameOrganization(data);
     reset(data);
@@ -33,7 +42,7 @@ export function OrganizationName({ organizationName }: { organizationName?: stri
 
   return (
     <form noValidate name="organization-name-form" onSubmit={handleSubmit(onSubmit)}>
-      <HStack gap={24} alignItems="flex-end">
+      <Stack gap={150} alignItems="flex-end" direction="row">
         <Controller
           name="name"
           control={control}
@@ -43,10 +52,14 @@ export function OrganizationName({ organizationName }: { organizationName?: stri
           render={({ field }) => (
             <Input
               {...field}
-              label="Organisation name"
+              label="Organization name"
               classNames={{
-                wrapper: InputWrapperStyles,
-                input: InputStyles,
+                wrapper: css({
+                  w: '340px',
+                }),
+                input: css({
+                  m: '0px !important',
+                }),
               }}
               placeholder="Organization name"
               error={errors.name?.message}
@@ -55,10 +68,16 @@ export function OrganizationName({ organizationName }: { organizationName?: stri
           )}
         />
 
-        <Button submit loading={isSubmitting || isLoading} disabled={!isDirty || !isValid} data-test-id="update-button">
+        <Button
+          submit
+          loading={isSubmitting || isLoading}
+          disabled={!isDirty || !isValid}
+          data-test-id="organization-update-button"
+          h={50}
+        >
           Update name
         </Button>
-      </HStack>
+      </Stack>
     </form>
   );
 }

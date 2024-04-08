@@ -16,8 +16,10 @@ export const useRenameOrganization = (options: UseMutationOptions<ResultType, IR
   const { mutateAsync: renameOrganization, isLoading } = useMutation<ResultType, IResponseError, PayloadType>(
     ({ name }) => renameOrganizationApi(name),
     {
-      onError: (e) => {
-        errorMessage(e.message || 'Unexpected error');
+      onError: (e: unknown) => {
+        if (e instanceof Error) {
+          errorMessage(e.message || 'Unexpected error');
+        }
       },
       onSuccess: async (result, variables, context) => {
         options?.onSuccess?.(result, variables, context);

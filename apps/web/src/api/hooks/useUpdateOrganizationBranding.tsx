@@ -1,13 +1,12 @@
 import type { IResponseError } from '@novu/shared';
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
 
-import { useCallback } from 'react';
 import { errorMessage } from '../../utils/notifications';
 import { updateBrandingSettings } from '../organization';
 
 type PayloadType = {
-  logo?: string;
-  color?: string;
+  logoUrl?: string;
+  colorValue?: string;
 };
 
 type ResultType = PayloadType;
@@ -18,7 +17,11 @@ export const useUpdateOrganizationBranding = (
   const queryClient = useQueryClient();
 
   const { mutateAsync: updateOrganizationBranding, isLoading } = useMutation<ResultType, IResponseError, PayloadType>(
-    (payload) => updateBrandingSettings(payload),
+    (payload) =>
+      updateBrandingSettings({
+        logo: payload.logoUrl,
+        color: payload.colorValue,
+      }),
     {
       onSuccess: async (result, variables, context) => {
         await queryClient.refetchQueries({
@@ -26,21 +29,16 @@ export const useUpdateOrganizationBranding = (
         });
         options?.onSuccess?.(result, variables, context);
       },
-      onError: (e: any) => {
-        errorMessage(e.message || 'Unexpected error');
+      onError: (e: unknown) => {
+        if (e instanceof Error) {
+          errorMessage(e.message || 'Unexpected error');
+        }
       },
     }
   );
 
-  const updateOrganizationBrandingCallback = useCallback(
-    async (data: PayloadType) => {
-      await updateOrganizationBranding(data);
-    },
-    [updateOrganizationBranding]
-  );
-
   return {
-    updateOrganizationBranding: updateOrganizationBrandingCallback,
+    updateOrganizationBranding,
     isLoading,
   };
 };
