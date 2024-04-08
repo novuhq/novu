@@ -20,7 +20,7 @@ export const UserProfilePage: FC = () => {
       <Title mb="100" variant="section">
         Profile security
       </Title>
-      <div className={css({ maxWidth: '37.5rem' })}>
+      <section className={css({ maxWidth: '37.5rem' })}>
         <InputPlain
           className={inputStyles}
           type="text"
@@ -47,7 +47,7 @@ export const UserProfilePage: FC = () => {
             {currentUser?.hasPassword ? 'Update password' : 'Set password'}
           </Button>
         </div>
-      </div>
+      </section>
     </SettingsPageContainer>
   );
 };

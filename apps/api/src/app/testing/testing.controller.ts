@@ -1,6 +1,5 @@
 import { Body, Controller, Get, HttpException, NotFoundException, Post, UseGuards } from '@nestjs/common';
-import { DalService } from '@novu/dal';
-import { IUserEntity } from '@novu/shared';
+import { DalService, UserEntity } from '@novu/dal';
 import { ISeedDataResponseDto, SeedDataBodyDto } from './dtos/seed-data.dto';
 import { IdempotencyBodyDto } from './dtos/idempotency.dto';
 
@@ -45,7 +44,7 @@ export class TestingController {
   }
 
   @Post('/seed')
-  async seedData(@Body() body: SeedDataBodyDto): Promise<{ password_user: IUserEntity }> {
+  async seedData(@Body() body: SeedDataBodyDto): Promise<{ password_user: UserEntity }> {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
     const command = SeedDataCommand.create({});
 
