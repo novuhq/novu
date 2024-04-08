@@ -22,6 +22,7 @@ const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/** @deprecated Use `SettingsPageNew` instead */
 export function SettingsPage() {
   const { currentOrganization } = useAuthContext();
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';

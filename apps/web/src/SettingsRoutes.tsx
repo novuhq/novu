@@ -1,14 +1,16 @@
+import { Route, Navigate } from 'react-router-dom';
 import { Cloud, IconLockPerson, SSO, UserAccess } from '@novu/design-system';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { Route } from 'react-router-dom';
+
 import { ProductLead } from './components/utils/ProductLead';
 import { ROUTES } from './constants/routes.enum';
 import { useFeatureFlag } from './hooks';
 import { BillingRoutes } from './pages/BillingPages';
 import { BrandingForm } from './pages/brand/tabs';
 import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
-import { ApiKeysPage } from './pages/settings';
-import { SettingsPage } from './pages/settings/SettingsPage';
+import { ApiKeysPage, UserProfilePage } from './pages/settings';
+import { SettingsPage as SettingsPageOld } from './pages/settings/SettingsPage';
+import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { ApiKeysCard } from './pages/settings/tabs';
 import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 
@@ -22,13 +24,9 @@ export const useSettingsRoutes = () => {
    */
   return true ? (
     <>
-      <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
-      {/* TODO: this should redirect to Profile */}
       <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
-        {/* TODO: replace with actual component */}
-        <Route path={''} element={<ApiKeysCard />} />
-        {/* TODO: replace with actual component */}
-        <Route path={ROUTES.PROFILE} element={<ApiKeysCard />} />
+        <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
+        <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
         <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingForm />} />
         {/* TODO: replace with actual component */}
         <Route path={ROUTES.ORGANIZATION} element={<ApiKeysCard />} />
@@ -47,10 +45,13 @@ export const useSettingsRoutes = () => {
             />
           }
         />
+        {/* Default settings route in case we didn't match with the existing */}
+        <Route path={`${ROUTES.SETTINGS}/*`} element={<Navigate to={ROUTES.PROFILE} replace />} />
+        <Route path={`${ROUTES.SETTINGS}`} element={<Navigate to={ROUTES.PROFILE} replace />} />
       </Route>
     </>
   ) : (
-    <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
+    <Route path={ROUTES.SETTINGS} element={<SettingsPageOld />}>
       <Route path="" element={<ApiKeysCard />} />
       <Route path="billing/*" element={<BillingRoutes />} />
       <Route path="email" element={<EmailSettings />} />
