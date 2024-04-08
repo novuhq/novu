@@ -1,8 +1,10 @@
-import { IOrganizationEntity, IResponseError } from '@novu/shared';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import * as capitalize from 'lodash.capitalize';
 import { useAuthContext } from '@novu/shared-web';
-import { useQueryClient, useMutation } from '@tanstack/react-query';
-import capitalize from 'lodash.capitalize';
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import type { IResponseError, IOrganizationEntity } from '@novu/shared';
+import { successMessage } from '@novu/design-system';
+
 import { addOrganization, switchOrganization } from '../../../api/organization';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 
@@ -19,7 +21,11 @@ export const useOrganizationSelect = () => {
     IOrganizationEntity,
     IResponseError,
     string
-  >((name) => addOrganization(name));
+  >((name) => addOrganization(name), {
+    onSuccess: () => {
+      successMessage('Your Business trial has started');
+    },
+  });
 
   const { mutateAsync: changeOrganization } = useMutation<string, IResponseError, string>((id) =>
     switchOrganization(id)

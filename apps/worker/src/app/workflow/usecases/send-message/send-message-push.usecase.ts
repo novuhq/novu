@@ -91,19 +91,21 @@ export class SendMessagePush extends SendMessageBase {
     let title = '';
 
     try {
-      content = await this.compileTemplate.execute(
-        CompileTemplateCommand.create({
-          template: step.template?.content as string,
-          data,
-        })
-      );
+      if (!command.chimeraData) {
+        content = await this.compileTemplate.execute(
+          CompileTemplateCommand.create({
+            template: step.template?.content as string,
+            data,
+          })
+        );
 
-      title = await this.compileTemplate.execute(
-        CompileTemplateCommand.create({
-          template: step.template?.title as string,
-          data,
-        })
-      );
+        title = await this.compileTemplate.execute(
+          CompileTemplateCommand.create({
+            template: step.template?.title as string,
+            data,
+          })
+        );
+      }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 

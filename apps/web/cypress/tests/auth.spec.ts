@@ -162,7 +162,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('email').type('test-user-1@example.com');
       cy.getByTestId('password').type('123456');
       cy.getByTestId('submit-btn').click();
-      cy.getByTestId('error-alert-banner').contains('Incorrect email or password provided');
+      cy.get('.mantine-TextInput-error').contains('Incorrect email or password provided');
     });
 
     it('should show invalid email error when authenticating with invalid email', function () {
@@ -180,7 +180,7 @@ describe('User Sign-up and Login', function () {
       cy.getByTestId('email').type('test-user-1@example.de');
       cy.getByTestId('password').type('123456');
       cy.getByTestId('submit-btn').click();
-      cy.getByTestId('error-alert-banner').contains('Incorrect email or password provided');
+      cy.get('.mantine-TextInput-error').contains('Incorrect email or password provided');
     });
   });
 

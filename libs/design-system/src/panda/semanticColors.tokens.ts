@@ -30,16 +30,25 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
         value: { base: '{colors.legacy.B70}', _dark: '{colors.legacy.B40}' },
         type: 'color',
       },
-      /*
-       * disabled: {
-       *   value: { base: '{colors.legacy.mauve.30.light}', _dark: '{colors.legacy.mauve.30.dark}' },
-       *   type: 'color',
-       * },
-       * accent: {
-       *   value: { base: '{colors.legacy.blue.20.light}', _dark: '{colors.legacy.blue.20.dark}' },
-       *   type: 'color',
-       * },
-       */
+      // not actually legacy, but makes the merging of the two easier for now.
+      feedback: {
+        alert: {
+          value: { base: '{colors.red.20.light}', _dark: '{colors.red.20.dark}' },
+          type: 'color',
+        },
+        warning: {
+          value: { base: '{colors.amber.30.light}', _dark: '{colors.amber.30.dark}' },
+          type: 'color',
+        },
+        info: {
+          value: { base: '{colors.blue.20.light}', _dark: '{colors.blue.20.dark}' },
+          type: 'color',
+        },
+        success: {
+          value: { base: '{colors.green.20.light}', _dark: '{colors.green.20.dark}' },
+          type: 'color',
+        },
+      },
     },
   },
   button: {

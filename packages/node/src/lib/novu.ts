@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
+import { getEnvVariable } from '@novu/shared/utils';
 import { Subscribers } from './subscribers/subscribers';
 import { EventEmitter } from 'events';
 import { Changes } from './changes/changes';
@@ -21,7 +22,7 @@ import { WorkflowOverrides } from './workflow-override/workflow-override';
 import { makeRetryable } from './retry';
 
 export class Novu extends EventEmitter {
-  private readonly apiKey?: string;
+  public readonly apiKey?: string;
   private readonly http: AxiosInstance;
   readonly subscribers: Subscribers;
   readonly environments: Environments;
@@ -40,8 +41,25 @@ export class Novu extends EventEmitter {
   readonly organizations: Organizations;
   readonly workflowOverrides: WorkflowOverrides;
 
-  constructor(apiKey: string, config?: INovuConfiguration) {
+  constructor(config?: INovuConfiguration);
+  constructor(apiKey: string, config?: INovuConfiguration);
+  constructor(...args: any) {
     super();
+
+    let apiKey: string | undefined;
+    let config: INovuConfiguration | undefined;
+
+    if (arguments.length === 2) {
+      apiKey = args[0];
+      config = args[1];
+    } else if (arguments.length === 1) {
+      const { apiKey: key, ...rest } = args[0];
+      apiKey = key;
+      config = rest;
+    } else {
+      apiKey = getEnvVariable('NOVU_API_KEY');
+    }
+
     this.apiKey = apiKey;
     const axiosInstance = axios.create({
       baseURL: this.buildBackendUrl(config),
