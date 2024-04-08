@@ -7,6 +7,7 @@ import { styled } from '../../../styled-system/jsx';
 import { title } from '../../../styled-system/recipes';
 import { InputPlain } from '../components';
 import { SettingsPageContainer } from '../SettingsPageContainer';
+import { UserProfileForm } from './UserProfileForm';
 
 const Title = styled('h2', title);
 
@@ -17,6 +18,7 @@ export const UserProfilePage: FC = () => {
 
   return (
     <SettingsPageContainer title="User profile">
+      <UserProfileForm currentUser={currentUser} />
       <Title mb="100" variant="section">
         Profile security
       </Title>

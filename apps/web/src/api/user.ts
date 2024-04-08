@@ -1,3 +1,5 @@
+import { IUserEntity } from '@novu/shared';
+
 import { api } from './api.client';
 
 export async function getUser() {
@@ -10,4 +12,16 @@ export async function updateUserOnBoarding(showOnBoarding: boolean) {
 
 export async function updateUserOnBoardingTour(showOnBoardingTour: number) {
   return api.put('/v1/users/onboarding-tour', { showOnBoardingTour });
+}
+
+export async function updateUserProfile({
+  firstName,
+  lastName,
+  profilePicture,
+}: {
+  firstName: string;
+  lastName: string;
+  profilePicture?: string | null;
+}): Promise<IUserEntity> {
+  return api.put('/v1/users/profile', { firstName, lastName, profilePicture });
 }

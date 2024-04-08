@@ -8,5 +8,5 @@ export class UpdateProfileRequestDto {
   lastName: string;
 
   @ApiProperty()
-  imageUrl: string;
+  profilePicture?: string;
 }

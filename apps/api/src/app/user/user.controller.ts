@@ -115,18 +115,17 @@ export class UsersController {
     summary: 'Update user name and profile picture',
   })
   @ExternalApiAccessible()
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiNoContentResponse({
-    description: 'Profile updated successfully.',
-  })
-  async updateProfile(@UserSession() user: IJwtPayload, @Body() body: UpdateProfileRequestDto) {
+  async updateProfile(
+    @UserSession() user: IJwtPayload,
+    @Body() body: UpdateProfileRequestDto
+  ): Promise<UserResponseDto> {
     return await this.updateNameAndProfilePictureUsecase.execute(
       UpdateNameAndProfilePictureCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         firstName: body.firstName,
         lastName: body.lastName,
-        imageUrl: body.imageUrl,
+        profilePicture: body.profilePicture,
         organizationId: user.organizationId,
       })
     );
