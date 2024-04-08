@@ -1,12 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import * as hat from 'hat';
 import { StorageService } from '@novu/application-generic';
-
+import { MIME_TYPES_LOOKUP } from '@novu/shared';
+import * as hat from 'hat';
 import { UploadUrlResponse } from '../../dtos/upload-url-response.dto';
-import {
-  GetUserProfilePictureSignedUrlCommand,
-  MIME_TYPES_LOOKUP,
-} from './get-user-profile-picture-signed-url.command';
+import { GetUserProfilePictureSignedUrlCommand } from './get-user-profile-picture-signed-url.command';
 
 @Injectable()
 export class GetUserProfilePictureSignedUrl {
