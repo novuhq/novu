@@ -22,6 +22,7 @@
     ],
     "plugins": [],
     "webpack": true,
+    "webpackConfigPath": "webpack.config.js",
     "typeCheck": true
   },
   "projects": {
