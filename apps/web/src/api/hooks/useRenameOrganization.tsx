@@ -1,7 +1,6 @@
 import { errorMessage } from '@novu/design-system';
 import type { IResponseError } from '@novu/shared';
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
-import { useCallback } from 'react';
 
 import { renameOrganization as renameOrganizationApi } from '../organization';
 
@@ -14,7 +13,7 @@ type ResultType = PayloadType;
 export const useRenameOrganization = (options: UseMutationOptions<ResultType, IResponseError, PayloadType> = {}) => {
   const queryClient = useQueryClient();
 
-  const { mutateAsync, isLoading } = useMutation<ResultType, IResponseError, PayloadType>(
+  const { mutateAsync: renameOrganization, isLoading } = useMutation<ResultType, IResponseError, PayloadType>(
     ({ name }) => renameOrganizationApi(name),
     {
       onError: (e) => {
@@ -27,15 +26,6 @@ export const useRenameOrganization = (options: UseMutationOptions<ResultType, IR
         });
       },
     }
-  );
-
-  const renameOrganization = useCallback(
-    async ({ name }: PayloadType) => {
-      await mutateAsync({
-        name,
-      });
-    },
-    [mutateAsync]
   );
 
   return {
