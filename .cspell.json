@@ -621,7 +621,9 @@
     "Vonage",
     "seti",
     "NXDI",
-    "Wmkbff"
+    "Wmkbff",
+    "runtimes",
+    "cafebabe"
   ],
   "flagWords": [],
   "patterns": [
@@ -705,6 +707,6 @@
     "angular.json",
     "ng-package.json",
     "libs/shared/src/types/timezones/timezones.types.ts",
-    "*.riv"
+    "*.riv",
   ]
 }

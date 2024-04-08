@@ -60,7 +60,7 @@ export const LAUNCH_DARKLY_CLIENT_SIDE_ID =
   window._env_.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID || process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 
 export const FEATURE_FLAGS = Object.values(FeatureFlagsKeysEnum).reduce((acc, key) => {
-  const defaultValue = isCypress ? true : false;
+  const defaultValue = isCypress ? 'true' : 'false';
   acc[key] = window._env_[key] || process.env[key] || defaultValue;
 
   return acc;
