@@ -9,6 +9,8 @@ type FormValues = {
   name: string;
 };
 
+const INPUT_HEIGHT = '50px';
+
 export function OrganizationName({ organizationName }: { organizationName?: string }) {
   const { isLoading, renameOrganization } = useRenameOrganization({
     onSuccess: () => {
@@ -59,6 +61,7 @@ export function OrganizationName({ organizationName }: { organizationName?: stri
                 }),
                 input: css({
                   m: '0px !important',
+                  h: INPUT_HEIGHT,
                 }),
               }}
               placeholder="Organization name"
@@ -73,7 +76,7 @@ export function OrganizationName({ organizationName }: { organizationName?: stri
           loading={isSubmitting || isLoading}
           disabled={!isDirty || !isValid}
           data-test-id="organization-update-button"
-          h={50}
+          h={INPUT_HEIGHT}
         >
           Update name
         </Button>
