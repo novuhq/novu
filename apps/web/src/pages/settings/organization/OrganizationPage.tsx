@@ -12,7 +12,7 @@ export function OrganizationPage() {
   return (
     <SettingsPageContainer title={PAGE_TITLE}>
       <Stack gap={150} direction="row" h={72} align="flex-end">
-        <OrganizationLogo logo={currentOrganization?.branding?.logo} />
+        <OrganizationLogo logoUrl={currentOrganization?.branding?.logo} />
         <OrganizationName organizationName={currentOrganization?.name} />
       </Stack>
     </SettingsPageContainer>
