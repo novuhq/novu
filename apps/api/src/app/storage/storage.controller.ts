@@ -1,5 +1,6 @@
 import { ClassSerializerInterceptor, Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/common';
-import { IJwtPayload } from '@novu/shared';
+import { IJwtPayload, UploadTypesEnum } from '@novu/shared';
+
 import { GetSignedUrl } from './usecases/get-signed-url/get-signed-url.usecase';
 import { GetSignedUrlCommand } from './usecases/get-signed-url/get-signed-url.command';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -8,8 +9,6 @@ import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UploadUrlResponse } from './dtos/upload-url-response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
-import { GetUserProfilePictureSignedUrl } from './usecases/get-user-profile-picture-signed-url/get-user-profile-picture-signed-url.usecase';
-import { GetUserProfilePictureSignedUrlCommand } from './usecases/get-user-profile-picture-signed-url/get-user-profile-picture-signed-url.command';
 
 @ApiCommonResponses()
 @Controller('/storage')
@@ -18,10 +17,7 @@ import { GetUserProfilePictureSignedUrlCommand } from './usecases/get-user-profi
 @UseGuards(UserAuthGuard)
 @ApiExcludeController()
 export class StorageController {
-  constructor(
-    private getSignedUrlUsecase: GetSignedUrl,
-    private getUserProfilePictureSignedUrlUsecase: GetUserProfilePictureSignedUrl
-  ) {}
+  constructor(private getSignedUrlUsecase: GetSignedUrl) {}
 
   @Get('/upload-url')
   @ApiOperation({
@@ -29,33 +25,18 @@ export class StorageController {
   })
   @ApiResponse(UploadUrlResponse)
   @ExternalApiAccessible()
-  async signedUrl(@UserSession() user: IJwtPayload, @Query('extension') extension: string): Promise<UploadUrlResponse> {
+  async signedUrl(
+    @UserSession() user: IJwtPayload,
+    @Query('extension') extension: string,
+    @Query('type') type: UploadTypesEnum = UploadTypesEnum.BRANDING
+  ): Promise<UploadUrlResponse> {
     return await this.getSignedUrlUsecase.execute(
       GetSignedUrlCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         extension,
-      })
-    );
-  }
-
-  @Get('/upload-url/profile')
-  @ApiOperation({
-    summary: "Get upload url for  user's profile picture",
-  })
-  @ApiResponse(UploadUrlResponse)
-  @ExternalApiAccessible()
-  async profilePictureSignedUrl(
-    @UserSession() user: IJwtPayload,
-    @Query('extension') extension: string
-  ): Promise<UploadUrlResponse> {
-    return await this.getUserProfilePictureSignedUrlUsecase.execute(
-      GetUserProfilePictureSignedUrlCommand.create({
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        userId: user._id,
-        extension,
+        type,
       })
     );
   }

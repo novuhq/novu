@@ -1,33 +1,30 @@
 import { Flex, Grid, Group, Input, LoadingOverlay, Stack, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
 import { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
 import { useOutletContext } from 'react-router-dom';
-import type { IResponseError, IOrganizationEntity } from '@novu/shared';
-import { Button, ColorInput, colors, Select, inputStyles, Upload, Trash } from '@novu/design-system';
+import { IResponseError, IOrganizationEntity, UploadTypesEnum, MIME_TYPE_TO_FILE_EXTENSION } from '@novu/shared';
+import { Button, ColorInput, colors, Select, inputStyles, Upload, Trash, errorMessage } from '@novu/design-system';
 
 import { updateBrandingSettings } from '../../../api/organization';
-import { getSignedUrl } from '../../../api/storage';
 import Card from '../../../components/layout/components/Card';
 import { successMessage } from '../../../utils/notifications';
-
-const mimeTypes = {
-  'image/jpeg': 'jpeg',
-  'image/png': 'png',
-};
+import { useUploadToStorage } from '../../../api/hooks/useUploadToStorage';
 
 export function BrandingForm() {
   const { currentOrganization: organization } = useOutletContext<{
     currentOrganization: IOrganizationEntity | undefined;
   }>();
-  const { mutateAsync: getSignedUrlAction } = useMutation<
-    { signedUrl: string; path: string; additionalHeaders: object },
-    IResponseError,
-    string
-  >(getSignedUrl);
+  const { uploadToStorage } = useUploadToStorage({
+    onSuccess: (path) => {
+      setValue('image', path);
+    },
+    onError: (e) => {
+      errorMessage('Failed to upload branding image: ' + e.message);
+    },
+  });
   const { setValue, handleSubmit, control } = useForm({
     defaultValues: {
       fontFamily: organization?.branding?.fontFamily || 'inherit',
@@ -63,27 +60,7 @@ export function BrandingForm() {
     const file = files[0];
     if (!file) return;
 
-    const { signedUrl, path, additionalHeaders } = await getSignedUrlAction(mimeTypes[file.type]);
-    const contentTypeHeaders = {
-      'Content-Type': file.type,
-    };
-
-    const mergedHeaders = Object.assign({}, contentTypeHeaders, additionalHeaders || {});
-    await axios.put(signedUrl, file, {
-      headers: mergedHeaders,
-      transformRequest: [
-        (data, headers) => {
-          if (headers) {
-            // eslint-disable-next-line
-            delete headers.Authorization;
-          }
-
-          return data;
-        },
-      ],
-    });
-
-    setValue('image', path);
+    uploadToStorage({ file, type: UploadTypesEnum.BRANDING });
   }
 
   const dropzoneRef = useRef<() => void>(null);
@@ -138,7 +115,7 @@ export function BrandingForm() {
                               },
                             }}
                             openRef={dropzoneRef}
-                            accept={Object.keys(mimeTypes)}
+                            accept={Object.keys(MIME_TYPE_TO_FILE_EXTENSION)}
                             multiple={false}
                             onDrop={handleUpload}
                             data-test-id="upload-image-button"
