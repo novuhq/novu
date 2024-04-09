@@ -1,5 +1,5 @@
 import { Route, Navigate } from 'react-router-dom';
-import { Cloud, IconLockPerson, SSO, UserAccess } from '@novu/design-system';
+import { Cloud, SSO, UserAccess } from '@novu/design-system';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { ProductLead } from './components/utils/ProductLead';
@@ -14,6 +14,7 @@ import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNe
 import { ApiKeysCard } from './pages/settings/tabs';
 import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 import { OrganizationPage } from './pages/settings/organization';
+import { WebhookPage } from './pages/settings/WebhookPage';
 
 /** Note: using a hook is the only way to separate routes */
 export const useSettingsRoutes = () => {
@@ -33,7 +34,7 @@ export const useSettingsRoutes = () => {
         <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
         <Route path={ROUTES.TEAM_SETTINGS} element={<TeamPage />} />
         <Route path={ROUTES.BILLING} element={<BillingRoutes />} />
-        <Route path={ROUTES.WEBHOOK} element={<EmailSettings />} />
+        <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
         <Route path={ROUTES.SECURITY} element={<AccessSecurityPage />} />
         {/* Default settings route in case we didn't match with the existing */}
         <Route path={`${ROUTES.SETTINGS}/*`} element={<Navigate to={ROUTES.PROFILE} replace />} />
