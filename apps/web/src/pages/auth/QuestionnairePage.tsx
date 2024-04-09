@@ -22,7 +22,7 @@ export default function QuestionnairePage() {
       ) : (
         <AuthContainer
           title="Customize your experience"
-          description={!isNovuProd ? 'Your answers can decrease the time to get started' : ''}
+          description={!shouldUseHubspotForm ? 'Your answers can decrease the time to get started' : ''}
         >
           <When truthy={shouldUseHubspotForm}>
             <HubspotSignupForm />
