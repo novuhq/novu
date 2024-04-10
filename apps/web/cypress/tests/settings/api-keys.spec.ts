@@ -1,15 +1,16 @@
-const testClipboardInput = (inputTestId: string) => {
-  cy.getByTestId(`${inputTestId}-copy`).focus().click();
-  cy.getClipboardValue().then((clipVal) => {
-    cy.getByTestId(`${inputTestId}`)
-      .invoke('val')
-      .then((inputVal) => {
-        expect(inputVal).to.equal(clipVal);
-      });
-  });
-};
-
 describe('API Keys Page', () => {
+  const testClipboardInput = (inputTestId: string) => {
+    cy.getByTestId(`${inputTestId}-copy`).focus().click();
+    cy.getClipboardValue().then((clipVal) => {
+      cy.getByTestId(`${inputTestId}`)
+        .focus()
+        .invoke('val')
+        .then((inputVal) => {
+          expect(inputVal).to.equal(clipVal);
+        });
+    });
+  };
+
   beforeEach(() => {
     cy.mockFeatureFlags({ IS_INFORMATION_ARCHITECTURE_ENABLED: true });
     cy.initializeSession().as('session');
