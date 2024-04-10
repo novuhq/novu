@@ -9,7 +9,7 @@ interface ProfileImageProps {
   /**
    * **NOTE**: Value should be URL string
    */
-  value: string;
+  value?: string | null;
 
   /**
    * **NOTE**: convert the File value to string URL to display the image

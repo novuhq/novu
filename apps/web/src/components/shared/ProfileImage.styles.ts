@@ -5,6 +5,7 @@ export const previewContainerStyles = css({
   borderRadius: '0.75rem',
   position: 'relative',
   overflow: 'hidden',
+  minWidth: '4.5rem',
   width: '4.5rem',
   height: '4.5rem',
 

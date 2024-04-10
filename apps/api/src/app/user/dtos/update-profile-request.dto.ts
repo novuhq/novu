@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { IUpdateUserProfile } from '@novu/shared';
 
-export class UpdateProfileRequestDto {
+export class UpdateProfileRequestDto implements IUpdateUserProfile {
   @ApiProperty()
   firstName: string;
 
@@ -8,5 +9,5 @@ export class UpdateProfileRequestDto {
   lastName: string;
 
   @ApiProperty()
-  imageUrl: string;
+  profilePicture?: string;
 }

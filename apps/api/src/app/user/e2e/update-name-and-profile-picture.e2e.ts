@@ -1,13 +1,8 @@
-import { EnvironmentRepository, OrganizationRepository, UserEntity, UserRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
 describe('Update user name and profile picture - /users/profile (PUT)', async () => {
   let session: UserSession;
-
-  const environmentRepository = new EnvironmentRepository();
-  const organizationRepository = new OrganizationRepository();
-  const userRepository = new UserRepository();
 
   before(async () => {
     session = new UserSession();
@@ -15,31 +10,34 @@ describe('Update user name and profile picture - /users/profile (PUT)', async ()
   });
 
   it('should update the user name and profile picture', async () => {
-    const { statusCode } = await session.testAgent.put('/v1/users/profile').send({
+    const profilePicture = 'https://example.com/profile-picture.jpg';
+    const {
+      body: { data },
+      statusCode,
+    } = await session.testAgent.put('/v1/users/profile').send({
       firstName: 'John',
       lastName: 'Doe',
-      imageUrl: 'https://example.com/profile-picture.jpg',
+      profilePicture: profilePicture,
     });
 
-    expect(statusCode).to.equal(204);
-
-    const user = (await userRepository.findOne({ _id: session.user._id })) as UserEntity;
-    expect(user.firstName).to.equal('John');
-    expect(user.lastName).to.equal('Doe');
-    expect(user.profilePicture).to.equal('https://example.com/profile-picture.jpg');
+    expect(statusCode).to.equal(200);
+    expect(data.firstName).to.equal('John');
+    expect(data.lastName).to.equal('Doe');
+    expect(data.profilePicture).to.equal(profilePicture);
   });
 
   it('should update the user name', async () => {
-    const { statusCode } = await session.testAgent.put('/v1/users/profile').send({
+    const {
+      body: { data },
+      statusCode,
+    } = await session.testAgent.put('/v1/users/profile').send({
       firstName: 'John',
       lastName: 'Doe',
     });
 
-    expect(statusCode).to.equal(204);
-
-    const user = (await userRepository.findOne({ _id: session.user._id })) as UserEntity;
-    expect(user.firstName).to.equal('John');
-    expect(user.lastName).to.equal('Doe');
+    expect(statusCode).to.equal(200);
+    expect(data.firstName).to.equal('John');
+    expect(data.lastName).to.equal('Doe');
   });
 
   it('should throw when invalid first name or last name provided', async () => {
@@ -58,19 +56,5 @@ describe('Update user name and profile picture - /users/profile (PUT)', async ()
 
     expect(body2.statusCode).to.equal(400);
     expect(body2.message).to.equal('First name and last name are required');
-  });
-
-  it('should remove the profile picture when imageUrl is not provided', async () => {
-    const { statusCode } = await session.testAgent.put('/v1/users/profile').send({
-      firstName: 'John',
-      lastName: 'Doe',
-    });
-
-    expect(statusCode).to.equal(204);
-
-    const user = (await userRepository.findOne({ _id: session.user._id })) as UserEntity;
-    expect(user.firstName).to.equal('John');
-    expect(user.lastName).to.equal('Doe');
-    expect(user.profilePicture).to.not.exist;
   });
 });
