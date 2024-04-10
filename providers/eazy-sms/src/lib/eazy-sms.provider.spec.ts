@@ -5,7 +5,7 @@ const mockConfig = {
   channelId: 'test-key@sms.eazy.im',
 };
 
-const mockBulkSMSMessage = {
+const mockSMSMessage = {
   to: '1234567890',
   content: 'sms content',
 };
@@ -22,7 +22,7 @@ test('should trigger eazy-sms library correctly', async () => {
       } as any;
     });
 
-  await smsProvider.sendMessage(mockBulkSMSMessage);
+  await smsProvider.sendMessage(mockSMSMessage);
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
     content: 'sms content',
