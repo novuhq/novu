@@ -4,7 +4,7 @@ import { buildGroupedBlueprintsKey, CachedEntity } from '@novu/application-gener
 import { INotificationTemplate, IGroupedBlueprint } from '@novu/shared';
 
 import { GroupedBlueprintResponse } from '../../dto/grouped-blueprint.response.dto';
-import { POPULAR_GROUPED_NAME, POPULAR_TEMPLATES_ID_LIST } from './index';
+import { GetGroupedBlueprintsCommand, POPULAR_GROUPED_NAME, POPULAR_TEMPLATES_ID_LIST } from './index';
 
 const WEEK_IN_SECONDS = 60 * 60 * 24 * 7;
 
@@ -13,10 +13,10 @@ export class GetGroupedBlueprints {
   constructor(private notificationTemplateRepository: NotificationTemplateRepository) {}
 
   @CachedEntity({
-    builder: () => buildGroupedBlueprintsKey(),
+    builder: (command: GetGroupedBlueprintsCommand) => buildGroupedBlueprintsKey(command.environmentId),
     options: { ttl: WEEK_IN_SECONDS },
   })
-  async execute(): Promise<GroupedBlueprintResponse> {
+  async execute(command: GetGroupedBlueprintsCommand): Promise<GroupedBlueprintResponse> {
     const groups = await this.fetchGroupedBlueprints();
 
     const updatePopularBlueprints = this.updatePopularBlueprints(groups);

@@ -112,6 +112,8 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
   it('should update the static POPULAR_TEMPLATES_GROUPED with fresh data', async () => {
     const prodEnv = await getProductionEnvironment();
+    if (!prodEnv) throw new Error('production environment was not found');
+
     await createTemplateFromBlueprint({ session, notificationTemplateRepository, prodEnv });
 
     const data = await session.testAgent.get(`/v1/blueprints/group-by-category`).send();
@@ -128,7 +130,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     indexModuleStub.value(mockedValue);
 
     await invalidateCache.invalidateByKey({
-      key: buildGroupedBlueprintsKey(),
+      key: buildGroupedBlueprintsKey(prodEnv._id),
     });
 
     const updatedBlueprintFromDb = (await session.testAgent.get(`/v1/blueprints/group-by-category`).send()).body.data

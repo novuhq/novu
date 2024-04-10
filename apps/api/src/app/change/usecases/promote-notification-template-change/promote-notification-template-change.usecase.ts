@@ -7,6 +7,7 @@ import {
   NotificationStepEntity,
   NotificationGroupRepository,
   StepVariantEntity,
+  EnvironmentRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
@@ -24,6 +25,7 @@ export class PromoteNotificationTemplateChange {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private environmentRepository: EnvironmentRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
     @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
