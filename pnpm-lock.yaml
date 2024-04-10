@@ -2973,6 +2973,9 @@ importers:
       '@novu/discord':
         specifier: ^0.24.1
         version: link:../../providers/discord
+      '@novu/eazy-sms':
+        specifier: 0.24.1
+        version: link:../../providers/eazy-sms
       '@novu/email-webhook':
         specifier: ^0.24.1
         version: link:../../providers/email-webhook
