@@ -71,6 +71,7 @@ test('should trigger resend email with From Name', async () => {
       filename: attachment?.name,
       content: attachment.file,
     })),
+    reply_to: null,
     cc: undefined,
     bcc: undefined,
   });
