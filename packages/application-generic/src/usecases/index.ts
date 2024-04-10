@@ -40,3 +40,4 @@ export * from './trigger-multicast';
 export * from './compile-in-app-template';
 export * from './execution-log-route';
 export * from './compile-step-template';
+export * from './create-workflow';

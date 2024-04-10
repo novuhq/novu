@@ -27,3 +27,8 @@ type ActiveIntegrationStatusWithPrimary = {
     hasPrimaryIntegrations: boolean;
   };
 };
+
+export enum WorkflowStepTypeEnum {
+  REGULAR = 'REGULAR',
+  ECHO = 'ECHO',
+}

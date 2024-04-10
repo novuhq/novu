@@ -12,9 +12,9 @@ import {
   ReservedVariablesMap,
   TriggerContextTypeEnum,
   ITriggerReservedVariable,
+  FilterParts,
 } from '@novu/shared';
-import { ApiException } from '../exceptions/api.exception';
-import { NotificationStep } from '../../workflows/usecases/create-notification-template';
+import { NotificationStep } from '../usecases/create-workflow';
 
 export class ContentService {
   replaceVariables(content: string, variables: { [key: string]: string }) {
@@ -23,7 +23,10 @@ export class ContentService {
 
     for (const key in variables) {
       if (!variables.hasOwnProperty(key)) continue;
-      modifiedContent = modifiedContent.replace(new RegExp(`{{${this.escapeForRegExp(key)}}}`, 'g'), variables[key]);
+      modifiedContent = modifiedContent.replace(
+        new RegExp(`{{${this.escapeForRegExp(key)}}}`, 'g'),
+        variables[key]
+      );
     }
 
     return modifiedContent;
@@ -37,7 +40,7 @@ export class ContentService {
 
       return getTemplateVariables(ast.body);
     } catch (e) {
-      throw new ApiException('Failed to extract variables');
+      throw new Error('Failed to extract variables');
     }
   }
 
@@ -50,7 +53,8 @@ export class ContentService {
 
     for (const text of this.messagesTextIterator(messages)) {
       const extractedVariables = this.extractVariables(text);
-      const extractedReservedVariables = this.extractReservedVariables(extractedVariables);
+      const extractedReservedVariables =
+        this.extractReservedVariables(extractedVariables);
 
       reservedVariables.push(...extractedReservedVariables);
       variables.push(...extractedVariables);
@@ -61,10 +65,14 @@ export class ContentService {
     return {
       variables: [
         ...new Map(
-          variables.filter((item) => !this.isSystemVariable(item.name)).map((item) => [item.name, item])
+          variables
+            .filter((item) => !this.isSystemVariable(item.name))
+            .map((item) => [item.name, item])
         ).values(),
       ],
-      reservedVariables: [...new Map(reservedVariables.map((item) => [item.type, item])).values()],
+      reservedVariables: [
+        ...new Map(reservedVariables.map((item) => [item.type, item])).values(),
+      ],
     };
   }
 
@@ -75,26 +83,43 @@ export class ContentService {
       if (message.filters) {
         const filters = Array.isArray(message.filters) ? message.filters : [];
         const filteredVariables = filters.flatMap((filter) => {
-          const filteredChildren = filter.children?.filter((item) => item.on === FilterPartTypeEnum.PAYLOAD) || [];
-          const mappedChildren = filteredChildren.map((item: IFieldFilterPart) => {
-            return {
-              name: item.field,
-              type: TemplateVariableTypeEnum.STRING,
-            };
-          });
+          const filteredChildren = this.filterChildren(filter.children);
+
+          const mappedChildren = filteredChildren.map(
+            (item: IFieldFilterPart) => {
+              return {
+                name: item.field,
+                type: TemplateVariableTypeEnum.STRING,
+              };
+            }
+          );
 
           return mappedChildren;
         });
+
         variables.push(...filteredVariables);
       }
 
-      if (message.metadata?.type === DelayTypeEnum.SCHEDULED && message.metadata.delayPath) {
-        variables.push({ name: message.metadata.delayPath, type: TemplateVariableTypeEnum.STRING });
+      if (
+        message.metadata?.type === DelayTypeEnum.SCHEDULED &&
+        message.metadata.delayPath
+      ) {
+        variables.push({
+          name: message.metadata.delayPath,
+          type: TemplateVariableTypeEnum.STRING,
+        });
       }
 
       if (message.template?.type === StepTypeEnum.DIGEST) {
-        if (message.metadata && 'digestKey' in message.metadata && message.metadata.digestKey) {
-          variables.push({ name: message.metadata.digestKey, type: TemplateVariableTypeEnum.STRING });
+        if (
+          message.metadata &&
+          'digestKey' in message.metadata &&
+          message.metadata.digestKey
+        ) {
+          variables.push({
+            name: message.metadata.digestKey,
+            type: TemplateVariableTypeEnum.STRING,
+          });
         }
       }
     }
@@ -102,17 +127,24 @@ export class ContentService {
     return variables;
   }
 
-  extractReservedVariables(variables: IMustacheVariable[]): ITriggerReservedVariable[] {
+  extractReservedVariables(
+    variables: IMustacheVariable[]
+  ): ITriggerReservedVariable[] {
     const reservedVariables: ITriggerReservedVariable[] = [];
 
     const reservedVariableTypes = variables
       .filter((item) => this.isReservedVariable(item.name))
       .map((item) => this.getVariableNamePrefix(item.name));
 
-    const triggerContextTypes = Array.from(new Set(reservedVariableTypes)) as TriggerContextTypeEnum[];
+    const triggerContextTypes = Array.from(
+      new Set(reservedVariableTypes)
+    ) as TriggerContextTypeEnum[];
 
     triggerContextTypes.forEach((variable) => {
-      reservedVariables.push({ type: variable, variables: ReservedVariablesMap[variable] });
+      reservedVariables.push({
+        type: variable,
+        variables: ReservedVariablesMap[variable],
+      });
     });
 
     return reservedVariables;
@@ -121,12 +153,16 @@ export class ContentService {
   extractSubscriberMessageVariables(messages: NotificationStep[]): string[] {
     const variables: string[] = [];
 
-    const hasSmsMessage = !!messages.find((i) => i.template?.type === StepTypeEnum.SMS);
+    const hasSmsMessage = !!messages.find(
+      (i) => i.template?.type === StepTypeEnum.SMS
+    );
     if (hasSmsMessage) {
       variables.push('phone');
     }
 
-    const hasEmailMessage = !!messages.find((i) => i.template?.type === StepTypeEnum.EMAIL);
+    const hasEmailMessage = !!messages.find(
+      (i) => i.template?.type === StepTypeEnum.EMAIL
+    );
     if (hasEmailMessage) {
       variables.push('email');
     }
@@ -134,7 +170,9 @@ export class ContentService {
     return Array.from(new Set(variables));
   }
 
-  private *messagesTextIterator(messages: NotificationStep[]): Generator<string> {
+  private *messagesTextIterator(
+    messages: NotificationStep[]
+  ): Generator<string> {
     for (const message of messages) {
       if (!message.template) continue;
 
@@ -163,25 +201,38 @@ export class ContentService {
   }
 
   private isSystemVariable(variableName: string): boolean {
-    return TemplateSystemVariables.includes(this.getVariableNamePrefix(variableName));
+    return TemplateSystemVariables.includes(
+      this.getVariableNamePrefix(variableName)
+    );
   }
 
   private getVariableNamePrefix(variableName: string): string {
-    return variableName.includes('.') ? variableName.split('.')[0] : variableName;
+    return variableName.includes('.')
+      ? variableName.split('.')[0]
+      : variableName;
   }
 
   private isReservedVariable(variableName: string): boolean {
-    return TriggerReservedVariables.includes(this.getVariableNamePrefix(variableName));
+    return TriggerReservedVariables.includes(
+      this.getVariableNamePrefix(variableName)
+    );
   }
 
   private escapeForRegExp(content: string) {
     return content.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
   }
 
-  buildMessageVariables(commandPayload: any, subscriberPayload): { [key: string]: any } {
+  buildMessageVariables(
+    commandPayload: any,
+    subscriberPayload
+  ): { [key: string]: any } {
     const messageVariables: { [key: string]: any } = { ...commandPayload };
 
-    return this.combineObjects(messageVariables, subscriberPayload, 'subscriber');
+    return this.combineObjects(
+      messageVariables,
+      subscriberPayload,
+      'subscriber'
+    );
   }
 
   private combineObjects(
@@ -192,10 +243,18 @@ export class ContentService {
     const newMessageVariables: { [key: string]: any } = { ...messageVariables };
 
     Object.keys(subscriberPayload).forEach(function (key) {
-      const newKey = subscriberString === '' ? key : `${subscriberString}.${key}`;
+      const newKey =
+        subscriberString === '' ? key : `${subscriberString}.${key}`;
       newMessageVariables[newKey] = subscriberPayload[key];
     });
 
     return newMessageVariables;
+  }
+
+  private isIFieldFilterPart(item: FilterParts): item is IFieldFilterPart {
+    return item.on === FilterPartTypeEnum.PAYLOAD;
+  }
+  private filterChildren(children: FilterParts[]): IFieldFilterPart[] {
+    return (children || []).filter(this.isIFieldFilterPart);
   }
 }

@@ -158,7 +158,11 @@
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
     "rrule": "^2.7.2",
-    "rxjs": "7.8.1"
+    "rxjs": "7.8.1",
+    "shortid": "^2.2.16",
+    "sanitize-html": "^2.4.0",
+    "@types/json-schema": "^7.0.15",
+    "slugify": "^1.4.6"
   },
   "optionalDependencies": {
     "@novu/ee-chimera-connect": "^0.24.1",
