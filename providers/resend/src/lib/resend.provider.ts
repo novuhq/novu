@@ -36,7 +36,7 @@ export class ResendEmailProvider implements IEmailProvider {
       text: options.text,
       html: options.html,
       cc: options.cc,
-      reply_to: options.replyTo,
+      reply_to: options.replyTo || null,
       attachments: options.attachments?.map((attachment) => ({
         filename: attachment?.name,
         content: attachment.file,
