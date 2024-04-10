@@ -30,7 +30,7 @@ export class EazySmsProvider implements ISmsProvider {
 
     const response = await axios.post(
       `${this.DEFAULT_BASE_URL}/channels/${this.config.channelId}/messages/${options.to}${this.EAZY_SMS_CHANNEL}`,
-      JSON.stringify(payload),
+      payload,
       {
         headers: {
           Authorization: `Bearer ${this.config.apiKey}`,
