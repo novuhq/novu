@@ -21,8 +21,7 @@
       }
     ],
     "plugins": [],
-    "webpack": true,
-    "webpackConfigPath": "webpack.config.js",
+    "builder": "swc",
     "typeCheck": true
   },
   "projects": {
