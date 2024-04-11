@@ -2,6 +2,7 @@ import '../../../src/config';
 import { NestFactory } from '@nestjs/core';
 import { SubscriberRepository } from '@novu/dal';
 import { AppModule } from '../../../src/app.module';
+import { IChannelSettings, ISubscriber } from '@novu/shared';
 
 export async function removeDuplicatedSubscribers() {
   // eslint-disable-next-line no-console
@@ -118,6 +119,9 @@ export async function removeDuplicatedSubscribers() {
 function mergeSubscribers(subscribers) {
   const mergedSubscriber = { ...subscribers[0] }; // Start with the first subscriber
 
+  // Initialize a map to store merged channels
+  const mergedChannelsMap = new Map();
+
   // Merge information from other subscribers
   for (const subscriber of subscribers) {
     const currentSubscriber = subscriber;
@@ -141,10 +145,49 @@ function mergeSubscribers(subscribers) {
 
       // Update with non-null/undefined values from subsequent subscribers
       if (currentSubscriber[key] !== null && currentSubscriber[key] !== undefined) {
-        mergedSubscriber[key] = currentSubscriber[key];
+        if (key === 'channels') {
+          mergeSubscriberChannels(currentSubscriber, mergedChannelsMap);
+        } else {
+          // For other keys, update directly
+          mergedSubscriber[key] = currentSubscriber[key];
+        }
       }
     }
   }
 
+  // Convert merged channels map back to array
+  mergedSubscriber.channels = [...mergedChannelsMap.values()];
+
   return mergedSubscriber;
+}
+
+function mergeChannels(existingChannel: IChannelSettings, newChannel: IChannelSettings) {
+  const result = { ...existingChannel };
+
+  // Merge deviceTokens
+  const allTokens = [
+    ...(existingChannel?.credentials?.deviceTokens || []),
+    ...(newChannel?.credentials?.deviceTokens || []),
+  ];
+  result.credentials.deviceTokens = [...new Set(allTokens)];
+
+  if (newChannel.credentials.webhookUrl) {
+    existingChannel.credentials.webhookUrl = newChannel.credentials.webhookUrl;
+  }
+
+  return existingChannel;
+}
+
+function mergeSubscriberChannels(subscriber: ISubscriber, mergedChannelsMap) {
+  for (const channel of subscriber.channels || []) {
+    const integrationId = channel._integrationId;
+    if (!mergedChannelsMap.has(integrationId)) {
+      // merging the same channel as a workaround just to make sure we always remove token duplications
+      mergedChannelsMap.set(integrationId, mergeChannels(channel, channel));
+    } else {
+      // If the integration ID exists, merge device tokens
+      const existingChannel = mergedChannelsMap.get(integrationId);
+      mergedChannelsMap.set(integrationId, mergeChannels(existingChannel, channel));
+    }
+  }
 }
