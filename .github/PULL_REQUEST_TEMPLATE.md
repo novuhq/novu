@@ -10,7 +10,7 @@ or design documents. -->
 and any notable implementation details. -->
 
 ### Screenshots
-<!-- If the changes are visual, include screenshots or GIFs. -->
+<!-- If the changes are visual, include screenshots or screencasts. -->
 
 <details>
 <summary><strong>Expand for optional sections</strong></summary>
