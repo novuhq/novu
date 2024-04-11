@@ -1,16 +1,18 @@
-import { FC } from 'react';
-import { SubmitHandler, useForm, ValidationRule } from 'react-hook-form';
+import { ChangeEventHandler, FC } from 'react';
+import { SubmitHandler, useController, useForm, ValidationRule } from 'react-hook-form';
 import * as capitalize from 'lodash.capitalize';
 import { Button, errorMessage, Input, successMessage } from '@novu/design-system';
-import type { IUserEntity } from '@novu/shared';
+import { IUserEntity, UploadTypesEnum } from '@novu/shared';
 
 import { css } from '../../../styled-system/css';
 import { ProfileImage } from '../../../components/shared';
 import { useUpdateUserProfile } from '../../../api/hooks';
+import { useUploadToStorage } from '../../../api/hooks/useUploadToStorage';
 
 interface IUserProfileForm {
   firstName: string;
   lastName: string;
+  profilePicture?: string;
 }
 
 interface IUserProfileFormProps {
@@ -34,18 +36,22 @@ const MIN_LENGTH_RULE: ValidationRule<number> = { value: 2, message: 'Should be 
 const makeFormData = (data?: IUserEntity | null): IUserProfileForm => ({
   firstName: capitalize(data?.firstName ?? ''),
   lastName: capitalize(data?.lastName ?? ''),
+  profilePicture: data?.profilePicture ?? '',
 });
 
 export const UserProfileForm: FC<IUserProfileFormProps> = ({ currentUser }) => {
   const {
+    control,
     register,
     reset,
     handleSubmit,
+    setValue,
     formState: { isDirty, errors },
   } = useForm<IUserProfileForm>({
     mode: 'onSubmit',
     defaultValues: makeFormData(currentUser),
   });
+  const { field: profilePictureField } = useController({ name: 'profilePicture', control });
 
   const { updateUserProfile, isLoading: isUpdatingUserProfile } = useUpdateUserProfile({
     onSuccess: (newUserData) => {
@@ -57,13 +63,46 @@ export const UserProfileForm: FC<IUserProfileFormProps> = ({ currentUser }) => {
     },
   });
 
-  const onUpdateUserProfileHandler: SubmitHandler<IUserProfileForm> = ({ firstName, lastName }) => {
-    updateUserProfile({ firstName, lastName });
+  const { uploadToStorage, isLoading: isUploadingImage } = useUploadToStorage({
+    onError: (e) => {
+      errorMessage('Failed to upload profile image: ' + e.message);
+    },
+  });
+
+  const uploadProfileImage = async (objectUrl: string): Promise<string> => {
+    const blob = await fetch(objectUrl).then((el) => el.blob());
+    const path = await uploadToStorage({
+      file: new File([blob], 'profile', { type: blob.type }),
+      type: UploadTypesEnum.USER_PROFILE,
+    });
+    URL.revokeObjectURL(objectUrl);
+
+    return path;
   };
 
-  const onUpdateUserProfileImageHandler = async (_: File[]) => {
-    // TODO: Implement image upload
+  const onUpdateUserProfileHandler: SubmitHandler<IUserProfileForm> = async (data) => {
+    const objectUrl = data.profilePicture;
+    let path: string | undefined;
+    if (objectUrl && objectUrl.startsWith('blob:')) {
+      path = await uploadProfileImage(objectUrl);
+    }
+
+    updateUserProfile({ ...data, profilePicture: path });
   };
+
+  const onUpdateUserProfileImageHandler: ChangeEventHandler<HTMLInputElement> = (event) => {
+    const {
+      target: { files },
+    } = event;
+    if (!files || !files[0]) {
+      return;
+    }
+
+    const path = URL.createObjectURL(files[0]);
+    setValue('profilePicture', path, { shouldDirty: true });
+  };
+
+  const isLoading = isUpdatingUserProfile || isUploadingImage;
 
   return (
     <form
@@ -71,11 +110,7 @@ export const UserProfileForm: FC<IUserProfileFormProps> = ({ currentUser }) => {
       onSubmit={handleSubmit(onUpdateUserProfileHandler)}
       className={css({ display: 'flex', alignItems: 'flex-end', gap: '150', marginBottom: '2.5rem' })}
     >
-      <ProfileImage
-        name="Profile picture"
-        onChange={onUpdateUserProfileImageHandler}
-        value={currentUser?.profilePicture}
-      />
+      <ProfileImage {...profilePictureField} onChange={onUpdateUserProfileImageHandler} isDisabled={isLoading} />
       <Input
         className={formInputStyles}
         {...register('firstName', {
@@ -98,8 +133,8 @@ export const UserProfileForm: FC<IUserProfileFormProps> = ({ currentUser }) => {
         size="lg"
         type="submit"
         className={css({ alignSelf: 'flex-end' })}
-        disabled={!isDirty || isUpdatingUserProfile}
-        loading={isUpdatingUserProfile}
+        disabled={!isDirty || isLoading}
+        loading={isLoading}
       >
         Update
       </Button>
