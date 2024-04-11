@@ -1,5 +1,4 @@
-import { showNotification } from '@mantine/notifications';
-import { Button, IconOutlineLockPerson, PasswordInput } from '@novu/design-system';
+import { Button, errorMessage, IconOutlineLockPerson, PasswordInput, successMessage } from '@novu/design-system';
 import { checkIsResponseError, IResponseError, passwordConstraints } from '@novu/shared';
 import { api, useAuthContext } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
@@ -72,10 +71,7 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
 
       setToken(response.token);
 
-      showNotification({
-        message: 'Password was set successfully',
-        color: 'green',
-      });
+      successMessage('Password was set successfully');
       onSuccess?.();
     } catch (err: unknown) {
       let errMessage = 'Error while setting password';
@@ -87,10 +83,7 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
         errMessage = `${errMessage}: ${err.message}`;
       }
 
-      showNotification({
-        message: errMessage,
-        color: 'red',
-      });
+      errorMessage(errMessage);
     }
 
     return true;

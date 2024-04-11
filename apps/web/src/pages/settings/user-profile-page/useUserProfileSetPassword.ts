@@ -1,4 +1,4 @@
-import { showNotification } from '@mantine/notifications';
+import { errorMessage } from '@novu/design-system';
 import { IResponseError, PasswordResetFlowEnum } from '@novu/shared';
 import { api, useAuthContext } from '@novu/shared-web';
 import { useMutation } from '@tanstack/react-query';
@@ -25,10 +25,7 @@ export const useUserProfileSetPassword = () => {
     }
   >((data) => api.post(`/v1/auth/reset/request`, data, { src: PasswordResetFlowEnum.USER_PROFILE }), {
     onError: (err) => {
-      showNotification({
-        color: 'red',
-        message: `There was an error sending your email. Please refresh and try again. Error: ${err.message}`,
-      });
+      errorMessage(`There was an error sending your email. Please refresh and try again. Error: ${err.message}`);
     },
   });
 
@@ -42,7 +39,7 @@ export const useUserProfileSetPassword = () => {
 
     // this should never happen, but helps with type checking, and better to be defensive
     if (!currentUser?.email) {
-      showNotification({ color: 'red', message: 'You must have a valid email tied to your logged-in user.' });
+      errorMessage('You must have a valid email tied to your logged-in user.');
 
       return;
     }
