@@ -75,7 +75,7 @@ export function OnboardingExperimentModal() {
             <StyledButton
               variant={'outline'}
               onClick={async () => {
-                segment.track('Buton Clicked - [Onboarding]', {
+                segment.track('Button Clicked - [Onboarding]', {
                   action: 'Modal - Get started',
                   experiment_id: '2024-w15-onb',
                   _organization: currentOrganization?._id,
