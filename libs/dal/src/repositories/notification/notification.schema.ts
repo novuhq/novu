@@ -140,6 +140,18 @@ notificationSchema.index({
  *           _environmentId: this.convertStringToObjectId(environmentId),
  *           createdAt: {$gte: monthBefore}
  *           weekly: { $sum: { $cond: [{ $gte: ['$createdAt', weekBefore] }, 1, 0] } },
+ *
+ *
+ * Path: ./get-platform-notification-usage.usecase.ts
+ *    Context: execute()
+ *        Query: organizationRepository.aggregate(
+ *                $lookup:
+ *        {
+ *          from: 'notifications',
+ *          localField: 'environments._id',
+ *          foreignField: '_environmentId',
+ *          as: 'notifications',
+ *        }
  */
 notificationSchema.index({
   _environmentId: 1,
