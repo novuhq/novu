@@ -1,7 +1,6 @@
-import { css } from '@emotion/react';
 import styled from '@emotion/styled';
 import { createStyles, CSSObject, Drawer, DrawerStylesNames, Loader, MantineTheme, Stack, Styles } from '@mantine/core';
-import { ReactNode } from 'react';
+import React, { ReactNode, useCallback } from 'react';
 import { useKeyDown } from '@novu/shared-web';
 
 import { ActionButton } from '../button/ActionButton';
@@ -9,6 +8,7 @@ import { When } from '../when';
 import { colors, shadows } from '../config';
 import { ArrowLeft } from '../icons';
 import { Close } from './Close';
+import { css, cx } from '@emotion/css';
 
 const HeaderHolder = styled.div`
   display: flex;
@@ -67,13 +67,12 @@ const useDrawerStyles = createStyles((theme: MantineTheme) => {
   };
 });
 
-const Form = styled.form<{ isParentScrollable: boolean }>`
+const sidebarDrawerContentClassName = css`
   height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  ${(props) => props.isParentScrollable && scrollable};
 `;
 
 export const Sidebar = ({
@@ -110,6 +109,61 @@ export const Sidebar = ({
 
   useKeyDown('Escape', onCloseCallback);
 
+  /**
+   * This is a temporary solution to a overloaded pattern. The Sidebar component should
+   * not have an embedded form as it removes the caller from properly controlling their own form.
+   * We will refactor the Sidebar later on as part of the design system work.
+   *
+   * https://linear.app/novu/issue/NV-3632/de-couple-the-sidebar-from-its-internal-form
+   */
+  const wrappedContent = (
+    <div data-test-id={dataTestId} className={cx(sidebarDrawerContentClassName, { [scrollable]: isParentScrollable })}>
+      <HeaderHolder className="sidebar-header-holder">
+        {isExpanded && onBack && (
+          <ActionButton
+            onClick={onBack}
+            Icon={ArrowLeft}
+            data-test-id="sidebar-back"
+            sx={{
+              '> svg': {
+                width: 16,
+                height: 16,
+              },
+            }}
+          />
+        )}
+        {customHeader}
+        <ActionButton
+          onClick={onCloseCallback}
+          Icon={Close}
+          sx={{
+            marginLeft: 'auto',
+            '> svg': {
+              width: 14,
+              height: 14,
+            },
+          }}
+          data-test-id="sidebar-close"
+        />
+      </HeaderHolder>
+      <BodyHolder isParentScrollable={isParentScrollable} className="sidebar-body-holder">
+        <When truthy={isLoading}>
+          <Stack
+            align="center"
+            justify="center"
+            sx={{
+              height: '100%',
+            }}
+          >
+            <Loader color={colors.error} size={32} />
+          </Stack>
+        </When>
+        <When truthy={!isLoading}>{children}</When>
+      </BodyHolder>
+      {customFooter && <FooterHolder className="sidebar-footer-holder">{customFooter}</FooterHolder>}
+    </div>
+  );
+
   return (
     <Drawer
       opened={isOpened}
@@ -134,60 +188,21 @@ export const Sidebar = ({
       trapFocus={false}
       data-expanded={isExpanded}
     >
-      <Form
-        name="form-name"
-        noValidate
-        onSubmit={onSubmit}
-        data-test-id={dataTestId}
-        isParentScrollable={isParentScrollable}
-        onClick={(e) => {
-          e.stopPropagation();
-        }}
-      >
-        <HeaderHolder className="sidebar-header-holder">
-          {isExpanded && onBack && (
-            <ActionButton
-              onClick={onBack}
-              Icon={ArrowLeft}
-              data-test-id="sidebar-back"
-              sx={{
-                '> svg': {
-                  width: 16,
-                  height: 16,
-                },
-              }}
-            />
-          )}
-          {customHeader}
-          <ActionButton
-            onClick={onCloseCallback}
-            Icon={Close}
-            sx={{
-              marginLeft: 'auto',
-              '> svg': {
-                width: 14,
-                height: 14,
-              },
-            }}
-            data-test-id="sidebar-close"
-          />
-        </HeaderHolder>
-        <BodyHolder isParentScrollable={isParentScrollable} className="sidebar-body-holder">
-          <When truthy={isLoading}>
-            <Stack
-              align="center"
-              justify="center"
-              sx={{
-                height: '100%',
-              }}
-            >
-              <Loader color={colors.error} size={32} />
-            </Stack>
-          </When>
-          <When truthy={!isLoading}>{children}</When>
-        </BodyHolder>
-        {customFooter && <FooterHolder className="sidebar-footer-holder">{customFooter}</FooterHolder>}
-      </Form>
+      {onSubmit ? (
+        <form
+          name="form-name"
+          noValidate
+          onSubmit={onSubmit}
+          data-test-id={dataTestId}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
+          {wrappedContent}
+        </form>
+      ) : (
+        wrappedContent
+      )}
     </Drawer>
   );
 };

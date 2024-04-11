@@ -1,6 +1,4 @@
 import { FC } from 'react';
-import { Button, IconLockPerson } from '@novu/design-system';
-
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { css } from '../../../styled-system/css';
 import { styled } from '../../../styled-system/jsx';
@@ -8,6 +6,8 @@ import { title } from '../../../styled-system/recipes';
 import { InputPlain } from '../components';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { UserProfileForm } from './UserProfileForm';
+import { UserProfileSidebarContextProvider } from './UserProfileSidebarContext';
+import { UserProfileSidebarControl } from './UserProfileSidebarControl';
 
 const Title = styled('h2', title);
 
@@ -15,6 +15,8 @@ const inputStyles = css({ minWidth: '18.75rem' });
 
 export const UserProfilePage: FC = () => {
   const { currentUser } = useAuthContext();
+
+  const email = currentUser?.email ?? '';
 
   return (
     <SettingsPageContainer title="User profile">
@@ -27,7 +29,7 @@ export const UserProfilePage: FC = () => {
           className={inputStyles}
           type="text"
           label="Email address"
-          value={currentUser?.email ?? ''}
+          value={email}
           autoCorrect="none"
           aria-autocomplete="none"
           autoComplete="none"
@@ -44,10 +46,9 @@ export const UserProfilePage: FC = () => {
             autoComplete="none"
             readOnly
           />
-          <Button variant="outline" className={css({ color: '' })}>
-            <IconLockPerson className={css({ color: 'button.text.outline !important' })} />
-            {currentUser?.hasPassword ? 'Update password' : 'Set password'}
-          </Button>
+          <UserProfileSidebarContextProvider>
+            <UserProfileSidebarControl />
+          </UserProfileSidebarContextProvider>
         </div>
       </section>
     </SettingsPageContainer>
