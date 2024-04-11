@@ -5,7 +5,7 @@ import type { IUpdateUserProfile } from '@novu/shared';
 import { IsImageUrl } from '../../shared/validators/image.validator';
 
 const protocols = process.env.NODE_ENV === 'production' ? ['https'] : ['http', 'https'];
-const hostWhitelist = process.env.NODE_ENV === 'production' ? undefined : ['localhost'];
+const hostWhitelist = process.env.NODE_ENV === 'production' ? undefined : ['localhost', 'web.novu.co'];
 
 export class UpdateProfileRequestDto implements IUpdateUserProfile {
   @ApiProperty()
