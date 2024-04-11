@@ -66,7 +66,7 @@ export function QuestionnaireForm() {
     const createDto: ICreateOrganizationDto = { ...rest, name: organizationName };
     const organization = await createOrganizationMutation(createDto);
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
-
+    localStorage.setItem('onboarding_modal', 'true');
     setToken(organizationResponseToken);
   }
 

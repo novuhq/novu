@@ -9,6 +9,7 @@ import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 import { NavButton } from '../components/NavButton';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
+import { OnboardingExperimentModal } from '../components/OnboadingExperimentModal';
 
 const ChannelsConfigurationHolder = styled.div`
   display: flex;
@@ -29,7 +30,7 @@ export function GetStarted() {
     open: boolean;
     channelType?: ChannelTypeEnum;
   }>({ open: false });
-
+  const isOnboardingModalEnabled = localStorage.getItem('onboarding_modal') === 'true';
   const onIntegrationModalClose = () => setClickedChannel({ open: false });
 
   useEffect(() => {
@@ -60,6 +61,7 @@ export function GetStarted() {
         />
         <ChannelsConfiguration setClickedChannel={setClickedChannel} />
       </ChannelsConfigurationHolder>
+      {isOnboardingModalEnabled && <OnboardingExperimentModal />}
     </GetStartedLayout>
   );
 }
