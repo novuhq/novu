@@ -21,14 +21,12 @@ export class HealthController {
     return this.healthCheckService.check([
       async () => this.dalHealthIndicator.isHealthy(),
       ...this.healthIndicators.map((indicator) => async () => indicator.isHealthy()),
-      async () => {
-        return {
-          apiVersion: {
-            version,
-            status: 'up',
-          },
-        };
-      },
+      async () => ({
+        apiVersion: {
+          version,
+          status: 'up',
+        },
+      }),
     ]);
   }
 }

@@ -1,6 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { HealthCheck, HealthCheckResult, HealthCheckService, HealthIndicatorFunction } from '@nestjs/terminus';
+import {
+  HealthCheck,
+  HealthCheckResult,
+  HealthCheckService,
+  HealthIndicatorFunction,
+  HealthCheckError,
+} from '@nestjs/terminus';
 import {
   CacheServiceHealthIndicator,
   DalServiceHealthIndicator,
@@ -25,14 +31,12 @@ export class HealthController {
     const checks: HealthIndicatorFunction[] = [
       async () => this.dalHealthIndicator.isHealthy(),
       async () => this.workflowQueueHealthIndicator.isHealthy(),
-      async () => {
-        return {
-          apiVersion: {
-            version,
-            status: 'up',
-          },
-        };
-      },
+      async () => ({
+        apiVersion: {
+          version,
+          status: 'up',
+        },
+      }),
     ];
 
     if (process.env.ELASTICACHE_CLUSTER_SERVICE_HOST) {
