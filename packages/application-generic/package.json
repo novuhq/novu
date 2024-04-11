@@ -118,7 +118,7 @@
     "@novu/testing": "^0.24.1",
     "@novu/twilio": "^0.24.1",
     "@novu/zulip": "^0.24.1",
-    "@novu/eazy-sms": "0.24.1",
+    "@novu/eazy-sms": "^0.24.1",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.40.2",
     "@opentelemetry/context-async-hooks": "^1.19.0",

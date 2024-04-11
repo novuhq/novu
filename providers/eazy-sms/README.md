@@ -11,3 +11,4 @@ const provider = new EazySmsProvider({
     apiKey: process.env.API_KEY,
     channelId: process.env.CHANNEL_ID,
 });
+```
