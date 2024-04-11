@@ -18,7 +18,3 @@ export function getSignedUrl({ extension, type }: IGetSignedUrlParams): Promise<
 
   return api.get(`/v1/storage/upload-url?extension=${extension}${typeQuery}`);
 }
-
-export function getSignedUrlForProfileImage(extension: MimeTypesEnum) {
-  return api.get(`/v1/storage/upload-url/profile?extension=${extension}`);
-}
