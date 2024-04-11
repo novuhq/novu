@@ -23,14 +23,12 @@ export class HealthController {
       ...indicatorHealthCheckFunctions,
       async () => this.dalHealthIndicator.isHealthy(),
       async () => this.wsServerHealthIndicator.isHealthy(),
-      async () => {
-        return {
-          apiVersion: {
-            version,
-            status: 'up',
-          },
-        };
-      },
+      async () => ({
+        apiVersion: {
+          version,
+          status: 'up',
+        },
+      }),
     ]);
 
     return result;
