@@ -9,7 +9,7 @@ import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 import { NavButton } from '../components/NavButton';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
-import { OnboardingExperimentModal } from '../components/OnboadingExperimentModal';
+import { OnboardingExperimentModal } from '../components/OnboardingExperimentModal';
 import { ENV, IS_DOCKER_HOSTED, useAuthContext } from '@novu/shared-web';
 
 const ChannelsConfigurationHolder = styled.div`

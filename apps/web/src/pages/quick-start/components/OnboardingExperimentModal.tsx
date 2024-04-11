@@ -55,7 +55,7 @@ export function OnboardingExperimentModal() {
               pulse={true}
               variant={'gradient'}
               onClick={async () => {
-                segment.track('Buton Clicked - [Onboarding]', {
+                segment.track('Button Clicked - [Onboarding]', {
                   action: 'Modal - Send test notification',
                   experiment_id: '2024-w15-onb',
                   _organization: currentOrganization?._id,
