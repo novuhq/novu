@@ -10,6 +10,7 @@ import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 import { NavButton } from '../components/NavButton';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
 import { OnboardingExperimentModal } from '../components/OnboadingExperimentModal';
+import { ENV, IS_DOCKER_HOSTED, useAuthContext } from '@novu/shared-web';
 
 const ChannelsConfigurationHolder = styled.div`
   display: flex;
@@ -26,16 +27,27 @@ const ChannelsConfigurationHolder = styled.div`
 
 export function GetStarted() {
   const segment = useSegment();
+  const { currentOrganization } = useAuthContext();
   const [clickedChannel, setClickedChannel] = useState<{
     open: boolean;
     channelType?: ChannelTypeEnum;
   }>({ open: false });
-  const isOnboardingModalEnabled = localStorage.getItem('onboarding_modal') === 'true';
+
+  const isNovuProd = !IS_DOCKER_HOSTED && ENV === 'production';
+  // open modal only for prod users
+  const isOnboardingModalEnabled = isNovuProd && localStorage.getItem('onboarding_modal') === 'true';
+
   const onIntegrationModalClose = () => setClickedChannel({ open: false });
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_VISIT);
-  }, [segment]);
+    if (isOnboardingModalEnabled) {
+      segment.track('Welcome modal open - [Onboarding]', {
+        experiment_id: '2024-w15-onb',
+        _organization: currentOrganization?._id,
+      });
+    }
+  }, [currentOrganization?._id, isOnboardingModalEnabled, segment]);
 
   function handleOnClick() {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_NAVIGATION_NEXT_PAGE_CLICK);
