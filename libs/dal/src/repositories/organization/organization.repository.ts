@@ -1,4 +1,4 @@
-import { IPartnerConfiguration, OrganizationEntity, OrganizationDBModel } from './organization.entity';
+import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
 import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
 import { MemberRepository } from '../member';
@@ -12,25 +12,24 @@ export class OrganizationRepository extends BaseRepository<OrganizationDBModel, 
   }
 
   async findById(id: string, select?: string): Promise<OrganizationEntity | null> {
-    const data = await this.MongooseModel.findById(id, select);
-    if (!data) return null;
-
-    return this.mapEntity(data.toObject());
-  }
-
-  async findOrganizationById(organizationId: string): Promise<OrganizationEntity | null> {
-    const data = await this.MongooseModel.findById(organizationId).read('secondaryPreferred');
+    const data = await this.MongooseModel.findById(id, select).read('secondaryPreferred');
     if (!data) return null;
 
     return this.mapEntity(data.toObject());
   }
 
   async findUserActiveOrganizations(userId: string): Promise<OrganizationEntity[]> {
-    const members = await this.memberRepository.findUserActiveMembers(userId);
+    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
 
     return await this.find({
-      _id: members.map((member) => member._organizationId),
+      _id: { $in: organizationIds },
     });
+  }
+
+  private async getUsersMembersOrganizationIds(userId: string): Promise<string[]> {
+    const members = await this.memberRepository.findUserActiveMembers(userId);
+
+    return members.map((member) => member._organizationId);
   }
 
   async updateBrandingDetails(organizationId: string, branding: { color: string; logo: string }) {
@@ -73,11 +72,11 @@ export class OrganizationRepository extends BaseRepository<OrganizationDBModel, 
   }
 
   async findPartnerConfigurationDetails(organizationId: string, userId: string, configurationId: string) {
-    const members = await this.memberRepository.findUserActiveMembers(userId);
+    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
 
     return await this.find(
       {
-        _id: members.map((member) => member._organizationId),
+        _id: { $in: organizationIds },
         'partnerConfigurations.configurationId': configurationId,
       },
       { 'partnerConfigurations.$': 1 }
@@ -85,11 +84,11 @@ export class OrganizationRepository extends BaseRepository<OrganizationDBModel, 
   }
 
   async updatePartnerConfiguration(organizationId: string, userId: string, configuration: IPartnerConfiguration) {
-    const members = await this.memberRepository.findUserActiveMembers(userId);
+    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
 
     return this.update(
       {
-        _id: members.map((member) => member._organizationId),
+        _id: { $in: organizationIds },
       },
       {
         $push: {
@@ -100,11 +99,10 @@ export class OrganizationRepository extends BaseRepository<OrganizationDBModel, 
   }
 
   async bulkUpdatePartnerConfiguration(userId: string, data: Record<string, string[]>, configurationId: string) {
-    const members = await this.memberRepository.findUserActiveMembers(userId);
-    const allOrgs = members.map((member) => member._organizationId);
+    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
     const usedOrgIds = Object.keys(data);
-    const unusedOrgIds = allOrgs.filter((org) => !usedOrgIds.includes(org));
-    const bulkWriteOps = allOrgs.map((orgId) => {
+    const unusedOrgIds = organizationIds.filter((org) => !usedOrgIds.includes(org));
+    const bulkWriteOps = organizationIds.map((orgId) => {
       return {
         updateOne: {
           filter: { _id: orgId, 'partnerConfigurations.configurationId': configurationId },
