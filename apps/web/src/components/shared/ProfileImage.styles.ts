@@ -1,18 +1,25 @@
 import { css } from '../../styled-system/css';
 
 export const previewContainerStyles = css({
-  bgColor: 'surface.popover',
+  bgColor: {
+    base: 'surface.popover',
+    // TODO: Remove legacy colors, once the design system is updated
+    _light: 'legacy.BGLight',
+  },
   borderRadius: '0.75rem',
   position: 'relative',
   overflow: 'hidden',
   minWidth: '4.5rem',
   width: '4.5rem',
   height: '4.5rem',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 
   '& > img': {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
+    width: '3rem',
+    height: '3rem',
+    objectFit: 'contain',
   },
 
   '& > svg': {

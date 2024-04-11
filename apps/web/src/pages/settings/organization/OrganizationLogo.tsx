@@ -1,11 +1,7 @@
-import { errorMessage, successMessage } from '@novu/design-system';
-import { IResponseError, MimeTypesEnum, UploadTypesEnum } from '@novu/shared';
-import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+import { errorMessage } from '@novu/design-system';
+import { MimeTypesEnum } from '@novu/shared';
 import React, { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
-import { useUpdateOrganizationBranding } from '../../../api/hooks';
-import { getSignedUrl, IGetSignedUrlParams } from '../../../api/storage';
 import { ProfileImage } from '../../../components/shared';
 
 type FormValues = {
@@ -18,12 +14,6 @@ const MIME_TYPES = {
 };
 
 export function OrganizationLogo({ logoUrl }: { logoUrl?: string }) {
-  const { updateOrganizationBranding } = useUpdateOrganizationBranding({
-    onSuccess: () => {
-      successMessage('Logo updated');
-    },
-  });
-
   const { control, reset } = useForm<FormValues>({
     defaultValues: {
       logoUrl,
@@ -37,12 +27,6 @@ export function OrganizationLogo({ logoUrl }: { logoUrl?: string }) {
   useEffect(() => {
     reset({ logoUrl });
   }, [logoUrl, reset]);
-
-  const { mutateAsync: getSignedUrlAction } = useMutation<
-    { signedUrl: string; path: string; additionalHeaders: object },
-    IResponseError,
-    IGetSignedUrlParams
-  >(getSignedUrl);
 
   async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ? event.target.files[0] : null;
@@ -58,16 +42,7 @@ export function OrganizationLogo({ logoUrl }: { logoUrl?: string }) {
 
       return;
     }
-
-    const { signedUrl, path, additionalHeaders } = await getSignedUrlAction({
-      extension: MIME_TYPES[fileExtension],
-      type: UploadTypesEnum.BRANDING,
-    });
-
-    await uploadImageToBucket(file, signedUrl, additionalHeaders);
-
-    reset({ logoUrl: path });
-    await updateOrganizationBranding({ logoUrl: path });
+    //TODO: Add organization logo api implementation once it is available
   }
 
   return (
@@ -75,36 +50,16 @@ export function OrganizationLogo({ logoUrl }: { logoUrl?: string }) {
       <Controller
         name="logoUrl"
         control={control}
-        render={({ field: { name, value } }) => <ProfileImage name={name} value={value} onChange={handleUpload} />}
+        render={({ field: { name, value } }) => (
+          <ProfileImage
+            name={name}
+            value={value}
+            onChange={handleUpload}
+            // TODO: update isDisabled prop once the organization logo api is available
+            isDisabled
+          />
+        )}
       />
     </form>
   );
 }
-
-const uploadImageToBucket = async (file: File, signedUrl: string, additionalHeaders?: object) => {
-  try {
-    const fileExtension = file.type;
-    const contentTypeHeaders = {
-      'Content-Type': fileExtension,
-    };
-
-    const mergedHeaders = Object.assign({}, contentTypeHeaders, additionalHeaders || {});
-
-    await axios.put(signedUrl, file, {
-      headers: mergedHeaders,
-      transformRequest: [
-        (data, headers) => {
-          if (headers) {
-            delete headers.Authorization;
-          }
-
-          return data;
-        },
-      ],
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      errorMessage(error.message || 'Failed to upload image');
-    }
-  }
-};
