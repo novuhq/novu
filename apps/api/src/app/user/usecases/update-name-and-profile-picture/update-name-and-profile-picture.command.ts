@@ -4,7 +4,7 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 export class UpdateNameAndProfilePictureCommand extends EnvironmentWithUserCommand {
   @IsUrl({ require_tld: false })
   @IsOptional()
-  imageUrl: string;
+  profilePicture?: string;
 
   @IsDefined()
   @IsString()

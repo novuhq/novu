@@ -11,3 +11,5 @@ export * from './usePreviewChat';
 export * from './usePreviewInApp';
 export * from './useRenameOrganization';
 export * from './useUpdateOrganizationBranding';
+export * from './useUpdateUserProfile';
+export * from './useGetSignedUrl';

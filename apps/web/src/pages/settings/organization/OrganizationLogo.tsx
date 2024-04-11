@@ -1,11 +1,11 @@
 import { errorMessage, successMessage } from '@novu/design-system';
-import { IResponseError, MimeTypesEnum } from '@novu/shared';
+import { IResponseError, MimeTypesEnum, UploadTypesEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import React, { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useUpdateOrganizationBranding } from '../../../api/hooks';
-import { getSignedUrl } from '../../../api/storage';
+import { getSignedUrl, IGetSignedUrlParams } from '../../../api/storage';
 import { ProfileImage } from '../../../components/shared';
 
 type FormValues = {
@@ -41,7 +41,7 @@ export function OrganizationLogo({ logoUrl }: { logoUrl?: string }) {
   const { mutateAsync: getSignedUrlAction } = useMutation<
     { signedUrl: string; path: string; additionalHeaders: object },
     IResponseError,
-    string
+    IGetSignedUrlParams
   >(getSignedUrl);
 
   async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -59,7 +59,10 @@ export function OrganizationLogo({ logoUrl }: { logoUrl?: string }) {
       return;
     }
 
-    const { signedUrl, path, additionalHeaders } = await getSignedUrlAction(MIME_TYPES[fileExtension]);
+    const { signedUrl, path, additionalHeaders } = await getSignedUrlAction({
+      extension: MIME_TYPES[fileExtension],
+      type: UploadTypesEnum.BRANDING,
+    });
 
     await uploadImageToBucket(file, signedUrl, additionalHeaders);
 
