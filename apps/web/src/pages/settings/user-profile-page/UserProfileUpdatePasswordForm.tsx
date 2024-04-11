@@ -1,6 +1,6 @@
 import { Button, errorMessage, IconOutlineLockPerson, PasswordInput, successMessage } from '@novu/design-system';
 import { checkIsResponseError, IResponseError } from '@novu/shared';
-import { api, useAuthContext } from '@novu/shared-web';
+import { api } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -9,22 +9,22 @@ import { Stack } from '../../../styled-system/jsx';
 import { PasswordRequirementPopover } from '../../auth/components/PasswordRequirementPopover';
 import { SHARED_PASSWORD_INPUT_REGISTER_OPTIONS } from './UserProfilePasswordSidebar.shared';
 
-type UserProfilePasswordFormProps = {
-  token: string;
+type UserProfileUpdatePasswordFormProps = {
   onSuccess?: () => void;
 };
 
-export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = ({ token, onSuccess }) => {
-  const { setToken } = useAuthContext();
+interface IPasswordUpdateData {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
 
+export const UserProfileUpdatePasswordForm: React.FC<UserProfileUpdatePasswordFormProps> = ({ onSuccess }) => {
   const { isLoading, mutateAsync, error, isError } = useMutation<
-    { token: string },
+    IPasswordUpdateData,
     IResponseError,
-    {
-      password: string;
-      token: string;
-    }
-  >((data) => api.post(`/v1/auth/reset`, data));
+    IPasswordUpdateData
+  >((data) => api.post(`/v1/auth/update-password`, data));
 
   const {
     register,
@@ -32,31 +32,27 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
     control,
     formState: { errors, isValid },
     setError,
+    reset,
   } = useForm({
     defaultValues: {
-      password: '',
-      passwordRepeat: '',
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: '',
     },
   });
 
-  const onSubmitPasswords = async (data: { password: string; passwordRepeat: string }) => {
-    if (data.password !== data.passwordRepeat) {
-      setError('passwordRepeat', { message: 'Passwords do not match' });
+  const onSubmitPasswords = async (data: IPasswordUpdateData) => {
+    if (data.newPassword !== data.confirmPassword) {
+      setError('confirmPassword', { message: 'Passwords do not match' });
 
       return;
     }
 
-    const itemData = {
-      password: data.password,
-      token,
-    };
-
     try {
-      const response = await mutateAsync(itemData);
-
-      setToken(response.token);
+      await mutateAsync(data);
 
       successMessage('Password was set successfully');
+      reset();
       onSuccess?.();
     } catch (err: unknown) {
       let errMessage = 'Error while setting password';
@@ -79,27 +75,37 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
   return (
     <form noValidate name="reset-form" onSubmit={handleSubmit(onSubmitPasswords)}>
       <Stack direction={'column'} gap={'200'}>
-        <PasswordRequirementPopover control={control}>
+        <PasswordInput
+          error={errors.currentPassword?.message}
+          {...register('currentPassword', {
+            required: SHARED_PASSWORD_INPUT_REGISTER_OPTIONS.required,
+          })}
+          required
+          label="Current Password"
+          placeholder="Enter current password"
+          data-test-id="password-current"
+        />
+        <PasswordRequirementPopover control={control} passwordInputName="newPassword">
           <PasswordInput
-            error={errors.password?.message}
-            {...register('password', {
+            error={errors.newPassword?.message}
+            {...register('newPassword', {
               ...SHARED_PASSWORD_INPUT_REGISTER_OPTIONS,
             })}
             required
             label="Password"
             placeholder="Type your new password"
-            data-test-id="password"
+            data-test-id="password-new"
           />
         </PasswordRequirementPopover>
         <PasswordInput
-          error={errors.passwordRepeat?.message}
-          {...register('passwordRepeat', {
+          error={errors.confirmPassword?.message}
+          {...register('confirmPassword', {
             ...SHARED_PASSWORD_INPUT_REGISTER_OPTIONS,
           })}
           required
-          label="Repeat Password"
+          label="Confirm Password"
           placeholder="Type it again"
-          data-test-id="password-repeat"
+          data-test-id="password-confirm"
         />
         <Button
           icon={<IconOutlineLockPerson color="typography.text.main" />}
@@ -110,7 +116,7 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
           data-test-id="submit-btn"
           className={css({ alignSelf: 'flex-end', width: 'fit-content !important' })}
         >
-          Set Password
+          Update Password
         </Button>
       </Stack>
       {isError && (

@@ -6,6 +6,7 @@ import { UserProfilePasswordEmailVerificationSection } from './UserProfilePasswo
 import { UserProfilePasswordForm } from './UserProfilePasswordForm';
 import { IUserProfilePasswordSidebarProps } from './UserProfilePasswordSidebar.shared';
 import { UserProfileSidebarContext } from './UserProfileSidebarContext';
+import { UserProfileUpdatePasswordForm } from './UserProfileUpdatePasswordForm';
 import { useUserProfileSearchParams } from './useUserProfileSearchParams';
 
 // TODO: replace with design-system components in future iteration
@@ -30,8 +31,7 @@ export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarPro
   const sidebarContent = useMemo(() => {
     switch (currentFlow.rootFlow) {
       case 'UPDATE_PASSWORD':
-        // FIXME: Replace in update password feature
-        return <div>Update password content here</div>;
+        return <UserProfileUpdatePasswordForm />;
       case 'SET_PASSWORD':
       default:
         switch (currentFlow.subFlow) {
