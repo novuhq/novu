@@ -2367,12 +2367,6 @@ importers:
       '@tanstack/react-query':
         specifier: ^4.20.4
         version: 4.29.1(react-dom@17.0.2)(react@17.0.2)
-      eslint:
-        specifier: ^8.33.0
-        version: 8.51.0
-      eslint-plugin-react-hooks:
-        specifier: ^4.4.0
-        version: 4.6.0(eslint@8.51.0)
       react-router-dom:
         specifier: 6.2.2
         version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
@@ -2389,6 +2383,12 @@ importers:
       '@types/react-dom':
         specifier: ^17.0.0
         version: 17.0.20
+      eslint:
+        specifier: ^8.33.0
+        version: 8.51.0
+      eslint-plugin-react-hooks:
+        specifier: ^4.4.0
+        version: 4.6.0(eslint@8.51.0)
       react:
         specifier: ^17.0.1
         version: 17.0.2
