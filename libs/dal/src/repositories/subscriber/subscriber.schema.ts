@@ -173,7 +173,7 @@ subscriberSchema.index({
  * subscriberId_2022:environmentId_123:_id_1234
  * We expect an exception to be thrown when attempting to create two subscribers with the same subscriberId (e.g., 2022) within the same environment.
  *
- * We can not add `deleted` field to the index the client wont be able to delete twice subsbriber with the same subscriberId.
+ * We can not add `deleted` field to the index the client wont be able to delete twice subscriber with the same subscriberId.
  */
 index(
   {
