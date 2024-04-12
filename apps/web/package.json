@@ -24,6 +24,7 @@
     "playwright:test-ui": "playwright test --ui",
     "playwright:codegen": "playwright codegen",
     "playwright:show-report": "npx playwright show-report",
+    "playwright:merge-report": "playwright merge-reports --reporter html",
     "start:api": "cd ../../ && pnpm start:api:test",
     "storybook": "storybook dev -p 6006 -s public",
     "build-storybook": "storybook build -s public",

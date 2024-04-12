@@ -26,6 +26,7 @@ import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
+import { OnboardingExperimentV2ModalKey } from '../../../constants/experimentsConstants';
 
 export function QuestionnaireForm() {
   const [loading, setLoading] = useState<boolean>();
@@ -66,7 +67,7 @@ export function QuestionnaireForm() {
     const createDto: ICreateOrganizationDto = { ...rest, name: organizationName };
     const organization = await createOrganizationMutation(createDto);
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
-
+    localStorage.setItem(OnboardingExperimentV2ModalKey, 'true');
     setToken(organizationResponseToken);
   }
 
