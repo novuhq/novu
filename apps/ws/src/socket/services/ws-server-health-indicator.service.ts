@@ -23,8 +23,4 @@ export class WSServerHealthIndicator extends HealthIndicator implements IHealthI
 
     throw new HealthCheckError('WS server health check failed', result);
   }
-
-  isActive(): Promise<HealthIndicatorResult> {
-    return this.isHealthy();
-  }
 }
