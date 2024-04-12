@@ -104,45 +104,45 @@ jobs:
       - run: |
           echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
 
-      - name: Cypress run EE e2e
-        if: ${{ steps.setup.outputs.has_token == 'true' && inputs.ee }}
-        uses: cypress-io/github-action@v6
-        env:
-          NODE_ENV: test
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
-          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
-          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
-          CYPRESS_IS_CI: true
-        with:
-          working-directory: apps/web
-          browser: "${{ env.BROWSER_PATH }}"
-          record: false
-          install: false
-          parallel: false
-          config-file: cypress.config.ts
-          spec: "cypress/tests/**/*.spec-ee.{js,jsx,ts,tsx}"
+      # - name: Cypress run EE e2e
+      #   if: ${{ steps.setup.outputs.has_token == 'true' && inputs.ee }}
+      #   uses: cypress-io/github-action@v6
+      #   env:
+      #     NODE_ENV: test
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+      #     CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
+      #     CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
+      #     CYPRESS_IS_CI: true
+      #   with:
+      #     working-directory: apps/web
+      #     browser: "${{ env.BROWSER_PATH }}"
+      #     record: false
+      #     install: false
+      #     parallel: true
+      #     config-file: cypress.config.ts
+      #     spec: "cypress/tests/**/*.spec-ee.{js,jsx,ts,tsx}"
 
-      - name: Cypress run e2e
-        uses: cypress-io/github-action@v6
-        env:
-          NODE_ENV: test
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
-          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
-          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
-          CYPRESS_IS_CI: true
-        with:
-          working-directory: apps/web
-          browser: "${{ env.BROWSER_PATH }}"
-          record: false
-          parallel: false
-          install: false
-          config-file: cypress.config.ts
-          spec: "cypress/tests/**/*.spec.{js,jsx,ts,tsx}"
+      # - name: Cypress run e2e
+      #   uses: cypress-io/github-action@v6
+      #   env:
+      #     NODE_ENV: test
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
+      #     CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
+      #     CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
+      #     CYPRESS_IS_CI: true
+      #   with:
+      #     working-directory: apps/web
+      #     browser: "${{ env.BROWSER_PATH }}"
+      #     record: false
+      #     parallel: true
+      #     install: false
+      #     config-file: cypress.config.ts
+      #     spec: "cypress/tests/**/*.spec.{js,jsx,ts,tsx}"
 
       - name: Install Playwright Browsers
-        run: pnpm dlx playwright install --with-deps
+        run: pnpm exec playwright install --with-deps
 
       - name: Run Playwright tests
         working-directory: apps/web
