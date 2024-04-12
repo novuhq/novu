@@ -256,6 +256,24 @@ describe('ContentService', function () {
       expect(variables[0].name).to.include('customVariables');
     });
 
+    it('should extract i18n content variables', function () {
+      const contentService = new ContentService();
+      const { variables } = contentService.extractMessageVariables([
+        {
+          template: {
+            type: StepTypeEnum.IN_APP,
+            content: '{{i18n "group.key" var=customVar.subVar var2=secVar}}',
+          },
+        },
+      ]);
+
+      expect(variables.length).to.equal(2);
+
+      const variablesNames = variables.map((variable) => variable.name);
+      expect(variablesNames).to.include('customVar.subVar');
+      expect(variablesNames).to.include('secVar');
+    });
+
     it('should extract action steps variables', function () {
       const contentService = new ContentService();
       const { variables } = contentService.extractMessageVariables([

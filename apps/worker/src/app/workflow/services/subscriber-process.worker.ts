@@ -46,6 +46,7 @@ export class SubscriberProcessWorker extends SubscriberProcessWorkerService {
                 .then(resolve)
                 .catch((e) => {
                   Logger.error(e, 'unexpected error', 'SubscriberProcessWorkerService - getWorkerProcessor');
+                  nr.noticeError(e);
                   reject(e);
                 })
 

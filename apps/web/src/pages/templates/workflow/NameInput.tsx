@@ -3,13 +3,15 @@ import { colors } from '@novu/notification-center';
 import { Controller, useFormContext } from 'react-hook-form';
 import { useEnvController } from '../../../hooks';
 import { IForm } from '../components/formTypes';
+import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 
 export const NameInput = () => {
   const {
     control,
     formState: { errors, isSubmitted },
   } = useFormContext<IForm>();
-  const { readonly } = useEnvController();
+  const { template } = useTemplateEditorForm();
+  const { readonly } = useEnvController({}, template?.chimera);
   const showErrors = isSubmitted && errors?.steps;
   const { colorScheme } = useMantineColorScheme();
 

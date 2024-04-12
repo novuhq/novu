@@ -28,6 +28,11 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  IProviderOverride,
+  IProvidersOverride,
+  ExecuteOutput,
+  IChimeraChannelResponse,
+  IBlock,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -84,12 +89,14 @@ export class SendMessageChat extends SendMessageBase {
     let content = '';
 
     try {
-      content = await this.compileTemplate.execute(
-        CompileTemplateCommand.create({
-          template: step.template.content as string,
-          data: this.getCompilePayload(command.compileContext),
-        })
-      );
+      if (!command.chimeraData) {
+        content = await this.compileTemplate.execute(
+          CompileTemplateCommand.create({
+            template: step.template.content as string,
+            data: this.getCompilePayload(command.compileContext),
+          })
+        );
+      }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
@@ -162,7 +169,28 @@ export class SendMessageChat extends SendMessageBase {
       },
     });
 
-    const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+    if (!integration) {
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            reason: `Integration with integrationId: ${subscriberChannel?._integrationId} is either deleted or not active`,
+          }),
+        })
+      );
+
+      return;
+    }
+
+    const chimeraOverride = this.getChimeraOverride(command.chimeraData?.providers, integration);
+
+    const chatWebhookUrl =
+      chimeraOverride?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
     const channelSpecification = subscriberChannel.credentials?.channel;
 
     if (!chatWebhookUrl) {
@@ -196,24 +224,6 @@ export class SendMessageChat extends SendMessageBase {
       _jobId: command.jobId,
     });
 
-    if (!integration) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            reason: `Integration with integrationId: ${subscriberChannel?._integrationId} is either deleted or not active`,
-          }),
-        })
-      );
-
-      return;
-    }
-
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
     await this.executionLogRoute.execute(
@@ -236,6 +246,23 @@ export class SendMessageChat extends SendMessageBase {
     }
 
     await this.sendErrors(chatWebhookUrl, integration, message, command);
+  }
+
+  private getChimeraOverride(
+    providersOverrides: IProvidersOverride | undefined,
+    integration: IntegrationEntity
+  ): IProviderOverride | null {
+    if (!providersOverrides) {
+      return null;
+    }
+
+    const providerExists = Object.keys(providersOverrides).includes(integration.providerId);
+
+    if (!providerExists) {
+      return null;
+    }
+
+    return providersOverrides[integration.providerId];
   }
 
   private async sendErrors(
@@ -315,10 +342,12 @@ export class SendMessageChat extends SendMessageBase {
         throw new PlatformException(`Chat handler for provider ${integration.providerId} is  not found`);
       }
 
+      const chimeraContent = this.getOverrideContent(command.chimeraData, integration);
+
       const result = await chatHandler.send({
         webhookUrl: chatWebhookUrl,
         channel: channelSpecification,
-        content,
+        ...(chimeraContent?.content ? (chimeraContent as DefinedContent) : { content }),
       });
 
       await this.executionLogRoute.execute(
@@ -358,4 +387,22 @@ export class SendMessageChat extends SendMessageBase {
       );
     }
   }
+
+  private getOverrideContent(
+    chimeraData: ExecuteOutput<IChimeraChannelResponse> | undefined | null,
+    integration: IntegrationEntity
+  ): { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined } {
+    const chimeraProviderOverride = this.getChimeraOverride(chimeraData?.providers, integration);
+
+    let chimeraContent: { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined };
+    if (chimeraProviderOverride) {
+      chimeraContent = { content: chimeraProviderOverride.text, blocks: chimeraProviderOverride.blocks };
+    } else {
+      chimeraContent = { content: chimeraData?.outputs.body };
+    }
+
+    return chimeraContent;
+  }
 }
+
+type DefinedContent = { content: string; blocks: IBlock[] | undefined } | { content: string };

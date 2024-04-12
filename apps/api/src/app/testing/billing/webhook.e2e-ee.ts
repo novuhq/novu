@@ -1,6 +1,7 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
+import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
 
 const mockSetupIntentSucceededEvent = {
   type: 'setup_intent.succeeded',
@@ -13,6 +14,7 @@ const mockSetupIntentSucceededEvent = {
       livemode: false,
       metadata: {
         apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+        billingInterval: StripeBillingIntervalEnum.MONTH,
       },
       payment_method_options: null,
       payment_method_types: [] as string[],

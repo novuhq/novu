@@ -2,18 +2,21 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as capitalize from 'lodash.capitalize';
 import styled from '@emotion/styled';
+import { useNavigate } from 'react-router-dom';
 import type { IResponseError, IOrganizationEntity } from '@novu/shared';
+import { Select, successMessage } from '@novu/design-system';
 
-import { Select } from '@novu/design-system';
 import { addOrganization, switchOrganization } from '../../../api/organization';
 import { useAuthContext } from '../../providers/AuthProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
+import { ROUTES } from '@novu/shared-web';
 
 export default function OrganizationSelect() {
   const [value, setValue] = useState<string>('');
   const [search, setSearch] = useState<string>('');
   const [loadingSwitch, setLoadingSwitch] = useState<boolean>(false);
   const { addItem, removeItems } = useSpotlightContext();
+  const navigate = useNavigate();
 
   const queryClient = useQueryClient();
   const { currentOrganization, organizations, setToken } = useAuthContext();
@@ -22,7 +25,11 @@ export default function OrganizationSelect() {
     IOrganizationEntity,
     IResponseError,
     string
-  >((name) => addOrganization(name));
+  >((name) => addOrganization(name), {
+    onSuccess: () => {
+      successMessage('Your Business trial has started');
+    },
+  });
 
   const { mutateAsync: changeOrganization } = useMutation<string, IResponseError, string>((id) =>
     switchOrganization(id)
@@ -42,10 +49,11 @@ export default function OrganizationSelect() {
       setLoadingSwitch(true);
       const token = await changeOrganization(organizationId);
       setToken(token);
-      await queryClient.refetchQueries();
+      await queryClient.clear();
+      await navigate(ROUTES.HOME);
       setLoadingSwitch(false);
     },
-    [currentOrganization, search, setToken, changeOrganization, queryClient]
+    [currentOrganization, search, setToken, changeOrganization, queryClient, navigate]
   );
 
   function addOrganizationItem(newOrganization: string): undefined {

@@ -95,20 +95,8 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  # Temporary for the migration phase
-  deploy_general_worker_eu:
-    needs: build_prod_image
-    uses: ./.github/workflows/reusable-app-service-deploy.yml
-    secrets: inherit
-    with:
-      environment: Production
-      service_name: worker
-      terraform_workspace: novu-prod-eu
-      # This is a workaround to an issue with matrix outputs
-      docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
-
   deploy_prod_workers_eu:
-    needs: deploy_general_worker_eu
+    needs: build_prod_image
     uses: ./.github/workflows/reusable-workers-service-deploy.yml
     secrets: inherit
     with:
@@ -117,25 +105,8 @@ jobs:
       # This is a workaround to an issue with matrix outputs
       docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
 
-
-  # Temporary for the migration phase
-  deploy_general_worker_us:
-    needs:
-      - deploy_prod_workers_eu
-      - build_prod_image
-    uses: ./.github/workflows/reusable-app-service-deploy.yml
-    secrets: inherit
-    with:
-      environment: Production
-      service_name: worker
-      terraform_workspace: novu-prod
-      # This is a workaround to an issue with matrix outputs
-      docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
-
   deploy_prod_workers_us:
-    needs:
-      - deploy_general_worker_us
-      - build_prod_image
+    needs: build_prod_image
     uses: ./.github/workflows/reusable-workers-service-deploy.yml
     secrets: inherit
     with:

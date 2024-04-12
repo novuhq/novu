@@ -89,6 +89,7 @@ export class SubscriberJobBound {
       'Notification event trigger - [Triggers]',
       '',
       {
+        type: template?.type || 'REGULAR',
         transactionId: command.transactionId,
         _template: template._id,
         _organization: command.organizationId,

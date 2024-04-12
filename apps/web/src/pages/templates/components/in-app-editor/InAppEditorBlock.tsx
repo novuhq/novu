@@ -132,7 +132,7 @@ function ContentContainerController() {
       data-test-id="in-app-content-form-item"
       control={control}
       render={({ field }) => {
-        return <CustomCodeEditor height="100px" onChange={field.onChange} value={field.value} />;
+        return <CustomCodeEditor height="100%" onChange={field.onChange} value={field.value} />;
       }}
     />
   );
