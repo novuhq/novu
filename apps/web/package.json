@@ -3,7 +3,7 @@
   "version": "0.24.1",
   "private": true,
   "scripts": {
-    "start": "pnpm panda --watch & cross-env PORT=4200 react-app-rewired start",
+    "start": "pnpm panda --watch & cross-env NODE_OPTIONS=--max_old_space_size=8192 PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
     "build": "pnpm panda && cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false react-app-rewired --max_old_space_size=4096 build",
     "precommit": "lint-staged",
@@ -19,6 +19,7 @@
     "cypress:install": "cypress install",
     "cypress:open": "cross-env NODE_ENV=test cypress open",
     "cypress:run:components": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component",
+    "playwright:install": "playwright install --with-deps",
     "playwright:test": "playwright test",
     "playwright:test-ui": "playwright test --ui",
     "playwright:codegen": "playwright codegen",
