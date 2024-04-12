@@ -63,6 +63,9 @@ describe('Stripe webhooks', () => {
 
     let verifyCustomerStub: sinon.SinonStub;
     let upsertSubscriptionStub: sinon.SinonStub;
+    const analyticsServiceStub = {
+      track: sinon.stub(),
+    };
 
     beforeEach(() => {
       verifyCustomerStub = sinon.stub(VerifyCustomer.prototype, 'execute').resolves({
@@ -84,7 +87,8 @@ describe('Stripe webhooks', () => {
         organization: { _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE },
       } as any);
       upsertSubscriptionStub = sinon.stub(UpsertSubscription.prototype, 'execute').resolves({
-        id: 'subscription_id',
+        licensed: { id: 'licensed_subscription_id' },
+        metered: { id: 'metered_subscription_id' },
       } as any);
       updateCustomerStub = sinon.stub(stripeStub.customers, 'update').resolves({});
     });
@@ -93,7 +97,8 @@ describe('Stripe webhooks', () => {
       const handler = new SetupIntentSucceededHandler(
         stripeStub as any,
         { execute: verifyCustomerStub } as any,
-        { execute: upsertSubscriptionStub } as any
+        { execute: upsertSubscriptionStub } as any,
+        analyticsServiceStub as any
       );
 
       return handler;
