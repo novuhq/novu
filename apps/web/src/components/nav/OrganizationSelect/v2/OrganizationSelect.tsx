@@ -1,4 +1,4 @@
-import { Select, Tooltip } from '@novu/design-system';
+import { Select, Tooltip, When } from '@novu/design-system';
 import { useState } from 'react';
 import { COMPANY_LOGO_PATH } from '../../../../constants/assets';
 import { css } from '../../../../styled-system/css';
@@ -62,7 +62,7 @@ export const OrganizationSelectRenderer: React.FC<INavOrganizationSelectRenderer
         }}
         data={data}
         icon={
-          !isLoading ? (
+          <When truthy={!isLoading}>
             <img
               // TODO: use actual organization photo
               src={COMPANY_LOGO_PATH}
@@ -73,7 +73,7 @@ export const OrganizationSelectRenderer: React.FC<INavOrganizationSelectRenderer
                 borderRadius: '8px',
               })}
             />
-          ) : null
+          </When>
         }
       />
     </Tooltip>
