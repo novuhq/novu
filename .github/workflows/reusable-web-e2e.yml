@@ -142,7 +142,7 @@ jobs:
           spec: "cypress/tests/**/*.spec.{js,jsx,ts,tsx}"
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: pnpm dlx playwright install --with-deps
 
       - name: Run Playwright tests
         working-directory: apps/web
