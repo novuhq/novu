@@ -4,6 +4,7 @@ import { IconButton, ClipboardIconButton } from '../../../components/';
 import { Flex } from '../../../styled-system/jsx';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { ConfirmRegenerationModal } from '../tabs/components/ConfirmRegenerationModal';
+import { useSettingsEnvRedirect } from '../useSettingsEnvRedirect';
 import { useApiKeysPage } from './useApiKeysPage';
 
 type ApiKeysRendererProps = ReturnType<typeof useApiKeysPage>;
@@ -99,6 +100,9 @@ const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
 };
 
 export const ApiKeysPage = () => {
+  // redirect user if an invalid env name is provided in the URL
+  useSettingsEnvRedirect();
+
   const props = useApiKeysPage();
 
   return (
