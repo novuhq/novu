@@ -1,14 +1,15 @@
-import { DalService, NotificationTemplateEntity } from '@novu/dal';
+import { DalService, IntegrationRepository, NotificationTemplateEntity } from '@novu/dal';
+import { ChannelTypeEnum, ProvidersIdEnum } from '@novu/shared';
 import { UserSession, NotificationTemplateService } from '@novu/testing';
 
-export async function getSession(
-  settings: {
-    noEnvironment?: boolean;
-    partialTemplate?: Partial<NotificationTemplateEntity>;
-    noTemplates?: boolean;
-    showOnBoardingTour?: boolean;
-  } = {}
-) {
+export interface ISessionOptions {
+  noEnvironment?: boolean;
+  partialTemplate?: Partial<NotificationTemplateEntity>;
+  noTemplates?: boolean;
+  showOnBoardingTour?: boolean;
+}
+
+export async function getSession(settings: ISessionOptions = {}) {
   const dal = new DalService();
   await dal.connect(process.env.MONGODB_URL ?? '');
 
@@ -48,4 +49,23 @@ export async function getSession(
     environment: session.environment,
     templates,
   };
+}
+
+export async function deleteProvider(query: {
+  providerId: ProvidersIdEnum;
+  channel: ChannelTypeEnum;
+  environmentId: string;
+  organizationId: string;
+}) {
+  const dal = new DalService();
+  await dal.connect(process.env.MONGODB_URL ?? '');
+
+  const repository = new IntegrationRepository();
+
+  return await repository.deleteMany({
+    channel: query.channel,
+    providerId: query.providerId,
+    _environmentId: query.environmentId,
+    _organizationId: query.organizationId,
+  });
 }

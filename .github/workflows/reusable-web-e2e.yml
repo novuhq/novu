@@ -141,11 +141,26 @@ jobs:
           config-file: cypress.config.ts
           spec: "cypress/tests/**/*.spec.{js,jsx,ts,tsx}"
 
-      - uses: actions/upload-artifact@v3
-        if: failure()
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Run Playwright tests
+        working-directory: apps/web
+        run: pnpm playwright:test
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 30
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
         with:
           name: cypress-screenshots
           path: apps/web/cypress/screenshots
+          retention-days: 30
 
   component_web:
     if: "!contains(github.event.head_commit.message, 'ci skip')"

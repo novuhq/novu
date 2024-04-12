@@ -1,4 +1,8 @@
-describe('Digest Playground Workflow Page', function () {
+/**
+ * The tests from this file were moved to the corresponding Playwright file apps/web/tests/digest-playground.spec.ts.
+ * @deprecated
+ */
+describe.skip('Digest Playground Workflow Page', function () {
   beforeEach(function () {
     cy.initializeSession({ noTemplates: true }).as('session');
   });
