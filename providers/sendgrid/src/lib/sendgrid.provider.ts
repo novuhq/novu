@@ -13,6 +13,10 @@ import {
 import { MailDataRequired, MailService } from '@sendgrid/mail';
 
 type AttachmentJSON = MailDataRequired['attachments'][0];
+type ASMConfig = {
+  groupId: number;
+  groupsToDisplay: number[];
+};
 
 export class SendgridEmailProvider implements IEmailProvider {
   id = 'sendgrid';
@@ -70,12 +74,14 @@ export class SendgridEmailProvider implements IEmailProvider {
   private createMailData(options: IEmailOptions) {
     const dynamicTemplateData = options.customData?.dynamicTemplateData;
     const templateId = options.customData?.templateId as unknown as string;
+    const asm = options.customData?.asm as ASMConfig;
     /*
      * deleted below values from customData to avoid passing them
      * in customArgs because customArgs has max limit of 10,000 bytes
      */
     delete options.customData?.dynamicTemplateData;
     delete options.customData?.templateId;
+    delete options.customData?.asm;
 
     const attachments = options.attachments?.map(
       (attachment: IAttachmentOptions) => {
@@ -128,6 +134,7 @@ export class SendgridEmailProvider implements IEmailProvider {
         },
       ],
       templateId: templateId,
+      asm: asm,
     };
 
     if (options.replyTo) {

@@ -16,6 +16,12 @@ const mockNovuMessage = {
     { mime: 'text/plain', file: Buffer.from('dGVzdA=='), name: 'test.txt' },
   ],
   id: 'message_id',
+  customData: {
+    asm: {
+      groupId: 12345,
+      groupsToDisplay: [12345],
+    },
+  },
 };
 
 test('should trigger sendgrid correctly', async () => {
@@ -71,6 +77,10 @@ test('should trigger sendgrid correctly', async () => {
       },
     ],
     templateId: undefined,
+    asm: {
+      groupId: 12345,
+      groupsToDisplay: [12345],
+    },
   });
 });
 
