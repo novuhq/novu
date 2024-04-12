@@ -12,9 +12,8 @@ import {
 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../create-change';
-import { UpdateChange } from '../update-change/update-change';
+import { UpdateChange, UpdateChangeCommand } from '../update-change';
 import { sanitizeMessageContent } from '../../services/sanitize/sanitizer.service';
-import { UpdateChangeCommand } from '../update-change/update-change.command';
 import { normalizeVariantDefault } from '../../utils/variants';
 
 @Injectable()

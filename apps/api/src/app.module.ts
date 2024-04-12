@@ -40,23 +40,19 @@ import { ProductFeatureInterceptor } from './app/shared/interceptors/product-fea
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
-  try {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-      if (require('@novu/ee-auth')?.EEAuthModule) {
-        modules.push(require('@novu/ee-auth')?.EEAuthModule);
-      }
-      if (require('@novu/ee-chimera')?.ChimeraModule) {
-        modules.push(require('@novu/ee-chimera')?.ChimeraModule);
-      }
-      if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
-        modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
-      }
-      if (require('@novu/ee-billing')?.BillingModule) {
-        modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
-      }
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    if (require('@novu/ee-auth')?.EEAuthModule) {
+      modules.push(require('@novu/ee-auth')?.EEAuthModule);
     }
-  } catch (e) {
-    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+    if (require('@novu/ee-chimera')?.ChimeraModule) {
+      modules.push(require('@novu/ee-chimera')?.ChimeraModule);
+    }
+    if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
+      modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
+    }
+    if (require('@novu/ee-billing')?.BillingModule) {
+      modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
+    }
   }
 
   return modules;

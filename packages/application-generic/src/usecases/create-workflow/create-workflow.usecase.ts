@@ -1,4 +1,10 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
@@ -42,6 +48,7 @@ export class CreateWorkflow {
     private notificationGroupRepository: NotificationGroupRepository,
     private feedRepository: FeedRepository,
     private createChange: CreateChange,
+    @Inject(forwardRef(() => AnalyticsService))
     private analyticsService: AnalyticsService,
     protected moduleRef: ModuleRef
   ) {}

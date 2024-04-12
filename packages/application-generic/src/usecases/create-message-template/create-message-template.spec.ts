@@ -15,7 +15,7 @@ import { expect } from 'chai';
 import { CreateMessageTemplate } from './create-message-template.usecase';
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { CreateChange } from '../create-change';
-import { UpdateChange } from '../update-change/update-change';
+import { UpdateChange } from '../update-change';
 
 describe('Create Message Template', function () {
   let useCase: CreateMessageTemplate;
