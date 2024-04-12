@@ -11,7 +11,7 @@ type FormValues = {
 
 const INPUT_HEIGHT = '50px';
 
-export function OrganizationName({ organizationName }: { organizationName?: string }) {
+export function OrganizationName({ name }: Partial<FormValues>) {
   const { isLoading, renameOrganization } = useRenameOrganization({
     onSuccess: () => {
       successMessage('Organization name updated');
@@ -25,7 +25,7 @@ export function OrganizationName({ organizationName }: { organizationName?: stri
     reset,
   } = useForm<FormValues>({
     defaultValues: {
-      name: organizationName,
+      name,
     },
   });
 
@@ -34,8 +34,8 @@ export function OrganizationName({ organizationName }: { organizationName?: stri
    * Useful in the scenario when the user switches to a different organization
    */
   useEffect(() => {
-    reset({ name: organizationName });
-  }, [organizationName, reset]);
+    reset({ name });
+  }, [name, reset]);
 
   const onSubmit = async (data: FormValues) => {
     renameOrganization(data);

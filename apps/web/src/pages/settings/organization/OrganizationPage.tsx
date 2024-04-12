@@ -21,7 +21,7 @@ export function OrganizationPage() {
       <Stack gap={150} direction="row" h={'4.5rem'} align="flex-end">
         {/**TODO: Once organization logo api is implemented update this to use the org logo */}
         <OrganizationLogo logoUrl={LOGO} />
-        <OrganizationName organizationName={currentOrganization?.name} />
+        <OrganizationName name={currentOrganization?.name} />
       </Stack>
     </SettingsPageContainer>
   );
