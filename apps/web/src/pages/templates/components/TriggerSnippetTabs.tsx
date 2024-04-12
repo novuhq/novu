@@ -66,8 +66,7 @@ novu.trigger('${identifier}', ${JSON.stringify(
     2
   )
     .replace(/"([^"]+)":/g, '$1:')
-    .replace(/"/g, "'")
-    .replaceAll('\n', '\n  ')});
+    .replace(/"/g, "'")});
 `;
 
   return (
@@ -85,19 +84,19 @@ export const getCurlTriggerSnippet = (
   snippet?: Record<string, unknown>
 ) => {
   const curlSnippet = `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
-     --header 'Authorization: ApiKey <REPLACE_WITH_API_KEY>' \\
-     --header 'Content-Type: application/json' \\
-     --data-raw '${JSON.stringify(
-       {
-         name: identifier,
-         to,
-         payload,
-         overrides,
-         ...snippet,
-       },
-       null,
-       2
-     ).replaceAll('\n', '\n       ')}'
+--header 'Authorization: ApiKey <REPLACE_WITH_API_KEY>' \\
+--header 'Content-Type: application/json' \\
+--data-raw '${JSON.stringify(
+    {
+      name: identifier,
+      to,
+      payload,
+      overrides,
+      ...snippet,
+    },
+    null,
+    2
+  )}'
   `;
 
   return (
