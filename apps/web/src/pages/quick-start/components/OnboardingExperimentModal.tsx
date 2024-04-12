@@ -5,6 +5,8 @@ import styled from '@emotion/styled';
 import { colors, shadows, Title, Button } from '@novu/design-system';
 import { useAuthContext, useSegment } from '@novu/shared-web';
 import { useCreateOnboardingExperimentWorkflow } from '../../../api/hooks/notification-templates/useCreateOnboardingExperimentWorkflow';
+import { OnboardingExperimentV2ModalKey } from '../../../constants/experimentsConstants';
+import { OnBoardingAnalyticsEnum } from '../consts';
 
 export function OnboardingExperimentModal() {
   const [opened, setOpened] = useState(true);
@@ -47,44 +49,44 @@ export function OnboardingExperimentModal() {
       <Grid>
         <Grid.Col xs={12} md={6} mb={20}>
           <ChannelCard>
-            <TitleRow> {'Send test notification'}</TitleRow>
-            <Description>{'Learn how to setup a workflow and send your first email notification.'}</Description>
+            <TitleRow> Send test notification</TitleRow>
+            <Description>Learn how to setup a workflow and send your first email notification.</Description>
             <StyledButton
               loading={IsCreateOnboardingExpWorkflowLoading}
               disabled={isIsCreateOnboardingExpWorkflowDisabled}
               pulse={true}
-              variant={'gradient'}
+              variant="gradient"
               onClick={async () => {
-                segment.track('Button Clicked - [Onboarding]', {
+                segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
                   action: 'Modal - Send test notification',
                   experiment_id: '2024-w15-onb',
                   _organization: currentOrganization?._id,
                 });
-                localStorage.removeItem('onboarding_modal');
+                localStorage.removeItem(OnboardingExperimentV2ModalKey);
                 createOnboardingExperimentWorkflow();
               }}
             >
-              {'Send test notification now'}
+              Send test notification now
             </StyledButton>
           </ChannelCard>
         </Grid.Col>
         <Grid.Col xs={12} md={6} mb={20}>
           <ChannelCard>
-            <TitleRow> {'Look around'}</TitleRow>
-            <Description>{'Start exploring the Novu app on your own terms'}</Description>
+            <TitleRow> Look around</TitleRow>
+            <Description>Start exploring the Novu app on your own terms</Description>
             <StyledButton
-              variant={'outline'}
+              variant="outline"
               onClick={async () => {
-                segment.track('Button Clicked - [Onboarding]', {
+                segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
                   action: 'Modal - Get started',
                   experiment_id: '2024-w15-onb',
                   _organization: currentOrganization?._id,
                 });
-                localStorage.removeItem('onboarding_modal');
+                localStorage.removeItem(OnboardingExperimentV2ModalKey);
                 setOpened(false);
               }}
             >
-              {'Get started'}
+              Get started
             </StyledButton>
           </ChannelCard>
         </Grid.Col>

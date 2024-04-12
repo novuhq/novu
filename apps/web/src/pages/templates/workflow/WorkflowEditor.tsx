@@ -293,7 +293,7 @@ const WorkflowEditor = () => {
                       }}
                       data-test-id="get-snippet-btn"
                     >
-                      {tagsIncludesOnboarding ? 'Trigger Notification' : 'Get Snippet'}
+                      Trigger Notification
                     </Button>
                     <Link data-test-id="settings-page" to="settings">
                       <Settings />
