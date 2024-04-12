@@ -100,7 +100,7 @@ export function BrandingForm() {
               <Controller
                 render={({ field }) => (
                   /**
-                   * group classname is used to target the dropzone overlay styles
+                   * group className is used to target the dropzone overlay styles
                    * REF: https://panda-css.com/docs/concepts/conditional-styles#group-selectors
                    */
                   <div className={cx('group', dropzoneWrapperStyles)}>
