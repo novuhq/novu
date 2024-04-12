@@ -1,16 +1,11 @@
 import { errorMessage } from '@novu/design-system';
-import { MimeTypesEnum } from '@novu/shared';
+import { MIME_TYPE_TO_FILE_EXTENSION } from '@novu/shared';
 import React, { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { ProfileImage } from '../../../components/shared';
 
 type FormValues = {
   logoUrl: string;
-};
-
-const MIME_TYPES = {
-  'image/jpeg': MimeTypesEnum.JPEG,
-  'image/png': MimeTypesEnum.PNG,
 };
 
 export function OrganizationLogo({ logoUrl }: Partial<FormValues>) {
@@ -36,7 +31,7 @@ export function OrganizationLogo({ logoUrl }: Partial<FormValues>) {
     }
 
     const fileExtension = file.type;
-    const isValidFileType = !!MIME_TYPES[fileExtension];
+    const isValidFileType = !!MIME_TYPE_TO_FILE_EXTENSION[fileExtension];
     if (!isValidFileType) {
       errorMessage(`Invalid file type: ${fileExtension}. Please upload a PNG or JPEG file.`);
 
