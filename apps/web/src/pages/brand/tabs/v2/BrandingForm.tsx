@@ -60,9 +60,6 @@ export function BrandingForm() {
     onSuccess: () => {
       successMessage('Branding info updated successfully');
     },
-    onError: (e: IResponseError) => {
-      errorMessage(e.message || 'Failed to update branding info');
-    },
   });
 
   const removeFile = () => {
