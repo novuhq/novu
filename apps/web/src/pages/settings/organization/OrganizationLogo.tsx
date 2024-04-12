@@ -13,7 +13,7 @@ const MIME_TYPES = {
   'image/png': MimeTypesEnum.PNG,
 };
 
-export function OrganizationLogo({ logoUrl }: { logoUrl?: string }) {
+export function OrganizationLogo({ logoUrl }: Partial<FormValues>) {
   const { control, reset } = useForm<FormValues>({
     defaultValues: {
       logoUrl,
