@@ -17,6 +17,7 @@ export const previewContainerStyles = css({
   justifyContent: 'center',
 
   '& > img': {
+    // TODO: use token values when available
     width: '3rem',
     height: '3rem',
     objectFit: 'contain',
