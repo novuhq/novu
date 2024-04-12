@@ -1,6 +1,7 @@
 import { errorMessage } from '@novu/design-system';
 import type { IResponseError } from '@novu/shared';
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
+
 import { renameOrganization as renameOrganizationApi } from '../organization';
 
 type PayloadType = {
