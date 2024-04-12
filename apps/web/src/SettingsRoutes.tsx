@@ -7,6 +7,7 @@ import { ROUTES } from './constants/routes.enum';
 import { useFeatureFlag } from './hooks';
 import { BillingRoutes } from './pages/BillingPages';
 import { BrandingForm } from './pages/brand/tabs';
+import { BrandingForm as BrandingFormNew } from './pages/brand/tabs/v2';
 import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
 import { ApiKeysPage, UserProfilePage } from './pages/settings';
 import { SettingsPage as SettingsPageOld } from './pages/settings/SettingsPage';
@@ -28,7 +29,7 @@ export const useSettingsRoutes = () => {
       <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
         <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
         <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
-        <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingForm />} />
+        <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingFormNew />} />
         {/* TODO: replace with actual component */}
         <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
         <Route path={ROUTES.TEAM_SETTINGS} element={<MembersInvitePageNew />} />
