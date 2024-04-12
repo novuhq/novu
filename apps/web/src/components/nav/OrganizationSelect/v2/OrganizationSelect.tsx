@@ -1,5 +1,6 @@
 import { Select, Tooltip } from '@novu/design-system';
 import { useState } from 'react';
+import { COMPANY_LOGO_PATH } from '../../../../constants/assets';
 import { css } from '../../../../styled-system/css';
 import { arrowStyles, navSelectStyles, tooltipStyles } from '../../NavSelect.styles';
 import { useOrganizationSelect } from '../useOrganizationSelect';
@@ -28,10 +29,12 @@ export const OrganizationSelectRenderer: React.FC<INavOrganizationSelectRenderer
 }) => {
   const [canShowTooltip, setCanShowTooltip] = useState<boolean>(false);
 
+  const isLoading = loadingAddOrganization || loadingSwitch;
+
   return (
     <Tooltip
       label="Type a name to add organization"
-      sx={{ visibility: canShowTooltip ? 'visible' : 'hidden' }}
+      sx={{ visibility: canShowTooltip && !isLoading ? 'visible' : 'hidden' }}
       position="left"
       classNames={{
         tooltip: tooltipStyles,
@@ -44,7 +47,7 @@ export const OrganizationSelectRenderer: React.FC<INavOrganizationSelectRenderer
         className={navSelectStyles}
         creatable
         searchable
-        loading={loadingAddOrganization || loadingSwitch}
+        loading={isLoading}
         getCreateLabel={(newOrganization) => <div>+ Add "{newOrganization}"</div>}
         onCreate={addOrganizationItem}
         value={value}
@@ -59,16 +62,18 @@ export const OrganizationSelectRenderer: React.FC<INavOrganizationSelectRenderer
         }}
         data={data}
         icon={
-          <img
-            // TODO: use actual organization photo
-            src="https://assets.super.so/1e9f5a51-c4c6-4fca-b6e8-25fa0186f139/uploads/favicon/d82d95bb-0983-4980-8b3f-dda6ecb0c22c.png"
-            className={css({
-              w: '200',
-              h: '200',
-              // TODO: use design system values when available
-              borderRadius: '8px',
-            })}
-          />
+          !isLoading ? (
+            <img
+              // TODO: use actual organization photo
+              src={COMPANY_LOGO_PATH}
+              className={css({
+                w: '200',
+                h: '200',
+                // TODO: use design system values when available
+                borderRadius: '8px',
+              })}
+            />
+          ) : null
         }
       />
     </Tooltip>
