@@ -3,6 +3,7 @@ import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { IResponseError, MIME_TYPE_TO_FILE_EXTENSION, UploadTypesEnum } from '@novu/shared';
 
 import { useGetSignedUrl } from './useGetSignedUrl';
+import { errorMessage } from '@novu/design-system';
 
 export const useUploadToStorage = (
   options: UseMutationOptions<string, IResponseError, { file: File; type: UploadTypesEnum }> = {}
@@ -10,6 +11,12 @@ export const useUploadToStorage = (
   const { getSignedUrl } = useGetSignedUrl();
   const { mutateAsync: uploadToStorage, ...mutationData } = useMutation(
     async ({ file, type }) => {
+      const isValidFileExtension = MIME_TYPE_TO_FILE_EXTENSION[file.type] !== undefined;
+
+      if (!isValidFileExtension) {
+        errorMessage('Invalid file type');
+      }
+
       const { signedUrl, path, additionalHeaders } = await getSignedUrl({
         extension: MIME_TYPE_TO_FILE_EXTENSION[file.type],
         type,

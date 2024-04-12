@@ -4,8 +4,11 @@ import { errorMessage } from '../../utils/notifications';
 import { updateBrandingSettings } from '../organization';
 
 type PayloadType = {
-  logoUrl?: string;
-  colorValue?: string;
+  brandLogoUrl?: string;
+  brandColorValue?: string;
+  fontColorValue?: string;
+  fontFamilyValue?: string;
+  contentBackgroundValue?: string;
 };
 
 type ResultType = PayloadType;
@@ -18,8 +21,11 @@ export const useUpdateOrganizationBranding = (
   const { mutateAsync: updateOrganizationBranding, isLoading } = useMutation<ResultType, IResponseError, PayloadType>(
     (payload) =>
       updateBrandingSettings({
-        logo: payload.logoUrl,
-        color: payload.colorValue,
+        logo: payload.brandLogoUrl || undefined,
+        color: payload.brandColorValue,
+        contentBackground: payload.contentBackgroundValue,
+        fontFamily: payload.fontFamilyValue,
+        fontColor: payload.fontColorValue,
       }),
     {
       onSuccess: async (result, variables, context) => {
