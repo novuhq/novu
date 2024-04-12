@@ -38,7 +38,7 @@ export class PasswordResetRequest {
 
       if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
         const novu = new Novu(process.env.NOVU_API_KEY);
-        const resetPasswordLink = PasswordResetRequest.getResetRedirectLink(token, command.src);
+        const resetPasswordLink = PasswordResetRequest.getResetRedirectLink(token, foundUser, command.src);
 
         novu.trigger(process.env.NOVU_TEMPLATEID_PASSWORD_RESET || 'password-reset-llS-wzWMq', {
           to: {
@@ -57,14 +57,19 @@ export class PasswordResetRequest {
     };
   }
 
-  private static getResetRedirectLink(token: string, src?: PasswordResetFlowEnum): string {
-    switch (src) {
-      case PasswordResetFlowEnum.USER_PROFILE:
-        return `${process.env.FRONT_BASE_URL}/settings/profile?token=${token}`;
-      case PasswordResetFlowEnum.FORGOT_PASSWORD:
-      default:
-        return `${process.env.FRONT_BASE_URL}/auth/reset/${token}`;
+  private static getResetRedirectLink(token: string, user: UserEntity, src?: PasswordResetFlowEnum): string {
+    // ensure that only users without passwords are allowed to reset
+    if (src === PasswordResetFlowEnum.USER_PROFILE && !user.password) {
+      return `${process.env.FRONT_BASE_URL}/settings/profile?token=${token}`;
     }
+
+    /**
+     * Default to the existing "forgot password flow". Works for:
+     * 1. No src
+     * 2. When src is explicitly FORGOT_PASSWORD
+     * 3. User already has a password
+     */
+    return `${process.env.FRONT_BASE_URL}/auth/reset/${token}`;
   }
 
   private isRequestBlocked(user: UserEntity) {
