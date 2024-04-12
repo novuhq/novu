@@ -10,7 +10,7 @@ import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 import { NavButton } from '../components/NavButton';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
 import { OnboardingExperimentModal } from '../components/OnboardingExperimentModal';
-import { ENV, IS_DOCKER_HOSTED, useAuthContext } from '@novu/shared-web';
+import { useAuthContext } from '@novu/shared-web';
 import { OnboardingExperimentV2ModalKey } from '../../../constants/experimentsConstants';
 
 const ChannelsConfigurationHolder = styled.div`
@@ -34,9 +34,7 @@ export function GetStarted() {
     channelType?: ChannelTypeEnum;
   }>({ open: false });
 
-  const isNovuProd = !IS_DOCKER_HOSTED && ENV === 'production';
-  // open modal only for prod users
-  const isOnboardingModalEnabled = isNovuProd && localStorage.getItem(OnboardingExperimentV2ModalKey) === 'true';
+  const isOnboardingModalEnabled = localStorage.getItem(OnboardingExperimentV2ModalKey) === 'true';
 
   const onIntegrationModalClose = () => setClickedChannel({ open: false });
 
