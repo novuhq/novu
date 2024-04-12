@@ -49,8 +49,8 @@ export function OnboardingExperimentModal() {
       <Grid>
         <Grid.Col xs={12} md={6} mb={20}>
           <ChannelCard>
-            <TitleRow> Send test notification</TitleRow>
-            <Description>Learn how to setup a workflow and send your first email notification.</Description>
+            <TitleRow>Send test notification</TitleRow>
+            <Description>Learn how to set up a workflow and send your first email notification.</Description>
             <StyledButton
               loading={IsCreateOnboardingExpWorkflowLoading}
               disabled={isIsCreateOnboardingExpWorkflowDisabled}
