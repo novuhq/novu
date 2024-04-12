@@ -42,7 +42,7 @@ export function OrganizationLogo({ logoUrl }: { logoUrl?: string }) {
 
       return;
     }
-    //TODO: Add organization logo api implementation once it is available
+    // FIXME: Add organization logo api implementation once it is available
   }
 
   return (
