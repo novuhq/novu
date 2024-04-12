@@ -98,7 +98,7 @@ export function BrandingForm() {
       <LoadingOverlay visible={!organization}>
         <form noValidate onSubmit={handleSubmit(saveBrandsForm)}>
           <Stack gap={32}>
-            <Stack gap={5}>
+            <Stack gap={10}>
               <Text weight="bold">Brand logo</Text>
               <Controller
                 render={({ field }) => (
