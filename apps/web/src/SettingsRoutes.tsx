@@ -13,6 +13,7 @@ import { SettingsPage as SettingsPageOld } from './pages/settings/SettingsPage';
 import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { ApiKeysCard } from './pages/settings/tabs';
 import { EmailSettings } from './pages/settings/tabs/EmailSettings';
+import { OrganizationPage } from './pages/settings/organization';
 
 /** Note: using a hook is the only way to separate routes */
 export const useSettingsRoutes = () => {
@@ -29,7 +30,7 @@ export const useSettingsRoutes = () => {
         <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
         <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingForm />} />
         {/* TODO: replace with actual component */}
-        <Route path={ROUTES.ORGANIZATION} element={<ApiKeysCard />} />
+        <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
         <Route path={ROUTES.TEAM_SETTINGS} element={<MembersInvitePageNew />} />
         <Route path={ROUTES.BILLING} element={<BillingRoutes />} />
         <Route path={ROUTES.WEBHOOK} element={<EmailSettings />} />

@@ -42,6 +42,10 @@ export function removeMember(memberId: string) {
   return api.delete(`/v1/organizations/members/${memberId}`);
 }
 
-export function updateBrandingSettings(payload: { color: string | undefined; logo: string | undefined }) {
+export function updateBrandingSettings(payload: { color?: string; logo?: string }) {
   return api.put(`/v1/organizations/branding`, payload);
+}
+
+export function renameOrganization(organizationName: string) {
+  return api.patch(`/v1/organizations`, { name: organizationName });
 }
