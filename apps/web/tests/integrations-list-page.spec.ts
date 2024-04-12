@@ -12,7 +12,7 @@ import {
 import { test, expect } from '@playwright/test';
 
 import { getByTestId, initializeSession, isDarkTheme } from './utils.ts/browser';
-import { checkTableLoading, checkTableRow, clickOnListRow, navigateToGetStarted } from './utils.ts/integrations';
+import { checkTableLoading, checkTableRow, clickOnListRow } from './utils.ts/integrations';
 import { deleteProvider } from './utils.ts/plugins';
 
 let session;
