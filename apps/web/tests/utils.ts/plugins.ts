@@ -1,6 +1,12 @@
 import { DalService, IntegrationRepository, NotificationTemplateEntity } from '@novu/dal';
 import { ChannelTypeEnum, ProvidersIdEnum } from '@novu/shared';
-import { UserSession, NotificationTemplateService } from '@novu/testing';
+import {
+  UserSession,
+  NotificationTemplateService,
+  SubscribersService,
+  NotificationsService,
+  JobsService,
+} from '@novu/testing';
 
 export interface ISessionOptions {
   noEnvironment?: boolean;
@@ -68,4 +74,49 @@ export async function deleteProvider(query: {
     _environmentId: query.environmentId,
     _organizationId: query.organizationId,
   });
+}
+
+export async function createNotifications({
+  identifier,
+  token,
+  count = 1,
+  subscriberId,
+  environmentId,
+  organizationId,
+  templateId,
+}: {
+  identifier: string;
+  token: string;
+  count?: number;
+  subscriberId?: string;
+  environmentId: string;
+  organizationId: string;
+  templateId?: string;
+}) {
+  const jobsService = new JobsService();
+  let subId = subscriberId;
+  if (!subId) {
+    const subscribersService = new SubscribersService(organizationId, environmentId);
+    const subscriber = await subscribersService.createSubscriber();
+    subId = subscriber.subscriberId;
+  }
+
+  const triggerIdentifier = identifier;
+  const service = new NotificationsService(token);
+  const session = new UserSession(process.env.API_URL);
+
+  // eslint-disable-next-line no-plusplus
+  for (let i = 0; i < count; i++) {
+    await service.triggerEvent(triggerIdentifier, subId, {});
+  }
+
+  if (organizationId) {
+    await session.awaitRunningJobs(templateId, undefined, 0, organizationId);
+  }
+
+  while ((await jobsService.standardQueue.getWaitingCount()) || (await jobsService.standardQueue.getActiveCount())) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  return 'ok';
 }
