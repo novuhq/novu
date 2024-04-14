@@ -1,12 +1,17 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+
 import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum, ITemplateVariable } from '@novu/shared';
+import {
+  CreateChange,
+  CreateChangeCommand,
+  normalizeVariantDefault,
+  sanitizeMessageContent,
+  UpdateChange,
+  UpdateChangeCommand,
+} from '@novu/application-generic';
 
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
-import { sanitizeMessageContent } from '../../shared/sanitizer.service';
-import { UpdateChangeCommand } from '../../../change/usecases/update-change/update-change.command';
-import { UpdateChange } from '../../../change/usecases/update-change/update-change';
-import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
 
 @Injectable()
 export class UpdateMessageTemplate {
@@ -35,11 +40,11 @@ export class UpdateMessageTemplate {
 
     if (command.content !== null || command.content !== undefined) {
       updatePayload.content =
-        command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content;
+        command.content && command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content;
     }
 
     if (command.variables) {
-      updatePayload.variables = UpdateMessageTemplate.mapVariables(command.variables);
+      updatePayload.variables = normalizeVariantDefault(command.variables);
     }
 
     if (command.contentType) {
@@ -137,7 +142,7 @@ export class UpdateMessageTemplate {
       );
     }
 
-    if (command.feedId) {
+    if (command.feedId && command.parentChangeId) {
       await this.updateChange.execute(
         UpdateChangeCommand.create({
           _entityId: command.feedId,
@@ -150,7 +155,7 @@ export class UpdateMessageTemplate {
       );
     }
 
-    if (command.layoutId) {
+    if (command.layoutId && command.parentChangeId) {
       await this.updateChange.execute(
         UpdateChangeCommand.create({
           _entityId: command.layoutId,
@@ -164,15 +169,5 @@ export class UpdateMessageTemplate {
     }
 
     return item;
-  }
-
-  public static mapVariables(items: ITemplateVariable[]) {
-    return items.map((item) => {
-      if (item.defaultValue === '') {
-        item.defaultValue = undefined;
-      }
-
-      return item;
-    });
   }
 }

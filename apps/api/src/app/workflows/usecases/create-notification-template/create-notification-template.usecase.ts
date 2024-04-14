@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
 import slugify from 'slugify';
 import * as shortid from 'shortid';
 
@@ -16,18 +17,23 @@ import {
   TriggerTypeEnum,
   IStepVariant,
 } from '@novu/shared';
-import { AnalyticsService, CreateChange, CreateChangeCommand, PlatformException } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  ContentService,
+  CreateChange,
+  CreateChangeCommand,
+  CreateMessageTemplate,
+  CreateMessageTemplateCommand,
+  isVariantEmpty,
+  PlatformException,
+} from '@novu/application-generic';
 
 import {
   CreateNotificationTemplateCommand,
   NotificationStep,
   NotificationStepVariant,
 } from './create-notification-template.command';
-import { ContentService } from '../../../shared/helpers/content.service';
-import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../../message-template/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { ModuleRef } from '@nestjs/core';
-import { checkIsVariantEmpty } from '../../utils';
 
 /**
  * DEPRECATED:
@@ -86,7 +92,7 @@ export class CreateNotificationTemplate {
     const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];
 
     for (const variant of variants) {
-      if (checkIsVariantEmpty(variant)) {
+      if (isVariantEmpty(variant)) {
         throw new ApiException(`Variant conditions are required, variant name ${variant.name} id ${variant._id}`);
       }
     }

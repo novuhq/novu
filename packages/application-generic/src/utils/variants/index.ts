@@ -1,2 +1,2 @@
-export * from './IsVariantEmpty';
+export * from './isVariantEmpty';
 export * from './normalizeVariantDefault';

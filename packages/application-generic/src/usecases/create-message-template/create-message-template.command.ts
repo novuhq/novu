@@ -37,7 +37,7 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   variables?: ITemplateVariable[];
 
   @IsDefined()
-  content: string | IEmailBlock[];
+  content?: string | IEmailBlock[];
 
   @IsOptional()
   contentType?: MessageTemplateContentType;
@@ -54,9 +54,8 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsString()
   layoutId?: string | null;
 
-  //
   @IsMongoId()
-  parentChangeId: string;
+  parentChangeId?: string;
 
   @IsOptional()
   @IsString()

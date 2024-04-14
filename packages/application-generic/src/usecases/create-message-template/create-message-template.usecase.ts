@@ -13,7 +13,7 @@ import {
 import { CreateMessageTemplateCommand } from './create-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../create-change';
 import { UpdateChange, UpdateChangeCommand } from '../update-change';
-import { sanitizeMessageContent } from '../../services/sanitize/sanitizer.service';
+import { sanitizeMessageContent } from '../../services';
 import { normalizeVariantDefault } from '../../utils/variants';
 
 @Injectable()

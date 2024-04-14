@@ -8,7 +8,7 @@ import {
   NotificationTemplateRepository,
   StepVariantEntity,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum, StepTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
   AnalyticsService,
   buildNotificationTemplateIdentifierKey,
@@ -18,22 +18,19 @@ import {
   CacheService,
   InvalidateCacheService,
   PlatformException,
+  ContentService,
+  CreateMessageTemplate,
+  CreateMessageTemplateCommand,
+  isVariantEmpty,
 } from '@novu/application-generic';
 
 import { UpdateNotificationTemplateCommand } from './update-notification-template.command';
-import { ContentService } from '../../../shared/helpers/content.service';
-import {
-  CreateMessageTemplate,
-  CreateMessageTemplateCommand,
-  UpdateMessageTemplate,
-  UpdateMessageTemplateCommand,
-} from '../../../message-template/usecases';
+import { UpdateMessageTemplate, UpdateMessageTemplateCommand } from '../../../message-template/usecases';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { NotificationStep, NotificationStepVariant } from '../create-notification-template';
 import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
 import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
 import { ModuleRef } from '@nestjs/core';
-import { checkIsVariantEmpty } from '../../utils';
 
 /**
  * DEPRECATED:
@@ -220,7 +217,7 @@ export class UpdateNotificationTemplate {
     const variants = command.steps ? command.steps?.flatMap((step) => step.variants || []) : [];
 
     for (const variant of variants) {
-      if (checkIsVariantEmpty(variant)) {
+      if (isVariantEmpty(variant)) {
         throw new ApiException(`Variant filters are required, variant name ${variant.name} id ${variant._id}`);
       }
     }
