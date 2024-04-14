@@ -12,7 +12,12 @@ import {
 import { test, expect } from '@playwright/test';
 
 import { getByTestId, initializeSession, isDarkTheme } from './utils.ts/browser';
-import { checkTableLoading, checkTableRow, clickOnListRow } from './utils.ts/integrations';
+import {
+  checkTableLoading,
+  checkTableRow,
+  clickOnListRow,
+  interceptIntegrationsRequest,
+} from './utils.ts/integrations';
 import { deleteProvider } from './utils.ts/plugins';
 
 let session;
@@ -22,14 +27,9 @@ test.beforeEach(async ({ context }) => {
 });
 
 test('should show the table loading skeleton and empty state', async ({ page }) => {
-  const integrationsPromise = page.route('**/v1/integrations', async (route) => {
-    const response = await page.request.fetch(route.request());
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    await route.fulfill({
-      response,
-      body: JSON.stringify({ data: [] }),
-    });
+  const integrationsPromise = interceptIntegrationsRequest({
+    page,
+    modifyBody: () => ({ data: [] }),
   });
 
   await page.goto('/integrations');
@@ -60,15 +60,8 @@ test('should show the table loading skeleton and empty state', async ({ page }) 
 });
 
 test('should show the table loading skeleton and then table', async ({ page }) => {
-  const integrationsPromise = page.route('**/v1/integrations', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    const response = await page.request.fetch(route.request());
-    const body = await response.json();
-
-    await route.fulfill({
-      response,
-      body: JSON.stringify(body),
-    });
+  const integrationsPromise = interceptIntegrationsRequest({
+    page,
   });
 
   await page.goto('/integrations');
@@ -992,27 +985,25 @@ test('should show the Novu in-app integration - React guide', async ({ page }) =
 });
 
 test('should show the Novu Email integration sidebar', async ({ page }) => {
-  const integrationsPromise = page.route('**/v1/integrations', async (route) => {
-    const response = await page.request.fetch(route.request());
-    const body = await response.json();
-    const [firstIntegration] = body.data;
-    body.data = [
-      {
-        _id: EmailProviderIdEnum.Novu,
-        _environmentId: firstIntegration._environmentId,
-        providerId: EmailProviderIdEnum.Novu,
-        active: true,
-        channel: ChannelTypeEnum.EMAIL,
-        name: 'Novu Email',
-        identifier: EmailProviderIdEnum.Novu,
-      },
-      ...body.data,
-    ];
+  const integrationsPromise = interceptIntegrationsRequest({
+    page,
+    modifyBody: (body) => {
+      const [firstIntegration] = body.data;
+      body.data = [
+        {
+          _id: EmailProviderIdEnum.Novu,
+          _environmentId: firstIntegration._environmentId,
+          providerId: EmailProviderIdEnum.Novu,
+          active: true,
+          channel: ChannelTypeEnum.EMAIL,
+          name: 'Novu Email',
+          identifier: EmailProviderIdEnum.Novu,
+        },
+        ...body.data,
+      ];
 
-    await route.fulfill({
-      response,
-      body: JSON.stringify(body),
-    });
+      return body;
+    },
   });
 
   await page.goto('/integrations');
@@ -1055,27 +1046,25 @@ test('should show the Novu Email integration sidebar', async ({ page }) => {
 });
 
 test('should show the Novu SMS integration sidebar', async ({ page }) => {
-  const integrationsPromise = page.route('**/v1/integrations', async (route) => {
-    const response = await page.request.fetch(route.request());
-    const body = await response.json();
-    const [firstIntegration] = body.data;
-    body.data = [
-      {
-        _id: SmsProviderIdEnum.Novu,
-        _environmentId: firstIntegration._environmentId,
-        providerId: SmsProviderIdEnum.Novu,
-        active: true,
-        channel: ChannelTypeEnum.SMS,
-        name: 'Novu SMS',
-        identifier: SmsProviderIdEnum.Novu,
-      },
-      ...body.data,
-    ];
+  const integrationsPromise = interceptIntegrationsRequest({
+    page,
+    modifyBody: (body) => {
+      const [firstIntegration] = body.data;
+      body.data = [
+        {
+          _id: SmsProviderIdEnum.Novu,
+          _environmentId: firstIntegration._environmentId,
+          providerId: SmsProviderIdEnum.Novu,
+          active: true,
+          channel: ChannelTypeEnum.SMS,
+          name: 'Novu SMS',
+          identifier: SmsProviderIdEnum.Novu,
+        },
+        ...body.data,
+      ];
 
-    await route.fulfill({
-      response,
-      body: JSON.stringify(body),
-    });
+      return body;
+    },
   });
 
   await page.goto('/integrations');

@@ -86,3 +86,22 @@ export const clickOnListRow = async (page: Page | Locator, name: string | RegExp
   await expect(row).toBeVisible();
   await row.click();
 };
+
+export async function interceptIntegrationsRequest({
+  page,
+  modifyBody,
+}: {
+  page: Page;
+  modifyBody?: (body: any) => any;
+}) {
+  return page.route('**/v1/integrations', async (route) => {
+    const response = await page.request.fetch(route.request());
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+    const body = await response.json();
+
+    await route.fulfill({
+      response,
+      body: JSON.stringify(modifyBody ? modifyBody(body) : body),
+    });
+  });
+}
