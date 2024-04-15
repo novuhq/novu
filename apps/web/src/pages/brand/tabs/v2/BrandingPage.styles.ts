@@ -18,7 +18,9 @@ export const dropzoneWrapperStyles = css({
   },
   _hover: {
     cursor: 'pointer',
-    backgroundColor: 'rgba(19, 19, 26, 0.84) !important',
+    // TODO: Remove legacy colors, once the design system is updated
+    backgroundColor: 'legacy.BGDark !important',
+    opacity: '0.8',
     backdropFilter: 'blur(6px)',
   },
 });
@@ -48,7 +50,7 @@ export const dropzoneOverlayStyles = css({
 });
 
 export const dropzoneRootStyles = css({
-  backgroundColor: 'none !important',
+  background: 'none !important',
   border: 'none !important',
 });
 
