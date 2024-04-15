@@ -3,11 +3,11 @@ import { Control, Controller } from 'react-hook-form';
 import { FONT_FAMILIES, IBrandFormValues } from './BrandingPage.const';
 import { inputWrapperStyles } from './BrandingPage.styles';
 
-type Props = {
+type InAppInputsProps = {
   control: Control<IBrandFormValues, any>;
 };
 
-export function InAppInputs({ control }: Props) {
+export function InAppInputs({ control }: InAppInputsProps) {
   return (
     <>
       <div className={inputWrapperStyles}>

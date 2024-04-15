@@ -5,12 +5,12 @@ import { IBrandFormValues } from './BrandingPage.const';
 import { inputWrapperStyles, Text } from './BrandingPage.styles';
 import { BrandLogoUpload } from './BrandLogoUpload';
 
-type Props = {
+type BrandInputsProps = {
   setValue: UseFormSetValue<IBrandFormValues>;
   control: Control<IBrandFormValues, any>;
 };
 
-export function BrandInputs({ control, setValue }: Props) {
+export function BrandInputs({ control, setValue }: BrandInputsProps) {
   return (
     <>
       <Stack gap="75">

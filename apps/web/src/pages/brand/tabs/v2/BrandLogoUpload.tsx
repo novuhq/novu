@@ -15,12 +15,12 @@ import {
   Text,
 } from './BrandingPage.styles';
 
-type Props = {
+type BrandLogoUploadProps = {
   field: ControllerRenderProps<IBrandFormValues, 'logo'>;
   setValue: UseFormSetValue<IBrandFormValues>;
 };
 
-export function BrandLogoUpload({ field, setValue }: Props) {
+export function BrandLogoUpload({ field, setValue }: BrandLogoUploadProps) {
   const dropzoneRef = useRef<() => void>(null);
 
   const { uploadToStorage } = useUploadToStorage({
