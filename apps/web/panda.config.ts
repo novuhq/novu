@@ -40,7 +40,7 @@ export default defineConfig({
 
   // Recommended by panda maintainer due to potential bug with nesting styled-system in src
   importMap: 'styled-system',
-  
+
   // Enables JSX util generation!
   jsxFramework: 'react',
 });
