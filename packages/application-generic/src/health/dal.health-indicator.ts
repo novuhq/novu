@@ -1,4 +1,8 @@
-import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
+import {
+  HealthCheckError,
+  HealthIndicator,
+  HealthIndicatorResult,
+} from '@nestjs/terminus';
 import { Injectable } from '@nestjs/common';
 import { DalService } from '@novu/dal';
 import { IHealthIndicator } from './health-indicator.interface';
@@ -8,16 +12,21 @@ export class DalServiceHealthIndicator
   extends HealthIndicator
   implements IHealthIndicator
 {
-  private INDICATOR_KEY = 'db';
+  private static KEY = 'db';
 
   constructor(private dalService: DalService) {
     super();
   }
 
   async isHealthy(): Promise<HealthIndicatorResult> {
-    const status = this.dalService.connection.readyState === 1;
+    const isHealthy = this.dalService.connection.readyState === 1;
+    const result = this.getStatus(DalServiceHealthIndicator.KEY, isHealthy);
 
-    return this.getStatus(this.INDICATOR_KEY, status);
+    if (isHealthy) {
+      return result;
+    }
+
+    throw new HealthCheckError('DAL health check failed', result);
   }
 
   isActive(): Promise<HealthIndicatorResult> {
