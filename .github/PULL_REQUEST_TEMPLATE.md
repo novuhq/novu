@@ -1,12 +1,16 @@
-### What change does this PR introduce?
+### What changed? Why was the change needed?
+<!-- Also include any relevant links, such as Linear tickets, Slack discussions, or design documents. -->
 
-<!-- Explain here the changes your PR introduces and text to help us understand the context of this change. -->
+### Screenshots
+<!-- If the changes are visual, include screenshots or screencasts. -->
 
-### Why was this change needed?
+<details>
+<summary><strong>Expand for optional sections</strong></summary>
 
-<!-- If your PR fixes an open issue, use `Closes #999` to link your PR with the issue. #999 stands for the issue number you are fixing, Example: Closes #31 -->
+### Related enterprise PR
+<!-- A link to a dependent pull request  -->
 
-### Other information (Screenshots)
+### Special notes for your reviewer
+<!-- Specific instructions or considerations you want to highlight for the reviewer. -->
 
-<!-- Add notes or any other information here -->
-<!-- Also add all the screenshots which support your changes -->
+</details>

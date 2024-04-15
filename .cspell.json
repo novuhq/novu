@@ -625,6 +625,7 @@
     "runtimes",
     "cafebabe",
     "Markunread",
+    "limitbar",
     "Fira",
     "Roboto",
     "Raleway"
@@ -690,6 +691,7 @@
     "apps/api/src/.env.test",
     "apps/ws/src/.env.test",
     "apps/ws/src/.example.env",
+    "apps/web/playwright.config.ts",
     ".cspell.json",
     "package.json",
     "package-lock.json",
