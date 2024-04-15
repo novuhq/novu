@@ -38,6 +38,9 @@ export default defineConfig({
   // The output directory for your css system
   outdir: './src/styled-system',
 
+  // Recommended by panda maintainer due to potential bug with nesting styled-system in src
+  importMap: 'styled-system',
+  
   // Enables JSX util generation!
   jsxFramework: 'react',
 });
