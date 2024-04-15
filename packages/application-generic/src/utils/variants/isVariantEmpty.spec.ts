@@ -21,7 +21,7 @@ const testFilter: MessageFilter = {
   ],
 };
 
-describe('checkIsVariantEmpty', () => {
+describe('isVariantEmpty', () => {
   it('should return true for an empty variant', () => {
     const emptyVariant: NotificationStepVariantCommand = {};
     const result = isVariantEmpty(emptyVariant);
