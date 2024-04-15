@@ -8,18 +8,12 @@ import { useRegenerateApiKeyModal } from './useRegenerateApiKeyModal';
 
 const CLIPBOARD_TIMEOUT_MS = 2000;
 
-/*
- * type ApiKeysPageUrlParams = {
- *   env: BaseEnvironmentEnum;
- * };
- */
-
 export const useApiKeysPage = () => {
   /**
    * TODO: we will eventually want to use the URL params instead of the current environment, but
    * this will come at a later time once we have the APIs to support it.
    *
-   * const { env } = useParams<ApiKeysPageUrlParams>();
+   * const { env } = useParams<'env'>();
    */
 
   const clipboardApiKey = useClipboard({ timeout: CLIPBOARD_TIMEOUT_MS });

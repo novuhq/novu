@@ -9,7 +9,7 @@ const iconButtonStyles = css({
   padding: '0 !important',
   backgroundImage: 'none !important',
   background: 'transparent',
-  height: 'inherit',
+  height: 'inherit !important',
   border: 'none',
   cursor: 'pointer',
 
@@ -21,6 +21,23 @@ const iconButtonStyles = css({
   },
   '&:disabled svg': {
     opacity: '40%',
+  },
+
+  '& .mantine-Button-icon': {
+    margin: '0 !important',
+  },
+
+  /**
+   * TODO: this is not ideal as it restricts the loader to the smallest icon size to avoid layout shift,
+   * but it should instead be based on the size of the icon in the button
+   */
+  '&[data-loading=true] .mantine-Button-icon svg': {
+    width: 'auto !important',
+    height: '100 !important',
+  },
+
+  '& .mantine-Button-label': {
+    display: 'none',
   },
 
   _hover: {
@@ -50,12 +67,12 @@ export const IconButton: React.FC<PropsWithChildren<IIconButtonProps>> = ({
   return !!tooltipProps ? (
     <Tooltip opened={isHovered} {...tooltipProps}>
       <Button {...elementProps} {...buttonProps} className={cx(iconButtonStyles, className)}>
-        {children}
+        {!buttonProps.loading ? children : null}
       </Button>
     </Tooltip>
   ) : (
     <Button {...buttonProps} className={cx(iconButtonStyles, className)}>
-      {children}
+      {!buttonProps.loading ? children : null}
     </Button>
   );
 };
