@@ -1,11 +1,12 @@
-import { PageContainer } from '@novu/design-system';
-import { FC, PropsWithChildren } from 'react';
+import { PageContainer, When } from '@novu/design-system';
+import { FC, PropsWithChildren, ReactNode } from 'react';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { css } from '../../styled-system/css';
 
 export interface ISettingsPageContainerProps {
   // TODO: this should be LocalizedMessage, but PageContainer and PageHeader don't accept it
   title: string;
+  header?: ReactNode;
 }
 
 /**
@@ -24,10 +25,23 @@ const SettingsPageContentContainer: FC<PropsWithChildren<{}>> = ({ children }) =
   );
 };
 
-export const SettingsPageContainer: FC<PropsWithChildren<ISettingsPageContainerProps>> = ({ title, children }) => {
+export const SettingsPageContainer: FC<PropsWithChildren<ISettingsPageContainerProps>> = ({
+  title,
+  children,
+  header,
+}) => {
   return (
     <PageContainer title={title}>
       <PageHeader title={title} />
+      <When truthy={!!header}>
+        <section
+          className={css({
+            mx: '150',
+          })}
+        >
+          {header}
+        </section>
+      </When>
       <SettingsPageContentContainer>{children}</SettingsPageContentContainer>
     </PageContainer>
   );
