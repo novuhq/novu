@@ -1,1 +1,1 @@
-export * from './BrandingForm';
+export * from './BrandingPage';

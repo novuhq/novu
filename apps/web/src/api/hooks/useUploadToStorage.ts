@@ -11,12 +11,6 @@ export const useUploadToStorage = (
   const { getSignedUrl } = useGetSignedUrl();
   const { mutateAsync: uploadToStorage, ...mutationData } = useMutation(
     async ({ file, type }) => {
-      const isValidFileExtension = MIME_TYPE_TO_FILE_EXTENSION[file.type] !== undefined;
-
-      if (!isValidFileExtension) {
-        errorMessage('Invalid file type');
-      }
-
       const { signedUrl, path, additionalHeaders } = await getSignedUrl({
         extension: MIME_TYPE_TO_FILE_EXTENSION[file.type],
         type,

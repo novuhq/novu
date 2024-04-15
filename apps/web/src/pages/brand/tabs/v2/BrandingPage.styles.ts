@@ -1,11 +1,15 @@
 import { css } from '../../../../styled-system/css';
+import { styled } from '../../../../styled-system/jsx';
+import { text } from '../../../../styled-system/recipes';
 
 export const dropzoneWrapperStyles = css({
   position: 'relative',
+  // TODO: use border radius values from Design-System once available
   rounded: '7px',
   px: '150',
   py: '200',
   width: '15rem',
+  // TODO: use border values from Design-System once available
   border: '1px solid',
   // TODO: Remove legacy colors, once the design system is updated
   borderColor: {
@@ -14,6 +18,8 @@ export const dropzoneWrapperStyles = css({
   },
   _hover: {
     cursor: 'pointer',
+    backgroundColor: 'rgba(19, 19, 26, 0.84) !important',
+    backdropFilter: 'blur(6px)',
   },
 });
 
@@ -22,7 +28,9 @@ export const dropzoneOverlayStyles = css({
   justifyContent: 'center',
   alignItems: 'center',
   gap: '150',
+  // TODO: use z-index value from Design-System once available
   zIndex: '20',
+  // TODO: use border radius values from Design-System once available
   rounded: '7px',
   position: 'absolute',
   top: '0',
@@ -37,4 +45,20 @@ export const dropzoneOverlayStyles = css({
   _groupHover: {
     display: 'flex',
   },
+});
+
+export const dropzoneRootStyles = css({
+  backgroundColor: 'none !important',
+  border: 'none !important',
+});
+
+export const Text = styled('p', text);
+
+export const dropzoneTextStyles = css({
+  // TODO: Remove legacy colors, once the design system is updated
+  color: 'legacy.B70',
+});
+
+export const inputWrapperStyles = css({
+  width: '15rem',
 });

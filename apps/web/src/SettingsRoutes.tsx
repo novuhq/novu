@@ -6,8 +6,8 @@ import { ProductLead } from './components/utils/ProductLead';
 import { ROUTES } from './constants/routes.enum';
 import { useFeatureFlag } from './hooks';
 import { BillingRoutes } from './pages/BillingPages';
-import { BrandingForm } from './pages/brand/tabs';
-import { BrandingForm as BrandingFormNew } from './pages/brand/tabs/v2';
+import { BrandingForm as BrandingFormOld } from './pages/brand/tabs';
+import { BrandingPage } from './pages/brand/tabs/v2';
 import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
 import { ApiKeysPage, UserProfilePage } from './pages/settings';
 import { SettingsPage as SettingsPageOld } from './pages/settings/SettingsPage';
@@ -29,7 +29,7 @@ export const useSettingsRoutes = () => {
       <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
         <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
         <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
-        <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingFormNew />} />
+        <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingPage />} />
         {/* TODO: replace with actual component */}
         <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
         <Route path={ROUTES.TEAM_SETTINGS} element={<MembersInvitePageNew />} />
@@ -58,7 +58,7 @@ export const useSettingsRoutes = () => {
       <Route path="billing/*" element={<BillingRoutes />} />
       <Route path="email" element={<EmailSettings />} />
       <Route path="team" element={<MembersInvitePageNew />} />
-      <Route path="brand" element={<BrandingForm />} />
+      <Route path="brand" element={<BrandingFormOld />} />
       <Route
         path="permissions"
         element={
