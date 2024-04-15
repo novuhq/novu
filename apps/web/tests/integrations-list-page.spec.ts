@@ -907,7 +907,7 @@ test('should show the Novu in-app integration', async ({ page }) => {
     'Select a framework to set up credentials to start sending notifications.'
   );
 
-  const sidebarClose = getByTestId(page, 'sidebar-close');
+  const sidebarClose = getByTestId(updateProviderSidebar, 'sidebar-close');
   await expect(sidebarClose).toBeVisible();
 
   const integrationChannel = getByTestId(updateProviderSidebar, 'provider-instance-channel');
