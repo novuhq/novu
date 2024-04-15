@@ -1,5 +1,5 @@
 import { MimeTypesEnum } from '@novu/shared';
-import { UpdateOrgBrandingPayloadType } from '../../../../api/hooks';
+import { UpdateOrgBrandingPayloadType } from '../../../../api/organization';
 
 export const DEFAULT_BRANDING_COLOR = '#f47373';
 export const DEFAULT_FONT_FAMILY = 'inherit';

@@ -1,6 +1,17 @@
 import { MemberRoleEnum } from '@novu/shared';
 import { api } from './api.client';
 
+type BrandColor = string;
+type FontColor = string;
+
+export type UpdateOrgBrandingPayloadType = {
+  logo?: string;
+  color?: BrandColor;
+  fontColor?: FontColor;
+  fontFamily?: string;
+  contentBackgroundValue?: string;
+};
+
 export function getOrganizations() {
   return api.get(`/v1/organizations`);
 }
