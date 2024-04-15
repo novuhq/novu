@@ -13,7 +13,11 @@ import { CopyInviteLink } from './CopyInviteLink';
 import { MemberInviteForm } from './MemberInviteForm';
 import { buildInviteHref, generateInviteLink } from './MembersInvitePage.utils';
 
-export function MembersInvitePage() {
+interface IMembersInviteProps {
+  shouldHideTitle?: boolean;
+}
+
+export function MembersInvitePage({ shouldHideTitle }: IMembersInviteProps) {
   const { currentOrganization, currentUser } = useAuthContext();
 
   const {
@@ -89,7 +93,7 @@ export function MembersInvitePage() {
   return (
     <div>
       <Group position="apart">
-        <Title>Team Members</Title>
+        {!shouldHideTitle && <Title>Team Members</Title>}
         <MemberInviteForm onSuccess={refetch} inviteByLink={inviteByLink} />
       </Group>
 

@@ -46,7 +46,6 @@ export const useEnvironmentSelect = () => {
       label: value,
       value,
     })),
-    defaultValue: environment?.name,
     value: environment?.name,
     onChange,
     readonly,

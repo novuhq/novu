@@ -1,4 +1,4 @@
-import { Select } from '@novu/design-system';
+import { Select, When } from '@novu/design-system';
 import { css } from '../../../styled-system/css';
 import { navSelectStyles } from '../NavSelect.styles';
 import { EnvironmentPopover } from './EnvironmentPopover';
@@ -21,22 +21,24 @@ export const EnvironmentSelectRenderer: React.FC<ReturnType<typeof useEnvironmen
         className={navSelectStyles}
         allowDeselect={false}
         icon={
-          <span
-            className={css({
-              p: '50',
-              // TODO: use design system values when available
-              borderRadius: '8px',
-              bg: 'surface.page',
-              '& svg': {
-                fill: 'typography.text.main',
-              },
-              _after: {
-                width: '100',
-              },
-            })}
-          >
-            {icon}
-          </span>
+          <When truthy={!selectProps.loading}>
+            <span
+              className={css({
+                p: '50',
+                // TODO: use design system values when available
+                borderRadius: '8px',
+                bg: 'surface.page',
+                '& svg': {
+                  fill: 'typography.text.main',
+                },
+                _after: {
+                  width: '100',
+                },
+              })}
+            >
+              {icon}
+            </span>
+          </When>
         }
         {...selectProps}
       />

@@ -8,7 +8,7 @@ import { useFeatureFlag } from './hooks';
 import { BillingRoutes } from './pages/BillingPages';
 import { BrandingForm } from './pages/brand/tabs';
 import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
-import { ApiKeysPage, UserProfilePage } from './pages/settings';
+import { AccessSecurityPage, ApiKeysPage, TeamPage, UserProfilePage } from './pages/settings';
 import { SettingsPage as SettingsPageOld } from './pages/settings/SettingsPage';
 import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { ApiKeysCard } from './pages/settings/tabs';
@@ -31,21 +31,10 @@ export const useSettingsRoutes = () => {
         <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingForm />} />
         {/* TODO: replace with actual component */}
         <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
-        <Route path={ROUTES.TEAM_SETTINGS} element={<MembersInvitePageNew />} />
+        <Route path={ROUTES.TEAM_SETTINGS} element={<TeamPage />} />
         <Route path={ROUTES.BILLING} element={<BillingRoutes />} />
         <Route path={ROUTES.WEBHOOK} element={<EmailSettings />} />
-        <Route
-          path={ROUTES.SECURITY}
-          element={
-            <ProductLead
-              icon={<IconLockPerson size="24" color="typography.text.secondary" />}
-              id="rbac-permissions"
-              title="Role-based access control"
-              text="Securely manage users' permissions to access system resources."
-              closeable={false}
-            />
-          }
-        />
+        <Route path={ROUTES.SECURITY} element={<AccessSecurityPage />} />
         {/* Default settings route in case we didn't match with the existing */}
         <Route path={`${ROUTES.SETTINGS}/*`} element={<Navigate to={ROUTES.PROFILE} replace />} />
         <Route path={`${ROUTES.SETTINGS}`} element={<Navigate to={ROUTES.PROFILE} replace />} />
