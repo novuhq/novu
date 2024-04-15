@@ -624,7 +624,10 @@
     "hstack",
     "runtimes",
     "cafebabe",
-    "Markunread"
+    "Markunread",
+    "Fira",
+    "Roboto",
+    "Raleway"
   ],
   "flagWords": [],
   "patterns": [
@@ -708,6 +711,6 @@
     "angular.json",
     "ng-package.json",
     "libs/shared/src/types/timezones/timezones.types.ts",
-    "*.riv",
+    "*.riv"
   ]
 }
