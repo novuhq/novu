@@ -19,7 +19,10 @@ export const dropzoneWrapperStyles = css({
   _hover: {
     cursor: 'pointer',
     // TODO: Remove legacy colors, once the design system is updated
-    backgroundColor: { base: 'legacy.white !important', _dark: 'legacy.BGDark !important' },
+    backgroundColor: {
+      base: 'legacy.white !important',
+      _dark: 'legacy.BGDark !important',
+    },
     opacity: '0.8',
     backdropFilter: 'blur(6px)',
   },
