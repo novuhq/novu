@@ -132,6 +132,7 @@
   },
   "optionalDependencies": {
     "@novu/ee-billing-web": "^0.24.1",
+    "@novu/ee-echo-web": "^0.24.1",
     "@novu/ee-translation-web": "^0.24.1"
   },
   "devDependencies": {
