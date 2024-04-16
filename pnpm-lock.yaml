@@ -433,9 +433,9 @@ importers:
       '@novu/ee-billing':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/billing
-      '@novu/ee-chimera':
+      '@novu/ee-echo-api':
         specifier: ^0.24.1
-        version: link:../../enterprise/packages/chimera
+        version: link:../../enterprise/packages/echo/echo-api
       '@novu/ee-translation':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/translation
@@ -918,7 +918,7 @@ importers:
         version: link:../../enterprise/packages/billing-web
       '@novu/ee-echo-web':
         specifier: ^0.24.1
-        version: link:../../enterprise/packages/web/echo
+        version: link:../../enterprise/packages/echo/echo-web
       '@novu/ee-translation-web':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/translation-web
@@ -1463,9 +1463,9 @@ importers:
       '@novu/ee-billing':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/billing
-      '@novu/ee-chimera-connect':
+      '@novu/ee-echo-worker':
         specifier: ^0.24.1
-        version: link:../../enterprise/packages/chimera-connect
+        version: link:../../enterprise/packages/echo/echo-worker
       '@novu/ee-translation':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/translation
@@ -1940,7 +1940,7 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
-  enterprise/packages/chimera:
+  enterprise/packages/echo/echo-api:
     dependencies:
       '@nestjs/common':
         specifier: 10.2.2
@@ -1953,22 +1953,22 @@ importers:
         version: 9.0.3(@nestjs/common@10.2.2)(passport@0.6.0)
       '@novu/application-generic':
         specifier: ^0.24.1
-        version: link:../../../packages/application-generic
+        version: link:../../../../packages/application-generic
       '@novu/dal':
         specifier: ^0.24.1
-        version: link:../../../libs/dal
+        version: link:../../../../libs/dal
       '@novu/ee-dal':
         specifier: ^0.24.1
-        version: link:../libs/dal
+        version: link:../../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
-        version: link:../../../libs/shared
+        version: link:../../../../libs/shared
       '@novu/stateless':
         specifier: ^0.24.1
-        version: link:../../../packages/stateless
+        version: link:../../../../packages/stateless
       '@novu/testing':
         specifier: ^0.24.1
-        version: link:../../../libs/testing
+        version: link:../../../../libs/testing
       axios:
         specifier: ^1.6.2
         version: 1.6.7
@@ -2037,7 +2037,68 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
-  enterprise/packages/chimera-connect:
+  enterprise/packages/echo/echo-web:
+    dependencies:
+      '@mantine/core':
+        specifier: ^5.7.1
+        version: 5.10.5(@emotion/react@11.10.6)(@mantine/hooks@5.10.5)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
+      '@mantine/hooks':
+        specifier: ^5.7.1
+        version: 5.10.5(react@17.0.2)
+      '@novu/design-system':
+        specifier: ^0.24.1
+        version: link:../../../../libs/design-system
+      '@novu/shared-web':
+        specifier: ^0.24.1
+        version: link:../../../../libs/shared-web
+      '@rjsf/core':
+        specifier: ^5.17.1
+        version: 5.17.1(@rjsf/utils@5.17.1)(react@17.0.2)
+      '@rjsf/validator-ajv8':
+        specifier: ^5.17.1
+        version: 5.17.1(@rjsf/utils@5.17.1)
+      '@tanstack/react-query':
+        specifier: ^4.20.4
+        version: 4.29.1(react-dom@17.0.2)(react@17.0.2)
+      react-router-dom:
+        specifier: 6.2.2
+        version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
+      tslib:
+        specifier: ^2.3.1
+        version: 2.6.2
+    devDependencies:
+      '@types/node':
+        specifier: ^18.11.12
+        version: 18.18.5
+      '@types/react':
+        specifier: ^17.0.0
+        version: 17.0.62
+      '@types/react-dom':
+        specifier: ^17.0.0
+        version: 17.0.20
+      eslint:
+        specifier: ^8.33.0
+        version: 8.51.0
+      eslint-plugin-react-hooks:
+        specifier: ^4.4.0
+        version: 4.6.0(eslint@8.51.0)
+      react:
+        specifier: ^17.0.1
+        version: 17.0.2
+      react-dom:
+        specifier: ^17.0.1
+        version: 17.0.2(react@17.0.2)
+      rimraf:
+        specifier: ^3.0.2
+        version: 3.0.2
+      ts-loader:
+        specifier: ~9.4.0
+        version: 9.4.2(typescript@4.9.5)(webpack@5.78.0)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  enterprise/packages/echo/echo-worker:
     dependencies:
       '@nestjs/common':
         specifier: 10.2.2
@@ -2050,19 +2111,19 @@ importers:
         version: 9.0.3(@nestjs/common@10.2.2)(passport@0.6.0)
       '@novu/dal':
         specifier: ^0.24.1
-        version: link:../../../libs/dal
+        version: link:../../../../libs/dal
       '@novu/ee-dal':
         specifier: ^0.24.1
-        version: link:../libs/dal
+        version: link:../../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
-        version: link:../../../libs/shared
+        version: link:../../../../libs/shared
       '@novu/stateless':
         specifier: ^0.24.1
-        version: link:../../../packages/stateless
+        version: link:../../../../packages/stateless
       '@novu/testing':
         specifier: ^0.24.1
-        version: link:../../../libs/testing
+        version: link:../../../../libs/testing
       axios:
         specifier: ^1.6.2
         version: 1.6.7
@@ -2374,67 +2435,6 @@ importers:
       '@types/react-dom':
         specifier: ^17.0.0
         version: 17.0.20
-      react:
-        specifier: ^17.0.1
-        version: 17.0.2
-      react-dom:
-        specifier: ^17.0.1
-        version: 17.0.2(react@17.0.2)
-      rimraf:
-        specifier: ^3.0.2
-        version: 3.0.2
-      ts-loader:
-        specifier: ~9.4.0
-        version: 9.4.2(typescript@4.9.5)(webpack@5.78.0)
-      typescript:
-        specifier: 4.9.5
-        version: 4.9.5
-
-  enterprise/packages/web/echo:
-    dependencies:
-      '@mantine/core':
-        specifier: ^5.7.1
-        version: 5.10.5(@emotion/react@11.10.6)(@mantine/hooks@5.10.5)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
-      '@mantine/hooks':
-        specifier: ^5.7.1
-        version: 5.10.5(react@17.0.2)
-      '@novu/design-system':
-        specifier: ^0.24.1
-        version: link:../../../../libs/design-system
-      '@novu/shared-web':
-        specifier: ^0.24.1
-        version: link:../../../../libs/shared-web
-      '@rjsf/core':
-        specifier: ^5.17.1
-        version: 5.17.1(@rjsf/utils@5.17.1)(react@17.0.2)
-      '@rjsf/validator-ajv8':
-        specifier: ^5.17.1
-        version: 5.17.1(@rjsf/utils@5.17.1)
-      '@tanstack/react-query':
-        specifier: ^4.20.4
-        version: 4.29.1(react-dom@17.0.2)(react@17.0.2)
-      react-router-dom:
-        specifier: 6.2.2
-        version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
-      tslib:
-        specifier: ^2.3.1
-        version: 2.6.2
-    devDependencies:
-      '@types/node':
-        specifier: ^18.11.12
-        version: 18.18.5
-      '@types/react':
-        specifier: ^17.0.0
-        version: 17.0.62
-      '@types/react-dom':
-        specifier: ^17.0.0
-        version: 17.0.20
-      eslint:
-        specifier: ^8.33.0
-        version: 8.51.0
-      eslint-plugin-react-hooks:
-        specifier: ^4.4.0
-        version: 4.6.0(eslint@8.51.0)
       react:
         specifier: ^17.0.1
         version: 17.0.2
@@ -3381,9 +3381,9 @@ importers:
         specifier: ^1.4.6
         version: 1.6.6
     optionalDependencies:
-      '@novu/ee-chimera-connect':
+      '@novu/ee-echo-worker':
         specifier: ^0.24.1
-        version: link:../../enterprise/packages/chimera-connect
+        version: link:../../enterprise/packages/echo/echo-worker
       '@novu/ee-shared-services':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/shared-services
@@ -40596,7 +40596,7 @@ packages:
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.51.0)
-      has: 1.0.4
+      has: 1.0.3
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -52004,7 +52004,7 @@ packages:
     dev: false
 
   /pause@0.0.1:
-    resolution: {integrity: sha512-KG8UEiEVkR3wGEb4m5yZkVCzigAD+cVEJck2CzYZO37ZGJfctvVptVO192MwrtPhzONn6go8ylnOdMhKqi4nfg==}
+    resolution: {integrity: sha1-HUCLP9t2kjuVQ9lvtMnf1TXZy10=}
     dev: false
 
   /peberminta@0.9.0:
@@ -58900,7 +58900,7 @@ packages:
     resolution: {integrity: sha512-l7FvfAHlcmulp8kr+flpQZmVwtu7nfRV7NZujtN0OqES8EL4O4e0qqzL0DC5gAvx/ZC/9lk6rhcUwYvkBnBnYA==}
     engines: {node: '>=12'}
     dependencies:
-      punycode: 2.3.0
+      punycode: 2.3.1
 
   /tr46@5.0.0:
     resolution: {integrity: sha512-tk2G5R2KRwBd+ZN0zaEXpmzdKyOYksXwywulIX95MBODjSzMIuQnQ3m8JxgbhnL1LeVo7lqQKsYa1O3Htl7K5g==}
@@ -59284,8 +59284,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 16.11.7
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
@@ -59315,8 +59315,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 16.11.7
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2
@@ -59346,8 +59346,8 @@ packages:
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.3
       '@types/node': 20.5.1
-      acorn: 8.10.0
-      acorn-walk: 8.2.0
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
       arg: 4.1.3
       create-require: 1.1.1
       diff: 4.0.2

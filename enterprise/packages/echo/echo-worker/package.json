@@ -1,5 +1,5 @@
 {
-  "name": "@novu/ee-chimera-connect",
+  "name": "@novu/ee-echo-worker",
   "version": "0.24.1",
   "private": true,
   "main": "dist/index.js",

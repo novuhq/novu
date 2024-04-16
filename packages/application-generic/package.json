@@ -165,7 +165,7 @@
     "slugify": "^1.4.6"
   },
   "optionalDependencies": {
-    "@novu/ee-chimera-connect": "^0.24.1",
+    "@novu/ee-echo-worker": "^0.24.1",
     "@novu/ee-shared-services": "^0.24.1",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },

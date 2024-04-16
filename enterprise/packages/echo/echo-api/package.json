@@ -1,5 +1,5 @@
 {
-  "name": "@novu/ee-chimera",
+  "name": "@novu/ee-echo-api",
   "version": "0.24.1",
   "private": true,
   "main": "dist/index.js",
