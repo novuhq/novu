@@ -75,6 +75,14 @@ export class SendgridEmailProvider implements IEmailProvider {
     const dynamicTemplateData = options.customData?.dynamicTemplateData;
     const templateId = options.customData?.templateId as unknown as string;
     const asm = options.customData?.asm as ASMConfig;
+    if (asm?.groupId) {
+      asm.groupId = parseInt(asm.groupId as any); // Sendgrid expects groupId to be a number
+    }
+    if (asm?.groupsToDisplay) {
+      asm.groupsToDisplay = asm.groupsToDisplay.map((group) =>
+        parseInt(group as any)
+      ); // Sendgrid expects groupsToDisplay to be an array of numbers
+    }
     /*
      * deleted below values from customData to avoid passing them
      * in customArgs because customArgs has max limit of 10,000 bytes
