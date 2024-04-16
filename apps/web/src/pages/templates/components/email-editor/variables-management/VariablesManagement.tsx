@@ -1,5 +1,5 @@
 import { useWatch } from 'react-hook-form';
-import { Group, useMantineColorScheme } from '@mantine/core';
+import { Group, Stack, useMantineColorScheme, Center } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
 import * as set from 'lodash.set';
 import styled from '@emotion/styled';
@@ -16,6 +16,8 @@ import {
   ActionButton,
   PencilOutlined,
   Close,
+  Text,
+  Button,
 } from '@novu/design-system';
 
 import { VarItemsDropdown } from './VarItemsDropdown';
@@ -24,6 +26,10 @@ import { useDebounce, useProcessVariables } from '../../../../../hooks';
 import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
 import { useWorkflowVariables } from '../../../../../api/hooks';
+import { useProductFeature } from '@novu/shared-web';
+import { ProductFeatureKeyEnum } from '@novu/shared';
+import { Link, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../../../constants/routes.enum';
 
 interface IVariablesList {
   translations: Record<string, any>;
@@ -85,12 +91,12 @@ export const VariablesManagement = ({
   const { colorScheme } = useMantineColorScheme();
 
   const { variables } = useWorkflowVariables();
-
   const processedVariables = useProcessVariables(variableArray, false);
   const [variablesList, setVariablesList] = useState<IVariablesList>({
     ...variables,
     step: processedVariables,
   });
+  // console.log(isTranslationsEnabled);
   const [searchVal, setSearchVal] = useState('');
 
   const debouncedSearchChange = useDebounce((args: { search: string; list: IVariablesList }) => {
@@ -213,36 +219,111 @@ export const VariableSectionItem = ({
   withFolders?: boolean;
 }) => {
   const keys = variableList && Object.keys(variableList);
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+  const navigate = useNavigate();
+  const isTranslationsEnabled = useProductFeature(ProductFeatureKeyEnum.TRANSLATIONS);
 
   return (
-    <When truthy={keys?.length}>
-      <VarLabel label={sectionName} Icon={Icon}>
-        {keys?.map((name, ind) => {
-          if (typeof variableList[name] === 'object') {
+    <>
+      <When truthy={keys?.length}>
+        <VarLabel label={sectionName} Icon={Icon}>
+          {keys?.map((name, ind) => {
+            if (typeof variableList[name] === 'object') {
+              return (
+                <VarItemsDropdown
+                  withFolders={withFolders}
+                  path={name}
+                  highlight={search}
+                  key={ind}
+                  name={name}
+                  type={variableList[name]}
+                />
+              );
+            }
+
             return (
-              <VarItemsDropdown
-                withFolders={withFolders}
-                path={name}
+              <VarItemTooltip
                 highlight={search}
-                key={ind}
+                pathToCopy={name}
                 name={name}
-                type={variableList[name]}
+                type={typeof variableList[name]}
+                key={ind}
               />
             );
-          }
-
-          return (
-            <VarItemTooltip
-              highlight={search}
-              pathToCopy={name}
-              name={name}
-              type={typeof variableList[name]}
-              key={ind}
-            />
-          );
-        })}
-      </VarLabel>
-    </When>
+          })}
+        </VarLabel>
+      </When>
+      <When truthy={!keys?.length && sectionName === 'Translation Variables' && !isTranslationsEnabled}>
+        <VarLabel label={sectionName} Icon={Icon}>
+          <Stack
+            spacing={8}
+            style={{
+              borderRadius: '7px',
+              marginBottom: '24px',
+              padding: '24px',
+              background: isDark ? colors.B20 : colors.B98,
+              alignItems: 'center',
+            }}
+          >
+            <Text mb={8} align={'center'} color={colors.B60}>
+              Utilize i18n localization for translating notifications
+            </Text>
+            <Button onClick={() => navigate('/settings/billing')}>Upgrade plan</Button>
+            <Group position="center" spacing={4}>
+              <Text color={isDark ? colors.B60 : colors.B40}>Questions?</Text>
+              <Text gradient={true}>
+                <a
+                  onClick={() => {
+                    // onContactSales();
+                  }}
+                  style={{
+                    cursor: 'pointer',
+                  }}
+                >
+                  Contact sales
+                </a>
+              </Text>
+            </Group>
+          </Stack>
+        </VarLabel>
+      </When>
+      <When truthy={!keys?.length && sectionName === 'Translation Variables' && isTranslationsEnabled}>
+        <VarLabel label={sectionName} Icon={Icon}>
+          <Stack
+            style={{
+              borderRadius: '7px',
+              marginBottom: '24px',
+              padding: '24px',
+              background: isDark ? colors.B20 : colors.B98,
+              alignItems: 'center',
+            }}
+          >
+            {/*<Text mb={8} align={'center'} color={colors.B60}>*/}
+            {/*  Upload translations to use them as variables or in the autosuggest for the editor.*/}
+            {/*</Text>*/}
+            {/*<Button onClick={() => navigate('/settings/billing')}>Upgrade plan</Button>*/}
+            {/*<Center inline>*/}
+            <Text color={isDark ? colors.B60 : colors.B40}>
+              <GradientSpan>
+                <a
+                  onClick={() => {
+                    navigate(ROUTES.TRANSLATIONS);
+                  }}
+                  style={{
+                    cursor: 'pointer',
+                  }}
+                >
+                  Upload translations{' '}
+                </a>
+              </GradientSpan>
+              <span>to use them as variables or in the autosuggest for the editor.</span>
+            </Text>
+            {/*</Center>*/}
+          </Stack>
+        </VarLabel>
+      </When>
+    </>
   );
 };
 
@@ -260,4 +341,13 @@ const EmptySearchContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+const GradientSpan = styled.span`
+  background: ${colors.horizontal};
+  background-clip: text;
+  text-fill-color: transparent;
+
+  &:hover {
+    cursor: pointer;
+  }
 `;
