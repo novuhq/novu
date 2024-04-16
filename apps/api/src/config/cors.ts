@@ -1,4 +1,4 @@
-import { INestApplication, Request } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 import { HttpRequestHeaderKeysEnum } from '../app/shared/framework/types';
 
 export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] = function (req: Request, callback) {
@@ -25,7 +25,14 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
       process.env.NODE_ENV === 'dev' &&
       host.includes(process.env.PR_PREVIEW_ROOT_URL);
 
+    Logger.verbose(`Should allow deploy preview? ${shouldDisableCorsForPreviewUrls ? 'Yes' : 'No'}.`, {
+      curEnv: process.env.NODE_ENV,
+      previewUrlRoot: process.env.PR_PREVIEW_ROOT_URL,
+      host,
+    });
+
     if (shouldDisableCorsForPreviewUrls) {
+      Logger.verbose(`Allowing deploy previews.`);
       corsOptions.origin.push('*');
     }
   }
