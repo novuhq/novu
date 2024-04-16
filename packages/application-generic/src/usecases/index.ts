@@ -42,4 +42,5 @@ export * from './compile-in-app-template';
 export * from './execution-log-route';
 export * from './compile-step-template';
 export * from './create-workflow';
-export * from './create-message-template';
+export * from './workflow';
+export * from './message-template';

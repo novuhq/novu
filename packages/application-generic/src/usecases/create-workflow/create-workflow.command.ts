@@ -19,7 +19,7 @@ import {
   IWorkflowStepMetadata,
   NotificationTemplateCustomData,
   INotificationGroup,
-  WorkflowStepTypeEnum,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../commands';
@@ -83,9 +83,9 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   payloadSchema?: JSONSchema7;
 
-  @IsEnum(WorkflowStepTypeEnum)
+  @IsEnum(WorkflowTypeEnum)
   @IsDefined()
-  type: WorkflowStepTypeEnum;
+  type: WorkflowTypeEnum;
 }
 
 export class ChannelCTACommand {

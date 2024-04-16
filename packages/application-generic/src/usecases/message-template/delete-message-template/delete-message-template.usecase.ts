@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { CreateChange, CreateChangeCommand } from '@novu/application-generic';
-import { ChangeRepository, DalException, MessageTemplateRepository } from '@novu/dal';
+import {
+  ChangeRepository,
+  DalException,
+  MessageTemplateRepository,
+} from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 
-import { ApiException } from '../../../shared/exceptions/api.exception';
 import { DeleteMessageTemplateCommand } from './delete-message-template.command';
+import { CreateChange, CreateChangeCommand } from '../../create-change';
+import { ApiException } from '../../../utils/exceptions';
 
 @Injectable()
 export class DeleteMessageTemplate {
@@ -27,10 +31,11 @@ export class DeleteMessageTemplate {
         command.messageTemplateId
       );
 
-      const deletedMessageTemplate = await this.messageTemplateRepository.findDeleted({
-        _environmentId: command.environmentId,
-        _id: command.messageTemplateId,
-      });
+      const deletedMessageTemplate =
+        await this.messageTemplateRepository.findDeleted({
+          _environmentId: command.environmentId,
+          _id: command.messageTemplateId,
+        });
 
       await this.createChange.execute(
         CreateChangeCommand.create({

@@ -28,7 +28,7 @@ type ActiveIntegrationStatusWithPrimary = {
   };
 };
 
-export enum WorkflowStepTypeEnum {
+export enum WorkflowTypeEnum {
   REGULAR = 'REGULAR',
   ECHO = 'ECHO',
 }

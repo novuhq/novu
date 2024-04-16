@@ -22,7 +22,7 @@ import {
   INotificationTrigger,
   IStepVariant,
   TriggerTypeEnum,
-  WorkflowStepTypeEnum,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 
 import {
@@ -30,15 +30,14 @@ import {
   NotificationStep,
   NotificationStepVariantCommand,
 } from './create-workflow.command';
-
 import { CreateChange, CreateChangeCommand } from '../create-change';
 import { AnalyticsService } from '../../services';
 import { ContentService } from '../../services/content.service';
+import { isVariantEmpty } from '../../utils/variants';
 import {
   CreateMessageTemplate,
   CreateMessageTemplateCommand,
-} from '../create-message-template';
-import { isVariantEmpty } from '../../utils/variants';
+} from '../message-template';
 
 @Injectable()
 export class CreateWorkflow {
@@ -85,14 +84,28 @@ export class CreateWorkflow {
         process.env.NOVU_ENTERPRISE === 'true' ||
         process.env.CI_EE_TEST === 'true'
       ) {
-        if (!require('@novu/ee-translation')?.TranslationsService) {
+        if (!require('@novu/ee-shared-services')?.TranslationsService) {
           throw new Error('Translation module is not loaded');
         }
         const service = this.moduleRef.get(
-          require('@novu/ee-translation')?.TranslationsService,
+          require('@novu/ee-shared-services')?.TranslationsService,
           { strict: false }
         );
-        await service.createTranslationAnalytics(storedWorkflow);
+
+        const locales = await service.createTranslationAnalytics(
+          storedWorkflow
+        );
+
+        this.analyticsService.track(
+          'Locale used in workflow - [Translations]',
+          command.userId,
+          {
+            _organization: command.organizationId,
+            _environment: command.environmentId,
+            workflowId: storedWorkflow._id,
+            locales,
+          }
+        );
       }
     } catch (e) {
       Logger.error(
@@ -228,7 +241,7 @@ export class CreateWorkflow {
       _notificationGroupId: command.notificationGroupId,
       blueprintId: command.blueprintId,
       type: command.type,
-      ...(command.inputs ? { inputs: command.inputs } : {}),
+      // ...(command.inputs ? { inputs: command.inputs } : {}),
       ...(command.rawData ? { rawData: command.rawData } : {}),
       ...(command.payloadSchema
         ? { payloadSchema: command.payloadSchema }
@@ -409,7 +422,7 @@ export class CreateWorkflow {
       preferenceSettings: command.preferenceSettings,
       blueprintId: command.blueprintId,
       __source: command.__source,
-      type: WorkflowStepTypeEnum.REGULAR,
+      type: WorkflowTypeEnum.REGULAR,
     });
   }
 

@@ -17,7 +17,7 @@ import {
   MessageTemplateContentType,
 } from '@novu/shared';
 
-import { EnvironmentWithUserCommand } from '../../commands';
+import { EnvironmentWithUserCommand } from '../../../commands';
 
 export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()

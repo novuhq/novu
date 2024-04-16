@@ -1,4 +1,11 @@
-import { IsDefined, IsEnum, IsMongoId, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsDefined,
+  IsEnum,
+  IsMongoId,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import {
   StepTypeEnum,
   IEmailBlock,
@@ -7,7 +14,8 @@ import {
   IActor,
   MessageTemplateContentType,
 } from '@novu/shared';
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { EnvironmentWithUserCommand } from '../../../commands';
+import { JSONSchema7 } from 'json-schema';
 
 export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -63,4 +71,9 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   actor?: IActor;
+
+  @IsOptional()
+  inputs?: {
+    schema: JSONSchema7;
+  };
 }

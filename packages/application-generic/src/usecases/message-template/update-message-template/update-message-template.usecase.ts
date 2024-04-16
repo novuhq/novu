@@ -1,38 +1,49 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-
-import { ChangeRepository, MessageTemplateEntity, MessageTemplateRepository, MessageRepository } from '@novu/dal';
-import { ChangeEntityTypeEnum, ITemplateVariable } from '@novu/shared';
 import {
-  CreateChange,
-  CreateChangeCommand,
-  normalizeVariantDefault,
-  sanitizeMessageContent,
-  UpdateChange,
-  UpdateChangeCommand,
-} from '@novu/application-generic';
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
+import {
+  ChangeRepository,
+  MessageTemplateEntity,
+  MessageTemplateRepository,
+  MessageRepository,
+} from '@novu/dal';
+import { ChangeEntityTypeEnum } from '@novu/shared';
 
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
+import { CreateChange, CreateChangeCommand } from '../../create-change';
+import { UpdateChange, UpdateChangeCommand } from '../../update-change';
+import { sanitizeMessageContent } from '../../../services';
+import { normalizeVariantDefault } from '../../../utils/variants';
 
 @Injectable()
 export class UpdateMessageTemplate {
   constructor(
     private messageTemplateRepository: MessageTemplateRepository,
     private messageRepository: MessageRepository,
-    private createChange: CreateChange,
     private changeRepository: ChangeRepository,
+    private createChange: CreateChange,
     private updateChange: UpdateChange
   ) {}
 
-  async execute(command: UpdateMessageTemplateCommand): Promise<MessageTemplateEntity> {
+  async execute(
+    command: UpdateMessageTemplateCommand
+  ): Promise<MessageTemplateEntity> {
     const existingTemplate = await this.messageTemplateRepository.findOne({
       _id: command.templateId,
       _environmentId: command.environmentId,
     });
-    if (!existingTemplate) throw new NotFoundException(`Message template with id ${command.templateId} not found`);
+    if (!existingTemplate)
+      throw new NotFoundException(
+        `Message template with id ${command.templateId} not found`
+      );
 
     const updatePayload: Partial<MessageTemplateEntity> = {};
 
-    const unsetPayload: Partial<Record<keyof MessageTemplateEntity, string>> = {};
+    const unsetPayload: Partial<Record<keyof MessageTemplateEntity, string>> =
+      {};
 
     if (command.name) {
       updatePayload.name = command.name;
@@ -40,7 +51,9 @@ export class UpdateMessageTemplate {
 
     if (command.content !== null || command.content !== undefined) {
       updatePayload.content =
-        command.content && command.contentType === 'editor' ? sanitizeMessageContent(command.content) : command.content;
+        command.content && command.contentType === 'editor'
+          ? sanitizeMessageContent(command.content)
+          : command.content;
     }
 
     if (command.variables) {
@@ -92,6 +105,10 @@ export class UpdateMessageTemplate {
       updatePayload.actor = command.actor;
     }
 
+    if (command.inputs) {
+      updatePayload.inputs = command.inputs;
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
@@ -112,7 +129,10 @@ export class UpdateMessageTemplate {
       _id: command.templateId,
       _organizationId: command.organizationId,
     });
-    if (!item) throw new NotFoundException(`Message template with id ${command.templateId} is not found`);
+    if (!item)
+      throw new NotFoundException(
+        `Message template with id ${command.templateId} is not found`
+      );
 
     if (command.feedId || (!command.feedId && existingTemplate._feedId)) {
       await this.messageRepository.updateFeedByMessageTemplateId(
