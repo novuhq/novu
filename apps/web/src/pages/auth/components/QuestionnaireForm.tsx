@@ -9,7 +9,6 @@ import { JobTitleEnum, jobTitleToLabelMapper, ProductUseCasesEnum } from '@novu/
 import type { ProductUseCases, IResponseError, ICreateOrganizationDto, IJwtPayload } from '@novu/shared';
 import {
   Button,
-  colors,
   Digest,
   HalfClock,
   Input,
@@ -27,6 +26,7 @@ import { ROUTES } from '../../../constants/routes.enum';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
 import { OnboardingExperimentV2ModalKey } from '../../../constants/experimentsConstants';
+import { useDomainParser } from './useDomainHook';
 
 export function QuestionnaireForm() {
   const [loading, setLoading] = useState<boolean>();
@@ -34,11 +34,13 @@ export function QuestionnaireForm() {
     handleSubmit,
     formState: { errors },
     control,
+    setError,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
   const { setToken, token } = useAuthContext();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
+  const { parse } = useDomainParser();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
@@ -80,6 +82,17 @@ export function QuestionnaireForm() {
 
   const onCreateOrganization = async (data: IOrganizationCreateForm) => {
     if (!data?.organizationName) return;
+
+    const val = parse(data?.domain as string);
+
+    if (data.domain && !val.isIcann) {
+      setError('domain', {
+        type: 'custom',
+        message: 'Please make sure you specified a valid domain',
+      });
+
+      return false;
+    }
 
     setLoading(true);
 
@@ -161,12 +174,6 @@ export function QuestionnaireForm() {
       <Controller
         name="domain"
         control={control}
-        rules={{
-          pattern: {
-            value: /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/,
-            message: 'Please make sure you specified a valid domain',
-          },
-        }}
         render={({ field }) => {
           return (
             <Input
