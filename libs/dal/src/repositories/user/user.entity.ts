@@ -53,6 +53,8 @@ export class UserEntity implements IUserEntity {
   servicesHashes?: { intercom?: string };
 
   jobTitle?: JobTitleEnum;
+
+  externalId?: string;
 }
 
 export type UserDBModel = UserEntity;
