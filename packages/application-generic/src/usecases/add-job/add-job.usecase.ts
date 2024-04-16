@@ -5,6 +5,7 @@ import {
   ExecutionDetailsStatusEnum,
   StepTypeEnum,
   DigestCreationResultEnum,
+  DigestTypeEnum,
 } from '@novu/shared';
 
 import { AddDelayJob } from './add-delay-job.usecase';
@@ -35,6 +36,7 @@ import {
   IUseCaseInterfaceInline,
   requireInject,
 } from '../../utils/require-inject';
+import { IFilterVariables } from '../../utils/filter-processing-details';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -85,7 +87,7 @@ export class AddJob {
     );
 
     let filtered = false;
-
+    let filterVariables: IFilterVariables | undefined;
     if (
       [StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(
         job.type as StepTypeEnum
@@ -102,6 +104,7 @@ export class AddJob {
         })
       );
 
+      filterVariables = shouldRun.variables;
       filtered = !shouldRun.passed;
     }
 
@@ -109,9 +112,12 @@ export class AddJob {
     let digestCreationResult: DigestCreationResultEnum | undefined;
     if (job.type === StepTypeEnum.DIGEST) {
       const chimeraResponse = await this.chimeraConnector.execute<
-        AddJobCommand,
+        AddJobCommand & { variables: IFilterVariables },
         ExecuteOutput<IChimeraDigestResponse>
-      >(command);
+      >({
+        ...command,
+        variables: filterVariables,
+      });
 
       validateDigest(job);
 
@@ -119,7 +125,10 @@ export class AddJob {
         stepMetadata: job.digest,
         payload: job.payload,
         overrides: job.overrides,
-        chimeraResponse: chimeraResponse?.outputs,
+        // TODO: Remove fallback after other digest types are implemented.
+        chimeraResponse: chimeraResponse
+          ? { type: DigestTypeEnum.REGULAR, ...chimeraResponse.outputs }
+          : undefined,
       });
 
       Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
@@ -164,9 +173,12 @@ export class AddJob {
 
     if (job.type === StepTypeEnum.DELAY) {
       const chimeraResponse = await this.chimeraConnector.execute<
-        AddJobCommand,
+        AddJobCommand & { variables: IFilterVariables },
         ExecuteOutput<IChimeraDigestResponse>
-      >(command);
+      >({
+        ...command,
+        variables: filterVariables,
+      });
 
       command.chimeraResponse = chimeraResponse;
       delayAmount = await this.addDelayJob.execute(command);
