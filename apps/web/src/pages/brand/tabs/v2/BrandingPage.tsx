@@ -6,7 +6,12 @@ import { css } from '../../../../styled-system/css';
 import { Stack } from '../../../../styled-system/jsx';
 import { successMessage } from '../../../../utils/notifications';
 import { SettingsPageContainer } from '../../../settings/SettingsPageContainer';
-import { DEFAULT_BRANDING_COLOR, DEFAULT_FONT_FAMILY, IBrandFormValues } from './BrandingPage.const';
+import {
+  DEFAULT_BRANDING_COLOR,
+  DEFAULT_FONT_COLOR,
+  DEFAULT_FONT_FAMILY,
+  IBrandFormValues,
+} from './BrandingPage.const';
 import { BrandInputs } from './BrandInputs';
 import { InAppInputs } from './InAppInputs';
 
@@ -23,7 +28,7 @@ export function BrandingPage() {
     defaultValues: {
       fontFamily: organization?.branding?.fontFamily || DEFAULT_FONT_FAMILY,
       color: organization?.branding?.color || DEFAULT_BRANDING_COLOR,
-      fontColor: organization?.branding?.fontColor || DEFAULT_BRANDING_COLOR,
+      fontColor: organization?.branding?.fontColor || DEFAULT_FONT_COLOR,
       logo: organization?.branding?.logo || '',
       file: null,
     },
@@ -36,7 +41,7 @@ export function BrandingPage() {
       reset({
         fontFamily: data.fontFamily || DEFAULT_FONT_FAMILY,
         color: data.color || DEFAULT_BRANDING_COLOR,
-        fontColor: data.fontColor || DEFAULT_BRANDING_COLOR,
+        fontColor: data.fontColor || DEFAULT_FONT_COLOR,
         logo: data.logo || '',
         file: null,
       });
@@ -54,18 +59,17 @@ export function BrandingPage() {
           <Stack gap="200">
             <BrandInputs control={control} setValue={setValue} />
             <InAppInputs control={control} />
-          </Stack>
 
-          <div
-            className={css({
-              textAlign: 'right',
-              marginTop: '60px',
-            })}
-          >
-            <Button submit loading={isLoading} data-test-id="submit-branding-settings" disabled={!isDirty}>
-              Update
-            </Button>
-          </div>
+            <div
+              className={css({
+                textAlign: 'right',
+              })}
+            >
+              <Button submit loading={isLoading} data-test-id="submit-branding-settings" disabled={!isDirty}>
+                Update
+              </Button>
+            </div>
+          </Stack>
         </form>
       </LoadingOverlay>
     </SettingsPageContainer>

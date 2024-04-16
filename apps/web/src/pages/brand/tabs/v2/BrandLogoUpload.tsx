@@ -6,7 +6,7 @@ import { ControllerRenderProps, UseFormSetValue } from 'react-hook-form';
 import { useUploadToStorage } from '../../../../api/hooks/useUploadToStorage';
 import { css, cx } from '../../../../styled-system/css';
 import { Stack } from '../../../../styled-system/jsx';
-import { ACCEPTABLE_ORG_IMAGE_TYPES, IBrandFormValues } from './BrandingPage.const';
+import { ACCEPTABLE_ORG_IMAGE_TYPES, BRAND_LOGO_SIZE, IBrandFormValues } from './BrandingPage.const';
 import {
   dropzoneOverlayStyles,
   dropzoneRootStyles,
@@ -75,8 +75,8 @@ export function BrandLogoUpload({ field, setValue }: BrandLogoUploadProps) {
       >
         <div
           className={css({
-            minHeight: '6.25rem',
-            minWidth: '6.25rem',
+            minHeight: BRAND_LOGO_SIZE,
+            minWidth: BRAND_LOGO_SIZE,
             display: 'flex',
           })}
         >
@@ -85,8 +85,8 @@ export function BrandLogoUpload({ field, setValue }: BrandLogoUploadProps) {
               data-test-id="logo-image-wrapper"
               src={field.value}
               className={css({
-                minHeight: '6.25rem',
-                minWidth: '6.25rem',
+                minHeight: BRAND_LOGO_SIZE,
+                minWidth: BRAND_LOGO_SIZE,
                 objectFit: 'contain',
               })}
               alt="avatar"
