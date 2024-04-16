@@ -1,6 +1,10 @@
 import { addAndEditChannel, clickWorkflow, dragAndDrop, editChannel, fillBasicNotificationDetails, goBack } from '.';
 
-describe('Workflow Editor - Main Functionality', function () {
+/**
+ * The tests from this file were moved to the corresponding Playwright file apps/web/tests/main-functionality.spec.ts.
+ * @deprecated
+ */
+describe.skip('Workflow Editor - Main Functionality', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
   });

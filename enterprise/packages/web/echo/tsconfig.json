@@ -1,0 +1,34 @@
+{
+  "include": [
+    "src"
+  ],
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist/cjs",
+    "forceConsistentCasingInFileNames": true,
+    "target": "es6",
+    "strict": true,
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
+    "jsx": "react",
+    "module": "commonjs",
+    "lib": [
+      "ESNext",
+      "dom"
+    ],
+    "skipLibCheck": true,
+    "declaration": false,
+    "declarationMap": false,
+    "sourceMap": true,
+    "removeComments": false,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "."
+  },
+  "exclude": [
+    "src/**/*.test.*",
+    "src/*.test.*",
+    "node_modules",
+    "**/node_modules/*"
+  ]
+}

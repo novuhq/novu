@@ -1,4 +1,8 @@
-describe('Start from scratch tour hints', function () {
+/**
+ * The tests from this file were moved to the corresponding Playwright file apps/web/tests/start-from-scratch-tour.spec.ts.
+ * @deprecated
+ */
+describe.skip('Start from scratch tour hints', function () {
   beforeEach(function () {
     cy.initializeSession({ showOnBoardingTour: true }).as('session');
   });

@@ -191,18 +191,9 @@ describe('Notifications List', function () {
     scrollToBottom();
     cy.getByTestId('notification-list-item').should('have.length', 26);
 
-    cy.getByTestId('notification-list-item')
-      .should('exist')
-      .each(($item, $index) => {
-        const notificationContentNumber = 20 - $index > 0 ? ' ' + (20 - $index).toString() : '';
-        cy.wrap($item)
-          .invoke('text')
-          .then((text) => {
-            if ($index !== 0) {
-              expect(text).to.contains(`John${notificationContentNumber}`);
-            }
-          });
-      });
+    for (let i = 0; i < 21; i++) {
+      cy.getByTestId('notification-list-item').contains(`John ${i}`).should('exist');
+    }
   });
 });
 

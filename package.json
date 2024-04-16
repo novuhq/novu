@@ -14,7 +14,7 @@
     "nx": "nx",
     "lint-staged": "lint-staged",
     "generate:provider": "npx hygen provider new --version 0.24.1",
-    "lint": "nx run-many --target=lint --all",
+    "lint": "nx run-many  --target=lint --all",
     "test": "cross-env CI=true lerna run test:watch --parallel",
     "start:dev": "cross-env TZ=UTC lerna run start:dev --stream --parallel --concurrency=20 --scope=@novu/{api,worker,web,widget,ws,notification-center}",
     "start:web": "cross-env nx run @novu/web:start",

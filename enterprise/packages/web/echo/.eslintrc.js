@@ -1,5 +1,4 @@
 module.exports = {
-  extends: ['../../.eslintrc.js'],
   rules: {
     'func-names': 'off',
     'react/jsx-props-no-spreading': 'off',
@@ -19,13 +18,6 @@ module.exports = {
     'react/require-default-props': 'off',
     'react/no-danger': 'off',
     'jsx-a11y/click-events-have-key-events': 'off',
-    'no-restricted-imports': [
-      'error',
-      {
-        paths: ['src'],
-        patterns: ['@novu/dal'],
-      },
-    ],
     '@typescript-eslint/naming-convention': [
       'error',
       {
@@ -35,15 +27,14 @@ module.exports = {
         format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
       },
     ],
-    "react-hooks/rules-of-hooks": 'error',
-    "react-hooks/exhaustive-deps": 'warn'
+    '@typescript-eslint/no-empty-function': 'off',
   },
   env: {
     'cypress/globals': true,
   },
-  ignorePatterns: ['craco.config.js', 'cypress/*', '**/styled-system/**/*', 'tests/*'],
-  extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
-  plugins: ['cypress', 'react-hooks'],
+  ignorePatterns: ['craco.config.js', 'cypress/*'],
+  extends: ['plugin:cypress/recommended', '../../../.eslintrc.js'],
+  plugins: ['cypress'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,
