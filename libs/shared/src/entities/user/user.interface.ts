@@ -21,4 +21,5 @@ export interface IUpdateUserProfile {
   firstName: string;
   lastName: string;
   profilePicture?: string;
+  externalId?: string;
 }

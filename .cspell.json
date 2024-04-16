@@ -625,10 +625,11 @@
     "runtimes",
     "cafebabe",
     "Markunread",
-    "limitbar",
     "Fira",
     "Roboto",
     "Raleway"
+    "Icann",
+    "limitbar"
   ],
   "flagWords": [],
   "patterns": [
