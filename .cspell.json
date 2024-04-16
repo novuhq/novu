@@ -621,7 +621,8 @@
     "Vonage",
     "runtimes",
     "cafebabe",
-    "Icann"
+    "Icann",
+    "limitbar",
   ],
   "flagWords": [],
   "patterns": [
@@ -684,6 +685,7 @@
     "apps/api/src/.env.test",
     "apps/ws/src/.env.test",
     "apps/ws/src/.example.env",
+    "apps/web/playwright.config.ts",
     ".cspell.json",
     "package.json",
     "package-lock.json",
