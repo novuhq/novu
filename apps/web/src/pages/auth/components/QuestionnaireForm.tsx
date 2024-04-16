@@ -83,17 +83,6 @@ export function QuestionnaireForm() {
   const onCreateOrganization = async (data: IOrganizationCreateForm) => {
     if (!data?.organizationName) return;
 
-    const val = parse(data?.domain as string);
-
-    if (data.domain && !val.isIcann) {
-      setError('domain', {
-        type: 'custom',
-        message: 'Please make sure you specified a valid domain',
-      });
-
-      return false;
-    }
-
     setLoading(true);
 
     if (!jwtHasKey('organizationId')) {
@@ -174,6 +163,17 @@ export function QuestionnaireForm() {
       <Controller
         name="domain"
         control={control}
+        rules={{
+          validate: {
+            isValiDomain: (value) => {
+              const val = parse(value as string);
+
+              if (value && !val.isIcann) {
+                return 'Please provide a valid domain';
+              }
+            },
+          },
+        }}
         render={({ field }) => {
           return (
             <Input
