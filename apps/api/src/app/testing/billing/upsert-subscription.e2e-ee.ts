@@ -37,6 +37,7 @@ describe('UpsertSubscription', () => {
       data: [
         {
           id: 'subscription_id',
+          billing_cycle_anchor: 123456789,
           items: {
             data: [
               {
@@ -93,66 +94,152 @@ describe('UpsertSubscription', () => {
         subscriptions: { data: [] },
       };
 
-      it('should create a single subscription with monthly prices when billingInterval is month', async () => {
-        const useCase = createUseCase();
+      describe('Monthly Billing Interval', () => {
+        it('should create a single subscription with monthly prices', async () => {
+          const useCase = createUseCase();
 
-        await useCase.execute(
-          UpsertSubscriptionCommand.create({
-            customer: mockCustomerNoSubscriptions as any,
-            apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-            billingInterval: StripeBillingIntervalEnum.MONTH,
-          })
-        );
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: mockCustomerNoSubscriptions as any,
+              apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+              billingInterval: StripeBillingIntervalEnum.MONTH,
+            })
+          );
 
-        expect(createSubscriptionStub.lastCall.args).to.deep.equal([
-          {
-            customer: 'customer_id',
-            items: [
-              {
-                price: 'price_id_notifications',
-              },
-              {
-                price: 'price_id_flat',
-              },
-            ],
-          },
-        ]);
-      });
-
-      it('should create two subscriptions, one with monthly prices and one with annual prices when billingInterval is year', async () => {
-        const useCase = createUseCase();
-
-        await useCase.execute(
-          UpsertSubscriptionCommand.create({
-            customer: mockCustomerNoSubscriptions as any,
-            apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
-            billingInterval: StripeBillingIntervalEnum.YEAR,
-          })
-        );
-
-        expect(createSubscriptionStub.callCount).to.equal(2);
-        expect(createSubscriptionStub.getCalls().map((call) => call.args)).to.deep.equal([
-          [
-            {
-              customer: 'customer_id',
-              items: [
-                {
-                  price: 'price_id_flat',
-                },
-              ],
-            },
-          ],
-          [
+          expect(createSubscriptionStub.lastCall.args).to.deep.equal([
             {
               customer: 'customer_id',
               items: [
                 {
                   price: 'price_id_notifications',
                 },
+                {
+                  price: 'price_id_flat',
+                },
               ],
             },
-          ],
-        ]);
+          ]);
+        });
+
+        it('should set the trial configuration for the subscription when trial days are provided', async () => {
+          const useCase = createUseCase();
+
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: mockCustomerNoSubscriptions as any,
+              apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+              billingInterval: StripeBillingIntervalEnum.MONTH,
+              trialPeriodDays: 10,
+            })
+          );
+
+          expect(createSubscriptionStub.lastCall.args).to.deep.equal([
+            {
+              customer: 'customer_id',
+              trial_period_days: 10,
+              trial_settings: {
+                end_behavior: {
+                  missing_payment_method: 'cancel',
+                },
+              },
+              items: [
+                {
+                  price: 'price_id_notifications',
+                },
+                {
+                  price: 'price_id_flat',
+                },
+              ],
+            },
+          ]);
+        });
+      });
+
+      describe('Annual Billing Interval', () => {
+        it('should create two subscriptions, one with monthly prices and one with annual prices', async () => {
+          const useCase = createUseCase();
+
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: mockCustomerNoSubscriptions as any,
+              apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+              billingInterval: StripeBillingIntervalEnum.YEAR,
+            })
+          );
+
+          expect(createSubscriptionStub.callCount).to.equal(2);
+          expect(createSubscriptionStub.getCalls().map((call) => call.args)).to.deep.equal([
+            [
+              {
+                customer: 'customer_id',
+                items: [
+                  {
+                    price: 'price_id_flat',
+                  },
+                ],
+              },
+            ],
+            [
+              {
+                customer: 'customer_id',
+                items: [
+                  {
+                    price: 'price_id_notifications',
+                  },
+                ],
+              },
+            ],
+          ]);
+        });
+
+        it('should set the trial configuration for both subscriptions when trial days are provided', async () => {
+          const useCase = createUseCase();
+
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: mockCustomerNoSubscriptions as any,
+              apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+              billingInterval: StripeBillingIntervalEnum.YEAR,
+              trialPeriodDays: 10,
+            })
+          );
+
+          expect(createSubscriptionStub.callCount).to.equal(2);
+          expect(createSubscriptionStub.getCalls().map((call) => call.args)).to.deep.equal([
+            [
+              {
+                customer: 'customer_id',
+                trial_period_days: 10,
+                trial_settings: {
+                  end_behavior: {
+                    missing_payment_method: 'cancel',
+                  },
+                },
+                items: [
+                  {
+                    price: 'price_id_flat',
+                  },
+                ],
+              },
+            ],
+            [
+              {
+                customer: 'customer_id',
+                trial_period_days: 10,
+                trial_settings: {
+                  end_behavior: {
+                    missing_payment_method: 'cancel',
+                  },
+                },
+                items: [
+                  {
+                    price: 'price_id_notifications',
+                  },
+                ],
+              },
+            ],
+          ]);
+        });
       });
     });
 
@@ -177,71 +264,124 @@ describe('UpsertSubscription', () => {
         },
       };
 
-      it('should update the existing subscription if the customer has one subscription and billingInterval is month', async () => {
-        const useCase = createUseCase();
+      describe('Monthly Billing Interval', () => {
+        it('should update the existing subscription', async () => {
+          const useCase = createUseCase();
 
-        await useCase.execute(
-          UpsertSubscriptionCommand.create({
-            customer: mockCustomerOneSubscription as any,
-            apiServiceLevel: ApiServiceLevelEnum.FREE,
-            billingInterval: StripeBillingIntervalEnum.MONTH,
-          })
-        );
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: mockCustomerOneSubscription as any,
+              apiServiceLevel: ApiServiceLevelEnum.FREE,
+              billingInterval: StripeBillingIntervalEnum.MONTH,
+            })
+          );
 
-        expect(updateSubscriptionStub.lastCall.args).to.deep.equal([
-          'subscription_id',
-          {
-            items: [
-              {
-                id: 'item_id_usage_notifications',
-                price: 'price_id_notifications',
-              },
-              {
-                id: 'item_id_flat',
-                price: 'price_id_flat',
-              },
-            ],
-          },
-        ]);
+          expect(updateSubscriptionStub.lastCall.args).to.deep.equal([
+            'subscription_id',
+            {
+              items: [
+                {
+                  id: 'item_id_usage_notifications',
+                  price: 'price_id_notifications',
+                },
+                {
+                  id: 'item_id_flat',
+                  price: 'price_id_flat',
+                },
+              ],
+            },
+          ]);
+        });
       });
 
-      it('should create a new annual subscription and update the existing subscription if the customer has one subscription and billingInterval is year', async () => {
-        const useCase = createUseCase();
+      describe('Annual Billing Interval', () => {
+        it('should create a new annual subscription and update the existing subscription', async () => {
+          const useCase = createUseCase();
 
-        await useCase.execute(
-          UpsertSubscriptionCommand.create({
-            customer: mockCustomerOneSubscription as any,
-            apiServiceLevel: ApiServiceLevelEnum.FREE,
-            billingInterval: StripeBillingIntervalEnum.YEAR,
-          })
-        );
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: mockCustomerOneSubscription as any,
+              apiServiceLevel: ApiServiceLevelEnum.FREE,
+              billingInterval: StripeBillingIntervalEnum.YEAR,
+            })
+          );
 
-        expect(createSubscriptionStub.lastCall.args).to.deep.equal([
-          {
-            customer: 'customer_id',
-            items: [
-              {
-                price: 'price_id_flat',
-              },
-            ],
-          },
-        ]);
+          expect(createSubscriptionStub.lastCall.args).to.deep.equal([
+            {
+              customer: 'customer_id',
+              items: [
+                {
+                  price: 'price_id_flat',
+                },
+              ],
+            },
+          ]);
 
-        expect(updateSubscriptionStub.lastCall.args).to.deep.equal([
-          'subscription_id',
-          {
-            items: [
-              {
-                id: 'item_id_usage_notifications',
-                price: 'price_id_notifications',
+          expect(updateSubscriptionStub.lastCall.args).to.deep.equal([
+            'subscription_id',
+            {
+              items: [
+                {
+                  id: 'item_id_usage_notifications',
+                  price: 'price_id_notifications',
+                },
+                {
+                  id: 'item_id_flat',
+                  deleted: true,
+                },
+              ],
+            },
+          ]);
+        });
+
+        it('should set the trial configuration for the newly created annual subscription from the existing licensed subscription', async () => {
+          const useCase = createUseCase();
+          const customer = {
+            ...mockCustomerBase,
+            subscriptions: {
+              data: [
+                {
+                  id: 'subscription_id',
+                  trial_end: 123456789,
+                  items: {
+                    data: [
+                      {
+                        id: 'item_id_usage_notifications',
+                        price: { recurring: { usage_type: StripeUsageTypeEnum.METERED } },
+                      },
+                      { id: 'item_id_flat', price: { recurring: { usage_type: StripeUsageTypeEnum.LICENSED } } },
+                    ],
+                  },
+                },
+              ],
+            },
+          };
+
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer,
+              apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+              billingInterval: StripeBillingIntervalEnum.YEAR,
+            })
+          );
+
+          expect(createSubscriptionStub.lastCall.args).to.deep.equal([
+            {
+              customer: 'customer_id',
+              trial_end: 123456789,
+              trial_settings: {
+                end_behavior: {
+                  missing_payment_method: 'cancel',
+                },
               },
-              {
-                id: 'item_id_flat',
-                deleted: true,
-              },
-            ],
-          },
-        ]);
+              items: [
+                {
+                  price: 'price_id_flat',
+                },
+              ],
+            },
+          ]);
+        });
       });
 
       it('should throw an error if the licensed subscription is not found', async () => {
@@ -293,66 +433,28 @@ describe('UpsertSubscription', () => {
           ],
         },
       };
-      it('should delete the licensed subscription and update the metered subscription if the customer has two subscriptions and billingInterval is month', async () => {
-        const useCase = createUseCase();
 
-        await useCase.execute(
-          UpsertSubscriptionCommand.create({
-            customer: mockCustomerTwoSubscriptions as any,
-            apiServiceLevel: ApiServiceLevelEnum.FREE,
-            billingInterval: StripeBillingIntervalEnum.MONTH,
-          })
-        );
+      describe('Monthly Billing Interval', () => {
+        it('should delete the licensed subscription and update the metered subscription', async () => {
+          const useCase = createUseCase();
 
-        expect(deleteSubscriptionStub.lastCall.args).to.deep.equal(['subscription_id_1', { prorate: true }]);
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: mockCustomerTwoSubscriptions as any,
+              apiServiceLevel: ApiServiceLevelEnum.FREE,
+              billingInterval: StripeBillingIntervalEnum.MONTH,
+            })
+          );
 
-        expect(updateSubscriptionStub.lastCall.args).to.deep.equal([
-          'subscription_id_2',
-          {
-            items: [
-              {
-                id: 'item_id_flat',
-                price: 'price_id_flat',
-              },
-              {
-                id: 'item_id_usage_notifications',
-                price: 'price_id_notifications',
-              },
-            ],
-          },
-        ]);
-      });
+          expect(deleteSubscriptionStub.lastCall.args).to.deep.equal(['subscription_id_1', { prorate: true }]);
 
-      it('should update the existing subscriptions if the customer has two subscriptions and billingInterval is year', async () => {
-        const useCase = createUseCase();
-
-        await useCase.execute(
-          UpsertSubscriptionCommand.create({
-            customer: mockCustomerTwoSubscriptions as any,
-            apiServiceLevel: ApiServiceLevelEnum.FREE,
-            billingInterval: StripeBillingIntervalEnum.YEAR,
-          })
-        );
-
-        expect(updateSubscriptionStub.getCalls().map((call) => call.args)).to.deep.equal([
-          [
-            'subscription_id_1',
-            {
-              items: [
-                {
-                  id: 'item_id_flat',
-                  price: 'price_id_flat',
-                },
-              ],
-            },
-          ],
-          [
+          expect(updateSubscriptionStub.lastCall.args).to.deep.equal([
             'subscription_id_2',
             {
               items: [
                 {
                   id: 'item_id_flat',
-                  deleted: true,
+                  price: 'price_id_flat',
                 },
                 {
                   id: 'item_id_usage_notifications',
@@ -360,8 +462,51 @@ describe('UpsertSubscription', () => {
                 },
               ],
             },
-          ],
-        ]);
+          ]);
+        });
+      });
+
+      describe('Annual Billing Interval', () => {
+        it('should update the existing subscriptions', async () => {
+          const useCase = createUseCase();
+
+          await useCase.execute(
+            UpsertSubscriptionCommand.create({
+              customer: mockCustomerTwoSubscriptions as any,
+              apiServiceLevel: ApiServiceLevelEnum.FREE,
+              billingInterval: StripeBillingIntervalEnum.YEAR,
+            })
+          );
+
+          expect(updateSubscriptionStub.getCalls().map((call) => call.args)).to.deep.equal([
+            [
+              'subscription_id_1',
+              {
+                items: [
+                  {
+                    id: 'item_id_flat',
+                    price: 'price_id_flat',
+                  },
+                ],
+              },
+            ],
+            [
+              'subscription_id_2',
+              {
+                items: [
+                  {
+                    id: 'item_id_flat',
+                    deleted: true,
+                  },
+                  {
+                    id: 'item_id_usage_notifications',
+                    price: 'price_id_notifications',
+                  },
+                ],
+              },
+            ],
+          ]);
+        });
       });
 
       it('should throw an error if the licensed subscription is not found', async () => {
