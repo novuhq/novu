@@ -1,14 +1,14 @@
 import styled from '@emotion/styled';
 import { createStyles, CSSObject, Drawer, DrawerStylesNames, Loader, MantineTheme, Stack, Styles } from '@mantine/core';
-import React, { ReactNode, useCallback } from 'react';
-import { useKeyDown } from '@novu/shared-web';
-
+import { useFeatureFlag, useKeyDown } from '@novu/shared-web';
+import React, { ReactNode } from 'react';
+import { css, cx } from '@emotion/css';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ActionButton } from '../button/ActionButton';
-import { When } from '../when';
 import { colors, shadows } from '../config';
 import { ArrowLeft } from '../icons';
+import { When } from '../when';
 import { Close } from './Close';
-import { css, cx } from '@emotion/css';
 
 const HeaderHolder = styled.div`
   display: flex;
@@ -45,6 +45,7 @@ const FooterHolder = styled.div`
 
 const COLLAPSED_WIDTH = 600;
 const NAVIGATION_WIDTH = 272;
+const LEGACY_NAVIGATION_WIDTH = 300;
 
 const useDrawerStyles = createStyles((theme: MantineTheme) => {
   return {
@@ -106,6 +107,12 @@ export const Sidebar = ({
   const onCloseCallback = () => {
     onClose();
   };
+
+  /**
+   * TODO: Remove this feature flag and navigationWidth once the information architecture is enabled for all users
+   */
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
+  const navigationWidth = isInformationArchitectureEnabled ? NAVIGATION_WIDTH : LEGACY_NAVIGATION_WIDTH;
 
   useKeyDown('Escape', onCloseCallback);
 
@@ -171,7 +178,7 @@ export const Sidebar = ({
       styles={{
         ...styles,
         drawer: {
-          width: isExpanded ? `calc(100% - ${NAVIGATION_WIDTH}px)` : COLLAPSED_WIDTH,
+          width: isExpanded ? `calc(100% - ${navigationWidth}px)` : COLLAPSED_WIDTH,
           transition: 'all 300ms ease !important',
           '@media screen and (max-width: 768px)': {
             width: isExpanded ? `100%` : COLLAPSED_WIDTH,
