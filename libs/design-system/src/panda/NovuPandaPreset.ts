@@ -15,6 +15,7 @@ import {
   LINE_HEIGHT_TOKENS,
 } from './typography.tokens';
 import { LEGACY_GRADIENT_TOKENS } from './gradients.tokens';
+import { LEGACY_RADIUS_TOKENS } from './radius.tokens';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -42,6 +43,7 @@ export const NovuPandaPreset = definePreset({
       lineHeights: LINE_HEIGHT_TOKENS,
       fontWeights: FONT_WEIGHT_TOKENS,
       letterSpacings: LETTER_SPACING_TOKENS,
+      radii: LEGACY_RADIUS_TOKENS,
     },
     semanticTokens: {
       colors: {
