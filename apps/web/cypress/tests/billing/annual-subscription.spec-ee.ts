@@ -2,6 +2,15 @@
 describe('Billing - Annual subscription', function () {
   beforeEach(function () {
     cy.initializeSession().as('session');
+
+    cy.intercept('GET', '**/v1/billing/subscription', {
+      data: {
+        trialStart: null,
+        trialEnd: null,
+        hasPaymentMethod: false,
+        status: 'active',
+      },
+    }).as('getSubscription');
   });
 
   it('should display monthly in modal as default', function () {
@@ -13,7 +22,7 @@ describe('Billing - Annual subscription', function () {
 
     cy.visit('/settings/billing');
 
-    cy.getByTestId('upgrade-button').click();
+    cy.getByTestId('plan-business-upgrade').click();
     cy.wait(['@checkout']);
 
     cy.getByTestId('billing-interval-control-monthly')
@@ -35,7 +44,7 @@ describe('Billing - Annual subscription', function () {
 
     cy.getByTestId('billing-interval-control-annually').click();
 
-    cy.getByTestId('upgrade-button').click();
+    cy.getByTestId('plan-business-upgrade').click();
     cy.wait(['@checkout']);
 
     cy.getByTestId('billing-interval-control-annually')
