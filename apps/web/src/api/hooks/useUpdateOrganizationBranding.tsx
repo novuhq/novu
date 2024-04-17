@@ -1,15 +1,10 @@
 import type { IResponseError } from '@novu/shared';
 import { useMutation, UseMutationOptions, useQueryClient } from '@tanstack/react-query';
-
 import { errorMessage } from '../../utils/notifications';
-import { updateBrandingSettings } from '../organization';
+import { updateBrandingSettings, UpdateOrgBrandingPayloadType } from '../organization';
 
-type PayloadType = {
-  logoUrl?: string;
-  colorValue?: string;
-};
-
-type ResultType = PayloadType;
+type PayloadType = UpdateOrgBrandingPayloadType;
+type ResultType = UpdateOrgBrandingPayloadType;
 
 export const useUpdateOrganizationBranding = (
   options: UseMutationOptions<ResultType, IResponseError, PayloadType> = {}
@@ -17,11 +12,7 @@ export const useUpdateOrganizationBranding = (
   const queryClient = useQueryClient();
 
   const { mutateAsync: updateOrganizationBranding, isLoading } = useMutation<ResultType, IResponseError, PayloadType>(
-    (payload) =>
-      updateBrandingSettings({
-        logo: payload.logoUrl,
-        color: payload.colorValue,
-      }),
+    (payload) => updateBrandingSettings({ ...payload, logo: payload.logo || undefined }),
     {
       onSuccess: async (result, variables, context) => {
         await queryClient.refetchQueries({

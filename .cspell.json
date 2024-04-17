@@ -625,6 +625,9 @@
     "runtimes",
     "cafebabe",
     "Markunread",
+    "Fira",
+    "Roboto",
+    "Raleway",
     "Icann",
     "limitbar"
   ],
@@ -711,6 +714,6 @@
     "angular.json",
     "ng-package.json",
     "libs/shared/src/types/timezones/timezones.types.ts",
-    "*.riv",
+    "*.riv"
   ]
 }

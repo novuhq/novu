@@ -1,6 +1,6 @@
-import axios from 'axios';
-import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { IResponseError, MIME_TYPE_TO_FILE_EXTENSION, UploadTypesEnum } from '@novu/shared';
+import { useMutation, UseMutationOptions } from '@tanstack/react-query';
+import axios from 'axios';
 
 import { useGetSignedUrl } from './useGetSignedUrl';
 

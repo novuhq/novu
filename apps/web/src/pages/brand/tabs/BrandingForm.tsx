@@ -13,6 +13,9 @@ import Card from '../../../components/layout/components/Card';
 import { successMessage } from '../../../utils/notifications';
 import { useUploadToStorage } from '../../../api/hooks/useUploadToStorage';
 
+/**
+ * @deprecated Use `BrandingForm` from the v2 folder instead
+ */
 export function BrandingForm() {
   const { currentOrganization: organization } = useOutletContext<{
     currentOrganization: IOrganizationEntity | undefined;
