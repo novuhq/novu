@@ -12,38 +12,46 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
 
   const host = (req.headers as any)?.host || '';
 
-  if (['test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url) || isBlueprintRoute(req.url)) {
+  if (enableWildcard(req)) {
     corsOptions.origin = '*';
   } else {
     corsOptions.origin = [process.env.FRONT_BASE_URL];
     if (process.env.WIDGET_BASE_URL) {
       corsOptions.origin.push(process.env.WIDGET_BASE_URL);
     }
-
-    const shouldDisableCorsForPreviewUrls =
-      process.env.PR_PREVIEW_ROOT_URL &&
-      process.env.NODE_ENV === 'dev' &&
-      host.includes(process.env.PR_PREVIEW_ROOT_URL);
-
-    Logger.verbose(`Should allow deploy preview? ${shouldDisableCorsForPreviewUrls ? 'Yes' : 'No'}.`, {
-      curEnv: process.env.NODE_ENV,
-      previewUrlRoot: process.env.PR_PREVIEW_ROOT_URL,
-      host,
-    });
-
-    if (shouldDisableCorsForPreviewUrls) {
-      Logger.verbose(`Allowing deploy previews.`);
-      corsOptions.origin.push('*');
-    }
   }
+
+  const shouldDisableCorsForPreviewUrls = isPreviewUrl(req.headers);
+
+  Logger.verbose(`Should allow deploy preview? ${shouldDisableCorsForPreviewUrls ? 'Yes' : 'No'}.`, {
+    curEnv: process.env.NODE_ENV,
+    previewUrlRoot: process.env.PR_PREVIEW_ROOT_URL,
+    host,
+  });
 
   callback(null as unknown as Error, corsOptions);
 };
 
-function isWidgetRoute(url: string) {
+function enableWildcard(req: Request): boolean {
+  return isSandboxEnvironment() || isWidgetRoute(req.url) || isBlueprintRoute(req.url) || isPreviewUrl(req.headers);
+}
+
+function isWidgetRoute(url: string): boolean {
   return url.startsWith('/v1/widgets');
 }
 
-function isBlueprintRoute(url: string) {
+function isBlueprintRoute(url: string): boolean {
   return url.startsWith('/v1/blueprints');
+}
+
+function isSandboxEnvironment(): boolean {
+  return ['test', 'local'].includes(process.env.NODE_ENV);
+}
+
+function isPreviewUrl(headers): boolean {
+  const host = (headers as any)?.host || '';
+
+  return (
+    process.env.PR_PREVIEW_ROOT_URL && process.env.NODE_ENV === 'dev' && host.includes(process.env.PR_PREVIEW_ROOT_URL)
+  );
 }
