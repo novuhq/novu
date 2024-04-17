@@ -9,7 +9,6 @@ import { JobTitleEnum, jobTitleToLabelMapper, ProductUseCasesEnum } from '@novu/
 import type { ProductUseCases, IResponseError, ICreateOrganizationDto, IJwtPayload } from '@novu/shared';
 import {
   Button,
-  colors,
   Digest,
   HalfClock,
   Input,
@@ -26,6 +25,7 @@ import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
+import { useDomainParser } from './useDomainHook';
 import { OnboardingExperimentV2ModalKey } from '../../../constants/experimentsConstants';
 
 export function QuestionnaireForm() {
@@ -34,11 +34,13 @@ export function QuestionnaireForm() {
     handleSubmit,
     formState: { errors },
     control,
+    setError,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
   const { setToken, token } = useAuthContext();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
+  const { parse } = useDomainParser();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
@@ -162,9 +164,14 @@ export function QuestionnaireForm() {
         name="domain"
         control={control}
         rules={{
-          pattern: {
-            value: /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/,
-            message: 'Please make sure you specified a valid domain',
+          validate: {
+            isValiDomain: (value) => {
+              const val = parse(value as string);
+
+              if (value && !val.isIcann) {
+                return 'Please provide a valid domain';
+              }
+            },
           },
         }}
         render={({ field }) => {
