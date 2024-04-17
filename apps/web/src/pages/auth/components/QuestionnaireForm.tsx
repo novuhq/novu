@@ -25,8 +25,8 @@ import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
-import { OnboardingExperimentV2ModalKey } from '../../../constants/experimentsConstants';
 import { useDomainParser } from './useDomainHook';
+import { OnboardingExperimentV2ModalKey } from '../../../constants/experimentsConstants';
 
 export function QuestionnaireForm() {
   const [loading, setLoading] = useState<boolean>();
