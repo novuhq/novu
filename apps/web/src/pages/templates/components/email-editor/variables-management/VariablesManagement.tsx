@@ -30,6 +30,7 @@ import { useProductFeature } from '@novu/shared-web';
 import { ProductFeatureKeyEnum } from '@novu/shared';
 import { Link, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../../../constants/routes.enum';
+import { UpgradeContainer } from '../../../../../components/layout/components/UpgradeContainer';
 
 interface IVariablesList {
   translations: Record<string, any>;
@@ -194,13 +195,7 @@ const VariablesSection = ({ variablesList, searchVal }: { variablesList: IVariab
     <>
       <VariableSectionItem variableList={system} search={searchVal} sectionName="System Variables" Icon={NovuIcon} />
       <VariableSectionItem variableList={step} search={searchVal} sectionName="Step Variables" Icon={Workflow} />
-      <VariableSectionItem
-        withFolders
-        variableList={translations}
-        search={searchVal}
-        sectionName={'Translation Variables'}
-        Icon={Translation}
-      />
+      <TranslationSectionItem variableList={translations} search={searchVal} />
     </>
   );
 };
@@ -254,75 +249,134 @@ export const VariableSectionItem = ({
           })}
         </VarLabel>
       </When>
-      <When truthy={!keys?.length && sectionName === 'Translation Variables' && !isTranslationsEnabled}>
-        <VarLabel label={sectionName} Icon={Icon}>
-          <Stack
-            spacing={8}
-            style={{
-              borderRadius: '7px',
-              marginBottom: '24px',
-              padding: '24px',
-              background: isDark ? colors.B20 : colors.B98,
-              alignItems: 'center',
-            }}
-          >
-            <Text mb={8} align={'center'} color={colors.B60}>
-              Utilize i18n localization for translating notifications
-            </Text>
-            <Button onClick={() => navigate('/settings/billing')}>Upgrade plan</Button>
-            <Group position="center" spacing={4}>
-              <Text color={isDark ? colors.B60 : colors.B40}>Questions?</Text>
-              <Text gradient={true}>
-                <a
-                  onClick={() => {
-                    // onContactSales();
-                  }}
-                  style={{
-                    cursor: 'pointer',
-                  }}
-                >
-                  Contact sales
-                </a>
+    </>
+  );
+};
+
+export const TranslationSectionItem = ({
+  variableList,
+  search,
+}: // sectionName,
+// Icon,
+// withFolders = false,
+{
+  variableList: Record<string, any>;
+  search: string;
+  // sectionName: string;
+  // Icon: React.FC<any>;
+  // withFolders?: boolean;
+}) => {
+  const sectionName = 'Translation Variables';
+  const keys = variableList && Object.keys(variableList);
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+  const navigate = useNavigate();
+  const isTranslationsEnabled = useProductFeature(ProductFeatureKeyEnum.TRANSLATIONS);
+
+  return (
+    <>
+      <VariableSectionItem
+        withFolders
+        variableList={variableList}
+        search={search}
+        sectionName={'Translation Variables'}
+        Icon={Translation}
+      />
+      {/*<When truthy={!keys?.length && sectionName === 'Translation Variables' && !isTranslationsEnabled}>*/}
+      <When truthy={!keys?.length && !search.length}>
+        <VarLabel label={sectionName} Icon={Translation}>
+          <UpgradeContainer varBla={true} />
+          <When truthy={isTranslationsEnabled}>
+            <Stack
+              style={{
+                borderRadius: '7px',
+                marginBottom: '24px',
+                padding: '24px',
+                background: isDark ? colors.B20 : colors.B98,
+                alignItems: 'center',
+              }}
+            >
+              <Text color={isDark ? colors.B60 : colors.B40}>
+                <GradientSpan>
+                  <a
+                    onClick={() => {
+                      navigate(ROUTES.TRANSLATIONS);
+                    }}
+                    style={{
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Upload translations{' '}
+                  </a>
+                </GradientSpan>
+                <span>to use them as variables or in the autosuggest for the editor.</span>
               </Text>
-            </Group>
-          </Stack>
+            </Stack>
+          </When>
+          {/*<Stack*/}
+          {/*  spacing={8}*/}
+          {/*  style={{*/}
+          {/*    borderRadius: '7px',*/}
+          {/*    marginBottom: '24px',*/}
+          {/*    padding: '24px',*/}
+          {/*    background: isDark ? colors.B20 : colors.B98,*/}
+          {/*    alignItems: 'center',*/}
+          {/*  }}*/}
+          {/*>*/}
+          {/*  <Text mb={8} align={'center'} color={colors.B60}>*/}
+          {/*    Utilize i18n localization for translating notifications*/}
+          {/*  </Text>*/}
+          {/*  <Button onClick={() => navigate('/settings/billing')}>Upgrade plan</Button>*/}
+          {/*  <Group position="center" spacing={4}>*/}
+          {/*    <Text color={isDark ? colors.B60 : colors.B40}>Questions?</Text>*/}
+          {/*    <Text gradient={true}>*/}
+          {/*      <a*/}
+          {/*        onClick={() => {*/}
+          {/*          // onContactSales();*/}
+          {/*        }}*/}
+          {/*        style={{*/}
+          {/*          cursor: 'pointer',*/}
+          {/*        }}*/}
+          {/*      >*/}
+          {/*        Contact sales*/}
+          {/*      </a>*/}
+          {/*    </Text>*/}
+          {/*  </Group>*/}
+          {/*</Stack>*/}
         </VarLabel>
       </When>
-      <When truthy={!keys?.length && sectionName === 'Translation Variables' && isTranslationsEnabled}>
-        <VarLabel label={sectionName} Icon={Icon}>
-          <Stack
-            style={{
-              borderRadius: '7px',
-              marginBottom: '24px',
-              padding: '24px',
-              background: isDark ? colors.B20 : colors.B98,
-              alignItems: 'center',
-            }}
-          >
-            {/*<Text mb={8} align={'center'} color={colors.B60}>*/}
-            {/*  Upload translations to use them as variables or in the autosuggest for the editor.*/}
-            {/*</Text>*/}
-            {/*<Button onClick={() => navigate('/settings/billing')}>Upgrade plan</Button>*/}
-            {/*<Center inline>*/}
-            <Text color={isDark ? colors.B60 : colors.B40}>
-              <GradientSpan>
-                <a
-                  onClick={() => {
-                    navigate(ROUTES.TRANSLATIONS);
-                  }}
-                  style={{
-                    cursor: 'pointer',
-                  }}
-                >
-                  Upload translations{' '}
-                </a>
-              </GradientSpan>
-              <span>to use them as variables or in the autosuggest for the editor.</span>
-            </Text>
-            {/*</Center>*/}
-          </Stack>
-        </VarLabel>
-      </When>
+      {/*<When*/}
+      {/*  truthy={!keys?.length && !search.length && sectionName === 'Translation Variables' && isTranslationsEnabled}*/}
+      {/*>*/}
+      {/*  <VarLabel label={sectionName} Icon={Icon}>*/}
+      {/*    <Stack*/}
+      {/*      style={{*/}
+      {/*        borderRadius: '7px',*/}
+      {/*        marginBottom: '24px',*/}
+      {/*        padding: '24px',*/}
+      {/*        background: isDark ? colors.B20 : colors.B98,*/}
+      {/*        alignItems: 'center',*/}
+      {/*      }}*/}
+      {/*    >*/}
+      {/*     */}
+      {/*      <Text color={isDark ? colors.B60 : colors.B40}>*/}
+      {/*        <GradientSpan>*/}
+      {/*          <a*/}
+      {/*            onClick={() => {*/}
+      {/*              navigate(ROUTES.TRANSLATIONS);*/}
+      {/*            }}*/}
+      {/*            style={{*/}
+      {/*              cursor: 'pointer',*/}
+      {/*            }}*/}
+      {/*          >*/}
+      {/*            Upload translations{' '}*/}
+      {/*          </a>*/}
+      {/*        </GradientSpan>*/}
+      {/*        <span>to use them as variables or in the autosuggest for the editor.</span>*/}
+      {/*      </Text>*/}
+      {/*    </Stack>*/}
+      {/*  </VarLabel>*/}
+      {/*</When>*/}
     </>
   );
 };
