@@ -71,7 +71,7 @@ describe('CORS Configuration', () => {
             {
               url: '/v1/test',
               headers: {
-                host: 'https://test--' + process.env.PR_PREVIEW_ROOT_URL,
+                origin: 'https://test--' + process.env.PR_PREVIEW_ROOT_URL,
               },
             },
             callbackSpy
