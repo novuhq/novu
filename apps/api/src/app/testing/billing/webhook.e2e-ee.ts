@@ -199,7 +199,6 @@ describe('Stripe webhooks', () => {
 
     const createHandler = () => {
       const handler = new CustomerSubscriptionCreatedHandler(
-        stripeStub as any,
         { execute: verifyCustomerStub } as any,
         organizationRepositoryStub,
         analyticsServiceStub as any
