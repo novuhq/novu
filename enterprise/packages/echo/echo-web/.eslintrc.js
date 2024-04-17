@@ -33,7 +33,7 @@ module.exports = {
     'cypress/globals': true,
   },
   ignorePatterns: ['craco.config.js', 'cypress/*'],
-  extends: ['plugin:cypress/recommended', '../../../.eslintrc.js'],
+  extends: ['plugin:cypress/recommended', '../../../../.eslintrc.js'],
   plugins: ['cypress'],
   parserOptions: {
     project: './tsconfig.json',
