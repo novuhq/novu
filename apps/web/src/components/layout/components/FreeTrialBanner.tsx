@@ -1,7 +1,14 @@
-import { IS_DOCKER_HOSTED } from '@novu/shared-web';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { IS_DOCKER_HOSTED, useFeatureFlag } from '@novu/shared-web';
 
 export function FreeTrialBanner() {
+  const isEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_BILLING_REVERSE_TRIAL_ENABLED);
+
   if (IS_DOCKER_HOSTED) {
+    return null;
+  }
+
+  if (!isEnabled) {
     return null;
   }
 

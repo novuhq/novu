@@ -49,6 +49,29 @@ describe('Stripe webhooks', () => {
     customers: {
       update: () => {},
     },
+    subscriptions: {
+      retrieve: () =>
+        Promise.resolve({
+          items: {
+            data: [
+              {
+                id: 'subscription_id',
+                items: { data: [{ id: 'item_id_usage_notifications' }, { id: 'item_id_flat' }] },
+                price: {
+                  recurring: {
+                    usage_type: 'licensed',
+                  },
+                  product: {
+                    metadata: {
+                      apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        }),
+    },
   };
 
   const eeBilling = require('@novu/ee-billing');
@@ -56,13 +79,17 @@ describe('Stripe webhooks', () => {
     throw new Error('ee-billing does not exist');
   }
   // eslint-disable-next-line @typescript-eslint/naming-convention
-  const { SetupIntentSucceededHandler, UpsertSubscription, VerifyCustomer } = eeBilling;
+  const { SetupIntentSucceededHandler, CustomerSubscriptionCreatedHandler, UpsertSubscription, VerifyCustomer } =
+    eeBilling;
 
   describe('setup_intent.succeeded', () => {
     let updateCustomerStub: sinon.SinonStub;
 
     let verifyCustomerStub: sinon.SinonStub;
     let upsertSubscriptionStub: sinon.SinonStub;
+    const analyticsServiceStub = {
+      track: sinon.stub(),
+    };
 
     beforeEach(() => {
       verifyCustomerStub = sinon.stub(VerifyCustomer.prototype, 'execute').resolves({
@@ -84,7 +111,8 @@ describe('Stripe webhooks', () => {
         organization: { _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE },
       } as any);
       upsertSubscriptionStub = sinon.stub(UpsertSubscription.prototype, 'execute').resolves({
-        id: 'subscription_id',
+        licensed: { id: 'licensed_subscription_id' },
+        metered: { id: 'metered_subscription_id' },
       } as any);
       updateCustomerStub = sinon.stub(stripeStub.customers, 'update').resolves({});
     });
@@ -93,7 +121,8 @@ describe('Stripe webhooks', () => {
       const handler = new SetupIntentSucceededHandler(
         stripeStub as any,
         { execute: verifyCustomerStub } as any,
-        { execute: upsertSubscriptionStub } as any
+        { execute: upsertSubscriptionStub } as any,
+        analyticsServiceStub as any
       );
 
       return handler;
@@ -143,14 +172,247 @@ describe('Stripe webhooks', () => {
   });
 
   describe('customer.subscription.created', () => {
-    it('Should handle customer.subscription.created event with known organization', async () => {
-      // @TODO: Implement test
-      expect(true).to.equal(true);
+    let verifyCustomerStub: sinon.SinonStub;
+    const organizationRepositoryStub = {
+      update: sinon.stub().resolves({ matched: 1, modified: 1 }),
+    };
+    const analyticsServiceStub = {
+      track: sinon.stub(),
+    };
+
+    beforeEach(() => {
+      verifyCustomerStub = sinon.stub(VerifyCustomer.prototype, 'execute').resolves({
+        customer: {
+          id: 'customer_id',
+          deleted: false,
+          metadata: {
+            organizationId: 'organization_id',
+          },
+        },
+        organization: { _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE },
+      } as any);
     });
 
-    it('Should exit early with unknown organization', async () => {
-      // @TODO: Implement test
-      expect(true).to.equal(true);
+    afterEach(() => {
+      organizationRepositoryStub.update.reset();
+    });
+
+    const createHandler = () => {
+      const handler = new CustomerSubscriptionCreatedHandler(
+        stripeStub as any,
+        { execute: verifyCustomerStub } as any,
+        organizationRepositoryStub,
+        analyticsServiceStub as any
+      );
+
+      return handler;
+    };
+
+    it('should handle event with known organization', async () => {
+      const event = {
+        data: {
+          object: {
+            id: 'sub_123',
+            customer: 'cus_123',
+            items: [
+              {
+                id: 'si_123',
+                data: {
+                  plan: {
+                    interval: StripeBillingIntervalEnum.MONTH,
+                  },
+                },
+              },
+            ],
+          },
+        },
+        created: 1234567890,
+      };
+
+      const handler = createHandler();
+      await handler.handle(event);
+
+      expect(
+        organizationRepositoryStub.update.calledWith(
+          { _id: 'organization_id' },
+          { apiServiceLevel: ApiServiceLevelEnum.BUSINESS }
+        )
+      ).to.be.true;
+    });
+
+    it('should exit early with unknown organization', async () => {
+      const event = {
+        data: {
+          object: {
+            id: 'sub_123',
+            customer: 'cus_123',
+            items: [
+              {
+                id: 'si_123',
+                data: {
+                  plan: {
+                    interval: StripeBillingIntervalEnum.MONTH,
+                  },
+                },
+              },
+            ],
+          },
+        },
+        created: 1234567890,
+      };
+
+      verifyCustomerStub.resolves({
+        organization: null,
+        customer: { id: 'customer_id', metadata: { organizationId: 'org_id' } },
+      });
+
+      const handler = createHandler();
+      await handler.handle(event);
+
+      expect(organizationRepositoryStub.update.called).to.be.false;
+    });
+
+    it('should handle event with known organization and licensed subscription', async () => {
+      const event = {
+        data: {
+          object: {
+            id: 'sub_123',
+            customer: 'cus_123',
+            items: [
+              {
+                id: 'si_123',
+                data: {
+                  plan: {
+                    interval: StripeBillingIntervalEnum.MONTH,
+                  },
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                    },
+                    product: {
+                      metadata: {
+                        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+        created: 1234567890,
+      };
+
+      const handler = createHandler();
+      await handler.handle(event);
+
+      expect(
+        organizationRepositoryStub.update.calledWith(
+          { _id: 'organization_id' },
+          { apiServiceLevel: ApiServiceLevelEnum.BUSINESS }
+        )
+      ).to.be.true;
+    });
+
+    it('should exit early with known organization and metered subscription', async () => {
+      const event = {
+        data: {
+          object: {
+            id: 'sub_123',
+            customer: 'cus_123',
+            items: [
+              {
+                id: 'si_123',
+                data: {
+                  plan: {
+                    interval: StripeBillingIntervalEnum.MONTH,
+                  },
+                  price: {
+                    recurring: {
+                      usage_type: 'metered',
+                    },
+                    product: {
+                      metadata: {
+                        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+        created: 1234567890,
+      };
+
+      const handler = createHandler();
+      await handler.handle(event);
+
+      expect(
+        organizationRepositoryStub.update.calledWith(
+          { _id: 'organization_id' },
+          { apiServiceLevel: ApiServiceLevelEnum.BUSINESS }
+        )
+      ).to.be.true;
+    });
+
+    it('should exit early with known organization and invalid apiServiceLevel', async () => {
+      const event = {
+        data: {
+          object: {
+            id: 'sub_123',
+            customer: 'cus_123',
+            items: [
+              {
+                id: 'si_123',
+                data: {
+                  plan: {
+                    interval: StripeBillingIntervalEnum.MONTH,
+                  },
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                    },
+                    product: {
+                      metadata: {
+                        apiServiceLevel: 'invalid',
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+        created: 1234567890,
+      };
+
+      stripeStub.subscriptions.retrieve = () =>
+        Promise.resolve({
+          items: {
+            data: [
+              {
+                id: 'subscription_id',
+                items: { data: [{ id: 'item_id_usage_notifications' }, { id: 'item_id_flat' }] },
+                price: {
+                  recurring: {
+                    usage_type: 'licensed',
+                  },
+                  product: {
+                    metadata: {
+                      apiServiceLevel: 'invalid' as any,
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        });
+
+      const handler = createHandler();
+      await handler.handle(event);
+
+      expect(organizationRepositoryStub.update.called).to.be.false;
     });
   });
 });
