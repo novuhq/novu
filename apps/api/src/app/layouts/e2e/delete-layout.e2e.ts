@@ -7,8 +7,8 @@ import { expect } from 'chai';
 import { createLayout } from './helpers';
 
 import { MessageTemplateModule } from '../../message-template/message-template.module';
-import { CreateMessageTemplate, CreateMessageTemplateCommand } from '../../message-template/usecases';
 import { SharedModule } from '../../shared/shared.module';
+import { CreateMessageTemplate, CreateMessageTemplateCommand } from '@novu/application-generic';
 
 const BASE_PATH = '/v1/layouts';
 
