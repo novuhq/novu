@@ -9,9 +9,6 @@ type IUseInitializeSocket = (args: { socketUrl: string }) => {
   disconnectSocket: () => void;
 };
 
-const RECONNECTION_DELAY_MAX = 60000 * 5; // 5 minutes
-const RANDOMIZATION_FACTOR = 1;
-
 export const useInitializeSocket: IUseInitializeSocket = ({ socketUrl }) => {
   const socketRef = useRef<Socket | null>(null);
 
@@ -33,8 +30,7 @@ export const useInitializeSocket: IUseInitializeSocket = ({ socketUrl }) => {
 
       if (token) {
         socketRef.current = io(socketUrl, {
-          reconnectionDelayMax: RECONNECTION_DELAY_MAX,
-          randomizationFactor: RANDOMIZATION_FACTOR,
+          reconnectionDelayMax: 10000,
           transports: ['websocket'],
           auth: {
             token: `${token}`,
