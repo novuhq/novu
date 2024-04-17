@@ -14,8 +14,10 @@
   "keywords": [],
   "scripts": {
     "prebuild": "rimraf build",
-    "build": "run-p build:*",
+    "build": "node ./check-ee.mjs",
     "build:main": "tsc -p tsconfig.json",
+    "build:esm": "tsc -p tsconfig.json",
+    "build:watch": "tsc -w -p tsconfig.json",
     "fix": "run-s fix:*",
     "fix:prettier": "prettier \"src/**/*.ts\" --write",
     "fix:lint": "eslint src --ext .ts --fix",

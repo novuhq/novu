@@ -436,6 +436,9 @@ importers:
       '@novu/ee-echo-api':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/echo/echo-api
+      '@novu/ee-shared-services':
+        specifier: ^0.24.1
+        version: link:../../enterprise/packages/shared-services
       '@novu/ee-translation':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/translation
@@ -1466,6 +1469,9 @@ importers:
       '@novu/ee-echo-worker':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/echo/echo-worker
+      '@novu/ee-shared-services':
+        specifier: ^0.24.1
+        version: link:../../enterprise/packages/shared-services
       '@novu/ee-translation':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/translation
