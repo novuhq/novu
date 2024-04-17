@@ -3,7 +3,7 @@ import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe.only('Product feature Test', async () => {
+describe('Product feature Test', async () => {
   let session: UserSession;
   const path = '/v1/testing/product-feature';
   let organizationRepository: OrganizationRepository;

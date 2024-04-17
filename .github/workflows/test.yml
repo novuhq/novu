@@ -108,30 +108,6 @@ jobs:
     if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
     secrets: inherit
 
-  build_docker_api:
-    name: Build Docker API
-    runs-on: ubuntu-latest
-    timeout-minutes: 80
-    needs: [get-affected]
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
-    permissions:
-      contents: read
-      packages: write
-      deployments: write
-      id-token: write
-    strategy:
-      matrix:
-        name: ['novu/api', 'novu/api-ee']
-    steps:
-      - uses: actions/checkout@v3
-      - uses: ./.github/actions/setup-project
-      - uses: ./.github/actions/setup-redis-cluster
-      - uses: ./.github/actions/docker/build-api
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          fork: ${{ github.event.pull_request.head.repo.fork }}
-          docker_name: ${{ matrix.name }}
-
   test_providers:
     name: Unit Test Providers
     runs-on: ubuntu-latest
