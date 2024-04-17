@@ -10,7 +10,7 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
-  const host = (req.headers as any)?.host || '';
+  const origin = (req.headers as any)?.origin || '';
 
   if (['test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url) || isBlueprintRoute(req.url)) {
     corsOptions.origin = '*';
@@ -23,12 +23,12 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     const shouldDisableCorsForPreviewUrls =
       process.env.PR_PREVIEW_ROOT_URL &&
       process.env.NODE_ENV === 'dev' &&
-      host.includes(process.env.PR_PREVIEW_ROOT_URL);
+      origin.includes(process.env.PR_PREVIEW_ROOT_URL);
 
     Logger.verbose(`Should allow deploy preview? ${shouldDisableCorsForPreviewUrls ? 'Yes' : 'No'}.`, {
       curEnv: process.env.NODE_ENV,
       previewUrlRoot: process.env.PR_PREVIEW_ROOT_URL,
-      host,
+      origin,
     });
 
     if (shouldDisableCorsForPreviewUrls) {
