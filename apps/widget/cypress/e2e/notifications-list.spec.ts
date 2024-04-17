@@ -176,6 +176,7 @@ describe('Notifications List', function () {
     cy.task('createNotifications', {
       organizationId: this.session.organization._id,
       enumerate: true,
+      ordered: true,
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
