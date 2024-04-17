@@ -29,6 +29,9 @@ import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email';
 
+// eslint-disable-next-line no-console
+console.log('trigger e2e test');
+
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ApiCommonResponses()
 @Controller({
