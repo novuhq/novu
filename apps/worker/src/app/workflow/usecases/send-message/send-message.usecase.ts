@@ -88,13 +88,16 @@ export class SendMessage {
 
     const stepType = command.step?.template?.type;
 
-    const resonateResponse = await this.resonateUsecase.execute<
-      SendMessageCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraChannelResponse> | null
-    >({
-      ...command,
-      variables: shouldRun.variables,
-    });
+    let resonateResponse: ExecuteOutput<IChimeraChannelResponse> | null = null;
+    if (!['digest', 'delay'].includes(stepType as any)) {
+      resonateResponse = await this.resonateUsecase.execute<
+        SendMessageCommand & { variables: IFilterVariables },
+        ExecuteOutput<IChimeraChannelResponse> | null
+      >({
+        ...command,
+        variables: shouldRun.variables,
+      });
+    }
 
     if (!command.payload?.$on_boarding_trigger) {
       const usedFilters = shouldRun?.conditions.reduce(ConditionsFilter.sumFilters, {
