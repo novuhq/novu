@@ -71,7 +71,7 @@ describe('CORS Configuration', () => {
             {
               url: '/v1/test',
               headers: {
-                host: 'https://test--' + process.env.PR_PREVIEW_ROOT_URL,
+                origin: 'https://test--' + process.env.PR_PREVIEW_ROOT_URL,
               },
             },
             callbackSpy
@@ -79,7 +79,6 @@ describe('CORS Configuration', () => {
 
           expect(callbackSpy.calledOnce).to.be.ok;
           expect(callbackSpy.firstCall.firstArg).to.be.null;
-          expect(callbackSpy.firstCall.lastArg.origin.length).to.equal(1);
           expect(callbackSpy.firstCall.lastArg.origin).to.equal('*');
         });
       }

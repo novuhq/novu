@@ -10,7 +10,7 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
-  const host = (req.headers as any)?.host || '';
+  const origin = (req.headers as any)?.origin || '';
 
   if (enableWildcard(req)) {
     corsOptions.origin = '*';
@@ -21,19 +21,24 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     }
   }
 
-  const shouldDisableCorsForPreviewUrls = isPreviewUrl(req.headers);
+  const shouldDisableCorsForPreviewUrls = isPermittedDeployPreviewOrigin(req.headers);
 
   Logger.verbose(`Should allow deploy preview? ${shouldDisableCorsForPreviewUrls ? 'Yes' : 'No'}.`, {
     curEnv: process.env.NODE_ENV,
     previewUrlRoot: process.env.PR_PREVIEW_ROOT_URL,
-    host,
+    origin,
   });
 
   callback(null as unknown as Error, corsOptions);
 };
 
 function enableWildcard(req: Request): boolean {
-  return isSandboxEnvironment() || isWidgetRoute(req.url) || isBlueprintRoute(req.url) || isPreviewUrl(req.headers);
+  return (
+    isSandboxEnvironment() ||
+    isWidgetRoute(req.url) ||
+    isBlueprintRoute(req.url) ||
+    isPermittedDeployPreviewOrigin(req.headers)
+  );
 }
 
 function isWidgetRoute(url: string): boolean {
@@ -48,7 +53,7 @@ function isSandboxEnvironment(): boolean {
   return ['test', 'local'].includes(process.env.NODE_ENV);
 }
 
-function isPreviewUrl(headers): boolean {
+function isPermittedDeployPreviewOrigin(headers): boolean {
   const host = (headers as any)?.host || '';
 
   return (
