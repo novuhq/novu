@@ -1,0 +1,11 @@
+name: Cache
+description: GitHub Action to expose GitHub runtime to the workflow
+runs:
+  using: composite
+  steps:
+    - name: Expose GitHub Runtime
+      uses: crazy-max/ghaction-github-runtime@v3
+    - name: Env
+      shell: bash
+      run: |
+        env|sort
