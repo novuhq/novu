@@ -22,7 +22,14 @@ export const NavMenuRightSide: FC<INavMenuButtonRightSideProps> = ({ children, t
   return (
     <Transition mounted={isMounted} transition="fade" duration={400} timingFunction="ease">
       {(styles) => (
-        <Tooltip classNames={{ tooltip: tooltipStyle }} label={tooltip} opened={isHovered} position="right">
+        <Tooltip
+          classNames={{ tooltip: tooltipStyle }}
+          label={tooltip}
+          // only open if there is content and the trigger is currently hovered
+          opened={!!tooltip && isHovered}
+          position="right"
+          withinPortal
+        >
           <div style={styles} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
             {children}
           </div>
