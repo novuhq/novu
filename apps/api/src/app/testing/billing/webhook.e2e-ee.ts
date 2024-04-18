@@ -56,7 +56,22 @@ describe('Stripe webhooks', () => {
             data: [
               {
                 id: 'subscription_id',
-                items: { data: [{ id: 'item_id_usage_notifications' }, { id: 'item_id_flat' }] },
+                items: {
+                  data: [
+                    {
+                      id: 'item_id_usage_notifications',
+                      plan: {
+                        interval: 'month',
+                      },
+                    },
+                    {
+                      id: 'item_id_flat',
+                      plan: {
+                        interval: 'month',
+                      },
+                    },
+                  ],
+                },
                 price: {
                   recurring: {
                     usage_type: 'licensed',
@@ -107,6 +122,9 @@ describe('Stripe webhooks', () => {
               },
             ],
           },
+        },
+        adminUser: {
+          _id: 'admin_user_id',
         },
         organization: { _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE },
       } as any);
@@ -189,6 +207,34 @@ describe('Stripe webhooks', () => {
             organizationId: 'organization_id',
           },
         },
+        subscriptions: [
+          {
+            id: 'subscription_id',
+            items: {
+              data: [
+                {
+                  id: 'item_id_usage_notifications',
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                    },
+                  },
+                },
+                {
+                  id: 'item_id_flat',
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+        adminUser: {
+          _id: 'admin_user_id',
+        },
         organization: { _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE },
       } as any);
     });
@@ -199,7 +245,6 @@ describe('Stripe webhooks', () => {
 
     const createHandler = () => {
       const handler = new CustomerSubscriptionCreatedHandler(
-        stripeStub as any,
         { execute: verifyCustomerStub } as any,
         organizationRepositoryStub,
         analyticsServiceStub as any
@@ -211,6 +256,7 @@ describe('Stripe webhooks', () => {
     it('should handle event with known organization', async () => {
       const event = {
         data: {
+          id: 'subscription_id',
           object: {
             id: 'sub_123',
             customer: 'cus_123',
@@ -393,7 +439,22 @@ describe('Stripe webhooks', () => {
             data: [
               {
                 id: 'subscription_id',
-                items: { data: [{ id: 'item_id_usage_notifications' }, { id: 'item_id_flat' }] },
+                items: {
+                  data: [
+                    {
+                      id: 'item_id_usage_notifications',
+                      plan: {
+                        interval: 'month',
+                      },
+                    },
+                    {
+                      id: 'item_id_flat',
+                      plan: {
+                        interval: 'month',
+                      },
+                    },
+                  ],
+                },
                 price: {
                   recurring: {
                     usage_type: 'licensed',
