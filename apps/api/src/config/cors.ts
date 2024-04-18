@@ -10,7 +10,7 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   };
 
-  const origin = (req.headers as any)?.origin || '';
+  const origin = extractOrigin(req);
 
   if (enableWildcard(req)) {
     corsOptions.origin = '*';
@@ -21,7 +21,7 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
     }
   }
 
-  const shouldDisableCorsForPreviewUrls = isPermittedDeployPreviewOrigin(req.headers);
+  const shouldDisableCorsForPreviewUrls = isPermittedDeployPreviewOrigin(origin);
 
   Logger.verbose(`Should allow deploy preview? ${shouldDisableCorsForPreviewUrls ? 'Yes' : 'No'}.`, {
     curEnv: process.env.NODE_ENV,
@@ -37,7 +37,7 @@ function enableWildcard(req: Request): boolean {
     isSandboxEnvironment() ||
     isWidgetRoute(req.url) ||
     isBlueprintRoute(req.url) ||
-    isPermittedDeployPreviewOrigin(req.headers)
+    isPermittedDeployPreviewOrigin(extractOrigin(req))
   );
 }
 
@@ -53,10 +53,14 @@ function isSandboxEnvironment(): boolean {
   return ['test', 'local'].includes(process.env.NODE_ENV);
 }
 
-function isPermittedDeployPreviewOrigin(headers): boolean {
-  const host = (headers as any)?.host || '';
+export function isPermittedDeployPreviewOrigin(origin: string | string[]): boolean {
+  if (!process.env.PR_PREVIEW_ROOT_URL || process.env.NODE_ENV !== 'dev') {
+    return false;
+  }
 
-  return (
-    process.env.PR_PREVIEW_ROOT_URL && process.env.NODE_ENV === 'dev' && host.includes(process.env.PR_PREVIEW_ROOT_URL)
-  );
+  return origin.includes(process.env.PR_PREVIEW_ROOT_URL);
+}
+
+function extractOrigin(req: Request): string {
+  return (req.headers as any)?.origin || '';
 }
