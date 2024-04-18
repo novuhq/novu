@@ -93,7 +93,7 @@ runs:
           --cache-from type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/novu/cache:build-cache-${{ env.SERVICE_NAME }}
           --cache-to type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/novu/cache:build-cache-${{ env.SERVICE_NAME }},mode=max
           --platform=linux/amd64,linux/arm64 --provenance=false
-          --output=type=image,name=ghcr.io/ras-devops/${{ env.DOCKER_NAME }},push-by-digest=true,name-canonical=true
+          --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.DOCKER_NAME }},push-by-digest=true,name-canonical=true
       run: |
         set -x
         cd apps/worker && pnpm run docker:build
