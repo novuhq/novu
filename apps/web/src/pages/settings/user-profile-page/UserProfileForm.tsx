@@ -20,13 +20,13 @@ interface IUserProfileFormProps {
 }
 
 const formInputStyles = css({
-  minWidth: '18.75rem',
+  minWidth: '10rem',
   '& label': { marginTop: '0 !important' },
   /**
    * show the error message absolutely positioned below the input, otherwise it will push the input up
    */
   '& .mantine-TextInput-error': { position: 'absolute', marginTop: '0.5rem' },
-  '& input, .mantine-TextInput-wrapper': { marginBottom: '0 !important' },
+  '& input, .mantine-TextInput-wrapper': { marginBottom: '0 !important', textOverflow: 'ellipsis' },
 });
 
 const FIRST_NAME_LABEL = 'First name';
@@ -108,6 +108,7 @@ export const UserProfileForm: FC<IUserProfileFormProps> = ({ currentUser }) => {
     <form
       noValidate
       onSubmit={handleSubmit(onUpdateUserProfileHandler)}
+      // TODO: update with proper token value for marginBottom: 250
       className={css({ display: 'flex', alignItems: 'flex-end', gap: '150', marginBottom: '2.5rem' })}
     >
       <ProfileImage {...profilePictureField} onChange={onUpdateUserProfileImageHandler} isDisabled={isLoading} />
