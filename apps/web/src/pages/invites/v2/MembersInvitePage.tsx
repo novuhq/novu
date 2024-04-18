@@ -97,7 +97,7 @@ export function MembersInvitePage({ shouldHideTitle }: IMembersInviteProps) {
         <MemberInviteForm onSuccess={refetch} inviteByLink={inviteByLink} />
       </Group>
 
-      <Container fluid p={0} mt={shouldHideTitle ? 15 : undefined}>
+      <Container fluid p={0} mt={shouldHideTitle ? 24 : undefined}>
         <ProductLead
           icon={<UserAccess />}
           id="rbac-team-page"
@@ -105,7 +105,7 @@ export function MembersInvitePage({ shouldHideTitle }: IMembersInviteProps) {
           text="Securely manage users' permissions to access system resources."
         />
       </Container>
-      <Container fluid mt={15} p={0}>
+      <Container fluid mt={24} p={0}>
         <MembersTable
           loading={loadingMembers}
           members={members}
