@@ -1,4 +1,4 @@
-import { Button, IconLockPerson } from '@novu/design-system';
+import { Button, IconOutlineLockPerson } from '@novu/design-system';
 import { FC, MouseEventHandler, useContext, useMemo } from 'react';
 import { css } from '../../../styled-system/css';
 import { UserProfileSidebarContext } from './UserProfileSidebarContext';
@@ -40,7 +40,7 @@ export const UserProfileSidebarControl: FC = () => {
   return (
     <>
       <Button variant="outline" className={css({ color: '' })} onClick={handleSetPasswordClick}>
-        <IconLockPerson className={css({ color: 'button.text.outline !important' })} />
+        <IconOutlineLockPerson className={css({ color: 'button.text.outline !important' })} />
         {hasPassword ? 'Update password' : 'Set password'}
       </Button>
       <UserProfilePasswordSidebar
