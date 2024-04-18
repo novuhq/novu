@@ -12,7 +12,7 @@ import {
   IconViewQuilt,
 } from '@novu/design-system';
 import { ChangesCountBadge } from '../layout/components/ChangesCountBadge';
-import { ROUTES, useSegment } from '@novu/shared-web';
+import { ROUTES, useEnvController, useSegment } from '@novu/shared-web';
 import { useUserOnboardingStatus } from '../../api/hooks/useUserOnboardingStatus';
 import { EnvironmentSelect } from './EnvironmentSelect';
 import { NavMenu } from './NavMenu';
@@ -25,6 +25,7 @@ import { VisibilityButton } from './VisibilityButton';
 export const RootNavMenu: React.FC = () => {
   const segment = useSegment();
   const { updateOnboardingStatus, showOnboarding, isLoading: isLoadingOnboardingStatus } = useUserOnboardingStatus();
+  const { readonly: isEnvReadonly } = useEnvController();
 
   const handleHideOnboardingClick: React.MouseEventHandler = async () => {
     segment.track('Click Hide Get Started Page - [Get Started]');
@@ -37,7 +38,7 @@ export const RootNavMenu: React.FC = () => {
         <OrganizationSelect />
         <NavMenuLinkButton
           label="Get started"
-          isVisible={!isLoadingOnboardingStatus && showOnboarding}
+          isVisible={!isEnvReadonly && !isLoadingOnboardingStatus && showOnboarding}
           icon={<IconTaskAlt />}
           link={ROUTES.GET_STARTED}
           testId="side-nav-quickstart-link"
@@ -80,7 +81,7 @@ export const RootNavMenu: React.FC = () => {
           link={ROUTES.CHANGES}
           testId={'side-nav-changes-link'}
           rightSide={{ node: <ChangesCountBadge /> }}
-          isVisible={true}
+          isVisible={!isEnvReadonly}
         />
         <NavMenuLinkButton
           label="Subscribers"
