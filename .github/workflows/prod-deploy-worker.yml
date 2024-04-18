@@ -64,7 +64,7 @@ jobs:
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver-opts: 'image=moby/buildkit:v0.13.1'
+          driver-opts: 'image=moby/buildkit:v0.12.4'
 
       - name: Prepare
         shell: bash
@@ -87,9 +87,10 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
-            --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}
-            --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }},mode=max
+            --cache-from type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/novu/cache:build-cache-${{ env.SERVICE_NAME }}
+            --cache-to type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/novu/cache:build-cache-${{ env.SERVICE_NAME }},mode=max
             --platform=linux/amd64,linux/arm64 --provenance=false
+            --output=type=image,name=ghcr.io/ras-devops/${{ env.DOCKER_NAME }},push-by-digest=true,name-canonical=true
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           cd apps/worker && pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load $DOCKER_BUILD_ARGUMENTS
