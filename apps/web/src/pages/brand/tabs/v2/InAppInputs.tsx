@@ -13,6 +13,15 @@ export function InAppInputs({ control }: InAppInputsProps) {
       <div className={inputWrapperStyles}>
         <Controller
           render={({ field }) => (
+            <ColorInput label="In-App font color" data-test-id="font-color-picker" disallowInput={false} {...field} />
+          )}
+          control={control}
+          name="fontColor"
+        />
+      </div>
+      <div className={inputWrapperStyles}>
+        <Controller
+          render={({ field }) => (
             <Select
               label="In-App font family"
               placeholder="Select a font family"
@@ -23,16 +32,6 @@ export function InAppInputs({ control }: InAppInputsProps) {
           )}
           control={control}
           name="fontFamily"
-        />
-      </div>
-
-      <div className={inputWrapperStyles}>
-        <Controller
-          render={({ field }) => (
-            <ColorInput label="In-App font color" data-test-id="font-color-picker" disallowInput={false} {...field} />
-          )}
-          control={control}
-          name="fontColor"
         />
       </div>
     </>
