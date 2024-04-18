@@ -64,7 +64,13 @@ jobs:
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver-opts: 'image=moby/buildkit:v0.12.4'
+          driver-opts: 'image=moby/buildkit:v0.13.1'
+
+      - name: Prepare
+        shell: bash
+        run: |
+          service=${{ matrix.name }}
+          echo "SERVICE_NAME=$(basename "${service//-/-}")" >> $GITHUB_ENV
 
       - name: Set Bull MQ Env variable for EE
         if: contains(matrix.name, 'ee')
@@ -80,9 +86,14 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DOCKER_BUILD_ARGUMENTS: >
+            --cache-from type=registry,ref=ghcr.io/novuhq/novu/cache:build-cache-${{ env.SERVICE_NAME }}
+            --cache-to type=registry,ref=ghcr.io/novuhq/novu/cache:build-cache-${{ env.SERVICE_NAME }},mode=max
+            --platform=linux/amd64,linux/arm64 --provenance=false
+            --output=type=image,name=ghcr.io/novuhq/${{ inputs.docker_name }},push-by-digest=true,name-canonical=true
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api - -t novu-api --load --platform=linux/amd64,linux/arm64 --provenance=false
+          cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api - -t novu-api --load $DOCKER_BUILD_ARGUMENTS
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-api ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
