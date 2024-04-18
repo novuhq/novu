@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, useMantineTheme, Grid } from '@mantine/core';
 
 import styled from '@emotion/styled';
@@ -21,6 +21,13 @@ export function OnboardingExperimentModal() {
   const handleOnClose = () => {
     setOpened(true);
   };
+
+  useEffect(() => {
+    segment.track('Welcome modal open - [Onboarding]', {
+      experiment_id: '2024-w15-onb',
+      _organization: currentOrganization?._id,
+    });
+  }, [currentOrganization?._id, segment]);
 
   return (
     <Modal
