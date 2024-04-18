@@ -59,16 +59,15 @@ export function BrandingPage() {
           <Stack gap="200">
             <BrandInputs control={control} setValue={setValue} />
             <InAppInputs control={control} />
-
-            <div
-              className={css({
-                textAlign: 'right',
-              })}
+            <Button
+              className={css({ alignSelf: 'flex-start' })}
+              submit
+              loading={isLoading}
+              data-test-id="submit-branding-settings"
+              disabled={!isDirty}
             >
-              <Button submit loading={isLoading} data-test-id="submit-branding-settings" disabled={!isDirty}>
-                Update
-              </Button>
-            </div>
+              Update
+            </Button>
           </Stack>
         </form>
       </LoadingOverlay>
