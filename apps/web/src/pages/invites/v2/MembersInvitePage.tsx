@@ -97,7 +97,7 @@ export function MembersInvitePage({ shouldHideTitle }: IMembersInviteProps) {
         <MemberInviteForm onSuccess={refetch} inviteByLink={inviteByLink} />
       </Group>
 
-      <Container fluid p={0}>
+      <Container fluid p={0} mt={shouldHideTitle ? 15 : undefined}>
         <ProductLead
           icon={<UserAccess />}
           id="rbac-team-page"
