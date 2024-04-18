@@ -25,7 +25,7 @@ const formInputStyles = css({
   /**
    * show the error message absolutely positioned below the input, otherwise it will push the input up
    */
-  '& .mantine-TextInput-error': { position: 'absolute', marginTop: '0.5rem' },
+  '& .mantine-TextInput-error': { position: 'absolute', marginTop: '50' },
   '& input, .mantine-TextInput-wrapper': { marginBottom: '0 !important', textOverflow: 'ellipsis' },
 });
 
