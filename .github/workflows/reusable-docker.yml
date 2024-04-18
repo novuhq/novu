@@ -66,6 +66,12 @@ jobs:
           submodules: ${{ contains (matrix.name,'-ee') }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
+      - name: Prepare
+        shell: bash
+        run: |
+          service=${{ matrix.name }}
+          echo "SERVICE_NAME=$(basename "${service//-/-}")" >> $GITHUB_ENV
+
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
@@ -103,6 +109,11 @@ jobs:
           PROJECT_PATH: ${{ inputs.project_path }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DOCKER_BUILD_ARGUMENTS: >
+            --cache-from type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/novu/cache:build-cache-${{ env.SERVICE_NAME }}
+            --cache-to type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/novu/cache:build-cache-${{ env.SERVICE_NAME }},mode=max
+            --platform=linux/amd64,linux/arm64 --provenance=false
+            --output=type=image,name=ghcr.io/ras-devops/${{ env.DOCKER_NAME }},push-by-digest=true,name-canonical=true
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           cd $PROJECT_PATH && npm run docker:build
@@ -123,6 +134,11 @@ jobs:
           PROJECT_PATH: ${{ inputs.project_path }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DOCKER_BUILD_ARGUMENTS: >
+            --cache-from type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/novu/cache:build-cache-${{ env.SERVICE_NAME }}
+            --cache-to type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/novu/cache:build-cache-${{ env.SERVICE_NAME }},mode=max
+            --platform=linux/amd64,linux/arm64 --provenance=false
+            --output=type=image,name=ghcr.io/ras-devops/${{ env.DOCKER_NAME }},push-by-digest=true,name-canonical=true
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           cd $PROJECT_PATH && npm run docker:build
