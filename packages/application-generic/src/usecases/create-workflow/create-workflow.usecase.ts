@@ -38,6 +38,7 @@ import {
   CreateMessageTemplate,
   CreateMessageTemplateCommand,
 } from '../message-template';
+import { ApiException, PlatformException } from '../../utils/exceptions';
 
 @Injectable()
 export class CreateWorkflow {
@@ -85,7 +86,7 @@ export class CreateWorkflow {
         process.env.CI_EE_TEST === 'true'
       ) {
         if (!require('@novu/ee-shared-services')?.TranslationsService) {
-          throw new Error('Translation module is not loaded');
+          throw new PlatformException('Translation module is not loaded');
         }
         const service = this.moduleRef.get(
           require('@novu/ee-shared-services')?.TranslationsService,
@@ -125,7 +126,7 @@ export class CreateWorkflow {
 
     for (const variant of variants) {
       if (isVariantEmpty(variant)) {
-        throw new Error(
+        throw new ApiException(
           `Variant conditions are required, variant name ${variant.name} id ${variant._id}`
         );
       }
@@ -270,7 +271,7 @@ export class CreateWorkflow {
 
     for (const message of command.steps) {
       if (!message.template)
-        throw new Error(`Unexpected error: message template is missing`);
+        throw new ApiException(`Unexpected error: message template is missing`);
 
       const [template, storedVariants] = await Promise.all([
         await this.createMessageTemplate.execute(
@@ -354,7 +355,7 @@ export class CreateWorkflow {
 
     for (const variant of variants) {
       if (!variant.template)
-        throw new Error(
+        throw new ApiException(
           `Unexpected error: variants message template is missing`
         );
 

@@ -1,4 +1,4 @@
-import * as sanitize from 'sanitize-html';
+import * as sanitizeTypes from 'sanitize-html';
 import { IEmailBlock } from '@novu/shared';
 
 /**
@@ -6,13 +6,13 @@ import { IEmailBlock } from '@novu/shared';
  *
  * @see https://www.npmjs.com/package/sanitize-html#default-options
  */
-const sanitizeOptions: sanitize.IOptions = {
+const sanitizeOptions: sanitizeTypes.IOptions = {
   /**
    * Additional tags to allow.
    */
-  allowedTags: sanitize.defaults.allowedTags.concat(['style', 'img']),
+  allowedTags: sanitizeTypes.defaults.allowedTags.concat(['style', 'img']),
   allowedAttributes: {
-    ...sanitize.defaults.allowedAttributes,
+    ...sanitizeTypes.defaults.allowedAttributes,
     /**
      * Additional attributes to allow on all tags.
      */
@@ -39,7 +39,7 @@ const sanitizeOptions: sanitize.IOptions = {
 export function sanitizeHTML(html: string) {
   if (!html) return html;
 
-  return sanitize(html, sanitizeOptions);
+  return sanitizeTypes.default(html, sanitizeOptions);
 }
 
 export function sanitizeMessageContent(content: string | IEmailBlock[]) {

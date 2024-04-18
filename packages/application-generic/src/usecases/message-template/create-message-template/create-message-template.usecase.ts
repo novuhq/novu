@@ -15,6 +15,7 @@ import { CreateChange, CreateChangeCommand } from '../../create-change';
 import { UpdateChange, UpdateChangeCommand } from '../../update-change';
 import { sanitizeMessageContent } from '../../../services';
 import { normalizeVariantDefault } from '../../../utils/variants';
+import { ApiException } from '../../../utils/exceptions';
 
 @Injectable()
 export class CreateMessageTemplate {
@@ -29,7 +30,7 @@ export class CreateMessageTemplate {
     command: CreateMessageTemplateCommand
   ): Promise<MessageTemplateEntity> {
     if ((command?.cta?.action as IMessageAction | undefined | '') === '') {
-      throw new Error('Please provide a valid CTA action');
+      throw new ApiException('Please provide a valid CTA action');
     }
 
     let layoutId: string | undefined | null;

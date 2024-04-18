@@ -161,7 +161,6 @@
     "rxjs": "7.8.1",
     "shortid": "^2.2.16",
     "sanitize-html": "^2.4.0",
-    "@types/json-schema": "^7.0.15",
     "slugify": "^1.4.6"
   },
   "optionalDependencies": {
@@ -173,6 +172,8 @@
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/jest": "29.5.2",
     "@types/newrelic": "^9",
+    "@types/json-schema": "^7.0.15",
+    "@types/sanitize-html": "^2.11.0",
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",
     "codecov": "^3.5.0",

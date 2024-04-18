@@ -15,6 +15,7 @@ import {
   FilterParts,
 } from '@novu/shared';
 import { NotificationStep } from '../usecases/create-workflow';
+import { ApiException } from '../utils/exceptions';
 
 export class ContentService {
   replaceVariables(content: string, variables: { [key: string]: string }) {
@@ -40,7 +41,7 @@ export class ContentService {
 
       return getTemplateVariables(ast.body);
     } catch (e) {
-      throw new Error('Failed to extract variables');
+      throw new ApiException('Failed to extract variables');
     }
   }
 
