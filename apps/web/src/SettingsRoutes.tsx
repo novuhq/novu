@@ -21,11 +21,7 @@ import { WebhookPage } from './pages/settings/WebhookPage';
 export const useSettingsRoutes = () => {
   const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
-  /*
-   * FIXME: reload doesn't work properly with conditional routes,
-   * so replace with isInformationArchitectureEnabled before merging
-   */
-  return true ? (
+  return isInformationArchitectureEnabled ? (
     <>
       <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
         <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />

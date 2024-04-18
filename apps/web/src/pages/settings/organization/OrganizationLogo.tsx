@@ -37,7 +37,6 @@ export function OrganizationLogo({ logoUrl }: Partial<FormValues>) {
 
       return;
     }
-    // FIXME: Add organization logo api implementation once it is available
   }
 
   return (
