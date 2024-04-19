@@ -1,4 +1,4 @@
-import { UserSession } from '@novu/testing';
+import { processTestAgentExpectedStatusCode, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
 describe('Update user name and profile picture - /users/profile (PUT)', async () => {
@@ -13,14 +13,15 @@ describe('Update user name and profile picture - /users/profile (PUT)', async ()
     const profilePicture = 'https://example.com/profile-picture.jpg';
     const {
       body: { data },
-      statusCode,
-    } = await session.testAgent.put('/v1/users/profile').send({
-      firstName: 'John',
-      lastName: 'Doe',
-      profilePicture: profilePicture,
-    });
+    } = await session.testAgent
+      .put('/v1/users/profile')
+      .send({
+        firstName: 'John',
+        lastName: 'Doe',
+        profilePicture: profilePicture,
+      })
+      .expect(processTestAgentExpectedStatusCode(200));
 
-    expect(statusCode).to.equal(200);
     expect(data.firstName).to.equal('John');
     expect(data.lastName).to.equal('Doe');
     expect(data.profilePicture).to.equal(profilePicture);
