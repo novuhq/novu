@@ -30,7 +30,7 @@
     "start:dev": "concurrently \"pnpm start\"",
     "start:docker": "pnpm build && http-server -p 4701 dist",
     "start:test:web": "http-server -p 4701 -o test",
-    "docker:build": "docker buildx build --load --platform=linux/amd64,linux/arm64 --provenance=false -f ./Dockerfile -t novu-embed ./../..",
+    "docker:build": "docker buildx build --load -f ./Dockerfile -t novu-embed ./../.. $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "depot build -f ./Dockerfile -t novu-embed ./../.. --load",
     "test": "echo \"Error: no test specified\"",
     "test:watch": "jest --coverage --watch",
