@@ -66,7 +66,7 @@ describe('User Profile Settings Page', () => {
 
       cy.get('form#set-password-form button[type="submit"]').should('be.disabled');
 
-      const password = 'hell0MyFriends!';
+      const password = 'hell0@MyFriends!';
 
       // blur is required due to the Password Strength popover
       cy.getByTestId('password').should('exist').type(password).blur();
