@@ -71,7 +71,7 @@ runs:
       shell: bash
       env:
         GH_ACTOR: ${{ github.actor }}
-        GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        GH_PASSWORD: ${{ inputs.github_token }}
       run: |
         echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
