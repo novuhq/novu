@@ -85,6 +85,8 @@ describe('Main Nav (Sidebar)', () => {
       cy.getByTestId('side-nav-settings-team-link').should('exist');
       cy.getByTestId('side-nav-settings-branding-link').should('exist');
       cy.getByTestId('side-nav-settings-billing-link').should('exist');
+      cy.getByTestId('side-nav-settings-api-keys').should('exist');
+      cy.getByTestId('side-nav-settings-inbound-webhook').should('exist');
       /** TODO: we will reinstate the toggle buttons w/ different envs once we have APIs to support the pages */
       // cy.getByTestId('side-nav-settings-toggle-development').should('exist');
       // cy.getByTestId('side-nav-settings-toggle-production').should('exist');
