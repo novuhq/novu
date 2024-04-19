@@ -74,14 +74,13 @@ describe('User Profile Settings Page', () => {
         .should('exist')
         .type(password + 'blah');
 
-      cy.get('form#set-password-form button[type="submit"]').should('not.be.disabled').click();
+      cy.getByTestId('submit-btn').should('not.be.disabled').click();
 
       // ensure at least one field is marked as error
       cy.get('div [aria-invalid="true"] input[type="password"]').should('have.length.at.least', 1);
 
       cy.getByTestId('password-repeat').clear().type(password);
-
-      cy.get('form#set-password-form button[type="submit"]').should('not.be.disabled');
+      cy.getByTestId('submit-btn').should('not.be.disabled');
     });
   });
 
@@ -131,7 +130,7 @@ describe('User Profile Settings Page', () => {
       cy.get('form#reset-password-form button[type="submit"]').should('be.disabled');
 
       const currentPassword = 'MyFriends,hell0!';
-      const password = 'hell0MyFriends!';
+      const password = 'hell0@MyFriends!';
 
       cy.getByTestId('password-current').should('exist').type(currentPassword);
       // blur is required due to the Password Strength popover
@@ -140,14 +139,14 @@ describe('User Profile Settings Page', () => {
         .should('exist')
         .type(password + 'blah');
 
-      cy.get('form#reset-password-form button[type="submit"]').should('not.be.disabled').click();
+      cy.getByTestId('submit-btn').should('not.be.disabled').click();
 
       // ensure at least one field is marked as error
       cy.get('div [aria-invalid="true"] input[type="password"]').should('have.length.at.least', 1);
 
       cy.getByTestId('password-confirm').clear().type(password);
 
-      cy.get('form#reset-password-form button[type="submit"]').should('not.be.disabled');
+      cy.getByTestId('submit-btn').should('not.be.disabled');
     });
   });
 });
