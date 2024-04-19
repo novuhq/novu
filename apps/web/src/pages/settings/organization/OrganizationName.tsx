@@ -44,7 +44,7 @@ export function OrganizationName({ name }: Partial<FormValues>) {
 
   return (
     <form noValidate name="organization-name-form" onSubmit={handleSubmit(onSubmit)}>
-      <Stack gap={150} alignItems="flex-end" direction="row">
+      <Stack gap={'150'} alignItems="flex-end" direction="row">
         <Controller
           name="name"
           control={control}
@@ -61,7 +61,7 @@ export function OrganizationName({ name }: Partial<FormValues>) {
                 }),
                 input: css({
                   m: '0px !important',
-                  h: INPUT_HEIGHT,
+                  h: 'components.input.height',
                 }),
               }}
               placeholder="Organization name"
