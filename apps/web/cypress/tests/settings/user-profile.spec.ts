@@ -64,7 +64,7 @@ describe('User Profile Settings Page', () => {
       // sidebar title
       cy.contains('h2', 'Set password').should('exist');
 
-      cy.get('button[type="submit"]').should('be.disabled');
+      cy.get('form#set-password-form button[type="submit"]').should('be.disabled');
 
       const password = 'hell0MyFriends!';
 
@@ -74,14 +74,14 @@ describe('User Profile Settings Page', () => {
         .should('exist')
         .type(password + 'blah');
 
-      cy.get('button[type="submit"]').should('not.be.disabled').click();
+      cy.get('form#set-password-form button[type="submit"]').should('not.be.disabled').click();
 
       // ensure at least one field is marked as error
       cy.get('div [aria-invalid="true"] input[type="password"]').should('have.length.at.least', 1);
 
       cy.getByTestId('password-repeat').clear().type(password);
 
-      cy.get('button[type="submit"]').should('not.be.disabled');
+      cy.get('form#set-password-form button[type="submit"]').should('not.be.disabled');
     });
   });
 
@@ -128,7 +128,7 @@ describe('User Profile Settings Page', () => {
       // ensure at least one field is marked as error
       cy.get('form div > input[type="password"]').should('have.length', 3);
 
-      cy.get('button[type="submit"]').should('be.disabled');
+      cy.get('form#reset-password-form button[type="submit"]').should('be.disabled');
 
       const currentPassword = 'MyFriends,hell0!';
       const password = 'hell0MyFriends!';
@@ -140,14 +140,14 @@ describe('User Profile Settings Page', () => {
         .should('exist')
         .type(password + 'blah');
 
-      cy.get('button[type="submit"]').should('not.be.disabled').click();
+      cy.get('form#reset-password-form button[type="submit"]').should('not.be.disabled').click();
 
       // ensure at least one field is marked as error
       cy.get('div [aria-invalid="true"] input[type="password"]').should('have.length.at.least', 1);
 
       cy.getByTestId('password-confirm').clear().type(password);
 
-      cy.get('button[type="submit"]').should('not.be.disabled');
+      cy.get('form#reset-password-form button[type="submit"]').should('not.be.disabled');
     });
   });
 });

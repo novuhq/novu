@@ -77,7 +77,7 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
   const isSubmitDisabled = !isValid;
 
   return (
-    <form noValidate name="reset-form" onSubmit={handleSubmit(onSubmitPasswords)}>
+    <form noValidate name="set-password-form" id="set-password-form" onSubmit={handleSubmit(onSubmitPasswords)}>
       <Stack direction={'column'} gap={'200'}>
         <PasswordRequirementPopover control={control}>
           <PasswordInput

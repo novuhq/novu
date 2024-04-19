@@ -73,7 +73,7 @@ export const UserProfileUpdatePasswordForm: React.FC<UserProfileUpdatePasswordFo
   const isSubmitDisabled = !isValid;
 
   return (
-    <form noValidate name="reset-form" onSubmit={handleSubmit(onSubmitPasswords)}>
+    <form noValidate name="reset-password-form" id="reset-password-form" onSubmit={handleSubmit(onSubmitPasswords)}>
       <Stack direction={'column'} gap={'200'}>
         <PasswordInput
           error={errors.currentPassword?.message}
