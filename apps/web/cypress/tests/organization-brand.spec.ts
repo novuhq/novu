@@ -29,6 +29,7 @@ describe('Organization Brand Screen', function () {
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', this.session.organization._id);
     cy.getByTestId('font-color-picker').click({ force: true });
     cy.get('button[aria-label="#BA68C8"]').click();
+    cy.get('body').click();
     cy.getByTestId('submit-branding-settings').click();
 
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
