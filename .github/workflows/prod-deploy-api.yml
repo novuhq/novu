@@ -87,10 +87,10 @@ jobs:
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
-            --cache-from type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/novu/cache:build-cache-${{ env.SERVICE_NAME }}
-            --cache-to type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/novu/cache:build-cache-${{ env.SERVICE_NAME }},mode=max
+            --cache-from type=registry,ref=ghcr.io/novuhq/novu/cache:build-cache-${{ env.SERVICE_NAME }}
+            --cache-to type=registry,ref=ghcr.io/novuhq/novu/cache:build-cache-${{ env.SERVICE_NAME }},mode=max
             --platform=linux/amd64,linux/arm64 --provenance=false
-            --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.DOCKER_NAME }},push-by-digest=true,name-canonical=true
+            --output=type=image,name=ghcr.io/novuhq/${{ matrix.name }},push-by-digest=true,name-canonical=true
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           cd apps/api && pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api - -t novu-api --load $DOCKER_BUILD_ARGUMENTS
