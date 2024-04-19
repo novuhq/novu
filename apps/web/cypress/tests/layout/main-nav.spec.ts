@@ -85,23 +85,33 @@ describe('Main Nav (Sidebar)', () => {
       cy.getByTestId('side-nav-settings-team-link').should('exist');
       cy.getByTestId('side-nav-settings-branding-link').should('exist');
       cy.getByTestId('side-nav-settings-billing-link').should('exist');
-      cy.getByTestId('side-nav-settings-toggle-development').should('exist');
-      cy.getByTestId('side-nav-settings-toggle-production').should('exist');
+
+      // TODO: remove these lines when we implement toggles for different envs
+      cy.getByTestId('side-nav-settings-api-keys').should('exist');
+      cy.getByTestId('side-nav-settings-inbound-webhook').should('exist');
+
+      // TODO: re-enable once we implement the toggles for different envs
+      // cy.getByTestId('side-nav-settings-toggle-development').should('exist');
+
+      // cy.getByTestId('side-nav-settings-toggle-production').should('exist');
     });
 
-    it('should display correct environment settings when toggling development/production', () => {
-      // Navigate to the settings page
-      cy.getByTestId('side-nav-settings-link').click();
-
-      // Toggle development environment
-      cy.getByTestId('side-nav-settings-toggle-development').click();
-      cy.getByTestId('side-nav-settings-api-keys-development').should('exist');
-      cy.getByTestId('side-nav-settings-inbound-webhook-development').should('exist');
-
-      // Toggle production environment
-      cy.getByTestId('side-nav-settings-toggle-production').click();
-      cy.getByTestId('side-nav-settings-api-keys-production').should('exist');
-      cy.getByTestId('side-nav-settings-inbound-webhook-production').should('exist');
-    });
+    /**
+     * TODO: re-enable once we implement the toggles for different envs
+     * it('should display correct environment settings when toggling development/production', () => {
+     *   // Navigate to the settings page
+     *   cy.getByTestId('side-nav-settings-link').click();
+     *
+     *   // Toggle development environment
+     *   cy.getByTestId('side-nav-settings-toggle-development').click();
+     *   cy.getByTestId('side-nav-settings-api-keys-development').should('exist');
+     *   cy.getByTestId('side-nav-settings-inbound-webhook-development').should('exist');
+     *
+     *   // Toggle production environment
+     *   cy.getByTestId('side-nav-settings-toggle-production').click();
+     *   cy.getByTestId('side-nav-settings-api-keys-production').should('exist');
+     *   cy.getByTestId('side-nav-settings-inbound-webhook-production').should('exist');
+     * });
+     */
   });
 });

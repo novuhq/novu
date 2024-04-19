@@ -86,7 +86,7 @@ export const SettingsNavMenu: React.FC = () => {
             ROUTES.API_KEYS,
             (environment?.name as BaseEnvironmentEnum) ?? BaseEnvironmentEnum.DEVELOPMENT
           )}
-          testId="side-nav-settings-api-keys-development"
+          testId="side-nav-settings-api-keys"
         ></NavMenuLinkButton>
         <NavMenuLinkButton
           label="Inbound webhook"
@@ -96,7 +96,7 @@ export const SettingsNavMenu: React.FC = () => {
             ROUTES.WEBHOOK,
             (environment?.name as BaseEnvironmentEnum) ?? BaseEnvironmentEnum.DEVELOPMENT
           )}
-          testId="side-nav-settings-inbound-webhook-development"
+          testId="side-nav-settings-inbound-webhook"
         ></NavMenuLinkButton>
         {/** TODO: we will reinstate the toggle buttons w/ different envs once we have APIs to support the pages */}
         {/*
