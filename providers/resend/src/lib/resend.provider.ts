@@ -44,6 +44,10 @@ export class ResendEmailProvider implements IEmailProvider {
       bcc: options.bcc,
     });
 
+    if (response.error) {
+      throw new Error(response.error.message);
+    }
+
     return {
       id: response.data?.id,
       date: new Date().toISOString(),

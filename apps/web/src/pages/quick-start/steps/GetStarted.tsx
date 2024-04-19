@@ -34,18 +34,13 @@ export function GetStarted() {
     channelType?: ChannelTypeEnum;
   }>({ open: false });
 
-  const isOnboardingModalEnabled = localStorage.getItem(OnboardingExperimentV2ModalKey) === 'true';
+  const isOnboardingModalEnabled =
+    localStorage.getItem(OnboardingExperimentV2ModalKey) === 'true' && window.innerWidth > 768;
 
   const onIntegrationModalClose = () => setClickedChannel({ open: false });
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_VISIT);
-    if (isOnboardingModalEnabled) {
-      segment.track('Welcome modal open - [Onboarding]', {
-        experiment_id: '2024-w15-onb',
-        _organization: currentOrganization?._id,
-      });
-    }
   }, [currentOrganization?._id, isOnboardingModalEnabled, segment]);
 
   function handleOnClick() {

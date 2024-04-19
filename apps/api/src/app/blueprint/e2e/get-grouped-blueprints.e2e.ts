@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 
 import { UserSession } from '@novu/testing';
-import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
+import { NotificationTemplateRepository, EnvironmentRepository, EnvironmentEntity } from '@novu/dal';
 import {
   EmailBlockTypeEnum,
   FieldLogicalOperatorEnum,
@@ -52,6 +52,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
   it('should get the grouped blueprints', async function () {
     const prodEnv = await getProductionEnvironment();
+    if (!prodEnv) throw new Error('production environment was not found');
 
     await createTemplateFromBlueprint({ session, notificationTemplateRepository, prodEnv });
 
@@ -82,6 +83,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
   it('should get the updated grouped blueprints (after invalidation)', async function () {
     const prodEnv = await getProductionEnvironment();
+    if (!prodEnv) throw new Error('production environment was not found');
 
     await createTemplateFromBlueprint({
       session,
@@ -167,7 +169,7 @@ export async function createTemplateFromBlueprint({
 }: {
   session: UserSession;
   notificationTemplateRepository: NotificationTemplateRepository;
-  prodEnv;
+  prodEnv: EnvironmentEntity;
 }) {
   const testTemplateRequestDto: Partial<CreateWorkflowRequestDto> = {
     name: 'test email template',
@@ -214,8 +216,6 @@ export async function createTemplateFromBlueprint({
   await session.applyChanges({
     enabled: false,
   });
-
-  if (!prodEnv) throw new Error('production environment was not found');
 
   const blueprintId = (
     await notificationTemplateRepository.findOne({

@@ -9,6 +9,7 @@ export interface IRetryConfig {
 }
 
 export interface INovuConfiguration {
+  apiKey?: string;
   backendUrl?: string;
   retryConfig?: IRetryConfig;
 }

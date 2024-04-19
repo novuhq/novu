@@ -8,11 +8,11 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
     panel: {
-      value: { base: '{colors.legacy.BGDark}', _dark: '{colors.legacy.BGLight}' },
+      value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.BGDark}' },
       type: 'color',
     },
     popover: {
-      value: { base: '{colors.mauve.120.light}', _dark: '{colors.mauve.120.dark}' },
+      value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B20}' },
       type: 'color',
     },
   },
@@ -30,16 +30,25 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
         value: { base: '{colors.legacy.B70}', _dark: '{colors.legacy.B40}' },
         type: 'color',
       },
-      /*
-       * disabled: {
-       *   value: { base: '{colors.legacy.mauve.30.light}', _dark: '{colors.legacy.mauve.30.dark}' },
-       *   type: 'color',
-       * },
-       * accent: {
-       *   value: { base: '{colors.legacy.blue.20.light}', _dark: '{colors.legacy.blue.20.dark}' },
-       *   type: 'color',
-       * },
-       */
+      // not actually legacy, but makes the merging of the two easier for now.
+      feedback: {
+        alert: {
+          value: { base: '{colors.red.20.light}', _dark: '{colors.red.20.dark}' },
+          type: 'color',
+        },
+        warning: {
+          value: { base: '{colors.amber.30.light}', _dark: '{colors.amber.30.dark}' },
+          type: 'color',
+        },
+        info: {
+          value: { base: '{colors.blue.20.light}', _dark: '{colors.blue.20.dark}' },
+          type: 'color',
+        },
+        success: {
+          value: { base: '{colors.green.20.light}', _dark: '{colors.green.20.dark}' },
+          type: 'color',
+        },
+      },
     },
   },
 });
