@@ -60,6 +60,7 @@ jobs:
           github_token: ${{ secrets.GH_PACKAGES }}
           docker_name: ${{ matrix.name }}
           bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
+          environment: dev
 
       - name: Checkout cloud infra
         if: ${{ contains (matrix.name,'-ee') }}
