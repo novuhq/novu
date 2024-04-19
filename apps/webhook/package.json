@@ -8,7 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | docker buildx build --load --platform=linux/amd64,linux/arm64 --provenance=false --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | docker buildx build --load --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook --load",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "npm run start:dev",
