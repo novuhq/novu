@@ -19,7 +19,7 @@ describe('Organization Switch', function () {
     cy.task('addOrganization', this.session.user.id).then((newOrg: any) => {
       cy.visit('/workflows');
 
-      cy.getByTestId('organization-switch').focus();
+      cy.getByTestId('organization-switch').scrollIntoView().focus();
 
       cy.get('.mantine-Select-item').contains(capitalize(newOrg.name)).click({ force: true });
 
