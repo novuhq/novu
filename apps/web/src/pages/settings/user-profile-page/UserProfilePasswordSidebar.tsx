@@ -1,4 +1,4 @@
-import { IconOutlineLockPerson, Sidebar } from '@novu/design-system';
+import { IconOutlineLockPerson, SidebarFormless } from '@novu/design-system';
 import { useContext, useEffect, useMemo } from 'react';
 import { HStack, styled } from '../../../styled-system/jsx';
 import { title } from '../../../styled-system/recipes';
@@ -62,7 +62,7 @@ export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarPro
   const sidebarTitle = `${currentFlow.rootFlow === 'SET_PASSWORD' ? 'Set' : 'Update'} password`;
 
   return (
-    <Sidebar
+    <SidebarFormless
       isOpened={isOpened}
       onClose={onClose}
       customHeader={
@@ -73,6 +73,6 @@ export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarPro
       }
     >
       {sidebarContent}
-    </Sidebar>
+    </SidebarFormless>
   );
 };
