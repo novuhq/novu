@@ -1,5 +1,4 @@
 import { test, expect } from '@playwright/test';
-import os from 'node:os';
 
 import { getByTestId, initializeSession } from './utils.ts/browser';
 
