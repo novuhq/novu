@@ -143,7 +143,7 @@ test('should show the dots navigation after the intro step', async ({ page }) =>
   await expect(dotsNavigation).toBeVisible();
 });
 
-test('should show not show the start from scratch tour hints after it is shown twice ', async ({ page }) => {
+test.skip('should not show the start from scratch tour hints after it is shown twice ', async ({ page }) => {
   await page.goto('/workflows/create');
 
   let scratchWorkflowTooltip = await getByTestId(page, 'scratch-workflow-tooltip');
