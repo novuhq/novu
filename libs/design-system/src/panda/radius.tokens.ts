@@ -5,37 +5,41 @@ import { defineTokens } from '@pandacss/dev';
  *
  * Used for properties like width and height.
  */
-export const LEGACY_RADIUS_TOKENS = defineTokens.radii({
-  '25': {
-    value: '0.25rem',
-    type: 'sizes',
-  },
+export const RADIUS_TOKENS = defineTokens.radii({
   '50': {
-    value: '0.5rem',
-    type: 'sizes',
+    value: '0.25rem',
+    type: 'radius',
   },
   '75': {
-    value: '0.75rem',
-    type: 'sizes',
+    value: '0.375rem',
+    type: 'radius',
   },
   '100': {
-    value: '1rem',
-    type: 'sizes',
-  },
-  '125': {
-    value: '1.25rem',
-    type: 'sizes',
+    value: '0.5rem',
+    type: 'radius',
   },
   '150': {
-    value: '1.5rem',
-    type: 'sizes',
+    value: '0.75rem',
+    type: 'radius',
   },
-  '175': {
-    value: '1.75rem',
-    type: 'sizes',
+  circle: {
+    value: '50%',
+    type: 'radius',
   },
-  '200': {
-    value: '2rem',
-    type: 'sizes',
+  pill: {
+    value: '9999px',
+    type: 'radius',
+  },
+});
+
+/** @deprecated */
+export const LEGACY_RADIUS_TOKENS = defineTokens.radii({
+  '63': {
+    value: '5px',
+    type: 'radius',
+  },
+  '88': {
+    value: '7px',
+    type: 'radius',
   },
 });
