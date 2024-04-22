@@ -185,7 +185,7 @@ describe('test use of novus node package - Subscribers class', () => {
     expect(mockedAxios.patch).toHaveBeenCalledWith(
       `/subscribers/test-update-subscriber/online-status`,
       {
-        online: true,
+        isOnline: true,
       }
     );
   });
