@@ -1,4 +1,4 @@
-name: Testing Pipeline Schedule
+name: Test Scheduler
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
