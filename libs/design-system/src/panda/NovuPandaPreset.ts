@@ -1,8 +1,12 @@
 import { definePreset } from '@pandacss/dev';
+import { BORDER_TOKENS, BORDER_WIDTH_TOKENS } from './borders.tokens';
 import { COLOR_PALETTE_TOKENS, LEGACY_COLOR_TOKENS } from './colors.tokens';
-import { COLOR_SEMANTIC_TOKENS, LEGACY_COLOR_SEMANTIC_TOKENS } from './semanticColors.tokens';
+import { GRADIENT_TOKENS, LEGACY_GRADIENT_TOKENS } from './gradients.tokens';
+import { LEGACY_RADIUS_TOKENS } from './radius.tokens';
 import { TEXT_RECIPE } from './recipes/text.recipe';
 import { TITLE_RECIPE } from './recipes/title.recipe';
+import { COLOR_SEMANTIC_TOKENS, LEGACY_COLOR_SEMANTIC_TOKENS } from './semanticColors.tokens';
+import { LEGACY_SHADOW_TOKENS } from './shadow.tokens';
 import { SIZES_TOKENS } from './sizes.tokens';
 import { SPACING_TOKENS } from './spacing.tokens';
 import { TEXT_STYLES } from './textStyles.tokens';
@@ -14,8 +18,7 @@ import {
   LETTER_SPACING_TOKENS,
   LINE_HEIGHT_TOKENS,
 } from './typography.tokens';
-import { LEGACY_GRADIENT_TOKENS } from './gradients.tokens';
-import { LEGACY_RADIUS_TOKENS } from './radius.tokens';
+import { Z_INDEX_TOKENS } from './zIndex.tokens';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -44,13 +47,20 @@ export const NovuPandaPreset = definePreset({
       fontWeights: FONT_WEIGHT_TOKENS,
       letterSpacings: LETTER_SPACING_TOKENS,
       radii: LEGACY_RADIUS_TOKENS,
+      borderWidths: BORDER_WIDTH_TOKENS,
+      borders: BORDER_TOKENS,
     },
     semanticTokens: {
       colors: {
         ...COLOR_SEMANTIC_TOKENS,
         ...LEGACY_COLOR_SEMANTIC_TOKENS,
       },
-      gradients: LEGACY_GRADIENT_TOKENS,
+      shadows: LEGACY_SHADOW_TOKENS,
+      gradients: {
+        ...GRADIENT_TOKENS,
+        ...LEGACY_GRADIENT_TOKENS,
+      },
+      zIndex: Z_INDEX_TOKENS,
     },
     textStyles: TEXT_STYLES,
     extend: {
