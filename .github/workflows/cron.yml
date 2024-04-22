@@ -4,6 +4,7 @@ concurrency:
   cancel-in-progress: true
 
 on:
+  workflow_dispatch:
   schedule:
     - cron:  '0 9-21/2 * * *'
 
