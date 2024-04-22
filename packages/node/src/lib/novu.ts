@@ -53,9 +53,13 @@ export class Novu extends EventEmitter {
       apiKey = args[0];
       config = args[1];
     } else if (arguments.length === 1) {
-      const { apiKey: key, ...rest } = args[0];
-      apiKey = key;
-      config = rest;
+      if (typeof args[0] === 'object') {
+        const { apiKey: key, ...rest } = args[0];
+        apiKey = key;
+        config = rest;
+      } else {
+        apiKey = args[0];
+      }
     } else {
       apiKey = getEnvVariable('NOVU_API_KEY');
     }
