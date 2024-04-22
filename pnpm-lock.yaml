@@ -3116,7 +3116,7 @@ importers:
         specifier: ^0.24.1
         version: link:../../providers/nodemailer
       '@novu/ntfy':
-        specifier: ^0.24.0
+        specifier: ^0.24.1
         version: link:../../providers/ntfy
       '@novu/one-signal':
         specifier: ^0.24.1
@@ -5893,7 +5893,7 @@ importers:
   providers/ntfy:
     dependencies:
       '@novu/stateless':
-        specifier: 0.24.0
+        specifier: 0.24.1
         version: link:../../packages/stateless
       axios:
         specifier: ^1.6.0
@@ -5925,7 +5925,7 @@ importers:
         version: 3.0.2
       ts-jest:
         specifier: ~27.1.5
-        version: 27.1.5(@babel/core@7.23.2)(@types/jest@27.5.2)(jest@27.5.1)(typescript@4.9.5)
+        version: 27.1.5(@babel/core@7.24.4)(@types/jest@27.5.2)(jest@27.5.1)(typescript@4.9.5)
       ts-node:
         specifier: ~10.9.1
         version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
@@ -19137,7 +19137,7 @@ packages:
       '@types/node': 14.18.42
       chalk: 4.1.2
       jest-message-util: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       slash: 3.0.0
     dev: true
 
@@ -19228,7 +19228,7 @@ packages:
       jest-runner: 29.5.0
       jest-runtime: 29.5.0
       jest-snapshot: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       jest-validate: 29.5.0
       jest-watcher: 29.5.0
       micromatch: 4.0.5
@@ -19367,7 +19367,7 @@ packages:
       '@types/node': 14.18.42
       jest-message-util: 29.5.0
       jest-mock: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
     dev: true
 
   /@jest/fake-timers@29.7.0:
@@ -19480,7 +19480,7 @@ packages:
       istanbul-lib-source-maps: 4.0.1
       istanbul-reports: 3.1.5
       jest-message-util: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       jest-worker: 29.5.0
       slash: 3.0.0
       string-length: 4.0.2
@@ -19776,7 +19776,6 @@ packages:
       '@types/node': 14.18.42
       '@types/yargs': 17.0.24
       chalk: 4.1.2
-    dev: true
 
   /@jonkemp/package-utils@1.0.8:
     resolution: {integrity: sha512-bIcKnH5YmtTYr7S6J3J86dn/rFiklwRpOqbTOQ9C0WMmR9FKHVb3bxs2UYfqEmNb93O4nbA97sb6rtz33i9SyA==}
@@ -22092,7 +22091,7 @@ packages:
       identity-obj-proxy: 3.0.0
       jest-config: 29.5.0(@types/node@16.11.7)(ts-node@10.9.1)
       jest-resolve: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       resolve.exports: 1.1.0
       tslib: 2.6.2
     transitivePeerDependencies:
@@ -39092,6 +39091,7 @@ packages:
     dependencies:
       ms: 2.1.3
       supports-color: 5.5.0
+    dev: true
 
   /debug@3.2.7(supports-color@8.1.1):
     resolution: {integrity: sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==}
@@ -40386,7 +40386,7 @@ packages:
   /eslint-import-resolver-node@0.3.7:
     resolution: {integrity: sha512-gozW2blMLJCeFpBwugLTGyvVjNoeo1knonXAcatC6bjPBZitotxdWf7Gimr25N4c0AAOo4eOUfaG82IJPDpqCA==}
     dependencies:
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       is-core-module: 2.13.0
       resolve: 1.22.2
     transitivePeerDependencies:
@@ -40401,7 +40401,7 @@ packages:
       webpack: '>=1.11.0'
     dependencies:
       array.prototype.find: 2.2.2
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       enhanced-resolve: 0.9.1
       eslint-plugin-import: 2.28.1(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-webpack@0.13.7)(eslint@8.38.0)
       find-root: 1.1.0
@@ -40439,7 +40439,7 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/parser': 5.58.0(eslint@8.38.0)(typescript@4.9.5)
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       eslint: 8.38.0
       eslint-import-resolver-node: 0.3.7
       eslint-import-resolver-webpack: 0.13.7(eslint-plugin-import@2.28.1)(webpack@5.78.0)
@@ -40469,7 +40469,7 @@ packages:
         optional: true
     dependencies:
       '@typescript-eslint/parser': 5.58.0(eslint@8.51.0)(typescript@4.9.5)
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
       eslint-import-resolver-webpack: 0.13.7(eslint-plugin-import@2.28.1)(webpack@5.78.0)
@@ -40550,7 +40550,7 @@ packages:
       array.prototype.findlastindex: 1.2.3
       array.prototype.flat: 1.3.1
       array.prototype.flatmap: 1.3.1
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       doctrine: 2.1.0
       eslint: 8.38.0
       eslint-import-resolver-node: 0.3.7
@@ -40585,7 +40585,7 @@ packages:
       array.prototype.findlastindex: 1.2.3
       array.prototype.flat: 1.3.1
       array.prototype.flatmap: 1.3.1
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       doctrine: 2.1.0
       eslint: 8.51.0
       eslint-import-resolver-node: 0.3.7
@@ -45218,7 +45218,7 @@ packages:
       jest-message-util: 29.5.0
       jest-runtime: 29.5.0
       jest-snapshot: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       p-limit: 3.1.0
       pretty-format: 29.7.0
       pure-rand: 6.0.1
@@ -45305,7 +45305,7 @@ packages:
       graceful-fs: 4.2.11
       import-local: 3.1.0
       jest-config: 29.5.0(@types/node@14.18.42)(ts-node@10.9.1)
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       jest-validate: 29.5.0
       prompts: 2.4.2
       yargs: 17.7.2
@@ -45333,7 +45333,7 @@ packages:
       graceful-fs: 4.2.11
       import-local: 3.1.0
       jest-config: 29.5.0(@types/node@18.15.11)(ts-node@10.9.1)
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       jest-validate: 29.5.0
       prompts: 2.4.2
       yargs: 17.7.2
@@ -45440,7 +45440,7 @@ packages:
       jest-regex-util: 29.4.3
       jest-resolve: 29.5.0
       jest-runner: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       jest-validate: 29.5.0
       micromatch: 4.0.5
       parse-json: 5.2.0
@@ -45480,7 +45480,7 @@ packages:
       jest-regex-util: 29.4.3
       jest-resolve: 29.5.0
       jest-runner: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       jest-validate: 29.5.0
       micromatch: 4.0.5
       parse-json: 5.2.0
@@ -45520,7 +45520,7 @@ packages:
       jest-regex-util: 29.4.3
       jest-resolve: 29.5.0
       jest-runner: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       jest-validate: 29.5.0
       micromatch: 4.0.5
       parse-json: 5.2.0
@@ -45648,10 +45648,10 @@ packages:
     resolution: {integrity: sha512-HM5kIJ1BTnVt+DQZ2ALp3rzXEl+g726csObrW/jpEGl+CDSSQpOJJX2KE/vEg8cxcMXdyEPu6U4QX5eruQv5hA==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
-      '@jest/types': 29.5.0
+      '@jest/types': 29.6.3
       chalk: 4.1.2
       jest-get-type: 29.4.3
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       pretty-format: 29.7.0
     dev: true
 
@@ -45728,7 +45728,7 @@ packages:
       '@jest/types': 29.5.0
       '@types/node': 14.18.42
       jest-mock: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
     dev: true
 
   /jest-environment-node@29.7.0:
@@ -45802,7 +45802,7 @@ packages:
       fb-watchman: 2.0.2
       graceful-fs: 4.2.11
       jest-regex-util: 29.4.3
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       jest-worker: 29.5.0
       micromatch: 4.0.5
       walker: 1.0.8
@@ -45989,7 +45989,7 @@ packages:
     dependencies:
       '@jest/types': 29.5.0
       '@types/node': 14.18.42
-      jest-util: 29.5.0
+      jest-util: 29.7.0
     dev: true
 
   /jest-mock@29.7.0:
@@ -46115,7 +46115,7 @@ packages:
       graceful-fs: 4.2.11
       jest-haste-map: 29.5.0
       jest-pnp-resolver: 1.2.3(jest-resolve@29.5.0)
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       jest-validate: 29.5.0
       resolve: 1.22.2
       resolve.exports: 2.0.2
@@ -46189,7 +46189,7 @@ packages:
       jest-message-util: 29.5.0
       jest-resolve: 29.5.0
       jest-runtime: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       jest-watcher: 29.5.0
       jest-worker: 29.5.0
       p-limit: 3.1.0
@@ -46267,7 +46267,7 @@ packages:
       '@jest/source-map': 29.4.3
       '@jest/test-result': 29.5.0
       '@jest/transform': 29.5.0
-      '@jest/types': 29.5.0
+      '@jest/types': 29.6.3
       '@types/node': 14.18.42
       chalk: 4.1.2
       cjs-module-lexer: 1.2.2
@@ -46280,7 +46280,7 @@ packages:
       jest-regex-util: 29.4.3
       jest-resolve: 29.5.0
       jest-snapshot: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       slash: 3.0.0
       strip-bom: 4.0.0
     transitivePeerDependencies:
@@ -46367,7 +46367,7 @@ packages:
       '@babel/types': 7.23.0
       '@jest/expect-utils': 29.5.0
       '@jest/transform': 29.5.0
-      '@jest/types': 29.5.0
+      '@jest/types': 29.6.3
       '@types/babel__traverse': 7.18.3
       '@types/prettier': 2.7.2
       babel-preset-current-node-syntax: 1.0.1(@babel/core@7.23.2)
@@ -46378,7 +46378,7 @@ packages:
       jest-get-type: 29.4.3
       jest-matcher-utils: 29.5.0
       jest-message-util: 29.5.0
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       natural-compare: 1.4.0
       pretty-format: 29.7.0
       semver: 7.5.4
@@ -46463,7 +46463,6 @@ packages:
       ci-info: 3.8.0
       graceful-fs: 4.2.11
       picomatch: 2.3.1
-    dev: true
 
   /jest-validate@27.5.1:
     resolution: {integrity: sha512-thkNli0LYTmOI1tDB3FI1S1RTp/Bqyd9pTarJwL87OIBFuqEb5Apv5EaApEudYg4g86e3CT6kM0RowkhtEnCBQ==}
@@ -46554,7 +46553,7 @@ packages:
       ansi-escapes: 4.3.2
       chalk: 4.1.2
       emittery: 0.13.1
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       string-length: 4.0.2
     dev: true
 
@@ -46603,7 +46602,7 @@ packages:
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
     dependencies:
       '@types/node': 14.18.42
-      jest-util: 29.5.0
+      jest-util: 29.7.0
       merge-stream: 2.0.0
       supports-color: 8.1.1
 
@@ -49938,7 +49937,7 @@ packages:
     hasBin: true
     requiresBuild: true
     dependencies:
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       iconv-lite: 0.6.3
       sax: 1.2.4
     transitivePeerDependencies:
@@ -52330,7 +52329,7 @@ packages:
     engines: {node: '>= 0.12.0'}
     dependencies:
       async: 2.6.4
-      debug: 3.2.7(supports-color@5.5.0)
+      debug: 3.2.7(supports-color@8.1.1)
       mkdirp: 0.5.6
     transitivePeerDependencies:
       - supports-color
