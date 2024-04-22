@@ -8,8 +8,8 @@ export class NtfyHandler extends BasePushHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    if (!credentials.baseUrl || !credentials.topic) {
-      throw Error('Config is not valid for ntfy');
+    if (!credentials.topic) {
+      throw Error('Topic is required for ntfy');
     }
 
     this.provider = new NtfyPushProvider({
