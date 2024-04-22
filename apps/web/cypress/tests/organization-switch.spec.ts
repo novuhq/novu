@@ -2,6 +2,7 @@ import * as capitalize from 'lodash.capitalize';
 
 describe('Organization Switch', function () {
   beforeEach(function () {
+    cy.mockFeatureFlags({ IS_INFORMATION_ARCHITECTURE_ENABLED: false });
     cy.initializeSession().as('session');
   });
 
