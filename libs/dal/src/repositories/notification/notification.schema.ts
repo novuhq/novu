@@ -10,26 +10,21 @@ const notificationSchema = new Schema<NotificationDBModel>(
     _templateId: {
       type: Schema.Types.ObjectId,
       ref: 'NotificationTemplate',
-      index: true,
     },
     _environmentId: {
       type: Schema.Types.ObjectId,
       ref: 'Environment',
-      index: true,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      index: true,
     },
     _subscriberId: {
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
-      index: true,
     },
     transactionId: {
       type: Schema.Types.String,
-      index: true,
     },
     channels: [
       {
