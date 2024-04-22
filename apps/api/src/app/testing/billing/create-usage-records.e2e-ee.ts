@@ -42,6 +42,13 @@ describe('CreateUsageRecords', () => {
   const getFeatureFlagUsecase = { execute: () => true };
 
   let createUsageRecordStub: sinon.SinonStub;
+  const getOrganizationAdminUserStub = {
+    execute: () => {
+      return {
+        _id: 'admin_user_id',
+      };
+    },
+  };
   let getPlatformNotificationUsageStub: sinon.SinonStub;
   let getFeatureFlagStub: sinon.SinonStub;
   let upsertSubscriptionStub: sinon.SinonStub;
@@ -92,7 +99,8 @@ describe('CreateUsageRecords', () => {
       upsertSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
       getFeatureFlagUsecase,
-      analyticsServiceStub
+      analyticsServiceStub,
+      getOrganizationAdminUserStub
     );
 
     return useCase;

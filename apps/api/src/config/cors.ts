@@ -12,28 +12,17 @@ export const corsOptionsDelegate: Parameters<INestApplication['enableCors']>[0] 
 
   const origin = (req.headers as any)?.origin || '';
 
-  if (['test', 'local'].includes(process.env.NODE_ENV) || isWidgetRoute(req.url) || isBlueprintRoute(req.url)) {
+  if (
+    ['test', 'local'].includes(process.env.NODE_ENV) ||
+    isWidgetRoute(req.url) ||
+    isBlueprintRoute(req.url) ||
+    hasPermittedDeployPreviewOrigin(origin)
+  ) {
     corsOptions.origin = '*';
   } else {
     corsOptions.origin = [process.env.FRONT_BASE_URL];
     if (process.env.WIDGET_BASE_URL) {
       corsOptions.origin.push(process.env.WIDGET_BASE_URL);
-    }
-
-    const shouldDisableCorsForPreviewUrls =
-      process.env.PR_PREVIEW_ROOT_URL &&
-      process.env.NODE_ENV === 'dev' &&
-      origin.includes(process.env.PR_PREVIEW_ROOT_URL);
-
-    Logger.verbose(`Should allow deploy preview? ${shouldDisableCorsForPreviewUrls ? 'Yes' : 'No'}.`, {
-      curEnv: process.env.NODE_ENV,
-      previewUrlRoot: process.env.PR_PREVIEW_ROOT_URL,
-      origin,
-    });
-
-    if (shouldDisableCorsForPreviewUrls) {
-      Logger.verbose(`Allowing deploy previews.`);
-      corsOptions.origin.push('*');
     }
   }
 
@@ -46,4 +35,19 @@ function isWidgetRoute(url: string) {
 
 function isBlueprintRoute(url: string) {
   return url.startsWith('/v1/blueprints');
+}
+
+function hasPermittedDeployPreviewOrigin(origin: string) {
+  const shouldAllowOrigin =
+    process.env.PR_PREVIEW_ROOT_URL &&
+    process.env.NODE_ENV === 'dev' &&
+    origin.includes(process.env.PR_PREVIEW_ROOT_URL);
+
+  Logger.verbose(`Should allow deploy preview? ${shouldAllowOrigin ? 'Yes' : 'No'}.`, {
+    curEnv: process.env.NODE_ENV,
+    previewUrlRoot: process.env.PR_PREVIEW_ROOT_URL,
+    origin,
+  });
+
+  return shouldAllowOrigin;
 }
