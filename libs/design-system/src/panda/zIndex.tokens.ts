@@ -1,5 +1,12 @@
 import { defineSemanticTokens } from '@pandacss/dev';
 
+/**
+ * Specifies the "depth" of UI elements.
+ *
+ * Based on the system from ParkUI:
+ * https://github.com/cschroeter/park-ui/blob/main/plugins/panda/src/theme/tokens/z-index.ts
+ * It’s similar to the system from MUI as well: https://mui.com/material-ui/customization/z-index/
+ */
 export const Z_INDEX_TOKENS = defineSemanticTokens.zIndex({
   hide: {
     value: -1,
