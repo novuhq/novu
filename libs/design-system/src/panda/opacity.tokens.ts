@@ -6,7 +6,7 @@ import { defineTokens } from '@pandacss/dev';
  * Used for properties like width and height.
  */
 export const OPACITY_TOKENS = defineTokens.opacity({
-  '50': {
+  '0': {
     value: '0',
     type: 'opacity',
   },
