@@ -85,10 +85,20 @@ export class SubscriberJobBound {
 
     await this.validateSubscriberIdProperty(subscriber);
 
+    /**
+     * Due to Mixpanel HotSharding, we don't want to pass userId for production volume
+     */
+    const segmentUserId = ['test-workflow', 'digest-playground'].includes(
+      command.payload.__source
+    )
+      ? userId
+      : '';
+
     this.analyticsService.mixpanelTrack(
       'Notification event trigger - [Triggers]',
-      '',
+      segmentUserId,
       {
+        name: template.name,
         type: template?.type || 'REGULAR',
         transactionId: command.transactionId,
         _template: template._id,
