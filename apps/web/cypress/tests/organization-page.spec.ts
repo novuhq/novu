@@ -1,5 +1,6 @@
 describe('Organization Page', function () {
   beforeEach(function () {
+    cy.mockFeatureFlags({ IS_INFORMATION_ARCHITECTURE_ENABLED: true });
     cy.initializeSession().as('session');
     cy.visit('/settings/organization');
     cy.intercept('*/organizations').as('renameOrganization');

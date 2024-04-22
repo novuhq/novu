@@ -1,5 +1,6 @@
 describe('Organization Brand Screen', function () {
   beforeEach(function () {
+    cy.mockFeatureFlags({ IS_INFORMATION_ARCHITECTURE_ENABLED: true });
     cy.initializeSession().as('session');
     cy.visit('settings/brand');
     cy.intercept('*/organizations/branding').as('updateBrandingSettings');
@@ -26,6 +27,9 @@ describe('Organization Brand Screen', function () {
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
 
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', this.session.organization._id);
+    cy.getByTestId('font-color-picker').click({ force: true });
+    cy.get('button[aria-label="#BA68C8"]').click();
+    cy.get('body').click();
     cy.getByTestId('submit-branding-settings').click();
 
     cy.getByTestId('logo-image-wrapper').should('have.attr', 'src').should('include', '.png');
