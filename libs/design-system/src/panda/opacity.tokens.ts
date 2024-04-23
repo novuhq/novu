@@ -1,10 +1,5 @@
 import { defineTokens } from '@pandacss/dev';
 
-/**
- * Represents the size of an element.
- *
- * Used for properties like width and height.
- */
 export const OPACITY_TOKENS = defineTokens.opacity({
   '0': {
     value: '0',
