@@ -619,8 +619,15 @@
     "zulip",
     "uuidv",
     "Vonage",
+    "HeaderNavNew",
+    "reshard",
+    "hstack",
     "runtimes",
     "cafebabe",
+    "Markunread",
+    "Fira",
+    "Roboto",
+    "Raleway",
     "Icann",
     "limitbar",
     "eazy"
@@ -708,6 +715,6 @@
     "angular.json",
     "ng-package.json",
     "libs/shared/src/types/timezones/timezones.types.ts",
-    "*.riv",
+    "*.riv"
   ]
 }
