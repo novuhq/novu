@@ -1,4 +1,5 @@
 import { defineSemanticTokens } from '@pandacss/dev';
+
 /** @deprecated */
 export const LEGACY_SHADOW_TOKENS = defineSemanticTokens.shadows({
   light: {
