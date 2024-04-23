@@ -632,7 +632,8 @@
     "limitbar",
     "eazy",
     "Maizzle",
-    "MJML"
+    "MJML",
+    "localstorage"
   ],
   "flagWords": [],
   "patterns": [
