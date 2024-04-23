@@ -1,15 +1,21 @@
 import { SpotlightProvider } from '@mantine/spotlight';
+import { Activity, Bolt, Box, Brand, Chat, IconLogout, Repeat, Settings, Team } from '@novu/design-system';
+import { UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Bolt, Box, Settings, Repeat, Team, Brand, Chat } from '@novu/design-system';
-import { UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 
+import { useAuthContext } from '@novu/shared-web';
 import { ROUTES } from '../../constants/routes.enum';
+import useThemeChange from '../../hooks/useThemeChange';
 import { useSpotlightContext } from '../providers/SpotlightProvider';
+import useStyles from './Spotlight.styles';
 
 export const SpotLight = ({ children }) => {
   const navigate = useNavigate();
   const { items, addItem } = useSpotlightContext();
+  const { logout } = useAuthContext();
+  const { themeIcon, toggleColorScheme } = useThemeChange();
+  const { classes, theme } = useStyles();
 
   useEffect(() => {
     addItem([
@@ -77,11 +83,27 @@ export const SpotLight = ({ children }) => {
         },
         icon: <Chat />,
       },
+      {
+        id: 'toggle-theme',
+        title: 'Toggle Theme',
+        icon: themeIcon,
+        onTrigger: () => {
+          toggleColorScheme();
+        },
+      },
+      {
+        id: 'sign-out',
+        title: 'Sign out',
+        icon: <IconLogout />,
+        onTrigger: () => {
+          logout();
+        },
+      },
     ]);
-  }, [navigate, addItem]);
+  }, [navigate, addItem, themeIcon, toggleColorScheme, logout]);
 
   return (
-    <SpotlightProvider limit={7} shortcut={['mod + K']} actions={items}>
+    <SpotlightProvider limit={7} shortcut={['mod + K']} actions={items} classNames={classes}>
       {children}
     </SpotlightProvider>
   );

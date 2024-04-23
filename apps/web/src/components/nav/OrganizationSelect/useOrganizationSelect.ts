@@ -1,22 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as capitalize from 'lodash.capitalize';
-import styled from '@emotion/styled';
-import { useNavigate } from 'react-router-dom';
+import { useAuthContext } from '@novu/shared-web';
 import type { IResponseError, IOrganizationEntity } from '@novu/shared';
-import { Select, successMessage } from '@novu/design-system';
+import { successMessage } from '@novu/design-system';
 
 import { addOrganization, switchOrganization } from '../../../api/organization';
-import { useAuthContext } from '../../providers/AuthProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
-import { ROUTES } from '@novu/shared-web';
 
-export default function OrganizationSelect() {
+export const useOrganizationSelect = () => {
   const [value, setValue] = useState<string>('');
   const [search, setSearch] = useState<string>('');
   const [loadingSwitch, setLoadingSwitch] = useState<boolean>(false);
   const { addItem, removeItems } = useSpotlightContext();
-  const navigate = useNavigate();
 
   const queryClient = useQueryClient();
   const { currentOrganization, organizations, setToken } = useAuthContext();
@@ -49,11 +45,10 @@ export default function OrganizationSelect() {
       setLoadingSwitch(true);
       const token = await changeOrganization(organizationId);
       setToken(token);
-      await queryClient.clear();
-      await navigate(ROUTES.HOME);
+      await queryClient.refetchQueries();
       setLoadingSwitch(false);
     },
-    [currentOrganization, search, setToken, changeOrganization, queryClient, navigate]
+    [currentOrganization, search, setToken, changeOrganization, queryClient]
   );
 
   function addOrganizationItem(newOrganization: string): undefined {
@@ -86,34 +81,16 @@ export default function OrganizationSelect() {
     addItem(organizationItems);
   }, [addItem, removeItems, organizationItems, value]);
 
-  return (
-    <>
-      <SelectWrapper>
-        <Select
-          data-test-id="organization-switch"
-          loading={loadingAddOrganization || loadingSwitch}
-          creatable
-          searchable
-          getCreateLabel={(newOrganization) => <div>+ Add "{newOrganization}"</div>}
-          onCreate={addOrganizationItem}
-          value={value}
-          onChange={switchOrgCallback}
-          allowDeselect={false}
-          onSearchChange={setSearch}
-          data={(organizations || []).map((item) => ({
-            label: capitalize(item.name),
-            value: item._id,
-          }))}
-        />
-      </SelectWrapper>
-    </>
-  );
-}
-
-const SelectWrapper = styled.div`
-  margin-top: 16px;
-
-  input {
-    background: transparent;
-  }
-`;
+  return {
+    loadingAddOrganization,
+    loadingSwitch,
+    addOrganizationItem,
+    value,
+    switchOrgCallback,
+    setSearch,
+    data: (organizations || []).map((item) => ({
+      label: capitalize(item.name),
+      value: item._id,
+    })),
+  };
+};
