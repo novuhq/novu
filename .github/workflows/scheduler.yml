@@ -1,0 +1,25 @@
+name: Test Scheduler
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron:  '0 9-21/2 * * *'
+permissions:
+  contents: read
+  packages: write
+  deployments: write
+  id-token: write
+jobs:
+  test_web:
+    name: Test Web Cypress
+    uses: ./.github/workflows/reusable-web-e2e.yml
+    secrets: inherit
+    with:
+      ee: true
+
+  test_widget:
+    name: Test Widget Cypress
+    uses: ./.github/workflows/reusable-widget-e2e.yml
+    with:
+      ee: true
+    secrets: inherit
