@@ -54,6 +54,14 @@ declare namespace Cypress {
      */
     mockFeatureFlags(featureFlags: Partial<Record<FeatureFlagsKeysEnum, boolean>>): Chainable<void>;
 
+    /**
+     * Get the value from the clipboard. Must use `.then((value) => ...)` to access the value.
+     *
+     * NOTE: In order for this to work while running the Cypress UI, the Cypress browser
+     * window must remain in focus. Otherwise, you'll see an exception: `Document is not focused`
+     */
+    getClipboardValue(): Chainable<string>;
+
     loginWithGitHub(): Chainable<any>;
 
     makeBlueprints(): Chainable<any>;
