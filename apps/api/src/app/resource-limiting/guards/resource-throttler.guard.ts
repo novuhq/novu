@@ -44,9 +44,9 @@ export class ResourceThrottlerInterceptor implements NestInterceptor {
 
         const isEnabled = await this.getFeatureFlag.execute(
           GetFeatureFlagCommand.create({
-            environmentId,
             organizationId,
-            userId: _id,
+            environmentId: 'system',
+            userId: 'system',
             key: FeatureFlagsKeysEnum.IS_EVENT_RESOURCE_LIMITING_ENABLED,
           })
         );
