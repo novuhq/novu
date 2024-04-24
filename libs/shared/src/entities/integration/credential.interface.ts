@@ -43,4 +43,5 @@ export interface ICredentials {
   state?: string;
   externalLink?: string;
   topic?: string;
+  channelId?: string;
 }

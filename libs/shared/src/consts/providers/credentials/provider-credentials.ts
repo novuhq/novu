@@ -1121,3 +1121,19 @@ export const brevoSmsConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const eazySmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.channelId,
+    displayName: 'SMS Channel Id',
+    type: 'string',
+    required: true,
+    description: 'Your SMS Channel Id',
+  },
+];

@@ -206,4 +206,9 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   topic?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  channelId?: string;
 }

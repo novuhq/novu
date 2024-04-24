@@ -45,6 +45,7 @@ export enum CredentialsKeyEnum {
   state = 'state',
   externalLink = 'externalLink',
   Topic = 'topic',
+  channelId = 'channelId',
 }
 
 export enum EmailProviderIdEnum {
@@ -101,6 +102,7 @@ export enum SmsProviderIdEnum {
   AzureSms = 'azure-sms',
   RingCentral = 'ring-central',
   BrevoSms = 'brevo-sms',
+  EazySms = 'eazy-sms',
 }
 
 export enum ChatProviderIdEnum {
