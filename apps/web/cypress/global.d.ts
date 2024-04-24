@@ -53,6 +53,7 @@ declare namespace Cypress {
      * Must be in beforeEach (vs before) because intercepts are cleared before each test run.
      */
     mockFeatureFlags(featureFlags: Partial<Record<FeatureFlagsKeysEnum, boolean>>): Chainable<void>;
+    waitLoadFeatureFlags(beforeWait?: () => void): void;
 
     /**
      * Get the value from the clipboard. Must use `.then((value) => ...)` to access the value.
