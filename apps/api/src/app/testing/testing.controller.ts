@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpException, NotFoundException, Post, UseGuards } from '@nestjs/common';
-import { ProductFeatureKeyEnum, ResourceEnum } from '@novu/shared';
 import { DalService, UserEntity } from '@novu/dal';
+import { ProductFeatureKeyEnum, ResourceEnum } from '@novu/shared';
 
 import { ISeedDataResponseDto, SeedDataBodyDto } from './dtos/seed-data.dto';
 import { IdempotencyBodyDto } from './dtos/idempotency.dto';
