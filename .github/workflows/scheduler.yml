@@ -46,9 +46,7 @@ jobs:
           web_status=$(echo "$needs_json" | jq -r '.test_web.result')
           widget_status=$(echo "$needs_json" | jq -r '.test_widget.result')
           workflows_map=$(cat << EOF
-          dev-deploy-widget.yml: $widget_status
           prod-deploy-widget.yml: $widget_status
-          dev-deploy-web.yml: $web_status
           prod-deploy-web.yml: $web_status
           EOF
           )
