@@ -9,7 +9,7 @@ import { BillingRoutes } from './pages/BillingPages';
 import { BrandingForm as BrandingFormOld } from './pages/brand/tabs';
 import { BrandingPage } from './pages/brand/tabs/v2';
 import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
-import { AccessSecurityPage, ApiKeysPage, TeamPage, UserProfilePage } from './pages/settings';
+import { AccessSecurityPage, ApiKeysPage, BillingPage, TeamPage, UserProfilePage } from './pages/settings';
 import { SettingsPage as SettingsPageOld } from './pages/settings/SettingsPage';
 import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { ApiKeysCard } from './pages/settings/tabs';
@@ -30,7 +30,7 @@ export const useSettingsRoutes = () => {
         {/* TODO: replace with actual component */}
         <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
         <Route path={ROUTES.TEAM_SETTINGS} element={<TeamPage />} />
-        <Route path={ROUTES.BILLING} element={<BillingRoutes />} />
+        <Route path={ROUTES.BILLING} element={<BillingPage />} />
         <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
         <Route path={ROUTES.SECURITY} element={<AccessSecurityPage />} />
         {/* Default settings route in case we didn't match with the existing */}
