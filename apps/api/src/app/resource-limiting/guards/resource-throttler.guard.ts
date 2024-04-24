@@ -29,7 +29,7 @@ export class ResourceThrottlerInterceptor implements NestInterceptor {
    * @throws {HttpException}
    */
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
-    if (process.env.NOVU_ENTERPRISE !== 'true') {
+    if (process.env.IS_DOCKER_HOSTED === 'true') {
       return next.handle();
     }
 

@@ -12,9 +12,9 @@ describe('Resource Limiting', () => {
     authHeader?: string
   ) => Promise<Awaited<ReturnType<typeof UserSession.prototype.testAgent.get>>>;
 
-  describe('IS_NOVU_ENTERPRISE is false', () => {
+  describe('IS_DOCKER_HOSTED is true', () => {
     beforeEach(async () => {
-      process.env.NOVU_ENTERPRISE = 'false';
+      process.env.IS_DOCKER_HOSTED = 'true';
       session = new UserSession();
       await session.initialize();
 
@@ -28,9 +28,9 @@ describe('Resource Limiting', () => {
     });
   });
 
-  describe('IS_NOVU_ENTERPRISE is true', () => {
+  describe('IS_DOCKER_HOSTED is false', () => {
     beforeEach(async () => {
-      process.env.NOVU_ENTERPRISE = 'true';
+      process.env.IS_DOCKER_HOSTED = 'false';
       session = new UserSession();
       await session.initialize();
 
