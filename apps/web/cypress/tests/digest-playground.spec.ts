@@ -1,4 +1,8 @@
-describe('Digest Playground Workflow Page', function () {
+/**
+ * The tests from this file were moved to the corresponding Playwright file apps/web/tests/digest-playground.spec.ts.
+ * @deprecated
+ */
+describe.skip('Digest Playground Workflow Page', function () {
   beforeEach(function () {
     cy.initializeSession({ noTemplates: true }).as('session');
   });
@@ -16,7 +20,7 @@ describe('Digest Playground Workflow Page', function () {
     cy.url().should('include', '/digest-playground');
     cy.contains('Digest Workflow Playground');
 
-    cy.get('a[href="https://docs.novu.co/workflows/digest?utm_campaign=in-app"]').contains('Learn more in docs');
+    cy.get('a[href^="https://docs.novu.co/workflows/digest"]').contains('Learn more in docs');
   });
 
   it('the set up digest workflow should redirect to template edit page', function () {

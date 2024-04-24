@@ -7,6 +7,7 @@ import {
   NotificationStepEntity,
   NotificationGroupRepository,
   StepVariantEntity,
+  EnvironmentRepository,
 } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
 import {
@@ -24,6 +25,7 @@ export class PromoteNotificationTemplateChange {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private environmentRepository: EnvironmentRepository,
     private messageTemplateRepository: MessageTemplateRepository,
     private notificationGroupRepository: NotificationGroupRepository,
     @Inject(forwardRef(() => ApplyChange)) private applyChange: ApplyChange,
@@ -179,19 +181,7 @@ export class PromoteNotificationTemplateChange {
       return;
     }
 
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateKey({
-        _id: newItem._id,
-        _environmentId: command.environmentId,
-      }),
-    });
-
-    await this.invalidateCache.invalidateByKey({
-      key: buildNotificationTemplateIdentifierKey({
-        templateIdentifier: newItem.triggers[0].identifier,
-        _environmentId: command.environmentId,
-      }),
-    });
+    await this.invalidateNotificationTemplate(item, command.organizationId);
 
     return await this.notificationTemplateRepository.update(
       {
@@ -215,15 +205,53 @@ export class PromoteNotificationTemplateChange {
     );
   }
 
-  private async invalidateBlueprints(command: PromoteTypeChangeCommand) {
-    if (command.organizationId === this.blueprintOrganizationId) {
-      await this.invalidateCache.invalidateByKey({
-        key: buildGroupedBlueprintsKey(),
-      });
+  private async getProductionEnvironmentId(organizationId: string) {
+    const productionEnvironmentId = (
+      await this.environmentRepository.findOrganizationEnvironments(organizationId)
+    )?.find((env) => env.name === 'Production')?._id;
+
+    if (!productionEnvironmentId) {
+      throw new NotFoundException('Production environment not found');
     }
+
+    return productionEnvironmentId;
   }
 
   private get blueprintOrganizationId() {
     return NotificationTemplateRepository.getBlueprintOrganizationId();
+  }
+
+  private async invalidateBlueprints(command: PromoteTypeChangeCommand) {
+    if (command.organizationId === this.blueprintOrganizationId) {
+      const productionEnvironmentId = await this.getProductionEnvironmentId(this.blueprintOrganizationId);
+
+      if (productionEnvironmentId) {
+        await this.invalidateCache.invalidateByKey({
+          key: buildGroupedBlueprintsKey(productionEnvironmentId),
+        });
+      }
+    }
+  }
+
+  private async invalidateNotificationTemplate(item: NotificationTemplateEntity, organizationId: string) {
+    const productionEnvironmentId = await this.getProductionEnvironmentId(organizationId);
+
+    /**
+     * Only invalidate cache of Production environment cause the development environment cache invalidation is handled
+     * during the CRUD operations itself
+     */
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateKey({
+        _id: item._id,
+        _environmentId: productionEnvironmentId,
+      }),
+    });
+
+    await this.invalidateCache.invalidateByKey({
+      key: buildNotificationTemplateIdentifierKey({
+        templateIdentifier: item.triggers[0].identifier,
+        _environmentId: productionEnvironmentId,
+      }),
+    });
   }
 }

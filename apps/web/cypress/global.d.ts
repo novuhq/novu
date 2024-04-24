@@ -3,6 +3,7 @@
 type IMountType = import('cypress/react').mount;
 type ICreateNotificationTemplateDto = import('@novu/shared').ICreateNotificationTemplateDto;
 type FeatureFlagsKeysEnum = import('@novu/shared').FeatureFlagsKeysEnum;
+type CreateTemplatePayload = import('@novu/testing').CreateTemplatePayload;
 
 declare namespace Cypress {
   interface Chainable {
@@ -52,10 +53,26 @@ declare namespace Cypress {
      * Must be in beforeEach (vs before) because intercepts are cleared before each test run.
      */
     mockFeatureFlags(featureFlags: Partial<Record<FeatureFlagsKeysEnum, boolean>>): Chainable<void>;
+    waitLoadFeatureFlags(beforeWait?: () => void): void;
+
+    /**
+     * Get the value from the clipboard. Must use `.then((value) => ...)` to access the value.
+     *
+     * NOTE: In order for this to work while running the Cypress UI, the Cypress browser
+     * window must remain in focus. Otherwise, you'll see an exception: `Document is not focused`
+     */
+    getClipboardValue(): Chainable<string>;
 
     loginWithGitHub(): Chainable<any>;
 
     makeBlueprints(): Chainable<any>;
+
+    createWorkflows(args: {
+      userId: string;
+      organizationId: string;
+      environmentId: string;
+      workflows: Partial<CreateTemplatePayload>[];
+    }): Chainable<any>;
 
     mount: typeof IMountType;
   }

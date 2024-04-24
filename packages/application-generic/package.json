@@ -118,6 +118,7 @@
     "@novu/testing": "^0.24.1",
     "@novu/twilio": "^0.24.1",
     "@novu/zulip": "^0.24.1",
+    "@novu/eazy-sms": "^0.24.1",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.40.2",
     "@opentelemetry/context-async-hooks": "^1.19.0",
@@ -125,6 +126,7 @@
     "@opentelemetry/exporter-collector": "^0.25.0",
     "@opentelemetry/exporter-jaeger": "^1.19.0",
     "@opentelemetry/exporter-prometheus": "^0.46.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.49.1",
     "@opentelemetry/instrumentation": "^0.46.0",
     "@opentelemetry/propagator-b3": "^1.19.0",
     "@opentelemetry/propagator-jaeger": "^1.19.0",
@@ -133,6 +135,7 @@
     "@opentelemetry/sdk-trace-base": "^1.19.0",
     "@opentelemetry/sdk-trace-node": "^1.19.0",
     "@opentelemetry/semantic-conventions": "^1.19.0",
+    "@pyroscope/nodejs": "^0.2.9",
     "@segment/analytics-node": "^1.1.4",
     "@sentry/node": "^7.12.1",
     "axios": "^1.6.2",
@@ -159,6 +162,7 @@
     "rxjs": "7.8.1"
   },
   "optionalDependencies": {
+    "@novu/ee-chimera-connect": "^0.24.1",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {

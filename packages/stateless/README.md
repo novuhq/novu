@@ -99,7 +99,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 In-App
 
-- [x] [Novu](https://docs.novu.co/notification-center/introduction)
+- [x] [Novu](https://docs.novu.co/notification-center/introduction?utm_source=github-stateless-readme)
 - [ ] MagicBell
 
 #### Other (Coming Soon...)

@@ -180,10 +180,10 @@ Cypress.Commands.add('mockFeatureFlags', (featureFlags: Partial<Record<FeatureFl
     req.reply('data: no streaming feature flag data here\n\n', {
       'content-type': 'text/event-stream; charset=utf-8',
     });
-  });
+  }).as('ld-clientstream');
 
   // ignore api calls to events endpoint
-  cy.intercept({ hostname: /events\.launchdarkly\.com/ }, { body: {} });
+  cy.intercept({ hostname: /events\.launchdarkly\.com/ }, { body: {} }).as('ld-events');
 
   // return feature flag values in format expected by launchdarkly client
   cy.intercept({ hostname: /app\.launchdarkly\.com/ }, (req) => {
@@ -192,7 +192,31 @@ Cypress.Commands.add('mockFeatureFlags', (featureFlags: Partial<Record<FeatureFl
       body[featureFlagName] = { value: featureFlagValue };
     });
     req.reply({ body });
-  });
+  }).as('ld-app');
+});
+
+Cypress.Commands.add('waitLoadFeatureFlags', (beforeWait?: () => void): void => {
+  beforeWait?.();
+
+  cy.wait(['@ld-app']);
+});
+
+Cypress.Commands.add('createWorkflows', (args) => {
+  return cy.task('createWorkflows', args);
+});
+
+/**
+ * Get the value from the clipboard. Must use `.then((value) => ...)` to access the value.
+ *
+ * NOTE: In order for this to work while running the Cypress UI, the Cypress browser
+ * window must remain in focus. Otherwise, you'll see an exception: `Document is not focused`
+ */
+Cypress.Commands.add('getClipboardValue', () => {
+  return cy
+    .window()
+    .its('navigator.clipboard')
+    .should('exist')
+    .then((clipboard) => clipboard?.readText());
 });
 
 export {};

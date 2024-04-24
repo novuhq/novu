@@ -68,7 +68,7 @@ export class UpdateSubscriberChannel {
       await this.addChannelToSubscriber(updatePayload, foundIntegration, command, foundSubscriber);
     }
 
-    this.analyticsService.track('Set Subscriber Credentials - [Subscribers]', command.organizationId, {
+    this.analyticsService.mixpanelTrack('Set Subscriber Credentials - [Subscribers]', '', {
       providerId: command.providerId,
       _organization: command.organizationId,
       oauthHandler: command.oauthHandler,

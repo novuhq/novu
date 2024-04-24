@@ -9,17 +9,28 @@ import { QueryKeys } from '../api/query.keys';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes.enum';
 import { api } from '../api';
+import { IS_DOCKER_HOSTED } from '../config';
+import { BaseEnvironmentEnum } from 'src/constants';
+
+interface ISetEnvironmentOptions {
+  /** using null will prevent a reroute */
+  route?: ROUTES | string | null;
+}
+
+export type EnvironmentName = BaseEnvironmentEnum | IEnvironment['name'];
 
 export type EnvironmentContext = {
   readonly: boolean;
   isLoading: boolean;
   environment: IEnvironment | undefined;
-  setEnvironment: (environment: string) => void;
+  setEnvironment: (environment: EnvironmentName, options?: ISetEnvironmentOptions) => void;
   refetchEnvironment: () => void;
+  chimera: boolean;
 };
 
 export const useEnvController = (
-  options: UseQueryOptions<IEnvironment, any, IEnvironment> = {}
+  options: UseQueryOptions<IEnvironment, any, IEnvironment> = {},
+  chimera = false
 ): EnvironmentContext => {
   const navigate = useNavigate();
 
@@ -42,7 +53,7 @@ export const useEnvController = (
   const isAllLoading = isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment;
 
   const setEnvironmentCallback = useCallback(
-    async (environmentName: string) => {
+    async (environmentName: string, { route }: ISetEnvironmentOptions = { route: ROUTES.HOME }) => {
       if (isAllLoading) {
         return;
       }
@@ -60,7 +71,9 @@ export const useEnvController = (
       }
       setToken(tokenResponse.token);
 
-      await navigate(ROUTES.HOME);
+      if (route) {
+        await navigate(route);
+      }
       await queryClient.invalidateQueries();
     },
     [isAllLoading, environments, navigate, queryClient, setToken]
@@ -69,7 +82,8 @@ export const useEnvController = (
   return {
     refetchEnvironment,
     environment,
-    readonly: environment?._parentId !== undefined,
+    readonly: environment?._parentId !== undefined || (!IS_DOCKER_HOSTED && chimera),
+    chimera: !IS_DOCKER_HOSTED && chimera,
     setEnvironment: setEnvironmentCallback,
     isLoading: isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading,
   };

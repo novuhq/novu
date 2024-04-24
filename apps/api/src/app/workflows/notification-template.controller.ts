@@ -62,15 +62,16 @@ export class NotificationTemplateController {
   @ExternalApiAccessible()
   getNotificationTemplates(
     @UserSession() user: IJwtPayload,
-    @Query() query: WorkflowsRequestDto
+    @Query() queryParams: WorkflowsRequestDto
   ): Promise<WorkflowsResponseDto> {
     return this.getNotificationTemplatesUsecase.execute(
       GetNotificationTemplatesCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
-        page: query.page ? query.page : 0,
-        limit: query.limit ? query.limit : 10,
+        page: queryParams.page,
+        limit: queryParams.limit,
+        query: queryParams.query,
       })
     );
   }
@@ -177,6 +178,7 @@ export class NotificationTemplateController {
         description: body.description,
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
+        notificationGroup: body.notificationGroup,
         active: body.active ?? false,
         draft: !body.active,
         critical: body.critical ?? false,

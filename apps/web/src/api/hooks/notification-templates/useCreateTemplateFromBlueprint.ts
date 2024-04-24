@@ -1,14 +1,20 @@
 import { useMutation, UseMutationOptions } from '@tanstack/react-query';
-import { ICreateNotificationTemplateDto, INotificationTemplate } from '@novu/shared';
+import {
+  IBlueprint,
+  ICreateNotificationTemplateDto,
+  INotificationTemplate,
+  INotificationTemplateStep,
+} from '@novu/shared';
 
 import { createTemplate } from '../../notification-templates';
 
-const mapBlueprintToTemplate = (blueprint: INotificationTemplate): ICreateNotificationTemplateDto => ({
+const mapBlueprintToTemplate = (blueprint: IBlueprint): ICreateNotificationTemplateDto => ({
   name: blueprint.name,
   tags: blueprint.tags,
   description: blueprint.description,
-  steps: blueprint.steps,
+  steps: blueprint.steps as INotificationTemplateStep[],
   notificationGroupId: blueprint._notificationGroupId,
+  notificationGroup: blueprint.notificationGroup,
   active: blueprint.active,
   draft: blueprint.draft,
   critical: blueprint.critical,
@@ -20,13 +26,13 @@ export const useCreateTemplateFromBlueprint = (
   options: UseMutationOptions<
     INotificationTemplate & { __source?: string },
     any,
-    { blueprint: INotificationTemplate; params: { __source?: string } }
+    { blueprint: IBlueprint; params: { __source?: string } }
   > = {}
 ) => {
   const { mutate, ...rest } = useMutation<
     INotificationTemplate,
     any,
-    { blueprint: INotificationTemplate; params: { __source?: string } }
+    { blueprint: IBlueprint; params: { __source?: string } }
   >((data) => createTemplate(mapBlueprintToTemplate(data.blueprint), data.params), {
     ...options,
   });

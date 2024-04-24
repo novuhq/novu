@@ -1,0 +1,49 @@
+{
+  "name": "@novu/ee-chimera-connect",
+  "version": "0.24.1",
+  "private": true,
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "node ./check-ee.mjs",
+    "build:esm": "node_modules/.bin/tsc -p tsconfig.json",
+    "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
+    "lint": "eslint src --no-error-on-unmatched-pattern",
+    "test": "echo 'skip test in the ci'",
+    "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
+  },
+  "dependencies": {
+    "@novu/ee-dal": "^0.24.1",
+    "@novu/stateless": "^0.24.1",
+    "@novu/dal": "^0.24.1",
+    "@novu/shared": "^0.24.1",
+    "@novu/testing": "^0.24.1",
+    "axios": "^1.6.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.0",
+    "got": "^11.8.6",
+    "shortid": "^2.2.16",
+    "slugify": "^1.4.6"
+  },
+  "devDependencies": {
+    "@types/got": "^9.6.12",
+    "@types/chai": "^4.2.11",
+    "@types/json-schema": "^7.0.15",
+    "@types/mocha": "^8.0.1",
+    "@types/node": "^14.6.0",
+    "@types/sinon": "^9.0.0",
+    "chai": "^4.2.0",
+    "cross-env": "^7.0.3",
+    "mocha": "^8.1.1",
+    "nodemon": "^2.0.3",
+    "sinon": "^9.2.4",
+    "ts-node": "~10.9.1",
+    "typescript": "4.9.5"
+  },
+  "peerDependencies": {
+    "@nestjs/common": "10.2.2",
+    "@nestjs/jwt": "10.2.0",
+    "@nestjs/passport": "9.0.3",
+    "passport": "0.6.0",
+    "passport-oauth2": "^1.6.1"
+  }
+}

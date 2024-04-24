@@ -1,7 +1,8 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
 
 import { JobRepository, JobStatusEnum } from '@novu/dal';
 import {
+  DelayTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   StepTypeEnum,
@@ -46,6 +47,13 @@ export class AddDelayJob {
         stepMetadata: data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
+        // TODO: Remove fallback after other delay types are implemented.
+        chimeraResponse: command.chimeraResponse?.outputs
+          ? {
+              type: DelayTypeEnum.REGULAR,
+              ...command.chimeraResponse?.outputs,
+            }
+          : undefined,
       });
 
       await this.jobRepository.updateStatus(

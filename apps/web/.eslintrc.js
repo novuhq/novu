@@ -36,12 +36,13 @@ module.exports = {
       },
     ],
     "react-hooks/rules-of-hooks": 'error',
-    "react-hooks/exhaustive-deps": 'warn'
+    "react-hooks/exhaustive-deps": 'warn',
+    "import/extensions": 'off',
   },
   env: {
     'cypress/globals': true,
   },
-  ignorePatterns: ['craco.config.js', 'cypress/*'],
+  ignorePatterns: ['craco.config.js', 'cypress/*', '**/styled-system/**/*', 'tests/*'],
   extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
   plugins: ['cypress', 'react-hooks'],
   parserOptions: {

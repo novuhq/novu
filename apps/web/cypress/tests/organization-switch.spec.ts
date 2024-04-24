@@ -2,6 +2,7 @@ import * as capitalize from 'lodash.capitalize';
 
 describe('Organization Switch', function () {
   beforeEach(function () {
+    cy.mockFeatureFlags({ IS_INFORMATION_ARCHITECTURE_ENABLED: false });
     cy.initializeSession().as('session');
   });
 
@@ -19,7 +20,7 @@ describe('Organization Switch', function () {
     cy.task('addOrganization', this.session.user.id).then((newOrg: any) => {
       cy.visit('/workflows');
 
-      cy.getByTestId('organization-switch').focus();
+      cy.getByTestId('organization-switch').scrollIntoView().focus();
 
       cy.get('.mantine-Select-item').contains(capitalize(newOrg.name)).click({ force: true });
 

@@ -18,8 +18,8 @@ import { useBasePath } from '../hooks/useBasePath';
 function BaseTemplateEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { environment } = useEnvController();
   const { template, isCreating, onSubmit, onInvalid } = useTemplateEditorForm();
+  const { environment, chimera } = useEnvController({}, template?.chimera);
   const methods = useFormContext<IForm>();
   const { handleSubmit } = methods;
   const tourStorage = useTourStorage();
@@ -31,7 +31,7 @@ function BaseTemplateEditorPage() {
   const isCreateTemplatePage = location.pathname === ROUTES.WORKFLOWS_CREATE;
 
   const [showNavigateValidatorModal, confirmNavigate, cancelNavigate] = usePrompt(
-    !methods.formState.isValid && location.pathname !== ROUTES.WORKFLOWS_CREATE && !isTouring,
+    !methods.formState.isValid && !chimera && location.pathname !== ROUTES.WORKFLOWS_CREATE && !isTouring,
     (nextLocation) => {
       if (nextLocation.location.pathname.includes(basePath)) {
         nextLocation.retry();
@@ -48,7 +48,7 @@ function BaseTemplateEditorPage() {
   };
 
   useEffect(() => {
-    if (environment && template) {
+    if (environment && template && template._environmentId) {
       if (environment._id !== template._environmentId) {
         navigate(ROUTES.WORKFLOWS);
       }
@@ -68,7 +68,8 @@ function BaseTemplateEditorPage() {
 
   return (
     <>
-      <TourProvider />
+      {!chimera && <TourProvider />}
+
       <PageContainer title={template?.name ?? 'Create Template'}>
         <form
           name="template-form"
