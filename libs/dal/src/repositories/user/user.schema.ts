@@ -41,6 +41,7 @@ const userSchema = new Schema<UserDBModel>(
       intercom: Schema.Types.String,
     },
     jobTitle: Schema.Types.String,
+    externalId: Schema.Types.String,
   },
   schemaOptions
 );

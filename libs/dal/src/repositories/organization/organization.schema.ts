@@ -60,6 +60,7 @@ const organizationSchema = new Schema<OrganizationDBModel>(
         default: false,
       },
     },
+    externalId: Schema.Types.String,
   },
   schemaOptions
 );

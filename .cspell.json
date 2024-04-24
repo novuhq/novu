@@ -619,8 +619,21 @@
     "zulip",
     "uuidv",
     "Vonage",
+    "HeaderNavNew",
+    "reshard",
+    "hstack",
     "runtimes",
-    "cafebabe"
+    "cafebabe",
+    "Markunread",
+    "Fira",
+    "Roboto",
+    "Raleway",
+    "Icann",
+    "limitbar",
+    "eazy",
+    "Maizzle",
+    "MJML",
+    "localstorage"
   ],
   "flagWords": [],
   "patterns": [
@@ -683,6 +696,7 @@
     "apps/api/src/.env.test",
     "apps/ws/src/.env.test",
     "apps/ws/src/.example.env",
+    "apps/web/playwright.config.ts",
     ".cspell.json",
     "package.json",
     "package-lock.json",
@@ -704,6 +718,6 @@
     "angular.json",
     "ng-package.json",
     "libs/shared/src/types/timezones/timezones.types.ts",
-    "*.riv",
+    "*.riv"
   ]
 }

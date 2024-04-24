@@ -50,7 +50,8 @@ export class MergeOrCreateDigest {
   ): Promise<MergeOrCreateDigestResultType> {
     const { job } = command;
 
-    const digestMeta = job.digest as IDigestBaseMetadata | undefined;
+    const digestMeta =
+      command.chimeraData ?? (job.digest as IDigestBaseMetadata | undefined);
     const digestKey = command.chimeraData?.digestKey ?? digestMeta?.digestKey;
     const digestValue = getNestedValue(job.payload, digestKey);
 
@@ -73,7 +74,10 @@ export class MergeOrCreateDigest {
       case DigestCreationResultEnum.SKIPPED:
         return await this.processSkippedDigest(job, command.filtered);
       case DigestCreationResultEnum.CREATED:
-        return await this.processCreatedDigest(digestMeta, job);
+        return await this.processCreatedDigest(
+          digestMeta as IDigestBaseMetadata,
+          job
+        );
       default:
         throw new ApiException('Something went wrong with digest creation');
     }
