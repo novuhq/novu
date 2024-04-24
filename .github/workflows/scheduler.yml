@@ -3,7 +3,7 @@ name: Test Scheduler
 on:
   workflow_dispatch:
   schedule:
-   - cron:  '0 9-21/2 * * *'
+   - cron:  '0 12-19/2 * * 1-5'
 permissions:
   contents: read
   packages: write
