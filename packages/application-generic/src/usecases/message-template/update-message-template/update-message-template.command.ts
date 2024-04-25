@@ -13,6 +13,7 @@ import {
   ITemplateVariable,
   IActor,
   MessageTemplateContentType,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { JSONSchema7 } from 'json-schema';
@@ -76,4 +77,13 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
   inputs?: {
     schema: JSONSchema7;
   };
+
+  @IsOptional()
+  output?: {
+    schema: JSONSchema7;
+  };
+
+  @IsEnum(WorkflowTypeEnum)
+  @IsDefined()
+  workflowType: WorkflowTypeEnum;
 }

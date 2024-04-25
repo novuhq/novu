@@ -8,6 +8,7 @@ import {
   ChangeEntityTypeEnum,
   IMessageAction,
   StepTypeEnum,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 
 import { CreateMessageTemplateCommand } from './create-message-template.command';
@@ -66,6 +67,8 @@ export class CreateMessageTemplate {
         _creatorId: command.userId,
         preheader: command.preheader,
         senderName: command.senderName,
+        inputs: command.inputs,
+        output: command.output,
         actor: command.actor,
       });
 
@@ -76,17 +79,19 @@ export class CreateMessageTemplate {
       })) as MessageTemplateEntity;
     }
 
-    await this.createChange.execute(
-      CreateChangeCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-        item,
-        type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-        parentChangeId: command.parentChangeId,
-        changeId: MessageTemplateRepository.createObjectId(),
-      })
-    );
+    if (command.workflowType !== WorkflowTypeEnum.ECHO) {
+      await this.createChange.execute(
+        CreateChangeCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+          item,
+          type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+          parentChangeId: command.parentChangeId,
+          changeId: MessageTemplateRepository.createObjectId(),
+        })
+      );
+    }
 
     if (command.feedId) {
       await this.updateChange.execute(

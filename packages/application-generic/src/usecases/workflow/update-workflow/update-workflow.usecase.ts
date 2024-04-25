@@ -11,13 +11,14 @@ import { ModuleRef } from '@nestjs/core';
 
 import {
   ChangeRepository,
+  MessageTemplateRepository,
   NotificationGroupRepository,
   NotificationStepEntity,
   NotificationTemplateEntity,
   NotificationTemplateRepository,
   StepVariantEntity,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, WorkflowTypeEnum } from '@novu/shared';
 
 import {
   AnalyticsService,
@@ -48,6 +49,7 @@ import {
 export class UpdateWorkflow {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private messageTemplateRepository: MessageTemplateRepository,
     private changeRepository: ChangeRepository,
     private notificationGroupRepository: NotificationGroupRepository,
     @Inject(forwardRef(() => CreateMessageTemplate))
@@ -243,16 +245,18 @@ export class UpdateWorkflow {
       notificationTemplateWithStepTemplate
     );
 
-    await this.createChange.execute(
-      CreateChangeCommand.create({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        userId: command.userId,
-        type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
-        item: notificationTemplate,
-        changeId: parentChangeId,
-      })
-    );
+    if (command.type !== WorkflowTypeEnum.ECHO) {
+      await this.createChange.execute(
+        CreateChangeCommand.create({
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          userId: command.userId,
+          type: ChangeEntityTypeEnum.NOTIFICATION_TEMPLATE,
+          item: notificationTemplate,
+          changeId: parentChangeId,
+        })
+      );
+    }
 
     this.analyticsService.track(
       'Update Notification Template - [Platform]',
@@ -327,11 +331,12 @@ export class UpdateWorkflow {
 
     for (const message of steps) {
       let messageTemplateId = message._id;
-      if (!message.template)
+
+      if (!message.template) {
         throw new ApiException(
           `Something un-expected happened, template couldn't be found`
         );
-
+      }
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const updatedVariants = await this.updateVariants(
         message.variants,
@@ -359,9 +364,23 @@ export class UpdateWorkflow {
         senderName: message.template.senderName,
         actor: message.template.actor,
         parentChangeId,
+        inputs: message?.template.inputs,
+        output: message?.template.output,
+        workflowType: command.type,
       };
 
-      const messageTemplateExist = message._templateId;
+      let messageTemplateExist = message._templateId;
+
+      if (!messageTemplateExist && command.type === WorkflowTypeEnum.ECHO) {
+        const stepMessageTemplate =
+          await this.messageTemplateRepository.findOne({
+            _environmentId: command.environmentId,
+            stepId: message.stepId,
+            _parentId: command.id,
+          });
+        messageTemplateExist = stepMessageTemplate?._id;
+      }
+
       const updatedTemplate = messageTemplateExist
         ? await this.updateMessageTemplate.execute(
             UpdateMessageTemplateCommand.create({
@@ -477,6 +496,10 @@ export class UpdateWorkflow {
       partialNotificationStep.name = message.name;
     }
 
+    if (message.stepId) {
+      partialNotificationStep.stepId = message.stepId;
+    }
+
     if (updatedVariants.length) {
       partialNotificationStep.variants = updatedVariants;
     }
@@ -560,6 +583,7 @@ export class UpdateWorkflow {
         senderName: variant.template.senderName,
         actor: variant.template.actor,
         parentChangeId,
+        workflowType: command.type,
       };
 
       const messageTemplateExist = variant._templateId;
@@ -619,6 +643,7 @@ export class UpdateWorkflow {
           userId: command.userId,
           messageTemplateId: id,
           parentChangeId: parentChangeId,
+          workflowType: command.type,
         })
       );
     }

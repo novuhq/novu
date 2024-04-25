@@ -114,6 +114,7 @@ export class WorkflowController {
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
         data: body.data,
+        type: WorkflowTypeEnum.REGULAR,
       })
     );
   }
@@ -136,6 +137,7 @@ export class WorkflowController {
         organizationId: user.organizationId,
         userId: user._id,
         templateId: workflowId,
+        type: WorkflowTypeEnum.REGULAR,
       })
     );
   }

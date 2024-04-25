@@ -2,6 +2,7 @@ import {
   IsArray,
   IsBoolean,
   IsDefined,
+  IsEnum,
   IsMongoId,
   IsOptional,
   IsString,
@@ -11,6 +12,7 @@ import {
 import {
   IPreferenceChannels,
   NotificationTemplateCustomData,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../commands';
@@ -78,6 +80,10 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   payloadSchema?: Record<string, unknown>;
+
+  @IsEnum(WorkflowTypeEnum)
+  @IsDefined()
+  type: WorkflowTypeEnum;
 }
 
 export interface IStepInput {

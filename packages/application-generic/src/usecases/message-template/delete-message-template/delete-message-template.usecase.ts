@@ -4,7 +4,7 @@ import {
   DalException,
   MessageTemplateRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, WorkflowTypeEnum } from '@novu/shared';
 
 import { DeleteMessageTemplateCommand } from './delete-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
@@ -37,17 +37,19 @@ export class DeleteMessageTemplate {
           _id: command.messageTemplateId,
         });
 
-      await this.createChange.execute(
-        CreateChangeCommand.create({
-          changeId,
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-          item: deletedMessageTemplate[0],
-          type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-          parentChangeId: command.parentChangeId,
-        })
-      );
+      if (command.workflowType !== WorkflowTypeEnum.ECHO) {
+        await this.createChange.execute(
+          CreateChangeCommand.create({
+            changeId,
+            organizationId: command.organizationId,
+            environmentId: command.environmentId,
+            userId: command.userId,
+            item: deletedMessageTemplate[0],
+            type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+            parentChangeId: command.parentChangeId,
+          })
+        );
+      }
 
       return true;
     } catch (error) {

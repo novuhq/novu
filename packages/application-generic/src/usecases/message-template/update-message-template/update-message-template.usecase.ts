@@ -10,7 +10,7 @@ import {
   MessageTemplateRepository,
   MessageRepository,
 } from '@novu/dal';
-import { ChangeEntityTypeEnum } from '@novu/shared';
+import { ChangeEntityTypeEnum, WorkflowTypeEnum } from '@novu/shared';
 
 import { UpdateMessageTemplateCommand } from './update-message-template.command';
 import { CreateChange, CreateChangeCommand } from '../../create-change';
@@ -109,6 +109,10 @@ export class UpdateMessageTemplate {
       updatePayload.inputs = command.inputs;
     }
 
+    if (command.output) {
+      updatePayload.output = command.output;
+    }
+
     if (!Object.keys(updatePayload).length) {
       throw new BadRequestException('No properties found for update');
     }
@@ -148,18 +152,19 @@ export class UpdateMessageTemplate {
         ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
         item._id
       );
-
-      await this.createChange.execute(
-        CreateChangeCommand.create({
-          organizationId: command.organizationId,
-          environmentId: command.environmentId,
-          userId: command.userId,
-          item,
-          type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
-          parentChangeId: command.parentChangeId,
-          changeId,
-        })
-      );
+      if (command.workflowType !== WorkflowTypeEnum.ECHO) {
+        await this.createChange.execute(
+          CreateChangeCommand.create({
+            organizationId: command.organizationId,
+            environmentId: command.environmentId,
+            userId: command.userId,
+            item,
+            type: ChangeEntityTypeEnum.MESSAGE_TEMPLATE,
+            parentChangeId: command.parentChangeId,
+            changeId,
+          })
+        );
+      }
     }
 
     if (command.feedId && command.parentChangeId) {

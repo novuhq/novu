@@ -108,6 +108,7 @@ export class NotificationTemplateController {
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
         data: body.data,
+        type: WorkflowTypeEnum.REGULAR,
       })
     );
   }
@@ -131,6 +132,7 @@ export class NotificationTemplateController {
         organizationId: user.organizationId,
         userId: user._id,
         templateId,
+        type: WorkflowTypeEnum.REGULAR,
       })
     );
   }

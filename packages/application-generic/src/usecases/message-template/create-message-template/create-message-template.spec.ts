@@ -1,14 +1,15 @@
 import { Test } from '@nestjs/testing';
 import { UserSession } from '@novu/testing';
 import {
+  ChangeRepository,
   LayoutRepository,
   MessageTemplateRepository,
-  ChangeRepository,
 } from '@novu/dal';
 import {
   EmailBlockTypeEnum,
   StepTypeEnum,
   TemplateVariableTypeEnum,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 import { expect } from 'chai';
 
@@ -65,6 +66,7 @@ describe('Create Message Template', function () {
       ],
       content,
       parentChangeId,
+      workflowType: WorkflowTypeEnum.REGULAR,
     });
 
     const result = await useCase.execute(command);

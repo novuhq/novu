@@ -55,6 +55,7 @@ export class DeleteNotificationTemplate {
             userId: command.userId,
             messageTemplateId: step._templateId,
             parentChangeId: parentChangeId,
+            workflowType: command.type,
           })
         );
       }

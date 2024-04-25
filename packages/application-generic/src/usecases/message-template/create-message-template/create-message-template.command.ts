@@ -15,6 +15,7 @@ import {
   ITemplateVariable,
   IActor,
   MessageTemplateContentType,
+  WorkflowTypeEnum,
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../commands';
@@ -36,7 +37,7 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   variables?: ITemplateVariable[];
 
-  @IsDefined()
+  @IsOptional()
   content?: string | IEmailBlock[];
 
   @IsOptional()
@@ -83,4 +84,8 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   stepId?: string;
+
+  @IsEnum(WorkflowTypeEnum)
+  @IsDefined()
+  workflowType: WorkflowTypeEnum;
 }
