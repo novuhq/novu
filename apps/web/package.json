@@ -3,11 +3,11 @@
   "version": "0.24.1",
   "private": true,
   "scripts": {
-    "start": "pnpm panda --watch & cross-env PORT=4200 react-app-rewired start",
+    "start": "pnpm panda --watch & cross-env NODE_OPTIONS=--max_old_space_size=8192 PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
     "build": "pnpm panda && cross-env NODE_OPTIONS=--max_old_space_size=4096 GENERATE_SOURCEMAP=false react-app-rewired --max_old_space_size=4096 build",
     "precommit": "lint-staged",
-    "docker:build": "docker buildx build --load --platform=linux/amd64,linux/arm64 --provenance=false -f ./Dockerfile -t novu-web ./../..",
+    "docker:build": "docker buildx build --load -f ./Dockerfile -t novu-web ./../.. $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "depot build -f ./Dockerfile -t novu-web ./../.. --load",
     "envsetup:docker": "chmod +x ./env.sh && ./env.sh && mv ./env-config.js ./build/env-config.js",
     "envsetup": "chmod +x ./env.sh && ./env.sh && mv env-config.js ./public/env-config.js",
@@ -19,6 +19,12 @@
     "cypress:install": "cypress install",
     "cypress:open": "cross-env NODE_ENV=test cypress open",
     "cypress:run:components": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component",
+    "playwright:install": "playwright install --with-deps",
+    "playwright:test": "playwright test",
+    "playwright:test-ui": "playwright test --ui",
+    "playwright:codegen": "playwright codegen",
+    "playwright:show-report": "npx playwright show-report",
+    "playwright:merge-report": "playwright merge-reports --reporter html",
     "start:api": "cd ../../ && pnpm start:api:test",
     "storybook": "storybook dev -p 6006 -s public",
     "build-storybook": "storybook build -s public",
@@ -126,6 +132,7 @@
   },
   "optionalDependencies": {
     "@novu/ee-billing-web": "^0.24.1",
+    "@novu/ee-echo-web": "^0.24.1",
     "@novu/ee-translation-web": "^0.24.1"
   },
   "devDependencies": {
@@ -137,6 +144,7 @@
     "@novu/dal": "^0.24.1",
     "@novu/testing": "^0.24.1",
     "@pandacss/dev": "^0.34.0",
+    "@playwright/test": "^1.42.1",
     "@storybook/addon-actions": "^7.4.2",
     "@storybook/addon-essentials": "^7.4.2",
     "@storybook/addon-links": "^7.4.2",
