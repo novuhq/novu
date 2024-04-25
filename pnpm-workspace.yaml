@@ -11,3 +11,4 @@ packages:
   # all packages in enterprise modules
   - 'enterprise/packages/*'
   - 'enterprise/packages/libs/*'
+  - 'enterprise/packages/web/*'

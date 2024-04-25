@@ -1,3 +1,5 @@
+const nr = require('newrelic');
+
 import {
   ActiveJobsMetricQueueService,
   ActiveJobsMetricWorkerService,
@@ -75,7 +77,11 @@ export class ActiveJobsMetricService {
 
         return undefined;
       })
-      .catch((error) => Logger.error('Metric Job Exists function errored', LOG_CONTEXT, error));
+      .catch((error) => {
+        nr.noticeError(error);
+
+        Logger.error('Metric Job Exists function errored', LOG_CONTEXT, error);
+      });
   }
 
   private getWorkerOptions(): WorkerOptions {

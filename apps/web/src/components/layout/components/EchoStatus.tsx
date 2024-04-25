@@ -31,9 +31,13 @@ export function EchoStatus() {
     return null;
   }
 
-  if (!echoEnabled || isInitialLoading) return null;
+  if (!echoEnabled) return null;
 
   const status = data?.status === 'ok' && !error ? 'ok' : 'down';
+  let color = status === 'ok' ? 'green' : 'red';
+  if (isInitialLoading) {
+    color = 'yellow';
+  }
 
   return (
     <Popover
@@ -41,7 +45,7 @@ export function EchoStatus() {
       titleGradient={status === 'ok' ? 'blue' : undefined}
       position={'bottom'}
       target={
-        <Badge color={status === 'ok' ? 'green' : 'red'} variant="outline" onMouseEnter={open} onMouseLeave={close}>
+        <Badge color={color} variant="outline" onMouseEnter={open} onMouseLeave={close}>
           Echo
         </Badge>
       }

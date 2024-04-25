@@ -15,7 +15,6 @@ const integrationSchema = new Schema<IntegrationDBModel>(
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',
-      index: true,
     },
     providerId: Schema.Types.String,
     channel: Schema.Types.String,
@@ -59,6 +58,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       state: Schema.Types.String,
       externalLink: Schema.Types.String,
       apiToken: Schema.Types.String,
+      channelId: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,
@@ -94,6 +94,11 @@ const integrationSchema = new Schema<IntegrationDBModel>(
   },
   schemaOptions
 );
+
+integrationSchema.index({
+  _organizationId: 1,
+  active: 1,
+});
 
 integrationSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 

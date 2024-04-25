@@ -1,6 +1,8 @@
 import { MantineTheme } from '@mantine/core';
 import { colors } from './colors';
 
+export const INPUT_HEIGHT_PX = 50;
+
 export const inputStyles = (theme: MantineTheme) => {
   const dark = theme.colorScheme === 'dark';
 
@@ -13,7 +15,7 @@ export const inputStyles = (theme: MantineTheme) => {
       color: `${theme.colors.gray[7]} !important`,
     },
     input: {
-      minHeight: '50px',
+      minHeight: `${INPUT_HEIGHT_PX}px`,
       borderRadius: '7px',
       borderColor: dark ? theme.colors.dark[5] : theme.colors.gray[5],
       backgroundColor: 'transparent',

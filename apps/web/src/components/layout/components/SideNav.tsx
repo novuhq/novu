@@ -11,7 +11,6 @@ import {
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { ROUTES } from '../../../constants/routes.enum';
 import {
   Activity,
   Bolt,
@@ -20,6 +19,7 @@ import {
   Buildings,
   CheckCircleOutlined,
   colors,
+  IconViewQuilt,
   NavMenu,
   NovuLogo,
   Repeat,
@@ -29,14 +29,16 @@ import {
   Team,
   Translation,
 } from '@novu/design-system';
+import { FeatureFlagsKeysEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
+import { FreeTrialSidebarWidget } from './FreeTrialSidebarWidget';
+import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
+import { ROUTES } from '../../../constants/routes.enum';
 import { useEnvController, useFeatureFlag } from '../../../hooks';
+import { useSegment } from '../../providers/SegmentProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
-import OrganizationSelect from './OrganizationSelect';
-import { FeatureFlagsKeysEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
-import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
+import OrganizationSelect from '../../nav/OrganizationSelect/OrganizationSelect';
 import { VisibilityOff } from './VisibilityOff';
-import { useSegment } from '../../providers/SegmentProvider';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -57,6 +59,7 @@ const usePopoverStyles = createStyles(({ colorScheme }) => ({
 
 type Props = {};
 
+/** @deprecated Use `MainNav` instead */
 export function SideNav({}: Props) {
   const navigate = useNavigate();
   const segment = useSegment();
@@ -78,6 +81,7 @@ export function SideNav({}: Props) {
     updateOnboardingStatus,
   } = useUserOnboardingStatus();
   const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -131,6 +135,7 @@ export function SideNav({}: Props) {
     },
     {
       label: 'Brand',
+      condition: !isInformationArchitectureEnabled,
       icon: <Brand />,
       link: '/brand',
       testId: 'side-nav-brand-link',
@@ -139,9 +144,17 @@ export function SideNav({}: Props) {
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
     {
       label: 'Team Members',
+      condition: !isInformationArchitectureEnabled,
       icon: <Team />,
       link: ROUTES.TEAM,
       testId: 'side-nav-settings-organization',
+    },
+    {
+      condition: isInformationArchitectureEnabled,
+      icon: <IconViewQuilt />,
+      link: ROUTES.LAYOUT,
+      label: 'Layouts',
+      testId: 'side-nav-layouts-link',
     },
     {
       label: 'Changes',
@@ -171,19 +184,19 @@ export function SideNav({}: Props) {
         borderRight: 'none',
         width: '300px',
         minHeight: '100vh',
-        padding: '16px 24px',
+        padding: '16px 0',
         paddingBottom: '0px',
         '@media (max-width: 768px)': {
           width: '100%',
         },
       }}
     >
-      <Navbar.Section mb={24}>
+      <Navbar.Section sx={{ marginBottom: '24px', padding: '0 24px' }}>
         <Link to="/">
           <NovuLogo />
         </Link>
       </Navbar.Section>
-      <Navbar.Section sx={{ overflowY: 'auto', flex: 1 }}>
+      <Navbar.Section sx={{ overflowY: 'auto', flex: 1, padding: '0 24px' }}>
         <Popover
           classNames={classes}
           withArrow
@@ -219,6 +232,7 @@ export function SideNav({}: Props) {
           </Popover.Dropdown>
         </Popover>
         <NavMenu menuItems={menuItems} />
+        <FreeTrialSidebarWidget />
         <OrganizationSelect />
         <BottomNav dark={dark} data-test-id="side-nav-bottom-links">
           <a

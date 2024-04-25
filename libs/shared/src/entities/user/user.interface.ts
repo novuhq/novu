@@ -14,4 +14,12 @@ export interface IUserEntity {
   showOnBoardingTour?: number;
   servicesHashes?: IServicesHashes;
   jobTitle?: JobTitleEnum;
+  hasPassword: boolean;
+}
+
+export interface IUpdateUserProfile {
+  firstName: string;
+  lastName: string;
+  profilePicture?: string;
+  externalId?: string;
 }

@@ -3,12 +3,16 @@ import { UserRepository } from '@novu/dal';
 import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 
 import { UpdateOnBoardingTourCommand } from './update-on-boarding-tour.command';
+import type { UserResponseDto } from '../../dtos/user-response.dto';
+import { BaseUserProfileUsecase } from '../base-user-profile.usecase';
 
 @Injectable()
-export class UpdateOnBoardingTourUsecase {
-  constructor(private invalidateCache: InvalidateCacheService, private readonly userRepository: UserRepository) {}
+export class UpdateOnBoardingTourUsecase extends BaseUserProfileUsecase {
+  constructor(private invalidateCache: InvalidateCacheService, private readonly userRepository: UserRepository) {
+    super();
+  }
 
-  async execute(command: UpdateOnBoardingTourCommand) {
+  async execute(command: UpdateOnBoardingTourCommand): Promise<UserResponseDto> {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new NotFoundException('User not found');
 
@@ -32,6 +36,6 @@ export class UpdateOnBoardingTourUsecase {
     const updatedUser = await this.userRepository.findById(command.userId);
     if (!updatedUser) throw new NotFoundException('User not found');
 
-    return updatedUser;
+    return this.mapToDto(updatedUser);
   }
 }
