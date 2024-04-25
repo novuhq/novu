@@ -37,6 +37,7 @@ import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overr
 import { ApiRateLimitInterceptor } from './app/rate-limiting/guards';
 import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
 import { ProductFeatureInterceptor } from './app/shared/interceptors/product-feature.interceptor';
+import { ResourceThrottlerInterceptor } from './app/resource-limiting/guards';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -102,11 +103,15 @@ const modules = baseModules.concat(enterpriseModules);
 const providers: Provider[] = [
   {
     provide: APP_INTERCEPTOR,
+    useClass: ApiRateLimitInterceptor,
+  },
+  {
+    provide: APP_INTERCEPTOR,
     useClass: ProductFeatureInterceptor,
   },
   {
     provide: APP_INTERCEPTOR,
-    useClass: ApiRateLimitInterceptor,
+    useClass: ResourceThrottlerInterceptor,
   },
   {
     provide: APP_INTERCEPTOR,
