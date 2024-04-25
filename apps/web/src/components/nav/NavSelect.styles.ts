@@ -12,6 +12,7 @@ export const tooltipStyles = css({
   p: '100 !important',
   bg: 'surface.popover !important',
   color: 'typography.text.secondary !important',
+  zIndex: 'tooltip !important',
 });
 
 export const arrowStyles = css({
