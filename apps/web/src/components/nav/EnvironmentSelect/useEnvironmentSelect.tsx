@@ -2,7 +2,7 @@ import { type IIconProps, IconConstruction, IconRocketLaunch } from '@novu/desig
 import { useEnvController, ROUTES, BaseEnvironmentEnum } from '@novu/shared-web';
 import { useState } from 'react';
 import { type ISelectProps } from '@novu/design-system';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const ENVIRONMENT_ICON_LOOKUP: Record<BaseEnvironmentEnum, React.ReactElement<IIconProps>> = {
   [BaseEnvironmentEnum.DEVELOPMENT]: <IconConstruction />,
@@ -13,6 +13,7 @@ export const useEnvironmentSelect = () => {
   const [isPopoverOpened, setIsPopoverOpened] = useState<boolean>(false);
 
   const location = useLocation();
+  const navigate = useNavigate();
 
   const { setEnvironment, isLoading, environment, readonly } = useEnvController({
     onSuccess: (newEnvironment) => {
@@ -23,7 +24,14 @@ export const useEnvironmentSelect = () => {
   async function handlePopoverLinkClick(e) {
     e.preventDefault();
 
-    await setEnvironment(BaseEnvironmentEnum.DEVELOPMENT, { route: ROUTES.CHANGES });
+    await setEnvironment(BaseEnvironmentEnum.DEVELOPMENT);
+
+    /**
+     * this must be done after the setEnvironment call because we cannot rely on state
+     * updating before the page changes, which then may automatically reroute again
+     * if it detects a readonly environment.
+     */
+    navigate(ROUTES.CHANGES);
   }
 
   const onChange: ISelectProps['onChange'] = async (value) => {
