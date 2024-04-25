@@ -2,7 +2,7 @@ import { FC, PropsWithChildren, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { css } from '../../../styled-system/css';
 import { HStack } from '../../../styled-system/jsx';
-import { INavMenuButtonProps, rawButtonBaseStyles, ButtonLabel } from './NavMenuButton.shared';
+import { INavMenuButtonProps, rawButtonBaseStyles } from './NavMenuButton.shared';
 import { NavMenuRightSide } from './NavMenuButtonRightSide';
 
 const rawLinkButtonStyles = css.raw({
@@ -50,9 +50,7 @@ export const NavMenuLinkButton: FC<PropsWithChildren<INavMenuLinkButtonProps>> =
     >
       <HStack gap="75">
         {icon}
-        <ButtonLabel variant={'strong'} color="typography.text.secondary">
-          {label}
-        </ButtonLabel>
+        <span>{label}</span>
       </HStack>
       <NavMenuRightSide tooltip={rightSide?.tooltip} isMounted={shouldShowRightSide}>
         {rightSide?.node}

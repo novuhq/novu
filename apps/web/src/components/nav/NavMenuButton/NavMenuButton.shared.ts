@@ -20,8 +20,6 @@ export interface INavMenuButtonProps {
   testId?: string;
 }
 
-export const ButtonLabel = styled('span', text);
-
 export const rawButtonBaseStyles = css.raw({
   display: 'flex',
   alignItems: 'center',
