@@ -24,14 +24,7 @@ export const useEnvironmentSelect = () => {
   async function handlePopoverLinkClick(e) {
     e.preventDefault();
 
-    await setEnvironment(BaseEnvironmentEnum.DEVELOPMENT);
-
-    /**
-     * this must be done after the setEnvironment call because we cannot rely on state
-     * updating before the page changes, which then may automatically reroute again
-     * if it detects a readonly environment.
-     */
-    navigate(ROUTES.CHANGES);
+    await setEnvironment(BaseEnvironmentEnum.DEVELOPMENT, { route: ROUTES.CHANGES });
   }
 
   const onChange: ISelectProps['onChange'] = async (value) => {

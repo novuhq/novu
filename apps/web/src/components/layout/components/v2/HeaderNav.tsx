@@ -5,6 +5,7 @@ import { IS_DOCKER_HOSTED } from '../../../../config';
 import { useBootIntercom } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
+import { css } from '../../../../styled-system/css';
 import { useAuthContext } from '../../../providers/AuthProvider';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
@@ -20,13 +21,14 @@ export function HeaderNav() {
   return (
     <Header
       height={`${HEADER_NAV_HEIGHT}px`}
-      sx={{
+      className={css({
         position: 'sticky',
         top: 0,
         borderBottom: 'none',
+        // TODO: fix when we re-do z-index across the app
         zIndex: 199,
-        padding: 8,
-      }}
+        padding: '50',
+      })}
     >
       {/* TODO: Change position: right to space-between for breadcrumbs */}
       <Group position="right" noWrap align="center">
@@ -41,12 +43,12 @@ export function HeaderNav() {
           {isSelfHosted ? (
             <a href={discordInviteUrl} target="_blank" rel="noopener noreferrer">
               <ActionIcon variant="transparent">
-                <IconHelpOutline color={colors.B60} />
+                <IconHelpOutline />
               </ActionIcon>
             </a>
           ) : (
             <ActionIcon variant="transparent" id="intercom-launcher">
-              <IconHelpOutline color={colors.B60} />
+              <IconHelpOutline />
             </ActionIcon>
           )}
           <HeaderMenuItems />
