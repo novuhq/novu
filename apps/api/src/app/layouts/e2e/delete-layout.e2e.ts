@@ -1,14 +1,14 @@
 import { Test } from '@nestjs/testing';
-import { UserSession } from '@novu/testing';
-import { MessageTemplateRepository } from '@novu/dal';
-import { EmailBlockTypeEnum, StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 
-import { createLayout } from './helpers';
+import { UserSession } from '@novu/testing';
+import { MessageTemplateRepository } from '@novu/dal';
+import { EmailBlockTypeEnum, StepTypeEnum, WorkflowTypeEnum } from '@novu/shared';
+import { CreateMessageTemplate, CreateMessageTemplateCommand } from '@novu/application-generic';
 
+import { createLayout } from './helpers';
 import { MessageTemplateModule } from '../../message-template/message-template.module';
 import { SharedModule } from '../../shared/shared.module';
-import { CreateMessageTemplate, CreateMessageTemplateCommand } from '@novu/application-generic';
 
 const BASE_PATH = '/v1/layouts';
 
@@ -90,6 +90,7 @@ describe('Delete a layout - /layouts/:layoutId (DELETE)', async () => {
       variables: [],
       content,
       parentChangeId,
+      workflowType: WorkflowTypeEnum.REGULAR,
     });
 
     const result = await useCase.execute(command);
