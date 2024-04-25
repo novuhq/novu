@@ -51,6 +51,7 @@ export const NovuPandaPreset = definePreset({
       radii: LEGACY_RADIUS_TOKENS,
       borderWidths: BORDER_WIDTH_TOKENS,
       borders: BORDER_TOKENS,
+      zIndex: Z_INDEX_TOKENS,
     },
     semanticTokens: {
       sizes: SEMANTIC_SIZES_TOKENS,
@@ -64,7 +65,6 @@ export const NovuPandaPreset = definePreset({
         ...GRADIENT_TOKENS,
         ...LEGACY_GRADIENT_TOKENS,
       },
-      zIndex: Z_INDEX_TOKENS,
     },
     textStyles: TEXT_STYLES,
     extend: {
