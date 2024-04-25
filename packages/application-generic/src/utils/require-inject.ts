@@ -4,27 +4,24 @@ import { ModuleRef } from '@nestjs/core';
 import { ChatProviderIdEnum } from '@novu/shared';
 
 export const requireInject = (inject: RequireInject, moduleRef?: ModuleRef) => {
-  if (inject === RequireInjectEnum.CHIMERA_CONNECT) {
-    return initiateChimeraConnector(moduleRef);
+  if (inject === RequireInjectEnum.RESONATE) {
+    return initiateResonateProvider(moduleRef);
   }
 };
 
-const initiateChimeraConnector = (moduleRef: ModuleRef) => {
+const initiateResonateProvider = (moduleRef: ModuleRef) => {
   try {
     if (
       process.env.NOVU_ENTERPRISE === 'true' ||
       process.env.CI_EE_TEST === 'true'
     ) {
-      if (!require('@novu/ee-chimera-connect')?.ChimeraConnector) {
-        throw new PlatformException('ChimeraConnector module is not loaded');
+      if (!require('@novu/ee-echo-worker')?.Resonate) {
+        throw new PlatformException('Resonate provider is not loaded');
       }
 
-      return moduleRef.get(
-        require('@novu/ee-chimera-connect')?.ChimeraConnector,
-        {
-          strict: false,
-        }
-      );
+      return moduleRef.get(require('@novu/ee-echo-worker')?.Resonate, {
+        strict: false,
+      });
     } else {
       return {
         execute: () => {
@@ -36,7 +33,7 @@ const initiateChimeraConnector = (moduleRef: ModuleRef) => {
     Logger.error(
       e,
       `Unexpected error while importing enterprise modules`,
-      'ChimeraConnector'
+      'Resonate'
     );
     throw e;
   }
@@ -45,7 +42,7 @@ const initiateChimeraConnector = (moduleRef: ModuleRef) => {
 type RequireInject = `${RequireInjectEnum}`;
 
 enum RequireInjectEnum {
-  CHIMERA_CONNECT = 'chimera_connector',
+  RESONATE = 'resonate',
 }
 
 export interface IChimeraDigestResponse {

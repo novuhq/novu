@@ -6,6 +6,15 @@ export enum ChannelTypeEnum {
   PUSH = 'push',
 }
 
+export enum ActionTypeEnum {
+  TRIGGER = 'trigger',
+  DIGEST = 'digest',
+  DELAY = 'delay',
+  CUSTOM = 'custom',
+}
+
+export type StepType = ChannelTypeEnum | ActionTypeEnum;
+
 export enum StepTypeEnum {
   IN_APP = 'in_app',
   EMAIL = 'email',
@@ -15,6 +24,7 @@ export enum StepTypeEnum {
   DIGEST = 'digest',
   TRIGGER = 'trigger',
   DELAY = 'delay',
+  CUSTOM = 'custom',
 }
 
 export const STEP_TYPE_TO_CHANNEL_TYPE = new Map<StepTypeEnum | string, ChannelTypeEnum>([
