@@ -633,7 +633,9 @@
     "eazy",
     "Maizzle",
     "MJML",
-    "localstorage"
+    "localstorage",
+    "elif",
+    "websockets"
   ],
   "flagWords": [],
   "patterns": [
