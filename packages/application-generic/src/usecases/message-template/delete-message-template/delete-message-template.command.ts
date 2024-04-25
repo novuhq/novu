@@ -1,4 +1,4 @@
-import { IsDefined, IsEnum, IsMongoId } from 'class-validator';
+import { IsDefined, IsEnum, IsMongoId, IsOptional } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../commands';
 import { WorkflowTypeEnum } from '@novu/shared';
 
@@ -7,9 +7,9 @@ export class DeleteMessageTemplateCommand extends EnvironmentWithUserCommand {
   @IsMongoId()
   messageTemplateId: string;
 
-  @IsDefined()
+  @IsOptional()
   @IsMongoId()
-  parentChangeId: string;
+  parentChangeId?: string;
 
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()
