@@ -21,7 +21,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     schema: {
       type: 'object',
       properties: {
-        username: { type: 'string', default: 'alanturing' },
+        username: { type: 'string', default: 'firstName' },
       },
     },
   };
