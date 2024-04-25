@@ -6,6 +6,7 @@ import {
   IMessageCTA,
   ActorTypeEnum,
   MessageTemplateContentType,
+  IActor,
 } from '@novu/shared';
 
 export class MessageTemplate {
@@ -54,10 +55,7 @@ export class MessageTemplate {
   senderName?: string;
 
   @IsOptional()
-  actor?: {
-    type: ActorTypeEnum;
-    data: string | null;
-  };
+  actor?: IActor;
 
   @IsOptional()
   _creatorId?: string;

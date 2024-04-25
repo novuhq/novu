@@ -6,8 +6,8 @@ import { ChangeModule } from '../change/change.module';
 
 @Module({
   imports: [SharedModule, ChangeModule],
+  controllers: [MessageTemplateController],
   providers: [...USE_CASES],
   exports: [...USE_CASES],
-  controllers: [MessageTemplateController],
 })
 export class MessageTemplateModule {}

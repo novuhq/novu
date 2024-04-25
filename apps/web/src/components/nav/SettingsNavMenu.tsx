@@ -11,6 +11,7 @@ import {
 import { BaseEnvironmentEnum, ROUTES, useAuthContext, useEnvController } from '@novu/shared-web';
 import { useNavigate } from 'react-router-dom';
 import { parseUrl } from '../../utils/routeUtils';
+import { FreeTrialSidebarWidget } from '../layout/components/FreeTrialSidebarWidget';
 import { NavMenu } from './NavMenu';
 import { NavMenuLinkButton } from './NavMenuButton/NavMenuLinkButton';
 import { NavMenuSection } from './NavMenuSection';
@@ -141,6 +142,7 @@ export const SettingsNavMenu: React.FC = () => {
           ></NavMenuLinkButton>
         </NavMenuToggleButton>*/}
       </NavMenuSection>
+      <FreeTrialSidebarWidget />
     </NavMenu>
   );
 };

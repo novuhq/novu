@@ -3,6 +3,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "websockets",
     "cacheable",
     "mrkdwn",
     "Springboot",
@@ -633,7 +634,9 @@
     "eazy",
     "Maizzle",
     "MJML",
-    "localstorage"
+    "localstorage",
+    "elif",
+    "websockets"
   ],
   "flagWords": [],
   "patterns": [
