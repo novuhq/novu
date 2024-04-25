@@ -1,7 +1,7 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { IS_DOCKER_HOSTED, useFeatureFlag } from '@novu/shared-web';
 
-export function UpgradeContainer({ varBla }: { varBla: boolean }) {
+export function UpgradePlanBanner({ FeatureActivatedBanner }: { FeatureActivatedBanner: React.ReactNode }) {
   const isEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_BILLING_REVERSE_TRIAL_ENABLED);
 
   if (IS_DOCKER_HOSTED) {
@@ -14,9 +14,9 @@ export function UpgradeContainer({ varBla }: { varBla: boolean }) {
 
   try {
     const module = require('@novu/ee-billing-web');
-    const Component = module.UpgradeContainer;
+    const Component = module.UpgradePlanBanner;
 
-    return <Component varBla={varBla} />;
+    return <Component FeatureActivatedBanner={FeatureActivatedBanner} />;
   } catch (e) {}
 
   return null;

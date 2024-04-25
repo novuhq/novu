@@ -1,8 +1,9 @@
 import { useWatch } from 'react-hook-form';
-import { Group, Stack, useMantineColorScheme, Center } from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import * as set from 'lodash.set';
 import styled from '@emotion/styled';
+import { Group, useMantineColorScheme } from '@mantine/core';
 
 import {
   Translation,
@@ -17,7 +18,6 @@ import {
   PencilOutlined,
   Close,
   Text,
-  Button,
 } from '@novu/design-system';
 
 import { VarItemsDropdown } from './VarItemsDropdown';
@@ -26,11 +26,9 @@ import { useDebounce, useProcessVariables } from '../../../../../hooks';
 import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
 import { useWorkflowVariables } from '../../../../../api/hooks';
-import { useProductFeature } from '@novu/shared-web';
-import { ProductFeatureKeyEnum } from '@novu/shared';
-import { Link, useNavigate } from 'react-router-dom';
+
 import { ROUTES } from '../../../../../constants/routes.enum';
-import { UpgradeContainer } from '../../../../../components/layout/components/UpgradeContainer';
+import { UpgradePlanBanner } from '../../../../../components/layout/components/UpgradePlanBanner';
 
 interface IVariablesList {
   translations: Record<string, any>;
@@ -97,7 +95,7 @@ export const VariablesManagement = ({
     ...variables,
     step: processedVariables,
   });
-  // console.log(isTranslationsEnabled);
+
   const [searchVal, setSearchVal] = useState('');
 
   const debouncedSearchChange = useDebounce((args: { search: string; list: IVariablesList }) => {
@@ -214,10 +212,6 @@ export const VariableSectionItem = ({
   withFolders?: boolean;
 }) => {
   const keys = variableList && Object.keys(variableList);
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
-  const navigate = useNavigate();
-  const isTranslationsEnabled = useProductFeature(ProductFeatureKeyEnum.TRANSLATIONS);
 
   return (
     <>
@@ -252,26 +246,36 @@ export const VariableSectionItem = ({
     </>
   );
 };
+const TranslationsGetStartedText = () => {
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+  const navigate = useNavigate();
+
+  return (
+    <Text color={isDark ? colors.B60 : colors.B40}>
+      <GradientSpan>
+        <a
+          onClick={() => {
+            navigate(ROUTES.TRANSLATIONS);
+          }}
+        >
+          Upload translations{' '}
+        </a>
+      </GradientSpan>
+      <span>to use them as variables or in the autosuggest for the editor.</span>
+    </Text>
+  );
+};
 
 export const TranslationSectionItem = ({
   variableList,
   search,
-}: // sectionName,
-// Icon,
-// withFolders = false,
-{
+}: {
   variableList: Record<string, any>;
   search: string;
-  // sectionName: string;
-  // Icon: React.FC<any>;
-  // withFolders?: boolean;
 }) => {
   const sectionName = 'Translation Variables';
   const keys = variableList && Object.keys(variableList);
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
-  const navigate = useNavigate();
-  const isTranslationsEnabled = useProductFeature(ProductFeatureKeyEnum.TRANSLATIONS);
 
   return (
     <>
@@ -279,104 +283,14 @@ export const TranslationSectionItem = ({
         withFolders
         variableList={variableList}
         search={search}
-        sectionName={'Translation Variables'}
+        sectionName={sectionName}
         Icon={Translation}
       />
-      {/*<When truthy={!keys?.length && sectionName === 'Translation Variables' && !isTranslationsEnabled}>*/}
       <When truthy={!keys?.length && !search.length}>
         <VarLabel label={sectionName} Icon={Translation}>
-          <UpgradeContainer varBla={true} />
-          <When truthy={isTranslationsEnabled}>
-            <Stack
-              style={{
-                borderRadius: '7px',
-                marginBottom: '24px',
-                padding: '24px',
-                background: isDark ? colors.B20 : colors.B98,
-                alignItems: 'center',
-              }}
-            >
-              <Text color={isDark ? colors.B60 : colors.B40}>
-                <GradientSpan>
-                  <a
-                    onClick={() => {
-                      navigate(ROUTES.TRANSLATIONS);
-                    }}
-                    style={{
-                      cursor: 'pointer',
-                    }}
-                  >
-                    Upload translations{' '}
-                  </a>
-                </GradientSpan>
-                <span>to use them as variables or in the autosuggest for the editor.</span>
-              </Text>
-            </Stack>
-          </When>
-          {/*<Stack*/}
-          {/*  spacing={8}*/}
-          {/*  style={{*/}
-          {/*    borderRadius: '7px',*/}
-          {/*    marginBottom: '24px',*/}
-          {/*    padding: '24px',*/}
-          {/*    background: isDark ? colors.B20 : colors.B98,*/}
-          {/*    alignItems: 'center',*/}
-          {/*  }}*/}
-          {/*>*/}
-          {/*  <Text mb={8} align={'center'} color={colors.B60}>*/}
-          {/*    Utilize i18n localization for translating notifications*/}
-          {/*  </Text>*/}
-          {/*  <Button onClick={() => navigate('/settings/billing')}>Upgrade plan</Button>*/}
-          {/*  <Group position="center" spacing={4}>*/}
-          {/*    <Text color={isDark ? colors.B60 : colors.B40}>Questions?</Text>*/}
-          {/*    <Text gradient={true}>*/}
-          {/*      <a*/}
-          {/*        onClick={() => {*/}
-          {/*          // onContactSales();*/}
-          {/*        }}*/}
-          {/*        style={{*/}
-          {/*          cursor: 'pointer',*/}
-          {/*        }}*/}
-          {/*      >*/}
-          {/*        Contact sales*/}
-          {/*      </a>*/}
-          {/*    </Text>*/}
-          {/*  </Group>*/}
-          {/*</Stack>*/}
+          <UpgradePlanBanner FeatureActivatedBanner={TranslationsGetStartedText} />
         </VarLabel>
       </When>
-      {/*<When*/}
-      {/*  truthy={!keys?.length && !search.length && sectionName === 'Translation Variables' && isTranslationsEnabled}*/}
-      {/*>*/}
-      {/*  <VarLabel label={sectionName} Icon={Icon}>*/}
-      {/*    <Stack*/}
-      {/*      style={{*/}
-      {/*        borderRadius: '7px',*/}
-      {/*        marginBottom: '24px',*/}
-      {/*        padding: '24px',*/}
-      {/*        background: isDark ? colors.B20 : colors.B98,*/}
-      {/*        alignItems: 'center',*/}
-      {/*      }}*/}
-      {/*    >*/}
-      {/*     */}
-      {/*      <Text color={isDark ? colors.B60 : colors.B40}>*/}
-      {/*        <GradientSpan>*/}
-      {/*          <a*/}
-      {/*            onClick={() => {*/}
-      {/*              navigate(ROUTES.TRANSLATIONS);*/}
-      {/*            }}*/}
-      {/*            style={{*/}
-      {/*              cursor: 'pointer',*/}
-      {/*            }}*/}
-      {/*          >*/}
-      {/*            Upload translations{' '}*/}
-      {/*          </a>*/}
-      {/*        </GradientSpan>*/}
-      {/*        <span>to use them as variables or in the autosuggest for the editor.</span>*/}
-      {/*      </Text>*/}
-      {/*    </Stack>*/}
-      {/*  </VarLabel>*/}
-      {/*</When>*/}
     </>
   );
 };
@@ -396,6 +310,7 @@ const EmptySearchContainer = styled.div`
   align-items: center;
   justify-content: center;
 `;
+
 const GradientSpan = styled.span`
   background: ${colors.horizontal};
   background-clip: text;
