@@ -1,4 +1,4 @@
-name: Test Scheduler
+name: Scheduled E2E tests
 
 on:
   workflow_dispatch:
@@ -56,10 +56,10 @@ jobs:
             echo "Workflow $filename status: $status"
 
             if [[ "$status" == "failure" ]]; then
-              echo "Disabling workflow $filename because some of the tests failed."
+              echo "Disabling workflow $filename. The E2E test has failed."
               gh workflow disable "$filename"
             elif [[ "$status" == "success" ]]; then
-              echo "Enabling workflow $filename because the tests look good."
+              echo "Enabling workflow $filenams. The E2E tests have passed."
               gh workflow enable "$filename"
             else
               echo "Unknown status for workflow $filename: $status"
