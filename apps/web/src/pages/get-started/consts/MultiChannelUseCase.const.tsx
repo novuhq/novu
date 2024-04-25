@@ -74,6 +74,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
               href={ROUTES.ACTIVITIES}
               target="_blank"
               rel="noopener noreferrer"
+              event='Discover "activity feed" (multi-channel)'
             />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.

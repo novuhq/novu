@@ -5,6 +5,7 @@ import { DelayUseCaseConst } from './DelayUseCase.const';
 import { TranslationUseCaseConst } from './TranslationUseCase.const';
 import { DigestUseCaseConst } from './DigestUseCase.const';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
+import { EchoUseCaseConst } from './EchoUseCase.const';
 
 export const UseCasesConst: OnboardingUseCases = {
   [OnboardingUseCasesTabsEnum.IN_APP]: InAppUseCaseConst,
@@ -12,4 +13,5 @@ export const UseCasesConst: OnboardingUseCases = {
   [OnboardingUseCasesTabsEnum.DELAY]: DelayUseCaseConst,
   [OnboardingUseCasesTabsEnum.TRANSLATION]: TranslationUseCaseConst,
   [OnboardingUseCasesTabsEnum.DIGEST]: DigestUseCaseConst,
+  [OnboardingUseCasesTabsEnum.ECHO]: EchoUseCaseConst,
 };

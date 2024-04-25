@@ -30,6 +30,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
               href={ROUTES.INTEGRATIONS_CREATE}
               target="_blank"
               rel="noopener noreferrer"
+              event="Integration store (digest)"
             />
             <StepText>.</StepText>
           </StepDescription>
@@ -97,6 +98,7 @@ export const DigestUseCaseConst: OnboardingUseCase = {
               href={ROUTES.ACTIVITIES}
               target="_blank"
               rel="noopener noreferrer"
+              event='Discover "activity feed" (digest)'
             />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.

@@ -16,8 +16,26 @@ export const StepButton = styled(Button)`
   display: block;
 `;
 
-export function GetStartedLink({ children, ...linkProps }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
-  return <StyledLink {...linkProps}>{children}</StyledLink>;
+export function GetStartedLink({
+  children,
+  ...linkProps
+}: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+  event?: string;
+}) {
+  const segment = useSegment();
+
+  return (
+    <StyledLink
+      {...linkProps}
+      onClick={() => {
+        if (linkProps.event) {
+          segment.track(`${linkProps.event} - [Get Started]`, { href: linkProps.href });
+        }
+      }}
+    >
+      {children}
+    </StyledLink>
+  );
 }
 
 export const StyledLink = styled.a`

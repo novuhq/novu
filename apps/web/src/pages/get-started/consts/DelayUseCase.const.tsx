@@ -27,6 +27,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
               href={ROUTES.INTEGRATIONS_CREATE}
               target="_blank"
               rel="noopener noreferrer"
+              event="Integration store (delay)"
             />
             <StepText>.</StepText>
           </StepDescription>
@@ -91,6 +92,7 @@ export const DelayUseCaseConst: OnboardingUseCase = {
               href={ROUTES.ACTIVITIES}
               target="_blank"
               rel="noopener noreferrer"
+              event='Discover "activity feed" (delay)'
             />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.

@@ -34,7 +34,12 @@ export const InAppUseCaseConst: OnboardingUseCase = {
 
         return (
           <StepDescription>
-            <GetStartedLink href={getInAppIntegrationUrl()} target="_blank" rel="noopener noreferrer">
+            <GetStartedLink
+              event="Create In-app provider"
+              href={getInAppIntegrationUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Create In-app provider
             </GetStartedLink>
             <StepText>
@@ -85,6 +90,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
               href={ROUTES.ACTIVITIES}
               target="_blank"
               rel="noopener noreferrer"
+              event='Discover "activity feed" (in app)'
             />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
