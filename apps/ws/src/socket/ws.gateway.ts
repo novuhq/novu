@@ -3,6 +3,7 @@ import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
 import { OnGatewayConnection, OnGatewayDisconnect, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Logger } from '@nestjs/common';
+import { instrument } from '@socket.io/admin-ui';
 
 import { ISubscriberJwt, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import { IDestroy } from '@novu/application-generic';
@@ -18,7 +19,7 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   constructor(private jwtService: JwtService, private subscriberOnlineService: SubscriberOnlineService) {}
 
   @WebSocketServer()
-  server: Server | null;
+  server: Server;
 
   async handleDisconnect(connection: Socket) {
     Logger.log(`New disconnect received from ${connection.id}`, LOG_CONTEXT);
@@ -198,5 +199,20 @@ export class WSGateway implements OnGatewayConnection, OnGatewayDisconnect, IDes
   async onModuleDestroy(): Promise<void> {
     this.isShutdown = true;
     await this.gracefulShutdown();
+  }
+
+  afterInit() {
+    if (!!process.env.SOCKET_IO_ADMIN_USERNAME && !!process.env.SOCKET_IO_ADMIN_PASSWORD_HASH) {
+      // For more information on how to use the admin UI, see https://socket.io/docs/v4/admin-ui/
+      instrument(this.server, {
+        auth: {
+          type: 'basic',
+          username: process.env.SOCKET_IO_ADMIN_USERNAME,
+          password: process.env.SOCKET_IO_ADMIN_PASSWORD_HASH,
+        },
+        mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+        namespaceName: '/admin',
+      });
+    }
   }
 }

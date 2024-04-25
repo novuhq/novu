@@ -619,10 +619,21 @@
     "zulip",
     "uuidv",
     "Vonage",
+    "HeaderNavNew",
+    "reshard",
+    "hstack",
     "runtimes",
     "cafebabe",
+    "Markunread",
+    "Fira",
+    "Roboto",
+    "Raleway",
     "Icann",
     "limitbar",
+    "eazy",
+    "Maizzle",
+    "MJML",
+    "localstorage"
   ],
   "flagWords": [],
   "patterns": [
@@ -708,5 +719,11 @@
     "ng-package.json",
     "libs/shared/src/types/timezones/timezones.types.ts",
     "*.riv",
+    "websockets",
+    ".env",
+    ".env.development",
+    ".env.local",
+    ".env.production",
+    ".env.test",
   ]
 }
