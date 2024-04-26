@@ -5147,8 +5147,8 @@ importers:
         specifier: ^0.24.1
         version: link:../../packages/stateless
       axios:
-        specifier: ^1.6.7
-        version: 1.6.7
+        specifier: 1.6.2
+        version: 1.6.2
       node-fetch:
         specifier: ^3.2.10
         version: 3.3.1
@@ -19135,7 +19135,7 @@ packages:
     resolution: {integrity: sha512-Jj/FSBWLvt7KLVsx1fZOfIoO68AtTvi/sEv0HEOMUehssuM7/AJSLeRerQNHtBMULBKrgYIRRAU4Y3QiwUbyOg==}
     engines: {node: '>=10'}
     dependencies:
-      axios: 1.6.7
+      axios: 1.6.2
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
@@ -26677,7 +26677,7 @@ packages:
     engines: {node: '>=12.*'}
     dependencies:
       '@sendgrid/helpers': 8.0.0
-      axios: 1.6.7
+      axios: 1.6.2
     transitivePeerDependencies:
       - debug
     dev: false
@@ -35493,7 +35493,7 @@ packages:
   /axios@0.26.1:
     resolution: {integrity: sha512-fPwcX4EvnSHuInCMItEhAGnaSEXRBjtzh9fOtsE6E1G6p7vl7edEeZe11QHf18+6+9gR5PbKV/sGKNaD8YaMeA==}
     dependencies:
-      follow-redirects: 1.15.2
+      follow-redirects: 1.15.5(debug@4.3.4)
     transitivePeerDependencies:
       - debug
     dev: false
@@ -35531,7 +35531,7 @@ packages:
   /axios@1.6.2:
     resolution: {integrity: sha512-7i24Ri4pmDRfJTR7LDBhsOTtcm+9kjX5WiY1X3wIisx6G9So3pfMkEiU7emUBe46oceVImccTEM3k6C5dbVW8A==}
     dependencies:
-      follow-redirects: 1.15.2
+      follow-redirects: 1.15.5(debug@4.3.4)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -35545,6 +35545,7 @@ packages:
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
+    dev: false
 
   /axobject-query@3.1.1:
     resolution: {integrity: sha512-goKlv8DZrK9hUh975fnHzhNIO4jUnFCfv/dszV5VwUGDFjI6vQ2VwoyjYjYNEbBE8AH87TduWP5uyDR1D+Iteg==}
@@ -42098,6 +42099,7 @@ packages:
     peerDependenciesMeta:
       debug:
         optional: true
+    dev: false
 
   /follow-redirects@1.15.5(debug@4.3.4):
     resolution: {integrity: sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==}
@@ -43905,7 +43907,7 @@ packages:
     engines: {node: '>=8.0.0'}
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.2
+      follow-redirects: 1.15.5(debug@4.3.4)
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -48449,7 +48451,7 @@ packages:
   /mailgun.js@8.2.1:
     resolution: {integrity: sha512-iKHCMehdUcWzBAp8KU2idLP7AbsTxQ8DjJev4Gvm430Dujul+ZkzKPgn40uYpb9BXGL5l8/w5jpf2pvw51df/w==}
     dependencies:
-      axios: 1.6.7
+      axios: 1.6.2
       base-64: 1.0.0
       url-join: 4.0.1
     transitivePeerDependencies:
@@ -48478,7 +48480,7 @@ packages:
       nodemailer:
         optional: true
     dependencies:
-      axios: 1.6.7
+      axios: 1.6.2
     transitivePeerDependencies:
       - debug
     dev: false
@@ -50904,7 +50906,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.7
+      axios: 1.6.2
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -50966,7 +50968,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.42
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.7
+      axios: 1.6.2
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -51027,7 +51029,7 @@ packages:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.7
+      axios: 1.6.2
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -53338,7 +53340,7 @@ packages:
   /postmark@4.0.2:
     resolution: {integrity: sha512-2zlCv+KVVQ0KoamXZHE7d+gXzLlr8tPE+PxQmtUaIZhbHzZAq4D6yH2b+ykhA8wYCc5ISodcx8U1aNLenXBs9g==}
     dependencies:
-      axios: 1.6.7
+      axios: 1.6.2
     transitivePeerDependencies:
       - debug
     dev: false
@@ -56287,7 +56289,7 @@ packages:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.22.0
+      terser: 5.16.9
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
@@ -59296,7 +59298,7 @@ packages:
       chalk: 4.1.2
       enhanced-resolve: 5.15.0
       micromatch: 4.0.5
-      semver: 7.5.4
+      semver: 7.5.2
       typescript: 4.9.5
       webpack: 5.82.1(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
     dev: true
@@ -59615,7 +59617,7 @@ packages:
     resolution: {integrity: sha512-Dl49awVTgv9LOLrmXi7elKa2mb69rtkwJHlKNbIR9HjXN7q66gEEaiZsE6gdr+Wfk/zInOvPDVBCdQM+SYXqkA==}
     engines: {node: '>=14.0'}
     dependencies:
-      axios: 1.6.7
+      axios: 1.6.2
       dayjs: 1.11.9
       https-proxy-agent: 5.0.1
       jsonwebtoken: 9.0.0
