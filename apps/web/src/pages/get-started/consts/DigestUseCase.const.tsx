@@ -7,6 +7,7 @@ import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 import { DigestPlaygroundView } from './DigestUsecasePlaygroundView.const';
 import { GetStartedTabsViewsEnum } from './GetStartedTabsViewsEnum';
+import { StepTypeEnum } from '@novu/shared';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-digest';
 
@@ -30,7 +31,8 @@ export const DigestUseCaseConst: OnboardingUseCase = {
               href={ROUTES.INTEGRATIONS_CREATE}
               target="_blank"
               rel="noopener noreferrer"
-              event="Integration store (digest)"
+              event="Integration store"
+              channel={StepTypeEnum.DIGEST}
             />
             <StepText>.</StepText>
           </StepDescription>
@@ -98,7 +100,8 @@ export const DigestUseCaseConst: OnboardingUseCase = {
               href={ROUTES.ACTIVITIES}
               target="_blank"
               rel="noopener noreferrer"
-              event='Discover "activity feed" (digest)'
+              event='Discover "activity feed"'
+              channel={StepTypeEnum.DIGEST}
             />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
