@@ -106,14 +106,18 @@ jobs:
           task_definition_list=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --output text --sort DESC | grep 'TASKDEFINITIONARNS' | cut -f 2)
           echo "task_definition_list=$task_definition_list" >> $GITHUB_ENV
           
-          echo "Retrieving previous_task_definition_arn..."
-          index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
-          if [ -n "$index" ] && [ "$index" -gt 1 ]; then
-            previous_index=$((index - 1))
-            previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
-            echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
+          if [ -n "$task_definition_list" ]; then
+            echo "Retrieving previous_task_definition_arn..."
+            index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
+            if [ -n "$index" ] && [ "$index" -gt 1 ]; then
+              previous_index=$((index - 1))
+              previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
+              echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
+            else
+              echo "Previous task definition not found or current task is the first one."
+            fi
           else
-            echo "Previous task definition not found or current task is the first one."
+            echo "No task definitions found."
           fi
 
 
