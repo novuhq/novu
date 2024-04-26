@@ -56,7 +56,22 @@ describe('Stripe webhooks', () => {
             data: [
               {
                 id: 'subscription_id',
-                items: { data: [{ id: 'item_id_usage_notifications' }, { id: 'item_id_flat' }] },
+                items: {
+                  data: [
+                    {
+                      id: 'item_id_usage_notifications',
+                      plan: {
+                        interval: 'month',
+                      },
+                    },
+                    {
+                      id: 'item_id_flat',
+                      plan: {
+                        interval: 'month',
+                      },
+                    },
+                  ],
+                },
                 price: {
                   recurring: {
                     usage_type: 'licensed',
@@ -107,6 +122,9 @@ describe('Stripe webhooks', () => {
               },
             ],
           },
+        },
+        adminUser: {
+          _id: 'admin_user_id',
         },
         organization: { _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE },
       } as any);
@@ -178,6 +196,7 @@ describe('Stripe webhooks', () => {
     };
     const analyticsServiceStub = {
       track: sinon.stub(),
+      upsertGroup: sinon.stub(),
     };
 
     beforeEach(() => {
@@ -189,6 +208,89 @@ describe('Stripe webhooks', () => {
             organizationId: 'organization_id',
           },
         },
+        subscriptions: [
+          {
+            id: 'sub_123',
+            items: {
+              data: [
+                {
+                  id: 'item_id_usage_notifications',
+                  plan: {
+                    interval: StripeBillingIntervalEnum.MONTH,
+                  },
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                    },
+                    product: {
+                      metadata: {
+                        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+                      },
+                    },
+                  },
+                },
+                {
+                  id: 'item_id_flat',
+                  plan: {
+                    interval: StripeBillingIntervalEnum.MONTH,
+                  },
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                    },
+                    product: {
+                      metadata: {
+                        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+          {
+            id: 'sub_1234',
+            items: {
+              data: [
+                {
+                  id: 'item_id_usage_notifications',
+                  plan: {
+                    interval: 'test',
+                  },
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                    },
+                    product: {
+                      metadata: {
+                        apiServiceLevel: 'test',
+                      },
+                    },
+                  },
+                },
+                {
+                  id: 'item_id_flat',
+                  plan: {
+                    interval: 'test',
+                  },
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                    },
+                    product: {
+                      metadata: {
+                        apiServiceLevel: 'test',
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        ],
+        adminUser: {
+          _id: 'admin_user_id',
+        },
         organization: { _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE },
       } as any);
     });
@@ -199,7 +301,6 @@ describe('Stripe webhooks', () => {
 
     const createHandler = () => {
       const handler = new CustomerSubscriptionCreatedHandler(
-        stripeStub as any,
         { execute: verifyCustomerStub } as any,
         organizationRepositoryStub,
         analyticsServiceStub as any
@@ -360,7 +461,7 @@ describe('Stripe webhooks', () => {
       const event = {
         data: {
           object: {
-            id: 'sub_123',
+            id: 'sub_1234',
             customer: 'cus_123',
             items: [
               {
@@ -393,7 +494,22 @@ describe('Stripe webhooks', () => {
             data: [
               {
                 id: 'subscription_id',
-                items: { data: [{ id: 'item_id_usage_notifications' }, { id: 'item_id_flat' }] },
+                items: {
+                  data: [
+                    {
+                      id: 'item_id_usage_notifications',
+                      plan: {
+                        interval: 'month',
+                      },
+                    },
+                    {
+                      id: 'item_id_flat',
+                      plan: {
+                        interval: 'month',
+                      },
+                    },
+                  ],
+                },
                 price: {
                   recurring: {
                     usage_type: 'licensed',

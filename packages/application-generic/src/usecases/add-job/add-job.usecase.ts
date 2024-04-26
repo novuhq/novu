@@ -46,7 +46,7 @@ const LOG_CONTEXT = 'AddJob';
 
 @Injectable()
 export class AddJob {
-  private chimeraConnector: IUseCaseInterfaceInline;
+  private resonateUsecase: IUseCaseInterfaceInline;
 
   constructor(
     private jobRepository: JobRepository,
@@ -62,7 +62,7 @@ export class AddJob {
     private conditionsFilter: ConditionsFilter,
     private moduleRef: ModuleRef
   ) {
-    this.chimeraConnector = requireInject('chimera_connector', this.moduleRef);
+    this.resonateUsecase = requireInject('resonate', this.moduleRef);
   }
 
   @InstrumentUsecase()
@@ -111,7 +111,7 @@ export class AddJob {
     let digestAmount: number | undefined;
     let digestCreationResult: DigestCreationResultEnum | undefined;
     if (job.type === StepTypeEnum.DIGEST) {
-      const chimeraResponse = await this.chimeraConnector.execute<
+      const resonateResponse = await this.resonateUsecase.execute<
         AddJobCommand & { variables: IFilterVariables },
         ExecuteOutput<IChimeraDigestResponse>
       >({
@@ -126,8 +126,8 @@ export class AddJob {
         payload: job.payload,
         overrides: job.overrides,
         // TODO: Remove fallback after other digest types are implemented.
-        chimeraResponse: chimeraResponse
-          ? { type: DigestTypeEnum.REGULAR, ...chimeraResponse.outputs }
+        chimeraResponse: resonateResponse
+          ? { type: DigestTypeEnum.REGULAR, ...resonateResponse.outputs }
           : undefined,
       });
 
@@ -137,7 +137,7 @@ export class AddJob {
         MergeOrCreateDigestCommand.create({
           job,
           filtered,
-          chimeraData: chimeraResponse?.outputs,
+          chimeraData: resonateResponse?.outputs,
         })
       );
 
@@ -172,7 +172,7 @@ export class AddJob {
     let delayAmount: number | undefined = undefined;
 
     if (job.type === StepTypeEnum.DELAY) {
-      const chimeraResponse = await this.chimeraConnector.execute<
+      const resonateResponse = await this.resonateUsecase.execute<
         AddJobCommand & { variables: IFilterVariables },
         ExecuteOutput<IChimeraDigestResponse>
       >({
@@ -180,7 +180,7 @@ export class AddJob {
         variables: filterVariables,
       });
 
-      command.chimeraResponse = chimeraResponse;
+      command.chimeraResponse = resonateResponse;
       delayAmount = await this.addDelayJob.execute(command);
 
       Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);

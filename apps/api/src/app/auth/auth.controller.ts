@@ -15,10 +15,11 @@ import {
   UseInterceptors,
   Logger,
   Header,
+  HttpStatus,
 } from '@nestjs/common';
 import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
-import { IJwtPayload } from '@novu/shared';
+import { IJwtPayload, PasswordResetFlowEnum } from '@novu/shared';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
 import { UserRegister } from './usecases/register/user-register.usecase';
 import { UserRegisterCommand } from './usecases/register/user-register.command';
@@ -43,6 +44,9 @@ import {
   SwitchOrganizationCommand,
 } from '@novu/application-generic';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
+import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
+import { UpdatePassword } from './usecases/update-password/update-password.usecase';
+import { UpdatePasswordCommand } from './usecases/update-password/update-password.command';
 
 @ApiCommonResponses()
 @Controller('/auth')
@@ -60,7 +64,8 @@ export class AuthController {
     private switchOrganizationUsecase: SwitchOrganization,
     private memberRepository: MemberRepository,
     private passwordResetRequestUsecase: PasswordResetRequest,
-    private passwordResetUsecase: PasswordReset
+    private passwordResetUsecase: PasswordReset,
+    private updatePasswordUsecase: UpdatePassword
   ) {}
 
   @Get('/github')
@@ -116,10 +121,11 @@ export class AuthController {
   }
 
   @Post('/reset/request')
-  async forgotPasswordRequest(@Body() body: { email: string }) {
+  async forgotPasswordRequest(@Body() body: { email: string }, @Query('src') src?: PasswordResetFlowEnum) {
     return await this.passwordResetRequestUsecase.execute(
       PasswordResetRequestCommand.create({
         email: body.email,
+        src,
       })
     );
   }
@@ -178,6 +184,23 @@ export class AuthController {
     return {
       token: await this.switchEnvironmentUsecase.execute(command),
     };
+  }
+
+  @Post('/update-password')
+  @Header('Cache-Control', 'no-store')
+  @UseGuards(UserAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async updatePassword(@UserSession() user: IJwtPayload, @Body() body: UpdatePasswordBodyDto) {
+    return await this.updatePasswordUsecase.execute(
+      UpdatePasswordCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        currentPassword: body.currentPassword,
+        newPassword: body.newPassword,
+        confirmPassword: body.confirmPassword,
+      })
+    );
   }
 
   @Get('/test/token/:userId')
