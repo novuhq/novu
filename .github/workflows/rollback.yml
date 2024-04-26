@@ -100,13 +100,10 @@ jobs:
           export index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
           export previous_index=$((index + 1))
           export previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
-          previous_task_definition_arn=$(echo "$previous_task_definition_arn" | sed 's/,$//') >> $GITHUB_ENV
+          echo "previous_task_definition_arn=$(echo "$previous_task_definition_arn" | sed 's/,$//')" >> $GITHUB_ENV
 
       - name: Rollback a service to the previous task definition
         id: rollback
-        env:
-          PREVIOUS_TASK: ${{ github.event.inputs.service }}
-          CURRENT_TASK: ${{ github.event.inputs.service }}
         run: |
           aws ecs update-service --cluster ${{ env.ecs_cluster }} --service ${{ env.ecs_service }} --task-definition ${{ env.previous_task_definition_arn }}
           aws ecs wait services-stable --cluster ${{ env.ecs_cluster }} --service ${{ env.ecs_service }}
