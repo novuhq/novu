@@ -103,7 +103,7 @@ jobs:
           echo "task_definition_family=$task_definition_family" >> $GITHUB_ENV
           
           echo "Retrieving task_definition_list..."
-          task_definition_list=$(aws ecs list-task-definitions --family-prefix ${{ env.task_definition_family }} --query taskDefinitionArns --sort DESC)
+          task_definition_list=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --query taskDefinitionArns --output text --sort DESC)
           echo "task_definition_list=$task_definition_list" >> $GITHUB_ENV
           
           echo "Retrieving index..."
@@ -117,6 +117,7 @@ jobs:
           echo "Retrieving previous_task_definition_arn..."
           previous_task_definition_arn=$(echo ${{ env.task_definition_list }} | sed -n "${previous_index}p" | sed 's/,$//')
           echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
+
 
 
       - name: Rollback a service to the previous task definition
