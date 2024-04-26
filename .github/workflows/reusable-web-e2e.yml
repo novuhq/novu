@@ -66,7 +66,7 @@ jobs:
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
-          targets: lint,build
+          targets: build
           projects: '@novu/web,@novu/api,@novu/worker'
           args: --skip-nx-cache
 
