@@ -108,12 +108,12 @@ jobs:
           
           echo "Retrieving previous_task_definition_arn..."
           index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
-          if [ -n "$index" ]; then
+          if [ -n "$index" ] && [ "$index" -gt 1 ]; then
             previous_index=$((index - 1))
             previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
             echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
           else
-            echo "Previous task definition not found."
+            echo "Previous task definition not found or current task is the first one."
           fi
 
 
