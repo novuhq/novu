@@ -159,16 +159,22 @@
     "redlock": "4.2.0",
     "reflect-metadata": "^0.1.13",
     "rrule": "^2.7.2",
-    "rxjs": "7.8.1"
+    "rxjs": "7.8.1",
+    "shortid": "^2.2.16",
+    "sanitize-html": "^2.4.0",
+    "slugify": "^1.4.6"
   },
   "optionalDependencies": {
-    "@novu/ee-chimera-connect": "^0.24.1",
+    "@novu/ee-echo-worker": "^0.24.1",
+    "@novu/ee-shared-services": "^0.24.1",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
     "@types/jest": "29.5.2",
     "@types/newrelic": "^9",
+    "@types/json-schema": "^7.0.15",
+    "@types/sanitize-html": "^2.11.0",
     "@types/sinon": "^9.0.0",
     "chai": "^4.2.0",
     "codecov": "^3.5.0",
