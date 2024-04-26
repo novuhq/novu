@@ -40,7 +40,6 @@ jobs:
       - run: echo "Rolling back ${{ github.event.inputs.service }} in ${{ github.event.inputs.environment }}"
 
       - name: Prepare variables
-        working-directory: cloud-infra/terraform/novu/aws
         id: variables
         run: |
           if [[ "${{ github.event.inputs.region }}" == "EU" && "$${{ github.event.inputs.environment }}" == "prod" ]]; then
