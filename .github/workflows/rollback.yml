@@ -57,7 +57,7 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: novuhq/cloud-infra
-          token: ${{ secrets.GH_PAT }}
+          token: ${{ secrets.GH_PACKAGES }}
           path: cloud-infra
 
       - name: Terraform setup
