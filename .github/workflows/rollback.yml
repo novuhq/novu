@@ -1,0 +1,127 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        type: choice
+        description: The microservice which we want to rollback to the previous version.
+        options:
+          - api
+          - inbound-mail
+          - web
+          - webhook
+          - widget
+          - worker
+          - ws
+      environment:
+        type: choice
+        description: The environment where the service is located.
+        options:
+          - dev
+          - prod
+      region:
+        type: choice
+        description: The region of the environment. It's needed to know TF workspace. When you choose DEV environment this option is not needed.
+        options:
+          - EU
+          - US
+
+jobs:
+  ecs:
+    if: ${{ contains(['api', 'inbound-mail', 'webhook', 'worker', 'ws'], inputs.service) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+    steps:
+      - run: echo "Rolling back ${{ github.event.inputs.service }} in the environment ${{ github.event.inputs.environment }}"
+
+      - name: Prepare variables
+        working-directory: cloud-infra/terraform/novu/aws
+        id: variables
+        run: |
+          if [[ "${{ github.event.inputs.region }}" == "EU" && "$${{ github.event.inputs.environment }}" == "prod" ]]; then
+            echo "Using Terraform Workspace: novu-prod-eu"
+            echo "TF_WORKSPACE=novu-prod-eu" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.region }}" == "US" && "$${{ github.event.inputs.environment }}" == "prod" ]]; then
+            echo "Using Terraform Workspace: novu-prod"
+            echo "TF_WORKSPACE=novu-prod" >> $GITHUB_ENV
+          else
+            echo "Using Terraform Workspace: novu-dev"
+            echo "TF_WORKSPACE=novu-dev" >> $GITHUB_ENV
+          fi
+
+      - name: Checkout cloud infra
+        uses: actions/checkout@master
+        with:
+          repository: novuhq/cloud-infra
+          token: ${{ secrets.GH_PACKAGES }}
+          path: cloud-infra
+
+      - name: Terraform setup
+        uses: hashicorp/setup-terraform@v1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_version: 1.5.5
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: cloud-infra/terraform/novu/aws
+        run: terraform init
+
+      - name: Terraform get output
+        working-directory: cloud-infra/terraform/novu/aws
+        id: terraform
+        env:
+          SERVICE_NAME: ${{ github.event.inputs.service }}
+        run: |
+          echo "ecs_container_name=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_container_name | jq -r .)" >> $GITHUB_ENV
+          echo "ecs_service=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_service | jq -r .)" >> $GITHUB_ENV
+          echo "ecs_cluster=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_cluster | jq -r .)" >> $GITHUB_ENV
+          echo "task_name=$(terraform output -json ${{ env.SERVICE_NAME }}_task_name | jq -r .)" >> $GITHUB_ENV
+          echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.aws_region }}
+
+      - name: ECS get output
+        id: ecs-output
+        run: |
+          echo "current_task_definition_arn=$(aws ecs describe-services --cluster ${{ env.ecs_cluster }} --services ${{ env.ecs_service }} --query 'services[0].taskDefinition' --output text)" >> $GITHUB_ENV
+          task_definition_family=$(aws ecs describe-task-definition --task-definition ${{ env.task_name }} --query 'taskDefinition.family' --output text)
+          task_definition_list=$(aws ecs list-task-definitions --family-prefix "$task_definition_family" --query taskDefinitionArns --sort DESC)
+          index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
+          previous_index=$((index + 1))
+          previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
+          previous_task_definition_arn=$(echo "$previous_task_definition_arn" | sed 's/,$//') >> $GITHUB_ENV
+
+      - name: Rollback a service to the previous task definition
+        id: rollback
+        env:
+          PREVIOUS_TASK: ${{ github.event.inputs.service }}
+          CURRENT_TASK: ${{ github.event.inputs.service }}
+        run: |
+          aws ecs update-service --cluster ${{ env.ecs_cluster }} --service ${{ env.ecs_service }} --task-definition ${{ env.previous_task_definition_arn }}
+          aws ecs wait services-stable --cluster ${{ env.ecs_cluster }} --service ${{ env.ecs_service }}
+          echo "After Rollback:"
+          echo "The previous task definition: $(echo $current_task_definition_arn | awk -F'task-definition/' '{print $2}')"
+          echo "The current task definition: $(echo $previous_task_definition_arn | awk -F'task-definition/' '{print $2}')"
+
+
+  netlify:
+    if: ${{ contains(['web', 'widget'], inputs.service) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+    steps:
+      - run: echo "Rolling back ${{ github.event.inputs.service }} in the environment ${{ github.event.inputs.environment }}"
