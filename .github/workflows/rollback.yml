@@ -29,7 +29,7 @@ on:
 
 jobs:
   ecs:
-    if: ${{ contains(['api', 'inbound-mail', 'webhook', 'worker', 'ws'], inputs.service) }}
+    if: contains(fromJson('["api", "inbound-mail", "webhook", "worker", "ws"]'), github.event.inputs.service)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -37,7 +37,7 @@ jobs:
       packages: write
       deployments: write
     steps:
-      - run: echo "Rolling back ${{ github.event.inputs.service }} in the environment ${{ github.event.inputs.environment }}"
+      - run: echo "Rolling back ${{ github.event.inputs.service }} in ${{ github.event.inputs.environment }}"
 
       - name: Prepare variables
         working-directory: cloud-infra/terraform/novu/aws
@@ -116,7 +116,7 @@ jobs:
 
 
   netlify:
-    if: ${{ contains(['web', 'widget'], inputs.service) }}
+    if: contains(fromJson('["web", "widget"]'), github.event.inputs.service)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     permissions:
@@ -124,4 +124,4 @@ jobs:
       packages: write
       deployments: write
     steps:
-      - run: echo "Rolling back ${{ github.event.inputs.service }} in the environment ${{ github.event.inputs.environment }}"
+      - run: echo "Rolling back ${{ github.event.inputs.service }} in ${{ github.event.inputs.environment }}"
