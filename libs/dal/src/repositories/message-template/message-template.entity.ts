@@ -59,6 +59,10 @@ export class MessageTemplateEntity implements IMessageTemplate {
   inputs?: {
     schema: JSONSchema7;
   };
+
+  output?: {
+    schema: JSONSchema7;
+  };
 }
 
 export type MessageTemplateDBModel = ChangePropsValueType<

@@ -9,8 +9,8 @@ import {
   StepTypeEnum,
   TriggerContextTypeEnum,
 } from '@novu/shared';
-import { ContentService } from './content.service';
 import { INotificationTemplateStep } from '@novu/shared';
+import { ContentService } from '@novu/application-generic';
 
 describe('ContentService', function () {
   describe('replaceVariables', function () {
