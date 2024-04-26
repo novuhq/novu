@@ -95,11 +95,11 @@ jobs:
         id: ecs-output
         run: |
           echo "current_task_definition_arn=$(aws ecs describe-services --cluster ${{ env.ecs_cluster }} --services ${{ env.ecs_service }} --query 'services[0].taskDefinition' --output text)" >> $GITHUB_ENV
-          task_definition_family=$(aws ecs describe-task-definition --task-definition ${{ env.task_name }} --query 'taskDefinition.family' --output text)
-          task_definition_list=$(aws ecs list-task-definitions --family-prefix "$task_definition_family" --query taskDefinitionArns --sort DESC)
-          index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
-          previous_index=$((index + 1))
-          previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
+          echo "task_definition_family=$(aws ecs describe-task-definition --task-definition ${{ env.task_name }} --query 'taskDefinition.family' --output text)" >> $GITHUB_ENV
+          echo "task_definition_list=$(aws ecs list-task-definitions --family-prefix "$task_definition_family" --query taskDefinitionArns --sort DESC)" >> $GITHUB_ENV
+          export index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
+          export previous_index=$((index + 1))
+          export previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
           previous_task_definition_arn=$(echo "$previous_task_definition_arn" | sed 's/,$//') >> $GITHUB_ENV
 
       - name: Rollback a service to the previous task definition
