@@ -1,9 +1,10 @@
 import { useMantineColorScheme } from '@mantine/core';
-import { IUserEntity, IMessage, MessageActionStatusEnum, ButtonTypeEnum } from '@novu/shared';
-import { NotificationBell, NovuProvider, PopoverNotificationCenter, useUpdateAction } from '@novu/notification-center';
+import { NovuProvider, PopoverNotificationCenter, useUpdateAction } from '@novu/notification-center';
+import { ButtonTypeEnum, IMessage, IUserEntity, MessageActionStatusEnum } from '@novu/shared';
 
-import { API_ROOT, APP_ID, WS_URL, IS_EU_ENV } from '../../../config';
+import { API_ROOT, APP_ID, IS_EU_ENV, WS_URL } from '../../../config';
 import { useEnvController } from '../../../hooks';
+import { NotificationCenterBell } from './NotificationCenterBell';
 
 const BACKEND_URL = IS_EU_ENV ? 'https://api.novu.co' : API_ROOT;
 const SOCKET_URL = IS_EU_ENV ? 'https://ws.novu.co' : WS_URL;
@@ -46,7 +47,7 @@ function PopoverWrapper() {
       onActionClick={handlerOnActionClick}
     >
       {({ unseenCount }) => {
-        return <NotificationBell colorScheme={colorScheme} unseenCount={unseenCount} />;
+        return <NotificationCenterBell colorScheme={colorScheme} unseenCount={unseenCount} />;
       }}
     </PopoverNotificationCenter>
   );

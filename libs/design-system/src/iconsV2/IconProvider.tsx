@@ -14,7 +14,7 @@ export const IconProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
     <IconContext.Provider
       value={{
-        color: theme.colorScheme === 'dark' ? theme.colors.gray[8] : theme.colors.gray[8],
+        color: theme.colorScheme === 'dark' ? theme.colors.gray[7] : theme.colors.gray[7],
         size: DEFAULT_ICON_SIZE,
         className: iconClassName.name,
       }}

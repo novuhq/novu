@@ -6,6 +6,7 @@ import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitCostEnum,
   IJwtPayload,
+  ResourceEnum,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
 
@@ -28,8 +29,10 @@ import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framew
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email';
+import { ResourceCategory } from '../resource-limiting/guards';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
+@ResourceCategory(ResourceEnum.EVENTS)
 @ApiCommonResponses()
 @Controller({
   path: 'events',
