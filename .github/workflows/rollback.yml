@@ -109,17 +109,20 @@ jobs:
           if [ -n "$task_definition_list" ]; then
             echo "Retrieving previous_task_definition_arn..."
             index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
-            if [ -n "$index" ] && [ "$index" -gt 1 ]; then
-              previous_index=$((index - 1))
-              previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
-              echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
+            if [ -n "$index" ]; then
+              if [ "$index" -ge 1 ]; then  # Greater than or equal to 1
+                previous_index=$((index + 1))
+                previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
+                echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
+              else
+                echo "Invalid index value: $index"
+              fi
             else
-              echo "Previous task definition not found or current task is the first one."
+              echo "Previous task definition not found."
             fi
           else
             echo "No task definitions found."
           fi
-
 
       - name: Rollback a service to the previous task definition
         id: rollback
