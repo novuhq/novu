@@ -32,8 +32,7 @@ jobs:
     if: contains(fromJson('["api", "inbound-mail", "webhook", "worker", "ws"]'), github.event.inputs.service)
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    environment:
-      name: {{ github.event.inputs.environment }}
+    environment: {{ github.event.inputs.environment }}
     permissions:
       contents: read
       packages: write
