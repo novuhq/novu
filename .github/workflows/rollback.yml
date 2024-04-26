@@ -7,8 +7,8 @@ on:
         type: choice
         description: The microservice which we want to rollback to the previous version.
         options:
+          - inbound_mail
           - api
-          - inbound-mail
           - web
           - webhook
           - widget
