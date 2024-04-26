@@ -105,12 +105,11 @@ jobs:
           echo "task_definition_family=$task_definition_family" >> $GITHUB_ENV
           
           echo "Retrieving task_definition_list..."
-          task_definition_list=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --output text --sort DESC | grep 'TASKDEFINITIONARNS')
-          echo "task_definition_list=$task_definition_list"
+          task_definition_list=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --output text --sort DESC | grep 'TASKDEFINITIONARNS' | cut -f 2)
           echo "task_definition_list=$task_definition_list" >> $GITHUB_ENV
           
           echo "Retrieving previous_task_definition_arn..."
-          previous_task_definition_arn=$(echo "$task_definition_list" | head -n 2 | tail -n 1 | cut -f 2)
+          previous_task_definition_arn=$(echo "$task_definition_list" | head -n 1)
           echo "previous_task_definition_arn=$previous_task_definition_arn"
           echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
 
