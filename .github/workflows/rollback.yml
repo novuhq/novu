@@ -18,8 +18,8 @@ on:
         type: choice
         description: The environment where the service is located.
         options:
-          - dev
-          - prod
+          - Development
+          - Production
       region:
         type: choice
         description: The region of the environment. It's needed to know TF workspace. When you choose DEV environment this option is not needed.
@@ -32,6 +32,7 @@ jobs:
     if: contains(fromJson('["api", "inbound-mail", "webhook", "worker", "ws"]'), github.event.inputs.service)
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    environment: {{ github.event.inputs.environment }}
     permissions:
       contents: read
       packages: write
@@ -42,10 +43,10 @@ jobs:
       - name: Prepare variables
         id: variables
         run: |
-          if [[ "${{ github.event.inputs.region }}" == "EU" && "$${{ github.event.inputs.environment }}" == "prod" ]]; then
+          if [[ "${{ github.event.inputs.region }}" == "EU" && "$${{ github.event.inputs.environment }}" == "Production" ]]; then
             echo "Using Terraform Workspace: novu-prod-eu"
             echo "TF_WORKSPACE=novu-prod-eu" >> $GITHUB_ENV
-          elif [[ "${{ github.event.inputs.region }}" == "US" && "$${{ github.event.inputs.environment }}" == "prod" ]]; then
+          elif [[ "${{ github.event.inputs.region }}" == "US" && "$${{ github.event.inputs.environment }}" == "Production" ]]; then
             echo "Using Terraform Workspace: novu-prod"
             echo "TF_WORKSPACE=novu-prod" >> $GITHUB_ENV
           else
@@ -57,6 +58,7 @@ jobs:
         uses: actions/checkout@master
         with:
           repository: novuhq/cloud-infra
+          token: ${{ secrets.GH_PACKAGES }}
           path: cloud-infra
 
       - name: Terraform setup
