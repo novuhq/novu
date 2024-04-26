@@ -3,7 +3,7 @@ name: Scheduled E2E tests
 on:
   workflow_dispatch:
   schedule:
-   - cron:  '0 12-19/2 * * 1-5'
+   - cron:  '0 7-19/2 * * 1-5'
 permissions:
   contents: read
   packages: write
