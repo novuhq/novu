@@ -29,7 +29,7 @@ on:
 
 jobs:
   ecs:
-    if: contains(fromJson('["api", "inbound-mail", "webhook", "worker", "ws"]'), github.event.inputs.service)
+    if: contains(fromJson('["api", "inbound_mail", "webhook", "worker", "ws"]'), github.event.inputs.service)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: Development
