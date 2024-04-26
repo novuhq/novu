@@ -20,6 +20,7 @@ import {
 } from './typography.tokens';
 import { Z_INDEX_TOKENS } from './zIndex.tokens';
 import { SEMANTIC_SIZES_TOKENS } from './semanticSizes.tokens';
+import { SEMANTIC_SPACING_TOKENS } from './semanticSpacing.tokens';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -50,9 +51,11 @@ export const NovuPandaPreset = definePreset({
       radii: LEGACY_RADIUS_TOKENS,
       borderWidths: BORDER_WIDTH_TOKENS,
       borders: BORDER_TOKENS,
+      zIndex: Z_INDEX_TOKENS,
     },
     semanticTokens: {
       sizes: SEMANTIC_SIZES_TOKENS,
+      spacing: SEMANTIC_SPACING_TOKENS,
       colors: {
         ...COLOR_SEMANTIC_TOKENS,
         ...LEGACY_COLOR_SEMANTIC_TOKENS,
@@ -62,7 +65,6 @@ export const NovuPandaPreset = definePreset({
         ...GRADIENT_TOKENS,
         ...LEGACY_GRADIENT_TOKENS,
       },
-      zIndex: Z_INDEX_TOKENS,
     },
     textStyles: TEXT_STYLES,
     extend: {

@@ -71,10 +71,10 @@ export const useEnvController = (
       }
       setToken(tokenResponse.token);
 
+      await queryClient.invalidateQueries();
       if (route) {
         await navigate(route);
       }
-      await queryClient.invalidateQueries();
     },
     [isAllLoading, environments, navigate, queryClient, setToken]
   );
