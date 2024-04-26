@@ -1,23 +1,18 @@
 import { JobRepository, JobEntity, DalException } from '@novu/dal';
 import { Injectable } from '@nestjs/common';
-import {
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-} from '@novu/shared';
-
-import { AddJob } from '../add-job';
-import {
-  DetailEnum,
-  CreateExecutionDetailsCommand,
-} from '../create-execution-details';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 
 import { StoreSubscriberJobsCommand } from './store-subscriber-jobs.command';
-import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { AddJob } from '../add-job';
 import {
   BulkCreateExecutionDetails,
   BulkCreateExecutionDetailsCommand,
-} from '../bulk-create-execution-details';
-import { PlatformException } from '../../utils/exceptions';
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  Instrument,
+  InstrumentUsecase,
+} from '@novu/application-generic';
+import { PlatformException } from '../../../shared/utils';
 
 const LOG_CONTEXT = 'StoreSubscriberJobs';
 

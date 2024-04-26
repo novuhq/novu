@@ -1,8 +1,7 @@
 import { IsDefined, IsOptional } from 'class-validator';
-import { JobEntity } from '@novu/dal';
 
-import { BaseCommand } from '../../commands/base.command';
-import { IChimeraDigestResponse } from '../../utils/require-inject';
+import { JobEntity } from '@novu/dal';
+import { BaseCommand, IChimeraDigestResponse } from '@novu/application-generic';
 
 export class MergeOrCreateDigestCommand extends BaseCommand {
   @IsDefined()

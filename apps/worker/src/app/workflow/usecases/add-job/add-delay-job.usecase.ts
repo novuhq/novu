@@ -1,22 +1,17 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 
 import { JobRepository, JobStatusEnum } from '@novu/dal';
+import { DelayTypeEnum, ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
 import {
-  DelayTypeEnum,
-  ExecutionDetailsSourceEnum,
-  ExecutionDetailsStatusEnum,
-  StepTypeEnum,
-} from '@novu/shared';
-
-import { ApiException } from '../../utils/exceptions';
-import { AddJobCommand } from './add-job.command';
-import { CalculateDelayService } from '../../services';
-import { InstrumentUsecase } from '../../instrumentation';
-import { DetailEnum } from '../create-execution-details';
-import {
+  ApiException,
+  CalculateDelayService,
+  DetailEnum,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-} from '../execution-log-route';
+  InstrumentUsecase,
+} from '@novu/application-generic';
+
+import { AddJobCommand } from './add-job.command';
 
 @Injectable()
 export class AddDelayJob {
@@ -56,11 +51,7 @@ export class AddDelayJob {
           : undefined,
       });
 
-      await this.jobRepository.updateStatus(
-        command.environmentId,
-        data._id,
-        JobStatusEnum.DELAYED
-      );
+      await this.jobRepository.updateStatus(command.environmentId, data._id, JobStatusEnum.DELAYED);
     } catch (error: any) {
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
@@ -74,11 +65,7 @@ export class AddDelayJob {
         })
       );
 
-      await this.jobRepository.updateStatus(
-        command.environmentId,
-        data._id,
-        JobStatusEnum.CANCELED
-      );
+      await this.jobRepository.updateStatus(command.environmentId, data._id, JobStatusEnum.CANCELED);
 
       throw error;
     }

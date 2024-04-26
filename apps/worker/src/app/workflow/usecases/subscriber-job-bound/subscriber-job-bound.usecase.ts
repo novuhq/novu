@@ -13,28 +13,22 @@ import {
   ProvidersIdEnum,
   STEP_TYPE_TO_CHANNEL_TYPE,
 } from '@novu/shared';
-import { Instrument, InstrumentUsecase } from '../../instrumentation';
+import { StoreSubscriberJobs, StoreSubscriberJobsCommand } from '../store-subscriber-jobs';
 import {
-  StoreSubscriberJobs,
-  StoreSubscriberJobsCommand,
-} from '../store-subscriber-jobs';
-import {
-  CreateNotificationJobs,
-  CreateNotificationJobsCommand,
-} from '../create-notification-jobs';
-import { PinoLogger } from 'nestjs-pino';
-import { ApiException } from '../../utils/exceptions';
-import {
-  ProcessSubscriber,
-  ProcessSubscriberCommand,
-} from '../process-subscriber';
-import { AnalyticsService } from '../../services/analytics.service';
-import { ProcessTenant } from '../process-tenant';
-import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
-import {
+  AnalyticsService,
+  ApiException,
   buildNotificationTemplateKey,
   CachedEntity,
-} from '../../services/cache';
+  CreateNotificationJobs,
+  CreateNotificationJobsCommand,
+  Instrument,
+  InstrumentUsecase,
+  PinoLogger,
+  ProcessSubscriber,
+  ProcessSubscriberCommand,
+  ProcessTenant,
+} from '@novu/application-generic';
+import { SubscriberJobBoundCommand } from './subscriber-job-bound.command';
 
 const LOG_CONTEXT = 'SubscriberJobBoundUseCase';
 
@@ -78,37 +72,30 @@ export class SubscriberJobBound {
       environmentId: environmentId,
     });
 
-    const templateProviderIds = await this.getProviderIdsForTemplate(
-      environmentId,
-      template
-    );
+    if (!template) {
+      throw new ApiException(`Workflow id ${templateId} was not found`);
+    }
+
+    const templateProviderIds = await this.getProviderIdsForTemplate(environmentId, template);
 
     await this.validateSubscriberIdProperty(subscriber);
 
     /**
      * Due to Mixpanel HotSharding, we don't want to pass userId for production volume
      */
-    const segmentUserId = ['test-workflow', 'digest-playground'].includes(
-      command.payload.__source
-    )
-      ? userId
-      : '';
+    const segmentUserId = ['test-workflow', 'digest-playground'].includes(command.payload.__source) ? userId : '';
 
-    this.analyticsService.mixpanelTrack(
-      'Notification event trigger - [Triggers]',
-      segmentUserId,
-      {
-        name: template.name,
-        type: template?.type || 'REGULAR',
-        transactionId: command.transactionId,
-        _template: template._id,
-        _organization: command.organizationId,
-        channels: template?.steps.map((step) => step.template?.type),
-        source: command.payload.__source || 'api',
-        subscriberSource: _subscriberSource || null,
-        requestCategory: requestCategory || null,
-      }
-    );
+    this.analyticsService.mixpanelTrack('Notification event trigger - [Triggers]', segmentUserId, {
+      name: template.name,
+      type: template?.type || 'REGULAR',
+      transactionId: command.transactionId,
+      _template: template._id,
+      _organization: command.organizationId,
+      channels: template?.steps.map((step) => step.template?.type),
+      source: command.payload.__source || 'api',
+      subscriberSource: _subscriberSource || null,
+      requestCategory: requestCategory || null,
+    });
 
     const subscriberProcessed = await this.processSubscriber.execute(
       ProcessSubscriberCommand.create({
@@ -127,11 +114,9 @@ export class SubscriberJobBound {
        * is no job at this point.
        */
       Logger.warn(
-        `Subscriber ${JSON.stringify(
-          subscriber.subscriberId
-        )} of organization ${command.organizationId} in transaction ${
-          command.transactionId
-        } was not processed. No jobs are created.`,
+        `Subscriber ${JSON.stringify(subscriber.subscriberId)} of organization ${
+          command.organizationId
+        } in transaction ${command.transactionId} was not processed. No jobs are created.`,
         LOG_CONTEXT
       );
 
@@ -171,10 +156,7 @@ export class SubscriberJobBound {
   }
 
   @Instrument()
-  private async getProviderId(
-    environmentId: string,
-    channelType: ChannelTypeEnum
-  ): Promise<ProvidersIdEnum> {
+  private async getProviderId(environmentId: string, channelType: ChannelTypeEnum): Promise<ProvidersIdEnum> {
     const integration = await this.integrationRepository.findOne(
       {
         _environmentId: environmentId,
@@ -188,11 +170,8 @@ export class SubscriberJobBound {
   }
 
   @Instrument()
-  private async validateSubscriberIdProperty(
-    subscriber: ISubscribersDefine
-  ): Promise<boolean> {
-    const subscriberIdExists =
-      typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
+  private async validateSubscriberIdProperty(subscriber: ISubscribersDefine): Promise<boolean> {
+    const subscriberIdExists = typeof subscriber === 'string' ? subscriber : subscriber.subscriberId;
 
     if (!subscriberIdExists) {
       throw new ApiException(
@@ -210,17 +189,8 @@ export class SubscriberJobBound {
         _id: command._id,
       }),
   })
-  private async getNotificationTemplate({
-    _id,
-    environmentId,
-  }: {
-    _id: string;
-    environmentId: string;
-  }) {
-    return await this.notificationTemplateRepository.findById(
-      _id,
-      environmentId
-    );
+  private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
+    return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
   @InstrumentUsecase()
@@ -235,6 +205,8 @@ export class SubscriberJobBound {
       if (!type) continue;
 
       const channelType = STEP_TYPE_TO_CHANNEL_TYPE.get(type);
+
+      if (!channelType) continue;
 
       if (providers[channelType] || !channelType) continue;
 

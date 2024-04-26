@@ -4,7 +4,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import {
   getSubscriberProcessWorkerOptions,
-  SubscriberJobBound,
   SubscriberProcessWorkerService,
   PinoLogger,
   storage,
@@ -14,6 +13,8 @@ import {
   WorkflowInMemoryProviderService,
   IProcessSubscriberDataDto,
 } from '@novu/application-generic';
+
+import { SubscriberJobBound } from '../usecases/subscriber-job-bound/subscriber-job-bound.usecase';
 
 const LOG_CONTEXT = 'SubscriberProcessWorker';
 
