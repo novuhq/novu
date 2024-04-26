@@ -28,12 +28,8 @@ module.exports = {
       },
     ],
   },
-  env: {
-    'cypress/globals': true,
-  },
-  ignorePatterns: ['craco.config.js', 'cypress/*', 'styled-system/*'],
-  extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
-  plugins: ['cypress'],
+  ignorePatterns: ['craco.config.js', 'styled-system/*'],
+  extends: ['../../.eslintrc.js'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,

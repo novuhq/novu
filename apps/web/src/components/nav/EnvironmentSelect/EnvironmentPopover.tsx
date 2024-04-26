@@ -36,11 +36,11 @@ export const EnvironmentPopover: React.FC<PropsWithChildren<IEnvironmentPopoverP
           <button className={closeButtonStyles} onClick={() => setIsPopoverOpened(false)} aria-label="Close popover">
             <IconClose />
           </button>
-          {'To make changes you’ll need to visit '}
+          {`To view the updates you've made, visit the `}
           <a className={linkStyles} onClick={handlePopoverLinkClick}>
             development changes
-          </a>{' '}
-          {' and promote the changes from there'}
+          </a>
+          {'.'}
         </div>
       </Popover.Dropdown>
     </Popover>

@@ -3,6 +3,7 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "websockets",
     "cacheable",
     "mrkdwn",
     "Springboot",
@@ -633,7 +634,9 @@
     "eazy",
     "Maizzle",
     "MJML",
-    "localstorage"
+    "localstorage",
+    "elif",
+    "websockets"
   ],
   "flagWords": [],
   "patterns": [
@@ -718,6 +721,12 @@
     "angular.json",
     "ng-package.json",
     "libs/shared/src/types/timezones/timezones.types.ts",
-    "*.riv"
+    "*.riv",
+    "websockets",
+    ".env",
+    ".env.development",
+    ".env.local",
+    ".env.production",
+    ".env.test",
   ]
 }

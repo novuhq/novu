@@ -1,6 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { SESConfig } from '@novu/ses/build/module/lib/ses.config';
-import { SESEmailProvider } from '@novu/ses';
+import { SESConfig, SESEmailProvider } from '@novu/ses';
 import { BaseHandler } from './base.handler';
 
 export class SESHandler extends BaseHandler {

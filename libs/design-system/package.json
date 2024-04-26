@@ -31,14 +31,10 @@
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
     "storybook": "pnpm panda --watch & storybook dev -p 6006",
     "build-storybook": "pnpm panda && storybook build",
-    "cypress:install": "cypress install",
-    "cypress:open": "cross-env NODE_ENV=test cypress open",
-    "cypress:run": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component",
     "test": "vitest",
     "audit-components": "pnpm react-scanner -c './react-scanner.config.js'"
   },
   "dependencies": {
-    "@cypress/react": "^7.0.3",
     "@emotion/css": "^11.10.5",
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
@@ -76,8 +72,6 @@
     "@types/react-dom": "^17.0.0",
     "@vitejs/plugin-react": "^4.0.3",
     "acorn": "^8.7.1",
-    "cypress": "^13.3.2",
-    "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-storybook": "^0.6.13",
     "jsdom": "^24.0.0",
     "react": "^17.0.1",
@@ -101,9 +95,16 @@
   "nx": {
     "targets": {
       "build-storybook": {
-        "dependsOn": ["^build"],
-        "outputs": ["{projectRoot}/storybook-static"],
-        "inputs": ["{projectRoot}/.storybook", "{projectRoot}/src"]
+        "dependsOn": [
+          "^build"
+        ],
+        "outputs": [
+          "{projectRoot}/storybook-static"
+        ],
+        "inputs": [
+          "{projectRoot}/.storybook",
+          "{projectRoot}/src"
+        ]
       }
     }
   }

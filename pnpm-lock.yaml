@@ -433,9 +433,12 @@ importers:
       '@novu/ee-billing':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/billing
-      '@novu/ee-chimera':
+      '@novu/ee-echo-api':
         specifier: ^0.24.1
-        version: link:../../enterprise/packages/chimera
+        version: link:../../enterprise/packages/echo/echo-api
+      '@novu/ee-shared-services':
+        specifier: ^0.24.1
+        version: link:../../enterprise/packages/shared-services
       '@novu/ee-translation':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/translation
@@ -918,7 +921,7 @@ importers:
         version: link:../../enterprise/packages/billing-web
       '@novu/ee-echo-web':
         specifier: ^0.24.1
-        version: link:../../enterprise/packages/web/echo
+        version: link:../../enterprise/packages/echo/echo-web
       '@novu/ee-translation-web':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/translation-web
@@ -1463,9 +1466,12 @@ importers:
       '@novu/ee-billing':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/billing
-      '@novu/ee-chimera-connect':
+      '@novu/ee-echo-worker':
         specifier: ^0.24.1
-        version: link:../../enterprise/packages/chimera-connect
+        version: link:../../enterprise/packages/echo/echo-worker
+      '@novu/ee-shared-services':
+        specifier: ^0.24.1
+        version: link:../../enterprise/packages/shared-services
       '@novu/ee-translation':
         specifier: ^0.24.1
         version: link:../../enterprise/packages/translation
@@ -1554,6 +1560,9 @@ importers:
       '@nestjs/platform-socket.io':
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2)(@nestjs/websockets@10.2.2)(rxjs@7.8.1)
+      '@nestjs/serve-static':
+        specifier: ^4.0.2
+        version: 4.0.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)
       '@nestjs/swagger':
         specifier: ^7.1.9
         version: 7.1.9(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
@@ -1578,6 +1587,9 @@ importers:
       '@sentry/node':
         specifier: ^7.30.0
         version: 7.47.0
+      '@socket.io/admin-ui':
+        specifier: ^0.5.1
+        version: 0.5.1(socket.io@4.7.2)
       '@socket.io/redis-adapter':
         specifier: ^7.2.0
         version: 7.2.0
@@ -1940,7 +1952,7 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
-  enterprise/packages/chimera:
+  enterprise/packages/echo/echo-api:
     dependencies:
       '@nestjs/common':
         specifier: 10.2.2
@@ -1953,22 +1965,22 @@ importers:
         version: 9.0.3(@nestjs/common@10.2.2)(passport@0.6.0)
       '@novu/application-generic':
         specifier: ^0.24.1
-        version: link:../../../packages/application-generic
+        version: link:../../../../packages/application-generic
       '@novu/dal':
         specifier: ^0.24.1
-        version: link:../../../libs/dal
+        version: link:../../../../libs/dal
       '@novu/ee-dal':
         specifier: ^0.24.1
-        version: link:../libs/dal
+        version: link:../../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
-        version: link:../../../libs/shared
+        version: link:../../../../libs/shared
       '@novu/stateless':
         specifier: ^0.24.1
-        version: link:../../../packages/stateless
+        version: link:../../../../packages/stateless
       '@novu/testing':
         specifier: ^0.24.1
-        version: link:../../../libs/testing
+        version: link:../../../../libs/testing
       axios:
         specifier: ^1.6.2
         version: 1.6.7
@@ -2037,7 +2049,68 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
-  enterprise/packages/chimera-connect:
+  enterprise/packages/echo/echo-web:
+    dependencies:
+      '@mantine/core':
+        specifier: ^5.7.1
+        version: 5.10.5(@emotion/react@11.10.6)(@mantine/hooks@5.10.5)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
+      '@mantine/hooks':
+        specifier: ^5.7.1
+        version: 5.10.5(react@17.0.2)
+      '@novu/design-system':
+        specifier: ^0.24.1
+        version: link:../../../../libs/design-system
+      '@novu/shared-web':
+        specifier: ^0.24.1
+        version: link:../../../../libs/shared-web
+      '@rjsf/core':
+        specifier: ^5.17.1
+        version: 5.17.1(@rjsf/utils@5.17.1)(react@17.0.2)
+      '@rjsf/validator-ajv8':
+        specifier: ^5.17.1
+        version: 5.17.1(@rjsf/utils@5.17.1)
+      '@tanstack/react-query':
+        specifier: ^4.20.4
+        version: 4.29.1(react-dom@17.0.2)(react@17.0.2)
+      react-router-dom:
+        specifier: 6.2.2
+        version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
+      tslib:
+        specifier: ^2.3.1
+        version: 2.6.2
+    devDependencies:
+      '@types/node':
+        specifier: ^18.11.12
+        version: 18.18.5
+      '@types/react':
+        specifier: ^17.0.0
+        version: 17.0.62
+      '@types/react-dom':
+        specifier: ^17.0.0
+        version: 17.0.20
+      eslint:
+        specifier: ^8.33.0
+        version: 8.51.0
+      eslint-plugin-react-hooks:
+        specifier: ^4.4.0
+        version: 4.6.0(eslint@8.51.0)
+      react:
+        specifier: ^17.0.1
+        version: 17.0.2
+      react-dom:
+        specifier: ^17.0.1
+        version: 17.0.2(react@17.0.2)
+      rimraf:
+        specifier: ^3.0.2
+        version: 3.0.2
+      ts-loader:
+        specifier: ~9.4.0
+        version: 9.4.2(typescript@4.9.5)(webpack@5.78.0)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  enterprise/packages/echo/echo-worker:
     dependencies:
       '@nestjs/common':
         specifier: 10.2.2
@@ -2050,19 +2123,19 @@ importers:
         version: 9.0.3(@nestjs/common@10.2.2)(passport@0.6.0)
       '@novu/dal':
         specifier: ^0.24.1
-        version: link:../../../libs/dal
+        version: link:../../../../libs/dal
       '@novu/ee-dal':
         specifier: ^0.24.1
-        version: link:../libs/dal
+        version: link:../../libs/dal
       '@novu/shared':
         specifier: ^0.24.1
-        version: link:../../../libs/shared
+        version: link:../../../../libs/shared
       '@novu/stateless':
         specifier: ^0.24.1
-        version: link:../../../packages/stateless
+        version: link:../../../../packages/stateless
       '@novu/testing':
         specifier: ^0.24.1
-        version: link:../../../libs/testing
+        version: link:../../../../libs/testing
       axios:
         specifier: ^1.6.2
         version: 1.6.7
@@ -2168,6 +2241,46 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
+  enterprise/packages/shared-services:
+    dependencies:
+      '@handlebars/parser':
+        specifier: ^2.1.0
+        version: 2.1.0
+      '@nestjs/common':
+        specifier: 10.2.2
+        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@novu/dal':
+        specifier: ^0.24.1
+        version: link:../../../libs/dal
+      '@novu/ee-dal':
+        specifier: ^0.24.1
+        version: link:../libs/dal
+      '@novu/shared':
+        specifier: ^0.24.1
+        version: link:../../../libs/shared
+    devDependencies:
+      '@types/node':
+        specifier: ^14.6.0
+        version: 14.18.42
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      nodemon:
+        specifier: ^2.0.3
+        version: 2.0.22
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      sinon:
+        specifier: ^9.2.4
+        version: 9.2.4
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@types/node@14.18.42)(typescript@4.9.5)
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
   enterprise/packages/translation:
     dependencies:
       '@handlebars/parser':
@@ -2194,6 +2307,9 @@ importers:
       '@novu/ee-dal':
         specifier: ^0.24.1
         version: link:../libs/dal
+      '@novu/ee-shared-services':
+        specifier: ^0.24.1
+        version: link:../shared-services
       '@novu/shared':
         specifier: ^0.24.1
         version: link:../../../libs/shared
@@ -2347,67 +2463,6 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
-  enterprise/packages/web/echo:
-    dependencies:
-      '@mantine/core':
-        specifier: ^5.7.1
-        version: 5.10.5(@emotion/react@11.10.6)(@mantine/hooks@5.10.5)(@types/react@17.0.62)(react-dom@17.0.2)(react@17.0.2)
-      '@mantine/hooks':
-        specifier: ^5.7.1
-        version: 5.10.5(react@17.0.2)
-      '@novu/design-system':
-        specifier: ^0.24.1
-        version: link:../../../../libs/design-system
-      '@novu/shared-web':
-        specifier: ^0.24.1
-        version: link:../../../../libs/shared-web
-      '@rjsf/core':
-        specifier: ^5.17.1
-        version: 5.17.1(@rjsf/utils@5.17.1)(react@17.0.2)
-      '@rjsf/validator-ajv8':
-        specifier: ^5.17.1
-        version: 5.17.1(@rjsf/utils@5.17.1)
-      '@tanstack/react-query':
-        specifier: ^4.20.4
-        version: 4.29.1(react-dom@17.0.2)(react@17.0.2)
-      react-router-dom:
-        specifier: 6.2.2
-        version: 6.2.2(react-dom@17.0.2)(react@17.0.2)
-      tslib:
-        specifier: ^2.3.1
-        version: 2.6.2
-    devDependencies:
-      '@types/node':
-        specifier: ^18.11.12
-        version: 18.18.5
-      '@types/react':
-        specifier: ^17.0.0
-        version: 17.0.62
-      '@types/react-dom':
-        specifier: ^17.0.0
-        version: 17.0.20
-      eslint:
-        specifier: ^8.33.0
-        version: 8.51.0
-      eslint-plugin-react-hooks:
-        specifier: ^4.4.0
-        version: 4.6.0(eslint@8.51.0)
-      react:
-        specifier: ^17.0.1
-        version: 17.0.2
-      react-dom:
-        specifier: ^17.0.1
-        version: 17.0.2(react@17.0.2)
-      rimraf:
-        specifier: ^3.0.2
-        version: 3.0.2
-      ts-loader:
-        specifier: ~9.4.0
-        version: 9.4.2(typescript@4.9.5)(webpack@5.78.0)
-      typescript:
-        specifier: 4.9.5
-        version: 4.9.5
-
   libs/dal:
     dependencies:
       '@aws-sdk/client-s3':
@@ -2516,9 +2571,6 @@ importers:
 
   libs/design-system:
     dependencies:
-      '@cypress/react':
-        specifier: ^7.0.3
-        version: 7.0.3(@types/react@17.0.62)(cypress@13.3.3)(react-dom@17.0.2)(react@17.0.2)
       '@emotion/css':
         specifier: ^11.10.5
         version: 11.10.6
@@ -2625,12 +2677,6 @@ importers:
       acorn:
         specifier: ^8.7.1
         version: 8.10.0
-      cypress:
-        specifier: ^13.3.2
-        version: 13.3.3
-      eslint-plugin-cypress:
-        specifier: ^2.12.1
-        version: 2.15.1(eslint@8.51.0)
       eslint-plugin-storybook:
         specifier: ^0.6.13
         version: 0.6.13(eslint@8.51.0)(typescript@4.9.5)
@@ -3328,10 +3374,22 @@ importers:
       rxjs:
         specifier: 7.8.1
         version: 7.8.1
+      sanitize-html:
+        specifier: ^2.4.0
+        version: 2.10.0
+      shortid:
+        specifier: ^2.2.16
+        version: 2.2.16
+      slugify:
+        specifier: ^1.4.6
+        version: 1.6.6
     optionalDependencies:
-      '@novu/ee-chimera-connect':
+      '@novu/ee-echo-worker':
         specifier: ^0.24.1
-        version: link:../../enterprise/packages/chimera-connect
+        version: link:../../enterprise/packages/echo/echo-worker
+      '@novu/ee-shared-services':
+        specifier: ^0.24.1
+        version: link:../../enterprise/packages/shared-services
       '@taskforcesh/bullmq-pro':
         specifier: 5.1.14
         version: 5.1.14
@@ -3342,9 +3400,15 @@ importers:
       '@types/jest':
         specifier: 29.5.2
         version: 29.5.2
+      '@types/json-schema':
+        specifier: ^7.0.15
+        version: 7.0.15
       '@types/newrelic':
         specifier: ^9
         version: 9.14.0
+      '@types/sanitize-html':
+        specifier: ^2.11.0
+        version: 2.11.0
       '@types/sinon':
         specifier: ^9.0.0
         version: 9.0.11
@@ -17314,23 +17378,6 @@ packages:
       react-dom: 17.0.2(react@17.0.2)
     dev: false
 
-  /@cypress/react@7.0.3(@types/react@17.0.62)(cypress@13.3.3)(react-dom@17.0.2)(react@17.0.2):
-    resolution: {integrity: sha512-YseqnMugTbdPV9YCYEMXVqIf+P7x+pfjXOdjv4dnDFqNCZeHaZfOZVFZ4XfEHVxMv0aDszxlaLiIp3QDPhr12w==}
-    peerDependencies:
-      '@types/react': ^16.9.16 || ^17.0.0
-      cypress: '*'
-      react: ^=16.x || ^=17.x
-      react-dom: ^=16.x || ^=17.x
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-    dependencies:
-      '@types/react': 17.0.62
-      cypress: 13.3.3
-      react: 17.0.2
-      react-dom: 17.0.2(react@17.0.2)
-    dev: false
-
   /@cypress/request@3.0.1:
     resolution: {integrity: sha512-TWivJlJi8ZDx2wGOw1dbLuHJKUYX7bWySw377nlnGOW3hP9/MUKIsEdXT/YngWxVdgNCHRBmFlBipE+5/2ZZlQ==}
     engines: {node: '>= 6'}
@@ -21264,6 +21311,27 @@ packages:
     transitivePeerDependencies:
       - chokidar
     dev: true
+
+  /@nestjs/serve-static@4.0.2(@nestjs/common@10.2.2)(@nestjs/core@10.2.2):
+    resolution: {integrity: sha512-cT0vdWN5ar7jDI2NKbhf4LcwJzU4vS5sVpMkVrHuyLcltbrz6JdGi1TfIMMatP2pNiq5Ie/uUdPSFDVaZX/URQ==}
+    peerDependencies:
+      '@fastify/static': ^6.5.0 || ^7.0.0
+      '@nestjs/common': ^9.0.0 || ^10.0.0
+      '@nestjs/core': ^9.0.0 || ^10.0.0
+      express: ^4.18.1
+      fastify: ^4.7.0
+    peerDependenciesMeta:
+      '@fastify/static':
+        optional: true
+      express:
+        optional: true
+      fastify:
+        optional: true
+    dependencies:
+      '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@nestjs/core': 10.2.2(@nestjs/common@10.2.2)(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      path-to-regexp: 0.2.5
+    dev: false
 
   /@nestjs/swagger@7.1.9(@nestjs/common@10.2.2)(@nestjs/core@10.2.2)(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13):
     resolution: {integrity: sha512-mKaNlN6uJpLh8itIF1EHK87j8GXFnwW8ldG4pQPqgeaBC8M6E9vH+GdRhxyRgAPrAkay4dL3lSOQS119tGrEHA==}
@@ -28088,6 +28156,19 @@ packages:
       tslib: 2.6.2
     dev: false
 
+  /@socket.io/admin-ui@0.5.1(socket.io@4.7.2):
+    resolution: {integrity: sha512-1dlGL2FGm6T+uL1e6iDvbo2eCINwvW7iVbjIblwh5kPPRM1SP8lmZrbFZf4QNJ/cqQ+JLcx49eXGM9WAB4TK7w==}
+    peerDependencies:
+      socket.io: '>=3.1.0'
+    dependencies:
+      '@types/bcryptjs': 2.4.6
+      bcryptjs: 2.4.3
+      debug: 4.3.4(supports-color@8.1.1)
+      socket.io: 4.7.2
+    transitivePeerDependencies:
+      - supports-color
+    dev: false
+
   /@socket.io/component-emitter@3.1.0:
     resolution: {integrity: sha512-+9jVqKhRSpsc591z5vX+X5Yyw+he/HCB4iQ/RYxw35CEPaY1gnsNE43nf9n9AaYjAQrTiI/mOwKUKdUs9vf7Xg==}
 
@@ -29898,7 +29979,7 @@ packages:
       color-convert: 2.0.1
       dequal: 2.0.3
       lodash: 4.17.21
-      markdown-to-jsx: 7.3.2(react@17.0.2)
+      markdown-to-jsx: 7.4.1(react@17.0.2)
       memoizerific: 1.11.3
       polished: 4.2.2
       react: 17.0.2
@@ -29935,7 +30016,7 @@ packages:
       color-convert: 2.0.1
       dequal: 2.0.3
       lodash: 4.17.21
-      markdown-to-jsx: 7.3.2(react@17.0.2)
+      markdown-to-jsx: 7.4.1(react@17.0.2)
       memoizerific: 1.11.3
       polished: 4.2.2
       react: 17.0.2
@@ -31671,6 +31752,10 @@ packages:
     resolution: {integrity: sha512-SwBrq5wb6jXP0o3O3jStdPWbKpimTImfdFD/OZE3uW+jhGpds/l5wMX9lfYOTDOa5Bod2QmOgo9ln+tMp2XP/w==}
     dev: true
 
+  /@types/bcryptjs@2.4.6:
+    resolution: {integrity: sha512-9xlo6R2qDs5uixm0bcIqCeMCE6HiQsIyel9KQySStiyqNl2tnj2mP3DX1Nf56MD6KMenNNlBBsy3LJ7gUEQPXQ==}
+    dev: false
+
   /@types/bluebird@3.5.38:
     resolution: {integrity: sha512-yR/Kxc0dd4FfwtEoLZMoqJbM/VE/W7hXn/MIjb+axcwag0iFmSPK7OBUZq1YWLynJUoWQkfUrI7T0HDqGApNSg==}
     dev: true
@@ -32649,6 +32734,12 @@ packages:
       '@types/node': 14.18.42
     dev: false
     optional: true
+
+  /@types/sanitize-html@2.11.0:
+    resolution: {integrity: sha512-7oxPGNQHXLHE48r/r/qjn7q0hlrs3kL7oZnGj0Wf/h9tj/6ibFyRkNbsDxaBBZ4XUZ0Dx5LGCyDJ04ytSofacQ==}
+    dependencies:
+      htmlparser2: 8.0.2
+    dev: true
 
   /@types/sarif@2.1.7:
     resolution: {integrity: sha512-kRz0VEkJqWLf1LLVN4pT1cg1Z9wAuvI6L97V3m2f5B76Tg8d413ddvLBPTEHAZJlnn4XSvu0FkZtViCQGVyrXQ==}
@@ -36071,6 +36162,10 @@ packages:
       - supports-color
     dev: false
 
+  /bcryptjs@2.4.3:
+    resolution: {integrity: sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ==}
+    dev: false
+
   /before-after-hook@2.2.3:
     resolution: {integrity: sha512-NzUnlZexiaH/46WDhANlyR2bXRopNg4F/zuSA3OpZnllCUgRaOF2znDioDWrmbNVsuZk6l9pMquQB38cfBZwkQ==}
     dev: true
@@ -38829,56 +38924,6 @@ packages:
 
   /cypress@13.3.1:
     resolution: {integrity: sha512-g4mJLZxYN+UAF2LMy3Znd4LBnUmS59Vynd81VES59RdW48Yt+QtR2cush3melOoVNz0PPbADpWr8DcUx6mif8Q==}
-    engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
-    hasBin: true
-    requiresBuild: true
-    dependencies:
-      '@cypress/request': 3.0.1
-      '@cypress/xvfb': 1.2.4(supports-color@8.1.1)
-      '@types/node': 18.18.5
-      '@types/sinonjs__fake-timers': 8.1.1
-      '@types/sizzle': 2.3.3
-      arch: 2.2.0
-      blob-util: 2.0.2
-      bluebird: 3.7.2
-      buffer: 5.7.1
-      cachedir: 2.3.0
-      chalk: 4.1.2
-      check-more-types: 2.24.0
-      cli-cursor: 3.1.0
-      cli-table3: 0.6.3
-      commander: 6.2.1
-      common-tags: 1.8.2
-      dayjs: 1.11.9
-      debug: 4.3.4(supports-color@8.1.1)
-      enquirer: 2.3.6
-      eventemitter2: 6.4.7
-      execa: 4.1.0
-      executable: 4.1.1
-      extract-zip: 2.0.1(supports-color@8.1.1)
-      figures: 3.2.0
-      fs-extra: 9.1.0
-      getos: 3.2.1
-      is-ci: 3.0.1
-      is-installed-globally: 0.4.0
-      lazy-ass: 1.6.0
-      listr2: 3.14.0(enquirer@2.3.6)
-      lodash: 4.17.21
-      log-symbols: 4.1.0
-      minimist: 1.2.8
-      ospath: 1.2.2
-      pretty-bytes: 5.6.0
-      process: 0.11.10
-      proxy-from-env: 1.0.0
-      request-progress: 3.0.0
-      semver: 7.5.4
-      supports-color: 8.1.1
-      tmp: 0.2.1
-      untildify: 4.0.0
-      yauzl: 2.10.0
-
-  /cypress@13.3.3:
-    resolution: {integrity: sha512-mbdkojHhKB1xbrj7CrKWHi22uFx9P9vQFiR0sYDZZoK99OMp9/ZYN55TO5pjbXmV7xvCJ4JwBoADXjOJK8aCJw==}
     engines: {node: ^16.0.0 || ^18.0.0 || >=20.0.0}
     hasBin: true
     requiresBuild: true
@@ -48613,14 +48658,6 @@ packages:
     resolution: {integrity: sha512-Z1NL3Tb1M9wH4XESsCDEksWoKTdlUafKc4pt0GRwjUyXaCFZ+dc3g2erqB6zm3szA2IUSi7VnPI+o/9jnxh9hw==}
     dev: true
 
-  /markdown-to-jsx@7.3.2(react@17.0.2):
-    resolution: {integrity: sha512-B+28F5ucp83aQm+OxNrPkS8z0tMKaeHiy0lHJs3LqCyDQFtWuenaIrkaVTgAm1pf1AU85LXltva86hlaT17i8Q==}
-    engines: {node: '>= 10'}
-    peerDependencies:
-      react: '>= 0.14.0'
-    dependencies:
-      react: 17.0.2
-
   /markdown-to-jsx@7.4.1(react@17.0.2):
     resolution: {integrity: sha512-GbrbkTnHp9u6+HqbPRFJbObi369AgJNXi/sGqq5HRsoZW063xR1XDCaConqq+whfEIAlzB1YPnOgsPc7B7bc/A==}
     engines: {node: '>= 10'}
@@ -48628,7 +48665,6 @@ packages:
       react: '>= 0.14.0'
     dependencies:
       react: 17.0.2
-    dev: false
 
   /markdownlint-cli@0.33.0:
     resolution: {integrity: sha512-zMK1oHpjYkhjO+94+ngARiBBrRDEUMzooDHBAHtmEIJ9oYddd9l3chCReY2mPlecwH7gflQp1ApilTo+o0zopQ==}
@@ -51995,6 +52031,10 @@ packages:
 
   /path-to-regexp@0.1.7:
     resolution: {integrity: sha512-5DFkuoqlv1uYQKxy8omFBeJPQcdoE07Kv2sferDCrAq1ohOU+MSDswDIbnx3YAM60qIOnYa53wBhXW0EbMonrQ==}
+
+  /path-to-regexp@0.2.5:
+    resolution: {integrity: sha512-l6qtdDPIkmAmzEO6egquYDfqQGPMRNGjYtrU13HAXb3YSRrt7HSb1sJY0pKp6o2bAa86tSB6iwaW2JbthPKr7Q==}
+    dev: false
 
   /path-to-regexp@1.8.0:
     resolution: {integrity: sha512-n43JRhlUKUAlibEJhPeir1ncUID16QnEjNpwzNdO3Lm4ywrBpBZ5oLD0I6br9evr1Y9JTqwRtAh7JLoOzAQdVA==}
@@ -58934,7 +58974,7 @@ packages:
     resolution: {integrity: sha512-l7FvfAHlcmulp8kr+flpQZmVwtu7nfRV7NZujtN0OqES8EL4O4e0qqzL0DC5gAvx/ZC/9lk6rhcUwYvkBnBnYA==}
     engines: {node: '>=12'}
     dependencies:
-      punycode: 2.3.0
+      punycode: 2.3.1
 
   /tr46@5.0.0:
     resolution: {integrity: sha512-tk2G5R2KRwBd+ZN0zaEXpmzdKyOYksXwywulIX95MBODjSzMIuQnQ3m8JxgbhnL1LeVo7lqQKsYa1O3Htl7K5g==}
@@ -59256,7 +59296,7 @@ packages:
       chalk: 4.1.2
       enhanced-resolve: 5.15.0
       micromatch: 4.0.5
-      semver: 7.5.2
+      semver: 7.5.4
       typescript: 4.9.5
       webpack: 5.82.1(@swc/core@1.3.49)(esbuild@0.18.20)(webpack-cli@5.1.4)
     dev: true
