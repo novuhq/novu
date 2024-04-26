@@ -43,10 +43,10 @@ jobs:
       - name: Prepare variables
         id: variables
         run: |
-          if [[ "${{ github.event.inputs.region }}" == "EU" && "$${{ github.event.inputs.environment }}" == "Production" ]]; then
+          if [[ "${{ github.event.inputs.region }}" == "EU" && "${{ github.event.inputs.environment }}" == "Production" ]]; then
             echo "Using Terraform Workspace: novu-prod-eu"
             echo "TF_WORKSPACE=novu-prod-eu" >> $GITHUB_ENV
-          elif [[ "${{ github.event.inputs.region }}" == "US" && "$${{ github.event.inputs.environment }}" == "Production" ]]; then
+          elif [[ "${{ github.event.inputs.region }}" == "US" && "${{ github.event.inputs.environment }}" == "Production" ]]; then
             echo "Using Terraform Workspace: novu-prod"
             echo "TF_WORKSPACE=novu-prod" >> $GITHUB_ENV
           else
