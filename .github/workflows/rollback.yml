@@ -104,12 +104,15 @@ jobs:
 
       - name: Rollback a service to the previous task definition
         id: rollback
+        env:
+          PREVIOUS_TASK: ${{ env.previous_task_definition_arn }}
+          CURRENT_TASK: ${{ env.current_task_definition_arn }}
         run: |
-          aws ecs update-service --cluster ${{ env.ecs_cluster }} --service ${{ env.ecs_service }} --task-definition ${{ env.previous_task_definition_arn }}
+          aws ecs update-service --cluster ${{ env.ecs_cluster }} --service ${{ env.ecs_service }} --task-definition ${{ env.PREVIOUS_TASK }}
           aws ecs wait services-stable --cluster ${{ env.ecs_cluster }} --service ${{ env.ecs_service }}
           echo "After Rollback:"
-          echo "The previous task definition: $(echo $current_task_definition_arn | awk -F'task-definition/' '{print $2}')"
-          echo "The current task definition: $(echo $previous_task_definition_arn | awk -F'task-definition/' '{print $2}')"
+          echo "The previous task definition: $(echo $CURRENT_TASK | awk -F'task-definition/' '{print $2}')"
+          echo "The current task definition: $(echo $PREVIOUS_TASK | awk -F'task-definition/' '{print $2}')"
 
 
   netlify:
