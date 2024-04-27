@@ -82,10 +82,14 @@ export const useSettingsRoutes = () => {
           }
         />
         {/* TODO: remove all routes above once information architecture is fully enabled */}
+        <Route
+          path={ROUTES.PROFILE}
+          // Note: this is unfortunately necessary for password reset redirects work properly with search params
+          element={isInformationArchitectureEnabled ? <UserProfilePage /> : <Navigate to={ROUTES.SETTINGS} replace />}
+        />
         {isInformationArchitectureEnabled && (
           <>
             <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
-            <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
             <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingPage />} />
             <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
             <Route path={ROUTES.TEAM_SETTINGS} element={<TeamPage />} />
