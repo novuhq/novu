@@ -270,6 +270,15 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
                 backgroundColor: 'transparent',
                 textAlign: textAlign || TextAlignEnum.LEFT,
               }}
+              onPaste={(event) => {
+                event.preventDefault();
+                const pastedData = event?.clipboardData?.getData('text/plain');
+                const selection = window.getSelection();
+                if (!selection?.rangeCount) return;
+                selection.deleteFromDocument();
+                selection.getRangeAt(0).insertNode(document.createTextNode(pastedData));
+                selection.collapseToEnd();
+              }}
               onClick={() => {
                 if (showAutoSuggestions) {
                   resetAutoSuggestions();
