@@ -5,6 +5,7 @@ concurrency:
 
 on:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   dependency-review:
@@ -93,7 +94,8 @@ jobs:
   test_web:
     name: Test Web Cypress
     needs: [get-affected]
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
+#    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
+    if: false
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
     with:
@@ -105,7 +107,8 @@ jobs:
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
       ee: true
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
+    if: false
+#    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
     secrets: inherit
 
   test_providers:

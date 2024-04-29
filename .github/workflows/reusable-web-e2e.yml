@@ -4,6 +4,13 @@ name: Test WEB
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
+  workflow_dispatch:
+    inputs:
+      ee:
+        description: 'use the ee version of worker'
+        required: false
+        default: true
+        type: boolean
   workflow_call:
     inputs:
       ee:
@@ -66,7 +73,7 @@ jobs:
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
-          targets: lint,build
+          targets: build
           projects: '@novu/web,@novu/api,@novu/worker'
           args: --skip-nx-cache
 

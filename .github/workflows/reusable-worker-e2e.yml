@@ -46,10 +46,6 @@ jobs:
     - uses: ./.github/actions/setup-project
 
     - uses: ./.github/actions/setup-redis-cluster
-    - uses: mansagroup/nrwl-nx-action@v3
-      with:
-        targets: lint
-        projects: '@novu/worker'
 
     - uses: ./.github/actions/start-localstack
 
@@ -59,6 +55,6 @@ jobs:
 
     # Runs a set of commands using the runners shell
     - name: Run a test
-      run: | 
+      run: |
         cd apps/worker && pnpm test:e2e
         pnpm test

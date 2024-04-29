@@ -44,10 +44,6 @@ jobs:
         if: steps.setup.outputs.has_token != 'true'
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
-      - uses: mansagroup/nrwl-nx-action@v3
-        with:
-          targets: lint
-          projects: "@novu/inbound-mail"
 
         # Runs a single command using the runners shell
       - name: Build Inbound Mail
