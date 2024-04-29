@@ -22,6 +22,11 @@ const EchoCodeSnippet = () => {
   );
 };
 
+const textClassName = css({
+  color: 'legacy.B60',
+  maxW: '400px',
+});
+
 export const EchoUseCaseConst: OnboardingUseCase = {
   title: 'Echo notifications center',
   type: OnboardingUseCasesTabsEnum.ECHO,
@@ -47,10 +52,10 @@ export const EchoUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>
-              Create type-safe, validated, and version-controlled Workflows
-              <br /> with code, at the heart of event-driven system notifications.
-            </StepText>
+            <p className={textClassName}>
+              Create type-safe, validated, and version-controlled Workflows with code, at the heart of event-driven
+              system notifications.
+            </p>
           </StepDescription>
         );
       },
@@ -60,23 +65,22 @@ export const EchoUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>
-              Steps send notifications to subscribers. Each step can have
-              <br /> customized content, aligning it with the provider's specifications.
-            </StepText>
+            <p className={textClassName}>
+              Steps send notifications to subscribers. Each step can have customized content, aligning it with the
+              provider's specifications.
+            </p>
           </StepDescription>
         );
       },
     },
     {
-      title: 'Sync with Novu cloud',
+      title: 'Sync with Novu Cloud',
       Description: function () {
         return (
           <StepDescription>
-            <StepText>
-              Echo is for building and debugging, when Novu Cloud handling all
-              <br /> logic and provider connections.
-            </StepText>
+            <p className={textClassName}>
+              Echo is for building and debugging, when Novu Cloud handling all logic and provider connections.
+            </p>
           </StepDescription>
         );
       },
