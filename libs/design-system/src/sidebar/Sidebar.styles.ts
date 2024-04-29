@@ -15,9 +15,20 @@ export const HeaderHolder = styled.div`
   margin-bottom: 0;
 `;
 
-export const scrollable = css`
+const scrollable = `
   overflow-x: hidden;
   overflow-y: auto;
+`;
+
+export const scrollableClass = css(scrollable);
+
+export const Form = styled.form<{ isParentScrollable: boolean }>`
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  ${(props) => props.isParentScrollable && scrollable};
 `;
 
 export const BodyHolder = styled.div<{ isParentScrollable: boolean }>`
