@@ -46,7 +46,6 @@ jobs:
       - run: echo "Rolling back ${{ github.event.inputs.service }} in ${{ github.event.inputs.environment }}"
 
       - name: Prepare variables
-        if: ${{ matrix.region != 'US' && github.event.inputs.environment != 'Development' }}
         id: variables
         run: |
           if [[ "${{ matrix.region }}" == "EU" && "${{ github.event.inputs.environment }}" == "Production" ]]; then
