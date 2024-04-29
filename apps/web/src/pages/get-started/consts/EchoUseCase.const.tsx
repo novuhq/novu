@@ -1,43 +1,21 @@
 import { StepDescription, StepText } from './shared';
 import { OnboardingUseCase } from './types';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
-import { colors, Copy } from '@novu/design-system';
-import { Group, UnstyledButton, useMantineColorScheme } from '@mantine/core';
-import { useClipboard } from '@mantine/hooks';
 import { useSegment } from '@novu/shared-web';
+import { CodeSnippet } from '../components/CodeSnippet';
 
 const COMMAND = 'npx novu-labs@latest echo';
 
-const CodeSnippet = () => {
-  const { copy } = useClipboard();
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
+const EchoCodeSnippet = () => {
   const segment = useSegment();
 
   return (
-    <div
-      style={{
-        background: isDark ? colors.B20 : colors.B98,
-        borderRadius: 12,
-        padding: 16,
-        height: 52,
-        width: '50%',
-        color: isDark ? '#EDEDEF' : colors.B40,
-        marginTop: 8,
+    <CodeSnippet
+      command={COMMAND}
+      onClick={() => {
+        segment.track(`Copy echo command - [Get Started]`);
       }}
-    >
-      <Group position="apart">
-        <div>{COMMAND}</div>
-        <UnstyledButton
-          onClick={() => {
-            segment.track(`Copy echo command - [Get Started]`);
-            copy(COMMAND);
-          }}
-        >
-          <Copy width="22" height="22" />
-        </UnstyledButton>
-      </Group>
-    </div>
+    />
   );
 };
 
@@ -56,7 +34,7 @@ export const EchoUseCaseConst: OnboardingUseCase = {
         return (
           <StepDescription>
             <StepText>To get started, open your terminal and launch the Dev Studio.</StepText>
-            <CodeSnippet />
+            <EchoCodeSnippet />
           </StepDescription>
         );
       },

@@ -1,5 +1,5 @@
 export enum OnboardingUseCasesTabsEnum {
-  ECHO = 'Echo',
+  ECHO = 'echo',
   IN_APP = 'in-app',
   DIGEST = 'digest',
   DELAY = 'delay',
