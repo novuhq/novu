@@ -1,6 +1,7 @@
-const { useBabelRc, override } = require('customize-cra');
+const { useBabelRc, override, addWebpackAlias } = require('customize-cra');
 const { DefinePlugin } = require('webpack');
 const { version } = require('./package.json');
+const path = require('path');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 function overrideConfig(config, env) {
@@ -23,5 +24,11 @@ function overrideConfig(config, env) {
   };
 }
 
-// eslint-disable-next-line react-hooks/rules-of-hooks
-module.exports = override(useBabelRc(), overrideConfig);
+module.exports = override(
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  useBabelRc(),
+  overrideConfig,
+  addWebpackAlias({
+    ['#ui-lib']: path.resolve(__dirname, 'src/styled-system'),
+  })
+);

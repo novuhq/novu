@@ -4,7 +4,7 @@ import App from './App';
 import { initializeApp } from './initializeApp';
 import reportWebVitals from './reportWebVitals';
 
-import './styled-system/styles.css';
+import '#ui-lib/styles.css';
 
 initializeApp();
 

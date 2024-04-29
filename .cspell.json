@@ -663,7 +663,9 @@
     "servername",
     "neom",
     "protonmail",
-    "automerge"
+    "automerge",
+    "novui",
+    "tsup"
   ],
   "flagWords": [],
   "patterns": [

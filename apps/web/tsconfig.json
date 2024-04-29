@@ -16,7 +16,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "noImplicitAny": false,
-    "types": ["cypress"]
+    "types": ["cypress"],
+    "paths": {
+      "#ui-lib/*": ["./src/styled-system/*"]
+    }
   },
   "include": ["src", "cypress/global.d.ts", "styled-system"],
   "exclude": ["node_modules"]

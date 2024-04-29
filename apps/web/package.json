@@ -2,6 +2,9 @@
   "name": "@novu/web",
   "version": "0.24.2",
   "private": true,
+  "imports": {
+    "#ui-lib/*": "./src/styled-system/*"
+  },
   "scripts": {
     "start": "pnpm panda --watch & cross-env NODE_OPTIONS=--max_old_space_size=8192 PORT=4200 react-app-rewired start",
     "prebuild": "rimraf build",
@@ -61,8 +64,9 @@
     "@monaco-editor/react": "^4.6.0",
     "@novu/design-system": "^0.24.2",
     "@novu/notification-center": "^0.24.2",
-    "@novu/shared": "^0.24.2",
-    "@novu/shared-web": "^0.24.2",
+    "@novu/novui": "^0.0.1",
+    "@novu/shared": "^0.24.1",
+    "@novu/shared-web": "^0.24.1",
     "@rive-app/react-canvas": "^4.8.1",
     "@segment/analytics-next": "^1.48.0",
     "@sentry/react": "^7.40.0",
@@ -143,7 +147,8 @@
     "@babel/runtime": "^7.20.13",
     "@novu/dal": "^0.24.2",
     "@novu/testing": "^0.24.2",
-    "@pandacss/dev": "^0.34.0",
+    "@pandacss/dev": "^0.38.0",
+    "@pandacss/studio": "^0.38.0",
     "@playwright/test": "^1.42.1",
     "@storybook/addon-actions": "^7.4.2",
     "@storybook/addon-essentials": "^7.4.2",

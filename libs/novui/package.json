@@ -1,0 +1,74 @@
+{
+  "name": "@novu/novui",
+  "version": "0.0.1",
+  "description": "",
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": "./dist/index.js"
+    },
+    "./css": {
+      "types": "./styled-system/css/index.d.ts",
+      "require": "./styled-system/css/index.mjs",
+      "import": "./styled-system/css/index.mjs"
+    },
+    "./tokens": {
+      "types": "./styled-system/tokens/index.d.ts",
+      "require": "./styled-system/tokens/index.mjs",
+      "import": "./styled-system/tokens/index.mjs"
+    },
+    "./types": {
+      "types": "./styled-system/types/index.d.ts",
+      "require": "./styled-system/types/index.mjs",
+      "import": "./styled-system/types/index.mjs"
+    },
+    "./patterns": {
+      "types": "./styled-system/patterns/index.d.ts",
+      "require": "./styled-system/patterns/index.mjs",
+      "import": "./styled-system/patterns/index.mjs"
+    },
+    "./recipes": {
+      "types": "./styled-system/recipes/index.d.ts",
+      "require": "./styled-system/recipes/index.mjs",
+      "import": "./styled-system/recipes/index.mjs"
+    },
+    "./jsx": {
+      "types": "./styled-system/jsx/index.d.ts",
+      "require": "./styled-system/jsx/index.mjs",
+      "import": "./styled-system/jsx/index.mjs"
+    },
+    "./styles.css": "./styled-system/styles.css"
+  },
+  "scripts": {
+    "prepare": "pnpm panda codegen",
+    "build": "tsup",
+    "build:dev": "tsup --no-dts",
+    "dev": "pnpm build:dev --watch",
+    "studio": "pnpm panda studio"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@pandabox/prettier-plugin": "^0.1.2",
+    "@pandacss/dev": "^0.38.0",
+    "@pandacss/eslint-plugin": "^0.1.2",
+    "@pandacss/studio": "^0.38.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "tsup": "^8.0.2",
+    "typescript": "^4.9.5"
+  }
+}

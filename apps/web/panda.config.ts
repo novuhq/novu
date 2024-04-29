@@ -1,9 +1,12 @@
 import { defineConfig } from '@pandacss/dev';
-import { NovuPandaPreset } from '@novu/design-system';
+import { novuPandaPreset } from '@novu/novui';
 
 export default defineConfig({
   // use CSS reset
   preflight: true,
+
+  /** Only allow defined values */
+  // strictTokens: true,
 
   /**
    * https://panda-css.com/docs/guides/component-library#include-the-src-files
@@ -18,7 +21,7 @@ export default defineConfig({
   // Files to exclude
   exclude: ['**/*.cy.{js,jsx,ts,tsx}', '**/*/styled-system'],
 
-  presets: [NovuPandaPreset],
+  presets: [novuPandaPreset],
 
   /**
    * Prefixes generated classes with the specified string (e.g. `nv-text_blue`)
@@ -36,10 +39,9 @@ export default defineConfig({
   },
 
   // The output directory for your css system
-  outdir: './src/styled-system',
+  outdir: 'src/styled-system',
 
-  // Recommended by panda maintainer due to potential bug with nesting styled-system in src
-  importMap: 'styled-system',
+  importMap: '@novu/novui',
 
   // Enables JSX util generation!
   jsxFramework: 'react',
