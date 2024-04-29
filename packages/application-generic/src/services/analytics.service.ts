@@ -35,7 +35,7 @@ export class AnalyticsService {
 
   upsertGroup(
     organizationId: string,
-    organization: IOrganizationEntity,
+    organization: IOrganizationEntity & { subscriptionStatus?: string },
     user: IUser
   ) {
     if (this.segmentEnabled) {
