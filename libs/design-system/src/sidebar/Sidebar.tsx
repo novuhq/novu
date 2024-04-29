@@ -1,4 +1,3 @@
-import styled from '@emotion/styled';
 import { Drawer, Loader, Stack } from '@mantine/core';
 import { useKeyDown } from '@novu/shared-web';
 
@@ -7,17 +6,8 @@ import { colors } from '../config';
 import { ArrowLeft } from '../icons';
 import { When } from '../when';
 import { Close } from './Close';
-import { BodyHolder, FooterHolder, HeaderHolder, scrollable, useDrawerStyles } from './Sidebar.styles';
+import { BodyHolder, FooterHolder, HeaderHolder, Form, useDrawerStyles } from './Sidebar.styles';
 import { ISidebarBaseProps } from './Sidebar.types';
-
-const Form = styled.form<{ isParentScrollable: boolean }>`
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  ${(props) => props.isParentScrollable && scrollable};
-`;
 
 export interface ISidebarProps extends ISidebarBaseProps {
   onSubmit?: React.FormEventHandler<HTMLFormElement>;
