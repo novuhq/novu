@@ -5,7 +5,7 @@ import { useSegment } from '@novu/shared-web';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
 
 const TAB_SEARCH_PARAM_NAME = 'tab';
-const DEFAULT_TAB: OnboardingUseCasesTabsEnum = OnboardingUseCasesTabsEnum.IN_APP;
+const DEFAULT_TAB: OnboardingUseCasesTabsEnum = OnboardingUseCasesTabsEnum.ECHO;
 
 interface GetStartedTabSearchParams {
   [TAB_SEARCH_PARAM_NAME]: OnboardingUseCasesTabsEnum;
