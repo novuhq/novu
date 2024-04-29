@@ -1,5 +1,5 @@
 name: Rollback
-run-name: Rollback of ${{ inputs.service }} for @${{ inputs.environment }} environment
+run-name: Rollback the ${{ inputs.service }} service in the ${{ inputs.environment }} environment
 
 on:
   workflow_dispatch:
