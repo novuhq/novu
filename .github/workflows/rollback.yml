@@ -125,10 +125,12 @@ jobs:
                 echo "Invalid index value: $index"
               fi
             else
-              echo "Previous task definition not found."
+              echo "Previous task definition not found." It seems to me someone deleted the current task from the list and that is why I can't find the previous task.
+              exit 1
             fi
           else
             echo "No task definitions found."
+            exit 1
           fi
 
       - name: Rollback a service to the previous task definition
