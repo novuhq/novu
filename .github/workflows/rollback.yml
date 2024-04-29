@@ -25,15 +25,19 @@ on:
         type: choice
         description: The region of the environment. It's needed to know TF workspace. When you choose DEV environment this option is not needed.
         options:
-          - EU
-          - US
+          - [EU]
+          - [US]
+          - [EU,US]
 
 jobs:
   ecs:
     if: contains(fromJson('["api", "inbound_mail", "webhook", "worker", "ws"]'), github.event.inputs.service)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        region: ${{ fromJSON(github.event.inputs.region) }}
     timeout-minutes: 60
-    environment: Development
+    environment: ${{ github.event.inputs.environment }}
     permissions:
       contents: read
       packages: write
@@ -42,14 +46,23 @@ jobs:
       - run: echo "Rolling back ${{ github.event.inputs.service }} in ${{ github.event.inputs.environment }}"
 
       - name: Prepare variables
+        if: ${{ matrix.region != 'US' && github.event.inputs.environment != 'Development' }}
         id: variables
         run: |
-          if [[ "${{ github.event.inputs.region }}" == "EU" && "${{ github.event.inputs.environment }}" == "Production" ]]; then
+          if [[ "${{ matrix.region }}" == "EU" && "${{ github.event.inputs.environment }}" == "Production" ]]; then
             echo "Using Terraform Workspace: novu-prod-eu"
             echo "TF_WORKSPACE=novu-prod-eu" >> $GITHUB_ENV
-          elif [[ "${{ github.event.inputs.region }}" == "US" && "${{ github.event.inputs.environment }}" == "Production" ]]; then
+          elif [[ "${{ matrix.region }}" == "US" && "${{ github.event.inputs.environment }}" == "Production" ]]; then
             echo "Using Terraform Workspace: novu-prod"
             echo "TF_WORKSPACE=novu-prod" >> $GITHUB_ENV
+          elif [[ "${{ matrix.region }}" == "EU" && "${{ github.event.inputs.environment }}" == "Development" ]]; then
+            echo "Using Terraform Workspace: novu-dev"
+            echo "TF_WORKSPACE=novu-dev" >> $GITHUB_ENV
+          elif [[ "${{ matrix.region }}" == "US" && "${{ github.event.inputs.environment }}" == "Development" ]]; then
+            echo "Using Terraform Workspace: novu-dev"
+            echo "TF_WORKSPACE=novu-dev" >> $GITHUB_ENV
+            echo "Error: Development environment doesn't exist in the US region." >&2
+            exit 1
           else
             echo "Using Terraform Workspace: novu-dev"
             echo "TF_WORKSPACE=novu-dev" >> $GITHUB_ENV
