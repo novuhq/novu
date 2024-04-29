@@ -3,6 +3,7 @@ import { OnboardingUseCase } from './types';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 import { useSegment } from '@novu/shared-web';
 import { CodeSnippet } from '../components/CodeSnippet';
+import { css } from '../../../styled-system/css';
 
 const COMMAND = 'npx novu-labs@latest echo';
 
@@ -12,6 +13,8 @@ const EchoCodeSnippet = () => {
   return (
     <CodeSnippet
       command={COMMAND}
+      // value from designs
+      className={css({ maxW: '400px' })}
       onClick={() => {
         segment.track(`Copy echo command - [Get Started]`);
       }}

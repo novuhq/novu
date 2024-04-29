@@ -1,35 +1,45 @@
-import { IconContentCopy } from '@novu/design-system';
+import { Input, inputStyles } from '@novu/design-system';
 import { useClipboard } from '@mantine/hooks';
-import { css } from '../../../styled-system/css';
-import { useIsDarkTheme } from '../../../hooks';
+import { css, cx } from '../../../styled-system/css';
+import { ClipboardIconButton } from '../../../components';
 
-export const CodeSnippet = ({ command, onClick = () => {} }: { command: string; onClick?: () => void }) => {
-  const { copy } = useClipboard();
-  const isDark = useIsDarkTheme();
+const codeValueInputClassName = css({
+  '& input': {
+    border: 'none !important',
+    background: 'surface.popover !important',
+    color: 'typography.text.secondary !important',
+    fontFamily: 'mono !important',
+  },
+});
+
+interface ICodeSnippetProps {
+  command: string;
+  onClick?: () => void;
+  className?: string;
+  'data-test-id'?: string;
+}
+
+/**
+ * Read-only code snippet with copy-paste functionality
+ */
+export const CodeSnippet = ({ command, onClick, className, ...props }: ICodeSnippetProps) => {
+  const { copy, copied } = useClipboard();
+
+  const handleCopy = () => {
+    onClick?.();
+    copy(command);
+  };
 
   return (
-    <div
-      className={css({
-        backgroundColor: isDark ? 'legacy.B20' : 'legacy.B98',
-        borderRadius: 12,
-        padding: 16,
-        height: 52,
-        width: '50%',
-        color: isDark ? 'mauve.10.dark' : 'legacy.b40',
-        marginTop: 8,
-      })}
-    >
-      <div className={css({ display: 'flex', justifyContent: 'space-between' })}>
-        <div>{command}</div>
-        <button
-          onClick={() => {
-            onClick();
-            copy(command);
-          }}
-        >
-          <IconContentCopy width="22" height="22" />
-        </button>
-      </div>
-    </div>
+    <Input
+      readOnly
+      className={cx(codeValueInputClassName, className)}
+      styles={inputStyles}
+      rightSection={
+        <ClipboardIconButton isCopied={copied} handleCopy={handleCopy} testId={'mail-server-domain-copy'} size={'16'} />
+      }
+      value={command}
+      data-test-id={props['data-test-id']}
+    />
   );
 };
