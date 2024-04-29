@@ -1,11 +1,15 @@
-import { StepDescription, StepText } from './shared';
+import { StepDescription } from './shared';
 import { OnboardingUseCase } from './types';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 import { useSegment } from '@novu/shared-web';
 import { CodeSnippet } from '../components/CodeSnippet';
 import { css } from '../../../styled-system/css';
+import { styled } from '../../../styled-system/jsx';
+import { text } from '../../../styled-system/recipes';
 
 const COMMAND = 'npx novu-labs@latest echo';
+
+const maxWClassName = css({ maxW: '400px' });
 
 const EchoCodeSnippet = () => {
   const segment = useSegment();
@@ -13,8 +17,7 @@ const EchoCodeSnippet = () => {
   return (
     <CodeSnippet
       command={COMMAND}
-      // value from designs
-      className={css({ maxW: '400px' })}
+      className={maxWClassName}
       onClick={() => {
         segment.track(`Copy echo command - [Get Started]`);
       }}
@@ -22,10 +25,7 @@ const EchoCodeSnippet = () => {
   );
 };
 
-const textClassName = css({
-  color: 'legacy.B60',
-  maxW: '400px',
-});
+const StepText = styled('p', text);
 
 export const EchoUseCaseConst: OnboardingUseCase = {
   title: 'Echo notifications center',
@@ -41,7 +41,9 @@ export const EchoUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <StepText>To get started, open your terminal and launch the Dev Studio.</StepText>
+            <StepText variant="secondary" className={maxWClassName}>
+              To get started, open your terminal and launch the Dev Studio.
+            </StepText>
             <EchoCodeSnippet />
           </StepDescription>
         );
@@ -52,10 +54,10 @@ export const EchoUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <p className={textClassName}>
+            <StepText variant="secondary" className={maxWClassName}>
               Create type-safe, validated, and version-controlled Workflows with code, at the heart of event-driven
               system notifications.
-            </p>
+            </StepText>
           </StepDescription>
         );
       },
@@ -65,10 +67,10 @@ export const EchoUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <p className={textClassName}>
+            <StepText variant="secondary" className={maxWClassName}>
               Steps send notifications to subscribers. Each step can have customized content, aligning it with the
               provider's specifications.
-            </p>
+            </StepText>
           </StepDescription>
         );
       },
@@ -78,9 +80,9 @@ export const EchoUseCaseConst: OnboardingUseCase = {
       Description: function () {
         return (
           <StepDescription>
-            <p className={textClassName}>
+            <StepText variant="secondary" className={maxWClassName}>
               Echo is for building and debugging, when Novu Cloud handling all logic and provider connections.
-            </p>
+            </StepText>
           </StepDescription>
         );
       },
