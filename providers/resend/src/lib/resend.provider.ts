@@ -42,6 +42,7 @@ export class ResendEmailProvider implements IEmailProvider {
         content: attachment.file,
       })),
       bcc: options.bcc,
+      headers: options.headers,
     });
 
     if (response.error) {
