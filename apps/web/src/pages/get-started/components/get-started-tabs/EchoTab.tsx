@@ -5,22 +5,21 @@ import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsE
 import { AdditionInformationLink } from '../AdditionInformationLink';
 import { CodeSnippet } from '../CodeSnippet';
 import { text, title } from '../../../../styled-system/recipes';
-import { IconCloudQueue, IconCode, IconHealthAndSafety, IconSettingsInputAntenna } from '@novu/design-system';
+import { IconCellTower, IconCloudQueue, IconCode, IconHealthAndSafety } from '@novu/design-system';
 
 const link = 'https://docs.novu.co/echo/quickstart';
 
 const COMMAND = 'npx novu-labs@latest echo';
 
 const Text = styled('p', text);
-
 const Title = styled('h2', title);
 const SubTitle = styled('h3', title);
 
-const columnText = css({ fontSize: 14, marginTop: 8, lineHeight: '20px', maxW: '214px' });
+const columnText = css({ fontSize: '88', marginTop: '50', lineHeight: '125', maxW: '214px' });
 
-const columnIcon = css({ marginBottom: 8 });
+const columnIcon = css({ marginBottom: '50' });
 
-const mainText = css({ maxW: '645px', fontSize: 14, lineHeight: '20px' });
+const mainText = css({ maxW: '645px', fontSize: '88', lineHeight: '125' });
 
 export const EchoTab = () => {
   const segment = useSegment();
@@ -31,14 +30,14 @@ export const EchoTab = () => {
 
   return (
     <>
-      <Title variant="section" className={css({ marginTop: 16 })}>
+      <Title variant="section" className={css({ marginTop: '100' })}>
         Notification workflows as code
       </Title>
-      <Text variant="secondary" className={cx(css({ marginTop: 8 }), mainText)}>
+      <Text variant="secondary" className={cx(css({ marginTop: '50' }), mainText)}>
         Novu Echo SDK allows you to write notification workflows in your codebase locally right in your IDE as well as
         preview and edit the channel specific content in real-time.
       </Text>
-      <Text variant="secondary" className={cx(css({ marginTop: 20, marginBottom: 24 }), mainText)}>
+      <Text variant="secondary" className={cx(css({ marginTop: '125', marginBottom: '150' }), mainText)}>
         You can use Echo with React Email, MJML, and other template engines.
       </Text>
       <SubTitle variant="subsection">Try it out now</SubTitle>
@@ -50,8 +49,8 @@ export const EchoTab = () => {
         className={cx(
           css({
             maxW: '400px',
-            marginTop: 8,
-            marginBottom: 40,
+            marginTop: '50',
+            marginBottom: '250',
           }),
           css({
             '& input': {
@@ -60,13 +59,13 @@ export const EchoTab = () => {
           })
         )}
         onClick={() => {
-          segment.track(`Copy echo command - [Get Started]`);
+          segment.track(`Copy Echo command - [Get Started]`);
         }}
       />
-      <div className={css({ marginBottom: '50px' })}>
+      <div className={css({ marginBottom: '300' })}>
         <AdditionInformationLink channel={OnboardingUseCasesTabsEnum.ECHO} href={link} onClick={handleDocsLinkClick} />
       </div>
-      <div className={css({ display: 'flex', gap: '24px' })}>
+      <div className={css({ display: 'flex', gap: '150' })}>
         <div>
           <IconCode size={32} className={columnIcon} />
           <SubTitle variant="subsection">Bring your own code</SubTitle>
@@ -75,7 +74,7 @@ export const EchoTab = () => {
           </Text>
         </div>
         <div>
-          <IconSettingsInputAntenna size={32} className={columnIcon} />
+          <IconCellTower size={32} className={columnIcon} />
           <SubTitle variant="subsection">Limitless integrations</SubTitle>
           <Text variant="secondary" className={columnText}>
             Use React.email, MJML, or fetch templates from Braze, Hubspot, Sendgrid, more…

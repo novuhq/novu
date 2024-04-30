@@ -1,5 +1,7 @@
 import { Center, Loader } from '@mantine/core';
 import { colors } from '@novu/design-system';
+import { useSegment } from '@novu/shared-web';
+import { useEffect } from 'react';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { useAuthContext } from '../../components/providers/AuthProvider';
@@ -12,8 +14,13 @@ const PAGE_TITLE = 'Get started';
 export function GetStartedPage() {
   const { currentOrganization } = useAuthContext();
   const { currentTab, setTab } = useGetStartedTabs();
+  const segment = useSegment();
 
   usePageViewTracking();
+
+  useEffect(() => {
+    segment.track('Page visit - [Get Started]');
+  }, []);
 
   return (
     <PageContainer title={PAGE_TITLE}>

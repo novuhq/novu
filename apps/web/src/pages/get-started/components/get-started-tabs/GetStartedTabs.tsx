@@ -1,5 +1,5 @@
 import { Container, Tabs } from '@mantine/core';
-import { IconBroadcastOnHome, IconBroadcastOnPersonal, IconComputer, IconConnectedTv } from '@novu/design-system';
+import { IconConnectedTv } from '@novu/design-system';
 import { Outlet } from 'react-router-dom';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
 import { UseCasesConst } from '../../consts/UseCases.const';
@@ -40,7 +40,7 @@ export const GetStartedTabs: React.FC<IGetStartedTabsProps> = ({ tabConfigs = TA
             value={OnboardingUseCasesTabsEnum.ECHO}
             icon={<IconConnectedTv style={ICON_STYLE} />}
           >
-            Echo Studio
+            Workflows
           </Tabs.Tab>
           {tabConfigs.map(({ value, icon, title }) => (
             <Tabs.Tab key={`tab-${value}`} value={value} icon={icon}>
