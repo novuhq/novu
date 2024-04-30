@@ -1136,5 +1136,4 @@ export const whatsAppBusinessConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
-  ...smsConfigBase,
 ];
