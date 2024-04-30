@@ -14,14 +14,9 @@ export interface GetStartedTabConfig {
   icon: JSX.Element;
   title: string;
 }
-const ICON_STYLE: Partial<CSSProperties> = { height: 20, width: 20, marginBottom: '12px' };
+export const ICON_STYLE: Partial<CSSProperties> = { height: 20, width: 20, marginBottom: '12px' };
 
 export const TAB_CONFIGS: GetStartedTabConfig[] = [
-  {
-    value: OnboardingUseCasesTabsEnum.ECHO,
-    icon: <IconComputer style={ICON_STYLE} />,
-    title: 'Echo',
-  },
   {
     value: OnboardingUseCasesTabsEnum.IN_APP,
     icon: <IconOutlineNotificationsActive style={ICON_STYLE} />,
