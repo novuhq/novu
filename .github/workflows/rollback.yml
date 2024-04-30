@@ -214,7 +214,7 @@ jobs:
     steps:
       - run: echo "Rolling back ${{ github.event.inputs.service }} in ${{ github.event.inputs.environment }}"
 
-      - id: commit
+      - id: commit-netlify
         if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
         uses: prompt/actions-commit-hash@v3
 
@@ -271,7 +271,7 @@ jobs:
         if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
         env:
           NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
-          COMMIT_REF: ${{ steps.commit.outputs.hash }}
+          COMMIT_REF: ${{ steps.commit-netlify.outputs.hash }}
         run: |
           response=$(curl -s -H "Authorization: Bearer $NETLIFY_ACCESS_TOKEN" "https://api.netlify.com/api/v1/sites/$NETLIFY_SITE_ID/deploys")
           deploy_id=$(echo "$response" | jq -r ".[] | select(.commit_ref == \"$COMMIT_REF\") | .id")
