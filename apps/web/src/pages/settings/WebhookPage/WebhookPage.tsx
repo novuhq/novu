@@ -84,7 +84,11 @@ export const WebhookPage: FC = () => {
                   },
                 }}
                 render={({ field, fieldState }) => (
-                  <HStack width={'100%'} className={css({ height: 'components.input.height', marginTop: '50' })}>
+                  <HStack
+                    width={'100%'}
+                    className={css({ height: 'components.input.height', marginTop: '50' })}
+                    gap="molecules.form.input.button"
+                  >
                     <Input
                       {...field}
                       id="inbound-parse-domain-input"

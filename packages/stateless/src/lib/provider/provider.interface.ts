@@ -24,6 +24,7 @@ export interface IEmailOptions {
   notificationDetails?: any;
   ipPoolName?: string;
   customData?: Record<string, any>;
+  headers?: Record<string, string>;
   senderName?: string;
 }
 
