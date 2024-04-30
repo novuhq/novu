@@ -20,7 +20,7 @@ export function NotificationCenterBell({
 
   return (
     <span style={{ position: 'relative' }}>
-      <IconNotifications color={colors.B60} />
+      <IconNotifications />
       {!!unseenCount && <StyledDot />}
     </span>
   );
