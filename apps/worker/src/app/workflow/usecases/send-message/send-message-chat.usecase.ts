@@ -180,7 +180,7 @@ export class SendMessageChat extends SendMessageBase {
     };
 
     /**
-     * Current a workaround as chat providers for whatsapp is more similiar to sms than to our chat implementation
+     * Current a workaround as chat providers for whatsapp is more similar to sms than to our chat implementation
      */
     if (subscriberChannel.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
       delete searchCriteria.id;
