@@ -114,6 +114,9 @@ describe('test use of novus node package - Events', () => {
               name: 'Fourth Child',
             },
           },
+          headers: {
+            'X-Novu-Custom-Header': 'test-data',
+          },
         },
       },
       payload: {

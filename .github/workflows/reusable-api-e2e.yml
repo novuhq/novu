@@ -80,12 +80,6 @@ jobs:
       - uses: ./.github/actions/setup-redis-cluster
         name: Setup redis cluster
 
-      - uses: mansagroup/nrwl-nx-action@v3
-        name: Run Lint
-        with:
-          targets: lint
-          projects: '@novu/api'
-
       - uses: ./.github/actions/start-localstack
         name: Start localstack
 

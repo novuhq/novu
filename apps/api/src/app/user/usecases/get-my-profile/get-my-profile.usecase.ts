@@ -4,11 +4,16 @@ import { UserRepository } from '@novu/dal';
 import { createHash } from '@novu/application-generic';
 
 import { GetMyProfileCommand } from './get-my-profile.dto';
-@Injectable()
-export class GetMyProfileUsecase {
-  constructor(private readonly userRepository: UserRepository) {}
+import type { UserResponseDto } from '../../dtos/user-response.dto';
+import { BaseUserProfileUsecase } from '../base-user-profile.usecase';
 
-  async execute(command: GetMyProfileCommand) {
+@Injectable()
+export class GetMyProfileUsecase extends BaseUserProfileUsecase {
+  constructor(private readonly userRepository: UserRepository) {
+    super();
+  }
+
+  async execute(command: GetMyProfileCommand): Promise<UserResponseDto> {
     Logger.verbose('Getting User from user repository in Command');
     Logger.debug('Getting user data for ' + command.userId);
     const profile = await this.userRepository.findById(command.userId);
@@ -39,6 +44,6 @@ export class GetMyProfileUsecase {
 
     Logger.verbose('Found User');
 
-    return profile;
+    return this.mapToDto(profile);
   }
 }

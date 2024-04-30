@@ -5,6 +5,7 @@ import {
   ExecutionDetailsStatusEnum,
   StepTypeEnum,
   DigestCreationResultEnum,
+  DigestTypeEnum,
 } from '@novu/shared';
 
 import { AddDelayJob } from './add-delay-job.usecase';
@@ -35,6 +36,7 @@ import {
   IUseCaseInterfaceInline,
   requireInject,
 } from '../../utils/require-inject';
+import { IFilterVariables } from '../../utils/filter-processing-details';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -44,7 +46,7 @@ const LOG_CONTEXT = 'AddJob';
 
 @Injectable()
 export class AddJob {
-  private chimeraConnector: IUseCaseInterfaceInline;
+  private resonateUsecase: IUseCaseInterfaceInline;
 
   constructor(
     private jobRepository: JobRepository,
@@ -60,7 +62,7 @@ export class AddJob {
     private conditionsFilter: ConditionsFilter,
     private moduleRef: ModuleRef
   ) {
-    this.chimeraConnector = requireInject('chimera_connector', this.moduleRef);
+    this.resonateUsecase = requireInject('resonate', this.moduleRef);
   }
 
   @InstrumentUsecase()
@@ -85,7 +87,7 @@ export class AddJob {
     );
 
     let filtered = false;
-
+    let filterVariables: IFilterVariables | undefined;
     if (
       [StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(
         job.type as StepTypeEnum
@@ -102,16 +104,20 @@ export class AddJob {
         })
       );
 
+      filterVariables = shouldRun.variables;
       filtered = !shouldRun.passed;
     }
 
     let digestAmount: number | undefined;
     let digestCreationResult: DigestCreationResultEnum | undefined;
     if (job.type === StepTypeEnum.DIGEST) {
-      const chimeraResponse = await this.chimeraConnector.execute<
-        AddJobCommand,
+      const resonateResponse = await this.resonateUsecase.execute<
+        AddJobCommand & { variables: IFilterVariables },
         ExecuteOutput<IChimeraDigestResponse>
-      >(command);
+      >({
+        ...command,
+        variables: filterVariables,
+      });
 
       validateDigest(job);
 
@@ -119,7 +125,10 @@ export class AddJob {
         stepMetadata: job.digest,
         payload: job.payload,
         overrides: job.overrides,
-        chimeraResponse: chimeraResponse?.outputs,
+        // TODO: Remove fallback after other digest types are implemented.
+        chimeraResponse: resonateResponse
+          ? { type: DigestTypeEnum.REGULAR, ...resonateResponse.outputs }
+          : undefined,
       });
 
       Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
@@ -128,7 +137,7 @@ export class AddJob {
         MergeOrCreateDigestCommand.create({
           job,
           filtered,
-          chimeraData: chimeraResponse?.outputs,
+          chimeraData: resonateResponse?.outputs,
         })
       );
 
@@ -163,12 +172,15 @@ export class AddJob {
     let delayAmount: number | undefined = undefined;
 
     if (job.type === StepTypeEnum.DELAY) {
-      const chimeraResponse = await this.chimeraConnector.execute<
-        AddJobCommand,
+      const resonateResponse = await this.resonateUsecase.execute<
+        AddJobCommand & { variables: IFilterVariables },
         ExecuteOutput<IChimeraDigestResponse>
-      >(command);
+      >({
+        ...command,
+        variables: filterVariables,
+      });
 
-      command.chimeraResponse = chimeraResponse;
+      command.chimeraResponse = resonateResponse;
       delayAmount = await this.addDelayJob.execute(command);
 
       Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);

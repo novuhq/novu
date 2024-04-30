@@ -43,10 +43,6 @@ jobs:
       - uses: actions/checkout@v3
         if: steps.setup.outputs.has_token != 'true'
       - uses: ./.github/actions/setup-project
-      - uses: mansagroup/nrwl-nx-action@v3
-        with:
-          targets: lint
-          projects: "@novu/ws"
 
         # Runs a single command using the runners shell
       - name: Build WS

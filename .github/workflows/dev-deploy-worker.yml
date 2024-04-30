@@ -63,21 +63,10 @@ jobs:
           github_token: ${{ secrets.GH_PACKAGES }}
           docker_name: ${{ matrix.name }}
           bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
-
-  # Temporary for the migration phase
-  deploy_general_worker:
-    needs: build_dev_worker
-    uses: ./.github/workflows/reusable-app-service-deploy.yml
-    secrets: inherit
-    with:
-      environment: Development
-      service_name: worker
-      terraform_workspace: novu-dev
-      # This is a workaround to an issue with matrix outputs
-      docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
+          environment: dev
 
   deploy_dev_workers:
-    needs: deploy_general_worker
+    needs: build_dev_worker
     uses: ./.github/workflows/reusable-workers-service-deploy.yml
     secrets: inherit
     with:

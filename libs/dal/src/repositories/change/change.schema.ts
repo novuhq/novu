@@ -23,7 +23,7 @@ const changeSchema = new Schema<ChangeDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Organization',
     },
-    _entityId: Schema.Types.ObjectId,
+    _entityId: { type: Schema.Types.ObjectId, index: true },
     _creatorId: {
       type: Schema.Types.ObjectId,
       ref: 'User',

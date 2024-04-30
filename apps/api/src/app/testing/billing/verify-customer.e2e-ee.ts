@@ -13,12 +13,21 @@ describe('VerifyCustomer', () => {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const { VerifyCustomer } = eeBilling;
 
+  const getOrganizationAdminUserStub = {
+    execute: () => {},
+  };
+
   const stripeStub = {
     customers: {
       retrieve: () => {},
     },
+    subscriptions: {
+      retrieve: () => {},
+    },
   };
   let getCustomerStub: sinon.SinonStub;
+
+  let getSubscriptionStub: sinon.SinonStub;
 
   const repo = new OrganizationRepository();
   let getOrgStub: sinon.SinonStub;
@@ -40,6 +49,30 @@ describe('VerifyCustomer', () => {
       },
     });
 
+    getSubscriptionStub = sinon.stub(stripeStub.subscriptions, 'retrieve').resolves({
+      id: 'subscription_id',
+      items: {
+        data: [
+          {
+            id: 'item_id_usage_notifications',
+            plan: {
+              interval: 'month',
+            },
+          },
+          {
+            id: 'item_id_flat',
+            plan: {
+              interval: 'month',
+            },
+          },
+        ],
+      },
+    });
+
+    sinon.stub(getOrganizationAdminUserStub, 'execute').resolves({
+      _id: 'admin_user_id',
+    });
+
     getOrgStub = sinon
       .stub(repo, 'findById')
       .resolves({ _id: 'organization_id', apiServiceLevel: ApiServiceLevelEnum.FREE } as any);
@@ -52,7 +85,7 @@ describe('VerifyCustomer', () => {
   });
 
   const createUseCase = () => {
-    const useCase = new VerifyCustomer(stripeStub as any, repo);
+    const useCase = new VerifyCustomer(stripeStub as any, repo, getOrganizationAdminUserStub);
 
     return useCase;
   };

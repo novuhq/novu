@@ -71,11 +71,13 @@ export class Digest extends SendMessageType {
       })
     );
 
+    const jobsToUpdate = [...nextJobs.map((job) => job._id), command.job._id];
+
     await this.jobRepository.update(
       {
         _environmentId: command.environmentId,
         _id: {
-          $in: nextJobs.map((job) => job._id),
+          $in: jobsToUpdate,
         },
       },
       {

@@ -453,10 +453,9 @@ export class SendMessageEmail extends SendMessageBase {
         message,
         'error',
         'mail_unexpected_error',
-        'Error while sending email with provider',
+        error.message || error.name || 'Error while sending email with provider',
         command,
-        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
-        error
+        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR
       );
 
       await this.executionLogRoute.execute(
@@ -468,7 +467,7 @@ export class SendMessageEmail extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(error),
+          raw: JSON.stringify(error) === '{}' ? JSON.stringify({ message: error.message }) : JSON.stringify(error),
         })
       );
 
@@ -538,6 +537,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     senderName: overrides?.senderName || options.senderName,
     subject: overrides?.subject || options.subject,
     customData: overrides?.customData || {},
+    headers: overrides?.headers || {},
   };
 };
 

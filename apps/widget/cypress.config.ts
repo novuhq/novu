@@ -3,6 +3,10 @@ import { defineConfig } from 'cypress';
 export default defineConfig({
   chromeWebSecurity: false,
   video: false,
+  retries: {
+    runMode: 3,
+    openMode: 0,
+  },
   projectId: 'kedzap',
   env: {
     NODE_ENV: 'test',

@@ -18,7 +18,11 @@ Cypress.on('window:before:load', (win) => {
   win.isDarkTheme = window.matchMedia('(prefers-color-scheme: dark)').matches;
 });
 
-describe('Integrations List Modal', function () {
+/**
+ * The tests from this file were moved to the corresponding Playwright file apps/web/tests/integrations-list-modal.spec.ts.
+ * @deprecated
+ */
+describe.skip('Integrations List Modal', function () {
   let session: any;
 
   beforeEach(function () {
