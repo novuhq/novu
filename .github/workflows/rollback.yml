@@ -209,5 +209,67 @@ jobs:
       contents: read
       packages: write
       deployments: write
+    env:
+      NETLIFY_ACCESS_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
     steps:
       - run: echo "Rolling back ${{ github.event.inputs.service }} in ${{ github.event.inputs.environment }}"
+      - name: Prepare variables
+        id: variables
+        run: |
+          if [[ "${{ github.event.inputs.service }}" == "widget" && "${{ github.event.inputs.environment }}" == "Development" && "${{ matrix.region }}" == "EU" ]]; then
+            echo "Using netlify_site_id: b9147448-b835-4eb1-a2f0-11102f611f5f"
+            echo "netlify_site_id=b9147448-b835-4eb1-a2f0-11102f611f5f" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.service }}" == "web" && "${{ github.event.inputs.environment }}" == "Development" && "${{ matrix.region }}" == "EU" ]]; then
+            echo "Using netlify_site_id: 45396446-dc86-4ad6-81e4-86d3eb78d06f"
+            echo "netlify_site_id=45396446-dc86-4ad6-81e4-86d3eb78d06f" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.environment }}" == "Development" && "${{ matrix.region }}" == "US" ]]; then
+            echo "Error: Development environment doesn't exist in the US region." >&2
+            exit 1
+          elif [[ "${{ github.event.inputs.service }}" == "web" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "EU" ]]; then
+            echo "Using netlify_site_id: d2e8b860-7016-4202-9256-ebca0f13259a"
+            echo "netlify_site_id=d2e8b860-7016-4202-9256-ebca0f13259a" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.service }}" == "web" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "US" ]]; then
+            echo "Using netlify_site_id: 8639d8b9-81f9-44c3-b885-585a7fd2b5ff"
+            echo "netlify_site_id=8639d8b9-81f9-44c3-b885-585a7fd2b5ff" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.service }}" == "widget" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "EU" ]]; then
+            echo "Using netlify_site_id: 20a64bdd-1934-4284-875f-862410c69a3b"
+            echo "netlify_site_id=20a64bdd-1934-4284-875f-862410c69a3b" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.service }}" == "widget" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "US" ]]; then
+            echo "Using netlify_site_id: 6f927fd4-dcb0-4cf3-8c0b-8c5539d0d034"
+            echo "netlify_site_id=6f927fd4-dcb0-4cf3-8c0b-8c5539d0d034" >> $GITHUB_ENV
+          fi
+
+      - name: Get Current Deploy ID
+        id: get_current_deploy
+        env:
+          NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
+        run: |
+          response=$(curl -s -H "Authorization: Bearer $NETLIFY_ACCESS_TOKEN" "https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}")
+          current_deploy_id=$(echo "$response" | jq -r '.published_deploy.id')
+          echo "current_deploy_id=$current_deploy_id" >> $GITHUB_ENV
+
+      - name: Find Previous Production Deployments
+        id: find_previous_deployments
+        env:
+          NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
+        run: |
+
+      - name: Find Previous Production Deployments and Determine Previous Deploy ID
+        id: previous_deploy_id
+        env:
+          NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
+        run: |
+          response=$(curl -s -H "Authorization: Bearer $NETLIFY_ACCESS_TOKEN" "https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}/deploys?per_page=100")
+          deploy_ids=$(echo "$response" | jq -r '.[] | select(.context == "production" and .state == "ready" and .published_at != null) | .id' | sort)
+          current_index=$(echo "$deploy_ids" | grep -n "$current_deploy_id" | cut -d ":" -f 1)
+          previous_index=$((current_index - 1))
+          previous_deploy_id=$(echo "$deploy_ids" | sed "${previous_index}q;d")
+          echo "previous_deploy_id=$previous_deploy_id" >> $GITHUB_ENV
+
+      - name: Rollback to Previous Deploy
+        if: env.previous_deploy_id != null
+        env:
+          NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
+        run: |
+          echo "Restoring previous deploy..."
+          curl -X POST -H "Authorization: Bearer $NETLIFY_ACCESS_TOKEN" "https://api.netlify.com/api/v1/sites/${{ env.netlify_site_id }}/deploys/${{ env.previous_deploy_id }}/restore"
