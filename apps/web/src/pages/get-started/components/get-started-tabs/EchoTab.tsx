@@ -39,7 +39,7 @@ export const EchoTab = () => {
         preview and edit the channel specific content in real-time.
       </Text>
       <Text variant="secondary" className={cx(css({ marginTop: 20, marginBottom: 24 }), mainText)}>
-        You can use Echo with React Email, MJML, or any other template generator.
+        You can use Echo with React Email, MJML, and other template engines.
       </Text>
       <SubTitle variant="subsection">Try it out now</SubTitle>
       <Text variant="secondary" className={mainText}>
