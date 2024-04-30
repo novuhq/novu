@@ -30,7 +30,7 @@ on:
           - [EU,US]
       mode:
         type: choice
-        description: The Rollback mode. You can rollback to the previously deployed version or to version that have current commit hash of this branch in an image tag name or a deployment info.
+        description: The Rollback mode. You can roll back to the previously deployed version or to the version that has the current commit hash of this branch in an image tag name or a deployment info.
         options:
           - Previous Version
           - Commit Hash
@@ -153,7 +153,7 @@ jobs:
 
       - name: ECS get output. By using commit hash
         if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
-        id: ecs-output
+        id: ecs-output-commit-hash
         env:
           IMAGE_TAG: ${{ steps.commit.outputs.hash }}
         run: |
