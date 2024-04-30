@@ -1121,7 +1121,7 @@ export const eazySmsConfig: IConfigCredentials[] = [
   },
 ];
 
-export const whatsaAppBusinessConfig: IConfigCredentials[] = [
+export const whatsAppBusinessConfig: IConfigCredentials[] = [
   {
     key: CredentialsKeyEnum.ApiToken,
     displayName: 'Access API token',

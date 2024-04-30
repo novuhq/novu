@@ -28,7 +28,7 @@ import {
   iSendSmsConfig,
   ringCentralConfig,
   brevoSmsConfig,
-  whatsaAppBusinessConfig,
+  whatsAppBusinessConfig,
   eazySmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
@@ -285,7 +285,7 @@ export const smsProviders: IProviderConfig[] = [
     id: SmsProviderIdEnum.WhatsAppBusiness,
     displayName: 'WhatsApp Business',
     channel: ChannelTypeEnum.SMS,
-    credentials: whatsaAppBusinessConfig,
+    credentials: whatsAppBusinessConfig,
     docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
     logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
   },
