@@ -268,7 +268,7 @@ jobs:
           echo "previous_deploy_id=$previous_deploy_id" >> $GITHUB_ENV
 
       - name: Determine Previous Deploy ID
-        if: env.previous_deploy_id != null && contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
+        if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
         env:
           NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
           COMMIT_REF: ${{ steps.commit.outputs.hash }}
