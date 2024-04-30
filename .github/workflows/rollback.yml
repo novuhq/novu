@@ -254,13 +254,6 @@ jobs:
           current_deploy_id=$(echo "$response" | jq -r '.published_deploy.id')
           echo "current_deploy_id=$current_deploy_id" >> $GITHUB_ENV
 
-      - name: Find Previous Production Deployments
-        if: contains(fromJson('["Previous Version"]'), github.event.inputs.mode)
-        id: find_previous_deployments
-        env:
-          NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
-        run: |
-
       - name: Find Previous Production Deployments and Determine Previous Deploy ID
         if: contains(fromJson('["Previous Version"]'), github.event.inputs.mode)
         id: previous_deploy_id
