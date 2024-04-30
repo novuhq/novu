@@ -4,6 +4,7 @@ import { LoadingOverlay, useMantineTheme } from '@mantine/core';
 import { getActivityList } from '../../../api/activity';
 import { ExecutionDetailsModal } from '../../../components/execution-detail/ExecutionDetailsModal';
 import { colors } from '@novu/design-system';
+import { useEffect } from 'react';
 
 interface Props {
   transactionId: string;
@@ -13,13 +14,21 @@ interface Props {
 
 export const ExecutionDetailsModalWrapper = ({ transactionId, isOpen, onClose }: Props) => {
   const theme = useMantineTheme();
-  const { data: notification, isFetching } = useQuery<{ data: any[] }>(
-    ['activitiesList', transactionId],
-    () => getActivityList(0, { transactionId }),
-    {
-      enabled: transactionId.length > 0,
+  const {
+    data: notification,
+    isFetching,
+    refetch,
+  } = useQuery<{ data: any[] }>(['activitiesList', transactionId], () => getActivityList(0, { transactionId }), {
+    enabled: transactionId.length > 0,
+  });
+
+  useEffect(() => {
+    if (!isFetching && !notification?.data.length) {
+      refetch();
     }
-  );
+  }, [isFetching, notification, refetch]);
+
+  if (!isOpen || !transactionId) return null;
 
   return (
     <>
@@ -30,9 +39,7 @@ export const ExecutionDetailsModalWrapper = ({ transactionId, isOpen, onClose }:
           color: colors.error,
         }}
       />
-      {notification?.data?.length && notification?.data?.length > 0 ? (
-        <ExecutionDetailsModal notificationId={notification?.data[0]._id} modalVisibility={isOpen} onClose={onClose} />
-      ) : null}
+      <ExecutionDetailsModal notificationId={notification?.data[0]?._id} modalVisibility={isOpen} onClose={onClose} />
     </>
   );
 };
