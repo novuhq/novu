@@ -12,8 +12,11 @@ import { GetActiveIntegrationsStatusCommand } from './get-active-integrations-st
 
 import { IntegrationResponseDto } from '../../../integrations/dtos/integration-response.dto';
 import { WorkflowResponse } from '../../dto/workflow-response.dto';
-import { NotificationStep } from '../create-notification-template';
-import { CalculateLimitNovuIntegration, CalculateLimitNovuIntegrationCommand } from '@novu/application-generic';
+import {
+  CalculateLimitNovuIntegration,
+  CalculateLimitNovuIntegrationCommand,
+  NotificationStep,
+} from '@novu/application-generic';
 
 @Injectable()
 export class GetActiveIntegrationsStatus {

@@ -36,26 +36,24 @@ import { IdempotencyInterceptor } from './app/shared/framework/idempotency.inter
 import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overrides.module';
 import { ApiRateLimitInterceptor } from './app/rate-limiting/guards';
 import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
+import { ProductFeatureInterceptor } from './app/shared/interceptors/product-feature.interceptor';
+import { ResourceThrottlerInterceptor } from './app/resource-limiting/guards';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
-  try {
-    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-      if (require('@novu/ee-auth')?.EEAuthModule) {
-        modules.push(require('@novu/ee-auth')?.EEAuthModule);
-      }
-      if (require('@novu/ee-chimera')?.ChimeraModule) {
-        modules.push(require('@novu/ee-chimera')?.ChimeraModule);
-      }
-      if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
-        modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
-      }
-      if (require('@novu/ee-billing')?.BillingModule) {
-        modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
-      }
+  if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+    if (require('@novu/ee-auth')?.EEAuthModule) {
+      modules.push(require('@novu/ee-auth')?.EEAuthModule);
     }
-  } catch (e) {
-    Logger.error(e, `Unexpected error while importing enterprise modules`, 'EnterpriseImport');
+    if (require('@novu/ee-echo-api')?.EchoModule) {
+      modules.push(require('@novu/ee-echo-api')?.EchoModule);
+    }
+    if (require('@novu/ee-translation')?.EnterpriseTranslationModule) {
+      modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModule);
+    }
+    if (require('@novu/ee-billing')?.BillingModule) {
+      modules.push(require('@novu/ee-billing')?.BillingModule.forRoot());
+    }
   }
 
   return modules;
@@ -102,6 +100,14 @@ const providers: Provider[] = [
   {
     provide: APP_INTERCEPTOR,
     useClass: ApiRateLimitInterceptor,
+  },
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: ProductFeatureInterceptor,
+  },
+  {
+    provide: APP_INTERCEPTOR,
+    useClass: ResourceThrottlerInterceptor,
   },
   {
     provide: APP_INTERCEPTOR,

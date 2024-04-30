@@ -13,6 +13,7 @@ import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { ROUTES } from '../../../constants/routes.enum';
 import { OAuth } from './OAuth';
+import { parseServerErrorMessage } from '../../../utils/errors';
 
 type LoginFormProps = {
   invitationToken?: string;
@@ -78,29 +79,28 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     }
   };
 
-  const serverErrorString = useMemo<string>(() => {
-    return Array.isArray(error?.message) ? error?.message[0] : error?.message;
-  }, [error]);
+  const emailClientError = errors.email?.message;
+  let emailServerError = parseServerErrorMessage(error);
 
-  const emailServerError = useMemo<string>(() => {
-    if (serverErrorString === 'email must be an email') return 'Please provide a valid email';
-
-    return '';
-  }, [serverErrorString]);
+  // TODO: Use a more human-friendly message in the IsEmail validator and remove this patch
+  if (emailServerError === 'email must be an email') {
+    emailServerError = 'Please provide a valid email address';
+  }
 
   return (
     <>
       <OAuth />
       <form noValidate onSubmit={handleSubmit(onLogin)}>
         <Input
-          error={errors.email?.message || emailServerError}
+          error={emailClientError || emailServerError}
           {...register('email', {
-            required: 'Please provide an email',
-            pattern: { value: /^\S+@\S+\.\S+$/, message: 'Please provide a valid email' },
+            required: 'Please provide an email address',
+            pattern: { value: /^\S+@\S+\.\S+$/, message: 'Please provide a valid email address' },
           })}
           required
           label="Email"
-          placeholder="Type your email..."
+          type="email"
+          placeholder="Type your email address..."
           disabled={!!invitationToken}
           data-test-id="email"
           mt={5}
@@ -142,12 +142,6 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
           </Link>
         </Center>
       </form>
-      {isError && !emailServerError && (
-        <Text data-test-id="error-alert-banner" mt={20} size="lg" weight="bold" align="center" color={colors.error}>
-          {' '}
-          {error?.message}
-        </Text>
-      )}
     </>
   );
 }

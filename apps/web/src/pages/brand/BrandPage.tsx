@@ -2,15 +2,15 @@ import { Center, Container, Loader, Tabs, TabsValue } from '@mantine/core';
 import { useMemo } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 
+import { colors, useTabsStyles } from '@novu/design-system';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { useAuthContext } from '../../components/providers/AuthProvider';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { ROUTES } from '../../constants/routes.enum';
-import { colors, useTabsStyles } from '@novu/design-system';
 import { useEnvController } from '../../hooks';
 
-const BRANDING = 'Assets';
+const BRAND = 'Brand';
 const LAYOUT = 'Layouts';
 
 export function BrandPage() {

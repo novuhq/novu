@@ -1,15 +1,15 @@
-import { LayoutEntity, LayoutRepository } from '@novu/dal';
-import { Injectable, Inject, ConflictException } from '@nestjs/common';
-import { isReservedVariableName } from '@novu/shared';
-import { AnalyticsService } from '@novu/application-generic';
-import { CreateLayoutCommand } from './create-layout.command';
+import { Injectable, ConflictException } from '@nestjs/common';
 
+import { LayoutEntity, LayoutRepository } from '@novu/dal';
+import { isReservedVariableName } from '@novu/shared';
+import { AnalyticsService, ContentService } from '@novu/application-generic';
+
+import { CreateLayoutCommand } from './create-layout.command';
 import { CreateLayoutChangeCommand, CreateLayoutChangeUseCase } from '../create-layout-change';
 import { SetDefaultLayoutCommand, SetDefaultLayoutUseCase } from '../set-default-layout';
 import { LayoutDto } from '../../dtos';
 import { ChannelTypeEnum, ITemplateVariable, LayoutId } from '../../types';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { ContentService } from '../../../shared/helpers/content.service';
 
 @Injectable()
 export class CreateLayoutUseCase {

@@ -77,10 +77,10 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
         modules.push(require('@novu/ee-billing')?.BillingModule.forRoot(activeWorkers));
       }
 
-      if (require('@novu/ee-chimera-connect')?.ChimeraConnectorModule) {
+      if (require('@novu/ee-echo-worker')?.EchoGatewayModule) {
         Logger.log('Importing enterprise chimera connector module', 'EnterpriseImport');
 
-        modules.push(require('@novu/ee-chimera-connect')?.ChimeraConnectorModule);
+        modules.push(require('@novu/ee-echo-worker')?.EchoGatewayModule);
       }
     }
   } catch (e) {

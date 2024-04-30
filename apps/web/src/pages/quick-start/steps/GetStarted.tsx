@@ -9,6 +9,9 @@ import { ChannelsConfiguration } from '../components/ChannelsConfiguration';
 import { GetStartedLayout } from '../components/layout/GetStartedLayout';
 import { NavButton } from '../components/NavButton';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../consts';
+import { OnboardingExperimentModal } from '../components/OnboardingExperimentModal';
+import { useAuthContext } from '@novu/shared-web';
+import { OnboardingExperimentV2ModalKey } from '../../../constants/experimentsConstants';
 
 const ChannelsConfigurationHolder = styled.div`
   display: flex;
@@ -25,16 +28,20 @@ const ChannelsConfigurationHolder = styled.div`
 
 export function GetStarted() {
   const segment = useSegment();
+  const { currentOrganization } = useAuthContext();
   const [clickedChannel, setClickedChannel] = useState<{
     open: boolean;
     channelType?: ChannelTypeEnum;
   }>({ open: false });
 
+  const isOnboardingModalEnabled =
+    localStorage.getItem(OnboardingExperimentV2ModalKey) === 'true' && window.innerWidth > 768;
+
   const onIntegrationModalClose = () => setClickedChannel({ open: false });
 
   useEffect(() => {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_VISIT);
-  }, [segment]);
+  }, [currentOrganization?._id, isOnboardingModalEnabled, segment]);
 
   function handleOnClick() {
     segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_NAVIGATION_NEXT_PAGE_CLICK);
@@ -60,6 +67,7 @@ export function GetStarted() {
         />
         <ChannelsConfiguration setClickedChannel={setClickedChannel} />
       </ChannelsConfigurationHolder>
+      {isOnboardingModalEnabled && <OnboardingExperimentModal />}
     </GetStartedLayout>
   );
 }

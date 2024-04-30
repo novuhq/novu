@@ -6,6 +6,15 @@ export enum ChannelTypeEnum {
   PUSH = 'push',
 }
 
+export enum ActionTypeEnum {
+  TRIGGER = 'trigger',
+  DIGEST = 'digest',
+  DELAY = 'delay',
+  CUSTOM = 'custom',
+}
+
+export type StepType = ChannelTypeEnum | ActionTypeEnum;
+
 export enum StepTypeEnum {
   IN_APP = 'in_app',
   EMAIL = 'email',
