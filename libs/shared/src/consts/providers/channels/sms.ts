@@ -29,6 +29,7 @@ import {
   ringCentralConfig,
   brevoSmsConfig,
   whatsaAppBusinessConfig,
+  eazySmsConfig,
 } from '../credentials';
 import { SmsProviderIdEnum } from '../provider.enum';
 
@@ -271,6 +272,14 @@ export const smsProviders: IProviderConfig[] = [
     credentials: brevoSmsConfig,
     docReference: 'https://developers.brevo.com/reference/sendtransacsms',
     logoFileName: { light: 'brevo.svg', dark: 'brevo.svg' },
+  },
+  {
+    id: SmsProviderIdEnum.EazySms,
+    displayName: `Eazy`,
+    channel: ChannelTypeEnum.SMS,
+    credentials: eazySmsConfig,
+    docReference: 'https://developers.eazy.im/#678805af-be7b-4487-93a4-c1007b7920f5',
+    logoFileName: { light: 'eazy-sms.svg', dark: 'eazy-sms.svg' },
   },
   {
     id: SmsProviderIdEnum.WhatsAppBusiness,

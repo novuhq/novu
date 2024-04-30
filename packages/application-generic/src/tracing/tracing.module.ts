@@ -17,13 +17,14 @@ const OtelModule = OpenTelemetryModule.forRoot({
 
 @Module({})
 export class TracingModule {
-  static register(serviceName: string): DynamicModule {
+  static register(serviceName: string, version: string): DynamicModule {
     return {
       module: TracingModule,
       imports: [OtelModule],
       providers: [
         TracingService,
         { provide: 'TRACING_SERVICE_NAME', useValue: serviceName },
+        { provide: 'TRACING_SERVICE_VERSION', useValue: version },
         {
           provide: 'TRACING_ENABLE_OTEL',
           useValue: process.env.ENABLE_OTEL === 'true',

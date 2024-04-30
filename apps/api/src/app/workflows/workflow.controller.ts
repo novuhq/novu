@@ -11,11 +11,17 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import {
+  CreateWorkflow,
+  CreateWorkflowCommand,
+  UpdateWorkflow,
+  UpdateWorkflowCommand,
+} from '@novu/application-generic';
+import { IJwtPayload, MemberRoleEnum, WorkflowTypeEnum } from '@novu/shared';
+
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
 import { GetNotificationTemplatesCommand } from './usecases/get-notification-templates/get-notification-templates.command';
-import { CreateNotificationTemplate, CreateNotificationTemplateCommand } from './usecases/create-notification-template';
 import {
   ChangeWorkflowStatusRequestDto,
   CreateWorkflowRequestDto,
@@ -24,9 +30,7 @@ import {
 } from './dto';
 import { GetNotificationTemplate } from './usecases/get-notification-template/get-notification-template.usecase';
 import { GetNotificationTemplateCommand } from './usecases/get-notification-template/get-notification-template.command';
-import { UpdateNotificationTemplate } from './usecases/update-notification-template/update-notification-template.usecase';
 import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
-import { UpdateNotificationTemplateCommand } from './usecases/update-notification-template/update-notification-template.command';
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
 import { UserAuthGuard } from '../auth/framework/user.auth.guard';
@@ -37,10 +41,9 @@ import { WorkflowsResponseDto } from './dto/workflows.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { WorkflowsRequestDto } from './dto/workflows-request.dto';
 import { Roles } from '../auth/framework/roles.decorator';
-import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
-import { ApiOkResponse } from '../shared/framework/response.decorator';
 import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
 import { GetWorkflowVariables } from './usecases/get-workflow-variables/get-workflow-variables.usecase';
 import { GetWorkflowVariablesCommand } from './usecases/get-workflow-variables/get-workflow-variables.command';
@@ -52,11 +55,11 @@ import { GetWorkflowVariablesCommand } from './usecases/get-workflow-variables/g
 @ApiTags('Workflows')
 export class WorkflowController {
   constructor(
+    private createWorkflowUsecase: CreateWorkflow,
+    private updateWorkflowByIdUsecase: UpdateWorkflow,
     private getWorkflowsUsecase: GetNotificationTemplates,
-    private createWorkflowUsecase: CreateNotificationTemplate,
     private getWorkflowUsecase: GetNotificationTemplate,
     private getWorkflowVariablesUsecase: GetWorkflowVariables,
-    private updateWorkflowByIdUsecase: UpdateNotificationTemplate,
     private deleteWorkflowByIdUsecase: DeleteNotificationTemplate,
     private changeWorkflowActiveStatusUsecase: ChangeTemplateActiveStatus
   ) {}
@@ -97,7 +100,7 @@ export class WorkflowController {
     @Body() body: UpdateWorkflowRequestDto
   ): Promise<WorkflowResponse> {
     return await this.updateWorkflowByIdUsecase.execute(
-      UpdateNotificationTemplateCommand.create({
+      UpdateWorkflowCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
@@ -111,6 +114,7 @@ export class WorkflowController {
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
         data: body.data,
+        type: WorkflowTypeEnum.REGULAR,
       })
     );
   }
@@ -133,6 +137,7 @@ export class WorkflowController {
         organizationId: user.organizationId,
         userId: user._id,
         templateId: workflowId,
+        type: WorkflowTypeEnum.REGULAR,
       })
     );
   }
@@ -174,6 +179,7 @@ export class WorkflowController {
       })
     );
   }
+
   @Post('')
   @ExternalApiAccessible()
   @UseGuards(RootEnvironmentGuard)
@@ -189,7 +195,7 @@ export class WorkflowController {
     @Body() body: CreateWorkflowRequestDto
   ): Promise<WorkflowResponse> {
     return this.createWorkflowUsecase.execute(
-      CreateNotificationTemplateCommand.create({
+      CreateWorkflowCommand.create({
         organizationId: user.organizationId,
         userId: user._id,
         environmentId: user.environmentId,
@@ -198,6 +204,7 @@ export class WorkflowController {
         description: body.description,
         steps: body.steps,
         notificationGroupId: body.notificationGroupId,
+        notificationGroup: body.notificationGroup,
         active: body.active ?? false,
         draft: !body.active,
         critical: body.critical ?? false,
@@ -205,6 +212,7 @@ export class WorkflowController {
         blueprintId: body.blueprintId,
         data: body.data,
         __source: query?.__source,
+        type: WorkflowTypeEnum.REGULAR,
       })
     );
   }

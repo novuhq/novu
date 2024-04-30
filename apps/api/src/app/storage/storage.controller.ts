@@ -1,5 +1,6 @@
 import { ClassSerializerInterceptor, Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/common';
-import { IJwtPayload } from '@novu/shared';
+import { IJwtPayload, UploadTypesEnum } from '@novu/shared';
+
 import { GetSignedUrl } from './usecases/get-signed-url/get-signed-url.usecase';
 import { GetSignedUrlCommand } from './usecases/get-signed-url/get-signed-url.command';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -24,13 +25,18 @@ export class StorageController {
   })
   @ApiResponse(UploadUrlResponse)
   @ExternalApiAccessible()
-  async signedUrl(@UserSession() user: IJwtPayload, @Query('extension') extension: string): Promise<UploadUrlResponse> {
+  async signedUrl(
+    @UserSession() user: IJwtPayload,
+    @Query('extension') extension: string,
+    @Query('type') type: UploadTypesEnum = UploadTypesEnum.BRANDING
+  ): Promise<UploadUrlResponse> {
     return await this.getSignedUrlUsecase.execute(
       GetSignedUrlCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
         extension,
+        type,
       })
     );
   }

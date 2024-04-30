@@ -22,6 +22,7 @@ const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/** @deprecated Use `SettingsPageNew` instead */
 export function SettingsPage() {
   const { currentOrganization } = useAuthContext();
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
@@ -29,6 +30,8 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const billingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_BILLING_ENABLED);
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
+
   const value = useMemo(() => {
     return pathname === ROUTES.SETTINGS ? '/' : pathname.replace(ROUTES.SETTINGS, '');
   }, [pathname]);
@@ -66,14 +69,22 @@ export function SettingsPage() {
           <Tabs.Tab value="/">API Keys</Tabs.Tab>
           <Tabs.Tab value="/email">Email Settings</Tabs.Tab>
           <When truthy={billingEnabled}>
-            <Tabs.Tab value="/billing">Billing Plans</Tabs.Tab>
+            <Tabs.Tab value="/billing">Billing</Tabs.Tab>
+          </When>
+          <When truthy={isInformationArchitectureEnabled}>
+            <Tabs.Tab value="/brand">Branding</Tabs.Tab>
+            <Tabs.Tab value="/team">Team Members</Tabs.Tab>
           </When>
           <Tabs.Tab value="/permissions">Permissions</Tabs.Tab>
           <Tabs.Tab value="/sso">SSO</Tabs.Tab>
           <Tabs.Tab value="/data-integrations">Data Integrations</Tabs.Tab>
         </Tabs.List>
       </Tabs>
-      <Outlet />
+      <Outlet
+        context={{
+          currentOrganization,
+        }}
+      />
     </SettingsPageWrapper>
   );
 }

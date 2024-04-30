@@ -26,3 +26,5 @@ export {
 } from './bull-mq';
 export * from './auth';
 export * from './cron';
+export * from './content.service';
+export * from './sanitize/sanitizer.service';

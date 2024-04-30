@@ -13,6 +13,7 @@ const mockNovuMessage = {
   to: ['test@test.com'],
   html: '<div> Mail Content </div>',
   subject: 'Test subject',
+  reply_to: 'no-reply@novu.co',
   attachments: [
     {
       mime: 'text/plain',
@@ -40,6 +41,7 @@ test('should trigger resend library correctly', async () => {
     html: mockNovuMessage.html,
     subject: mockNovuMessage.subject,
     attachments: mockNovuMessage.attachments,
+    reply_to: mockNovuMessage.reply_to,
   });
 });
 
@@ -69,6 +71,7 @@ test('should trigger resend email with From Name', async () => {
       filename: attachment?.name,
       content: attachment.file,
     })),
+    reply_to: null,
     cc: undefined,
     bcc: undefined,
   });
