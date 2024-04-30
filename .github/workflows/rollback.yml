@@ -162,25 +162,27 @@ jobs:
           found=false
           counter=0
           for arn in $task_definition_arns; do
-          task_definition=$(aws ecs describe-task-definition --task-definition $arn)
-          if echo "$task_definition" | grep -q "$IMAGE_TAG"; then
-          echo "Found task definition with image tag $IMAGE_TAG: $arn"
-            needed_arn=$arn
-            found=true
-            break  # Stop the loop
+            task_definition=$(aws ecs describe-task-definition --task-definition $arn)
+            if echo "$task_definition" | grep -q "$IMAGE_TAG"; then
+              echo "Found task definition with image tag $IMAGE_TAG: $arn"
+              needed_arn=$arn
+              found=true
+              break  # Stop the loop
             fi
             ((counter++))
             if [ $counter -ge 20 ]; then
+              break  # Stop the loop
             fi
-            done
-            if [ "$found" = false ]; then
-          echo "Error: Task definition with image tag $IMAGE_TAG not found within the last 20 tasks."
+          done
+          if [ "$found" = false ]; then
+            echo "Error: Task definition with image tag $IMAGE_TAG not found within the last 20 tasks."
             exit 1
-            fi
-            current_task_definition_arn=$(aws ecs describe-services --cluster ${{ env.ecs_cluster }} --services ${{ env.ecs_service }} --query 'services[0].taskDefinition' --output text)
-            echo "current_task_definition_arn=$current_task_definition_arn" >> $GITHUB_ENV
-            echo "previous_task_definition_arn=$needed_arn" >> $GITHUB_ENV
-            echo "Your task definition ARN is $needed_arn"
+          fi
+          current_task_definition_arn=$(aws ecs describe-services --cluster ${{ env.ecs_cluster }} --services ${{ env.ecs_service }} --query 'services[0].taskDefinition' --output text)
+          echo "current_task_definition_arn=$current_task_definition_arn" >> $GITHUB_ENV
+          echo "previous_task_definition_arn=$needed_arn" >> $GITHUB_ENV
+          echo "Your task definition ARN is $needed_arn"
+
 
       - name: Rollback a service to the previous task definition
         id: rollback
