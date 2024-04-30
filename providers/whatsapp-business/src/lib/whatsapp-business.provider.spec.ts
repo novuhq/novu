@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { WhatsappBusinessChatProvider } from './whatsapp-business.provider';
 import { nanoid } from 'nanoid';
-import { ISmsOptions } from 'packages/stateless/build/main';
+import { IChatOptions } from '@novu/stateless';
 
 const mockProviderConfig = {
   accessToken: 'my-access-token',
@@ -15,8 +15,8 @@ test('should trigger whatsapp-business library correctly with simple text messag
 
   const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
 
-  const options: ISmsOptions = {
-    to: '+111111111',
+  const options: IChatOptions = {
+    phoneNumber: '+111111111',
     content: 'Simple text message',
   };
 
@@ -32,7 +32,7 @@ test('should trigger whatsapp-business library correctly with simple text messag
         body: options.content,
         preview_url: false,
       },
-      to: options.to,
+      to: options.phoneNumber,
       type: 'text',
     }
   );
@@ -51,8 +51,8 @@ test('should trigger whatsapp-business library correctly with template message',
 
   const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
 
-  const options: ISmsOptions = {
-    to: '+111111111',
+  const options: IChatOptions = {
+    phoneNumber: '+111111111',
     content: 'Simple text message',
     customData: {
       template: {
@@ -73,7 +73,7 @@ test('should trigger whatsapp-business library correctly with template message',
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
       template: options.customData.template,
-      to: options.to,
+      to: options.phoneNumber,
       type: 'template',
     }
   );
