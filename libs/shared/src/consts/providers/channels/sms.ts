@@ -31,7 +31,7 @@ import {
   whatsAppBusinessConfig,
   eazySmsConfig,
 } from '../credentials';
-import { SmsProviderIdEnum } from '../provider.enum';
+import { ChatProviderIdEnum, SmsProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
@@ -280,13 +280,5 @@ export const smsProviders: IProviderConfig[] = [
     credentials: eazySmsConfig,
     docReference: 'https://developers.eazy.im/#678805af-be7b-4487-93a4-c1007b7920f5',
     logoFileName: { light: 'eazy-sms.svg', dark: 'eazy-sms.svg' },
-  },
-  {
-    id: SmsProviderIdEnum.WhatsAppBusiness,
-    displayName: 'WhatsApp Business',
-    channel: ChannelTypeEnum.SMS,
-    credentials: whatsAppBusinessConfig,
-    docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
-    logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
   },
 ];

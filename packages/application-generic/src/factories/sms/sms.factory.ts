@@ -29,7 +29,6 @@ import {
   ISendSmsHandler,
   RingCentralHandler,
   BrevoSmsHandler,
-  WhatsAppBusinessHandler,
   EazySmsHandler,
 } from './handlers';
 
@@ -64,7 +63,6 @@ export class SmsFactory implements ISmsFactory {
     new RingCentralHandler(),
     new BrevoSmsHandler(),
     new EazySmsHandler(),
-    new WhatsAppBusinessHandler(),
   ];
 
   getHandler(integration: IntegrationEntity) {

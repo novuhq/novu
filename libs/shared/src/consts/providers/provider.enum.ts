@@ -102,7 +102,6 @@ export enum SmsProviderIdEnum {
   AzureSms = 'azure-sms',
   RingCentral = 'ring-central',
   BrevoSms = 'brevo-sms',
-  WhatsAppBusiness = 'whatsapp-business',
   EazySms = 'eazy-sms',
 }
 
@@ -116,6 +115,7 @@ export enum ChatProviderIdEnum {
   GrafanaOnCall = 'grafana-on-call',
   GetStream = 'getstream',
   RocketChat = 'rocket-chat',
+  WhatsAppBusiness = 'whatsapp-business',
 }
 
 export enum PushProviderIdEnum {

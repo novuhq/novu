@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { WhatsappBusinessSmsProvider } from './whatsapp-business.provider';
+import { WhatsappBusinessChatProvider } from './whatsapp-business.provider';
 import { nanoid } from 'nanoid';
 import { ISmsOptions } from 'packages/stateless/build/main';
 
@@ -13,7 +13,7 @@ test('should trigger whatsapp-business library correctly with simple text messag
 
   const { mockPost, axiosMockSpy } = axiosSpy(messageId);
 
-  const provider = new WhatsappBusinessSmsProvider(mockProviderConfig);
+  const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
 
   const options: ISmsOptions = {
     to: '+111111111',
@@ -49,7 +49,7 @@ test('should trigger whatsapp-business library correctly with template message',
 
   const { mockPost, axiosMockSpy } = axiosSpy(messageId);
 
-  const provider = new WhatsappBusinessSmsProvider(mockProviderConfig);
+  const provider = new WhatsappBusinessChatProvider(mockProviderConfig);
 
   const options: ISmsOptions = {
     to: '+111111111',

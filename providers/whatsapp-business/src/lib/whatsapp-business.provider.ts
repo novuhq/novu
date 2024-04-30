@@ -1,16 +1,16 @@
 import {
   ChannelTypeEnum,
+  IChatOptions,
+  IChatProvider,
   ISendMessageSuccessResponse,
-  ISmsOptions,
-  ISmsProvider,
 } from '@novu/stateless';
 import Axios, { AxiosInstance } from 'axios';
 import { ISendMessageRes } from '../types/whatsapp-business.types';
 import { WhatsAppMessageTypeEnum } from '../consts/whatsapp-business.enum';
 
-export class WhatsappBusinessSmsProvider implements ISmsProvider {
+export class WhatsappBusinessChatProvider implements IChatProvider {
   id = 'whatsapp-business';
-  channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
+  channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
 
   private readonly axiosClient: AxiosInstance;
   private readonly baseUrl = 'https://graph.facebook.com/v18.0/';
@@ -30,7 +30,7 @@ export class WhatsappBusinessSmsProvider implements ISmsProvider {
   }
 
   async sendMessage(
-    options: ISmsOptions
+    options: IChatOptions
   ): Promise<ISendMessageSuccessResponse> {
     const payload = this.defineMessagePayload(options);
 
@@ -45,13 +45,13 @@ export class WhatsappBusinessSmsProvider implements ISmsProvider {
     };
   }
 
-  private defineMessagePayload(options: ISmsOptions) {
+  private defineMessagePayload(options: IChatOptions) {
     const type = this.defineMessageType(options);
 
     const basePayload = {
       messaging_product: 'whatsapp',
       recipient_type: 'individual',
-      to: options.to,
+      to: options.phoneNumber,
       type: type,
     };
 
@@ -67,7 +67,7 @@ export class WhatsappBusinessSmsProvider implements ISmsProvider {
     };
   }
 
-  private defineMessageType(options: ISmsOptions): WhatsAppMessageTypeEnum {
+  private defineMessageType(options: IChatOptions): WhatsAppMessageTypeEnum {
     return options.customData &&
       Object.keys(options.customData).some((key) => key === 'template')
       ? WhatsAppMessageTypeEnum.TEMPLATE
