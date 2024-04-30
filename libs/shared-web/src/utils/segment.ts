@@ -23,7 +23,7 @@ export class SegmentService {
   }
 
   async track(event: string, data?: Record<string, unknown>) {
-    await api.post('/v1/analytics/track', {
+    await api.post('/v1/telemetry/measure', {
       event: event + ' - [WEB]',
       data,
     });

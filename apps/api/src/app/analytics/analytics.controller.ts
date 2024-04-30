@@ -4,13 +4,13 @@ import { AnalyticsService, UserAuthGuard, UserSession } from '@novu/application-
 import { IJwtPayload } from '@novu/shared';
 
 @Controller({
-  path: 'analytics',
+  path: 'telemetry',
 })
 @SkipThrottle()
 export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
 
-  @Post('/track')
+  @Post('/measure')
   @UseGuards(UserAuthGuard)
   async trackEvent(@Body('event') event, @Body('data') data, @UserSession() user: IJwtPayload): Promise<any> {
     await this.analyticsService.track(event, user._id, data);
