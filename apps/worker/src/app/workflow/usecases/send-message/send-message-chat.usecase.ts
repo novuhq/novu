@@ -167,8 +167,7 @@ export class SendMessageChat extends SendMessageBase {
     chatChannel: NotificationStepEntity,
     content: string
   ) {
-    const searchCriteria: SelectIntegrationCommand = {
-      id: subscriberChannel._integrationId,
+    const integrationCommand: SelectIntegrationCommand = {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       providerId: subscriberChannel.providerId,
@@ -182,11 +181,11 @@ export class SendMessageChat extends SendMessageBase {
     /**
      * Current a workaround as chat providers for whatsapp is more similar to sms than to our chat implementation
      */
-    if (subscriberChannel.providerId === ChatProviderIdEnum.WhatsAppBusiness) {
-      delete searchCriteria.id;
+    if (subscriberChannel.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
+      integrationCommand.id = subscriberChannel._integrationId;
     }
 
-    const integration = await this.getIntegration(searchCriteria);
+    const integration = await this.getIntegration(integrationCommand);
 
     if (subscriberChannel.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
       if (!integration) {
@@ -219,22 +218,6 @@ export class SendMessageChat extends SendMessageBase {
       chimeraOverride?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
     const phoneNumber = subscriberChannel.credentials?.phoneNumber;
     const channelSpecification = subscriberChannel.credentials?.channel;
-
-    if (!chatWebhookUrl && integration.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            reason: `webhookUrl for integrationId: ${subscriberChannel?._integrationId} is missing`,
-          }),
-        })
-      );
-    }
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
