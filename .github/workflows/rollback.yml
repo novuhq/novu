@@ -28,6 +28,12 @@ on:
           - [EU]
           - [US]
           - [EU,US]
+      mode:
+        type: choice
+        description: The Rollback mode. You can rollback to the previously deployed version or to version that have current commit hash of this branch in an image tag name or a deployment info.
+        options:
+          - Previous Version
+          - Commit Hash
 
 jobs:
   ecs:
@@ -44,6 +50,10 @@ jobs:
       deployments: write
     steps:
       - run: echo "Rolling back ${{ github.event.inputs.service }} in ${{ github.event.inputs.environment }}"
+
+      - id: commit
+        if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
+        uses: prompt/actions-commit-hash@v3
 
       - name: Prepare variables
         id: variables
@@ -105,6 +115,7 @@ jobs:
           aws-region: ${{ env.aws_region }}
 
       - name: ECS get output
+        if: contains(fromJson('["Previous Version"]'), github.event.inputs.mode)
         id: ecs-output
         run: |
           echo "Retrieving current_task_definition_arn..."
@@ -113,17 +124,13 @@ jobs:
           
           echo "Retrieving task_definition_family..."
           task_definition_family=$(aws ecs describe-task-definition --task-definition ${{ env.task_name }} --query 'taskDefinition.family' --output text)
-          task_definition_family_formatted="$task_definition_family"  # No need to format, keep as is
-          echo "task_definition_family=$task_definition_family_formatted" >> $GITHUB_ENV
+          echo "task_definition_family=$task_definition_family" >> $GITHUB_ENV
           
           echo "Retrieving task_definition_list..."
           task_definition_list=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --output text --sort DESC | grep 'TASKDEFINITIONARNS' | cut -f 2)
           task_definition_list_formatted=$(echo "$task_definition_list" | tr '\n' '|')  # Replace newline with '|'
           echo "task_definition_list=$task_definition_list_formatted" >> $GITHUB_ENV
-          
-          echo "Checking environment variables..."
-          env | grep GITHUB_ENV
-          
+
           if [ -n "$task_definition_list" ]; then
             echo "Retrieving previous_task_definition_arn..."
             index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
@@ -131,8 +138,7 @@ jobs:
               if [ "$index" -ge 1 ]; then  # Greater than or equal to 1
                 previous_index=$((index + 1))
                 previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
-                previous_task_definition_arn_formatted="$previous_task_definition_arn"  # No need to format, keep as is
-                echo "previous_task_definition_arn=$previous_task_definition_arn_formatted" >> $GITHUB_ENV
+                echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
               else
                 echo "Invalid index value: $index"
               fi
@@ -145,6 +151,36 @@ jobs:
             exit 1
           fi
 
+      - name: ECS get output. By using commit hash
+        if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
+        id: ecs-output
+        env:
+          IMAGE_TAG: ${{ steps.commit.outputs.hash }}
+        run: |
+          task_definition_family=$(aws ecs describe-task-definition --task-definition ${{ env.task_name }} --query 'taskDefinition.family' --output text)
+          task_definition_arns=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --query 'taskDefinitionArns' --output text --sort DESC)
+          found=false
+          counter=0
+          for arn in $task_definition_arns; do
+          task_definition=$(aws ecs describe-task-definition --task-definition $arn)
+          if echo "$task_definition" | grep -q "$IMAGE_TAG"; then
+          echo "Found task definition with image tag $IMAGE_TAG: $arn"
+            needed_arn=$arn
+            found=true
+            break  # Stop the loop
+            fi
+            ((counter++))
+            if [ $counter -ge 20 ]; then
+            fi
+            done
+            if [ "$found" = false ]; then
+          echo "Error: Task definition with image tag $IMAGE_TAG not found within the last 20 tasks."
+            exit 1
+            fi
+            current_task_definition_arn=$(aws ecs describe-services --cluster ${{ env.ecs_cluster }} --services ${{ env.ecs_service }} --query 'services[0].taskDefinition' --output text)
+            echo "current_task_definition_arn=$current_task_definition_arn" >> $GITHUB_ENV
+            echo "previous_task_definition_arn=$needed_arn" >> $GITHUB_ENV
+            echo "Your task definition ARN is $needed_arn"
 
       - name: Rollback a service to the previous task definition
         id: rollback
@@ -162,7 +198,11 @@ jobs:
   netlify:
     if: contains(fromJson('["web", "widget"]'), github.event.inputs.service)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        region: ${{ fromJSON(github.event.inputs.region) }}
     timeout-minutes: 60
+    environment: ${{ github.event.inputs.environment }}
     permissions:
       contents: read
       packages: write
