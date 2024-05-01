@@ -1,5 +1,11 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
-import { grafanaOnCallConfig, slackConfig, getstreamConfig, rocketChatConfig } from '../credentials';
+import {
+  grafanaOnCallConfig,
+  slackConfig,
+  getstreamConfig,
+  rocketChatConfig,
+  whatsAppBusinessConfig,
+} from '../credentials';
 
 import { ChatProviderIdEnum } from '../provider.enum';
 import { ChannelTypeEnum } from '../../../types';
@@ -77,5 +83,13 @@ export const chatProviders: IProviderConfig[] = [
     credentials: rocketChatConfig,
     docReference: 'https://developer.rocket.chat/reference/api/rest-api/endpoints',
     logoFileName: { light: 'rocket-chat.svg', dark: 'rocket-chat.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.WhatsAppBusiness,
+    displayName: 'WhatsApp Business',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: whatsAppBusinessConfig,
+    docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
+    logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
   },
 ];

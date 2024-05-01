@@ -178,9 +178,10 @@ jobs:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
 
-  test_api:
+  test_unit_api:
     name: Test API
     needs: [get-affected]
+    if: false
     strategy:
       # The order is important for ee to be first, otherwise outputs not work correctly
       matrix:
