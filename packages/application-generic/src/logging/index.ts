@@ -108,7 +108,7 @@ export function createNestLoggingModuleOptions(
   );
 
   return {
-    exclude: [{ path: '/ignore-me-path', method: RequestMethod.ALL }],
+    exclude: [{ path: '*/health-check', method: RequestMethod.GET }],
     pinoHttp: {
       customLevels: loggingLevelSet,
       level: values.level,
