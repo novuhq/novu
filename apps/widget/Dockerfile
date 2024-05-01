@@ -24,7 +24,7 @@ COPY --chown=1000:1000 tsconfig.json .
 COPY --chown=1000:1000 tsconfig.base.json .
 
 COPY --chown=1000:1000 .eslintrc.js .
-COPY --chown=1000:1000 .prettierrc .
+COPY --chown=1000:1000 prettier.config.js .
 COPY --chown=1000:1000 .prettierignore .
 COPY --chown=1000:1000 nx.json .
 COPY --chown=1000:1000 pnpm-workspace.yaml .
