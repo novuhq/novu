@@ -160,17 +160,12 @@ jobs:
           task_definition_family=$(aws ecs describe-task-definition --task-definition ${{ env.task_name }} --query 'taskDefinition.family' --output text)
           task_definition_arns=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --query 'taskDefinitionArns' --output text --sort DESC)
           found=false
-          counter=0
-          for arn in $task_definition_arns; do
+          for arn in $(echo "$task_definition_arns" | tr '\t' '\n' | head -n 20); do
             task_definition=$(aws ecs describe-task-definition --task-definition $arn)
             if echo "$task_definition" | grep -q "$IMAGE_TAG"; then
               echo "Found task definition with image tag $IMAGE_TAG: $arn"
-              needed_arn=$arn
               found=true
-              break
-            fi
-            ((counter++))
-            if [ $counter -ge 20 ]; then
+              needed_arn=$arn
               break
             fi
           done
