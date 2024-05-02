@@ -63,11 +63,13 @@ jobs:
         name: ⚙️ Setup Node Version
         with:
           node-version: '20.8.1'
-          cache: 'pnpm'
 
       # Install Nx
       - name: Install Nx
-        run: npm install -g nx cross-spawn
+        run: npm install -g nx
+
+      - name: Install Nx Cloud
+        run: npm install -g cross-spawn
 
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
