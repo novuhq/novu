@@ -67,7 +67,7 @@ jobs:
 
       # Install Nx
       - name: Install Nx
-        run: npm install -g nx
+        run: npm install -g nx cross-spawn
 
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
