@@ -41,6 +41,17 @@ jobs:
       deployments: write
       id-token: write
     steps:
+      - name: Calculate affected projects
+        uses: e-square-io/nx-affected-matrix@v2
+        id: affected-unit
+        with:
+          targets: 'test:unit'
+      - name: Calculate affected projects
+        uses: e-square-io/nx-affected-matrix@v2
+        id: affected-e2e
+        with:
+          targets: 'test:e2e'
+
       # Get current branch name
       - name: Get branch name
         id: branch-name
