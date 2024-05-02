@@ -1,6 +1,5 @@
 import {
   buildEnvironmentByApiKey,
-  buildKeyById,
   buildNotificationTemplateIdentifierKey,
   buildNotificationTemplateKey,
   buildSubscriberKey,
@@ -11,6 +10,7 @@ import {
   CacheKeyPrefixEnum,
   IdentifierPrefixEnum,
   OrgScopePrefixEnum,
+  buildUnscopedKey,
 } from './shared';
 
 describe('Key builder for entities', () => {
@@ -52,7 +52,7 @@ describe('Key builder for entities', () => {
       const identifierPrefix = IdentifierPrefixEnum.SUBSCRIBER_ID;
       const identifier = '123';
       const expectedKey = `{${type}:${keyEntity}:${identifierPrefix}=${identifier}}`;
-      const actualKey = buildKeyById({
+      const actualKey = buildUnscopedKey({
         type,
         keyEntity,
         identifierPrefix,
