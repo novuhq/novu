@@ -175,7 +175,7 @@ jobs:
             fi
           done
           if [ "$found" = false ]; then
-            echo "Error: Task definition with image tag $IMAGE_TAG not found within the last 20 tasks."
+            echo "::error::Task definition with image tag $IMAGE_TAG not found within the last 20 tasks."
             exit 1
           fi
           current_task_definition_arn=$(aws ecs describe-services --cluster ${{ env.ecs_cluster }} --services ${{ env.ecs_service }} --query 'services[0].taskDefinition' --output text)
