@@ -9,7 +9,7 @@
  * that the entire prefix string is treated as a single key part by Redis.
  *
  * This must be revisited as the Redis Cluster deployment moves beyond a single shard
- * to ensure that the keyspace is distributed evenly.
+ * to ensure that the key-space is distributed evenly.
  *
  * @see https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/#hash-tags
  *
