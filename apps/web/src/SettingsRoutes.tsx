@@ -28,7 +28,7 @@ export const useSettingsRoutes = () => {
           path=""
           element={isInformationArchitectureEnabled ? <Navigate to={ROUTES.PROFILE} replace /> : <ApiKeysCard />}
         />
-        <Route path="billing/*" element={<BillingRoutes />} />
+        <Route path="billing/*" element={isInformationArchitectureEnabled ? <BillingPage /> : <BillingRoutes />} />
         <Route path="email" element={<EmailSettings />} />
         <Route path="team" element={<MembersInvitePageNew />} />
         {/* ensure legacy routes re-route to base settings page */}
@@ -92,7 +92,6 @@ export const useSettingsRoutes = () => {
             <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingPage />} />
             <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
             <Route path={ROUTES.TEAM_SETTINGS} element={<TeamPage />} />
-            <Route path={`${ROUTES.BILLING}/*`} element={<BillingPage />} />
             <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
             <Route path={ROUTES.SECURITY} element={<AccessSecurityPage />} />
             <Route path={`${ROUTES.SETTINGS}`} element={<Navigate to={ROUTES.PROFILE} replace />} />

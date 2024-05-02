@@ -1,5 +1,6 @@
 describe('Organization Brand Screen', function () {
   beforeEach(function () {
+    // TODO: remove after Information Architecture is fully enabled
     cy.mockFeatureFlags({ IS_INFORMATION_ARCHITECTURE_ENABLED: true });
     cy.initializeSession().as('session');
     cy.visit('settings/brand');
