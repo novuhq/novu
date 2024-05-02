@@ -93,7 +93,6 @@ async function affectedProjectsContainingTask(taskName, baseBranch) {
   }
 
   const affectedCommandResult = await pnpmRun(
-    "npx",
     'nx',
     'show',
     'projects',
@@ -125,8 +124,6 @@ async function allProjectsContainingTask(taskName) {
 
   // pnpm nx show projects --affected --withTarget=[task] --files package.json --json
   const affectedCommandResult = await pnpmRun(
-    "npx",
-
     'nx',
     'show',
     'projects',
