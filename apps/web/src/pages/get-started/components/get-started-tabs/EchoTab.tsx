@@ -7,6 +7,7 @@ import { CodeSnippet } from '../CodeSnippet';
 import { text, title } from '../../../../styled-system/recipes';
 import { IconCellTower, IconCloudQueue, IconCode, IconHealthAndSafety } from '@novu/design-system';
 import { DOMAttributes, useEffect } from 'react';
+import { flex } from '../../../../styled-system/patterns';
 
 type CustomElement<T> = Partial<T & DOMAttributes<T> & { children: any }>;
 
@@ -28,7 +29,7 @@ const Title = styled('h2', title);
 const SubTitle = styled('h3', title);
 
 const columnText = css({ fontSize: '88', marginTop: '50', lineHeight: '125', maxW: '214px' });
-const cardWrapper = css({ display: 'flex', gap: '150' });
+const cardWrapper = flex({ gap: '150' });
 
 const columnIcon = css({ marginBottom: '50' });
 
@@ -51,7 +52,7 @@ export const EchoTab = () => {
   }, []);
 
   return (
-    <div className={css({ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '300' })}>
+    <div className={flex({ flexDirection: 'row', alignItems: 'center', gap: '300' })}>
       <div>
         <Title variant="section" className={css({ marginTop: '100' })}>
           Create notification workflows as code
