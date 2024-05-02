@@ -1,8 +1,9 @@
 image:
   file: .gitpod.dockerfile
+  
 tasks:
   - init: npm_config_yes=true pnpm setup:project && gp sync-done setup
-    command: mkdir -p /workspace/data && mongod --dbpath /workspace/data 
+    command: mkdir -p /workspace/data && mongod --dbpath /workspace/data
   - init: gp sync-await setup
     command: redis-server
   - name: Shared Library
