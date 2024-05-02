@@ -1,11 +1,13 @@
 import {
   buildEnvironmentScopedKeyById,
   buildOrganizationScopedKey,
+} from './shared';
+import {
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
   QUERY_PREFIX,
-} from './shared';
+} from './identifiers';
 
 export const buildFeedKey = () => {
   const cache = (

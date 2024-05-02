@@ -10,8 +10,8 @@ import {
   CacheKeyPrefixEnum,
   IdentifierPrefixEnum,
   OrgScopePrefixEnum,
-  buildUnscopedKey,
-} from './shared';
+} from './identifiers';
+import { buildUnscopedKey } from './shared';
 
 describe('Key builder for entities', () => {
   describe('buildSubscriberKey', () => {
@@ -39,6 +39,7 @@ describe('Key builder for entities', () => {
   describe('buildEnvironmentByApiKey', () => {
     it('should build an environment by api key with the given _id', () => {
       const _id = '123';
+      // eslint-disable-next-line max-len
       const expectedKey = `{${CacheKeyTypeEnum.ENTITY}:${CacheKeyPrefixEnum.ENVIRONMENT_BY_API_KEY}:${IdentifierPrefixEnum.API_KEY}=${_id}}`;
       const actualKey = buildEnvironmentByApiKey({ apiKey: _id });
       expect(actualKey).toEqual(expectedKey);

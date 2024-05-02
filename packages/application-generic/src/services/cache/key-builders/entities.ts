@@ -1,12 +1,14 @@
 import { createHash } from './crypto';
 import {
   BLUEPRINT_IDENTIFIER,
-  buildEnvironmentScopedKeyById,
-  buildUnscopedKey,
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
   ServiceConfigIdentifierEnum,
+} from './identifiers';
+import {
+  buildEnvironmentScopedKeyById,
+  buildUnscopedKey,
   buildEnvironmentScopedKey,
   buildOrganizationScopedKeyById,
   buildOrganizationScopedKey,
