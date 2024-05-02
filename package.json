@@ -3,7 +3,6 @@
   "private": true,
   "packageManager": "pnpm@8.9.0",
   "scripts": {
-    "bootstrap": "npm run setup:dev",
     "start": "npm run jarvis",
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
