@@ -7,7 +7,7 @@ import {
   QUERY_PREFIX,
 } from './shared';
 
-const buildFeedKey = () => {
+export const buildFeedKey = () => {
   const cache = (
     command: Record<string, unknown> & {
       environmentId: string;
@@ -44,7 +44,7 @@ const buildFeedKey = () => {
   };
 };
 
-const buildMessageCountKey = () => {
+export const buildMessageCountKey = () => {
   const cache = (
     command: Record<string, unknown> & {
       environmentId: string;
@@ -81,7 +81,7 @@ const buildMessageCountKey = () => {
   };
 };
 
-const buildIntegrationKey = () => {
+export const buildIntegrationKey = () => {
   const cache = (
     command: Record<string, unknown> & { _organizationId: string }
   ): string =>
@@ -155,5 +155,3 @@ export interface IBuildNotificationTemplateByIdentifier {
     | ({ id: string } & { triggerIdentifier?: string })
     | ({ id?: string } & { triggerIdentifier: string });
 }
-
-export { buildFeedKey, buildMessageCountKey, buildIntegrationKey };
