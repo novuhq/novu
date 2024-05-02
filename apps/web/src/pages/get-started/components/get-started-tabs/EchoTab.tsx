@@ -125,7 +125,7 @@ export const EchoTab = () => {
           </div>
         </div>
       </div>
-      <div className={css({ maxW: '600px' })}>
+      <div>
         <nv-echo-terminal></nv-echo-terminal>
       </div>
     </div>
