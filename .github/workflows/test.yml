@@ -41,14 +41,6 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - uses: pnpm/action-setup@v2
-
-      - uses: actions/setup-node@v3
-        name: ⚙️ Setup Node Version
-        with:
-          node-version: '20.8.1'
-          cache: 'pnpm'
-
       # Get current branch name
       - name: Get branch name
         id: branch-name
@@ -65,6 +57,14 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 0
+      - uses: pnpm/action-setup@v2
+
+      - uses: actions/setup-node@v3
+        name: ⚙️ Setup Node Version
+        with:
+          node-version: '20.8.1'
+          cache: 'pnpm'
+
       # Install Nx
       - name: Install Nx
         run: npm install -g nx
