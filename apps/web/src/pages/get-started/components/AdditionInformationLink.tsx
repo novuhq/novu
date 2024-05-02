@@ -5,6 +5,7 @@ import { colors, Text, IconMenuBook } from '@novu/design-system';
 import { Link } from '../consts/shared';
 import { OnboardingUseCasesTabsEnum } from '../consts/OnboardingUseCasesTabsEnum';
 import * as capitalize from 'lodash.capitalize';
+import { When } from '../../../components/utils/When';
 
 interface IAdditionInformationLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   channel: OnboardingUseCasesTabsEnum;
@@ -13,7 +14,12 @@ export function AdditionInformationLink({ channel, ...linkProps }: IAdditionInfo
   return (
     <StyledLink {...linkProps}>
       <IconMenuBook />
-      <StyledText>Learn about {channel === OnboardingUseCasesTabsEnum.ECHO ? capitalize(channel) : channel}</StyledText>
+      <When truthy={channel !== OnboardingUseCasesTabsEnum.ECHO}>
+        <StyledText>Learn about {channel}</StyledText>
+      </When>
+      <When truthy={channel === OnboardingUseCasesTabsEnum.ECHO}>
+        <StyledText>Learn more</StyledText>
+      </When>
     </StyledLink>
   );
 }
