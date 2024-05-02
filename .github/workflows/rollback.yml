@@ -151,7 +151,7 @@ jobs:
             exit 1
           fi
 
-      - name: ECS get output. By using commit hash
+      - name: ECS get output by using commit hash
         if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
         id: ecs-output-commit-hash
         env:
@@ -167,15 +167,16 @@ jobs:
               echo "Found task definition with image tag $IMAGE_TAG: $arn"
               needed_arn=$arn
               found=true
-              break  # Stop the loop
+              break
             fi
             ((counter++))
             if [ $counter -ge 20 ]; then
-              break  # Stop the loop
+              break
             fi
           done
           if [ "$found" = false ]; then
             echo "Error: Task definition with image tag $IMAGE_TAG not found within the last 20 tasks."
+            exit 1
           fi
           current_task_definition_arn=$(aws ecs describe-services --cluster ${{ env.ecs_cluster }} --services ${{ env.ecs_service }} --query 'services[0].taskDefinition' --output text)
           echo "current_task_definition_arn=$current_task_definition_arn" >> $GITHUB_ENV
