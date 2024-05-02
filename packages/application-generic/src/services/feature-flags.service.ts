@@ -10,6 +10,7 @@ import {
   IContextualFeatureFlag,
   IGlobalFeatureFlag,
 } from './types';
+import { SystemFlagsEnum } from '@novu/shared';
 
 const LOG_CONTEXT = 'FeatureFlagsService';
 
@@ -159,6 +160,18 @@ export class FeatureFlagsService {
       default:
         throw new Error('Invalid context target');
     }
+  }
+
+  public subscribe<T>(key: SystemFlagsEnum, func: (value: T) => void): void {
+    //TODO if not initialized or not existing do a default value
+    Logger.log('before check');
+    if (!this.isServiceEnabled()) {
+      Logger.log('in check');
+
+      return;
+    }
+
+    this.service.subscribe(key, func);
   }
 
   private isServiceEnabled(): boolean {

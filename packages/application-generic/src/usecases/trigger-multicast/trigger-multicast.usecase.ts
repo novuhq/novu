@@ -15,10 +15,9 @@ import {
   TriggerRecipientSubscriber,
 } from '@novu/shared';
 
-import { PinoLogger } from '../../logging';
 import { InstrumentUsecase } from '../../instrumentation';
 import { ApiException } from '../../utils/exceptions';
-import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
+import { SubscriberProcessQueueService } from '../../services';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
 import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
@@ -39,7 +38,7 @@ const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
 @Injectable()
 export class TriggerMulticast {
   constructor(
-    private logger: PinoLogger,
+    private logger: Logger,
     private subscriberProcessQueueService: SubscriberProcessQueueService,
     private topicSubscribersRepository: TopicSubscribersRepository,
     private topicRepository: TopicRepository,

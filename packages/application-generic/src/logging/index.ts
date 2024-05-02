@@ -2,8 +2,8 @@ import { NestInterceptor } from '@nestjs/common';
 import {
   LoggerErrorInterceptor,
   Logger,
-  LoggerModule,
   PinoLogger,
+  LoggerModule,
   getLoggerToken,
   Params,
 } from 'nestjs-pino';
@@ -11,10 +11,20 @@ import { storage, Store } from 'nestjs-pino/storage';
 import { sensitiveFields } from './masking';
 export * from './LogDecorator';
 
+import { FeatureFlaggedLogger } from './featureFlaggedLogger.service';
+
 export function getErrorInterceptor(): NestInterceptor {
   return new LoggerErrorInterceptor();
 }
-export { Logger, LoggerModule, PinoLogger, storage, Store, getLoggerToken };
+export {
+  // Logger,
+  LoggerModule,
+  FeatureFlaggedLogger as Logger,
+  PinoLogger,
+  storage,
+  Store,
+  getLoggerToken,
+};
 
 const loggingLevelArr = ['error', 'warn', 'info', 'verbose', 'debug'];
 

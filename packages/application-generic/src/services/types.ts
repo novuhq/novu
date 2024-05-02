@@ -2,6 +2,7 @@ import {
   EnvironmentId,
   FeatureFlagsKeysEnum,
   OrganizationId,
+  SystemFlagsEnum,
   UserId,
 } from '@novu/shared';
 
@@ -44,4 +45,5 @@ export interface IFeatureFlagsService {
   gracefullyShutdown: () => Promise<void>;
   initialize: () => Promise<void>;
   isEnabled: boolean;
+  subscribe: <T>(key: SystemFlagsEnum, func: (value: T) => void) => void;
 }

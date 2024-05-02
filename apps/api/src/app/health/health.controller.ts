@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import {
   HealthCheck,
@@ -28,6 +28,8 @@ export class HealthController {
   @Get()
   @HealthCheck()
   healthCheck(): Promise<HealthCheckResult> {
+    Logger.log('Health Check');
+
     const checks: HealthIndicatorFunction[] = [
       async () => this.dalHealthIndicator.isHealthy(),
       async () => this.workflowQueueHealthIndicator.isHealthy(),

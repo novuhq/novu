@@ -12,6 +12,7 @@ import {
   OrganizationId,
   UserId,
 } from './types';
+import { SystemFlagsEnum } from '@novu/shared';
 
 const LOG_CONTEXT = 'LaunchDarklyService';
 
@@ -62,6 +63,10 @@ export class LaunchDarklyService implements IFeatureFlagsService {
     return await this.client.variation(key, context, defaultValue);
   }
 
+  public async subscribe<T>(key: SystemFlagsEnum, func: any): Promise<void> {
+    this.client.on(key, func);
+  }
+
   public async getWithAnonymousContext<T>(
     key: FeatureFlagsKeysEnum,
     defaultValue: T
@@ -72,9 +77,7 @@ export class LaunchDarklyService implements IFeatureFlagsService {
       anonymous: true,
     };
 
-    const result = await this.get(key, anonymousUserContext, defaultValue);
-
-    return result;
+    return await this.get(key, anonymousUserContext, defaultValue);
   }
 
   public async getWithEnvironmentContext<T>(
