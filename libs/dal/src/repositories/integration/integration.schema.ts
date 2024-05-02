@@ -59,6 +59,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       externalLink: Schema.Types.String,
       apiToken: Schema.Types.String,
       channelId: Schema.Types.String,
+      phoneNumberIdentification: Schema.Types.String,
     },
     active: {
       type: Schema.Types.Boolean,

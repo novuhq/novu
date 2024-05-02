@@ -45,6 +45,7 @@ export enum CredentialsKeyEnum {
   state = 'state',
   externalLink = 'externalLink',
   channelId = 'channelId',
+  phoneNumberIdentification = 'phoneNumberIdentification',
 }
 
 export enum EmailProviderIdEnum {
@@ -114,6 +115,7 @@ export enum ChatProviderIdEnum {
   GrafanaOnCall = 'grafana-on-call',
   GetStream = 'getstream',
   RocketChat = 'rocket-chat',
+  WhatsAppBusiness = 'whatsapp-business',
 }
 
 export enum PushProviderIdEnum {
