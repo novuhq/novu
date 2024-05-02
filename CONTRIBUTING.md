@@ -52,7 +52,7 @@ You can open a new issue with this [issue form](https://github.com/novuhq/novu/i
 - **(Optional)** pnpm - Needed if you want to install new packages
 - **(Optional)** localstack (required only in S3 related modules)
 
-### Setup the project
+### Setup the project 
 
 The project is a monorepo, meaning that it is a collection of multiple packages managed in the same repository.
 
