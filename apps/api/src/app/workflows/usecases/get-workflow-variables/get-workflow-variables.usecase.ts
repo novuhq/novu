@@ -36,10 +36,10 @@ export class GetWorkflowVariables {
 
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-translation')?.TranslationsService) {
+        if (!require('@novu/ee-shared-services')?.TranslationsService) {
           throw new ApiException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
+        const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
         translationVariables = await service.getTranslationVariables(_environmentId, _organizationId);
       }
     } catch (e) {

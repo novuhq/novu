@@ -455,8 +455,7 @@ export class SendMessageEmail extends SendMessageBase {
         'mail_unexpected_error',
         error.message || error.name || 'Error while sending email with provider',
         command,
-        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
-        error
+        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR
       );
 
       await this.executionLogRoute.execute(
@@ -538,6 +537,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     senderName: overrides?.senderName || options.senderName,
     subject: overrides?.subject || options.subject,
     customData: overrides?.customData || {},
+    headers: overrides?.headers || {},
   };
 };
 

@@ -10,7 +10,7 @@ import {
   BodyHolder,
   FooterHolder,
   HeaderHolder,
-  scrollable,
+  scrollableClass,
   sidebarDrawerContentClassName,
   useDrawerStyles,
 } from './Sidebar.styles';
@@ -62,7 +62,7 @@ export const SidebarFormless = ({
     >
       <div
         data-test-id={dataTestId}
-        className={cx(sidebarDrawerContentClassName, { [scrollable]: isParentScrollable })}
+        className={cx(sidebarDrawerContentClassName, { [scrollableClass]: isParentScrollable })}
       >
         <HeaderHolder className="sidebar-header-holder">
           {isExpanded && onBack && (

@@ -89,10 +89,10 @@ export class SendTestEmail {
 
     if (command.chimera) {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-chimera')?.PreviewStep) {
+        if (!require('@novu/ee-echo-api')?.PreviewStep) {
           throw new ApiException('Chimera module is not loaded');
         }
-        const service = this.moduleRef.get(require('@novu/ee-chimera')?.PreviewStep, { strict: false });
+        const service = this.moduleRef.get(require('@novu/ee-echo-api')?.PreviewStep, { strict: false });
         const data = await service.execute({
           workflowId: command.workflowId,
           stepId: command.stepId,
