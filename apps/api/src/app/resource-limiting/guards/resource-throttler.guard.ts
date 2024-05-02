@@ -13,6 +13,7 @@ import { IJwtPayload, FeatureFlagsKeysEnum, ResourceEnum } from '@novu/shared';
 import { Observable } from 'rxjs';
 import { ResourceCategory } from './resource-throttler.decorator';
 
+// eslint-disable-next-line max-len
 export const THROTTLED_EXCEPTION_MESSAGE = `You have exceeded the number of allowed requests for this resource. Please visit ${process.env.FRONT_BASE_URL}/settings/billing to upgrade your plan.`;
 
 /**
@@ -47,7 +48,7 @@ export class ResourceThrottlerInterceptor implements NestInterceptor {
             organizationId,
             environmentId: 'system',
             userId: 'system',
-            key: FeatureFlagsKeysEnum.IS_EVENT_RESOURCE_LIMITING_ENABLED,
+            key: FeatureFlagsKeysEnum.IS_EVENT_QUOTA_LIMITING_ENABLED,
           })
         );
 

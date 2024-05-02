@@ -40,14 +40,14 @@ describe('Resource Limiting', () => {
 
     describe('Event resource', () => {
       it('should block the request when the Feature Flag is enabled', async () => {
-        process.env.IS_EVENT_RESOURCE_LIMITING_ENABLED = 'true';
+        process.env.IS_EVENT_QUOTA_LIMITING_ENABLED = 'true';
         const response = await request(pathEvent);
 
         expect(response.status).to.equal(402);
       });
 
       it('should NOT block the request when the Feature Flag is disabled', async () => {
-        process.env.IS_EVENT_RESOURCE_LIMITING_ENABLED = 'false';
+        process.env.IS_EVENT_QUOTA_LIMITING_ENABLED = 'false';
         const response = await request(pathEvent);
 
         expect(response.status).to.equal(200);
@@ -56,14 +56,14 @@ describe('Resource Limiting', () => {
 
     describe('Default resources (no decorator)', () => {
       it('should handle the request when the Feature Flag is enabled', async () => {
-        process.env.IS_EVENT_RESOURCE_LIMITING_ENABLED = 'true';
+        process.env.IS_EVENT_QUOTA_LIMITING_ENABLED = 'true';
         const response = await request(pathDefault);
 
         expect(response.status).to.equal(200);
       });
 
       it('should handle the request when the Feature Flag is disabled', async () => {
-        process.env.IS_EVENT_RESOURCE_LIMITING_ENABLED = 'false';
+        process.env.IS_EVENT_QUOTA_LIMITING_ENABLED = 'false';
         const response = await request(pathDefault);
 
         expect(response.status).to.equal(200);
