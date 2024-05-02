@@ -49,6 +49,7 @@ import { useSettingsRoutes } from './SettingsRoutes';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   return (
     <Routes>
@@ -116,10 +117,12 @@ export const AppRoutes = () => {
         <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
         <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
         <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
-        <Route path={ROUTES.BRAND} element={<BrandPage />}>
-          <Route path="" element={<BrandingForm />} />
-          <Route path="layouts" element={<LayoutsListPage />} />
-        </Route>
+        {!isInformationArchitectureEnabled && (
+          <Route path={ROUTES.BRAND} element={<BrandPage />}>
+            <Route path="" element={<BrandingForm />} />
+            <Route path="layouts" element={<LayoutsListPage />} />
+          </Route>
+        )}
         <Route path={ROUTES.LAYOUT} element={<LayoutsPage />}>
           <Route path="" element={<LayoutsListPage />} />
         </Route>

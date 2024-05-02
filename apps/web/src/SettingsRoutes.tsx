@@ -31,7 +31,6 @@ export const useSettingsRoutes = () => {
         <Route path="billing/*" element={<BillingRoutes />} />
         <Route path="email" element={<EmailSettings />} />
         <Route path="team" element={<MembersInvitePageNew />} />
-        <Route path="brand" element={<BrandingFormOld />} />
         {/* ensure legacy routes re-route to base settings page */}
         <Route
           path="permissions"
