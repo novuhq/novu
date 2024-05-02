@@ -64,10 +64,6 @@ jobs:
         with:
           node-version: '20.8.1'
 
-      # Install Nx
-      - name: Install Nx
-        run: npm install -g nx
-
         # Install Cross Spawn
       - name: Install Script Dependencies
         run: cd scripts && npm i

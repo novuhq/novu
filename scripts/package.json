@@ -6,6 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "devDependencies": {
+    "nx": "^16.10.0",
     "@pnpm/filter-workspace-packages": "^7.0.6",
     "@nrwl/workspace": "^16.10.0",
     "cross-spawn": "^7.0.3"
