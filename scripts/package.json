@@ -1,0 +1,17 @@
+{
+  "name": "@novu/scripts",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@pnpm/filter-workspace-packages": "^7.0.6",
+    "cross-spawn": "^7.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/novuhq/novu.git"
+  },
+  "private": true
+}
