@@ -1,7 +1,11 @@
 import styled from '@emotion/styled';
+import { useMantineTheme } from '@mantine/core';
 import { colors, shadows } from '../config';
 
-export const CardTile = styled.button`
+export const CardTile = styled.button(() => {
+  const theme = useMantineTheme();
+
+  return `
   outline: none;
   border: none;
   cursor: pointer;
@@ -15,7 +19,7 @@ export const CardTile = styled.button`
   height: 100px;
   border-radius: 8px;
   color: ${colors.B60};
-  background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B20 : colors.B98)};
+  background: ${theme.colorScheme === 'dark' ? colors.B20 : colors.B98};
   box-shadow: ${shadows.dark};
   font-size: 14px;
   transition: all 0.25s ease;
@@ -29,8 +33,8 @@ export const CardTile = styled.button`
   }
 
   &:not(:disabled)&:hover {
-    color: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.white : colors.B60)};
-    background: ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight)};
+    color: ${theme.colorScheme === 'dark' ? colors.white : colors.B60};
+    background: ${theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight};
   }
 
   &[data-can-be-hidden='true'] {
@@ -55,3 +59,4 @@ export const CardTile = styled.button`
     }
   }
 `;
+});
