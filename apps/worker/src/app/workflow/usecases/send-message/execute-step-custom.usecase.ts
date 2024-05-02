@@ -14,7 +14,7 @@ export class ExecuteStepCustom {
     await this.jobRepository.updateOne(
       { _id: command.job._id, _environmentId: command.environmentId },
       {
-        $set: { 'overrides.customStep': command.chimeraData?.outputs },
+        $set: { stepOutput: command.chimeraData?.outputs },
       }
     );
   }

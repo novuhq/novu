@@ -40,6 +40,7 @@ export class JobEntity {
   type?: StepTypeEnum;
   _actorId?: string;
   actorId?: string;
+  stepOutput?: Record<string, unknown>;
 }
 
 export type JobDBModel = ChangePropsValueType<
