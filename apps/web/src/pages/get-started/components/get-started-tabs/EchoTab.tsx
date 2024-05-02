@@ -1,13 +1,12 @@
 import { useSegment } from '@novu/shared-web';
 import { css, cx } from '../../../../styled-system/css';
-import { styled } from '../../../../styled-system/jsx';
+import { Flex, styled } from '../../../../styled-system/jsx';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
 import { AdditionInformationLink } from '../AdditionInformationLink';
 import { CodeSnippet } from '../CodeSnippet';
 import { text, title } from '../../../../styled-system/recipes';
 import { IconCellTower, IconCloudQueue, IconCode, IconHealthAndSafety } from '@novu/design-system';
 import { DOMAttributes, useEffect } from 'react';
-import { flex } from '../../../../styled-system/patterns';
 
 type CustomElement<T> = Partial<T & DOMAttributes<T> & { children: any }>;
 
@@ -28,12 +27,9 @@ const Text = styled('p', text);
 const Title = styled('h2', title);
 const SubTitle = styled('h3', title);
 
-const columnText = css({ fontSize: '88', marginTop: '50', lineHeight: '125', maxW: '214px' });
-const cardWrapper = flex({ gap: '150' });
-
+const columnText = css({ textStyle: 'text.main', marginTop: '50', maxW: '214px' });
 const columnIcon = css({ marginBottom: '50' });
-
-const mainText = css({ maxW: '645px', fontSize: '88', lineHeight: '125' });
+const mainText = css({ textStyle: 'text.main', maxW: '645px' });
 
 export const EchoTab = () => {
   const segment = useSegment();
@@ -52,7 +48,7 @@ export const EchoTab = () => {
   }, []);
 
   return (
-    <div className={flex({ flexDirection: 'row', alignItems: 'center', gap: '300' })}>
+    <Flex direction="row" alignItems="center" gap="300">
       <div>
         <Title variant="section" className={css({ marginTop: '100' })}>
           Create notification workflows as code
@@ -62,7 +58,7 @@ export const EchoTab = () => {
           the channel-specific content in real-time.
         </Text>
         <Text variant="secondary" className={cx(css({ marginTop: '125', marginBottom: '150' }), mainText)}>
-          Integrate React.Email, MJML, and other template engines easily.
+          Integrate React.Email, MJML, and other template engines easily.
         </Text>
         <SubTitle variant="subsection">Try it out now</SubTitle>
         <Text variant="secondary" className={mainText}>
@@ -93,7 +89,7 @@ export const EchoTab = () => {
             onClick={handleDocsLinkClick}
           />
         </div>
-        <div className={cardWrapper}>
+        <Flex gap="150">
           <div>
             <IconCode size={32} className={columnIcon} />
             <SubTitle variant="subsection">Bring your own code</SubTitle>
@@ -108,8 +104,8 @@ export const EchoTab = () => {
               Use React.email, MJML, or fetch templates from Braze, Hubspot, Sendgrid, more…
             </Text>
           </div>
-        </div>
-        <div className={cx(cardWrapper, css({ marginTop: '150' }))}>
+        </Flex>
+        <Flex className={css({ marginTop: '150' })}>
           <div>
             <IconHealthAndSafety size={32} className={columnIcon} />
             <SubTitle variant="subsection">Type safety</SubTitle>
@@ -124,11 +120,11 @@ export const EchoTab = () => {
               Sync your own workflows with Novu Cloud and ease collaboration.
             </Text>
           </div>
-        </div>
+        </Flex>
       </div>
       <div>
         <nv-echo-terminal></nv-echo-terminal>
       </div>
-    </div>
+    </Flex>
   );
 };
