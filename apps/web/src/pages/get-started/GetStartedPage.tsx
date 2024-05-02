@@ -20,7 +20,7 @@ export function GetStartedPage() {
 
   useEffect(() => {
     segment.track('Page visit - [Get Started]');
-  }, []);
+  }, [segment]);
 
   return (
     <PageContainer title={PAGE_TITLE}>
