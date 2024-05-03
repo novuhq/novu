@@ -31,7 +31,7 @@ const columnText = css({ textStyle: 'text.main', marginTop: '50', maxW: '214px' 
 const columnIcon = css({ marginBottom: '50' });
 const mainText = css({ textStyle: 'text.main', maxW: '645px' });
 
-export const EchoTab = () => {
+export const EchoTab = ({ className }: { className?: string }) => {
   const segment = useSegment();
 
   const handleDocsLinkClick = () => {
@@ -47,8 +47,20 @@ export const EchoTab = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const tabs = document.getElementsByClassName('nv-terminal-tab');
+    for (let i = 0; i < tabs.length; i++) {
+      const tab = tabs[i];
+      tab.addEventListener('click', () => {
+        segment.track(`Code snippet tab clicked - [Get Started]`, {
+          language: tab.innerHTML,
+        });
+      });
+    }
+  });
+
   return (
-    <Flex direction="row" alignItems="center" gap="300">
+    <Flex className={className} direction="row" alignItems="center" gap="300">
       <div>
         <Title variant="section" className={css({ marginTop: '100' })}>
           Create notification workflows as code
@@ -105,7 +117,7 @@ export const EchoTab = () => {
             </Text>
           </div>
         </Flex>
-        <Flex className={css({ marginTop: '150' })}>
+        <Flex gap="150" className={css({ marginTop: '150' })}>
           <div>
             <IconHealthAndSafety size={32} className={columnIcon} />
             <SubTitle variant="subsection">Type safety</SubTitle>
