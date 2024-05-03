@@ -39,7 +39,6 @@ const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
 @Injectable()
 export class TriggerMulticast {
   constructor(
-    private logger: PinoLogger,
     private subscriberProcessQueueService: SubscriberProcessQueueService,
     private topicSubscribersRepository: TopicSubscribersRepository,
     private topicRepository: TopicRepository,
