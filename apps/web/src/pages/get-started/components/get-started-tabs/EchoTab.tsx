@@ -74,7 +74,7 @@ export const EchoTab = ({ className }: { className?: string }) => {
         </Text>
         <SubTitle variant="subsection">Try it out now</SubTitle>
         <Text variant="secondary" className={mainText}>
-          Open your terminal and launch the Echo Studio
+          Open your terminal and launch the development studio
         </Text>
         <CodeSnippet
           command={COMMAND}
