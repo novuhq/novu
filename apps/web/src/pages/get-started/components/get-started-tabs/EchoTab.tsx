@@ -115,9 +115,9 @@ export const EchoTab = () => {
           </div>
           <div>
             <IconCloudQueue size={32} className={columnIcon} />
-            <SubTitle variant="subsection">Cloud synchronization</SubTitle>
+            <SubTitle variant="subsection">Sync and build visually</SubTitle>
             <Text variant="secondary" className={columnText}>
-              Sync your own workflows with Novu Cloud and ease collaboration.
+              Sync local workflows with Novu Cloud and ease collaboration using the web editor.
             </Text>
           </div>
         </Flex>
