@@ -638,7 +638,8 @@
     "elif",
     "websockets",
     "whatsapp",
-    "whatsappbusiness"
+    "whatsappbusiness",
+    "parens"
   ],
   "flagWords": [],
   "patterns": [
