@@ -72,24 +72,6 @@ export class TriggerMulticast {
         );
       }
 
-      const isEnabled = await this.getFeatureFlag.execute(
-        GetFeatureFlagCommand.create({
-          environmentId,
-          organizationId,
-          userId,
-          key: FeatureFlagsKeysEnum.IS_TOPIC_NOTIFICATION_ENABLED,
-        })
-      );
-
-      if (!isEnabled) {
-        Logger.log(
-          `The IS_TOPIC_NOTIFICATION_ENABLED feature flag is disabled, skipping trigger multicast`,
-          LOG_CONTEXT
-        );
-
-        return;
-      }
-
       const topics = await this.getTopicsByTopicKeys(
         organizationId,
         environmentId,
