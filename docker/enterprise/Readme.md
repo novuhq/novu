@@ -4,6 +4,8 @@ This documentation guides you through the process of setting up an on-premises t
 
 To do this trail you will need to contact [sales](https://notify.novu.co/meetings/ryannovu/30minutes) to get a token.
 
+
+
 Note: This is not our preferred way of doing an enterprise trail,
 all features are available on Novu Cloud with a free trial.
 
@@ -17,6 +19,9 @@ Ensure that the following software has been installed on your system:
 ## Guide
 
 ### Get the Code
+
+Warning: Before you start this process, If you have an existing mongodb volume you will need to remove it to 
+ensure the enterprise tables are installed correctly.
 
 Clone the Novu repository and navigate to the Docker directory:
 
