@@ -731,6 +731,5 @@
     ".env.local",
     ".env.production",
     ".env.test",
-    "servername"
   ]
 }
