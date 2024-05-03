@@ -23,6 +23,10 @@ export class SegmentService {
   }
 
   async track(event: string, data?: Record<string, unknown>) {
+    if (!this.isSegmentEnabled()) {
+      return;
+    }
+
     await api.post('/v1/telemetry/measure', {
       event: event + ' - [WEB]',
       data,
