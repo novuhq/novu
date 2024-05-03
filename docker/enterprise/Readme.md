@@ -27,7 +27,7 @@ Clone the Novu repository and navigate to the Docker directory:
 
 ```sh
 # Add the token to the shell env
-GH_TOKEN=ghr_xxxx
+GH_TOKEN=ghp_xxxx
 
 # Get the code
 git clone https://github.com/novuhq/novu
