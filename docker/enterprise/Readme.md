@@ -2,11 +2,9 @@
 
 This documentation guides you through the process of setting up an on-premises trial of Novu Enterprise using Docker Compose.
 
-To do this trail you will need to contact [sales](https://notify.novu.co/meetings/ryannovu/30minutes) to get a token.
+To do this trial you will need to contact [sales](https://notify.novu.co/meetings/ryannovu/30minutes) to get a token.
 
-
-
-Note: This is not our preferred way of doing an enterprise trail,
+Note: This is not our preferred way of doing an enterprise trial,
 all features are available on Novu Cloud with a free trial.
 
 ## Before You Begin
@@ -27,7 +25,7 @@ Clone the Novu repository and navigate to the Docker directory:
 
 ```sh
 # Add the token to the shell env
-GH_TOKEN=ghp_xxxx
+NOVU_ENTERPRISE_TOKEN=ghp_xxxx
 
 # Get the code
 git clone https://github.com/novuhq/novu
@@ -39,7 +37,7 @@ cd novu/docker
 cp .env.example ./enterprise/.env
 
 # Login
-echo "$GH_TOKEN" | docker login --username cliftonz --password-stdin
+echo "$NOVU_ENTERPRISE_TOKEN" | docker login --username <provided_username> --password-stdin
 
 # Start Novu
 docker-compose -f ./enterprise/docker-compose.enterprise.yml up
