@@ -46,13 +46,13 @@ testFlagEnumValidity(ValidFlagsEnum);
 
 enum InvalidKeyFlagsEnum {
   IS_SOMETHING_ENABLED = 'IS_SOMETHING_ENABLED',
-  INVALID_ENABLED = 'IS_INVALID_ENABLED',
+  INVALID_ENABLED = 'INVALID_ENABLED',
 }
 // @ts-expect-error - Invalid key - INVALID_ENABLED
 testFlagEnumValidity(InvalidKeyFlagsEnum);
 enum InvalidValueFlagsEnum {
   IS_SOMETHING_ENABLED = 'IS_SOMETHING_ENABLED',
-  IS_INVALID_ENABLED = 'INVALID_ENABLED',
+  INVALID_ENABLED = 'INVALID_ENABLED',
 }
 // @ts-expect-error - Invalid value on IS_INVALID_ENABLED: 'INVALID_ENABLED'
 testFlagEnumValidity(InvalidValueFlagsEnum);
