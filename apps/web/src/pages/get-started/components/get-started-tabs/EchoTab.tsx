@@ -66,7 +66,7 @@ export const EchoTab = ({ className }: { className?: string }) => {
           Create notification workflows as code
         </Title>
         <Text variant="secondary" className={cx(css({ marginTop: '50' }), mainText)}>
-          With Novu, you to write notification workflows in your codebase locally right in your IDE and preview and edit
+          With Novu, you write notification workflows in your codebase locally right in your IDE and preview and edit
           the channel-specific content in real-time.
         </Text>
         <Text variant="secondary" className={cx(css({ marginTop: '125', marginBottom: '150' }), mainText)}>
