@@ -81,10 +81,12 @@ export interface IPushOptions {
 }
 
 export interface IChatOptions {
-  webhookUrl: string;
+  phoneNumber?: string;
+  webhookUrl?: string;
   channel?: string;
   content: string;
   blocks?: IBlock[];
+  customData?: Record<string, any>;
 }
 
 export interface IBlock {
