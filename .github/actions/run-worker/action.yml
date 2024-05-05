@@ -20,7 +20,7 @@ runs:
   steps:
     - name: Build worker
       shell: bash
-      run: CI='' pnpm build:worker
+      run: CI='' pnpm build:worker --skip-nx-cache
 
     - name: Start worker
       shell: bash
