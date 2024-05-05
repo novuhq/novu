@@ -4,6 +4,7 @@ import * as sinon from 'sinon';
 import * as chai from 'chai';
 
 import { bootstrap } from '../src/bootstrap';
+import { echoServer } from './echo.server';
 
 const dalService = new DalService();
 
@@ -13,11 +14,14 @@ before(async () => {
    */
   chai.config.truncateThreshold = 0;
   await testServer.create(await bootstrap());
+  await echoServer.start();
+
   await dalService.connect(process.env.MONGO_URL);
 });
 
 after(async () => {
   await testServer.teardown();
+  await echoServer.stop();
 
   try {
     await dalService.destroy();
