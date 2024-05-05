@@ -8,6 +8,11 @@ inputs:
     description: 'The Launch Darkly SDK key to use'
     required: false
     default: ''
+  ee:
+    description: 'Whether to run the EE version of the tests'
+    required: false
+    default: false
+    type: boolean
 
 runs:
   using: composite
@@ -21,6 +26,7 @@ runs:
       shell: bash
       env:
         LAUNCH_DARKLY_SDK_KEY: ${{ inputs.launch_darkly_sdk_key }}
+        NOVU_ENTERPRISE: ${{ inputs.ee }}
       run: cd apps/worker && pnpm start:test &
 
     - name: Wait on worker
