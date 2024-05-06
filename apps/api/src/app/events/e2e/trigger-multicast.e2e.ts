@@ -140,7 +140,6 @@ describe('TriggerMulticast', () => {
   }
 
   beforeEach(async () => {
-    process.env.LAUNCH_DARKLY_SDK_KEY = '';
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();
