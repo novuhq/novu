@@ -639,7 +639,7 @@
     "websockets",
     "whatsapp",
     "whatsappbusiness",
-    "parens"
+    "parens",
   ],
   "flagWords": [],
   "patterns": [
@@ -731,5 +731,6 @@
     ".env.local",
     ".env.production",
     ".env.test",
+    ".example.env",
   ]
 }
