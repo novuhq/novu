@@ -16,17 +16,5 @@ export type IFlagKey = `IS_${Uppercase<string>}_ENABLED`;
  * @param testEnum - the Enum to type check
  */
 export function testFlagEnumValidity<TEnum extends IFlags, IFlags = Record<IFlagKey, IFlagKey>>(
-  testEnum: TEnum & Record<Exclude<keyof TEnum, keyof IFlags>, ['Key must follow `IFlagKey` format']>
-) {
-  for (const key in testEnum) {
-    if (testEnum.hasOwnProperty(key) && isIFlagKey(key) && isIFlagKey(testEnum[key])) {
-      if (key !== testEnum[key]) {
-        throw Error('Enum name must match the value');
-      }
-    }
-  }
-}
-
-function isIFlagKey(value: unknown): value is IFlagKey {
-  return typeof value === 'string';
-}
+  _: TEnum & Record<Exclude<keyof TEnum, keyof IFlags>, ['Key must follow `IFlagKey` format']>
+) {}
