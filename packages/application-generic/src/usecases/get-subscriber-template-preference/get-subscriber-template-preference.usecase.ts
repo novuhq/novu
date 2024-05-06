@@ -56,17 +56,15 @@ export class GetSubscriberTemplatePreference {
 
     const initialActiveChannels = await this.getActiveChannels(command);
     const subscriberPreference =
-      command.preference === undefined
-        ? await this.subscriberPreferenceRepository.findOne(
-            {
-              _environmentId: command.environmentId,
-              _subscriberId: subscriber._id,
-              _templateId: command.template._id,
-            },
-            'enabled channels',
-            { readPreference: 'secondaryPreferred' }
-          )
-        : command.preference;
+      await this.subscriberPreferenceRepository.findOne(
+        {
+          _environmentId: command.environmentId,
+          _subscriberId: subscriber._id,
+          _templateId: command.template._id,
+        },
+        'enabled channels',
+        { readPreference: 'secondaryPreferred' }
+      );
     const workflowOverride = await this.getWorkflowOverride(command);
 
     const templateChannelPreference = command.template.preferenceSettings;
@@ -100,13 +98,10 @@ export class GetSubscriberTemplatePreference {
       return null;
     }
 
-    const tenant = await this.tenantRepository.findOne(
-      {
-        _environmentId: command.environmentId,
-        identifier: command.tenant.identifier,
-      },
-      '_id'
-    );
+    const tenant = await this.tenantRepository.findOne({
+      _environmentId: command.environmentId,
+      identifier: command.tenant.identifier,
+    });
 
     if (!tenant) {
       return null;

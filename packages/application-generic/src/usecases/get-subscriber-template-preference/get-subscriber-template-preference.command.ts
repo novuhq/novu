@@ -1,8 +1,4 @@
-import {
-  NotificationTemplateEntity,
-  SubscriberEntity,
-  SubscriberPreferenceEntity,
-} from '@novu/dal';
+import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
 import { IsDefined, IsNotEmpty, IsOptional } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../commands';
@@ -18,10 +14,4 @@ export class GetSubscriberTemplatePreferenceCommand extends EnvironmentWithSubsc
 
   @IsOptional()
   tenant?: ITenantDefine;
-
-  @IsOptional()
-  preference?: Pick<
-    SubscriberPreferenceEntity,
-    'channels' | '_templateId' | 'enabled'
-  >;
 }
