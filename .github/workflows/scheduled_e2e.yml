@@ -21,6 +21,7 @@ jobs:
     name: Test Web Cypress
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
+    environment: Development
     with:
       ee: true
       slack_notification: true
@@ -28,6 +29,7 @@ jobs:
   test_widget:
     name: Test Widget Cypress
     uses: ./.github/workflows/reusable-widget-e2e.yml
+    environment: Development
     with:
       ee: true
       slack_notification: true
