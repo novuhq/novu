@@ -1,5 +1,5 @@
-import { IEmailJsConfig } from '@novu/emailjs/build/main/lib/emailjs.config';
-import { EmailJsProvider } from '@novu/emailjs';
+import { IEmailJsConfig } from '@novu/providers';
+import { EmailJsProvider } from '@novu/providers';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseHandler } from './base.handler';
 

@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { ResendEmailProvider } from '@novu/resend';
+import { ResendEmailProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class ResendHandler extends BaseHandler {

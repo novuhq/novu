@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { Sms77SmsProvider } from '@novu/sms77';
+import { Sms77SmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class Sms77Handler extends BaseSmsHandler {

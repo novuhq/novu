@@ -3,7 +3,7 @@ import {
   ICredentials,
   EmailProviderIdEnum,
 } from '@novu/shared';
-import { MailtrapEmailProvider } from '@novu/mailtrap';
+import { MailtrapEmailProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class MailtrapHandler extends BaseHandler {
