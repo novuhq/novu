@@ -60,7 +60,7 @@ export class PasswordResetRequest {
   private static getResetRedirectLink(token: string, user: UserEntity, src?: PasswordResetFlowEnum): string {
     // ensure that only users without passwords are allowed to reset
     if (src === PasswordResetFlowEnum.USER_PROFILE && !user.password) {
-      return `${process.env.FRONT_BASE_URL}/settings/profile?token=${token}`;
+      return `${process.env.FRONT_BASE_URL}/settings/profile?token=${token}&view=password`;
     }
 
     /**

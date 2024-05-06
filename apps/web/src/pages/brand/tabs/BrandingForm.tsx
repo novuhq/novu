@@ -4,7 +4,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { IResponseError, UploadTypesEnum, MIME_TYPE_TO_FILE_EXTENSION } from '@novu/shared';
+import { IResponseError, UploadTypesEnum, MIME_TYPE_TO_FILE_EXTENSION, IOrganizationEntity } from '@novu/shared';
 import { Button, ColorInput, colors, Select, inputStyles, Upload, Trash, errorMessage } from '@novu/design-system';
 
 import { updateBrandingSettings } from '../../../api/organization';
@@ -18,6 +18,14 @@ import { useAuthContext } from '@novu/shared-web';
  */
 export function BrandingForm() {
   const { currentOrganization: organization } = useAuthContext();
+
+  return <BrandingFormRenderer organization={organization} />;
+}
+
+/**
+ * @deprecated Use `BrandingForm` from the v2 folder instead
+ */
+export function BrandingFormRenderer({ organization }: { organization: IOrganizationEntity | undefined }) {
   const { uploadToStorage } = useUploadToStorage({
     onSuccess: (path) => {
       setValue('image', path);
