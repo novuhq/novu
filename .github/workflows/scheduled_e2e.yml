@@ -75,7 +75,7 @@ jobs:
             echo "Workflow $filename status: $status"
             if [[ "$status" == "failure" ]]; then
               echo "Disabling workflow $filename. The E2E test has failed."
-              state=$(gh workflow list --all --json path,state | jq '.[] | select(.path ==".github/workflows/'$filename'")' | jq -r .state)
+              state=$(gh workflow list --all --limit 100 --json path,state | jq '.[] | select(.path ==".github/workflows/'$filename'")' | jq -r .state)
               echo "Filename: $filename"
               echo "State: $state"
               if [[ "$state" == "active" ]]; then
