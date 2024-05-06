@@ -162,6 +162,18 @@ jobs:
           path: apps/web/cypress/screenshots
           retention-days: 30
 
+      - name: Notify Slack Action
+        uses: ravsamhq/notify-slack-action@v2
+        if: ${{ always() && inputs.slack_notification }}
+        with:
+          status: ${{ job.status }}
+          notification_title: "{workflow} for WEB has {status_message}"
+          message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
+          footer: "Linked Run URL {run_url}\nCommit URL{commit_url}"
+          notify_when: "failure"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
   merge-reports:
     # Merge reports after playwright-tests, even if some shards have failed
     if: ${{ !cancelled() }}
@@ -190,18 +202,6 @@ jobs:
         name: html-report--attempt-${{ github.run_attempt }}
         path: playwright-report
         retention-days: 14
-
-    - name: Notify Slack Action
-      uses: ravsamhq/notify-slack-action@v2
-      if: ${{ always() && inputs.slack_notification }}
-      with:
-        status: ${{ job.status }}
-        notification_title: "{workflow} for WEB has {status_message}"
-        message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
-        footer: "Linked Run URL {run_url}\nCommit URL{commit_url}"
-        notify_when: "failure"
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   component_web:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -246,3 +246,15 @@ jobs:
         with:
           name: cypress-screenshots
           path: apps/web/cypress/screenshots
+
+      - name: Notify Slack Action
+        uses: ravsamhq/notify-slack-action@v2
+        if: ${{ always() && inputs.slack_notification }}
+        with:
+          status: ${{ job.status }}
+          notification_title: "{workflow} for Component WEB has {status_message}"
+          message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
+          footer: "Linked Run URL {run_url}\nCommit URL{commit_url}"
+          notify_when: "failure"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
