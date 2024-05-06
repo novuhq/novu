@@ -62,3 +62,15 @@ testFlagEnumValidity(InvalidValueFlagsEnum);
  */
 testFlagEnumValidity(FeatureFlagsKeysEnum);
 testFlagEnumValidity(SystemCriticalFlagsEnum);
+
+// Ensure that the keys and values of FeatureFlagsKeysEnum match
+type ValidateFeatureFlagsKeysEnum = {
+  [K in keyof typeof FeatureFlagsKeysEnum]: K extends IFlagKey ? K : `Value doesn't match key`;
+};
+const validateFeatureFlagsKeysEnum: ValidateFeatureFlagsKeysEnum = FeatureFlagsKeysEnum;
+
+// Ensure that the keys and values of SystemCriticalFlagsEnum match
+type ValidateSystemCriticalFlagsEnum = {
+  [K in keyof typeof SystemCriticalFlagsEnum]: K extends IFlagKey ? K : `Value doesn't match key`;
+};
+const validateSystemCriticalFlagsEnum: ValidateSystemCriticalFlagsEnum = SystemCriticalFlagsEnum;
