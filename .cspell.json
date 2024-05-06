@@ -647,7 +647,8 @@
     "firsttris",
     "esbenp",
     "npmjs",
-    "maxage"
+    "maxage",
+    "unpublish"
   ],
   "flagWords": [],
   "patterns": [
