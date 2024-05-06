@@ -11,6 +11,10 @@ on:
         required: false
         default: true
         type: boolean
+      environment:
+        required: false
+        default: 'Development'
+        type: string
   workflow_call:
     inputs:
       ee:
@@ -23,6 +27,10 @@ on:
         required: false
         default: false
         type: boolean
+      environment:
+        required: false
+        default: 'Development'
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -44,6 +52,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
+    environment: ${{ inputs.environment }}
 
     permissions:
       contents: read
@@ -209,6 +218,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
+    environment: ${{ inputs.environment }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
