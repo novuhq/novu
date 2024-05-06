@@ -91,7 +91,6 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   RateLimitingModule,
   ProfilingModule.register(packageJson.name),
   TracingModule.register(packageJson.name, packageJson.version),
-  AnalyticsModule,
 ];
 
 const enterpriseModules = enterpriseImports();
@@ -132,6 +131,10 @@ if (process.env.SENTRY_DSN) {
       user: ['_id', 'firstName', 'organizationId', 'environmentId', 'roles', 'domain'],
     }),
   });
+}
+
+if (process.env.SEGMENT_TOKEN) {
+  modules.push(AnalyticsModule);
 }
 
 if (process.env.NODE_ENV === 'test') {
