@@ -74,8 +74,7 @@ jobs:
             status=$(echo "$line" | awk -F ':' '{print $2}' | awk '{$1=$1};1') # Trim whitespace
             echo "Workflow $filename status: $status"
             if [[ "$status" == "failure" ]]; then
-              echo "Disabling workflow $filename because some of the tests failed."
-              gh workflow list --all --json path,state
+              echo "Disabling workflow $filename. The E2E test has failed."
               state=$(gh workflow list --all --json path,state | jq '.[] | select(.path ==".github/workflows/'$filename'")' | jq -r .state)
               echo "Filename: $filename"
               echo "State: $state"
