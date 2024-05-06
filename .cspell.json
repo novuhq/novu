@@ -641,7 +641,13 @@
     "whatsappbusiness",
     "parens",
     "Webpush",
-    "webpush"
+    "webpush",
+    "xkeysib",
+    "firestore",
+    "firsttris",
+    "esbenp",
+    "npmjs",
+    "maxage"
   ],
   "flagWords": [],
   "patterns": [
