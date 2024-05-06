@@ -33,6 +33,19 @@ jobs:
       slack_notification: true
     secrets: inherit
 
+  test_unit_api:
+    name: Test API
+    strategy:
+      matrix:
+        name: ['novu/api-ee', 'novu/api']
+    uses: ./.github/workflows/reusable-api-e2e.yml
+    with:
+      ee: ${{ contains (matrix.name,'-ee') }}
+      test-e2e-affected: true
+      test-e2e-ee-affected: true
+      job-name: ${{ matrix.name }}
+    secrets: inherit
+
   release_decision:
     name: Release Decision
     if: always()
@@ -40,6 +53,7 @@ jobs:
     needs:
       - test_widget
       - test_web
+      - test_unit_api
     steps:
       - uses: actions/checkout@v4
       - name: Check and manage workflows
@@ -47,9 +61,11 @@ jobs:
           needs_json='${{ toJSON(needs) }}'
           web_status=$(echo "$needs_json" | jq -r '.test_web.result')
           widget_status=$(echo "$needs_json" | jq -r '.test_widget.result')
+          api_status=$(echo "$needs_json" | jq -r '.test_unit_api.result')
           workflows_map=$(cat << EOF
           prod-deploy-widget.yml: $widget_status
           prod-deploy-web.yml: $web_status
+          prod-deploy-api.yml: $api_status
           EOF
           )
           while IFS= read -r line; do
