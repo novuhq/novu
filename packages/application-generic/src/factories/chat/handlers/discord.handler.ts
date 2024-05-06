@@ -1,7 +1,7 @@
 import { ICredentials } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { BaseChatHandler } from './base.handler';
-import { DiscordProvider } from '@novu/discord';
+import { DiscordProvider } from '@novu/providers';
 
 export class DiscordHandler extends BaseChatHandler {
   constructor() {

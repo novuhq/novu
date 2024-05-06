@@ -1,7 +1,7 @@
 import { ICredentials } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
 import { BaseChatHandler } from './base.handler';
-import { MattermostProvider } from '@novu/mattermost';
+import { MattermostProvider } from '@novu/providers';
 
 export class MattermostHandler extends BaseChatHandler {
   constructor() {
