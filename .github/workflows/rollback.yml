@@ -6,7 +6,7 @@ on:
     inputs:
       service:
         type: choice
-        description: The microservice which we want to rollback to the previous version.
+        description: Select service to rollback.
         options:
           - inbound_mail
           - api
@@ -17,17 +17,17 @@ on:
           - ws
       environment:
         type: choice
-        description: The environment where the service is located.
+        description: Select the environment
         options:
-          - Development
           - Production
+          - Development
       region:
         type: choice
-        description: The region of the environment. It's needed to know TF workspace. When you choose DEV environment this option is not needed.
+        description: Select the environment region. Required only in production.
         options:
+          - [EU,US]
           - [EU]
           - [US]
-          - [EU,US]
       mode:
         type: choice
         description: The Rollback mode. You can roll back to the previously deployed version or to the version that has the current commit hash of this branch in an image tag name or a deployment info.
