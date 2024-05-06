@@ -636,7 +636,10 @@
     "MJML",
     "localstorage",
     "elif",
-    "websockets"
+    "websockets",
+    "whatsapp",
+    "whatsappbusiness",
+    "parens"
   ],
   "flagWords": [],
   "patterns": [

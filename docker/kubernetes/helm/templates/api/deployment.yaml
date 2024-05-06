@@ -208,7 +208,7 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.api.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.api.extraVolumeMounts }}
-          {{- include "common.tplvalues.render" (dict "value" .Values.api.extraVolumeMounts "context" $) | nindent 12 }}
+          volumeMounts: {{- include "common.tplvalues.render" (dict "value" .Values.api.extraVolumeMounts "context" $) | nindent 12 }}
           {{- end }}
         {{- if .Values.api.sidecars }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.api.sidecars "context" $) | nindent 8 }}

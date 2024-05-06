@@ -28,8 +28,4 @@ export class DalServiceHealthIndicator
 
     throw new HealthCheckError('DAL health check failed', result);
   }
-
-  isActive(): Promise<HealthIndicatorResult> {
-    return this.isHealthy();
-  }
 }

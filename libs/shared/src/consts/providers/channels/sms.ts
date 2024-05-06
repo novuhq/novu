@@ -28,9 +28,10 @@ import {
   iSendSmsConfig,
   ringCentralConfig,
   brevoSmsConfig,
+  whatsAppBusinessConfig,
   eazySmsConfig,
 } from '../credentials';
-import { SmsProviderIdEnum } from '../provider.enum';
+import { ChatProviderIdEnum, SmsProviderIdEnum } from '../provider.enum';
 
 import { ChannelTypeEnum } from '../../../types';
 import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
