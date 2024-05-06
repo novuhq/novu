@@ -176,7 +176,7 @@ jobs:
         if: ${{ always() && inputs.slack_notification }}
         with:
           status: ${{ job.status }}
-          notification_title: "{workflow} for WEB has {status_message}"
+          notification_title: "{workflow} for WEB ${{ matrix.containers }} has {status_message}"
           message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
           footer: "Linked Run URL {run_url}\nCommit URL{commit_url}"
           notify_when: "failure"

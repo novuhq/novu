@@ -73,12 +73,19 @@ jobs:
             filename=$(echo "$line" | awk -F ':' '{print $1}')
             status=$(echo "$line" | awk -F ':' '{print $2}' | awk '{$1=$1};1') # Trim whitespace
             echo "Workflow $filename status: $status"
-
             if [[ "$status" == "failure" ]]; then
-              echo "Disabling workflow $filename. The E2E test has failed."
-              gh workflow disable "$filename"
+              echo "Disabling workflow $filename because some of the tests failed."
+              gh workflow list --all --json path,state
+              state=$(gh workflow list --all --json path,state | jq '.[] | select(.path ==".github/workflows/'$filename'")' | jq -r .state)
+              echo "Filename: $filename"
+              echo "State: $state"
+              if [[ "$state" == "active" ]]; then
+                gh workflow disable "$filename"
+              else
+                echo "Workflow $filename is not active, skipping disable action."
+              fi
             elif [[ "$status" == "success" ]]; then
-              echo "Enabling workflow $filename. The E2E tests have passed."
+              echo "Enabling workflow $filename because the tests look good."
               gh workflow enable "$filename"
             else
               echo "Unknown status for workflow $filename: $status"
