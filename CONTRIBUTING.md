@@ -89,5 +89,4 @@ Questions, suggestions, and thoughts are most welcome. Feel free to open a [GitH
 - **Improve documentation** - fix incomplete or missing [docs](https://docs.novu.co/?utm_campaign=github-contrib), bad wording, examples or explanations.
 
 ## Missing a provider?
-
 If you are in need of a provider we do not yet have, you can request a new one by [submitting an issue](#submitting-an-issue). Or you can build a new one by following our [create a provider guide](https://docs.novu.co/community/add-a-new-provider?utm_campaign=github-contrib).

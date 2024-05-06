@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { PushpadPushProvider } from '@novu/pushpad';
+import { PushpadPushProvider } from '@novu/providers';
 import { BasePushHandler } from './base.handler';
 
 export class PushpadHandler extends BasePushHandler {

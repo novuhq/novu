@@ -1,6 +1,6 @@
 packages:
   # all packages in subdirs of packages/ and components/
-  - 'providers/*'
+  - 'automation'
   - 'packages/*'
   # Angular projects - these are nested under the Angular workspace root, and need version bumps during release.
   - 'packages/notification-center-angular/projects/*'
