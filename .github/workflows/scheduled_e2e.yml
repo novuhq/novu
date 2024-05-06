@@ -44,6 +44,7 @@ jobs:
       test-e2e-affected: true
       test-e2e-ee-affected: true
       job-name: ${{ matrix.name }}
+      slack_notification: true
     secrets: inherit
 
   release_decision:
