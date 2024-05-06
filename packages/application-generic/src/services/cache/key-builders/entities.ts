@@ -8,12 +8,12 @@ import {
 } from './identifiers';
 import {
   buildEnvironmentScopedKeyById,
-  buildUnscopedKey,
   buildEnvironmentScopedKey,
   buildOrganizationScopedKeyById,
   buildOrganizationScopedKey,
   buildServiceConfigKey,
-} from './shared';
+} from './builder.scoped';
+import { buildUnscopedKey } from './builder.base';
 
 export const buildSubscriberKey = ({
   subscriberId,
@@ -48,6 +48,7 @@ export const buildUserKey = ({ _id }: { _id: string }): string =>
     type: CacheKeyTypeEnum.ENTITY,
     keyEntity: CacheKeyPrefixEnum.USER,
     identifier: _id,
+    identifierPrefix: IdentifierPrefixEnum.ID,
   });
 
 export const buildNotificationTemplateKey = ({

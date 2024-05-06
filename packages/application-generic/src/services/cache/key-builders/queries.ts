@@ -1,7 +1,7 @@
 import {
   buildEnvironmentScopedKeyById,
   buildOrganizationScopedKey,
-} from './shared';
+} from './builder.scoped';
 import {
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
