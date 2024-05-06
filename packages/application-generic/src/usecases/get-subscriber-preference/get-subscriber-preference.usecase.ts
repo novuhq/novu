@@ -12,6 +12,7 @@ import {
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
 } from '../get-subscriber-template-preference';
+import { ApiException } from '../../utils/exceptions';
 
 @Injectable()
 export class GetSubscriberPreference {
@@ -30,6 +31,10 @@ export class GetSubscriberPreference {
       command.environmentId,
       command.subscriberId
     );
+
+    if (!subscriber) {
+      throw new ApiException(`Subscriber ${command.subscriberId} not found`);
+    }
 
     const templateList =
       await this.notificationTemplateRepository.getActiveList(
