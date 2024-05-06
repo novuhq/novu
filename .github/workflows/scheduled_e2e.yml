@@ -23,12 +23,14 @@ jobs:
     secrets: inherit
     with:
       ee: true
+      slack_notification: true
 
   test_widget:
     name: Test Widget Cypress
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
       ee: true
+      slack_notification: true
     secrets: inherit
 
   release_decision:
