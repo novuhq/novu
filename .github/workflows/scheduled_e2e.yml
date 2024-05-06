@@ -85,7 +85,7 @@ jobs:
                 echo "Workflow $filename is not active, skipping disable action."
               fi
             elif [[ "$status" == "success" ]]; then
-              echo "Enabling workflow $filename because the tests look good."
+              echo "Enabling workflow $filename. The E2E tests have passed."
               gh workflow enable "$filename"
             else
               echo "Unknown status for workflow $filename: $status"
