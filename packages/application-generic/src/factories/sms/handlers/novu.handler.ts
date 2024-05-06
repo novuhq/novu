@@ -1,4 +1,4 @@
-import { TwilioSmsProvider } from '@novu/twilio';
+import { TwilioSmsProvider } from '@novu/providers';
 import { ChannelTypeEnum, ICredentials, SmsProviderIdEnum } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 

@@ -1,0 +1,29 @@
+import {
+  ChannelTypeEnum,
+  ISendMessageSuccessResponse,
+  I<%= pascalType %>Options,
+  I<%= pascalType %>Provider,
+} from '@novu/stateless';
+
+export class <%= pascalName %><%= pascalType %>Provider implements I<%= pascalType %>Provider {
+  id = '<%= name %>';
+  channelType = ChannelTypeEnum.<%= upperType %> as ChannelTypeEnum.<%= upperType %>;
+
+  constructor(
+    private config: {
+      <%= upperType === 'EMAIL' ? 'apiKey: string;' : null %>
+    }
+  ) {
+  }
+
+  async sendMessage(
+    options: I<%= pascalType %>Options
+  ): Promise<ISendMessageSuccessResponse> {
+
+
+    return {
+      id: 'id_returned_by_provider',
+      date: 'current_time'
+    };
+  }
+}

@@ -639,7 +639,9 @@
     "websockets",
     "whatsapp",
     "whatsappbusiness",
-    "parens"
+    "parens",
+    "Webpush",
+    "webpush"
   ],
   "flagWords": [],
   "patterns": [
@@ -730,6 +732,6 @@
     ".env.development",
     ".env.local",
     ".env.production",
-    ".env.test",
+    ".env.test"
   ]
 }
