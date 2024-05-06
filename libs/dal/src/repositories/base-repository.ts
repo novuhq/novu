@@ -72,7 +72,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async find(
     query: FilterQuery<T_DBModel> & T_Enforcement,
     select: ProjectionType<T_MappedEntity> = '',
-    options: { limit?: number; sort?: any; skip?: number } = {}
+    options: { limit?: number; sort?: any; skip?: number; readPreference?: 'secondaryPreferred' | 'primary' } = {}
   ): Promise<T_MappedEntity[]> {
     const data = await this.MongooseModel.find(query, select, {
       sort: options.sort || null,
@@ -80,6 +80,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
       .skip(options.skip as number)
       .limit(options.limit as number)
       .lean()
+      .read(options?.readPreference || 'primary')
       .exec();
 
     return this.mapEntities(data);
