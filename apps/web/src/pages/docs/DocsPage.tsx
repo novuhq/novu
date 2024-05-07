@@ -14,7 +14,7 @@ export const DocsPage = () => {
   const segment = useSegment();
   const path = useMemo(() => params['*'], [params]);
 
-  const { isLoading, data: { code } = { code: '' } } = useQuery(['docs', path], async () => {
+  const { isLoading, data: { code, title } = { code: '', title: '' } } = useQuery(['docs', path], async () => {
     const response = await fetch('http://localhost:5173/' + path);
     const json = await response.json();
 
@@ -35,19 +35,40 @@ export const DocsPage = () => {
     return getMDXComponent(code);
   }, [code]);
 
+  // Workaround for img tags that is not parsed correctly by mdx-bundler
+  useEffect(() => {
+    if (Component === null || isLoading) {
+      return;
+    }
+
+    const docs = document.getElementById('docs');
+
+    if (!docs) {
+      return;
+    }
+
+    const images = Array.from(docs.getElementsByTagName('img'));
+
+    for (const img of images) {
+      const url = new URL(img.src);
+      img.src = `https://mintlify.s3-us-west-1.amazonaws.com/novu${url.pathname}`;
+    }
+  }, [Component, isLoading]);
+
   if (isLoading || Component === null) {
     return null;
   }
 
   return (
     <PageContainer title="Docs">
-      <Stack p={20} spacing={8}>
+      <Stack id="docs" p={20} spacing={8}>
+        <Title size={1}>{title}</Title>
         <Component
           components={{
             Frame: ({ className, ...props }: any) => {
               return (
                 <div {...props}>
-                  <img alt="" src={`https://mintlify.s3-us-west-1.amazonaws.com/novu${props.children.props.src}`} />
+                  <img alt="" src={props.children.props.src} />
                   <Text align="center" size="sm">
                     {props.caption}
                   </Text>
@@ -147,6 +168,21 @@ export const DocsPage = () => {
             },
             h3: ({ className, ...props }: any) => {
               return <Title size={2} {...props} />;
+            },
+            a: ({ className, ...props }: any) => {
+              const LinkComponet = props.href.includes('api-reference') ? 'a' : Link;
+              const LinkProps = props.href.includes('api-reference')
+                ? { href: `https://docs.novu.co${props.href}` }
+                : { to: `/docs${props.href}` };
+
+              return (
+                <LinkComponet
+                  {...(LinkProps as any)}
+                  rel={props.href.includes('api-reference') ? 'noopener noreferrer' : undefined}
+                  target={props.href.includes('api-reference') ? '_blank' : '_self'}
+                  children={props.children}
+                />
+              );
             },
           }}
         />
