@@ -753,10 +753,6 @@
     ".env.development",
     ".env.local",
     ".env.production",
-    ".env.test",
-    "decompile",
-    "servername",
-    "neom",
-    ".example.env"
+    ".env.test"
   ]
 }
