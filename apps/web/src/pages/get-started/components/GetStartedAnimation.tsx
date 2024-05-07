@@ -24,7 +24,7 @@ enum AnimationThemeEnum {
 }
 
 // uses `public` as the default base directory
-const ROOT_ANIMATION_PATH = `animations/get-started`;
+const ROOT_ANIMATION_PATH = `/animations/get-started`;
 const STATE_MACHINE_NAME = 'SM';
 const STATE_MACHINE_INPUT_NAME = 'theme';
 

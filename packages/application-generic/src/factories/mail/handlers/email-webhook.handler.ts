@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { EmailWebhookProvider } from '@novu/email-webhook';
+import { EmailWebhookProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 export class EmailWebhookHandler extends BaseHandler {
   constructor() {

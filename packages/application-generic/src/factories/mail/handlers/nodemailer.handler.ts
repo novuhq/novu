@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { NodemailerProvider } from '@novu/nodemailer';
+import { NodemailerProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class NodemailerHandler extends BaseHandler {

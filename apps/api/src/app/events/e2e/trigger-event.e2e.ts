@@ -67,7 +67,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
   describe(`Trigger Event - ${eventTriggerPath} (POST)`, function () {
     beforeEach(async () => {
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       session = new UserSession();
       await session.initialize();
       template = await session.createTemplate();
@@ -2550,7 +2549,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
   describe('filters logic', () => {
     beforeEach(async () => {
-      process.env.LAUNCH_DARKLY_SDK_KEY = '';
       session = new UserSession();
       await session.initialize();
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
@@ -3189,7 +3187,6 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
 
     describe('workflow override', () => {
       beforeEach(async () => {
-        process.env.LAUNCH_DARKLY_SDK_KEY = '';
         session = new UserSession();
         await session.initialize();
 
