@@ -23,7 +23,7 @@ COPY libs/shared-web ./libs/shared-web
 COPY packages/notification-center ./packages/notification-center
 COPY packages/stateless ./packages/stateless
 COPY packages/node ./packages/node
-
+COPY enterprise ./enterprise
 COPY tsconfig.json .
 COPY tsconfig.base.json .
 
