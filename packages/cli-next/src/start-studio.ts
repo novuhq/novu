@@ -11,7 +11,7 @@ import open from 'open';
 export const showWelcomeScreen = (): void => {
   const textGradient = gradient('#0099F7', '#ff3432');
   const logoGradient = gradient('#DD2476', '#FF512F');
-  /* spell-checker:disable */
+  // cSpell:disable
   const logo = `
                             εεεεεεεεεεεεε        
                     εεε       εεεεεεεεεεε        
@@ -27,7 +27,7 @@ export const showWelcomeScreen = (): void => {
                        εεεεεεεεεεε       εεε     
                        εεεεεεεεεεεεε                  
                               `;
-  /* spell-checker:enable */
+  // cSpell:enable
 
   const items = logo.split('\n').map((row) => logoGradient(row));
 
