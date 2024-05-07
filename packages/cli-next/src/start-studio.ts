@@ -1,4 +1,3 @@
-/** cspell:disable */
 import chalk from 'chalk';
 import gradient from 'gradient-string';
 
