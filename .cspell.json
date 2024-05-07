@@ -731,6 +731,8 @@
     ".env.local",
     ".env.production",
     ".env.test",
-    "decompile"
+    "decompile",
+    "servername",
+    "neom"
   ]
 }
