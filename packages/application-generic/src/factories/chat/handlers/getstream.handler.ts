@@ -2,7 +2,7 @@ import { ChannelTypeEnum } from '@novu/stateless';
 
 import { ICredentials } from '@novu/shared';
 import { BaseChatHandler } from './base.handler';
-import { GetstreamChatProvider } from '@novu/getstream';
+import { GetstreamChatProvider } from '@novu/providers';
 
 export class GetstreamChatHandler extends BaseChatHandler {
   constructor() {

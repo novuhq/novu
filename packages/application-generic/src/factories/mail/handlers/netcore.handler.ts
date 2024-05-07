@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { NetCoreProvider } from '@novu/netcore';
+import { NetCoreProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class NetCoreHandler extends BaseHandler {

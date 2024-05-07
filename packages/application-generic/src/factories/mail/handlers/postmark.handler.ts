@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { PostmarkEmailProvider } from '@novu/postmark';
+import { PostmarkEmailProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class PostmarkHandler extends BaseHandler {

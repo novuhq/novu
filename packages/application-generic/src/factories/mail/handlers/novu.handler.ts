@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
-import { SendgridEmailProvider } from '@novu/sendgrid';
+import { SendgridEmailProvider } from '@novu/providers';
 
 import { BaseHandler } from './base.handler';
 

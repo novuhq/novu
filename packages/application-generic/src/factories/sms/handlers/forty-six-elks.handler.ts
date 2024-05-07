@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
-import { FortySixElksSmsProvider } from '@novu/forty-six-elks';
+import { FortySixElksSmsProvider } from '@novu/providers';
 
 export class FortySixElksHandler extends BaseSmsHandler {
   constructor() {

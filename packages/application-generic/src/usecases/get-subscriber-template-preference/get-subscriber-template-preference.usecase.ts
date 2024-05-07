@@ -56,11 +56,15 @@ export class GetSubscriberTemplatePreference {
 
     const initialActiveChannels = await this.getActiveChannels(command);
     const subscriberPreference =
-      await this.subscriberPreferenceRepository.findOne({
-        _environmentId: command.environmentId,
-        _subscriberId: subscriber._id,
-        _templateId: command.template._id,
-      });
+      await this.subscriberPreferenceRepository.findOne(
+        {
+          _environmentId: command.environmentId,
+          _subscriberId: subscriber._id,
+          _templateId: command.template._id,
+        },
+        'enabled channels',
+        { readPreference: 'secondaryPreferred' }
+      );
     const workflowOverride = await this.getWorkflowOverride(command);
 
     const templateChannelPreference = command.template.preferenceSettings;
