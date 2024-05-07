@@ -1,10 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import {
-  JobEntity,
-  JobRepository,
-  IDelayOrDigestJobResult,
-  NotificationRepository,
-} from '@novu/dal';
+import { JobEntity, JobRepository, IDelayOrDigestJobResult, NotificationRepository } from '@novu/dal';
 import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
@@ -13,17 +8,18 @@ import {
   JobStatusEnum,
   DigestCreationResultEnum,
 } from '@novu/shared';
-
-import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
-import { ApiException } from '../../utils/exceptions';
-import { EventsDistributedLockService } from '../../services';
-import { DetailEnum } from '../create-execution-details';
-import { Instrument, InstrumentUsecase } from '../../instrumentation';
-import { getNestedValue } from '../../utils/object';
 import {
+  ApiException,
+  DetailEnum,
+  EventsDistributedLockService,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-} from '../execution-log-route';
+  getNestedValue,
+  Instrument,
+  InstrumentUsecase,
+} from '@novu/application-generic';
+
+import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 
 interface IFindAndUpdateResponse {
   matched: number;
@@ -45,39 +41,32 @@ export class MergeOrCreateDigest {
   ) {}
 
   @InstrumentUsecase()
-  public async execute(
-    command: MergeOrCreateDigestCommand
-  ): Promise<MergeOrCreateDigestResultType> {
+  public async execute(command: MergeOrCreateDigestCommand): Promise<MergeOrCreateDigestResultType> {
     const { job } = command;
 
-    const digestMeta =
-      command.chimeraData ?? (job.digest as IDigestBaseMetadata | undefined);
+    const digestMeta = command.chimeraData ?? (job.digest as IDigestBaseMetadata | undefined);
     const digestKey = command.chimeraData?.digestKey ?? digestMeta?.digestKey;
     const digestValue = getNestedValue(job.payload, digestKey);
 
     const digestAction = command.filtered
       ? { digestResult: DigestCreationResultEnum.SKIPPED }
-      : await this.shouldDelayDigestOrMergeWithLock(
-          job,
-          digestKey,
-          digestValue,
-          digestMeta
-        );
+      : await this.shouldDelayDigestOrMergeWithLock(job, digestKey, digestValue, digestMeta);
 
     switch (digestAction.digestResult) {
-      case DigestCreationResultEnum.MERGED:
-        return await this.processMergedDigest(
-          job,
-          digestAction.activeDigestId,
-          digestAction.activeNotificationId
-        );
+      case DigestCreationResultEnum.MERGED: {
+        if (!digestAction.activeDigestId || !digestAction.activeNotificationId) {
+          throw new ApiException(
+            `Active digest or notification id is missing, active digest id ${digestAction.activeDigestId},` +
+              `active notification id ${digestAction.activeNotificationId}`
+          );
+        }
+
+        return await this.processMergedDigest(job, digestAction.activeDigestId, digestAction.activeNotificationId);
+      }
       case DigestCreationResultEnum.SKIPPED:
         return await this.processSkippedDigest(job, command.filtered);
       case DigestCreationResultEnum.CREATED:
-        return await this.processCreatedDigest(
-          digestMeta as IDigestBaseMetadata,
-          job
-        );
+        return await this.processCreatedDigest(digestMeta as IDigestBaseMetadata, job);
       default:
         throw new ApiException('Something went wrong with digest creation');
     }
@@ -90,9 +79,7 @@ export class MergeOrCreateDigest {
   ): Promise<DigestCreationResultEnum> {
     const regularDigestMeta = digestMeta as IDigestRegularMetadata | undefined;
     if (!regularDigestMeta?.amount || !regularDigestMeta?.unit) {
-      throw new ApiException(
-        `Somehow ${job._id} had wrong digest settings and escaped validation`
-      );
+      throw new ApiException(`Somehow ${job._id} had wrong digest settings and escaped validation`);
     }
 
     return DigestCreationResultEnum.CREATED;
@@ -117,11 +104,7 @@ export class MergeOrCreateDigest {
           },
         }
       ),
-      this.jobRepository.updateAllChildJobStatus(
-        job,
-        JobStatusEnum.MERGED,
-        activeDigestId
-      ),
+      this.jobRepository.updateAllChildJobStatus(job, JobStatusEnum.MERGED, activeDigestId),
       this.digestMergedExecutionDetails(job),
       this.notificationRepository.update(
         {
@@ -141,10 +124,7 @@ export class MergeOrCreateDigest {
   }
 
   @Instrument()
-  private async processSkippedDigest(
-    job: JobEntity,
-    filtered = false
-  ): Promise<DigestCreationResultEnum> {
+  private async processSkippedDigest(job: JobEntity, filtered = false): Promise<DigestCreationResultEnum> {
     await Promise.all([
       this.jobRepository.update(
         {
@@ -163,11 +143,7 @@ export class MergeOrCreateDigest {
     return DigestCreationResultEnum.SKIPPED;
   }
 
-  private getLockKey(
-    job: JobEntity,
-    digestKey: string,
-    digestValue: string | number
-  ): string {
+  private getLockKey(job: JobEntity, digestKey: string | undefined, digestValue: string | number | undefined): string {
     let resource = `environment:${job._environmentId}:template:${job._templateId}:subscriber:${job._subscriberId}`;
     if (digestKey && digestValue) {
       resource = `${resource}:digestKey:${digestKey}:digestValue:${digestValue}`;
@@ -186,21 +162,15 @@ export class MergeOrCreateDigest {
     const resourceKey = this.getLockKey(job, digestKey, digestValue);
 
     const shouldDelayDigestJobOrMerge = async () =>
-      this.jobRepository.shouldDelayDigestJobOrMerge(
-        job,
-        digestKey,
-        digestValue,
-        digestMeta
-      );
+      this.jobRepository.shouldDelayDigestJobOrMerge(job, digestKey, digestValue, digestMeta);
 
-    const result =
-      await this.eventsDistributedLockService.applyLock<IDelayOrDigestJobResult>(
-        {
-          resource: resourceKey,
-          ttl: TTL,
-        },
-        shouldDelayDigestJobOrMerge
-      );
+    const result = await this.eventsDistributedLockService.applyLock<IDelayOrDigestJobResult>(
+      {
+        resource: resourceKey,
+        ttl: TTL,
+      },
+      shouldDelayDigestJobOrMerge
+    );
 
     return result;
   }
@@ -217,10 +187,7 @@ export class MergeOrCreateDigest {
       })
     );
   }
-  private async digestSkippedExecutionDetails(
-    job: JobEntity,
-    filtered: boolean
-  ): Promise<void> {
+  private async digestSkippedExecutionDetails(job: JobEntity, filtered: boolean): Promise<void> {
     await this.executionLogRoute.execute(
       ExecutionLogRouteCommand.create({
         ...ExecutionLogRouteCommand.getDetailsFromJob(job),
