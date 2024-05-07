@@ -33,7 +33,7 @@ describe('Client', () => {
 
     it('should not compile when the custom output is incorrect', async () => {
       echo.workflow('custom-test', async ({ step }) => {
-        const result = await step.custom(
+        await step.custom(
           'custom',
           // @ts-expect-error - foo is a number
           async () => ({
@@ -56,7 +56,7 @@ describe('Client', () => {
     });
 
     it('should not compile when the custom result is compared incorrectly', async () => {
-      echo.workflow('in-app-test-something-1', async ({ step }) => {
+      echo.workflow('custom-test-something', async ({ step }) => {
         const result = await step.custom(
           'custom',
           async () => ({
@@ -77,7 +77,7 @@ describe('Client', () => {
         );
 
         // @ts-expect-error - result is a string
-        result.foo === 'custom';
+        result?.foo === 'custom';
       });
     });
   });
