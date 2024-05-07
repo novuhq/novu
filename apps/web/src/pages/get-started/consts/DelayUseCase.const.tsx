@@ -5,6 +5,7 @@ import { OnboardingWorkflowRouteEnum, OnboardingUseCase } from './types';
 import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { OpenWorkflowButton } from '../components/OpenWorkflowButton';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
+import { StepTypeEnum } from '@novu/shared';
 
 const USECASE_BLUEPRINT_IDENTIFIER = 'get-started-delay';
 
@@ -27,6 +28,8 @@ export const DelayUseCaseConst: OnboardingUseCase = {
               href={ROUTES.INTEGRATIONS_CREATE}
               target="_blank"
               rel="noopener noreferrer"
+              event="Integration store"
+              channel={StepTypeEnum.DELAY}
             />
             <StepText>.</StepText>
           </StepDescription>
@@ -91,6 +94,8 @@ export const DelayUseCaseConst: OnboardingUseCase = {
               href={ROUTES.ACTIVITIES}
               target="_blank"
               rel="noopener noreferrer"
+              event='Discover "activity feed"'
+              channel={StepTypeEnum.DELAY}
             />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.
