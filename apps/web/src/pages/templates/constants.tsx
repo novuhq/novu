@@ -47,7 +47,7 @@ export const ordinalNumbers = {
   10: 'tenth',
 };
 
-export const stepNames: Record<StepTypeEnum | ChannelTypeEnum, string> = {
+export const stepNames: Record<StepTypeEnum, string> = {
   email: 'Email',
   chat: 'Chat',
   in_app: 'In-App',

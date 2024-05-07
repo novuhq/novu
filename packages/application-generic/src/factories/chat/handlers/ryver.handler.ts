@@ -1,6 +1,6 @@
 import { ICredentials } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
-import { RyverChatProvider } from '@novu/ryver';
+import { RyverChatProvider } from '@novu/providers';
 import { BaseChatHandler } from './base.handler';
 
 export class RyverHandler extends BaseChatHandler {

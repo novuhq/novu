@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { BandwidthSmsProvider } from '@novu/bandwidth';
+import { BandwidthSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class BandwidthHandler extends BaseSmsHandler {

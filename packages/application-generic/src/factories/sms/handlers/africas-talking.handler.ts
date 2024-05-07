@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { AfricasTalkingSmsProvider } from '@novu/africas-talking';
+import { AfricasTalkingSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class AfricasTalkingSmsHandler extends BaseSmsHandler {
