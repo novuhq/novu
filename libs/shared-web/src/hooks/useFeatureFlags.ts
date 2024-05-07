@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 
 import { FEATURE_FLAGS } from '../config';
 
-export const useFeatureFlags = (organization: IOrganizationEntity) => {
+export const useFeatureFlags = (organization?: IOrganizationEntity) => {
   const ldClient = useLDClient();
 
   useEffect(() => {

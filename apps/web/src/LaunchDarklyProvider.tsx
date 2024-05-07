@@ -1,43 +1,41 @@
-import { Loader } from '@mantine/core';
-import { LoadingOverlay } from '@novu/design-system';
 import { IOrganizationEntity } from '@novu/shared';
-import { LAUNCH_DARKLY_CLIENT_SIDE_ID, useAuthContext, useFeatureFlags } from '@novu/shared-web';
-import { asyncWithLDProvider, useLDClient } from 'launchdarkly-react-client-sdk';
-import { PropsWithChildren, useEffect, useRef, useState } from 'react';
+import {
+  LAUNCH_DARKLY_CLIENT_SIDE_ID,
+  useAuthContext,
+  useFeatureFlags,
+  checkIsUnprotectedPathname,
+} from '@novu/shared-web';
+import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
+import { PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react';
 
-type GenericProvider = ({ children }: { children: React.ReactNode }) => JSX.Element;
-const DEFAULT_GENERIC_PROVIDER: GenericProvider = (props) => <>{props.children}</>;
+/** A provider with children required */
+type GenericLDProvider = Awaited<ReturnType<typeof asyncWithLDProvider>>;
+
+/** Simply renders the children */
+const DEFAULT_GENERIC_PROVIDER: GenericLDProvider = ({ children }) => <>{children}</>;
 
 export interface ILaunchDarklyProviderProps {
-  organization?: IOrganizationEntity;
+  /** Renders when LaunchDarkly is enabled and is awaiting initialization */
+  fallbackDisplay: ReactNode;
 }
 
 /**
+ * Async provider for feature flags.
+ *
  * @requires AuthProvider must be wrapped in the AuthProvider.
  */
-export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProviderProps>> = ({ children }) => {
-  const LDProvider = useRef<GenericProvider>(DEFAULT_GENERIC_PROVIDER);
+export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProviderProps>> = ({
+  children,
+  fallbackDisplay,
+}) => {
+  const LDProvider = useRef<GenericLDProvider>(DEFAULT_GENERIC_PROVIDER);
   const [isLDReady, setIsLDReady] = useState<boolean>(false);
 
   const authContext = useAuthContext();
   if (!authContext) {
-    throw new Error('LaunchDarklyProvider must be used within AuthProvider!');
+    throw new Error('LaunchDarklyProvider must be used within <AuthProvider>!');
   }
   const { currentOrganization } = authContext;
-  // const ldClient = useFeatureFlags();
-  // eslint-disable-next-line multiline-comment-style
-  // useEffect(() => {
-  //   console.log({ org: authContext.currentOrganization, ldClient });
-  //   if (!authContext.currentOrganization || !ldClient) {
-  //     return;
-  //   }
-  //   console.log('Reidentify', authContext.currentOrganization);
-  //   ldClient.identify({
-  //     kind: 'organization',
-  //     key: authContext.currentOrganization._id,
-  //     name: authContext.currentOrganization.name,
-  //   });
-  // }, [authContext.currentOrganization, ldClient]);
 
   useEffect(() => {
     const fetchLDProvider = async () => {
@@ -55,27 +53,16 @@ export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProvi
         reactOptions: {
           useCamelCaseFlagKeys: false,
         },
-        // deferInitialization: true,
       });
       setIsLDReady(true);
     };
     fetchLDProvider();
   }, [setIsLDReady, currentOrganization]);
 
-  /**
-   * Current issues:
-   * - This breaks login since there's no org -- can we match against "isUnprotectedUrl"?
-   * -
-   */
-
   // eslint-disable-next-line multiline-comment-style
-  // if (!isLDReady) {
-  //   return (
-  //     <LoadingOverlay visible>
-  //       <></>
-  //     </LoadingOverlay>
-  //   );
-  // }
+  if (shouldUseLaunchDarkly() && !checkIsUnprotectedPathname(window.location.pathname) && !isLDReady) {
+    return <>{fallbackDisplay}</>;
+  }
 
   return (
     <LDProvider.current>
@@ -91,4 +78,8 @@ function LaunchDarklyClientWrapper({ children, org }: PropsWithChildren<{ org?: 
   useFeatureFlags(org);
 
   return <>{children}</>;
+}
+
+function shouldUseLaunchDarkly(): boolean {
+  return !!process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 }
