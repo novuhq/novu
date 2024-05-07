@@ -31,7 +31,7 @@ cp .env.example .env
 docker login ghcr.io --username <provided_username> --password "$NOVU_ENTERPRISE_TOKEN"
 
 # Start Novu
-docker-compose -f ./enterprise/docker-compose.enterprise.yml up
+docker-compose -f ./docker-compose.enterprise.yml up
 ```
 
 Now visit [http://127.0.0.1:4200](http://127.0.0.1:4200) to start using Novu.
