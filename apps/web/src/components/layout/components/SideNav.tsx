@@ -39,6 +39,7 @@ import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';
 import OrganizationSelect from '../../nav/OrganizationSelect/OrganizationSelect';
 import { VisibilityOff } from './VisibilityOff';
+import { IS_DOCKER_HOSTED } from '../../../config';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -73,8 +74,6 @@ export function SideNav({}: Props) {
   const dark = colorScheme === 'dark';
   const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
-  const isMultiTenancyEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MULTI_TENANCY_ENABLED);
-  const isTranslationManagerEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_MANAGER_ENABLED);
   const {
     showOnboarding: showOnBoardingState,
     isLoading: isLoadingShowOnBoarding,
@@ -115,7 +114,6 @@ export function SideNav({}: Props) {
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
     {
       label: 'Tenants',
-      condition: isMultiTenancyEnabled,
       icon: <Buildings />,
       link: ROUTES.TENANTS,
       testId: 'side-nav-tenants-link',
@@ -128,7 +126,7 @@ export function SideNav({}: Props) {
     },
     {
       label: 'Translations',
-      condition: isTranslationManagerEnabled,
+      condition: !IS_DOCKER_HOSTED,
       icon: <Translation width={20} height={20} />,
       link: ROUTES.TRANSLATIONS,
       testId: 'side-nav-translations-link',
