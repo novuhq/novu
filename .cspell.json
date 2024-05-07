@@ -661,8 +661,7 @@
     "unpublish",
     "decompile",
     "servername",
-    "neom",
-    ".example.env"
+    "neom"
   ],
   "flagWords": [],
   "patterns": [
@@ -753,6 +752,7 @@
     ".env.development",
     ".env.local",
     ".env.production",
-    ".env.test"
+    ".env.test",
+    ".example.env"
   ]
 }
