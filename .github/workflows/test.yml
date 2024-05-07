@@ -95,7 +95,7 @@ jobs:
     name: Test Web Cypress
     needs: [get-affected]
 #    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
-    if: false
+    if: ${{ github.event.label.name == 'run-e2e' }}
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
     with:
@@ -107,7 +107,7 @@ jobs:
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
       ee: true
-    if: false
+    if: ${{ github.event.label.name == 'run-e2e' }}
 #    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/widget') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/notification-center') || contains(fromJson(needs.get-affected.outputs.test-unit), '@novu/ws') }}
     secrets: inherit
 
@@ -181,7 +181,7 @@ jobs:
   test_unit_api:
     name: Test API
     needs: [get-affected]
-    if: false
+    if: ${{ github.event.label.name == 'run-e2e' }}
     strategy:
       # The order is important for ee to be first, otherwise outputs not work correctly
       matrix:
