@@ -74,7 +74,6 @@ export const privateEmailDomains = [
   'yahoo.ro',
   'yahoo.ru',
   'yahoo.se',
-  'yahoofs.com',
   'yandex.com',
   'yandex.pl',
   'yandex.ru',
