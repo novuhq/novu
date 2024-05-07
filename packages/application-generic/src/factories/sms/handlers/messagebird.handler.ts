@@ -1,4 +1,4 @@
-import { MessageBirdSmsProvider } from '@novu/messagebird';
+import { MessageBirdSmsProvider } from '@novu/providers';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 

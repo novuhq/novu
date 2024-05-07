@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { TermiiSmsProvider } from '@novu/termii';
+import { TermiiSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class TermiiSmsHandler extends BaseSmsHandler {

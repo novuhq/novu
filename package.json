@@ -13,7 +13,7 @@
     "commit": "cz",
     "nx": "nx",
     "lint-staged": "lint-staged",
-    "generate:provider": "npx hygen provider new --version 0.24.1",
+    "generate:provider": "cd libs/automation && npm run generate:provider",
     "lint": "nx run-many  --target=lint --all",
     "test": "cross-env CI=true lerna run test:watch --parallel",
     "start:dev": "cross-env TZ=UTC lerna run start:dev --stream --parallel --concurrency=20 --scope=@novu/{api,worker,web,widget,ws,notification-center}",
@@ -52,7 +52,7 @@
     "build:widget": "nx build @novu/widget",
     "build:embed": "nx build @novu/embed",
     "build:storybook": "nx run @novu/design-system:build-storybook",
-    "test:providers": "cross-env pnpm --filter './providers/**' test",
+    "test:providers": "cross-env pnpm --filter './packages/providers/**' test",
     "release:patch": "lerna version patch --no-push",
     "release:minor": "lerna version minor --no-push",
     "release:preminor": "lerna version preminor --no-push",
@@ -85,6 +85,7 @@
     "@nrwl/nx-cloud": "^16.5.2",
     "@nrwl/tao": "^16.10.0",
     "@nrwl/workspace": "^16.10.0",
+    "@nx/plugin": "^16.10.0",
     "@octokit/core": "^4.0.0",
     "@pnpm/filter-workspace-packages": "^7.0.6",
     "@pnpm/logger": "^5.0.0",
@@ -177,8 +178,7 @@
       "packages/*",
       "enterprise/packages/*",
       "enterprise/packages/*/*",
-      "packages/notification-center-angular/projects/*",
-      "providers/*"
+      "packages/notification-center-angular/projects/*"
     ]
   },
   "husky": {

@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { TelnyxSmsProvider } from '@novu/telnyx';
+import { TelnyxSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class TelnyxHandler extends BaseSmsHandler {

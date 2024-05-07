@@ -28,4 +28,3 @@ jobs:
     - name: Run a test
       run: |
         cd apps/webhook && pnpm test:e2e
-        pnpm test

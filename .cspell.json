@@ -636,7 +636,19 @@
     "MJML",
     "localstorage",
     "elif",
-    "websockets"
+    "websockets",
+    "whatsapp",
+    "whatsappbusiness",
+    "parens",
+    "Webpush",
+    "webpush",
+    "xkeysib",
+    "firestore",
+    "firsttris",
+    "esbenp",
+    "npmjs",
+    "maxage",
+    "unpublish"
   ],
   "flagWords": [],
   "patterns": [
@@ -727,6 +739,6 @@
     ".env.development",
     ".env.local",
     ".env.production",
-    ".env.test",
+    ".env.test"
   ]
 }

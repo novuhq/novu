@@ -103,6 +103,7 @@ async function affectedProjectsContainingTask(taskName, baseBranch) {
     baseBranch,
     '--json'
   );
+  // console.log("nx output:\n" + affectedCommandResult)
 
   // pnpm nx show projects --affected --withTarget=[task] --base [base branch] --json
   const result = JSON.parse(getAffectedCommandResult(affectedCommandResult));
