@@ -740,6 +740,7 @@
     ".env.development",
     ".env.local",
     ".env.production",
-    ".env.test"
+    ".env.test",
+    ".example.env",
   ]
 }
