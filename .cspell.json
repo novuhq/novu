@@ -731,5 +731,6 @@
     ".env.local",
     ".env.production",
     ".env.test",
+    "decompile"
   ]
 }
