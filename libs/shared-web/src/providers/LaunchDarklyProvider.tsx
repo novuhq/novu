@@ -3,7 +3,7 @@ import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import { PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react';
 import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
 import { useFeatureFlags } from '../hooks';
-import { checkIsUnprotectedPathname, checkShouldUseLaunchDarkly } from '../utils';
+import { checkShouldUseLaunchDarkly } from '../utils';
 import { useAuthContext } from './AuthProvider';
 
 /** A provider with children required */
@@ -33,7 +33,7 @@ export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProvi
   if (!authContext) {
     throw new Error('LaunchDarklyProvider must be used within <AuthProvider>!');
   }
-  const { currentOrganization } = authContext;
+  const { currentOrganization, isLoggedIn } = authContext;
 
   useEffect(() => {
     // no need to fetch if LD is disabled or there isn't an org to query against
@@ -61,9 +61,9 @@ export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProvi
 
   /**
    * For self-hosted, LD will not be enabled, so do not block initialization.
-   * Checking unprotected (routes without org-based auth) is required to ensure that such routes still load.
+   * Must not show the fallback if the user isn't logged-in to avoid issues with un-authenticated routes (i.e. login).
    */
-  if (checkShouldUseLaunchDarkly() && !checkIsUnprotectedPathname(window.location.pathname) && !isLDReady) {
+  if (checkShouldUseLaunchDarkly() && isLoggedIn && !isLDReady) {
     return <>{fallbackDisplay}</>;
   }
 
