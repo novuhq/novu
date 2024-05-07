@@ -16,34 +16,37 @@
   <a href="https://www.npmjs.com/package/@novu/node">
     <img src="https://img.shields.io/npm/dm/@novu/node" alt="npm downloads">
   </a>
-  <img src="https://img.shields.io/github/license/novuhq/novu" alt="MIT">
+  <a href="https://github.com/novuhq/novu/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/novuhq/novu" alt="MIT">
+  </a>
 </p>
 
-<h1 align="center">The open-source notification infrastructure for developers</h1>
+<h1 align="center">
+  The open-source notification infrastructure for developers
+</h1>
 
 <div align="center">
-The ultimate service for managing multi-channel notifications with a single API.
+  The ultimate service for managing multi-channel notifications with a single API.
 </div>
 
-  <p align="center">
-    <br />
-    <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
-    <br />
+<p align="center">
+  <br />
+  <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
+  <br />
 
-  <br/>
-    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
-    ·
-    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
-    ·
-  <a href="https://discord.novu.co">Join Our Discord</a>
-    ·
-    <a href="https://roadmap.novu.co">Roadmap</a>
-    ·
-    <a href="https://twitter.com/novuhq">X</a>
-    ·
-    <a href="https://notifications.directory">Notifications Directory</a>
-  </p>
-
+<br/>
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
+  ·
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
+  ·
+<a href="https://discord.novu.co">Join Our Discord</a>
+  ·
+  <a href="https://roadmap.novu.co">Roadmap</a>
+  ·
+  <a href="https://twitter.com/novuhq">X</a>
+  ·
+  <a href="https://notifications.directory">Notifications Directory</a>
+</p>
 
 ## ⭐️ Why Novu?
 
@@ -196,7 +199,6 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Bandwidth
 - [ ] RingCentral
 
-
 #### 📱 Push
 
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
@@ -216,7 +218,6 @@ Novu provides a single API to manage providers across multiple channels with a s
 #### 📱 In-App
 
 - [x] [Novu](https://docs.novu.co/notification-center/getting-started?utm_campaign=github-readme)
-- [ ] MagicBell
 
 #### Other (Coming Soon...)
 
