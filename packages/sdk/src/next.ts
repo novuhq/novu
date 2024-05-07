@@ -161,6 +161,7 @@ export const serve = (options: IServeHandlerOptions): any => {
    *
    * Because of this, we'll add circular references to those property names of
    * the returned handler, meaning we can write some succinct code to export
+   * cspell:disable-next-line
    * them. Thanks, @goodoldneon.
    *
    * @example

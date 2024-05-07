@@ -4,9 +4,7 @@
  * https://jestjs.io/docs/configuration
  */
 
-import type { Config } from 'jest';
-
-const config: Config = {
+const config = {
   /*
    * All imported modules in your tests should be mocked automatically
    * automock: false,
@@ -19,6 +17,7 @@ const config: Config = {
 
   /*
    * The directory where Jest should store its cached dependency information
+   * cspell:disable-next-line
    * cacheDirectory: "/private/var/folders/h5/6fkfv6mj2wv2j74sgphjsxr00000gn/T/jest_dx",
    */
 

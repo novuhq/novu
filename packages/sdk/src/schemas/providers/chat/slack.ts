@@ -291,7 +291,7 @@ export const slackOutputSchema = {
             verbatim: {
               type: 'boolean',
               description:
-                'When set to `false` (as is default) URLs will be auto-converted into links, conversation names will\nbe link-ified, and certain mentions will be {@link https://api.slack.com/reference/surfaces/formatting#automatic-parsing automatically parsed}.\nUsing a value of `true` will skip any preprocessing of this nature, although you can still include\n{@link https://api.slack.com/reference/surfaces/formatting#advanced manual parsing strings}.',
+                'When set to `false` (as is default) URLs will be auto-converted into links, conversation names will\nbe converted to links, and certain mentions will be {@link https://api.slack.com/reference/surfaces/formatting#automatic-parsing automatically parsed}.\nUsing a value of `true` will skip any preprocessing of this nature, although you can still include\n{@link https://api.slack.com/reference/surfaces/formatting#advanced manual parsing strings}.',
             },
           },
           required: ['type', 'text'],

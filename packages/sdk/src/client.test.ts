@@ -77,7 +77,7 @@ describe('Client', () => {
         );
 
         // @ts-expect-error - result is a string
-        result.foo === 'stom';
+        result.foo === 'custom';
       });
     });
   });

@@ -11,8 +11,8 @@
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "test": "jest",
-    "lint": "eslint . --ext .ts --ignore-path .gitignore",
-    "lint:fix": "npm run lint -- --fix",
+    "lint": "eslint src --ext .ts",
+    "lint:fix":"eslint src --ext .ts --fix",
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
     "start": "ts-node src/index.ts",
