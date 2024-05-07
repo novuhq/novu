@@ -1,3 +1,4 @@
+/** cspell:disable */
 import chalk from 'chalk';
 import gradient from 'gradient-string';
 
@@ -11,7 +12,6 @@ import open from 'open';
 export const showWelcomeScreen = (): void => {
   const textGradient = gradient('#0099F7', '#ff3432');
   const logoGradient = gradient('#DD2476', '#FF512F');
-  // cSpell:disable
   const logo = `
                             εεεεεεεεεεεεε        
                     εεε       εεεεεεεεεεε        
@@ -27,7 +27,6 @@ export const showWelcomeScreen = (): void => {
                        εεεεεεεεεεε       εεε     
                        εεεεεεεεεεεεε                  
                               `;
-  // cSpell:enable
 
   const items = logo.split('\n').map((row) => logoGradient(row));
 
@@ -70,8 +69,10 @@ export async function startStudio(anonymousId: string, requestedPort = 2022) {
 
   createServer(async (req, res) => {
     try {
-      // Be sure to pass `true` as the second argument to `url.parse`.
-      // This tells it to parse the query portion of the URL.
+      /*
+       * Be sure to pass `true` as the second argument to `url.parse`.
+       * This tells it to parse the query portion of the URL.
+       */
       const parsedUrl = parse(req.url, true);
       const { pathname, query } = parsedUrl;
 
@@ -79,19 +80,23 @@ export async function startStudio(anonymousId: string, requestedPort = 2022) {
 
       await handle(req, res, parsedUrl);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Error occurred handling', req.url, err);
       res.statusCode = 500;
       res.end('internal server error');
     }
   })
     .once('error', (err) => {
+      // eslint-disable-next-line no-console
       console.error(err);
       process.exit(1);
     })
     .listen(availablePort, () => {
       if (requestedPort && Number(availablePort) !== Number(requestedPort)) {
+        // eslint-disable-next-line no-console
         console.warn(`> Port ${requestedPort} is not available, using port ${availablePort}`);
       }
+      // eslint-disable-next-line no-console
       console.log(`> Ready on http://${hostname}:${availablePort}`);
 
       if (process.env.NODE_ENV !== 'development') {

@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 
-describe('test use of novus node package - Events', () => {
+describe('test studio start', () => {
   test('should ss', () => {
     expect(1).toBe(1);
   });
