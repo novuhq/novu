@@ -1,5 +1,3 @@
-/** cspell:disable */
-
 import chalk from 'chalk';
 import gradient from 'gradient-string';
 
@@ -9,25 +7,11 @@ const next = require('next');
 const getPort = require('get-port');
 import * as process from 'process';
 import open from 'open';
+import { logo } from './constants';
 
 export const showWelcomeScreen = (): void => {
   const textGradient = gradient('#0099F7', '#ff3432');
   const logoGradient = gradient('#DD2476', '#FF512F');
-  const logo = `
-                            εεεεεεεεεεεεε        
-                    εεε       εεεεεεεεεεε        
-                  εεεεεεεε       εεεεεεεε        
-                εεεεεεεεεεεε       εεεεεε     εε 
-               εεεεεεεεεεεεεεεε      εεεε     εεε
-              εεεεεεεεεεεεεεεεεεε       ε     εεε
-              εεεεε         εεεεεεεε         εεεε
-               εεε     ε       εεεεεεεεεεεεεεεεεε
-               εεε     εεεε      εεεεεεεεεεεεεεεε
-                εε     εεεεεε       εεεεεεεεεεεε 
-                       εεεεεεεε       εεεεεεεε   
-                       εεεεεεεεεεε       εεε     
-                       εεεεεεεεεεεεε                  
-                              `;
 
   const items = logo.split('\n').map((row) => logoGradient(row));
 
