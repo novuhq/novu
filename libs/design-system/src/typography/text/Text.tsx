@@ -13,6 +13,7 @@ interface ITextProps extends JSX.ElementChildrenAttribute, SpacingProps {
   color?: MantineColor;
   rows?: number;
   gradient?: boolean;
+  transform?: TextProps['transform'];
 }
 
 /**

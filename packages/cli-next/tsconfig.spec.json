@@ -1,0 +1,7 @@
+{
+  "extends": "packages/cli/tsconfig.json",
+  "compilerOptions": {
+    "types": ["mocha", "node"],
+    "esModuleInterop": false
+  }
+}

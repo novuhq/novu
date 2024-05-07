@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { AzureSmsProvider } from '@novu/azure-sms';
+import { AzureSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class AzureSmsHandler extends BaseSmsHandler {

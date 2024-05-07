@@ -54,11 +54,6 @@ jobs:
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
-          targets: lint
-          projects: '@novu/widget'
-
-      - uses: mansagroup/nrwl-nx-action@v3
-        with:
           targets: build
           args: --skip-nx-cache
           projects: '@novu/widget,@novu/embed,@novu/api,@novu/worker,@novu/ws'

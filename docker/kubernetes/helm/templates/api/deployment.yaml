@@ -147,18 +147,18 @@ spec:
                   key: accessKey
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom :
-               secretKeyRef:
+                secretKeyRef:
                   name: {{ include "novu.s3.secretName" . }}
                   key: secretKey
             - name: JWT_SECRET
               valueFrom :
-               secretKeyRef:
-                  name: {{ include "common.names.fullname" . }}
+                secretKeyRef:
+                  name: {{ if .Values.existingSecret -}} {{ .Values.existingSecret }} {{- else -}} {{ include "common.names.fullname" . }} {{- end }}
                   key: jwt-secret
             - name: STORE_ENCRYPTION_KEY
               valueFrom :
-               secretKeyRef:
-                  name: {{ include "common.names.fullname" . }}
+                secretKeyRef:
+                  name: {{ if .Values.existingSecret -}} {{ .Values.existingSecret }} {{- else -}} {{ include "common.names.fullname" . }} {{- end }}
                   key: store-encryption-key
             {{- if .Values.api.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVars "context" $) | nindent 12 }}
@@ -208,7 +208,7 @@ spec:
           lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.api.lifecycleHooks "context" $) | nindent 12 }}
           {{- end }}
           {{- if .Values.api.extraVolumeMounts }}
-          {{- include "common.tplvalues.render" (dict "value" .Values.api.extraVolumeMounts "context" $) | nindent 12 }}
+          volumeMounts: {{- include "common.tplvalues.render" (dict "value" .Values.api.extraVolumeMounts "context" $) | nindent 12 }}
           {{- end }}
         {{- if .Values.api.sidecars }}
         {{- include "common.tplvalues.render" ( dict "value" .Values.api.sidecars "context" $) | nindent 8 }}

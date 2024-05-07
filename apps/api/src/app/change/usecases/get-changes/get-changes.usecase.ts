@@ -148,10 +148,10 @@ export class GetChanges {
   ): Promise<IViewEntity | Record<string, unknown>> {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-translation')?.TranslationsService) {
+        if (!require('@novu/ee-shared-services')?.TranslationsService) {
           throw new ApiException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
+        const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
         const { name, identifier } = await service.getTranslationGroupData(environmentId, entityId);
 
         return {
@@ -172,10 +172,10 @@ export class GetChanges {
   ): Promise<IViewEntity | Record<string, unknown>> {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-translation')?.TranslationsService) {
+        if (!require('@novu/ee-shared-services')?.TranslationsService) {
           throw new ApiException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
+        const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
         const { name, group } = await service.getTranslationData(environmentId, entityId);
 
         return {

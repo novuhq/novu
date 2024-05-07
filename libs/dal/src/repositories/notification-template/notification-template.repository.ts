@@ -214,7 +214,10 @@ export class NotificationTemplateRepository extends BaseRepository<
       active: active,
     };
 
-    const items = await this.MongooseModel.find(requestQuery).populate('notificationGroup');
+    const items = await this.MongooseModel.find(requestQuery)
+      .populate('steps.template', { type: 1 })
+      .populate('notificationGroup')
+      .read('secondaryPreferred');
 
     return this.mapEntities(items);
   }

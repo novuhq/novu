@@ -1,0 +1,58 @@
+{
+  "name": "@novu/novu-labs",
+  "version": "0.0.1-alpha.77",
+  "description": "On-Boarding Cli",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18.17.0"
+  },
+  "scripts": {
+    "build:post": "cross-env mkdir dist/constants/dashboard",
+    "prebuild": "rimraf dist",
+    "build": "pnpm prebuild && tsc -p tsconfig.build.json && pnpm build:post",
+    "build:prod": "pnpm prebuild && pnpm build && pnpm build:post",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "precommit": "lint-staged",
+    "start": "pnpm start:dev",
+    "start:sync": "cross-env NODE_ENV=development TZ=UTC nodemon sync --backend-url=http://localhost:3000 --echo-url=http://localhost:4000/api --api-key=9185a6719c99faa9142b08c94e3b65ca",
+    "start:dev": "cross-env NODE_ENV=development NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon echo",
+    "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nodemon init",
+    "start:debug": "cross-env TZ=UTC nodemon --config nodemon-debug.json",
+    "start:prod": "cross-env TZ=UTC node dist/index.js",
+    "release:alpha": "npm i && npm version prerelease --preid=alpha && npm run build && npm publish"
+  },
+  "author": "Novu Labs Team.",
+  "license": "ISC",
+  "bin": {
+    "novu-labs": "./dist/index.js"
+  },
+  "devDependencies": {
+    "@types/configstore": "^5.0.1",
+    "@types/inquirer": "^8.2.0",
+    "@types/mocha": "10.0.2",
+    "eslint-config-adjunct": "^4.13.0",
+    "ncp": "^2.0.0",
+    "nodemon": "^3.0.1",
+    "rimraf": "^5.0.5",
+    "ts-node": "~10.9.1",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "4.9.5"
+  },
+  "dependencies": {
+    "@novu/shared": "^0.23.1",
+    "@novu/studio": "^0.0.1-alpha.87",
+    "@segment/analytics-node": "^1.1.4",
+    "axios": "^1.6.2",
+    "chalk": "4.1.2",
+    "commander": "^9.0.0",
+    "configstore": "^5.0.0",
+    "cross-env": "^7.0.3",
+    "dotenv": "^8.2.0",
+    "get-port": "^5.1.1",
+    "gradient-string": "^2.0.0",
+    "inquirer": "^8.2.0",
+    "jwt-decode": "^3.1.2",
+    "open": "^8.4.2",
+    "uuid": "^9.0.0"
+  }
+}

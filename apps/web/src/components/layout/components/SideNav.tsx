@@ -11,7 +11,6 @@ import {
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
-import { ROUTES } from '../../../constants/routes.enum';
 import {
   Activity,
   Bolt,
@@ -20,6 +19,7 @@ import {
   Buildings,
   CheckCircleOutlined,
   colors,
+  IconViewQuilt,
   NavMenu,
   NovuLogo,
   Repeat,
@@ -29,15 +29,17 @@ import {
   Team,
   Translation,
 } from '@novu/design-system';
-import { useEnvController, useFeatureFlag } from '../../../hooks';
-import { useSpotlightContext } from '../../providers/SpotlightProvider';
-import { ChangesCountBadge } from './ChangesCountBadge';
-import OrganizationSelect from './OrganizationSelect';
 import { FeatureFlagsKeysEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import { FreeTrialSidebarWidget } from './FreeTrialSidebarWidget';
 import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
-import { VisibilityOff } from './VisibilityOff';
+import { ROUTES } from '../../../constants/routes.enum';
+import { useEnvController, useFeatureFlag } from '../../../hooks';
 import { useSegment } from '../../providers/SegmentProvider';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
+import { ChangesCountBadge } from './ChangesCountBadge';
+import OrganizationSelect from '../../nav/OrganizationSelect/OrganizationSelect';
+import { VisibilityOff } from './VisibilityOff';
+import { IS_DOCKER_HOSTED } from '../../../config';
 
 const usePopoverStyles = createStyles(({ colorScheme }) => ({
   dropdown: {
@@ -58,6 +60,7 @@ const usePopoverStyles = createStyles(({ colorScheme }) => ({
 
 type Props = {};
 
+/** @deprecated Use `MainNav` instead */
 export function SideNav({}: Props) {
   const navigate = useNavigate();
   const segment = useSegment();
@@ -71,14 +74,13 @@ export function SideNav({}: Props) {
   const dark = colorScheme === 'dark';
   const { addItem, removeItems } = useSpotlightContext();
   const { classes } = usePopoverStyles();
-  const isMultiTenancyEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MULTI_TENANCY_ENABLED);
-  const isTranslationManagerEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_TRANSLATION_MANAGER_ENABLED);
   const {
     showOnboarding: showOnBoardingState,
     isLoading: isLoadingShowOnBoarding,
     updateOnboardingStatus,
   } = useUserOnboardingStatus();
   const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   useEffect(() => {
     removeItems(['toggle-environment']);
@@ -112,7 +114,6 @@ export function SideNav({}: Props) {
     { icon: <Bolt />, link: ROUTES.WORKFLOWS, label: 'Workflows', testId: 'side-nav-templates-link' },
     {
       label: 'Tenants',
-      condition: isMultiTenancyEnabled,
       icon: <Buildings />,
       link: ROUTES.TENANTS,
       testId: 'side-nav-tenants-link',
@@ -125,13 +126,14 @@ export function SideNav({}: Props) {
     },
     {
       label: 'Translations',
-      condition: isTranslationManagerEnabled,
+      condition: !IS_DOCKER_HOSTED,
       icon: <Translation width={20} height={20} />,
       link: ROUTES.TRANSLATIONS,
       testId: 'side-nav-translations-link',
     },
     {
       label: 'Brand',
+      condition: !isInformationArchitectureEnabled,
       icon: <Brand />,
       link: '/brand',
       testId: 'side-nav-brand-link',
@@ -140,9 +142,17 @@ export function SideNav({}: Props) {
     { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
     {
       label: 'Team Members',
+      condition: !isInformationArchitectureEnabled,
       icon: <Team />,
       link: ROUTES.TEAM,
       testId: 'side-nav-settings-organization',
+    },
+    {
+      condition: isInformationArchitectureEnabled,
+      icon: <IconViewQuilt />,
+      link: ROUTES.LAYOUT,
+      label: 'Layouts',
+      testId: 'side-nav-layouts-link',
     },
     {
       label: 'Changes',

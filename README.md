@@ -1,11 +1,4 @@
 <div align="center">
-  👨‍💻 <a href="https://jobs.ashbyhq.com/novu.co?utm_source=github" target="_blank"> We are hiring in Europe/UK/Israel!</a> 👩‍💻
-</div>
-
-<br/>
-<br/>
-
-<div align="center">
   <a href="https://novu.co?utm_source=github" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
@@ -36,33 +29,23 @@
   The ultimate service for managing multi-channel notifications with a single API.
 </div>
 
-<br />
-
-<p align="center">  
+<p align="center">
+  <br />
   <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
-</p>
+  <br />
 
-<br />
-
-<p align="center">
+<br/>
   <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
-  · <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
-  · <a href="https://discord.novu.co">Join Our Discord</a>
-  · <a href="https://roadmap.novu.co">Roadmap</a>
-  · <a href="https://twitter.com/novuhq">X</a>
-  · <a href="https://notifications.directory">Notifications Directory</a>
-</p>
-
-<p align="center">
-  Available in: <a href="https://github.com/novuhq/novu/tree/next/packages/node">Node.js</a>
-  · <a href="https://github.com/novuhq/novu-php">PHP</a>
-  · <a href="https://github.com/novuhq/go-novu">Go</a>
-  · <a href="https://github.com/novuhq/novu-ruby">Ruby</a>
-  · <a href="https://github.com/novuhq/novu-kotlin">Kotlin</a>
-  · <a href="https://github.com/novuhq/elixir">Elixir</a>
-  · <a href="https://github.com/novuhq/rust">Rust</a>
-  · <a href="https://github.com/novuhq/novu-python">Python</a>
-  · <a href="https://github.com/novuhq/novu-java">Java</a>
+  ·
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
+  ·
+<a href="https://discord.novu.co">Join Our Discord</a>
+  ·
+  <a href="https://roadmap.novu.co">Roadmap</a>
+  ·
+  <a href="https://twitter.com/novuhq">X</a>
+  ·
+  <a href="https://notifications.directory">Notifications Directory</a>
 </p>
 
 ## ⭐️ Why Novu?
@@ -73,13 +56,21 @@ With Novu, you can create custom workflows and define conditions for each channe
 ## ✨ Features
 
 - 🌈 Single API for all messaging providers (In-App, Email, SMS, Push, Chat)
-- 💅 Easily manage notifications over multiple channels
+- 💅 Fully managed GitOps Flow, deployed from your CI
+- 🔥 Define workflow and step validations with Zod or JSON Schema
+- 💌 React Email/Maizzle/MJML integrations
 - 🚀 Equipped with a CMS for advanced layouts and design management
-- 🛡 Built-in protection for missing variables (Coming Soon)
-- 📦 Easy to set up and integrate
 - 🛡 Debug and analyze multi-channel messages in a single dashboard
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community-driven
+
+## 🚀 Getting Started
+
+To get started, type the following command in your Terminal.
+
+```bash
+npx novu-labs@latest echo
+```
 
 ## 📚 Table Of Contents
 
@@ -97,76 +88,24 @@ With Novu, you can create custom workflows and define conditions for each channe
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
 
-## 🚀 Getting Started
-
-We are excited to launch the complete Novu API and admin panel. Do you want to give it a test before the official release? Here is how:
-
-```
-npx novu init
-```
-
-After setting up your account using the cloud or docker version, you can trigger the API using the `@novu/node` package.
-
-For API documentation and reference, please visit [Novu API Reference](https://docs.novu.co/api-reference/events/trigger-event?utm_campaign=github-readme).
-
-To get started with the Node.js package, you can install it using npm:
-
-```bash
-npm install @novu/node
-```
-
-```ts
-import { Novu } from '@novu/node';
-
-const novu = new Novu(process.env.NOVU_API_KEY);
-
-await novu.trigger('<TRIGGER_NAME>', {
-  to: [
-    {
-      subscriberId: '<UNIQUE_IDENTIFIER>',
-      email: 'john1@doemail.com',
-      firstName: 'John',
-      lastName: 'Doe',
-    },
-  ],
-  payload: {
-    name: 'Hello World',
-    organization: {
-      logo: 'https://happycorp.com/logo.png',
-    },
-  },
-});
-```
-
-## GitOps & React Email Integration
-Create notification workflows right from your IDE and integrate with MJML/React Email/Maizzle and others
-
-- Fully managed GitOps Flow, deployed from your CI
-- Local Dev Studio to develop and debug workflows in your IDE
-- React Email/Maizzle/MJML integrations
-- Runs in your VPC
-- Debug cloud triggers in your IDE
-- Type safety with your favorite programming language
-- Define workflow and step validations with Zod or JSON Schema
-- Modify content and behavior via Web management input panel
-
-[Request Early Access](https://novu.co/novu-echo-coming-soon/?utm_campaign=github-readme)
+## Notification Workflows as Code
+For API documentation and reference, please visit [Echo API Reference](https://docs.novu.co/echo/quickstart?utm_campaign=github-readme).
 
 ```ts
 
 client.workflow('comment-on-post', async ({step, subscriber}) => {
   const inAppResponse = await step.inApp('in-app-step', async (inputs) => {
     return {
-      // body: renderReactComponent(inputs)
+      body: renderReactComponent(inputs)
     };
   }, {
-    inputs: {
+    inputSchema: {
       // ...JSON Schema or ZOD/Ajv/Class Validators definition
     }
   });
 
   // Novu Worker Engine will manage the state and durability of each step in isolation
-  const {digestedEvents} = await step.digest('1 day');
+  const { events } = await step.digest('1 day');
 
   await step.email('email-step', async () => {
     return {
@@ -175,7 +114,7 @@ client.workflow('comment-on-post', async ({step, subscriber}) => {
     }
   }, {
     // Step-level inputs defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
-    inputs: {
+    inputSchema: {
       // ...JSON Schema
     },
     providers: {
@@ -195,7 +134,7 @@ client.workflow('comment-on-post', async ({step, subscriber}) => {
   });
 // Define your workflow trigger payload using json schema and custom validation;
 }, {
-  dataSchema: {
+  payloadSchema: {
     // ...JSON Schema
   }
 });
@@ -279,7 +218,6 @@ Novu provides a single API to manage providers across multiple channels with a s
 #### 📱 In-App
 
 - [x] [Novu](https://docs.novu.co/notification-center/getting-started?utm_campaign=github-readme)
-- [ ] MagicBell
 
 #### Other (Coming Soon...)
 
@@ -293,10 +231,6 @@ Before you begin coding and collaborating, please read our [Code of Conduct](htt
 
 We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
 
-## ⚡ Immediate working space with Gitpod
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
-
 ## 🔗 Links
 
 - [Home page](https://novu.co?utm_campaign=github-readme)
@@ -308,7 +242,6 @@ We are more than happy to help you. If you are getting any errors or facing prob
 Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
 
 ## 💪 Thanks To All Contributors
-
 Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
 <a href="https://novu.co/contributors?utm_source=github">
