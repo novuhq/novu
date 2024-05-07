@@ -1,12 +1,10 @@
 import { IOrganizationEntity } from '@novu/shared';
-import {
-  LAUNCH_DARKLY_CLIENT_SIDE_ID,
-  useAuthContext,
-  useFeatureFlags,
-  checkIsUnprotectedPathname,
-} from '@novu/shared-web';
 import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import { PropsWithChildren, ReactNode, useEffect, useRef, useState } from 'react';
+import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
+import { useFeatureFlags } from '../hooks';
+import { checkIsUnprotectedPathname, checkShouldUseLaunchDarkly } from '../utils';
+import { useAuthContext } from './AuthProvider';
 
 /** A provider with children required */
 type GenericLDProvider = Awaited<ReturnType<typeof asyncWithLDProvider>>;
@@ -59,8 +57,11 @@ export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProvi
     fetchLDProvider();
   }, [setIsLDReady, currentOrganization]);
 
-  // eslint-disable-next-line multiline-comment-style
-  if (shouldUseLaunchDarkly() && !checkIsUnprotectedPathname(window.location.pathname) && !isLDReady) {
+  /**
+   * For self-hosted, LD will not be enabled, so do not block initialization.
+   * Checking unprotected (routes without org-based auth) is required to ensure that such routes still load.
+   */
+  if (checkShouldUseLaunchDarkly() && !checkIsUnprotectedPathname(window.location.pathname) && !isLDReady) {
     return <>{fallbackDisplay}</>;
   }
 
@@ -78,8 +79,4 @@ function LaunchDarklyClientWrapper({ children, org }: PropsWithChildren<{ org?: 
   useFeatureFlags(org);
 
   return <>{children}</>;
-}
-
-function shouldUseLaunchDarkly(): boolean {
-  return !!process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 }
