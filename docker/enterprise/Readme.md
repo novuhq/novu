@@ -18,23 +18,17 @@ Ensure that the following software has been installed on your system:
 Warning: Before you start this process, If you have an existing mongodb volume you will need to remove it to 
 ensure the enterprise tables are installed correctly.
 
-Clone the Novu repository and navigate to the Docker directory:
+Clone the Novu repository, navigate to this directory, and run the following command with the provided username and token
 
 ```sh
 # Add the token to the shell env
 NOVU_ENTERPRISE_TOKEN=ghp_xxxx
 
-# Get the code
-git clone https://github.com/novuhq/novu
-
-# Go to the docker folder
-cd novu/docker
-
 # Copy the example env file
-cp .env.example ./enterprise/.env
+cp .env.example .env
 
 # Login
-echo "$NOVU_ENTERPRISE_TOKEN" | docker login --username <provided_username> --password-stdin
+docker login ghcr.io --username <provided_username> --password "$NOVU_ENTERPRISE_TOKEN"
 
 # Start Novu
 docker-compose -f ./enterprise/docker-compose.enterprise.yml up
