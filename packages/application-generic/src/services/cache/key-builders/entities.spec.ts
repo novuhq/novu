@@ -11,7 +11,7 @@ import {
   IdentifierPrefixEnum,
   OrgScopePrefixEnum,
 } from './identifiers';
-import { buildUnscopedKey } from './builder.scoped';
+import { buildUnscopedKey } from './builder.base';
 
 describe('Key builder for entities', () => {
   describe('buildSubscriberKey', () => {
