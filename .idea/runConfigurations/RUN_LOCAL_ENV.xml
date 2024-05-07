@@ -9,8 +9,6 @@
     <toRun name="WORKER" type="js.build_tools.npm" />
     <toRun name="WS" type="js.build_tools.npm" />
     <toRun name="auth &gt; build:watch" type="js.build_tools.npm" />
-    <toRun name="chimera &gt; build:watch" type="js.build_tools.npm" />
-    <toRun name="chimera-connect &gt; build:watch" type="js.build_tools.npm" />
     <method v="2" />
   </configuration>
 </component>

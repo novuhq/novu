@@ -18,11 +18,11 @@ export const InputVariables = ({
   }
 
   try {
-    const module = require('@novu/ee-billing-web');
+    const module = require('@novu/ee-echo-web');
     const InputVariablesComponent = module.InputVariables;
 
     return <InputVariablesComponent schema={inputs} onSubmit={onSubmit} onChange={onChange} />;
-  } catch (e) {}
-
-  return null;
+  } catch (e) {
+    throw e;
+  }
 };

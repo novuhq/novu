@@ -12,8 +12,11 @@ import { GetActiveIntegrationsStatusCommand } from './get-active-integrations-st
 
 import { IntegrationResponseDto } from '../../../integrations/dtos/integration-response.dto';
 import { WorkflowResponse } from '../../dto/workflow-response.dto';
-import { NotificationStep } from '../create-notification-template';
-import { CalculateLimitNovuIntegration, CalculateLimitNovuIntegrationCommand } from '@novu/application-generic';
+import {
+  CalculateLimitNovuIntegration,
+  CalculateLimitNovuIntegrationCommand,
+  NotificationStep,
+} from '@novu/application-generic';
 
 @Injectable()
 export class GetActiveIntegrationsStatus {
@@ -113,7 +116,10 @@ export class GetActiveIntegrationsStatus {
     for (const step of uniqueSteps) {
       const stepType = step.template?.type;
       const skipStep =
-        stepType === StepTypeEnum.DELAY || stepType === StepTypeEnum.DIGEST || stepType === StepTypeEnum.TRIGGER;
+        stepType === StepTypeEnum.DELAY ||
+        stepType === StepTypeEnum.DIGEST ||
+        stepType === StepTypeEnum.TRIGGER ||
+        stepType === StepTypeEnum.CUSTOM;
       const isStepWithPrimaryIntegration = stepType === StepTypeEnum.EMAIL || stepType === StepTypeEnum.SMS;
       if (stepType && !skipStep) {
         const hasActiveIntegrations = activeChannelsStatus[stepType].hasActiveIntegrations;

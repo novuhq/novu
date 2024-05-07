@@ -27,7 +27,7 @@ export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => voi
   }
 
   try {
-    const module = require('@novu/ee-billing-web');
+    const module = require('@novu/ee-echo-web');
     const InputVariablesComponent = module.InputVariablesForm;
 
     return (
@@ -40,7 +40,7 @@ export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => voi
         />
       </>
     );
-  } catch (e) {}
-
-  return null;
+  } catch (e) {
+    throw e;
+  }
 };

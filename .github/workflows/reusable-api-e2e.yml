@@ -80,12 +80,6 @@ jobs:
       - uses: ./.github/actions/setup-redis-cluster
         name: Setup redis cluster
 
-      - uses: mansagroup/nrwl-nx-action@v3
-        name: Run Lint
-        with:
-          targets: lint
-          projects: '@novu/api'
-
       - uses: ./.github/actions/start-localstack
         name: Start localstack
 
@@ -94,6 +88,7 @@ jobs:
         name: Run worker
         with:
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          ee: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
 
         # Runs a single command using the runners shell
       - name: Build API

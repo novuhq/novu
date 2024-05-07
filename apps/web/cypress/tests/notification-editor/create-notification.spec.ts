@@ -73,7 +73,7 @@ describe('Creation functionality', function () {
 
     cy.getByTestId('email-editor').getByTestId('editor-row').eq(1).click();
     cy.getByTestId('control-add').click();
-    cy.getByTestId('add-text-block').click();
+    cy.getByTestId('add-text-block').click({ force: true });
     cy.getByTestId('editable-text-content').eq(1).clear().type('This another text will be {{customVariable}}', {
       parseSpecialCharSequences: false,
     });
@@ -87,7 +87,7 @@ describe('Creation functionality', function () {
     cy.getByTestId('emailPreheader').type('this is email preheader');
 
     cy.getByTestId('var-label').first().contains('System Variables').click();
-    cy.getByTestId('var-label').last().contains('Step Variables');
+    cy.getByTestId('var-label').last().contains('Translation Variables');
     cy.getByTestId('var-items-step').contains('step');
     cy.getByTestId('var-items-step').contains('object');
     cy.getByTestId('var-items-branding').contains('branding');
@@ -250,7 +250,7 @@ describe('Creation functionality', function () {
 
     cy.getByTestId('email-editor').getByTestId('editor-row').eq(1).click();
     cy.getByTestId('control-add').click();
-    cy.getByTestId('add-text-block').click();
+    cy.getByTestId('add-text-block').click({ force: true });
     cy.getByTestId('editable-text-content').eq(1).clear().type('This another text will be {{customVariable}}', {
       parseSpecialCharSequences: false,
     });
@@ -336,7 +336,7 @@ describe('Creation functionality', function () {
 
     cy.getByTestId('email-editor').getByTestId('editor-row').eq(1).click();
     cy.getByTestId('control-add').click();
-    cy.getByTestId('add-text-block').click();
+    cy.getByTestId('add-text-block').click({ force: true });
     cy.getByTestId('editable-text-content').eq(1).clear().type('This another text will be {{customVariable}}', {
       parseSpecialCharSequences: false,
     });

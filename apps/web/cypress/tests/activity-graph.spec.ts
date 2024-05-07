@@ -1,4 +1,8 @@
-describe('Activity page', function () {
+/**
+ * The tests from this file were moved to the corresponding Playwright file apps/web/tests/activity-graph.spec.ts.
+ * @deprecated
+ */
+describe.skip('Activity page', function () {
   beforeEach(function () {
     // @ts-expect-error
     cy.initializeSession()

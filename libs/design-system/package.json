@@ -1,6 +1,6 @@
 {
   "name": "@novu/design-system",
-  "version": "0.24.0",
+  "version": "0.24.1",
   "repository": "https://github.com/novuhq/novu",
   "description": "",
   "private": true,
@@ -16,7 +16,9 @@
     "dist/types"
   ],
   "scripts": {
-    "prepare": "panda codegen --clean",
+    "prepare": "pnpm prepare:panda && pnpm prepare:audit",
+    "prepare:panda": "panda codegen --clean",
+    "prepare:audit": "pnpm audit-components",
     "start": "npm run build:watch",
     "prebuild": "rimraf dist",
     "lint": "eslint --ext .ts,.tsx src",
@@ -28,24 +30,20 @@
     "build:esm:watch": "cross-env node_modules/.bin/tsc -p tsconfig.esm.json -w --preserveWatchOutput",
     "build:types": "tsc --declaration --emitDeclarationOnly --declarationMap --declarationDir dist/types -p tsconfig.json",
     "storybook": "pnpm panda --watch & storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "cypress:install": "cypress install",
-    "cypress:open": "cross-env NODE_ENV=test cypress open",
-    "cypress:run": "cross-env NODE_OPTIONS=--max_old_space_size=4096 NODE_ENV=test cypress run --component",
+    "build-storybook": "pnpm panda && storybook build",
     "test": "vitest",
     "audit-components": "pnpm react-scanner -c './react-scanner.config.js'"
   },
   "dependencies": {
-    "@cypress/react": "^7.0.3",
     "@emotion/css": "^11.10.5",
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
     "@mantine/notifications": "^5.7.1",
-    "@novu/client": "^0.24.0",
-    "@novu/shared": "^0.24.0",
-    "@novu/shared-web": "^0.24.0",
+    "@novu/client": "^0.24.1",
+    "@novu/shared": "^0.24.1",
+    "@novu/shared-web": "^0.24.1",
     "@segment/analytics-next": "1.59.0",
     "@sentry/react": "^7.40.0",
     "@tanstack/react-query": "^4.20.4",
@@ -74,8 +72,6 @@
     "@types/react-dom": "^17.0.0",
     "@vitejs/plugin-react": "^4.0.3",
     "acorn": "^8.7.1",
-    "cypress": "^13.3.2",
-    "eslint-plugin-cypress": "^2.12.1",
     "eslint-plugin-storybook": "^0.6.13",
     "jsdom": "^24.0.0",
     "react": "^17.0.1",
@@ -95,5 +91,21 @@
   "peerDependencies": {
     "react": "^16.8.0 || ^17.0.0",
     "react-dom": "^16.8.0 || ^17.0.0"
+  },
+  "nx": {
+    "targets": {
+      "build-storybook": {
+        "dependsOn": [
+          "^build"
+        ],
+        "outputs": [
+          "{projectRoot}/storybook-static"
+        ],
+        "inputs": [
+          "{projectRoot}/.storybook",
+          "{projectRoot}/src"
+        ]
+      }
+    }
   }
 }

@@ -1,4 +1,4 @@
-import { GenericSmsProvider } from '@novu/generic-sms';
+import { GenericSmsProvider } from '@novu/providers';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 

@@ -1,80 +1,17 @@
-import { css } from '@emotion/react';
-import styled from '@emotion/styled';
-import { createStyles, CSSObject, Drawer, DrawerStylesNames, Loader, MantineTheme, Stack, Styles } from '@mantine/core';
-import { ReactNode } from 'react';
+import { Drawer, Loader, Stack } from '@mantine/core';
 import { useKeyDown } from '@novu/shared-web';
 
 import { ActionButton } from '../button/ActionButton';
-import { When } from '../when';
-import { colors, shadows } from '../config';
+import { colors } from '../config';
 import { ArrowLeft } from '../icons';
+import { When } from '../when';
 import { Close } from './Close';
+import { BodyHolder, FooterHolder, HeaderHolder, Form, useDrawerStyles } from './Sidebar.styles';
+import { ISidebarBaseProps } from './Sidebar.types';
 
-const HeaderHolder = styled.div`
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 12px;
-  margin: 24px;
-  margin-bottom: 0;
-`;
-
-const scrollable = css`
-  overflow-x: hidden;
-  overflow-y: auto;
-`;
-
-const BodyHolder = styled.div<{ isParentScrollable: boolean }>`
-  display: flex;
-  flex-direction: column;
-  ${(props) => !props.isParentScrollable && scrollable};
-  margin: 0 24px;
-  gap: 24px;
-  padding-right: 5px;
-  margin-right: 19px;
-  height: 100%;
-`;
-
-const FooterHolder = styled.div`
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
-  margin: 24px;
-  margin-top: 0;
-  margin-top: auto;
-`;
-
-const COLLAPSED_WIDTH = 600;
-const NAVIGATION_WIDTH = 300;
-
-const useDrawerStyles = createStyles((theme: MantineTheme) => {
-  return {
-    root: {
-      position: 'absolute',
-    },
-    drawer: {
-      position: 'fixed',
-      top: 40,
-      right: 0,
-      bottom: 0,
-      backgroundColor: theme.colorScheme === 'dark' ? colors.B17 : colors.white,
-      borderTopLeftRadius: 7,
-      borderBottomLeftRadius: 7,
-      boxShadow: shadows.dark,
-    },
-    body: {
-      height: '100%',
-    },
-  };
-});
-
-const Form = styled.form<{ isParentScrollable: boolean }>`
-  height: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  ${(props) => props.isParentScrollable && scrollable};
-`;
+export interface ISidebarProps extends ISidebarBaseProps {
+  onSubmit?: React.FormEventHandler<HTMLFormElement>;
+}
 
 export const Sidebar = ({
   customFooter,
@@ -89,21 +26,8 @@ export const Sidebar = ({
   onClose,
   onBack,
   onSubmit,
-}: {
-  customHeader?: ReactNode;
-  customFooter?: ReactNode;
-  children: ReactNode;
-  isOpened: boolean;
-  isExpanded?: boolean;
-  isLoading?: boolean;
-  isParentScrollable?: boolean;
-  styles?: Styles<DrawerStylesNames, Record<string, any>>;
-  onClose: () => void;
-  onBack?: () => void;
-  onSubmit?: React.FormEventHandler<HTMLFormElement>;
-  'data-test-id'?: string;
-}) => {
-  const { classes: drawerClasses } = useDrawerStyles();
+}: ISidebarProps) => {
+  const { classes: drawerClasses } = useDrawerStyles({ isExpanded });
   const onCloseCallback = () => {
     onClose();
   };
@@ -114,17 +38,7 @@ export const Sidebar = ({
     <Drawer
       opened={isOpened}
       position="right"
-      styles={{
-        ...styles,
-        drawer: {
-          width: isExpanded ? `calc(100% - ${NAVIGATION_WIDTH}px)` : COLLAPSED_WIDTH,
-          transition: 'all 300ms ease !important',
-          '@media screen and (max-width: 768px)': {
-            width: isExpanded ? `100%` : COLLAPSED_WIDTH,
-          },
-          ...((styles && ((styles as any).drawer as CSSObject)) ?? {}),
-        },
-      }}
+      styles={styles}
       classNames={drawerClasses}
       onClose={onCloseCallback}
       withOverlay={false}
