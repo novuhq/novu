@@ -1,11 +1,8 @@
-# Novu Enterprise: On-Premises Non-Production Trial with Docker Compose
+# Novu Enterprise Docker Compose
 
-This documentation guides you through the process of setting up an on-premises trial of Novu Enterprise using Docker Compose.
+This documentation guides you through the process of setting up a non-production deployment of Novu Enterprise using Docker Compose.
 
-To do this trial you will need to contact [sales](https://notify.novu.co/meetings/ryannovu/30minutes) to get a token.
-
-Note: This is not our preferred way of doing an enterprise trial,
-all features are available on Novu Cloud with a free trial.
+You will need to contact [sales](https://notify.novu.co/meetings/ryannovu/30minutes) to get a token.
 
 ## Before You Begin
 

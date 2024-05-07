@@ -63,6 +63,7 @@ services:
       NEW_RELIC_APP_NAME: ${NEW_RELIC_APP_NAME}
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       API_CONTEXT_PATH: ${API_CONTEXT_PATH}
+      IS_TRANSLATION_MANAGER_ENABLED: 'true'
     ports:
       - '3000:3000'
   worker:
@@ -98,6 +99,7 @@ services:
       NEW_RELIC_LICENSE_KEY: ${NEW_RELIC_LICENSE_KEY}
       BROADCAST_QUEUE_CHUNK_SIZE: ${BROADCAST_QUEUE_CHUNK_SIZE}
       MULTICAST_QUEUE_CHUNK_SIZE: ${MULTICAST_QUEUE_CHUNK_SIZE}
+      IS_TRANSLATION_MANAGER_ENABLED: 'true'
   ws:
     image: 'ghcr.io/novuhq/novu/ws-ee:prod'
     depends_on:
@@ -142,6 +144,7 @@ services:
       REACT_APP_WIDGET_EMBED_PATH: ${WIDGET_EMBED_PATH}
       REACT_APP_DOCKER_HOSTED_ENV: 'true'
       REACT_APP_WS_URL: ${REACT_APP_WS_URL}
+      IS_TRANSLATION_MANAGER_ENABLED: 'true'
     ports:
       - 4200:4200
   widget:
