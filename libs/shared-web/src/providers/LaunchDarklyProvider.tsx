@@ -36,11 +36,12 @@ export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProvi
   const { currentOrganization } = authContext;
 
   useEffect(() => {
-    const fetchLDProvider = async () => {
-      if (!currentOrganization) {
-        return;
-      }
+    // no need to fetch if LD is disabled or there isn't an org to query against
+    if (!checkShouldUseLaunchDarkly() || !currentOrganization) {
+      return;
+    }
 
+    const fetchLDProvider = async () => {
       LDProvider.current = await asyncWithLDProvider({
         clientSideID: LAUNCH_DARKLY_CLIENT_SIDE_ID,
         context: {
@@ -54,6 +55,7 @@ export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProvi
       });
       setIsLDReady(true);
     };
+
     fetchLDProvider();
   }, [setIsLDReady, currentOrganization]);
 

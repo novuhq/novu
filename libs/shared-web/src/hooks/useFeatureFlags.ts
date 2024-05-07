@@ -1,7 +1,7 @@
 import { FeatureFlagsKeysEnum, IOrganizationEntity, prepareBooleanStringFeatureFlag } from '@novu/shared';
-import { useFlags } from 'launchdarkly-react-client-sdk';
-import { useLDClient } from 'launchdarkly-react-client-sdk';
+import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect } from 'react';
+import { checkShouldUseLaunchDarkly } from '../utils';
 
 import { FEATURE_FLAGS } from '../config';
 
@@ -9,7 +9,7 @@ export const useFeatureFlags = (organization?: IOrganizationEntity) => {
   const ldClient = useLDClient();
 
   useEffect(() => {
-    if (!organization?._id) {
+    if (!checkShouldUseLaunchDarkly() || !organization?._id) {
       return;
     }
 
@@ -24,10 +24,12 @@ export const useFeatureFlags = (organization?: IOrganizationEntity) => {
 };
 
 export const useFeatureFlag = (key: FeatureFlagsKeysEnum): boolean => {
-  const { [key]: featureFlag } = useFlags();
+  /** We knowingly break the rule of hooks here to avoid making any LaunchDarkly calls when it is disabled */
+  // eslint-disable-next-line
+  const flagValue = checkShouldUseLaunchDarkly() ? useFlags()[key] : undefined;
   const fallbackValue = false;
   const value = FEATURE_FLAGS[key];
   const defaultValue = prepareBooleanStringFeatureFlag(value, fallbackValue);
 
-  return featureFlag ?? defaultValue;
+  return flagValue ?? defaultValue;
 };
