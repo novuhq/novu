@@ -11,6 +11,7 @@ describe('Get Active Integrations - Multi-Provider Configuration - /integrations
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    process.env.LAUNCH_DARKLY_SDK_KEY = '';
   });
 
   it('should get active integrations', async function () {

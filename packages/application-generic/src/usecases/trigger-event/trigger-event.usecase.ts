@@ -14,7 +14,6 @@ import {
   ISubscribersDefine,
   ITenantDefine,
   ProvidersIdEnum,
-  TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
 
@@ -31,6 +30,7 @@ import {
 } from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
 import { ProcessTenant, ProcessTenantCommand } from '../process-tenant';
+import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-recipients.use-case';
 import { TriggerBroadcast } from '../trigger-broadcast/trigger-broadcast.usecase';
 import { TriggerBroadcastCommand } from '../trigger-broadcast/trigger-broadcast.command';
 import {
@@ -49,6 +49,7 @@ export class TriggerEvent {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
+    private mapTriggerRecipients: MapTriggerRecipients,
     private triggerBroadcast: TriggerBroadcast,
     private triggerMulticast: TriggerMulticast
   ) {}
@@ -59,7 +60,7 @@ export class TriggerEvent {
       const mappedCommand = {
         ...command,
         tenant: this.mapTenant(command.tenant),
-        actor: this.mapActor(command.actor),
+        actor: this.mapTriggerRecipients.mapActor(command.actor),
       };
 
       Logger.debug(mappedCommand.actor);
@@ -269,17 +270,5 @@ export class TriggerEvent {
     }
 
     return tenant;
-  }
-
-  private mapActor(
-    subscriber: TriggerRecipientSubscriber
-  ): ISubscribersDefine | null {
-    if (!subscriber) return null;
-
-    if (typeof subscriber === 'string') {
-      return { subscriberId: subscriber };
-    }
-
-    return subscriber;
   }
 }

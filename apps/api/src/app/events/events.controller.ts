@@ -1,6 +1,6 @@
-import { v4 as uuidv4 } from 'uuid';
 import { Body, Controller, Delete, Param, Post, Scope, UseGuards } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { v4 as uuidv4 } from 'uuid';
 import {
   AddressingTypeEnum,
   ApiRateLimitCategoryEnum,
@@ -21,7 +21,6 @@ import { CancelDelayed, CancelDelayedCommand } from './usecases/cancel-delayed';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from './usecases/parse-event-request';
 import { ProcessBulkTrigger, ProcessBulkTriggerCommand } from './usecases/process-bulk-trigger';
 import { TriggerEventToAll, TriggerEventToAllCommand } from './usecases/trigger-event-to-all';
-import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -29,6 +28,7 @@ import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
+import { SendTestEmail, SendTestEmailCommand } from './usecases/send-test-email';
 import { ResourceCategory } from '../resource-limiting/guards';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
