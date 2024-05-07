@@ -1,7 +1,6 @@
 import { useEffect, useCallback, useState } from 'react';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
-import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import type { IJwtPayload, IOrganizationEntity, IUserEntity } from '@novu/shared';
@@ -41,7 +40,6 @@ export function getToken(): string {
 export function useAuthController() {
   const segment = useSegment();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(() => {
     const initialToken = getToken();
     applyToken(initialToken);
@@ -122,7 +120,8 @@ export function useAuthController() {
   const logout = () => {
     setTokenCallback(null);
     queryClient.clear();
-    navigate('/auth/login');
+    // avoid usage of react-router here to prevent needing AuthProvider to be wrapped in the BrowserRouter
+    window.location.assign('/auth/login');
     segment.reset();
   };
 

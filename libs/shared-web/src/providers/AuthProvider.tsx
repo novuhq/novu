@@ -28,7 +28,6 @@ export const useAuthContext = (): UserContext => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { token, setToken, user, organization, isUserLoading, logout, jwtPayload, organizations } = useAuthController();
-  useFeatureFlags(organization);
 
   return (
     <AuthContext.Provider
