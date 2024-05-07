@@ -1,4 +1,5 @@
 import { Loader } from '@mantine/core';
+import { colors } from '@novu/design-system';
 import { CONTEXT_PATH, LaunchDarklyProvider, SegmentProvider } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -37,7 +38,7 @@ const fallbackDisplay = (
       _osLight: { bg: 'legacy.BGLight' },
     })}
   >
-    <Loader size={64} />
+    <Loader size={64} variant="bars" color={colors.gradientMiddle} />
   </div>
 );
 
