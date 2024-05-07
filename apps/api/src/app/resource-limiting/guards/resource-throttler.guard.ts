@@ -8,10 +8,9 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { GetFeatureFlag, GetFeatureFlagCommand } from '@novu/application-generic';
+import { GetFeatureFlag, GetFeatureFlagCommand, ResourceCategory } from '@novu/application-generic';
 import { IJwtPayload, FeatureFlagsKeysEnum, ResourceEnum } from '@novu/shared';
 import { Observable } from 'rxjs';
-import { ResourceCategory } from './resource-throttler.decorator';
 
 // eslint-disable-next-line max-len
 export const THROTTLED_EXCEPTION_MESSAGE = `You have exceeded the number of allowed requests for this resource. Please visit ${process.env.FRONT_BASE_URL}/settings/billing to upgrade your plan.`;
