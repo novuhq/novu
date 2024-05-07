@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/schema",
+  "$id": "Provider",
+  "title": "",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "x-prompt": "Write the provider name`kebab-cased` (e.g. proton-mail, outlook365, yahoo-mail)?"
+    },
+    "type": {
+      "type": "string",
+      "x-prompt": "Choose the provider type?",
+      "$default": {
+        "$source": "argv",
+        "index": 0
+      },
+      "enum": ["EMAIL", "SMS", "PUSH", "CHAT"]
+    }
+  },
+  "required": ["name"]
+}

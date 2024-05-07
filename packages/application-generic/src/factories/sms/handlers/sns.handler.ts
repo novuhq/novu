@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { SNSSmsProvider } from '@novu/sns';
-import { SNSConfig } from '@novu/sns/build/main/lib/sns.config';
+import { SNSSmsProvider } from '@novu/providers';
+import { SNSConfig } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class SnsHandler extends BaseSmsHandler {
