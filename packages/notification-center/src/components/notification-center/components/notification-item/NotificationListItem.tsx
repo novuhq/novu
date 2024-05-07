@@ -207,6 +207,7 @@ export function NotificationListItem({
           withArrow
           classNames={overrideClasses}
           withinPortal={true}
+          middlewares={{ flip: false, shift: false }}
         >
           <Menu.Target>
             <ActionIcon
