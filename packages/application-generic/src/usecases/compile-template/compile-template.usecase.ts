@@ -214,12 +214,10 @@ export class CompileTemplate {
       const template = Handlebars.compile(templateContent);
 
       result = template(command.data, {});
-    } catch (e: unknown) {
-      let errorMessage = `Message content could not be generated`;
-      if (checkIsResponseError(e)) {
-        errorMessage = e.message;
-      }
-      throw new ApiException(errorMessage);
+    } catch (e: any) {
+      throw new ApiException(
+        e?.message || `Message content could not be generated`
+      );
     }
 
     return result.replace(/&#x27;/g, "'");
