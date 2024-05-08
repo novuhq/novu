@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
 import { format } from 'date-fns';
-import { checkIsResponseError, HandlebarHelpersEnum } from '@novu/shared';
+import { HandlebarHelpersEnum } from '@novu/shared';
 
 import { CompileTemplateCommand } from './compile-template.command';
 import * as i18next from 'i18next';
