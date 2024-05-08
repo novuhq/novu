@@ -9,11 +9,7 @@ import * as sinon from 'sinon';
 import { CacheInMemoryProviderService } from '../in-memory-provider';
 import { MockCacheService } from './cache-service.mock';
 
-/**
- * TODO: Maybe create a Test single Redis instance to be able to run it in the
- * pipeline. Local wise they work
- */
-describe.skip('Cache Service - Redis Instance - Non Cluster Mode', () => {
+describe('Cache Service - Redis Instance - Non Cluster Mode', () => {
   let cacheService: CacheService;
   let cacheInMemoryProviderService: CacheInMemoryProviderService;
 
