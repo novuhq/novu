@@ -202,7 +202,7 @@ jobs:
 
     - name: Notify Slack Action
       uses: ravsamhq/notify-slack-action@v2
-      if: ${{ always() && inputs.slack_notification }} && ${{ needs.e2e_web.result == 'failure' }}
+      if: ${{ inputs.slack_notification && needs.e2e_web.result == 'failure' }}
       with:
         status: "failure"
         notification_title: "{workflow} for WEB has failed"

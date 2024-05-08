@@ -36,7 +36,6 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   check_submodule_token:
-    if: ${{ inputs.ee }}
     name: Check if the secret exists or not.
     runs-on: ubuntu-latest
     outputs:
@@ -54,7 +53,7 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_api:
     name: Test E2E
-    # The type of runner that the job will run on
+    if: ${{ (contains(inputs.job-name, '-ee') && inputs.test-e2e-ee-affected) || (!contains(inputs.job-name, '-ee') && inputs.test-e2e-affected) }}
     runs-on: ubuntu-latest
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
@@ -64,10 +63,6 @@ jobs:
       deployments: write
       id-token: write
     needs: [check_submodule_token]
-    if: |
-      ${{ contains (inputs.job-name,'-ee') && inputs.test-e2e-ee-affected == 'true' }} ||
-      ${{ !contains (inputs.job-name,'-ee') && inputs.test-e2e-affected == 'true' }}
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # checkout with submodules if token is provided
       - uses: actions/checkout@v3
