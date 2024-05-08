@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import { Button, colors } from '@novu/design-system';
+import { StepTypeEnum } from '@novu/shared';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export const StepText = styled.p`
@@ -16,8 +17,27 @@ export const StepButton = styled(Button)`
   display: block;
 `;
 
-export function GetStartedLink({ children, ...linkProps }: React.AnchorHTMLAttributes<HTMLAnchorElement>) {
-  return <StyledLink {...linkProps}>{children}</StyledLink>;
+export function GetStartedLink({
+  children,
+  ...linkProps
+}: React.AnchorHTMLAttributes<HTMLAnchorElement> & {
+  event?: string;
+  channel?: StepTypeEnum;
+}) {
+  const segment = useSegment();
+
+  return (
+    <StyledLink
+      {...linkProps}
+      onClick={() => {
+        if (linkProps.event) {
+          segment.track(`${linkProps.event} - [Get Started]`, { href: linkProps.href, channel: linkProps.channel });
+        }
+      }}
+    >
+      {children}
+    </StyledLink>
+  );
 }
 
 export const StyledLink = styled.a`

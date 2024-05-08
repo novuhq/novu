@@ -1,0 +1,10 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  '@novu/studio':
+    specifier: ^0.0.1-alpha.47
+    version: link:../studio

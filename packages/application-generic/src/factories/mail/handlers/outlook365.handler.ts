@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { Outlook365Provider } from '@novu/outlook365';
+import { Outlook365Provider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class Outlook365Handler extends BaseHandler {

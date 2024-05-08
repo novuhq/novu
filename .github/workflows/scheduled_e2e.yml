@@ -3,7 +3,7 @@ name: Scheduled E2E tests
 on:
   workflow_dispatch:
   schedule:
-   - cron:  '0 12-19/2 * * 1-5'
+   - cron:  '0 7-19/4 * * 1-5'
 permissions:
   contents: read
   packages: write
@@ -23,12 +23,28 @@ jobs:
     secrets: inherit
     with:
       ee: true
+      slack_notification: true
 
   test_widget:
     name: Test Widget Cypress
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:
       ee: true
+      slack_notification: true
+    secrets: inherit
+
+  test_unit_api:
+    name: Test API
+    strategy:
+      matrix:
+        name: ['novu/api-ee', 'novu/api']
+    uses: ./.github/workflows/reusable-api-e2e.yml
+    with:
+      ee: ${{ contains (matrix.name,'-ee') }}
+      test-e2e-affected: true
+      test-e2e-ee-affected: true
+      job-name: ${{ matrix.name }}
+      slack_notification: true
     secrets: inherit
 
   release_decision:
@@ -38,6 +54,7 @@ jobs:
     needs:
       - test_widget
       - test_web
+      - test_unit_api
     steps:
       - uses: actions/checkout@v4
       - name: Check and manage workflows
@@ -45,19 +62,27 @@ jobs:
           needs_json='${{ toJSON(needs) }}'
           web_status=$(echo "$needs_json" | jq -r '.test_web.result')
           widget_status=$(echo "$needs_json" | jq -r '.test_widget.result')
+          api_status=$(echo "$needs_json" | jq -r '.test_unit_api.result')
           workflows_map=$(cat << EOF
           prod-deploy-widget.yml: $widget_status
           prod-deploy-web.yml: $web_status
+          prod-deploy-api.yml: $api_status
           EOF
           )
           while IFS= read -r line; do
             filename=$(echo "$line" | awk -F ':' '{print $1}')
             status=$(echo "$line" | awk -F ':' '{print $2}' | awk '{$1=$1};1') # Trim whitespace
             echo "Workflow $filename status: $status"
-
             if [[ "$status" == "failure" ]]; then
               echo "Disabling workflow $filename. The E2E test has failed."
-              gh workflow disable "$filename"
+              state=$(gh workflow list --all --limit 100 --json path,state | jq '.[] | select(.path ==".github/workflows/'$filename'")' | jq -r .state)
+              echo "Filename: $filename"
+              echo "State: $state"
+              if [[ "$state" == "active" ]]; then
+                gh workflow disable "$filename"
+              else
+                echo "Workflow $filename is not active, skipping disable action."
+              fi
             elif [[ "$status" == "success" ]]; then
               echo "Enabling workflow $filename. The E2E tests have passed."
               gh workflow enable "$filename"

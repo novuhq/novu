@@ -3,6 +3,15 @@
   "version": "0.2",
   "language": "en",
   "words": [
+    "Styleable",
+    "Usergroup",
+    "Dispatchable",
+    "MPIMs",
+    "mpim",
+    "datetimepicker",
+    "Placeholdable",
+    "EARLYHINTS",
+    "nuxt",
     "websockets",
     "cacheable",
     "mrkdwn",
@@ -636,7 +645,23 @@
     "MJML",
     "localstorage",
     "elif",
-    "websockets"
+    "websockets",
+    "whatsapp",
+    "whatsappbusiness",
+    "parens",
+    "ravsamhq",
+    "Webpush",
+    "webpush",
+    "xkeysib",
+    "firestore",
+    "firsttris",
+    "esbenp",
+    "npmjs",
+    "maxage",
+    "unpublish",
+    "decompile",
+    "servername",
+    "neom"
   ],
   "flagWords": [],
   "patterns": [
@@ -728,5 +753,6 @@
     ".env.local",
     ".env.production",
     ".env.test",
+    ".example.env"
   ]
 }

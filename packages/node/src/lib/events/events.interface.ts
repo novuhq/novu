@@ -37,6 +37,7 @@ export interface IEmailOverrides extends IIntegrationOverride {
   bcc?: string[];
   senderName?: string;
   customData?: Record<string, any>;
+  headers?: Record<string, string>;
 }
 
 export type ITriggerTenant = string | ITenantDefine;

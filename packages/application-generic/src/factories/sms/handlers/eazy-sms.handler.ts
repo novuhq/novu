@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { EazySmsProvider } from '@novu/eazy-sms';
+import { EazySmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class EazySmsHandler extends BaseSmsHandler {
