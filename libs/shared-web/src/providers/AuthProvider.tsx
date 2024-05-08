@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { IOrganizationEntity, IUserEntity, IJwtPayload } from '@novu/shared';
 import { useAuthController } from '../hooks';
 
-type UserContext = {
+export type UserContext = {
   token: string | null;
   isLoggedIn: boolean;
   currentUser: IUserEntity | undefined;
