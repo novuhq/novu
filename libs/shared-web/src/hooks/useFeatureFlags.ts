@@ -9,11 +9,11 @@ export const useFeatureFlags = (organization?: IOrganizationEntity) => {
   const ldClient = useLDClient();
 
   useEffect(() => {
-    if (!checkShouldUseLaunchDarkly() || !organization?._id) {
+    if (!checkShouldUseLaunchDarkly() || !organization?._id || !ldClient) {
       return;
     }
 
-    ldClient?.identify({
+    ldClient.identify({
       kind: 'organization',
       key: organization._id,
       name: organization.name,
