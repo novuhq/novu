@@ -649,6 +649,7 @@
     "whatsapp",
     "whatsappbusiness",
     "parens",
+    "ravsamhq",
     "Webpush",
     "webpush",
     "xkeysib",
@@ -657,7 +658,10 @@
     "esbenp",
     "npmjs",
     "maxage",
-    "unpublish"
+    "unpublish",
+    "decompile",
+    "servername",
+    "neom"
   ],
   "flagWords": [],
   "patterns": [
@@ -748,6 +752,7 @@
     ".env.development",
     ".env.local",
     ".env.production",
-    ".env.test"
+    ".env.test",
+    ".example.env"
   ]
 }

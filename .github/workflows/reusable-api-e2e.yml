@@ -23,6 +23,15 @@ on:
         description: 'job name [options: novu/api-ee, novu/api]'
         required: true
         type: string
+      slack_notification:
+        description: 'notify if e2e fail via slack'
+        required: false
+        default: false
+        type: boolean
+      environment:
+        required: false
+        default: 'Development'
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -48,6 +57,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
+    environment: ${{ inputs.environment }}
     permissions:
       contents: read
       packages: write
@@ -116,3 +126,15 @@ jobs:
       - name: Run unit tests
         run: |
           cd apps/api && pnpm test
+
+      - name: Notify Slack Action
+        uses: ravsamhq/notify-slack-action@v2
+        if: ${{ always() && inputs.slack_notification }}
+        with:
+          status: ${{ job.status }}
+          notification_title: "{workflow} for API has {status_message}"
+          message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
+          footer: "Linked Run URL {run_url}\nCommit URL{commit_url}"
+          notify_when: "failure"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

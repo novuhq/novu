@@ -12,31 +12,25 @@ import { AddDelayJob } from './add-delay-job.usecase';
 import { MergeOrCreateDigestCommand } from './merge-or-create-digest.command';
 import { MergeOrCreateDigest } from './merge-or-create-digest.usecase';
 import { AddJobCommand } from './add-job.command';
+import { validateDigest } from './validation';
+import { ModuleRef } from '@nestjs/core';
 import {
+  CalculateDelayService,
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
-} from '../../usecases';
-import {
-  CalculateDelayService,
-  JobsOptions,
-  StandardQueueService,
-} from '../../services';
-import { LogDecorator } from '../../logging';
-import { InstrumentUsecase } from '../../instrumentation';
-import { validateDigest } from './validation';
-import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-} from '../execution-log-route';
-import { ModuleRef } from '@nestjs/core';
-import {
-  ExecuteOutput,
   IChimeraDigestResponse,
+  IFilterVariables,
+  InstrumentUsecase,
   IUseCaseInterfaceInline,
+  JobsOptions,
+  LogDecorator,
   requireInject,
-} from '../../utils/require-inject';
-import { IFilterVariables } from '../../utils/filter-processing-details';
+  StandardQueueService,
+  ExecuteOutput,
+} from '@novu/application-generic';
 
 export enum BackoffStrategiesEnum {
   WEBHOOK_FILTER_BACKOFF = 'webhookFilterBackoff',
@@ -73,26 +67,19 @@ export class AddJob {
     Logger.debug(`Job contents for job ${job._id}`, job, LOG_CONTEXT);
 
     if (!job) {
-      Logger.warn(
-        `Job ${job._id} was null in both the input and search`,
-        LOG_CONTEXT
-      );
+      Logger.warn(`Job was null in both the input and search`, LOG_CONTEXT);
 
       return;
     }
 
-    Logger.log(
-      `Scheduling New Job ${job._id} of type: ${job.type}`,
-      LOG_CONTEXT
-    );
+    Logger.log(`Scheduling New Job ${job._id} of type: ${job.type}`, LOG_CONTEXT);
+
+    let digestAmount: number | undefined;
+    let delayAmount: number | undefined = undefined;
 
     let filtered = false;
     let filterVariables: IFilterVariables | undefined;
-    if (
-      [StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(
-        job.type as StepTypeEnum
-      )
-    ) {
+    if ([StepTypeEnum.DELAY, StepTypeEnum.DIGEST].includes(job.type as StepTypeEnum)) {
       const shouldRun = await this.conditionsFilter.filter(
         ConditionsFilterCommand.create({
           filters: job.step.filters || [],
@@ -106,105 +93,89 @@ export class AddJob {
 
       filterVariables = shouldRun.variables;
       filtered = !shouldRun.passed;
-    }
 
-    let digestAmount: number | undefined;
-    let digestCreationResult: DigestCreationResultEnum | undefined;
-    if (job.type === StepTypeEnum.DIGEST) {
-      const resonateResponse = await this.resonateUsecase.execute<
-        AddJobCommand & { variables: IFilterVariables },
-        ExecuteOutput<IChimeraDigestResponse>
-      >({
-        ...command,
-        variables: filterVariables,
-      });
-
-      validateDigest(job);
-
-      digestAmount = this.calculateDelayService.calculateDelay({
-        stepMetadata: job.digest,
-        payload: job.payload,
-        overrides: job.overrides,
-        // TODO: Remove fallback after other digest types are implemented.
-        chimeraResponse: resonateResponse
-          ? { type: DigestTypeEnum.REGULAR, ...resonateResponse.outputs }
-          : undefined,
-      });
-
-      Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
-
-      digestCreationResult = await this.mergeOrCreateDigestUsecase.execute(
-        MergeOrCreateDigestCommand.create({
-          job,
-          filtered,
-          chimeraData: resonateResponse?.outputs,
-        })
-      );
-
-      if (digestCreationResult === DigestCreationResultEnum.MERGED) {
-        Logger.log('Digest was merged, queueing next job', LOG_CONTEXT);
-
-        return;
-      }
-
-      if (digestCreationResult === DigestCreationResultEnum.SKIPPED) {
-        const nextJobToSchedule = await this.jobRepository.findOne({
-          _environmentId: command.environmentId,
-          _parentId: job._id,
+      let digestCreationResult: DigestCreationResultEnum | undefined;
+      if (job.type === StepTypeEnum.DIGEST) {
+        const resonateResponse = await this.resonateUsecase.execute<
+          AddJobCommand & { variables: IFilterVariables },
+          ExecuteOutput<IChimeraDigestResponse>
+        >({
+          ...command,
+          variables: filterVariables,
         });
 
-        if (!nextJobToSchedule) {
+        validateDigest(job);
+
+        digestAmount = this.calculateDelayService.calculateDelay({
+          stepMetadata: job.digest,
+          payload: job.payload,
+          overrides: job.overrides,
+          chimeraResponse: this.fallbackToRegularDigest(resonateResponse?.outputs),
+        });
+
+        Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
+
+        digestCreationResult = await this.mergeOrCreateDigestUsecase.execute(
+          MergeOrCreateDigestCommand.create({
+            job,
+            filtered,
+            chimeraData: resonateResponse?.outputs,
+          })
+        );
+
+        if (digestCreationResult === DigestCreationResultEnum.MERGED) {
+          Logger.log('Digest was merged, queueing next job', LOG_CONTEXT);
+
           return;
         }
 
-        await this.execute({
-          userId: job._userId,
-          environmentId: job._environmentId,
-          organizationId: command.organizationId,
-          jobId: nextJobToSchedule._id,
-          job: nextJobToSchedule,
+        if (digestCreationResult === DigestCreationResultEnum.SKIPPED) {
+          const nextJobToSchedule = await this.jobRepository.findOne({
+            _environmentId: command.environmentId,
+            _parentId: job._id,
+          });
+
+          if (!nextJobToSchedule) {
+            return;
+          }
+
+          await this.execute({
+            userId: job._userId,
+            environmentId: job._environmentId,
+            organizationId: command.organizationId,
+            jobId: nextJobToSchedule._id,
+            job: nextJobToSchedule,
+          });
+
+          return;
+        }
+      }
+
+      if (job.type === StepTypeEnum.DELAY) {
+        const resonateResponse = await this.resonateUsecase.execute<
+          AddJobCommand & { variables: IFilterVariables },
+          ExecuteOutput<IChimeraDigestResponse>
+        >({
+          ...command,
+          variables: filterVariables,
         });
 
-        return;
-      }
-    }
+        command.chimeraResponse = resonateResponse;
+        delayAmount = await this.addDelayJob.execute(command);
 
-    let delayAmount: number | undefined = undefined;
+        Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
 
-    if (job.type === StepTypeEnum.DELAY) {
-      const resonateResponse = await this.resonateUsecase.execute<
-        AddJobCommand & { variables: IFilterVariables },
-        ExecuteOutput<IChimeraDigestResponse>
-      >({
-        ...command,
-        variables: filterVariables,
-      });
+        if (delayAmount === undefined) {
+          Logger.warn(`Delay  Amount does not exist on a delay job ${job._id}`, LOG_CONTEXT);
 
-      command.chimeraResponse = resonateResponse;
-      delayAmount = await this.addDelayJob.execute(command);
-
-      Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
-
-      if (delayAmount === undefined) {
-        Logger.warn(
-          `Delay  Amount does not exist on a delay job ${job._id}`,
-          LOG_CONTEXT
-        );
-
-        return;
+          return;
+        }
       }
     }
 
     if (digestAmount === undefined && delayAmount === undefined) {
-      Logger.verbose(
-        `Updating status to queued for job ${job._id}`,
-        LOG_CONTEXT
-      );
-      await this.jobRepository.updateStatus(
-        command.environmentId,
-        job._id,
-        JobStatusEnum.QUEUED
-      );
+      Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
+      await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
     }
 
     await this.executionLogRoute.execute(
@@ -218,16 +189,28 @@ export class AddJob {
       })
     );
 
-    const delay = filtered ? 0 : digestAmount ?? delayAmount;
+    const delay = (filtered ? 0 : digestAmount ?? delayAmount) ?? 0;
 
     if ((digestAmount || delayAmount) && filtered) {
-      Logger.verbose(
-        `Delay for job ${job._id} will be 0 because job was filtered`,
-        LOG_CONTEXT
-      );
+      Logger.verbose(`Delay for job ${job._id} will be 0 because job was filtered`, LOG_CONTEXT);
     }
 
     await this.queueJob(job, delay);
+  }
+
+  /*
+   *  Fallback to regular digest type.
+   *  This is a temporary solution until other digest types are implemented.
+   */
+  private fallbackToRegularDigest(outputs: IChimeraDigestResponse | undefined): IChimeraDigestResponse | undefined {
+    let resonateResponseOutput: IChimeraDigestResponse | undefined = undefined;
+
+    if (outputs) {
+      const { type, ...resonateResponseOutputsOmitType } = outputs;
+      resonateResponseOutput = { type: DigestTypeEnum.REGULAR, ...resonateResponseOutputsOmitType };
+    }
+
+    return resonateResponseOutput;
   }
 
   public async queueJob(job: JobEntity, delay: number) {
@@ -250,11 +233,7 @@ export class AddJob {
       _userId: job._userId,
     };
 
-    Logger.verbose(
-      jobData,
-      'Going to add a minimal job in Standard Queue',
-      LOG_CONTEXT
-    );
+    Logger.verbose(jobData, 'Going to add a minimal job in Standard Queue', LOG_CONTEXT);
 
     await this.standardQueueService.add({
       name: job._id,
@@ -276,10 +255,7 @@ export class AddJob {
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
           ...ExecutionLogRouteCommand.getDetailsFromJob(job),
-          detail:
-            job.type === StepTypeEnum.DELAY
-              ? DetailEnum.STEP_DELAYED
-              : DetailEnum.STEP_DIGESTED,
+          detail: job.type === StepTypeEnum.DELAY ? DetailEnum.STEP_DELAYED : DetailEnum.STEP_DIGESTED,
           source: ExecutionDetailsSourceEnum.INTERNAL,
           status: ExecutionDetailsStatusEnum.PENDING,
           isTest: false,

@@ -1695,6 +1695,8 @@ metrics:
 
 ##@section Secrets definition
 ##
+existingSecret: ''
+
 jwt:
   ## @param jwt.secret The secret keybase which is used to encrypt / verify the tokens issued for authentication
   ## Please change this for production use !

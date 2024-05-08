@@ -147,18 +147,18 @@ spec:
                   key: accessKey
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom :
-               secretKeyRef:
+                secretKeyRef:
                   name: {{ include "novu.s3.secretName" . }}
                   key: secretKey
             - name: JWT_SECRET
               valueFrom :
-               secretKeyRef:
-                  name: {{ include "common.names.fullname" . }}
+                secretKeyRef:
+                  name: {{ if .Values.existingSecret -}} {{ .Values.existingSecret }} {{- else -}} {{ include "common.names.fullname" . }} {{- end }}
                   key: jwt-secret
             - name: STORE_ENCRYPTION_KEY
               valueFrom :
-               secretKeyRef:
-                  name: {{ include "common.names.fullname" . }}
+                secretKeyRef:
+                  name: {{ if .Values.existingSecret -}} {{ .Values.existingSecret }} {{- else -}} {{ include "common.names.fullname" . }} {{- end }}
                   key: store-encryption-key
             {{- if .Values.api.extraEnvVars }}
             {{- include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVars "context" $) | nindent 12 }}

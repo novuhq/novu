@@ -11,9 +11,7 @@ import {
   OrdinalValueEnum,
 } from '@novu/shared';
 import { JobEntity } from '@novu/dal';
-
-import { ApiException } from '../../utils/exceptions';
-import { isRegularDigest } from '../../utils/digest';
+import { ApiException, isRegularDigest } from '@novu/application-generic';
 
 const validateAmountAndUnit = (digest: IAmountAndUnit) => {
   if (!digest?.amount) {
@@ -37,9 +35,7 @@ const validateAtTime = (atTime?: string) => {
   }
 
   if (!hasValidAtTime(atTime)) {
-    throw new ApiException(
-      'Digest timed config atTime has invalid format, expected 24h time format'
-    );
+    throw new ApiException('Digest timed config atTime has invalid format, expected 24h time format');
   }
 };
 
@@ -83,7 +79,7 @@ const validateOrdinal = (timed: ITimedConfig) => {
 };
 
 export const validateDigest = (job: JobEntity): void => {
-  if (job.type !== StepTypeEnum.DIGEST) {
+  if (!job.digest || job.type !== StepTypeEnum.DIGEST) {
     throw new ApiException('Job is not a digest type');
   }
 
@@ -107,17 +103,11 @@ export const validateDigest = (job: JobEntity): void => {
           validateWeekDays(job.digest.timed.weekDays);
         }
 
-        if (
-          job.digest.unit === DigestUnitEnum.MONTHS &&
-          job.digest.timed.monthlyType === MonthlyTypeEnum.EACH
-        ) {
+        if (job.digest.unit === DigestUnitEnum.MONTHS && job.digest.timed.monthlyType === MonthlyTypeEnum.EACH) {
           validateMonthDays(job.digest.timed.monthDays);
         }
 
-        if (
-          job.digest.unit === DigestUnitEnum.MONTHS &&
-          job.digest.timed.monthlyType === MonthlyTypeEnum.ON
-        ) {
+        if (job.digest.unit === DigestUnitEnum.MONTHS && job.digest.timed.monthlyType === MonthlyTypeEnum.ON) {
           validateOrdinal(job.digest.timed);
         }
       }
