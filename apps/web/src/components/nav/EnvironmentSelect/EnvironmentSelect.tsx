@@ -19,6 +19,7 @@ export const EnvironmentSelectRenderer: React.FC<ReturnType<typeof useEnvironmen
     >
       <Select
         className={navSelectStyles}
+        data-test-id="environment-switch"
         allowDeselect={false}
         icon={
           <When truthy={!selectProps.loading}>

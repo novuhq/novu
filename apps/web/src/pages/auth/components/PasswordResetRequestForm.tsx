@@ -34,8 +34,7 @@ export function PasswordResetRequestForm({ onSent }: Props) {
     };
 
     try {
-      const response = await mutateAsync(itemData);
-
+      await mutateAsync(itemData);
       onSent();
     } catch (e: any) {
       if (e.statusCode !== 400) {

@@ -48,28 +48,31 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   >((data) => api.post('/v1/auth/login', data));
 
   useEffect(() => {
-    if (tokenInQuery) {
-      debugger;
-      login(tokenInQuery);
-    }
+    async () => {
+      if (tokenInQuery) {
+        await login(tokenInQuery);
 
-    if (isFromVercel) {
-      startVercelSetup();
+        if (isFromVercel) {
+          startVercelSetup();
 
-      return;
-    }
+          return;
+        }
 
-    if (tokenInQuery && source === 'cli') {
-      segment.track('Dashboard Visit', {
-        widget: sourceWidget || 'unknown',
-        source: 'cli',
-      });
-      navigate(ROUTES.GET_STARTED);
-    }
+        if (source === 'cli') {
+          segment.track('Dashboard Visit', {
+            widget: sourceWidget || 'unknown',
+            source: 'cli',
+          });
+          navigate(ROUTES.GET_STARTED);
 
-    navigate(ROUTES.GET_STARTED);
+          return;
+        }
+
+        navigate(ROUTES.WORKFLOWS);
+      }
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]);
+  }, [login, navigate, currentUser, tokenInQuery, segment]);
 
   const signupLink = isFromVercel ? `${ROUTES.AUTH_SIGNUP}?${params.toString()}` : ROUTES.AUTH_SIGNUP;
   const resetPasswordLink = isFromVercel
@@ -101,7 +104,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       if (invitationToken) {
         const updatedToken = await acceptInvite(invitationToken);
         if (updatedToken) {
-          login(updatedToken);
+          await login(updatedToken);
         }
       }
 

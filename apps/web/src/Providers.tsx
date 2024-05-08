@@ -19,24 +19,11 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: defaultQueryFn as any,
+      refetchOnWindowFocus: false,
+      retry: false,
     },
   },
 });
-
-/** Full-page loader that uses color-preferences for background */
-const Fallback = (
-  <div
-    className={css({
-      h: '100dvh',
-      w: '100dvw',
-      display: 'grid',
-      placeItems: 'center',
-      bg: 'surface.page',
-    })}
-  >
-    <Loader size={64} variant="bars" color={colors.gradientMiddle} />
-  </div>
-);
 
 /**
  * Centralized Provider hierarchy.

@@ -1,9 +1,9 @@
 import { Handle, Position } from 'react-flow-renderer';
-import { Button, colors, shadows, Text, Title, BoltOutlinedGradient, Playground } from '@novu/design-system';
+import { BoltOutlinedGradient, Button, colors, Playground, shadows, Text, Title } from '@novu/design-system';
 import styled from '@emotion/styled';
 import { createStyles, Group, Popover, Stack, useMantineColorScheme } from '@mantine/core';
-import { ActorTypeEnum, StepTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
-import type { IResponseError, INotificationTemplate } from '@novu/shared';
+import type { INotificationTemplate, IResponseError } from '@novu/shared';
+import { ActorTypeEnum, ICreateNotificationTemplateDto, StepTypeEnum, SystemAvatarIconEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
