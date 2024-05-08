@@ -2,12 +2,14 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Row } from 'react-table';
+import { useSetDocs } from '../../components/providers/DocsProvider';
 import { ROUTES } from '../../constants/routes.enum';
 
 import { IntegrationsList } from './IntegrationsList';
 import { ITableIntegration } from './types';
 
 export const IntegrationsListPage = () => {
+  useSetDocs('channels-and-providers/integration-store');
   const navigate = useNavigate();
 
   const onRowClickCallback = useCallback(

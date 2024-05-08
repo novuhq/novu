@@ -8,8 +8,10 @@ import PageHeader from '../../components/layout/components/PageHeader';
 import { TenantsList } from './components/list/TenantsList';
 import { ROUTES } from '../../constants/routes.enum';
 import { useSegment } from '../../components/providers/SegmentProvider';
+import { useSetDocs } from '../../components/providers/DocsProvider';
 
 export function TenantsPage() {
+  useSetDocs('tenants/introduction');
   const segment = useSegment();
   const navigate = useNavigate();
 

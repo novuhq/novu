@@ -1,6 +1,6 @@
 import { colors, Tabs, Text, Title, Tooltip } from '@novu/design-system';
-import { Accordion, Alert, Code, Grid, Loader, Paper, Stack } from '@mantine/core';
-import { useEffect, useMemo } from 'react';
+import { Accordion, Alert, Code, Grid, Group, Loader, Paper, Stack } from '@mantine/core';
+import { ReactNode, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import * as mdxBundler from 'mdx-bundler/client';
 import { Highlight } from './Highlight';
@@ -10,7 +10,7 @@ import { Center } from '../../styled-system/jsx';
 
 const getMDXComponent = mdxBundler.getMDXComponent;
 
-export const Docs = ({ path = '' }: { path?: string }) => {
+export const Docs = ({ path = '', children }: { path?: string; children: ReactNode }) => {
   const segment = useSegment();
 
   const { isLoading, data: { code, title } = { code: '', title: '' } } = useQuery(['docs', path], async () => {
@@ -72,8 +72,11 @@ export const Docs = ({ path = '' }: { path?: string }) => {
   }
 
   return (
-    <Stack mt={32} id="docs" p={20} spacing={8}>
-      <Title size={1}>{title}</Title>
+    <Stack id="docs" p={20} spacing={8}>
+      <Group position="apart" align="center">
+        <Title size={1}>{title}</Title>
+        {children}
+      </Group>
       <Component
         components={{
           Frame: ({ className, ...props }: any) => {
@@ -110,17 +113,17 @@ export const Docs = ({ path = '' }: { path?: string }) => {
           },
           Tab: () => null,
           Tabs: ({ className, ...props }: any) => {
-            const children = Array.isArray(props.children) ? props.children : [props.children];
+            const tabs = Array.isArray(props.children) ? props.children : [props.children];
 
             return (
               <Tabs
-                menuTabs={children.map((tab) => {
+                menuTabs={tabs.map((tab) => {
                   return {
                     content: tab.props.children,
                     value: tab.props.title,
                   };
                 })}
-                defaultValue={children[0].props.title}
+                defaultValue={tabs[0].props.title}
               />
             );
           },

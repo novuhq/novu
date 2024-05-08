@@ -41,6 +41,7 @@ import { TemplateCreationSourceEnum } from './shared';
 import { When } from '../../components/utils/When';
 import { ListPage } from '../../components/layout/components/ListPage';
 import { WorkflowListNoMatches } from './WorkflowListNoMatches';
+import { useSetDocs } from '../../components/providers/DocsProvider';
 
 const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
   {
@@ -162,6 +163,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
 ];
 
 function WorkflowListPage() {
+  useSetDocs('workflows/notification-workflows');
   const segment = useSegment();
   const { readonly } = useEnvController();
   const { loading: areNotificationGroupLoading } = useNotificationGroup();

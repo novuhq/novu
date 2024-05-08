@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Drawer } from '@mantine/core';
+import { ActionIcon, Drawer } from '@mantine/core';
 import { useLocation } from 'react-router-dom';
 import { Docs } from '../docs';
+import { IconClose } from '@novu/design-system';
 
 interface IDocsContext {
   setPath: (path: string) => void;
@@ -47,15 +48,17 @@ export const DocsProvider = ({ children }) => {
         enabled: path.length > 0,
       }}
     >
-      {children}
       <Drawer
         opened={open}
         onClose={() => {
           setOpen(false);
         }}
         position="right"
-        size="50%"
+        size="100%"
         styles={{
+          root: {
+            zIndex: 10002,
+          },
           drawer: {
             overflow: 'scroll',
           },
@@ -64,8 +67,13 @@ export const DocsProvider = ({ children }) => {
           },
         }}
       >
-        <Docs path={path} />
+        <Docs path={path}>
+          <ActionIcon variant="transparent" onClick={() => toggle()}>
+            <IconClose />
+          </ActionIcon>
+        </Docs>
       </Drawer>
+      {children}
     </DocsContext.Provider>
   );
 };

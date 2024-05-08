@@ -16,6 +16,7 @@ import { ExecutionDetailsModal } from '../../components/execution-detail/Executi
 import { IActivityGraphStats } from './interfaces';
 import { Flex } from '@mantine/core';
 import { FIRST_100_WORKFLOWS } from '../../constants/workflowConstants';
+import { useSetDocs } from '../../components/providers/DocsProvider';
 
 const FiltersContainer = styled.div`
   gap: 15px;
@@ -39,6 +40,7 @@ const initialFormState: IFiltersForm = {
 };
 
 export function ActivitiesPage() {
+  useSetDocs('activity-feed/introduction');
   const { templates, loading: loadingTemplates } = useTemplates(FIRST_100_WORKFLOWS);
   const [page, setPage] = useState<number>(0);
   const [isModalOpen, setToggleModal] = useState<boolean>(false);
