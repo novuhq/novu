@@ -5,6 +5,7 @@ import { HandlebarHelpersEnum } from '@novu/shared';
 
 import { CompileTemplateCommand } from './compile-template.command';
 import * as i18next from 'i18next';
+import { ApiException } from '../../utils/exceptions';
 
 const assertResult = (condition: boolean, options) => {
   const fn = condition ? options.fn : options.inverse;
@@ -208,10 +209,16 @@ Handlebars.registerHelper(
 export class CompileTemplate {
   async execute(command: CompileTemplateCommand): Promise<string> {
     const templateContent = command.template;
+    let result = '';
+    try {
+      const template = Handlebars.compile(templateContent);
 
-    const template = Handlebars.compile(templateContent);
-
-    const result = template(command.data, {});
+      result = template(command.data, {});
+    } catch (e: any) {
+      throw new ApiException(
+        e?.message || `Message content could not be generated`
+      );
+    }
 
     return result.replace(/&#x27;/g, "'");
   }
