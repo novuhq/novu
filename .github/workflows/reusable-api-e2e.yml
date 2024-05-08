@@ -64,9 +64,7 @@ jobs:
       deployments: write
       id-token: write
     needs: [check_submodule_token]
-    if: |
-      ${{ contains (inputs.job-name,'-ee') && inputs.test-e2e-ee-affected == 'true' }} ||
-      ${{ !contains (inputs.job-name,'-ee') && inputs.test-e2e-affected == 'true' }}
+    if: ${{ (contains(inputs.job-name, '-ee') && inputs.test-e2e-ee-affected) || (!contains(inputs.job-name, '-ee') && inputs.test-e2e-affected) }}
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # checkout with submodules if token is provided
