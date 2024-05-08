@@ -7,6 +7,7 @@ import { useSubscribers } from '../../hooks';
 import PageHeader from '../../components/layout/components/PageHeader';
 import PageContainer from '../../components/layout/components/PageContainer';
 import { Table, withCellLoading, IExtendedColumn, ViewportWide, HoverCard } from '@novu/design-system';
+import { useSetDocs } from '../../components/providers/DocsProvider';
 
 const columns: IExtendedColumn<ISubscriber>[] = [
   {
@@ -57,6 +58,7 @@ const columns: IExtendedColumn<ISubscriber>[] = [
 ];
 
 function SubscribersList() {
+  useSetDocs('subscribers/subscribers');
   const [page, setPage] = useState<number>(0);
   const { subscribers, loading: isLoading, hasMore, pageSize } = useSubscribers(page);
 

@@ -13,7 +13,6 @@ import SignUpPage from './pages/auth/SignUpPage';
 import { BrandPage } from './pages/brand/BrandPage';
 import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
-import { DocsPage } from './pages/docs/DocsPage';
 import { GetStartedPage } from './pages/get-started/GetStartedPage';
 import HomePage from './pages/HomePage';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
@@ -127,7 +126,6 @@ export const AppRoutes = () => {
             <Route path="" element={<LayoutsListPage />} />
           </Route>
         )}
-        <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path="/docs/*" element={<DocsPage />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
