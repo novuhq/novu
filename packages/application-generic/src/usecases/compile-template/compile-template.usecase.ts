@@ -6,6 +6,12 @@ import { HandlebarHelpersEnum } from '@novu/shared';
 import { CompileTemplateCommand } from './compile-template.command';
 import * as i18next from 'i18next';
 
+const assertResult = (condition: boolean, options) => {
+  const fn = condition ? options.fn : options.inverse;
+
+  return typeof fn === 'function' ? fn(this) : condition;
+};
+
 Handlebars.registerHelper(
   HandlebarHelpersEnum.I18N,
   function (key, { hash, data, fn }) {
@@ -36,9 +42,7 @@ Handlebars.registerHelper(
 Handlebars.registerHelper(
   HandlebarHelpersEnum.EQUALS,
   function (arg1, arg2, options) {
-    // eslint-disable-next-line
-    // @ts-expect-error
-    return arg1 == arg2 ? options.fn(this) : options.inverse(this);
+    return assertResult(arg1 == arg2, options);
   }
 );
 
@@ -161,54 +165,42 @@ Handlebars.registerHelper(
 Handlebars.registerHelper(
   HandlebarHelpersEnum.GT,
   function (arg1, arg2, options) {
-    // eslint-disable-next-line
-    // @ts-expect-error
-    return arg1 > arg2 ? options.fn(this) : options.inverse(this);
+    return assertResult(arg1 > arg2, options);
   }
 );
 
 Handlebars.registerHelper(
   HandlebarHelpersEnum.GTE,
   function (arg1, arg2, options) {
-    // eslint-disable-next-line
-    // @ts-expect-error
-    return arg1 >= arg2 ? options.fn(this) : options.inverse(this);
+    return assertResult(arg1 >= arg2, options);
   }
 );
 
 Handlebars.registerHelper(
   HandlebarHelpersEnum.LT,
   function (arg1, arg2, options) {
-    // eslint-disable-next-line
-    // @ts-expect-error
-    return arg1 < arg2 ? options.fn(this) : options.inverse(this);
+    return assertResult(arg1 < arg2, options);
   }
 );
 
 Handlebars.registerHelper(
   HandlebarHelpersEnum.LTE,
   function (arg1, arg2, options) {
-    // eslint-disable-next-line
-    // @ts-expect-error
-    return arg1 <= arg2 ? options.fn(this) : options.inverse(this);
+    return assertResult(arg1 <= arg2, options);
   }
 );
 
 Handlebars.registerHelper(
   HandlebarHelpersEnum.EQ,
   function (arg1, arg2, options) {
-    // eslint-disable-next-line
-    // @ts-expect-error
-    return arg1 === arg2 ? options.fn(this) : options.inverse(this);
+    return assertResult(arg1 === arg2, options);
   }
 );
 
 Handlebars.registerHelper(
   HandlebarHelpersEnum.NE,
   function (arg1, arg2, options) {
-    // eslint-disable-next-line
-    // @ts-expect-error
-    return arg1 !== arg2 ? options.fn(this) : options.inverse(this);
+    return assertResult(arg1 !== arg2, options);
   }
 );
 
