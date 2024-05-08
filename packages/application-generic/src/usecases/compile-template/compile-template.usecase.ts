@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as Handlebars from 'handlebars';
 import { format } from 'date-fns';
-import { HandlebarHelpersEnum } from '@novu/shared';
+import { checkIsResponseError, HandlebarHelpersEnum } from '@novu/shared';
 
 import { CompileTemplateCommand } from './compile-template.command';
 import * as i18next from 'i18next';
@@ -214,10 +214,12 @@ export class CompileTemplate {
       const template = Handlebars.compile(templateContent);
 
       result = template(command.data, {});
-    } catch (e: any) {
-      throw new ApiException(
-        e?.message || `Message content could not be generated`
-      );
+    } catch (e: unknown) {
+      let errorMessage = `Message content could not be generated`;
+      if (checkIsResponseError(e)) {
+        errorMessage = e.message;
+      }
+      throw new ApiException(errorMessage);
     }
 
     return result.replace(/&#x27;/g, "'");
