@@ -1,4 +1,11 @@
-import { Digest, HalfClock, IconOutlineNotificationsActive, IconOutlinePublic, Translation } from '@novu/design-system';
+import {
+  Digest,
+  HalfClock,
+  IconComputer,
+  IconOutlineNotificationsActive,
+  IconOutlinePublic,
+  Translation,
+} from '@novu/design-system';
 import { CSSProperties } from 'react';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
 
@@ -7,7 +14,7 @@ export interface GetStartedTabConfig {
   icon: JSX.Element;
   title: string;
 }
-const ICON_STYLE: Partial<CSSProperties> = { height: 20, width: 20, marginBottom: '12px' };
+export const ICON_STYLE: Partial<CSSProperties> = { height: 20, width: 20, marginBottom: '12px' };
 
 export const TAB_CONFIGS: GetStartedTabConfig[] = [
   {

@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
-import { NexmoSmsProvider } from '@novu/nexmo';
+import { NexmoSmsProvider } from '@novu/providers';
 
 export class NexmoHandler extends BaseSmsHandler {
   constructor() {

@@ -1,0 +1,5 @@
+import { <%= pascalName %><%= pascalType %>Provider } from './<%= name %>.provider';
+
+test('should trigger <%= name %> library correctly', async () => {
+
+});

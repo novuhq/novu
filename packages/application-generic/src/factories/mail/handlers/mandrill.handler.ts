@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { MandrillProvider } from '@novu/mandrill';
+import { MandrillProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class MandrillHandler extends BaseHandler {

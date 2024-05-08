@@ -24,7 +24,7 @@ export function HeaderNav() {
       className={css({
         position: 'sticky',
         top: 0,
-        borderBottom: 'none',
+        borderBottom: 'none !important',
         // TODO: fix when we re-do z-index across the app
         zIndex: 199,
         padding: '50',
