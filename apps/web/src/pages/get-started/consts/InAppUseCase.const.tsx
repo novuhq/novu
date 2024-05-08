@@ -1,4 +1,4 @@
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
 import { ROUTES } from '@novu/shared-web';
 
 import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
@@ -16,7 +16,7 @@ export const InAppUseCaseConst: OnboardingUseCase = {
   description:
     "Utilize Novu's pre-built customizable in-app component. " +
     'Or opt for the headless library to create your own in-app notification center.',
-  useCaseLink: 'https://docs.novu.co/channels-and-providers/in-app/introduction',
+  useCaseLink: 'https://docs.novu.co/channels-and-providers/in-app/introduction?utm_campaign=inapp-usecase-inapp',
   steps: [
     {
       title: 'Configure In-App provider',
@@ -34,7 +34,13 @@ export const InAppUseCaseConst: OnboardingUseCase = {
 
         return (
           <StepDescription>
-            <GetStartedLink href={getInAppIntegrationUrl()} target="_blank" rel="noopener noreferrer">
+            <GetStartedLink
+              event="Create In-app provider"
+              href={getInAppIntegrationUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              channel={StepTypeEnum.IN_APP}
+            >
               Create In-app provider
             </GetStartedLink>
             <StepText>
@@ -85,6 +91,8 @@ export const InAppUseCaseConst: OnboardingUseCase = {
               href={ROUTES.ACTIVITIES}
               target="_blank"
               rel="noopener noreferrer"
+              event='Discover "activity feed"'
+              channel={StepTypeEnum.IN_APP}
             />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.

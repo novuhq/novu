@@ -4,6 +4,17 @@ name: Test WEB
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 on:
+  workflow_dispatch:
+    inputs:
+      ee:
+        description: 'use the ee version of worker'
+        required: false
+        default: true
+        type: boolean
+      environment:
+        required: false
+        default: 'Development'
+        type: string
   workflow_call:
     inputs:
       ee:
@@ -11,6 +22,15 @@ on:
         required: false
         default: false
         type: boolean
+      slack_notification:
+        description: 'notify if e2e fail via slack'
+        required: false
+        default: false
+        type: boolean
+      environment:
+        required: false
+        default: 'Development'
+        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -24,10 +44,15 @@ jobs:
       # leaving the Dashboard hanging ...
       # https://github.com/cypress-io/github-action/issues/48
       fail-fast: false
+      matrix:
+        # run 5 copies of the current job in parallel
+        containers: [1, 2, 3, 4, 5]
+        total: [5]
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
+    environment: ${{ inputs.environment }}
 
     permissions:
       contents: read
@@ -62,7 +87,7 @@ jobs:
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
-          targets: lint,build
+          targets: build
           projects: '@novu/web,@novu/api,@novu/worker'
           args: --skip-nx-cache
 
@@ -74,6 +99,7 @@ jobs:
           cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
           cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          ci_ee_test: ${{ steps.setup.outputs.has_token }}
 
       - name: Start Client
         working-directory: apps/web
@@ -103,25 +129,6 @@ jobs:
       - run: |
           echo "BROWSER_PATH=$(which chrome)" >> $GITHUB_ENV
 
-      - name: Cypress run EE e2e
-        if: ${{ inputs.ee }}
-        uses: cypress-io/github-action@v6
-        env:
-          NODE_ENV: test
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_WEB_KEY }}
-          CYPRESS_GITHUB_USER_EMAIL: ${{ secrets.CYPRESS_GITHUB_USER_EMAIL }}
-          CYPRESS_GITHUB_USER_PASSWORD: ${{ secrets.CYPRESS_GITHUB_USER_PASSWORD }}
-          CYPRESS_IS_CI: true
-        with:
-          working-directory: apps/web
-          browser: "${{ env.BROWSER_PATH }}"
-          record: false
-          parallel: false
-          install: false
-          config-file: cypress.config.ts
-          spec: "cypress/tests/**/*.spec-ee.{js,jsx,ts,tsx}"
-
       - name: Cypress run e2e
         uses: cypress-io/github-action@v6
         env:
@@ -134,17 +141,76 @@ jobs:
         with:
           working-directory: apps/web
           browser: "${{ env.BROWSER_PATH }}"
-          record: false
-          parallel: false
+          record: true
+          parallel: true
           install: false
           config-file: cypress.config.ts
-          spec: "cypress/tests/**/*.spec.{js,jsx,ts,tsx}"
+          spec: |
+            cypress/tests/**/*.spec.ts
+            ${{ steps.setup.outputs.has_token == 'true' && inputs.ee && 'cypress/tests/**/*.spec-ee.ts' }}
 
-      - uses: actions/upload-artifact@v3
-        if: failure()
+      - name: Playwright Install
+        working-directory: apps/web
+        run: pnpm playwright:install
+
+      - name: Run Playwright tests
+        working-directory: apps/web
+        run: pnpm playwright:test --shard=${{ matrix.containers }}/${{ matrix.total }}
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
         with:
-          name: cypress-screenshots
+          name: blob-report-${{ matrix.containers }}
+          path: apps/web/blob-report
+          retention-days: 1
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: cypress-screenshots-${{ matrix.containers }}
           path: apps/web/cypress/screenshots
+          retention-days: 30
+
+  merge-reports:
+    # Merge reports after playwright-tests, even if some shards have failed
+    if: ${{ !cancelled() }}
+    needs: [e2e_web]
+    environment: ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20.8.1
+
+    - name: Download blob reports from GitHub Actions Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: all-blob-reports
+        pattern: blob-report-*
+        merge-multiple: true
+
+    - name: Merge into HTML Report
+      run: npx playwright merge-reports --reporter html ./all-blob-reports
+
+    - name: Upload HTML report
+      uses: actions/upload-artifact@v4
+      with:
+        name: html-report--attempt-${{ github.run_attempt }}
+        path: playwright-report
+        retention-days: 14
+
+    - name: Notify Slack Action
+      uses: ravsamhq/notify-slack-action@v2
+      if: ${{ inputs.slack_notification && needs.e2e_web.result == 'failure' }}
+      with:
+        status: "failure"
+        notification_title: "{workflow} for WEB has failed"
+        message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
+        footer: "Linked Run URL {run_url}\nCommit URL{commit_url}"
+        notify_when: "failure"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
   component_web:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -152,6 +218,7 @@ jobs:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
     timeout-minutes: 80
+    environment: ${{ inputs.environment }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -189,3 +256,15 @@ jobs:
         with:
           name: cypress-screenshots
           path: apps/web/cypress/screenshots
+
+      - name: Notify Slack Action
+        uses: ravsamhq/notify-slack-action@v2
+        if: ${{ always() && inputs.slack_notification }}
+        with:
+          status: ${{ job.status }}
+          notification_title: "{workflow} for Component WEB has {status_message}"
+          message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
+          footer: "Linked Run URL {run_url}\nCommit URL{commit_url}"
+          notify_when: "failure"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

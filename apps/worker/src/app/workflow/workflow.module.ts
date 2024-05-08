@@ -1,8 +1,5 @@
 import { DynamicModule, Logger, Module, Provider, OnApplicationShutdown } from '@nestjs/common';
 import {
-  AddDelayJob,
-  MergeOrCreateDigest,
-  AddJob,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
@@ -17,16 +14,11 @@ import {
   GetSubscriberTemplatePreference,
   ProcessTenant,
   SelectIntegration,
-  SendTestEmail,
-  SendTestEmailCommand,
-  StoreSubscriberJobs,
   ConditionsFilter,
   TriggerEvent,
   SelectVariant,
-  MapTriggerRecipients,
   GetTopicSubscribersUseCase,
   getFeatureFlag,
-  SubscriberJobBound,
   TriggerBroadcast,
   TriggerMulticast,
   CompileInAppTemplate,
@@ -61,6 +53,10 @@ import { Type } from '@nestjs/common/interfaces/type.interface';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
 import { JobTopicNameEnum } from '@novu/shared';
+import { ExecuteStepCustom } from './usecases/send-message/execute-step-custom.usecase';
+import { AddDelayJob, AddJob, MergeOrCreateDigest } from './usecases/add-job';
+import { StoreSubscriberJobs } from './usecases/store-subscriber-jobs';
+import { SubscriberJobBound } from './usecases/subscriber-job-bound/subscriber-job-bound.usecase';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -71,10 +67,17 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
         Logger.log('Importing enterprise translations module', 'EnterpriseImport');
         modules.push(require('@novu/ee-translation')?.EnterpriseTranslationModuleWithoutControllers);
       }
+
       if (require('@novu/ee-billing')?.BillingModule) {
         Logger.log('Importing enterprise billing module', 'EnterpriseImport');
         const activeWorkers = workersToProcess.length ? workersToProcess : Object.values(JobTopicNameEnum);
         modules.push(require('@novu/ee-billing')?.BillingModule.forRoot(activeWorkers));
+      }
+
+      if (require('@novu/ee-echo-worker')?.EchoGatewayModule) {
+        Logger.log('Importing enterprise chimera connector module', 'EnterpriseImport');
+
+        modules.push(require('@novu/ee-echo-worker')?.EchoGatewayModule);
       }
     }
   } catch (e) {
@@ -118,15 +121,13 @@ const USE_CASES = [
   SendMessageInApp,
   SendMessagePush,
   SendMessageSms,
-  SendTestEmail,
-  SendTestEmailCommand,
+  ExecuteStepCustom,
   StoreSubscriberJobs,
   SetJobAsCompleted,
   SetJobAsFailed,
   TriggerEvent,
   UpdateJobStatus,
   WebhookFilterBackoffStrategy,
-  MapTriggerRecipients,
   GetTopicSubscribersUseCase,
   getFeatureFlag,
   SubscriberJobBound,

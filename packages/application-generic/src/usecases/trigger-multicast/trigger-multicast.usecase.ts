@@ -1,6 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import * as _ from 'lodash';
-
 import {
   TopicEntity,
   TopicRepository,
@@ -40,7 +39,6 @@ const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
 @Injectable()
 export class TriggerMulticast {
   constructor(
-    private logger: PinoLogger,
     private subscriberProcessQueueService: SubscriberProcessQueueService,
     private topicSubscribersRepository: TopicSubscribersRepository,
     private topicRepository: TopicRepository,
@@ -72,19 +70,6 @@ export class TriggerMulticast {
           subscribersToProcess,
           SubscriberSourceEnum.SINGLE
         );
-      }
-
-      const isEnabled = await this.getFeatureFlag.execute(
-        GetFeatureFlagCommand.create({
-          environmentId,
-          organizationId,
-          userId,
-          key: FeatureFlagsKeysEnum.IS_TOPIC_NOTIFICATION_ENABLED,
-        })
-      );
-
-      if (!isEnabled) {
-        return;
       }
 
       const topics = await this.getTopicsByTopicKeys(

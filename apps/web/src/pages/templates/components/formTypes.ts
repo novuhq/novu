@@ -100,4 +100,5 @@ export interface IForm {
   critical: boolean;
   steps: IFormStep[];
   preferenceSettings: IPreferenceChannels;
+  payloadSchema?: any;
 }

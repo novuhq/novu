@@ -14,7 +14,6 @@ COPY --chown=1000:1000 .npmrc-cloud .
 
 COPY --chown=1000:1000 package.json .
 
-COPY --chown=1000:1000 providers ./providers
 COPY --chown=1000:1000 apps/ws ./apps/ws
 COPY --chown=1000:1000 libs/dal ./libs/dal
 COPY --chown=1000:1000 libs/shared ./libs/shared
@@ -23,6 +22,7 @@ COPY --chown=1000:1000 packages/client ./packages/client
 COPY --chown=1000:1000 packages/stateless ./packages/stateless
 COPY --chown=1000:1000 packages/node ./packages/node
 COPY --chown=1000:1000 packages/application-generic ./packages/application-generic
+COPY --chown=1000:1000 packages/providers ./packages/providers
 
 COPY --chown=1000:1000 ["tsconfig.json","tsconfig.base.json","nx.json","pnpm-workspace.yaml","pnpm-lock.yaml", ".npmrc", "./"]
 

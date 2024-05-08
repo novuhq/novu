@@ -1104,3 +1104,36 @@ export const brevoSmsConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const eazySmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'API Key',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.channelId,
+    displayName: 'SMS Channel Id',
+    type: 'string',
+    required: true,
+    description: 'Your SMS Channel Id',
+  },
+];
+
+export const whatsAppBusinessConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'Access API token',
+    description: 'Your WhatsApp Business access API token',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.phoneNumberIdentification,
+    displayName: 'Phone Number Identification',
+    description: 'Your WhatsApp Business phone number identification',
+    type: 'string',
+    required: true,
+  },
+];

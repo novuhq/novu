@@ -206,6 +206,8 @@ export function NotificationListItem({
           shadow={colorScheme === 'dark' ? shadows.dark : shadows.light}
           withArrow
           classNames={overrideClasses}
+          withinPortal={true}
+          middlewares={{ flip: false, shift: false }}
         >
           <Menu.Target>
             <ActionIcon

@@ -16,6 +16,7 @@ import {
   ChatProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  PushProviderIdEnum,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -28,6 +29,12 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  IProviderOverride,
+  IProvidersOverride,
+  ExecuteOutput,
+  IChimeraChannelResponse,
+  IBlock,
+  SelectIntegrationCommand,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -84,12 +91,14 @@ export class SendMessageChat extends SendMessageBase {
     let content = '';
 
     try {
-      content = await this.compileTemplate.execute(
-        CompileTemplateCommand.create({
-          template: step.template.content as string,
-          data: this.getCompilePayload(command.compileContext),
-        })
-      );
+      if (!command.chimeraData) {
+        content = await this.compileTemplate.execute(
+          CompileTemplateCommand.create({
+            template: step.template.content as string,
+            data: this.getCompilePayload(command.compileContext),
+          })
+        );
+      }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
@@ -100,6 +109,14 @@ export class SendMessageChat extends SendMessageBase {
       subscriber.channels?.filter((chan) =>
         Object.values(ChatProviderIdEnum).includes(chan.providerId as ChatProviderIdEnum)
       ) || [];
+
+    const phone = subscriber.phone;
+    chatChannels.push({
+      providerId: ChatProviderIdEnum.WhatsAppBusiness,
+      credentials: {
+        phoneNumber: phone,
+      },
+    });
 
     if (chatChannels.length === 0) {
       await this.executionLogRoute.execute(
@@ -150,8 +167,7 @@ export class SendMessageChat extends SendMessageBase {
     chatChannel: NotificationStepEntity,
     content: string
   ) {
-    const integration = await this.getIntegration({
-      id: subscriberChannel._integrationId,
+    const integrationCommand: SelectIntegrationCommand = {
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       providerId: subscriberChannel.providerId,
@@ -160,26 +176,48 @@ export class SendMessageChat extends SendMessageBase {
       filterData: {
         tenant: command.job.tenant,
       },
-    });
+    };
 
-    const chatWebhookUrl = command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
-    const channelSpecification = subscriberChannel.credentials?.channel;
-
-    if (!chatWebhookUrl) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.CHAT_WEBHOOK_URL_MISSING,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            reason: `webhookUrl for integrationId: ${subscriberChannel?._integrationId} is missing`,
-          }),
-        })
-      );
+    /**
+     * Current a workaround as chat providers for whatsapp is more similar to sms than to our chat implementation
+     */
+    if (subscriberChannel.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
+      integrationCommand.id = subscriberChannel._integrationId;
     }
+
+    const integration = await this.getIntegration(integrationCommand);
+
+    if (subscriberChannel.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
+      if (!integration) {
+        await this.executionLogRoute.execute(
+          ExecutionLogRouteCommand.create({
+            ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+            detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.FAILED,
+            isTest: false,
+            isRetry: false,
+            raw: JSON.stringify({
+              reason: `Integration with integrationId: ${subscriberChannel?._integrationId} is either deleted or not active`,
+            }),
+          })
+        );
+
+        return;
+      }
+    } else if (!integration) {
+      /**
+       * TODO: Need to handle a proper execution log error for this case
+       */
+      return;
+    }
+
+    const chimeraOverride = this.getChimeraOverride(command.chimeraData?.providers, integration);
+
+    const chatWebhookUrl =
+      chimeraOverride?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+    const phoneNumber = subscriberChannel.credentials?.phoneNumber;
+    const channelSpecification = subscriberChannel.credentials?.channel;
 
     const message: MessageEntity = await this.messageRepository.create({
       _notificationId: command.notificationId,
@@ -191,28 +229,11 @@ export class SendMessageChat extends SendMessageBase {
       channel: ChannelTypeEnum.CHAT,
       transactionId: command.transactionId,
       chatWebhookUrl: chatWebhookUrl,
+      phone: phoneNumber,
       content: this.storeContent() ? content : null,
       providerId: subscriberChannel.providerId,
       _jobId: command.jobId,
     });
-
-    if (!integration) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.SUBSCRIBER_NO_ACTIVE_INTEGRATION,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            reason: `Integration with integrationId: ${subscriberChannel?._integrationId} is either deleted or not active`,
-          }),
-        })
-      );
-
-      return;
-    }
 
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
@@ -229,13 +250,30 @@ export class SendMessageChat extends SendMessageBase {
       })
     );
 
-    if (chatWebhookUrl && integration) {
-      await this.sendMessage(chatWebhookUrl, integration, content, message, command, channelSpecification);
+    if ((chatWebhookUrl && integration) || (phoneNumber && integration)) {
+      await this.sendMessage(chatWebhookUrl, integration, content, message, command, channelSpecification, phoneNumber);
 
       return;
     }
 
     await this.sendErrors(chatWebhookUrl, integration, message, command);
+  }
+
+  private getChimeraOverride(
+    providersOverrides: IProvidersOverride | undefined,
+    integration: IntegrationEntity
+  ): IProviderOverride | null {
+    if (!providersOverrides) {
+      return null;
+    }
+
+    const providerExists = Object.keys(providersOverrides).includes(integration.providerId);
+
+    if (!providerExists) {
+      return null;
+    }
+
+    return providersOverrides[integration.providerId];
   }
 
   private async sendErrors(
@@ -306,7 +344,8 @@ export class SendMessageChat extends SendMessageBase {
     content: string,
     message: MessageEntity,
     command: SendMessageCommand,
-    channelSpecification?: string | undefined
+    channelSpecification?: string | undefined,
+    phoneNumber?: string | undefined
   ) {
     try {
       const chatFactory = new ChatFactory();
@@ -315,10 +354,18 @@ export class SendMessageChat extends SendMessageBase {
         throw new PlatformException(`Chat handler for provider ${integration.providerId} is  not found`);
       }
 
+      const chimeraContent = this.getOverrideContent(command.chimeraData, integration);
+      const overrides = {
+        ...(command.overrides[integration?.channel] || {}),
+        ...(command.overrides[integration?.providerId] || {}),
+      };
+
       const result = await chatHandler.send({
+        phoneNumber,
+        customData: overrides,
         webhookUrl: chatWebhookUrl,
         channel: channelSpecification,
-        content,
+        ...(chimeraContent?.content ? (chimeraContent as DefinedContent) : { content }),
       });
 
       await this.executionLogRoute.execute(
@@ -358,4 +405,22 @@ export class SendMessageChat extends SendMessageBase {
       );
     }
   }
+
+  private getOverrideContent(
+    chimeraData: ExecuteOutput<IChimeraChannelResponse> | undefined | null,
+    integration: IntegrationEntity
+  ): { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined } {
+    const chimeraProviderOverride = this.getChimeraOverride(chimeraData?.providers, integration);
+
+    let chimeraContent: { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined };
+    if (chimeraProviderOverride) {
+      chimeraContent = { content: chimeraProviderOverride.text, blocks: chimeraProviderOverride.blocks };
+    } else {
+      chimeraContent = { content: chimeraData?.outputs.body };
+    }
+
+    return chimeraContent;
+  }
 }
+
+type DefinedContent = { content: string; blocks: IBlock[] | undefined } | { content: string };

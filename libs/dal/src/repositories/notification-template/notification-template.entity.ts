@@ -1,4 +1,4 @@
-import { Types } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 import {
   FilterParts,
   BuilderFieldType,
@@ -15,6 +15,7 @@ import {
   INotificationTemplate,
   INotificationTemplateStep,
   IMessageTemplate,
+  NotificationTemplateTypeEnum,
 } from '@novu/shared';
 
 import { NotificationGroupEntity } from '../notification-group';
@@ -70,6 +71,12 @@ export class NotificationTemplateEntity implements INotificationTemplate {
   blueprintId?: string;
 
   data?: NotificationTemplateCustomData;
+
+  type?: NotificationTemplateTypeEnum;
+
+  rawData?: any;
+
+  payloadSchema?: any;
 }
 
 export type NotificationTemplateDBModel = ChangePropsValueType<
@@ -95,6 +102,8 @@ export class StepVariantEntity implements IStepVariant {
   _id?: string;
 
   uuid?: string;
+
+  stepId?: string;
 
   name?: string;
 

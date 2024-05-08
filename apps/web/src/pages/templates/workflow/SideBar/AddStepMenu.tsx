@@ -5,6 +5,7 @@ import { colors, DragButton, Tooltip } from '@novu/design-system';
 import { useEnvController } from '../../../../hooks';
 import { channels, NodeTypeEnum } from '../../../../utils/channels';
 import { TOP_ROW_HEIGHT } from '../WorkflowEditor';
+import { StepTypeEnum } from '@novu/shared';
 
 export function AddStepMenu({
   setDragging,
@@ -26,6 +27,7 @@ export function AddStepMenu({
         <Stack spacing={18} mb={16}>
           {channels
             .filter((channel) => channel.type === NodeTypeEnum.ACTION)
+            .filter((channel) => channel.channelType !== StepTypeEnum.CUSTOM)
             .map((channel, index) => (
               <DraggableNode key={index} channel={channel} setDragging={setDragging} onDragStart={onDragStart} />
             ))}

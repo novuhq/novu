@@ -11,7 +11,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
   description:
     'Upload translations to use them as variables or for auto-upload in the editor in a workflow. ' +
     'This feature is available for business and enterprise plan.',
-  useCaseLink: 'https://docs.novu.co/content-creation-design/translations',
+  useCaseLink: 'https://docs.novu.co/content-creation-design/translations?utm_campaign=inapp-usecase-translation',
   steps: [
     {
       title: 'Configure providers',
@@ -21,7 +21,12 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <GetStartedLink href={ROUTES.INTEGRATIONS_CREATE} target="_blank" rel="noopener noreferrer">
+            <GetStartedLink
+              event="Integration store (translation)"
+              href={ROUTES.INTEGRATIONS_CREATE}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {' '}
               Integration store
             </GetStartedLink>
@@ -41,6 +46,7 @@ export const TranslationUseCaseConst: OnboardingUseCase = {
               href={ROUTES.TRANSLATIONS}
               target="_blank"
               rel="noopener noreferrer"
+              event="Translations page"
             />
             <StepText>.</StepText>
           </StepDescription>

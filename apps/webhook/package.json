@@ -8,7 +8,7 @@
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | docker buildx build --load --platform=linux/amd64,linux/arm64 --provenance=false --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | docker buildx build --load --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/webhook/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/webhook - -t novu-webhook --load",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "npm run start:dev",
@@ -17,7 +17,6 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
     "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts"
   },
   "dependencies": {

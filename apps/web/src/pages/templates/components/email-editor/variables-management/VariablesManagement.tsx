@@ -1,8 +1,9 @@
 import { useWatch } from 'react-hook-form';
-import { Group, useMantineColorScheme } from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import * as set from 'lodash.set';
 import styled from '@emotion/styled';
+import { Group, useMantineColorScheme } from '@mantine/core';
 
 import {
   Translation,
@@ -16,6 +17,7 @@ import {
   ActionButton,
   PencilOutlined,
   Close,
+  Text,
 } from '@novu/design-system';
 
 import { VarItemsDropdown } from './VarItemsDropdown';
@@ -24,6 +26,9 @@ import { useDebounce, useProcessVariables } from '../../../../../hooks';
 import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
 import { useWorkflowVariables } from '../../../../../api/hooks';
+
+import { ROUTES } from '../../../../../constants/routes.enum';
+import { UpgradePlanBanner } from '../../../../../components/layout/components/UpgradePlanBanner';
 
 interface IVariablesList {
   translations: Record<string, any>;
@@ -69,12 +74,14 @@ export const VariablesManagement = ({
   control,
   path,
   isPopover = false,
+  chimera = false,
 }: {
   openVariablesModal?: () => void;
   closeVariablesManagement?: () => void;
   control?: any;
   path: string;
   isPopover?: boolean;
+  chimera?: boolean;
 }) => {
   const variableArray = useWatch({
     name: path,
@@ -83,12 +90,12 @@ export const VariablesManagement = ({
   const { colorScheme } = useMantineColorScheme();
 
   const { variables } = useWorkflowVariables();
-
   const processedVariables = useProcessVariables(variableArray, false);
   const [variablesList, setVariablesList] = useState<IVariablesList>({
     ...variables,
     step: processedVariables,
   });
+
   const [searchVal, setSearchVal] = useState('');
 
   const debouncedSearchChange = useDebounce((args: { search: string; list: IVariablesList }) => {
@@ -116,7 +123,7 @@ export const VariablesManagement = ({
 
   return (
     <VariablesContainer isPopover={isPopover}>
-      <When truthy={openVariablesModal !== undefined}>
+      <When truthy={openVariablesModal !== undefined && !chimera}>
         <Group
           px={16}
           h={40}
@@ -186,18 +193,12 @@ const VariablesSection = ({ variablesList, searchVal }: { variablesList: IVariab
     <>
       <VariableSectionItem variableList={system} search={searchVal} sectionName="System Variables" Icon={NovuIcon} />
       <VariableSectionItem variableList={step} search={searchVal} sectionName="Step Variables" Icon={Workflow} />
-      <VariableSectionItem
-        withFolders
-        variableList={translations}
-        search={searchVal}
-        sectionName={'Translation Variables'}
-        Icon={Translation}
-      />
+      <TranslationSectionItem variableList={translations} search={searchVal} />
     </>
   );
 };
 
-const VariableSectionItem = ({
+export const VariableSectionItem = ({
   variableList,
   search,
   sectionName,
@@ -213,34 +214,84 @@ const VariableSectionItem = ({
   const keys = variableList && Object.keys(variableList);
 
   return (
-    <When truthy={keys?.length}>
-      <VarLabel label={sectionName} Icon={Icon}>
-        {keys?.map((name, ind) => {
-          if (typeof variableList[name] === 'object') {
+    <>
+      <When truthy={keys?.length}>
+        <VarLabel label={sectionName} Icon={Icon}>
+          {keys?.map((name, ind) => {
+            if (typeof variableList[name] === 'object') {
+              return (
+                <VarItemsDropdown
+                  withFolders={withFolders}
+                  path={name}
+                  highlight={search}
+                  key={ind}
+                  name={name}
+                  type={variableList[name]}
+                />
+              );
+            }
+
             return (
-              <VarItemsDropdown
-                withFolders={withFolders}
-                path={name}
+              <VarItemTooltip
                 highlight={search}
-                key={ind}
+                pathToCopy={name}
                 name={name}
-                type={variableList[name]}
+                type={typeof variableList[name]}
+                key={ind}
               />
             );
-          }
+          })}
+        </VarLabel>
+      </When>
+    </>
+  );
+};
+const TranslationsGetStartedText = () => {
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+  const navigate = useNavigate();
 
-          return (
-            <VarItemTooltip
-              highlight={search}
-              pathToCopy={name}
-              name={name}
-              type={typeof variableList[name]}
-              key={ind}
-            />
-          );
-        })}
-      </VarLabel>
-    </When>
+  return (
+    <Text color={isDark ? colors.B60 : colors.B40}>
+      <GradientSpan>
+        <a
+          onClick={() => {
+            navigate(ROUTES.TRANSLATIONS);
+          }}
+        >
+          Upload translations{' '}
+        </a>
+      </GradientSpan>
+      <span>to use them as variables or in the autosuggest for the editor.</span>
+    </Text>
+  );
+};
+
+export const TranslationSectionItem = ({
+  variableList,
+  search,
+}: {
+  variableList: Record<string, any>;
+  search: string;
+}) => {
+  const sectionName = 'Translation Variables';
+  const keys = variableList && Object.keys(variableList);
+
+  return (
+    <>
+      <VariableSectionItem
+        withFolders
+        variableList={variableList}
+        search={search}
+        sectionName={sectionName}
+        Icon={Translation}
+      />
+      <When truthy={!keys?.length && !search.length}>
+        <VarLabel label={sectionName} Icon={Translation}>
+          <UpgradePlanBanner FeatureActivatedBanner={TranslationsGetStartedText} />
+        </VarLabel>
+      </When>
+    </>
   );
 };
 
@@ -258,4 +309,14 @@ const EmptySearchContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+const GradientSpan = styled.span`
+  background: ${colors.horizontal};
+  background-clip: text;
+  text-fill-color: transparent;
+
+  &:hover {
+    cursor: pointer;
+  }
 `;

@@ -10,7 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --load --platform=linux/amd64,linux/arm64 --provenance=false -t novu-api --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api -",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --load -t novu-api --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/api - $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/api/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/api - -t novu-api --load",
     "start": "pnpm start:dev",
     "start:dev": "cross-env TZ=UTC nest start --watch",
@@ -47,6 +47,7 @@
     "@novu/shared": "^0.24.1",
     "@novu/stateless": "^0.24.1",
     "@novu/testing": "^0.24.1",
+    "@novu/echo": "^0.0.1-alpha.25",
     "@sendgrid/mail": "^8.1.0",
     "@sentry/hub": "^7.40.0",
     "@sentry/node": "^7.40.0",
@@ -114,12 +115,15 @@
     "ts-loader": "~9.4.0",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "~4.1.0",
-    "typescript": "4.9.5"
+    "typescript": "4.9.5",
+    "express": "^4.17.1"
   },
   "optionalDependencies": {
+    "@novu/ee-echo-api": "^0.24.1",
     "@novu/ee-auth": "^0.24.1",
     "@novu/ee-billing": "^0.24.1",
-    "@novu/ee-translation": "^0.24.1"
+    "@novu/ee-translation": "^0.24.1",
+    "@novu/ee-shared-services": "^0.24.1"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

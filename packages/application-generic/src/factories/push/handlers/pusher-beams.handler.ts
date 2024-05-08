@@ -1,4 +1,4 @@
-import { PusherBeamsPushProvider } from '@novu/pusher-beams';
+import { PusherBeamsPushProvider } from '@novu/providers';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BasePushHandler } from './base.handler';
 

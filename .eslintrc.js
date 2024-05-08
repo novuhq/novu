@@ -66,6 +66,7 @@ module.exports = {
       {
         patterns: [
           '@novu/shared/*',
+          '!@novu/shared/utils',
           '@novu/dal/*',
           '!import2/good',
           '*../libs/dal/*',

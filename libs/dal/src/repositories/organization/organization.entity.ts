@@ -30,6 +30,8 @@ export class OrganizationEntity implements IOrganizationEntity {
   createdAt: string;
 
   updatedAt: string;
+
+  externalId?: string;
 }
 
 export type OrganizationDBModel = OrganizationEntity;

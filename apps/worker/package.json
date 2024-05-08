@@ -10,7 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
-    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load --platform=linux/amd64,linux/arm64 --provenance=false",
+    "docker:build": "pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load $DOCKER_BUILD_ARGUMENTS",
     "docker:build:depot": "pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | depot build --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load",
     "start": "pnpm start:dev",
     "start:dev": "cross-env TZ=UTC nest start --watch",
@@ -84,8 +84,11 @@
     "typescript": "4.9.5"
   },
   "optionalDependencies": {
+    "@novu/ee-echo-worker": "^0.24.1",
+    "@novu/ee-auth": "^0.24.1",
     "@novu/ee-billing": "^0.24.1",
-    "@novu/ee-translation": "^0.24.1"
+    "@novu/ee-translation": "^0.24.1",
+    "@novu/ee-shared-services": "^0.24.1"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

@@ -13,6 +13,7 @@ describe('Shell Embed', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
 
     cy.get('#notification-bell').click();
@@ -58,6 +59,7 @@ describe('Shell Embed', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
     cy.get('#notification-bell .ntf-counter').should('be.visible');
   });
@@ -68,6 +70,7 @@ describe('Shell Embed', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
 
     cy.get('#notification-bell').click();
@@ -88,6 +91,7 @@ describe('Shell Embed', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
 
     cy.get('#notification-bell').click();
@@ -101,11 +105,7 @@ describe('Shell Embed', function () {
           .first()
           .find('[data-test-id="notification-dots-button"]')
           .click();
-        cy.wrap(body)
-          .find('[data-test-id="notification-list-item"]')
-          .first()
-          .find('[data-test-id="notification-mark-as-read"]')
-          .click();
+        cy.wrap(body).find('[data-test-id="notification-mark-as-read"]').first().click();
         cy.wait('@fetchUnseenCount');
       });
 
@@ -126,6 +126,7 @@ describe('Shell Embed', function () {
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
       count: 5,
+      organizationId: this.session.organization._id,
     });
 
     cy.get('#notification-bell').click();

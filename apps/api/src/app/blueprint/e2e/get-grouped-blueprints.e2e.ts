@@ -2,13 +2,14 @@ import { expect } from 'chai';
 import * as sinon from 'sinon';
 
 import { UserSession } from '@novu/testing';
-import { NotificationTemplateRepository, EnvironmentRepository } from '@novu/dal';
+import { NotificationTemplateRepository, EnvironmentRepository, EnvironmentEntity } from '@novu/dal';
 import {
   EmailBlockTypeEnum,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
   FilterPartTypeEnum,
   INotificationTemplate,
+  INotificationTemplateStep,
   StepTypeEnum,
 } from '@novu/shared';
 import {
@@ -51,6 +52,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
   it('should get the grouped blueprints', async function () {
     const prodEnv = await getProductionEnvironment();
+    if (!prodEnv) throw new Error('production environment was not found');
 
     await createTemplateFromBlueprint({ session, notificationTemplateRepository, prodEnv });
 
@@ -70,16 +72,18 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
         expect(blueprint.active).to.equal(false);
         expect(blueprint.critical).to.equal(false);
         expect(blueprint.steps).to.be.exist;
-        expect(blueprint.steps[0].active).to.equal(true);
-        expect(blueprint.steps[0].template).to.exist;
-        expect(blueprint.steps[0].template?.name).to.be.equal('Message Name');
-        expect(blueprint.steps[0].template?.subject).to.be.equal('Test email subject');
+        const step: INotificationTemplateStep = blueprint.steps[0] as INotificationTemplateStep;
+        expect(step.active).to.equal(true);
+        expect(step.template).to.exist;
+        expect(step.template?.name).to.be.equal('Message Name');
+        expect(step.template?.subject).to.be.equal('Test email subject');
       }
     }
   });
 
   it('should get the updated grouped blueprints (after invalidation)', async function () {
     const prodEnv = await getProductionEnvironment();
+    if (!prodEnv) throw new Error('production environment was not found');
 
     await createTemplateFromBlueprint({
       session,
@@ -110,6 +114,8 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
 
   it('should update the static POPULAR_TEMPLATES_GROUPED with fresh data', async () => {
     const prodEnv = await getProductionEnvironment();
+    if (!prodEnv) throw new Error('production environment was not found');
+
     await createTemplateFromBlueprint({ session, notificationTemplateRepository, prodEnv });
 
     const data = await session.testAgent.get(`/v1/blueprints/group-by-category`).send();
@@ -126,7 +132,7 @@ describe('Get grouped notification template blueprints - /blueprints/group-by-ca
     indexModuleStub.value(mockedValue);
 
     await invalidateCache.invalidateByKey({
-      key: buildGroupedBlueprintsKey(),
+      key: buildGroupedBlueprintsKey(prodEnv._id),
     });
 
     const updatedBlueprintFromDb = (await session.testAgent.get(`/v1/blueprints/group-by-category`).send()).body.data
@@ -163,7 +169,7 @@ export async function createTemplateFromBlueprint({
 }: {
   session: UserSession;
   notificationTemplateRepository: NotificationTemplateRepository;
-  prodEnv;
+  prodEnv: EnvironmentEntity;
 }) {
   const testTemplateRequestDto: Partial<CreateWorkflowRequestDto> = {
     name: 'test email template',
@@ -210,8 +216,6 @@ export async function createTemplateFromBlueprint({
   await session.applyChanges({
     enabled: false,
   });
-
-  if (!prodEnv) throw new Error('production environment was not found');
 
   const blueprintId = (
     await notificationTemplateRepository.findOne({

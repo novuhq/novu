@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { MailjetEmailProvider } from '@novu/mailjet';
+import { MailjetEmailProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class MailjetHandler extends BaseHandler {

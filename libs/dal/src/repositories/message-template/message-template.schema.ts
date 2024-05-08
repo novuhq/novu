@@ -16,6 +16,7 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
       default: true,
     },
     name: Schema.Types.String,
+    stepId: Schema.Types.String,
     subject: Schema.Types.String,
     variables: [
       {
@@ -78,6 +79,8 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
       },
       data: Schema.Types.Mixed,
     },
+    inputs: { schema: Schema.Types.Mixed },
+    output: { schema: Schema.Types.Mixed },
   },
   schemaOptions
 );
@@ -85,6 +88,10 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
 messageTemplateSchema.index({
   _organizationId: 1,
   'triggers.identifier': 1,
+});
+
+messageTemplateSchema.index({
+  _parentId: 1,
 });
 
 messageTemplateSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
