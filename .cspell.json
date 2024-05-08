@@ -658,7 +658,10 @@
     "esbenp",
     "npmjs",
     "maxage",
-    "unpublish"
+    "unpublish",
+    "decompile",
+    "servername",
+    "neom"
   ],
   "flagWords": [],
   "patterns": [
@@ -750,6 +753,6 @@
     ".env.local",
     ".env.production",
     ".env.test",
-    ".example.env",
+    ".example.env"
   ]
 }
