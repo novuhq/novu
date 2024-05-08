@@ -25,7 +25,7 @@ export function BrandLogoUpload({ field, setValue }: BrandLogoUploadProps) {
 
   const { uploadToStorage } = useUploadToStorage({
     onSuccess: (path) => {
-      setValue('logo', path);
+      setValue('logo', path, { shouldDirty: true });
     },
     onError: (e) => {
       errorMessage('Failed to upload branding image: ' + e.message);
