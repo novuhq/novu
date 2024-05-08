@@ -1,3 +1,5 @@
+import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
+
 export const checkShouldUseLaunchDarkly = (): boolean => {
-  return !!process.env.REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID;
+  return !!LAUNCH_DARKLY_CLIENT_SIDE_ID;
 };
