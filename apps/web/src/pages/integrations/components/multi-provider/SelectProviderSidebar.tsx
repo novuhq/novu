@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from '@emotion/styled';
-import { Group, Image, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
+import { Group, Image, Space, Stack, Tabs, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   colors,
@@ -25,6 +25,8 @@ import { sortProviders } from './sort-providers';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../config';
 import { useProviders } from '../../useProviders';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../../constants/routes.enum';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));
@@ -43,6 +45,7 @@ export function SelectProviderSidebar({
   const [providersList, setProvidersList] = useState(initialProvidersList);
   const [selectedTab, setSelectedTab] = useState(ChannelTypeEnum.IN_APP);
   const { isLoading: isIntegrationsLoading, providers: integrations } = useProviders();
+  const navigate = useNavigate();
 
   const inAppCount: number = useMemo(() => {
     const count = integrations.filter(
@@ -75,21 +78,11 @@ export function SelectProviderSidebar({
   const onProviderClick = (provider) => () => setSelectedProvider(provider);
 
   const onTabChange = useCallback(
-    (elementId?: TabsValue) => {
-      if (!elementId) {
-        return;
-      }
-
-      setSelectedTab(elementId as ChannelTypeEnum);
-
-      const element = document.getElementById(elementId);
-
-      element?.parentElement?.scrollTo({
-        behavior: 'smooth',
-        top: element?.offsetTop ? element?.offsetTop - 250 : undefined,
-      });
+    (channel: ChannelTypeEnum) => {
+      navigate(`${ROUTES.INTEGRATIONS_CREATE}?scrollTo=${channel}`);
+      setSelectedTab(scrollTo as ChannelTypeEnum);
     },
-    [setSelectedTab]
+    [navigate, scrollTo]
   );
 
   const onSidebarClose = () => {
@@ -98,9 +91,22 @@ export function SelectProviderSidebar({
     setSelectedTab(inAppCount < 2 ? ChannelTypeEnum.IN_APP : ChannelTypeEnum.EMAIL);
   };
 
+  const scrollToElement = (elementId: string) => {
+    const element = document.getElementById(elementId);
+    if (element && element.parentElement) {
+      element.parentElement.scrollTo({
+        behavior: 'smooth',
+        top: element.offsetTop - 250,
+      });
+    }
+  };
+
   useEffect(() => {
-    onTabChange(scrollTo?.toString());
-  }, [onTabChange, scrollTo]);
+    if (scrollTo && !isIntegrationsLoading) {
+      onTabChange(scrollTo);
+      scrollToElement(scrollTo);
+    }
+  }, [selectedTab, isIntegrationsLoading, scrollTo, onTabChange]);
 
   return (
     <Sidebar
