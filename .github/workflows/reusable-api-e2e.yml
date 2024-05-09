@@ -23,11 +23,6 @@ on:
         description: 'job name [options: novu/api-ee, novu/api]'
         required: true
         type: string
-      slack_notification:
-        description: 'notify if e2e fail via slack'
-        required: false
-        default: false
-        type: boolean
       environment:
         required: false
         default: 'Development'
@@ -122,14 +117,4 @@ jobs:
         run: |
           cd apps/api && pnpm test
 
-      - name: Notify Slack Action
-        uses: ravsamhq/notify-slack-action@v2
-        if: ${{ always() && inputs.slack_notification }}
-        with:
-          status: ${{ job.status }}
-          notification_title: "{workflow} for API has {status_message}"
-          message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
-          footer: "Linked Run URL {run_url}\nCommit URL{commit_url}"
-          notify_when: "failure"
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - uses: ./.github/actions/slack/notify-on-failure

@@ -22,11 +22,6 @@ on:
         required: false
         default: false
         type: boolean
-      slack_notification:
-        description: 'notify if e2e fail via slack'
-        required: false
-        default: false
-        type: boolean
       environment:
         required: false
         default: 'Development'
@@ -200,17 +195,7 @@ jobs:
         path: playwright-report
         retention-days: 14
 
-    - name: Notify Slack Action
-      uses: ravsamhq/notify-slack-action@v2
-      if: ${{ inputs.slack_notification && needs.e2e_web.result == 'failure' }}
-      with:
-        status: "failure"
-        notification_title: "{workflow} for WEB has failed"
-        message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
-        footer: "Linked Run URL {run_url}\nCommit URL{commit_url}"
-        notify_when: "failure"
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    - uses: ./.github/actions/slack/notify-on-failure
 
   component_web:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -257,14 +242,4 @@ jobs:
           name: cypress-screenshots
           path: apps/web/cypress/screenshots
 
-      - name: Notify Slack Action
-        uses: ravsamhq/notify-slack-action@v2
-        if: ${{ always() && inputs.slack_notification }}
-        with:
-          status: ${{ job.status }}
-          notification_title: "{workflow} for Component WEB has {status_message}"
-          message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
-          footer: "Linked Run URL {run_url}\nCommit URL{commit_url}"
-          notify_when: "failure"
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - uses: ./.github/actions/slack/notify-on-failure
