@@ -18,4 +18,4 @@ runs:
         notify_when: "failure"
         status: "failure"
       env:
-        SLACK_WEBHOOK_URL: ${{ input.slackWebhookURL }}
+        SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
