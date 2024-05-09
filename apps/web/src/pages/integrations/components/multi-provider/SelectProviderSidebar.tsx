@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from '@emotion/styled';
-import { Group, Image, Space, Stack, Tabs, TabsValue, useMantineColorScheme } from '@mantine/core';
+import { Group, Image, Space, Stack, Tabs, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import {
   colors,
