@@ -1,4 +1,10 @@
 name: 'Notify Slack on workflow failure'
+
+inputs:
+  slackWebhookURL:
+    required: true
+    type: string
+
 runs:
   using: "composite"
   steps:
@@ -12,4 +18,4 @@ runs:
         notify_when: "failure"
         status: "failure"
       env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
+        SLACK_WEBHOOK_URL: ${{ input.slackWebhookURL }}

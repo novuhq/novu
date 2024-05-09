@@ -186,6 +186,8 @@ jobs:
         retention-days: 14
 
     - uses: ./.github/actions/slack-notify-on-failure
+      with:
+        slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
 
   component_web:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
@@ -232,3 +234,5 @@ jobs:
           path: apps/web/cypress/screenshots
 
       - uses: ./.github/actions/slack-notify-on-failure
+        with:
+          slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
