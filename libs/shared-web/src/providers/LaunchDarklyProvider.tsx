@@ -1,11 +1,10 @@
 import { IOrganizationEntity } from '@novu/shared';
 import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import { PropsWithChildren, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { selectHasUserCompletedSignUp } from '../utils/auth-selectors';
 import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
 import { useFeatureFlags } from '../hooks';
-import { checkShouldUseLaunchDarkly } from '../utils';
-import { useAuthContext, UserContext } from './AuthProvider';
+import { useAuthContext } from './AuthProvider';
+import { selectShouldShowLaunchDarklyFallback, selectShouldInitializeLaunchDarkly } from '../utils/auth-selectors';
 
 /** A provider with children required */
 type GenericLDProvider = Awaited<ReturnType<typeof asyncWithLDProvider>>;
@@ -34,12 +33,12 @@ export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProvi
   if (!authContext) {
     throw new Error('LaunchDarklyProvider must be used within <AuthProvider>!');
   }
-  const { currentOrganization, isLoggedIn, isUserLoading, currentUser } = authContext;
+  const { currentOrganization } = authContext;
 
-  const { shouldWaitForLd, doesNeedOrg } = useMemo(() => checkShouldInitializeLaunchDarkly(authContext), [authContext]);
+  const shouldInitializeLd = useMemo(() => selectShouldInitializeLaunchDarkly(authContext), [authContext]);
 
   useEffect(() => {
-    if (!shouldWaitForLd) {
+    if (!shouldInitializeLd) {
       return;
     }
 
@@ -74,13 +73,13 @@ export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProvi
     };
 
     fetchLDProvider();
-  }, [setIsLDReady, shouldWaitForLd, currentOrganization]);
+  }, [setIsLDReady, shouldInitializeLd, currentOrganization]);
 
   /**
    * For self-hosted, LD will not be enabled, so do not block initialization.
    * Must not show the fallback if the user isn't logged-in to avoid issues with un-authenticated routes (i.e. login).
    */
-  if ((shouldWaitForLd || (doesNeedOrg && !currentOrganization)) && !isLDReady) {
+  if (selectShouldShowLaunchDarklyFallback(authContext, isLDReady)) {
     return <>{fallbackDisplay}</>;
   }
 
@@ -98,32 +97,4 @@ function LaunchDarklyClientWrapper({ children, org }: PropsWithChildren<{ org?: 
   useFeatureFlags(org);
 
   return <>{children}</>;
-}
-
-function checkShouldInitializeLaunchDarkly(userCtx: UserContext): { shouldWaitForLd: boolean; doesNeedOrg?: boolean } {
-  const { isLoggedIn, currentOrganization } = userCtx;
-
-  if (!checkShouldUseLaunchDarkly()) {
-    return { shouldWaitForLd: false };
-  }
-
-  // enable feature flags for unauthenticated areas of the app
-  if (!isLoggedIn) {
-    return { shouldWaitForLd: true };
-  }
-
-  // user must be loaded -- a user can have `isLoggedIn` true when `currentUser` is undefined
-  // eslint-disable-next-line
-  // if (!currentUser) {
-  //   return { shouldWaitForLd: false };
-  // }
-
-  // allow LD to load when the user is created but still in onboarding
-  const isUserFullyRegistered = selectHasUserCompletedSignUp(userCtx);
-  if (!isUserFullyRegistered) {
-    return { shouldWaitForLd: true };
-  }
-
-  // if a user is fully on-boarded, but no organization has loaded, we must wait for the organization to initialize the client.
-  return { shouldWaitForLd: !!currentOrganization, doesNeedOrg: true };
 }
