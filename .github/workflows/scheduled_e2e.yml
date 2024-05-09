@@ -12,9 +12,9 @@ permissions:
   actions: write
 
 env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   OWNER: ${{ github.repository_owner }}
   REPO: ${{ github.event.repository.name }}
-  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   test_web:
@@ -49,7 +49,8 @@ jobs:
 
   release_decision:
     name: Release Decision
-    if: always()
+    # TODO: Remove the conditional for next when we fully switch to main/prod branching model
+    if: github.ref_name == 'next' || github.ref_name == 'prod' || github.ref_name == 'main'
     runs-on: ubuntu-latest
     needs:
       - test_widget
