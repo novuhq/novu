@@ -1,7 +1,10 @@
 import * as capitalize from 'lodash.capitalize';
-import { JobTitleEnum, jobTitleToLabelMapper } from '@novu/shared';
+import { FeatureFlagsKeysEnum, JobTitleEnum, jobTitleToLabelMapper } from '@novu/shared';
 
 describe('User Sign-up and Login', function () {
+  beforeEach(function () {
+    cy.mockFeatureFlags({ [FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED]: false });
+  });
   describe('Sign up', function () {
     beforeEach(function () {
       cy.clearDatabase();
@@ -206,6 +209,7 @@ describe('User Sign-up and Login', function () {
       cy.clock(date);
 
       cy.visit('/subscribers');
+      cy.waitLoadFeatureFlags();
 
       // checking if token is removed from local storage
       cy.getLocalStorage('auth_token').should('be.null');
