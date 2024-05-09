@@ -23,10 +23,6 @@ on:
         description: 'job name [options: novu/api-ee, novu/api]'
         required: true
         type: string
-      environment:
-        required: false
-        default: 'Development'
-        type: string
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -51,7 +47,6 @@ jobs:
     if: ${{ (contains(inputs.job-name, '-ee') && inputs.test-e2e-ee-affected) || (!contains(inputs.job-name, '-ee') && inputs.test-e2e-affected) }}
     runs-on: ubuntu-latest
     timeout-minutes: 80
-    environment: ${{ inputs.environment }}
     permissions:
       contents: read
       packages: write
