@@ -1,6 +1,7 @@
-import { IOrganizationEntity, IUserEntity } from '@novu/shared';
+import { IOrganizationEntity } from '@novu/shared';
 import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import { PropsWithChildren, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { selectHasUserCompletedSignUp } from '../utils/auth-selectors';
 import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
 import { useFeatureFlags } from '../hooks';
 import { checkShouldUseLaunchDarkly } from '../utils';
@@ -118,24 +119,11 @@ function checkShouldInitializeLaunchDarkly(userCtx: UserContext): { shouldWaitFo
   // }
 
   // allow LD to load when the user is created but still in onboarding
-  const isUserFullyRegistered = checkIsUserFullyRegistered(userCtx);
+  const isUserFullyRegistered = selectHasUserCompletedSignUp(userCtx);
   if (!isUserFullyRegistered) {
     return { shouldWaitForLd: true };
   }
 
   // if a user is fully on-boarded, but no organization has loaded, we must wait for the organization to initialize the client.
   return { shouldWaitForLd: !!currentOrganization, doesNeedOrg: true };
-}
-
-/**
- * Determine if a user is fully-registered; if not, they're still in onboarding.
- */
-function checkIsUserFullyRegistered(userCtx: UserContext): boolean {
-  /*
-   * Determine if the user has completed registration based on if they have an associated orgId.
-   * Use jobTitle as a back-up
-   */
-  const isUserFullyRegistered = !!userCtx.jwtPayload?.organizationId || !!userCtx.currentUser?.jobTitle;
-
-  return isUserFullyRegistered;
 }
