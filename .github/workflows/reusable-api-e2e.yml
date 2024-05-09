@@ -112,4 +112,4 @@ jobs:
         run: |
           cd apps/api && pnpm test
 
-      - uses: ./.github/actions/slack/notify-on-failure
+      - uses: ./.github/actions/slack-notify-on-failure

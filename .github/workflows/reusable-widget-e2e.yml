@@ -112,4 +112,4 @@ jobs:
           name: cypress-videos
           path: apps/widget/cypress/videos
 
-      - uses: ./.github/actions/slack/notify-on-failure
+      - uses: ./.github/actions/slack-notify-on-failure
