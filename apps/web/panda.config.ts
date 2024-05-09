@@ -1,6 +1,8 @@
 import { defineConfig } from '@pandacss/dev';
 import { novuPandaPreset } from '@novu/novui';
 
+const STYLED_SYSTEM_PATH_BASE = './node_modules/@novu/novui/';
+
 export default defineConfig({
   // use CSS reset
   preflight: true,
@@ -15,7 +17,8 @@ export default defineConfig({
    */
   include: [
     './src/**/*.{js,jsx,ts,tsx}',
-    // '../../libs/design-system/src/**/*.{js,jsx,ts,tsx}'
+    `${STYLED_SYSTEM_PATH_BASE}/dist/**/*.{js,jsx}`,
+    // '../../libs/novui/src/**/*.{js,jsx,ts,tsx}',
   ],
 
   // Files to exclude
@@ -38,8 +41,10 @@ export default defineConfig({
     extend: {},
   },
 
-  // The output directory for your css system
-  outdir: 'src/styled-system',
+  outExtension: 'js',
+
+  // TODO: have to confirm this with the panda maintainer
+  outdir: `${STYLED_SYSTEM_PATH_BASE}/styled-system`,
 
   importMap: '@novu/novui',
 

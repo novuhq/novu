@@ -4,7 +4,7 @@ import App from './App';
 import { initializeApp } from './initializeApp';
 import reportWebVitals from './reportWebVitals';
 
-import '#ui-lib/styles.css';
+import '@novu/novui/styles.css';
 
 initializeApp();
 

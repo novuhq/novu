@@ -1,74 +1,76 @@
 {
   "name": "@novu/novui",
   "version": "0.0.1",
-  "description": "",
+  "repository": "https://github.com/novuhq/novu",
+  "description": "Novu's Design System & Component Library",
   "types": "./dist/index.d.ts",
   "main": "./dist/index.js",
+  "files": ["dist", "styled-system"],
   "exports": {
     ".": {
       "source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      },
-      "require": "./dist/index.js"
+      "import": "./dist/index.js"
     },
     "./css": {
       "types": "./styled-system/css/index.d.ts",
-      "require": "./styled-system/css/index.mjs",
-      "import": "./styled-system/css/index.mjs"
+      "require": "./styled-system/css/index.js",
+      "import": "./styled-system/css/index.js"
     },
     "./tokens": {
       "types": "./styled-system/tokens/index.d.ts",
-      "require": "./styled-system/tokens/index.mjs",
-      "import": "./styled-system/tokens/index.mjs"
+      "require": "./styled-system/tokens/index.js",
+      "import": "./styled-system/tokens/index.js"
     },
     "./types": {
       "types": "./styled-system/types/index.d.ts",
-      "require": "./styled-system/types/index.mjs",
-      "import": "./styled-system/types/index.mjs"
+      "require": "./styled-system/types/index.js",
+      "import": "./styled-system/types/index.js"
     },
     "./patterns": {
       "types": "./styled-system/patterns/index.d.ts",
-      "require": "./styled-system/patterns/index.mjs",
-      "import": "./styled-system/patterns/index.mjs"
+      "require": "./styled-system/patterns/index.js",
+      "import": "./styled-system/patterns/index.js"
     },
     "./recipes": {
       "types": "./styled-system/recipes/index.d.ts",
-      "require": "./styled-system/recipes/index.mjs",
-      "import": "./styled-system/recipes/index.mjs"
+      "require": "./styled-system/recipes/index.js",
+      "import": "./styled-system/recipes/index.js"
     },
     "./jsx": {
       "types": "./styled-system/jsx/index.d.ts",
-      "require": "./styled-system/jsx/index.mjs",
-      "import": "./styled-system/jsx/index.mjs"
+      "require": "./styled-system/jsx/index.js",
+      "import": "./styled-system/jsx/index.js"
     },
     "./styles.css": "./styled-system/styles.css"
   },
   "scripts": {
     "prepare": "pnpm panda codegen",
-    "build": "tsup",
-    "build:dev": "tsup --no-dts",
-    "dev": "pnpm build:dev --watch",
+    "prebuild": "rimraf dist styled-system",
+    "lint": "eslint --ext .ts,.tsx src",
+    "build": "cross-env node_modules/.bin/tsc",
+    "build:watch": "pnpm panda && cross-env node_modules/.bin/tsc -w --preserveWatchOutput",
     "studio": "pnpm panda studio"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "react": "^18.3.0",
-    "react-dom": "^18.3.0"
-  },
   "devDependencies": {
     "@pandabox/prettier-plugin": "^0.1.2",
     "@pandacss/dev": "^0.38.0",
     "@pandacss/eslint-plugin": "^0.1.2",
     "@pandacss/studio": "^0.38.0",
-    "@types/react": "^18.3.0",
-    "@types/react-dom": "^18.3.0",
+    "@types/node": "^18.11.12",
+    "@types/react": "^17.0.1",
+    "@types/react-dom": "^17.0.1",
     "eslint-plugin-react-hooks": "^4.6.2",
-    "tsup": "^8.0.2",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "rimraf": "^3.0.2",
     "typescript": "^4.9.5"
+  },
+  "peerDependencies": {
+    "react": "^16.8.0 || ^17.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0"
   }
 }

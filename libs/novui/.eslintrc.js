@@ -1,8 +1,5 @@
 module.exports = {
-  extends: [
-    '../../.eslintrc.js',
-    // 'plugin:@pandacss/recommended'
-  ],
+  extends: ['../../.eslintrc.js', 'plugin:@pandacss/recommended'],
   plugins: ['@pandacss', 'react-hooks'],
   rules: {
     'func-names': 'off',
@@ -33,7 +30,8 @@ module.exports = {
         format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
       },
     ],
-    '@pandacss/file-not-included': 'off',
+    // disabled because it suggests putting everything into a single config file
+    '@pandacss/no-config-function-in-source': 'off',
   },
   ignorePatterns: ['styled-system/*', 'prettier.config.ts', 'panda.config.ts'],
   parserOptions: {

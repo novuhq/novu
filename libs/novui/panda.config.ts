@@ -6,7 +6,7 @@ export default defineConfig({
   preflight: true,
 
   /** Only allow defined values */
-  // strictTokens: true,
+  strictTokens: true,
 
   // Where to look for your css declarations
   include: ['./src/**/*.{js,jsx,ts,tsx}', './.storybook/**/*.{js,jsx,ts,tsx}'],
@@ -30,12 +30,6 @@ export default defineConfig({
     extend: {},
   },
 
-  // importMap: {
-  //   css: '#ui-lib/css',
-  //   recipes: '#ui-lib/recipes',
-  //   patterns: '#ui-lib/patterns',
-  //   jsx: '#ui-lib/jsx',
-  // },
   importMap: 'styled-system',
 
   // extension of generated files

@@ -10,6 +10,8 @@ import { IBlueprintTemplate } from '../../api/types';
 import { TemplateCreationSourceEnum } from './shared';
 import { useHoverOverItem } from '../../hooks';
 import { EchoProjectCardTile } from './components/EchoProjectWaitList';
+import { Test } from '@novu/novui';
+import { css } from '@novu/novui/css';
 
 const NoDataHolder = styled.div`
   display: flex;
@@ -73,7 +75,10 @@ export const TemplatesListNoData = ({
 
   return (
     <NoDataHolder data-test-id="no-workflow-templates-placeholder">
-      <NoDataSubHeading>Start from a blank workflow or use a template</NoDataSubHeading>
+      <NoDataSubHeading className={css({ color: 'legacy.success !important' })}>
+        Start from a blank workflow or use a template
+      </NoDataSubHeading>
+      <Test />
       <CardsContainer>
         <CardTile
           disabled={readonly}

@@ -1,42 +1,22 @@
 {
+  "include": ["src", "styled-system"],
   "extends": "../../tsconfig.json",
-  "include": ["**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "target": "ES2020",
+    "outDir": "dist",
+    "forceConsistentCasingInFileNames": true,
+    "target": "es6",
     "module": "ESNext",
-    "esModuleInterop": true,
-    "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "typeRoots": ["node_modules/@types"],
+    "jsx": "react-jsx",
+    "lib": ["ESNext", "dom", "dom.iterable"],
     "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "removeComments": false,
-
-    /**
-     * Required due to extending base tsconfig, and receiving error:
-     * "error TS5101: Option 'suppressImplicitAnyIndexErrors' is deprecated
-     * and will stop functioning in TypeScript 5.5"
-     */
-    "ignoreDeprecations": "5.0",
-
-    "moduleResolution": "Node",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "noEmit": true,
-    "jsx": "react-jsx",
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
-    //
     "allowSyntheticDefaultImports": true,
-    "allowJs": true,
-    //
-    "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": {
-      "styled-system/*": ["./styled-system/*"]
-    }
-  }
+    "baseUrl": "."
+  },
+  "exclude": ["src/**/*.test.*", "src/**/*.stories.*", "node_modules", "**/node_modules/*"]
 }

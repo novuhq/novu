@@ -1,18 +1,20 @@
-import { css } from 'styled-system/css';
+import { css } from '../../styled-system/css';
 import { FC } from 'react';
 
+/**
+ * An example component using Panda.
+ * TODO remove this in a future iteration.
+ */
 export const Test: FC = () => {
   return (
-    <div
+    <p
       className={css({
-        bg: 'surface.page',
-        w: '11/12',
-        h: '[69px]',
+        bg: 'legacy.warning',
         textAlign: 'center',
-        textStyle: 'title.section',
+        textStyle: 'title.page',
       })}
     >
       Testing everything now
-    </div>
+    </p>
   );
 };

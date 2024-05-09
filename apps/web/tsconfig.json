@@ -10,16 +10,13 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "Node16",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
     "noImplicitAny": false,
-    "types": ["cypress"],
-    "paths": {
-      "#ui-lib/*": ["./src/styled-system/*"]
-    }
+    "types": ["cypress"]
   },
   "include": ["src", "cypress/global.d.ts", "styled-system"],
   "exclude": ["node_modules"]
