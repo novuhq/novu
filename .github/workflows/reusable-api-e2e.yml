@@ -113,5 +113,6 @@ jobs:
           cd apps/api && pnpm test
 
       - uses: ./.github/actions/slack-notify-on-failure
+        if: failure()
         with:
           slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
