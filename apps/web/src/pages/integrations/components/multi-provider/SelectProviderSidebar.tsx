@@ -25,7 +25,7 @@ import { sortProviders } from './sort-providers';
 import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../config';
 import { useProviders } from '../../useProviders';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../../constants/routes.enum';
 
 const filterSearch = (list, search: string) =>
@@ -46,6 +46,7 @@ export function SelectProviderSidebar({
   const [selectedTab, setSelectedTab] = useState(ChannelTypeEnum.IN_APP);
   const { isLoading: isIntegrationsLoading, providers: integrations } = useProviders();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   const inAppCount: number = useMemo(() => {
     const count = integrations.filter(
@@ -79,10 +80,15 @@ export function SelectProviderSidebar({
 
   const onTabChange = useCallback(
     (channel: ChannelTypeEnum) => {
-      navigate(`${ROUTES.INTEGRATIONS_CREATE}?scrollTo=${channel}`);
-      setSelectedTab(scrollTo as ChannelTypeEnum);
+      setSelectedTab(channel as ChannelTypeEnum);
+
+      if (pathname.includes(ROUTES.INTEGRATIONS_CREATE)) {
+        navigate(`${ROUTES.INTEGRATIONS_CREATE}?scrollTo=${channel}`);
+
+        return;
+      }
     },
-    [navigate, scrollTo]
+    [navigate, pathname]
   );
 
   const onSidebarClose = () => {
@@ -101,12 +107,20 @@ export function SelectProviderSidebar({
     }
   };
 
+  // TODO: sometime the scrollTo url param needs to change and sometimes not (e.g. from /get-started)
+  useEffect(() => {
+    if (selectedTab && !isIntegrationsLoading) {
+      onTabChange(selectedTab);
+      scrollToElement(selectedTab);
+    }
+  }, [selectedTab, isIntegrationsLoading, onTabChange]);
+
   useEffect(() => {
     if (scrollTo && !isIntegrationsLoading) {
       onTabChange(scrollTo);
       scrollToElement(scrollTo);
     }
-  }, [selectedTab, isIntegrationsLoading, scrollTo, onTabChange]);
+  }, [scrollTo, isIntegrationsLoading, onTabChange]);
 
   return (
     <Sidebar
