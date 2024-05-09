@@ -16,6 +16,6 @@ runs:
         message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
         notification_title: "{workflow} is now failing!"
         notify_when: "failure"
-        status: "failure"
+        status: ${{ job.status }}
       env:
         SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}

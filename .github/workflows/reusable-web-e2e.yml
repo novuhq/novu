@@ -235,6 +235,6 @@ jobs:
           path: apps/web/cypress/screenshots
 
       - uses: ./.github/actions/slack-notify-on-failure
-        if: failure()
+        if: ${{ failure() || needs.e2e_web.result == 'failure' }}
         with:
           slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}
