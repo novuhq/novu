@@ -117,15 +117,16 @@ export const AppRoutes = () => {
         <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
         <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
         <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
-        {!isInformationArchitectureEnabled && (
+        {!isInformationArchitectureEnabled ? (
           <Route path={ROUTES.BRAND} element={<BrandPage />}>
             <Route path="" element={<BrandingForm />} />
             <Route path="layouts" element={<LayoutsListPage />} />
           </Route>
+        ) : (
+          <Route path={ROUTES.LAYOUT} element={<LayoutsPage />}>
+            <Route path="" element={<LayoutsListPage />} />
+          </Route>
         )}
-        <Route path={ROUTES.LAYOUT} element={<LayoutsPage />}>
-          <Route path="" element={<LayoutsListPage />} />
-        </Route>
         <Route path="/translations/*" element={<TranslationRoutes />} />
       </Route>
     </Routes>
