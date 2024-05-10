@@ -78,25 +78,30 @@ export const EchoTab = ({ className }: { className?: string }) => {
         <Text variant="secondary" className={mainText}>
           Open your terminal and launch the development studio
         </Text>
-        <CodeSnippet
-          command={COMMAND}
-          className={cx(
-            css({
-              maxW: '400px',
-              marginTop: '50',
-              marginBottom: '250',
-            }),
-            css({
-              '& input': {
-                color: theme.colorScheme === 'dark' ? 'white !important' : 'black !important',
-                background: theme.colorScheme === 'dark' ? '#161618 !important' : '#f4f4f4 !important',
-              },
-            })
-          )}
+        <div
           onClick={() => {
             segment.track(`Copy Echo command - [Get Started]`);
           }}
-        />
+        >
+          <CodeSnippet
+            command={COMMAND}
+            className={cx(
+              css({
+                maxW: '400px',
+                marginTop: '50',
+                marginBottom: '250',
+              }),
+              css({
+                '& input': {
+                  color: theme.colorScheme === 'dark' ? 'white !important' : 'black !important',
+                  background: theme.colorScheme === 'dark' ? '#161618 !important' : '#f4f4f4 !important',
+                },
+              })
+            )}
+            onClick={() => {}}
+          />
+        </div>
+
         <div className={css({ marginBottom: '300' })}>
           <AdditionInformationLink
             channel={OnboardingUseCasesTabsEnum.ECHO}
