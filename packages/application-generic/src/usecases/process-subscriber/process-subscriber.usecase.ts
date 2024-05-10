@@ -7,7 +7,6 @@ import {
   CreateSubscriberCommand,
 } from '../create-subscriber';
 import { InstrumentUsecase } from '../../instrumentation';
-import { subscriberNeedUpdate } from '../../utils/subscriber';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 
@@ -46,14 +45,6 @@ export class ProcessSubscriber {
       _environmentId: environmentId,
       subscriberId: subscriberPayload.subscriberId,
     });
-
-    if (
-      subscriber &&
-      !subscriberNeedUpdate(subscriber, subscriberPayload) &&
-      !subscriberPayload.channels
-    ) {
-      return subscriber;
-    }
 
     return await this.createOrUpdateSubscriber(
       environmentId,
