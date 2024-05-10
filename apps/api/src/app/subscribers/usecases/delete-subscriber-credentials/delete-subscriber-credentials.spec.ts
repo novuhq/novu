@@ -6,10 +6,8 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { DeleteSubscriberCredentials } from './delete-subscriber-credentials.usecase';
 import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
-import { UpdateSubscriberChannel } from '../update-subscriber-channel/update-subscriber-channel.usecase';
-import { UpdateSubscriberChannelCommand } from '../update-subscriber-channel/update-subscriber-channel.command';
-import { OAuthHandlerEnum } from '../../types';
 import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
+import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
 
 describe('Delete subscriber provider credentials', function () {
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
