@@ -2,8 +2,8 @@ import { Button, Input, successMessage } from '@novu/design-system';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useRenameOrganization } from '../../../api/hooks';
-import { css } from '../../../styled-system/css';
-import { Stack } from '../../../styled-system/jsx';
+import { css } from '@novu/novui/css';
+import { Stack } from '@novu/novui/jsx';
 
 type FormValues = {
   name: string;

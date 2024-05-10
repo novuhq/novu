@@ -1,7 +1,7 @@
 import { ROUTES } from '@novu/shared-web';
 import { FC, useMemo } from 'react';
 import { matchRoutes, useLocation } from 'react-router-dom';
-import { css } from '../../styled-system/css';
+import { css } from '@novu/novui/css';
 
 const sidebarStyle = css({
   position: 'sticky',

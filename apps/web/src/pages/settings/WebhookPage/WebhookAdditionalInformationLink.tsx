@@ -1,6 +1,6 @@
 import { IconOutlineMenuBook } from '@novu/design-system';
 import { FC } from 'react';
-import { css } from '../../../styled-system/css';
+import { css } from '@novu/novui/css';
 import { Text } from './WebhookPage.shared';
 
 export const WebhookAdditionalInformationLink: FC = () => {
