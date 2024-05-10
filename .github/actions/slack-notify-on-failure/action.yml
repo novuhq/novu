@@ -9,13 +9,13 @@ runs:
   using: "composite"
   steps:
     - name: Notify Slack Action
+      if: ${{ github.ref_name == 'next' || github.ref_name == 'main' || github.ref_name == 'prod' }}
       uses: ravsamhq/notify-slack-action@v2
-      if: ${{ always() && github.ref_name == 'next' || github.ref_name == 'main' || github.ref_name == 'prod' }}
       with:
         footer: "Run: {run_url}\nCommit: {commit_url}"
         message_format: "{emoji} *{workflow}* {status_message} in <{repo_url}|{repo}>"
         notification_title: "{workflow} is now failing!"
         notify_when: "failure"
-        status: "failure"
+        status: ${{ job.status }}
       env:
         SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
