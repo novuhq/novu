@@ -47,7 +47,11 @@ export class ProcessSubscriber {
       subscriberId: subscriberPayload.subscriberId,
     });
 
-    if (subscriber && !subscriberNeedUpdate(subscriber, subscriberPayload)) {
+    if (
+      subscriber &&
+      !subscriberNeedUpdate(subscriber, subscriberPayload) &&
+      !subscriberPayload.channels
+    ) {
       return subscriber;
     }
 
@@ -79,6 +83,7 @@ export class ProcessSubscriber {
         locale: subscriberPayload?.locale,
         subscriber: subscriber ?? undefined,
         data: subscriberPayload?.data,
+        channels: subscriberPayload?.channels,
       })
     );
   }

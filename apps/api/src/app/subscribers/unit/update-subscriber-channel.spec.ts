@@ -2,12 +2,10 @@ import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import { SubscribersService, UserSession } from '@novu/testing';
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
-import { SharedModule } from '../../../shared/shared.module';
 import { ChannelTypeEnum, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
-import { UpdateSubscriberChannel } from './update-subscriber-channel.usecase';
-import { UpdateSubscriberChannelCommand } from './update-subscriber-channel.command';
-import { OAuthHandlerEnum } from '../../types';
 import { faker } from '@faker-js/faker';
+import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
+import { SharedModule } from '../../shared/shared.module';
 
 describe('Update Subscriber channel credentials', function () {
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
