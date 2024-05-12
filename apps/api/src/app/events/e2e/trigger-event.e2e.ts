@@ -4,40 +4,41 @@ import axios, { AxiosResponse } from 'axios';
 import { v4 as uuid } from 'uuid';
 import { differenceInMilliseconds, subDays } from 'date-fns';
 import {
+  EnvironmentRepository,
+  ExecutionDetailsRepository,
+  IntegrationRepository,
+  JobRepository,
+  JobStatusEnum,
   MessageRepository,
   NotificationRepository,
   NotificationTemplateEntity,
+  NotificationTemplateRepository,
   SubscriberEntity,
   SubscriberRepository,
-  JobRepository,
-  JobStatusEnum,
-  IntegrationRepository,
-  ExecutionDetailsRepository,
-  EnvironmentRepository,
   TenantRepository,
-  NotificationTemplateRepository,
 } from '@novu/dal';
-import { UserSession, SubscribersService, WorkflowOverrideService } from '@novu/testing';
+import { SubscribersService, UserSession, WorkflowOverrideService } from '@novu/testing';
 import {
+  ActorTypeEnum,
   ChannelTypeEnum,
+  ChatProviderIdEnum,
+  DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
+  DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
+  DelayTypeEnum,
+  DigestUnitEnum,
   EmailBlockTypeEnum,
+  EmailProviderIdEnum,
   FieldLogicalOperatorEnum,
   FieldOperatorEnum,
   FilterPartTypeEnum,
-  StepTypeEnum,
   IEmailBlock,
-  ISubscribersDefine,
-  TemplateVariableTypeEnum,
-  EmailProviderIdEnum,
-  SmsProviderIdEnum,
-  DigestUnitEnum,
-  DelayTypeEnum,
-  PreviousStepTypeEnum,
   InAppProviderIdEnum,
-  DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
-  DEFAULT_MESSAGE_GENERIC_RETENTION_DAYS,
-  ActorTypeEnum,
+  ISubscribersDefine,
+  PreviousStepTypeEnum,
+  SmsProviderIdEnum,
+  StepTypeEnum,
   SystemAvatarIconEnum,
+  TemplateVariableTypeEnum,
 } from '@novu/shared';
 import { EmailEventStatusEnum } from '@novu/stateless';
 import { createTenant } from '../../tenant/e2e/create-tenant.e2e';
@@ -1066,6 +1067,132 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
       expect(updatedSubscriber?.lastName).to.equal(payload.lastName);
       expect(updatedSubscriber?.email).to.equal('hello@world.com');
       expect(updatedSubscriber?.locale).to.equal(payload.locale);
+    });
+
+    describe('Subscriber channels', function () {
+      it('should set a new subscriber with channels array', async function () {
+        const subscriberId = SubscriberRepository.createObjectId();
+        const payload: ISubscribersDefine = {
+          subscriberId,
+          firstName: 'Test Name',
+          lastName: 'Last of name',
+          email: undefined,
+          locale: 'en',
+          channels: [
+            {
+              providerId: ChatProviderIdEnum.Slack,
+              credentials: {
+                webhookUrl: 'https://slack.com/webhook/test',
+                deviceTokens: ['1', '2'],
+              },
+            },
+          ],
+        };
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: {
+              ...payload,
+            },
+            payload: {
+              urlVar: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs();
+
+        const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+        expect(createdSubscriber?.channels?.length).to.equal(1);
+        expect(createdSubscriber?.channels[0]?.providerId).to.equal(ChatProviderIdEnum.Slack);
+        expect(createdSubscriber?.channels[0]?.credentials?.webhookUrl).to.equal('https://slack.com/webhook/test');
+        expect(createdSubscriber?.channels[0]?.credentials?.deviceTokens.length).to.equal(2);
+      });
+
+      it('should update a subscribers channels array', async function () {
+        const subscriberId = SubscriberRepository.createObjectId();
+        const payload: ISubscribersDefine = {
+          subscriberId,
+          firstName: 'Test Name',
+          lastName: 'Last of name',
+          email: undefined,
+          locale: 'en',
+          channels: [
+            {
+              providerId: ChatProviderIdEnum.Slack,
+              credentials: {
+                webhookUrl: 'https://slack.com/webhook/test',
+              },
+            },
+          ],
+        };
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: {
+              ...payload,
+            },
+            payload: {
+              urlVar: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs();
+        const createdSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+        expect(createdSubscriber?.subscriberId).to.equal(subscriberId);
+        expect(createdSubscriber?.channels?.length).to.equal(1);
+
+        await axiosInstance.post(
+          `${session.serverUrl}${eventTriggerPath}`,
+          {
+            name: template.triggers[0].identifier,
+            to: {
+              ...payload,
+              channels: [
+                {
+                  providerId: ChatProviderIdEnum.Slack,
+                  credentials: {
+                    webhookUrl: 'https://slack.com/webhook/test2',
+                  },
+                },
+              ],
+            },
+            payload: {
+              urlVar: '/test/url/path',
+            },
+          },
+          {
+            headers: {
+              authorization: `ApiKey ${session.apiKey}`,
+            },
+          }
+        );
+
+        await session.awaitRunningJobs();
+
+        const updatedSubscriber = await subscriberRepository.findBySubscriberId(session.environment._id, subscriberId);
+
+        expect(updatedSubscriber?.channels?.length).to.equal(1);
+        expect(updatedSubscriber?.channels[0]?.providerId).to.equal(ChatProviderIdEnum.Slack);
+        expect(updatedSubscriber?.channels[0]?.credentials?.webhookUrl).to.equal('https://slack.com/webhook/test2');
+      });
     });
 
     it('should not unset a subscriber email', async function () {

@@ -20,6 +20,9 @@ import {
   CreateSubscriberCommand,
   UpdateSubscriber,
   UpdateSubscriberCommand,
+  OAuthHandlerEnum,
+  UpdateSubscriberChannel,
+  UpdateSubscriberChannelCommand,
 } from '@novu/application-generic';
 import { ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
 import {
@@ -45,7 +48,6 @@ import {
   UpdateSubscriberGlobalPreferencesRequestDto,
   UpdateSubscriberRequestDto,
 } from './dtos';
-import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
 import { GetPreferencesByLevelCommand } from './usecases/get-preferences-by-level/get-preferences-by-level.command';
@@ -77,7 +79,6 @@ import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 import { ApiCommonResponses, ApiResponse, ApiNoContentResponse } from '../shared/framework/response.decorator';
 import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
-import { OAuthHandlerEnum } from './types';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';

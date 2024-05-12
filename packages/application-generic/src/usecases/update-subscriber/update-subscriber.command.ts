@@ -1,6 +1,6 @@
 import { IsEmail, IsLocale, IsOptional, IsString } from 'class-validator';
 import { SubscriberEntity } from '@novu/dal';
-import { SubscriberCustomData } from '@novu/shared';
+import { ISubscriberChannel, SubscriberCustomData } from '@novu/shared';
 import { Transform } from 'class-transformer';
 
 import { EnvironmentCommand } from '../../commands';
@@ -37,4 +37,7 @@ export class UpdateSubscriberCommand extends EnvironmentCommand {
 
   @IsOptional()
   subscriber?: SubscriberEntity;
+
+  @IsOptional()
+  channels?: ISubscriberChannel[];
 }

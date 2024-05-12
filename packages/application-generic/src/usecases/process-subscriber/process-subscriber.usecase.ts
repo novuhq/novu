@@ -7,7 +7,6 @@ import {
   CreateSubscriberCommand,
 } from '../create-subscriber';
 import { InstrumentUsecase } from '../../instrumentation';
-import { subscriberNeedUpdate } from '../../utils/subscriber';
 import { ProcessSubscriberCommand } from './process-subscriber.command';
 import { buildSubscriberKey, CachedEntity } from '../../services/cache';
 
@@ -47,10 +46,6 @@ export class ProcessSubscriber {
       subscriberId: subscriberPayload.subscriberId,
     });
 
-    if (subscriber && !subscriberNeedUpdate(subscriber, subscriberPayload)) {
-      return subscriber;
-    }
-
     return await this.createOrUpdateSubscriber(
       environmentId,
       organizationId,
@@ -79,6 +74,7 @@ export class ProcessSubscriber {
         locale: subscriberPayload?.locale,
         subscriber: subscriber ?? undefined,
         data: subscriberPayload?.data,
+        channels: subscriberPayload?.channels,
       })
     );
   }
