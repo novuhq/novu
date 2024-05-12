@@ -56,6 +56,7 @@ export class MarkMessageAs {
     });
 
     if (command.mark.seen != null) {
+      await this.sendAnalyticsEventForInviteTeamNudge(messages);
       await this.updateServices(command, subscriber, messages, MarkEnum.SEEN);
     }
 
@@ -91,6 +92,20 @@ export class MarkMessageAs {
       groupId: subscriber._organizationId,
     });
   }
+
+  private async sendAnalyticsEventForInviteTeamNudge(messages: MessageEntity[]) {
+    const inviteTeamMemberNudgeMessage = messages.find(
+      (message) => message.payload['nv-type-team-member-invite-nudge'] === true
+    );
+
+    if (inviteTeamMemberNudgeMessage) {
+      this.analyticsService.mixpanelTrack('Invite Nudge Seen - [Notification Center]', '', {
+        _subscriber: inviteTeamMemberNudgeMessage._subscriberId,
+        _organization: inviteTeamMemberNudgeMessage._organizationId,
+      });
+    }
+  }
+
   @CachedEntity({
     builder: (command: { subscriberId: string; _environmentId: string }) =>
       buildSubscriberKey({

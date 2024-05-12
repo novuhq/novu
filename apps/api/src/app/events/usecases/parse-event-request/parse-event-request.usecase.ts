@@ -21,7 +21,11 @@ import {
   NotificationTemplateRepository,
   NotificationTemplateEntity,
   TenantRepository,
+  NotificationRepository,
+  UserRepository,
+  MemberRepository,
 } from '@novu/dal';
+import { Novu } from '@novu/node';
 
 import { ParseEventRequestCommand } from './parse-event-request.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -33,6 +37,9 @@ const LOG_CONTEXT = 'ParseEventRequest';
 export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private notificationRepository: NotificationRepository,
+    private userRepository: UserRepository,
+    private memberRepository: MemberRepository,
     private verifyPayload: VerifyPayload,
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
@@ -136,6 +143,7 @@ export class ParseEventRequest {
       actor: command.actor,
       transactionId,
     };
+    await this.sendInAppNudgeForTeamMemberInvite(command);
 
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
 
@@ -205,5 +213,63 @@ export class ParseEventRequest {
     const reservedVariables = template.triggers[0].reservedVariables;
 
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
+  }
+
+  public async sendInAppNudgeForTeamMemberInvite(command: ParseEventRequestCommand) {
+    // check if this is first trigger
+    const notifications = await this.notificationRepository.count({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    if (notifications > 0) return;
+
+    const user = await this.userRepository.findOne({
+      _id: command.userId,
+    });
+
+    if (this.checkEmail(user?.email)) return;
+
+    // check if organization has less than 2 members
+    const membersCount = await this.memberRepository.count({
+      _organizationId: command.organizationId,
+    });
+
+    if (membersCount > 1) return;
+
+    if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
+      if (!command.payload['nv-type-team-member-invite-nudge']) {
+        const novu = new Novu(process.env.NOVU_API_KEY);
+
+        novu.trigger(
+          process.env.NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER || 'in-app-invite-team-member-nudge',
+          {
+            to: {
+              subscriberId: user?._id as string,
+              email: user?.email as string,
+            },
+            payload: {
+              'nv-type-team-member-invite-nudge': true,
+            },
+          }
+        );
+      }
+    }
+  }
+
+  public checkEmail(email) {
+    const includedDomains = [
+      '@gmail',
+      '@outlook',
+      '@yahoo',
+      '@icloud',
+      '@mail',
+      '@hotmail',
+      '@protonmail',
+      '@gmx',
+      '@novu',
+    ];
+
+    return includedDomains.some((domain) => email.includes(domain));
   }
 }
