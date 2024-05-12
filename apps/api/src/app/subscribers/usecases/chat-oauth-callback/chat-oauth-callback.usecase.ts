@@ -1,7 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import axios from 'axios';
 
-import { CreateSubscriber, CreateSubscriberCommand, decryptCredentials } from '@novu/application-generic';
+import {
+  CreateSubscriber,
+  CreateSubscriberCommand,
+  decryptCredentials,
+  OAuthHandlerEnum,
+  IChannelCredentialsCommand,
+  UpdateSubscriberChannel,
+  UpdateSubscriberChannelCommand,
+} from '@novu/application-generic';
 import { ICredentialsDto } from '@novu/shared';
 import {
   ChannelTypeEnum,
@@ -12,13 +20,7 @@ import {
 } from '@novu/dal';
 
 import { ChatOauthCallbackCommand } from './chat-oauth-callback.command';
-import {
-  IChannelCredentialsCommand,
-  UpdateSubscriberChannel,
-  UpdateSubscriberChannelCommand,
-} from '../update-subscriber-channel';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { OAuthHandlerEnum } from '../../types';
 import { validateEncryption } from '../chat-oauth/chat-oauth.usecase';
 
 @Injectable()

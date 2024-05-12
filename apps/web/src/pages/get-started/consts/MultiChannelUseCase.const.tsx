@@ -25,7 +25,12 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
             <StepText>
               Novu has set up trial email and SMS providers for you. To expand your options, add more providers in the
             </StepText>
-            <GetStartedLink href={ROUTES.INTEGRATIONS_CREATE} target="_blank" rel="noopener noreferrer">
+            <GetStartedLink
+              href={ROUTES.INTEGRATIONS_CREATE}
+              event="Integration store (multi-channel)"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {' Integration store'}
             </GetStartedLink>
             <StepText>.</StepText>
@@ -74,6 +79,7 @@ export const MultiChannelUseCaseConst: OnboardingUseCase = {
               href={ROUTES.ACTIVITIES}
               target="_blank"
               rel="noopener noreferrer"
+              event='Discover "activity feed" (multi-channel)'
             />
             <StepText>
               to monitor notifications activity and see potential issues with a specific provider or channel.

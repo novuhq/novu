@@ -39,7 +39,6 @@ const isTopic = (recipient: TriggerRecipient): recipient is ITopic =>
 @Injectable()
 export class TriggerMulticast {
   constructor(
-    private logger: PinoLogger,
     private subscriberProcessQueueService: SubscriberProcessQueueService,
     private topicSubscribersRepository: TopicSubscribersRepository,
     private topicRepository: TopicRepository,
@@ -71,24 +70,6 @@ export class TriggerMulticast {
           subscribersToProcess,
           SubscriberSourceEnum.SINGLE
         );
-      }
-
-      const isEnabled = await this.getFeatureFlag.execute(
-        GetFeatureFlagCommand.create({
-          environmentId,
-          organizationId,
-          userId,
-          key: FeatureFlagsKeysEnum.IS_TOPIC_NOTIFICATION_ENABLED,
-        })
-      );
-
-      if (!isEnabled) {
-        Logger.log(
-          `The IS_TOPIC_NOTIFICATION_ENABLED feature flag is disabled, skipping trigger multicast`,
-          LOG_CONTEXT
-        );
-
-        return;
       }
 
       const topics = await this.getTopicsByTopicKeys(
