@@ -1,13 +1,13 @@
 import chalk from 'chalk';
 import gradient from 'gradient-string';
-
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
 const getPort = require('get-port');
 import * as process from 'process';
 import open from 'open';
-import { logo } from './constants';
+
+import { logo } from '../constants';
 
 export const showWelcomeScreen = (): void => {
   const textGradient = gradient('#0099F7', '#ff3432');
@@ -22,7 +22,7 @@ export const showWelcomeScreen = (): void => {
   /* eslint-enable  no-console */
 };
 
-export async function startStudio(anonymousId: string, requestedPort = 2022) {
+export async function echo(anonymousId: string, requestedPort = 2022) {
   await showWelcomeScreen();
   const dev = false;
   const hostname = 'localhost';

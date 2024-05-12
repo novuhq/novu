@@ -2,22 +2,6 @@ import { Analytics } from '@segment/analytics-node';
 import { IJwtPayload } from '@novu/shared';
 import { ANALYTICS_ENABLED, SEGMENTS_WRITE_KEY } from '../constants';
 
-export enum AnalyticsEventEnum {
-  ENVIRONMENT_SELECT_EVENT = 'Select Install Environment',
-  CREATE_APP_QUESTION_EVENT = 'Create App Question',
-  REGISTER_METHOD_SELECT_EVENT = 'Select Register Method',
-  TERMS_AND_CONDITIONS_QUESTION = 'Terms And Conditions Question',
-  PRIVATE_EMAIL_ATTEMPT = 'Private Email Register Attempt',
-  ACCOUNT_CREATED = 'account_created',
-  OPEN_DASHBOARD = 'open_dashboard',
-  DASHBOARD_PAGE_OPENED = 'Dashboard Page Opened',
-  EXIT_EXISTING_SESSION = 'exit_existing_session',
-  SKIP_TUTORIAL = 'skip_tutorial',
-  COPY_SNIPPET = 'copy_snippet',
-  TRIGGER_BUTTON = 'trigger_button',
-  CLI_LAUNCHED = 'Cli Launched',
-}
-
 export const ANALYTICS_SOURCE = '[Echo CLI]';
 
 export class AnalyticService {
