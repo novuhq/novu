@@ -9,7 +9,7 @@
     "prepare": "husky install",
     "publish": "lerna publish from-package",
     "setup:project": "npx --yes pnpm@8.9.0 i && node scripts/setup-env-files.js && pnpm build",
-    "clean": "lerna clean --yes && npm run prebuild",
+    "clean": "lerna clean --yes && npm run prebuild && rimraf node_modules",
     "commit": "cz",
     "nx": "nx",
     "lint-staged": "lint-staged",
