@@ -146,27 +146,6 @@ export class Echo {
         ),
         digest: this.discoverStepFactory(workflowId, 'digest', digestOutputSchema, digestResultSchema),
         delay: this.discoverStepFactory(workflowId, 'delay', delayOutputSchema, delayResultSchema),
-        /*
-         * custom: this.discoverStepFactory(
-         *   workflowId,
-         *   'custom',
-         *   customOutputResultSchema,
-         *   customOutputResultSchema,
-         * ),
-         */
-
-        /*
-         * async custom(outputSchema: Schema) {
-         *   this.discoverStepFactory(
-         *     workflowId,
-         *     'custom',
-         *     outputSchema,
-         *     outputSchema,
-         *   );
-         *   return undefined as any;
-         * },
-         */
-
         custom: this.discoverCustomStepFactory(workflowId, 'custom'),
       },
     });
@@ -679,7 +658,9 @@ export class Echo {
     try {
       if (payload.stepId === step.stepId) {
         const input = this.createStepInputs(step, payload);
-        const result = await provider.resolve(input);
+        const result = await provider.resolve({
+          inputs: input,
+        });
         this.validate(
           result,
           provider.outputs.validate,
