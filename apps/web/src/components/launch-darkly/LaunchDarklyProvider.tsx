@@ -3,10 +3,9 @@ import * as Sentry from '@sentry/react';
 import { IOrganizationEntity } from '@novu/shared';
 import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import { PropsWithChildren, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '../config';
-import { useFeatureFlags } from '../hooks';
-import { useAuthContext } from './AuthProvider';
-import { selectShouldShowLaunchDarklyFallback, selectShouldInitializeLaunchDarkly } from '../utils/auth-selectors';
+import { useFeatureFlags, useAuthContext, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@novu/shared-web';
+import { selectShouldInitializeLaunchDarkly } from './utils/selectShouldInitializeLaunchDarkly';
+import { selectShouldShowLaunchDarklyFallback } from './utils/selectShouldShowLaunchDarklyFallback';
 
 /** A provider with children required */
 type GenericLDProvider = Awaited<ReturnType<typeof asyncWithLDProvider>>;

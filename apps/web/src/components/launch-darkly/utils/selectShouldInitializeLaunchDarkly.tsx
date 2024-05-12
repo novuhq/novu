@@ -1,6 +1,5 @@
-import { selectHasUserCompletedSignUp } from './selectHasUserCompletedSignUp';
-import { checkShouldUseLaunchDarkly } from '../checkShouldUseLaunchDarkly';
-import { UserContext } from '../../providers/AuthProvider';
+import { selectHasUserCompletedSignUp, UserContext } from '@novu/shared-web';
+import { checkShouldUseLaunchDarkly } from '@novu/shared-web';
 
 /** Determine if LaunchDarkly should be initialized based on the current auth context */
 export function selectShouldInitializeLaunchDarkly(userCtx: UserContext): boolean {

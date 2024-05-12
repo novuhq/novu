@@ -1,7 +1,7 @@
 import { FeatureFlagsKeysEnum, IOrganizationEntity, prepareBooleanStringFeatureFlag } from '@novu/shared';
 import { useFlags, useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect } from 'react';
-import { checkShouldUseLaunchDarkly } from '../utils';
+import { checkShouldUseLaunchDarkly } from '../utils/checkShouldUseLaunchDarkly';
 
 import { FEATURE_FLAGS } from '../config';
 

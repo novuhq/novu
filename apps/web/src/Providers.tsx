@@ -1,12 +1,13 @@
 import { Loader } from '@mantine/core';
 import { colors } from '@novu/design-system';
-import { CONTEXT_PATH, LaunchDarklyProvider, SegmentProvider } from '@novu/shared-web';
+import { CONTEXT_PATH, SegmentProvider } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import { api } from './api/api.client';
+import { LaunchDarklyProvider } from './components/launch-darkly';
 import { AuthProvider } from './components/providers/AuthProvider';
 import { css } from './styled-system/css';
 

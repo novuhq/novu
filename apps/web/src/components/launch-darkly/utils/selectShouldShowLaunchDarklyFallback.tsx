@@ -1,6 +1,4 @@
-import { selectHasUserCompletedSignUp } from '.';
-import { checkShouldUseLaunchDarkly } from '..';
-import { UserContext } from '../../providers/AuthProvider';
+import { selectHasUserCompletedSignUp, UserContext, checkShouldUseLaunchDarkly } from '@novu/shared-web';
 
 /** Determine if a fallback should be shown instead of the provider-wrapped application */
 export function selectShouldShowLaunchDarklyFallback(userCtx: UserContext, isLDReady: boolean): boolean {
