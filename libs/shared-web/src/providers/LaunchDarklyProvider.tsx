@@ -1,3 +1,5 @@
+import * as Sentry from '@sentry/react';
+
 import { IOrganizationEntity } from '@novu/shared';
 import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import { PropsWithChildren, ReactNode, useEffect, useMemo, useRef, useState } from 'react';
@@ -66,7 +68,7 @@ export const LaunchDarklyProvider: React.FC<PropsWithChildren<ILaunchDarklyProvi
               },
         });
       } catch (err: unknown) {
-        // FIXME: what should we do here since we don't have logging?
+        Sentry.captureException(err);
       } finally {
         setIsLDReady(true);
       }

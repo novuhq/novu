@@ -121,7 +121,7 @@ export function useAuthController() {
     setTokenCallback(null);
     queryClient.clear();
     // avoid usage of react-router here to prevent needing AuthProvider to be wrapped in the BrowserRouter
-    window.location.assign('/auth/login');
+    window.location.replace('/auth/login');
     segment.reset();
   };
 

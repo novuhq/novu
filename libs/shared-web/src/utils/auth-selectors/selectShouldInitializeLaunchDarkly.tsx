@@ -15,7 +15,14 @@ export function selectShouldInitializeLaunchDarkly(userCtx: UserContext): boolea
     return true;
   }
 
-  // allow LD to load when the user is created but still in onboarding
+  /**
+   * Allow LD to load when the user is created but still in onboarding.
+   *
+   * After users provide their name, email, and password, we take them to an onboarding step where they provide details
+   * such as job title, use cases, company name, etc. When they reach this page, isLoggedIn is true, but they don't
+   * have an organizationId yet that we can use for org-based feature flags. To prevent from blocking this page
+   * from loading during this "limbo" state, we should initialize LD with the anonymous context.
+   */
   if (!selectHasUserCompletedSignUp(userCtx)) {
     return true;
   }
