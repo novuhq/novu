@@ -41,7 +41,7 @@ export const useSettingsRoutes = () => {
     );
   }
 
-  /* TODO: remove all routes above once information architecture is fully enabled */
+  /* TODO: remove all routes below once information architecture is fully enabled */
   return (
     <>
       <Route path={ROUTES.SETTINGS} element={<SettingsPageOld />}>
