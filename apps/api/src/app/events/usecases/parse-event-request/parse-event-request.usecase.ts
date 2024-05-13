@@ -258,6 +258,7 @@ export class ParseEventRequest {
             },
             payload: {
               INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY: true,
+              webhookUrl: `${process.env.API_ROOT_URL}/v1/invites/webhook`,
             },
           }
         );
