@@ -143,7 +143,7 @@ export const buildEvaluateApiRateLimitKey = ({
     identifier: apiRateLimitCategory,
   });
 
-export const buildEventUsageKey = ({
+export const buildUsageKey = ({
   _organizationId,
   resourceType,
   periodStart,
