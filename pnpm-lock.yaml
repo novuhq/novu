@@ -2976,9 +2976,6 @@ importers:
 
   libs/shared:
     dependencies:
-      axios:
-        specifier: ^1.6.2
-        version: 1.6.2
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
