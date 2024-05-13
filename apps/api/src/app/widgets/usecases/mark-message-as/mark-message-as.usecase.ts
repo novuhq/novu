@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
-import { ChannelTypeEnum, WebSocketEventEnum } from '@novu/shared';
+import { ChannelTypeEnum, INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY, WebSocketEventEnum } from '@novu/shared';
 import {
   WebSocketsQueueService,
   AnalyticsService,
@@ -95,7 +95,7 @@ export class MarkMessageAs {
 
   private async sendAnalyticsEventForInviteTeamNudge(messages: MessageEntity[]) {
     const inviteTeamMemberNudgeMessage = messages.find(
-      (message) => message.payload['nv-type-team-member-invite-nudge'] === true
+      (message) => message.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY] === true
     );
 
     if (inviteTeamMemberNudgeMessage) {

@@ -9,6 +9,7 @@ import {
   ExecutionDetailsStatusEnum,
   ActorTypeEnum,
   WebSocketEventEnum,
+  INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -243,7 +244,7 @@ export class SendMessageInApp extends SendMessageBase {
       groupId: command.organizationId,
     });
 
-    if (message.payload['nv-type-team-member-invite-nudge']) {
+    if (message.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]) {
       this.analyticsService.mixpanelTrack('Invite Nudge Sent - [Notification Center]', '', {
         _subscriber: message._subscriberId,
         _organization: message._subscriberId,

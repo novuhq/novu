@@ -1,6 +1,12 @@
 import { useMantineColorScheme } from '@mantine/core';
 import { NovuProvider, PopoverNotificationCenter, useUpdateAction } from '@novu/notification-center';
-import { ButtonTypeEnum, IMessage, IUserEntity, MessageActionStatusEnum } from '@novu/shared';
+import {
+  ButtonTypeEnum,
+  IMessage,
+  INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
+  IUserEntity,
+  MessageActionStatusEnum,
+} from '@novu/shared';
 
 import { API_ROOT, APP_ID, IS_EU_ENV, WS_URL } from '../../../config';
 import { useEnvController } from '../../../hooks';
@@ -36,7 +42,7 @@ function PopoverWrapper() {
 
   const navigate = useNavigate();
   function handlerOnNotificationClick(message: IMessage) {
-    if (message.payload['nv-type-team-member-invite-nudge']) {
+    if (message.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]) {
       segment.track('Invite Nudge Clicked', {
         _user: currentUser?._id,
         _organization: currentOrganization?._id,

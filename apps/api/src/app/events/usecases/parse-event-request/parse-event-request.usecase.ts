@@ -13,7 +13,12 @@ import {
   StorageHelperService,
   WorkflowQueueService,
 } from '@novu/application-generic';
-import { ReservedVariablesMap, TriggerContextTypeEnum, TriggerEventStatusEnum } from '@novu/shared';
+import {
+  INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
+  ReservedVariablesMap,
+  TriggerContextTypeEnum,
+  TriggerEventStatusEnum,
+} from '@novu/shared';
 import {
   WorkflowOverrideRepository,
   TenantEntity,
@@ -224,13 +229,14 @@ export class ParseEventRequest {
 
     if (notifications > 0) return;
 
+    // check if user is using personal email
     const user = await this.userRepository.findOne({
       _id: command.userId,
     });
 
     if (this.checkEmail(user?.email)) return;
 
-    // check if organization has less than 2 members
+    // check if organization has more than 1 member
     const membersCount = await this.memberRepository.count({
       _organizationId: command.organizationId,
     });
@@ -238,7 +244,7 @@ export class ParseEventRequest {
     if (membersCount > 1) return;
 
     if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
-      if (!command.payload['nv-type-team-member-invite-nudge']) {
+      if (!command.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]) {
         const novu = new Novu(process.env.NOVU_API_KEY);
 
         novu.trigger(
@@ -249,7 +255,7 @@ export class ParseEventRequest {
               email: user?.email as string,
             },
             payload: {
-              'nv-type-team-member-invite-nudge': true,
+              INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY: true,
             },
           }
         );
