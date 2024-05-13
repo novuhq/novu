@@ -19,18 +19,18 @@ export class InviteNudgeWebhook {
       process.env.NOVU_API_KEY &&
       process.env.NOVU_ENVIRONMENT_ID
     ) {
-      const hmacHash = createHash(process.env.NOVU_API_KEY || '', process.env.NOVU_ENVIRONMENT_ID || '');
+      const hmacHash = createHash(process.env.NOVU_API_KEY || '', command?.body?.subscriber?._environmentId || '');
       const hmacHashFromWebhook = command?.headers?.['nv-hmac-256'];
 
       if (hmacHash !== hmacHashFromWebhook) {
         throw new Error('Unauthorized request');
       }
 
-      const members = await this.memberRepository.count({
+      const membersCount = await this.memberRepository.count({
         _organizationId: command?.body?.subscriber?._organizationId,
       });
 
-      if (members === 1) {
+      if (membersCount === 1) {
         return await axiosInstance.post(
           `https://api.hubapi.com/contacts/v1/lists/${process.env.HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST}/add`,
           {

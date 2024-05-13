@@ -99,8 +99,7 @@ export class MarkMessageAs {
     );
 
     if (inviteTeamMemberNudgeMessage) {
-      this.analyticsService.mixpanelTrack('Invite Nudge Seen - [Notification Center]', '', {
-        _subscriber: inviteTeamMemberNudgeMessage._subscriberId,
+      this.analyticsService.track('Invite Nudge Seen', inviteTeamMemberNudgeMessage._subscriberId, {
         _organization: inviteTeamMemberNudgeMessage._organizationId,
       });
     }

@@ -9,7 +9,6 @@ import {
   ExecutionDetailsStatusEnum,
   ActorTypeEnum,
   WebSocketEventEnum,
-  INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -25,7 +24,6 @@ import {
   WebSocketsQueueService,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  AnalyticsService,
 } from '@novu/application-generic';
 
 import { CreateLog } from '../../../shared/logs';
@@ -48,8 +46,7 @@ export class SendMessageInApp extends SendMessageBase {
     protected getNovuProviderCredentials: GetNovuProviderCredentials,
     protected selectVariant: SelectVariant,
     protected moduleRef: ModuleRef,
-    protected compileInAppTemplate: CompileInAppTemplate,
-    private analyticsService: AnalyticsService
+    protected compileInAppTemplate: CompileInAppTemplate
   ) {
     super(
       messageRepository,
@@ -243,13 +240,6 @@ export class SendMessageInApp extends SendMessageBase {
       },
       groupId: command.organizationId,
     });
-
-    if (message.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]) {
-      this.analyticsService.mixpanelTrack('Invite Nudge Sent - [Notification Center]', '', {
-        _subscriber: message._subscriberId,
-        _organization: message._subscriberId,
-      });
-    }
     await this.executionLogRoute.execute(
       ExecutionLogRouteCommand.create({
         ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),

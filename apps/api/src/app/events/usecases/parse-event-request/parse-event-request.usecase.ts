@@ -12,6 +12,7 @@ import {
   IWorkflowJobDto,
   StorageHelperService,
   WorkflowQueueService,
+  AnalyticsService,
 } from '@novu/application-generic';
 import {
   INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
@@ -49,7 +50,8 @@ export class ParseEventRequest {
     private storageHelperService: StorageHelperService,
     private workflowQueueService: WorkflowQueueService,
     private tenantRepository: TenantRepository,
-    private workflowOverrideRepository: WorkflowOverrideRepository
+    private workflowOverrideRepository: WorkflowOverrideRepository,
+    private analyticsService: AnalyticsService
   ) {}
 
   @InstrumentUsecase()
@@ -251,7 +253,7 @@ export class ParseEventRequest {
           process.env.NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER || 'in-app-invite-team-member-nudge',
           {
             to: {
-              subscriberId: user?._id as string,
+              subscriberId: command.userId,
               email: user?.email as string,
             },
             payload: {
@@ -259,6 +261,10 @@ export class ParseEventRequest {
             },
           }
         );
+
+        this.analyticsService.track('Invite Nudge Sent', command.userId, {
+          _organization: command.organizationId,
+        });
       }
     }
   }
