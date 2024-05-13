@@ -19,10 +19,16 @@ type LoginFormProps = {
   email?: string;
 };
 
+export interface LocationState {
+  redirectTo: {
+    pathname: string;
+  };
+}
+
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state as { redirectTo?: { pathname?: string } };
+  const state = location.state as LocationState;
   const { setToken } = useAuthContext();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },

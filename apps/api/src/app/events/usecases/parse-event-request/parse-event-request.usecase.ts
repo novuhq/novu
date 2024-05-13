@@ -13,8 +13,11 @@ import {
   StorageHelperService,
   WorkflowQueueService,
   AnalyticsService,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
 } from '@novu/application-generic';
 import {
+  FeatureFlagsKeysEnum,
   INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
   ReservedVariablesMap,
   TriggerContextTypeEnum,
@@ -51,7 +54,8 @@ export class ParseEventRequest {
     private workflowQueueService: WorkflowQueueService,
     private tenantRepository: TenantRepository,
     private workflowOverrideRepository: WorkflowOverrideRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   @InstrumentUsecase()
@@ -150,7 +154,19 @@ export class ParseEventRequest {
       actor: command.actor,
       transactionId,
     };
-    await this.sendInAppNudgeForTeamMemberInvite(command);
+
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
+        organizationId: command.organizationId,
+        userId: 'system',
+        environmentId: 'system',
+      })
+    );
+
+    if (isEnabled) {
+      await this.sendInAppNudgeForTeamMemberInvite(command);
+    }
 
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
 
@@ -224,12 +240,12 @@ export class ParseEventRequest {
 
   public async sendInAppNudgeForTeamMemberInvite(command: ParseEventRequestCommand) {
     // check if this is first trigger
-    const notifications = await this.notificationRepository.count({
+    const notification = await this.notificationRepository.findOne({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
     });
 
-    if (notifications > 0) return;
+    if (notification) return;
 
     // check if user is using personal email
     const user = await this.userRepository.findOne({
@@ -257,7 +273,7 @@ export class ParseEventRequest {
               email: user?.email as string,
             },
             payload: {
-              INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY: true,
+              [INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]: true,
               webhookUrl: `${process.env.API_ROOT_URL}/v1/invites/webhook`,
             },
           }
