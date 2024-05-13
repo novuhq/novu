@@ -27,7 +27,7 @@ const spyIncreaseLockCounter = jest.spyOn(
   <any>'increaseLockCounter'
 );
 const spyLock = jest.spyOn(Redlock.prototype, 'acquire');
-const spyUnlock = jest.spyOn(Redlock.prototype, 'unlock');
+const spyUnlock = jest.spyOn(Redlock.prototype, 'release');
 
 describe('Distributed Lock Service', () => {
   afterEach(() => {
@@ -72,12 +72,18 @@ describe('Distributed Lock Service', () => {
       });
 
       it('should have default settings', () => {
-        expect(distributedLockService.distributedLock.driftFactor).toEqual(
-          0.01
-        );
-        expect(distributedLockService.distributedLock.retryCount).toEqual(50);
-        expect(distributedLockService.distributedLock.retryDelay).toEqual(100);
-        expect(distributedLockService.distributedLock.retryJitter).toEqual(200);
+        expect(
+          distributedLockService.distributedLock.settings.driftFactor
+        ).toEqual(0.01);
+        expect(
+          distributedLockService.distributedLock.settings.retryCount
+        ).toEqual(50);
+        expect(
+          distributedLockService.distributedLock.settings.retryDelay
+        ).toEqual(100);
+        expect(
+          distributedLockService.distributedLock.settings.retryJitter
+        ).toEqual(200);
       });
     });
 
