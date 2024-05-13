@@ -42,7 +42,7 @@ export class InviteNudgeWebhook {
 
       if (membersCount === 1) {
         await axiosInstance.post(
-          `https://api.hubapi.com/contacts/v1/lists/${process.env.HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST}/add`,
+          `https://api.hubapi.com/contacts/v1/lists/${process.env.HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST_ID}/add`,
           {
             emails: [command?.body?.subscriber?.email],
           },
