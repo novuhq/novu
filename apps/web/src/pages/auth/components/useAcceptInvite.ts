@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import type { IResponseError } from '@novu/shared';
 
@@ -13,6 +13,8 @@ import { errorMessage } from '../../../utils/notifications';
 export function useAcceptInvite() {
   const { setToken } = useAuthContext();
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as { redirectTo?: { pathname?: string } };
   const queryClient = useQueryClient();
 
   const { isLoading, mutateAsync, error, isError } = useMutation<string, IResponseError, string>((tokenItem) =>
@@ -33,15 +35,18 @@ export function useAcceptInvite() {
             predicate: (query) => query.queryKey.includes('/v1/organizations'),
           });
         }
-
-        navigate(ROUTES.WORKFLOWS);
+        if (state?.redirectTo?.pathname) {
+          navigate(state?.redirectTo?.pathname);
+        } else {
+          navigate(ROUTES.WORKFLOWS);
+        }
       } catch (e: unknown) {
         errorMessage('Failed to accept an invite.');
 
         Sentry.captureException(e);
       }
     },
-    [mutateAsync, navigate, queryClient, setToken]
+    [mutateAsync, navigate, queryClient, setToken, state?.redirectTo?.pathname]
   );
 
   return {

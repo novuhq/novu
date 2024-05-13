@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
@@ -22,6 +21,8 @@ type LoginFormProps = {
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as { redirectTo?: { pathname?: string } };
   const { setToken } = useAuthContext();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
@@ -71,7 +72,12 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       }
 
       setToken(token);
-      navigate(ROUTES.WORKFLOWS);
+
+      if (state?.redirectTo?.pathname) {
+        navigate(state?.redirectTo?.pathname);
+      } else {
+        navigate(ROUTES.WORKFLOWS);
+      }
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);

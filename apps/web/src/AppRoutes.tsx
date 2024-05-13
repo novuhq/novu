@@ -75,7 +75,6 @@ export const AppRoutes = () => {
         }
       />
       <Route element={<AppLayout />}>
-        <Route path={ROUTES.ANY} element={<HomePage />} />
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
         <Route path={ROUTES.WORKFLOWS_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
@@ -124,6 +123,7 @@ export const AppRoutes = () => {
           <Route path="" element={<LayoutsListPage />} />
         </Route>
         <Route path="/translations/*" element={<TranslationRoutes />} />
+        <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
     </Routes>
   );
