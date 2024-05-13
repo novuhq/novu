@@ -7,6 +7,7 @@ import type { IJwtPayload, IOrganizationEntity, IUserEntity } from '@novu/shared
 
 import { useSegment } from '../providers';
 import { api } from '../api';
+import { useNavigate } from 'react-router-dom';
 
 function getUser() {
   return api.get('/v1/users/me');
@@ -40,6 +41,7 @@ export function getToken(): string {
 export function useAuthController() {
   const segment = useSegment();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(() => {
     const initialToken = getToken();
     applyToken(initialToken);
@@ -120,8 +122,7 @@ export function useAuthController() {
   const logout = () => {
     setTokenCallback(null);
     queryClient.clear();
-    // avoid usage of react-router here to prevent needing AuthProvider to be wrapped in the BrowserRouter
-    window.location.replace('/auth/login');
+    navigate('/auth/login');
     segment.reset();
   };
 

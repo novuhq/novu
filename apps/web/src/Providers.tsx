@@ -50,13 +50,13 @@ const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
     <SegmentProvider>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <LaunchDarklyProvider fallbackDisplay={fallbackDisplay}>
-            <HelmetProvider>
-              <BrowserRouter basename={CONTEXT_PATH}>{children}</BrowserRouter>
-            </HelmetProvider>
-          </LaunchDarklyProvider>
-        </AuthProvider>
+        <BrowserRouter basename={CONTEXT_PATH}>
+          <AuthProvider>
+            <LaunchDarklyProvider fallbackDisplay={fallbackDisplay}>
+              <HelmetProvider>{children}</HelmetProvider>
+            </LaunchDarklyProvider>
+          </AuthProvider>
+        </BrowserRouter>
       </QueryClientProvider>
     </SegmentProvider>
   );
