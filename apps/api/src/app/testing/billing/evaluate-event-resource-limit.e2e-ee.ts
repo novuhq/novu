@@ -70,7 +70,7 @@ describe('EvaluateEventResourceLimit', async () => {
         success: true,
         start: 1609459200000,
         reset: 1612137600000,
-        apiServiceLevel: 'business',
+        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
         locked: true,
       });
     });
@@ -92,7 +92,7 @@ describe('EvaluateEventResourceLimit', async () => {
         success: false,
         start: 1609459200000,
         reset: 1612137600000,
-        apiServiceLevel: 'business',
+        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
         locked: true,
       });
     });
@@ -112,7 +112,7 @@ describe('EvaluateEventResourceLimit', async () => {
         success: true,
         start: 1609459200000,
         reset: 1612137600000,
-        apiServiceLevel: 'free',
+        apiServiceLevel: ApiServiceLevelEnum.FREE,
         locked: true,
       });
     });
