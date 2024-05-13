@@ -1,13 +1,13 @@
 import { useEffect, useCallback, useState } from 'react';
 import axios from 'axios';
 import jwtDecode from 'jwt-decode';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import type { IJwtPayload, IOrganizationEntity, IUserEntity } from '@novu/shared';
 
 import { useSegment } from '../providers';
 import { api } from '../api';
-import { useNavigate } from 'react-router-dom';
 
 function getUser() {
   return api.get('/v1/users/me');
