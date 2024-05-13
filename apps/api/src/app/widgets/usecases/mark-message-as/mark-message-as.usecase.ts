@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { MessageEntity, MessageRepository, SubscriberRepository, SubscriberEntity, MemberRepository } from '@novu/dal';
-import { ChannelTypeEnum, INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY, WebSocketEventEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  FeatureFlagsKeysEnum,
+  INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY,
+  WebSocketEventEnum,
+} from '@novu/shared';
 import {
   WebSocketsQueueService,
   AnalyticsService,
@@ -9,6 +14,8 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   buildSubscriberKey,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
 } from '@novu/application-generic';
 
 import { MarkEnum, MarkMessageAsCommand } from './mark-message-as.command';
@@ -21,7 +28,8 @@ export class MarkMessageAs {
     private webSocketsQueueService: WebSocketsQueueService,
     private analyticsService: AnalyticsService,
     private subscriberRepository: SubscriberRepository,
-    private memberRepository: MemberRepository
+    private memberRepository: MemberRepository,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   async execute(command: MarkMessageAsCommand): Promise<MessageEntity[]> {
@@ -54,9 +62,18 @@ export class MarkMessageAs {
         $in: command.messageIds,
       },
     });
-
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
+        organizationId: command.organizationId,
+        userId: 'system',
+        environmentId: 'system',
+      })
+    );
     if (command.mark.seen != null) {
-      await this.sendAnalyticsEventForInviteTeamNudge(messages);
+      if (isEnabled && (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production')) {
+        await this.sendAnalyticsEventForInviteTeamNudge(messages);
+      }
       await this.updateServices(command, subscriber, messages, MarkEnum.SEEN);
     }
 
@@ -95,7 +112,7 @@ export class MarkMessageAs {
 
   private async sendAnalyticsEventForInviteTeamNudge(messages: MessageEntity[]) {
     const inviteTeamMemberNudgeMessage = messages.find(
-      (message) => message.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY] === true
+      (message) => message?.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY] === true
     );
 
     if (inviteTeamMemberNudgeMessage) {

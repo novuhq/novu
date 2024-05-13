@@ -164,7 +164,7 @@ export class ParseEventRequest {
       })
     );
 
-    if (isEnabled) {
+    if (isEnabled && (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production')) {
       await this.sendInAppNudgeForTeamMemberInvite(command);
     }
 
