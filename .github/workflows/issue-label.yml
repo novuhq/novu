@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 20.8.1
       - name: Install Octokit
-        run: npm --prefix .github/workflows/scripts install @octokit/action
+        run: npm --prefix .github/workflows/scripts install @octokit/action@6
 
       - name: Check if user is a community contributor
         id: check
