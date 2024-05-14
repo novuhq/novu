@@ -52,7 +52,9 @@
     "prebuild": "rimraf dist styled-system",
     "lint": "eslint --ext .ts,.tsx src",
     "build": "cross-env node_modules/.bin/tsc",
-    "build:watch": "pnpm panda && cross-env node_modules/.bin/tsc -w --preserveWatchOutput",
+    "build:watch": "pnpm panda & cross-env node_modules/.bin/tsc -w --preserveWatchOutput",
+    "build:storybook": "pnpm panda && storybook build",
+    "storybook": "pnpm panda --watch & storybook dev -p 6006",
     "studio": "pnpm panda studio"
   },
   "keywords": [],
@@ -64,11 +66,11 @@
     "@pandacss/eslint-plugin": "^0.1.2",
     "@pandacss/studio": "^0.38.0",
     "@storybook/addon-actions": "^7.5.0",
-    "@storybook/addon-docs": "^7.4.2",
+    "@storybook/addon-docs": "^8.0.10",
     "@storybook/client-api": "^7.6.10",
-    "@storybook/react": "^7.4.2",
-    "@storybook/react-webpack5": "^7.4.2",
-    "@storybook/theming": "^7.4.2",
+    "@storybook/react": "^8.0.10",
+    "@storybook/react-vite": "^8.0.10",
+    "@storybook/theming": "^8.0.10",
     "@testing-library/jest-dom": "^6.4.1",
     "@testing-library/react": "^12.1.5",
     "@testing-library/react-hooks": "^8.0.1",
@@ -78,15 +80,34 @@
     "@types/react-dom": "^17.0.1",
     "@vitejs/plugin-react": "^4.0.3",
     "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-storybook": "^0.6.13",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "rimraf": "^3.0.2",
+    "storybook": "^8.0.10",
     "typescript": "^4.9.5",
     "vite": "^4.5.2",
+    "vite-tsconfig-paths": "^4.3.2",
     "vitest": "^1.2.1"
   },
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0",
-    "react-dom": "^16.8.0 || ^17.0.0"
+    "react": ">=17.0.0",
+    "react-dom": ">=17.0.0"
+  },
+  "nx": {
+    "targets": {
+      "build-storybook": {
+        "dependsOn": [
+          "^build"
+        ],
+        "outputs": [
+          "{projectRoot}/storybook-static"
+        ],
+        "inputs": [
+          "{projectRoot}/.storybook",
+          "{projectRoot}/src"
+        ]
+      }
+    }
   }
 }
