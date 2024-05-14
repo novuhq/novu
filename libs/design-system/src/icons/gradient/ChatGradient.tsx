@@ -13,7 +13,7 @@ export function ChatGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
       <defs>
         <linearGradient id="paint0_linear_2873_32232" x1="15" y1="25" x2="15" y2="5" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

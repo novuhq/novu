@@ -63,7 +63,7 @@ function createGradientColor() {
     const { ctx } = context.chart;
     const gradient = ctx.createLinearGradient(0, 0, 0, 200);
 
-    gradient.addColorStop(0, '#DD2476');
+    gradient.addColorStop(0, '#b89535');
     gradient.addColorStop(1, '#FF512F');
 
     return gradient;

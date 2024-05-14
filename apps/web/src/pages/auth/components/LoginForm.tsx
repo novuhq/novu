@@ -118,7 +118,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
         />
 
         <Link to={resetPasswordLink}>
-          <Text my={30} gradient align="center">
+          <Text my={30} align="center">
             Forgot Your Password?
           </Text>
         </Link>
@@ -138,7 +138,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
             Don't have an account yet?
           </Text>
           <Link to={signupLink}>
-            <Text gradient>Sign Up</Text>
+            <Text>Sign Up</Text>
           </Link>
         </Center>
       </form>

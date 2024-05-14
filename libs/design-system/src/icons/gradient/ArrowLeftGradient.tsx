@@ -9,7 +9,7 @@ export function ArrowLeftGradient(props: React.ComponentPropsWithoutRef<'svg'>) 
       />
       <defs>
         <linearGradient id="paint0_linear_969_37969" x1="1" y1="7" x2="15" y2="7" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#DD2476" />
+          <stop stopColor="#b89535" />
           <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
       </defs>

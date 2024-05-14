@@ -15,7 +15,7 @@ export function MailGradient({ disabled = false, width = '30px', height = '31px'
       <defs>
         <linearGradient id="paint0_linear_440_2017" x1="15" y1="23.5" x2="15" y2="7.5" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

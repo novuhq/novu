@@ -85,7 +85,7 @@ export function BuildWorkflow(props: React.ComponentPropsWithoutRef<'svg'>) {
           y2="23.203"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#DD2476"></stop>
+          <stop stopColor="#b89535"></stop>
           <stop offset="1" stopColor="#FF512F"></stop>
         </linearGradient>
         <linearGradient
@@ -96,7 +96,7 @@ export function BuildWorkflow(props: React.ComponentPropsWithoutRef<'svg'>) {
           y2="23.203"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#DD2476"></stop>
+          <stop stopColor="#b89535"></stop>
           <stop offset="1" stopColor="#FF512F"></stop>
         </linearGradient>
         <clipPath id="clip0_1481_2380">

@@ -13,7 +13,7 @@ export function LevelsGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
       <defs>
         <linearGradient id="paint0_linear_3297_35030" x1="12" y1="19" x2="12" y2="1" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

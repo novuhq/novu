@@ -11,7 +11,7 @@ export const JsGradient = () => {
       </g>
       <defs>
         <linearGradient id="paint0_linear_263_2800" x1="0" y1="12" x2="24" y2="12" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#DD2476" />
+          <stop stopColor="#b89535" />
           <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
         <clipPath id="clip0_263_2800">

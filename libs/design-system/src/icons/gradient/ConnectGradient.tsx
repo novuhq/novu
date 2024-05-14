@@ -20,7 +20,7 @@ export function ConnectGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

@@ -11,7 +11,7 @@ import { logo } from '../constants';
 
 export const showWelcomeScreen = (): void => {
   const textGradient = gradient('#0099F7', '#ff3432');
-  const logoGradient = gradient('#DD2476', '#FF512F');
+  const logoGradient = gradient('#b89535', '#FF512F');
 
   const items = logo.split('\n').map((row) => logoGradient(row));
 

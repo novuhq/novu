@@ -14,7 +14,7 @@ export const EditGradient = (props: React.ComponentPropsWithoutRef<'svg'>) => (
         y2="9.25"
         gradientUnits="userSpaceOnUse"
       >
-        <stop stopColor="#DD2476" />
+        <stop stopColor="#b89535" />
         <stop offset="1" stopColor="#FF512F" />
       </linearGradient>
     </defs>

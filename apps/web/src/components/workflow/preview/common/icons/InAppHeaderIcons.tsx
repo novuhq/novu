@@ -65,7 +65,7 @@ export const InAppHeaderIcons = (props) => {
       ></path>
       <defs>
         <linearGradient id="paint0_linear_174_182126" x1="48" x2="60" y1="8" y2="8" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#DD2476"></stop>
+          <stop stopColor="#b89535"></stop>
           <stop offset="1" stopColor="#FF512F"></stop>
         </linearGradient>
       </defs>

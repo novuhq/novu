@@ -19,7 +19,7 @@ export function Question(props: React.ComponentPropsWithoutRef<'svg'> & { isGrad
           y2="12.5"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor={isGradient ? '#DD2476' : 'currentColor'}></stop>
+          <stop stopColor={isGradient ? '#b89535' : 'currentColor'}></stop>
           <stop offset="1" stopColor={isGradient ? '#FF512F' : 'currentColor'}></stop>
         </linearGradient>
       </defs>

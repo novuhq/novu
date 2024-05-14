@@ -66,7 +66,7 @@ export const LetterOpened = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <stop offset="1" stopColor="#fff" />
         </linearGradient>
         <linearGradient id="h" x1="68" x2="113.058" y1="66.022" y2="66.022" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#DD2476" />
+          <stop stopColor="#b89535" />
           <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
         <filter

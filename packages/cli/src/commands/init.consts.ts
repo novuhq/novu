@@ -176,7 +176,7 @@ export const termAndPrivacyQuestions: ListQuestionOptions[] = [
 
 export function showWelcomeScreen() {
   const textGradient = gradient('#0099F7', '#ff3432');
-  const logoGradient = gradient('#DD2476', '#FF512F');
+  const logoGradient = gradient('#b89535', '#FF512F');
   const logo = `
                         @@@@@@@@@@@@@        
                 @@@       @@@@@@@@@@@        

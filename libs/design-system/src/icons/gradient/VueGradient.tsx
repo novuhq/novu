@@ -20,7 +20,7 @@ export const VueGradient = () => {
           y2="12.4688"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#DD2476" />
+          <stop stopColor="#b89535" />
           <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
         <clipPath id="clip0_271_6303">

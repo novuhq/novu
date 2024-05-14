@@ -25,7 +25,7 @@ export function MobileGradient(props: React.ComponentPropsWithoutRef<'svg'> & { 
       <defs>
         <linearGradient id="paint0_linear_440_2955" x1="15" y1="28" x2="15" y2="3" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

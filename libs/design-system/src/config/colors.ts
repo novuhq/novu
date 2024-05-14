@@ -1,5 +1,5 @@
-const gradientStart = '#FF512F';
-const gradientEnd = '#DD2476';
+const gradientStart = '#b89535';
+const gradientEnd = '#b89535';
 const error = '#E54545';
 
 export const colors = {
@@ -15,15 +15,15 @@ export const colors = {
   B40: '#525266',
   B30: '#3D3D4D',
   B20: '#292933',
-  B15: '#1E1E26',
+  B15: '#fff',
   B17: '#23232B',
   gradientStart,
   gradientEnd,
   success: '#4D9980',
   warning: '#FF8000',
   error,
-  vertical: `linear-gradient(0deg, ${gradientStart} 0%, ${gradientEnd} 100%)`,
-  horizontal: `linear-gradient(99deg, ${gradientEnd} 0% 0%, ${gradientStart} 100% 100%)`,
+  vertical: `#b89535`,
+  horizontal: `#b89535`,
   disabled: 'linear-gradient(90deg, #F5C4D8 0%, #FFCBC1 100%)',
   darkDisabled: 'linear-gradient(90deg, #58203E 0%, #612E29 100%)',
   errorGradient: `linear-gradient(0deg, ${error}33 0%, ${error}33 100%)`,

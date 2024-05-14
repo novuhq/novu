@@ -27,7 +27,7 @@ export function SmsGradient({ disabled = false, width = '31px', height = '31px' 
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

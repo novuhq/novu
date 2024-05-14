@@ -9,8 +9,8 @@ const colors = {
   B80: '#BEBECC',
   B40: '#525266',
   B20: '#292933',
-  vertical: `linear-gradient(0deg, #FF512F 0%, #DD2476 100%)`,
-  horizontal: `linear-gradient(99deg, #DD2476 0% 0%, #FF512F 100% 100%)`,
+  vertical: `linear-gradient(0deg, #FF512F 0%, #b89535 100%)`,
+  horizontal: `linear-gradient(99deg, #b89535 0% 0%, #FF512F 100% 100%)`,
 };
 
 declare global {

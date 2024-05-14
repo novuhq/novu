@@ -57,7 +57,7 @@ export function NovuProviderBase({ onClose, senderInformation, channel }: NovuPr
               href={`https://docs.novu.co/channels-and-providers/integration-store${UTM_CAMPAIGN_QUERY_PARAM}`}
               target="_blank"
               rel="noreferrer"
-              style={{ color: '#DD2476 ', textDecoration: 'underline' }}
+              style={{ color: '#b89535 ', textDecoration: 'underline' }}
             >
               our docs
             </a>

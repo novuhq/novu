@@ -10,7 +10,7 @@ export function Discord(props: React.ComponentPropsWithoutRef<'svg'>) {
       ></path>
       <defs>
         <linearGradient id="paint0_linear_2272_43212" x1="0" x2="16" y1="6" y2="6" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#DD2476"></stop>
+          <stop stopColor="#b89535"></stop>
           <stop offset="1" stopColor="#FF512F"></stop>
         </linearGradient>
       </defs>

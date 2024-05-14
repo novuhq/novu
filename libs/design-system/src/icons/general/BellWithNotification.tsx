@@ -70,7 +70,7 @@ export const BellWithNotification = (props: React.ComponentPropsWithoutRef<'svg'
           <stop offset=".743" stopColor="#FCFCFC" stopOpacity=".08" />
         </linearGradient>
         <linearGradient id="g" x1="30.98" x2="76.038" y1="36.828" y2="36.828" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#DD2476" />
+          <stop stopColor="#b89535" />
           <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
         <filter

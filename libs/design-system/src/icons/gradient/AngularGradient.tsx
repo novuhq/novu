@@ -58,7 +58,7 @@ export const AngularGradient = () => {
           gradientUnits="userSpaceOnUse"
         >
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
         <linearGradient
           id="paint1_linear_263_2791"
@@ -68,7 +68,7 @@ export const AngularGradient = () => {
           y2="12.0061"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#DD2476" />
+          <stop stopColor="#b89535" />
           <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
       </defs>

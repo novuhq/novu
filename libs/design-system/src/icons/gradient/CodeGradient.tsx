@@ -15,7 +15,7 @@ export const CodeGradient = () => {
           y2="9.80005"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#DD2476" />
+          <stop stopColor="#b89535" />
           <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
       </defs>

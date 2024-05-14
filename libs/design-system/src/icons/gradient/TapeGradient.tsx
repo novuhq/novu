@@ -10,7 +10,7 @@ export function TapeGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
       <defs>
         <linearGradient id="paint0_linear_440_3778" x1="15" y1="23.5" x2="15" y2="7.5" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

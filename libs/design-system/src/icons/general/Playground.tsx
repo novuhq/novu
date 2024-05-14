@@ -271,7 +271,7 @@ export function Playground(props: React.ComponentPropsWithoutRef<'svg'>) {
           <stop offset="1" stopColor="#fff"></stop>
         </linearGradient>
         <linearGradient id="paint15_linear_2499_183" x1="39" x2="55" y1="25" y2="25" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#DD2476"></stop>
+          <stop stopColor="#b89535"></stop>
           <stop offset="1" stopColor="#FF512F"></stop>
         </linearGradient>
         <clipPath id="clip0_2499_183">

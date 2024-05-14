@@ -13,7 +13,7 @@ export function PlusFilled(props: React.ComponentPropsWithoutRef<'svg'>) {
       />
       <defs>
         <linearGradient id="paint0_linear_375_800" x1="0" y1="12" x2="24" y2="12" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#DD2476" />
+          <stop stopColor="#b89535" />
           <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
       </defs>

@@ -32,7 +32,7 @@ export const Clock = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <stop offset="1" stopColor="#fff" />
         </linearGradient>
         <linearGradient id="c" x1="71.459" x2="125.84" y1="36.662" y2="36.662" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#DD2476" />
+          <stop stopColor="#b89535" />
           <stop offset="1" stopColor="#FF512F" />
         </linearGradient>
         <linearGradient id="d" x1="53.994" x2="53.994" y1="39.241" y2="96.788" gradientUnits="userSpaceOnUse">

@@ -10,7 +10,7 @@ export function BoltGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
       <defs>
         <linearGradient id="paint0_linear_1062_464" x1="6.75" y1="17" x2="6.75" y2="1" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

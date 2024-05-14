@@ -25,7 +25,7 @@ const NewBadge = (props) => {
           padding: 5,
           pointerEvents: 'none',
           border: 'none',
-          background: '#dd2476',
+          background: '#b89535',
           color: 'white',
           fontWeight: 'bold',
           fontSize: '12px',

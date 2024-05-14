@@ -94,7 +94,7 @@ const StyledDraggableNode = styled.div`
   &:hover {
     svg {
       stop:first-of-type {
-        stop-color: #dd2476 !important;
+        stop-color: #b89535 !important;
       }
       stop:last-child {
         stop-color: #ff512f !important;

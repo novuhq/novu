@@ -145,7 +145,7 @@ export function RunTestBell(props: React.ComponentPropsWithoutRef<'svg'>) {
           y2="20.801"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#DD2476"></stop>
+          <stop stopColor="#b89535"></stop>
           <stop offset="1" stopColor="#FF512F"></stop>
         </linearGradient>
         <clipPath id="clip0_1481_2636">

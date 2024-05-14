@@ -51,7 +51,7 @@ function chartStyles(isTriggerSent: boolean, isDark: boolean) {
       font-weight: 700;
       height: 17px;
       color: #ff512f;
-      background: -webkit-linear-gradient(90deg, #dd2476 0%, #ff512f 100%);
+      background: -webkit-linear-gradient(90deg, #b89535 0%, #ff512f 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }

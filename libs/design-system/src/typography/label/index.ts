@@ -17,7 +17,7 @@ export const Label = styled.div<{ gradientColor?: 'red' | 'blue' | 'none' }>`
       `
     background: ${
       gradientColor === 'red'
-        ? 'linear-gradient(90deg, #DD2476 0%, #FF512F 100%)'
+        ? 'linear-gradient(90deg, #b89535 0%, #FF512F 100%)'
         : 'linear-gradient(0deg, #14deeb 0%, #446edc 100%)'
     };
         

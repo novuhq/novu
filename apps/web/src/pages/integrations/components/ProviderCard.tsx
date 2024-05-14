@@ -72,8 +72,8 @@ export function ProviderCard({
 const StyledButton = styled(Button)`
   background-image: ${({ theme }) =>
     theme.colorScheme === 'dark'
-      ? `linear-gradient(0deg, ${colors.B17} 0%, ${colors.B17} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`
-      : `linear-gradient(0deg, ${colors.B98} 0%, ${colors.B98} 100%),linear-gradient(99deg,#DD2476 0% 0%, #FF512F 100% 100%)`};
+      ? `linear-gradient(0deg, ${colors.B17} 0%, ${colors.B17} 100%),linear-gradient(99deg,#b89535 0% 0%, #FF512F 100% 100%)`
+      : `linear-gradient(0deg, ${colors.B98} 0%, ${colors.B98} 100%),linear-gradient(99deg,#b89535 0% 0%, #FF512F 100% 100%)`};
 `;
 
 const StyledGroup = styled(Group)`

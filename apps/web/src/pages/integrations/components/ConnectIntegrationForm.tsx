@@ -224,7 +224,7 @@ export function ConnectIntegrationForm({
           <InlineDiv>
             <span>
               Take a look at{' '}
-              <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#DD2476 ' }}>
+              <a href={provider?.docReference} target="_blank" rel="noreferrer" style={{ color: '#b89535 ' }}>
                 our guide
               </a>{' '}
               for how to connect <strong>{provider?.displayName}</strong>.

@@ -15,7 +15,7 @@ export function TurnOnGradient({ stopColor, offSetStopColor, ...props }: ISvgPro
       <defs>
         <linearGradient id="paint0_linear_1020_1949" x1="11" y1="23" x2="11" y2="1" gradientUnits="userSpaceOnUse">
           <stop stopColor={stopColor ?? '#FF512F'} />
-          <stop offset="1" stopColor={offSetStopColor ?? '#DD2476'} />
+          <stop offset="1" stopColor={offSetStopColor ?? '#b89535'} />
         </linearGradient>
       </defs>
     </svg>

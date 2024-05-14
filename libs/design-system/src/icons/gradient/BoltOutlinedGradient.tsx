@@ -19,7 +19,7 @@ export function BoltOutlinedGradient(props: React.ComponentPropsWithoutRef<'svg'
           y2="15.667"
           gradientUnits="userSpaceOnUse"
         >
-          <stop stopColor="#DD2476"></stop>
+          <stop stopColor="#b89535"></stop>
           <stop offset="1" stopColor="#FF512F"></stop>
         </linearGradient>
       </defs>

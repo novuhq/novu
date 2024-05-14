@@ -27,7 +27,7 @@ export function GlobeGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
       <defs>
         <linearGradient id="paint0_linear_240_2434" x1="15.75" y1="28" x2="15.75" y2="3" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
         <linearGradient
           id="paint1_linear_240_2434"
@@ -35,13 +35,14 @@ export function GlobeGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
           y1="16.5"
           x2="15.75"
           y2="15.5"
-          gradientUnits="userSpaceOnUse">
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
         <linearGradient id="paint2_linear_240_2434" x1="15.75" y1="28" x2="15.75" y2="3" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

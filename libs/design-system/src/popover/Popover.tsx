@@ -78,7 +78,7 @@ export const Popover = ({
           {url && (
             <a
               href={url}
-              style={{ color: '#DD2476', textDecoration: 'underline' }}
+              style={{ color: '#b89535', textDecoration: 'underline' }}
               onClick={onUrlClick}
               target="_blank"
               rel="noreferrer"

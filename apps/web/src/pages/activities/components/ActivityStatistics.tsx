@@ -59,7 +59,7 @@ const StyledNumber = styled.div<{ isColored: boolean }>`
   text-align: left;
   margin-bottom: 2px;
   background: ${({ isColored }: { isColored: boolean }) =>
-    isColored ? '-webkit-linear-gradient(90deg, #dd2476 0%, #ff512f 100%)' : colors.B60};
+    isColored ? '-webkit-linear-gradient(90deg, #b89535 0%, #ff512f 100%)' : colors.B60};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 `;

@@ -27,7 +27,7 @@ export const Star = (props: React.ComponentPropsWithoutRef<'svg'>) => {
         />
         <defs>
           <linearGradient id="a" x1="0" x2="10" y1="5.05" y2="5.05" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#DD2476" />
+            <stop stopColor="#b89535" />
             <stop offset="1" stopColor="#FF512F" />
           </linearGradient>
         </defs>

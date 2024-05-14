@@ -190,8 +190,8 @@ export function SideNav({}: Props) {
       }}
     >
       <Navbar.Section sx={{ marginBottom: '24px', padding: '0 24px' }}>
-        <Link to="/">
-          <NovuLogo />
+        <Link to="/" style={{ textAlign: 'center', display: 'flex', justifyContent: 'center' }}>
+          <img src="/static/images/logo.png" alt="NEOM Logo" width="auto" height="80px" style={{ height: '80px' }} />{' '}
         </Link>
       </Navbar.Section>
       <Navbar.Section sx={{ overflowY: 'auto', flex: 1, padding: '0 24px' }}>

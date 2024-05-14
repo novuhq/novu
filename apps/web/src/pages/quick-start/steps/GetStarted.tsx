@@ -75,7 +75,7 @@ function LearnMoreRef() {
   return (
     <a
       href={`https://docs.novu.co/quickstarts/01-introduction${UTM_CAMPAIGN_QUERY_PARAM}`}
-      style={{ color: '#DD2476', textDecoration: 'underline', fontSize: '18px' }}
+      style={{ color: '#b89535', textDecoration: 'underline', fontSize: '18px' }}
       onClick={() => handleOnClick}
       target="_blank"
       rel="noreferrer"

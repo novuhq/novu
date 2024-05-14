@@ -21,7 +21,7 @@ export const LEGACY_COLOR_TOKENS = defineTokens.colors({
     B17: { value: '#23232B', description: '@deprecated', type: 'color' },
     gradientStart: { value: '#FF512F', description: '@deprecated', type: 'color' },
     gradientMiddle: { value: '#ef3f5a', description: '@deprecated', type: 'color' },
-    gradientEnd: { value: '#DD2476', description: '@deprecated', type: 'color' },
+    gradientEnd: { value: '#b89535', description: '@deprecated', type: 'color' },
     success: { value: '#4D9980', description: '@deprecated', type: 'color' },
     warning: { value: '#FF8000', description: '@deprecated', type: 'color' },
     error: { value: '#E54545', description: '@deprecated', type: 'color' },

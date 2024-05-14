@@ -20,7 +20,7 @@ export function CompassGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
       <defs>
         <linearGradient id="paint0_linear_240_2428" x1="15.25" y1="28" x2="15.25" y2="3" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
         <linearGradient
           id="paint1_linear_240_2428"
@@ -28,9 +28,10 @@ export function CompassGradient(props: React.ComponentPropsWithoutRef<'svg'>) {
           y1="20.7999"
           x2="15.2502"
           y2="10.2"
-          gradientUnits="userSpaceOnUse">
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

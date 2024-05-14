@@ -14,11 +14,11 @@ export const ReactGradient = () => {
       <defs>
         <linearGradient id="paint0_linear_263_2786" x1="12" y1="22.5" x2="12" y2="1.5" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
         <linearGradient id="paint1_linear_263_2786" x1="12" y1="22.5" x2="12" y2="1.5" gradientUnits="userSpaceOnUse">
           <stop stopColor="#FF512F" />
-          <stop offset="1" stopColor="#DD2476" />
+          <stop offset="1" stopColor="#b89535" />
         </linearGradient>
       </defs>
     </svg>

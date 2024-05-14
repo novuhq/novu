@@ -409,7 +409,7 @@ const Wrapper = styled.div<{ dark: boolean }>`
 
   [data-template-store-editor] [data-workflow-node-icon] {
     stop:first-of-type {
-      stop-color: #dd2476 !important;
+      stop-color: #b89535 !important;
     }
     stop:last-child {
       stop-color: #ff512f !important;

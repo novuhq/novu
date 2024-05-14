@@ -14,8 +14,8 @@ export const colors = {
   B17: '#23232B',
   success: '#4D9980',
   error: '#E54545',
-  vertical: 'linear-gradient(0deg,#FF512F 0%,#DD2476 100%)',
-  horizontal: 'linear-gradient(99deg,#DD2476 0% 0%,#FF512F 100% 100%)',
+  vertical: 'linear-gradient(0deg,#FF512F 0%,#b89535 100%)',
+  horizontal: 'linear-gradient(99deg,#b89535 0% 0%,#FF512F 100% 100%)',
   loader: '#ef3f5a',
 };
 

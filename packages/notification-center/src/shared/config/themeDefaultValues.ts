@@ -120,12 +120,12 @@ const defaultCommonTheme: ICommonTheme = {
 };
 
 const defaultNotificationBellLightTheme: INotificationBellColors = {
-  unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+  unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#b89535' },
   unseenBadgeBackgroundColor: colors.white,
 };
 
 const defaultNotificationBellDarkTheme: INotificationBellColors = {
-  unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#DD2476' },
+  unseenBadgeColor: { stopColor: '#FF512F', stopColorOffset: '#b89535' },
   unseenBadgeBackgroundColor: colors.B15,
 };
 
