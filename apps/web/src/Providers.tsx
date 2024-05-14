@@ -20,7 +20,6 @@ const queryClient = new QueryClient({
     queries: {
       queryFn: defaultQueryFn as any,
       refetchOnWindowFocus: false,
-      retry: false,
     },
   },
 });
