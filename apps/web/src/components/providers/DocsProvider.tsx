@@ -21,12 +21,14 @@ interface IDocsContext {
   setPath: (path: string) => void;
   toggle: () => void;
   enabled: boolean;
+  path: string;
 }
 
 const DocsContext = React.createContext<IDocsContext>({
   setPath: () => {},
   toggle: () => {},
   enabled: false,
+  path: '',
 });
 
 export const useDocsContext = (): IDocsContext => useContext(DocsContext);
@@ -54,6 +56,7 @@ export const DocsProvider = ({ children }) => {
   useEffect(() => {
     return () => {
       setPath('');
+      setVoted('');
     };
   }, [pathname]);
 
@@ -76,6 +79,7 @@ export const DocsProvider = ({ children }) => {
         setPath,
         toggle,
         enabled: path.length > 0,
+        path,
       }}
     >
       <Modal
@@ -85,11 +89,19 @@ export const DocsProvider = ({ children }) => {
           root: {
             zIndex: 10003,
           },
+          inner: {
+            padding: '24px',
+          },
+          body: {
+            height: '100%',
+            maxHeight: '100%',
+          },
           modal: {
             width: 800,
             padding: '24px !important',
             borderRadius: 12,
             position: 'relative',
+            height: '100%',
           },
         }}
         overflow="inside"

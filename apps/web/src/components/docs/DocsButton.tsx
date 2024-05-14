@@ -1,5 +1,6 @@
 import { ActionIcon, Popover, useMantineColorScheme } from '@mantine/core';
 import { Button, colors, IconOutlineMenuBook, QuickGuide, shadows, Tooltip } from '@novu/design-system';
+import { useSegment } from '@novu/shared-web';
 import { useEffect, useState } from 'react';
 import { css } from '../../styled-system/css';
 import { Flex, styled } from '../../styled-system/jsx';
@@ -12,8 +13,9 @@ const Text = styled('p', text);
 export const DocsButton = () => {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
-  const { toggle, enabled } = useDocsContext();
+  const { toggle, enabled, path } = useDocsContext();
   const [opened, setOpened] = useState(false);
+  const segment = useSegment();
 
   const onClose = () => {
     setOpened(false);
@@ -28,10 +30,18 @@ export const DocsButton = () => {
       return;
     }
     setOpened(false);
-  }, [enabled]);
+    segment.track('Inline docs tooltip shown', {
+      documentationPage: path,
+      pageURL: window.location.href,
+    });
+  }, [enabled, path, segment]);
+
+  if (!enabled) {
+    return null;
+  }
 
   return (
-    <Tooltip disabled={opened} label={enabled ? 'Inline documentation' : 'There is no documentation for this page'}>
+    <Tooltip disabled={opened} label="Inline documentation">
       <div>
         <Popover
           closeOnClickOutside={false}
@@ -42,7 +52,7 @@ export const DocsButton = () => {
           withArrow
         >
           <Popover.Target>
-            <ActionIcon variant="transparent" disabled={!enabled} onClick={() => toggle()}>
+            <ActionIcon variant="transparent" onClick={() => toggle()}>
               <IconOutlineMenuBook />
             </ActionIcon>
           </Popover.Target>
