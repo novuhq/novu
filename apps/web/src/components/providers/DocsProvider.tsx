@@ -61,6 +61,15 @@ export const DocsProvider = ({ children }) => {
     setOpen(!open);
   };
 
+  const onVoteClick = (vote: string) => () => {
+    segment.track('Inline docs voting used', {
+      documentationPage: path,
+      pageURL: window.location.href,
+      vote,
+    });
+    setVoted(vote);
+  };
+
   return (
     <DocsContext.Provider
       value={{
@@ -144,14 +153,7 @@ export const DocsProvider = ({ children }) => {
                 border: 'none',
               }}
               variant="transparent"
-              onClick={() => {
-                segment.track('Inline docs voting used', {
-                  documentationPage: path,
-                  pageURL: window.location.href,
-                  vote: 'up',
-                });
-                setVoted('up');
-              }}
+              onClick={onVoteClick('up')}
             >
               <IconThumbUpAlt color={voted == 'up' ? 'white' : undefined} size={20} />
             </ActionIcon>
@@ -162,14 +164,7 @@ export const DocsProvider = ({ children }) => {
                 border: 'none',
               }}
               variant="transparent"
-              onClick={() => {
-                segment.track('Inline docs voting used', {
-                  documentationPage: path,
-                  pageURL: window.location.href,
-                  vote: 'down',
-                });
-                setVoted('down');
-              }}
+              onClick={onVoteClick('down')}
             >
               <IconThumbDownAlt color={voted == 'down' ? 'white' : undefined} size={20} />
             </ActionIcon>
