@@ -30,7 +30,7 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
   );
 
   useEffect(() => {
-    segment.track('Open Inline Documentation', {
+    segment.track('Inline docs opened', {
       documentationPage: path,
       pageURL: window.location.href,
     });

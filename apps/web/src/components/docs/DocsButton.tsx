@@ -20,6 +20,10 @@ export const DocsButton = () => {
   const onClose = () => {
     setOpened(false);
     localStorage.setItem('inline-docs-intro', 'false');
+    segment.track('Inline docs tooltip shown', {
+      documentationPage: path,
+      pageURL: window.location.href,
+    });
   };
 
   useEffect(() => {
@@ -30,11 +34,7 @@ export const DocsButton = () => {
       return;
     }
     setOpened(false);
-    segment.track('Inline docs tooltip shown', {
-      documentationPage: path,
-      pageURL: window.location.href,
-    });
-  }, [enabled, path, segment]);
+  }, [enabled]);
 
   if (!enabled) {
     return null;
