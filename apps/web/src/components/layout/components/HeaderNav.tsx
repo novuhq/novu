@@ -116,7 +116,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
           })}
           radius="xl"
           size={45}
-          src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}
+          src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.webp'}
         />
         <div style={{ flex: 1 }}>
           <Text data-test-id="header-dropdown-username" rows={1}>
@@ -198,7 +198,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
                   size={24}
                   radius="xl"
                   data-test-id="header-profile-avatar"
-                  src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}
+                  src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.webp'}
                 />
               </ActionIcon>
             }
