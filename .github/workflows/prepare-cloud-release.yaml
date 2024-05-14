@@ -59,7 +59,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*"
+              "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*",
               "blocks": [
                 {
                   "type": "section",
