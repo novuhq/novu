@@ -285,7 +285,7 @@ describe('Billing', function () {
     cy.getByTestId('plan-business-current').should('exist');
     cy.getByTestId('plan-business-add-payment').should('exist');
     cy.getByTestId('free-trial-plan-widget').should('have.text', '10 days left on your trial');
-    cy.getByTestId('free-trial-widget-text').should('have.text', '10 days left on your Business trial');
+    cy.getByTestId('free-trial-widget-text').should('have.text', '10 days left on your free trial');
     cy.getByTestId('free-trial-banner').should('exist');
 
     cy.intercept('GET', '**/v1/billing/subscription', {
