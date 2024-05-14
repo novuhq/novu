@@ -89,7 +89,7 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
         justify="center"
         align="center"
       >
-        <Text>We could not load the documenation for you, please try again.</Text>
+        <Text>We could not load the documentation for you, please try again.</Text>
         {children}
       </Flex>
     );

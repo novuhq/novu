@@ -666,7 +666,8 @@
     "automerge",
     "novui",
     "tsup",
-    "pandabox"
+    "pandabox",
+    "hljs"
   ],
   "flagWords": [],
   "patterns": [
