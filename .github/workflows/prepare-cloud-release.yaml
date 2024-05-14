@@ -23,8 +23,8 @@ jobs:
       - name: Set output variables
         id: output-variables
         run: |
-          echo "::set-output name=date_humanized::$(date +'%Y-%m-%d %H:%M')"
-          echo "::set-output name=branch_name::release_$(date +'%Y_%m_%d_%H_%M')"
+          echo "date_humanized=$(date +'%Y-%m-%d %H:%M')" >> "$GITHUB_OUTPUT"
+          echo "branch_name=$(release_$(date +'%Y_%m_%d_%H_%M'))" >> "$GITHUB_OUTPUT"
 
       - name: Create Novu Cloud  release branch
         run: git checkout -b ${{ steps.output-variables.outputs.branch_name }}
@@ -33,23 +33,24 @@ jobs:
         run: git push origin ${{ steps.output-variables.outputs.branch_name }}
 
       - name: Create Novu Cloud release PR
+        id: create-pr
         run: |
-          gh pr create --base prod --head ${{ steps.output-variables.outputs.branch_name }} --title "Release ${{ steps.output-variables.outputs.date_humanized }}" --body "Automated daily production Novu Cloud release"
+          echo "pr_url=$(gh pr create --base prod --head ${{steps.output-variables.outputs.branch_name}} --title 'Release ${{steps.output-variables.outputs.date_humanized}}' --body 'Automated daily production Novu Cloud release')" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable PR automerge
-        uses: peter-evans/enable-pull-request-automerge@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-number: ${{ steps.open-pr.outputs.pr_number }}
-          merge-method: merge
+        id: enable-pr-automerge
+        run: |
+          gh pr merge --auto -r ${{steps.create-pr.outputs.pr_url}}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Generate commit log
         id: commit-log
         run: |
           echo 'COMMIT_LOG<<EOF' >> $GITHUB_ENV
-          echo $(git log --format="format:%h %s (@%aL)\n" origin/prod..origin/${{ steps.output-variables.outputs.branch_name }} | sed "s/\"/'/g") >> $GITHUB_ENV
+          echo $(git log --format="format:%h %s (@%aL)\n" origin/prod..origin/${{steps.output-variables.outputs.branch_name}} | sed "s/\"/'/g") >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
 
       - name: Send commit log to Slack
@@ -63,10 +64,10 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*<${{steps.open-pr.outputs.pr_url}}|Novu Cloud Release: ${{ steps.output-variables.outputs.date_humanized }}>*\n```${{ env.COMMIT_LOG }}```"
+                    "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{env.COMMIT_LOG}}```"
                   }
                 }
               ]
             }
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS }}
+          SLACK_WEBHOOK_URL: ${{secrets.SLACK_WEBHOOK_URL_ENG_FEED_DEPLOYMENTS}}
