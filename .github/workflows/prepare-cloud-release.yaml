@@ -8,7 +8,7 @@ on:
     - cron: "0 9 * * 1,2,3,4,5"
 
 jobs:
-  daily-release:
+  prepare-cloud-release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -59,7 +59,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*",
+              "text": "*<${{steps.create-pr.outputs.pr_url}}|Novu Cloud Release: ${{steps.output-variables.outputs.date_humanized }}>*\n```${{env.COMMIT_LOG}}```",
               "blocks": [
                 {
                   "type": "section",
