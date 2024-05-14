@@ -22,6 +22,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "date-fns": "^2.29.2",
+    "mongoose": "^7.5.0",
     "rxjs": "7.8.1",
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",

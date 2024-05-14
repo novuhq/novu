@@ -1893,6 +1893,9 @@ importers:
       date-fns:
         specifier: ^2.29.2
         version: 2.29.3
+      mongoose:
+        specifier: ^7.5.0
+        version: 7.5.2
       rxjs:
         specifier: 7.8.1
         version: 7.8.1
@@ -3492,7 +3495,7 @@ importers:
         version: 0.23.1
       '@novu/studio':
         specifier: ^0.0.1-alpha.87
-        version: 0.0.1-alpha.90(@ant-design/icons@4.6.2)(@babel/core@7.24.4)(@chakra-ui/icons@2.1.1)(@chakra-ui/react@1.8.9)(@chakra-ui/system@2.6.2)(antd@4.24.8)(chakra-react-select@4.7.6)(dayjs@1.11.9)(webpack@5.78.0)
+        version: 0.0.1-alpha.90(@ant-design/icons@4.6.2)(@babel/core@7.24.4)(@chakra-ui/icons@2.1.1)(@chakra-ui/react@1.8.9)(@chakra-ui/system@2.6.2)(antd@4.24.8)(chakra-react-select@4.7.6)(dayjs@1.11.10)(webpack@5.78.0)
       '@segment/analytics-node':
         specifier: ^1.1.4
         version: 1.1.4
@@ -16054,7 +16057,7 @@ packages:
       ajv: 6.12.6
       debug: 4.3.4(supports-color@8.1.1)
       espree: 7.3.1
-      globals: 13.23.0
+      globals: 13.24.0
       ignore: 4.0.6
       import-fresh: 3.3.0
       js-yaml: 3.14.1
@@ -19556,7 +19559,7 @@ packages:
       - debug
     dev: false
 
-  /@novu/studio@0.0.1-alpha.90(@ant-design/icons@4.6.2)(@babel/core@7.24.4)(@chakra-ui/icons@2.1.1)(@chakra-ui/react@1.8.9)(@chakra-ui/system@2.6.2)(antd@4.24.8)(chakra-react-select@4.7.6)(dayjs@1.11.9)(webpack@5.78.0):
+  /@novu/studio@0.0.1-alpha.90(@ant-design/icons@4.6.2)(@babel/core@7.24.4)(@chakra-ui/icons@2.1.1)(@chakra-ui/react@1.8.9)(@chakra-ui/system@2.6.2)(antd@4.24.8)(chakra-react-select@4.7.6)(dayjs@1.11.10)(webpack@5.78.0):
     resolution: {integrity: sha512-6khD9K9QvsWEPhCk403YTCjeujZPAdqtAwEMCSGtP/6k5UJzVok6Ydl60xNMRS3qLebULQj1ZgEbegN9rX0yog==}
     engines: {node: '>=18.17.0'}
     hasBin: true
@@ -19569,7 +19572,7 @@ packages:
       '@mantine/spotlight': 7.6.2(@mantine/core@7.6.2)(@mantine/hooks@7.6.2)(react-dom@18.2.0)(react@18.2.0)
       '@microlink/react-json-view': 1.23.0(react-dom@18.2.0)(react@18.2.0)
       '@next/bundle-analyzer': 14.2.3
-      '@rjsf/antd': 5.18.3(@ant-design/icons@4.6.2)(@rjsf/core@5.17.1)(@rjsf/utils@5.17.1)(antd@4.24.8)(dayjs@1.11.9)(react-dom@18.2.0)(react@18.2.0)
+      '@rjsf/antd': 5.18.3(@ant-design/icons@4.6.2)(@rjsf/core@5.17.1)(@rjsf/utils@5.17.1)(antd@4.24.8)(dayjs@1.11.10)(react-dom@18.2.0)(react@18.2.0)
       '@rjsf/chakra-ui': 5.17.1(@chakra-ui/icons@2.1.1)(@chakra-ui/react@1.8.9)(@chakra-ui/system@2.6.2)(@rjsf/core@5.17.1)(@rjsf/utils@5.17.1)(chakra-react-select@4.7.6)(framer-motion@11.2.0)(react-dom@18.2.0)(react@18.2.0)
       '@rjsf/core': 5.17.1(@rjsf/utils@5.17.1)(react@18.2.0)
       '@rjsf/utils': 5.17.1(react@18.2.0)
@@ -24678,7 +24681,7 @@ packages:
       react: 17.0.2
     dev: false
 
-  /@rjsf/antd@5.18.3(@ant-design/icons@4.6.2)(@rjsf/core@5.17.1)(@rjsf/utils@5.17.1)(antd@4.24.8)(dayjs@1.11.9)(react-dom@18.2.0)(react@18.2.0):
+  /@rjsf/antd@5.18.3(@ant-design/icons@4.6.2)(@rjsf/core@5.17.1)(@rjsf/utils@5.17.1)(antd@4.24.8)(dayjs@1.11.10)(react-dom@18.2.0)(react@18.2.0):
     resolution: {integrity: sha512-eKuxNGXBTwq5hqdqSpbkEUxzX5224y42EHJgiP0Eu3xDj74ktAjBHvBHfX4Fa76Gjwfv+Dkj/N1wg1+G+iBlZw==}
     engines: {node: '>=14'}
     peerDependencies:
@@ -24694,7 +24697,7 @@ packages:
       '@rjsf/utils': 5.17.1(react@18.2.0)
       antd: 4.24.8(react-dom@18.2.0)(react@18.2.0)
       classnames: 2.5.1
-      dayjs: 1.11.9
+      dayjs: 1.11.10
       lodash: 4.17.21
       lodash-es: 4.17.21
       rc-picker: 2.7.6(react-dom@18.2.0)(react@18.2.0)
@@ -38984,7 +38987,6 @@ packages:
 
   /dayjs@1.11.10:
     resolution: {integrity: sha512-vjAczensTgRcqDERK0SR2XMwsF/tSvnvlv6VcF2GIhg6Sx4yOIt/irsr1RDJsKiIyBzJDpCoXiWWq28MqH2cnQ==}
-    dev: true
 
   /dayjs@1.11.9:
     resolution: {integrity: sha512-QvzAURSbQ0pKdIye2txOzNaHmxtUBXerpY0FJsFXUMKbIZeFm5ht1LS/jFsrncjnmtv8HsG0W2g6c0zUjZWmpA==}
@@ -41436,7 +41438,7 @@ packages:
       file-entry-cache: 6.0.1
       functional-red-black-tree: 1.0.1
       glob-parent: 5.1.2
-      globals: 13.23.0
+      globals: 13.24.0
       ignore: 4.0.6
       import-fresh: 3.3.0
       imurmurhash: 0.1.4
@@ -41450,7 +41452,7 @@ packages:
       optionator: 0.9.3
       progress: 2.0.3
       regexpp: 3.2.0
-      semver: 7.5.4
+      semver: 7.6.2
       strip-ansi: 6.0.1
       strip-json-comments: 3.1.1
       table: 6.8.1
@@ -57669,7 +57671,7 @@ packages:
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
       '@babel/runtime': 7.23.2
-      '@emotion/cache': 11.10.7
+      '@emotion/cache': 11.11.0
       '@emotion/react': 11.10.6(@types/react@17.0.62)(react@17.0.2)
       '@floating-ui/dom': 1.5.3
       '@types/react-transition-group': 4.4.10
@@ -57677,7 +57679,7 @@ packages:
       prop-types: 15.8.1
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
-      react-transition-group: 4.4.2(react-dom@17.0.2)(react@17.0.2)
+      react-transition-group: 4.4.5(react-dom@17.0.2)(react@17.0.2)
       use-isomorphic-layout-effect: 1.1.2(@types/react@17.0.62)(react@17.0.2)
     transitivePeerDependencies:
       - '@types/react'
@@ -57690,7 +57692,7 @@ packages:
       react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0
     dependencies:
       '@babel/runtime': 7.23.2
-      '@emotion/cache': 11.10.7
+      '@emotion/cache': 11.11.0
       '@emotion/react': 11.10.6(react@18.2.0)
       '@floating-ui/dom': 1.5.3
       '@types/react-transition-group': 4.4.10
@@ -57698,7 +57700,7 @@ packages:
       prop-types: 15.8.1
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
-      react-transition-group: 4.4.2(react-dom@18.2.0)(react@18.2.0)
+      react-transition-group: 4.4.5(react-dom@18.2.0)(react@18.2.0)
       use-isomorphic-layout-effect: 1.1.2(react@18.2.0)
     transitivePeerDependencies:
       - '@types/react'
@@ -57919,6 +57921,20 @@ packages:
       prop-types: 15.8.1
       react: 18.2.0
       react-dom: 18.2.0(react@18.2.0)
+    dev: false
+
+  /react-transition-group@4.4.5(react-dom@17.0.2)(react@17.0.2):
+    resolution: {integrity: sha512-pZcd1MCJoiKiBR2NRxeCRg13uCXbydPnmB4EOeRrY7480qNWO8IIgQG6zlDkm6uRMsURXPuKq0GWtiM59a5Q6g==}
+    peerDependencies:
+      react: '>=16.6.0'
+      react-dom: '>=16.6.0'
+    dependencies:
+      '@babel/runtime': 7.23.2
+      dom-helpers: 5.2.1
+      loose-envify: 1.4.0
+      prop-types: 15.8.1
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
     dev: false
 
   /react-transition-group@4.4.5(react-dom@18.2.0)(react@18.2.0):
@@ -58914,11 +58930,11 @@ packages:
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
-      '@babel/code-frame': 7.24.2
+      '@babel/code-frame': 7.21.4
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.22.0
+      terser: 5.16.9
     dev: true
 
   /rollup-plugin-terser@7.0.2(rollup@3.20.2):
