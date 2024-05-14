@@ -140,8 +140,6 @@ describe('TriggerMulticast', () => {
   }
 
   beforeEach(async () => {
-    process.env.LAUNCH_DARKLY_SDK_KEY = '';
-    process.env.IS_TOPIC_NOTIFICATION_ENABLED = 'true';
     session = new UserSession();
     await session.initialize();
     template = await session.createTemplate();

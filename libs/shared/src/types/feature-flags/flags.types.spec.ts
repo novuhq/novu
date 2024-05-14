@@ -44,21 +44,36 @@ enum ValidFlagsEnum {
 }
 testFlagEnumValidity(ValidFlagsEnum);
 
-enum InvalidKeyFlagsEnum {
-  IS_SOMETHING_ENABLED = 'IS_SOMETHING_ENABLED',
-  INVALID_ENABLED = 'IS_INVALID_ENABLED',
+enum InvalidFlagsEnum {
+  INVALID_ENABLED = 'INVALID_ENABLED',
 }
-// @ts-expect-error - Invalid key - INVALID_ENABLED
-testFlagEnumValidity(InvalidKeyFlagsEnum);
-enum InvalidValueFlagsEnum {
-  IS_SOMETHING_ENABLED = 'IS_SOMETHING_ENABLED',
-  IS_INVALID_ENABLED = 'INVALID_ENABLED',
+// @ts-expect-error - not matching pattern
+testFlagEnumValidity(InvalidFlagsEnum);
+
+enum NonMatchingKeyValueEnum {
+  IS_SOMETHING_ENABLED = 'IS_SOMETHING_ELSE_ENABLED',
 }
-// @ts-expect-error - Invalid value on IS_INVALID_ENABLED: 'INVALID_ENABLED'
-testFlagEnumValidity(InvalidValueFlagsEnum);
+
+// Ensure that the keys and values of FeatureFlagsKeysEnum match
+type ValidateNonMatchingKeyValueEnum = {
+  [K in keyof typeof NonMatchingKeyValueEnum]: K extends IFlagKey ? K : `Value doesn't match key`;
+};
+// @ts-expect-error - non matching key-value pair in enum
+const validateNonMatchingKeyValueEnum: ValidateNonMatchingKeyValueEnum = NonMatchingKeyValueEnum;
 
 /**
  * Verifying declared FlagEnums
  */
+// Ensure that the keys and values of FeatureFlagsKeysEnum match
+type ValidateFeatureFlagsKeysEnum = {
+  [K in keyof typeof FeatureFlagsKeysEnum]: K extends IFlagKey ? K : `Value doesn't match key`;
+};
+const validateFeatureFlagsKeysEnum: ValidateFeatureFlagsKeysEnum = FeatureFlagsKeysEnum;
 testFlagEnumValidity(FeatureFlagsKeysEnum);
+
+// Ensure that the keys and values of SystemCriticalFlagsEnum match
+type ValidateSystemCriticalFlagsEnum = {
+  [K in keyof typeof SystemCriticalFlagsEnum]: K extends IFlagKey ? K : `Value doesn't match key`;
+};
+const validateSystemCriticalFlagsEnum: ValidateSystemCriticalFlagsEnum = SystemCriticalFlagsEnum;
 testFlagEnumValidity(SystemCriticalFlagsEnum);

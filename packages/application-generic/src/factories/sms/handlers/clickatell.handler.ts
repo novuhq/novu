@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { ClickatellSmsProvider } from '@novu/clickatell';
+import { ClickatellSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class ClickatellHandler extends BaseSmsHandler {

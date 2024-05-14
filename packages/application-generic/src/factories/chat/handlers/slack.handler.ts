@@ -1,6 +1,6 @@
 import { ICredentials } from '@novu/shared';
 import { ChannelTypeEnum } from '@novu/stateless';
-import { SlackProvider } from '@novu/slack';
+import { SlackProvider } from '@novu/providers';
 
 import { BaseChatHandler } from './base.handler';
 

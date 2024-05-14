@@ -14,6 +14,7 @@ on:
       - 'apps/api/**'
       - 'libs/dal/**'
       - 'libs/shared/**'
+      - 'packages/application-generic/**'
 env:
   TF_WORKSPACE: novu-dev
 

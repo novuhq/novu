@@ -1,4 +1,4 @@
-import { MaqsamSmsProvider } from '@novu/maqsam';
+import { MaqsamSmsProvider } from '@novu/providers';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 

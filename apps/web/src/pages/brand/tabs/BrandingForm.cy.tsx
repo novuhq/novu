@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { IOrganizationEntity } from '@novu/shared';
 
-import { BrandingForm } from './BrandingForm';
+import { BrandingFormRenderer } from './BrandingForm';
 import { TestWrapper } from '../../../testing';
 import { Outlet, Route, Routes } from 'react-router-dom';
 
@@ -26,7 +26,7 @@ const BrandingFormRoute = ({ organization = undefined }: { organization?: IOrgan
   return (
     <Routes>
       <Route path="/" element={<Outlet context={{ currentOrganization: organization }} />}>
-        <Route index element={<BrandingForm />} />
+        <Route index element={<BrandingFormRenderer organization={organization} />} />
       </Route>
     </Routes>
   );

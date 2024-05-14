@@ -99,7 +99,7 @@ export class DistributedLockService {
           await this.distributedLock.quit();
         } catch (error: any) {
           Logger.verbose(
-            `Error quiting redlock: ${error.message}`,
+            `Error quitting redlock: ${error.message}`,
             LOG_CONTEXT
           );
         } finally {

@@ -15,16 +15,12 @@ import {
   SubscriberSourceEnum,
 } from '@novu/shared';
 
-import { ProcessSubscriber } from '../process-subscriber';
-import { PinoLogger } from '../../logging';
 import { Instrument, InstrumentUsecase } from '../../instrumentation';
 import {
   buildNotificationTemplateIdentifierKey,
   CachedEntity,
 } from '../../services/cache';
 import { ApiException } from '../../utils/exceptions';
-import { ProcessTenant } from '../process-tenant';
-import { MapTriggerRecipients } from '../map-trigger-recipients/map-trigger-recipients.use-case';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerBroadcastCommand } from './trigger-broadcast.command';
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
@@ -35,14 +31,10 @@ const QUEUE_CHUNK_SIZE = Number(process.env.BROADCAST_QUEUE_CHUNK_SIZE) || 100;
 @Injectable()
 export class TriggerBroadcast {
   constructor(
-    private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
     private subscriberRepository: SubscriberRepository,
     private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private processTenant: ProcessTenant,
-    private logger: PinoLogger,
-    private mapTriggerRecipients: MapTriggerRecipients,
     private subscriberProcessQueueService: SubscriberProcessQueueService
   ) {}
 

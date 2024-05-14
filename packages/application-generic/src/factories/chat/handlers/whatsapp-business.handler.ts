@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { WhatsappBusinessChatProvider } from '@novu/whatsapp-business';
+import { WhatsappBusinessChatProvider } from '@novu/providers';
 import { BaseChatHandler } from './base.handler';
 
 export class WhatsAppBusinessHandler extends BaseChatHandler {
