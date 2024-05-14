@@ -59,7 +59,7 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
     const images = Array.from(docs.getElementsByTagName('img'));
 
     for (const img of images) {
-      if (img.src.includes('https://mintlify.s3-us-west-1.amazonaws.com')) {
+      if (img.src.startsWith('https://mintlify.s3-us-west-1.amazonaws.com')) {
         continue;
       }
 
