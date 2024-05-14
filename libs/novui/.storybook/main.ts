@@ -1,10 +1,9 @@
-import { dirname, join } from 'path';
 import { StorybookConfig } from '@storybook/react-vite';
 
 export default {
   stories: ['../src/**/*.stories.mdx', '../src/**/*.stories.@(js|jsx|ts|tsx)'],
 
-  addons: [getAbsolutePath('storybook-dark-mode'), getAbsolutePath('@storybook/addon-mdx-gfm')],
+  addons: ['storybook-dark-mode', '@storybook/addon-controls'],
 
   framework: {
     name: '@storybook/react-vite',
@@ -12,12 +11,9 @@ export default {
   },
 
   docs: {
-    autodocs: true,
+    // TODO: re-enable docs when we decide how to incorporate them
+    autodocs: false,
   },
 
   staticDirs: ['./public'],
 } satisfies StorybookConfig;
-
-function getAbsolutePath(value) {
-  return dirname(require.resolve(join(value, 'package.json')));
-}

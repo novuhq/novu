@@ -1,20 +1,15 @@
 import React from 'react';
-// import { addons } from '@storybook/preview-api';
-// import { DARK_MODE_EVENT_NAME } from 'storybook-dark-mode';
-// import { ColorSchemePreferenceEnum, useLocalThemePreference } from '@novu/shared-web';
 import { lightTheme, darkTheme } from './NovuTheme';
 import { Parameters, Decorator } from '@storybook/react';
+import { css } from '../styled-system/css';
 
 // Bring in the Panda-generated stylesheets
 import '../src/index.css';
 
-// import '../styled-system/styles.css';
-
 export const parameters: Parameters = {
   layout: 'fullscreen',
-  viewMode: 'docs',
   docs: {
-    // @TODO: fix the container context
+    // TODO: fix the container context
     // container: DocsContainer,
   },
   actions: { argTypesRegex: '^on[A-Z].*' },
@@ -29,23 +24,15 @@ export const parameters: Parameters = {
     dark: darkTheme,
     // Override the default light theme
     light: lightTheme,
+    darkClass: 'dark',
+    stylePreview: true,
   },
 };
 
 // const channel = addons.getChannel();
 function ColorSchemeThemeWrapper({ children }) {
-  // const { setThemeStatus } = useLocalThemePreference();
-
-  // const handleColorScheme = (value) => {
-  //   setThemeStatus(value ? ColorSchemePreferenceEnum.DARK : ColorSchemePreferenceEnum.LIGHT);
-  // };
-
-  // useEffect(() => {
-  //   channel.on(DARK_MODE_EVENT_NAME, handleColorScheme);
-  //   return () => channel.off(DARK_MODE_EVENT_NAME, handleColorScheme);
-  // }, [channel]);
-
-  return <div style={{ margin: '3em' }}>{children}</div>;
+  // wraps the component preview in a full-page container with proper bg color
+  return <section className={css({ padding: '250', bg: 'surface.page', height: '[100dvh]' })}>{children}</section>;
 }
 
 export const decorators: Decorator[] = [
