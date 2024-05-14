@@ -35,6 +35,8 @@ jobs:
       - name: Create Novu Cloud release PR
         run: |
           gh pr create --base prod --head ${{ steps.output-variables.outputs.branch_name }} --title "Release ${{ steps.output-variables.outputs.date_humanized }}" --body "Automated daily production Novu Cloud release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Enable PR automerge
         uses: peter-evans/enable-pull-request-automerge@v2
