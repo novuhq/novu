@@ -240,6 +240,7 @@ export class SendMessageInApp extends SendMessageBase {
       },
       groupId: command.organizationId,
     });
+
     await this.executionLogRoute.execute(
       ExecutionLogRouteCommand.create({
         ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),

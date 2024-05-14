@@ -662,7 +662,8 @@
     "decompile",
     "servername",
     "neom",
-    "protonmail"
+    "protonmail",
+    "automerge"
   ],
   "flagWords": [],
   "patterns": [
