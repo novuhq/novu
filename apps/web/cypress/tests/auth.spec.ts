@@ -223,12 +223,12 @@ describe('User Sign-up and Login', function () {
 
     it('should logout user when auth token is expired', function () {
       // login the user
-      cy.waitLoadFeatureFlags(() => {
-        cy.visit('/auth/login');
-      });
+      cy.visit('/auth/login');
       cy.getByTestId('email').type('test-user-1@example.com');
       cy.getByTestId('password').type('123qwe!@#');
       cy.getByTestId('submit-btn').click();
+
+      cy.waitLoadFeatureFlags();
 
       cy.location('pathname').should('equal', '/workflows');
 
@@ -238,9 +238,9 @@ describe('User Sign-up and Login', function () {
       const date = new Date(Date.now() + THIRTY_DAYS + ONE_MINUTE);
       cy.clock(date);
 
-      cy.waitLoadFeatureFlags(() => {
-        cy.visit('/subscribers');
-      });
+      cy.visit('/subscribers');
+
+      cy.waitLoadFeatureFlags();
 
       // checking if token is removed from local storage
       cy.getLocalStorage('auth_token').should('be.null');
