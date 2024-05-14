@@ -1,4 +1,4 @@
-name: prepare-release
+name: "Prepare Cloud Release"
 
 on:
   workflow_dispatch:
