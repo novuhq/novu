@@ -24,9 +24,9 @@ jobs:
         id: output-variables
         run: |
           echo "date_humanized=$(date +'%Y-%m-%d %H:%M')" >> "$GITHUB_OUTPUT"
-          echo "branch_name=$(release_$(date +'%Y_%m_%d_%H_%M'))" >> "$GITHUB_OUTPUT"
+          echo "branch_name=release_$(date +'%Y_%m_%d_%H_%M')" >> "$GITHUB_OUTPUT"
 
-      - name: Create Novu Cloud  release branch
+      - name: Create Novu Cloud release branch
         run: git checkout -b ${{ steps.output-variables.outputs.branch_name }}
 
       - name: Push release branch
