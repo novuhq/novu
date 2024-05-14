@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { SimpletextingSmsProvider } from '@novu/simpletexting';
+import { SimpletextingSmsProvider } from '@novu/providers';
 import { BaseSmsHandler } from './base.handler';
 
 export class SimpletextingSmsHandler extends BaseSmsHandler {

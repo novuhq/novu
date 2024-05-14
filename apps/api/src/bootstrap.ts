@@ -22,7 +22,14 @@ import * as packageJson from '../package.json';
 import { setupSwagger } from './app/shared/framework/swagger/swagger.controller';
 import { corsOptionsDelegate } from './config/cors';
 
-const extendedBodySizeRoutes = ['/v1/events', '/v1/notification-templates', '/v1/workflows', '/v1/layouts'];
+const extendedBodySizeRoutes = [
+  '/v1/events',
+  '/v1/notification-templates',
+  '/v1/workflows',
+  '/v1/layouts',
+  '/v1/echo/sync',
+  '/v1/echo/diff',
+];
 
 if (process.env.SENTRY_DSN) {
   Sentry.init({

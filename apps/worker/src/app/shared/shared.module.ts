@@ -49,6 +49,7 @@ import {
   StorageHelperService,
   storageService,
   UpdateSubscriber,
+  UpdateSubscriberChannel,
   UpdateTenant,
 } from '@novu/application-generic';
 
@@ -114,6 +115,7 @@ const PROVIDERS = [
   StorageHelperService,
   storageService,
   UpdateSubscriber,
+  UpdateSubscriberChannel,
   UpdateTenant,
   GetTenant,
   CreateTenant,

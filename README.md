@@ -1,11 +1,4 @@
 <div align="center">
-  👨‍💻 <a href="https://jobs.ashbyhq.com/novu.co?utm_source=github" target="_blank">
-     We are hiring in Europe/UK/Israel!</a> 👩‍💻
-</div>
-<br/>
-<br/>
-
-<div align="center">
   <a href="https://novu.co?utm_source=github" target="_blank">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/2233092/213641039-220ac15f-f367-4d13-9eaf-56e79433b8c1.png">
@@ -23,45 +16,37 @@
   <a href="https://www.npmjs.com/package/@novu/node">
     <img src="https://img.shields.io/npm/dm/@novu/node" alt="npm downloads">
   </a>
-  <img src="https://img.shields.io/github/license/novuhq/novu" alt="MIT">
+  <a href="https://github.com/novuhq/novu/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/novuhq/novu" alt="MIT">
+  </a>
 </p>
 
-<h1 align="center">The open-source notification infrastructure for developers</h1>
+<h1 align="center">
+  The open-source notification infrastructure for developers
+</h1>
 
 <div align="center">
-The ultimate service for managing multi-channel notifications with a single API.
+  The ultimate service for managing multi-channel notifications with a single API.
 </div>
 
-  <p align="center">
-    <br />
-    <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
-    <br />
+<p align="center">
+  <br />
+  <a href="https://docs.novu.co" rel="dofollow"><strong>Explore the docs »</strong></a>
+  <br />
 
-  <br/>
-    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
-    ·
-    <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
-    ·
-  <a href="https://discord.novu.co">Join Our Discord</a>
-    ·
-    <a href="https://roadmap.novu.co">Roadmap</a>
-    ·
-    <a href="https://twitter.com/novuhq">X</a>
-    ·
-    <a href="https://notifications.directory">Notifications Directory</a>
-  </p>
-  
-  <p align="center">
-  Available in: <a href="https://github.com/novuhq/novu/tree/next/packages/node">Node.js</a>
-  · <a href="https://github.com/novuhq/novu-php">PHP</a>
-  · <a href="https://github.com/novuhq/go-novu">Go</a>
-  · <a href="https://github.com/novuhq/novu-ruby">Ruby</a>
-  · <a href="https://github.com/novuhq/novu-kotlin">Kotlin</a>
-  · <a href="https://github.com/novuhq/elixir">Elixir</a>
-  · <a href="https://github.com/novuhq/rust">Rust</a>
-  · <a href="https://github.com/novuhq/novu-python">Python</a>
-  · <a href="https://github.com/novuhq/novu-java">Java</a>
-  </p>
+<br/>
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=type%3A+bug&template=bug_report.yml&title=%F0%9F%90%9B+Bug+Report%3A+">Report Bug</a>
+  ·
+  <a href="https://github.com/novuhq/novu/issues/new?assignees=&labels=feature&template=feature_request.yml&title=%F0%9F%9A%80+Feature%3A+">Request Feature</a>
+  ·
+<a href="https://discord.novu.co">Join Our Discord</a>
+  ·
+  <a href="https://roadmap.novu.co">Roadmap</a>
+  ·
+  <a href="https://twitter.com/novuhq">X</a>
+  ·
+  <a href="https://notifications.directory">Notifications Directory</a>
+</p>
 
 ## ⭐️ Why Novu?
 
@@ -79,6 +64,14 @@ With Novu, you can create custom workflows and define conditions for each channe
 - 📦 Embeddable notification center with real-time updates
 - 👨‍💻 Community-driven
 
+## 🚀 Getting Started
+
+To get started, type the following command in your Terminal.
+
+```bash
+npx novu-labs@latest echo
+```
+
 ## 📚 Table Of Contents
 
 - [Getting Started](https://github.com/novuhq/novu#-getting-started)
@@ -95,14 +88,7 @@ With Novu, you can create custom workflows and define conditions for each channe
 - [Links](https://github.com/novuhq/novu#-links)
 - [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
 
-## 🚀 Getting Started
-
-We are excited to launch the complete Novu API and admin panel. Do you want to give it a test before the official release? Here is how:
-
-```bash
-npx novu-labs@latest echo
-```
-
+## Notification Workflows as Code
 For API documentation and reference, please visit [Echo API Reference](https://docs.novu.co/echo/quickstart?utm_campaign=github-readme).
 
 ```ts
@@ -213,7 +199,6 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Bandwidth
 - [ ] RingCentral
 
-
 #### 📱 Push
 
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
@@ -233,7 +218,6 @@ Novu provides a single API to manage providers across multiple channels with a s
 #### 📱 In-App
 
 - [x] [Novu](https://docs.novu.co/notification-center/getting-started?utm_campaign=github-readme)
-- [ ] MagicBell
 
 #### Other (Coming Soon...)
 
@@ -247,10 +231,6 @@ Before you begin coding and collaborating, please read our [Code of Conduct](htt
 
 We are more than happy to help you. If you are getting any errors or facing problems while working on this project, join our [Discord server](https://discord.novu.co) and ask for help. We are open to discussing anything related to the project.
 
-## ⚡ Immediate working space with Gitpod
-
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/novuhq/novu)
-
 ## 🔗 Links
 
 - [Home page](https://novu.co?utm_campaign=github-readme)
@@ -262,7 +242,6 @@ We are more than happy to help you. If you are getting any errors or facing prob
 Novu is licensed under the MIT License - see the [LICENSE](https://github.com/novuhq/novu/blob/main/LICENSE) file for details.
 
 ## 💪 Thanks To All Contributors
-
 Thanks a lot for spending your time helping Novu grow. Keep rocking 🥂
 
 <a href="https://novu.co/contributors?utm_source=github">

@@ -151,9 +151,10 @@ export class SendMessageEmail extends SendMessageBase {
       command.overrides.email || {},
       command.overrides[integration?.providerId] || {}
     );
+    const chimeraOutputs = command.chimeraData?.outputs;
 
     let html;
-    let subject = step?.template?.subject || '';
+    let subject = (chimeraOutputs as IChimeraEmailResponse)?.subject || step?.template?.subject || '';
     let content;
     let senderName;
 
@@ -263,11 +264,10 @@ export class SendMessageEmail extends SendMessageBase {
         }
     );
 
-    const chimeraOutputs = command.chimeraData?.outputs;
     const mailData: IEmailOptions = createMailData(
       {
         to: email,
-        subject: (chimeraOutputs as IChimeraEmailResponse)?.subject || subject,
+        subject: subject,
         html: (chimeraOutputs as IChimeraEmailResponse)?.body || html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,

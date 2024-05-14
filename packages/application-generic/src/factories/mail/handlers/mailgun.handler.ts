@@ -1,4 +1,4 @@
-import { MailgunEmailProvider } from '@novu/mailgun';
+import { MailgunEmailProvider } from '@novu/providers';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseHandler } from './base.handler';
 

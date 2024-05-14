@@ -1,4 +1,4 @@
-import { RingCentralSmsProvider } from '@novu/ring-central';
+import { RingCentralSmsProvider } from '@novu/providers';
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
 import { BaseSmsHandler } from './base.handler';
 
