@@ -36,11 +36,7 @@ export function useAcceptInvite() {
             predicate: (query) => query.queryKey.includes('/v1/organizations'),
           });
         }
-        if (state?.redirectTo?.pathname) {
-          navigate(state?.redirectTo?.pathname);
-        } else {
-          navigate(ROUTES.WORKFLOWS);
-        }
+        navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
       } catch (e: unknown) {
         errorMessage('Failed to accept an invite.');
 

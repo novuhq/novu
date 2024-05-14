@@ -79,11 +79,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
 
       setToken(token);
 
-      if (state?.redirectTo?.pathname) {
-        navigate(state?.redirectTo?.pathname);
-      } else {
-        navigate(ROUTES.WORKFLOWS);
-      }
+      navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
