@@ -33,9 +33,7 @@ jobs:
         run: git push origin ${{ steps.output-variables.outputs.branch_name }}
 
       - name: Create Novu Cloud release PR
-        id: open-pr
-        uses: repo-sync/pull-request@v2
-        with:
+        run: |
           gh pr create --base prod --head ${{ steps.output-variables.outputs.branch_name }} --title "Release ${{ steps.output-variables.outputs.date_humanized }}" --body "Automated daily production Novu Cloud release"
 
       - name: Enable PR automerge
