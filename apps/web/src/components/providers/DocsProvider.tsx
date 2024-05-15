@@ -117,7 +117,7 @@ export const DocsProvider = ({ children }) => {
               position: 'fixed',
               top: '150',
               right: '150',
-              background: 'legacy.B15',
+              background: isDark ? 'legacy.B15' : 'white',
               zIndex: 1,
               padding: '25',
               borderBottomLeftRadius: '50',
