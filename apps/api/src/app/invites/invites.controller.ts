@@ -6,9 +6,9 @@ import {
   Param,
   Post,
   UseGuards,
+  Headers,
   UseInterceptors,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import {
   ApiRateLimitCostEnum,
   IBulkInviteResponse,
@@ -35,6 +35,8 @@ import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthGuard } from '../auth/framework/user.auth.guard';
+import { InviteNudgeWebhookCommand } from './usecases/invite-nudge-webhook/invite-nudge-command';
+import { InviteNudgeWebhook } from './usecases/invite-nudge-webhook/invite-nudge-usecase';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiCommonResponses()
@@ -47,7 +49,8 @@ export class InvitesController {
     private bulkInviteUsecase: BulkInvite,
     private acceptInviteUsecase: AcceptInvite,
     private getInvite: GetInvite,
-    private resendInviteUsecase: ResendInvite
+    private resendInviteUsecase: ResendInvite,
+    private inviteNudgeWebhookUsecase: InviteNudgeWebhook
   ) {}
 
   @Get('/:inviteToken')
@@ -126,6 +129,18 @@ export class InvitesController {
     });
 
     const response = await this.bulkInviteUsecase.execute(command);
+
+    return response;
+  }
+
+  @Post('/webhook')
+  async inviteCheckWebhook(@Headers() headers: Record<string, string>, @Body() body: Record<string, any>) {
+    const command = InviteNudgeWebhookCommand.create({
+      headers,
+      body,
+    });
+
+    const response = await this.inviteNudgeWebhookUsecase.execute(command);
 
     return response;
   }
