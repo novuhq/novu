@@ -65,6 +65,9 @@ export const DocsProvider = ({ children }) => {
   };
 
   const onVoteClick = (vote: string) => () => {
+    if (voted.length > 0) {
+      return;
+    }
     segment.track('Inline docs voting used', {
       documentationPage: path,
       pageURL: window.location.href,
