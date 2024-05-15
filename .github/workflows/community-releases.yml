@@ -38,7 +38,7 @@ jobs:
         run: |
           service=${{ matrix.name }}
           echo "SERVICE_NAME=$(basename "${service//-/-}")" >> $GITHUB_ENV
-          echo "REGISTRY_OWNER=aliaksandrryzhou" >> $GITHUB_ENV
+          echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
