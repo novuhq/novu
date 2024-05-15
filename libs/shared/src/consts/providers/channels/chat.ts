@@ -34,7 +34,7 @@ export const chatProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.CHAT,
     credentials: grafanaOnCallConfig,
     docReference: 'https://grafana.com/docs/oncall/latest/integrations/webhook/',
-    logoFileName: { light: 'grafana-on-call.png', dark: 'grafana-on-call.png' },
+    logoFileName: { light: 'grafana-on-call.webp', dark: 'grafana-on-call.webp' },
   },
   {
     id: ChatProviderIdEnum.MsTeams,
@@ -58,7 +58,7 @@ export const chatProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
     docReference: 'https://api.ryver.com/ryvrest_api_examples.html#create-chat-message',
-    logoFileName: { light: 'ryver.png', dark: 'ryver.png' },
+    logoFileName: { light: 'ryver.webp', dark: 'ryver.webp' },
   },
   {
     id: ChatProviderIdEnum.Zulip,

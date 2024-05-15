@@ -43,7 +43,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: [],
     docReference: `https://docs.novu.co/channels-and-providers/default-providers${UTM_CAMPAIGN_QUERY_PARAM}#novu-sms-provider`,
-    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+    logoFileName: { light: 'novu.webp', dark: 'novu.webp' },
   },
   {
     id: SmsProviderIdEnum.Nexmo,
@@ -51,7 +51,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: nexmoConfig,
     docReference: `https://docs.novu.co/channels-and-providers/sms/nexmo${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'nexmo.png', dark: 'nexmo.png' },
+    logoFileName: { light: 'nexmo.webp', dark: 'nexmo.webp' },
   },
   {
     id: SmsProviderIdEnum.Plivo,
@@ -59,7 +59,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: plivoConfig,
     docReference: `https://docs.novu.co/channels-and-providers/sms/plivo${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'plivo.png', dark: 'plivo.png' },
+    logoFileName: { light: 'plivo.webp', dark: 'plivo.webp' },
   },
 
   {
@@ -84,7 +84,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: telnyxConfig,
     docReference: `https://docs.novu.co/channels-and-providers/sms/telnyx${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'telnyx.png', dark: 'telnyx.png' },
+    logoFileName: { light: 'telnyx.webp', dark: 'telnyx.webp' },
   },
   {
     id: SmsProviderIdEnum.MessageBird,
@@ -92,7 +92,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: messagebirdConfig,
     docReference: 'https://developers.messagebird.com/quickstarts/sms-overview/',
-    logoFileName: { light: 'messagebird.png', dark: 'messagebird.png' },
+    logoFileName: { light: 'messagebird.webp', dark: 'messagebird.webp' },
   },
   {
     id: SmsProviderIdEnum.Twilio,
@@ -100,7 +100,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: twilioConfig,
     docReference: `https://docs.novu.co/channels-and-providers/sms/twilio${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'twilio.png', dark: 'twilio.png' },
+    logoFileName: { light: 'twilio.webp', dark: 'twilio.webp' },
   },
   {
     id: SmsProviderIdEnum.Gupshup,
@@ -108,7 +108,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: gupshupConfig,
     docReference: 'https://docs.gupshup.io/docs/send-single-message',
-    logoFileName: { light: 'gupshup.png', dark: 'gupshup.png' },
+    logoFileName: { light: 'gupshup.webp', dark: 'gupshup.webp' },
   },
   {
     id: SmsProviderIdEnum.Firetext,
@@ -124,7 +124,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: infobipSMSConfig,
     docReference: `https://docs.novu.co/channels-and-providers/sms/infobip${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
+    logoFileName: { light: 'infobip.webp', dark: 'infobip.webp' },
   },
   {
     id: SmsProviderIdEnum.BurstSms,
@@ -140,7 +140,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: bulkSmsConfig,
     docReference: 'https://www.bulksms.com/developer/json/v1/',
-    logoFileName: { light: 'bulk-sms.png', dark: 'bulk-sms.png' },
+    logoFileName: { light: 'bulk-sms.webp', dark: 'bulk-sms.webp' },
   },
   {
     id: SmsProviderIdEnum.ISendSms,
@@ -157,7 +157,7 @@ export const smsProviders: IProviderConfig[] = [
     credentials: clickatellConfig,
     betaVersion: true,
     docReference: 'https://docs.clickatell.com/',
-    logoFileName: { light: 'clickatell.png', dark: 'clickatell.png' },
+    logoFileName: { light: 'clickatell.webp', dark: 'clickatell.webp' },
   },
   {
     id: SmsProviderIdEnum.FortySixElks,
@@ -165,7 +165,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: fortySixElksConfig,
     docReference: 'https://46elks.com/docs/send-sms',
-    logoFileName: { light: '46elks.png', dark: '46elks.png' },
+    logoFileName: { light: '46elks.webp', dark: '46elks.webp' },
   },
   {
     id: SmsProviderIdEnum.Kannel,
@@ -174,7 +174,7 @@ export const smsProviders: IProviderConfig[] = [
     credentials: kannelConfig,
     betaVersion: true,
     docReference: 'https://www.kannel.org/doc.shtml',
-    logoFileName: { light: 'kannel.png', dark: 'kannel.png' },
+    logoFileName: { light: 'kannel.webp', dark: 'kannel.webp' },
   },
   {
     id: SmsProviderIdEnum.Maqsam,
@@ -182,7 +182,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: maqsamConfig,
     docReference: 'https://portal.maqsam.com/docs/v2/sms',
-    logoFileName: { light: 'maqsam.png', dark: 'maqsam.png' },
+    logoFileName: { light: 'maqsam.webp', dark: 'maqsam.webp' },
   },
   {
     id: SmsProviderIdEnum.SmsCentral,
@@ -190,7 +190,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: smsCentralConfig,
     docReference: 'https://www.smscentral.com.au/sms-api/',
-    logoFileName: { light: 'sms-central.png', dark: 'sms-central.png' },
+    logoFileName: { light: 'sms-central.webp', dark: 'sms-central.webp' },
   },
   {
     id: SmsProviderIdEnum.Termii,
@@ -198,7 +198,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: termiiConfig,
     docReference: `https://docs.novu.co/channels-and-providers/sms/termii${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'termii.png', dark: 'termii.png' },
+    logoFileName: { light: 'termii.webp', dark: 'termii.webp' },
   },
   {
     id: SmsProviderIdEnum.AfricasTalking,
@@ -230,7 +230,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: clickSendConfig,
     docReference: 'https://developers.clicksend.com/docs/rest/v3/?javascript--nodejs#send-sms',
-    logoFileName: { light: 'clicksend.png', dark: 'clicksend.png' },
+    logoFileName: { light: 'clicksend.webp', dark: 'clicksend.webp' },
   },
   {
     id: SmsProviderIdEnum.Simpletexting,
@@ -238,7 +238,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: simpleTextingConfig,
     docReference: 'https://simpletexting.com/api/docs/v2/',
-    logoFileName: { light: 'simpletexting.png', dark: 'simpletexting.png' },
+    logoFileName: { light: 'simpletexting.webp', dark: 'simpletexting.webp' },
   },
   {
     id: SmsProviderIdEnum.Bandwidth,
@@ -247,7 +247,7 @@ export const smsProviders: IProviderConfig[] = [
     credentials: bandwidthConfig,
     betaVersion: true,
     docReference: 'https://dev.bandwidth.com/docs/messaging/createMessage',
-    logoFileName: { light: 'bandwidth.png', dark: 'bandwidth.png' },
+    logoFileName: { light: 'bandwidth.webp', dark: 'bandwidth.webp' },
   },
   {
     id: SmsProviderIdEnum.AzureSms,
@@ -255,7 +255,7 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: azureSmsConfig,
     docReference: 'https://learn.microsoft.com/en-us/azure/communication-services/quickstarts/sms/receive-sms',
-    logoFileName: { light: 'azure-sms.png', dark: 'azure-sms.png' },
+    logoFileName: { light: 'azure-sms.webp', dark: 'azure-sms.webp' },
   },
   {
     id: SmsProviderIdEnum.RingCentral,

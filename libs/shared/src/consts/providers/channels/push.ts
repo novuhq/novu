@@ -53,7 +53,7 @@ export const pushProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.PUSH,
     credentials: apnsConfig,
     docReference: `https://docs.novu.co/channels-and-providers/push/apns${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'apns.png', dark: 'apns.png' },
+    logoFileName: { light: 'apns.webp', dark: 'apns.webp' },
     betaVersion: true,
   },
   {

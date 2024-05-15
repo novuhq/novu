@@ -30,7 +30,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: [],
     docReference: `https://docs.novu.co/channels-and-providers/default-providers${UTM_CAMPAIGN_QUERY_PARAM}#novu-email-provider`,
-    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+    logoFileName: { light: 'novu.webp', dark: 'novu.webp' },
   },
   {
     id: EmailProviderIdEnum.Mailgun,
@@ -46,7 +46,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: mailjetConfig,
     docReference: `https://docs.novu.co/channels-and-providers/email/mailjet${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'mailjet.png', dark: 'mailjet.png' },
+    logoFileName: { light: 'mailjet.webp', dark: 'mailjet.webp' },
   },
   {
     id: EmailProviderIdEnum.Mailtrap,
@@ -70,7 +70,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: postmarkConfig,
     docReference: `https://docs.novu.co/channels-and-providers/email/postmark${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'postmark.png', dark: 'postmark.png' },
+    logoFileName: { light: 'postmark.webp', dark: 'postmark.webp' },
   },
   {
     id: EmailProviderIdEnum.SendGrid,
@@ -78,7 +78,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendgridConfig,
     docReference: `https://docs.novu.co/channels-and-providers/email/sendgrid${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'sendgrid.png', dark: 'sendgrid.png' },
+    logoFileName: { light: 'sendgrid.webp', dark: 'sendgrid.webp' },
   },
   {
     id: EmailProviderIdEnum.Sendinblue,
@@ -86,7 +86,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: sendinblueConfig,
     docReference: `https://docs.novu.co/channels-and-providers/email/sendinblue${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'sendinblue.png', dark: 'sendinblue.png' },
+    logoFileName: { light: 'sendinblue.webp', dark: 'sendinblue.webp' },
   },
   {
     id: EmailProviderIdEnum.SES,
@@ -102,7 +102,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: netCoreConfig,
     docReference: `https://docs.novu.co/channels-and-providers/email/netcore${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'netcore.png', dark: 'netcore.png' },
+    logoFileName: { light: 'netcore.webp', dark: 'netcore.webp' },
   },
   {
     id: EmailProviderIdEnum.CustomSMTP,
@@ -126,7 +126,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: outlook365Config,
     docReference: `https://docs.novu.co/channels-and-providers/email/outlook365${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'outlook365.png', dark: 'outlook365.png' },
+    logoFileName: { light: 'outlook365.webp', dark: 'outlook365.webp' },
   },
   {
     id: EmailProviderIdEnum.Infobip,
@@ -134,7 +134,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: infobipEmailConfig,
     docReference: `https://docs.novu.co/channels-and-providers/email/infobip${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'infobip.png', dark: 'infobip.png' },
+    logoFileName: { light: 'infobip.webp', dark: 'infobip.webp' },
   },
   {
     id: EmailProviderIdEnum.Braze,
@@ -158,7 +158,7 @@ export const emailProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.EMAIL,
     credentials: plunkConfig,
     docReference: `https://docs.novu.co/channels/email/plunk${UTM_CAMPAIGN_QUERY_PARAM}`,
-    logoFileName: { light: 'plunk.png', dark: 'plunk.png' },
+    logoFileName: { light: 'plunk.webp', dark: 'plunk.webp' },
   },
   {
     id: EmailProviderIdEnum.SparkPost,
