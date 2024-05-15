@@ -91,10 +91,12 @@ export function CachedEntity({
       let response: unknown;
       try {
         response = await originalMethod.apply(this, args);
-      } finally {
+      } catch (error) {
         if (unlock) {
           await unlock();
         }
+
+        throw error;
       }
 
       try {
