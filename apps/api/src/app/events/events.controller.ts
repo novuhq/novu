@@ -9,6 +9,7 @@ import {
   ResourceEnum,
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
+import { ResourceCategory } from '@novu/application-generic';
 
 import {
   BulkTriggerEventDto,
@@ -29,7 +30,6 @@ import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
-import { ResourceCategory } from '../resource-limiting/guards';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
