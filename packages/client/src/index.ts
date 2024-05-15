@@ -49,4 +49,9 @@ export type PreferenceSettingsType = {
   enabled: boolean;
   channels: IPreferenceChannels;
 };
+
+export type ApiOptions = {
+  apiVersion?: string;
+};
+
 export { ApiService } from './api/api.service';

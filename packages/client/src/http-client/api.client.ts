@@ -1,3 +1,5 @@
+import { ApiOptions } from '..';
+
 //SubscriberCustomData
 export interface IParamObject {
   [key: string]: string | string[] | number | boolean;
@@ -18,7 +20,7 @@ export class HttpClient {
     'Content-Type': 'application/json',
   };
 
-  constructor(backendUrl: string, options?: { apiVersion?: string }) {
+  constructor(backendUrl: string, options?: ApiOptions) {
     if (options?.apiVersion) {
       this.apiVersion = options.apiVersion;
     }
@@ -34,17 +36,23 @@ export class HttpClient {
   }
 
   async getFullResponse(url: string, params?: IParamObject) {
-    const response = await fetch(this.backendUrl + url + this.getQueryString(params), {
-      headers: this.headers,
-    });
+    const response = await fetch(
+      this.backendUrl + url + this.getQueryString(params),
+      {
+        headers: this.headers,
+      }
+    );
 
     return await response.json();
   }
 
   async get(url: string, params?: IParamObject) {
-    const response = await fetch(this.backendUrl + url + this.getQueryString(params), {
-      headers: this.headers,
-    });
+    const response = await fetch(
+      this.backendUrl + url + this.getQueryString(params),
+      {
+        headers: this.headers,
+      }
+    );
     const data = await response.json();
 
     return data.data;
@@ -90,7 +98,11 @@ export class HttpClient {
       .filter(([_, value]) => value !== undefined)
       .map(([key, value]) => {
         if (Array.isArray(value)) {
-          return value.map((val) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`).join('&');
+          return value
+            .map(
+              (val) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`
+            )
+            .join('&');
         } else {
           return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
         }

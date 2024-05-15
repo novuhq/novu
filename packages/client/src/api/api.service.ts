@@ -1,11 +1,11 @@
 import {
   IMessage,
-  HttpClient,
   ButtonTypeEnum,
   MessageActionStatusEnum,
   IParamObject,
   IPaginatedResponse,
 } from '@novu/shared';
+import { HttpClient } from '../http-client';
 import {
   ITabCountQuery,
   IStoreQuery,
@@ -13,6 +13,7 @@ import {
   IUnseenCountQuery,
   IUnreadCountQuery,
   IUserGlobalPreferenceSettings,
+  ApiOptions,
 } from '../index';
 
 export class ApiService {
@@ -20,8 +21,8 @@ export class ApiService {
 
   isAuthenticated = false;
 
-  constructor(private backendUrl: string) {
-    this.httpClient = new HttpClient(backendUrl);
+  constructor(private backendUrl: string, options?: ApiOptions) {
+    this.httpClient = new HttpClient(backendUrl, options);
   }
 
   setAuthorizationToken(token: string) {
