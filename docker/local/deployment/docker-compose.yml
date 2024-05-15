@@ -19,12 +19,12 @@ services:
     environment:
       - PUID=1000
       - PGID=1000
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=secret
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     volumes:
       - mongodb:/data/db
     ports:
-      - 27018:27017
+      - 27017:27017
   api:
     image: 'ghcr.io/novuhq/novu/api:0.23.0'
     depends_on:

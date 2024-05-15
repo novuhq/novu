@@ -1087,5 +1087,4 @@ export const unifonicConfig: IConfigCredentials[] = [
     type: 'string',
     required: true,
   },
-  ...smsConfigBase,
 ];
