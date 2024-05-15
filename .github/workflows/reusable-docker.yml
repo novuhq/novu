@@ -35,6 +35,10 @@ on:
       env_tag:
         required: false
         type: string
+      community_build:
+        required: false
+        default: false
+        type: boolean
     outputs:
       docker_image:
         description: 'The image that was built'
@@ -138,6 +142,33 @@ jobs:
             --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-${{ inputs.env_tag }}
             --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
             --platform=linux/amd64
+            --output=type=image,name=ghcr.io/novuhq/${{ matrix.name }},push-by-digest=true,name-canonical=true
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
+          cd $PROJECT_PATH && npm run docker:build
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
+          docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
+          docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
+
+      - name: Community build, tag, and push image to ghcr.io
+        id: build-community-image
+        if: ${{ inputs.community_build }}
+        env:
+          REGISTRY_OWNER: novuhq
+          DOCKER_NAME: ${{ matrix.name }}
+          LOCAL_TAG: ${{ inputs.local_tag }}
+          IMAGE_TAG: ${{ github.sha }}
+          ENV_TAG: ${{ inputs.env_tag }}
+          PROJECT_PATH: ${{ inputs.project_path }}
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DOCKER_BUILD_ARGUMENTS: >
+            --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-community
+            --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-community,mode=max
+            --platform=linux/amd64,linux/arm64 --provenance=false
             --output=type=image,name=ghcr.io/novuhq/${{ matrix.name }},push-by-digest=true,name-canonical=true
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin

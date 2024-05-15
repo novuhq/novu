@@ -51,6 +51,7 @@ jobs:
           docker_name: ${{ matrix.name }}
           bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
           environment: dev
+          community_build: true
 
   docker_build_worker:
     runs-on: ubuntu-latest
@@ -83,6 +84,7 @@ jobs:
           docker_name: ${{ matrix.name }}
           bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
           environment: dev
+          community_build: true
 
   docker_build_embed:
     needs: prepare
@@ -93,6 +95,7 @@ jobs:
       project_path: libs/embed
       local_tag: novu-embed
       env_tag: ${{ inputs.version }}
+      community_build: true
     secrets: inherit
 
   docker_build_inbound_mail:
@@ -103,6 +106,7 @@ jobs:
       package_name: novu/inbound-mail
       local_tag: novu-inbound-mail
       env_tag: ${{ inputs.version }}
+      community_build: true
     secrets: inherit
 
   docker_build_web:
@@ -114,6 +118,7 @@ jobs:
       project_path: apps/web
       local_tag: novu-web
       env_tag: ${{ inputs.version }}
+      community_build: true
     secrets: inherit
 
   docker_build_webhook:
@@ -127,6 +132,7 @@ jobs:
       health_check: true
       local_tag: novu-webhook
       env_tag: ${{ inputs.version }}
+      community_build: true
     secrets: inherit
 
   docker_build_widget:
@@ -138,6 +144,7 @@ jobs:
       project_path: apps/widget
       local_tag: novu-widget
       env_tag: ${{ inputs.version }}
+      community_build: true
     secrets: inherit
 
   docker_build_ws:
@@ -149,4 +156,5 @@ jobs:
       project_path: apps/ws
       local_tag: novu-ws
       env_tag: ${{ inputs.version }}
+      community_build: true
     secrets: inherit

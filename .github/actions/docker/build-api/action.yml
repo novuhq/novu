@@ -23,10 +23,13 @@ inputs:
   environment:
     required: false
     type: string
-
   bullmq_secret:
     description: 'Bullmq secret api token'
     required: true
+  community_build:
+    required: false
+    default: false
+    type: boolean
 
 outputs:
   image:
@@ -85,6 +88,7 @@ runs:
       if: contains( inputs.docker_name  , 'ee')
 
     - name: Build with Buildx, tag, and test
+      if: ${{ !inputs.community_build }}
       shell: bash
       env:
         REGISTRY_OWNER: novuhq
@@ -96,6 +100,24 @@ runs:
           --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-${{ inputs.environment }}
           --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-${{ inputs.environment }},mode=max
           --platform=linux/amd64 --provenance=false
+          --output=type=image,name=ghcr.io/novuhq/${{ inputs.docker_name }},push-by-digest=true,name-canonical=true
+      run: |
+        set -x
+        cd apps/api && pnpm run docker:build
+
+    - name: Build Community Docker Image with Buildx, tag, and test
+      if: ${{ inputs.community_build }}
+      shell: bash
+      env:
+        REGISTRY_OWNER: novuhq
+        DOCKER_NAME: ${{ inputs.docker_name }}
+        IMAGE_TAG: ${{ github.sha }}
+        GH_ACTOR: ${{ github.actor }}
+        GH_PASSWORD: ${{ inputs.github_token }}
+        DOCKER_BUILD_ARGUMENTS: >
+          --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-community
+          --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-community,mode=max
+          --platform=linux/amd64,linux/arm64 --provenance=false
           --output=type=image,name=ghcr.io/novuhq/${{ inputs.docker_name }},push-by-digest=true,name-canonical=true
       run: |
         set -x
