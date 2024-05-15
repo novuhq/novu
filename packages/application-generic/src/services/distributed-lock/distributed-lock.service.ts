@@ -45,8 +45,8 @@ export class DistributedLockService {
 
     if (client) {
       this.instances = [client];
-      // @ts-expect-error - Redlock does not have the correct (latest) client typings
-      this.distributedLock = new Redlock(this.instances, settings);
+      // TODO: remove any - Redlock does not have the correct (latest) client typings
+      this.distributedLock = new Redlock(this.instances as any, settings);
       Logger.verbose('Redlock started', LOG_CONTEXT);
 
       /**
