@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-echo-web",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "description": "",
   "repository": "https://github.com/novuhq/novu",
   "license": "ISC",
@@ -26,8 +26,8 @@
   "dependencies": {
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
-    "@novu/design-system": "^0.24.1",
-    "@novu/shared-web": "^0.24.1",
+    "@novu/design-system": "^0.24.2",
+    "@novu/shared-web": "^0.24.2",
     "@rjsf/core": "^5.17.1",
     "@rjsf/validator-ajv8": "^5.17.1",
     "@tanstack/react-query": "^4.20.4",
@@ -35,11 +35,11 @@
     "tslib": "^2.3.1"
   },
   "devDependencies": {
-    "eslint": "^8.33.0",
-    "eslint-plugin-react-hooks": "^4.4.0",
     "@types/node": "^18.11.12",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
+    "eslint": "^8.33.0",
+    "eslint-plugin-react-hooks": "^4.4.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "rimraf": "^3.0.2",
