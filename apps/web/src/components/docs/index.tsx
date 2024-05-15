@@ -10,6 +10,7 @@ import { css } from '../../styled-system/css';
 import { text, title as RTitle } from '../../styled-system/recipes';
 
 const Text = styled('p', text);
+const LiText = styled('span', text);
 const TitleH2 = styled('h2', RTitle);
 const TitleH3 = styled('h3', RTitle);
 const TitleH1 = styled('h1', RTitle);
@@ -96,7 +97,14 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
   }
 
   return (
-    <VStack alignItems="unset" id="docs" gap={12}>
+    <VStack
+      alignItems="unset"
+      id="docs"
+      gap={12}
+      className={css({
+        textAlign: 'justify left',
+      })}
+    >
       <div>
         <Flex justify="space-between" align="center">
           <TitleH1>{title}</TitleH1>
@@ -149,13 +157,25 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
             return null;
           },
           Steps: ({ className, ...props }: any) => {
-            return <ol className={css({ lineHeight: '125', listStyleType: 'decimal' })}>{props.children}</ol>;
+            return (
+              <ol
+                className={css({
+                  lineHeight: '125',
+                  listStyleType: 'decimal',
+                  listStylePosition: 'inside',
+                })}
+              >
+                {props.children}
+              </ol>
+            );
           },
           Step: ({ className, ...props }: any) => {
             return (
-              <li className={css({ paddingLeft: '100', lineHeight: '125', marginBottom: '50' })}>
-                <Text className={css({ lineHeight: '150', fontSize: '100', fontWeight: 'bolder' })}>{props.title}</Text>
-                <Text className={css({ lineHeight: '125' })}>{props.children}</Text>
+              <li className={css({ lineHeight: '125', marginBottom: '50' })}>
+                <LiText className={css({ lineHeight: '150', fontSize: '100', fontWeight: 'bolder' })}>
+                  {props.title}
+                </LiText>
+                <LiText className={css({ lineHeight: '125' })}>{props.children}</LiText>
               </li>
             );
           },
@@ -244,10 +264,34 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
             return <Text className={css({ lineHeight: '125' })} {...props} />;
           },
           ol: ({ className, ...props }: any) => {
-            return <ol className={css({ lineHeight: '125', listStyleType: 'decimal' })} {...props} />;
+            return (
+              <ol
+                className={css({
+                  lineHeight: '125',
+                  listStyleType: 'decimal',
+                  listStylePosition: 'inside',
+                  '& p': {
+                    display: 'inline !important',
+                  },
+                })}
+                {...props}
+              />
+            );
           },
           ul: ({ className, ...props }: any) => {
-            return <ul className={css({ lineHeight: '125', listStyleType: 'disc' })} {...props} />;
+            return (
+              <ul
+                className={css({
+                  lineHeight: '125',
+                  listStyleType: 'disc',
+                  listStylePosition: 'inside',
+                  '& p': {
+                    display: 'inline !important',
+                  },
+                })}
+                {...props}
+              />
+            );
           },
           li: ({ className, ...props }: any) => {
             return <li className={css({ lineHeight: '125', marginBottom: '50' })} {...props} />;
