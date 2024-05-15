@@ -62,7 +62,7 @@
     "start:e2e:api": "cd apps/api && pnpm run test:e2e",
     "g:module": "hygen module new --name=$npm_config_name",
     "g:usecase": "hygen usecase new --name=$npm_config_name --module=$npm_config_module",
-    "get-remote-env-files": "doppler secrets download --project api --config dev --no-file --format env > apps/api/src/.env",
+    "get-remote-env-files": "sh ./scripts/get-remote-env-files.sh",
     "pnpm-context": "node scripts/pnpm-context.mjs",
     "get-packages-folder": "node scripts/get-packages-folder.mjs",
     "jarvis": "node scripts/jarvis.js",
