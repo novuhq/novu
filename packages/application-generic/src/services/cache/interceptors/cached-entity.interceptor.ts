@@ -88,15 +88,23 @@ export function CachedEntity({
         }
       }
 
+      let response: unknown;
       try {
-        const response = await originalMethod.apply(this, args);
+        response = await originalMethod.apply(this, args);
+      } finally {
+        if (unlock) {
+          await unlock();
+        }
+      }
+
+      try {
         await cacheService.set(cacheKey, JSON.stringify(response), options);
 
         return response;
       } catch (err) {
         Logger.error(
           err,
-          `An error occurred during method execution for "method: ${methodName}"`,
+          `An error has occurred when inserting key: ${cacheKey} in "method: ${methodName}`,
           LOG_CONTEXT
         );
       } finally {
