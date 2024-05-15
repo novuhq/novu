@@ -1,14 +1,15 @@
 import {
-  buildCommonKey,
+  buildEnvironmentScopedKeyById,
+  buildOrganizationScopedKey,
+} from './builder.scoped';
+import {
   CacheKeyPrefixEnum,
   CacheKeyTypeEnum,
   IdentifierPrefixEnum,
-  OrgScopePrefixEnum,
-  prefixWrapper,
   QUERY_PREFIX,
-} from './shared';
+} from './identifiers';
 
-const buildFeedKey = () => {
+export const buildFeedKey = () => {
   const cache = (
     command: Record<string, unknown> & {
       environmentId: string;
@@ -31,7 +32,7 @@ const buildFeedKey = () => {
     subscriberId: string;
     _environmentId: string;
   }): string =>
-    buildCommonKey({
+    buildEnvironmentScopedKeyById({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.FEED,
       environmentId: _environmentId,
@@ -45,7 +46,7 @@ const buildFeedKey = () => {
   };
 };
 
-const buildMessageCountKey = () => {
+export const buildMessageCountKey = () => {
   const cache = (
     command: Record<string, unknown> & {
       environmentId: string;
@@ -68,7 +69,7 @@ const buildMessageCountKey = () => {
     subscriberId: string;
     _environmentId: string;
   }): string =>
-    buildCommonKey({
+    buildEnvironmentScopedKeyById({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.MESSAGE_COUNT,
       environmentId: _environmentId,
@@ -82,7 +83,7 @@ const buildMessageCountKey = () => {
   };
 };
 
-const buildIntegrationKey = () => {
+export const buildIntegrationKey = () => {
   const cache = (
     command: Record<string, unknown> & { _organizationId: string }
   ): string =>
@@ -90,7 +91,6 @@ const buildIntegrationKey = () => {
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.INTEGRATION,
       organizationId: command._organizationId,
-      organizationIdPrefix: OrgScopePrefixEnum.ORGANIZATION_ID,
       query: command,
     });
 
@@ -99,11 +99,10 @@ const buildIntegrationKey = () => {
   }: {
     _organizationId: string;
   }): string =>
-    buildKeyByOrganization({
+    buildOrganizationScopedKey({
       type: CacheKeyTypeEnum.QUERY,
       keyEntity: CacheKeyPrefixEnum.INTEGRATION,
       organizationId: _organizationId,
-      organizationIdPrefix: OrgScopePrefixEnum.ORGANIZATION_ID,
     });
 
   return {
@@ -115,7 +114,6 @@ const buildIntegrationKey = () => {
 export const buildQueryKey = ({
   type,
   keyEntity,
-  environmentIdPrefix = OrgScopePrefixEnum.ENVIRONMENT_ID,
   environmentId,
   identifierPrefix = IdentifierPrefixEnum.ID,
   identifier,
@@ -123,16 +121,14 @@ export const buildQueryKey = ({
 }: {
   type: CacheKeyTypeEnum;
   keyEntity: CacheKeyPrefixEnum;
-  environmentIdPrefix?: OrgScopePrefixEnum;
   environmentId: string;
   identifierPrefix?: IdentifierPrefixEnum;
   identifier: string;
   query: Record<string, unknown>;
 }): string =>
-  `${buildCommonKey({
+  `${buildEnvironmentScopedKeyById({
     type,
     keyEntity,
-    environmentIdPrefix,
     environmentId,
     identifierPrefix,
     identifier,
@@ -141,37 +137,19 @@ export const buildQueryKey = ({
 export const buildQueryByOrganizationKey = ({
   type,
   keyEntity,
-  organizationIdPrefix = OrgScopePrefixEnum.ORGANIZATION_ID,
   organizationId,
   query,
 }: {
   type: CacheKeyTypeEnum;
   keyEntity: CacheKeyPrefixEnum;
-  organizationIdPrefix?: OrgScopePrefixEnum;
   organizationId: string;
   query: Record<string, unknown>;
 }): string =>
-  `${buildKeyByOrganization({
+  `${buildOrganizationScopedKey({
     type,
     keyEntity,
-    organizationIdPrefix,
     organizationId,
   })}:${QUERY_PREFIX}=${JSON.stringify(query)}`;
-
-const buildKeyByOrganization = ({
-  type,
-  keyEntity,
-  organizationIdPrefix = OrgScopePrefixEnum.ORGANIZATION_ID,
-  organizationId,
-}: {
-  type: CacheKeyTypeEnum;
-  keyEntity: CacheKeyPrefixEnum;
-  organizationIdPrefix?: OrgScopePrefixEnum;
-  organizationId: string;
-}): string =>
-  prefixWrapper(
-    `${type}:${keyEntity}:${organizationIdPrefix}=${organizationId}`
-  );
 
 export interface IBuildNotificationTemplateByIdentifier {
   _environmentId: string;
@@ -179,5 +157,3 @@ export interface IBuildNotificationTemplateByIdentifier {
     | ({ id: string } & { triggerIdentifier?: string })
     | ({ id?: string } & { triggerIdentifier: string });
 }
-
-export { buildFeedKey, buildMessageCountKey, buildIntegrationKey };

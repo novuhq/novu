@@ -1,5 +1,9 @@
 import { buildFeedKey, buildMessageCountKey } from './queries';
-import { CacheKeyPrefixEnum, CacheKeyTypeEnum, QUERY_PREFIX } from './shared';
+import {
+  CacheKeyPrefixEnum,
+  CacheKeyTypeEnum,
+  QUERY_PREFIX,
+} from './identifiers';
 
 describe('Key builder for queries', () => {
   describe('buildFeedKey', () => {
