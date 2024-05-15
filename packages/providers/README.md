@@ -9,6 +9,9 @@
 
 # Novu Providers
 
+[![Version](https://img.shields.io/npm/v/@novu/providers.svg)](https://www.npmjs.org/package/@novu/providers)
+[![Downloads](https://img.shields.io/npm/dm/@novu/providers.svg)](https://www.npmjs.com/package/@novu/providers)
+
 A collection of stateless notification delivery providers, abstracting the underlying delivery provider implementation details. Independently usable, and additionally consumed by the [Novu Platform](https://novu.co/).
 
 ## Installation
