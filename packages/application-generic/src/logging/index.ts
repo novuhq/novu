@@ -1,4 +1,4 @@
-import { NestInterceptor } from '@nestjs/common';
+import { NestInterceptor, RequestMethod } from '@nestjs/common';
 import {
   LoggerErrorInterceptor,
   Logger,
@@ -52,7 +52,7 @@ export function getLogLevel() {
   return logLevel;
 }
 
-// TODO: should be moved into a config framework
+// TODO: ENV should be moved into a config framework
 function getLoggingVariables(): ILoggingVariables {
   const env = process.env.NODE_ENV ?? 'local';
 
@@ -108,6 +108,7 @@ export function createNestLoggingModuleOptions(
   );
 
   return {
+    exclude: [{ path: '*/health-check', method: RequestMethod.GET }],
     pinoHttp: {
       customLevels: loggingLevelSet,
       level: values.level,
