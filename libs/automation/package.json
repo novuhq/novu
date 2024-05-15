@@ -1,6 +1,7 @@
 {
   "name": "@novu/automation",
   "version": "0.24.2",
+  "private": true,
   "license": "MIT",
   "scripts": {
     "generate:provider": "pnpm nx g automation:provider",
