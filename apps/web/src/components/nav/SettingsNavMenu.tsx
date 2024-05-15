@@ -71,7 +71,7 @@ export const SettingsNavMenu: React.FC = () => {
           testId="side-nav-settings-branding-link"
         ></NavMenuLinkButton>
         <NavMenuLinkButton
-          label="Billing plans"
+          label="Billing"
           isVisible
           icon={<IconCreditCard />}
           link={ROUTES.BILLING}
