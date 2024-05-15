@@ -14,14 +14,16 @@ export interface IPaginatedResponse<T = unknown> {
 export class HttpClient {
   private backendUrl: string;
   private apiVersion = 'v1';
-
-  constructor(backendUrl: string) {
-    this.backendUrl = `${backendUrl}/${this.apiVersion}`;
-  }
-
   private headers: Record<string, string> = {
     'Content-Type': 'application/json',
   };
+
+  constructor(backendUrl: string, options?: { apiVersion?: string }) {
+    if (options?.apiVersion) {
+      this.apiVersion = options.apiVersion;
+    }
+    this.backendUrl = `${backendUrl}/${this.apiVersion}`;
+  }
 
   setAuthorizationToken(token: string) {
     this.headers.Authorization = `Bearer ${token}`;
@@ -85,7 +87,7 @@ export class HttpClient {
     if (!params) return '';
 
     const queryString = Object.entries(params)
-      .filter(([key, value]) => value !== undefined)
+      .filter(([_, value]) => value !== undefined)
       .map(([key, value]) => {
         if (Array.isArray(value)) {
           return value.map((val) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`).join('&');
