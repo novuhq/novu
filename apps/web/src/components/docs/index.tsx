@@ -23,7 +23,7 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
   const { isLoading, data: { code, title, description } = { code: '', title: '', description: '' } } = useQuery(
     ['docs', path],
     async () => {
-      const response = await fetch('http://localhost:5173/' + path);
+      const response = await fetch('https://cloud-doc.vercel.app/' + path);
       const json = await response.json();
 
       return json;
