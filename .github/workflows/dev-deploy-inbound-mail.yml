@@ -44,7 +44,7 @@ jobs:
         name: ['novu/inbound-mail-ee']
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-project
 
       - uses: crazy-max/ghaction-setup-docker@v2

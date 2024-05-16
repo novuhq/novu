@@ -55,7 +55,7 @@ jobs:
     needs: [check_submodule_token]
     steps:
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Checkout with submodules
         if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
         with:

@@ -109,7 +109,7 @@ jobs:
           cluster: ${{ needs.infrastructure_data.outputs.ecs_cluster }}
           wait-for-service-stability: true
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         if: ${{ inputs.deploy_sentry_release }}
 
       - name: get-npm-version

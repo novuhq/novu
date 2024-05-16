@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: 'Checkout Repository'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v3
 
@@ -21,7 +21,7 @@ jobs:
     name: Spell check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: streetsidesoftware/cspell-action@v5
 
   get-affected:
@@ -54,7 +54,7 @@ jobs:
           else
             echo "branch=main" >> $GITHUB_OUTPUT
           fi
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-project
@@ -119,7 +119,7 @@ jobs:
     timeout-minutes: 80
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-providers }}'
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
@@ -145,7 +145,7 @@ jobs:
         run: echo '${{ needs.get-affected.outputs.test-packages }}'
 
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Project
         uses: ./.github/actions/setup-project
@@ -171,7 +171,7 @@ jobs:
     timeout-minutes: 80
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-libs }}'
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-project
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -211,7 +211,7 @@ jobs:
       id-token: write
     steps:
       - run: echo ${{ matrix.projectName }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-project
         with:
           # Don't run redis and etc... for other unit tests
@@ -235,7 +235,7 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: ./.github/actions/run-api

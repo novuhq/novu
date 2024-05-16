@@ -34,13 +34,13 @@ jobs:
             echo "has_token=false" >> $GITHUB_OUTPUT
           fi
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         if: steps.setup.outputs.has_token == 'true'
         with:
           submodules: ${{ inputs.ee }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
       # else checkout without submodules if the token is not provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         if: steps.setup.outputs.has_token != 'true'
 
       - uses: ./.github/actions/setup-project
@@ -100,13 +100,13 @@ jobs:
           parallel: false
           config-file: cypress.config.ts
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: cypress-screenshots
           path: apps/widget/cypress/screenshots
       # Test run video was always captured, so this action uses "always()" condition
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: cypress-videos
