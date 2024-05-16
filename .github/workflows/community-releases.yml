@@ -23,7 +23,7 @@ jobs:
         id: get_version
         shell: bash
         run: |
-          echo "LERNA_RELEASE_VERSION=$(lerna ls --json | jq -r '.[] | select(.name == "novu") | .version')" >> $GITHUB_OUTPUT
+          echo "LERNA_RELEASE_VERSION=$(jq -r '.version' lerna.json)" >> $GITHUB_OUTPUT
 
   docker_build:
     runs-on: ubuntu-latest
