@@ -127,11 +127,11 @@ export const DocsProvider = ({ children }) => {
           >
             <Tooltip label="Open docs website">
               <ActionIcon
-                style={{
-                  width: '20px  !important',
-                  minWidth: '20px !important',
+                className={css({
+                  width: '125 !important',
+                  minWidth: '125 !important',
                   border: 'none',
-                }}
+                })}
                 variant="transparent"
                 onClick={() => {
                   window.open(`https://docs.novu.co/${path}`);
@@ -143,11 +143,11 @@ export const DocsProvider = ({ children }) => {
             <ActionIcon
               variant="transparent"
               onClick={onClose}
-              style={{
-                width: '20px  !important',
-                minWidth: '20px !important',
+              className={css({
+                width: '125 !important',
+                minWidth: '125 !important',
                 border: 'none',
-              }}
+              })}
             >
               <IconOutlineClose />
             </ActionIcon>
@@ -163,22 +163,22 @@ export const DocsProvider = ({ children }) => {
           <Text>Did you find it useful?</Text>
           <Flex gap="100" align="center">
             <ActionIcon
-              style={{
-                width: '20px  !important',
-                minWidth: '20px',
+              className={css({
+                width: '125 !important',
+                minWidth: '125 !important',
                 border: 'none',
-              }}
+              })}
               variant="transparent"
               onClick={onVoteClick('up')}
             >
               <IconThumbUpAlt color={voted === 'up' ? 'white' : undefined} size={20} />
             </ActionIcon>
             <ActionIcon
-              style={{
-                width: '20px  !important',
-                minWidth: '20px',
+              className={css({
+                width: '125 !important',
+                minWidth: '125 !important',
                 border: 'none',
-              }}
+              })}
               variant="transparent"
               onClick={onVoteClick('down')}
             >
