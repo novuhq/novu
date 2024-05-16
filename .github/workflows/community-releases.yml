@@ -7,10 +7,6 @@ on:
         description: 'The version to tag docker images'
         required: true
         type: string
-      services:
-        type: string
-        description: 'Select the services for building. Format: [novu/api,novu/worker]'
-        required: false
 
 permissions:
   contents: write
@@ -33,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: ${{ fromJSON(github.event.inputs.region) || (['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed']) }}
+        name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed']
     steps:
       - uses: actions/checkout@v4
 
@@ -75,7 +71,12 @@ jobs:
             --platform=linux/amd64,linux/arm64 --provenance=false
             --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
-          cd apps/$SERVICE_NAME && pnpm run docker:build
+          if [ "${{ env.SERVICE_NAME }}" = "embed" ]; then
+            cd libs/$SERVICE_NAME
+          else
+            cd apps/$SERVICE_NAME
+          fi
+          pnpm run docker:build
           docker images
 
       - name: Tag and Push docker image
