@@ -54,6 +54,7 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '../execution-log-route';
+import { decryptApiKey } from '../../encryption';
 
 @Injectable()
 export class ConditionsFilter extends Filter {
@@ -373,7 +374,10 @@ export class ConditionsFilter extends Filter {
     });
     if (!environment) throw new PlatformException('Environment is not found');
 
-    return createHash(environment.apiKeys[0].key, command.environmentId);
+    return createHash(
+      decryptApiKey(environment.apiKeys[0].key),
+      command.environmentId
+    );
   }
 
   private async buildPayload(

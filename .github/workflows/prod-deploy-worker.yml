@@ -46,6 +46,32 @@ jobs:
       - name: build worker
         run: pnpm build:worker --skip-nx-cache
 
+      - uses: crazy-max/ghaction-setup-docker@v2
+        with:
+          version: v24.0.6
+          daemon-config: |
+            {
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: 'image=moby/buildkit:v0.13.1'
+
+      - name: Prepare
+        shell: bash
+        run: |
+          service=${{ matrix.name }}
+          echo "SERVICE_NAME=$(basename "${service//-/-}")" >> $GITHUB_ENV
+
       - name: Set Bull MQ Env variable for EE
         if: contains(matrix.name, 'ee')
         shell: bash
@@ -60,9 +86,14 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+          DOCKER_BUILD_ARGUMENTS: >
+            --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-prod
+            --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-prod,mode=max
+            --platform=linux/amd64
+            --output=type=image,name=ghcr.io/novuhq/${{ matrix.name }},push-by-digest=true,name-canonical=true
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
-          cd apps/worker && pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load --platform=linux/amd64,linux/arm64 --provenance=false
+          cd apps/worker && pnpm --silent --workspace-root pnpm-context -- apps/worker/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=apps/worker - -t novu-worker --load $DOCKER_BUILD_ARGUMENTS
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:latest
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:prod
           docker tag novu-worker ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
@@ -75,20 +106,8 @@ jobs:
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           echo "IMAGE=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-  # Temporary for the migration phase
-  deploy_general_worker_eu:
-    needs: build_prod_image
-    uses: ./.github/workflows/reusable-app-service-deploy.yml
-    secrets: inherit
-    with:
-      environment: Production
-      service_name: worker
-      terraform_workspace: novu-prod-eu
-      # This is a workaround to an issue with matrix outputs
-      docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
-
   deploy_prod_workers_eu:
-    needs: deploy_general_worker_eu
+    needs: build_prod_image
     uses: ./.github/workflows/reusable-workers-service-deploy.yml
     secrets: inherit
     with:
@@ -97,25 +116,8 @@ jobs:
       # This is a workaround to an issue with matrix outputs
       docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
 
-
-  # Temporary for the migration phase
-  deploy_general_worker_us:
-    needs:
-      - deploy_prod_workers_eu
-      - build_prod_image
-    uses: ./.github/workflows/reusable-app-service-deploy.yml
-    secrets: inherit
-    with:
-      environment: Production
-      service_name: worker
-      terraform_workspace: novu-prod
-      # This is a workaround to an issue with matrix outputs
-      docker_image: ghcr.io/novuhq/novu/worker-ee:${{ github.sha }}
-
   deploy_prod_workers_us:
-    needs:
-      - deploy_general_worker_us
-      - build_prod_image
+    needs: build_prod_image
     uses: ./.github/workflows/reusable-workers-service-deploy.yml
     secrets: inherit
     with:

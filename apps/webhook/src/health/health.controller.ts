@@ -12,14 +12,12 @@ export class HealthController {
   @HealthCheck()
   async healthCheck(): Promise<HealthCheckResult> {
     const result = await this.healthCheckService.check([
-      async () => {
-        return {
-          apiVersion: {
-            version,
-            status: 'up',
-          },
-        };
-      },
+      async () => ({
+        apiVersion: {
+          version,
+          status: 'up',
+        },
+      }),
       () => this.dalHealthIndicator.isHealthy(),
     ]);
 

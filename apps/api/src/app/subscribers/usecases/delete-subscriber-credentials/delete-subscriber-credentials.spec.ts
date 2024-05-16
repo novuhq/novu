@@ -6,10 +6,8 @@ import { SharedModule } from '../../../shared/shared.module';
 import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { DeleteSubscriberCredentials } from './delete-subscriber-credentials.usecase';
 import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
-import { UpdateSubscriberChannel } from '../update-subscriber-channel/update-subscriber-channel.usecase';
-import { UpdateSubscriberChannelCommand } from '../update-subscriber-channel/update-subscriber-channel.command';
-import { OAuthHandlerEnum } from '../../types';
 import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
+import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
 
 describe('Delete subscriber provider credentials', function () {
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
@@ -41,6 +39,7 @@ describe('Delete subscriber provider credentials', function () {
         providerId: ChatProviderIdEnum.Discord,
         credentials: { webhookUrl: 'newWebhookUrl' },
         oauthHandler: OAuthHandlerEnum.NOVU,
+        isIdempotentOperation: false,
       })
     );
 
@@ -52,6 +51,7 @@ describe('Delete subscriber provider credentials', function () {
         providerId: PushProviderIdEnum.FCM,
         credentials: { deviceTokens: fcmTokens },
         oauthHandler: OAuthHandlerEnum.NOVU,
+        isIdempotentOperation: false,
       })
     );
 

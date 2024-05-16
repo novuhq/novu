@@ -210,6 +210,7 @@ export const mapNotificationTemplateToForm = (template: INotificationTemplate): 
     identifier: template.triggers[0].identifier,
     critical: !template.critical,
     preferenceSettings: template.preferenceSettings,
+    payloadSchema: template.payloadSchema,
     steps: [],
   };
 

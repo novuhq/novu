@@ -7,6 +7,7 @@ import { editor as NEditor } from 'monaco-editor';
 
 import { createTranslationMarks } from './createTranslationMarks';
 import { IVariable, useWorkflowVariables } from '../../../api/hooks';
+import { useEnvController } from '@novu/shared-web';
 
 export const CustomCodeEditor = ({
   onChange,
@@ -24,7 +25,7 @@ export const CustomCodeEditor = ({
 
   if (isLoadingVariables) {
     return (
-      <Card withBorder sx={styledCard}>
+      <Card data-test-id={'custom-code-editor'} withBorder sx={styledCard}>
         <Loader />
       </Card>
     );
@@ -59,6 +60,8 @@ const CustomCodeEditorBase = ({
   variables: any;
   isDark: boolean;
 }) => {
+  const { readonly } = useEnvController();
+
   const editorRef = useRef<NEditor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<Monaco | null>(null);
   const decoratorsRef = useRef<NEditor.IEditorDecorationsCollection | null>(null);
@@ -77,6 +80,7 @@ const CustomCodeEditorBase = ({
 
   return (
     <Editor
+      value={value}
       height={height}
       onChange={(newValue) => {
         if (!onChange) {
@@ -87,7 +91,7 @@ const CustomCodeEditorBase = ({
         decoratorsRef.current?.set(decorators);
       }}
       defaultLanguage="handlebars"
-      defaultValue={value}
+      defaultValue={''}
       theme={isDark ? 'vs-dark' : 'vs'}
       onMount={(editor, monaco) => {
         const decorators = editor.createDecorationsCollection([]);
@@ -157,6 +161,7 @@ const CustomCodeEditorBase = ({
         renderLineHighlight: 'all',
         fontSize: 14,
         lineHeight: 20,
+        readOnly: readonly,
       }}
       className={isDark ? 'custom-code-editor-dark' : 'custom-code-editor'}
     />
@@ -169,4 +174,5 @@ const styledCard = (theme) => ({
   borderColor: theme.colorScheme === 'dark' ? colors.B30 : colors.B80,
   padding: '30px',
   overflow: 'visible',
+  height: '300px',
 });

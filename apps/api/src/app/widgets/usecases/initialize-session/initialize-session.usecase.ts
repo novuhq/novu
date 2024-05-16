@@ -10,6 +10,7 @@ import {
   SelectIntegration,
   AuthService,
   createHash,
+  decryptApiKey,
 } from '@novu/application-generic';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
@@ -65,7 +66,7 @@ export class InitializeSession {
     });
     const subscriber = await this.createSubscriber.execute(commandos);
 
-    this.analyticsService.track('Initialize Widget Session - [Notification Center]', environment._organizationId, {
+    this.analyticsService.mixpanelTrack('Initialize Widget Session - [Notification Center]', '', {
       _organization: environment._organizationId,
       environmentName: environment.name,
       _subscriber: subscriber._id,
@@ -84,7 +85,8 @@ export class InitializeSession {
 }
 
 function validateNotificationCenterEncryption(environment, command: InitializeSessionCommand) {
-  const hmacHash = createHash(environment.apiKeys[0].key, command.subscriberId);
+  const key = decryptApiKey(environment.apiKeys[0].key);
+  const hmacHash = createHash(key, command.subscriberId);
   if (hmacHash !== command.hmacHash) {
     throw new ApiException('Please provide a valid HMAC hash');
   }

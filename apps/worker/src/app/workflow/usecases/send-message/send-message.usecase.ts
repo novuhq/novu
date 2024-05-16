@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ModuleRef } from '@nestjs/core';
+
 import {
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
@@ -8,29 +10,33 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import {
-  InstrumentUsecase,
   AnalyticsService,
   buildNotificationTemplateKey,
-  CachedEntity,
-  DetailEnum,
-  GetSubscriberTemplatePreference,
-  GetSubscriberTemplatePreferenceCommand,
-  Instrument,
-  ConditionsFilterCommand,
-  ConditionsFilter,
-  IFilterVariables,
-  GetSubscriberGlobalPreference,
-  GetSubscriberGlobalPreferenceCommand,
   buildSubscriberKey,
+  CachedEntity,
+  ConditionsFilter,
+  ConditionsFilterCommand,
+  DetailEnum,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  GetSubscriberGlobalPreference,
+  GetSubscriberGlobalPreferenceCommand,
+  GetSubscriberTemplatePreference,
+  GetSubscriberTemplatePreferenceCommand,
+  IFilterVariables,
+  Instrument,
+  InstrumentUsecase,
+  IChimeraChannelResponse,
+  IUseCaseInterfaceInline,
+  requireInject,
+  ExecuteOutput,
 } from '@novu/application-generic';
 import {
-  SubscriberRepository,
   JobEntity,
-  NotificationTemplateRepository,
   JobRepository,
   JobStatusEnum,
+  NotificationTemplateRepository,
+  SubscriberRepository,
   TenantEntity,
   TenantRepository,
 } from '@novu/dal';
@@ -44,9 +50,12 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
+import { ExecuteStepCustom } from './execute-step-custom.usecase';
 
 @Injectable()
 export class SendMessage {
+  private resonateUsecase: IUseCaseInterfaceInline;
+
   constructor(
     private sendMessageEmail: SendMessageEmail,
     private sendMessageSms: SendMessageSms,
@@ -60,11 +69,15 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
+    private executeStepCustom: ExecuteStepCustom,
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
-    private analyticsService: AnalyticsService
-  ) {}
+    private analyticsService: AnalyticsService,
+    protected moduleRef: ModuleRef
+  ) {
+    this.resonateUsecase = requireInject('resonate', this.moduleRef);
+  }
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand) {
@@ -76,6 +89,17 @@ export class SendMessage {
     ]);
 
     const stepType = command.step?.template?.type;
+
+    let resonateResponse: ExecuteOutput<IChimeraChannelResponse> | null = null;
+    if (!['digest', 'delay'].includes(stepType as any)) {
+      resonateResponse = await this.resonateUsecase.execute<
+        SendMessageCommand & { variables: IFilterVariables },
+        ExecuteOutput<IChimeraChannelResponse> | null
+      >({
+        ...command,
+        variables: shouldRun.variables,
+      });
+    }
 
     if (!command.payload?.$on_boarding_trigger) {
       const usedFilters = shouldRun?.conditions.reduce(ConditionsFilter.sumFilters, {
@@ -97,7 +121,12 @@ export class SendMessage {
         };
       }
 
-      this.analyticsService.track('Process Workflow Step - [Triggers]', command.userId, {
+      /**
+       * userId is empty string due to mixpanel hot shard events.
+       * This is intentional, so that mixpanel can automatically reshard it.
+       */
+      this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
+        workflowType: resonateResponse?.outputs ? 'ECHO' : 'REGULAR',
         _template: command.job._templateId,
         _organization: command.organizationId,
         _environment: command.environmentId,
@@ -137,7 +166,11 @@ export class SendMessage {
       );
     }
 
-    const sendMessageCommand = SendMessageCommand.create({ ...command, compileContext: payload });
+    const sendMessageCommand = SendMessageCommand.create({
+      ...command,
+      compileContext: payload,
+      chimeraData: resonateResponse,
+    });
 
     switch (stepType) {
       case StepTypeEnum.SMS:
@@ -154,6 +187,8 @@ export class SendMessage {
         return await this.digest.execute(command);
       case StepTypeEnum.DELAY:
         return await this.sendMessageDelay.execute(command);
+      case StepTypeEnum.CUSTOM:
+        return await this.executeStepCustom.execute(sendMessageCommand);
     }
   }
 

@@ -1,34 +1,39 @@
 import { Flex, Grid, Group, Input, LoadingOverlay, Stack, UnstyledButton, useMantineTheme } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
 import { useEffect, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import styled from '@emotion/styled';
-import { useOutletContext } from 'react-router-dom';
-import { IOrganizationEntity } from '@novu/shared';
+import { IResponseError, UploadTypesEnum, MIME_TYPE_TO_FILE_EXTENSION, IOrganizationEntity } from '@novu/shared';
+import { Button, ColorInput, colors, Select, inputStyles, Upload, Trash, errorMessage } from '@novu/design-system';
 
 import { updateBrandingSettings } from '../../../api/organization';
-import { getSignedUrl } from '../../../api/storage';
 import Card from '../../../components/layout/components/Card';
-import { Button, ColorInput, colors, Select, inputStyles, Upload, Trash } from '@novu/design-system';
-
 import { successMessage } from '../../../utils/notifications';
+import { useUploadToStorage } from '../../../api/hooks/useUploadToStorage';
+import { useAuthContext } from '@novu/shared-web';
 
-const mimeTypes = {
-  'image/jpeg': 'jpeg',
-  'image/png': 'png',
-};
-
+/**
+ * @deprecated Use `BrandingForm` from the v2 folder instead
+ */
 export function BrandingForm() {
-  const { currentOrganization: organization } = useOutletContext<{
-    currentOrganization: IOrganizationEntity | undefined;
-  }>();
-  const { mutateAsync: getSignedUrlAction } = useMutation<
-    { signedUrl: string; path: string; additionalHeaders: object },
-    { error: string; message: string; statusCode: number },
-    string
-  >(getSignedUrl);
+  const { currentOrganization: organization } = useAuthContext();
+
+  return <BrandingFormRenderer organization={organization} />;
+}
+
+/**
+ * @deprecated Use `BrandingForm` from the v2 folder instead
+ */
+export function BrandingFormRenderer({ organization }: { organization: IOrganizationEntity | undefined }) {
+  const { uploadToStorage } = useUploadToStorage({
+    onSuccess: (path) => {
+      setValue('image', path);
+    },
+    onError: (e) => {
+      errorMessage('Failed to upload branding image: ' + e.message);
+    },
+  });
   const { setValue, handleSubmit, control } = useForm({
     defaultValues: {
       fontFamily: organization?.branding?.fontFamily || 'inherit',
@@ -41,7 +46,7 @@ export function BrandingForm() {
 
   const { mutateAsync: updateBrandingSettingsMutation, isLoading: isUpdateBrandingLoading } = useMutation<
     { logo: string; path: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     { logo: string | undefined; color: string | undefined }
   >(updateBrandingSettings);
 
@@ -64,27 +69,7 @@ export function BrandingForm() {
     const file = files[0];
     if (!file) return;
 
-    const { signedUrl, path, additionalHeaders } = await getSignedUrlAction(mimeTypes[file.type]);
-    const contentTypeHeaders = {
-      'Content-Type': file.type,
-    };
-
-    const mergedHeaders = Object.assign({}, contentTypeHeaders, additionalHeaders || {});
-    await axios.put(signedUrl, file, {
-      headers: mergedHeaders,
-      transformRequest: [
-        (data, headers) => {
-          if (headers) {
-            // eslint-disable-next-line
-            delete headers.Authorization;
-          }
-
-          return data;
-        },
-      ],
-    });
-
-    setValue('image', path);
+    uploadToStorage({ file, type: UploadTypesEnum.BRANDING });
   }
 
   const dropzoneRef = useRef<() => void>(null);
@@ -139,7 +124,7 @@ export function BrandingForm() {
                               },
                             }}
                             openRef={dropzoneRef}
-                            accept={Object.keys(mimeTypes)}
+                            accept={Object.keys(MIME_TYPE_TO_FILE_EXTENSION)}
                             multiple={false}
                             onDrop={handleUpload}
                             data-test-id="upload-image-button"

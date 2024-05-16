@@ -1,14 +1,29 @@
 import { expect } from 'chai';
 
-import { MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
+import {
+  MemberRepository,
+  OrganizationRepository,
+  UserRepository,
+  IntegrationRepository,
+  EnvironmentRepository,
+} from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { ApiServiceLevelEnum, ICreateOrganizationDto, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  EmailProviderIdEnum,
+  ICreateOrganizationDto,
+  JobTitleEnum,
+  MemberRoleEnum,
+  SmsProviderIdEnum,
+} from '@novu/shared';
 
 describe('Create Organization - /organizations (POST)', async () => {
   let session: UserSession;
   const organizationRepository = new OrganizationRepository();
   const userRepository = new UserRepository();
   const memberRepository = new MemberRepository();
+  const integrationRepository = new IntegrationRepository();
+  const environmentRepository = new EnvironmentRepository();
 
   before(async () => {
     session = new UserSession();
@@ -87,6 +102,94 @@ describe('Create Organization - /organizations (POST)', async () => {
       const user = await userRepository.findById(session.user._id);
 
       expect(user?.jobTitle).to.eq(testOrganization.jobTitle);
+    });
+
+    it('should create organization with built in Novu integrations and set them as primary', async () => {
+      const testOrganization: ICreateOrganizationDto = {
+        name: 'Org Name',
+      };
+
+      const { body } = await session.testAgent.post('/v1/organizations').send(testOrganization).expect(201);
+      const integrations = await integrationRepository.find({ _organizationId: body.data._id });
+      const environments = await environmentRepository.find({ _organizationId: body.data._id });
+      const productionEnv = environments.find((e) => e.name === 'Production');
+      const developmentEnv = environments.find((e) => e.name === 'Development');
+      const novuEmailIntegration = integrations.filter(
+        (i) => i.active && i.name === 'Novu Email' && i.providerId === EmailProviderIdEnum.Novu
+      );
+      const novuSmsIntegration = integrations.filter(
+        (i) => i.active && i.name === 'Novu SMS' && i.providerId === SmsProviderIdEnum.Novu
+      );
+      const novuEmailIntegrationProduction = novuEmailIntegration.filter(
+        (el) => el._environmentId === productionEnv?._id
+      );
+      const novuEmailIntegrationDevelopment = novuEmailIntegration.filter(
+        (el) => el._environmentId === developmentEnv?._id
+      );
+      const novuSmsIntegrationProduction = novuSmsIntegration.filter((el) => el._environmentId === productionEnv?._id);
+      const novuSmsIntegrationDevelopment = novuSmsIntegration.filter(
+        (el) => el._environmentId === developmentEnv?._id
+      );
+
+      expect(integrations.length).to.eq(4);
+      expect(novuEmailIntegration?.length).to.eq(2);
+      expect(novuSmsIntegration?.length).to.eq(2);
+
+      expect(novuEmailIntegrationProduction.length).to.eq(1);
+      expect(novuSmsIntegrationProduction.length).to.eq(1);
+      expect(novuEmailIntegrationDevelopment.length).to.eq(1);
+      expect(novuSmsIntegrationDevelopment.length).to.eq(1);
+
+      expect(novuEmailIntegrationProduction[0].primary).to.eq(true);
+      expect(novuSmsIntegrationProduction[0].primary).to.eq(true);
+      expect(novuEmailIntegrationDevelopment[0].primary).to.eq(true);
+      expect(novuSmsIntegrationDevelopment[0].primary).to.eq(true);
+    });
+
+    it('when Novu Email credentials are not set it should not create Novu Email integration', async () => {
+      const oldNovuEmailIntegrationApiKey = process.env.NOVU_EMAIL_INTEGRATION_API_KEY;
+      process.env.NOVU_EMAIL_INTEGRATION_API_KEY = '';
+      const testOrganization: ICreateOrganizationDto = {
+        name: 'Org Name',
+      };
+
+      const { body } = await session.testAgent.post('/v1/organizations').send(testOrganization).expect(201);
+      const integrations = await integrationRepository.find({ _organizationId: body.data._id });
+      const environments = await environmentRepository.find({ _organizationId: body.data._id });
+      const productionEnv = environments.find((e) => e.name === 'Production');
+      const developmentEnv = environments.find((e) => e.name === 'Development');
+      const novuSmsIntegration = integrations.filter(
+        (i) => i.active && i.name === 'Novu SMS' && i.providerId === SmsProviderIdEnum.Novu
+      );
+
+      expect(integrations.length).to.eq(2);
+      expect(novuSmsIntegration?.length).to.eq(2);
+      expect(novuSmsIntegration.filter((el) => el._environmentId === productionEnv?._id).length).to.eq(1);
+      expect(novuSmsIntegration.filter((el) => el._environmentId === developmentEnv?._id).length).to.eq(1);
+      process.env.NOVU_EMAIL_INTEGRATION_API_KEY = oldNovuEmailIntegrationApiKey;
+    });
+
+    it('when Novu SMS credentials are not set it should not create Novu SMS integration', async () => {
+      const oldNovuSmsIntegrationAccountSid = process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID;
+      process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID = '';
+      const testOrganization: ICreateOrganizationDto = {
+        name: 'Org Name',
+      };
+
+      const { body } = await session.testAgent.post('/v1/organizations').send(testOrganization).expect(201);
+      const integrations = await integrationRepository.find({ _organizationId: body.data._id });
+      const environments = await environmentRepository.find({ _organizationId: body.data._id });
+      const productionEnv = environments.find((e) => e.name === 'Production');
+      const developmentEnv = environments.find((e) => e.name === 'Development');
+      const novuEmailIntegrations = integrations.filter(
+        (i) => i.active && i.name === 'Novu Email' && i.providerId === EmailProviderIdEnum.Novu
+      );
+
+      expect(integrations.length).to.eq(2);
+      expect(novuEmailIntegrations?.length).to.eq(2);
+      expect(novuEmailIntegrations.filter((el) => el._environmentId === productionEnv?._id).length).to.eq(1);
+      expect(novuEmailIntegrations.filter((el) => el._environmentId === developmentEnv?._id).length).to.eq(1);
+      process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID = oldNovuSmsIntegrationAccountSid;
     });
   });
 });

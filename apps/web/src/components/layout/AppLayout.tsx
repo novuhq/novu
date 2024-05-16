@@ -11,8 +11,13 @@ import { INTERCOM_APP_ID } from '../../config';
 import { RequiredAuth } from './RequiredAuth';
 import { SpotLight } from '../utils/Spotlight';
 import { SpotLightProvider } from '../providers/SpotlightProvider';
+import { useFeatureFlag } from '@novu/shared-web';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { HeaderNav as HeaderNavNew } from './components/v2/HeaderNav';
+import { MainNav } from '../nav/MainNav';
+import { FreeTrialBanner } from './components/FreeTrialBanner';
 
-const AppShellNew = styled.div`
+const AppShell = styled.div`
   display: flex;
   width: 100vw;
   height: 100vh;
@@ -29,6 +34,8 @@ const ContentShell = styled.div`
 export function AppLayout() {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
 
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
+
   return (
     <RequiredAuth>
       <SpotLightProvider>
@@ -42,7 +49,7 @@ export function AppLayout() {
               fallback={({ error, resetError, eventId }) => (
                 <>
                   Sorry, but something went wrong. <br />
-                  Our team been notified about it and we will look at it asap.
+                  Our team has been notified and we are investigating.
                   <br />
                   <code>
                     <small style={{ color: 'lightGrey' }}>
@@ -55,13 +62,18 @@ export function AppLayout() {
               )}
             >
               <SpotLight>
-                <AppShellNew>
-                  <SideNav />
+                <AppShell>
+                  {isInformationArchitectureEnabled ? <MainNav /> : <SideNav />}
                   <ContentShell>
-                    <HeaderNav isIntercomOpened={isIntercomOpened} />
+                    <FreeTrialBanner />
+                    {isInformationArchitectureEnabled ? (
+                      <HeaderNavNew />
+                    ) : (
+                      <HeaderNav isIntercomOpened={isIntercomOpened} />
+                    )}
                     <Outlet />
                   </ContentShell>
-                </AppShellNew>
+                </AppShell>
               </SpotLight>
             </Sentry.ErrorBoundary>
           </IntercomProvider>

@@ -26,6 +26,7 @@ export abstract class SendMessageType {
   ) {
     const errorString =
       stringifyObject(error?.response?.body) ||
+      stringifyObject(error?.response?.data) ||
       stringifyObject(error?.response) ||
       stringifyObject(error) ||
       errorMessageFallback;

@@ -1,4 +1,4 @@
-import { IsNumber } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -13,4 +13,8 @@ export class GetNotificationTemplatesCommand extends EnvironmentWithUserCommand 
 
   @IsNumber()
   limit: number;
+
+  @IsOptional()
+  @IsString()
+  query?: string;
 }

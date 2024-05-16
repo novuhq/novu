@@ -20,6 +20,9 @@ import {
   CreateSubscriberCommand,
   UpdateSubscriber,
   UpdateSubscriberCommand,
+  OAuthHandlerEnum,
+  UpdateSubscriberChannel,
+  UpdateSubscriberChannelCommand,
 } from '@novu/application-generic';
 import { ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
 import {
@@ -45,7 +48,6 @@ import {
   UpdateSubscriberGlobalPreferencesRequestDto,
   UpdateSubscriberRequestDto,
 } from './dtos';
-import { UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from './usecases/update-subscriber-channel';
 import { GetSubscribers, GetSubscribersCommand } from './usecases/get-subscribers';
 import { GetSubscriber, GetSubscriberCommand } from './usecases/get-subscriber';
 import { GetPreferencesByLevelCommand } from './usecases/get-preferences-by-level/get-preferences-by-level.command';
@@ -77,7 +79,6 @@ import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
 import { ApiCommonResponses, ApiResponse, ApiNoContentResponse } from '../shared/framework/response.decorator';
 import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
-import { OAuthHandlerEnum } from './types';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
@@ -97,6 +98,9 @@ import {
 } from './usecases/update-subscriber-global-preferences';
 import { GetSubscriberPreferencesByLevelParams } from './params';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
+import { MessageMarkAsRequestDto } from '../widgets/dtos/mark-as-request.dto';
+import { MarkMessageAsByMarkCommand } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
+import { MarkMessageAsByMark } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -117,6 +121,7 @@ export class SubscribersController {
     private getNotificationsFeedUsecase: GetNotificationsFeed,
     private getFeedCountUsecase: GetFeedCount,
     private markMessageAsUsecase: MarkMessageAs,
+    private markMessageAsByMarkUsecase: MarkMessageAsByMark,
     private updateMessageActionsUsecase: UpdateMessageActions,
     private updateSubscriberOnlineFlagUsecase: UpdateSubscriberOnlineFlag,
     private chatOauthCallbackUsecase: ChatOauthCallback,
@@ -141,8 +146,8 @@ export class SubscribersController {
       GetSubscribersCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
-        page: query.page ? Number(query.page) : 0,
-        limit: query.limit ? Number(query.limit) : 10,
+        page: query.page,
+        limit: query.limit,
       })
     );
   }
@@ -195,6 +200,7 @@ export class SubscribersController {
         avatar: body.avatar,
         locale: body.locale,
         data: body.data,
+        channels: body.channels,
       })
     );
   }
@@ -271,6 +277,35 @@ export class SubscribersController {
         credentials: body.credentials,
         integrationIdentifier: body.integrationIdentifier,
         oauthHandler: OAuthHandlerEnum.EXTERNAL,
+        isIdempotentOperation: true,
+      })
+    );
+  }
+
+  @Patch('/:subscriberId/credentials')
+  @ExternalApiAccessible()
+  @UseGuards(UserAuthGuard)
+  @ApiResponse(SubscriberResponseDto)
+  @ApiOperation({
+    summary: 'Modify subscriber credentials',
+    description: `Subscriber credentials associated to the delivery methods such as slack and push tokens.
+    This endpoint appends provided credentials and deviceTokens to the existing ones.`,
+  })
+  async modifySubscriberChannel(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: UpdateSubscriberChannelRequestDto
+  ): Promise<SubscriberResponseDto> {
+    return await this.updateSubscriberChannelUsecase.execute(
+      UpdateSubscriberChannelCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId,
+        providerId: body.providerId,
+        credentials: body.credentials,
+        integrationIdentifier: body.integrationIdentifier,
+        oauthHandler: OAuthHandlerEnum.EXTERNAL,
+        isIdempotentOperation: false,
       })
     );
   }
@@ -456,10 +491,10 @@ export class SubscribersController {
       organizationId: user.organizationId,
       environmentId: user.environmentId,
       subscriberId: subscriberId,
-      page: query.page != null ? parseInt(query.page) : 0,
+      page: query.page,
       feedId: feedsQuery,
       query: { seen: query.seen, read: query.read },
-      limit: query.limit != null ? parseInt(query.limit) : 10,
+      limit: query.limit,
       payload: query.payload,
     });
 
@@ -506,7 +541,10 @@ export class SubscribersController {
   @UseGuards(UserAuthGuard)
   @Post('/:subscriberId/messages/markAs')
   @ApiOperation({
-    summary: 'Mark a subscriber feed message as seen',
+    summary: 'Mark a subscriber feed messages as seen or as read',
+    description: `Introducing '/:subscriberId/messages/mark-as endpoint for consistent read and seen message handling,
+     deprecating old legacy endpoint.`,
+    deprecated: true,
   })
   @ApiResponse(MessageResponseDto, 201, true)
   async markMessageAs(
@@ -528,6 +566,32 @@ export class SubscribersController {
     });
 
     return await this.markMessageAsUsecase.execute(command);
+  }
+
+  @ApiOperation({
+    summary: 'Mark a subscriber messages as seen, read, unseen or unread',
+  })
+  @ExternalApiAccessible()
+  @UseGuards(UserAuthGuard)
+  @Post('/:subscriberId/messages/mark-as')
+  async markMessagesAs(
+    @UserSession() user: IJwtPayload,
+    @Param('subscriberId') subscriberId: string,
+    @Body() body: MessageMarkAsRequestDto
+  ): Promise<MessageEntity[]> {
+    const messageIds = this.toArray(body.messageId);
+    if (!messageIds || messageIds.length === 0) throw new BadRequestException('messageId is required');
+
+    return await this.markMessageAsByMarkUsecase.execute(
+      MarkMessageAsByMarkCommand.create({
+        organizationId: user.organizationId,
+        subscriberId: subscriberId,
+        environmentId: user.environmentId,
+        messageIds,
+        markAs: body.markAs,
+        __source: 'api',
+      })
+    );
   }
 
   @ExternalApiAccessible()

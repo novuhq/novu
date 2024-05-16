@@ -31,6 +31,7 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
+  IChimeraEmailResponse,
 } from '@novu/application-generic';
 import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
@@ -150,9 +151,10 @@ export class SendMessageEmail extends SendMessageBase {
       command.overrides.email || {},
       command.overrides[integration?.providerId] || {}
     );
+    const chimeraOutputs = command.chimeraData?.outputs;
 
     let html;
-    let subject = step?.template?.subject || '';
+    let subject = (chimeraOutputs as IChimeraEmailResponse)?.subject || step?.template?.subject || '';
     let content;
     let senderName;
 
@@ -201,35 +203,37 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
-        CompileEmailTemplateCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          userId: command.userId,
-          ...payload,
-        }),
-        this.initiateTranslations.bind(this)
-      ));
+      if (!command.chimeraData) {
+        ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
+          CompileEmailTemplateCommand.create({
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
+            ...payload,
+          }),
+          this.initiateTranslations.bind(this)
+        ));
 
-      if (this.storeContent()) {
-        await this.messageRepository.update(
-          {
-            _id: message._id,
-            _environmentId: command.environmentId,
-          },
-          {
-            $set: {
-              subject,
-              content,
+        if (this.storeContent()) {
+          await this.messageRepository.update(
+            {
+              _id: message._id,
+              _environmentId: command.environmentId,
             },
-          }
-        );
-      }
+            {
+              $set: {
+                subject,
+                content,
+              },
+            }
+          );
+        }
 
-      html = await inlineCss(html, {
-        // Used for style sheet links that starts with / so should not be needed in our case.
-        url: ' ',
-      });
+        html = await inlineCss(html, {
+          // Used for style sheet links that starts with / so should not be needed in our case.
+          url: ' ',
+        });
+      }
     } catch (e) {
       Logger.error({ payload }, 'Compiling the email template or storing it or inlining it has failed', LOG_CONTEXT);
       await this.sendErrorHandlebars(command.job, e.message);
@@ -263,8 +267,8 @@ export class SendMessageEmail extends SendMessageBase {
     const mailData: IEmailOptions = createMailData(
       {
         to: email,
-        subject,
-        html,
+        subject: subject,
+        html: (chimeraOutputs as IChimeraEmailResponse)?.body || html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
         senderName,
@@ -449,10 +453,9 @@ export class SendMessageEmail extends SendMessageBase {
         message,
         'error',
         'mail_unexpected_error',
-        'Error while sending email with provider',
+        error.message || error.name || 'Error while sending email with provider',
         command,
-        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
-        error
+        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR
       );
 
       await this.executionLogRoute.execute(
@@ -464,7 +467,7 @@ export class SendMessageEmail extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(error),
+          raw: JSON.stringify(error) === '{}' ? JSON.stringify({ message: error.message }) : JSON.stringify(error),
         })
       );
 
@@ -534,6 +537,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     senderName: overrides?.senderName || options.senderName,
     subject: overrides?.subject || options.subject,
     customData: overrides?.customData || {},
+    headers: overrides?.headers || {},
   };
 };
 

@@ -1,5 +1,3 @@
-// eslint-ignore max-len
-
 import { Injectable } from '@nestjs/common';
 import { ChangeRepository, DalException, NotificationTemplateEntity, NotificationTemplateRepository } from '@novu/dal';
 import { ChangeEntityTypeEnum } from '@novu/shared';
@@ -11,11 +9,11 @@ import {
   buildNotificationTemplateKey,
   CreateChange,
   CreateChangeCommand,
+  DeleteMessageTemplate,
+  DeleteMessageTemplateCommand,
   InvalidateCacheService,
 } from '@novu/application-generic';
-import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
-import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
-import { GetNotificationTemplateCommand } from '../get-notification-template/get-notification-template.command';
+import { DeleteNotificationTemplateCommand } from './delete-notification-template.command';
 
 /**
  * DEPRECATED:
@@ -33,7 +31,7 @@ export class DeleteNotificationTemplate {
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: GetNotificationTemplateCommand) {
+  async execute(command: DeleteNotificationTemplateCommand) {
     try {
       const notificationTemplate = await this.notificationTemplateRepository.findOne({
         _environmentId: command.environmentId,
@@ -57,6 +55,7 @@ export class DeleteNotificationTemplate {
             userId: command.userId,
             messageTemplateId: step._templateId,
             parentChangeId: parentChangeId,
+            workflowType: command.type,
           })
         );
       }

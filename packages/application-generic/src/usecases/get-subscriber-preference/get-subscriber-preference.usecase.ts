@@ -1,14 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
   NotificationTemplateRepository,
-  NotificationTemplateEntity,
-  MemberRepository,
+  SubscriberRepository,
 } from '@novu/dal';
-import {
-  ChannelTypeEnum,
-  IPreferenceChannels,
-  ISubscriberPreferenceResponse,
-} from '@novu/shared';
+import { ISubscriberPreferenceResponse } from '@novu/shared';
 
 import { AnalyticsService } from '../../services/analytics.service';
 import { GetSubscriberPreferenceCommand } from './get-subscriber-preference.command';
@@ -20,7 +15,7 @@ import {
 @Injectable()
 export class GetSubscriberPreference {
   constructor(
-    private memberRepository: MemberRepository,
+    private subscriberRepository: SubscriberRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private analyticsService: AnalyticsService
@@ -29,8 +24,9 @@ export class GetSubscriberPreference {
   async execute(
     command: GetSubscriberPreferenceCommand
   ): Promise<ISubscriberPreferenceResponse[]> {
-    const admin = await this.memberRepository.getOrganizationAdminAccount(
-      command.organizationId
+    const subscriber = await this.subscriberRepository.findBySubscriberId(
+      command.environmentId,
+      command.subscriberId
     );
 
     const templateList =
@@ -40,16 +36,14 @@ export class GetSubscriberPreference {
         true
       );
 
-    if (admin) {
-      this.analyticsService.track(
-        'Fetch User Preferences - [Notification Center]',
-        admin._userId,
-        {
-          _organization: command.organizationId,
-          templatesSize: templateList.length,
-        }
-      );
-    }
+    this.analyticsService.mixpanelTrack(
+      'Fetch User Preferences - [Notification Center]',
+      '',
+      {
+        _organization: command.organizationId,
+        templatesSize: templateList.length,
+      }
+    );
 
     return await Promise.all(
       templateList.map(async (template) =>
@@ -59,6 +53,7 @@ export class GetSubscriberPreference {
             subscriberId: command.subscriberId,
             environmentId: command.environmentId,
             template,
+            subscriber,
           })
         )
       )

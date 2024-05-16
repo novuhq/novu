@@ -140,11 +140,14 @@ export abstract class SendMessageBase extends SendMessageType {
   protected async initiateTranslations(environmentId: string, organizationId: string, locale: string | undefined) {
     try {
       if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-        if (!require('@novu/ee-translation')?.TranslationsService) {
+        if (!require('@novu/ee-shared-services')?.TranslationsService) {
           throw new PlatformException('Translation module is not loaded');
         }
-        const service = this.moduleRef.get(require('@novu/ee-translation')?.TranslationsService, { strict: false });
-        const { namespaces, resources } = await service.getTranslationsList(environmentId, organizationId);
+        const service = this.moduleRef.get(require('@novu/ee-shared-services')?.TranslationsService, { strict: false });
+        const { namespaces, resources, defaultLocale } = await service.getTranslationsList(
+          environmentId,
+          organizationId
+        );
 
         await i18next.init({
           resources,
@@ -153,6 +156,7 @@ export abstract class SendMessageBase extends SendMessageType {
           nsSeparator: '.',
           lng: locale || 'en',
           compatibilityJSON: 'v2',
+          fallbackLng: defaultLocale || 'en',
           interpolation: {
             formatSeparator: ',',
             format: function (value, formatting, lng) {

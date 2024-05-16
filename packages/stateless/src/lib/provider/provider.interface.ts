@@ -24,6 +24,7 @@ export interface IEmailOptions {
   notificationDetails?: any;
   ipPoolName?: string;
   customData?: Record<string, any>;
+  headers?: Record<string, string>;
   senderName?: string;
 }
 
@@ -80,9 +81,20 @@ export interface IPushOptions {
 }
 
 export interface IChatOptions {
-  webhookUrl: string;
+  phoneNumber?: string;
+  webhookUrl?: string;
   channel?: string;
   content: string;
+  blocks?: IBlock[];
+  customData?: Record<string, any>;
+}
+
+export interface IBlock {
+  type: 'section' | 'header';
+  text: {
+    type: 'mrkdwn';
+    text: string;
+  };
 }
 
 export interface ISendMessageSuccessResponse {

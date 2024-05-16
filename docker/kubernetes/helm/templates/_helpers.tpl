@@ -245,12 +245,12 @@ Return mongodb username
 Return mongodb secretName
 */}}
 {{- define "novu.mongodb.secretName" -}}
-{{- if .Values.mongodb.enabled -}}
+{{- if and (not .Values.externalDatabase.existingSecret) (not .Values.mongodb.auth.existingSecret) }}
     {{- printf "%s-url-mongodb" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
 {{- else if .Values.externalDatabase.existingSecret -}}
     {{- printf "%s" .Values.externalDatabase.existingSecret -}}
-{{- else -}}
-     {{- printf "%s-externaldb" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- else if .Values.mongodb.auth.existingSecret -}}
+    {{- printf "%s" .Values.mongodb.auth.existingSecret -}}
 {{- end -}}
 {{- end -}}
 

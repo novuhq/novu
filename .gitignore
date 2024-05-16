@@ -100,5 +100,14 @@ fabric.properties
 .env
 docker/.env
 .vercel
+nx-cloud.env
 
 .pnpm-store/
+
+# NX Build System
+.nx/cache
+
+# EE Symlinked folders - we need these for the EE build
+# @TODO - find a way to remove the symlinks without breaking the build
+!enterprise/packages/**/src
+/.idea/jsLinters/eslint.xml

@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-translation-web",
-  "version": "0.23.0",
+  "version": "0.24.2",
   "description": "",
   "repository": "https://github.com/novuhq/novu",
   "license": "ISC",
@@ -21,8 +21,7 @@
     "build:watch": "npm run build:esm:watch",
     "lint": "eslint --ext .ts,.tsx src --no-error-on-unmatched-pattern",
     "test": "echo 'skip test in the ci'",
-    "start": "npm run build:watch",
-    "symlink": "ln -s ../../../.source/translation-web/src ./src"
+    "start": "npm run build:watch"
   },
   "dependencies": {
     "@emotion/css": "^11.10.5",
@@ -30,13 +29,14 @@
     "@emotion/styled": "^11.6.0",
     "@handlebars/parser": "^2.1.0",
     "@mantine/core": "^5.7.1",
+    "@mantine/dropzone": "^5.9.2",
     "@mantine/hooks": "^5.7.1",
     "@mantine/prism": "^5.7.1",
     "@monaco-editor/react": "^4.6.0",
-    "@novu/client": "^0.23.0",
-    "@novu/design-system": "^0.23.0",
-    "@novu/shared": "^0.23.0",
-    "@novu/shared-web": "^0.23.0",
+    "@novu/client": "^0.24.2",
+    "@novu/design-system": "^0.24.2",
+    "@novu/shared": "^0.24.2",
+    "@novu/shared-web": "^0.24.2",
     "@tanstack/react-query": "^4.20.4",
     "axios": "^1.4.0",
     "date-fns": "^2.29.2",

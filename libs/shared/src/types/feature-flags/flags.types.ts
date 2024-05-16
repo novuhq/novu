@@ -16,5 +16,5 @@ export type IFlagKey = `IS_${Uppercase<string>}_ENABLED`;
  * @param testEnum - the Enum to type check
  */
 export function testFlagEnumValidity<TEnum extends IFlags, IFlags = Record<IFlagKey, IFlagKey>>(
-  testEnum: TEnum & Record<Exclude<keyof TEnum, keyof IFlags>, ['Key must follow `IFlagKey` format']>
+  _: TEnum & Record<Exclude<keyof TEnum, keyof IFlags>, ['Key must follow `IFlagKey` format']>
 ) {}

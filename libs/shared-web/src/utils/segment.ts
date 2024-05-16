@@ -1,5 +1,6 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { IUserEntity } from '@novu/shared';
+import { api } from '../api';
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
@@ -21,12 +22,23 @@ export class SegmentService {
     this._segment?.identify(user?._id);
   }
 
-  track(event: string, data?: Record<string, unknown>) {
+  async track(event: string, data?: Record<string, unknown>) {
     if (!this.isSegmentEnabled()) {
       return;
     }
 
-    this._segment?.track(event + ' - [WEB]', data);
+    await api.post('/v1/telemetry/measure', {
+      event: event + ' - [WEB]',
+      data,
+    });
+  }
+
+  pageView(url: string) {
+    if (!this.isSegmentEnabled()) {
+      return;
+    }
+
+    this._segment?.pageView(url);
   }
 
   reset() {

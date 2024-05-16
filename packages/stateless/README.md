@@ -12,7 +12,7 @@ yarn add @novu/stateless
 
 ```ts
 import { NovuStateless, ChannelTypeEnum } from '@novu/stateless';
-import { SendgridEmailProvider } from '@novu/sendgrid';
+import { SendgridEmailProvider } from '@novu/providers';
 
 const novu = new NovuStateless();
 
@@ -31,9 +31,9 @@ const passwordResetTemplate = await novu.registerTemplate({
       channel: ChannelTypeEnum.EMAIL,
       template: `
           Hi {{firstName}}!
-          
+
           To reset your password click <a href="{{resetLink}}">here.</a>
-          
+
           {{#if organization}}
             <img src="{{organization.logo}}" />
           {{/if}}
@@ -99,7 +99,7 @@ Novu provides a single API to manage providers across multiple channels with a s
 
 #### 📱 In-App
 
-- [x] [Novu](https://docs.novu.co/notification-center/introduction)
+- [x] [Novu](https://docs.novu.co/notification-center/introduction?utm_source=github-stateless-readme)
 - [ ] MagicBell
 
 #### Other (Coming Soon...)

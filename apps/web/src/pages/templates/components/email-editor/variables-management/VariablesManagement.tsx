@@ -1,14 +1,11 @@
 import { useWatch } from 'react-hook-form';
-import { UnstyledButton } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import React, { useEffect, useState } from 'react';
 import * as set from 'lodash.set';
 import styled from '@emotion/styled';
+import { Group, useMantineColorScheme } from '@mantine/core';
 
 import {
-  Text,
-  Tooltip,
-  EditGradient,
   Translation,
   colors,
   NovuIcon,
@@ -17,6 +14,10 @@ import {
   Workflow,
   shadows,
   EmptySearch,
+  ActionButton,
+  PencilOutlined,
+  Close,
+  Text,
 } from '@novu/design-system';
 
 import { VarItemsDropdown } from './VarItemsDropdown';
@@ -24,8 +25,10 @@ import { VarLabel } from './VarLabel';
 import { useDebounce, useProcessVariables } from '../../../../../hooks';
 import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
-import { getWorkflowVariables } from '../../../../../api/notification-templates';
 import { useWorkflowVariables } from '../../../../../api/hooks';
+
+import { ROUTES } from '../../../../../constants/routes.enum';
+import { UpgradePlanBanner } from '../../../../../components/layout/components/UpgradePlanBanner';
 
 interface IVariablesList {
   translations: Record<string, any>;
@@ -67,25 +70,32 @@ const searchVariables = (list, search: string) => {
 
 export const VariablesManagement = ({
   openVariablesModal,
+  closeVariablesManagement,
   control,
   path,
+  isPopover = false,
+  chimera = false,
 }: {
   openVariablesModal?: () => void;
+  closeVariablesManagement?: () => void;
   control?: any;
   path: string;
+  isPopover?: boolean;
+  chimera?: boolean;
 }) => {
   const variableArray = useWatch({
     name: path,
     control,
   });
+  const { colorScheme } = useMantineColorScheme();
 
   const { variables } = useWorkflowVariables();
-
   const processedVariables = useProcessVariables(variableArray, false);
   const [variablesList, setVariablesList] = useState<IVariablesList>({
     ...variables,
     step: processedVariables,
   });
+
   const [searchVal, setSearchVal] = useState('');
 
   const debouncedSearchChange = useDebounce((args: { search: string; list: IVariablesList }) => {
@@ -112,58 +122,66 @@ export const VariablesManagement = ({
   };
 
   return (
-    <VariablesContainer>
-      <When truthy={openVariablesModal !== undefined}>
-        <div
+    <VariablesContainer isPopover={isPopover}>
+      <When truthy={openVariablesModal !== undefined && !chimera}>
+        <Group
+          px={16}
+          h={40}
+          noWrap
+          spacing={20}
+          position={'right'}
           style={{
-            textAlign: 'right',
-            marginBottom: '20px',
+            borderRadius: '8px 8px 0px 0px',
+            backgroundColor: colorScheme === 'dark' ? colors.B15 : colors.BGLight,
           }}
         >
-          <Tooltip label="Add defaults or mark as required">
-            <UnstyledButton
-              data-test-id="open-edit-variables-btn"
-              onClick={() => {
-                if (openVariablesModal) {
-                  openVariablesModal();
-                }
+          <ActionButton
+            onClick={() => {
+              if (openVariablesModal) {
+                openVariablesModal();
+              }
+            }}
+            Icon={PencilOutlined}
+            data-test-id="open-edit-variables-btn"
+            tooltip={'Add defaults or mark as required'}
+          />
+          <When truthy={closeVariablesManagement}>
+            <ActionButton
+              onClick={closeVariablesManagement}
+              sx={{
+                '> svg': {
+                  width: 14,
+                  height: 14,
+                },
               }}
-              type="button"
-            >
-              <Text gradient>
-                Edit Variables
-                <EditGradient
-                  style={{
-                    width: '18px',
-                    height: '18px',
-                    marginBottom: '-4px',
-                    marginLeft: 5,
-                  }}
-                />
-              </Text>
-            </UnstyledButton>
-          </Tooltip>
-        </div>
+              Icon={Close}
+            />
+          </When>
+        </Group>
       </When>
-      <Input
-        type={'search'}
-        onChange={handleSearchVariable}
-        mb={20}
-        placeholder={'Search variables...'}
-        rightSection={<Search />}
-      />
-      <When truthy={emptyVariablesList}>
-        <EmptySearchContainer>
-          <EmptySearch style={{ maxWidth: 200, marginBottom: 15 }} />
-          <span style={{ color: colors.B40, fontSize: 16, fontWeight: 600, lineHeight: '20px' }}>No matches found</span>
-          <span style={{ color: colors.B40, fontSize: 14, fontWeight: 400, lineHeight: '20px' }}>
-            Try being less specific or using different keywords.
-          </span>
-        </EmptySearchContainer>
-      </When>
-      <When truthy={!emptyVariablesList}>
-        <VariablesSection variablesList={variablesList} searchVal={searchVal} />
-      </When>
+      <div style={{ padding: '12px' }}>
+        <Input
+          type={'search'}
+          onChange={handleSearchVariable}
+          mb={20}
+          placeholder={'Search variables...'}
+          rightSection={<Search />}
+        />
+        <When truthy={emptyVariablesList}>
+          <EmptySearchContainer>
+            <EmptySearch style={{ maxWidth: 200, marginBottom: 15 }} />
+            <span style={{ color: colors.B40, fontSize: 16, fontWeight: 600, lineHeight: '20px' }}>
+              No matches found
+            </span>
+            <span style={{ color: colors.B40, fontSize: 14, fontWeight: 400, lineHeight: '20px' }}>
+              Try being less specific or using different keywords.
+            </span>
+          </EmptySearchContainer>
+        </When>
+        <When truthy={!emptyVariablesList}>
+          <VariablesSection variablesList={variablesList} searchVal={searchVal} />
+        </When>
+      </div>
     </VariablesContainer>
   );
 };
@@ -175,18 +193,12 @@ const VariablesSection = ({ variablesList, searchVal }: { variablesList: IVariab
     <>
       <VariableSectionItem variableList={system} search={searchVal} sectionName="System Variables" Icon={NovuIcon} />
       <VariableSectionItem variableList={step} search={searchVal} sectionName="Step Variables" Icon={Workflow} />
-      <VariableSectionItem
-        withFolders
-        variableList={translations}
-        search={searchVal}
-        sectionName={'Translation Variables'}
-        Icon={Translation}
-      />
+      <TranslationSectionItem variableList={translations} search={searchVal} />
     </>
   );
 };
 
-const VariableSectionItem = ({
+export const VariableSectionItem = ({
   variableList,
   search,
   sectionName,
@@ -202,43 +214,92 @@ const VariableSectionItem = ({
   const keys = variableList && Object.keys(variableList);
 
   return (
-    <When truthy={keys?.length}>
-      <VarLabel label={sectionName} Icon={Icon}>
-        {keys?.map((name, ind) => {
-          if (typeof variableList[name] === 'object') {
+    <>
+      <When truthy={keys?.length}>
+        <VarLabel label={sectionName} Icon={Icon}>
+          {keys?.map((name, ind) => {
+            if (typeof variableList[name] === 'object') {
+              return (
+                <VarItemsDropdown
+                  withFolders={withFolders}
+                  path={name}
+                  highlight={search}
+                  key={ind}
+                  name={name}
+                  type={variableList[name]}
+                />
+              );
+            }
+
             return (
-              <VarItemsDropdown
-                withFolders={withFolders}
-                path={name}
+              <VarItemTooltip
                 highlight={search}
-                key={ind}
+                pathToCopy={name}
                 name={name}
-                type={variableList[name]}
+                type={typeof variableList[name]}
+                key={ind}
               />
             );
-          }
+          })}
+        </VarLabel>
+      </When>
+    </>
+  );
+};
+const TranslationsGetStartedText = () => {
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+  const navigate = useNavigate();
 
-          return (
-            <VarItemTooltip
-              highlight={search}
-              pathToCopy={name}
-              name={name}
-              type={typeof variableList[name]}
-              key={ind}
-            />
-          );
-        })}
-      </VarLabel>
-    </When>
+  return (
+    <Text color={isDark ? colors.B60 : colors.B40}>
+      <GradientSpan>
+        <a
+          onClick={() => {
+            navigate(ROUTES.TRANSLATIONS);
+          }}
+        >
+          Upload translations{' '}
+        </a>
+      </GradientSpan>
+      <span>to use them as variables or in the autosuggest for the editor.</span>
+    </Text>
   );
 };
 
-const VariablesContainer = styled.div`
+export const TranslationSectionItem = ({
+  variableList,
+  search,
+}: {
+  variableList: Record<string, any>;
+  search: string;
+}) => {
+  const sectionName = 'Translation Variables';
+  const keys = variableList && Object.keys(variableList);
+
+  return (
+    <>
+      <VariableSectionItem
+        withFolders
+        variableList={variableList}
+        search={search}
+        sectionName={sectionName}
+        Icon={Translation}
+      />
+      <When truthy={!keys?.length && !search.length}>
+        <VarLabel label={sectionName} Icon={Translation}>
+          <UpgradePlanBanner FeatureActivatedBanner={TranslationsGetStartedText} />
+        </VarLabel>
+      </When>
+    </>
+  );
+};
+
+const VariablesContainer = styled.div<{ isPopover: boolean }>`
   width: 100%;
   height: 100%;
   border-radius: 8px;
-  padding: 15px;
-  box-shadow: ${shadows.dark};
+  box-shadow: ${({ isPopover }) => (isPopover ? 'none' : shadows.dark)};
 `;
 
 const EmptySearchContainer = styled.div`
@@ -248,4 +309,14 @@ const EmptySearchContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+`;
+
+const GradientSpan = styled.span`
+  background: ${colors.horizontal};
+  background-clip: text;
+  text-fill-color: transparent;
+
+  &:hover {
+    cursor: pointer;
+  }
 `;

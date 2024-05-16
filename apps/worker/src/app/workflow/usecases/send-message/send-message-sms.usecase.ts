@@ -89,20 +89,22 @@ export class SendMessageSms extends SendMessageBase {
     let content: string | null = '';
 
     try {
-      content = await this.compileTemplate.execute(
-        CompileTemplateCommand.create({
-          template: step.template.content as string,
-          data: this.getCompilePayload(command.compileContext),
-        })
-      );
+      if (!command.chimeraData) {
+        content = await this.compileTemplate.execute(
+          CompileTemplateCommand.create({
+            template: step.template.content as string,
+            data: this.getCompilePayload(command.compileContext),
+          })
+        );
+
+        if (!content) {
+          throw new PlatformException(`Unexpected error: SMS content is missing`);
+        }
+      }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
 
       return;
-    }
-
-    if (!content) {
-      throw new PlatformException(`Unexpected error: SMS content is missing`);
     }
 
     const phone = command.payload.phone || subscriber.phone;
@@ -263,6 +265,8 @@ export class SendMessageSms extends SendMessageBase {
     overrides: Record<string, any> = {}
   ) {
     try {
+      const chimeraBody = command.chimeraData?.outputs.body;
+
       const smsFactory = new SmsFactory();
       const smsHandler = smsFactory.getHandler(this.buildFactoryIntegration(integration));
       if (!smsHandler) {
@@ -272,7 +276,7 @@ export class SendMessageSms extends SendMessageBase {
       const result = await smsHandler.send({
         to: overrides.to || phone,
         from: overrides.from || integration.credentials.from,
-        content: overrides.content || content,
+        content: chimeraBody || overrides.content || content,
         id: message._id,
         customData: overrides.customData || {},
       });
@@ -309,8 +313,7 @@ export class SendMessageSms extends SendMessageBase {
         'unexpected_sms_error',
         e.message || e.name || 'Un-expect SMS provider error',
         command,
-        LogCodeEnum.SMS_ERROR,
-        e
+        LogCodeEnum.SMS_ERROR
       );
 
       await this.executionLogRoute.execute(
@@ -322,7 +325,7 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ message: e.message, name: e.name }),
+          raw: JSON.stringify({ message: e?.response?.data || e.message, name: e.name }),
         })
       );
     }

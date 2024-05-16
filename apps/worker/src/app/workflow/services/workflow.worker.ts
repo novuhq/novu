@@ -51,7 +51,10 @@ export class WorkflowWorker extends WorkflowWorkerService {
               _this.triggerEventUsecase
                 .execute(data)
                 .then(resolve)
-                .catch(reject)
+                .catch((e) => {
+                  nr.noticeError(e);
+                  reject(e);
+                })
                 .finally(() => {
                   transaction.end();
                 });

@@ -9,9 +9,10 @@ import {
 } from 'react';
 import { PaginationContext } from './PaginationContext';
 import styled from '@emotion/styled';
-import { Input, NumberInput, NumberInputProps } from '@mantine/core';
+import { Input, NumberInput, NumberInputProps, useMantineTheme } from '@mantine/core';
 import { Tooltip } from '../tooltip/Tooltip';
 import { FIRST_PAGE_NUMBER } from './Pagination.const';
+import { colors } from '../config';
 
 export interface IGoToPageInputProps extends NumberInputProps {
   firstPageNumber?: number;
@@ -22,14 +23,27 @@ const InputWrapper = styled(Input.Wrapper)(({ theme }) => {
   display: flex;
   flex-direction: row;
   align-items: center;
-  
+
+      
+  /**
+   * TODO: use theme values for color styles below.
+   * Should be enforced for all child elements as these are in the design system.
+   */
+  color: ${theme.colorScheme === 'dark' ? colors.B60 : colors.B40};
+
   input {
+    background-color: transparent;
+    border-color: ${theme.colorScheme === 'dark' ? colors.B30 : colors.B80};
     margin: 0;
     min-height: inherit;
     height: 32px;
     text-align: center;
     min-width: 56px;
     max-width: 60px;
+
+    &:focus, &:focus-within {
+      border-color: ${theme.colorScheme === 'dark' ? colors.B60 : colors.B60};
+    }
   }
 
   label {
@@ -53,6 +67,7 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
   ({ label, firstPageNumber = FIRST_PAGE_NUMBER, ...inputProps }, forwardedRef) => {
     const { onPageChange, totalPageCount } = useContext(PaginationContext);
     const [hasError, setHasError] = useState<boolean>(false);
+    const [goToValue, setGoToValue] = useState<number | undefined>(undefined);
 
     const validateValue = (val: number | string) => {
       const numVal = +val;
@@ -83,7 +98,7 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
         return;
       }
       onPageChange(+val);
-      internalRef.current.value = undefined;
+      setGoToValue(undefined);
       setHasError(false);
     };
 
@@ -95,7 +110,7 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
     };
 
     return (
-      <InputWrapper label={label} id="goToPage">
+      <InputWrapper label={label} id="goToPage" theme={useMantineTheme()}>
         <Tooltip
           opened={hasError}
           data-test-id="conditions-form-tooltip-error"
@@ -105,6 +120,8 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
         >
           <NumberInput
             onKeyDown={handleKeyPress}
+            value={goToValue}
+            onChange={setGoToValue}
             id={'goToPage'}
             ref={internalRef}
             onBlur={handleBlurEvent}
@@ -113,6 +130,9 @@ export const GoToPageInput: React.FC<IGoToPageInputProps> = forwardRef<HTMLInput
             maxLength={`${totalPageCount}`.length}
             hideControls
             noClampOnBlur
+            autoCorrect={'none'}
+            aria-autocomplete={'none'}
+            autoComplete={'none'}
             disabled={totalPageCount === 1}
             {...inputProps}
           />

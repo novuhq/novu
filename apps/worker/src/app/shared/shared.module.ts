@@ -49,6 +49,7 @@ import {
   StorageHelperService,
   storageService,
   UpdateSubscriber,
+  UpdateSubscriberChannel,
   UpdateTenant,
 } from '@novu/application-generic';
 
@@ -56,7 +57,7 @@ import * as packageJson from '../../../package.json';
 import { CreateLog } from './logs';
 import { JobTopicNameEnum } from '@novu/shared';
 import { ActiveJobsMetricService } from '../workflow/services';
-import { UNIQUE_WORKER_DEPENDENCIES } from '../../config/worker-init.config';
+import { UNIQUE_WORKER_DEPENDENCIES, workersToProcess } from '../../config/worker-init.config';
 
 const DAL_MODELS = [
   UserRepository,
@@ -114,6 +115,7 @@ const PROVIDERS = [
   StorageHelperService,
   storageService,
   UpdateSubscriber,
+  UpdateSubscriberChannel,
   UpdateTenant,
   GetTenant,
   CreateTenant,

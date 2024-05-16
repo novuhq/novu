@@ -1,9 +1,15 @@
 import { IConfigCredentials, IProviderConfig } from '../provider.interface';
-import { grafanaOnCallConfig, slackConfig, getstreamConfig, rocketChatConfig } from '../credentials';
+import {
+  grafanaOnCallConfig,
+  slackConfig,
+  getstreamConfig,
+  rocketChatConfig,
+  whatsAppBusinessConfig,
+} from '../credentials';
 
 import { ChatProviderIdEnum } from '../provider.enum';
-
 import { ChannelTypeEnum } from '../../../types';
+import { UTM_CAMPAIGN_QUERY_PARAM } from '../../../ui';
 
 export const chatProviders: IProviderConfig[] = [
   {
@@ -11,7 +17,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Slack',
     channel: ChannelTypeEnum.CHAT,
     credentials: slackConfig,
-    docReference: 'https://docs.novu.co/channels-and-providers/chat/slack',
+    docReference: `https://docs.novu.co/channels-and-providers/chat/slack${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'slack.svg', dark: 'slack.svg' },
   },
   {
@@ -19,7 +25,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Discord',
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
-    docReference: 'https://docs.novu.co/channels-and-providers/chat/discord',
+    docReference: `https://docs.novu.co/channels-and-providers/chat/discord${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'discord.svg', dark: 'discord.svg' },
   },
   {
@@ -35,7 +41,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'MSTeams',
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
-    docReference: 'https://docs.novu.co/channels-and-providers/chat/ms-teams',
+    docReference: `https://docs.novu.co/channels-and-providers/chat/ms-teams${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'msteams.svg', dark: 'msteams.svg' },
   },
   {
@@ -59,7 +65,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Zulip',
     channel: ChannelTypeEnum.CHAT,
     credentials: [] as IConfigCredentials[],
-    docReference: 'https://docs.novu.co/channels-and-providers/chat/zulip',
+    docReference: `https://docs.novu.co/channels-and-providers/chat/zulip${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'zulip.svg', dark: 'zulip.svg' },
   },
   {
@@ -77,5 +83,13 @@ export const chatProviders: IProviderConfig[] = [
     credentials: rocketChatConfig,
     docReference: 'https://developer.rocket.chat/reference/api/rest-api/endpoints',
     logoFileName: { light: 'rocket-chat.svg', dark: 'rocket-chat.svg' },
+  },
+  {
+    id: ChatProviderIdEnum.WhatsAppBusiness,
+    displayName: 'WhatsApp Business',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: whatsAppBusinessConfig,
+    docReference: 'https://developers.facebook.com/docs/whatsapp/cloud-api',
+    logoFileName: { light: 'whatsapp-business.svg', dark: 'whatsapp-business.svg' },
   },
 ];

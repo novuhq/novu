@@ -3,38 +3,56 @@ import { useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { Grid } from '@mantine/core';
 import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
+import { ActiveLabel, Button, colors } from '@novu/design-system';
 
 import { IQuickStartChannelConfiguration, OnBoardingAnalyticsEnum, quickStartChannels } from '../consts';
 import { When } from '../../../components/utils/When';
-import { ActiveLabel, Button, colors } from '@novu/design-system';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useActiveIntegrations, useIntegrationLimit } from '../../../hooks';
 import type { IntegrationEntity } from '../../integrations/types';
 import { useCreateInAppIntegration } from '../../../hooks/useCreateInAppIntegration';
+import { useCreateOnboardingExperimentWorkflow } from '../../../api/hooks/notification-templates/useCreateOnboardingExperimentWorkflow';
+import { useOnboardingExperiment } from '../../../hooks/useOnboardingExperiment';
+import { useAuthContext } from '@novu/shared-web';
 
 export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel: Dispatch<any> }) {
   const segment = useSegment();
+  const { currentOrganization } = useAuthContext();
   const navigate = useNavigate();
   const { integrations } = useActiveIntegrations();
   const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);
   const { create, isLoading } = useCreateInAppIntegration((data: any) => {});
+  const {
+    createOnboardingExperimentWorkflow,
+    isLoading: IsCreateOnboardingExpWorkflowLoading,
+    isDisabled: isIsCreateOnboardingExpWorkflowDisabled,
+  } = useCreateOnboardingExperimentWorkflow();
+  const { isOnboardingExperimentEnabled } = useOnboardingExperiment();
 
   function trackClick(channel: IQuickStartChannelConfiguration, integrationActive: boolean) {
-    if (integrationActive) {
-      let providerId = getActiveIntegration(integrations, channel)?.providerId;
-
-      if (channel.type === ChannelTypeEnum.EMAIL && !providerId) {
-        providerId = InAppProviderIdEnum.Novu;
-      }
-
-      segment.track(OnBoardingAnalyticsEnum.UPDATE_PROVIDER_CLICK, {
-        channel: channel.type,
-        provider: providerId,
+    if (isOnboardingExperimentEnabled && channel.type === ChannelTypeEnum.EMAIL) {
+      segment.track(OnBoardingAnalyticsEnum.ONBOARDING_EXPERIMENT_TEST_NOTIFICATION, {
+        action: 'Get started - Send test notification',
+        experiment_id: '2024-w9-onb',
+        _organization: currentOrganization?._id,
       });
     } else {
-      segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_CLICK, {
-        channel: channel.type,
-      });
+      if (integrationActive) {
+        let providerId = getActiveIntegration(integrations, channel)?.providerId;
+
+        if (channel.type === ChannelTypeEnum.EMAIL && !providerId) {
+          providerId = InAppProviderIdEnum.Novu;
+        }
+
+        segment.track(OnBoardingAnalyticsEnum.UPDATE_PROVIDER_CLICK, {
+          channel: channel.type,
+          provider: providerId,
+        });
+      } else {
+        segment.track(OnBoardingAnalyticsEnum.CONFIGURE_PROVIDER_CLICK, {
+          channel: channel.type,
+        });
+      }
     }
   }
 
@@ -46,6 +64,7 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
         if (channel.type === ChannelTypeEnum.EMAIL) {
           isIntegrationActive = isIntegrationActive || !isLimitReached;
         }
+        const isOnboardingExperiment = isOnboardingExperimentEnabled && channel.type === ChannelTypeEnum.EMAIL;
 
         return (
           <CardCol span={5} key={index}>
@@ -62,23 +81,35 @@ export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel
                 </TitleRow>
                 <Description>{channel.description}</Description>
                 <StyledButton
-                  loading={isLoading}
-                  variant={'outline'}
+                  loading={
+                    isLoading || (channel.type === ChannelTypeEnum.EMAIL && IsCreateOnboardingExpWorkflowLoading)
+                  }
+                  disabled={channel.type === ChannelTypeEnum.EMAIL && isIsCreateOnboardingExpWorkflowDisabled}
+                  pulse={isOnboardingExperiment}
+                  fullWidth={isOnboardingExperiment}
+                  variant={isOnboardingExperiment ? 'gradient' : 'outline'}
                   onClick={async () => {
                     trackClick(channel, isIntegrationActive);
 
                     if (channel.type === ChannelTypeEnum.IN_APP) {
                       await create();
                     }
-
-                    channel.clickHandler({
-                      navigate,
-                      setClickedChannel,
-                      channelType: channel.type,
-                    });
+                    if (isOnboardingExperiment) {
+                      createOnboardingExperimentWorkflow();
+                    } else {
+                      channel.clickHandler({
+                        navigate,
+                        setClickedChannel,
+                        channelType: channel.type,
+                      });
+                    }
                   }}
                 >
-                  {isIntegrationActive ? 'Change Provider' : `Configure ${channel.displayName}`}
+                  {isOnboardingExperiment
+                    ? 'Send test notification now'
+                    : isIntegrationActive
+                    ? 'Change Provider'
+                    : `Configure ${channel.displayName}`}
                 </StyledButton>
               </ChannelCard>
             </Container>

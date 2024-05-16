@@ -1,11 +1,10 @@
-import { useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Center } from '@mantine/core';
-
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
+import type { IResponseError } from '@novu/shared';
 
 import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { api } from '../../../api/api.client';
@@ -13,18 +12,27 @@ import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { ROUTES } from '../../../constants/routes.enum';
 import { OAuth } from './OAuth';
+import { parseServerErrorMessage } from '../../../utils/errors';
 
 type LoginFormProps = {
   invitationToken?: string;
   email?: string;
 };
 
+export interface LocationState {
+  redirectTo: {
+    pathname: string;
+  };
+}
+
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const state = location.state as LocationState;
   const { setToken } = useAuthContext();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
-    { error: string; message: string; statusCode: number },
+    IResponseError,
     {
       email: string;
       password: string;
@@ -70,7 +78,8 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       }
 
       setToken(token);
-      navigate(ROUTES.WORKFLOWS);
+
+      navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
@@ -78,29 +87,28 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     }
   };
 
-  const serverErrorString = useMemo<string>(() => {
-    return Array.isArray(error?.message) ? error?.message[0] : error?.message;
-  }, [error]);
+  const emailClientError = errors.email?.message;
+  let emailServerError = parseServerErrorMessage(error);
 
-  const emailServerError = useMemo<string>(() => {
-    if (serverErrorString === 'email must be an email') return 'Please provide a valid email';
-
-    return '';
-  }, [serverErrorString]);
+  // TODO: Use a more human-friendly message in the IsEmail validator and remove this patch
+  if (emailServerError === 'email must be an email') {
+    emailServerError = 'Please provide a valid email address';
+  }
 
   return (
     <>
       <OAuth />
       <form noValidate onSubmit={handleSubmit(onLogin)}>
         <Input
-          error={errors.email?.message || emailServerError}
+          error={emailClientError || emailServerError}
           {...register('email', {
-            required: 'Please provide an email',
-            pattern: { value: /^\S+@\S+\.\S+$/, message: 'Please provide a valid email' },
+            required: 'Please provide an email address',
+            pattern: { value: /^\S+@\S+\.\S+$/, message: 'Please provide a valid email address' },
           })}
           required
           label="Email"
-          placeholder="Type your email..."
+          type="email"
+          placeholder="Type your email address..."
           disabled={!!invitationToken}
           data-test-id="email"
           mt={5}
@@ -142,12 +150,6 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
           </Link>
         </Center>
       </form>
-      {isError && !emailServerError && (
-        <Text data-test-id="error-alert-banner" mt={20} size="lg" weight="bold" align="center" color={colors.error}>
-          {' '}
-          {error?.message}
-        </Text>
-      )}
     </>
   );
 }

@@ -47,16 +47,36 @@ export class NotificationTemplateRepository extends BaseRepository<
     return this.mapEntity(item);
   }
 
-  async findBlueprint(id: string) {
+  async findBlueprintById(id: string) {
     if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
 
     const requestQuery: NotificationTemplateQuery = {
-      _id: id,
       isBlueprint: true,
       _organizationId: this.blueprintOrganizationId,
+      _id: id,
     };
 
-    const item = await this.MongooseModel.findOne(requestQuery).populate('steps.template').lean();
+    const item = await this.MongooseModel.findOne(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
+
+    return this.mapEntity(item);
+  }
+
+  async findBlueprintByTriggerIdentifier(identifier: string) {
+    if (!this.blueprintOrganizationId) throw new DalException('Blueprint environment id was not found');
+
+    const requestQuery: NotificationTemplateQuery = {
+      isBlueprint: true,
+      _organizationId: this.blueprintOrganizationId,
+      triggers: { $elemMatch: { identifier: identifier } },
+    };
+
+    const item = await this.MongooseModel.findOne(requestQuery)
+      .populate('steps.template')
+      .populate('notificationGroup')
+      .lean();
 
     return this.mapEntity(item);
   }
@@ -151,15 +171,31 @@ export class NotificationTemplateRepository extends BaseRepository<
     return { totalCount: totalItemsCount, data: this.mapEntities(items) };
   }
 
-  async getList(organizationId: string, environmentId: string, skip = 0, limit = 10) {
-    const totalItemsCount = await this.count({ _environmentId: environmentId });
+  async getList(organizationId: string, environmentId: string, skip = 0, limit = 10, query?: string) {
+    let searchQuery: FilterQuery<NotificationTemplateDBModel> = {};
+    if (query) {
+      searchQuery = {
+        $or: [
+          { name: { $regex: regExpEscape(query), $options: 'i' } },
+          { 'triggers.identifier': { $regex: regExpEscape(query), $options: 'i' } },
+        ],
+      };
+    }
+
+    const totalItemsCount = await this.count({
+      _environmentId: environmentId,
+      ...searchQuery,
+    });
 
     const requestQuery: NotificationTemplateQuery = {
       _environmentId: environmentId,
       _organizationId: organizationId,
     };
 
-    const items = await this.MongooseModel.find(requestQuery)
+    const items = await this.MongooseModel.find({
+      ...requestQuery,
+      ...searchQuery,
+    })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -178,7 +214,10 @@ export class NotificationTemplateRepository extends BaseRepository<
       active: active,
     };
 
-    const items = await this.MongooseModel.find(requestQuery).populate('notificationGroup');
+    const items = await this.MongooseModel.find(requestQuery)
+      .populate('steps.template', { type: 1 })
+      .populate('notificationGroup')
+      .read('secondaryPreferred');
 
     return this.mapEntities(items);
   }
@@ -197,10 +236,14 @@ export class NotificationTemplateRepository extends BaseRepository<
   }
 
   private get blueprintOrganizationId(): string | undefined {
-    return process.env.BLUEPRINT_CREATOR;
+    return NotificationTemplateRepository.getBlueprintOrganizationId();
   }
 
   public static getBlueprintOrganizationId(): string | undefined {
     return process.env.BLUEPRINT_CREATOR;
   }
+}
+
+function regExpEscape(literalString: string): string {
+  return literalString.replace(/[-[\]{}()*+!<=:?./\\^$|#\s,]/g, '\\$&');
 }

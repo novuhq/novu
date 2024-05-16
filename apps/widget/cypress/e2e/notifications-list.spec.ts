@@ -34,6 +34,15 @@ describe('Notifications List', function () {
       .then((session: any) => {
         cy.wait(500);
 
+        cy.log('Creating 5 notifications', {
+          identifier: session.templates[0].triggers[0].identifier,
+          token: session.token,
+          subscriberId: session.subscriber.subscriberId,
+          count: 5,
+          organizationId: session.organization._id,
+          templateId: session.templates[0]._id,
+        });
+
         cy.task('createNotifications', {
           identifier: session.templates[0].triggers[0].identifier,
           token: session.token,
@@ -162,11 +171,12 @@ describe('Notifications List', function () {
     cy.getByTestId('unseen-count-label').should('contain', '99+');
   });
 
-  it('pagination check', async function () {
+  it('pagination check', function () {
     cy.wait('@getNotificationsFirstPage');
     cy.task('createNotifications', {
       organizationId: this.session.organization._id,
       enumerate: true,
+      ordered: true,
       identifier: this.session.templates[0].triggers[0].identifier,
       token: this.session.token,
       subscriberId: this.session.subscriber.subscriberId,
@@ -181,21 +191,12 @@ describe('Notifications List', function () {
     scrollToBottom();
     cy.getByTestId('notification-list-item').should('have.length', 26);
 
-    cy.getByTestId('notification-list-item')
-      .should('exist')
-      .each(($item, $index) => {
-        const notificationContentNumber = 20 - $index > 0 ? ' ' + (20 - $index).toString() : '';
-        cy.wrap($item)
-          .invoke('text')
-          .then((text) => {
-            if ($index !== 0) {
-              expect(text).to.contains(`John${notificationContentNumber}`);
-            }
-          });
-      });
+    for (let i = 0; i < 21; i++) {
+      cy.getByTestId('notification-list-item').contains(`John ${i}`).should('exist');
+    }
   });
 });
 
 function scrollToBottom() {
-  cy.getByTestId('notifications-scroll-area').get('.infinite-scroll-component').scrollTo('bottom');
+  cy.getByTestId('notifications-scroll-area').scrollTo('bottom', { ensureScrollable: true });
 }
