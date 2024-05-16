@@ -288,6 +288,6 @@ export const smsProviders: IProviderConfig[] = [
     channel: ChannelTypeEnum.SMS,
     credentials: unifonicSmsConfig,
     docReference: 'https://docs.unifonic.com/reference/sendmessage',
-    logoFileName: { light: 'unifonic.jpeg', dark: 'unifonic.jpeg' },
+    logoFileName: { light: 'unifonic-sms.svg', dark: 'unifonic-sms.svg' },
   },
 ];
