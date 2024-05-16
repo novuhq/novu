@@ -26,7 +26,6 @@ import { HEADER_NAV_HEIGHT } from '../constants';
 import { NotificationCenterWidget } from './NotificationCenterWidget';
 import { useSegment } from '../../providers/SegmentProvider';
 import { EchoStatus } from './EchoStatus';
-import { DocsButton } from '../../docs/DocsButton';
 
 type Props = { isIntercomOpened: boolean };
 const menuItem = [
@@ -178,7 +177,6 @@ export function HeaderNav({ isIntercomOpened }: Props) {
               </div>
             </Tooltip>
           </ActionIcon>
-          <DocsButton />
           {isSelfHosted ? (
             <a href={discordInviteUrl} target="_blank" rel="noreferrer">
               <ActionIcon variant="transparent">

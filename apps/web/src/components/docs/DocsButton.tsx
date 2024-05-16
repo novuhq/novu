@@ -65,7 +65,7 @@ export const DocsButton = () => {
 
   return (
     <>
-      <Tooltip disabled={opened} label="Inline documentation">
+      <Tooltip disabled={opened} position="bottom" label="Inline documentation">
         <div>
           <Popover
             closeOnClickOutside={false}
@@ -76,7 +76,14 @@ export const DocsButton = () => {
             withArrow
           >
             <Popover.Target>
-              <ActionButton Icon={() => <IconOutlineMenuBook />} onClick={() => toggle()} />
+              <ActionButton
+                sx={{
+                  height: 24,
+                  minHeight: 24,
+                }}
+                Icon={() => <IconOutlineMenuBook />}
+                onClick={() => toggle()}
+              />
             </Popover.Target>
             <Popover.Dropdown
               className={css({

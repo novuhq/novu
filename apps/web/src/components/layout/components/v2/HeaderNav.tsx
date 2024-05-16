@@ -5,7 +5,6 @@ import { useBootIntercom } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { css } from '@novu/novui/css';
-import { DocsButton } from '../../../docs/DocsButton';
 import { useAuthContext } from '../../../providers/AuthProvider';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
@@ -40,7 +39,6 @@ export function HeaderNav() {
               <div>{themeIcon}</div>
             </Tooltip>
           </ActionIcon>
-          <DocsButton />
           {isSelfHosted ? (
             <a href={discordInviteUrl} target="_blank" rel="noopener noreferrer">
               <ActionIcon variant="transparent">
