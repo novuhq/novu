@@ -1,4 +1,4 @@
-name: Docker Community Release
+name: Prepare Self-hosted Release
 
 on:
   workflow_dispatch:
