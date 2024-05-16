@@ -80,7 +80,7 @@ export const DocsModal = ({ open, toggle, path }) => {
             <ActionButton
               tooltip="Open docs website"
               onClick={() => {
-                window.open(`${DOCS_URL}${path}`);
+                window.open(`${DOCS_URL}/${path}`);
               }}
               Icon={() => <IconOpenInNew />}
             />
