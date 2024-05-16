@@ -63,7 +63,6 @@ export const RootNavMenu: React.FC = () => {
         />
       </NavMenuSection>
       <NavMenuSection>
-        <EnvironmentSelect />
         <NavMenuLinkButton
           label="Workflows"
           icon={<IconRoute />}

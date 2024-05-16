@@ -1,4 +1,4 @@
-import { ActionIcon, Group, Header } from '@mantine/core';
+import { ActionIcon, Header } from '@mantine/core';
 
 import { colors, IconHelpOutline, Tooltip } from '@novu/design-system';
 import { IS_DOCKER_HOSTED } from '../../../../config';
@@ -6,6 +6,8 @@ import { useBootIntercom } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { css } from '@novu/novui/css';
+import { Flex, HStack } from '@novu/novui/jsx';
+import { EnvironmentSwitch } from '../../../nav/EnvironmentSelect/EnvironmentSwitch';
 import { useAuthContext } from '../../../providers/AuthProvider';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
@@ -31,15 +33,17 @@ export function HeaderNav() {
       })}
     >
       {/* TODO: Change position: right to space-between for breadcrumbs */}
-      <Group position="right" noWrap align="center">
-        <Group spacing={16}>
-          <NotificationCenterWidget user={currentUser} />
-
+      <HStack flexWrap={'nowrap'} justifyContent="space-between">
+        <HStack gap={'100'}>
+          <EnvironmentSwitch />
           <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
             <Tooltip label={themeLabel}>
               <div>{themeIcon}</div>
             </Tooltip>
           </ActionIcon>
+        </HStack>
+        <HStack gap={'100'}>
+          <NotificationCenterWidget user={currentUser} />
           {isSelfHosted ? (
             <a href={discordInviteUrl} target="_blank" rel="noopener noreferrer">
               <ActionIcon variant="transparent">
@@ -52,8 +56,8 @@ export function HeaderNav() {
             </ActionIcon>
           )}
           <HeaderMenuItems />
-        </Group>
-      </Group>
+        </HStack>
+      </HStack>
     </Header>
   );
 }
