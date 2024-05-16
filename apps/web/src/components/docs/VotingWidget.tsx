@@ -1,5 +1,4 @@
-import { ActionIcon } from '@mantine/core';
-import { IconThumbDownAlt, IconThumbUpAlt } from '@novu/design-system';
+import { ActionButton, IconThumbDownAlt, IconThumbUpAlt } from '@novu/design-system';
 import { css } from '../../styled-system/css';
 import { Flex, styled } from '../../styled-system/jsx';
 import { text } from '../../styled-system/recipes';
@@ -22,29 +21,15 @@ export const VotingWidget = ({
       gap="125"
     >
       <Text>Did you find it useful?</Text>
-      <Flex gap="100" align="center">
-        <ActionIcon
-          className={css({
-            width: '125 !important',
-            minWidth: '125 !important',
-            border: 'none',
-          })}
-          variant="transparent"
+      <Flex gap="50" align="center">
+        <ActionButton
           onClick={onVoteClick('up')}
-        >
-          <IconThumbUpAlt color={voted === 'up' ? 'white' : undefined} size={20} />
-        </ActionIcon>
-        <ActionIcon
-          className={css({
-            width: '125 !important',
-            minWidth: '125 !important',
-            border: 'none',
-          })}
-          variant="transparent"
+          Icon={() => <IconThumbUpAlt color={voted === 'up' ? 'white' : undefined} size={20} />}
+        />
+        <ActionButton
           onClick={onVoteClick('down')}
-        >
-          <IconThumbDownAlt color={voted === 'down' ? 'white' : undefined} size={20} />
-        </ActionIcon>
+          Icon={() => <IconThumbDownAlt color={voted === 'down' ? 'white' : undefined} size={20} />}
+        />
       </Flex>
     </Flex>
   );

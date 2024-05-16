@@ -1,23 +1,13 @@
-import { ActionIcon, Modal, Popover } from '@mantine/core';
-import {
-  Button,
-  colors,
-  IconOpenInNew,
-  IconOutlineClose,
-  IconOutlineMenuBook,
-  QuickGuide,
-  Tooltip,
-  useColorScheme,
-} from '@novu/design-system';
-import { ROUTES, useSegment } from '@novu/shared-web';
+import { Popover } from '@mantine/core';
+import { ActionButton, Button, IconOutlineMenuBook, QuickGuide, Tooltip, useColorScheme } from '@novu/design-system';
+import { useSegment } from '@novu/shared-web';
 import { useEffect, useMemo, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { css } from '../../styled-system/css';
 import { Flex, styled } from '../../styled-system/jsx';
 import { text, title } from '../../styled-system/recipes';
-import { DOCS_URL, PATHS } from './docs.const';
-import { Docs } from './Docs';
-import { VotingWidget } from './VotingWidget';
+import { PATHS } from './docs.const';
+import { DocsModal } from './DocsModal';
 
 const Title = styled('h3', title);
 const Text = styled('p', text);
@@ -30,7 +20,6 @@ export const DocsButton = () => {
   const [path, setPath] = useState<string>('');
   const enabled = useMemo(() => path.length > 0, [path]);
   const [docsOpen, setDocsOpen] = useState<boolean>(false);
-  const [voted, setVoted] = useState<'up' | 'down' | ''>('');
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -43,25 +32,12 @@ export const DocsButton = () => {
 
     return () => {
       setPath('');
-      setVoted('');
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
 
   const toggle = () => {
     setDocsOpen(!docsOpen);
-  };
-
-  const onVoteClick = (vote: 'up' | 'down') => () => {
-    if (voted.length > 0) {
-      return;
-    }
-    segment.track('Inline docs voting used', {
-      documentationPage: path,
-      pageURL: window.location.href,
-      vote,
-    });
-    setVoted(vote);
   };
 
   const onClose = () => {
@@ -100,9 +76,7 @@ export const DocsButton = () => {
             withArrow
           >
             <Popover.Target>
-              <ActionIcon variant="transparent" onClick={() => toggle()}>
-                <IconOutlineMenuBook />
-              </ActionIcon>
+              <ActionButton Icon={() => <IconOutlineMenuBook />} onClick={() => toggle()} />
             </Popover.Target>
             <Popover.Dropdown
               className={css({
@@ -155,83 +129,7 @@ export const DocsButton = () => {
           </Popover>
         </div>
       </Tooltip>
-      <Modal
-        opened={docsOpen}
-        onClose={() => {
-          toggle();
-        }}
-        styles={{
-          root: {
-            zIndex: 10003,
-          },
-          inner: {
-            padding: '24px',
-          },
-          body: {
-            height: '100%',
-            maxHeight: '100%',
-          },
-          modal: {
-            width: 800,
-            padding: '24px !important',
-            borderRadius: 12,
-            position: 'relative',
-            height: '100%',
-          },
-        }}
-        overflow="inside"
-        withCloseButton={false}
-        overlayColor={isDark ? colors.BGDark : colors.BGLight}
-      >
-        <Docs
-          path={path}
-          actions={
-            <Flex
-              className={css({
-                position: 'fixed',
-                top: '150',
-                right: '150',
-                background: isDark ? 'legacy.B15' : 'white',
-                zIndex: 1,
-                padding: '25',
-                borderBottomLeftRadius: '50',
-              })}
-              gap="125"
-            >
-              <Tooltip label="Open docs website">
-                <ActionIcon
-                  className={css({
-                    width: '125 !important',
-                    minWidth: '125 !important',
-                    border: 'none',
-                  })}
-                  variant="transparent"
-                  onClick={() => {
-                    window.open(`${DOCS_URL}${path}`);
-                  }}
-                >
-                  <IconOpenInNew />
-                </ActionIcon>
-              </Tooltip>
-              <ActionIcon
-                variant="transparent"
-                onClick={() => {
-                  toggle();
-                }}
-                className={css({
-                  width: '125 !important',
-                  minWidth: '125 !important',
-                  border: 'none',
-                })}
-              >
-                <IconOutlineClose />
-              </ActionIcon>
-            </Flex>
-          }
-        >
-          <VotingWidget onVoteClick={onVoteClick} voted={voted} />
-        </Docs>
-      </Modal>
+      <DocsModal open={docsOpen} toggle={toggle} path={path} />
     </>
   );
 };

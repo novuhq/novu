@@ -1,5 +1,5 @@
-import { ActionIcon, Modal } from '@mantine/core';
 import {
+  Modal,
   colors,
   IconChecklist,
   IconCode,
@@ -15,8 +15,8 @@ import {
   IconSchool,
   IconWidgets,
   IconWrapText,
-  Tooltip,
   useColorScheme,
+  ActionButton,
 } from '@novu/design-system';
 import { css } from '../../styled-system/css';
 import { Flex, Grid, GridItem, styled } from '../../styled-system/jsx';
@@ -49,6 +49,7 @@ export const DocsHomeModal = ({
   return (
     <When truthy={path.length === 0}>
       <Modal
+        title={undefined}
         opened={open}
         onClose={onClose}
         styles={{
@@ -60,7 +61,7 @@ export const DocsHomeModal = ({
             padding: '0px !important',
             background: 'transparent',
             boxShadow: 'none',
-            borderRadius: 12,
+            borderRadius: '0.75rem',
           },
         }}
         withCloseButton={false}
@@ -74,20 +75,15 @@ export const DocsHomeModal = ({
           justify="space-between"
         >
           <ModalTitle>Explore Novu</ModalTitle>
-          <Flex gap="125">
-            <Tooltip label="Open docs website">
-              <ActionIcon
-                variant="transparent"
-                onClick={() => {
-                  window.open(`${DOCS_URL}/getting-started/introduction`);
-                }}
-              >
-                <IconOpenInNew />
-              </ActionIcon>
-            </Tooltip>
-            <ActionIcon variant="transparent" onClick={onClose}>
-              <IconOutlineClose />
-            </ActionIcon>
+          <Flex gap="75">
+            <ActionButton
+              tooltip="Open docs website"
+              onClick={() => {
+                window.open(`${DOCS_URL}/getting-started/introduction`);
+              }}
+              Icon={() => <IconOpenInNew />}
+            />
+            <ActionButton Icon={() => <IconOutlineClose />} onClick={onClose} />
           </Flex>
         </Flex>
         <Grid columns={4} gap="150">
