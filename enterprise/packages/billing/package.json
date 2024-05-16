@@ -13,9 +13,6 @@
     "start:proxy": "ngrok http http://localhost:3000"
   },
   "dependencies": {
-    "@nestjs/core": "^10.2.2",
-    "@nestjs/swagger": "^7.1.8",
-    "@nestjs/throttler": "^5.0.1",
     "@novu/application-generic": "^0.24.2",
     "@novu/ee-dal": "^0.24.2",
     "@novu/shared": "^0.24.2",
@@ -44,8 +41,11 @@
   },
   "peerDependencies": {
     "@nestjs/common": "10.2.2",
+    "@nestjs/core": "^10.2.2",
     "@nestjs/jwt": "10.2.0",
     "@nestjs/platform-express": "^10.2.2",
+    "@nestjs/swagger": "^7.1.8",
+    "@nestjs/throttler": "^5.0.1",
     "@novu/dal": "^0.24.1"
   }
 }

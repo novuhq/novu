@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@handlebars/parser": "^2.1.0",
-    "@nestjs/swagger": "^7.1.8",
     "@novu/application-generic": "^0.24.2",
     "@novu/ee-dal": "^0.24.2",
     "@novu/ee-shared-services": "^0.24.2",
@@ -41,6 +40,7 @@
   "peerDependencies": {
     "@nestjs/common": "10.2.2",
     "@nestjs/jwt": "10.2.0",
+    "@nestjs/swagger": "^7.1.8",
     "@nestjs/platform-express": "^10.2.2",
     "@novu/dal": "^0.24.1"
   }
