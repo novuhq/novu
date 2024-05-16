@@ -63,7 +63,7 @@ jobs:
         shell: bash
         env:
           GH_ACTOR: ${{ github.actor }}
-          GH_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
