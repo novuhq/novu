@@ -1,4 +1,4 @@
-import { NestInterceptor } from '@nestjs/common';
+import { NestInterceptor, RequestMethod } from '@nestjs/common';
 import {
   LoggerErrorInterceptor,
   Logger,
@@ -108,6 +108,7 @@ export function createNestLoggingModuleOptions(
   );
 
   return {
+    exclude: [{ path: '*/health-check', method: RequestMethod.GET }],
     pinoHttp: {
       customLevels: loggingLevelSet,
       level: values.level,
