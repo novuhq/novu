@@ -200,6 +200,7 @@ export class SubscribersController {
         avatar: body.avatar,
         locale: body.locale,
         data: body.data,
+        channels: body.channels,
       })
     );
   }

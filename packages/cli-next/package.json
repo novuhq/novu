@@ -1,6 +1,6 @@
 {
   "name": "@novu/novu-labs",
-  "version": "0.0.1-alpha.77",
+  "version": "0.24.2",
   "description": "On-Boarding Cli",
   "main": "index.js",
   "engines": {
@@ -37,10 +37,10 @@
     "@types/jest": "^29.5.12",
     "@types/mocha": "10.0.2",
     "eslint-config-adjunct": "^4.13.0",
+    "jest": "^29.7.0",
     "ncp": "^2.0.0",
     "nodemon": "^3.0.1",
     "rimraf": "^5.0.5",
-    "jest": "^29.7.0",
     "ts-jest": "^29.1.2",
     "ts-node": "~10.9.1",
     "tsconfig-paths": "^4.2.0",

@@ -2,6 +2,7 @@ import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { StripeBillingIntervalEnum } from '@novu/ee-billing/src/stripe/types';
+import { InvalidateCacheService } from '@novu/application-generic';
 
 const mockSetupIntentSucceededEvent = {
   type: 'setup_intent.succeeded',
@@ -198,6 +199,9 @@ describe('Stripe webhooks', () => {
       track: sinon.stub(),
       upsertGroup: sinon.stub(),
     };
+    const invalidateCacheServiceStub = {
+      invalidateByKey: sinon.stub(),
+    };
 
     beforeEach(() => {
       verifyCustomerStub = sinon.stub(VerifyCustomer.prototype, 'execute').resolves({
@@ -303,7 +307,8 @@ describe('Stripe webhooks', () => {
       const handler = new CustomerSubscriptionCreatedHandler(
         { execute: verifyCustomerStub } as any,
         organizationRepositoryStub,
-        analyticsServiceStub as any
+        analyticsServiceStub as any,
+        invalidateCacheServiceStub as any
       );
 
       return handler;
@@ -413,6 +418,43 @@ describe('Stripe webhooks', () => {
           { apiServiceLevel: ApiServiceLevelEnum.BUSINESS }
         )
       ).to.be.true;
+    });
+
+    it('should invalidate the subscription cache with known organization and licensed subscription', async () => {
+      const event = {
+        data: {
+          object: {
+            id: 'sub_123',
+            customer: 'cus_123',
+            items: [
+              {
+                id: 'si_123',
+                data: {
+                  plan: {
+                    interval: StripeBillingIntervalEnum.MONTH,
+                  },
+                  price: {
+                    recurring: {
+                      usage_type: 'licensed',
+                    },
+                    product: {
+                      metadata: {
+                        apiServiceLevel: ApiServiceLevelEnum.BUSINESS,
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
+        created: 1234567890,
+      };
+
+      const handler = createHandler();
+      await handler.handle(event);
+
+      expect(invalidateCacheServiceStub.invalidateByKey.called).to.be.true;
     });
 
     it('should exit early with known organization and metered subscription', async () => {

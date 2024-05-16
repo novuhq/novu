@@ -6,7 +6,6 @@ import { ProductLead } from './components/utils/ProductLead';
 import { ROUTES } from './constants/routes.enum';
 import { useFeatureFlag } from './hooks';
 import { BillingRoutes } from './pages/BillingPages';
-import { BrandingForm as BrandingFormOld } from './pages/brand/tabs';
 import { BrandingPage } from './pages/brand/tabs/v2';
 import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
 import { AccessSecurityPage, ApiKeysPage, BillingPage, TeamPage, UserProfilePage } from './pages/settings';
@@ -42,7 +41,7 @@ export const useSettingsRoutes = () => {
     );
   }
 
-  /* TODO: remove all routes above once information architecture is fully enabled */
+  /* TODO: remove all routes below once information architecture is fully enabled */
   return (
     <>
       <Route path={ROUTES.SETTINGS} element={<SettingsPageOld />}>
@@ -50,7 +49,6 @@ export const useSettingsRoutes = () => {
         <Route path="billing/*" element={<BillingRoutes />} />
         <Route path="email" element={<EmailSettings />} />
         <Route path="team" element={<MembersInvitePageNew />} />
-        <Route path="brand" element={<BrandingFormOld />} />
         <Route
           path="permissions"
           element={
