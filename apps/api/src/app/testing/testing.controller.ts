@@ -12,7 +12,7 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
-import { ResourceCategory } from '../resource-limiting/guards';
+import { ResourceCategory } from '@novu/application-generic';
 
 @Controller('/testing')
 @ApiExcludeController()

@@ -15,7 +15,6 @@ jobs:
     with:
       ee: ${{ contains (matrix.name,'-ee') }}
       job-name: ${{ matrix.name }}
-      environment: Production
     secrets: inherit
 
   build_prod_image:

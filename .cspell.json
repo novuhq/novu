@@ -661,7 +661,9 @@
     "unpublish",
     "decompile",
     "servername",
-    "neom"
+    "neom",
+    "protonmail",
+    "automerge"
   ],
   "flagWords": [],
   "patterns": [

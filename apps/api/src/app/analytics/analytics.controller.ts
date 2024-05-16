@@ -12,8 +12,11 @@ export class AnalyticsController {
 
   @Post('/measure')
   @UseGuards(UserAuthGuard)
-  async trackEvent(@Body('event') event, @Body('data') data, @UserSession() user: IJwtPayload): Promise<any> {
-    await this.analyticsService.track(event, user._id, data);
+  async trackEvent(@Body('event') event, @Body('data') data = {}, @UserSession() user: IJwtPayload): Promise<any> {
+    this.analyticsService.track(event, user._id, {
+      ...(data || {}),
+      _organization: user?.organizationId,
+    });
 
     return {
       success: true,
