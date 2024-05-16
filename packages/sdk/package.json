@@ -1,6 +1,6 @@
 {
   "name": "@novu/echo",
-  "version": "0.24.2",
+  "version": "0.24.3-alpha.0",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
