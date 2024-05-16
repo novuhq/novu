@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { PlunkEmailProvider } from '@novu/plunk';
+import { PlunkEmailProvider } from '@novu/providers';
 import { BaseHandler } from './base.handler';
 
 export class PlunkHandler extends BaseHandler {

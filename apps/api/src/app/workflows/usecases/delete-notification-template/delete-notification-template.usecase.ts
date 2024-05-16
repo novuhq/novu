@@ -9,10 +9,10 @@ import {
   buildNotificationTemplateKey,
   CreateChange,
   CreateChangeCommand,
+  DeleteMessageTemplate,
+  DeleteMessageTemplateCommand,
   InvalidateCacheService,
 } from '@novu/application-generic';
-import { DeleteMessageTemplateCommand } from '../../../message-template/usecases/delete-message-template/delete-message-template.command';
-import { DeleteMessageTemplate } from '../../../message-template/usecases/delete-message-template/delete-message-template.usecase';
 import { DeleteNotificationTemplateCommand } from './delete-notification-template.command';
 
 /**
@@ -55,6 +55,7 @@ export class DeleteNotificationTemplate {
             userId: command.userId,
             messageTemplateId: step._templateId,
             parentChangeId: parentChangeId,
+            workflowType: command.type,
           })
         );
       }

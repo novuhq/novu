@@ -23,6 +23,21 @@ describe('Billing', function () {
   });
 
   it('should display free trial widget', function () {
+    cy.intercept('GET', '**/v1/organizations', (request) => {
+      request.reply((response) => {
+        if (!response.body.data) {
+          return response;
+        }
+
+        response.body['data'] = response.body.data.map((org) => {
+          return {
+            ...org,
+            apiServiceLevel: 'business',
+          };
+        });
+        return response;
+      });
+    }).as('organizations');
     cy.intercept('GET', '**/v1/billing/subscription', {
       data: {
         trialStart: startOfDay(new Date()),
@@ -34,13 +49,28 @@ describe('Billing', function () {
 
     cy.visit('/workflows');
 
-    cy.wait(['@getSubscription']);
-    cy.getByTestId('free-trial-widget-text').should('have.text', '30 days left on your Business trial');
-    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade to Business');
+    cy.wait(['@getSubscription', '@organizations']);
+    cy.getByTestId('free-trial-widget-text').should('have.text', '30 days left on your free trial');
+    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade');
     cy.getByTestId('free-trial-widget-progress').find('.mantine-Progress-bar').should('have.css', 'width', '0px');
   });
 
   it('should display free trial widget after 10 days', function () {
+    cy.intercept('GET', '**/v1/organizations', (request) => {
+      request.reply((response) => {
+        if (!response.body.data) {
+          return response;
+        }
+
+        response.body['data'] = [
+          {
+            ...response.body.data[0],
+            apiServiceLevel: 'business',
+          },
+        ];
+        return response;
+      });
+    }).as('organizations');
     cy.intercept('GET', '**/v1/billing/subscription', {
       data: {
         trialStart: subDays(startOfDay(new Date()), 10),
@@ -52,15 +82,30 @@ describe('Billing', function () {
 
     cy.visit('/workflows');
 
-    cy.wait(['@getSubscription']);
-    cy.getByTestId('free-trial-widget-text').should('have.text', '20 days left on your Business trial');
-    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade to Business');
+    cy.wait(['@getSubscription', '@organizations']);
+    cy.getByTestId('free-trial-widget-text').should('have.text', '20 days left on your free trial');
+    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade');
     cy.getByTestId('free-trial-widget-progress')
       .find('.mantine-Progress-bar')
       .should('have.css', 'background-color', 'rgb(77, 153, 128)');
   });
 
   it('should display free trial widget after 20 days', function () {
+    cy.intercept('GET', '**/v1/organizations', (request) => {
+      request.reply((response) => {
+        if (!response.body.data) {
+          return response;
+        }
+
+        response.body['data'] = [
+          {
+            ...response.body.data[0],
+            apiServiceLevel: 'business',
+          },
+        ];
+        return response;
+      });
+    }).as('organizations');
     cy.intercept('GET', '**/v1/billing/subscription', {
       data: {
         trialStart: subDays(startOfDay(new Date()), 20),
@@ -72,9 +117,9 @@ describe('Billing', function () {
 
     cy.visit('/workflows');
 
-    cy.wait(['@getSubscription']);
-    cy.getByTestId('free-trial-widget-text').should('have.text', '10 days left on your Business trial');
-    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade to Business');
+    cy.wait(['@getSubscription', '@organizations']);
+    cy.getByTestId('free-trial-widget-text').should('have.text', '10 days left on your free trial');
+    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade');
     cy.getByTestId('free-trial-widget-progress')
       .find('.mantine-Progress-bar')
       .should('have.css', 'background-color', 'rgb(253, 224, 68)');
@@ -240,7 +285,7 @@ describe('Billing', function () {
     cy.getByTestId('plan-business-current').should('exist');
     cy.getByTestId('plan-business-add-payment').should('exist');
     cy.getByTestId('free-trial-plan-widget').should('have.text', '10 days left on your trial');
-    cy.getByTestId('free-trial-widget-text').should('have.text', '10 days left on your Business trial');
+    cy.getByTestId('free-trial-widget-text').should('have.text', '10 days left on your free trial');
     cy.getByTestId('free-trial-banner').should('exist');
 
     cy.intercept('GET', '**/v1/billing/subscription', {
@@ -248,7 +293,7 @@ describe('Billing', function () {
         trialStart: startOfDay(new Date()),
         trialEnd: addDays(endOfDay(new Date()), 30),
         hasPaymentMethod: true,
-        status: 'trialing',
+        status: 'active',
       },
     }).as('getSubscription');
 

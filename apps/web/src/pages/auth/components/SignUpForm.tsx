@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { Center } from '@mantine/core';
-import { showNotification } from '@mantine/notifications';
 import { passwordConstraints, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import type { IResponseError } from '@novu/shared';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '@novu/design-system';
@@ -13,7 +12,6 @@ import { api } from '../../../api/api.client';
 import { applyToken, useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
-import { buildGithubLink, buildVercelGithubLink } from './gitHubUtils';
 import { ROUTES } from '../../../constants/routes.enum';
 import { OAuth } from './OAuth';
 
@@ -36,9 +34,6 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
   const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : ROUTES.AUTH_LOGIN;
-  const githubLink = isFromVercel
-    ? buildVercelGithubLink({ code, next, configurationId })
-    : buildGithubLink({ invitationToken });
 
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
@@ -52,21 +47,14 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   >((data) => api.post('/v1/auth/register', data));
 
   const onSubmit = async (data) => {
+    const [firstName, lastName] = data?.fullName.trim().split(' ');
     const itemData = {
-      firstName: data.fullName.split(' ')[0],
-      lastName: data.fullName.split(' ')[1],
+      firstName,
+      lastName,
       email: data.email,
       password: data.password,
     };
 
-    if (!itemData.lastName) {
-      showNotification({
-        message: 'Please write your full name including last name',
-        color: 'red',
-      });
-
-      return;
-    }
     const response = await mutateAsync(itemData);
 
     /**
@@ -80,10 +68,9 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       submitToken(token, invitationToken);
 
       return true;
-    } else {
-      setToken(token);
     }
 
+    setToken(token);
     navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : ROUTES.AUTH_APPLICATION);
 
     return true;

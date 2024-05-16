@@ -5,6 +5,13 @@ import { HandlebarHelpersEnum } from '@novu/shared';
 
 import { CompileTemplateCommand } from './compile-template.command';
 import * as i18next from 'i18next';
+import { ApiException } from '../../utils/exceptions';
+
+const assertResult = (condition: boolean, options) => {
+  const fn = condition ? options.fn : options.inverse;
+
+  return typeof fn === 'function' ? fn(this) : condition;
+};
 
 Handlebars.registerHelper(
   HandlebarHelpersEnum.I18N,
@@ -36,9 +43,7 @@ Handlebars.registerHelper(
 Handlebars.registerHelper(
   HandlebarHelpersEnum.EQUALS,
   function (arg1, arg2, options) {
-    // eslint-disable-next-line
-    // @ts-expect-error
-    return arg1 == arg2 ? options.fn(this) : options.inverse(this);
+    return assertResult(arg1 == arg2, options);
   }
 );
 
@@ -158,14 +163,62 @@ Handlebars.registerHelper(
   }
 );
 
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.GT,
+  function (arg1, arg2, options) {
+    return assertResult(arg1 > arg2, options);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.GTE,
+  function (arg1, arg2, options) {
+    return assertResult(arg1 >= arg2, options);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.LT,
+  function (arg1, arg2, options) {
+    return assertResult(arg1 < arg2, options);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.LTE,
+  function (arg1, arg2, options) {
+    return assertResult(arg1 <= arg2, options);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.EQ,
+  function (arg1, arg2, options) {
+    return assertResult(arg1 === arg2, options);
+  }
+);
+
+Handlebars.registerHelper(
+  HandlebarHelpersEnum.NE,
+  function (arg1, arg2, options) {
+    return assertResult(arg1 !== arg2, options);
+  }
+);
+
 @Injectable()
 export class CompileTemplate {
   async execute(command: CompileTemplateCommand): Promise<string> {
     const templateContent = command.template;
+    let result = '';
+    try {
+      const template = Handlebars.compile(templateContent);
 
-    const template = Handlebars.compile(templateContent);
-
-    const result = template(command.data, {});
+      result = template(command.data, {});
+    } catch (e: any) {
+      throw new ApiException(
+        e?.message || `Message content could not be generated`
+      );
+    }
 
     return result.replace(/&#x27;/g, "'");
   }

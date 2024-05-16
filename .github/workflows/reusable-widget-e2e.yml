@@ -54,11 +54,6 @@ jobs:
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
-          targets: lint
-          projects: '@novu/widget'
-
-      - uses: mansagroup/nrwl-nx-action@v3
-        with:
           targets: build
           args: --skip-nx-cache
           projects: '@novu/widget,@novu/embed,@novu/api,@novu/worker,@novu/ws'
@@ -116,3 +111,9 @@ jobs:
         with:
           name: cypress-videos
           path: apps/widget/cypress/videos
+
+      - name: Send Slack notifications
+        uses: ./.github/actions/slack-notify-on-failure
+        if: failure()
+        with:
+          slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}

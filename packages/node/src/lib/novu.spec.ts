@@ -26,6 +26,10 @@ describe('test initialization of novu node package', () => {
   test('should use the NOVU_API_KEY when defined', async () => {
     expect(new Novu().apiKey).toBe('cafebabe');
   });
+
+  test('should use the NOVU_API_KEY when defined', async () => {
+    expect(new Novu('whatever').apiKey).toBe('whatever');
+  });
 });
 
 describe('test use of novu node package', () => {

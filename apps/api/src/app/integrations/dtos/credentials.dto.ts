@@ -201,4 +201,14 @@ export class CredentialsDto implements ICredentials {
   @IsString()
   @IsOptional()
   externalLink?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  channelId?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  phoneNumberIdentification?: string;
 }

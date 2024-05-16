@@ -50,10 +50,11 @@ import { SendMessageChat } from './send-message-chat.usecase';
 import { SendMessagePush } from './send-message-push.usecase';
 import { Digest } from './digest';
 import { PlatformException } from '../../../shared/utils';
+import { ExecuteStepCustom } from './execute-step-custom.usecase';
 
 @Injectable()
 export class SendMessage {
-  private chimeraConnector: IUseCaseInterfaceInline;
+  private resonateUsecase: IUseCaseInterfaceInline;
 
   constructor(
     private sendMessageEmail: SendMessageEmail,
@@ -68,13 +69,14 @@ export class SendMessage {
     private notificationTemplateRepository: NotificationTemplateRepository,
     private jobRepository: JobRepository,
     private sendMessageDelay: SendMessageDelay,
+    private executeStepCustom: ExecuteStepCustom,
     private conditionsFilter: ConditionsFilter,
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
     protected moduleRef: ModuleRef
   ) {
-    this.chimeraConnector = requireInject('chimera_connector', this.moduleRef);
+    this.resonateUsecase = requireInject('resonate', this.moduleRef);
   }
 
   @InstrumentUsecase()
@@ -88,13 +90,16 @@ export class SendMessage {
 
     const stepType = command.step?.template?.type;
 
-    const chimeraResponse = await this.chimeraConnector.execute<
-      SendMessageCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraChannelResponse> | null
-    >({
-      ...command,
-      variables: shouldRun.variables,
-    });
+    let resonateResponse: ExecuteOutput<IChimeraChannelResponse> | null = null;
+    if (!['digest', 'delay'].includes(stepType as any)) {
+      resonateResponse = await this.resonateUsecase.execute<
+        SendMessageCommand & { variables: IFilterVariables },
+        ExecuteOutput<IChimeraChannelResponse> | null
+      >({
+        ...command,
+        variables: shouldRun.variables,
+      });
+    }
 
     if (!command.payload?.$on_boarding_trigger) {
       const usedFilters = shouldRun?.conditions.reduce(ConditionsFilter.sumFilters, {
@@ -121,7 +126,7 @@ export class SendMessage {
        * This is intentional, so that mixpanel can automatically reshard it.
        */
       this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
-        workflowType: chimeraResponse?.outputs ? 'ECHO' : 'REGULAR',
+        workflowType: resonateResponse?.outputs ? 'ECHO' : 'REGULAR',
         _template: command.job._templateId,
         _organization: command.organizationId,
         _environment: command.environmentId,
@@ -164,7 +169,7 @@ export class SendMessage {
     const sendMessageCommand = SendMessageCommand.create({
       ...command,
       compileContext: payload,
-      chimeraData: chimeraResponse,
+      chimeraData: resonateResponse,
     });
 
     switch (stepType) {
@@ -182,6 +187,8 @@ export class SendMessage {
         return await this.digest.execute(command);
       case StepTypeEnum.DELAY:
         return await this.sendMessageDelay.execute(command);
+      case StepTypeEnum.CUSTOM:
+        return await this.executeStepCustom.execute(sendMessageCommand);
     }
   }
 

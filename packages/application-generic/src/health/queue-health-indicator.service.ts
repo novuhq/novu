@@ -26,42 +26,17 @@ export abstract class QueueHealthIndicator
     return await this.handleHealthCheck();
   }
 
-  async isActive(): Promise<HealthIndicatorResult> {
-    return await this.handleHealthCheck(true);
-  }
-
-  async handleHealthCheck(checkActive = false) {
+  async handleHealthCheck() {
     const isReady = this.queueService.isReady();
+    const result = this.getStatus(this.indicatorKey, isReady);
 
-    if (!isReady) {
-      Logger.verbose(`${this.serviceName} is not ready`, this.logContext);
-
-      throw new HealthCheckError(
-        `${this.serviceName} Health is not ready`,
-        this.getStatus(this.indicatorKey, false)
-      );
+    if (isReady) {
+      return result;
     }
 
-    if (!checkActive) {
-      Logger.log(`${this.serviceName} is ready`, this.logContext);
-
-      return this.getStatus(this.indicatorKey, true);
-    }
-
-    const isPaused = await this.queueService.isPaused();
-    const isActive = isReady && !isPaused;
-
-    if (!isActive) {
-      Logger.log(`${this.serviceName} is not active`, this.logContext);
-
-      throw new HealthCheckError(
-        `${this.serviceName} Health is not active`,
-        this.getStatus(this.indicatorKey, false)
-      );
-    }
-
-    Logger.log(`${this.serviceName} is active`, this.logContext);
-
-    return this.getStatus(this.indicatorKey, true);
+    throw new HealthCheckError(
+      `${this.serviceName} Health is not ready`,
+      result
+    );
   }
 }

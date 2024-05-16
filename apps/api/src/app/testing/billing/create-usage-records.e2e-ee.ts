@@ -42,6 +42,13 @@ describe('CreateUsageRecords', () => {
   const getFeatureFlagUsecase = { execute: () => true };
 
   let createUsageRecordStub: sinon.SinonStub;
+  const getOrganizationAdminUserStub = {
+    execute: () => {
+      return {
+        _id: 'admin_user_id',
+      };
+    },
+  };
   let getPlatformNotificationUsageStub: sinon.SinonStub;
   let getFeatureFlagStub: sinon.SinonStub;
   let upsertSubscriptionStub: sinon.SinonStub;
@@ -92,7 +99,8 @@ describe('CreateUsageRecords', () => {
       upsertSubscriptionUsecase,
       getPlatformNotificationUsageUsecase,
       getFeatureFlagUsecase,
-      analyticsServiceStub
+      analyticsServiceStub,
+      getOrganizationAdminUserStub
     );
 
     return useCase;
@@ -229,6 +237,22 @@ describe('CreateUsageRecords', () => {
         notificationsCount: 100,
       },
     ]);
+    const mockNoMeteredSubscription = {
+      id: 'subscription_id',
+      items: {
+        data: [
+          {
+            id: 'item_id_flat',
+            price: { lookup_key: 'business_flat_monthly', recurring: { usage_type: StripeUsageTypeEnum.LICENSED } },
+          },
+        ],
+      },
+    };
+    getCustomerStub.resolves({
+      subscriptions: {
+        data: [mockNoMeteredSubscription],
+      },
+    });
     const useCase = createUseCase();
 
     await useCase.execute(
@@ -238,7 +262,7 @@ describe('CreateUsageRecords', () => {
     );
 
     expect(logStub.lastCall.args[0].message).to.equal(
-      "Subscription item not found for subscriptionId: 'subscription_id' and price lookup key: 'free_usage_notifications'"
+      "No metered subscription found for organizationId: 'organization_id_1'"
     );
 
     logStub.restore();
