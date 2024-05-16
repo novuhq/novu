@@ -2,7 +2,7 @@ import {
   IMessage,
   ButtonTypeEnum,
   MessageActionStatusEnum,
-  IParamObject,
+  CustomDataType,
   IPaginatedResponse,
 } from '@novu/shared';
 import { HttpClient } from '../http-client';
@@ -139,21 +139,21 @@ export class ApiService {
   async getUnseenCount(query: IUnseenCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/unseen',
-      query as unknown as IParamObject
+      query as unknown as CustomDataType
     );
   }
 
   async getUnreadCount(query: IUnreadCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/unread',
-      query as unknown as IParamObject
+      query as unknown as CustomDataType
     );
   }
 
   async getTabCount(query: ITabCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/count',
-      query as unknown as IParamObject
+      query as unknown as CustomDataType
     );
   }
 

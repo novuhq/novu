@@ -1,17 +1,5 @@
 import { ApiOptions } from '..';
-
-//SubscriberCustomData
-export interface IParamObject {
-  [key: string]: string | string[] | number | boolean;
-}
-
-export interface IPaginatedResponse<T = unknown> {
-  data: T[];
-  hasMore: boolean;
-  totalCount: number;
-  pageSize: number;
-  page: number;
-}
+import { CustomDataType } from '@novu/shared';
 
 export class HttpClient {
   private backendUrl: string;
@@ -35,7 +23,7 @@ export class HttpClient {
     delete this.headers.Authorization;
   }
 
-  async getFullResponse(url: string, params?: IParamObject) {
+  async getFullResponse(url: string, params?: CustomDataType) {
     const response = await fetch(
       this.backendUrl + url + this.getQueryString(params),
       {
@@ -46,7 +34,7 @@ export class HttpClient {
     return await response.json();
   }
 
-  async get(url: string, params?: IParamObject) {
+  async get(url: string, params?: CustomDataType) {
     const response = await fetch(
       this.backendUrl + url + this.getQueryString(params),
       {
@@ -91,24 +79,11 @@ export class HttpClient {
     return data.data;
   }
 
-  private getQueryString(params?: IParamObject) {
+  private getQueryString(params?: CustomDataType) {
     if (!params) return '';
 
-    const queryString = Object.entries(params)
-      .filter(([_, value]) => value !== undefined)
-      .map(([key, value]) => {
-        if (Array.isArray(value)) {
-          return value
-            .map(
-              (val) => `${encodeURIComponent(key)}=${encodeURIComponent(val)}`
-            )
-            .join('&');
-        } else {
-          return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
-        }
-      })
-      .join('&');
+    const queryString = new URLSearchParams(params as any);
 
-    return queryString ? `?${queryString}` : '';
+    return '?' + queryString.toString();
   }
 }
