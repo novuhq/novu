@@ -15,23 +15,12 @@ import { matchPath, useLocation } from 'react-router-dom';
 import { css } from '../../styled-system/css';
 import { Flex, styled } from '../../styled-system/jsx';
 import { text, title } from '../../styled-system/recipes';
+import { DOCS_URL, PATHS } from './docs.const';
 import { Docs } from './Docs';
 import { VotingWidget } from './VotingWidget';
 
 const Title = styled('h3', title);
 const Text = styled('p', text);
-
-const paths: { [key in ROUTES]?: string } = {
-  [ROUTES.ACTIVITIES]: 'activity-feed/introduction',
-  [`${ROUTES.BRAND}/layouts`]: 'content-creation-design/layouts',
-  [ROUTES.LAYOUT]: 'content-creation-design/layouts',
-  [ROUTES.CHANGES]: 'platform/environments',
-  [ROUTES.INTEGRATIONS]: 'channels-and-providers/integration-store',
-  [ROUTES.SUBSCRIBERS]: 'subscribers/subscribers',
-  [ROUTES.WORKFLOWS]: 'workflows/notification-workflows',
-  [ROUTES.TENANTS]: 'tenants/introduction',
-  [ROUTES.TRANSLATIONS]: 'content-creation-design/translations',
-};
 
 export const DocsButton = () => {
   const { colorScheme } = useColorScheme();
@@ -45,9 +34,9 @@ export const DocsButton = () => {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    for (const route in paths) {
+    for (const route in PATHS) {
       if (matchPath(route, pathname) !== null) {
-        setPath(paths[route]);
+        setPath(PATHS[route]);
         break;
       }
     }
@@ -218,7 +207,7 @@ export const DocsButton = () => {
                   })}
                   variant="transparent"
                   onClick={() => {
-                    window.open(`https://docs.novu.co/${path}`);
+                    window.open(`${DOCS_URL}${path}`);
                   }}
                 >
                   <IconOpenInNew />

@@ -8,6 +8,7 @@ import { useSegment } from '@novu/shared-web';
 import { Center, Flex, Grid, GridItem, styled, VStack } from '../../styled-system/jsx';
 import { css } from '../../styled-system/css';
 import { text, title as RTitle } from '../../styled-system/recipes';
+import { DOCS_URL, MINTLIFY_IMAGE_URL } from './docs.const';
 
 const Text = styled('p', text);
 const LiText = styled('span', text);
@@ -65,12 +66,12 @@ export const Docs = ({ path = '', children, actions }: { path?: string; children
     const images = Array.from(docs.getElementsByTagName('img'));
 
     for (const img of images) {
-      if (img.src.startsWith('https://mintlify.s3-us-west-1.amazonaws.com')) {
+      if (img.src.startsWith(MINTLIFY_IMAGE_URL)) {
         continue;
       }
 
       const url = new URL(img.src);
-      img.src = `https://mintlify.s3-us-west-1.amazonaws.com/novu${url.pathname}`;
+      img.src = `${MINTLIFY_IMAGE_URL}${url.pathname}`;
     }
   }, [Component, isLoading]);
 
@@ -149,7 +150,7 @@ export const Docs = ({ path = '', children, actions }: { path?: string; children
             Frame: ({ className, ...props }: any) => {
               return (
                 <div {...props}>
-                  <img alt="" src={`https://mintlify.s3-us-west-1.amazonaws.com/novu${props.children.props.src}`} />
+                  <img alt="" src={`${MINTLIFY_IMAGE_URL}${props.children.props.src}`} />
                   <Text className={css({ textAlign: 'center', fontStyle: 'italic' })}>{props.caption}</Text>
                 </div>
               );
@@ -255,7 +256,7 @@ export const Docs = ({ path = '', children, actions }: { path?: string; children
                 <GridItem colSpan={1}>
                   <Paper>
                     <TitleH2>
-                      <a href={`https://docs.novu.co${props.href}`} rel={'noopener noreferrer'} target={'_blank'}>
+                      <a href={`${DOCS_URL}${props.href}`} rel={'noopener noreferrer'} target={'_blank'}>
                         {props.title}
                       </a>
                     </TitleH2>
@@ -316,7 +317,7 @@ export const Docs = ({ path = '', children, actions }: { path?: string; children
             a: ({ className, ...props }: any) => {
               return (
                 <a
-                  href={`https://docs.novu.co${props.href}`}
+                  href={`${DOCS_URL}${props.href}`}
                   rel={'noopener noreferrer'}
                   target={'_blank'}
                   children={props.children}

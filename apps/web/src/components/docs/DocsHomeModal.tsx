@@ -22,6 +22,7 @@ import { css } from '../../styled-system/css';
 import { Flex, Grid, GridItem, styled } from '../../styled-system/jsx';
 import { title } from '../../styled-system/recipes';
 import { When } from '../utils/When';
+import { DOCS_URL } from './docs.const';
 import { DocsCard } from './DocsCard';
 import { ExploreLink } from './ExploreLink';
 
@@ -78,7 +79,7 @@ export const DocsHomeModal = ({
               <ActionIcon
                 variant="transparent"
                 onClick={() => {
-                  window.open('https://docs.novu.co/getting-started/introduction');
+                  window.open(`${DOCS_URL}/getting-started/introduction`);
                 }}
               >
                 <IconOpenInNew />
