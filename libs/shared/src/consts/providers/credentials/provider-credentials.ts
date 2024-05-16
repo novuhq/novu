@@ -1137,3 +1137,18 @@ export const whatsAppBusinessConfig: IConfigCredentials[] = [
     required: true,
   },
 ];
+
+export const unifonicSmsConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'App Sid',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Sender ID',
+    type: 'string',
+    required: true,
+  },
+];
