@@ -1,6 +1,5 @@
 import {
   Modal,
-  colors,
   IconChecklist,
   IconCode,
   IconEditNote,
@@ -66,7 +65,6 @@ export const DocsHomeModal = ({
         }}
         withCloseButton={false}
         overlayBlur={1}
-        overlayColor={isDark ? colors.BGDark : colors.BGLight}
       >
         <Flex
           className={css({

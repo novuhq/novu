@@ -1,4 +1,4 @@
-import { colors, IconOpenInNew, IconOutlineClose, useColorScheme, Modal, ActionButton } from '@novu/design-system';
+import { IconOpenInNew, IconOutlineClose, useColorScheme, Modal, ActionButton } from '@novu/design-system';
 import { useSegment } from '@novu/shared-web';
 import { useEffect, useState } from 'react';
 import { css } from '../../styled-system/css';
@@ -60,7 +60,6 @@ export const DocsModal = ({ open, toggle, path }) => {
       title={undefined}
       overflow="inside"
       withCloseButton={false}
-      overlayColor={isDark ? colors.BGDark : colors.BGLight}
     >
       <Docs
         path={path}
