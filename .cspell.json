@@ -667,7 +667,9 @@
     "novui",
     "tsup",
     "pandabox",
-    "hljs"
+    "hljs",
+    "MINTLIFY",
+    "mintlify"
   ],
   "flagWords": [],
   "patterns": [
