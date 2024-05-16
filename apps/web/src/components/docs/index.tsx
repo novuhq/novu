@@ -17,7 +17,11 @@ const TitleH1 = styled('h1', RTitle);
 
 const getMDXComponent = mdxBundler.getMDXComponent;
 
-export const Docs = ({ path = '', children }: { path?: string; children: ReactNode }) => {
+/*
+ *Render the mdx for our mintlify docs inside of the web.
+ *Fetching the compiled mdx from another service and then try to map the markdown to react components.
+ */
+export const Docs = ({ path = '', children, actions }: { path?: string; children: ReactNode; actions: ReactNode }) => {
   const segment = useSegment();
 
   const { isLoading, data: { code, title, description } = { code: '', title: '', description: '' } } = useQuery<{
@@ -98,228 +102,231 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
   }
 
   return (
-    <VStack
-      alignItems="unset"
-      id="docs"
-      gap={12}
-      className={css({
-        textAlign: 'justify left',
-      })}
-    >
-      <div>
-        <Flex justify="space-between" align="center">
-          <TitleH1>{title}</TitleH1>
-          {children}
-        </Flex>
-        <Text>{description}</Text>
-      </div>
-      <Component
-        components={{
-          tr: ({ className, ...props }: any) => {
-            return (
-              <tr
-                {...props}
-                className={css({
-                  height: '250',
-                  lineHeight: '125',
-                  borderBottom: `1px solid`,
-                  borderBottomColor: 'legacy.B20',
-                })}
-              />
-            );
-          },
-          thead: ({ className, ...props }: any) => {
-            return (
-              <thead
-                {...props}
-                className={css({
-                  height: '150',
-                  lineHeight: '125',
-                  color: 'typography.text.main',
-                  borderBottomColor: 'legacy.B30',
-                })}
-              />
-            );
-          },
-          Frame: ({ className, ...props }: any) => {
-            return (
-              <div {...props}>
-                <img alt="" src={`https://mintlify.s3-us-west-1.amazonaws.com/novu${props.children.props.src}`} />
-                <Text className={css({ textAlign: 'center', fontStyle: 'italic' })}>{props.caption}</Text>
-              </div>
-            );
-          },
-          Info: ({ className, ...props }: any) => {
-            return (
-              <Alert style={{ borderRadius: 12 }} color="gray" {...props} icon={<IconInfoOutline color="white" />} />
-            );
-          },
-          Snippet: () => {
-            return null;
-          },
-          Steps: ({ className, ...props }: any) => {
-            return (
-              <ol
-                className={css({
-                  lineHeight: '125',
-                  listStyleType: 'decimal',
-                  listStylePosition: 'inside',
-                })}
-              >
-                {props.children}
-              </ol>
-            );
-          },
-          Step: ({ className, ...props }: any) => {
-            return (
-              <li className={css({ lineHeight: '125', marginBottom: '50' })}>
-                <LiText className={css({ lineHeight: '150', fontSize: '100', fontWeight: 'bolder' })}>
-                  {props.title}
-                </LiText>
-                <LiText className={css({ lineHeight: '125' })}>{props.children}</LiText>
-              </li>
-            );
-          },
-          Warning: ({ className, ...props }: any) => {
-            return (
-              <Alert
-                style={{ borderRadius: 12 }}
-                color="yellow"
-                {...props}
-                icon={<IconOutlineWarning color="white" />}
-              />
-            );
-          },
-          Note: ({ className, ...props }: any) => {
-            return (
-              <Alert style={{ borderRadius: 12 }} color="blue" {...props} icon={<IconInfoOutline color="white" />} />
-            );
-          },
-          CardGroup: ({ className, ...props }: any) => {
-            return (
-              <Grid gap={16} columns={props.cols}>
-                {props.children}
-              </Grid>
-            );
-          },
-          AccordionGroup: ({ className, ...props }: any) => {
-            return <Accordion {...props} />;
-          },
-          Tab: () => null,
-          Tabs: ({ className, ...props }: any) => {
-            const tabs = Array.isArray(props.children) ? props.children : [props.children];
+    <>
+      <VStack
+        alignItems="unset"
+        id="docs"
+        gap={12}
+        className={css({
+          textAlign: 'justify left',
+        })}
+      >
+        <div>
+          <Flex justify="space-between" align="center">
+            <TitleH1>{title}</TitleH1>
+            {actions}
+          </Flex>
+          <Text>{description}</Text>
+        </div>
+        <Component
+          components={{
+            tr: ({ className, ...props }: any) => {
+              return (
+                <tr
+                  {...props}
+                  className={css({
+                    height: '250',
+                    lineHeight: '125',
+                    borderBottom: `1px solid`,
+                    borderBottomColor: 'legacy.B20',
+                  })}
+                />
+              );
+            },
+            thead: ({ className, ...props }: any) => {
+              return (
+                <thead
+                  {...props}
+                  className={css({
+                    height: '150',
+                    lineHeight: '125',
+                    color: 'typography.text.main',
+                    borderBottomColor: 'legacy.B30',
+                  })}
+                />
+              );
+            },
+            Frame: ({ className, ...props }: any) => {
+              return (
+                <div {...props}>
+                  <img alt="" src={`https://mintlify.s3-us-west-1.amazonaws.com/novu${props.children.props.src}`} />
+                  <Text className={css({ textAlign: 'center', fontStyle: 'italic' })}>{props.caption}</Text>
+                </div>
+              );
+            },
+            Info: ({ className, ...props }: any) => {
+              return (
+                <Alert style={{ borderRadius: 12 }} color="gray" {...props} icon={<IconInfoOutline color="white" />} />
+              );
+            },
+            Snippet: () => {
+              return null;
+            },
+            Steps: ({ className, ...props }: any) => {
+              return (
+                <ol
+                  className={css({
+                    lineHeight: '125',
+                    listStyleType: 'decimal',
+                    listStylePosition: 'inside',
+                  })}
+                >
+                  {props.children}
+                </ol>
+              );
+            },
+            Step: ({ className, ...props }: any) => {
+              return (
+                <li className={css({ lineHeight: '125', marginBottom: '50' })}>
+                  <LiText className={css({ lineHeight: '150', fontSize: '100', fontWeight: 'bolder' })}>
+                    {props.title}
+                  </LiText>
+                  <LiText className={css({ lineHeight: '125' })}>{props.children}</LiText>
+                </li>
+              );
+            },
+            Warning: ({ className, ...props }: any) => {
+              return (
+                <Alert
+                  style={{ borderRadius: 12 }}
+                  color="yellow"
+                  {...props}
+                  icon={<IconOutlineWarning color="white" />}
+                />
+              );
+            },
+            Note: ({ className, ...props }: any) => {
+              return (
+                <Alert style={{ borderRadius: 12 }} color="blue" {...props} icon={<IconInfoOutline color="white" />} />
+              );
+            },
+            CardGroup: ({ className, ...props }: any) => {
+              return (
+                <Grid gap={16} columns={props.cols}>
+                  {props.children}
+                </Grid>
+              );
+            },
+            AccordionGroup: ({ className, ...props }: any) => {
+              return <Accordion {...props} />;
+            },
+            Tab: () => null,
+            Tabs: ({ className, ...props }: any) => {
+              const tabs = Array.isArray(props.children) ? props.children : [props.children];
 
-            return (
-              <Tabs
-                menuTabs={tabs.map((tab) => {
-                  return {
-                    content: tab.props.children,
-                    value: tab.props.title,
-                  };
-                })}
-                defaultValue={tabs[0].props.title}
-              />
-            );
-          },
-          Tip: ({ className, ...props }: any) => {
-            return (
-              <Alert
-                className={css({ borderRadius: '75' })}
-                color="gray"
-                {...props}
-                icon={<IconInfoOutline color="white" />}
-              />
-            );
-          },
-          Tooltip: ({ className, ...props }: any) => {
-            return (
-              <Tooltip label={props.tip}>
-                <span>{props.children}</span>
-              </Tooltip>
-            );
-          },
-          code: ({ className, ...props }: any) => {
-            if (className?.includes('language-')) {
-              return <Highlight {...props} />;
-            }
+              return (
+                <Tabs
+                  menuTabs={tabs.map((tab) => {
+                    return {
+                      content: tab.props.children,
+                      value: tab.props.title,
+                    };
+                  })}
+                  defaultValue={tabs[0].props.title}
+                />
+              );
+            },
+            Tip: ({ className, ...props }: any) => {
+              return (
+                <Alert
+                  className={css({ borderRadius: '75' })}
+                  color="gray"
+                  {...props}
+                  icon={<IconInfoOutline color="white" />}
+                />
+              );
+            },
+            Tooltip: ({ className, ...props }: any) => {
+              return (
+                <Tooltip label={props.tip}>
+                  <span>{props.children}</span>
+                </Tooltip>
+              );
+            },
+            code: ({ className, ...props }: any) => {
+              if (className?.includes('language-')) {
+                return <Highlight {...props} />;
+              }
 
-            return <Code {...props} />;
-          },
-          Card: ({ className, ...props }: any) => {
-            return (
-              <GridItem colSpan={1}>
-                <Paper>
-                  <TitleH2>
-                    <a href={`https://docs.novu.co${props.href}`} rel={'noopener noreferrer'} target={'_blank'}>
-                      {props.title}
-                    </a>
-                  </TitleH2>
-                </Paper>
-              </GridItem>
-            );
-          },
-          Accordion: ({ className, ...props }: any) => {
-            return (
-              <Accordion.Item value={props.title}>
-                <Accordion.Control>{props.title}</Accordion.Control>
-                <Accordion.Panel>{props.children}</Accordion.Panel>
-              </Accordion.Item>
-            );
-          },
-          p: ({ className, ...props }: any) => {
-            return <Text className={css({ lineHeight: '125' })} {...props} />;
-          },
-          ol: ({ className, ...props }: any) => {
-            return (
-              <ol
-                className={css({
-                  lineHeight: '125',
-                  listStyleType: 'decimal',
-                  listStylePosition: 'inside',
-                  '& p': {
-                    display: 'inline !important',
-                  },
-                })}
-                {...props}
-              />
-            );
-          },
-          ul: ({ className, ...props }: any) => {
-            return (
-              <ul
-                className={css({
-                  lineHeight: '125',
-                  listStyleType: 'disc',
-                  listStylePosition: 'inside',
-                  '& p': {
-                    display: 'inline !important',
-                  },
-                })}
-                {...props}
-              />
-            );
-          },
-          li: ({ className, ...props }: any) => {
-            return <li className={css({ lineHeight: '125', marginBottom: '50' })} {...props} />;
-          },
-          h2: ({ className, ...props }: any) => {
-            return <TitleH2 className={css({ marginTop: '75' })} {...props} />;
-          },
-          h3: ({ className, ...props }: any) => {
-            return <TitleH3 {...props} />;
-          },
-          a: ({ className, ...props }: any) => {
-            return (
-              <a
-                href={`https://docs.novu.co${props.href}`}
-                rel={'noopener noreferrer'}
-                target={'_blank'}
-                children={props.children}
-              />
-            );
-          },
-        }}
-      />
-    </VStack>
+              return <Code {...props} />;
+            },
+            Card: ({ className, ...props }: any) => {
+              return (
+                <GridItem colSpan={1}>
+                  <Paper>
+                    <TitleH2>
+                      <a href={`https://docs.novu.co${props.href}`} rel={'noopener noreferrer'} target={'_blank'}>
+                        {props.title}
+                      </a>
+                    </TitleH2>
+                  </Paper>
+                </GridItem>
+              );
+            },
+            Accordion: ({ className, ...props }: any) => {
+              return (
+                <Accordion.Item value={props.title}>
+                  <Accordion.Control>{props.title}</Accordion.Control>
+                  <Accordion.Panel>{props.children}</Accordion.Panel>
+                </Accordion.Item>
+              );
+            },
+            p: ({ className, ...props }: any) => {
+              return <Text className={css({ lineHeight: '125' })} {...props} />;
+            },
+            ol: ({ className, ...props }: any) => {
+              return (
+                <ol
+                  className={css({
+                    lineHeight: '125',
+                    listStyleType: 'decimal',
+                    listStylePosition: 'inside',
+                    '& p': {
+                      display: 'inline !important',
+                    },
+                  })}
+                  {...props}
+                />
+              );
+            },
+            ul: ({ className, ...props }: any) => {
+              return (
+                <ul
+                  className={css({
+                    lineHeight: '125',
+                    listStyleType: 'disc',
+                    listStylePosition: 'inside',
+                    '& p': {
+                      display: 'inline !important',
+                    },
+                  })}
+                  {...props}
+                />
+              );
+            },
+            li: ({ className, ...props }: any) => {
+              return <li className={css({ lineHeight: '125', marginBottom: '50' })} {...props} />;
+            },
+            h2: ({ className, ...props }: any) => {
+              return <TitleH2 className={css({ marginTop: '75' })} {...props} />;
+            },
+            h3: ({ className, ...props }: any) => {
+              return <TitleH3 {...props} />;
+            },
+            a: ({ className, ...props }: any) => {
+              return (
+                <a
+                  href={`https://docs.novu.co${props.href}`}
+                  rel={'noopener noreferrer'}
+                  target={'_blank'}
+                  children={props.children}
+                />
+              );
+            },
+          }}
+        />
+      </VStack>
+      {children}
+    </>
   );
 };

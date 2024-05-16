@@ -2,21 +2,11 @@ import React, { useContext, useEffect, useState } from 'react';
 import { ActionIcon, Modal } from '@mantine/core';
 import { useLocation } from 'react-router-dom';
 import { Docs } from '../docs';
-import {
-  colors,
-  IconOpenInNew,
-  IconOutlineClose,
-  IconThumbDownAlt,
-  IconThumbUpAlt,
-  Tooltip,
-  useColorScheme,
-} from '@novu/design-system';
-import { Flex, styled } from '../../styled-system/jsx';
-import { text } from '../../styled-system/recipes';
+import { colors, IconOpenInNew, IconOutlineClose, Tooltip, useColorScheme } from '@novu/design-system';
+import { Flex } from '../../styled-system/jsx';
 import { css } from '../../styled-system/css';
 import { useSegment } from '@novu/shared-web';
-
-const Text = styled('p', text);
+import { VotingWidget } from '../docs/VotingWidget';
 
 interface IDocsContext {
   setPath: (path: string) => void;
@@ -44,7 +34,7 @@ export const useSetDocs = (path: string) => {
 export const DocsProvider = ({ children }) => {
   const [path, setPath] = useState<string>('');
   const [open, setOpen] = useState(false);
-  const [voted, setVoted] = useState('');
+  const [voted, setVoted] = useState<'up' | 'down' | ''>('');
   const { pathname } = useLocation();
   const segment = useSegment();
   const { colorScheme } = useColorScheme();
@@ -112,80 +102,52 @@ export const DocsProvider = ({ children }) => {
         withCloseButton={false}
         overlayColor={isDark ? colors.BGDark : colors.BGLight}
       >
-        <Docs path={path}>
-          <Flex
-            className={css({
-              position: 'fixed',
-              top: '150',
-              right: '150',
-              background: isDark ? 'legacy.B15' : 'white',
-              zIndex: 1,
-              padding: '25',
-              borderBottomLeftRadius: '50',
-            })}
-            gap="125"
-          >
-            <Tooltip label="Open docs website">
+        <Docs
+          path={path}
+          actions={
+            <Flex
+              className={css({
+                position: 'fixed',
+                top: '150',
+                right: '150',
+                background: isDark ? 'legacy.B15' : 'white',
+                zIndex: 1,
+                padding: '25',
+                borderBottomLeftRadius: '50',
+              })}
+              gap="125"
+            >
+              <Tooltip label="Open docs website">
+                <ActionIcon
+                  className={css({
+                    width: '125 !important',
+                    minWidth: '125 !important',
+                    border: 'none',
+                  })}
+                  variant="transparent"
+                  onClick={() => {
+                    window.open(`https://docs.novu.co/${path}`);
+                  }}
+                >
+                  <IconOpenInNew />
+                </ActionIcon>
+              </Tooltip>
               <ActionIcon
+                variant="transparent"
+                onClick={onClose}
                 className={css({
                   width: '125 !important',
                   minWidth: '125 !important',
                   border: 'none',
                 })}
-                variant="transparent"
-                onClick={() => {
-                  window.open(`https://docs.novu.co/${path}`);
-                }}
               >
-                <IconOpenInNew />
+                <IconOutlineClose />
               </ActionIcon>
-            </Tooltip>
-            <ActionIcon
-              variant="transparent"
-              onClick={onClose}
-              className={css({
-                width: '125 !important',
-                minWidth: '125 !important',
-                border: 'none',
-              })}
-            >
-              <IconOutlineClose />
-            </ActionIcon>
-          </Flex>
-        </Docs>
-        <Flex
-          className={css({
-            marginTop: '250',
-          })}
-          align="center"
-          gap="125"
+            </Flex>
+          }
         >
-          <Text>Did you find it useful?</Text>
-          <Flex gap="100" align="center">
-            <ActionIcon
-              className={css({
-                width: '125 !important',
-                minWidth: '125 !important',
-                border: 'none',
-              })}
-              variant="transparent"
-              onClick={onVoteClick('up')}
-            >
-              <IconThumbUpAlt color={voted === 'up' ? 'white' : undefined} size={20} />
-            </ActionIcon>
-            <ActionIcon
-              className={css({
-                width: '125 !important',
-                minWidth: '125 !important',
-                border: 'none',
-              })}
-              variant="transparent"
-              onClick={onVoteClick('down')}
-            >
-              <IconThumbDownAlt color={voted === 'down' ? 'white' : undefined} size={20} />
-            </ActionIcon>
-          </Flex>
-        </Flex>
+          <VotingWidget onVoteClick={onVoteClick} voted={voted} />
+        </Docs>
       </Modal>
       {children}
     </DocsContext.Provider>
