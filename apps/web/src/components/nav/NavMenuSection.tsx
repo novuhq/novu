@@ -18,7 +18,7 @@ export const NavMenuSection: FC<React.PropsWithChildren<INavMenuSectionProps>> =
           {title}
         </Title>
       )}
-      {children}
+      <Stack gap="25">{children}</Stack>
     </section>
   );
 };
