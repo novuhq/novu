@@ -52,7 +52,7 @@ export function getLogLevel() {
   return logLevel;
 }
 
-// TODO: ENV should be moved into a config framework
+// TODO: should be moved into a config framework
 function getLoggingVariables(): ILoggingVariables {
   const env = process.env.NODE_ENV ?? 'local';
 
