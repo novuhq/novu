@@ -47,7 +47,7 @@
     "@novu/shared": "^0.24.1",
     "@novu/stateless": "^0.24.1",
     "@novu/testing": "^0.24.1",
-    "@novu/echo": "^0.0.1-alpha.25",
+    "@novu/echo": "^0.0.1-alpha.27",
     "@sendgrid/mail": "^8.1.0",
     "@sentry/hub": "^7.40.0",
     "@sentry/node": "^7.40.0",
