@@ -63,6 +63,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - uses: ./.github/actions/free-space
       - uses: ./.github/actions/setup-qemu
 
       - name: Login To Registry
