@@ -8,7 +8,7 @@ import { useSegment } from '@novu/shared-web';
 import { Center, Flex, Grid, GridItem, styled, VStack } from '../../styled-system/jsx';
 import { css } from '../../styled-system/css';
 import { text, title as RTitle } from '../../styled-system/recipes';
-import { DOCS_URL, MINTLIFY_IMAGE_URL } from './docs.const';
+import { DOCS_URL, MDX_URL, MINTLIFY_IMAGE_URL } from './docs.const';
 
 const Text = styled('p', text);
 const LiText = styled('span', text);
@@ -30,7 +30,7 @@ export const Docs = ({ path = '', children, actions }: { path?: string; children
     title: string;
     description: string;
   }>(['docs', path], async () => {
-    const response = await fetch('https://cloud-doc.vercel.app/' + path);
+    const response = await fetch(MDX_URL + path);
     const json = await response.json();
 
     return json;
@@ -128,7 +128,7 @@ export const Docs = ({ path = '', children, actions }: { path?: string; children
                   className={css({
                     height: '250',
                     lineHeight: '125',
-                    borderBottom: `1px solid`,
+                    borderBottom: 'solid',
                     borderBottomColor: 'legacy.B20',
                   })}
                 />

@@ -1,10 +1,10 @@
 import hljs from 'highlight.js';
-import { useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import 'highlight.js/styles/default.css';
 import 'highlight.js/styles/atom-one-dark.css';
 
-export const Highlight = (props: any) => {
-  const ref = useRef<HTMLElement>();
+export const Highlight = (props: { children: ReactNode }) => {
+  const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
     if (!ref.current) {
