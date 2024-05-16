@@ -1,9 +1,5 @@
 [build]
-  # For monorepos, the directory that contains your site files, including the netlify.toml. Set this value only if it is different from the base directory.
-  package = "apps/web/"
-  # This is the directory that you are publishing from (relative to root of your repo)
-  publish = "apps/web/build/"
-  # This will be your default build command
+  # default build command
   command = "cd apps/web && pnpm run envsetup && cd ../../ && pnpm run build:web --skip-nx-cache"
 
 [context.deploy-preview]
