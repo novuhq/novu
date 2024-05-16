@@ -1,13 +1,15 @@
 {
   "name": "@novu/echo",
-  "version": "0.24.2",
-  "description": "The Echo SDK, used to programmatically declare and manage your notifications.",
-  "main": "./index.js",
-  "types": "./index.d.ts",
+  "version": "0.24.3-alpha.0",
+  "description": "The Code-First Notifications Workflow SDK.",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "publishConfig": {
-    "registry": "https://registry.npmjs.org"
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
   },
   "private": false,
+  "repository": "https://github.com/novuhq/novu",
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "test": "jest",
@@ -15,41 +17,52 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
-    "start": "ts-node src/index.ts",
     "clean": "rm -rf ./dist",
-    "build": "pnpm run clean && tsc --build && pnpm run build:copy",
+    "build": "pnpm run clean && tsc --build",
     "build:watch": "tsc --build --watch",
-    "build:copy": "cp package.json README.md dist",
-    "release:alpha": "pnpm i && npm version prerelease --preid=alpha && pnpm build && cd dist && npm publish"
+    "$comment:bump:prerelease": "This is a workaround to catch allow npm version prerelease with lerna",
+    "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
+    "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish --dry-run"
   },
-  "keywords": [],
+  "keywords": [
+    "novu",
+    "code-first",
+    "workflows",
+    "durable",
+    "sdk",
+    "notifications",
+    "email",
+    "sms",
+    "push",
+    "webhooks"
+  ],
   "author": "Athena",
-  "license": "ISC",
+  "license": "MIT",
   "exports": {
     ".": {
-      "require": "./index.js",
-      "import": "./index.js",
-      "types": "./index.d.ts"
+      "require": "./dist/index.js",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
     },
     "./express": {
-      "require": "./express.js",
-      "import": "./express.js",
-      "types": "./express.d.ts"
+      "require": "./dist/express.js",
+      "import": "./dist/express.js",
+      "types": "./dist/express.d.ts"
     },
     "./next": {
-      "require": "./next.js",
-      "import": "./next.js",
-      "types": "./next.d.ts"
+      "require": "./dist/next.js",
+      "import": "./dist/next.js",
+      "types": "./dist/next.d.ts"
     },
     "./nuxt": {
-      "require": "./nuxt.js",
-      "import": "./nuxt.js",
-      "types": "./nuxt.d.ts"
+      "require": "./dist/nuxt.js",
+      "import": "./dist/nuxt.js",
+      "types": "./dist/nuxt.d.ts"
     },
     "./h3": {
-      "require": "./h3.js",
-      "import": "./h3.js",
-      "types": "./h3.d.ts"
+      "require": "./dist/h3.js",
+      "import": "./dist/h3.js",
+      "types": "./dist/h3.d.ts"
     }
   },
   "devDependencies": {
@@ -77,5 +90,9 @@
     "json-schema-faker": "^0.5.6",
     "json-schema-to-ts": "^3.0.0",
     "ora": "^5.4.1"
-  }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
 }
