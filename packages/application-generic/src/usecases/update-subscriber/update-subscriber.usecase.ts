@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { SubscriberEntity, SubscriberRepository } from '@novu/dal';
 
 import {
@@ -9,12 +9,18 @@ import { subscriberNeedUpdate } from '../../utils/subscriber';
 
 import { UpdateSubscriberCommand } from './update-subscriber.command';
 import { ApiException } from '../../utils/exceptions';
+import {
+  OAuthHandlerEnum,
+  UpdateSubscriberChannel,
+  UpdateSubscriberChannelCommand,
+} from '../subscribers';
 
 @Injectable()
 export class UpdateSubscriber {
   constructor(
     private invalidateCache: InvalidateCacheService,
-    private subscriberRepository: SubscriberRepository
+    private subscriberRepository: SubscriberRepository,
+    private updateSubscriberChannel: UpdateSubscriberChannel
   ) {}
 
   public async execute(
@@ -61,6 +67,10 @@ export class UpdateSubscriber {
       updatePayload.data = command.data;
     }
 
+    if (command.channels?.length) {
+      await this.updateSubscriberChannels(command, foundSubscriber);
+    }
+
     if (!subscriberNeedUpdate(foundSubscriber, updatePayload)) {
       return {
         ...foundSubscriber,
@@ -88,5 +98,26 @@ export class UpdateSubscriber {
       ...foundSubscriber,
       ...updatePayload,
     };
+  }
+
+  private async updateSubscriberChannels(
+    command: UpdateSubscriberCommand,
+    foundSubscriber: SubscriberEntity
+  ) {
+    for (const channel of command.channels) {
+      await this.updateSubscriberChannel.execute(
+        UpdateSubscriberChannelCommand.create({
+          subscriber: foundSubscriber,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          subscriberId: command.subscriberId,
+          providerId: channel.providerId,
+          credentials: channel.credentials,
+          integrationIdentifier: channel.integrationIdentifier,
+          oauthHandler: OAuthHandlerEnum.EXTERNAL,
+          isIdempotentOperation: false,
+        })
+      );
+    }
   }
 }

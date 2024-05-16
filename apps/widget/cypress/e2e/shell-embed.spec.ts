@@ -105,11 +105,7 @@ describe('Shell Embed', function () {
           .first()
           .find('[data-test-id="notification-dots-button"]')
           .click();
-        cy.wrap(body)
-          .find('[data-test-id="notification-list-item"]')
-          .first()
-          .find('[data-test-id="notification-mark-as-read"]')
-          .click();
+        cy.wrap(body).find('[data-test-id="notification-mark-as-read"]').first().click();
         cy.wait('@fetchUnseenCount');
       });
 

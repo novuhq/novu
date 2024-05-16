@@ -115,11 +115,11 @@ spec:
                   key: mongoUrl
             - name: JWT_SECRET
               valueFrom :
-               secretKeyRef:
-                  name: {{ include "common.names.fullname" . }}
+                secretKeyRef:
+                  name: {{ if .Values.existingSecret -}} {{ .Values.existingSecret }} {{- else -}} {{ include "common.names.fullname" . }} {{- end }}
                   key: jwt-secret
             {{- if .Values.ws.extraEnvVars }}
-            {{- include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVars "context" $) | nindent 12 }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.ws.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
           envFrom:
             {{- if .Values.ws.extraEnvVarsCM }}

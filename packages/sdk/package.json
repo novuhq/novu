@@ -1,6 +1,6 @@
 {
   "name": "@novu/echo",
-  "version": "0.0.1-alpha.27",
+  "version": "0.24.2",
   "description": "The Echo SDK, used to programmatically declare and manage your notifications.",
   "main": "./index.js",
   "types": "./index.d.ts",
@@ -12,7 +12,7 @@
     "preinstall": "npx only-allow pnpm",
     "test": "jest",
     "lint": "eslint src --ext .ts",
-    "lint:fix":"eslint src --ext .ts --fix",
+    "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
     "start": "ts-node src/index.ts",

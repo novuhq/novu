@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { SubscriberEntity } from '@novu/dal';
-import { SubscriberCustomData } from '@novu/shared';
+import { ISubscriberChannel, SubscriberCustomData } from '@novu/shared';
 
 import { EnvironmentCommand } from '../../commands/project.command';
 
@@ -46,4 +46,7 @@ export class CreateSubscriberCommand extends EnvironmentCommand {
 
   @IsOptional()
   subscriber?: SubscriberEntity;
+
+  @IsOptional()
+  channels?: ISubscriberChannel[];
 }

@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsDefined, IsObject, IsOptional, IsString } from 'class-validator';
-import { ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, ISubscriberChannel, PushProviderIdEnum } from '@novu/shared';
 
 import { ChannelCredentials } from '../../shared/dtos/subscriber-channel';
 
-export class UpdateSubscriberChannelRequestDto {
+export class UpdateSubscriberChannelRequestDto implements ISubscriberChannel {
   @ApiProperty({
     enum: { ...ChatProviderIdEnum, ...PushProviderIdEnum },
     description: 'The provider identifier for the credentials',

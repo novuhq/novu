@@ -1,9 +1,17 @@
 import { CustomDataType } from '../shared';
+import { ChatProviderIdEnum, PushProviderIdEnum } from '../../consts';
+import { IChannelCredentials } from '../../entities/subscriber';
 
 export type ExternalSubscriberId = string;
 export type SubscriberId = string;
 
 export type SubscriberCustomData = CustomDataType;
+
+export interface ISubscriberChannel {
+  providerId: ChatProviderIdEnum | PushProviderIdEnum;
+  integrationIdentifier?: string;
+  credentials: IChannelCredentials;
+}
 
 export interface ISubscriberPayload {
   firstName?: string;
@@ -13,6 +21,7 @@ export interface ISubscriberPayload {
   avatar?: string;
   locale?: string;
   data?: SubscriberCustomData;
+  channels?: ISubscriberChannel[];
 }
 
 export interface ISubscribersDefine extends ISubscriberPayload {

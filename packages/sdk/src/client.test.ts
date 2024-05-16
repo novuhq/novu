@@ -24,6 +24,11 @@ describe('Echo Client', () => {
     });
   });
 
+  test('should discover 1 workflow', () => {
+    const discovery = echo.discover();
+    expect(discovery.workflows).toHaveLength(1);
+  });
+
   describe('Type tests', () => {
     it('should not compile when the channel output is incorrect', async () => {
       echo.workflow('email-test', async ({ step }) => {

@@ -1,4 +1,4 @@
-import Redlock from 'redlock';
+import Redlock, { Lock } from 'redlock';
 import { setTimeout } from 'timers/promises';
 import { Injectable, Logger } from '@nestjs/common';
 
@@ -45,7 +45,8 @@ export class DistributedLockService {
 
     if (client) {
       this.instances = [client];
-      this.distributedLock = new Redlock(this.instances, settings);
+      // TODO: remove any - Redlock does not have the correct (latest) client typings
+      this.distributedLock = new Redlock(this.instances as any, settings);
       Logger.verbose('Redlock started', LOG_CONTEXT);
 
       /**
@@ -182,12 +183,17 @@ export class DistributedLockService {
     }
   }
 
-  private async lock(
+  public async lock(
     resource: string,
-    ttl: number
+    ttl: number,
+    settings: { retryCount: number } = this.distributedLock.settings
   ): Promise<() => Promise<void>> {
     try {
-      const acquiredLock = await this.distributedLock.acquire([resource], ttl);
+      const acquiredLock = await this.distributedLock.acquire(
+        [resource],
+        ttl,
+        settings
+      );
       Logger.verbose(`Lock ${resource} acquired for ${ttl} ms`, LOG_CONTEXT);
 
       return this.createLockRelease(resource, acquiredLock);
@@ -200,7 +206,7 @@ export class DistributedLockService {
     }
   }
 
-  private createLockRelease(resource: string, lock): () => Promise<void> {
+  private createLockRelease(resource: string, lock: Lock): () => Promise<void> {
     this.increaseLockCounter(resource);
 
     return async (): Promise<void> => {
@@ -209,7 +215,7 @@ export class DistributedLockService {
           `Lock ${resource} counter at ${this.lockCounter[resource]}`,
           LOG_CONTEXT
         );
-        await lock.unlock();
+        await lock.release();
       } catch (error: any) {
         Logger.error(
           `Releasing lock ${resource} threw an error: ${error.message}`,
