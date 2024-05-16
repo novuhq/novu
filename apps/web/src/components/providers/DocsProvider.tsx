@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { ActionIcon, useMantineColorScheme, Modal } from '@mantine/core';
+import { ActionIcon, Modal } from '@mantine/core';
 import { useLocation } from 'react-router-dom';
 import { Docs } from '../docs';
 import {
@@ -9,6 +9,7 @@ import {
   IconThumbDownAlt,
   IconThumbUpAlt,
   Tooltip,
+  useColorScheme,
 } from '@novu/design-system';
 import { Flex, styled } from '../../styled-system/jsx';
 import { text } from '../../styled-system/recipes';
@@ -46,7 +47,7 @@ export const DocsProvider = ({ children }) => {
   const [voted, setVoted] = useState('');
   const { pathname } = useLocation();
   const segment = useSegment();
-  const { colorScheme } = useMantineColorScheme();
+  const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
 
   const onClose = () => {
@@ -64,7 +65,7 @@ export const DocsProvider = ({ children }) => {
     setOpen(!open);
   };
 
-  const onVoteClick = (vote: string) => () => {
+  const onVoteClick = (vote: 'up' | 'down') => () => {
     if (voted.length > 0) {
       return;
     }
@@ -170,7 +171,7 @@ export const DocsProvider = ({ children }) => {
               variant="transparent"
               onClick={onVoteClick('up')}
             >
-              <IconThumbUpAlt color={voted == 'up' ? 'white' : undefined} size={20} />
+              <IconThumbUpAlt color={voted === 'up' ? 'white' : undefined} size={20} />
             </ActionIcon>
             <ActionIcon
               style={{
@@ -181,7 +182,7 @@ export const DocsProvider = ({ children }) => {
               variant="transparent"
               onClick={onVoteClick('down')}
             >
-              <IconThumbDownAlt color={voted == 'down' ? 'white' : undefined} size={20} />
+              <IconThumbDownAlt color={voted === 'down' ? 'white' : undefined} size={20} />
             </ActionIcon>
           </Flex>
         </Flex>

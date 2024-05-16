@@ -4,7 +4,7 @@ import 'highlight.js/styles/default.css';
 import 'highlight.js/styles/atom-one-dark.css';
 
 export const Highlight = (props: any) => {
-  const ref: any = useRef();
+  const ref = useRef<HTMLElement>();
 
   useEffect(() => {
     if (!ref.current) {

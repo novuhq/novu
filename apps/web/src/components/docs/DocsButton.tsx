@@ -1,5 +1,5 @@
-import { ActionIcon, Popover, useMantineColorScheme } from '@mantine/core';
-import { Button, colors, IconOutlineMenuBook, QuickGuide, shadows, Tooltip } from '@novu/design-system';
+import { ActionIcon, Popover } from '@mantine/core';
+import { Button, IconOutlineMenuBook, QuickGuide, Tooltip, useColorScheme } from '@novu/design-system';
 import { useSegment } from '@novu/shared-web';
 import { useEffect, useState } from 'react';
 import { css } from '../../styled-system/css';
@@ -11,10 +11,10 @@ const Title = styled('h3', title);
 const Text = styled('p', text);
 
 export const DocsButton = () => {
-  const { colorScheme } = useMantineColorScheme();
+  const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { toggle, enabled, path } = useDocsContext();
-  const [opened, setOpened] = useState(false);
+  const [opened, setOpened] = useState<boolean>(false);
   const segment = useSegment();
 
   const onClose = () => {
@@ -57,11 +57,11 @@ export const DocsButton = () => {
             </ActionIcon>
           </Popover.Target>
           <Popover.Dropdown
-            style={{
-              borderRadius: '12px',
-              boxShadow: isDark ? undefined : shadows.dark,
-              background: isDark ? colors.B30 : undefined,
-            }}
+            className={css({
+              borderRadius: '75',
+              boxShadow: isDark ? undefined : 'dark',
+              background: isDark ? 'legacy.B30' : undefined,
+            })}
           >
             <Flex gap="125" justify="space-between">
               <QuickGuide />
@@ -69,7 +69,7 @@ export const DocsButton = () => {
                 <Title
                   className={css({
                     marginBottom: '50',
-                    fontSize: '18px',
+                    fontSize: '88',
                     lineHeight: '150',
                   })}
                 >
@@ -77,7 +77,7 @@ export const DocsButton = () => {
                 </Title>
                 <Text
                   className={css({
-                    color: isDark ? 'legacy.B80' : 'legacy.B60',
+                    color: isDark ? 'legacy.B80' : 'typography.text.secondary',
                     fontSize: '100',
                     lineHeight: '125',
                     maxWidth: '268px',
@@ -95,10 +95,10 @@ export const DocsButton = () => {
             >
               <Button
                 onClick={onClose}
-                style={{
-                  height: '32px',
-                  padding: '0 12px',
-                }}
+                className={css({
+                  height: '200',
+                  padding: '0 75',
+                })}
               >
                 Got it
               </Button>

@@ -40,7 +40,7 @@ export const ExploreLink = ({
           className={css({
             fontSize: '75',
             lineHeight: '125',
-            color: 'legacy.B60',
+            color: 'typography.text.secondary',
           })}
         >
           {text}

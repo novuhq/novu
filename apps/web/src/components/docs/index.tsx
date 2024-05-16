@@ -20,15 +20,16 @@ const getMDXComponent = mdxBundler.getMDXComponent;
 export const Docs = ({ path = '', children }: { path?: string; children: ReactNode }) => {
   const segment = useSegment();
 
-  const { isLoading, data: { code, title, description } = { code: '', title: '', description: '' } } = useQuery(
-    ['docs', path],
-    async () => {
-      const response = await fetch('https://cloud-doc.vercel.app/' + path);
-      const json = await response.json();
+  const { isLoading, data: { code, title, description } = { code: '', title: '', description: '' } } = useQuery<{
+    code: string;
+    title: string;
+    description: string;
+  }>(['docs', path], async () => {
+    const response = await fetch('https://cloud-doc.vercel.app/' + path);
+    const json = await response.json();
 
-      return json;
-    }
-  );
+    return json;
+  });
 
   useEffect(() => {
     segment.track('Inline docs opened', {
@@ -73,7 +74,7 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
     return (
       <Center
         className={css({
-          marginTop: 64,
+          marginTop: '[4rem]',
         })}
       >
         <Loader color={colors.error} size={32} />
@@ -85,12 +86,12 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
     return (
       <Flex
         className={css({
-          marginTop: 64,
+          marginTop: '[4rem]',
         })}
         justify="center"
         align="center"
       >
-        <Text>We could not load the documentation for you, please try again.</Text>
+        <Text>We could not load the documentation for you. Please try again.</Text>
         {children}
       </Flex>
     );
@@ -134,7 +135,7 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
                 className={css({
                   height: '150',
                   lineHeight: '125',
-                  color: 'legacy.B40',
+                  color: 'typography.text.main',
                   borderBottomColor: 'legacy.B30',
                 })}
               />
@@ -222,7 +223,12 @@ export const Docs = ({ path = '', children }: { path?: string; children: ReactNo
           },
           Tip: ({ className, ...props }: any) => {
             return (
-              <Alert style={{ borderRadius: 12 }} color="gray" {...props} icon={<IconInfoOutline color="white" />} />
+              <Alert
+                className={css({ borderRadius: '75' })}
+                color="gray"
+                {...props}
+                icon={<IconInfoOutline color="white" />}
+              />
             );
           },
           Tooltip: ({ className, ...props }: any) => {

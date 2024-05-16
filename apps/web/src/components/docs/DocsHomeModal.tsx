@@ -1,4 +1,4 @@
-import { ActionIcon, Modal, useMantineColorScheme } from '@mantine/core';
+import { ActionIcon, Modal } from '@mantine/core';
 import {
   colors,
   IconChecklist,
@@ -16,6 +16,7 @@ import {
   IconWidgets,
   IconWrapText,
   Tooltip,
+  useColorScheme,
 } from '@novu/design-system';
 import { css } from '../../styled-system/css';
 import { Flex, Grid, GridItem, styled } from '../../styled-system/jsx';
@@ -29,7 +30,7 @@ const ModalTitle = styled('h2', title);
 
 export const DocsHomeModal = ({ path, open }: { path: string; open: boolean }) => {
   const { setPath, toggle } = useDocsContext();
-  const { colorScheme } = useMantineColorScheme();
+  const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
 
   const onClose = () => {

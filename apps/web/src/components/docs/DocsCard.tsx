@@ -1,4 +1,4 @@
-import { useMantineColorScheme } from '@mantine/core';
+import { useColorScheme } from '@novu/design-system';
 import { css } from '../../styled-system/css';
 import { styled } from '../../styled-system/jsx';
 import { text as RText, title as RTitle } from '../../styled-system/recipes';
@@ -14,10 +14,10 @@ export const DocsCard = ({
 }: {
   title: string;
   text: string;
-  Icon: any;
+  Icon: (props: { size?: number }) => JSX.Element;
   onClick: () => void;
 }) => {
-  const { colorScheme } = useMantineColorScheme();
+  const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
 
   return (
@@ -37,7 +37,9 @@ export const DocsCard = ({
       <CardTitle className={css({ fontSize: '100', lineHeight: '150', marginBottom: '25', marginTop: '150' })}>
         {title}
       </CardTitle>
-      <CardText className={css({ fontSize: '75', lineHeight: '125', color: 'legacy.B60' })}>{text}</CardText>
+      <CardText className={css({ fontSize: '75', lineHeight: '125', color: 'typography.text.secondary' })}>
+        {text}
+      </CardText>
     </div>
   );
 };
