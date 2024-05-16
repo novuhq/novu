@@ -28,15 +28,7 @@ import {
   WorkflowAlreadyExistsError,
   WorkflowNotFoundError,
 } from './errors';
-import {
-  channelStepSchemas,
-  delayOutputSchema,
-  delayResultSchema,
-  digestOutputSchema,
-  digestResultSchema,
-  emptySchema,
-  providerSchemas,
-} from './schemas';
+import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
 import {
   ActionStep,
   ClientConfig,
@@ -144,8 +136,13 @@ export class Echo {
           channelStepSchemas.in_app.output,
           channelStepSchemas.in_app.result
         ),
-        digest: this.discoverStepFactory(workflowId, 'digest', digestOutputSchema, digestResultSchema),
-        delay: this.discoverStepFactory(workflowId, 'delay', delayOutputSchema, delayResultSchema),
+        digest: this.discoverStepFactory(
+          workflowId,
+          'digest',
+          digestChannelSchemas.output,
+          digestChannelSchemas.result
+        ),
+        delay: this.discoverStepFactory(workflowId, 'delay', delayChannelSchemas.output, delayChannelSchemas.result),
         custom: this.discoverCustomStepFactory(workflowId, 'custom'),
       },
     });

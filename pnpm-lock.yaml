@@ -368,7 +368,7 @@ importers:
         version: link:../../libs/dal
       '@novu/echo':
         specifier: ^0.0.1-alpha.25
-        version: 0.0.1-alpha.27
+        version: link:../../packages/sdk
       '@novu/node':
         specifier: ^0.24.1
         version: link:../../packages/node
@@ -4384,6 +4384,9 @@ importers:
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
+      sinon:
+        specifier: ^9.2.4
+        version: 9.2.4
       ts-jest:
         specifier: ^29.1.2
         version: 29.1.2(@babel/core@7.24.4)(jest@29.7.0)(typescript@5.4.5)
@@ -18380,24 +18383,6 @@ packages:
       '@nodelib/fs.scandir': 3.0.0
       fastq: 1.15.0
     dev: true
-
-  /@novu/echo@0.0.1-alpha.27:
-    resolution: {integrity: sha512-ywdPdAOowMkNR2qqsEEQcb3+hvkdnkswMeF9F7WmQnbFajRvb/V5cPIz5aDEHUshMr5SCa3P59PSiZ8OLKwm2Q==}
-    requiresBuild: true
-    dependencies:
-      ajv: 8.12.0
-      ajv-formats: 2.1.1(ajv@8.12.0)
-      better-ajv-errors: 1.2.0(ajv@8.12.0)
-      chalk: 4.1.2
-      cross-fetch: 4.0.0
-      h3: 1.11.1
-      json-schema-faker: 0.5.6
-      json-schema-to-ts: 3.1.0
-      ora: 5.4.1
-    transitivePeerDependencies:
-      - encoding
-      - uWebSockets.js
-    dev: false
 
   /@novu/floating-vue@2.0.3(vue@3.2.47):
     resolution: {integrity: sha512-ypymfdAx55M30bd6IluQujtxTlZwJk9ZeTzptj5UFixMjE4MqgTmBe4wQ1+tHcwUSFY3R+CoVR+RpOLO3XODqg==}
