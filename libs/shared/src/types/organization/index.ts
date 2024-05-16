@@ -6,6 +6,7 @@ export enum ApiServiceLevelEnum {
   ENTERPRISE = 'enterprise',
   // TODO: NV-3067 - Remove unlimited tier once all organizations have a service level
   UNLIMITED = 'unlimited',
+  UNKNOWN = 'unknown',
 }
 
 export enum ProductUseCasesEnum {

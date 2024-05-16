@@ -21,6 +21,7 @@ type CacheLockOptions = {
 };
 
 const LOG_CONTEXT = 'CachedEntityInterceptor';
+
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export function CachedEntity({
   builder,
@@ -71,35 +72,18 @@ export function CachedEntity({
         );
       }
 
-      let unlock = null;
-      if (lockOptions?.enableLock) {
-        try {
-          const lockCacheKey = `lock:${cacheKey}`;
-          unlock = await lockService.lock(lockCacheKey, lockOptions.ttl, {
-            retryCount: lockOptions.retryCount,
-          });
-        } catch (err) {
-          Logger.error(
-            err,
-            `Failed to acquire lock for key: ${cacheKey} in "method: ${methodName}"`,
-            LOG_CONTEXT
-          );
-          throw new Error(`Failed to acquire lock for key: ${cacheKey}`);
-        }
-      }
-
-      let response: unknown;
+      let releaseLock = null;
       try {
-        response = await originalMethod.apply(this, args);
-      } catch (error) {
-        if (unlock) {
-          await unlock();
-        }
+        releaseLock = await lockAndAcquireRelease(
+          lockOptions,
+          cacheKey,
+          releaseLock,
+          lockService,
+          methodName
+        );
 
-        throw error;
-      }
+        const response = await originalMethod.apply(this, args);
 
-      try {
         await cacheService.set(cacheKey, JSON.stringify(response), options);
 
         return response;
@@ -110,10 +94,36 @@ export function CachedEntity({
           LOG_CONTEXT
         );
       } finally {
-        if (unlock) {
-          await unlock();
+        if (releaseLock) {
+          await releaseLock();
         }
       }
     };
   };
+}
+
+async function lockAndAcquireRelease(
+  lockOptions: CacheLockOptions,
+  cacheKey: string,
+  unlock,
+  lockService: DistributedLockService,
+  methodName: string
+) {
+  if (lockOptions?.enableLock) {
+    try {
+      const lockCacheKey = `lock:${cacheKey}`;
+      unlock = await lockService.lock(lockCacheKey, lockOptions.ttl, {
+        retryCount: lockOptions.retryCount,
+      });
+    } catch (err) {
+      Logger.error(
+        err,
+        `Failed to acquire lock for key: ${cacheKey} in "method: ${methodName}"`,
+        LOG_CONTEXT
+      );
+      throw new Error(`Failed to acquire lock for key: ${cacheKey}`);
+    }
+  }
+
+  return unlock;
 }
