@@ -24,7 +24,6 @@ jobs:
         shell: bash
         run: |
           echo "LERNA_RELEASE_VERSION=$(jq -r '.version' lerna.json)" >> $GITHUB_OUTPUT
-          echo $LERNA_RELEASE_VERSION
 
   docker_build:
     runs-on: ubuntu-latest
@@ -41,6 +40,7 @@ jobs:
       - name: Variables
         shell: bash
         run: |
+          echo "The release version is ${{ needs.prepare.outputs.lerna-release-version }}"
           service=${{ matrix.name }}
           echo "SERVICE_NAME=$(basename "${service//-/-}")" >> $GITHUB_ENV
           echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
