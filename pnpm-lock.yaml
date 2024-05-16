@@ -368,7 +368,7 @@ importers:
         specifier: ^0.24.2
         version: link:../../libs/dal
       '@novu/echo':
-        specifier: ^0.0.1-alpha.25
+        specifier: ^0.0.1-alpha.27
         version: 0.0.1-alpha.27
       '@novu/node':
         specifier: ^0.24.2
@@ -9130,6 +9130,16 @@ packages:
       '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
+  /@babel/plugin-syntax-typescript@7.21.4(@babel/core@7.21.4):
+    resolution: {integrity: sha512-xz0D39NvhQn4t4RNsHmDnnsaQizIlUkdtYvLs8La1BlfjQ6JEwxkJGeqJMW2tAXx+q6H+WFuUTXNdYVpEya0YA==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0-0
+    dependencies:
+      '@babel/core': 7.21.4
+      '@babel/helper-plugin-utils': 7.22.5
+    dev: true
+
   /@babel/plugin-syntax-typescript@7.21.4(@babel/core@7.24.5):
     resolution: {integrity: sha512-xz0D39NvhQn4t4RNsHmDnnsaQizIlUkdtYvLs8La1BlfjQ6JEwxkJGeqJMW2tAXx+q6H+WFuUTXNdYVpEya0YA==}
     engines: {node: '>=6.9.0'}
@@ -9137,16 +9147,6 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.24.5
-      '@babel/helper-plugin-utils': 7.22.5
-    dev: true
-
-  /@babel/plugin-syntax-typescript@7.22.5(@babel/core@7.21.4):
-    resolution: {integrity: sha512-1mS2o03i7t1c6VzH6fdQ3OA8tcEIxwG18zIPRp+UY1Ihv6W+XZzBCVxExF9upussPXJ0xE9XRHwMoNs1ep/nRQ==}
-    engines: {node: '>=6.9.0'}
-    peerDependencies:
-      '@babel/core': ^7.0.0-0
-    dependencies:
-      '@babel/core': 7.21.4
       '@babel/helper-plugin-utils': 7.22.5
     dev: true
 
@@ -10859,7 +10859,7 @@ packages:
       '@babel/helper-annotate-as-pure': 7.22.5
       '@babel/helper-create-class-features-plugin': 7.22.15(@babel/core@7.21.4)
       '@babel/helper-plugin-utils': 7.22.5
-      '@babel/plugin-syntax-typescript': 7.22.5(@babel/core@7.21.4)
+      '@babel/plugin-syntax-typescript': 7.21.4(@babel/core@7.21.4)
     dev: true
 
   /@babel/plugin-transform-typescript@7.21.3(@babel/core@7.24.5):
@@ -25482,8 +25482,8 @@ packages:
       '@rjsf/utils': ^5.16.x
     dependencies:
       '@rjsf/utils': 5.17.1(react@17.0.2)
-      ajv: 8.12.0
-      ajv-formats: 2.1.1(ajv@8.12.0)
+      ajv: 8.13.0
+      ajv-formats: 2.1.1(ajv@8.13.0)
       lodash: 4.17.21
       lodash-es: 4.17.21
     dev: false
@@ -32933,7 +32933,7 @@ packages:
       typescript:
         optional: true
     dependencies:
-      '@eslint-community/regexpp': 4.10.0
+      '@eslint-community/regexpp': 4.5.0
       '@typescript-eslint/parser': 5.58.0(eslint@8.57.0)(typescript@4.9.5)
       '@typescript-eslint/scope-manager': 5.58.0
       '@typescript-eslint/type-utils': 5.58.0(eslint@8.57.0)(typescript@4.9.5)
@@ -32941,7 +32941,7 @@ packages:
       debug: 4.3.4(supports-color@8.1.1)
       eslint: 8.57.0
       grapheme-splitter: 1.0.4
-      ignore: 5.3.1
+      ignore: 5.2.4
       natural-compare-lite: 1.4.0
       semver: 7.5.4
       tsutils: 3.21.0(typescript@4.9.5)
@@ -41634,7 +41634,7 @@ packages:
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.7
       eslint-module-utils: 2.8.0(@typescript-eslint/parser@5.58.0)(eslint-import-resolver-node@0.3.7)(eslint-import-resolver-webpack@0.13.7)(eslint@8.57.0)
-      has: 1.0.4
+      has: 1.0.3
       is-core-module: 2.13.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -49699,6 +49699,8 @@ packages:
       webpack: '*'
     peerDependenciesMeta:
       webpack:
+        optional: true
+      webpack-sources:
         optional: true
     dependencies:
       webpack: 5.88.2(esbuild@0.18.17)
@@ -59768,7 +59770,7 @@ packages:
     peerDependencies:
       rollup: ^2.0.0
     dependencies:
-      '@babel/code-frame': 7.21.4
+      '@babel/code-frame': 7.24.2
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
