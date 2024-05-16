@@ -20,7 +20,7 @@
     "clean": "rm -rf ./dist",
     "build": "pnpm run clean && tsc --build",
     "build:watch": "tsc --build --watch",
-    "$comment:bump:prerelease": "This is a workaround to catch allow npm version prerelease with lerna",
+    "$comment:bump:prerelease": "This is a workaround to support `npm version prerelease` with lerna",
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
     "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish"
   },
