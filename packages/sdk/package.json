@@ -34,7 +34,11 @@
     "email",
     "sms",
     "push",
-    "webhooks"
+    "webhooks",
+    "next",
+    "nuxt",
+    "h3",
+    "express"
   ],
   "author": "Athena",
   "license": "MIT",
