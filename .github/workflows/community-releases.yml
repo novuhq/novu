@@ -2,11 +2,8 @@ name: Prepare Self-hosted Release
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'The version to tag docker images'
-        required: true
-        type: string
+    branches:
+      - prod
 
 permissions:
   contents: write
@@ -18,8 +15,15 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     timeout-minutes: 80
+    outputs:
+      lerna-release-version: ${{ steps.get_version.outputs.lerna-release-version }}
     steps:
       - uses: actions/checkout@v4
+      - name: Get Current Lerna Release version
+        id: get_version
+        shell: bash
+        run: |
+          echo "LERNA_RELEASE_VERSION=$(lerna ls --json | jq -r '.[] | select(.name == "novu") | .version')" >> $GITHUB_OUTPUT
 
   docker_build:
     runs-on: ubuntu-latest
@@ -81,23 +85,28 @@ jobs:
       - name: Tag and Push docker image
         shell: bash
         run: |
-          docker tag novu-$SERVICE_NAME ghcr.io/$REGISTRY_OWNER/$SERVICE_NAME:${{ inputs.version }}
-          docker push ghcr.io/$REGISTRY_OWNER/$SERVICE_NAME:${{ inputs.version }}
+          docker tag novu-$SERVICE_NAME ghcr.io/$REGISTRY_OWNER/$SERVICE_NAME:${{ needs.prepare.outputs.lerna-release-version }}
+          docker push ghcr.io/$REGISTRY_OWNER/$SERVICE_NAME:${{ needs.prepare.outputs.lerna-release-version }}
 
   tag_create:
-    if: false
     runs-on: ubuntu-latest
-    needs: docker_build
+    needs:
+      - prepare
+      - docker_build
     timeout-minutes: 80
     steps:
       - uses: actions/checkout@v4
-      - name: Create tag ${{ inputs.version }}
+      - name: The Tag is v${{ needs.prepare.outputs.lerna-release-version }}
+        shell: bash
+        run: echo "The Tag is v${{ needs.prepare.outputs.lerna-release-version }}"
+      - name: Create tag v${{ needs.prepare.outputs.lerna-release-version }} in the GIT Repo
+        if: false
         uses: actions/github-script@v5
         with:
           script: |
             github.rest.git.createRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              ref: 'refs/tags/${{ inputs.version }}',
+              ref: 'refs/tags/v${{ needs.prepare.outputs.lerna-release-version }}',
               sha: context.sha
             })
