@@ -4,6 +4,12 @@ on:
   workflow_dispatch:
     branches:
       - prod
+    inputs:
+      create-tag:
+        description: 'Create a git tag after docker images build'
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -14,7 +20,7 @@ permissions:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 80
+    timeout-minutes: 60
     outputs:
       lerna-release-version: ${{ steps.get_version.outputs.lerna-release-version }}
     steps:
@@ -102,7 +108,7 @@ jobs:
         shell: bash
         run: echo "The Tag is v${{ needs.prepare.outputs.lerna-release-version }}"
       - name: Create tag v${{ needs.prepare.outputs.lerna-release-version }} in the GIT Repo
-        if: false
+        if: ${{ inputs.create-tag }}
         uses: actions/github-script@v5
         with:
           script: |
