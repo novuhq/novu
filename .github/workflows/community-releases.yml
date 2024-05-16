@@ -24,6 +24,7 @@ jobs:
         shell: bash
         run: |
           echo "LERNA_RELEASE_VERSION=$(jq -r '.version' lerna.json)" >> $GITHUB_OUTPUT
+          echo $LERNA_RELEASE_VERSION
 
   docker_build:
     runs-on: ubuntu-latest
