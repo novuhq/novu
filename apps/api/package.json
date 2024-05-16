@@ -43,7 +43,7 @@
     "@nestjs/throttler": "^5.0.1",
     "@novu/application-generic": "^0.24.2",
     "@novu/dal": "^0.24.2",
-    "@novu/echo": "^0.0.1-alpha.25",
+    "@novu/echo": "^0.24.3-alpha.0",
     "@novu/node": "^0.24.2",
     "@novu/shared": "^0.24.2",
     "@novu/stateless": "^0.24.2",
