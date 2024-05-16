@@ -39,3 +39,4 @@ export * from './compile-step-template';
 export * from './create-workflow';
 export * from './workflow';
 export * from './message-template';
+export * from './subscribers';

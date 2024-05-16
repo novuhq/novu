@@ -5,13 +5,21 @@ import {
   IsArray,
   IsDefined,
   IsEmail,
+  IsEnum,
   IsLocale,
   IsOptional,
   IsString,
   ValidateNested,
 } from 'class-validator';
-import { SubscriberCustomData } from '@novu/shared';
+import {
+  ChatProviderIdEnum,
+  IChannelCredentials,
+  ISubscriberChannel,
+  PushProviderIdEnum,
+  SubscriberCustomData,
+} from '@novu/shared';
 import { Type } from 'class-transformer';
+import { SubscriberPayloadDto, TopicPayloadDto } from '../../events/dtos';
 
 export class CreateSubscriberRequestDto {
   @ApiProperty({
@@ -57,6 +65,25 @@ export class CreateSubscriberRequestDto {
   @ApiPropertyOptional()
   @IsOptional()
   data?: SubscriberCustomData;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsArray()
+  channels?: SubscriberChannelDto[];
+}
+
+export class SubscriberChannelDto {
+  providerId: ChatProviderIdEnum | PushProviderIdEnum;
+
+  @ApiPropertyOptional()
+  integrationIdentifier?: string;
+
+  credentials: ChannelCredentialsDto;
+}
+
+export class ChannelCredentialsDto implements IChannelCredentials {
+  webhookUrl?: string;
+  deviceTokens?: string[];
 }
 
 export class BulkSubscriberCreateDto {

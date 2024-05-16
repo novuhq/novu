@@ -313,8 +313,7 @@ export class SendMessageSms extends SendMessageBase {
         'unexpected_sms_error',
         e.message || e.name || 'Un-expect SMS provider error',
         command,
-        LogCodeEnum.SMS_ERROR,
-        e
+        LogCodeEnum.SMS_ERROR
       );
 
       await this.executionLogRoute.execute(

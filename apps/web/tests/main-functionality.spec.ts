@@ -291,7 +291,7 @@ test('should show error on node if message field is missing', async ({ page }) =
 });
 
 test('should allow uploading a logo from email editor', async ({ page }) => {
-  await page.route('**/organizations', async (route) => {
+  await page.route('**/v1/organizations', async (route) => {
     const response = await page.request.fetch(route.request());
     const body = await response.json();
     if (body) {
@@ -300,7 +300,7 @@ test('should allow uploading a logo from email editor', async ({ page }) => {
 
     await route.fulfill({
       response,
-      body,
+      body: JSON.stringify({ ...body }),
     });
   });
 

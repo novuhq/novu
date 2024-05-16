@@ -34,7 +34,7 @@ export function RequiredAuth({ children }: any) {
   }
 
   if (!getToken()) {
-    return <Navigate to={ROUTES.AUTH_LOGIN} replace />;
+    return <Navigate to={ROUTES.AUTH_LOGIN} replace state={{ redirectTo: location }} />;
   } else if (
     !jwtHasKey('organizationId') ||
     (!jwtHasKey('environmentId') && location.pathname !== ROUTES.AUTH_APPLICATION)

@@ -50,8 +50,8 @@ describe('Billing', function () {
     cy.visit('/workflows');
 
     cy.wait(['@getSubscription', '@organizations']);
-    cy.getByTestId('free-trial-widget-text').should('have.text', '30 days left on your Business trial');
-    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade to Business');
+    cy.getByTestId('free-trial-widget-text').should('have.text', '30 days left on your free trial');
+    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade');
     cy.getByTestId('free-trial-widget-progress').find('.mantine-Progress-bar').should('have.css', 'width', '0px');
   });
 
@@ -83,8 +83,8 @@ describe('Billing', function () {
     cy.visit('/workflows');
 
     cy.wait(['@getSubscription', '@organizations']);
-    cy.getByTestId('free-trial-widget-text').should('have.text', '20 days left on your Business trial');
-    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade to Business');
+    cy.getByTestId('free-trial-widget-text').should('have.text', '20 days left on your free trial');
+    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade');
     cy.getByTestId('free-trial-widget-progress')
       .find('.mantine-Progress-bar')
       .should('have.css', 'background-color', 'rgb(77, 153, 128)');
@@ -118,8 +118,8 @@ describe('Billing', function () {
     cy.visit('/workflows');
 
     cy.wait(['@getSubscription', '@organizations']);
-    cy.getByTestId('free-trial-widget-text').should('have.text', '10 days left on your Business trial');
-    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade to Business');
+    cy.getByTestId('free-trial-widget-text').should('have.text', '10 days left on your free trial');
+    cy.getByTestId('free-trial-widget-button').should('have.text', 'Upgrade');
     cy.getByTestId('free-trial-widget-progress')
       .find('.mantine-Progress-bar')
       .should('have.css', 'background-color', 'rgb(253, 224, 68)');
@@ -285,7 +285,7 @@ describe('Billing', function () {
     cy.getByTestId('plan-business-current').should('exist');
     cy.getByTestId('plan-business-add-payment').should('exist');
     cy.getByTestId('free-trial-plan-widget').should('have.text', '10 days left on your trial');
-    cy.getByTestId('free-trial-widget-text').should('have.text', '10 days left on your Business trial');
+    cy.getByTestId('free-trial-widget-text').should('have.text', '10 days left on your free trial');
     cy.getByTestId('free-trial-banner').should('exist');
 
     cy.intercept('GET', '**/v1/billing/subscription', {
