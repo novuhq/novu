@@ -87,8 +87,8 @@ jobs:
       - name: Tag and Push docker image
         shell: bash
         run: |
-          docker tag novu-$SERVICE_NAME ghcr.io/$REGISTRY_OWNER/$SERVICE_NAME:${{ needs.prepare.outputs.lerna-release-version }}
-          docker push ghcr.io/$REGISTRY_OWNER/$SERVICE_NAME:${{ needs.prepare.outputs.lerna-release-version }}
+          docker tag novu-$SERVICE_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ needs.prepare.outputs.lerna-release-version }}
+          docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ needs.prepare.outputs.lerna-release-version }}
 
   tag_create:
     runs-on: ubuntu-latest
