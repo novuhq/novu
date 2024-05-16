@@ -63,7 +63,7 @@ jobs:
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       # else checkout without submodules if the token is not provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Checkout
         if: ${{ needs.check_submodule_token.outputs.has_token != 'true' || !contains (inputs.job-name,'-ee') }}
 
