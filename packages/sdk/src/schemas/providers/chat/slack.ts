@@ -780,7 +780,6 @@ export const slackOutputSchema = {
         max_selected_items: {
           type: 'number',
           description: 'Specifies the maximum number of items that can be selected in the menu. Minimum number is `1`.',
-          description: 'Specifies the maximum number of items that can be selected in the menu. Minimum number is `1`.',
         },
       },
       required: ['type'],
@@ -856,7 +855,6 @@ export const slackOutputSchema = {
         max_selected_items: {
           type: 'number',
           description: 'Specifies the maximum number of items that can be selected in the menu. Minimum number is 1.',
-          description: 'Specifies the maximum number of items that can be selected in the menu. Minimum number is 1.',
         },
       },
       required: ['type'],
@@ -928,7 +926,6 @@ export const slackOutputSchema = {
           },
           additionalProperties: false,
           description: 'A filter object that reduces the list of available conversations using the specified criteria.',
-          description: 'A filter object that reduces the list of available conversations using the specified criteria.',
         },
       },
       required: ['type'],
@@ -974,7 +971,6 @@ export const slackOutputSchema = {
         },
         max_selected_items: {
           type: 'number',
-          description: 'Specifies the maximum number of items that can be selected in the menu. Minimum number is 1.',
           description: 'Specifies the maximum number of items that can be selected in the menu. Minimum number is 1.',
         },
       },
@@ -1025,7 +1021,6 @@ export const slackOutputSchema = {
         },
         max_selected_items: {
           type: 'number',
-          description: 'Specifies the maximum number of items that can be selected in the menu. Minimum number is 1.',
           description: 'Specifies the maximum number of items that can be selected in the menu. Minimum number is 1.',
         },
       },
@@ -1293,7 +1288,6 @@ export const slackOutputSchema = {
             },
           },
           additionalProperties: false,
-          description: 'A filter object that reduces the list of available conversations using the specified criteria.',
           description: 'A filter object that reduces the list of available conversations using the specified criteria.',
         },
       },
