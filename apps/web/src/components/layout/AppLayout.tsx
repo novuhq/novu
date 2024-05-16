@@ -16,7 +16,6 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { HeaderNav as HeaderNavNew } from './components/v2/HeaderNav';
 import { MainNav } from '../nav/MainNav';
 import { FreeTrialBanner } from './components/FreeTrialBanner';
-import { DocsProvider } from '../providers/DocsProvider';
 
 const AppShell = styled.div`
   display: flex;
@@ -64,18 +63,16 @@ export function AppLayout() {
             >
               <SpotLight>
                 <AppShell>
-                  <DocsProvider>
-                    {isInformationArchitectureEnabled ? <MainNav /> : <SideNav />}
-                    <ContentShell>
-                      <FreeTrialBanner />
-                      {isInformationArchitectureEnabled ? (
-                        <HeaderNavNew />
-                      ) : (
-                        <HeaderNav isIntercomOpened={isIntercomOpened} />
-                      )}
-                      <Outlet />
-                    </ContentShell>
-                  </DocsProvider>
+                  {isInformationArchitectureEnabled ? <MainNav /> : <SideNav />}
+                  <ContentShell>
+                    <FreeTrialBanner />
+                    {isInformationArchitectureEnabled ? (
+                      <HeaderNavNew />
+                    ) : (
+                      <HeaderNav isIntercomOpened={isIntercomOpened} />
+                    )}
+                    <Outlet />
+                  </ContentShell>
                 </AppShell>
               </SpotLight>
             </Sentry.ErrorBoundary>

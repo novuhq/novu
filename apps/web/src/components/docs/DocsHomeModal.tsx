@@ -21,15 +21,23 @@ import {
 import { css } from '../../styled-system/css';
 import { Flex, Grid, GridItem, styled } from '../../styled-system/jsx';
 import { title } from '../../styled-system/recipes';
-import { useDocsContext } from '../providers/DocsProvider';
 import { When } from '../utils/When';
 import { DocsCard } from './DocsCard';
 import { ExploreLink } from './ExploreLink';
 
 const ModalTitle = styled('h2', title);
 
-export const DocsHomeModal = ({ path, open }: { path: string; open: boolean }) => {
-  const { setPath, toggle } = useDocsContext();
+export const DocsHomeModal = ({
+  path,
+  open,
+  setPath,
+  toggle,
+}: {
+  path: string;
+  open: boolean;
+  setPath: (path: string) => void;
+  toggle: () => void;
+}) => {
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
 

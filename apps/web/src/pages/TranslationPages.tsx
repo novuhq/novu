@@ -1,9 +1,6 @@
-import { useSetDocs } from '../components/providers/DocsProvider';
 import { IS_DOCKER_HOSTED } from '../config';
 
 export const TranslationRoutes = () => {
-  useSetDocs('content-creation-design/translations');
-
   if (IS_DOCKER_HOSTED) {
     return null;
   }

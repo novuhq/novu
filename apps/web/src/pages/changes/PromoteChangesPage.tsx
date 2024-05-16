@@ -12,13 +12,11 @@ import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { ROUTES } from '../../constants/routes.enum';
-import { useSetDocs } from '../../components/providers/DocsProvider';
 
 const PENDING = 'Pending';
 const HISTORY = 'History';
 
 export function PromoteChangesPage() {
-  useSetDocs('platform/environments');
   const [page, setPage] = useState<number>(0);
   const navigate = useNavigate();
   const { readonly } = useEnvController();

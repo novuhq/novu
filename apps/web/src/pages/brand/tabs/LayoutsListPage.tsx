@@ -24,7 +24,6 @@ import { useEnvController, useLayouts } from '../../../hooks';
 import { errorMessage, successMessage } from '../../../utils/notifications';
 import { DeleteConfirmModal } from '../../templates/components/DeleteConfirmModal';
 import { LayoutEditor } from './LayoutEditor';
-import { useSetDocs } from '../../../components/providers/DocsProvider';
 
 const enum ActivePageEnum {
   LAYOUTS_LIST = 'layouts_list',
@@ -36,7 +35,6 @@ type LayoutsListPageContext = {
 };
 
 export function LayoutsListPage() {
-  useSetDocs('content-creation-design/layouts');
   const { handleLayoutAnalytics } = useOutletContext<LayoutsListPageContext>();
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
