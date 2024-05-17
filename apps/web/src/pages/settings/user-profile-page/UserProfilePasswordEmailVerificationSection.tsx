@@ -1,7 +1,7 @@
 import { Button, IconOutlineForwardToInbox, IconOutlineMarkunreadMailbox } from '@novu/design-system';
-import { css, cx } from '../../../styled-system/css';
-import { HStack, Stack } from '../../../styled-system/jsx';
-import { text } from '../../../styled-system/recipes';
+import { css, cx } from '@novu/novui/css';
+import { HStack, Stack } from '@novu/novui/jsx';
+import { text } from '@novu/novui/recipes';
 import { IUserProfilePasswordEmailVerificationProps } from './UserProfilePasswordSidebar.shared';
 
 export const UserProfilePasswordEmailVerificationSection: React.FC<IUserProfilePasswordEmailVerificationProps> = ({

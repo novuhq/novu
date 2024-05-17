@@ -26,11 +26,14 @@ module.exports = {
           {
             name: '@novu/dal',
           },
+          // TODO: re-enable this once we have de-coupled web's build from linting
+          /*
           {
             name: '@mantine/core',
             message:
               'Please avoid referencing @mantine/core directly in new or updated code. Instead, import from @novu/novui',
           },
+          */
         ],
       },
     ],

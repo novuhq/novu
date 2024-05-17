@@ -1,7 +1,7 @@
 import { IconOutlineLockPerson, SidebarFormless } from '@novu/design-system';
 import { useContext, useEffect, useMemo } from 'react';
-import { HStack, styled } from '../../../styled-system/jsx';
-import { title } from '../../../styled-system/recipes';
+import { HStack, styled } from '@novu/novui/jsx';
+import { title } from '@novu/novui/recipes';
 import { UserProfilePasswordEmailVerificationSection } from './UserProfilePasswordEmailVerificationSection';
 import { UserProfilePasswordForm } from './UserProfilePasswordForm';
 import { IUserProfilePasswordSidebarProps } from './UserProfilePasswordSidebar.shared';

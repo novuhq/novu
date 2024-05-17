@@ -1,9 +1,9 @@
 import { IIconProps } from '@novu/design-system';
 import { LocalizedMessage } from '@novu/shared-web';
 import { ReactNode } from 'react';
-import { css } from '../../../styled-system/css';
-import { styled } from '../../../styled-system/jsx';
-import { text } from '../../../styled-system/recipes';
+import { css } from '@novu/novui/css';
+import { styled } from '@novu/novui/jsx';
+import { text } from '@novu/novui/recipes';
 
 export type RightSideTrigger = 'hover';
 
