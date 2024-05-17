@@ -32,7 +32,6 @@ export { Modal } from './modal/Modal';
 export { LoadingOverlay } from './loading-overlay/LoadingOverlay';
 export { NameInput } from './name-input/NameInput';
 export * from './color-scheme';
-export * from './panda';
 export * from './pagination';
 export * from './cards';
 export * from './arrow-button';
