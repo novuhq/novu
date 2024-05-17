@@ -2,8 +2,6 @@ name: Prepare Self-hosted Release
 
 on:
   workflow_dispatch:
-    branches:
-      - prod
     inputs:
       create-tag:
         description: 'Create a git tag after docker images build'
