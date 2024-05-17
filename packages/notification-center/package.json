@@ -56,8 +56,8 @@
     "jest": "^29.3.1",
     "jest-environment-jsdom": "^29.3.1",
     "jest-transform-stub": "^2.0.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "rimraf": "^3.0.2",
     "storybook": "^7.4.2",
     "terser-webpack-plugin": "^5.3.9",
@@ -71,8 +71,8 @@
     "webpack-cli": "^5.1.4"
   },
   "peerDependencies": {
-    "react": ">=16.8.0",
-    "react-dom": ">=16.8.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "dependencies": {
     "@emotion/css": "^11.10.5",
