@@ -61,24 +61,16 @@ jobs:
       matrix:
         name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed','novu/inbound-mail-ee','novu/worker-ee','novu/api-ee','novu/web-ee','novu/widget-ee','novu/embed-ee']
     steps:
-      - id: setup
-        run: |
-          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo "has_token=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_token=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Git Checkout with Submodules
         uses: actions/checkout@v4
-        if: contains(matrix.name, 'ee')
+        if: ${{ contains (inputs.job-name,'-ee') }}
         with:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Git Checkout without Submodules
+        if: ${{ !contains (inputs.job-name,'-ee') }}
         uses: actions/checkout@v4
-        if: !contains(matrix.name, 'ee')
 
       - name: Variables
         shell: bash
