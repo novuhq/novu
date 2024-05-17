@@ -1,3 +1,13 @@
+[build.environment]
+  DISABLE_ESLINT_PLUGIN="true"
+
+[build]
+  # default build command
+  command = "cd apps/web && pnpm run envsetup && cd ../../ && pnpm run build:web --skip-nx-cache"
+
+[context.deploy-preview]
+  command = "cd apps/web && pnpm run envsetup && cd ../../ && pnpm run build:web --skip-nx-cache"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
