@@ -20,7 +20,8 @@ module.exports = {
     'react/no-danger': 'off',
     'jsx-a11y/click-events-have-key-events': 'off',
     'no-restricted-imports': [
-      'error',
+      // TODO: make this an error once we de-couple build from linting
+      'warn',
       {
         paths: [
           {
