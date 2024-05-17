@@ -122,7 +122,7 @@ export class HeadlessService {
   constructor(private options: IHeadlessServiceOptions) {
     const backendUrl = options.backendUrl ?? 'https://api.novu.co';
     const token = getToken();
-    this.api = new ApiService(backendUrl);
+    this.api = new ApiService({ backendUrl });
     this.applyToken(token);
 
     this.queryClient = new QueryClient({

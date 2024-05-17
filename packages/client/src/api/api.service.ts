@@ -21,8 +21,8 @@ export class ApiService {
 
   isAuthenticated = false;
 
-  constructor(private backendUrl: string, options?: ApiOptions) {
-    this.httpClient = new HttpClient(backendUrl, options);
+  constructor(options?: ApiOptions) {
+    this.httpClient = new HttpClient(options);
   }
 
   setAuthorizationToken(token: string) {

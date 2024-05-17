@@ -1,18 +1,22 @@
 import { ApiOptions } from '..';
 import { CustomDataType } from '@novu/shared';
 
+const DEFAULT_API_VERSION = 'v1';
+const DEFAULT_BACKEND_URL = 'https://api.novu.co';
 export class HttpClient {
   private backendUrl: string;
-  private apiVersion = 'v1';
-  private headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
+  private apiVersion: string;
+  private headers: Record<string, string>;
 
-  constructor(backendUrl: string, options?: ApiOptions) {
-    if (options?.apiVersion) {
-      this.apiVersion = options.apiVersion;
-    }
+  constructor({
+    apiVersion = DEFAULT_API_VERSION,
+    backendUrl = DEFAULT_BACKEND_URL,
+  }: ApiOptions = {}) {
+    this.apiVersion = apiVersion;
     this.backendUrl = `${backendUrl}/${this.apiVersion}`;
+    this.headers = {
+      'Content-Type': 'application/json',
+    };
   }
 
   setAuthorizationToken(token: string) {
@@ -24,32 +28,21 @@ export class HttpClient {
   }
 
   async getFullResponse(url: string, params?: CustomDataType) {
-    const response = await fetch(
-      this.backendUrl + url + this.getQueryString(params),
-      {
-        headers: this.headers,
-      }
-    );
+    const response = await this.doFetch(url + this.getQueryString(params));
 
     return await response.json();
   }
 
   async get(url: string, params?: CustomDataType) {
-    const response = await fetch(
-      this.backendUrl + url + this.getQueryString(params),
-      {
-        headers: this.headers,
-      }
-    );
+    const response = await this.doFetch(url + this.getQueryString(params));
     const data = await response.json();
 
     return data.data;
   }
 
   async post(url: string, body = {}) {
-    const response = await fetch(this.backendUrl + url, {
+    const response = await this.doFetch(url, {
       method: 'POST',
-      headers: this.headers,
       body: JSON.stringify(body),
     });
     const data = await response.json();
@@ -58,9 +51,8 @@ export class HttpClient {
   }
 
   async patch(url: string, body = {}) {
-    const response = await fetch(this.backendUrl + url, {
+    const response = await this.doFetch(url, {
       method: 'PATCH',
-      headers: this.headers,
       body: JSON.stringify(body),
     });
     const data = await response.json();
@@ -69,9 +61,8 @@ export class HttpClient {
   }
 
   async delete(url: string, body = {}) {
-    const response = await fetch(this.backendUrl + url, {
+    const response = await this.doFetch(url, {
       method: 'DELETE',
-      headers: this.headers,
       body: JSON.stringify(body),
     });
     const data = await response.json();
@@ -85,5 +76,28 @@ export class HttpClient {
     const queryString = new URLSearchParams(params as any);
 
     return '?' + queryString.toString();
+  }
+
+  private async doFetch(url: string, options: RequestInit = {}) {
+    try {
+      const response = await fetch(this.backendUrl + url, {
+        ...options,
+        headers: this.headers,
+      });
+      await this.checkResponseStatus(response);
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  private async checkResponseStatus(response: Response) {
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        `HTTP error! Status: ${response.status}, Message: ${errorData.message}`
+      );
+    }
   }
 }
