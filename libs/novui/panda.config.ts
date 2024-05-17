@@ -12,7 +12,7 @@ export default defineConfig({
   include: ['./src/**/*.{js,jsx,ts,tsx}', './.storybook/**/*.{js,jsx,ts,tsx}'],
 
   // Files to exclude
-  exclude: [],
+  exclude: ['./react-scanner.config.js'],
 
   presets: [novuPandaPreset],
 
