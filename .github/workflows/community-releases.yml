@@ -39,9 +39,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed']
+        name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed','novu/inbound-mail-ee','novu/worker-ee','novu/api-ee','novu/web-ee','novu/widget-ee','novu/embed-ee']
     steps:
-      - uses: actions/checkout@v4
+      - id: setup
+        run: |
+          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
+            echo "has_token=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_token=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Git Checkout with Submodules
+        uses: actions/checkout@v4
+        if: steps.setup.outputs.has_token == 'true'
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - name: Git Checkout without Submodules
+        uses: actions/checkout@v4
+        if: steps.setup.outputs.has_token != 'true'
 
       - name: Variables
         shell: bash
@@ -49,17 +66,20 @@ jobs:
           echo "The release version is ${{ needs.prepare.outputs.lerna-release-version }}"
           service=${{ matrix.name }}
           echo "SERVICE_NAME=$(basename "${service//-/-}")" >> $GITHUB_ENV
+          echo "SERVICE_PATH=$(echo "$service" | sed 's/-ee$//')" >> $GITHUB_ENV
           echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
           version: 8.9.0
+
       - name: Use Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.8.1
           cache: 'pnpm'
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
@@ -74,7 +94,13 @@ jobs:
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
 
-      - name: Build Community Docker Image with Buildx, tag, and test
+      - name: Set Bull MQ Env variable for EE
+        if: contains(matrix.name, 'ee')
+        shell: bash
+        run: |
+          echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
+
+      - name: Build Community Docker Image ${{ env.SERVICE_NAME }}
         shell: bash
         env:
           DOCKER_BUILD_ARGUMENTS: >
@@ -83,10 +109,10 @@ jobs:
             --platform=linux/amd64,linux/arm64 --provenance=false
             --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
-          if [ "${{ env.SERVICE_NAME }}" = "embed" ]; then
-            cd libs/$SERVICE_NAME
+          if [ "${{ env.SERVICE_NAME }}" = "embed" ] || [ "${{ env.SERVICE_NAME }}" = "embed-ee" ]; then
+            cd libs/$SERVICE_PATH
           else
-            cd apps/$SERVICE_NAME
+            cd apps/$SERVICE_PATH
           fi
           pnpm run docker:build
           docker images
