@@ -74,8 +74,8 @@
     "acorn": "^8.7.1",
     "eslint-plugin-storybook": "^0.6.13",
     "jsdom": "^24.0.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-router-dom": "6.2.2",
     "react-scanner": "^1.1.0",
     "rimraf": "^3.0.2",
@@ -89,8 +89,8 @@
     "vitest": "^1.2.1"
   },
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0",
-    "react-dom": "^16.8.0 || ^17.0.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "nx": {
     "targets": {
