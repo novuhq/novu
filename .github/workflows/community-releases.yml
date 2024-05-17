@@ -51,8 +51,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed','novu/inbound-mail-ee','novu/worker-ee','novu/api-ee','novu/web-ee','novu/widget-ee','novu/embed-ee']
-        name: ['novu/api','novu/api-ee']
+        name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed','novu/inbound-mail-ee','novu/worker-ee','novu/api-ee','novu/web-ee','novu/widget-ee','novu/embed-ee']
     steps:
       - name: Git Checkout with Submodules
         uses: actions/checkout@v4
@@ -128,7 +127,9 @@ jobs:
         shell: bash
         run: |
           docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ needs.prepare.outputs.lerna-release-version }}
+          docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
           docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ needs.prepare.outputs.lerna-release-version }}
+          docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
 
   tag_create:
     runs-on: ubuntu-latest
