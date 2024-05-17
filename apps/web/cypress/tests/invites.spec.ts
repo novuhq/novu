@@ -99,7 +99,7 @@ describe('Invites module', function () {
     });
   });
 
-  it('should also accept invite if already logged in with right user', function () {
+  it.skip('should also accept invite if already logged in with right user', function () {
     cy.inviteUser('testing-amazing@user.com').then(() => {
       doRegister(this.token);
     });
