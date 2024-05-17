@@ -126,7 +126,7 @@ export const AppRoutes = () => {
             <Route path="" element={<LayoutsListPage />} />
           </Route>
         )}
-        <Route path="/docs/*" element={<DocsPage />} />
+        <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
     </Routes>

@@ -1,7 +1,7 @@
 import { ActionButton, IconThumbDownAlt, IconThumbUpAlt } from '@novu/design-system';
-import { css } from '../../styled-system/css';
-import { Flex, styled } from '../../styled-system/jsx';
-import { text } from '../../styled-system/recipes';
+import { css } from '@novu/novui/css';
+import { Flex, styled } from '@novu/novui/jsx';
+import { text } from '@novu/novui/recipes';
 
 const Text = styled('p', text);
 

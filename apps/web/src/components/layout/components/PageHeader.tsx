@@ -1,6 +1,6 @@
 import { Group } from '@mantine/core';
 import { Title, Container } from '@novu/design-system';
-import { Flex } from '../../../styled-system/jsx';
+import { Flex } from '@novu/novui/jsx';
 import { DocsButton } from '../../docs/DocsButton';
 
 function PageHeader({ actions, title }: { actions?: JSX.Element; title: string }) {

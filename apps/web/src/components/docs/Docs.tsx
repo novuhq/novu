@@ -5,9 +5,9 @@ import * as mdxBundler from 'mdx-bundler/client';
 import { Highlight } from './Highlight';
 import { useQuery } from '@tanstack/react-query';
 import { useSegment } from '@novu/shared-web';
-import { Center, Flex, Grid, GridItem, styled, VStack } from '../../styled-system/jsx';
-import { css } from '../../styled-system/css';
-import { text, title as RTitle } from '../../styled-system/recipes';
+import { Center, Flex, Grid, GridItem, styled, VStack } from '@novu/novui/jsx';
+import { css } from '@novu/novui/css';
+import { text, title as RTitle } from '@novu/novui/recipes';
 import { DOCS_URL, MDX_URL, MINTLIFY_IMAGE_URL } from './docs.const';
 
 const Text = styled('p', text);

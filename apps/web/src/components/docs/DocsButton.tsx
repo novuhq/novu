@@ -3,10 +3,10 @@ import { ActionButton, Button, IconOutlineMenuBook, QuickGuide, Tooltip, useColo
 import { useSegment } from '@novu/shared-web';
 import { useEffect, useMemo, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
-import { css, cva } from '../../styled-system/css';
-import { Flex, styled } from '../../styled-system/jsx';
-import { text, title } from '../../styled-system/recipes';
-import { SystemStyleObject } from '../../styled-system/types';
+import { css, cva } from '@novu/novui/css';
+import { Flex, styled } from '@novu/novui/jsx';
+import { text, title } from '@novu/novui/recipes';
+import { SystemStyleObject } from '@novu/novui/types';
 import { PATHS } from './docs.const';
 import { DocsModal } from './DocsModal';
 
