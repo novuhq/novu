@@ -5,12 +5,14 @@ import { text } from '../../styled-system/recipes';
 
 const Text = styled('p', text);
 
+export type Voting = 'up' | 'down';
+
 export const VotingWidget = ({
   voted,
   onVoteClick,
 }: {
-  voted: 'up' | 'down' | '';
-  onVoteClick: (vote: 'up' | 'down') => () => void;
+  voted: Voting | undefined;
+  onVoteClick: (vote: Voting) => () => void;
 }) => {
   return (
     <Flex

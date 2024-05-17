@@ -1,6 +1,6 @@
 import { colors, IconInfoOutline, IconOutlineWarning, Tabs, Tooltip } from '@novu/design-system';
 import { Accordion, Alert, Code, Loader, Paper } from '@mantine/core';
-import { ReactNode, useEffect, useMemo } from 'react';
+import { PropsWithChildren, ReactNode, useEffect, useMemo } from 'react';
 import * as mdxBundler from 'mdx-bundler/client';
 import { Highlight } from './Highlight';
 import { useQuery } from '@tanstack/react-query';
@@ -22,7 +22,7 @@ const getMDXComponent = mdxBundler.getMDXComponent;
  *Render the mdx for our mintlify docs inside of the web.
  *Fetching the compiled mdx from another service and then try to map the markdown to react components.
  */
-export const Docs = ({ path = '', children, actions }: { path?: string; children: ReactNode; actions: ReactNode }) => {
+export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?: string; actions: ReactNode }>) => {
   const segment = useSegment();
 
   const { isLoading, data: { code, title, description } = { code: '', title: '', description: '' } } = useQuery<{
@@ -107,7 +107,7 @@ export const Docs = ({ path = '', children, actions }: { path?: string; children
       <VStack
         alignItems="unset"
         id="docs"
-        gap={12}
+        gap="75"
         className={css({
           textAlign: 'justify left',
         })}
@@ -157,7 +157,17 @@ export const Docs = ({ path = '', children, actions }: { path?: string; children
             },
             Info: ({ className, ...props }: any) => {
               return (
-                <Alert style={{ borderRadius: 12 }} color="gray" {...props} icon={<IconInfoOutline color="white" />} />
+                <Alert
+                  className={css({
+                    borderRadius: '75',
+                    backgroundColor: 'mauve.60.dark !important',
+                    '& p': {
+                      color: 'white !important',
+                    },
+                  })}
+                  {...props}
+                  icon={<IconInfoOutline className={css({ color: 'white !important' })} />}
+                />
               );
             },
             Snippet: () => {
@@ -189,16 +199,31 @@ export const Docs = ({ path = '', children, actions }: { path?: string; children
             Warning: ({ className, ...props }: any) => {
               return (
                 <Alert
-                  style={{ borderRadius: 12 }}
-                  color="yellow"
+                  className={css({
+                    borderRadius: '75',
+                    backgroundColor: 'amber.60.dark !important',
+                    '& p': {
+                      color: 'white !important',
+                    },
+                  })}
                   {...props}
-                  icon={<IconOutlineWarning color="white" />}
+                  icon={<IconOutlineWarning className={css({ color: 'white !important' })} />}
                 />
               );
             },
             Note: ({ className, ...props }: any) => {
               return (
-                <Alert style={{ borderRadius: 12 }} color="blue" {...props} icon={<IconInfoOutline color="white" />} />
+                <Alert
+                  className={css({
+                    borderRadius: '75',
+                    backgroundColor: 'blue.70.dark !important',
+                    '& p': {
+                      color: 'white !important',
+                    },
+                  })}
+                  {...props}
+                  icon={<IconInfoOutline className={css({ color: 'white !important' })} />}
+                />
               );
             },
             CardGroup: ({ className, ...props }: any) => {
@@ -230,10 +255,15 @@ export const Docs = ({ path = '', children, actions }: { path?: string; children
             Tip: ({ className, ...props }: any) => {
               return (
                 <Alert
-                  className={css({ borderRadius: '75' })}
-                  color="gray"
+                  className={css({
+                    borderRadius: '75',
+                    backgroundColor: 'mauve.60.dark !important',
+                    '& p': {
+                      color: 'white !important',
+                    },
+                  })}
                   {...props}
-                  icon={<IconInfoOutline color="white" />}
+                  icon={<IconInfoOutline className={css({ color: 'white !important' })} />}
                 />
               );
             },

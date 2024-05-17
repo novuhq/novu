@@ -1,26 +1,50 @@
+import { ColorScheme } from '@mantine/core';
 import { IconOpenInNew, IconOutlineClose, useColorScheme, Modal, ActionButton } from '@novu/design-system';
 import { useSegment } from '@novu/shared-web';
 import { useEffect, useState } from 'react';
-import { css } from '../../styled-system/css';
+import { css, cva } from '../../styled-system/css';
 import { Flex } from '../../styled-system/jsx';
+import { SystemStyleObject } from '../../styled-system/types';
+import { openInNewTab } from '../../utils';
 import { Docs } from './Docs';
 import { DOCS_URL } from './docs.const';
-import { VotingWidget } from './VotingWidget';
+import { Voting, VotingWidget } from './VotingWidget';
+
+const actionsRecipe = cva<{ colorScheme: Record<ColorScheme, SystemStyleObject> }>({
+  base: {
+    position: 'fixed',
+    top: '150',
+    right: '150',
+    // TODO: update with a proper zIndex once we have refactored
+    zIndex: '[1]',
+    padding: '25',
+    borderBottomLeftRadius: '50',
+  },
+  variants: {
+    colorScheme: {
+      light: {
+        background: 'white',
+      },
+      dark: {
+        background: 'legacy.B15',
+      },
+    },
+  },
+});
 
 export const DocsModal = ({ open, toggle, path }) => {
-  const [voted, setVoted] = useState<'up' | 'down' | ''>('');
+  const [voted, setVoted] = useState<Voting | undefined>(undefined);
   const segment = useSegment();
   const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === 'dark';
 
   useEffect(() => {
     return () => {
-      setVoted('');
+      setVoted(undefined);
     };
   }, [path]);
 
-  const onVoteClick = (vote: 'up' | 'down') => () => {
-    if (voted.length > 0) {
+  const onVoteClick = (vote: Voting) => () => {
+    if (voted === undefined) {
       return;
     }
     segment.track('Inline docs voting used', {
@@ -31,6 +55,7 @@ export const DocsModal = ({ open, toggle, path }) => {
     setVoted(vote);
   };
 
+  // TOOD: remove styles when modal have common style ground
   return (
     <Modal
       opened={open}
@@ -64,22 +89,11 @@ export const DocsModal = ({ open, toggle, path }) => {
       <Docs
         path={path}
         actions={
-          <Flex
-            className={css({
-              position: 'fixed',
-              top: '150',
-              right: '150',
-              background: isDark ? 'legacy.B15' : 'white',
-              zIndex: 1,
-              padding: '25',
-              borderBottomLeftRadius: '50',
-            })}
-            gap="75"
-          >
+          <Flex className={actionsRecipe({ colorScheme })} gap="75">
             <ActionButton
               tooltip="Open docs website"
               onClick={() => {
-                window.open(`${DOCS_URL}/${path}`);
+                openInNewTab(`${DOCS_URL}/${path}`);
               }}
               Icon={() => <IconOpenInNew />}
             />

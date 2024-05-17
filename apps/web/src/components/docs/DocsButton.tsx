@@ -1,20 +1,54 @@
-import { Popover } from '@mantine/core';
+import { ColorScheme, Popover } from '@mantine/core';
 import { ActionButton, Button, IconOutlineMenuBook, QuickGuide, Tooltip, useColorScheme } from '@novu/design-system';
 import { useSegment } from '@novu/shared-web';
 import { useEffect, useMemo, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
-import { css } from '../../styled-system/css';
+import { css, cva } from '../../styled-system/css';
 import { Flex, styled } from '../../styled-system/jsx';
 import { text, title } from '../../styled-system/recipes';
+import { SystemStyleObject } from '../../styled-system/types';
 import { PATHS } from './docs.const';
 import { DocsModal } from './DocsModal';
 
 const Title = styled('h3', title);
 const Text = styled('p', text);
 
+const popoverDropdownRecipe = cva<{ colorScheme: Record<ColorScheme, SystemStyleObject> }>({
+  base: {
+    borderRadius: '75',
+  },
+  variants: {
+    colorScheme: {
+      light: {
+        boxShadow: 'dark !important',
+      },
+      dark: {
+        background: 'legacy.B30 !important',
+      },
+    },
+  },
+});
+
+const popoverTextRecipe = cva<{ colorScheme: Record<ColorScheme, SystemStyleObject> }>({
+  base: {
+    fontSize: '100',
+    lineHeight: '125',
+    maxWidth: '268px',
+  },
+  variants: {
+    colorScheme: {
+      light: {
+        color: 'typography.text.secondary',
+      },
+      dark: {
+        color: 'legacy.B80',
+      },
+    },
+  },
+});
+
 export const DocsButton = () => {
   const { colorScheme } = useColorScheme();
-  const isDark = colorScheme === 'dark';
   const [opened, setOpened] = useState<boolean>(false);
   const segment = useSegment();
   const [path, setPath] = useState<string>('');
@@ -37,7 +71,7 @@ export const DocsButton = () => {
   }, [pathname]);
 
   const toggle = () => {
-    setDocsOpen(!docsOpen);
+    setDocsOpen((prevOpen) => !prevOpen);
   };
 
   const onClose = () => {
@@ -77,21 +111,15 @@ export const DocsButton = () => {
           >
             <Popover.Target>
               <ActionButton
-                sx={{
-                  height: 24,
-                  minHeight: 24,
-                }}
+                className={css({
+                  height: '150 !important',
+                  minHeight: '150  !important',
+                })}
                 Icon={() => <IconOutlineMenuBook />}
                 onClick={() => toggle()}
               />
             </Popover.Target>
-            <Popover.Dropdown
-              className={css({
-                borderRadius: '75',
-                boxShadow: isDark ? undefined : 'dark',
-                background: isDark ? 'legacy.B30' : undefined,
-              })}
-            >
+            <Popover.Dropdown className={popoverDropdownRecipe({ colorScheme })}>
               <Flex gap="125" justify="space-between">
                 <QuickGuide />
                 <div>
@@ -104,14 +132,7 @@ export const DocsButton = () => {
                   >
                     Discover inline documentation
                   </Title>
-                  <Text
-                    className={css({
-                      color: isDark ? 'legacy.B80' : 'typography.text.secondary',
-                      fontSize: '100',
-                      lineHeight: '125',
-                      maxWidth: '268px',
-                    })}
-                  >
+                  <Text className={popoverTextRecipe({ colorScheme })}>
                     Need help? Get details and dive deeper with our inline docs.
                   </Text>
                 </div>
@@ -136,6 +157,7 @@ export const DocsButton = () => {
           </Popover>
         </div>
       </Tooltip>
+      {/* TODO: extract the Modal root out when modal management is improved */}
       <DocsModal open={docsOpen} toggle={toggle} path={path} />
     </>
   );
