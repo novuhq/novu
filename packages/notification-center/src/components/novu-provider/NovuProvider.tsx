@@ -76,7 +76,7 @@ export function NovuProvider({
 
   const apiService = useMemo(() => {
     queryClient.clear();
-    const service = new ApiService({ backendUrl });
+    const service = new ApiService(backendUrl);
     applyToken({ apiService: service });
 
     return service;
