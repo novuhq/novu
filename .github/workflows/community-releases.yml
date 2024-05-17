@@ -71,14 +71,14 @@ jobs:
 
       - name: Git Checkout with Submodules
         uses: actions/checkout@v4
-        if: steps.setup.outputs.has_token == 'true' && contains(matrix.name, 'ee')
+        if: contains(matrix.name, 'ee')
         with:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Git Checkout without Submodules
         uses: actions/checkout@v4
-        if: steps.setup.outputs.has_token != 'true' && contains(matrix.name, 'ee')
+        if: !contains(matrix.name, 'ee')
 
       - name: Variables
         shell: bash
