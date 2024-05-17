@@ -55,7 +55,7 @@ export const DocsModal = ({ open, toggle, path }) => {
     setVoted(vote);
   };
 
-  // TOOD: remove styles when modal have common style ground
+  // TODO: remove styles when modal have common style ground
   return (
     <Modal
       opened={open}
