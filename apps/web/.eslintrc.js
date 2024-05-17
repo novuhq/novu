@@ -20,18 +20,20 @@ module.exports = {
     'react/no-danger': 'off',
     'jsx-a11y/click-events-have-key-events': 'off',
     'no-restricted-imports': [
-      // TODO: make this an error once we de-couple build from linting
-      'warn',
+      'error',
       {
         paths: [
           {
             name: '@novu/dal',
           },
+          // TODO: re-enable this once we have de-coupled web's build from linting
+          /*
           {
             name: '@mantine/core',
             message:
               'Please avoid referencing @mantine/core directly in new or updated code. Instead, import from @novu/novui',
           },
+          */
         ],
       },
     ],
