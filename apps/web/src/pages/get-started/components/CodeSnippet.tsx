@@ -1,6 +1,6 @@
 import { Input, inputStyles } from '@novu/design-system';
 import { useClipboard } from '@mantine/hooks';
-import { css, cx } from '../../../styled-system/css';
+import { css, cx } from '@novu/novui/css';
 import { ClipboardIconButton } from '../../../components';
 
 const codeValueInputClassName = css({

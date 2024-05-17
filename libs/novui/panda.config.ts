@@ -1,17 +1,20 @@
 import { defineConfig } from '@pandacss/dev';
-import { NovuPandaPreset } from './src/panda/NovuPandaPreset';
+import { novuPandaPreset } from './src/panda-preset';
 
 export default defineConfig({
   // Whether to use css reset
   preflight: true,
 
+  /** Only allow defined values */
+  strictTokens: true,
+
   // Where to look for your css declarations
   include: ['./src/**/*.{js,jsx,ts,tsx}', './.storybook/**/*.{js,jsx,ts,tsx}'],
 
   // Files to exclude
-  exclude: [],
+  exclude: ['./react-scanner.config.js'],
 
-  presets: [NovuPandaPreset],
+  presets: [novuPandaPreset],
 
   /**
    * Prefixes generated classes with the specified string (e.g. `nv-text_blue`)
@@ -26,6 +29,11 @@ export default defineConfig({
   theme: {
     extend: {},
   },
+
+  importMap: 'styled-system',
+
+  // extension of generated files
+  outExtension: 'js',
 
   // The output directory for your css system
   outdir: 'styled-system',

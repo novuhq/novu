@@ -1,53 +1,57 @@
 import { defineTokens } from '@pandacss/dev';
 
 /**
- * Determines distances between elements.
+ * Represents the size of an element.
  *
- * Used for properties like margin and padding.
+ * Used for properties like width and height.
  */
-export const SPACING_TOKENS = defineTokens.spacing({
+export const SIZES_TOKENS = defineTokens.sizes({
+  '0': {
+    value: '0',
+    type: 'sizes',
+  },
   '25': {
     value: '0.25rem',
-    type: 'spacing',
+    type: 'sizes',
   },
   '50': {
     value: '0.5rem',
-    type: 'spacing',
+    type: 'sizes',
   },
   '75': {
     value: '0.75rem',
-    type: 'spacing',
+    type: 'sizes',
   },
   '100': {
     value: '1rem',
-    type: 'spacing',
+    type: 'sizes',
   },
   '125': {
     value: '1.25rem',
-    type: 'spacing',
+    type: 'sizes',
   },
   '150': {
     value: '1.5rem',
-    type: 'spacing',
+    type: 'sizes',
   },
   '175': {
     value: '1.75rem',
-    type: 'spacing',
+    type: 'sizes',
   },
   '200': {
     value: '2rem',
-    type: 'spacing',
+    type: 'sizes',
   },
   '225': {
     value: '2.25rem',
-    type: 'spacing',
+    type: 'sizes',
   },
   '250': {
     value: '2.5rem',
-    type: 'spacing',
+    type: 'sizes',
   },
   '300': {
     value: '3rem',
-    type: 'spacing',
+    type: 'sizes',
   },
 });

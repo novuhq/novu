@@ -8,9 +8,9 @@ import {
 import { LocalizedMessage } from '@novu/shared-web';
 import { FC } from 'react';
 import { IconButton } from '../../../components';
-import { cva } from '../../../styled-system/css';
-import { HStack } from '../../../styled-system/jsx';
-import { SystemStyleObject } from '../../../styled-system/types';
+import { cva } from '@novu/novui/css';
+import { HStack } from '@novu/novui/jsx';
+import { SystemStyleObject } from '@novu/novui/types';
 import { Text } from './WebhookPage.shared';
 import { type WebhookClaimStatus } from './WebhookPage.types';
 
