@@ -65,8 +65,10 @@ jobs:
         run: |
           echo "The release version is ${{ needs.prepare.outputs.lerna-release-version }}"
           service=${{ matrix.name }}
-          echo "SERVICE_NAME=$(basename "${service//-/-}")" >> $GITHUB_ENV
-          echo "SERVICE_PATH=$(echo "$SERVICE_NAME" | sed 's/-ee$//')" >> $GITHUB_ENV
+          SERVICE_NAME=$(basename "${service//-/-}")
+          SERVICE_PATH=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
+          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
+          echo "SERVICE_PATH=$SERVICE_PATH" >> $GITHUB_ENV
           echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
 
       - name: Install pnpm
