@@ -67,7 +67,7 @@ jobs:
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Git Checkout without Submodules
-        if: !contains(matrix.name, 'ee')
+        if: "!contains(matrix.name, 'ee')"
         uses: actions/checkout@v4
 
       - name: Variables
