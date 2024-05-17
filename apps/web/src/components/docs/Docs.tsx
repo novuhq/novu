@@ -18,6 +18,8 @@ const TitleH1 = styled('h1', RTitle);
 
 const getMDXComponent = mdxBundler.getMDXComponent;
 
+const wrapperId = 'embedded-docs';
+
 /*
  *Render the mdx for our mintlify docs inside of the web.
  *Fetching the compiled mdx from another service and then try to map the markdown to react components.
@@ -57,7 +59,7 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
       return;
     }
 
-    const docs = document.getElementById('docs');
+    const docs = document.getElementById(wrapperId);
 
     if (!docs) {
       return;
@@ -106,7 +108,7 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
     <>
       <VStack
         alignItems="unset"
-        id="docs"
+        id={wrapperId}
         gap="75"
         className={css({
           textAlign: 'justify left',
