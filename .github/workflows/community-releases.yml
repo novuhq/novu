@@ -31,6 +31,26 @@ jobs:
         run: |
           echo "lerna-release-version=$(jq -r '.version' lerna.json)" >> $GITHUB_OUTPUT
 
+      - name: Check if tag already exists
+        id: check_tag
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: tags } = await github.rest.git.listMatchingRefs({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'tags/v${{ steps.get_version.outputs.lerna-release-version }}'
+            });
+            const tagExists = tags.length > 0;
+            console.log(`Tag exists: ${tagExists}`);
+            return tagExists;
+
+      - name: The TAG v${{ steps.get_version.outputs.lerna-release-version }} already exists
+        if: steps.check_tag.outputs.result == 'true'
+        run: |
+          echo "::error::The TAG v${{ steps.get_version.outputs.lerna-release-version }} already exists. Please, delete the existing GIT tag so that you can build images and create a new tag after build."
+          exit 1
+
   docker_build:
     runs-on: ubuntu-latest
     needs: prepare
@@ -51,14 +71,14 @@ jobs:
 
       - name: Git Checkout with Submodules
         uses: actions/checkout@v4
-        if: steps.setup.outputs.has_token == 'true'
+        if: steps.setup.outputs.has_token == 'true' && contains(matrix.name, 'ee')
         with:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Git Checkout without Submodules
         uses: actions/checkout@v4
-        if: steps.setup.outputs.has_token != 'true'
+        if: steps.setup.outputs.has_token != 'true' && contains(matrix.name, 'ee')
 
       - name: Variables
         shell: bash
@@ -138,7 +158,7 @@ jobs:
         run: echo "The Tag is v${{ needs.prepare.outputs.lerna-release-version }}"
       - name: Create tag v${{ needs.prepare.outputs.lerna-release-version }} in the GIT Repo
         if: ${{ inputs.create-tag }}
-        uses: actions/github-script@v5
+        uses: actions/github-script@v7
         with:
           script: |
             github.rest.git.createRef({
