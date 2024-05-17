@@ -665,7 +665,8 @@
     "protonmail",
     "automerge",
     "novui",
-    "tsup"
+    "tsup",
+    "pandabox"
   ],
   "flagWords": [],
   "patterns": [
