@@ -68,48 +68,115 @@ export const ComponentAuditTable: React.FC<ComponentAuditTableProps> = ({ data: 
     : data;
 
   return (
-    <table className={`${css({ width: '100%', borderCollapse: 'collapse' })} ${className ?? ''}`}>
+    <table
+      className={`${css({ width: '[100%]', borderCollapse: 'collapse', color: 'typography.text.main' })} ${
+        className ?? ''
+      }`}
+    >
       <thead>
-        <tr className={css({ bg: 'gray.200', fontSize: '100', fontWeight: 'strong' })}>
+        <tr className={css({ bg: 'surface.popover', fontSize: '100', fontWeight: 'strong' })}>
           <th
-            className={css({ py: 2, px: 4, textAlign: 'left', borderBottom: '1px solid #ddd', cursor: 'pointer' })}
+            className={css({
+              py: '[2]',
+              px: '25',
+              textAlign: 'left',
+              borderBottom: 'solid',
+              borderColor: 'typography.text.secondary',
+              cursor: 'pointer',
+            })}
             onClick={() => sortData('name')}
           >
             Name {getSortIcon('name')}
           </th>
           <th
-            className={css({ py: 2, px: 4, textAlign: 'left', borderBottom: '1px solid #ddd', cursor: 'pointer' })}
+            className={css({
+              py: '[2]',
+              px: '25',
+              textAlign: 'left',
+              borderBottom: 'solid',
+              borderColor: 'typography.text.secondary',
+              cursor: 'pointer',
+            })}
             onClick={() => sortData('instances')}
           >
             Instance Count {getSortIcon('instances')}
           </th>
           <th
-            className={css({ py: 2, px: 4, textAlign: 'left', borderBottom: '1px solid #ddd', cursor: 'pointer' })}
+            className={css({
+              py: '[2]',
+              px: '25',
+              textAlign: 'left',
+              borderBottom: 'solid',
+              borderColor: 'typography.text.secondary',
+              cursor: 'pointer',
+            })}
             onClick={() => sortData('srcPkg')}
           >
             Source {getSortIcon('srcPkg')}
           </th>
-          <th className={css({ py: 2, px: 4, textAlign: 'left', borderBottom: '1px solid #ddd' })}>Props</th>
+          <th
+            className={css({
+              py: '[2]',
+              px: '25',
+              textAlign: 'left',
+              borderBottom: 'solid',
+              borderColor: 'typography.text.secondary',
+            })}
+          >
+            Props
+          </th>
         </tr>
       </thead>
       <tbody>
         {sortedData.map(({ name, instances, props, srcPkg }) => (
           <React.Fragment key={`${srcPkg}-${name}`}>
-            <tr className={css({ bg: 'surface.page', _even: { bg: { base: '#DDDDDD', _dark: '#222233' } } })}>
-              <td className={css({ py: 2, px: 4, borderBottom: '1px solid #ddd' })}>{name}</td>
-              <td className={css({ py: 2, px: 4, borderBottom: '1px solid #ddd' })}>{instances}</td>
-              <td className={css({ py: 2, px: 4, borderBottom: '1px solid #ddd' })}>{srcPkg}</td>
+            <tr className={css({ bg: 'surface.page', _even: { bg: { base: '[#DDDDDD]', _dark: '[#222233]' } } })}>
               <td
                 className={css({
-                  py: 2,
-                  px: 4,
-                  borderBottom: '1px solid #ddd',
-                  maxW: '300px',
+                  py: '[2]',
+                  px: '25',
+                  borderBottom: 'solid',
+                  borderColor: 'typography.text.secondary',
+                })}
+              >
+                {name}
+              </td>
+              <td
+                className={css({
+                  py: '[2]',
+                  px: '25',
+                  borderBottom: 'solid',
+                  borderColor: 'typography.text.secondary',
+                })}
+              >
+                {instances}
+              </td>
+              <td
+                className={css({
+                  py: '[2]',
+                  px: '25',
+                  borderBottom: 'solid',
+                  borderColor: 'typography.text.secondary',
+                })}
+              >
+                {srcPkg}
+              </td>
+              <td
+                className={css({
+                  py: '[2]',
+                  px: '25',
+                  borderBottom: 'solid',
+                  borderColor: 'typography.text.secondary',
+                  maxW: '[300px]',
                   textOverflow: 'ellipsis',
                 })}
               >
                 <span
-                  className={css({ textDecoration: 'underline', _hover: { color: 'blue' }, cursor: 'pointer' })}
+                  className={css({
+                    textDecoration: 'underline',
+                    _hover: { color: 'typography.text.feedback.info' },
+                    cursor: 'pointer',
+                  })}
                   onClick={() => toggleRow(name)}
                 >
                   {Object.entries(props)
@@ -122,28 +189,28 @@ export const ComponentAuditTable: React.FC<ComponentAuditTableProps> = ({ data: 
             </tr>
             {expandedRows.includes(name) && (
               <tr>
-                <td colSpan={4} className={css({ py: 2, px: 4 })}>
+                <td colSpan={4} className={css({ py: '[2]', px: '25' })}>
                   <div
                     className={css({
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                      gap: 2,
+                      gridTemplateColumns: '[repeat(auto-fit, minmax(150px, 1fr))]',
+                      gap: '25',
                     })}
                   >
                     {Object.entries(props).map(([prop, value]) => (
                       <div
                         key={prop}
                         className={css({
-                          bg: 'gray.200',
-                          px: 2,
-                          py: 1,
+                          bg: 'surface.popover',
+                          px: '25',
+                          py: '[2]',
                           display: 'grid',
-                          gridTemplateColumns: 'max-content 1fr',
+                          gridTemplateColumns: '[max-content 1fr]',
                           alignItems: 'center',
-                          gap: 2,
+                          gap: '25',
                         })}
                       >
-                        <span className={css({ fontWeight: 'bold' })}>{prop}:</span>
+                        <span className={css({ fontWeight: 'strong' })}>{prop}:</span>
                         <span>{typeof value === 'number' ? value : value.join(', ')}</span>
                       </div>
                     ))}

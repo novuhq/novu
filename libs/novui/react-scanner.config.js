@@ -38,7 +38,7 @@ module.exports = {
    * To see only local imports, replace with: /(\.(\.){0,}\/.*)/gim
    */
   importedFrom:
-    /(@novu\/(design-system|shared-web|notification-center)|@mantine\/core|@ant-design)(\/[a-z0-9\-)]+){0,}|(\.(\.){0,}\/.*)/gim,
+    /(@novu\/(novui|design-system|shared-web|notification-center)|@mantine\/core|@ant-design)(\/[a-z0-9\-)]+){0,}|(\.(\.){0,}\/.*)/gim,
   exclude: ['/src/api', '/src/styled-system'],
   processors: [countComponentsAndPropsProcessor({ minNumInstances: 1 }), groupByNamespaceProcessor],
   /** file patterns to scan */

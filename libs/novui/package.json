@@ -48,14 +48,17 @@
     "./styles.css": "./styled-system/styles.css"
   },
   "scripts": {
-    "prepare": "pnpm panda codegen",
+    "prepare": "pnpm prepare:panda && pnpm prepare:audit",
+    "prepare:panda": "pnpm panda codegen",
+    "prepare:audit": "pnpm audit-components",
     "prebuild": "rimraf dist styled-system",
     "lint": "eslint --ext .ts,.tsx src",
     "build": "cross-env node_modules/.bin/tsc",
-    "build:watch": "pnpm panda & cross-env node_modules/.bin/tsc -w --preserveWatchOutput",
+    "build:watch": "pnpm panda --watch & cross-env node_modules/.bin/tsc -w --preserveWatchOutput",
     "build:storybook": "pnpm panda && storybook build",
     "storybook": "pnpm panda --watch & storybook dev -p 6006",
-    "studio": "pnpm panda studio"
+    "studio": "pnpm panda studio",
+    "audit-components": "pnpm react-scanner -c './react-scanner.config.js'"
   },
   "keywords": [],
   "author": "",
@@ -84,6 +87,7 @@
     "eslint-plugin-storybook": "^0.6.13",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "react-scanner": "^1.1.0",
     "rimraf": "^3.0.2",
     "storybook": "^8.1.0",
     "storybook-dark-mode": "^4.0.1",

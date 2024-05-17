@@ -33,7 +33,7 @@ module.exports = {
     // disabled because it suggests putting everything into a single config file
     '@pandacss/no-config-function-in-source': 'off',
   },
-  ignorePatterns: ['styled-system/*', 'prettier.config.ts', 'panda.config.ts'],
+  ignorePatterns: ['styled-system/*', 'prettier.config.ts', 'panda.config.ts', 'react-scanner.config.js'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,
