@@ -68,7 +68,11 @@ export const ComponentAuditTable: React.FC<ComponentAuditTableProps> = ({ data: 
     : data;
 
   return (
-    <table className={`${css({ width: '[100%]', borderCollapse: 'collapse' })} ${className ?? ''}`}>
+    <table
+      className={`${css({ width: '[100%]', borderCollapse: 'collapse', color: 'typography.text.main' })} ${
+        className ?? ''
+      }`}
+    >
       <thead>
         <tr className={css({ bg: 'surface.popover', fontSize: '100', fontWeight: 'strong' })}>
           <th

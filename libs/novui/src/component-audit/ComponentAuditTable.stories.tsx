@@ -1,17 +1,15 @@
-// FIXME: fix file when storybook is available
-
 import React from 'react';
-// import { StoryFn, Meta } from '@storybook/react';
+import { StoryFn, Meta } from '@storybook/react';
 import { ComponentAuditTable } from './ComponentAuditTable';
 import { css } from '../../styled-system/css';
 
-// import scanJson from './component-scans/scan.json';
+import scanJson from './component-scans/scan.json';
 
 export default {
   title: 'ComponentAudit',
   component: ComponentAuditTable,
   argTypes: {},
-}; // as Meta<typeof ComponentAuditTable>;
+} as Meta<typeof ComponentAuditTable>;
 
 const TableWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -28,20 +26,18 @@ const TableWrapper = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// const Template: StoryFn<typeof ComponentAuditTable> = ({ ...args }) => (
-const Template = ({ ...args }) => (
+const Template: StoryFn<typeof ComponentAuditTable> = ({ ...args }) => (
   <>
-    <h3>
+    <h3 className={css({ color: 'typography.text.main' })}>
       If no data is appearing below, please run `pnpm audit-components` in your terminal in the `design-system`
       directory
     </h3>
     <br />
     <TableWrapper>
-      {/* <ComponentAuditTable data={scanJson ?? {}} /> */}
-      <ComponentAuditTable data={{}} />
+      <ComponentAuditTable data={scanJson ?? {}} />
     </TableWrapper>
   </>
 );
 
 export const ComponentAudit = Template.bind({});
-// ComponentAudit.args = {};
+ComponentAudit.args = {};
