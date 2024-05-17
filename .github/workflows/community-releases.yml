@@ -63,13 +63,13 @@ jobs:
     steps:
       - name: Git Checkout with Submodules
         uses: actions/checkout@v4
-        if: ${{ contains (inputs.job-name,'-ee') }}
+        if: contains(matrix.name, 'ee')
         with:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Git Checkout without Submodules
-        if: ${{ !contains (inputs.job-name,'-ee') }}
+        if: !contains(matrix.name, 'ee')
         uses: actions/checkout@v4
 
       - name: Variables
