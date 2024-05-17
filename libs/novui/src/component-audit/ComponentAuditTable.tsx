@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { css } from '../../../styled-system/css';
+import { css } from '../../styled-system/css';
 
 interface JsonData {
   [key: string]: {

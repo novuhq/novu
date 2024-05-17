@@ -3,7 +3,7 @@
 import React from 'react';
 // import { StoryFn, Meta } from '@storybook/react';
 import { ComponentAuditTable } from './ComponentAuditTable';
-import { css } from '../../../styled-system/css';
+import { css } from '../../styled-system/css';
 
 // import scanJson from './component-scans/scan.json';
 
