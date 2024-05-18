@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate scopes
+        id: generate_scopes
         run: |
           scopes=$(nx show projects | grep "@novu/" | cut -d"/" -f2)
           echo "SCOPES=$scopes" >> $GITHUB_ENV
@@ -29,7 +30,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          scopes: ${{ env.SCOPES }}
+          scopes: |
+            ${{ steps.generate_scopes.outputs.SCOPES }}
       - uses: marocchino/sticky-pull-request-comment@v2
         # When the previous steps fails, the workflow would stop. By adding this
         # condition you can continue the execution with the populated error message.
@@ -41,9 +43,9 @@ jobs:
             
             We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/) and it looks like your proposed title needs to be adjusted.
 
-            Your PR title is: "${{ github.event.pull_request.title }}"
-            It should be something like: "feat(scope): Add fancy new feature"
-            Where scope is one of: ${{ env.SCOPES }}
+            Your PR title is: `${{ github.event.pull_request.title }}`
+            It should be something like: `feat(scope): Add fancy new feature`
+            Where scope is one of: `${{ steps.generate_scopes.outputs.SCOPES }}`
 
             Details:
             
