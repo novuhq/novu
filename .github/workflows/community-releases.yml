@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     outputs:
-      lerna-release-version: ${{ steps.get_version.outputs.lerna-release-version }}
+      latest-version: ${{ steps.get_version.outputs.latest-version }}
       check_tag_result: ${{ steps.check_tag.outputs.result }}
     steps:
       - uses: actions/checkout@v4
