@@ -12,11 +12,10 @@ on:
       - upgrade-pnpm-v9
 
 permissions:
-  pull-requests: read
+  pull-requests: write
 
 jobs:
   main:
-    # Linting per https://www.conventionalcommits.org/
     name: Validate PR title
     runs-on: ubuntu-latest
     steps:
@@ -36,12 +35,13 @@ jobs:
         with:
           header: pr-title-lint-error
           message: |
-            Hey there and thank you for opening this pull request! 👋🏼
+            Hey there and thank you for opening this pull request! 👋
             
             We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/) and it looks like your proposed title needs to be adjusted.
 
             Your PR title is: "${{ github.event.pull_request.title }}"
-            It should be something like: "feat(web): Add fancy new feature"
+            It should be something like: "feat(scope): Add fancy new feature"
+            Where scope is one of: ${{ env.SCOPES }}
 
             Details:
             
