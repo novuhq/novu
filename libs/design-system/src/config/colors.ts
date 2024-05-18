@@ -1,7 +1,11 @@
+/** @deprecated: Please only use values via Panda CSS defined via tokens. If the color doesn't exist, please contact Design. */
 const gradientStart = '#FF512F';
+/** @deprecated: Please only use values via Panda CSS defined via tokens. If the color doesn't exist, please contact Design. */
 const gradientEnd = '#DD2476';
+/** @deprecated: Please only use values via Panda CSS defined via tokens. If the color doesn't exist, please contact Design. */
 const error = '#E54545';
 
+/** @deprecated: Please only use values via Panda CSS defined via tokens. If the color doesn't exist, please contact Design. */
 export const colors = {
   white: '#FFFFFF',
   black: '#000000',

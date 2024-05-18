@@ -1,0 +1,22 @@
+{
+  "include": ["src", "styled-system"],
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "forceConsistentCasingInFileNames": true,
+    "target": "es6",
+    "module": "ESNext",
+    "strict": true,
+    "typeRoots": ["node_modules/@types"],
+    "jsx": "react-jsx",
+    "lib": ["ESNext", "dom", "dom.iterable"],
+    "skipLibCheck": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": false,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "."
+  },
+  "exclude": ["src/**/*.test.*", "src/**/*.stories.*", "node_modules", "**/node_modules/*"]
+}

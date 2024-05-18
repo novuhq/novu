@@ -1,10 +1,10 @@
 import { useSegment } from '@novu/shared-web';
-import { css, cx } from '../../../../styled-system/css';
-import { Flex, styled } from '../../../../styled-system/jsx';
+import { css, cx } from '@novu/novui/css';
+import { Flex, styled } from '@novu/novui/jsx';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';
 import { AdditionInformationLink } from '../AdditionInformationLink';
 import { CodeSnippet } from '../CodeSnippet';
-import { text, title } from '../../../../styled-system/recipes';
+import { text, title } from '@novu/novui/recipes';
 import { IconCellTower, IconCloudQueue, IconCode, IconHealthAndSafety } from '@novu/design-system';
 import { DOMAttributes, useEffect } from 'react';
 import { useMantineTheme } from '@mantine/core';

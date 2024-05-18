@@ -5,7 +5,7 @@ import { IS_DOCKER_HOSTED } from '../../../../config';
 import { useBootIntercom } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
-import { css } from '../../../../styled-system/css';
+import { css } from '@novu/novui/css';
 import { useAuthContext } from '../../../providers/AuthProvider';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';

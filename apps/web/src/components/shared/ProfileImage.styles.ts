@@ -1,4 +1,4 @@
-import { css } from '../../styled-system/css';
+import { css } from '@novu/novui/css';
 
 export const previewContainerStyles = css({
   bgColor: {

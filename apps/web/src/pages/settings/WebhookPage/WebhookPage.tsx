@@ -4,9 +4,9 @@ import { Controller } from 'react-hook-form';
 
 import { ClipboardIconButton } from '../../../components';
 import { Timeline } from '../../../components/Timeline';
-import { css, cx } from '../../../styled-system/css';
-import { HStack, Stack } from '../../../styled-system/jsx';
-import { text } from '../../../styled-system/recipes';
+import { css, cx } from '@novu/novui/css';
+import { HStack, Stack } from '@novu/novui/jsx';
+import { text } from '@novu/novui/recipes';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { Text } from './WebhookPage.shared';
 

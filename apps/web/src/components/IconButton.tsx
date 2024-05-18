@@ -2,7 +2,7 @@ import { ComponentProps, PropsWithChildren } from 'react';
 import { Tooltip, Button, IButtonProps } from '@novu/design-system';
 
 import { useHover } from '../hooks';
-import { css, cx } from '../styled-system/css';
+import { css, cx } from '@novu/novui/css';
 
 // Mantine styles take precedence over Panda :(, so have to use !important
 const iconButtonStyles = css({

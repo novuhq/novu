@@ -1,6 +1,6 @@
 import { UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
-import { css, cx } from '../../styled-system/css';
-import { hstack } from '../../styled-system/patterns';
+import { css, cx } from '@novu/novui/css';
+import { hstack } from '@novu/novui/patterns';
 import { NavMenuFooter } from './NavMenuFooter';
 
 export const RootNavMenuFooter: React.FC = () => {

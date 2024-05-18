@@ -1,4 +1,4 @@
-import { css } from '../../styled-system/css';
+import { css } from '@novu/novui/css';
 
 // TODO: these are ugly, but necessary for overriding Mantine + our design-system overrides
 export const navSelectStyles = css({

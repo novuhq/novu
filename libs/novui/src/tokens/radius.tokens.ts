@@ -6,6 +6,10 @@ import { defineTokens } from '@pandacss/dev';
  * Used for properties like width and height.
  */
 export const RADIUS_TOKENS = defineTokens.radii({
+  '0': {
+    value: '0',
+    type: 'radius',
+  },
   '50': {
     value: '0.25rem',
     type: 'radius',
