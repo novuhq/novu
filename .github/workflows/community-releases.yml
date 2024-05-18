@@ -43,7 +43,7 @@ jobs:
         run: |
           echo "::notice::The v${{ steps.get_version.outputs.lerna-release-version }} tag already exists."
 
-  docker_build:
+ build_docker:
     runs-on: ubuntu-latest
     needs: prepare
     timeout-minutes: 90
