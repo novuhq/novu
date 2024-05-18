@@ -17,10 +17,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
       - name: Install pnpm
         uses: pnpm/action-setup@v3
-        with:
-          version: 9.1.1
+
       - name: Generate scopes
         id: generate_scopes
         run: |
@@ -28,6 +28,7 @@ jobs:
           echo 'SCOPES<<EOF' >> $GITHUB_ENV
           echo "$scopes" >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
+
       - uses: amannn/action-semantic-pull-request@v5
         id: lint_pr_title
         env:
@@ -35,6 +36,7 @@ jobs:
         with:
           scopes: |
             ${{ env.SCOPES }}
+
       - uses: marocchino/sticky-pull-request-comment@v2
         # When the previous steps fails, the workflow would stop. By adding this
         # condition you can continue the execution with the populated error message.
