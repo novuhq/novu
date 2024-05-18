@@ -22,7 +22,7 @@ jobs:
         id: get_version
         shell: bash
         run: |
-          echo "lerna-release-version=$(jq -r '.version' lerna.json)" >> $GITHUB_OUTPUT
+          echo "latest-version=$(jq -r '.version' lerna.json)" >> $GITHUB_OUTPUT
 
       - name: Check if tag already exists
         id: check_tag
