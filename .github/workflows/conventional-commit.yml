@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   main:
-    name: Validate PR title
+    name: Validate PR titles
     runs-on: ubuntu-latest
     steps:
       - name: Generate scopes
