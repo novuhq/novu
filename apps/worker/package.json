@@ -1,6 +1,6 @@
 {
   "name": "@novu/worker",
-  "version": "0.24.2",
+  "version": "0.24.4",
   "description": "description",
   "author": "",
   "private": "true",
@@ -30,11 +30,11 @@
     "@nestjs/platform-express": "^10.2.2",
     "@nestjs/swagger": "^7.1.9",
     "@nestjs/terminus": "^10.0.1",
-    "@novu/application-generic": "workspace:",
-    "@novu/dal": "workspace:",
-    "@novu/shared": "workspace:",
-    "@novu/stateless": "workspace:",
-    "@novu/testing": "workspace:",
+    "@novu/application-generic": "0.24.4",
+    "@novu/dal": "0.24.4",
+    "@novu/shared": "0.24.4",
+    "@novu/stateless": "0.24.4",
+    "@novu/testing": "0.24.4",
     "@sentry/node": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.13.0",
@@ -58,7 +58,12 @@
     "rxjs": "7.8.1",
     "shortid": "^2.2.16",
     "simple-statistics": "^7.8.3",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "@novu/ee-echo-worker": "0.24.4",
+    "@novu/ee-shared-services": "0.24.4",
+    "@novu/ee-translation": "0.24.4",
+    "@novu/ee-billing": "0.24.4",
+    "@novu/ee-auth": "0.24.4"
   },
   "devDependencies": {
     "@faker-js/faker": "^6.0.0",
@@ -84,11 +89,12 @@
     "typescript": "4.9.5"
   },
   "optionalDependencies": {
-    "@novu/ee-auth": "workspace:",
-    "@novu/ee-billing": "workspace:",
-    "@novu/ee-echo-worker": "workspace:",
-    "@novu/ee-shared-services": "workspace:",
-    "@novu/ee-translation": "workspace:"
+    "@novu/ee-auth": "0.24.3",
+    "@novu/ee-billing": "0.24.3",
+    "@novu/ee-echo-worker": "0.24.3",
+    "@novu/ee-shared-services": "0.24.3",
+    "@novu/ee-translation": "0.24.3",
+    "@novu/application-generic": "0.24.3"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

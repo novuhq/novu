@@ -1,6 +1,6 @@
 {
   "name": "@novu/application-generic",
-  "version": "0.24.2",
+  "version": "0.24.4",
   "description": "Generic backend code used inside of Novu's different services",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -52,11 +52,11 @@
     "@google-cloud/storage": "^6.2.3",
     "@hokify/agenda": "^6.3.0",
     "@nestjs/passport": "^10.0.1",
-    "@novu/dal": "workspace:",
-    "@novu/providers": "workspace:",
-    "@novu/shared": "workspace:",
-    "@novu/stateless": "workspace:",
-    "@novu/testing": "workspace:",
+    "@novu/dal": "0.24.4",
+    "@novu/providers": "0.24.4",
+    "@novu/shared": "0.24.4",
+    "@novu/stateless": "0.24.4",
+    "@novu/testing": "0.24.4",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.40.2",
     "@opentelemetry/context-async-hooks": "^1.19.0",
@@ -100,11 +100,13 @@
     "rxjs": "7.8.1",
     "sanitize-html": "^2.4.0",
     "shortid": "^2.2.16",
-    "slugify": "^1.4.6"
+    "slugify": "^1.4.6",
+    "@novu/ee-echo-worker": "0.24.4",
+    "@novu/ee-shared-services": "0.24.4"
   },
   "optionalDependencies": {
-    "@novu/ee-echo-worker": "workspace:",
-    "@novu/ee-shared-services": "workspace:",
+    "@novu/ee-echo-worker": "0.24.3",
+    "@novu/ee-shared-services": "0.24.3",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {

@@ -7,7 +7,7 @@
     "start": "npm run jarvis",
     "preinstall": "npx only-allow pnpm",
     "prepare": "husky install",
-    "publish": "nx release version && lerna publish from-package",
+    "publish": "nx release version && git add . && git commit -m 'chore: release' && lerna publish from-package --dry-run",
     "setup:project": "npx --yes pnpm@8.9.0 i && node scripts/setup-env-files.js && pnpm build",
     "clean": "lerna clean --yes && npm run prebuild && rimraf node_modules",
     "commit": "cz",

@@ -1,6 +1,6 @@
 {
   "name": "@novu/widget",
-  "version": "0.24.2",
+  "version": "0.24.4",
   "private": true,
   "scripts": {
     "start": "react-app-rewired start",
@@ -29,8 +29,8 @@
     "@emotion/styled": "^11.6.0",
     "@mantine/core": "4.2.12",
     "@mantine/hooks": "4.2.12",
-    "@novu/notification-center": "workspace:",
-    "@novu/shared": "workspace:",
+    "@novu/notification-center": "0.24.4",
+    "@novu/shared": "0.24.4",
     "antd": "^4.10.0",
     "babel-plugin-import": "^1.13.3",
     "chroma-js": "^2.4.2",
@@ -48,7 +48,9 @@
     "rimraf": "^3.0.2",
     "socket.io-client": "4.7.2",
     "web-vitals": "^0.2.4",
-    "webfontloader": "^1.6.28"
+    "webfontloader": "^1.6.28",
+    "@novu/testing": "0.24.4",
+    "@novu/dal": "0.24.4"
   },
   "devDependencies": {
     "@babel/plugin-proposal-optional-chaining": "^7.20.7",
@@ -63,8 +65,8 @@
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@faker-js/faker": "^6.0.0",
-    "@novu/dal": "workspace:",
-    "@novu/testing": "workspace:",
+    "@novu/dal": "0.24.3",
+    "@novu/testing": "0.24.3",
     "@types/jest": "^29.5.0",
     "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
@@ -84,7 +86,9 @@
     "react-scripts": "^5.0.1",
     "typescript": "4.9.5",
     "webpack": "5.78.0",
-    "webpack-dev-server": "4.11.1"
+    "webpack-dev-server": "4.11.1",
+    "@novu/notification-center": "0.24.3",
+    "@novu/shared": "0.24.3"
   },
   "browserslist": {
     "production": [

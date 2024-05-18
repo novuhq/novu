@@ -1,6 +1,6 @@
 {
   "name": "@novu/echo",
-  "version": "0.24.2",
+  "version": "0.24.4",
   "description": "The Echo SDK, used to programmatically declare and manage your notifications.",
   "main": "./index.js",
   "types": "./index.d.ts",

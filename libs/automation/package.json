@@ -1,6 +1,6 @@
 {
   "name": "@novu/automation",
-  "version": "0.24.2",
+  "version": "0.24.4",
   "private": true,
   "license": "MIT",
   "scripts": {

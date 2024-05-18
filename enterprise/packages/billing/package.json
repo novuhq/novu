@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-billing",
-  "version": "0.24.2",
+  "version": "0.24.4",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -13,9 +13,9 @@
     "start:proxy": "ngrok http http://localhost:3000"
   },
   "dependencies": {
-    "@novu/application-generic": "workspace:",
-    "@novu/ee-dal": "workspace:",
-    "@novu/shared": "workspace:",
+    "@novu/application-generic": "0.24.4",
+    "@novu/ee-dal": "0.24.4",
+    "@novu/shared": "0.24.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "date-fns": "^2.29.2",

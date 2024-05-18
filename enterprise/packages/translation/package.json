@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-translation",
-  "version": "0.24.2",
+  "version": "0.24.4",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -13,10 +13,10 @@
   },
   "dependencies": {
     "@handlebars/parser": "^2.1.0",
-    "@novu/application-generic": "workspace:",
-    "@novu/ee-dal": "workspace:",
-    "@novu/ee-shared-services": "workspace:",
-    "@novu/shared": "workspace:",
+    "@novu/application-generic": "0.24.4",
+    "@novu/ee-dal": "0.24.4",
+    "@novu/ee-shared-services": "0.24.4",
+    "@novu/shared": "0.24.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "multer": "^1.4.5-lts.1",
