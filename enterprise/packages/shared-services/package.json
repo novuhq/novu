@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-shared-services",
-  "version": "0.24.4",
+  "version": "0.24.2",
   "description": "Generic service used inside of Novu's different services - can not be depended on application-generic",
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
@@ -30,8 +30,8 @@
   },
   "dependencies": {
     "@handlebars/parser": "^2.1.0",
-    "@novu/ee-dal": "0.24.4",
-    "@novu/shared": "0.24.4"
+    "@novu/ee-dal": "workspace:",
+    "@novu/shared": "workspace:"
   },
   "devDependencies": {
     "@types/node": "^14.6.0",
