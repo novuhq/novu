@@ -53,7 +53,6 @@ jobs:
 
             Your PR title is: `${{ github.event.pull_request.title }}`
             It should be something like: `feat(scope): Add fancy new feature`
-            Where scope is one of: `${{ env.SCOPES }}`
 
             Details:
             
