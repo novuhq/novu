@@ -38,7 +38,7 @@ jobs:
             console.log(`Tag exists: ${tagExists}`);
             return tagExists;
 
-      - name: The TAG v${{ steps.get_version.outputs.lerna-release-version }} already exists
+      - name: The v${{ steps.get_version.outputs.lerna-release-version }} tag already exists
         if: steps.check_tag.outputs.result == 'true'
         run: |
           echo "::notice::The TAG v${{ steps.get_version.outputs.lerna-release-version }} already exists."
