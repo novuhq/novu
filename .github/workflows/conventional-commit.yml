@@ -24,7 +24,7 @@ jobs:
         id: generate_scopes
         run: |
           scopes=$(nx show projects | grep "@novu/" | cut -d"/" -f2)
-          echo "SCOPES=$scopes" >> $GITHUB_ENV
+          echo "SCOPES=$scopes" >> $GITHUB_OUTPUT
       - uses: amannn/action-semantic-pull-request@v5
         id: lint_pr_title
         env:
