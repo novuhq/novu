@@ -41,7 +41,7 @@ jobs:
       - name: The v${{ steps.get_version.outputs.lerna-release-version }} tag already exists
         if: steps.check_tag.outputs.result == 'true'
         run: |
-          echo "::notice::The TAG v${{ steps.get_version.outputs.lerna-release-version }} already exists."
+          echo "::notice::The v${{ steps.get_version.outputs.lerna-release-version }} tag already exists."
 
   docker_build:
     runs-on: ubuntu-latest
