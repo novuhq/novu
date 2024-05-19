@@ -101,7 +101,7 @@ export const ChangesTable = ({
       Header: 'Changed By',
       Cell: withCellLoading(({ row: { original } }) => (
         <Text data-test-id="subscriber-name" rows={1}>
-          {capitalize(original.user.firstName)} {capitalize(original.user.lastName)}
+          {capitalize(original.user?.firstName)} {capitalize(original.user?.lastName)}
         </Text>
       )),
     },
