@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ClipboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { getHotkeyHandler } from '@mantine/hooks';
 import { TextAlignEnum } from '@novu/shared';
@@ -157,6 +157,17 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, text]);
 
+  const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const pastedData = event?.clipboardData?.getData('text/plain');
+    const selection = window.getSelection();
+    if (!selection?.rangeCount) return;
+    selection.deleteFromDocument();
+    selection.getRangeAt(0).insertNode(document.createTextNode(pastedData));
+    selection.collapseToEnd();
+    methods.setValue(`${stepFormPath}.template.content.${blockIndex}.content`, ref.current?.innerHTML ?? '');
+  };
+
   return (
     <div style={{ position: 'relative' }}>
       {showAutoSuggestions && (
@@ -270,15 +281,7 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
                 backgroundColor: 'transparent',
                 textAlign: textAlign || TextAlignEnum.LEFT,
               }}
-              onPaste={(event) => {
-                event.preventDefault();
-                const pastedData = event?.clipboardData?.getData('text/plain');
-                const selection = window.getSelection();
-                if (!selection?.rangeCount) return;
-                selection.deleteFromDocument();
-                selection.getRangeAt(0).insertNode(document.createTextNode(pastedData));
-                selection.collapseToEnd();
-              }}
+              onPaste={(event) => handlePaste(event)}
               onClick={() => {
                 if (showAutoSuggestions) {
                   resetAutoSuggestions();
