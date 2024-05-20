@@ -1,6 +1,6 @@
 import { ColorInput } from '@novu/design-system';
 import { Control, Controller, UseFormSetValue } from 'react-hook-form';
-import { Stack } from '../../../../styled-system/jsx';
+import { Stack } from '@novu/novui/jsx';
 import { IBrandFormValues } from './BrandingPage.const';
 import { inputWrapperStyles, Text } from './BrandingPage.styles';
 import { BrandLogoUpload } from './BrandLogoUpload';

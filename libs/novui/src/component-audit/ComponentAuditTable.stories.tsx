@@ -16,9 +16,9 @@ const TableWrapper = ({ children }: { children: React.ReactNode }) => {
     <div
       className={css({
         overflowX: 'auto',
-        maxWidth: '100%',
+        maxWidth: '[100%]',
         overflowY: 'auto',
-        maxHeight: '95dvh',
+        maxHeight: '[95dvh]',
       })}
     >
       {children}
@@ -28,7 +28,7 @@ const TableWrapper = ({ children }: { children: React.ReactNode }) => {
 
 const Template: StoryFn<typeof ComponentAuditTable> = ({ ...args }) => (
   <>
-    <h3>
+    <h3 className={css({ color: 'typography.text.main' })}>
       If no data is appearing below, please run `pnpm audit-components` in your terminal in the `design-system`
       directory
     </h3>

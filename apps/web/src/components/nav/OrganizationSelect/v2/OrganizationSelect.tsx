@@ -1,7 +1,7 @@
 import { Select, Tooltip, When } from '@novu/design-system';
 import { useState } from 'react';
 import { COMPANY_LOGO_PATH } from '../../../../constants/assets';
-import { css } from '../../../../styled-system/css';
+import { css } from '@novu/novui/css';
 import { arrowStyles, navSelectStyles, tooltipStyles } from '../../NavSelect.styles';
 import { useOrganizationSelect } from '../useOrganizationSelect';
 

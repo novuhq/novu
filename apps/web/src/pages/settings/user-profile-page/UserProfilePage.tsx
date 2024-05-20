@@ -1,8 +1,8 @@
 import { FC } from 'react';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
-import { css } from '../../../styled-system/css';
-import { Flex, styled } from '../../../styled-system/jsx';
-import { title } from '../../../styled-system/recipes';
+import { css } from '@novu/novui/css';
+import { Flex, styled } from '@novu/novui/jsx';
+import { title } from '@novu/novui/recipes';
 import { InputPlain } from '../components';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { UserProfileForm } from './UserProfileForm';

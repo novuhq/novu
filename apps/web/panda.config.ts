@@ -1,9 +1,14 @@
 import { defineConfig } from '@pandacss/dev';
-import { NovuPandaPreset } from '@novu/design-system';
+import { novuPandaPreset } from '@novu/novui';
+
+const STYLED_SYSTEM_PATH_BASE = './node_modules/@novu/novui/';
 
 export default defineConfig({
   // use CSS reset
   preflight: true,
+
+  /** Only allow defined values */
+  // strictTokens: true,
 
   /**
    * https://panda-css.com/docs/guides/component-library#include-the-src-files
@@ -12,13 +17,14 @@ export default defineConfig({
    */
   include: [
     './src/**/*.{js,jsx,ts,tsx}',
-    // '../../libs/design-system/src/**/*.{js,jsx,ts,tsx}'
+    `${STYLED_SYSTEM_PATH_BASE}/dist/**/*.{js,jsx}`,
+    // '../../libs/novui/src/**/*.{js,jsx,ts,tsx}',
   ],
 
   // Files to exclude
   exclude: ['**/*.cy.{js,jsx,ts,tsx}', '**/*/styled-system'],
 
-  presets: [NovuPandaPreset],
+  presets: [novuPandaPreset],
 
   /**
    * Prefixes generated classes with the specified string (e.g. `nv-text_blue`)
@@ -35,11 +41,12 @@ export default defineConfig({
     extend: {},
   },
 
-  // The output directory for your css system
-  outdir: './src/styled-system',
+  outExtension: 'js',
 
-  // Recommended by panda maintainer due to potential bug with nesting styled-system in src
-  importMap: 'styled-system',
+  // TODO: have to confirm this with the panda maintainer
+  outdir: `${STYLED_SYSTEM_PATH_BASE}/styled-system`,
+
+  importMap: '@novu/novui',
 
   // Enables JSX util generation!
   jsxFramework: 'react',

@@ -256,7 +256,7 @@ export class SendMessageChat extends SendMessageBase {
       return;
     }
 
-    await this.sendErrors(chatWebhookUrl, integration, message, command);
+    await this.sendErrors(chatWebhookUrl, integration, message, command, phoneNumber);
   }
 
   private getChimeraOverride(
@@ -280,9 +280,34 @@ export class SendMessageChat extends SendMessageBase {
     chatWebhookUrl: string,
     integration: IntegrationEntity,
     message: MessageEntity,
-    command: SendMessageCommand
+    command: SendMessageCommand,
+    phoneNumber?: string
   ) {
-    if (!chatWebhookUrl) {
+    if (integration?.providerId === ChatProviderIdEnum.WhatsAppBusiness && !phoneNumber) {
+      await this.messageRepository.updateMessageStatus(
+        command.environmentId,
+        message._id,
+        'warning',
+        null,
+        'no_subscriber_chat_phone_number',
+        'Subscriber does not have phone number specified'
+      );
+
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+          messageId: message._id,
+          detail: DetailEnum.CHAT_MISSING_PHONE_NUMBER,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.FAILED,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            reason: `Subscriber does not have a phone number for selected integration`,
+          }),
+        })
+      );
+    } else if (!chatWebhookUrl) {
       await this.messageRepository.updateMessageStatus(
         command.environmentId,
         message._id,

@@ -1,6 +1,6 @@
 import { useAuthContext } from '@novu/shared-web';
 import { COMPANY_LOGO_PATH } from '../../../constants/assets';
-import { Stack } from '../../../styled-system/jsx';
+import { Stack } from '@novu/novui/jsx';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { OrganizationLogo } from './OrganizationLogo';
 import { OrganizationName } from './OrganizationName';
