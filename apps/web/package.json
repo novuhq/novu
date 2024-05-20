@@ -59,11 +59,11 @@
     "@mantine/prism": "^5.7.1",
     "@mantine/spotlight": "^5.7.1",
     "@monaco-editor/react": "^4.6.0",
-    "@novu/design-system": "workspace:",
-    "@novu/notification-center": "workspace:",
-    "@novu/novui": "workspace:",
-    "@novu/shared": "workspace:",
-    "@novu/shared-web": "workspace:",
+    "@novu/design-system": "workspace:*",
+    "@novu/notification-center": "workspace:*",
+    "@novu/novui": "workspace:*",
+    "@novu/shared": "workspace:*",
+    "@novu/shared-web": "workspace:*",
     "@rive-app/react-canvas": "^4.8.1",
     "@segment/analytics-next": "^1.48.0",
     "@sentry/react": "^7.40.0",
@@ -132,9 +132,9 @@
     "zod": "^3.22.4"
   },
   "optionalDependencies": {
-    "@novu/ee-billing-web": "workspace:",
-    "@novu/ee-echo-web": "workspace:",
-    "@novu/ee-translation-web": "workspace:"
+    "@novu/ee-billing-web": "workspace:*",
+    "@novu/ee-echo-web": "workspace:*",
+    "@novu/ee-translation-web": "workspace:*"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",
@@ -142,8 +142,8 @@
     "@babel/preset-react": "^7.13.13",
     "@babel/preset-typescript": "^7.13.0",
     "@babel/runtime": "^7.20.13",
-    "@novu/dal": "workspace:",
-    "@novu/testing": "workspace:",
+    "@novu/dal": "workspace:*",
+    "@novu/testing": "workspace:*",
     "@pandacss/dev": "^0.38.0",
     "@pandacss/studio": "^0.38.0",
     "@playwright/test": "^1.42.1",
