@@ -19,13 +19,13 @@ jobs:
       latest-version: ${{ steps.get_version.outputs.latest-version }}
     steps:
       - uses: actions/checkout@v4
-      - name: Get Current Lerna Release version
+      - name: Get Current Lerna Release version and comparing with the Git tag
         id: get_version
         shell: bash
         run: |
-          LATEST_VERSION=v$(jq -r '.version' lerna.json)
-          CURRENT_GIT_TAG=${{  github.ref_name }}
-          if ["$LATEST_VERSION" == "$CURRENT_GIT_TAG"]
+          LATEST_VERSION="v$(jq -r '.version' lerna.json)"
+          CURRENT_GIT_TAG="${{  github.ref_name }}"
+          if [ "$LATEST_VERSION" == "$CURRENT_GIT_TAG" ]
           then
             echo "latest-version=$(jq -r '.version' lerna.json)" >> $GITHUB_OUTPUT
           else
