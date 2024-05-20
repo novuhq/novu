@@ -8,11 +8,11 @@ on:
       - synchronize
 
   # Use the following event if you want edit and test setting regarding conventional commits
-  pull_request:
-    types:
-      - opened
-      - edited
-      - synchronize
+  # pull_request:
+  #   types:
+  #     - opened
+  #     - edited
+  #     - synchronize
 
 permissions:
   pull-requests: write
