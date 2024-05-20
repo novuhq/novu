@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { styled } from '@novu/novui/jsx';
+import { styled, Stack } from '@novu/novui/jsx';
 import { text } from '@novu/novui/recipes';
 import { LocalizedMessage } from '@novu/shared-web';
 import { css } from '@novu/novui/css';
