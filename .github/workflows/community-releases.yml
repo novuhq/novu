@@ -47,11 +47,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: prepare
     timeout-minutes: 90
-    environment: Development
+    environment: Production
     strategy:
       fail-fast: false
       matrix:
-        name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed','novu/inbound-mail-ee','novu/worker-ee','novu/api-ee','novu/web-ee','novu/widget-ee','novu/embed-ee']
+        name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed','novu/inbound-mail-ee','novu/worker-ee','novu/api-ee','novu/web-ee','novu/widget-ee','novu/embed-ee','novu/ws-ee','novu/webhook-ee']
     steps:
       - name: Git Checkout with Submodules
         uses: actions/checkout@v4
