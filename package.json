@@ -10,7 +10,7 @@
     "publish": "nx release version && git add . && git commit -m 'chore: release' && pnpm publish:npm",
     "publish:npm": "lerna publish from-package",
     "setup:project": "npx --yes pnpm@9.1.1 i && node scripts/setup-env-files.js && pnpm build",
-    "clean": "lerna clean --yes && npm run prebuild && rimraf node_modules",
+    "clean": "lerna clean --yes && rimraf node_modules",
     "commit": "cz",
     "nx": "nx",
     "lint-staged": "lint-staged",
