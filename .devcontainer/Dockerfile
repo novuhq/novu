@@ -12,10 +12,14 @@ RUN . /etc/os-release \
         && apt-get install -y mongodb-database-tools mongodb-mongosh \
         && apt-get clean -y && rm -rf /var/lib/apt/lists/*; \
     fi
-    
-WORKDIR /workspaces
-ENV PNPM_HOME=/workspaces/pnpm
-RUN corepack enable pnpm
-COPY pnpm-lock.yaml ./
 
-RUN pnpm fetch
+# [Optional] Uncomment this section to install additional OS packages.
+# RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
+#     && apt-get -y install --no-install-recommends <your-package-list-here>
+
+# [Optional] Uncomment if you want to install an additional version of node using nvm
+# ARG EXTRA_NODE_VERSION=10
+# RUN su node -c "source /usr/local/share/nvm/nvm.sh && nvm install ${EXTRA_NODE_VERSION}"
+
+# [Optional] Uncomment if you want to install more global node modules
+RUN su node -c "npm install -g pnpm@8.9.0"
