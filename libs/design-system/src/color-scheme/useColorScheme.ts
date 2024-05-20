@@ -3,6 +3,7 @@ import { useLocalThemePreference, ColorSchemePreferenceEnum } from '@novu/shared
 import { useColorScheme as useMantineColorScheme } from '@mantine/hooks';
 import { ColorScheme } from './ColorScheme';
 import { mapThemeStatusToColorScheme } from './mapThemeStatusToColorScheme';
+import { getColorSchemeHtmlElement } from './getColorSchemeHtmlElement';
 
 /**
  * Handle behavior for changing ColorSchemes or ThemeStatuses
@@ -14,9 +15,10 @@ export const useColorScheme = () => {
 
   const setColorScheme = useCallback(
     (newColorScheme: ColorScheme) => {
-      // avoid issues with multiple `html` elements (like in Storybook)
-      const htmlElements = document.querySelectorAll('html');
-      const htmlElem = htmlElements.item(htmlElements.length - 1);
+      const htmlElem = getColorSchemeHtmlElement();
+      if (!htmlElem) {
+        return;
+      }
 
       htmlElem.className = newColorScheme;
       _setColorScheme(newColorScheme);

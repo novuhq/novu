@@ -1,5 +1,5 @@
 import { Select } from '@novu/design-system';
-import { css } from '../../../styled-system/css';
+import { css } from '@novu/novui/css';
 import { useOrganizationSelect } from './useOrganizationSelect';
 
 interface IOrganizationSelectRendererProps {

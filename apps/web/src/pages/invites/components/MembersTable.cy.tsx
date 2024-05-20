@@ -1,7 +1,7 @@
 import { MembersTable } from './MembersTable';
 import { TestWrapper } from '../../../testing';
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
-import { SinonSpy } from 'cypress/types/sinon';
+import { SinonSpy } from 'sinon';
 
 describe('MembersTable Component', function () {
   let onChangeMemberRole: SinonSpy;

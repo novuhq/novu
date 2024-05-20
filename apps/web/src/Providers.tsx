@@ -9,7 +9,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { api } from './api/api.client';
 import { LaunchDarklyProvider } from './components/launch-darkly';
 import { AuthProvider } from './components/providers/AuthProvider';
-import { css } from './styled-system/css';
+import { css } from '@novu/novui/css';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
