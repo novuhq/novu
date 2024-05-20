@@ -16,7 +16,7 @@ import {
 } from '@novu/shared';
 
 import { EnvironmentWithUserCommand } from '../../../commands';
-import { NotificationStep } from '../../../usecases';
+import { NotificationStep } from '../..';
 import { JSONSchema7 } from 'json-schema';
 
 export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
