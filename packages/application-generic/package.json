@@ -52,11 +52,11 @@
     "@google-cloud/storage": "^6.2.3",
     "@hokify/agenda": "^6.3.0",
     "@nestjs/passport": "^10.0.1",
-    "@novu/dal": "^0.24.2",
-    "@novu/providers": "^0.24.2",
-    "@novu/shared": "^0.24.2",
-    "@novu/stateless": "^0.24.2",
-    "@novu/testing": "^0.24.2",
+    "@novu/dal": "workspace:",
+    "@novu/providers": "workspace:",
+    "@novu/shared": "workspace:",
+    "@novu/stateless": "workspace:",
+    "@novu/testing": "workspace:",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.40.2",
     "@opentelemetry/context-async-hooks": "^1.19.0",
@@ -103,8 +103,8 @@
     "slugify": "^1.4.6"
   },
   "optionalDependencies": {
-    "@novu/ee-echo-worker": "^0.24.2",
-    "@novu/ee-shared-services": "^0.24.2",
+    "@novu/ee-echo-worker": "workspace:",
+    "@novu/ee-shared-services": "workspace:",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },
   "devDependencies": {

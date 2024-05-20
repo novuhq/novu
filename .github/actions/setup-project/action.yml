@@ -27,7 +27,9 @@ runs:
     - name: ⚙️ Setup kernel for react native, increase watchers
       shell: bash
       run: echo fs.inotify.max_user_watches=524288 | sudo tee -a /etc/sysctl.conf && sudo sysctl -p
-    - uses: pnpm/action-setup@v2
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v3
 
     - uses: actions/setup-node@v3
       name: ⚙️ Setup Node Version
