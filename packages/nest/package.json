@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "@nestjs/common": "10.2.2",
-    "@novu/stateless": "workspace:"
+    "@novu/stateless": "workspace:*"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",

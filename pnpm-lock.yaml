@@ -362,25 +362,25 @@ importers:
         specifier: ^5.0.1
         version: 5.1.1(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/echo':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/echo
       '@novu/node':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/node
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@sendgrid/mail':
         specifier: ^8.1.0
@@ -513,19 +513,19 @@ importers:
         version: 8.3.2
     optionalDependencies:
       '@novu/ee-auth':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/auth
       '@novu/ee-billing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/billing
       '@novu/ee-echo-api':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/echo/echo-api
       '@novu/ee-shared-services':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/shared-services
       '@novu/ee-translation':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
@@ -604,10 +604,10 @@ importers:
   apps/inbound-mail:
     dependencies:
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/application-generic
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@sentry/node':
         specifier: ^7.12.1
@@ -659,7 +659,7 @@ importers:
         version: 3.10.0
     devDependencies:
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@types/chai':
         specifier: ^4.2.11
@@ -720,13 +720,13 @@ importers:
         version: 4.6.2(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@babel/plugin-proposal-optional-chaining':
         specifier: ^7.20.7
-        version: 7.21.0(@babel/core@7.24.4)
+        version: 7.21.0(@babel/core@7.22.11)
       '@babel/plugin-transform-react-display-name':
         specifier: ^7.18.6
-        version: 7.18.6(@babel/core@7.24.4)
+        version: 7.18.6(@babel/core@7.22.11)
       '@babel/plugin-transform-runtime':
         specifier: ^7.23.2
-        version: 7.23.2(@babel/core@7.24.4)
+        version: 7.23.2(@babel/core@7.22.11)
       '@cypress/react':
         specifier: ^7.0.3
         version: 7.0.3(@types/react@17.0.53)(cypress@13.3.1)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
@@ -794,19 +794,19 @@ importers:
         specifier: ^4.6.0
         version: 4.6.0(monaco-editor@0.45.0)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@novu/design-system':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/design-system
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/notification-center
       '@novu/novui':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/novui
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/shared-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared-web
       '@rive-app/react-canvas':
         specifier: ^4.8.1
@@ -1008,13 +1008,13 @@ importers:
         version: 3.22.4
     optionalDependencies:
       '@novu/ee-billing-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/billing-web
       '@novu/ee-echo-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/echo/echo-web
       '@novu/ee-translation-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/translation-web
     devDependencies:
       '@babel/polyfill':
@@ -1022,21 +1022,21 @@ importers:
         version: 7.12.1
       '@babel/preset-env':
         specifier: ^7.23.2
-        version: 7.23.2(@babel/core@7.24.4)
+        version: 7.23.2(@babel/core@7.22.11)
       '@babel/preset-react':
         specifier: ^7.13.13
-        version: 7.18.6(@babel/core@7.24.4)
+        version: 7.18.6(@babel/core@7.22.11)
       '@babel/preset-typescript':
         specifier: ^7.13.0
-        version: 7.21.4(@babel/core@7.24.4)
+        version: 7.21.4(@babel/core@7.22.11)
       '@babel/runtime':
         specifier: ^7.20.13
         version: 7.21.0
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@pandacss/dev':
         specifier: ^0.38.0
@@ -1064,13 +1064,13 @@ importers:
         version: 7.4.2
       '@storybook/preset-create-react-app':
         specifier: ^7.4.2
-        version: 7.4.2(@babel/core@7.24.4)(@types/webpack@4.41.34)(react-refresh@0.11.0)(react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3))(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
+        version: 7.4.2(@babel/core@7.22.11)(@types/webpack@4.41.34)(react-refresh@0.11.0)(react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3))(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
       '@storybook/react':
         specifier: ^7.4.2
         version: 7.4.2(encoding@0.1.13)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(typescript@4.9.5)
       '@storybook/react-webpack5':
         specifier: ^7.4.2
-        version: 7.4.2(@babel/core@7.24.4)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/helpers@0.5.2)(@types/react-dom@17.0.19)(@types/react@17.0.53)(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)
+        version: 7.4.2(@babel/core@7.22.11)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/helpers@0.5.2)(@types/react-dom@17.0.19)(@types/react@17.0.53)(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)
       '@testing-library/jest-dom':
         specifier: ^4.2.4
         version: 4.2.4
@@ -1109,13 +1109,13 @@ importers:
         version: 3.0.1
       react-app-rewired:
         specifier: ^2.2.1
-        version: 2.2.1(react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3))
+        version: 2.2.1(react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3))
       react-error-overlay:
         specifier: 6.0.11
         version: 6.0.11
       react-scripts:
         specifier: ^5.0.1
-        version: 5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3)
+        version: 5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3)
       sinon:
         specifier: 9.2.4
         version: 9.2.4
@@ -1150,19 +1150,19 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.66.0
@@ -1292,10 +1292,10 @@ importers:
         specifier: 4.2.12
         version: 4.2.12(react@17.0.2)
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/notification-center
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       antd:
         specifier: ^4.10.0
@@ -1383,10 +1383,10 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@types/jest':
         specifier: ^29.5.0
@@ -1470,19 +1470,19 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.40.0
@@ -1558,19 +1558,19 @@ importers:
         version: 8.3.2
     optionalDependencies:
       '@novu/ee-auth':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/auth
       '@novu/ee-billing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/billing
       '@novu/ee-echo-worker':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/echo/echo-worker
       '@novu/ee-shared-services':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/shared-services
       '@novu/ee-translation':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
@@ -1670,16 +1670,16 @@ importers:
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2)(@nestjs/platform-socket.io@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.30.0
@@ -1809,13 +1809,13 @@ importers:
         specifier: 9.0.3
         version: 9.0.3(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(passport@0.6.0)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
       passport:
         specifier: 0.6.0
@@ -1882,16 +1882,16 @@ importers:
         specifier: ^5.0.1
         version: 5.1.1(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/dal
       '@novu/ee-dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
       class-transformer:
         specifier: ^0.5.1
@@ -1976,16 +1976,16 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/client':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../packages/client
       '@novu/design-system':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/design-system
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
       '@novu/shared-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared-web
       '@rjsf/chakra-ui':
         specifier: ^5.17.1
@@ -2070,22 +2070,22 @@ importers:
         specifier: 9.0.3
         version: 9.0.3(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(passport@0.6.0)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/dal
       '@novu/ee-dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../packages/stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/testing
       axios:
         specifier: ^1.6.2
@@ -2164,10 +2164,10 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/design-system':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/design-system
       '@novu/shared-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/shared-web
       '@rjsf/core':
         specifier: ^5.17.1
@@ -2228,19 +2228,19 @@ importers:
         specifier: 9.0.3
         version: 9.0.3(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(passport@0.6.0)
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/dal
       '@novu/ee-dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../packages/stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/testing
       axios:
         specifier: ^1.6.2
@@ -2313,10 +2313,10 @@ importers:
         specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/shared
       mongoose:
         specifier: ^7.5.0
@@ -2356,13 +2356,13 @@ importers:
         specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/dal
       '@novu/ee-dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
     devDependencies:
       '@types/node':
@@ -2405,19 +2405,19 @@ importers:
         specifier: ^7.1.8
         version: 7.1.9(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/dal
       '@novu/ee-dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../libs/dal
       '@novu/ee-shared-services':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared-services
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
       class-transformer:
         specifier: ^0.5.1
@@ -2502,16 +2502,16 @@ importers:
         specifier: ^4.6.0
         version: 4.6.0(monaco-editor@0.45.0)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@novu/client':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../packages/client
       '@novu/design-system':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/design-system
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
       '@novu/shared-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared-web
       '@tanstack/react-query':
         specifier: ^4.20.4
@@ -2636,7 +2636,7 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared
       JSONStream:
         specifier: ^1.3.5
@@ -2751,13 +2751,13 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(@mantine/core@5.10.5(@emotion/react@11.10.6(@types/react@17.0.62)(react@17.0.2))(@mantine/hooks@5.10.5(react@17.0.2))(@types/react@17.0.62)(react-dom@17.0.2(react@17.0.2))(react@17.0.2))(@mantine/hooks@5.10.5(react@17.0.2))(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@novu/client':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/client
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared
       '@novu/shared-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared-web
       '@segment/analytics-next':
         specifier: 1.59.0
@@ -2878,7 +2878,7 @@ importers:
   libs/embed:
     dependencies:
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/notification-center
       '@types/iframe-resizer':
         specifier: ^3.5.8
@@ -3114,7 +3114,7 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared
       '@segment/analytics-next':
         specifier: 1.59.0
@@ -3169,10 +3169,10 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared
       JSONStream:
         specifier: ^1.3.5
@@ -3302,19 +3302,19 @@ importers:
         specifier: '>=10'
         version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2))
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/providers':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../providers
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@opentelemetry/api':
         specifier: ^1.7.0
@@ -3450,10 +3450,10 @@ importers:
         version: 1.6.6
     optionalDependencies:
       '@novu/ee-echo-worker':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/echo/echo-worker
       '@novu/ee-shared-services':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/shared-services
       '@taskforcesh/bullmq-pro':
         specifier: 5.1.14
@@ -3523,7 +3523,7 @@ importers:
   packages/cli:
     dependencies:
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@segment/analytics-node':
         specifier: ^1.1.4
@@ -3590,7 +3590,7 @@ importers:
   packages/cli-next:
     dependencies:
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/studio':
         specifier: ^0.0.1-alpha.87
@@ -3681,7 +3681,7 @@ importers:
   packages/client:
     dependencies:
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
     devDependencies:
       '@types/jest':
@@ -3785,10 +3785,10 @@ importers:
   packages/headless:
     dependencies:
       '@novu/client':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../client
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@tanstack/query-core':
         specifier: ^4.15.1
@@ -3831,7 +3831,7 @@ importers:
         specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -3883,7 +3883,7 @@ importers:
   packages/node:
     dependencies:
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       axios-retry:
         specifier: ^3.8.0
@@ -3968,10 +3968,10 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/client':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../client
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@tanstack/react-query':
         specifier: ^4.20.4
@@ -4146,7 +4146,7 @@ importers:
         specifier: ^16.2.0
         version: 16.2.11(@angular/common@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(rxjs@7.8.1))(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(@angular/platform-browser@16.2.11(@angular/animations@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(@angular/common@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(rxjs@7.8.1))(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(rxjs@7.8.1)
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../notification-center
       rxjs:
         specifier: ~7.8.0
@@ -4210,7 +4210,7 @@ importers:
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0
         version: 16.2.11(@angular/common@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(rxjs@7.8.1))(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(@angular/platform-browser@16.2.11(@angular/animations@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(@angular/common@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(rxjs@7.8.1))(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../notification-center
       '@types/react':
         specifier: ^17.0.0
@@ -4234,7 +4234,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3(vue@3.2.47)
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../notification-center
       react:
         specifier: ^17.0.1
@@ -4310,10 +4310,10 @@ importers:
         specifier: ^1.0.50
         version: 1.0.50
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../stateless
       '@parse/node-apn':
         specifier: ^5.2.3
@@ -34725,6 +34725,13 @@ snapshots:
       '@babel/helper-skip-transparent-expression-wrappers': 7.22.5
       '@babel/plugin-syntax-optional-chaining': 7.8.3(@babel/core@7.21.4)
 
+  '@babel/plugin-proposal-optional-chaining@7.21.0(@babel/core@7.22.11)':
+    dependencies:
+      '@babel/core': 7.22.11
+      '@babel/helper-plugin-utils': 7.22.5
+      '@babel/helper-skip-transparent-expression-wrappers': 7.22.5
+      '@babel/plugin-syntax-optional-chaining': 7.8.3(@babel/core@7.22.11)
+
   '@babel/plugin-proposal-optional-chaining@7.21.0(@babel/core@7.24.4)':
     dependencies:
       '@babel/core': 7.24.4
@@ -36404,9 +36411,9 @@ snapshots:
       '@babel/core': 7.24.4
       '@babel/helper-plugin-utils': 7.22.5
 
-  '@babel/plugin-transform-react-display-name@7.18.6(@babel/core@7.24.4)':
+  '@babel/plugin-transform-react-display-name@7.18.6(@babel/core@7.22.11)':
     dependencies:
-      '@babel/core': 7.24.4
+      '@babel/core': 7.22.11
       '@babel/helper-plugin-utils': 7.20.2
 
   '@babel/plugin-transform-react-display-name@7.22.5(@babel/core@7.21.4)':
@@ -36424,10 +36431,10 @@ snapshots:
       '@babel/core': 7.24.4
       '@babel/helper-plugin-utils': 7.22.5
 
-  '@babel/plugin-transform-react-jsx-development@7.18.6(@babel/core@7.24.4)':
+  '@babel/plugin-transform-react-jsx-development@7.18.6(@babel/core@7.22.11)':
     dependencies:
-      '@babel/core': 7.24.4
-      '@babel/plugin-transform-react-jsx': 7.21.0(@babel/core@7.24.4)
+      '@babel/core': 7.22.11
+      '@babel/plugin-transform-react-jsx': 7.21.0(@babel/core@7.22.11)
 
   '@babel/plugin-transform-react-jsx-development@7.22.5(@babel/core@7.21.4)':
     dependencies:
@@ -36464,13 +36471,13 @@ snapshots:
       '@babel/core': 7.24.4
       '@babel/helper-plugin-utils': 7.24.5
 
-  '@babel/plugin-transform-react-jsx@7.21.0(@babel/core@7.24.4)':
+  '@babel/plugin-transform-react-jsx@7.21.0(@babel/core@7.22.11)':
     dependencies:
-      '@babel/core': 7.24.4
+      '@babel/core': 7.22.11
       '@babel/helper-annotate-as-pure': 7.18.6
       '@babel/helper-module-imports': 7.22.15
       '@babel/helper-plugin-utils': 7.22.5
-      '@babel/plugin-syntax-jsx': 7.22.5(@babel/core@7.24.4)
+      '@babel/plugin-syntax-jsx': 7.22.5(@babel/core@7.22.11)
       '@babel/types': 7.22.19
 
   '@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.21.4)':
@@ -36500,9 +36507,9 @@ snapshots:
       '@babel/plugin-syntax-jsx': 7.22.5(@babel/core@7.24.4)
       '@babel/types': 7.24.0
 
-  '@babel/plugin-transform-react-pure-annotations@7.18.6(@babel/core@7.24.4)':
+  '@babel/plugin-transform-react-pure-annotations@7.18.6(@babel/core@7.22.11)':
     dependencies:
-      '@babel/core': 7.24.4
+      '@babel/core': 7.22.11
       '@babel/helper-annotate-as-pure': 7.18.6
       '@babel/helper-plugin-utils': 7.22.5
 
@@ -36599,6 +36606,18 @@ snapshots:
       babel-plugin-polyfill-corejs2: 0.4.6(@babel/core@7.21.4)
       babel-plugin-polyfill-corejs3: 0.8.5(@babel/core@7.21.4)
       babel-plugin-polyfill-regenerator: 0.5.3(@babel/core@7.21.4)
+      semver: 6.3.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@babel/plugin-transform-runtime@7.23.2(@babel/core@7.22.11)':
+    dependencies:
+      '@babel/core': 7.22.11
+      '@babel/helper-module-imports': 7.22.15
+      '@babel/helper-plugin-utils': 7.22.5
+      babel-plugin-polyfill-corejs2: 0.4.6(@babel/core@7.22.11)
+      babel-plugin-polyfill-corejs3: 0.8.5(@babel/core@7.22.11)
+      babel-plugin-polyfill-regenerator: 0.5.3(@babel/core@7.22.11)
       semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
@@ -37372,15 +37391,15 @@ snapshots:
       '@babel/types': 7.23.0
       esutils: 2.0.3
 
-  '@babel/preset-react@7.18.6(@babel/core@7.24.4)':
+  '@babel/preset-react@7.18.6(@babel/core@7.22.11)':
     dependencies:
-      '@babel/core': 7.24.4
+      '@babel/core': 7.22.11
       '@babel/helper-plugin-utils': 7.20.2
       '@babel/helper-validator-option': 7.21.0
-      '@babel/plugin-transform-react-display-name': 7.18.6(@babel/core@7.24.4)
-      '@babel/plugin-transform-react-jsx': 7.21.0(@babel/core@7.24.4)
-      '@babel/plugin-transform-react-jsx-development': 7.18.6(@babel/core@7.24.4)
-      '@babel/plugin-transform-react-pure-annotations': 7.18.6(@babel/core@7.24.4)
+      '@babel/plugin-transform-react-display-name': 7.18.6(@babel/core@7.22.11)
+      '@babel/plugin-transform-react-jsx': 7.21.0(@babel/core@7.22.11)
+      '@babel/plugin-transform-react-jsx-development': 7.18.6(@babel/core@7.22.11)
+      '@babel/plugin-transform-react-pure-annotations': 7.18.6(@babel/core@7.22.11)
 
   '@babel/preset-react@7.22.15(@babel/core@7.21.4)':
     dependencies:
@@ -50701,16 +50720,16 @@ snapshots:
 
   '@storybook/postinstall@7.4.2': {}
 
-  '@storybook/preset-create-react-app@7.4.2(@babel/core@7.24.4)(@types/webpack@4.41.34)(react-refresh@0.11.0)(react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3))(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))':
+  '@storybook/preset-create-react-app@7.4.2(@babel/core@7.22.11)(@types/webpack@4.41.34)(react-refresh@0.11.0)(react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3))(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))':
     dependencies:
-      '@babel/core': 7.24.4
+      '@babel/core': 7.22.11
       '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(@types/webpack@4.41.34)(react-refresh@0.11.0)(type-fest@2.19.0)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
       '@storybook/react-docgen-typescript-plugin': 1.0.6--canary.9.0c3f3b7.0(typescript@4.9.5)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
       '@storybook/types': 7.4.2
       '@types/babel__core': 7.20.0
       babel-plugin-react-docgen: 4.2.1
       pnp-webpack-plugin: 1.7.0(typescript@4.9.5)
-      react-scripts: 5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3)
+      react-scripts: 5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3)
       semver: 7.5.4
     transitivePeerDependencies:
       - '@types/webpack'
@@ -50761,11 +50780,11 @@ snapshots:
       - webpack-hot-middleware
       - webpack-plugin-serve
 
-  '@storybook/preset-react-webpack@7.4.2(@babel/core@7.22.11)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.15.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)':
+  '@storybook/preset-react-webpack@7.4.2(@babel/core@7.22.11)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)':
     dependencies:
       '@babel/preset-flow': 7.22.15(@babel/core@7.22.11)
       '@babel/preset-react': 7.22.15(@babel/core@7.22.11)
-      '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(@types/webpack@4.41.34)(react-refresh@0.11.0)(type-fest@2.19.0)(webpack-dev-server@4.15.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
+      '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(@types/webpack@4.41.34)(react-refresh@0.11.0)(type-fest@2.19.0)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
       '@storybook/core-webpack': 7.4.2(encoding@0.1.13)
       '@storybook/docs-tools': 7.4.2(encoding@0.1.13)
       '@storybook/node-logger': 7.4.2
@@ -50798,11 +50817,11 @@ snapshots:
       - webpack-hot-middleware
       - webpack-plugin-serve
 
-  '@storybook/preset-react-webpack@7.4.2(@babel/core@7.24.4)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)':
+  '@storybook/preset-react-webpack@7.4.2(@babel/core@7.22.11)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.15.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)':
     dependencies:
-      '@babel/preset-flow': 7.22.15(@babel/core@7.24.4)
-      '@babel/preset-react': 7.22.15(@babel/core@7.24.4)
-      '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(@types/webpack@4.41.34)(react-refresh@0.11.0)(type-fest@2.19.0)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
+      '@babel/preset-flow': 7.22.15(@babel/core@7.22.11)
+      '@babel/preset-react': 7.22.15(@babel/core@7.22.11)
+      '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(@types/webpack@4.41.34)(react-refresh@0.11.0)(type-fest@2.19.0)(webpack-dev-server@4.15.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
       '@storybook/core-webpack': 7.4.2(encoding@0.1.13)
       '@storybook/docs-tools': 7.4.2(encoding@0.1.13)
       '@storybook/node-logger': 7.4.2
@@ -50819,7 +50838,7 @@ snapshots:
       semver: 7.6.2
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)
     optionalDependencies:
-      '@babel/core': 7.24.4
+      '@babel/core': 7.22.11
       typescript: 4.9.5
     transitivePeerDependencies:
       - '@swc/core'
@@ -50998,10 +51017,10 @@ snapshots:
       - webpack-hot-middleware
       - webpack-plugin-serve
 
-  '@storybook/react-webpack5@7.4.2(@babel/core@7.22.11)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/helpers@0.5.2)(@types/react-dom@17.0.20)(@types/react@17.0.62)(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.15.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)':
+  '@storybook/react-webpack5@7.4.2(@babel/core@7.22.11)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/helpers@0.5.2)(@types/react-dom@17.0.19)(@types/react@17.0.53)(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)':
     dependencies:
-      '@storybook/builder-webpack5': 7.4.2(@swc/helpers@0.5.2)(@types/react-dom@17.0.20)(@types/react@17.0.62)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(typescript@4.9.5)
-      '@storybook/preset-react-webpack': 7.4.2(@babel/core@7.22.11)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.15.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)
+      '@storybook/builder-webpack5': 7.4.2(@swc/helpers@0.5.2)(@types/react-dom@17.0.19)(@types/react@17.0.53)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(typescript@4.9.5)
+      '@storybook/preset-react-webpack': 7.4.2(@babel/core@7.22.11)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)
       '@storybook/react': 7.4.2(encoding@0.1.13)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(typescript@4.9.5)
       '@types/node': 16.11.7
       react: 17.0.2
@@ -51026,16 +51045,16 @@ snapshots:
       - webpack-hot-middleware
       - webpack-plugin-serve
 
-  '@storybook/react-webpack5@7.4.2(@babel/core@7.24.4)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/helpers@0.5.2)(@types/react-dom@17.0.19)(@types/react@17.0.53)(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)':
+  '@storybook/react-webpack5@7.4.2(@babel/core@7.22.11)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/helpers@0.5.2)(@types/react-dom@17.0.20)(@types/react@17.0.62)(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.15.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)':
     dependencies:
-      '@storybook/builder-webpack5': 7.4.2(@swc/helpers@0.5.2)(@types/react-dom@17.0.19)(@types/react@17.0.53)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(typescript@4.9.5)
-      '@storybook/preset-react-webpack': 7.4.2(@babel/core@7.24.4)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)
+      '@storybook/builder-webpack5': 7.4.2(@swc/helpers@0.5.2)(@types/react-dom@17.0.20)(@types/react@17.0.62)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(typescript@4.9.5)
+      '@storybook/preset-react-webpack': 7.4.2(@babel/core@7.22.11)(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/webpack@4.41.34)(encoding@0.1.13)(esbuild@0.18.20)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(type-fest@2.19.0)(typescript@4.9.5)(webpack-dev-server@4.15.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)
       '@storybook/react': 7.4.2(encoding@0.1.13)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(typescript@4.9.5)
       '@types/node': 16.11.7
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
     optionalDependencies:
-      '@babel/core': 7.24.4
+      '@babel/core': 7.22.11
       typescript: 4.9.5
     transitivePeerDependencies:
       - '@swc/core'
@@ -52832,7 +52851,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.58.0(typescript@4.9.5)
       eslint: 8.38.0
       eslint-scope: 5.1.1
-      semver: 7.6.2
+      semver: 7.5.4
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -58650,7 +58669,7 @@ snapshots:
       - jest
       - supports-color
 
-  eslint-config-react-app@7.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(jest@27.5.1(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5)))(typescript@4.9.5):
+  eslint-config-react-app@7.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(jest@27.5.1(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5)))(typescript@4.9.5):
     dependencies:
       '@babel/core': 7.24.4
       '@babel/eslint-parser': 7.21.3(@babel/core@7.24.4)(eslint@8.57.0)
@@ -58660,7 +58679,7 @@ snapshots:
       babel-preset-react-app: 10.0.1
       confusing-browser-globals: 1.0.11
       eslint: 8.57.0
-      eslint-plugin-flowtype: 8.0.3(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(eslint@8.57.0)
+      eslint-plugin-flowtype: 8.0.3(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(eslint@8.57.0)
       eslint-plugin-import: 2.28.1(@typescript-eslint/parser@5.58.0(eslint@8.57.0)(typescript@4.9.5))(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)
       eslint-plugin-jest: 25.7.0(@typescript-eslint/eslint-plugin@5.58.0(@typescript-eslint/parser@5.58.0(eslint@8.57.0)(typescript@4.9.5))(eslint@8.57.0)(typescript@4.9.5))(eslint@8.57.0)(jest@27.5.1(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5)))(typescript@4.9.5)
       eslint-plugin-jsx-a11y: 6.7.1(eslint@8.57.0)
@@ -58762,10 +58781,10 @@ snapshots:
       lodash: 4.17.21
       string-natural-compare: 3.0.1
 
-  eslint-plugin-flowtype@8.0.3(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(eslint@8.57.0):
+  eslint-plugin-flowtype@8.0.3(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(eslint@8.57.0):
     dependencies:
-      '@babel/plugin-syntax-flow': 7.22.5(@babel/core@7.24.4)
-      '@babel/plugin-transform-react-jsx': 7.22.15(@babel/core@7.24.4)
+      '@babel/plugin-syntax-flow': 7.22.5(@babel/core@7.22.11)
+      '@babel/plugin-transform-react-jsx': 7.22.15(@babel/core@7.22.11)
       eslint: 8.57.0
       lodash: 4.17.21
       string-natural-compare: 3.0.1
@@ -70720,9 +70739,9 @@ snapshots:
       react-scripts: 5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.21.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.21.4))(@swc/core@1.3.107)(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3)
       semver: 5.7.2
 
-  react-app-rewired@2.2.1(react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3)):
+  react-app-rewired@2.2.1(react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3)):
     dependencies:
-      react-scripts: 5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3)
+      react-scripts: 5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3)
       semver: 5.7.2
 
   react-base16-styling@0.6.0:
@@ -71290,7 +71309,7 @@ snapshots:
       - webpack-hot-middleware
       - webpack-plugin-serve
 
-  react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3):
+  react-scripts@5.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/babel__core@7.20.5)(@types/webpack@4.41.34)(esbuild@0.18.20)(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(react@17.0.2)(sass@1.64.1)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5))(type-fest@2.19.0)(typescript@4.9.5)(vue-template-compiler@2.7.14)(webpack-hot-middleware@2.25.3):
     dependencies:
       '@babel/core': 7.21.4
       '@pmmmwh/react-refresh-webpack-plugin': 0.5.10(@types/webpack@4.41.34)(react-refresh@0.11.0)(type-fest@2.19.0)(webpack-dev-server@4.11.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)))(webpack-hot-middleware@2.25.3)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
@@ -71308,7 +71327,7 @@ snapshots:
       dotenv: 10.0.0
       dotenv-expand: 5.1.0
       eslint: 8.57.0
-      eslint-config-react-app: 7.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.24.4))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.24.4))(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(jest@27.5.1(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5)))(typescript@4.9.5)
+      eslint-config-react-app: 7.0.1(@babel/plugin-syntax-flow@7.22.5(@babel/core@7.22.11))(@babel/plugin-transform-react-jsx@7.22.15(@babel/core@7.22.11))(eslint-import-resolver-webpack@0.13.7(eslint-plugin-import@2.28.1)(webpack@5.88.2(@swc/core@1.3.107)))(eslint@8.57.0)(jest@27.5.1(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@12.20.55)(typescript@4.9.5)))(typescript@4.9.5)
       eslint-webpack-plugin: 3.2.0(eslint@8.57.0)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
       file-loader: 6.2.0(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
       fs-extra: 10.1.0
