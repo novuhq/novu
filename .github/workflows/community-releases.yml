@@ -89,6 +89,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Link submodules
+        if: contains(matrix.name, '-ee')
+        run: pnpm symlink:submodules
+
       - uses: ./.github/actions/free-space
       - uses: ./.github/actions/setup-qemu
 
