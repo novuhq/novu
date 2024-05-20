@@ -6,7 +6,9 @@
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
-
+  "hostRequirements": {
+    "cpus": 4
+  },
   // Add the IDs of extensions you want installed when the container is created.
   "customizations": {
     "vscode": {
