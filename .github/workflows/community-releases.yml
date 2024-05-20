@@ -77,8 +77,6 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v3
-        with:
-          version: 8.9.0
 
       - name: Use Node.js
         uses: actions/setup-node@v4
