@@ -1,6 +1,7 @@
 import { IsBoolean, IsOptional, ValidateNested } from 'class-validator';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ChannelPreference } from '../../shared/dtos/channel-preference';
+import { Type } from 'class-transformer';
 
 @ApiExtraModels(ChannelPreference)
 export class UpdateSubscriberPreferenceRequestDto {
@@ -9,6 +10,8 @@ export class UpdateSubscriberPreferenceRequestDto {
     description: 'The subscriber preferences for every ChannelTypeEnum for the workflow assigned.',
   })
   @ValidateNested()
+  @Type(() => ChannelPreference)
+  @IsOptional()
   channel?: ChannelPreference;
 
   @ApiPropertyOptional({
