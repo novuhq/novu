@@ -9,7 +9,13 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 
-import { getNotificationTemplate, updateNotificationTemplate, getPreference, updatePreference } from './helpers';
+import {
+  getNotificationTemplate,
+  updateNotificationTemplate,
+  getPreference,
+  updatePreference,
+  updatePreferences,
+} from './helpers';
 
 describe('Update Subscribers preferences - /subscribers/:subscriberId/preferences/:templateId (PATCH)', function () {
   let session: UserSession;
@@ -84,7 +90,7 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
   });
 
   it('should fail on invalid "enabled" param (string)', async function () {
-    const updateDataEmailFalse = {
+    const updatePreferenceDataEmailFalse = {
       channel: {
         type: ChannelTypeEnum.EMAIL,
         enabled: '',
@@ -92,12 +98,30 @@ describe('Update Subscribers preferences - /subscribers/:subscriberId/preference
     };
 
     try {
-      const response = await updatePreference(updateDataEmailFalse as any, session, template._id);
+      const response = await updatePreference(updatePreferenceDataEmailFalse as any, session, template._id);
       expect(response).to.not.be.ok;
     } catch (error) {
       const { response } = error;
       expect(response.status).to.eql(400);
       expect(response.data.message[0]).to.be.equal('channel.enabled must be a boolean value');
+    }
+
+    const updatePreferencesDataEmailFalse = {
+      preferences: [
+        {
+          type: ChannelTypeEnum.EMAIL,
+          enabled: '',
+        },
+      ],
+    };
+
+    try {
+      const response = await updatePreferences(updatePreferencesDataEmailFalse as any, session);
+      expect(response).to.not.be.ok;
+    } catch (error) {
+      const { response } = error;
+      expect(response.status).to.eql(400);
+      expect(response.data.message[0]).to.be.equal('preferences.0.enabled must be a boolean value');
     }
   });
 
