@@ -18,7 +18,7 @@ const TitleH1 = styled('h1', RTitle);
 
 const getMDXComponent = mdxBundler.getMDXComponent;
 
-const wrapperId = 'embedded-docs';
+const DOCS_WRAPPER_ELEMENT_ID = 'embedded-docs';
 
 /*
  *Render the mdx for our mintlify docs inside of the web.
@@ -59,7 +59,7 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
       return;
     }
 
-    const docs = document.getElementById(wrapperId);
+    const docs = document.getElementById(DOCS_WRAPPER_ELEMENT_ID);
 
     if (!docs) {
       return;
@@ -108,7 +108,7 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
     <>
       <VStack
         alignItems="unset"
-        id={wrapperId}
+        id={DOCS_WRAPPER_ELEMENT_ID}
         gap="75"
         className={css({
           textAlign: 'justify left',
@@ -164,11 +164,11 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
                     borderRadius: '75',
                     backgroundColor: 'mauve.60.dark !important',
                     '& p': {
-                      color: 'white !important',
+                      color: 'legacy.white !important',
                     },
                   })}
                   {...props}
-                  icon={<IconInfoOutline className={css({ color: 'white !important' })} />}
+                  icon={<IconInfoOutline className={css({ color: 'legacy.white !important' })} />}
                 />
               );
             },
@@ -205,11 +205,11 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
                     borderRadius: '75',
                     backgroundColor: 'amber.60.dark !important',
                     '& p': {
-                      color: 'white !important',
+                      color: 'legacy.white !important',
                     },
                   })}
                   {...props}
-                  icon={<IconOutlineWarning className={css({ color: 'white !important' })} />}
+                  icon={<IconOutlineWarning className={css({ color: 'legacy.white !important' })} />}
                 />
               );
             },
@@ -220,11 +220,11 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
                     borderRadius: '75',
                     backgroundColor: 'blue.70.dark !important',
                     '& p': {
-                      color: 'white !important',
+                      color: 'legacy.white !important',
                     },
                   })}
                   {...props}
-                  icon={<IconInfoOutline className={css({ color: 'white !important' })} />}
+                  icon={<IconInfoOutline className={css({ color: 'legacy.white !important' })} />}
                 />
               );
             },
@@ -261,11 +261,11 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
                     borderRadius: '75',
                     backgroundColor: 'mauve.60.dark !important',
                     '& p': {
-                      color: 'white !important',
+                      color: 'legacy.white !important',
                     },
                   })}
                   {...props}
-                  icon={<IconInfoOutline className={css({ color: 'white !important' })} />}
+                  icon={<IconInfoOutline className={css({ color: 'legacy.white !important' })} />}
                 />
               );
             },

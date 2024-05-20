@@ -52,7 +52,7 @@ export const DocsButton = () => {
   const [opened, setOpened] = useState<boolean>(false);
   const segment = useSegment();
   const [path, setPath] = useState<string>('');
-  const enabled = useMemo(() => path.length > 0, [path]);
+  const shouldShowButton = useMemo(() => path.length > 0, [path]);
   const [docsOpen, setDocsOpen] = useState<boolean>(false);
   const { pathname } = useLocation();
 
@@ -84,16 +84,16 @@ export const DocsButton = () => {
   };
 
   useEffect(() => {
-    if (!enabled) {
+    if (!shouldShowButton) {
       return;
     }
     if (localStorage.getItem('inline-docs-intro') === 'false') {
       return;
     }
     setOpened(false);
-  }, [enabled]);
+  }, [shouldShowButton]);
 
-  if (!enabled) {
+  if (!shouldShowButton) {
     return null;
   }
 

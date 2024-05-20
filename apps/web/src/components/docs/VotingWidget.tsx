@@ -1,11 +1,56 @@
-import { ActionButton, IconThumbDownAlt, IconThumbUpAlt } from '@novu/design-system';
-import { css } from '@novu/novui/css';
+import { ActionButton, ColorScheme, IconThumbDownAlt, IconThumbUpAlt, useColorScheme } from '@novu/design-system';
+import { css, cva } from '@novu/novui/css';
 import { Flex, styled } from '@novu/novui/jsx';
 import { text } from '@novu/novui/recipes';
+import { SystemStyleObject } from '@novu/novui/types';
 
 const Text = styled('p', text);
 
 export type Voting = 'up' | 'down';
+
+const VotedDownButtonRecipe = cva<{
+  colorScheme: Record<ColorScheme, SystemStyleObject>;
+  voted: Record<Voting, SystemStyleObject>;
+}>({
+  compoundVariants: [
+    {
+      voted: 'down',
+      colorScheme: 'dark',
+      css: {
+        color: 'legacy.white !important',
+      },
+    },
+    {
+      voted: 'down',
+      colorScheme: 'light',
+      css: {
+        color: 'legacy.white !important',
+      },
+    },
+  ],
+});
+
+const VotedUpButtonRecipe = cva<{
+  colorScheme: Record<ColorScheme, SystemStyleObject>;
+  voted: Record<Voting, SystemStyleObject>;
+}>({
+  compoundVariants: [
+    {
+      voted: 'up',
+      colorScheme: 'dark',
+      css: {
+        color: 'legacy.white !important',
+      },
+    },
+    {
+      voted: 'up',
+      colorScheme: 'light',
+      css: {
+        color: 'legacy.white !important',
+      },
+    },
+  ],
+});
 
 export const VotingWidget = ({
   voted,
@@ -14,6 +59,8 @@ export const VotingWidget = ({
   voted: Voting | undefined;
   onVoteClick: (vote: Voting) => () => void;
 }) => {
+  const { colorScheme } = useColorScheme();
+
   return (
     <Flex
       className={css({
@@ -26,11 +73,11 @@ export const VotingWidget = ({
       <Flex gap="50" align="center">
         <ActionButton
           onClick={onVoteClick('up')}
-          Icon={() => <IconThumbUpAlt color={voted === 'up' ? 'white' : undefined} size={20} />}
+          Icon={() => <IconThumbUpAlt className={VotedUpButtonRecipe({ colorScheme, voted })} size={20} />}
         />
         <ActionButton
           onClick={onVoteClick('down')}
-          Icon={() => <IconThumbDownAlt color={voted === 'down' ? 'white' : undefined} size={20} />}
+          Icon={() => <IconThumbDownAlt className={VotedDownButtonRecipe({ colorScheme, voted })} size={20} />}
         />
       </Flex>
     </Flex>
