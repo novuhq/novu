@@ -135,7 +135,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - prepare
-      - docker_build
+      - build_docker
     timeout-minutes: 80
     steps:
       - name: Create tag v${{ needs.prepare.outputs.latest-version }} in the GIT Repo
