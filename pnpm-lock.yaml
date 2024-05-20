@@ -362,25 +362,25 @@ importers:
         specifier: ^5.0.1
         version: 5.1.1(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/echo':
-        specifier: 'workspace:'
-        version: link:../../packages/sdk
+        specifier: workspace:*
+        version: link:../../packages/echo
       '@novu/node':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/node
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@sendgrid/mail':
         specifier: ^8.1.0
@@ -513,19 +513,19 @@ importers:
         version: 8.3.2
     optionalDependencies:
       '@novu/ee-auth':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/auth
       '@novu/ee-billing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/billing
       '@novu/ee-echo-api':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/echo/echo-api
       '@novu/ee-shared-services':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/shared-services
       '@novu/ee-translation':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
@@ -604,10 +604,10 @@ importers:
   apps/inbound-mail:
     dependencies:
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/application-generic
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@sentry/node':
         specifier: ^7.12.1
@@ -659,7 +659,7 @@ importers:
         version: 3.10.0
     devDependencies:
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@types/chai':
         specifier: ^4.2.11
@@ -794,19 +794,19 @@ importers:
         specifier: ^4.6.0
         version: 4.6.0(monaco-editor@0.45.0)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@novu/design-system':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/design-system
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/notification-center
       '@novu/novui':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/novui
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/shared-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared-web
       '@rive-app/react-canvas':
         specifier: ^4.8.1
@@ -1008,13 +1008,13 @@ importers:
         version: 3.22.4
     optionalDependencies:
       '@novu/ee-billing-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/billing-web
       '@novu/ee-echo-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/echo/echo-web
       '@novu/ee-translation-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/translation-web
     devDependencies:
       '@babel/polyfill':
@@ -1033,10 +1033,10 @@ importers:
         specifier: ^7.20.13
         version: 7.21.0
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@pandacss/dev':
         specifier: ^0.38.0
@@ -1150,19 +1150,19 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.66.0
@@ -1292,10 +1292,10 @@ importers:
         specifier: 4.2.12
         version: 4.2.12(react@17.0.2)
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/notification-center
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       antd:
         specifier: ^4.10.0
@@ -1383,10 +1383,10 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@types/jest':
         specifier: ^29.5.0
@@ -1470,19 +1470,19 @@ importers:
         specifier: ^10.0.1
         version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.40.0
@@ -1558,19 +1558,19 @@ importers:
         version: 8.3.2
     optionalDependencies:
       '@novu/ee-auth':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/auth
       '@novu/ee-billing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/billing
       '@novu/ee-echo-worker':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/echo/echo-worker
       '@novu/ee-shared-services':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/shared-services
       '@novu/ee-translation':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/translation
     devDependencies:
       '@faker-js/faker':
@@ -1670,16 +1670,16 @@ importers:
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2)(@nestjs/platform-socket.io@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@sentry/node':
         specifier: ^7.30.0
@@ -1809,13 +1809,13 @@ importers:
         specifier: 9.0.3
         version: 9.0.3(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(passport@0.6.0)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
       passport:
         specifier: 0.6.0
@@ -1882,16 +1882,16 @@ importers:
         specifier: ^5.0.1
         version: 5.1.1(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/dal
       '@novu/ee-dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
       class-transformer:
         specifier: ^0.5.1
@@ -1976,16 +1976,16 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/client':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../packages/client
       '@novu/design-system':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/design-system
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
       '@novu/shared-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared-web
       '@rjsf/chakra-ui':
         specifier: ^5.17.1
@@ -2070,22 +2070,22 @@ importers:
         specifier: 9.0.3
         version: 9.0.3(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(passport@0.6.0)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/dal
       '@novu/ee-dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../packages/stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/testing
       axios:
         specifier: ^1.6.2
@@ -2164,10 +2164,10 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/design-system':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/design-system
       '@novu/shared-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/shared-web
       '@rjsf/core':
         specifier: ^5.17.1
@@ -2228,19 +2228,19 @@ importers:
         specifier: 9.0.3
         version: 9.0.3(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(passport@0.6.0)
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/dal
       '@novu/ee-dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../packages/stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/testing
       axios:
         specifier: ^1.6.2
@@ -2313,10 +2313,10 @@ importers:
         specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../../libs/shared
       mongoose:
         specifier: ^7.5.0
@@ -2356,13 +2356,13 @@ importers:
         specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/dal
       '@novu/ee-dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../libs/dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
     devDependencies:
       '@types/node':
@@ -2405,19 +2405,19 @@ importers:
         specifier: ^7.1.8
         version: 7.1.9(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
       '@novu/application-generic':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../packages/application-generic
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/dal
       '@novu/ee-dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../libs/dal
       '@novu/ee-shared-services':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared-services
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
       class-transformer:
         specifier: ^0.5.1
@@ -2502,16 +2502,16 @@ importers:
         specifier: ^4.6.0
         version: 4.6.0(monaco-editor@0.45.0)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@novu/client':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../packages/client
       '@novu/design-system':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/design-system
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared
       '@novu/shared-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../libs/shared-web
       '@tanstack/react-query':
         specifier: ^4.20.4
@@ -2636,7 +2636,7 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared
       JSONStream:
         specifier: ^1.3.5
@@ -2751,13 +2751,13 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(@mantine/core@5.10.5(@emotion/react@11.10.6(@types/react@17.0.62)(react@17.0.2))(@mantine/hooks@5.10.5(react@17.0.2))(@types/react@17.0.62)(react-dom@17.0.2(react@17.0.2))(react@17.0.2))(@mantine/hooks@5.10.5(react@17.0.2))(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@novu/client':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/client
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared
       '@novu/shared-web':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared-web
       '@segment/analytics-next':
         specifier: 1.59.0
@@ -2878,7 +2878,7 @@ importers:
   libs/embed:
     dependencies:
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../packages/notification-center
       '@types/iframe-resizer':
         specifier: ^3.5.8
@@ -3114,7 +3114,7 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared
       '@segment/analytics-next':
         specifier: 1.59.0
@@ -3169,10 +3169,10 @@ importers:
         specifier: ^6.0.0
         version: 6.3.1
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../dal
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../shared
       JSONStream:
         specifier: ^1.3.5
@@ -3302,19 +3302,19 @@ importers:
         specifier: '>=10'
         version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2))
       '@novu/dal':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/dal
       '@novu/providers':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../providers
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../stateless
       '@novu/testing':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/testing
       '@opentelemetry/api':
         specifier: ^1.7.0
@@ -3450,10 +3450,10 @@ importers:
         version: 1.6.6
     optionalDependencies:
       '@novu/ee-echo-worker':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/echo/echo-worker
       '@novu/ee-shared-services':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../enterprise/packages/shared-services
       '@taskforcesh/bullmq-pro':
         specifier: 5.1.14
@@ -3523,7 +3523,7 @@ importers:
   packages/cli:
     dependencies:
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@segment/analytics-node':
         specifier: ^1.1.4
@@ -3590,7 +3590,7 @@ importers:
   packages/cli-next:
     dependencies:
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/studio':
         specifier: ^0.0.1-alpha.87
@@ -3681,7 +3681,7 @@ importers:
   packages/client:
     dependencies:
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
     devDependencies:
       '@types/jest':
@@ -3712,13 +3712,83 @@ importers:
         specifier: 4.9.5
         version: 4.9.5
 
+  packages/echo:
+    dependencies:
+      ajv:
+        specifier: ^8.12.0
+        version: 8.12.0
+      ajv-formats:
+        specifier: ^2.1.1
+        version: 2.1.1(ajv@8.12.0)
+      better-ajv-errors:
+        specifier: ^1.2.0
+        version: 1.2.0(ajv@8.12.0)
+      chalk:
+        specifier: ^4.1.2
+        version: 4.1.2
+      cross-fetch:
+        specifier: ^4.0.0
+        version: 4.0.0(encoding@0.1.13)
+      json-schema-faker:
+        specifier: ^0.5.6
+        version: 0.5.6
+      json-schema-to-ts:
+        specifier: ^3.0.0
+        version: 3.1.0
+      ora:
+        specifier: ^5.4.1
+        version: 5.4.1
+    devDependencies:
+      '@jest/globals':
+        specifier: ^29.7.0
+        version: 29.7.0
+      '@types/express':
+        specifier: ^4.17.13
+        version: 4.17.17
+      '@types/jest':
+        specifier: ^29.5.12
+        version: 29.5.12
+      '@types/json-schema':
+        specifier: ^7.0.15
+        version: 7.0.15
+      '@types/node':
+        specifier: ^20.11.20
+        version: 20.12.12
+      '@vercel/node':
+        specifier: ^2.15.9
+        version: 2.15.10(@swc/core@1.3.107)(encoding@0.1.13)
+      express:
+        specifier: ^4.18.2
+        version: 4.19.2
+      h3:
+        specifier: ^1.11.1
+        version: 1.11.1
+      jest:
+        specifier: ^29.7.0
+        version: 29.7.0(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@5.4.5))
+      next:
+        specifier: ^13.5.4
+        version: 13.5.6(@babel/core@7.24.4)(@opentelemetry/api@1.7.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.64.1)
+      prettier:
+        specifier: ^3.2.5
+        version: 3.2.5
+      ts-jest:
+        specifier: ^29.1.2
+        version: 29.1.2(@babel/core@7.24.4)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.24.4))(jest@29.7.0(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@5.4.5)))(typescript@5.4.5)
+      ts-node:
+        specifier: ^10.9.2
+        version: 10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@5.4.5)
+      typescript:
+        specifier: ^5.3.3
+        version: 5.4.5
+
   packages/headless:
     dependencies:
       '@novu/client':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../client
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@tanstack/query-core':
         specifier: ^4.15.1
@@ -3761,7 +3831,7 @@ importers:
         specifier: 10.2.2
         version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../stateless
     devDependencies:
       '@istanbuljs/nyc-config-typescript':
@@ -3813,7 +3883,7 @@ importers:
   packages/node:
     dependencies:
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       axios-retry:
         specifier: ^3.8.0
@@ -3898,10 +3968,10 @@ importers:
         specifier: ^5.7.1
         version: 5.10.5(react@17.0.2)
       '@novu/client':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../client
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@tanstack/react-query':
         specifier: ^4.20.4
@@ -4076,7 +4146,7 @@ importers:
         specifier: ^16.2.0
         version: 16.2.11(@angular/common@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(rxjs@7.8.1))(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(@angular/platform-browser@16.2.11(@angular/animations@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(@angular/common@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(rxjs@7.8.1))(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(rxjs@7.8.1)
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../notification-center
       rxjs:
         specifier: ~7.8.0
@@ -4140,7 +4210,7 @@ importers:
         specifier: ^15.0.0 || ^16.0.0 || ^17.0.0
         version: 16.2.11(@angular/common@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(rxjs@7.8.1))(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(@angular/platform-browser@16.2.11(@angular/animations@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(@angular/common@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3))(rxjs@7.8.1))(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../../notification-center
       '@types/react':
         specifier: ^17.0.0
@@ -4164,7 +4234,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3(vue@3.2.47)
       '@novu/notification-center':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../notification-center
       react:
         specifier: ^17.0.1
@@ -4240,10 +4310,10 @@ importers:
         specifier: ^1.0.50
         version: 1.0.50
       '@novu/shared':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../../libs/shared
       '@novu/stateless':
-        specifier: 'workspace:'
+        specifier: workspace:*
         version: link:../stateless
       '@parse/node-apn':
         specifier: ^5.2.3
@@ -4432,76 +4502,6 @@ importers:
       typescript:
         specifier: ^4.9.5
         version: 4.9.5
-
-  packages/sdk:
-    dependencies:
-      ajv:
-        specifier: ^8.12.0
-        version: 8.12.0
-      ajv-formats:
-        specifier: ^2.1.1
-        version: 2.1.1(ajv@8.12.0)
-      better-ajv-errors:
-        specifier: ^1.2.0
-        version: 1.2.0(ajv@8.12.0)
-      chalk:
-        specifier: ^4.1.2
-        version: 4.1.2
-      cross-fetch:
-        specifier: ^4.0.0
-        version: 4.0.0(encoding@0.1.13)
-      h3:
-        specifier: ^1.11.1
-        version: 1.11.1
-      json-schema-faker:
-        specifier: ^0.5.6
-        version: 0.5.6
-      json-schema-to-ts:
-        specifier: ^3.0.0
-        version: 3.1.0
-      ora:
-        specifier: ^5.4.1
-        version: 5.4.1
-    devDependencies:
-      '@jest/globals':
-        specifier: ^29.7.0
-        version: 29.7.0
-      '@types/express':
-        specifier: ^4.17.13
-        version: 4.17.17
-      '@types/jest':
-        specifier: ^29.5.12
-        version: 29.5.12
-      '@types/json-schema':
-        specifier: ^7.0.15
-        version: 7.0.15
-      '@types/node':
-        specifier: ^20.11.20
-        version: 20.12.12
-      '@vercel/node':
-        specifier: ^2.15.9
-        version: 2.15.10(@swc/core@1.3.107)(encoding@0.1.13)
-      express:
-        specifier: ^4.18.2
-        version: 4.18.2
-      jest:
-        specifier: ^29.7.0
-        version: 29.7.0(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@5.4.5))
-      next:
-        specifier: ^13.5.4
-        version: 13.5.6(@babel/core@7.24.4)(@opentelemetry/api@1.7.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.64.1)
-      prettier:
-        specifier: ^3.2.5
-        version: 3.2.5
-      ts-jest:
-        specifier: ^29.1.2
-        version: 29.1.2(@babel/core@7.24.4)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.24.4))(jest@29.7.0(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@5.4.5)))(typescript@5.4.5)
-      ts-node:
-        specifier: ^10.9.2
-        version: 10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@5.4.5)
-      typescript:
-        specifier: ^5.3.3
-        version: 5.4.5
 
   packages/stateless:
     dependencies:
@@ -8060,12 +8060,6 @@ packages:
     cpu: [arm64]
     os: [android]
 
-  '@esbuild/android-arm64@0.19.5':
-    resolution: {integrity: sha512-5d1OkoJxnYQfmC+Zd8NBFjkhyCNYwM4n9ODrycTFY6Jk1IGiZ+tjVJDDSwDt77nK+tfpGP4T50iMtVi4dEGzhQ==}
-    engines: {node: '>=12'}
-    cpu: [arm64]
-    os: [android]
-
   '@esbuild/android-arm64@0.20.1':
     resolution: {integrity: sha512-hCnXNF0HM6AjowP+Zou0ZJMWWa1VkD77BXe959zERgGJBBxB+sV+J9f/rcjeg2c5bsukD/n17RKWXGFCO5dD5A==}
     engines: {node: '>=12'}
@@ -8086,12 +8080,6 @@ packages:
 
   '@esbuild/android-arm@0.19.12':
     resolution: {integrity: sha512-qg/Lj1mu3CdQlDEEiWrlC4eaPZ1KztwGJ9B6J+/6G+/4ewxJg7gqj8eVYWvao1bXrqGiW2rsBZFSX3q2lcW05w==}
-    engines: {node: '>=12'}
-    cpu: [arm]
-    os: [android]
-
-  '@esbuild/android-arm@0.19.5':
-    resolution: {integrity: sha512-bhvbzWFF3CwMs5tbjf3ObfGqbl/17ict2/uwOSfr3wmxDE6VdS2GqY/FuzIPe0q0bdhj65zQsvqfArI9MY6+AA==}
     engines: {node: '>=12'}
     cpu: [arm]
     os: [android]
@@ -8120,12 +8108,6 @@ packages:
     cpu: [x64]
     os: [android]
 
-  '@esbuild/android-x64@0.19.5':
-    resolution: {integrity: sha512-9t+28jHGL7uBdkBjL90QFxe7DVA+KGqWlHCF8ChTKyaKO//VLuoBricQCgwhOjA1/qOczsw843Fy4cbs4H3DVA==}
-    engines: {node: '>=12'}
-    cpu: [x64]
-    os: [android]
-
   '@esbuild/android-x64@0.20.1':
     resolution: {integrity: sha512-MSfZMBoAsnhpS+2yMFYIQUPs8Z19ajwfuaSZx+tSl09xrHZCjbeXXMsUF/0oq7ojxYEpsSo4c0SfjxOYXRbpaA==}
     engines: {node: '>=12'}
@@ -8146,12 +8128,6 @@ packages:
 
   '@esbuild/darwin-arm64@0.19.12':
     resolution: {integrity: sha512-B6IeSgZgtEzGC42jsI+YYu9Z3HKRxp8ZT3cqhvliEHovq8HSX2YX8lNocDn79gCKJXOSaEot9MVYky7AKjCs8g==}
-    engines: {node: '>=12'}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@esbuild/darwin-arm64@0.19.5':
-    resolution: {integrity: sha512-mvXGcKqqIqyKoxq26qEDPHJuBYUA5KizJncKOAf9eJQez+L9O+KfvNFu6nl7SCZ/gFb2QPaRqqmG0doSWlgkqw==}
     engines: {node: '>=12'}
     cpu: [arm64]
     os: [darwin]
@@ -8180,12 +8156,6 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@esbuild/darwin-x64@0.19.5':
-    resolution: {integrity: sha512-Ly8cn6fGLNet19s0X4unjcniX24I0RqjPv+kurpXabZYSXGM4Pwpmf85WHJN3lAgB8GSth7s5A0r856S+4DyiA==}
-    engines: {node: '>=12'}
-    cpu: [x64]
-    os: [darwin]
-
   '@esbuild/darwin-x64@0.20.1':
     resolution: {integrity: sha512-pFIfj7U2w5sMp52wTY1XVOdoxw+GDwy9FsK3OFz4BpMAjvZVs0dT1VXs8aQm22nhwoIWUmIRaE+4xow8xfIDZA==}
     engines: {node: '>=12'}
@@ -8206,12 +8176,6 @@ packages:
 
   '@esbuild/freebsd-arm64@0.19.12':
     resolution: {integrity: sha512-4aRvFIXmwAcDBw9AueDQ2YnGmz5L6obe5kmPT8Vd+/+x/JMVKCgdcRwH6APrbpNXsPz+K653Qg8HB/oXvXVukA==}
-    engines: {node: '>=12'}
-    cpu: [arm64]
-    os: [freebsd]
-
-  '@esbuild/freebsd-arm64@0.19.5':
-    resolution: {integrity: sha512-GGDNnPWTmWE+DMchq1W8Sd0mUkL+APvJg3b11klSGUDvRXh70JqLAO56tubmq1s2cgpVCSKYywEiKBfju8JztQ==}
     engines: {node: '>=12'}
     cpu: [arm64]
     os: [freebsd]
@@ -8240,12 +8204,6 @@ packages:
     cpu: [x64]
     os: [freebsd]
 
-  '@esbuild/freebsd-x64@0.19.5':
-    resolution: {integrity: sha512-1CCwDHnSSoA0HNwdfoNY0jLfJpd7ygaLAp5EHFos3VWJCRX9DMwWODf96s9TSse39Br7oOTLryRVmBoFwXbuuQ==}
-    engines: {node: '>=12'}
-    cpu: [x64]
-    os: [freebsd]
-
   '@esbuild/freebsd-x64@0.20.1':
     resolution: {integrity: sha512-itPwCw5C+Jh/c624vcDd9kRCCZVpzpQn8dtwoYIt2TJF3S9xJLiRohnnNrKwREvcZYx0n8sCSbvGH349XkcQeg==}
     engines: {node: '>=12'}
@@ -8266,12 +8224,6 @@ packages:
 
   '@esbuild/linux-arm64@0.19.12':
     resolution: {integrity: sha512-EoTjyYyLuVPfdPLsGVVVC8a0p1BFFvtpQDB/YLEhaXyf/5bczaGeN15QkR+O4S5LeJ92Tqotve7i1jn35qwvdA==}
-    engines: {node: '>=12'}
-    cpu: [arm64]
-    os: [linux]
-
-  '@esbuild/linux-arm64@0.19.5':
-    resolution: {integrity: sha512-o3vYippBmSrjjQUCEEiTZ2l+4yC0pVJD/Dl57WfPwwlvFkrxoSO7rmBZFii6kQB3Wrn/6GwJUPLU5t52eq2meA==}
     engines: {node: '>=12'}
     cpu: [arm64]
     os: [linux]
@@ -8300,12 +8252,6 @@ packages:
     cpu: [arm]
     os: [linux]
 
-  '@esbuild/linux-arm@0.19.5':
-    resolution: {integrity: sha512-lrWXLY/vJBzCPC51QN0HM71uWgIEpGSjSZZADQhq7DKhPcI6NH1IdzjfHkDQws2oNpJKpR13kv7/pFHBbDQDwQ==}
-    engines: {node: '>=12'}
-    cpu: [arm]
-    os: [linux]
-
   '@esbuild/linux-arm@0.20.1':
     resolution: {integrity: sha512-LojC28v3+IhIbfQ+Vu4Ut5n3wKcgTu6POKIHN9Wpt0HnfgUGlBuyDDQR4jWZUZFyYLiz4RBBBmfU6sNfn6RhLw==}
     engines: {node: '>=12'}
@@ -8326,12 +8272,6 @@ packages:
 
   '@esbuild/linux-ia32@0.19.12':
     resolution: {integrity: sha512-Thsa42rrP1+UIGaWz47uydHSBOgTUnwBwNq59khgIwktK6x60Hivfbux9iNR0eHCHzOLjLMLfUMLCypBkZXMHA==}
-    engines: {node: '>=12'}
-    cpu: [ia32]
-    os: [linux]
-
-  '@esbuild/linux-ia32@0.19.5':
-    resolution: {integrity: sha512-MkjHXS03AXAkNp1KKkhSKPOCYztRtK+KXDNkBa6P78F8Bw0ynknCSClO/ztGszILZtyO/lVKpa7MolbBZ6oJtQ==}
     engines: {node: '>=12'}
     cpu: [ia32]
     os: [linux]
@@ -8360,12 +8300,6 @@ packages:
     cpu: [loong64]
     os: [linux]
 
-  '@esbuild/linux-loong64@0.19.5':
-    resolution: {integrity: sha512-42GwZMm5oYOD/JHqHska3Jg0r+XFb/fdZRX+WjADm3nLWLcIsN27YKtqxzQmGNJgu0AyXg4HtcSK9HuOk3v1Dw==}
-    engines: {node: '>=12'}
-    cpu: [loong64]
-    os: [linux]
-
   '@esbuild/linux-loong64@0.20.1':
     resolution: {integrity: sha512-c0jgtB+sRHCciVXlyjDcWb2FUuzlGVRwGXgI+3WqKOIuoo8AmZAddzeOHeYLtD+dmtHw3B4Xo9wAUdjlfW5yYA==}
     engines: {node: '>=12'}
@@ -8386,12 +8320,6 @@ packages:
 
   '@esbuild/linux-mips64el@0.19.12':
     resolution: {integrity: sha512-fEnAuj5VGTanfJ07ff0gOA6IPsvrVHLVb6Lyd1g2/ed67oU1eFzL0r9WL7ZzscD+/N6i3dWumGE1Un4f7Amf+w==}
-    engines: {node: '>=12'}
-    cpu: [mips64el]
-    os: [linux]
-
-  '@esbuild/linux-mips64el@0.19.5':
-    resolution: {integrity: sha512-kcjndCSMitUuPJobWCnwQ9lLjiLZUR3QLQmlgaBfMX23UEa7ZOrtufnRds+6WZtIS9HdTXqND4yH8NLoVVIkcg==}
     engines: {node: '>=12'}
     cpu: [mips64el]
     os: [linux]
@@ -8420,12 +8348,6 @@ packages:
     cpu: [ppc64]
     os: [linux]
 
-  '@esbuild/linux-ppc64@0.19.5':
-    resolution: {integrity: sha512-yJAxJfHVm0ZbsiljbtFFP1BQKLc8kUF6+17tjQ78QjqjAQDnhULWiTA6u0FCDmYT1oOKS9PzZ2z0aBI+Mcyj7Q==}
-    engines: {node: '>=12'}
-    cpu: [ppc64]
-    os: [linux]
-
   '@esbuild/linux-ppc64@0.20.1':
     resolution: {integrity: sha512-b+yuD1IUeL+Y93PmFZDZFIElwbmFfIKLKlYI8M6tRyzE6u7oEP7onGk0vZRh8wfVGC2dZoy0EqX1V8qok4qHaw==}
     engines: {node: '>=12'}
@@ -8446,12 +8368,6 @@ packages:
 
   '@esbuild/linux-riscv64@0.19.12':
     resolution: {integrity: sha512-2MueBrlPQCw5dVJJpQdUYgeqIzDQgw3QtiAHUC4RBz9FXPrskyyU3VI1hw7C0BSKB9OduwSJ79FTCqtGMWqJHg==}
-    engines: {node: '>=12'}
-    cpu: [riscv64]
-    os: [linux]
-
-  '@esbuild/linux-riscv64@0.19.5':
-    resolution: {integrity: sha512-5u8cIR/t3gaD6ad3wNt1MNRstAZO+aNyBxu2We8X31bA8XUNyamTVQwLDA1SLoPCUehNCymhBhK3Qim1433Zag==}
     engines: {node: '>=12'}
     cpu: [riscv64]
     os: [linux]
@@ -8480,12 +8396,6 @@ packages:
     cpu: [s390x]
     os: [linux]
 
-  '@esbuild/linux-s390x@0.19.5':
-    resolution: {integrity: sha512-Z6JrMyEw/EmZBD/OFEFpb+gao9xJ59ATsoTNlj39jVBbXqoZm4Xntu6wVmGPB/OATi1uk/DB+yeDPv2E8PqZGw==}
-    engines: {node: '>=12'}
-    cpu: [s390x]
-    os: [linux]
-
   '@esbuild/linux-s390x@0.20.1':
     resolution: {integrity: sha512-5BepC2Au80EohQ2dBpyTquqGCES7++p7G+7lXe1bAIvMdXm4YYcEfZtQrP4gaoZ96Wv1Ute61CEHFU7h4FMueQ==}
     engines: {node: '>=12'}
@@ -8506,12 +8416,6 @@ packages:
 
   '@esbuild/linux-x64@0.19.12':
     resolution: {integrity: sha512-B71g1QpxfwBvNrfyJdVDexenDIt1CiDN1TIXLbhOw0KhJzE78KIFGX6OJ9MrtC0oOqMWf+0xop4qEU8JrJTwCg==}
-    engines: {node: '>=12'}
-    cpu: [x64]
-    os: [linux]
-
-  '@esbuild/linux-x64@0.19.5':
-    resolution: {integrity: sha512-psagl+2RlK1z8zWZOmVdImisMtrUxvwereIdyJTmtmHahJTKb64pAcqoPlx6CewPdvGvUKe2Jw+0Z/0qhSbG1A==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [linux]
@@ -8540,12 +8444,6 @@ packages:
     cpu: [x64]
     os: [netbsd]
 
-  '@esbuild/netbsd-x64@0.19.5':
-    resolution: {integrity: sha512-kL2l+xScnAy/E/3119OggX8SrWyBEcqAh8aOY1gr4gPvw76la2GlD4Ymf832UCVbmuWeTf2adkZDK+h0Z/fB4g==}
-    engines: {node: '>=12'}
-    cpu: [x64]
-    os: [netbsd]
-
   '@esbuild/netbsd-x64@0.20.1':
     resolution: {integrity: sha512-4fL68JdrLV2nVW2AaWZBv3XEm3Ae3NZn/7qy2KGAt3dexAgSVT+Hc97JKSZnqezgMlv9x6KV0ZkZY7UO5cNLCg==}
     engines: {node: '>=12'}
@@ -8566,12 +8464,6 @@ packages:
 
   '@esbuild/openbsd-x64@0.19.12':
     resolution: {integrity: sha512-RbrfTB9SWsr0kWmb9srfF+L933uMDdu9BIzdA7os2t0TXhCRjrQyCeOt6wVxr79CKD4c+p+YhCj31HBkYcXebw==}
-    engines: {node: '>=12'}
-    cpu: [x64]
-    os: [openbsd]
-
-  '@esbuild/openbsd-x64@0.19.5':
-    resolution: {integrity: sha512-sPOfhtzFufQfTBgRnE1DIJjzsXukKSvZxloZbkJDG383q0awVAq600pc1nfqBcl0ice/WN9p4qLc39WhBShRTA==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [openbsd]
@@ -8600,12 +8492,6 @@ packages:
     cpu: [x64]
     os: [sunos]
 
-  '@esbuild/sunos-x64@0.19.5':
-    resolution: {integrity: sha512-dGZkBXaafuKLpDSjKcB0ax0FL36YXCvJNnztjKV+6CO82tTYVDSH2lifitJ29jxRMoUhgkg9a+VA/B03WK5lcg==}
-    engines: {node: '>=12'}
-    cpu: [x64]
-    os: [sunos]
-
   '@esbuild/sunos-x64@0.20.1':
     resolution: {integrity: sha512-ZnWEyCM0G1Ex6JtsygvC3KUUrlDXqOihw8RicRuQAzw+c4f1D66YlPNNV3rkjVW90zXVsHwZYWbJh3v+oQFM9Q==}
     engines: {node: '>=12'}
@@ -8626,12 +8512,6 @@ packages:
 
   '@esbuild/win32-arm64@0.19.12':
     resolution: {integrity: sha512-URgtR1dJnmGvX864pn1B2YUYNzjmXkuJOIqG2HdU62MVS4EHpU2946OZoTMnRUHklGtJdJZ33QfzdjGACXhn1A==}
-    engines: {node: '>=12'}
-    cpu: [arm64]
-    os: [win32]
-
-  '@esbuild/win32-arm64@0.19.5':
-    resolution: {integrity: sha512-dWVjD9y03ilhdRQ6Xig1NWNgfLtf2o/STKTS+eZuF90fI2BhbwD6WlaiCGKptlqXlURVB5AUOxUj09LuwKGDTg==}
     engines: {node: '>=12'}
     cpu: [arm64]
     os: [win32]
@@ -8660,12 +8540,6 @@ packages:
     cpu: [ia32]
     os: [win32]
 
-  '@esbuild/win32-ia32@0.19.5':
-    resolution: {integrity: sha512-4liggWIA4oDgUxqpZwrDhmEfAH4d0iljanDOK7AnVU89T6CzHon/ony8C5LeOdfgx60x5cnQJFZwEydVlYx4iw==}
-    engines: {node: '>=12'}
-    cpu: [ia32]
-    os: [win32]
-
   '@esbuild/win32-ia32@0.20.1':
     resolution: {integrity: sha512-HzcJa1NcSWTAU0MJIxOho8JftNp9YALui3o+Ny7hCh0v5f90nprly1U3Sj1Ldj/CvKKdvvFsCRvDkpsEMp4DNw==}
     engines: {node: '>=12'}
@@ -8686,12 +8560,6 @@ packages:
 
   '@esbuild/win32-x64@0.19.12':
     resolution: {integrity: sha512-T1QyPSDCyMXaO3pzBkF96E8xMkiRYbUEZADd29SyPGabqxMViNoii+NcK7eWJAEoU6RZyEm5lVSIjTmcdoB9HA==}
-    engines: {node: '>=12'}
-    cpu: [x64]
-    os: [win32]
-
-  '@esbuild/win32-x64@0.19.5':
-    resolution: {integrity: sha512-czTrygUsB/jlM8qEW5MD8bgYU2Xg14lo6kBDXW6HdxKjh8M5PzETGiSHaz9MtbXBYDloHNUAUW2tMiKW4KM9Mw==}
     engines: {node: '>=12'}
     cpu: [x64]
     os: [win32]
@@ -15295,9 +15163,6 @@ packages:
   '@types/node-fetch@2.6.3':
     resolution: {integrity: sha512-ETTL1mOEdq/sxUtgtOhKjyB2Irra4cjxksvcMUR5Zr4n+PxVhsCD9WS46oPbHL3et9Zde7CNRr+WUNlcHvsX+w==}
 
-  '@types/node-fetch@2.6.5':
-    resolution: {integrity: sha512-OZsUlr2nxvkqUFLSaY2ZbA+P1q22q+KrlxWOn/38RX+u5kTkYL2mTujEpzUhGkS+K/QCYp9oagfXG39XOzyySg==}
-
   '@types/node-fetch@2.6.6':
     resolution: {integrity: sha512-95X8guJYhfqiuVVhRFxVQcf4hW/2bCuoPwDasMf/531STFoNoWTT7YDnWdXHEZKqAGUigmpG31r2FE70LwnzJw==}
 
@@ -18991,9 +18856,6 @@ packages:
     resolution: {integrity: sha512-jwK2UV4cnPpbcG7+VRARKTZPUWowwXA8bzH5NP6ud0oeAxyYPuGZUAC7hMugpCdz4BeSZl2Dl9k66CHJ/46ZYQ==}
     engines: {node: '>=0.10.0'}
 
-  defu@6.1.2:
-    resolution: {integrity: sha512-+uO4+qr7msjNNWKYPHqN/3+Dx3NFkmIzayk2L1MyZQlvgZb/J1A0fo410dpKrN2SnqFjt8n4JL8fDJE0wIgjFQ==}
-
   defu@6.1.4:
     resolution: {integrity: sha512-mEQCMmwJu317oSz8CwdIOdwf3xMif1ttiM8LTufzc3g6kR+9Pe236twL8j3IYT1F7GfRgGcW6MWxzZjLIkuHIg==}
 
@@ -19673,11 +19535,6 @@ packages:
 
   esbuild@0.19.12:
     resolution: {integrity: sha512-aARqgq8roFBj054KvQr5f1sFu0D65G+miZRCuJyJ0G13Zwx7vRar5Zhn2tkQNzIXcBrNVsv/8stehpj+GAjgbg==}
-    engines: {node: '>=12'}
-    hasBin: true
-
-  esbuild@0.19.5:
-    resolution: {integrity: sha512-bUxalY7b1g8vNhQKdB24QDmHeY4V4tw/s6Ak5z+jJX9laP5MoQseTOMemAr0gxssjNcH0MCViG8ONI2kksvfFQ==}
     engines: {node: '>=12'}
     hasBin: true
 
@@ -26960,10 +26817,6 @@ packages:
   punycode@1.4.1:
     resolution: {integrity: sha512-jmYNElW7yvO7TV33CjSmvSiE2yco3bV2czu/OzDKdMNVZQWfxCblURLhf+47syQRBntjfLdd/H0egrzIG+oaFQ==}
 
-  punycode@2.3.0:
-    resolution: {integrity: sha512-rRV+zQD8tVFys26lAGR9WUuS4iUAngJScM+ZRSKtvl5tKeZ2t5bvdNFdNHBW9FWR4guGHlgmsZ1G7BSm2wTbuA==}
-    engines: {node: '>=6'}
-
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
@@ -30335,9 +30188,6 @@ packages:
 
   uc.micro@1.0.6:
     resolution: {integrity: sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==}
-
-  ufo@1.3.2:
-    resolution: {integrity: sha512-o+ORpgGwaYQXgqGDwd+hkS4PuZ3QnmqMMxRuajK/a38L6fTpcE5GPIfrf+L/KemFzfUpeUQc1rRS1iDBozvnFA==}
 
   ufo@1.5.3:
     resolution: {integrity: sha512-Y7HYmWaFwPUmkoQCUIAYpKqkOf+SbVj/2fJJZ4RJMCfZp0rTGwRbzQD+HghfnhKOjL9E01okqz+ncJskGYfBNw==}
@@ -34106,7 +33956,7 @@ snapshots:
       '@azure/core-tracing': 1.0.0-preview.13
       '@azure/core-util': 1.3.0
       '@azure/logger': 1.0.4
-      '@types/node-fetch': 2.6.5
+      '@types/node-fetch': 2.6.6
       '@types/tunnel': 0.0.3
       form-data: 4.0.0
       node-fetch: 2.7.0(encoding@0.1.13)
@@ -34277,7 +34127,7 @@ snapshots:
       '@babel/parser': 7.24.4
       '@babel/template': 7.24.0
       '@babel/traverse': 7.24.1
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.5
       convert-source-map: 2.0.0
       debug: 4.3.4(supports-color@8.1.1)
       gensync: 1.0.0-beta.2
@@ -34759,7 +34609,7 @@ snapshots:
 
   '@babel/parser@7.24.4':
     dependencies:
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.5
 
   '@babel/plugin-bugfix-firefox-class-in-computed-class-key@7.24.5(@babel/core@7.24.4)':
     dependencies:
@@ -37696,7 +37546,7 @@ snapshots:
       '@babel/helper-hoist-variables': 7.22.5
       '@babel/helper-split-export-declaration': 7.22.6
       '@babel/parser': 7.24.4
-      '@babel/types': 7.24.0
+      '@babel/types': 7.24.5
       debug: 4.3.4(supports-color@8.1.1)
       globals: 11.12.0
     transitivePeerDependencies:
@@ -40122,9 +39972,6 @@ snapshots:
   '@esbuild/android-arm64@0.19.12':
     optional: true
 
-  '@esbuild/android-arm64@0.19.5':
-    optional: true
-
   '@esbuild/android-arm64@0.20.1':
     optional: true
 
@@ -40135,9 +39982,6 @@ snapshots:
     optional: true
 
   '@esbuild/android-arm@0.19.12':
-    optional: true
-
-  '@esbuild/android-arm@0.19.5':
     optional: true
 
   '@esbuild/android-arm@0.20.1':
@@ -40152,9 +39996,6 @@ snapshots:
   '@esbuild/android-x64@0.19.12':
     optional: true
 
-  '@esbuild/android-x64@0.19.5':
-    optional: true
-
   '@esbuild/android-x64@0.20.1':
     optional: true
 
@@ -40165,9 +40006,6 @@ snapshots:
     optional: true
 
   '@esbuild/darwin-arm64@0.19.12':
-    optional: true
-
-  '@esbuild/darwin-arm64@0.19.5':
     optional: true
 
   '@esbuild/darwin-arm64@0.20.1':
@@ -40182,9 +40020,6 @@ snapshots:
   '@esbuild/darwin-x64@0.19.12':
     optional: true
 
-  '@esbuild/darwin-x64@0.19.5':
-    optional: true
-
   '@esbuild/darwin-x64@0.20.1':
     optional: true
 
@@ -40195,9 +40030,6 @@ snapshots:
     optional: true
 
   '@esbuild/freebsd-arm64@0.19.12':
-    optional: true
-
-  '@esbuild/freebsd-arm64@0.19.5':
     optional: true
 
   '@esbuild/freebsd-arm64@0.20.1':
@@ -40212,9 +40044,6 @@ snapshots:
   '@esbuild/freebsd-x64@0.19.12':
     optional: true
 
-  '@esbuild/freebsd-x64@0.19.5':
-    optional: true
-
   '@esbuild/freebsd-x64@0.20.1':
     optional: true
 
@@ -40225,9 +40054,6 @@ snapshots:
     optional: true
 
   '@esbuild/linux-arm64@0.19.12':
-    optional: true
-
-  '@esbuild/linux-arm64@0.19.5':
     optional: true
 
   '@esbuild/linux-arm64@0.20.1':
@@ -40242,9 +40068,6 @@ snapshots:
   '@esbuild/linux-arm@0.19.12':
     optional: true
 
-  '@esbuild/linux-arm@0.19.5':
-    optional: true
-
   '@esbuild/linux-arm@0.20.1':
     optional: true
 
@@ -40255,9 +40078,6 @@ snapshots:
     optional: true
 
   '@esbuild/linux-ia32@0.19.12':
-    optional: true
-
-  '@esbuild/linux-ia32@0.19.5':
     optional: true
 
   '@esbuild/linux-ia32@0.20.1':
@@ -40272,9 +40092,6 @@ snapshots:
   '@esbuild/linux-loong64@0.19.12':
     optional: true
 
-  '@esbuild/linux-loong64@0.19.5':
-    optional: true
-
   '@esbuild/linux-loong64@0.20.1':
     optional: true
 
@@ -40285,9 +40102,6 @@ snapshots:
     optional: true
 
   '@esbuild/linux-mips64el@0.19.12':
-    optional: true
-
-  '@esbuild/linux-mips64el@0.19.5':
     optional: true
 
   '@esbuild/linux-mips64el@0.20.1':
@@ -40302,9 +40116,6 @@ snapshots:
   '@esbuild/linux-ppc64@0.19.12':
     optional: true
 
-  '@esbuild/linux-ppc64@0.19.5':
-    optional: true
-
   '@esbuild/linux-ppc64@0.20.1':
     optional: true
 
@@ -40315,9 +40126,6 @@ snapshots:
     optional: true
 
   '@esbuild/linux-riscv64@0.19.12':
-    optional: true
-
-  '@esbuild/linux-riscv64@0.19.5':
     optional: true
 
   '@esbuild/linux-riscv64@0.20.1':
@@ -40332,9 +40140,6 @@ snapshots:
   '@esbuild/linux-s390x@0.19.12':
     optional: true
 
-  '@esbuild/linux-s390x@0.19.5':
-    optional: true
-
   '@esbuild/linux-s390x@0.20.1':
     optional: true
 
@@ -40345,9 +40150,6 @@ snapshots:
     optional: true
 
   '@esbuild/linux-x64@0.19.12':
-    optional: true
-
-  '@esbuild/linux-x64@0.19.5':
     optional: true
 
   '@esbuild/linux-x64@0.20.1':
@@ -40362,9 +40164,6 @@ snapshots:
   '@esbuild/netbsd-x64@0.19.12':
     optional: true
 
-  '@esbuild/netbsd-x64@0.19.5':
-    optional: true
-
   '@esbuild/netbsd-x64@0.20.1':
     optional: true
 
@@ -40375,9 +40174,6 @@ snapshots:
     optional: true
 
   '@esbuild/openbsd-x64@0.19.12':
-    optional: true
-
-  '@esbuild/openbsd-x64@0.19.5':
     optional: true
 
   '@esbuild/openbsd-x64@0.20.1':
@@ -40392,9 +40188,6 @@ snapshots:
   '@esbuild/sunos-x64@0.19.12':
     optional: true
 
-  '@esbuild/sunos-x64@0.19.5':
-    optional: true
-
   '@esbuild/sunos-x64@0.20.1':
     optional: true
 
@@ -40405,9 +40198,6 @@ snapshots:
     optional: true
 
   '@esbuild/win32-arm64@0.19.12':
-    optional: true
-
-  '@esbuild/win32-arm64@0.19.5':
     optional: true
 
   '@esbuild/win32-arm64@0.20.1':
@@ -40422,9 +40212,6 @@ snapshots:
   '@esbuild/win32-ia32@0.19.12':
     optional: true
 
-  '@esbuild/win32-ia32@0.19.5':
-    optional: true
-
   '@esbuild/win32-ia32@0.20.1':
     optional: true
 
@@ -40435,9 +40222,6 @@ snapshots:
     optional: true
 
   '@esbuild/win32-x64@0.19.12':
-    optional: true
-
-  '@esbuild/win32-x64@0.19.5':
     optional: true
 
   '@esbuild/win32-x64@0.20.1':
@@ -41240,7 +41024,7 @@ snapshots:
       '@jest/reporters': 29.5.0
       '@jest/test-result': 29.5.0
       '@jest/transform': 29.7.0
-      '@jest/types': 29.5.0
+      '@jest/types': 29.6.3
       '@types/node': 14.18.42
       ansi-escapes: 4.3.2
       chalk: 4.1.2
@@ -41274,7 +41058,7 @@ snapshots:
       '@jest/reporters': 29.5.0
       '@jest/test-result': 29.5.0
       '@jest/transform': 29.7.0
-      '@jest/types': 29.5.0
+      '@jest/types': 29.6.3
       '@types/node': 14.18.42
       ansi-escapes: 4.3.2
       chalk: 4.1.2
@@ -43045,7 +42829,7 @@ snapshots:
     dependencies:
       https-proxy-agent: 5.0.1
       nan: 2.17.0
-      semver: 7.5.4
+      semver: 7.6.2
     transitivePeerDependencies:
       - supports-color
     optional: true
@@ -50128,7 +49912,7 @@ snapshots:
       case-sensitive-paths-webpack-plugin: 2.4.0
       constants-browserify: 1.0.0
       css-loader: 6.7.3(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
-      express: 4.18.2
+      express: 4.19.2
       fork-ts-checker-webpack-plugin: 8.0.0(typescript@4.9.5)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
       fs-extra: 11.2.0
       html-webpack-plugin: 5.5.3(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
@@ -50338,7 +50122,7 @@ snapshots:
       detect-indent: 6.1.0
       envinfo: 7.8.1
       execa: 5.1.1
-      express: 4.18.2
+      express: 4.19.2
       find-up: 5.0.0
       fs-extra: 11.2.0
       get-npm-tarball-url: 2.0.3
@@ -52445,11 +52229,6 @@ snapshots:
     dependencies:
       '@types/node': 14.18.42
       form-data: 3.0.1
-
-  '@types/node-fetch@2.6.5':
-    dependencies:
-      '@types/node': 14.18.42
-      form-data: 4.0.0
 
   '@types/node-fetch@2.6.6':
     dependencies:
@@ -57471,7 +57250,7 @@ snapshots:
       postcss-modules-scope: 3.0.0(postcss@8.4.35)
       postcss-modules-values: 4.0.0(postcss@8.4.35)
       postcss-value-parser: 4.2.0
-      semver: 7.6.0
+      semver: 7.6.2
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)
 
   css-loader@6.7.3(webpack@5.78.0(@swc/core@1.3.107)):
@@ -57483,7 +57262,7 @@ snapshots:
       postcss-modules-scope: 3.0.0(postcss@8.4.35)
       postcss-modules-values: 4.0.0(postcss@8.4.35)
       postcss-value-parser: 4.2.0
-      semver: 7.6.0
+      semver: 7.6.2
       webpack: 5.78.0(@swc/core@1.3.107)
 
   css-loader@6.8.1(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)(webpack-cli@5.1.4(webpack-bundle-analyzer@4.9.0)(webpack-dev-server@4.15.1)(webpack@5.82.1))):
@@ -58003,8 +57782,6 @@ snapshots:
     dependencies:
       is-descriptor: 1.0.2
       isobject: 3.0.1
-
-  defu@6.1.2: {}
 
   defu@6.1.4: {}
 
@@ -58752,31 +58529,6 @@ snapshots:
       '@esbuild/win32-arm64': 0.19.12
       '@esbuild/win32-ia32': 0.19.12
       '@esbuild/win32-x64': 0.19.12
-
-  esbuild@0.19.5:
-    optionalDependencies:
-      '@esbuild/android-arm': 0.19.5
-      '@esbuild/android-arm64': 0.19.5
-      '@esbuild/android-x64': 0.19.5
-      '@esbuild/darwin-arm64': 0.19.5
-      '@esbuild/darwin-x64': 0.19.5
-      '@esbuild/freebsd-arm64': 0.19.5
-      '@esbuild/freebsd-x64': 0.19.5
-      '@esbuild/linux-arm': 0.19.5
-      '@esbuild/linux-arm64': 0.19.5
-      '@esbuild/linux-ia32': 0.19.5
-      '@esbuild/linux-loong64': 0.19.5
-      '@esbuild/linux-mips64el': 0.19.5
-      '@esbuild/linux-ppc64': 0.19.5
-      '@esbuild/linux-riscv64': 0.19.5
-      '@esbuild/linux-s390x': 0.19.5
-      '@esbuild/linux-x64': 0.19.5
-      '@esbuild/netbsd-x64': 0.19.5
-      '@esbuild/openbsd-x64': 0.19.5
-      '@esbuild/sunos-x64': 0.19.5
-      '@esbuild/win32-arm64': 0.19.5
-      '@esbuild/win32-ia32': 0.19.5
-      '@esbuild/win32-x64': 0.19.5
 
   esbuild@0.20.1:
     optionalDependencies:
@@ -60451,7 +60203,7 @@ snapshots:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
-      semver: 7.6.2
+      semver: 7.5.4
       tapable: 2.2.1
       typescript: 4.9.5
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)(webpack-cli@5.1.4(webpack-bundle-analyzer@4.9.0)(webpack-dev-server@4.15.1)(webpack@5.82.1))
@@ -60468,7 +60220,7 @@ snapshots:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
-      semver: 7.6.2
+      semver: 7.5.4
       tapable: 2.2.1
       typescript: 4.9.5
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)
@@ -60874,7 +60626,7 @@ snapshots:
   giget@1.1.2:
     dependencies:
       colorette: 2.0.19
-      defu: 6.1.2
+      defu: 6.1.4
       https-proxy-agent: 5.0.1
       mri: 1.2.0
       node-fetch-native: 1.4.0
@@ -62944,7 +62696,7 @@ snapshots:
     dependencies:
       '@jest/core': 29.7.0(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@14.18.42)(typescript@4.9.5))
       '@jest/test-result': 29.5.0
-      '@jest/types': 29.5.0
+      '@jest/types': 29.6.3
       chalk: 4.1.2
       exit: 0.1.2
       graceful-fs: 4.2.11
@@ -62964,7 +62716,7 @@ snapshots:
     dependencies:
       '@jest/core': 29.7.0(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@18.15.11)(typescript@4.9.5))
       '@jest/test-result': 29.5.0
-      '@jest/types': 29.5.0
+      '@jest/types': 29.6.3
       chalk: 4.1.2
       exit: 0.1.2
       graceful-fs: 4.2.11
@@ -64081,7 +63833,7 @@ snapshots:
 
   jest-message-util@29.5.0:
     dependencies:
-      '@babel/code-frame': 7.22.13
+      '@babel/code-frame': 7.24.2
       '@jest/types': 29.6.3
       '@types/stack-utils': 2.0.1
       chalk: 4.1.2
@@ -64397,7 +64149,7 @@ snapshots:
       '@babel/plugin-syntax-typescript': 7.22.5(@babel/core@7.24.4)
       '@babel/traverse': 7.24.1
       '@babel/types': 7.24.5
-      '@jest/expect-utils': 29.5.0
+      '@jest/expect-utils': 29.7.0
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3
       '@types/babel__traverse': 7.18.3
@@ -67218,7 +66970,7 @@ snapshots:
       acorn: 8.11.3
       pathe: 1.1.2
       pkg-types: 1.0.3
-      ufo: 1.3.2
+      ufo: 1.5.3
 
   mocha@10.2.0:
     dependencies:
@@ -69499,7 +69251,7 @@ snapshots:
       cosmiconfig: 7.1.0
       klona: 2.0.6
       postcss: 8.4.31
-      semver: 7.6.0
+      semver: 7.6.2
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)
 
   postcss-loader@6.2.1(postcss@8.4.31)(webpack@5.78.0(@swc/core@1.3.107)):
@@ -69507,7 +69259,7 @@ snapshots:
       cosmiconfig: 7.1.0
       klona: 2.0.6
       postcss: 8.4.31
-      semver: 7.6.0
+      semver: 7.6.2
       webpack: 5.78.0(@swc/core@1.3.107)
 
   postcss-loader@7.3.3(postcss@8.4.31)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
@@ -70163,8 +69915,6 @@ snapshots:
   punycode@1.3.2: {}
 
   punycode@1.4.1: {}
-
-  punycode@2.3.0: {}
 
   punycode@2.3.1: {}
 
@@ -72570,11 +72320,11 @@ snapshots:
 
   rollup-plugin-terser@7.0.2(rollup@2.79.1):
     dependencies:
-      '@babel/code-frame': 7.21.4
+      '@babel/code-frame': 7.24.2
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.16.9
+      terser: 5.22.0
 
   rollup-plugin-terser@7.0.2(rollup@3.20.2):
     dependencies:
@@ -74566,7 +74316,7 @@ snapshots:
   tough-cookie@4.1.3:
     dependencies:
       psl: 1.9.0
-      punycode: 2.3.0
+      punycode: 2.3.1
       universalify: 0.2.0
       url-parse: 1.5.10
 
@@ -75456,8 +75206,6 @@ snapshots:
 
   uc.micro@1.0.6: {}
 
-  ufo@1.3.2: {}
-
   ufo@1.5.3: {}
 
   uglify-js@3.17.4:
@@ -76218,7 +75966,7 @@ snapshots:
 
   vite@5.1.7(@types/node@12.20.55)(less@4.1.3)(lightningcss@1.23.0)(sass@1.64.1)(terser@5.22.0):
     dependencies:
-      esbuild: 0.19.5
+      esbuild: 0.19.12
       postcss: 8.4.35
       rollup: 4.9.6
     optionalDependencies:
@@ -76231,7 +75979,7 @@ snapshots:
 
   vite@5.1.7(@types/node@18.16.9)(less@4.1.3)(lightningcss@1.23.0)(sass@1.64.1)(terser@5.22.0):
     dependencies:
-      esbuild: 0.19.5
+      esbuild: 0.19.12
       postcss: 8.4.35
       rollup: 4.9.6
     optionalDependencies:
@@ -76244,7 +75992,7 @@ snapshots:
 
   vite@5.1.7(@types/node@18.18.5)(less@4.1.3)(lightningcss@1.23.0)(sass@1.64.1)(terser@5.22.0):
     dependencies:
-      esbuild: 0.19.5
+      esbuild: 0.19.12
       postcss: 8.4.35
       rollup: 4.9.6
     optionalDependencies:
@@ -76683,7 +76431,7 @@ snapshots:
       compression: 1.7.4
       connect-history-api-fallback: 2.0.0
       default-gateway: 6.0.3
-      express: 4.18.2
+      express: 4.19.2
       graceful-fs: 4.2.11
       html-entities: 2.3.3
       http-proxy-middleware: 2.0.6(@types/express@4.17.17)
@@ -76725,7 +76473,7 @@ snapshots:
       compression: 1.7.4
       connect-history-api-fallback: 2.0.0
       default-gateway: 6.0.3
-      express: 4.18.2
+      express: 4.19.2
       graceful-fs: 4.2.11
       html-entities: 2.3.3
       http-proxy-middleware: 2.0.6(@types/express@4.17.17)
@@ -76766,7 +76514,7 @@ snapshots:
       compression: 1.7.4
       connect-history-api-fallback: 2.0.0
       default-gateway: 6.0.3
-      express: 4.18.2
+      express: 4.19.2
       graceful-fs: 4.2.11
       html-entities: 2.3.3
       http-proxy-middleware: 2.0.6(@types/express@4.17.17)
