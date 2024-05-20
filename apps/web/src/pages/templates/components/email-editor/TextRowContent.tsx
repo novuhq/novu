@@ -10,6 +10,7 @@ import { useStepFormPath } from '../../hooks/useStepFormPath';
 import type { IForm } from '../formTypes';
 import { AutoSuggestionsDropdown } from './AutoSuggestionsDropdown';
 import { useWorkflowVariables } from '../../../../api/hooks';
+import { paste } from '../../../../utils/paste';
 
 export function TextRowContent({ blockIndex }: { blockIndex: number }) {
   const methods = useFormContext<IForm>();
@@ -160,11 +161,7 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
   const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
     event.preventDefault();
     const pastedData = event?.clipboardData?.getData('text/plain');
-    const selection = window.getSelection();
-    if (!selection?.rangeCount) return;
-    selection.deleteFromDocument();
-    selection.getRangeAt(0).insertNode(document.createTextNode(pastedData));
-    selection.collapseToEnd();
+    paste(pastedData);
     methods.setValue(`${stepFormPath}.template.content.${blockIndex}.content`, ref.current?.innerHTML ?? '');
   };
 
