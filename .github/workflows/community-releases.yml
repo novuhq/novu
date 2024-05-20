@@ -17,7 +17,6 @@ jobs:
     timeout-minutes: 60
     outputs:
       latest-version: ${{ steps.get_version.outputs.latest-version }}
-      check_tag_result: ${{ steps.check_tag.outputs.result }}
     steps:
       - uses: actions/checkout@v4
       - name: Get Current Lerna Release version
