@@ -26,8 +26,8 @@
   "dependencies": {
     "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
-    "@novu/design-system": "^0.24.2",
-    "@novu/shared-web": "^0.24.2",
+    "@novu/design-system": "workspace:*",
+    "@novu/shared-web": "workspace:*",
     "@rjsf/core": "^5.17.1",
     "@rjsf/validator-ajv8": "^5.17.1",
     "@tanstack/react-query": "^4.20.4",

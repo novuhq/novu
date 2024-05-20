@@ -13,9 +13,9 @@
     "start:proxy": "ngrok http http://localhost:3000"
   },
   "dependencies": {
-    "@novu/application-generic": "^0.24.2",
-    "@novu/ee-dal": "^0.24.2",
-    "@novu/shared": "^0.24.2",
+    "@novu/application-generic": "workspace:*",
+    "@novu/ee-dal": "workspace:*",
+    "@novu/shared": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "date-fns": "^2.29.2",
@@ -46,6 +46,6 @@
     "@nestjs/platform-express": "^10.2.2",
     "@nestjs/swagger": "^7.1.8",
     "@nestjs/throttler": "^5.0.1",
-    "@novu/dal": "^0.24.1"
+    "@novu/dal": "workspace:*"
   }
 }

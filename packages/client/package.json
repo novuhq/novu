@@ -44,7 +44,7 @@
     "node": ">=10"
   },
   "dependencies": {
-    "@novu/shared": "^0.24.2"
+    "@novu/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/jest": "29.5.2",
