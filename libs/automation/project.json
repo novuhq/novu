@@ -13,38 +13,6 @@
   },
   "tags": [],
   "targets": {
-    "build": {
-      "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "outputPath": "dist/automation",
-        "main": "./src/index.ts",
-        "tsConfig": "./tsconfig.lib.json",
-        "assets": [
-          "*.md",
-          {
-            "input": "./src",
-            "glob": "**/!(*.ts)",
-            "output": "./src"
-          },
-          {
-            "input": "./src",
-            "glob": "**/*.d.ts",
-            "output": "./src"
-          },
-          {
-            "input": ".",
-            "glob": "generators.json",
-            "output": "."
-          },
-          {
-            "input": ".",
-            "glob": "executors.json",
-            "output": "."
-          }
-        ]
-      }
-    },
     "nx-release-publish": {
       "options": {
         "packageRoot": "dist/{projectRoot}"
