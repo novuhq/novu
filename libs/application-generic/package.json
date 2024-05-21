@@ -5,11 +5,7 @@
   "main": "build/main/index.js",
   "typings": "build/main/index.d.ts",
   "module": "build/module/index.js",
-  "private": false,
-  "repository": {
-    "url": "https://github.com/novuhq/novu",
-    "directory": "packages/nest"
-  },
+  "private": true,
   "license": "MIT",
   "keywords": [],
   "scripts": {
@@ -23,11 +19,7 @@
     "lint": "eslint src --ext .ts",
     "watch:build": "tsc -p tsconfig.json -w",
     "watch:test": "jest src --watch",
-    "reset-hard": "git clean -dfx && git reset --hard && pnpm install",
-    "prepare-release": "run-s reset-hard test"
-  },
-  "publishConfig": {
-    "access": "public"
+    "reset-hard": "git clean -dfx && git reset --hard && pnpm install"
   },
   "engines": {
     "node": ">=10"
@@ -59,20 +51,20 @@
     "@novu/testing": "workspace:*",
     "@opentelemetry/api": "^1.7.0",
     "@opentelemetry/auto-instrumentations-node": "^0.40.2",
-    "@opentelemetry/context-async-hooks": "^1.19.0",
-    "@opentelemetry/core": "^1.19.0",
+    "@opentelemetry/context-async-hooks": "~1.19.0",
+    "@opentelemetry/core": "~1.19.0",
     "@opentelemetry/exporter-collector": "^0.25.0",
-    "@opentelemetry/exporter-jaeger": "^1.19.0",
+    "@opentelemetry/exporter-jaeger": "~1.19.0",
     "@opentelemetry/exporter-prometheus": "^0.46.0",
     "@opentelemetry/exporter-trace-otlp-http": "^0.49.1",
     "@opentelemetry/instrumentation": "^0.46.0",
-    "@opentelemetry/propagator-b3": "^1.19.0",
-    "@opentelemetry/propagator-jaeger": "^1.19.0",
-    "@opentelemetry/resources": "^1.19.0",
+    "@opentelemetry/propagator-b3": "~1.19.0",
+    "@opentelemetry/propagator-jaeger": "~1.19.0",
+    "@opentelemetry/resources": "~1.19.0",
     "@opentelemetry/sdk-node": "^0.46.0",
-    "@opentelemetry/sdk-trace-base": "^1.19.0",
-    "@opentelemetry/sdk-trace-node": "^1.19.0",
-    "@opentelemetry/semantic-conventions": "^1.19.0",
+    "@opentelemetry/sdk-trace-base": "~1.19.0",
+    "@opentelemetry/sdk-trace-node": "~1.19.0",
+    "@opentelemetry/semantic-conventions": "~1.19.0",
     "@pyroscope/nodejs": "^0.2.9",
     "@segment/analytics-node": "^1.1.4",
     "@sentry/node": "^7.12.1",
@@ -138,18 +130,6 @@
     "LICENSE",
     "README.md"
   ],
-  "ava": {
-    "failFast": true,
-    "timeout": "60s",
-    "typescript": {
-      "rewritePaths": {
-        "src/": "build/main/"
-      }
-    },
-    "files": [
-      "!build/module/**"
-    ]
-  },
   "prettier": {
     "singleQuote": true
   },
