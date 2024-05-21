@@ -1,11 +1,11 @@
 name: "Lint PR title"
 
 on:
-  pull_request_target:
-    types:
-      - opened
-      - edited
-      - synchronize
+  # pull_request_target:
+  #   types:
+  #     - opened
+  #     - edited
+  #     - synchronize
 
   # Use the following event if you want edit and test setting regarding conventional commits
   pull_request:
