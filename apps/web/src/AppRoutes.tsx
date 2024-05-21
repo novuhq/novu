@@ -1,7 +1,7 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
-import { RequiredAuth } from './components/layout/RequiredAuth';
+import { EnsureOnboardingComplete } from './components/layout/EnsureOnboardingComplete';
 import { ROUTES } from './constants/routes.enum';
 import { useFeatureFlag } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
@@ -62,17 +62,17 @@ export const AppRoutes = () => {
       <Route
         path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
         element={
-          <RequiredAuth>
+          <EnsureOnboardingComplete>
             <LinkVercelProjectPage type="create" />
-          </RequiredAuth>
+          </EnsureOnboardingComplete>
         }
       />
       <Route
         path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
         element={
-          <RequiredAuth>
+          <EnsureOnboardingComplete>
             <LinkVercelProjectPage type="edit" />
-          </RequiredAuth>
+          </EnsureOnboardingComplete>
         }
       />
       <Route element={<AppLayout />}>

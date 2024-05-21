@@ -1,4 +1,4 @@
-import { Loader } from '@mantine/core';
+import { ColorSchemeProvider, Loader } from '@mantine/core';
 import { colors } from '@novu/design-system';
 import { CONTEXT_PATH, SegmentProvider } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
@@ -48,17 +48,19 @@ const fallbackDisplay = (
  */
 const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
-    <SegmentProvider>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter basename={CONTEXT_PATH}>
-          <AuthProvider>
-            <LaunchDarklyProvider fallbackDisplay={fallbackDisplay}>
-              <HelmetProvider>{children}</HelmetProvider>
-            </LaunchDarklyProvider>
-          </AuthProvider>
-        </BrowserRouter>
-      </QueryClientProvider>
-    </SegmentProvider>
+    <ColorSchemeProvider colorScheme={'dark'} toggleColorScheme={() => {}}>
+      <SegmentProvider>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter basename={CONTEXT_PATH}>
+            <AuthProvider fallbackComponent={fallbackDisplay}>
+              <LaunchDarklyProvider>
+                <HelmetProvider>{children}</HelmetProvider>
+              </LaunchDarklyProvider>
+            </AuthProvider>
+          </BrowserRouter>
+        </QueryClientProvider>
+      </SegmentProvider>
+    </ColorSchemeProvider>
   );
 };
 

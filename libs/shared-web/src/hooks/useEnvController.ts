@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes.enum';
 import { api } from '../api';
 import { IS_DOCKER_HOSTED } from '../config';
-import { BaseEnvironmentEnum } from 'src/constants';
+import { BaseEnvironmentEnum } from '../constants';
 
 interface ISetEnvironmentOptions {
   /** using null will prevent a reroute */

@@ -90,7 +90,6 @@
     "eslint-plugin-react-hooks": "^4.4.0",
     "handlebars": "^4.7.7",
     "html-webpack-plugin": "5.5.3",
-    "jwt-decode": "^3.1.2",
     "launchdarkly-react-client-sdk": "^3.0.6",
     "less": "^4.1.0",
     "localforage": "^1.10.0",

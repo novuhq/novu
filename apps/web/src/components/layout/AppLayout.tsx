@@ -8,7 +8,7 @@ import { HeaderNav } from './components/HeaderNav';
 import { SideNav } from './components/SideNav';
 import { IntercomProvider } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../config';
-import { RequiredAuth } from './RequiredAuth';
+import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../utils/Spotlight';
 import { SpotLightProvider } from '../providers/SpotlightProvider';
 import { useFeatureFlag } from '@novu/shared-web';
@@ -37,7 +37,7 @@ export function AppLayout() {
   const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   return (
-    <RequiredAuth>
+    <EnsureOnboardingComplete>
       <SpotLightProvider>
         <ThemeProvider>
           <IntercomProvider
@@ -79,6 +79,6 @@ export function AppLayout() {
           </IntercomProvider>
         </ThemeProvider>
       </SpotLightProvider>
-    </RequiredAuth>
+    </EnsureOnboardingComplete>
   );
 }

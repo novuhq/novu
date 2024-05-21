@@ -1,13 +1,21 @@
 import { useEffect, useCallback, useState } from 'react';
-import axios from 'axios';
 import jwtDecode from 'jwt-decode';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import type { IJwtPayload, IOrganizationEntity, IUserEntity } from '@novu/shared';
 
 import { useSegment } from '../providers';
 import { api } from '../api';
+import { ROUTES } from '../constants';
+
+const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
+const UNAUTHENTICATED_STATUS_CODE = 401;
+
+export interface IUserWithContext extends IUserEntity {
+  organizationId?: string;
+  environmentId?: string;
+}
 
 function getUser() {
   return api.get('/v1/users/me');
@@ -18,56 +26,61 @@ function getOrganizations() {
 }
 
 export function applyToken(token: string | null) {
-  if (token) {
-    localStorage.setItem('auth_token', token);
-    axios.defaults.headers.common.Authorization = `Bearer ${token}`;
+  if (token !== null) {
+    localStorage.setItem(LOCAL_STORAGE_AUTH_TOKEN_KEY, token);
   } else {
-    localStorage.removeItem('auth_token');
-    delete axios.defaults.headers.common.Authorization;
+    localStorage.removeItem(LOCAL_STORAGE_AUTH_TOKEN_KEY);
   }
 }
 
-export function getTokenPayload() {
-  const token = getToken();
-  if (!token) return null;
-
-  return jwtDecode<IJwtPayload>(token);
-}
-
-export function getToken(): string {
-  return localStorage.getItem('auth_token') as string;
+function getToken(): string | null {
+  const token = localStorage.getItem(LOCAL_STORAGE_AUTH_TOKEN_KEY);
+  if (!token) {
+    return null;
+  } else {
+    return token;
+  }
 }
 
 export function useAuthController() {
   const segment = useSegment();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const [token, setToken] = useState<string | null>(() => {
-    const initialToken = getToken();
-    applyToken(initialToken);
+  const location = useLocation();
 
-    return initialToken;
-  });
-  const [jwtPayload, setJwtPayload] = useState<IJwtPayload | undefined>(() => {
-    const initialToken = getToken();
-    if (initialToken) {
-      return jwtDecode<IJwtPayload>(initialToken);
-    }
-  });
+  const [token, setToken] = useState<string | null>(getToken());
+
   const [organization, setOrganization] = useState<IOrganizationEntity>();
-  const isLoggedIn = !!token;
+  const isLoginPage = location.pathname.includes(ROUTES.AUTH_LOGIN);
+  const isLoggedIn = !!token && !isLoginPage;
+
+  /*
+   * TODO: Decoding a JWT token on a browser is a security risk.
+   * We should modify the `/users/me` endpoint to return the organizationId and environmentId
+   * and then we can remove the jwtPayload state and the setJwtPayload function.
+   */
+  const [jwtPayload, setJwtPayload] = useState<IJwtPayload | undefined>(token && jwtDecode<IJwtPayload>(token));
+
+  useEffect(() => {
+    if (!token && !isLoginPage) {
+      navigate(ROUTES.AUTH_LOGIN);
+    }
+  }, [token, navigate, isLoginPage]);
 
   const { data: user, isLoading: isUserLoading } = useQuery<IUserEntity>(['/v1/users/me'], getUser, {
-    enabled: Boolean(isLoggedIn && axios.defaults.headers.common.Authorization),
+    retry: false,
+    enabled: isLoggedIn,
+    onError: (error: any) => {
+      if (error?.statusCode === UNAUTHENTICATED_STATUS_CODE) {
+        applyToken(null);
+        logout();
+      }
+    },
   });
 
-  const authorization = axios.defaults.headers.common.Authorization as string;
   const { data: organizations } = useQuery<IOrganizationEntity[]>(['/v1/organizations'], getOrganizations, {
-    enabled: Boolean(
-      isLoggedIn &&
-        axios.defaults.headers.common.Authorization &&
-        jwtDecode<IJwtPayload>(authorization?.split(' ')[1])?.organizationId
-    ),
+    enabled: isLoggedIn,
+    retry: 0,
   });
 
   useEffect(() => {
@@ -105,7 +118,6 @@ export function useAuthController() {
         if (refetch) {
           queryClient.refetchQueries({
             predicate: (query) =>
-              // !query.isFetching &&
               !query.queryKey.includes('/v1/users/me') &&
               !query.queryKey.includes('/v1/environments') &&
               !query.queryKey.includes('/v1/organizations') &&
@@ -122,19 +134,22 @@ export function useAuthController() {
   const logout = () => {
     setTokenCallback(null);
     queryClient.clear();
-    navigate('/auth/login');
+    navigate(ROUTES.AUTH_LOGIN);
     segment.reset();
   };
 
   return {
     isLoggedIn,
-    user,
-    isUserLoading,
+    user: {
+      ...user,
+      organizationId: jwtPayload?.organizationId,
+      environmentId: jwtPayload?.environmentId,
+    } satisfies IUserWithContext,
+    isUserLoading: isUserLoading && isLoggedIn,
     organizations,
     organization,
     token,
     logout,
-    jwtPayload,
     setToken: setTokenCallback,
   };
 }
