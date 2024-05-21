@@ -11,6 +11,7 @@ import { ROUTES } from '../constants';
 
 const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
 const UNAUTHENTICATED_STATUS_CODE = 401;
+const UNAUTHORIZED_ROUTES = [ROUTES.AUTH_LOGIN, ROUTES.AUTH_SIGNUP, ROUTES.AUTH_RESET_REQUEST, ROUTES.AUTH_RESET_TOKEN];
 
 export interface IUserWithContext extends IUserEntity {
   organizationId?: string;
@@ -51,7 +52,7 @@ export function useAuthController() {
   const [token, setToken] = useState<string | null>(getToken());
 
   const [organization, setOrganization] = useState<IOrganizationEntity>();
-  const isLoginPage = location.pathname.includes(ROUTES.AUTH_LOGIN);
+  const isLoginPage = UNAUTHORIZED_ROUTES.includes(location.pathname as any);
   const isLoggedIn = !!token && !isLoginPage;
 
   /*
