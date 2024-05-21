@@ -57,6 +57,7 @@ import {
 import { Schema } from './types/schema.types';
 import { EMOJI, log } from './utils';
 import { VERSION } from './version';
+import { Skip } from './types/skip.types';
 
 JSONSchemaFaker.option({
   useDefaultValue: true,
@@ -496,6 +497,13 @@ export class Echo {
 
   private executeStepFactory<T, U>(event: IEvent, setResult: (result: any) => void): ActionStep<T, U> {
     return async (stepId, stepResolve, options) => {
+      if (await this.shouldSkip(options?.skip, event.data)) {
+        const skippedResult = { options: { skip: true } };
+        setResult(skippedResult);
+
+        return {} as any;
+      }
+
       const step = this.getStep(event.workflowId, stepId);
 
       const previewStepHandler = this.previewStep.bind(this);
@@ -527,6 +535,14 @@ export class Echo {
     };
   }
 
+  private async shouldSkip(skip: Skip | undefined, payload: Record<string, unknown>): Promise<boolean> {
+    if (!skip) {
+      return false;
+    }
+
+    return skip(payload);
+  }
+
   public async executeWorkflow(event: IEvent): Promise<ExecuteOutput> {
     const actionMessages = {
       execute: 'Executing',
@@ -544,9 +560,11 @@ export class Echo {
     let result: {
       outputs: Record<string, unknown>;
       providers: Record<string, unknown>;
+      options: Record<string, unknown>;
     } = {
       outputs: {},
       providers: {},
+      options: {},
     };
     let resolveEarlyExit: (value?: unknown) => void;
     const earlyExitPromise = new Promise((resolve) => {
@@ -613,6 +631,7 @@ export class Echo {
     return {
       outputs: result.outputs,
       providers: result.providers,
+      options: result.options,
       metadata: {
         status: 'success',
         error: false,

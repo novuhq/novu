@@ -90,7 +90,7 @@ export type CustomStep = <
     /**
      * Skip the step. If the skip function returns true, the step will be skipped.
      *
-     * @param payload The payload for the step.
+     * @param inputs The inputs for the step.
      */
     skip?: (inputs: T_Inputs) => MaybePromise<boolean>;
     /**
@@ -144,7 +144,7 @@ export type ChannelStep<
     /**
      * Skip the step. If the skip function returns true, the step will be skipped.
      *
-     * @param payload The payload for the step.
+     * @param inputs The inputs for the step.
      */
     skip?: (inputs: T_Inputs) => MaybePromise<boolean>;
     /**

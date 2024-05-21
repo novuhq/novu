@@ -138,8 +138,13 @@ export interface IBlock {
 
 export type IProvidersOverride = Record<ChatProviderIdEnum, IProviderOverride>;
 
+interface IExecutionOptions {
+  skip?: boolean;
+}
+
 export type ExecuteOutput<OutputResult> = {
   outputs: OutputResult;
   metadata: ExecuteOutputMetadata;
   providers?: IProvidersOverride;
+  options?: IExecutionOptions;
 };

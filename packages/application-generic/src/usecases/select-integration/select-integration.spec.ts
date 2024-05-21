@@ -24,6 +24,7 @@ import {
 import { ExecutionLogRoute } from '../execution-log-route';
 import { CreateExecutionDetails } from '../create-execution-details';
 import { GetFeatureFlag } from '../get-feature-flag';
+import { NormalizeVariables } from '../normalize-variables';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -117,7 +118,10 @@ describe('select integration', function () {
           new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
           new GetFeatureFlag(new FeatureFlagsService())
         ),
-        new CompileTemplate()
+        // @ts-ignore
+        new CompileTemplate(),
+        // @ts-ignore
+        new NormalizeVariables()
       ),
       new TenantRepository()
     );

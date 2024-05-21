@@ -11,6 +11,7 @@ import { ConditionsFilter } from '../conditions-filter';
 import { SelectVariant } from './select-variant.usecase';
 import { MessageTemplateRepository } from '@novu/dal';
 import { SelectVariantCommand } from './select-variant.command';
+import { NormalizeVariables } from '../normalize-variables';
 
 const findOneMessageTemplateMock = jest.fn(() => testVariant);
 
@@ -28,8 +29,9 @@ describe('select variant', function () {
     selectVariantUsecase = new SelectVariant(
       // @ts-ignore
       new ConditionsFilter(),
-      new MessageTemplateRepository()
+      new MessageTemplateRepository(),
       // @ts-ignore
+      new NormalizeVariables()
     );
     jest.clearAllMocks();
   });
