@@ -1,11 +1,11 @@
 import {
   IMessage,
-  HttpClient,
   ButtonTypeEnum,
   MessageActionStatusEnum,
-  IParamObject,
+  CustomDataType,
   IPaginatedResponse,
 } from '@novu/shared';
+import { HttpClient } from '../http-client';
 import {
   ITabCountQuery,
   IStoreQuery,
@@ -13,6 +13,7 @@ import {
   IUnseenCountQuery,
   IUnreadCountQuery,
   IUserGlobalPreferenceSettings,
+  ApiOptions,
 } from '../index';
 
 export class ApiService {
@@ -20,8 +21,25 @@ export class ApiService {
 
   isAuthenticated = false;
 
-  constructor(private backendUrl: string) {
-    this.httpClient = new HttpClient(backendUrl);
+  constructor(backendUrl: string, apiVersion?: ApiOptions['apiVersion']);
+  constructor(options?: ApiOptions);
+  constructor(...args: any) {
+    if (arguments.length === 2) {
+      this.httpClient = new HttpClient({
+        backendUrl: args[0],
+        apiVersion: args[1],
+      });
+    } else if (arguments.length === 1) {
+      if (typeof args[0] === 'object') {
+        this.httpClient = new HttpClient(args[0]);
+      } else if (typeof args[0] === 'string') {
+        this.httpClient = new HttpClient({
+          backendUrl: args[0],
+        });
+      }
+    } else {
+      this.httpClient = new HttpClient();
+    }
   }
 
   setAuthorizationToken(token: string) {
@@ -107,7 +125,7 @@ export class ApiService {
       `/widgets/notifications/feed`,
       {
         page,
-        payload: payloadString,
+        ...(payloadString && { payload: payloadString }),
         ...rest,
       }
     );
@@ -138,21 +156,21 @@ export class ApiService {
   async getUnseenCount(query: IUnseenCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/unseen',
-      query as unknown as IParamObject
+      query as unknown as CustomDataType
     );
   }
 
   async getUnreadCount(query: IUnreadCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/unread',
-      query as unknown as IParamObject
+      query as unknown as CustomDataType
     );
   }
 
   async getTabCount(query: ITabCountQuery = {}) {
     return await this.httpClient.get(
       '/widgets/notifications/count',
-      query as unknown as IParamObject
+      query as unknown as CustomDataType
     );
   }
 

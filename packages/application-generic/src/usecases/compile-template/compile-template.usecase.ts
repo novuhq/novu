@@ -208,7 +208,7 @@ Handlebars.registerHelper(
 @Injectable()
 export class CompileTemplate {
   async execute(command: CompileTemplateCommand): Promise<string> {
-    const templateContent = command.template;
+    const templateContent = command.template || '';
     let result = '';
     try {
       const template = Handlebars.compile(templateContent);

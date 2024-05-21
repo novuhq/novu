@@ -67,6 +67,14 @@ export async function updatePreference(
   );
 }
 
+export async function updatePreferences(data: UpdateSubscriberPreferenceRequestDto, session: UserSession) {
+  return await axiosInstance.patch(`${session.serverUrl}/v1/subscribers/${session.subscriberId}/preferences`, data, {
+    headers: {
+      authorization: `ApiKey ${session.apiKey}`,
+    },
+  });
+}
+
 export async function updateGlobalPreferences(data: UpdateSubscriberGlobalPreferencesRequestDto, session: UserSession) {
   return await axiosInstance.patch(`${session.serverUrl}/v1/subscribers/${session.subscriberId}/preferences`, data, {
     headers: {
