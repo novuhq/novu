@@ -15,6 +15,7 @@ export class SlackProvider implements IChatProvider {
     const response = await this.axiosInstance.post(data.webhookUrl, {
       text: data.content,
       blocks: data.blocks,
+      ...(data.customData || {}),
     });
 
     return {

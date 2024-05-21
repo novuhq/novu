@@ -19,6 +19,7 @@ export class DiscordProvider implements IChatProvider {
     url.searchParams.set('wait', 'true');
     const response = await this.axiosInstance.post(url.toString(), {
       content: data.content,
+      ...(data.customData || {}),
     });
 
     return {
