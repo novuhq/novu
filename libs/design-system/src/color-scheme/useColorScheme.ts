@@ -1,17 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocalThemePreference, ColorSchemePreferenceEnum } from '@novu/shared-web';
-import { useColorScheme as useMantineColorScheme } from '@mantine/hooks';
 import { ColorScheme } from './ColorScheme';
 import { mapThemeStatusToColorScheme } from './mapThemeStatusToColorScheme';
 import { getColorSchemeHtmlElement } from './getColorSchemeHtmlElement';
+import { getBrowserColorScheme } from './getColorScheme';
 
 /**
  * Handle behavior for changing ColorSchemes or ThemeStatuses
  */
 export const useColorScheme = () => {
   const { themeStatus, setThemeStatus } = useLocalThemePreference();
-  const preferredColorScheme = useMantineColorScheme();
-  const [colorScheme, _setColorScheme] = useState<ColorScheme>(preferredColorScheme);
+  const [colorScheme, _setColorScheme] = useState<ColorScheme>(getBrowserColorScheme());
 
   const setColorScheme = useCallback(
     (newColorScheme: ColorScheme) => {
@@ -26,25 +25,26 @@ export const useColorScheme = () => {
     [_setColorScheme]
   );
 
-  const toggleColorScheme = () => {
-    switch (themeStatus) {
-      case ColorSchemePreferenceEnum.SYSTEM:
-        setThemeStatus(ColorSchemePreferenceEnum.LIGHT);
-        break;
-      case ColorSchemePreferenceEnum.LIGHT:
-        setThemeStatus(ColorSchemePreferenceEnum.DARK);
-        break;
-      default:
-        setThemeStatus(ColorSchemePreferenceEnum.SYSTEM);
-        break;
-    }
-  };
+  const toggleColorScheme = useCallback(() => {
+    setThemeStatus((prevThemeStatus) => {
+      switch (prevThemeStatus) {
+        case ColorSchemePreferenceEnum.SYSTEM:
+          return ColorSchemePreferenceEnum.LIGHT;
+        case ColorSchemePreferenceEnum.LIGHT:
+          return ColorSchemePreferenceEnum.DARK;
+        default:
+          return ColorSchemePreferenceEnum.SYSTEM;
+      }
+    });
+    // eslint-disable-next-line
+  }, []);
 
   useEffect(() => {
-    setColorScheme(mapThemeStatusToColorScheme(themeStatus, preferredColorScheme));
-  }, [themeStatus, preferredColorScheme, setColorScheme]);
+    setColorScheme(mapThemeStatusToColorScheme(themeStatus));
+  }, [themeStatus, setColorScheme]);
 
   return {
+    themeStatus,
     colorScheme,
     toggleColorScheme,
   };

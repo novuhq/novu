@@ -1,6 +1,5 @@
-import { ColorScheme, useMantineColorScheme } from '@mantine/core';
-import { IconDarkMode, IconLightMode, IconTonality } from '@novu/design-system';
-import { ColorSchemePreferenceEnum, THEME_TITLE_LOOKUP, useLocalThemePreference, useSegment } from '@novu/shared-web';
+import { ColorScheme, IconDarkMode, IconLightMode, IconTonality, useColorScheme } from '@novu/design-system';
+import { ColorSchemePreferenceEnum, THEME_TITLE_LOOKUP, useSegment } from '@novu/shared-web';
 import { useEffect, useMemo } from 'react';
 import { useDebounce } from './useDebounce';
 
@@ -18,8 +17,7 @@ const getThemeIcon = (themeStatus: ColorSchemePreferenceEnum) => {
 };
 
 export default function useThemeChange() {
-  const { themeStatus } = useLocalThemePreference();
-  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
+  const { colorScheme, toggleColorScheme, themeStatus } = useColorScheme();
   const segment = useSegment();
 
   const trackThemeChange = useDebounce<ThemeChange>((args) => {

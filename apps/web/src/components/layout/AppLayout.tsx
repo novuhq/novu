@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
 import styled from '@emotion/styled';
 
-import { ThemeProvider } from '@novu/design-system';
+import { ThemeProvider, useColorScheme } from '@novu/design-system';
 import { HeaderNav } from './components/HeaderNav';
 import { SideNav } from './components/SideNav';
 import { IntercomProvider } from 'react-use-intercom';
@@ -16,6 +16,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { HeaderNav as HeaderNavNew } from './components/v2/HeaderNav';
 import { MainNav } from '../nav/MainNav';
 import { FreeTrialBanner } from './components/FreeTrialBanner';
+import { ColorSchemeProvider } from '@mantine/core';
 
 const AppShell = styled.div`
   display: flex;
@@ -38,8 +39,8 @@ export function AppLayout() {
 
   return (
     <RequiredAuth>
-      <SpotLightProvider>
-        <ThemeProvider>
+      <ThemeProvider>
+        <SpotLightProvider>
           <IntercomProvider
             appId={INTERCOM_APP_ID}
             onShow={() => setIsIntercomOpened(true)}
@@ -77,8 +78,8 @@ export function AppLayout() {
               </SpotLight>
             </Sentry.ErrorBoundary>
           </IntercomProvider>
-        </ThemeProvider>
-      </SpotLightProvider>
+        </SpotLightProvider>
+      </ThemeProvider>
     </RequiredAuth>
   );
 }
