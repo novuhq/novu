@@ -1,41 +1,16 @@
-import { ColorScheme } from '@mantine/core';
-import { IconOpenInNew, IconOutlineClose, useColorScheme, Modal, ActionButton } from '@novu/design-system';
+import { IconOpenInNew, IconOutlineClose, Modal, ActionButton } from '@novu/design-system';
 import { useSegment } from '@novu/shared-web';
 import { useEffect, useState } from 'react';
-import { cva } from '@novu/novui/css';
+import { css } from '@novu/novui/css';
 import { Flex } from '@novu/novui/jsx';
-import { SystemStyleObject } from '@novu/novui/types';
 import { openInNewTab } from '../../utils';
 import { Docs } from './Docs';
 import { DOCS_URL } from './docs.const';
 import { Voting, VotingWidget } from './VotingWidget';
 
-const actionsRecipe = cva<{ colorScheme: Record<ColorScheme, SystemStyleObject> }>({
-  base: {
-    position: 'fixed',
-    top: '150',
-    right: '150',
-    // TODO: update with a proper zIndex once we have refactored
-    zIndex: '[1]',
-    padding: '25',
-    borderBottomLeftRadius: '50',
-  },
-  variants: {
-    colorScheme: {
-      light: {
-        background: 'white',
-      },
-      dark: {
-        background: 'legacy.B15',
-      },
-    },
-  },
-});
-
 export const DocsModal = ({ open, toggle, path }) => {
   const [voted, setVoted] = useState<Voting | undefined>(undefined);
   const segment = useSegment();
-  const { colorScheme } = useColorScheme();
 
   useEffect(() => {
     return () => {
@@ -89,7 +64,19 @@ export const DocsModal = ({ open, toggle, path }) => {
       <Docs
         path={path}
         actions={
-          <Flex className={actionsRecipe({ colorScheme })} gap="75">
+          <Flex
+            className={css({
+              position: 'fixed',
+              top: '150',
+              right: '150',
+              // TODO: update with a proper zIndex once we have refactored
+              zIndex: '[1]',
+              padding: '25',
+              borderBottomLeftRadius: '50',
+              background: 'surface.page',
+            })}
+            gap="75"
+          >
             <ActionButton
               tooltip="Open docs website"
               onClick={() => {

@@ -131,7 +131,7 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
                     height: '250',
                     lineHeight: '125',
                     borderBottom: 'solid',
-                    borderBottomColor: 'legacy.B20',
+                    borderBottomColor: 'table.border.row',
                   })}
                 />
               );
@@ -144,7 +144,7 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
                     height: '150',
                     lineHeight: '125',
                     color: 'typography.text.main',
-                    borderBottomColor: 'legacy.B30',
+                    borderBottomColor: 'table.border.header',
                   })}
                 />
               );
