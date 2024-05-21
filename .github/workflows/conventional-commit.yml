@@ -41,9 +41,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          requireScope: true
           scopes: |
             ${{ env.SCOPES }}
-            requireScope: true
 
 
       - uses: marocchino/sticky-pull-request-comment@v2
