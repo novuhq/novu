@@ -790,6 +790,9 @@ importers:
       '@mantine/spotlight':
         specifier: ^5.7.1
         version: 5.10.5(@mantine/core@5.10.5(@emotion/react@11.10.6(@types/react@17.0.53)(react@17.0.2))(@mantine/hooks@5.10.5(react@17.0.2))(@types/react@17.0.53)(react-dom@17.0.2(react@17.0.2))(react@17.0.2))(@mantine/hooks@5.10.5(react@17.0.2))(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
+      '@measured/puck':
+        specifier: ^0.14.2
+        version: 0.14.2(@types/react-dom@17.0.19)(@types/react@17.0.53)(prop-types@15.8.1)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
       '@monaco-editor/react':
         specifier: ^4.6.0
         version: 4.6.0(monaco-editor@0.45.0)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
@@ -9588,6 +9591,22 @@ packages:
       '@types/react': '>=16'
       react: '>=16'
 
+  '@measured/auto-frame-component@0.1.7':
+    resolution: {integrity: sha512-bVaIvGFtA4kuuBxaOgtPD7S5a91aBiTPZ+VYm+URLdhKUEuhIUtATPm74NnO7M14IGteJGSGzNf28O/blXSU4g==}
+    peerDependencies:
+      react: ^17.0.0 || ^18.0.0
+
+  '@measured/dnd@16.6.0-canary.4cba1d1':
+    resolution: {integrity: sha512-mMPQ5jElzQRZFR2HNyBn5WnPWpf+E464q1oT0qaI0dJtPqm7R/ssm5lcFDYaXApGvhZnrCRQWWT1ggoW80j0JA==}
+    peerDependencies:
+      react: ^16.8.5 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.8.5 || ^17.0.0 || ^18.0.0
+
+  '@measured/puck@0.14.2':
+    resolution: {integrity: sha512-lhQoXxZppk1Fz8sjINI5ZmNHYZr5mKZlbyFU0mLpHe4ZJiBWKMBFvCTP9lPRl2MyYTp3cWtopfyJaK4/hQ3blw==}
+    peerDependencies:
+      react: ^17.0.0 || ^18.0.0
+
   '@medv/finder@3.2.0':
     resolution: {integrity: sha512-JmU7JIBwyL8RAzefvzALT4sP2M0biGk8i2invAgpQmma/QgfsaqoHIvJ7S0YC8n9hUVG8X3Leul2nGa06PvhbQ==}
 
@@ -14982,6 +15001,9 @@ packages:
   '@types/history@4.7.11':
     resolution: {integrity: sha512-qjDJRrmvBMiTx+jyLxvLfJU7UznFuokDv4f3WRuriHKERccVpFU+8XMQUAbDzoiJCsmexxRExQeMwwCdamSKDA==}
 
+  '@types/hoist-non-react-statics@3.3.5':
+    resolution: {integrity: sha512-SbcrWzkKBw2cdwRTwQAswfpB9g9LJWfjtUeW/jvNwbhC8cpmmNYVePa+ncbUe0rGTQ7G3Ff6mYUN2VMfLVr+Sg==}
+
   '@types/html-minifier-terser@5.1.2':
     resolution: {integrity: sha512-h4lTMgMJctJybDp8CQrxTUiiYmedihHWkjnF/8Pxseu2S6Nlfcy8kwboQ8yejh456rP2yWoEVm1sS/FVsfM48w==}
 
@@ -15406,6 +15428,9 @@ packages:
 
   '@types/urijs@1.19.25':
     resolution: {integrity: sha512-XOfUup9r3Y06nFAZh3WvO0rBU4OtlfPB/vgxpjg+NRdGU6CN6djdc6OEiH+PcqHCY6eFLo9Ista73uarf4gnBg==}
+
+  '@types/use-sync-external-store@0.0.3':
+    resolution: {integrity: sha512-EwmlvuaxPNej9+T4v5AuBPJa2x2UOJVdjCtDHgcDqitUeOtjnJKJ+apYjVcAoBEMjKW1VVFGZLUb5+qqa09XFA==}
 
   '@types/uuid@8.3.4':
     resolution: {integrity: sha512-c/I8ZRb51j+pYGAu5CrFMRxqZ2ke4y2grEBO5AUjgSkSk+qT2Ea+OdWElz/OiMf5MNpn2b17kuVBwZLQJXzihw==}
@@ -18788,6 +18813,9 @@ packages:
     peerDependenciesMeta:
       babel-plugin-macros:
         optional: true
+
+  deep-diff@1.0.2:
+    resolution: {integrity: sha512-aWS3UIVH+NPGCD1kki+DCU9Dua032iSsO43LqQpcs4R3+dVv7tX0qBGjiVHJHjplsoUM2XRO/KB92glqc68awg==}
 
   deep-eql@4.1.3:
     resolution: {integrity: sha512-WaEtAOpRA1MQ0eohqZjpGD8zdI0Ovsm8mmFhaDN8dvDZzyoUMcYDnf5Y6iu7HTXxf8JDS23qWa4a+hKCDyOPzw==}
@@ -23697,6 +23725,10 @@ packages:
     resolution: {integrity: sha512-IJ4uwUTi2qCccrioU6g9g/5rvvVl13bsdczUUcqbciD9iLr095yj8DQKdObriEvuNSx325N1rV1O0sJFszx75g==}
     engines: {node: 14 || >=16.14}
 
+  lru-cache@10.2.2:
+    resolution: {integrity: sha512-9hp3Vp2/hFQUiIwKo8XCeFVnrg8Pk3TYNPIR7tJADKi5YfcF7vEaK7avFHTlSy3kOKYaJQaalfEo6YuXdceBOQ==}
+    engines: {node: 14 || >=16.14}
+
   lru-cache@4.0.2:
     resolution: {integrity: sha512-uQw9OqphAGiZhkuPlpFGmdTU2tEuhxTourM/19qGJrxBPHAr/f8BT1a0i/lOclESnGatdJG/UCkP9kZB/Lh1iw==}
 
@@ -26896,6 +26928,9 @@ packages:
   radix3@1.1.2:
     resolution: {integrity: sha512-b484I/7b8rDEdSDKckSSBA8knMpcdsXudlE/LNL639wFoHKwLbEkQFZHWEYwDC0wa0FKUcCY+GAF73Z7wxNVFA==}
 
+  raf-schd@4.0.3:
+    resolution: {integrity: sha512-tQkJl2GRWh83ui2DiPTJz9wEiMN20syf+5oKfB03yYP7ioZcJwsIK8FjrtLwH1m7C7e+Tt2yYBlrOpdT+dyeIQ==}
+
   raf@3.4.1:
     resolution: {integrity: sha512-Sq4CW4QhwOHE8ucn6J34MqtZCeWFP2aQSmrlroYgqAV1PjStIhJXxYuTgUIfkEk7zTLjmIjLmU5q+fbD1NnOJA==}
 
@@ -27347,6 +27382,12 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17 || ^18
 
+  react-hotkeys-hook@4.5.0:
+    resolution: {integrity: sha512-Samb85GSgAWFQNvVt3PS90LPPGSf9mkH/r4au81ZP1yOIFayLC3QAvqTgGtJ8YEDMXtPmaVBs6NgipHO6h4Mug==}
+    peerDependencies:
+      react: '>=16.8.1'
+      react-dom: '>=16.8.1'
+
   react-icons@5.0.1:
     resolution: {integrity: sha512-WqLZJ4bLzlhmsvme6iFdgO8gfZP17rfjYEJ2m9RsZjZ+cc4k1hTzknEz63YS1MeT50kVzoa1Nz36f4BEx+Wigw==}
     peerDependencies:
@@ -27412,6 +27453,27 @@ packages:
 
   react-proptype-conditional-require@1.0.4:
     resolution: {integrity: sha512-nopsRn7KnGgazBe2c3H2+Kf+Csp6PGDRLiBkYEDMKY8o/EIgft/WnIm/OnAKTawZiLnJXHAqhpFBddvs6NiXlw==}
+
+  react-redux@8.1.3:
+    resolution: {integrity: sha512-n0ZrutD7DaX/j9VscF+uTALI3oUPa/pO4Z3soOBIjuRn/FzVu6aehhysxZCLi6y7duMf52WNZGMl7CtuK5EnRw==}
+    peerDependencies:
+      '@types/react': ^16.8 || ^17.0 || ^18.0
+      '@types/react-dom': ^16.8 || ^17.0 || ^18.0
+      react: ^16.8 || ^17.0 || ^18.0
+      react-dom: ^16.8 || ^17.0 || ^18.0
+      react-native: '>=0.59'
+      redux: ^4 || ^5.0.0-beta.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+      react-dom:
+        optional: true
+      react-native:
+        optional: true
+      redux:
+        optional: true
 
   react-refresh@0.11.0:
     resolution: {integrity: sha512-F27qZr8uUqwhWZboondsPx8tnC3Ct3SxZA3V5WyEvujRyyNv0VYPhoBg1gZ8/MV5tubQp76Trw8lTv9hzRBa+A==}
@@ -27515,6 +27577,12 @@ packages:
     resolution: {integrity: sha512-xLE65euP920QMTOmv5haPlml+hmOPDkbIr5WeF7ADIXWBYt5kW/vwpNfWg8EKMab8aeDxIZ6QjffVh8v2dUyhg==}
     peerDependencies:
       react-dom: ^16.8.0 || ^17 || ^18
+
+  react-spinners@0.13.8:
+    resolution: {integrity: sha512-3e+k56lUkPj0vb5NDXPVFAOkPC//XyhKPJjvcGjyMNPWsBKpplfeyialP74G7H7+It7KzhtET+MvGqbKgAqpZA==}
+    peerDependencies:
+      react: ^16.0.0 || ^17.0.0 || ^18.0.0
+      react-dom: ^16.0.0 || ^17.0.0 || ^18.0.0
 
   react-style-singleton@2.2.1:
     resolution: {integrity: sha512-ZWj0fHEMyWkHzKYUr2Bs/4zU6XLmq9HsgBURm7g5pAVfyn49DgUiNgY2d4lXRlYSiCif9YBGpQleewkcqddc7g==}
@@ -27768,6 +27836,9 @@ packages:
   reduce-flatten@2.0.0:
     resolution: {integrity: sha512-EJ4UNY/U1t2P/2k6oqotuX2Cc3T6nxJwsM0N0asT7dhrtH1ltUxDn4NalSYmPE2rCkVpcf/X6R0wDwcFpzhd4w==}
     engines: {node: '>=6'}
+
+  redux@4.2.1:
+    resolution: {integrity: sha512-LAUYz4lc+Do8/g7aeRa8JkyDErK6ekstQaqWQrNRW//MY1TvCEpMtpTWvlQ+FPbWCx+Xixu/6SHt5N0HR+SB4w==}
 
   reflect-metadata@0.1.13:
     resolution: {integrity: sha512-Ts1Y/anZELhSsjMcU605fU9RE4Oi3p5ORujwbIKXfWa+0Zxs510Qrmrce5/Jowq3cHSZSJqBjypxmHarc+vEWg==}
@@ -30467,6 +30538,12 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0
 
+  use-debounce@9.0.4:
+    resolution: {integrity: sha512-6X8H/mikbrt0XE8e+JXRtZ8yYVvKkdYRfmIhWZYsP8rcNs9hk3APV8Ua2mFkKRLcJKVdnX2/Vwrmg2GWKUQEaQ==}
+    engines: {node: '>= 10.0.0'}
+    peerDependencies:
+      react: '>=16.8.0'
+
   use-deep-compare-effect@1.8.1:
     resolution: {integrity: sha512-kbeNVZ9Zkc0RFGpfMN3MNfaKNvcLNyxOAAd9O4CBZ+kCBXXscn9s/4I+8ytUER4RDpEYs5+O6Rs4PqiZ+rHr5Q==}
     engines: {node: '>=10', npm: '>=6'}
@@ -30490,6 +30567,11 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  use-memo-one@1.1.3:
+    resolution: {integrity: sha512-g66/K7ZQGYrI6dy8GLpVcMsBp4s17xNkYJVSMvTEevGy3nDxHOfE6z8BVE22+5G5x7t3+bhzrlTDB7ObrEE0cQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0
 
   use-resize-observer@9.1.0:
     resolution: {integrity: sha512-R25VqO9Wb3asSD4eqtcxk8sJalvIOYBqS8MNZlpDSQ4l4xMQxC/J7Id9HoTqPq8FwULIn0PVW+OAqF2dyYbjow==}
@@ -42497,6 +42579,50 @@ snapshots:
       '@types/react': 17.0.62
       react: 17.0.2
 
+  '@measured/auto-frame-component@0.1.7(prop-types@15.8.1)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)':
+    dependencies:
+      object-hash: 3.0.0
+      react: 17.0.2
+      react-frame-component: 5.2.6(prop-types@15.8.1)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
+    transitivePeerDependencies:
+      - prop-types
+      - react-dom
+
+  '@measured/dnd@16.6.0-canary.4cba1d1(@types/react-dom@17.0.19)(@types/react@17.0.53)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)':
+    dependencies:
+      '@babel/runtime': 7.23.2
+      css-box-model: 1.2.1
+      lru-cache: 10.2.2
+      memoize-one: 6.0.0
+      raf-schd: 4.0.3
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+      react-redux: 8.1.3(@types/react-dom@17.0.19)(@types/react@17.0.53)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(redux@4.2.1)
+      redux: 4.2.1
+      use-memo-one: 1.1.3(react@17.0.2)
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
+      - react-native
+
+  '@measured/puck@0.14.2(@types/react-dom@17.0.19)(@types/react@17.0.53)(prop-types@15.8.1)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)':
+    dependencies:
+      '@measured/auto-frame-component': 0.1.7(prop-types@15.8.1)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
+      '@measured/dnd': 16.6.0-canary.4cba1d1(@types/react-dom@17.0.19)(@types/react@17.0.53)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
+      deep-diff: 1.0.2
+      react: 17.0.2
+      react-hotkeys-hook: 4.5.0(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
+      react-spinners: 0.13.8(react-dom@17.0.2(react@17.0.2))(react@17.0.2)
+      ua-parser-js: 1.0.37
+      use-debounce: 9.0.4(react@17.0.2)
+      uuid: 9.0.1
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
+      - prop-types
+      - react-dom
+      - react-native
+
   '@medv/finder@3.2.0': {}
 
   '@microlink/react-json-view@1.23.0(@types/react@17.0.62)(encoding@0.1.13)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
@@ -50068,7 +50194,7 @@ snapshots:
       '@storybook/global': 5.0.0
       qs: 6.11.2
       telejson: 7.2.0
-      tiny-invariant: 1.3.1
+      tiny-invariant: 1.3.3
 
   '@storybook/channels@7.5.1':
     dependencies:
@@ -52023,6 +52149,11 @@ snapshots:
 
   '@types/history@4.7.11': {}
 
+  '@types/hoist-non-react-statics@3.3.5':
+    dependencies:
+      '@types/react': 17.0.62
+      hoist-non-react-statics: 3.3.2
+
   '@types/html-minifier-terser@5.1.2': {}
 
   '@types/html-minifier-terser@6.1.0': {}
@@ -52507,6 +52638,8 @@ snapshots:
   '@types/unist@3.0.2': {}
 
   '@types/urijs@1.19.25': {}
+
+  '@types/use-sync-external-store@0.0.3': {}
 
   '@types/uuid@8.3.4': {}
 
@@ -57701,6 +57834,8 @@ snapshots:
   dedent@1.5.1(babel-plugin-macros@3.1.0):
     optionalDependencies:
       babel-plugin-macros: 3.1.0
+
+  deep-diff@1.0.2: {}
 
   deep-eql@4.1.3:
     dependencies:
@@ -65708,6 +65843,8 @@ snapshots:
 
   lru-cache@10.0.1: {}
 
+  lru-cache@10.2.2: {}
+
   lru-cache@4.0.2:
     dependencies:
       pseudomap: 1.0.2
@@ -69985,6 +70122,8 @@ snapshots:
 
   radix3@1.1.2: {}
 
+  raf-schd@4.0.3: {}
+
   raf@3.4.1:
     dependencies:
       performance-now: 2.1.0
@@ -71029,6 +71168,11 @@ snapshots:
     dependencies:
       react: 17.0.2
 
+  react-hotkeys-hook@4.5.0(react-dom@17.0.2(react@17.0.2))(react@17.0.2):
+    dependencies:
+      react: 17.0.2
+      react-dom: 17.0.2(react@17.0.2)
+
   react-icons@5.0.1(react@17.0.2):
     dependencies:
       react: 17.0.2
@@ -71094,6 +71238,21 @@ snapshots:
       warning: 4.0.3
 
   react-proptype-conditional-require@1.0.4: {}
+
+  react-redux@8.1.3(@types/react-dom@17.0.19)(@types/react@17.0.53)(react-dom@17.0.2(react@17.0.2))(react@17.0.2)(redux@4.2.1):
+    dependencies:
+      '@babel/runtime': 7.23.2
+      '@types/hoist-non-react-statics': 3.3.5
+      '@types/use-sync-external-store': 0.0.3
+      hoist-non-react-statics: 3.3.2
+      react: 17.0.2
+      react-is: 18.2.0
+      use-sync-external-store: 1.2.0(react@17.0.2)
+    optionalDependencies:
+      '@types/react': 17.0.53
+      '@types/react-dom': 17.0.19
+      react-dom: 17.0.2(react@17.0.2)
+      redux: 4.2.1
 
   react-refresh@0.11.0: {}
 
@@ -71458,6 +71617,11 @@ snapshots:
 
   react-simple-animate@3.5.2(react-dom@17.0.2(react@17.0.2)):
     dependencies:
+      react-dom: 17.0.2(react@17.0.2)
+
+  react-spinners@0.13.8(react-dom@17.0.2(react@17.0.2))(react@17.0.2):
+    dependencies:
+      react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
 
   react-style-singleton@2.2.1(@types/react@17.0.53)(react@17.0.2):
@@ -71838,6 +72002,10 @@ snapshots:
       node-abort-controller: 3.1.1
 
   reduce-flatten@2.0.0: {}
+
+  redux@4.2.1:
+    dependencies:
+      '@babel/runtime': 7.23.2
 
   reflect-metadata@0.1.13: {}
 
@@ -72317,11 +72485,11 @@ snapshots:
 
   rollup-plugin-terser@7.0.2(rollup@2.79.1):
     dependencies:
-      '@babel/code-frame': 7.24.2
+      '@babel/code-frame': 7.21.4
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.22.0
+      terser: 5.16.9
 
   rollup-plugin-terser@7.0.2(rollup@3.20.2):
     dependencies:
@@ -75533,6 +75701,10 @@ snapshots:
     dependencies:
       react: 18.2.0
 
+  use-debounce@9.0.4(react@17.0.2):
+    dependencies:
+      react: 17.0.2
+
   use-deep-compare-effect@1.8.1(react@17.0.2):
     dependencies:
       '@babel/runtime': 7.23.2
@@ -75577,6 +75749,10 @@ snapshots:
       use-isomorphic-layout-effect: 1.1.2(@types/react@17.0.62)(react@18.2.0)
     optionalDependencies:
       '@types/react': 17.0.62
+
+  use-memo-one@1.1.3(react@17.0.2):
+    dependencies:
+      react: 17.0.2
 
   use-resize-observer@9.1.0(react-dom@17.0.2(react@17.0.2))(react@17.0.2):
     dependencies:

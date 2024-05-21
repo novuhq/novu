@@ -74,6 +74,7 @@
     "@tanstack/react-query-devtools": "^4.20.4",
     "@testing-library/react": "^11.1.0",
     "@testing-library/user-event": "^12.1.10",
+    "@measured/puck": "^0.14.2",
     "@types/jest": "^29.5.0",
     "@types/node": "^12.0.0",
     "@types/react": "^17.0.0",
