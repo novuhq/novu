@@ -39,8 +39,9 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     const verifyPayloadService = new VerifyPayloadService();
     const organization = await this.getOrganization(command.organizationId);
 
+    let i18nInstance;
     if (initiateTranslations) {
-      await initiateTranslations(
+      i18nInstance = await initiateTranslations(
         command.environmentId,
         command.organizationId,
         command.locale ||
@@ -97,17 +98,25 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     };
 
     try {
-      subject = await this.renderContent(command.subject, payload);
+      subject = await this.renderContent(
+        command.subject,
+        payload,
+        i18nInstance
+      );
 
       if (preheader) {
-        preheader = await this.renderContent(preheader, payload);
+        preheader = await this.renderContent(preheader, payload, i18nInstance);
       }
       if (command.senderName) {
-        senderName = await this.renderContent(command.senderName, payload);
+        senderName = await this.renderContent(
+          command.senderName,
+          payload,
+          i18nInstance
+        );
       }
     } catch (e: any) {
       throw new ApiException(
-        e?.message || `Message content could not be generated`
+        e?.message || `Email subject message content could not be generated`
       );
     }
 
@@ -125,13 +134,22 @@ export class CompileEmailTemplate extends CompileTemplateBase {
 
     if (isEditorMode) {
       for (const block of content as IEmailBlock[]) {
-        block.content = await this.renderContent(block.content, payload);
-        block.url = await this.renderContent(block.url || '', payload);
+        block.content = await this.renderContent(
+          block.content,
+          payload,
+          i18nInstance
+        );
+        block.url = await this.renderContent(
+          block.url || '',
+          payload,
+          i18nInstance
+        );
       }
     }
 
     const body = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
+        i18next: i18nInstance,
         template: !isEditorMode
           ? (content as string)
           : (helperBlocksContent as string),
@@ -155,10 +173,12 @@ export class CompileEmailTemplate extends CompileTemplateBase {
 
   private async renderContent(
     content: string,
-    payload: Record<string, unknown>
+    payload: Record<string, unknown>,
+    i18nInstance: any
   ) {
     const renderedContent = await this.compileTemplate.execute(
       CompileTemplateCommand.create({
+        i18next: i18nInstance,
         template: content,
         data: {
           ...payload,
