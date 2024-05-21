@@ -458,6 +458,14 @@ export class SendMessageEmail extends SendMessageBase {
         LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR
       );
 
+      /*
+       * Axios Error, to provide better readability, otherwise stringify ignores response object
+       * TODO: Handle this at the handler level globally
+       */
+      if (error?.isAxiosError && error.response) {
+        error = error.response;
+      }
+
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
           ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
