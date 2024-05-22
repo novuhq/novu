@@ -3,13 +3,13 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import { useVercelParams } from './useVercelParams';
-import { useAuthContext } from '../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { errorMessage } from '../utils/notifications';
 import { vercelIntegrationSetup } from '../api/vercel-integration';
 
 export function useVercelIntegration() {
-  const { token } = useAuthContext();
-  const isLoggedIn = !!token;
+  const { currentUser } = useAuth();
+  const isLoggedIn = !!currentUser;
 
   const { code, next, configurationId } = useVercelParams();
 

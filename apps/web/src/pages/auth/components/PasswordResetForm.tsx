@@ -4,9 +4,8 @@ import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { showNotification } from '@mantine/notifications';
 import { passwordConstraints } from '@novu/shared';
+import { useAuth } from '@novu/shared-web';
 import type { IResponseError } from '@novu/shared';
-
-import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { api } from '../../../api/api.client';
 import { PasswordInput, Button, colors, Text } from '@novu/design-system';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
@@ -17,7 +16,7 @@ type Props = {
 };
 
 export function PasswordResetForm({ token }: Props) {
-  const { setToken } = useAuthContext();
+  const { login } = useAuth();
 
   const navigate = useNavigate();
   const { isLoading, mutateAsync, isError, error } = useMutation<
@@ -45,7 +44,7 @@ export function PasswordResetForm({ token }: Props) {
     try {
       const response = await mutateAsync(itemData);
 
-      setToken(response.token);
+      login(response.token);
 
       showNotification({
         message: 'Password was changed successfully',

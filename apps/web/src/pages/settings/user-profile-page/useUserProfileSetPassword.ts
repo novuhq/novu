@@ -1,13 +1,13 @@
 import { errorMessage } from '@novu/design-system';
 import { IResponseError, PasswordResetFlowEnum } from '@novu/shared';
-import { api, useAuthContext } from '@novu/shared-web';
+import { api, useAuth } from '@novu/shared-web';
 import { useMutation } from '@tanstack/react-query';
 import { useCountdownTimer } from '../../../hooks';
 
 const COUNTDOWN_TIMER_START_SECONDS = 60;
 
 export const useUserProfileSetPassword = () => {
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
   const {
     timeRemaining: countdownTimerSeconds,
     resetTimer,

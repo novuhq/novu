@@ -1,42 +1,42 @@
 import * as Sentry from '@sentry/react';
 
-import { IOrganizationEntity } from '@novu/shared';
-import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
-import { PropsWithChildren, useEffect, useMemo, useRef, useState } from 'react';
-import { useFeatureFlags, useAuthContext, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@novu/shared-web';
-import { selectShouldInitializeLaunchDarkly } from './utils/selectShouldInitializeLaunchDarkly';
+import { asyncWithLDProvider, useLDClient, withLDProvider } from 'launchdarkly-react-client-sdk';
+import { useEffect, useRef } from 'react';
+import { useAuth, LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@novu/shared-web';
 
-/** A provider with children required */
+/*
+ * 👮 DX police. This TS dance is required so that TS is happy with the returned type of
+ * asyncWithLDProvider.
+ */
 type GenericLDProvider = Awaited<ReturnType<typeof asyncWithLDProvider>>;
-
-/** Simply renders the children */
 const DEFAULT_GENERIC_PROVIDER: GenericLDProvider = ({ children }) => <>{children}</>;
 
-/**
- * Async provider for feature flags.
- *
- * @requires AuthProvider must be wrapped in the AuthProvider.
- */
-export const LaunchDarklyProvider: React.FC<PropsWithChildren<{}>> = ({ children }) => {
+export function LaunchDarklyProvider({ children }) {
+  const ldClient = useLDClient();
   const LDProvider = useRef<GenericLDProvider>(DEFAULT_GENERIC_PROVIDER);
-
-  const authContext = useAuthContext();
-  if (!authContext) {
+  const auth = useAuth();
+  if (!auth) {
     throw new Error('LaunchDarklyProvider must be used within <AuthProvider>!');
   }
-  const { currentOrganization } = authContext;
 
-  const shouldInitializeLd = useMemo(() => selectShouldInitializeLaunchDarkly(authContext), [authContext]);
+  const { currentOrganization } = auth;
 
   useEffect(() => {
-    if (!shouldInitializeLd) {
-      return;
+    if (ldClient && currentOrganization) {
+      ldClient.identify({
+        kind: 'organization',
+        key: currentOrganization._id,
+        name: currentOrganization.name,
+      });
     }
+  }, [ldClient, currentOrganization]);
 
-    const fetchLDProvider = async () => {
+  useEffect(() => {
+    (async () => {
       try {
         LDProvider.current = await asyncWithLDProvider({
           clientSideID: LAUNCH_DARKLY_CLIENT_SIDE_ID,
+          ldClient,
           reactOptions: {
             useCamelCaseFlagKeys: false,
           },
@@ -59,23 +59,8 @@ export const LaunchDarklyProvider: React.FC<PropsWithChildren<{}>> = ({ children
       } catch (err: unknown) {
         Sentry.captureException(err);
       }
-    };
+    })();
+  }, [ldClient, currentOrganization]);
 
-    fetchLDProvider();
-  }, [shouldInitializeLd, currentOrganization]);
-
-  return (
-    <LDProvider.current>
-      <LaunchDarklyClientWrapper org={currentOrganization}>{children}</LaunchDarklyClientWrapper>
-    </LDProvider.current>
-  );
-};
-
-/**
- * Refreshes feature flags on org change using the LaunchDarkly client from the provider.
- */
-function LaunchDarklyClientWrapper({ children, org }: PropsWithChildren<{ org?: IOrganizationEntity }>) {
-  useFeatureFlags(org);
-
-  return <>{children}</>;
+  return <LDProvider.current>{children}</LDProvider.current>;
 }

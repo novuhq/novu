@@ -1,9 +1,9 @@
 import { useEffect } from 'react';
 import { APP_ID, ENV, WIDGET_EMBED_PATH } from '../config';
-import { useAuthContext } from '../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 
 export function useNovu() {
-  const authContext = useAuthContext();
+  const authContext = useAuth();
 
   useEffect(() => {
     if ((ENV === 'dev' || ENV === 'production') && authContext.currentUser) {

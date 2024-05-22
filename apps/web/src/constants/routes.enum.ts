@@ -1,3 +1,1 @@
-import { ROUTES } from '@novu/shared-web';
-
-export { ROUTES };
+export { ROUTES } from '@novu/shared-web';

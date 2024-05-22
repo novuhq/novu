@@ -1,16 +1,18 @@
 import { ApiServiceLevelEnum, productFeatureEnabledForServiceLevel, ProductFeatureKeyEnum } from '@novu/shared';
 import { useEffect, useState } from 'react';
-import { useAuthController } from './useAuthController';
+import { useAuth } from './useAuth';
 
 export const useProductFeature = (feature: ProductFeatureKeyEnum) => {
-  const { organization } = useAuthController();
+  const { currentOrganization } = useAuth();
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
     setEnabled(
-      productFeatureEnabledForServiceLevel[feature].includes(organization?.apiServiceLevel as ApiServiceLevelEnum)
+      productFeatureEnabledForServiceLevel[feature].includes(
+        currentOrganization?.apiServiceLevel as ApiServiceLevelEnum
+      )
     );
-  }, [feature, organization?.apiServiceLevel]);
+  }, [feature, currentOrganization?.apiServiceLevel]);
 
   return enabled;
 };

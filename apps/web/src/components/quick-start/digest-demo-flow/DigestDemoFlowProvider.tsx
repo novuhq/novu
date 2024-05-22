@@ -8,7 +8,7 @@ import {
 } from '@novu/shared';
 
 import { testTrigger } from '../../../api/notification-templates';
-import { useAuthContext } from '../../providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { useDebounce } from '../../../hooks';
 import { useTemplateFetcher, useUpdateTemplate } from '../../../api/hooks';
 
@@ -60,7 +60,7 @@ export const DigestDemoFlowProvider = ({
       digestInterval: 10,
       emailsSentCount: 0,
     });
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
   const { template } = useTemplateFetcher(
     { templateId },
     {

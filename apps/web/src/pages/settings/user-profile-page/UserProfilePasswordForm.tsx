@@ -1,6 +1,6 @@
 import { Button, errorMessage, IconOutlineLockPerson, PasswordInput, successMessage } from '@novu/design-system';
 import { checkIsResponseError, IResponseError } from '@novu/shared';
-import { api, useAuthContext } from '@novu/shared-web';
+import { api, useAuth } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -15,7 +15,7 @@ type UserProfilePasswordFormProps = {
 };
 
 export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = ({ token, onSuccess }) => {
-  const { setToken } = useAuthContext();
+  const { login } = useAuth();
 
   const { isLoading, mutateAsync, error, isError } = useMutation<
     { token: string },
@@ -54,7 +54,7 @@ export const UserProfilePasswordForm: React.FC<UserProfilePasswordFormProps> = (
     try {
       const response = await mutateAsync(itemData);
 
-      setToken(response.token);
+      login(response.token);
 
       successMessage('Password was set successfully');
       onSuccess?.();

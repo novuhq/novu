@@ -8,15 +8,16 @@ import { getInviteTokenData } from '../../api/invitation';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { SignUpForm } from './components/SignUpForm';
 import { colors, Text, Button } from '@novu/design-system';
-import { useAuthContext } from '../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { useAcceptInvite } from './components/useAcceptInvite';
 import { LoginForm } from './components/LoginForm';
 
 export default function InvitationPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { token, logout, currentUser } = useAuthContext();
+  const { token, logout, currentUser } = useAuth();
   const location = useLocation();
+  // TODO: Replace token check with currentUser check
   const isLoggedIn = !!token;
   const { token: invitationToken } = useParams<{ token: string }>();
   const tokensRef = useRef({ token, invitationToken });

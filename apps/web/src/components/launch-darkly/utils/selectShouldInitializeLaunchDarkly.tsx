@@ -1,16 +1,16 @@
-import { UserContext } from '@novu/shared-web';
+import { useAuth } from '@novu/shared-web';
 import { checkShouldUseLaunchDarkly } from '@novu/shared-web';
 
 /** Determine if LaunchDarkly should be initialized based on the current auth context */
-export function selectShouldInitializeLaunchDarkly(userCtx: UserContext): boolean {
-  const { isLoggedIn, currentUser, currentOrganization } = userCtx;
+export function selectShouldInitializeLaunchDarkly(userCtx: ReturnType<typeof useAuth>): boolean {
+  const { inPublicRoute, currentUser, currentOrganization } = userCtx;
   // don't show fallback if LaunchDarkly isn't enabled
   if (!checkShouldUseLaunchDarkly()) {
     return false;
   }
 
   // enable feature flags for unauthenticated areas of the app
-  if (!isLoggedIn) {
+  if (inPublicRoute) {
     return true;
   }
 
