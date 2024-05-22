@@ -6,11 +6,13 @@ on:
       - opened
       - edited
       - synchronize
-  pull_request:
-    types:
-      - opened
-      - edited
-      - synchronize
+
+  # Use the following event if you want edit and test setting regarding conventional commits
+  # pull_request:
+  #   types:
+  #     - opened
+  #     - edited
+  #     - synchronize
 
 permissions:
   pull-requests: write
@@ -29,7 +31,7 @@ jobs:
       - name: Generate scopes
         id: generate_scopes
         run: |
-          scopes=$(pnpm m ls --json --depth=-1 | grep "name" | cut -d":" -f2 | grep "@novu" | cut -d"/" -f2 | grep "\"" | cut -d"\"" -f1)
+          scopes=$(pnpm m ls --json --depth=-1 | grep "name" | sed -e 's/.*\: \(.*\)/\1/' -e 's/@novu\///g' -e 's/[",]//g')
           echo 'SCOPES<<EOF' >> $GITHUB_ENV
           echo "$scopes" >> $GITHUB_ENV
           echo 'EOF' >> $GITHUB_ENV
@@ -39,8 +41,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          requireScope: true
           scopes: |
             ${{ env.SCOPES }}
+
 
       - uses: marocchino/sticky-pull-request-comment@v2
         # When the previous steps fails, the workflow would stop. By adding this
@@ -50,21 +54,19 @@ jobs:
           header: pr-title-lint-error
           message: |
             Hey there and thank you for opening this pull request! 👋
-            
+
             We require pull request titles to follow the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/) and it looks like your proposed title needs to be adjusted.
 
             Your PR title is: `${{ github.event.pull_request.title }}`
             It should be something like: `feat(scope): Add fancy new feature`
 
-            Details:
-            
-            ```
+            **Details:**
+
             ${{ steps.lint_pr_title.outputs.error_message }}
-            ```
 
       # Delete a previous comment when the issue has been resolved
       - if: ${{ steps.lint_pr_title.outputs.error_message == null }}
         uses: marocchino/sticky-pull-request-comment@v2
-        with:   
+        with:
           header: pr-title-lint-error
           delete: true

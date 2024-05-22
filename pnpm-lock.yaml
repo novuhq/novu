@@ -357,13 +357,13 @@ importers:
         version: 7.1.9(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
       '@nestjs/terminus':
         specifier: ^10.0.1
-        version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+        version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/throttler':
         specifier: ^5.0.1
         version: 5.1.1(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)
       '@novu/application-generic':
         specifier: workspace:*
-        version: link:../../packages/application-generic
+        version: link:../../libs/application-generic
       '@novu/dal':
         specifier: workspace:*
         version: link:../../libs/dal
@@ -605,7 +605,7 @@ importers:
     dependencies:
       '@novu/application-generic':
         specifier: workspace:*
-        version: link:../../packages/application-generic
+        version: link:../../libs/application-generic
       '@novu/shared':
         specifier: workspace:*
         version: link:../../libs/shared
@@ -1148,10 +1148,10 @@ importers:
         version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2)
       '@nestjs/terminus':
         specifier: ^10.0.1
-        version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+        version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
         specifier: workspace:*
-        version: link:../../packages/application-generic
+        version: link:../../libs/application-generic
       '@novu/dal':
         specifier: workspace:*
         version: link:../../libs/dal
@@ -1468,10 +1468,10 @@ importers:
         version: 7.1.9(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
       '@nestjs/terminus':
         specifier: ^10.0.1
-        version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+        version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
         specifier: workspace:*
-        version: link:../../packages/application-generic
+        version: link:../../libs/application-generic
       '@novu/dal':
         specifier: workspace:*
         version: link:../../libs/dal
@@ -1665,13 +1665,13 @@ importers:
         version: 7.1.9(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
       '@nestjs/terminus':
         specifier: ^10.0.1
-        version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+        version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(axios@1.6.8)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/websockets':
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2)(@nestjs/platform-socket.io@10.2.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@novu/application-generic':
         specifier: workspace:*
-        version: link:../../packages/application-generic
+        version: link:../../libs/application-generic
       '@novu/dal':
         specifier: workspace:*
         version: link:../../libs/dal
@@ -1810,7 +1810,7 @@ importers:
         version: 9.0.3(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(passport@0.6.0)
       '@novu/application-generic':
         specifier: workspace:*
-        version: link:../../../packages/application-generic
+        version: link:../../../libs/application-generic
       '@novu/dal':
         specifier: workspace:*
         version: link:../../../libs/dal
@@ -1883,7 +1883,7 @@ importers:
         version: 5.1.1(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)
       '@novu/application-generic':
         specifier: workspace:*
-        version: link:../../../packages/application-generic
+        version: link:../../../libs/application-generic
       '@novu/dal':
         specifier: workspace:*
         version: link:../../../libs/dal
@@ -2071,7 +2071,7 @@ importers:
         version: 9.0.3(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(passport@0.6.0)
       '@novu/application-generic':
         specifier: workspace:*
-        version: link:../../../../packages/application-generic
+        version: link:../../../../libs/application-generic
       '@novu/dal':
         specifier: workspace:*
         version: link:../../../../libs/dal
@@ -2406,7 +2406,7 @@ importers:
         version: 7.1.9(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
       '@novu/application-generic':
         specifier: workspace:*
-        version: link:../../../packages/application-generic
+        version: link:../../../libs/application-generic
       '@novu/dal':
         specifier: workspace:*
         version: link:../../../libs/dal
@@ -2565,6 +2565,266 @@ importers:
       ts-loader:
         specifier: ~9.4.0
         version: 9.4.2(typescript@4.9.5)(webpack@5.88.2(@swc/core@1.3.107))
+      typescript:
+        specifier: 4.9.5
+        version: 4.9.5
+
+  libs/application-generic:
+    dependencies:
+      '@aws-sdk/client-cloudwatch':
+        specifier: ^3.567.0
+        version: 3.575.0
+      '@aws-sdk/client-s3':
+        specifier: ^3.567.0
+        version: 3.575.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.567.0
+        version: 3.575.0
+      '@azure/storage-blob':
+        specifier: ^12.11.0
+        version: 12.13.0(encoding@0.1.13)
+      '@google-cloud/storage':
+        specifier: ^6.2.3
+        version: 6.12.0(encoding@0.1.13)
+      '@hokify/agenda':
+        specifier: ^6.3.0
+        version: 6.3.0
+      '@nestjs/common':
+        specifier: 10.2.2
+        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@nestjs/core':
+        specifier: '>=10'
+        version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@nestjs/jwt':
+        specifier: 10.2.0
+        version: 10.2.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))
+      '@nestjs/passport':
+        specifier: ^10.0.1
+        version: 10.0.1(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(passport@0.6.0)
+      '@nestjs/swagger':
+        specifier: '>=6'
+        version: 7.1.9(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
+      '@nestjs/terminus':
+        specifier: '>=10'
+        version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(axios@1.6.8)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@nestjs/testing':
+        specifier: '>=10'
+        version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2))
+      '@novu/dal':
+        specifier: workspace:*
+        version: link:../dal
+      '@novu/providers':
+        specifier: workspace:*
+        version: link:../../packages/providers
+      '@novu/shared':
+        specifier: workspace:*
+        version: link:../shared
+      '@novu/stateless':
+        specifier: workspace:*
+        version: link:../../packages/stateless
+      '@novu/testing':
+        specifier: workspace:*
+        version: link:../testing
+      '@opentelemetry/api':
+        specifier: ^1.7.0
+        version: 1.7.0
+      '@opentelemetry/auto-instrumentations-node':
+        specifier: ^0.40.2
+        version: 0.40.3(@opentelemetry/api@1.7.0)(encoding@0.1.13)
+      '@opentelemetry/context-async-hooks':
+        specifier: ~1.19.0
+        version: 1.19.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/core':
+        specifier: ~1.19.0
+        version: 1.19.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/exporter-collector':
+        specifier: ^0.25.0
+        version: 0.25.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/exporter-jaeger':
+        specifier: ~1.19.0
+        version: 1.19.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/exporter-prometheus':
+        specifier: ^0.46.0
+        version: 0.46.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/exporter-trace-otlp-http':
+        specifier: ^0.49.1
+        version: 0.49.1(@opentelemetry/api@1.7.0)
+      '@opentelemetry/instrumentation':
+        specifier: ^0.46.0
+        version: 0.46.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/propagator-b3':
+        specifier: ~1.19.0
+        version: 1.19.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/propagator-jaeger':
+        specifier: ~1.19.0
+        version: 1.19.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/resources':
+        specifier: ~1.19.0
+        version: 1.19.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/sdk-node':
+        specifier: ^0.46.0
+        version: 0.46.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/sdk-trace-base':
+        specifier: ~1.19.0
+        version: 1.19.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/sdk-trace-node':
+        specifier: ~1.19.0
+        version: 1.19.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/semantic-conventions':
+        specifier: ~1.19.0
+        version: 1.19.0
+      '@pyroscope/nodejs':
+        specifier: ^0.2.9
+        version: 0.2.9(encoding@0.1.13)
+      '@segment/analytics-node':
+        specifier: ^1.1.4
+        version: 1.1.4(encoding@0.1.13)
+      '@sentry/node':
+        specifier: ^7.12.1
+        version: 7.114.0
+      axios:
+        specifier: ^1.6.2
+        version: 1.6.8
+      bullmq:
+        specifier: ^3.10.2
+        version: 3.10.4
+      class-transformer:
+        specifier: ^0.5.1
+        version: 0.5.1
+      class-validator:
+        specifier: ^0.14.0
+        version: 0.14.0
+      date-fns:
+        specifier: ^2.29.2
+        version: 2.29.3
+      handlebars:
+        specifier: ^4.7.7
+        version: 4.7.8
+      i18next:
+        specifier: ^23.7.6
+        version: 23.7.11
+      ioredis:
+        specifier: ^5.2.4
+        version: 5.3.2
+      jsonwebtoken:
+        specifier: 9.0.0
+        version: 9.0.0
+      launchdarkly-node-server-sdk:
+        specifier: ^7.0.1
+        version: 7.0.1
+      lodash:
+        specifier: ^4.17.15
+        version: 4.17.21
+      mixpanel:
+        specifier: ^0.17.0
+        version: 0.17.0
+      nestjs-otel:
+        specifier: ^5.1.5
+        version: 5.1.5(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))
+      nestjs-pino:
+        specifier: ^3.4.0
+        version: 3.4.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(pino-http@8.3.3)
+      node-fetch:
+        specifier: ^3.2.10
+        version: 3.3.1
+      pino-http:
+        specifier: ^8.3.3
+        version: 8.3.3
+      pino-pretty:
+        specifier: ^9.4.0
+        version: 9.4.0
+      recursive-diff:
+        specifier: ^1.0.8
+        version: 1.0.9
+      redlock:
+        specifier: 5.0.0-beta.2
+        version: 5.0.0-beta.2
+      reflect-metadata:
+        specifier: ^0.1.13
+        version: 0.1.13
+      rrule:
+        specifier: ^2.7.2
+        version: 2.7.2
+      rxjs:
+        specifier: 7.8.1
+        version: 7.8.1
+      sanitize-html:
+        specifier: ^2.4.0
+        version: 2.10.0
+      shortid:
+        specifier: ^2.2.16
+        version: 2.2.16
+      slugify:
+        specifier: ^1.4.6
+        version: 1.6.6
+    optionalDependencies:
+      '@novu/ee-echo-worker':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/echo/echo-worker
+      '@novu/ee-shared-services':
+        specifier: workspace:*
+        version: link:../../enterprise/packages/shared-services
+      '@taskforcesh/bullmq-pro':
+        specifier: 5.1.14
+        version: 5.1.14
+    devDependencies:
+      '@istanbuljs/nyc-config-typescript':
+        specifier: ^1.0.1
+        version: 1.0.2(nyc@15.1.0)
+      '@types/jest':
+        specifier: 29.5.2
+        version: 29.5.2
+      '@types/json-schema':
+        specifier: ^7.0.15
+        version: 7.0.15
+      '@types/newrelic':
+        specifier: ^9
+        version: 9.14.0
+      '@types/sanitize-html':
+        specifier: ^2.11.0
+        version: 2.11.0
+      '@types/sinon':
+        specifier: ^9.0.0
+        version: 9.0.11
+      chai:
+        specifier: ^4.2.0
+        version: 4.4.1
+      codecov:
+        specifier: ^3.5.0
+        version: 3.8.3(encoding@0.1.13)
+      cpx:
+        specifier: ^1.5.0
+        version: 1.5.0
+      dotenv:
+        specifier: ^8.2.0
+        version: 8.6.0
+      jest:
+        specifier: ^27.1.0
+        version: 27.5.1(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@4.9.5))
+      newrelic:
+        specifier: ^9
+        version: 9.15.0
+      npm-run-all:
+        specifier: ^4.1.5
+        version: 4.1.5
+      nyc:
+        specifier: ^15.1.0
+        version: 15.1.0
+      prettier:
+        specifier: ~2.8.0
+        version: 2.8.8
+      rimraf:
+        specifier: ^3.0.2
+        version: 3.0.2
+      sinon:
+        specifier: ^9.2.4
+        version: 9.2.4
+      ts-jest:
+        specifier: ^27.0.5
+        version: 27.1.5(@babel/core@7.24.4)(@types/jest@29.5.2)(babel-jest@27.5.1(@babel/core@7.24.4))(jest@27.5.1(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@4.9.5)))(typescript@4.9.5)
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@4.9.5)
       typescript:
         specifier: 4.9.5
         version: 4.9.5
@@ -3076,9 +3336,6 @@ importers:
 
   libs/shared:
     dependencies:
-      axios:
-        specifier: ^1.6.2
-        version: 1.6.2
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -3256,266 +3513,6 @@ importers:
       tsconfig-paths:
         specifier: ~4.1.0
         version: 4.1.2
-      typescript:
-        specifier: 4.9.5
-        version: 4.9.5
-
-  packages/application-generic:
-    dependencies:
-      '@aws-sdk/client-cloudwatch':
-        specifier: ^3.567.0
-        version: 3.575.0
-      '@aws-sdk/client-s3':
-        specifier: ^3.567.0
-        version: 3.575.0
-      '@aws-sdk/s3-request-presigner':
-        specifier: ^3.567.0
-        version: 3.575.0
-      '@azure/storage-blob':
-        specifier: ^12.11.0
-        version: 12.13.0(encoding@0.1.13)
-      '@google-cloud/storage':
-        specifier: ^6.2.3
-        version: 6.9.5(encoding@0.1.13)
-      '@hokify/agenda':
-        specifier: ^6.3.0
-        version: 6.3.0
-      '@nestjs/common':
-        specifier: 10.2.2
-        version: 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@nestjs/core':
-        specifier: '>=10'
-        version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@nestjs/jwt':
-        specifier: 10.2.0
-        version: 10.2.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))
-      '@nestjs/passport':
-        specifier: ^10.0.1
-        version: 10.0.1(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(passport@0.6.0)
-      '@nestjs/swagger':
-        specifier: '>=6'
-        version: 7.1.9(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)
-      '@nestjs/terminus':
-        specifier: '>=10'
-        version: 10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
-      '@nestjs/testing':
-        specifier: '>=10'
-        version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2))
-      '@novu/dal':
-        specifier: workspace:*
-        version: link:../../libs/dal
-      '@novu/providers':
-        specifier: workspace:*
-        version: link:../providers
-      '@novu/shared':
-        specifier: workspace:*
-        version: link:../../libs/shared
-      '@novu/stateless':
-        specifier: workspace:*
-        version: link:../stateless
-      '@novu/testing':
-        specifier: workspace:*
-        version: link:../../libs/testing
-      '@opentelemetry/api':
-        specifier: ^1.7.0
-        version: 1.7.0
-      '@opentelemetry/auto-instrumentations-node':
-        specifier: ^0.40.2
-        version: 0.40.3(@opentelemetry/api@1.7.0)(encoding@0.1.13)
-      '@opentelemetry/context-async-hooks':
-        specifier: ^1.19.0
-        version: 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/core':
-        specifier: ^1.19.0
-        version: 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/exporter-collector':
-        specifier: ^0.25.0
-        version: 0.25.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/exporter-jaeger':
-        specifier: ^1.19.0
-        version: 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/exporter-prometheus':
-        specifier: ^0.46.0
-        version: 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/exporter-trace-otlp-http':
-        specifier: ^0.49.1
-        version: 0.49.1(@opentelemetry/api@1.7.0)
-      '@opentelemetry/instrumentation':
-        specifier: ^0.46.0
-        version: 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/propagator-b3':
-        specifier: ^1.19.0
-        version: 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/propagator-jaeger':
-        specifier: ^1.19.0
-        version: 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/resources':
-        specifier: ^1.19.0
-        version: 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/sdk-node':
-        specifier: ^0.46.0
-        version: 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/sdk-trace-base':
-        specifier: ^1.19.0
-        version: 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/sdk-trace-node':
-        specifier: ^1.19.0
-        version: 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions':
-        specifier: ^1.19.0
-        version: 1.19.0
-      '@pyroscope/nodejs':
-        specifier: ^0.2.9
-        version: 0.2.9(encoding@0.1.13)
-      '@segment/analytics-node':
-        specifier: ^1.1.4
-        version: 1.1.4(encoding@0.1.13)
-      '@sentry/node':
-        specifier: ^7.12.1
-        version: 7.47.0
-      axios:
-        specifier: ^1.6.2
-        version: 1.6.2
-      bullmq:
-        specifier: ^3.10.2
-        version: 3.10.4
-      class-transformer:
-        specifier: ^0.5.1
-        version: 0.5.1
-      class-validator:
-        specifier: ^0.14.0
-        version: 0.14.0
-      date-fns:
-        specifier: ^2.29.2
-        version: 2.29.3
-      handlebars:
-        specifier: ^4.7.7
-        version: 4.7.7
-      i18next:
-        specifier: ^23.7.6
-        version: 23.7.11
-      ioredis:
-        specifier: ^5.2.4
-        version: 5.3.1
-      jsonwebtoken:
-        specifier: 9.0.0
-        version: 9.0.0
-      launchdarkly-node-server-sdk:
-        specifier: ^7.0.1
-        version: 7.0.1
-      lodash:
-        specifier: ^4.17.15
-        version: 4.17.21
-      mixpanel:
-        specifier: ^0.17.0
-        version: 0.17.0
-      nestjs-otel:
-        specifier: ^5.1.5
-        version: 5.1.5(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))
-      nestjs-pino:
-        specifier: ^3.4.0
-        version: 3.4.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(pino-http@8.3.3)
-      node-fetch:
-        specifier: ^3.2.10
-        version: 3.3.1
-      pino-http:
-        specifier: ^8.3.3
-        version: 8.3.3
-      pino-pretty:
-        specifier: ^9.4.0
-        version: 9.4.0
-      recursive-diff:
-        specifier: ^1.0.8
-        version: 1.0.9
-      redlock:
-        specifier: 5.0.0-beta.2
-        version: 5.0.0-beta.2
-      reflect-metadata:
-        specifier: ^0.1.13
-        version: 0.1.13
-      rrule:
-        specifier: ^2.7.2
-        version: 2.7.2
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
-      sanitize-html:
-        specifier: ^2.4.0
-        version: 2.10.0
-      shortid:
-        specifier: ^2.2.16
-        version: 2.2.16
-      slugify:
-        specifier: ^1.4.6
-        version: 1.6.6
-    optionalDependencies:
-      '@novu/ee-echo-worker':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/echo/echo-worker
-      '@novu/ee-shared-services':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/shared-services
-      '@taskforcesh/bullmq-pro':
-        specifier: 5.1.14
-        version: 5.1.14
-    devDependencies:
-      '@istanbuljs/nyc-config-typescript':
-        specifier: ^1.0.1
-        version: 1.0.2(nyc@15.1.0)
-      '@types/jest':
-        specifier: 29.5.2
-        version: 29.5.2
-      '@types/json-schema':
-        specifier: ^7.0.15
-        version: 7.0.15
-      '@types/newrelic':
-        specifier: ^9
-        version: 9.14.0
-      '@types/sanitize-html':
-        specifier: ^2.11.0
-        version: 2.11.0
-      '@types/sinon':
-        specifier: ^9.0.0
-        version: 9.0.11
-      chai:
-        specifier: ^4.2.0
-        version: 4.3.7
-      codecov:
-        specifier: ^3.5.0
-        version: 3.8.3(encoding@0.1.13)
-      cpx:
-        specifier: ^1.5.0
-        version: 1.5.0
-      dotenv:
-        specifier: ^8.2.0
-        version: 8.6.0
-      jest:
-        specifier: ^27.1.0
-        version: 27.5.1(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@4.9.5))
-      newrelic:
-        specifier: ^9
-        version: 9.15.0
-      npm-run-all:
-        specifier: ^4.1.5
-        version: 4.1.5
-      nyc:
-        specifier: ^15.1.0
-        version: 15.1.0
-      prettier:
-        specifier: ~2.8.0
-        version: 2.8.7
-      rimraf:
-        specifier: ^3.0.2
-        version: 3.0.2
-      sinon:
-        specifier: ^9.2.4
-        version: 9.2.4
-      ts-jest:
-        specifier: ^27.0.5
-        version: 27.1.5(@babel/core@7.24.4)(@types/jest@29.5.2)(babel-jest@27.5.1(@babel/core@7.24.4))(jest@27.5.1(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@4.9.5)))(typescript@4.9.5)
-      ts-node:
-        specifier: ~10.9.1
-        version: 10.9.1(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@4.9.5)
       typescript:
         specifier: 4.9.5
         version: 4.9.5
@@ -25909,9 +25906,6 @@ packages:
   pino-abstract-transport@0.5.0:
     resolution: {integrity: sha512-+KAgmVeqXYbTtU2FScx1XS3kNyfZ5TrXY07V96QnUSFqo2gAqlvmaxH67Lj7SWazqsMabf+58ctdTcBgnOLUOQ==}
 
-  pino-abstract-transport@1.0.0:
-    resolution: {integrity: sha512-c7vo5OpW4wIS42hUVcT5REsL8ZljsUfBjqV/e2sFxmFEFZiq1XLUp5EYLtuDH6PEHq9W1egWqRbnLUP5FuZmOA==}
-
   pino-abstract-transport@1.1.0:
     resolution: {integrity: sha512-lsleG3/2a/JIWUtf9Q5gUNErBqwIu1tUKTT3dUzaf5DySw9ra1wcqKjJjLX1VTY64Wk1eEOYsVGSaGfCK85ekA==}
 
@@ -25930,10 +25924,6 @@ packages:
 
   pino@7.11.0:
     resolution: {integrity: sha512-dMACeu63HtRLmCG8VKdy4cShCPKaYDR4youZqoSWLxl5Gu99HUw8bw75thbPv9Nip+H+QYX8o3ZJbTdVZZ2TVg==}
-    hasBin: true
-
-  pino@8.11.0:
-    resolution: {integrity: sha512-Z2eKSvlrl2rH8p5eveNUnTdd4AjJk8tAsLkHYZQKGHP4WTh2Gi1cOSOs3eWPqaj+niS3gj4UkoreoaWgF3ZWYg==}
     hasBin: true
 
   pino@8.17.2:
@@ -28743,9 +28733,6 @@ packages:
 
   sonic-boom@2.8.0:
     resolution: {integrity: sha512-kuonw1YOYYNOve5iHdSahXPOK49GqwA+LZhI6Wz/l0rP57iKyXXIHaRagOBHAPmGwJC6od2Z9zgvZ5loSgMlVg==}
-
-  sonic-boom@3.3.0:
-    resolution: {integrity: sha512-LYxp34KlZ1a2Jb8ZQgFCK3niIHzibdwtwNUWKg0qQRzsDoJ3Gfgkf8KdBTFU3SkejDEIlWwnSnpVdOZIhFMl/g==}
 
   sonic-boom@3.8.0:
     resolution: {integrity: sha512-ybz6OYOUjoQQCQ/i4LU8kaToD8ACtYP+Cj5qd2AO36bwbdewxWJ3ArmJ2cr6AvxlL2o0PqnCcPGUgkILbfkaCA==}
@@ -32149,13 +32136,13 @@ snapshots:
   '@aws-crypto/crc32@3.0.0':
     dependencies:
       '@aws-crypto/util': 3.0.0
-      '@aws-sdk/types': 3.502.0
+      '@aws-sdk/types': 3.575.0
       tslib: 1.14.1
 
   '@aws-crypto/crc32c@3.0.0':
     dependencies:
       '@aws-crypto/util': 3.0.0
-      '@aws-sdk/types': 3.502.0
+      '@aws-sdk/types': 3.575.0
       tslib: 1.14.1
 
   '@aws-crypto/ie11-detection@3.0.0':
@@ -32178,7 +32165,7 @@ snapshots:
       '@aws-crypto/sha256-js': 3.0.0
       '@aws-crypto/supports-web-crypto': 3.0.0
       '@aws-crypto/util': 3.0.0
-      '@aws-sdk/types': 3.387.0
+      '@aws-sdk/types': 3.575.0
       '@aws-sdk/util-locate-window': 3.310.0
       '@aws-sdk/util-utf8-browser': 3.259.0
       tslib: 1.14.1
@@ -32186,7 +32173,7 @@ snapshots:
   '@aws-crypto/sha256-js@3.0.0':
     dependencies:
       '@aws-crypto/util': 3.0.0
-      '@aws-sdk/types': 3.387.0
+      '@aws-sdk/types': 3.575.0
       tslib: 1.14.1
 
   '@aws-crypto/supports-web-crypto@3.0.0':
@@ -32195,7 +32182,7 @@ snapshots:
 
   '@aws-crypto/util@3.0.0':
     dependencies:
-      '@aws-sdk/types': 3.502.0
+      '@aws-sdk/types': 3.575.0
       '@aws-sdk/util-utf8-browser': 3.259.0
       tslib: 1.14.1
 
@@ -33744,6 +33731,7 @@ snapshots:
     dependencies:
       '@smithy/types': 2.9.1
       tslib: 2.6.2
+    optional: true
 
   '@aws-sdk/types@3.575.0':
     dependencies:
@@ -37579,7 +37567,7 @@ snapshots:
   '@bandwidth/messaging@4.1.3':
     dependencies:
       '@apimatic/schema': 0.6.0
-      axios: 1.6.7
+      axios: 1.6.8
       detect-node: 2.1.0
       form-data: 3.0.1
       json-bigint: 1.0.0
@@ -40484,7 +40472,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    optional: true
 
   '@google-cloud/storage@6.9.5(encoding@0.1.13)':
     dependencies:
@@ -40686,7 +40673,7 @@ snapshots:
 
   '@infobip-api/sdk@0.3.2':
     dependencies:
-      axios: 1.6.7
+      axios: 1.6.8
       form-data: 4.0.0
     transitivePeerDependencies:
       - debug
@@ -42596,6 +42583,14 @@ snapshots:
       reflect-metadata: 0.1.13
       rxjs: 7.8.1
 
+  '@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(axios@1.6.8)(reflect-metadata@0.1.13)(rxjs@7.8.1)':
+    dependencies:
+      '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      axios: 1.6.8
+      reflect-metadata: 0.1.13
+      rxjs: 7.8.1
+    optional: true
+
   '@nestjs/cli@10.1.16(@swc/core@1.3.107)':
     dependencies:
       '@angular-devkit/core': 16.2.0(chokidar@3.5.3)
@@ -42776,7 +42771,7 @@ snapshots:
       class-transformer: 0.5.1
       class-validator: 0.14.0
 
-  '@nestjs/terminus@10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)':
+  '@nestjs/terminus@10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)':
     dependencies:
       '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       '@nestjs/core': 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1)
@@ -42788,6 +42783,20 @@ snapshots:
       '@grpc/grpc-js': 1.8.21
       '@grpc/proto-loader': 0.7.9
       '@nestjs/axios': 2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(axios@1.6.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      mongoose: 7.5.2(@aws-sdk/credential-providers@3.504.1)
+
+  '@nestjs/terminus@10.0.1(@grpc/grpc-js@1.8.21)(@grpc/proto-loader@0.7.9)(@nestjs/axios@2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(axios@1.6.8)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(mongoose@7.5.2)(reflect-metadata@0.1.13)(rxjs@7.8.1)':
+    dependencies:
+      '@nestjs/common': 10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      '@nestjs/core': 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1)
+      boxen: 5.1.2
+      check-disk-space: 3.4.0
+      reflect-metadata: 0.1.13
+      rxjs: 7.8.1
+    optionalDependencies:
+      '@grpc/grpc-js': 1.8.21
+      '@grpc/proto-loader': 0.7.9
+      '@nestjs/axios': 2.0.0(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(axios@1.6.8)(reflect-metadata@0.1.13)(rxjs@7.8.1)
       mongoose: 7.5.2(@aws-sdk/credential-providers@3.504.1)
 
   '@nestjs/testing@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2))':
@@ -43492,7 +43501,7 @@ snapshots:
       enquirer: 2.3.6
       ignore: 5.2.4
       nx: 16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.2))
-      semver: 7.5.4
+      semver: 7.6.2
       tmp: 0.2.1
       tslib: 2.6.2
       yargs-parser: 21.1.1
@@ -43504,7 +43513,7 @@ snapshots:
       enquirer: 2.3.6
       ignore: 5.2.4
       nx: 17.3.2(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.2))
-      semver: 7.5.4
+      semver: 7.6.2
       tmp: 0.2.1
       tslib: 2.6.2
       yargs-parser: 21.1.1
@@ -43749,7 +43758,7 @@ snapshots:
       npm-package-arg: 11.0.1
       npm-run-path: 4.0.1
       ora: 5.3.0
-      semver: 7.5.4
+      semver: 7.6.2
       source-map-support: 0.5.19
       ts-node: 10.9.1(@swc/core@1.3.107(@swc/helpers@0.5.2))(@types/node@18.16.9)(typescript@5.3.3)
       tsconfig-paths: 4.2.0
@@ -44283,7 +44292,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44293,7 +44302,7 @@ snapshots:
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/propagator-aws-xray': 1.3.1(@opentelemetry/api@1.7.0)
       '@opentelemetry/resources': 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       '@types/aws-lambda': 8.10.122
     transitivePeerDependencies:
       - supports-color
@@ -44304,7 +44313,7 @@ snapshots:
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/propagation-utils': 0.30.5(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44321,7 +44330,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44330,7 +44339,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       '@types/connect': 3.4.36
     transitivePeerDependencies:
       - supports-color
@@ -44339,7 +44348,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44354,7 +44363,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       semver: 7.6.2
     transitivePeerDependencies:
       - supports-color
@@ -44364,7 +44373,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44373,7 +44382,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44382,7 +44391,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44390,7 +44399,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44414,7 +44423,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       '@types/hapi__hapi': 20.0.13
     transitivePeerDependencies:
       - supports-color
@@ -44434,7 +44443,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/redis-common': 0.36.1
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       '@types/ioredis4': '@types/ioredis@4.28.10'
     transitivePeerDependencies:
       - supports-color
@@ -44443,7 +44452,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44452,7 +44461,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       '@types/koa': 2.13.9
       '@types/koa__router': 12.0.3
     transitivePeerDependencies:
@@ -44469,7 +44478,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       '@types/memcached': 2.2.10
     transitivePeerDependencies:
       - supports-color
@@ -44479,7 +44488,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/sdk-metrics': 1.22.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44488,7 +44497,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44496,7 +44505,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       '@opentelemetry/sql-common': 0.40.0(@opentelemetry/api@1.7.0)
     transitivePeerDependencies:
       - supports-color
@@ -44505,7 +44514,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       '@types/mysql': 2.15.22
     transitivePeerDependencies:
       - supports-color
@@ -44514,7 +44523,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44522,7 +44531,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44531,7 +44540,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       '@opentelemetry/sql-common': 0.40.0(@opentelemetry/api@1.7.0)
       '@types/pg': 8.6.1
       '@types/pg-pool': 2.0.4
@@ -44550,7 +44559,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/redis-common': 0.36.1
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44559,7 +44568,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/redis-common': 0.36.1
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44568,7 +44577,7 @@ snapshots:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44576,7 +44585,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44584,7 +44593,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
     transitivePeerDependencies:
       - supports-color
 
@@ -44592,7 +44601,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/instrumentation': 0.46.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       '@types/tedious': 4.0.14
     transitivePeerDependencies:
       - supports-color
@@ -44610,7 +44619,7 @@ snapshots:
       '@types/shimmer': 1.0.5
       import-in-the-middle: 1.7.1
       require-in-the-middle: 7.2.0
-      semver: 7.5.4
+      semver: 7.6.2
       shimmer: 1.2.1
     transitivePeerDependencies:
       - supports-color
@@ -44667,7 +44676,7 @@ snapshots:
   '@opentelemetry/propagator-aws-xray@1.3.1(@opentelemetry/api@1.7.0)':
     dependencies:
       '@opentelemetry/api': 1.7.0
-      '@opentelemetry/core': 1.22.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
 
   '@opentelemetry/propagator-b3@1.19.0(@opentelemetry/api@1.7.0)':
     dependencies:
@@ -44685,27 +44694,27 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/resources': 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
 
   '@opentelemetry/resource-detector-aws@1.3.5(@opentelemetry/api@1.7.0)':
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/resources': 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
 
   '@opentelemetry/resource-detector-container@0.3.5(@opentelemetry/api@1.7.0)':
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/resources': 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
 
   '@opentelemetry/resource-detector-gcp@0.29.5(@opentelemetry/api@1.7.0)(encoding@0.1.13)':
     dependencies:
       '@opentelemetry/api': 1.7.0
       '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/resources': 1.19.0(@opentelemetry/api@1.7.0)
-      '@opentelemetry/semantic-conventions': 1.22.0
+      '@opentelemetry/semantic-conventions': 1.19.0
       gcp-metadata: 6.1.0(encoding@0.1.13)
     transitivePeerDependencies:
       - encoding
@@ -44814,7 +44823,7 @@ snapshots:
       '@opentelemetry/propagator-b3': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/propagator-jaeger': 1.19.0(@opentelemetry/api@1.7.0)
       '@opentelemetry/sdk-trace-base': 1.19.0(@opentelemetry/api@1.7.0)
-      semver: 7.5.4
+      semver: 7.6.2
 
   '@opentelemetry/semantic-conventions@0.25.0': {}
 
@@ -44825,7 +44834,7 @@ snapshots:
   '@opentelemetry/sql-common@0.40.0(@opentelemetry/api@1.7.0)':
     dependencies:
       '@opentelemetry/api': 1.7.0
-      '@opentelemetry/core': 1.22.0(@opentelemetry/api@1.7.0)
+      '@opentelemetry/core': 1.19.0(@opentelemetry/api@1.7.0)
 
   '@pandabox/prettier-plugin@0.1.2(@pandacss/config@0.39.1)(@pandacss/core@0.39.1)(@pandacss/is-valid-prop@0.39.1)(@pandacss/node@0.39.1(jsdom@24.0.0)(typescript@4.9.5))(@pandacss/preset-base@0.39.1)(@pandacss/shared@0.39.1)':
     dependencies:
@@ -47265,7 +47274,7 @@ snapshots:
   '@sendgrid/client@8.1.0':
     dependencies:
       '@sendgrid/helpers': 8.0.0
-      axios: 1.6.7
+      axios: 1.6.8
     transitivePeerDependencies:
       - debug
 
@@ -49920,7 +49929,7 @@ snapshots:
       process: 0.11.10
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
-      semver: 7.5.4
+      semver: 7.6.2
       style-loader: 3.3.2(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
       swc-loader: 0.2.3(@swc/core@1.3.107(@swc/helpers@0.5.2))(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
       terser-webpack-plugin: 5.3.9(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
@@ -50136,7 +50145,7 @@ snapshots:
       prompts: 2.4.2
       puppeteer-core: 2.1.1
       read-pkg-up: 7.0.1
-      semver: 7.5.4
+      semver: 7.6.2
       simple-update-notifier: 2.0.0
       strip-json-comments: 3.1.1
       tempy: 1.0.1
@@ -50354,7 +50363,7 @@ snapshots:
       find-up: 5.0.0
       fs-extra: 11.2.0
       glob: 10.3.10
-      handlebars: 4.7.7
+      handlebars: 4.7.8
       lazy-universal-dotenv: 4.0.0
       node-fetch: 2.7.0(encoding@0.1.13)
       picomatch: 2.3.1
@@ -50662,7 +50671,7 @@ snapshots:
       memoizerific: 1.11.3
       react: 17.0.2
       react-dom: 17.0.2(react@17.0.2)
-      semver: 7.5.4
+      semver: 7.6.2
       store2: 2.14.2
       telejson: 7.2.0
       ts-dedent: 2.2.0
@@ -52098,8 +52107,8 @@ snapshots:
 
   '@types/jest@29.5.2':
     dependencies:
-      expect: 29.5.0
-      pretty-format: 29.5.0
+      expect: 29.7.0
+      pretty-format: 29.7.0
 
   '@types/jsdom@20.0.1':
     dependencies:
@@ -52762,7 +52771,7 @@ snapshots:
       debug: 4.3.4(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.5.4
+      semver: 7.6.2
       tsutils: 3.21.0(typescript@4.9.5)
     optionalDependencies:
       typescript: 4.9.5
@@ -52851,7 +52860,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.58.0(typescript@4.9.5)
       eslint: 8.38.0
       eslint-scope: 5.1.1
-      semver: 7.5.4
+      semver: 7.6.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -52866,7 +52875,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.58.0(typescript@4.9.5)
       eslint: 8.57.0
       eslint-scope: 5.1.1
-      semver: 7.5.4
+      semver: 7.6.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -53972,7 +53981,7 @@ snapshots:
   africastalking@0.6.2:
     dependencies:
       '@hapi/joi': 16.1.8
-      axios: 1.6.7
+      axios: 1.6.8
       body-parser: 1.20.2
       lodash: 4.17.21
       phone: 3.1.37
@@ -54829,19 +54838,19 @@ snapshots:
 
   axios@0.21.4:
     dependencies:
-      follow-redirects: 1.15.5(debug@4.3.4)
+      follow-redirects: 1.15.6(debug@4.3.4)
     transitivePeerDependencies:
       - debug
 
   axios@0.26.1:
     dependencies:
-      follow-redirects: 1.15.5(debug@4.3.4)
+      follow-redirects: 1.15.5
     transitivePeerDependencies:
       - debug
 
   axios@0.28.0(debug@4.3.4):
     dependencies:
-      follow-redirects: 1.15.5(debug@4.3.4)
+      follow-redirects: 1.15.6(debug@4.3.4)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -54849,7 +54858,7 @@ snapshots:
 
   axios@1.1.3:
     dependencies:
-      follow-redirects: 1.15.5(debug@4.3.4)
+      follow-redirects: 1.15.6(debug@4.3.4)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -54857,7 +54866,7 @@ snapshots:
 
   axios@1.6.2:
     dependencies:
-      follow-redirects: 1.15.5(debug@4.3.4)
+      follow-redirects: 1.15.5
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -54865,7 +54874,7 @@ snapshots:
 
   axios@1.6.7:
     dependencies:
-      follow-redirects: 1.15.5(debug@4.3.4)
+      follow-redirects: 1.15.5
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -54873,7 +54882,7 @@ snapshots:
 
   axios@1.6.8:
     dependencies:
-      follow-redirects: 1.15.6
+      follow-redirects: 1.15.6(debug@4.3.4)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -55698,9 +55707,9 @@ snapshots:
       ioredis: 5.3.2
       lodash: 4.17.21
       msgpackr: 1.8.5
-      semver: 7.5.4
+      semver: 7.6.2
       tslib: 2.6.2
-      uuid: 9.0.0
+      uuid: 9.0.1
     transitivePeerDependencies:
       - supports-color
     optional: true
@@ -56633,7 +56642,7 @@ snapshots:
     dependencies:
       conventional-commits-filter: 2.0.7
       dateformat: 3.0.3
-      handlebars: 4.7.7
+      handlebars: 4.7.8
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       meow: 8.1.2
@@ -56826,7 +56835,7 @@ snapshots:
       glob2base: 0.0.12
       minimatch: 3.1.2
       mkdirp: 0.5.6
-      resolve: 1.22.2
+      resolve: 1.22.8
       safe-buffer: 5.2.1
       shell-quote: 1.8.1
       subarg: 1.0.0
@@ -58933,8 +58942,8 @@ snapshots:
 
   eslint-plugin-jsx-a11y@6.7.1(eslint@8.57.0):
     dependencies:
-      '@babel/runtime': 7.23.2
-      aria-query: 5.3.0
+      '@babel/runtime': 7.21.0
+      aria-query: 5.1.3
       array-includes: 3.1.6
       array.prototype.flatmap: 1.3.1
       ast-types-flow: 0.0.7
@@ -58943,7 +58952,7 @@ snapshots:
       damerau-levenshtein: 1.0.8
       emoji-regex: 9.2.2
       eslint: 8.57.0
-      has: 1.0.4
+      has: 1.0.3
       jsx-ast-utils: 3.3.3
       language-tags: 1.0.5
       minimatch: 3.1.2
@@ -59795,7 +59804,6 @@ snapshots:
   fast-xml-parser@4.2.7:
     dependencies:
       strnum: 1.0.5
-    optional: true
 
   fastest-levenshtein@1.0.16: {}
 
@@ -60121,11 +60129,11 @@ snapshots:
     dependencies:
       tslib: 2.6.2
 
-  follow-redirects@1.15.5(debug@4.3.4):
+  follow-redirects@1.15.5: {}
+
+  follow-redirects@1.15.6(debug@4.3.4):
     optionalDependencies:
       debug: 4.3.4(supports-color@8.1.1)
-
-  follow-redirects@1.15.6: {}
 
   for-each@0.3.3:
     dependencies:
@@ -60203,7 +60211,7 @@ snapshots:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
-      semver: 7.5.4
+      semver: 7.6.2
       tapable: 2.2.1
       typescript: 4.9.5
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)(webpack-cli@5.1.4(webpack-bundle-analyzer@4.9.0)(webpack-dev-server@4.15.1)(webpack@5.82.1))
@@ -60220,7 +60228,7 @@ snapshots:
       minimatch: 3.1.2
       node-abort-controller: 3.1.1
       schema-utils: 3.3.0
-      semver: 7.5.4
+      semver: 7.6.2
       tapable: 2.2.1
       typescript: 4.9.5
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)
@@ -60474,7 +60482,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    optional: true
 
   gaxios@6.1.1(encoding@0.1.13):
     dependencies:
@@ -60509,7 +60516,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    optional: true
 
   gcp-metadata@6.1.0(encoding@0.1.13):
     dependencies:
@@ -60625,7 +60631,7 @@ snapshots:
 
   giget@1.1.2:
     dependencies:
-      colorette: 2.0.19
+      colorette: 2.0.20
       defu: 6.1.4
       https-proxy-agent: 5.0.1
       mri: 1.2.0
@@ -60944,7 +60950,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    optional: true
 
   google-gax@3.6.1(encoding@0.1.13):
     dependencies:
@@ -61573,7 +61578,7 @@ snapshots:
   http-proxy@1.18.1:
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.5(debug@4.3.4)
+      follow-redirects: 1.15.5
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -64927,7 +64932,7 @@ snapshots:
       jws: 3.2.2
       lodash: 4.17.21
       ms: 2.1.3
-      semver: 7.5.4
+      semver: 7.6.2
 
   jsonwebtoken@9.0.2:
     dependencies:
@@ -64940,7 +64945,7 @@ snapshots:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.5.4
+      semver: 7.6.2
 
   jsprim@1.4.2:
     dependencies:
@@ -65154,11 +65159,11 @@ snapshots:
 
   launchdarkly-node-server-sdk@7.0.1:
     dependencies:
-      async: 3.2.4
+      async: 3.2.5
       launchdarkly-eventsource: 1.4.4
       lru-cache: 6.0.0
       node-cache: 5.1.2
-      semver: 7.5.4
+      semver: 7.6.2
       tunnel: 0.0.6
       uuid: 8.3.2
 
@@ -65788,7 +65793,7 @@ snapshots:
 
   mailgun.js@8.2.1:
     dependencies:
-      axios: 1.6.7
+      axios: 1.6.8
       base-64: 1.0.0
       url-join: 4.0.1
     transitivePeerDependencies:
@@ -65803,7 +65808,7 @@ snapshots:
 
   mailtrap@3.2.0(@types/nodemailer@6.4.11)(nodemailer@6.9.1):
     dependencies:
-      axios: 1.6.7
+      axios: 1.6.8
     optionalDependencies:
       '@types/nodemailer': 6.4.11
       nodemailer: 6.9.1
@@ -67706,7 +67711,7 @@ snapshots:
     dependencies:
       hosted-git-info: 7.0.1
       proc-log: 3.0.0
-      semver: 7.5.4
+      semver: 7.6.2
       validate-npm-package-name: 5.0.0
 
   npm-package-arg@8.1.1:
@@ -67848,7 +67853,7 @@ snapshots:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.7
+      axios: 1.6.8
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -67900,7 +67905,7 @@ snapshots:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.7
+      axios: 1.6.8
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -67951,7 +67956,7 @@ snapshots:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.7
+      axios: 1.6.8
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -68005,7 +68010,7 @@ snapshots:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.7
+      axios: 1.6.8
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -68058,7 +68063,7 @@ snapshots:
       '@yarnpkg/lockfile': 1.1.0
       '@yarnpkg/parsers': 3.0.0-rc.46
       '@zkochan/js-yaml': 0.0.6
-      axios: 1.6.7
+      axios: 1.6.8
       chalk: 4.1.2
       cli-cursor: 3.1.0
       cli-spinners: 2.6.1
@@ -68875,11 +68880,6 @@ snapshots:
       duplexify: 4.1.2
       split2: 4.2.0
 
-  pino-abstract-transport@1.0.0:
-    dependencies:
-      readable-stream: 4.3.0
-      split2: 4.2.0
-
   pino-abstract-transport@1.1.0:
     dependencies:
       readable-stream: 4.3.0
@@ -68888,13 +68888,13 @@ snapshots:
   pino-http@8.3.3:
     dependencies:
       get-caller-file: 2.0.5
-      pino: 8.11.0
+      pino: 8.17.2
       pino-std-serializers: 6.2.0
       process-warning: 2.2.0
 
   pino-pretty@9.4.0:
     dependencies:
-      colorette: 2.0.19
+      colorette: 2.0.20
       dateformat: 4.6.3
       fast-copy: 3.0.1
       fast-safe-stringify: 2.1.1
@@ -68902,11 +68902,11 @@ snapshots:
       joycon: 3.1.1
       minimist: 1.2.8
       on-exit-leak-free: 2.1.0
-      pino-abstract-transport: 1.0.0
+      pino-abstract-transport: 1.1.0
       pump: 3.0.0
       readable-stream: 4.3.0
       secure-json-parse: 2.7.0
-      sonic-boom: 3.3.0
+      sonic-boom: 3.8.1
       strip-json-comments: 3.1.1
 
   pino-std-serializers@4.0.0: {}
@@ -68926,20 +68926,6 @@ snapshots:
       safe-stable-stringify: 2.4.3
       sonic-boom: 2.8.0
       thread-stream: 0.15.2
-
-  pino@8.11.0:
-    dependencies:
-      atomic-sleep: 1.0.0
-      fast-redact: 3.1.2
-      on-exit-leak-free: 2.1.0
-      pino-abstract-transport: 1.0.0
-      pino-std-serializers: 6.2.0
-      process-warning: 2.2.0
-      quick-format-unescaped: 4.0.4
-      real-require: 0.2.0
-      safe-stable-stringify: 2.4.3
-      sonic-boom: 3.3.0
-      thread-stream: 2.3.0
 
   pino@8.17.2:
     dependencies:
@@ -69594,7 +69580,7 @@ snapshots:
 
   postmark@4.0.2:
     dependencies:
-      axios: 1.6.7
+      axios: 1.6.8
     transitivePeerDependencies:
       - debug
 
@@ -72320,11 +72306,11 @@ snapshots:
 
   rollup-plugin-terser@7.0.2(rollup@2.79.1):
     dependencies:
-      '@babel/code-frame': 7.24.2
+      '@babel/code-frame': 7.21.4
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.22.0
+      terser: 5.16.9
 
   rollup-plugin-terser@7.0.2(rollup@3.20.2):
     dependencies:
@@ -72878,7 +72864,7 @@ snapshots:
 
   simple-update-notifier@1.1.0:
     dependencies:
-      semver: 7.5.4
+      semver: 7.6.2
 
   simple-update-notifier@2.0.0:
     dependencies:
@@ -73044,10 +73030,6 @@ snapshots:
       smart-buffer: 4.2.0
 
   sonic-boom@2.8.0:
-    dependencies:
-      atomic-sleep: 1.0.0
-
-  sonic-boom@3.3.0:
     dependencies:
       atomic-sleep: 1.0.0
 
@@ -73701,7 +73683,7 @@ snapshots:
       mime: 2.6.0
       qs: 6.11.2
       readable-stream: 3.6.2
-      semver: 7.5.4
+      semver: 7.6.2
     transitivePeerDependencies:
       - supports-color
 
@@ -73716,7 +73698,7 @@ snapshots:
       methods: 1.1.2
       mime: 2.6.0
       qs: 6.11.2
-      semver: 7.5.4
+      semver: 7.6.2
     transitivePeerDependencies:
       - supports-color
 
@@ -74061,11 +74043,11 @@ snapshots:
 
   terser-webpack-plugin@5.3.9(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)(webpack-cli@5.1.4(webpack-bundle-analyzer@4.9.0)(webpack-dev-server@4.15.1)(webpack@5.82.1))):
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.18
       jest-worker: 27.5.1
-      schema-utils: 3.3.0
+      schema-utils: 3.1.2
       serialize-javascript: 6.0.1
-      terser: 5.22.0
+      terser: 5.16.9
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)(webpack-cli@5.1.4(webpack-bundle-analyzer@4.9.0)(webpack-dev-server@4.15.1)(webpack@5.82.1))
     optionalDependencies:
       '@swc/core': 1.3.107(@swc/helpers@0.5.2)
@@ -74073,11 +74055,11 @@ snapshots:
 
   terser-webpack-plugin@5.3.9(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)):
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.18
       jest-worker: 27.5.1
-      schema-utils: 3.3.0
+      schema-utils: 3.1.2
       serialize-javascript: 6.0.1
-      terser: 5.22.0
+      terser: 5.16.9
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)
     optionalDependencies:
       '@swc/core': 1.3.107(@swc/helpers@0.5.2)
@@ -74097,11 +74079,11 @@ snapshots:
 
   terser-webpack-plugin@5.3.9(@swc/core@1.3.107)(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.18
       jest-worker: 27.5.1
-      schema-utils: 3.3.0
+      schema-utils: 3.1.2
       serialize-javascript: 6.0.1
-      terser: 5.22.0
+      terser: 5.16.9
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
     optionalDependencies:
       '@swc/core': 1.3.107(@swc/helpers@0.5.2)
@@ -74109,11 +74091,11 @@ snapshots:
 
   terser-webpack-plugin@5.3.9(@swc/core@1.3.107)(webpack@5.78.0(@swc/core@1.3.107)):
     dependencies:
-      '@jridgewell/trace-mapping': 0.3.25
+      '@jridgewell/trace-mapping': 0.3.18
       jest-worker: 27.5.1
-      schema-utils: 3.3.0
+      schema-utils: 3.1.2
       serialize-javascript: 6.0.1
-      terser: 5.22.0
+      terser: 5.16.9
       webpack: 5.78.0(@swc/core@1.3.107)
     optionalDependencies:
       '@swc/core': 1.3.107(@swc/helpers@0.5.2)
@@ -74401,7 +74383,7 @@ snapshots:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.5.4
+      semver: 7.6.2
       typescript: 4.9.5
       yargs-parser: 20.2.9
     optionalDependencies:
@@ -74418,7 +74400,7 @@ snapshots:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.5.4
+      semver: 7.6.2
       typescript: 4.9.5
       yargs-parser: 20.2.9
     optionalDependencies:
@@ -74435,7 +74417,7 @@ snapshots:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.5.4
+      semver: 7.6.2
       typescript: 4.9.5
       yargs-parser: 20.2.9
     optionalDependencies:
@@ -74452,7 +74434,7 @@ snapshots:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.5.4
+      semver: 7.6.2
       typescript: 4.9.5
       yargs-parser: 20.2.9
     optionalDependencies:
@@ -74469,7 +74451,7 @@ snapshots:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.5.4
+      semver: 7.6.2
       typescript: 4.9.5
       yargs-parser: 20.2.9
     optionalDependencies:
@@ -74486,7 +74468,24 @@ snapshots:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.5.4
+      semver: 7.6.2
+      typescript: 4.9.5
+      yargs-parser: 20.2.9
+    optionalDependencies:
+      '@babel/core': 7.24.4
+      '@types/jest': 29.5.2
+      babel-jest: 27.5.1(@babel/core@7.24.4)
+
+  ts-jest@27.1.5(@babel/core@7.24.4)(@types/jest@29.5.2)(babel-jest@27.5.1(@babel/core@7.24.4))(jest@27.5.1(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@4.9.5)))(typescript@4.9.5):
+    dependencies:
+      bs-logger: 0.2.6
+      fast-json-stable-stringify: 2.1.0
+      jest: 27.5.1(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@4.9.5))
+      jest-util: 27.5.1
+      json5: 2.2.3
+      lodash.memoize: 4.1.2
+      make-error: 1.3.6
+      semver: 7.6.2
       typescript: 4.9.5
       yargs-parser: 20.2.9
     optionalDependencies:
@@ -74503,7 +74502,7 @@ snapshots:
       json5: 2.2.3
       lodash.memoize: 4.1.2
       make-error: 1.3.6
-      semver: 7.5.4
+      semver: 7.6.2
       typescript: 4.9.5
       yargs-parser: 20.2.9
     optionalDependencies:
@@ -75085,7 +75084,7 @@ snapshots:
 
   twilio@4.20.0:
     dependencies:
-      axios: 1.6.7
+      axios: 1.6.8
       dayjs: 1.11.9
       https-proxy-agent: 5.0.1
       jsonwebtoken: 9.0.0
@@ -77322,7 +77321,7 @@ snapshots:
     dependencies:
       lodash.get: 4.4.2
       lodash.isequal: 4.5.0
-      validator: 13.9.0
+      validator: 13.12.0
     optionalDependencies:
       commander: 9.5.0
 
