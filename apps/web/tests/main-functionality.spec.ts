@@ -326,7 +326,7 @@ test('should show the brand logo on main page', async ({ page }) => {
   await addAndEditChannel(page, 'email');
 
   const brandLogo = getByTestId(page, 'brand-logo');
-  await expect(brandLogo).toHaveAttribute('src', 'https://web.novu.co/static/images/logo-light.png');
+  await expect(brandLogo).toHaveAttribute('src', 'https://web.novu.co/static/images/logo-light.webp');
 });
 
 test('should support RTL text content', async ({ page }) => {

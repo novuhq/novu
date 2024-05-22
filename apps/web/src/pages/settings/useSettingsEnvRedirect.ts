@@ -13,7 +13,7 @@ export const useSettingsEnvRedirect = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // don't redirect away until we've loaded the environment and checked it 
+    // don't redirect away until we've loaded the environment and checked it
     if (isLoading) {
       return;
     }
@@ -21,9 +21,10 @@ export const useSettingsEnvRedirect = () => {
     const curPathname = window.location.pathname;
     const currentEnvName = environment?.name ?? DEFAULT_ENV_NAME;
 
-    const redirectPath = !env || !VALID_ENV_VALUES.has(env as BaseEnvironmentEnum)
-      ? `${curPathname}/${currentEnvName}`
-      : curPathname.replace(`/${env}`, `/${currentEnvName}`);
+    const redirectPath =
+      !env || !VALID_ENV_VALUES.has(env as BaseEnvironmentEnum)
+        ? `${curPathname}/${currentEnvName}`
+        : curPathname.replace(`/${env}`, `/${currentEnvName}`);
 
     navigate(redirectPath);
   }, [env, environment, navigate, isLoading]);
