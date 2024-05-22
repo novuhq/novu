@@ -21,7 +21,7 @@ export const useSettingsEnvRedirect = () => {
     const curPathname = window.location.pathname;
     const currentEnvName = environment?.name ?? DEFAULT_ENV_NAME;
 
-    const redirectPath = !env
+    const redirectPath = !env || !VALID_ENV_VALUES.has(env as BaseEnvironmentEnum)
       ? `${curPathname}/${currentEnvName}`
       : curPathname.replace(`/${env}`, `/${currentEnvName}`);
 
