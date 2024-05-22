@@ -125,7 +125,7 @@ jobs:
           )
           for pattern in "${patterns[@]}"; do
             if docker run --rm novu-$SERVICE_COMMON_NAME sh -c "ls $pattern 2>/dev/null"; then
-              echo "Error: '$pattern'  files were detected in ${{ matrix.name }}."
+              echo "::error::'$pattern' files were detected in ${{ matrix.name }}."
               exit 1
             fi
           done
