@@ -1,9 +1,9 @@
-import { selectHasUserCompletedSignUp, UserContext } from '@novu/shared-web';
+import { UserContext } from '@novu/shared-web';
 import { checkShouldUseLaunchDarkly } from '@novu/shared-web';
 
 /** Determine if LaunchDarkly should be initialized based on the current auth context */
 export function selectShouldInitializeLaunchDarkly(userCtx: UserContext): boolean {
-  const { isLoggedIn, currentOrganization } = userCtx;
+  const { isLoggedIn, currentUser, currentOrganization } = userCtx;
   // don't show fallback if LaunchDarkly isn't enabled
   if (!checkShouldUseLaunchDarkly()) {
     return false;
@@ -22,7 +22,7 @@ export function selectShouldInitializeLaunchDarkly(userCtx: UserContext): boolea
    * have an organizationId yet that we can use for org-based feature flags. To prevent from blocking this page
    * from loading during this "limbo" state, we should initialize LD with the anonymous context.
    */
-  if (!selectHasUserCompletedSignUp(userCtx)) {
+  if (!currentUser?.organizationId) {
     return true;
   }
 

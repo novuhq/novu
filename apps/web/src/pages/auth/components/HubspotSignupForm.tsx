@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
-import decode from 'jwt-decode';
 import { useMantineColorScheme } from '@mantine/core';
 
 import { JobTitleEnum } from '@novu/shared';
 import type { ProductUseCases, IResponseError, ICreateOrganizationDto, IJwtPayload } from '@novu/shared';
-import { HubspotForm, useSegment } from '@novu/shared-web';
+import { HubspotForm, useAuthController, useSegment } from '@novu/shared-web';
 
 import { api } from '../../../api/api.client';
 import { useAuthContext } from '../../../components/providers/AuthProvider';
@@ -25,6 +24,7 @@ export function HubspotSignupForm() {
   const { colorScheme } = useMantineColorScheme();
 
   const segment = useSegment();
+  const { user } = useAuthController();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
@@ -34,9 +34,7 @@ export function HubspotSignupForm() {
 
   useEffect(() => {
     if (token) {
-      const userData = decode<IJwtPayload>(token);
-
-      if (userData.environmentId) {
+      if (user?.environmentId) {
         if (isFromVercel) {
           startVercelSetup();
 
@@ -46,7 +44,7 @@ export function HubspotSignupForm() {
         navigate(ROUTES.HOME);
       }
     }
-  }, [token, navigate, isFromVercel, startVercelSetup]);
+  }, [token, navigate, isFromVercel, startVercelSetup, user]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, jobTitle, ...rest } = data;
@@ -60,13 +58,6 @@ export function HubspotSignupForm() {
     setToken(organizationResponseToken);
   }
 
-  function jwtHasKey(key: string) {
-    if (!token) return false;
-    const jwt = decode<IJwtPayload>(token);
-
-    return jwt && jwt[key];
-  }
-
   const handleCreateOrganization = async (data: IOrganizationCreateForm) => {
     if (!data?.organizationName) return;
 
@@ -74,7 +65,7 @@ export function HubspotSignupForm() {
 
     setLoading(true);
 
-    if (!jwtHasKey('organizationId')) {
+    if (!user?.organizationId) {
       await createOrganization({ ...data });
     }
 
