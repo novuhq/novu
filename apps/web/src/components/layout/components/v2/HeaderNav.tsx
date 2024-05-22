@@ -1,13 +1,12 @@
 import { ActionIcon, Header } from '@mantine/core';
 
-import { colors, IconHelpOutline, Tooltip } from '@novu/design-system';
+import { IconHelpOutline, Tooltip } from '@novu/design-system';
 import { IS_DOCKER_HOSTED } from '../../../../config';
 import { useBootIntercom } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { css } from '@novu/novui/css';
-import { Flex, HStack } from '@novu/novui/jsx';
-import { EnvironmentSwitch } from '../../../nav/EnvironmentSelect/EnvironmentSwitch';
+import { HStack } from '@novu/novui/jsx';
 import { useAuthContext } from '../../../providers/AuthProvider';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
@@ -33,30 +32,25 @@ export function HeaderNav() {
       })}
     >
       {/* TODO: Change position: right to space-between for breadcrumbs */}
-      <HStack flexWrap={'nowrap'} justifyContent="space-between">
-        <HStack gap={'100'}>
-          <EnvironmentSwitch />
-          <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
-            <Tooltip label={themeLabel}>
-              <div>{themeIcon}</div>
-            </Tooltip>
-          </ActionIcon>
-        </HStack>
-        <HStack gap={'100'}>
-          <NotificationCenterWidget user={currentUser} />
-          {isSelfHosted ? (
-            <a href={discordInviteUrl} target="_blank" rel="noopener noreferrer">
-              <ActionIcon variant="transparent">
-                <IconHelpOutline />
-              </ActionIcon>
-            </a>
-          ) : (
-            <ActionIcon variant="transparent" id="intercom-launcher">
+      <HStack flexWrap={'nowrap'} justifyContent="flex-end" gap={'100'}>
+        <ActionIcon variant="transparent" onClick={() => toggleColorScheme()}>
+          <Tooltip label={themeLabel}>
+            <div>{themeIcon}</div>
+          </Tooltip>
+        </ActionIcon>
+        <NotificationCenterWidget user={currentUser} />
+        {isSelfHosted ? (
+          <a href={discordInviteUrl} target="_blank" rel="noopener noreferrer">
+            <ActionIcon variant="transparent">
               <IconHelpOutline />
             </ActionIcon>
-          )}
-          <HeaderMenuItems />
-        </HStack>
+          </a>
+        ) : (
+          <ActionIcon variant="transparent" id="intercom-launcher">
+            <IconHelpOutline />
+          </ActionIcon>
+        )}
+        <HeaderMenuItems />
       </HStack>
     </Header>
   );
