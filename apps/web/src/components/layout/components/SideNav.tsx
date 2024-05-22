@@ -139,7 +139,7 @@ export function SideNav({}: Props) {
       testId: 'side-nav-brand-link',
     },
     { icon: <Activity />, link: ROUTES.ACTIVITIES, label: 'Activity Feed', testId: 'side-nav-activities-link' },
-    { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integrations Store', testId: 'side-nav-integrations-link' },
+    { icon: <Box />, link: ROUTES.INTEGRATIONS, label: 'Integration Store', testId: 'side-nav-integrations-link' },
     {
       label: 'Team Members',
       condition: !isInformationArchitectureEnabled,
