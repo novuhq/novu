@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { ROUTES } from '../../constants/routes.enum';
-import { useBlueprint, useAuthController } from '../../hooks/index';
+import { ROUTES } from '../../../constants/routes.enum';
+import { useBlueprint, useAuthController } from '../../../hooks/index';
 
 export function EnsureOnboardingComplete({ children }: any) {
   useBlueprint();

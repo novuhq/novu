@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useAuthContext } from '../../components/providers/AuthProvider';
 import { LoginForm } from './components/LoginForm';
-import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { useVercelIntegration, useBlueprint, useVercelParams } from '../../hooks';
 import SetupLoader from './components/SetupLoader';
@@ -69,18 +68,11 @@ export default function LoginPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  return (
-    <AuthLayout>
-      {isLoading || isLoadingAcceptInvite ? (
-        <SetupLoader title="Loading..." />
-      ) : (
-        <AuthContainer
-          title="Sign In"
-          description="Welcome back! Sign in with the data you entered in your registration"
-        >
-          <LoginForm />
-        </AuthContainer>
-      )}
-    </AuthLayout>
+  return isLoading || isLoadingAcceptInvite ? (
+    <SetupLoader title="Loading..." />
+  ) : (
+    <AuthContainer title="Sign In" description="Welcome back! Sign in with the data you entered in your registration">
+      <LoginForm />
+    </AuthContainer>
   );
 }

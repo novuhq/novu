@@ -5,7 +5,6 @@ import { Center, LoadingOverlay } from '@mantine/core';
 import { IGetInviteResponseDto } from '@novu/shared';
 
 import { getInviteTokenData } from '../../api/invitation';
-import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { SignUpForm } from './components/SignUpForm';
 import { colors, Text, Button } from '@novu/design-system';
@@ -55,75 +54,69 @@ export default function InvitationPage() {
     };
   }, [queryClient]);
 
-  return (
-    <AuthLayout>
-      {isLoggedIn && (
-        <AuthContainer
-          title="Active Session!"
-          customDescription={
-            <Center inline mb={40} mt={20}>
-              <Text size="lg" color={colors.B60}>
-                {isAcceptingInvite || isLoggedInAsInvitedUser ? (
-                  <p>Accepting invite...</p>
-                ) : (
-                  <p>The invite is not valid for the current user. Please log in with the right user.</p>
-                )}
-              </Text>
-            </Center>
-          }
-        >
-          <Button data-test-id="success-screen-reset" onClick={logoutWhenActiveSession} inherit>
-            Log out
-          </Button>
-          <Center mt={20}>
-            <Text mr={10} size="md" color={colors.B60}>
-              Go to
+  return isLoggedIn ? (
+    <AuthContainer
+      title="Active Session!"
+      customDescription={
+        <Center inline mb={40} mt={20}>
+          <Text size="lg" color={colors.B60}>
+            {isAcceptingInvite || isLoggedInAsInvitedUser ? (
+              <p>Accepting invite...</p>
+            ) : (
+              <p>The invite is not valid for the current user. Please log in with the right user.</p>
+            )}
+          </Text>
+        </Center>
+      }
+    >
+      <Button data-test-id="success-screen-reset" onClick={logoutWhenActiveSession} inherit>
+        Log out
+      </Button>
+      <Center mt={20}>
+        <Text mr={10} size="md" color={colors.B60}>
+          Go to
+        </Text>
+        <Link to="/quickstart">
+          <Text>Dashboard</Text>
+        </Link>
+      </Center>
+    </AuthContainer>
+  ) : (
+    <AuthContainer
+      title={existingUser ? 'Sign In & Accept Invite' : 'Get Started'}
+      customDescription={
+        inviterFirstName && organizationName ? (
+          <Center inline mb={60} mt={20} data-test-id="invitation-description">
+            <Text size="lg" mr={4} color={colors.B60}>
+              {"You've been invited by "}
             </Text>
-            <Link to="/quickstart">
-              <Text>Dashboard</Text>
-            </Link>
+            <Text size="lg" weight="bold" mr={4}>
+              {inviterFirstName[0].toUpperCase() + inviterFirstName.slice(1)}
+            </Text>
+            <Text size="lg" mr={4} color={colors.B60}>
+              {' to join '}
+            </Text>
+            <Text size="lg" weight="bold">
+              {organizationName}
+            </Text>
+            <Text size="lg" color={colors.B60}>
+              .
+            </Text>
           </Center>
-        </AuthContainer>
+        ) : undefined
+      }
+    >
+      {isInitialLoading ? (
+        <LoadingOverlay
+          visible
+          overlayColor={colors.B30}
+          loaderProps={{
+            color: colors.error,
+          }}
+        />
+      ) : (
+        <Form email={data?.email} invitationToken={invitationToken} />
       )}
-
-      {!isLoggedIn && (
-        <AuthContainer
-          title={existingUser ? 'Sign In & Accept Invite' : 'Get Started'}
-          customDescription={
-            inviterFirstName && organizationName ? (
-              <Center inline mb={60} mt={20} data-test-id="invitation-description">
-                <Text size="lg" mr={4} color={colors.B60}>
-                  {"You've been invited by "}
-                </Text>
-                <Text size="lg" weight="bold" mr={4}>
-                  {inviterFirstName[0].toUpperCase() + inviterFirstName.slice(1)}
-                </Text>
-                <Text size="lg" mr={4} color={colors.B60}>
-                  {' to join '}
-                </Text>
-                <Text size="lg" weight="bold">
-                  {organizationName}
-                </Text>
-                <Text size="lg" color={colors.B60}>
-                  .
-                </Text>
-              </Center>
-            ) : undefined
-          }
-        >
-          {isInitialLoading ? (
-            <LoadingOverlay
-              visible
-              overlayColor={colors.B30}
-              loaderProps={{
-                color: colors.error,
-              }}
-            />
-          ) : (
-            <Form email={data?.email} invitationToken={invitationToken} />
-          )}
-        </AuthContainer>
-      )}
-    </AuthLayout>
+    </AuthContainer>
   );
 }
