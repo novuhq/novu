@@ -115,6 +115,22 @@ jobs:
           pnpm run docker:build
           docker images
 
+      - name: Check for EE files
+        if: "!contains(matrix.name, '-ee')"
+        id: check-ee-files
+        run: |
+          patterns=(
+            './node_modules/@novu/ee-**/dist/index.js'
+            './node_modules/@taskforcesh/bullmq-pro'  # Add more patterns as needed
+          )
+          for pattern in "${patterns[@]}"; do
+            if docker run --rm novu-$SERVICE_COMMON_NAME sh -c "ls $pattern 2>/dev/null"; then
+              echo "::error::'$pattern' files were detected in ${{ matrix.name }}."
+              exit 1
+            fi
+          done
+          echo "No matching EE files found in the Docker image ${{ matrix.name }}"
+
       - name: Tag and Push docker image
         shell: bash
         run: |

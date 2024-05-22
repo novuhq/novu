@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { useCallback } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
@@ -11,11 +10,10 @@ import { vercelIntegrationSetup } from '../api/vercel-integration';
 export function useVercelIntegration() {
   const { token } = useAuthContext();
   const isLoggedIn = !!token;
-  const isAxiosAuthorized = axios.defaults.headers.common.Authorization;
 
   const { code, next, configurationId } = useVercelParams();
 
-  const canStartSetup = Boolean(code && next && isLoggedIn && isAxiosAuthorized);
+  const canStartSetup = Boolean(code && next && isLoggedIn);
 
   const navigate = useNavigate();
 

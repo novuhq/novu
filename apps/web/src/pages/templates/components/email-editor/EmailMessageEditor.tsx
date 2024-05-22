@@ -12,6 +12,9 @@ import { ButtonRowContent } from './ButtonRowContent';
 import { TextRowContent } from './TextRowContent';
 import type { IForm, IFormStep, ITemplates } from '../formTypes';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
+import { useFeatureFlag } from '../../../../hooks/useFeatureFlags';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { ROUTES } from '../../../../constants/routes.enum';
 
 interface IStepEntityExtended extends IFormStep {
   template: ITemplates & {
@@ -30,6 +33,7 @@ export function EmailMessageEditor({
   branding: { color: string; logo: string } | undefined;
   readonly: boolean;
 }) {
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
   const methods = useFormContext<IFormExtended>();
   const stepFormPath = useStepFormPath();
   const contentBlocks = useFieldArray<IFormExtended, any, 'id' | 'type'>({
@@ -83,7 +87,7 @@ export function EmailMessageEditor({
   }
 
   function getBrandSettingsUrl(): string {
-    return '/brand';
+    return isInformationArchitectureEnabled ? ROUTES.BRAND_SETTINGS : ROUTES.BRAND;
   }
 
   return (
