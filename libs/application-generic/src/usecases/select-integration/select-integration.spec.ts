@@ -105,7 +105,6 @@ describe('select integration', function () {
     // @ts-ignore
     useCase = new SelectIntegration(
       integrationRepository,
-      new GetDecryptedIntegrations(integrationRepository),
       new ConditionsFilter(
         new SubscriberRepository(),
         new MessageRepository(),
