@@ -29,6 +29,7 @@ import { GetStarted } from './pages/quick-start/steps/GetStarted';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
 import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
 import { Setup } from './pages/quick-start/steps/Setup';
+import { ApiKeysPage, WebhookPage } from './pages/settings/index';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { ChannelPreview } from './pages/templates/components/ChannelPreview';
 import { ChannelStepEditor } from './pages/templates/components/ChannelStepEditor';
@@ -125,9 +126,14 @@ export const AppRoutes = () => {
             <Route path="layouts" element={<LayoutsListPage />} />
           </Route>
         ) : (
-          <Route path={ROUTES.LAYOUT} element={<LayoutsPage />}>
-            <Route path="" element={<LayoutsListPage />} />
-          </Route>
+          <>
+            <Route path={ROUTES.LAYOUT} element={<LayoutsPage />}>
+              <Route path="" element={<LayoutsListPage />} />
+            </Route>
+            {/* routes previously under settings */}
+            <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
+            <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
+          </>
         )}
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
