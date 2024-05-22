@@ -1,7 +1,8 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Route, Routes } from 'react-router-dom';
-import { AppLayout } from './components/layout/AppLayout';
-import { EnsureOnboardingComplete } from './components/layout/EnsureOnboardingComplete';
+import { PrivatePageLayout } from './components/layout/components/AppLayout';
+import { PublicPageLayout } from './components/layout/components/PublicPageLayout';
+import { EnsureOnboardingComplete } from './components/layout/components/EnsureOnboardingComplete';
 import { ROUTES } from './constants/routes.enum';
 import { useFeatureFlag } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
@@ -53,29 +54,31 @@ export const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
-      <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
-      <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
-      <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
-      <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
-      <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
-      <Route
-        path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
-        element={
-          <EnsureOnboardingComplete>
-            <LinkVercelProjectPage type="create" />
-          </EnsureOnboardingComplete>
-        }
-      />
-      <Route
-        path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
-        element={
-          <EnsureOnboardingComplete>
-            <LinkVercelProjectPage type="edit" />
-          </EnsureOnboardingComplete>
-        }
-      />
-      <Route element={<AppLayout />}>
+      <Route element={<PublicPageLayout />}>
+        <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
+        <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
+        <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
+        <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
+        <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
+        <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
+        <Route
+          path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
+          element={
+            <EnsureOnboardingComplete>
+              <LinkVercelProjectPage type="create" />
+            </EnsureOnboardingComplete>
+          }
+        />
+        <Route
+          path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
+          element={
+            <EnsureOnboardingComplete>
+              <LinkVercelProjectPage type="edit" />
+            </EnsureOnboardingComplete>
+          }
+        />
+      </Route>
+      <Route element={<PrivatePageLayout />}>
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
         <Route path={ROUTES.WORKFLOWS_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
