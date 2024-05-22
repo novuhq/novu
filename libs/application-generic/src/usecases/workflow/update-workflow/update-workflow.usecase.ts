@@ -37,7 +37,7 @@ import {
   CreateMessageTemplateCommand,
   NotificationStep,
   NotificationStepVariantCommand,
-} from '../../../usecases';
+} from '../..';
 import {
   DeleteMessageTemplate,
   DeleteMessageTemplateCommand,

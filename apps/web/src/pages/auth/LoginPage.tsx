@@ -1,7 +1,5 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import jwtDecode from 'jwt-decode';
-import { IJwtPayload } from '@novu/shared';
 
 import { useAuthContext } from '../../components/providers/AuthProvider';
 import { LoginForm } from './components/LoginForm';
@@ -15,7 +13,7 @@ import { ROUTES } from '../../constants/routes.enum';
 
 export default function LoginPage() {
   useBlueprint();
-  const { setToken, token: oldToken } = useAuthContext();
+  const { setToken, token: oldToken, currentUser } = useAuthContext();
   const segment = useSegment();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -31,9 +29,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (token) {
-      const user = jwtDecode<IJwtPayload>(token);
-
-      if (!invitationToken && (!user.organizationId || !user.environmentId)) {
+      if (!invitationToken && currentUser?._id && (!currentUser?.organizationId || !currentUser?.environmentId)) {
         const authApplicationLink = isFromVercel
           ? `${ROUTES.AUTH_APPLICATION}?code=${code}&next=${next}`
           : ROUTES.AUTH_APPLICATION;
