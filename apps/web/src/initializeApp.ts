@@ -1,7 +1,6 @@
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { far } from '@fortawesome/free-regular-svg-icons';
 import { fas } from '@fortawesome/free-solid-svg-icons';
-import { applyToken, getToken } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
 import { Integrations } from '@sentry/tracing';
 import { ENV, SENTRY_DSN } from './config';
@@ -57,8 +56,4 @@ export const initializeApp = () => {
       },
     });
   }
-
-  const tokenStoredToken: string = getToken();
-
-  applyToken(tokenStoredToken);
 };

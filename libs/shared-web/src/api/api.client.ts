@@ -89,5 +89,5 @@ function getHeaders() {
     ? {
         Authorization: `Bearer ${token}`,
       }
-    : undefined;
+    : {};
 }

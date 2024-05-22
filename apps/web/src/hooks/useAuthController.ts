@@ -1,3 +1,3 @@
-import { useAuthController, applyToken, getTokenPayload, getToken } from '@novu/shared-web';
+import { useAuthController, applyToken } from '@novu/shared-web';
 
-export { useAuthController, applyToken, getTokenPayload, getToken };
+export { useAuthController, applyToken };
