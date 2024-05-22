@@ -15,6 +15,10 @@ const assertResult = (condition: boolean, options) => {
 function createHandlebarsInstance(i18next: any) {
   const handlebars = Handlebars.create();
 
+  handlebars.registerHelper('json', function (context) {
+    return JSON.stringify(context);
+  });
+
   if (i18next) {
     handlebars.registerHelper(
       HandlebarHelpersEnum.I18N,
@@ -40,7 +44,7 @@ function createHandlebarsInstance(i18next: any) {
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        return new Handlebars.SafeString(i18next.t(key, options));
+        return new handlebars.SafeString(i18next.t(key, options));
       }
     );
   }
@@ -48,7 +52,9 @@ function createHandlebarsInstance(i18next: any) {
   handlebars.registerHelper(
     HandlebarHelpersEnum.EQUALS,
     function (arg1, arg2, options) {
-      return assertResult(arg1 == arg2, options);
+      // eslint-disable-next-line
+      // @ts-expect-error
+      return arg1 == arg2 ? options.fn(this) : options.inverse(this);
     }
   );
 

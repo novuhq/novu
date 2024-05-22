@@ -93,18 +93,16 @@ export class CompileInAppTemplate extends CompileTemplateBase {
     organization: OrganizationEntity | null,
     i18nInstance: any
   ): Promise<string> {
-    return await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        i18next: i18nInstance,
-        template: content as string,
-        data: {
-          ...payload,
-          branding: {
-            logo: organization?.branding?.logo,
-            color: organization?.branding?.color || '#f47373',
-          },
+    return await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: content as string,
+      data: {
+        ...payload,
+        branding: {
+          logo: organization?.branding?.logo,
+          color: organization?.branding?.color || '#f47373',
         },
-      })
-    );
+      },
+    });
   }
 }

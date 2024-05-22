@@ -75,14 +75,12 @@ export class CompileStepTemplate extends CompileTemplateBase {
     payload: any,
     i18nInstance?: any
   ): Promise<string> {
-    return await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        i18next: i18nInstance,
-        template: content as string,
-        data: {
-          ...payload,
-        },
-      })
-    );
+    return await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: content as string,
+      data: {
+        ...payload,
+      },
+    });
   }
 }

@@ -107,6 +107,7 @@ export class CompileEmailTemplate extends CompileTemplateBase {
       if (preheader) {
         preheader = await this.renderContent(preheader, payload, i18nInstance);
       }
+
       if (command.senderName) {
         senderName = await this.renderContent(
           command.senderName,
@@ -124,14 +125,6 @@ export class CompileEmailTemplate extends CompileTemplateBase {
       layoutContent as string
     );
 
-    const templateVariables = {
-      ...payload,
-      subject,
-      preheader,
-      body: '',
-      blocks: isEditorMode ? content : [],
-    };
-
     if (isEditorMode) {
       for (const block of content as IEmailBlock[]) {
         block.content = await this.renderContent(
@@ -147,25 +140,30 @@ export class CompileEmailTemplate extends CompileTemplateBase {
       }
     }
 
-    const body = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        i18next: i18nInstance,
-        template: !isEditorMode
-          ? (content as string)
-          : (helperBlocksContent as string),
-        data: templateVariables,
-      })
-    );
+    const templateVariables = {
+      ...payload,
+      subject,
+      preheader,
+      body: '',
+      blocks: isEditorMode ? content : [],
+    };
+
+    const body = await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: !isEditorMode
+        ? (content as string)
+        : (helperBlocksContent as string),
+      data: templateVariables,
+    });
 
     templateVariables.body = body as string;
 
     const html = customLayout
-      ? await this.compileTemplate.execute(
-          CompileTemplateCommand.create({
-            template: customLayout,
-            data: templateVariables,
-          })
-        )
+      ? await this.compileTemplate.execute({
+          i18next: i18nInstance,
+          template: customLayout,
+          data: templateVariables,
+        })
       : body;
 
     return { html, content, subject, senderName };
@@ -176,15 +174,13 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     payload: Record<string, unknown>,
     i18nInstance: any
   ) {
-    const renderedContent = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        i18next: i18nInstance,
-        template: content,
-        data: {
-          ...payload,
-        },
-      })
-    );
+    const renderedContent = await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: content,
+      data: {
+        ...payload,
+      },
+    });
 
     return renderedContent?.trim() || '';
   }
