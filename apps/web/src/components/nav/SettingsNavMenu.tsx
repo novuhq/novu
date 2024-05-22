@@ -13,8 +13,6 @@ import { NavMenu } from './NavMenu';
 import { NavMenuLinkButton } from './NavMenuButton/NavMenuLinkButton';
 import { NavMenuSection } from './NavMenuSection';
 
-// const getEnvSettingsRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });
-
 // TODO: Parentheses were not part of designs, but I believe it's much clearer this way
 const getScopedTitle = (label: string, scope?: string) => `${label} ${`(${scope})` ?? ''}`;
 
