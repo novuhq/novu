@@ -68,7 +68,9 @@ export function ThemeProvider({
   children: ReactNode | ReactNode[];
   shouldDisableGlobals?: Boolean;
 }) {
-  const { colorScheme, toggleColorScheme } = useColorScheme();
+  // const { colorScheme, toggleColorScheme } = useColorScheme();
+  const colorScheme = 'dark';
+  const toggleColorScheme = () => {};
 
   return (
     <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>

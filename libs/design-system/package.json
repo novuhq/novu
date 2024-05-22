@@ -34,7 +34,6 @@
     "@emotion/css": "^11.10.5",
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
-    "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
     "@mantine/notifications": "^5.7.1",
     "@novu/client": "workspace:*",
@@ -51,6 +50,7 @@
     "tslib": "^2.3.1"
   },
   "devDependencies": {
+    "@mantine/core": "^5.7.1",
     "@storybook/addon-actions": "^7.5.0",
     "@storybook/addon-docs": "^7.4.2",
     "@storybook/client-api": "^7.6.10",
@@ -82,6 +82,7 @@
     "vitest": "^1.2.1"
   },
   "peerDependencies": {
+    "@mantine/core": "^5.7.1",
     "react": "^16.8.0 || ^17.0.0",
     "react-dom": "^16.8.0 || ^17.0.0"
   },

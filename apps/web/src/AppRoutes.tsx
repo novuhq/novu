@@ -1,6 +1,7 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
+import AuthLayout from './components/layout/components/AuthLayout';
 import { EnsureOnboardingComplete } from './components/layout/EnsureOnboardingComplete';
 import { ROUTES } from './constants/routes.enum';
 import { useFeatureFlag } from './hooks';
@@ -53,28 +54,30 @@ export const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
-      <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
-      <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
-      <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
-      <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
-      <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
-      <Route
-        path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
-        element={
-          <EnsureOnboardingComplete>
-            <LinkVercelProjectPage type="create" />
-          </EnsureOnboardingComplete>
-        }
-      />
-      <Route
-        path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
-        element={
-          <EnsureOnboardingComplete>
-            <LinkVercelProjectPage type="edit" />
-          </EnsureOnboardingComplete>
-        }
-      />
+      <Route element={<AuthLayout />}>
+        <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
+        <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
+        <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
+        <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
+        <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
+        <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
+        <Route
+          path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
+          element={
+            <EnsureOnboardingComplete>
+              <LinkVercelProjectPage type="create" />
+            </EnsureOnboardingComplete>
+          }
+        />
+        <Route
+          path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
+          element={
+            <EnsureOnboardingComplete>
+              <LinkVercelProjectPage type="edit" />
+            </EnsureOnboardingComplete>
+          }
+        />
+      </Route>
       <Route element={<AppLayout />}>
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />

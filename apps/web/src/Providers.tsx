@@ -1,5 +1,5 @@
 import { ColorSchemeProvider, Loader } from '@mantine/core';
-import { colors } from '@novu/design-system';
+import { colors, ThemeProvider } from '@novu/design-system';
 import { CONTEXT_PATH, SegmentProvider } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -48,7 +48,7 @@ const fallbackDisplay = (
  */
 const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
-    <ColorSchemeProvider colorScheme={'dark'} toggleColorScheme={() => {}}>
+    <ThemeProvider>
       <SegmentProvider>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter basename={CONTEXT_PATH}>
@@ -60,7 +60,7 @@ const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
           </BrowserRouter>
         </QueryClientProvider>
       </SegmentProvider>
-    </ColorSchemeProvider>
+    </ThemeProvider>
   );
 };
 

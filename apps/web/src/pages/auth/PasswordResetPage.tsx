@@ -1,7 +1,5 @@
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { Center } from '@mantine/core';
-import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { PasswordResetRequestForm } from './components/PasswordResetRequestForm';
 import { PasswordResetForm } from './components/PasswordResetForm';
@@ -24,7 +22,7 @@ export function PasswordResetPage({}: Props) {
   }
 
   return (
-    <AuthLayout>
+    <>
       {!showSentSuccess && (
         <AuthContainer title="Reset Password" description="">
           {!token && <PasswordResetRequestForm onSent={onSent} />}
@@ -41,6 +39,6 @@ export function PasswordResetPage({}: Props) {
           </Button>
         </AuthContainer>
       )}
-    </AuthLayout>
+    </>
   );
 }

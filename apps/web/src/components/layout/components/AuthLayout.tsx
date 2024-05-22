@@ -1,52 +1,49 @@
-import React from 'react';
 import { createStyles, Box } from '@mantine/core';
-import { ThemeProvider } from '@novu/design-system';
 import { CONTEXT_PATH } from '../../../config';
+import { Outlet } from 'react-router-dom';
 
-export default function AuthLayout({ children }: { children?: React.ReactNode }) {
+export default function AuthLayout() {
   const { classes } = useStyles();
 
   return (
-    <ThemeProvider>
-      <div className={classes.wrapper}>
-        <div className={classes.bg}>
+    <div className={classes.wrapper}>
+      <div className={classes.bg}>
+        <img
+          src={CONTEXT_PATH + '/static/images/logo-formerly-dark-bg.png'}
+          alt="logo"
+          style={{ alignSelf: 'flex-start', maxWidth: 150, marginTop: 5, marginLeft: 5 }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            right: '50%',
+            display: 'flex',
+            flexDirection: 'column',
+            transform: 'translate(35%, 7%)',
+            '@media (max-width: 1200px)': {
+              display: 'none',
+            },
+          }}
+        >
           <img
-            src={CONTEXT_PATH + '/static/images/logo-formerly-dark-bg.png'}
+            src={CONTEXT_PATH + '/static/images/notifications/notification_01.png'}
             alt="logo"
-            style={{ alignSelf: 'flex-start', maxWidth: 150, marginTop: 5, marginLeft: 5 }}
+            style={{ maxWidth: 400 }}
           />
-          <Box
-            sx={{
-              position: 'absolute',
-              right: '50%',
-              display: 'flex',
-              flexDirection: 'column',
-              transform: 'translate(35%, 7%)',
-              '@media (max-width: 1200px)': {
-                display: 'none',
-              },
-            }}
-          >
-            <img
-              src={CONTEXT_PATH + '/static/images/notifications/notification_01.png'}
-              alt="logo"
-              style={{ maxWidth: 400 }}
-            />
-            <img
-              src={CONTEXT_PATH + '/static/images/notifications/notification_02.png'}
-              alt="logo"
-              style={{ marginTop: -15, marginLeft: 30, maxWidth: 400 }}
-            />
-            <img
-              src={CONTEXT_PATH + '/static/images/notifications/notification_03.png'}
-              alt="logo"
-              style={{ marginTop: -15, maxWidth: 400 }}
-            />
-          </Box>{' '}
-        </div>
-        {children}
+          <img
+            src={CONTEXT_PATH + '/static/images/notifications/notification_02.png'}
+            alt="logo"
+            style={{ marginTop: -15, marginLeft: 30, maxWidth: 400 }}
+          />
+          <img
+            src={CONTEXT_PATH + '/static/images/notifications/notification_03.png'}
+            alt="logo"
+            style={{ marginTop: -15, maxWidth: 400 }}
+          />
+        </Box>{' '}
       </div>
-    </ThemeProvider>
+      <Outlet />
+    </div>
   );
 }
 

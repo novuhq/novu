@@ -5,7 +5,6 @@ import { Center, LoadingOverlay } from '@mantine/core';
 import { IGetInviteResponseDto } from '@novu/shared';
 
 import { getInviteTokenData } from '../../api/invitation';
-import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { SignUpForm } from './components/SignUpForm';
 import { colors, Text, Button } from '@novu/design-system';
@@ -56,7 +55,7 @@ export default function InvitationPage() {
   }, [queryClient]);
 
   return (
-    <AuthLayout>
+    <>
       {isLoggedIn && (
         <AuthContainer
           title="Active Session!"
@@ -124,6 +123,6 @@ export default function InvitationPage() {
           )}
         </AuthContainer>
       )}
-    </AuthLayout>
+    </>
   );
 }
