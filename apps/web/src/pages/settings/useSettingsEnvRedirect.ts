@@ -13,6 +13,7 @@ export const useSettingsEnvRedirect = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // don't redirect away until we've loaded the environment and checked it 
     if (isLoading) {
       return;
     }
