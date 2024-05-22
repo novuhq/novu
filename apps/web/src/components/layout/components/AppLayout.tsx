@@ -3,18 +3,18 @@ import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
 import styled from '@emotion/styled';
 
-import { HeaderNav } from './components/HeaderNav';
-import { SideNav } from './components/SideNav';
+import { HeaderNav } from './HeaderNav';
+import { SideNav } from './SideNav';
 import { IntercomProvider } from 'react-use-intercom';
-import { INTERCOM_APP_ID } from '../../config';
-import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
-import { SpotLight } from '../utils/Spotlight';
-import { SpotLightProvider } from '../providers/SpotlightProvider';
+import { INTERCOM_APP_ID } from '../../../config/index';
+import { EnsureOnboardingComplete } from '../components/EnsureOnboardingComplete';
+import { SpotLight } from '../../utils/Spotlight';
+import { SpotLightProvider } from '../../providers/SpotlightProvider';
 import { useFeatureFlag } from '@novu/shared-web';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { HeaderNav as HeaderNavNew } from './components/v2/HeaderNav';
-import { MainNav } from '../nav/MainNav';
-import { FreeTrialBanner } from './components/FreeTrialBanner';
+import { HeaderNav as HeaderNavNew } from './v2/HeaderNav';
+import { MainNav } from '../../nav/MainNav';
+import { FreeTrialBanner } from './FreeTrialBanner';
 
 const AppShell = styled.div`
   display: flex;
@@ -30,7 +30,7 @@ const ContentShell = styled.div`
   overflow: hidden; // for appropriate scroll
 `;
 
-export function AppLayout() {
+export function PrivatePageLayout() {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
 
   const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);

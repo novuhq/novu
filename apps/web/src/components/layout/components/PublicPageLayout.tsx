@@ -1,8 +1,8 @@
 import { createStyles, Box } from '@mantine/core';
-import { CONTEXT_PATH } from '../../../config';
+import { CONTEXT_PATH } from '../../../config/index';
 import { Outlet } from 'react-router-dom';
 
-export default function AuthLayout() {
+export function PublicPageLayout() {
   const { classes } = useStyles();
 
   return (
