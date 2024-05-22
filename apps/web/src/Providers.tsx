@@ -34,9 +34,6 @@ const fallbackDisplay = (
       display: 'grid',
       placeItems: 'center',
       bg: 'surface.page',
-      // Root element may not have loaded so rely on OS
-      _osDark: { bg: 'legacy.BGDark' },
-      _osLight: { bg: 'legacy.BGLight' },
     })}
   >
     <Loader size={64} variant="bars" color={colors.gradientMiddle} />
