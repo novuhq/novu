@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useIsDarkTheme } from '../../../../hooks';
 import { ProfileMenuItem } from './ProfileMenuItem';
 
-const FALLBACK_AVATAR = CONTEXT_PATH + '/static/images/avatar.png';
+const FALLBACK_AVATAR = CONTEXT_PATH + '/static/images/avatar.webp';
 
 const IS_SELF_HOSTED = IS_DOCKER_HOSTED;
 

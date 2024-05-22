@@ -1,8 +1,8 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { Route, Routes } from 'react-router-dom';
 import { PrivatePageLayout } from './components/layout/components/AppLayout';
 import { PublicPageLayout } from './components/layout/components/PublicPageLayout';
 import { EnsureOnboardingComplete } from './components/layout/components/EnsureOnboardingComplete';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { ROUTES } from './constants/routes.enum';
 import { useFeatureFlag } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
@@ -135,6 +135,10 @@ export const AppRoutes = () => {
             <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
           </>
         )}
+        {isInformationArchitectureEnabled && (
+          <Route path={ROUTES.BRAND} element={<Navigate to={ROUTES.BRAND_SETTINGS} replace />} />
+        )}
+
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>

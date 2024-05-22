@@ -3,7 +3,7 @@ import { colors, Text } from '@novu/design-system';
 import { IOrganizationEntity, IUserEntity } from '@novu/shared';
 import { CONTEXT_PATH } from '@novu/shared-web';
 
-const FALLBACK_AVATAR = CONTEXT_PATH + '/static/images/avatar.png';
+const FALLBACK_AVATAR = CONTEXT_PATH + '/static/images/avatar.webp';
 
 type ProfileMenuItemProps = {
   currentUser?: IUserEntity;
