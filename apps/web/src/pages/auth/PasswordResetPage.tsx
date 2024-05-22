@@ -21,24 +21,19 @@ export function PasswordResetPage({}: Props) {
     setShowSentSuccess(true);
   }
 
-  return (
-    <>
-      {!showSentSuccess && (
-        <AuthContainer title="Reset Password" description="">
-          {!token && <PasswordResetRequestForm onSent={onSent} />}
-          {token && <PasswordResetForm token={token} />}
-        </AuthContainer>
-      )}
-      {showSentSuccess && (
-        <AuthContainer
-          title="Reset Sent!"
-          description="We've sent a password reset link to the account associated with your email"
-        >
-          <Button data-test-id="success-screen-reset" onClick={() => navigate(loginLink)} inherit>
-            Go Back
-          </Button>
-        </AuthContainer>
-      )}
-    </>
+  return showSentSuccess ? (
+    <AuthContainer
+      title="Reset Sent!"
+      description="We've sent a password reset link to the account associated with your email"
+    >
+      <Button data-test-id="success-screen-reset" onClick={() => navigate(loginLink)} inherit>
+        Go Back
+      </Button>
+    </AuthContainer>
+  ) : (
+    <AuthContainer title="Reset Password" description="">
+      {!token && <PasswordResetRequestForm onSent={onSent} />}
+      {token && <PasswordResetForm token={token} />}
+    </AuthContainer>
   );
 }
