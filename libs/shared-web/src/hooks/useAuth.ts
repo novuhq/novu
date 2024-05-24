@@ -8,7 +8,6 @@ import type { IJwtClaims, IOrganizationEntity, IUserEntity } from '@novu/shared'
 import { useSegment } from '../providers';
 import { api } from '../api';
 import { ROUTES, PUBLIC_ROUTES } from '../constants';
-import { log } from 'console';
 
 // TODO: Add a novu prefix to the local storage key
 const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
@@ -53,6 +52,7 @@ export function useAuth() {
     if (newToken) {
       setTokenInStorage(newToken);
       setToken(newToken);
+      refetchOrganizations();
     } else {
       logout();
     }
@@ -84,19 +84,19 @@ export function useAuth() {
     },
   });
 
-  const { data: organizations, isLoading: isOrganizationLoading } = useQuery<IOrganizationEntity[]>(
-    ['/v1/organizations'],
-    getOrganizations,
-    {
-      enabled: inPrivateRoute,
-      retry: false,
-      onError: (error: any) => {
-        if (error?.statusCode === UNAUTHENTICATED_STATUS_CODE) {
-          logout();
-        }
-      },
-    }
-  );
+  const {
+    data: organizations,
+    isLoading: isOrganizationLoading,
+    refetch: refetchOrganizations,
+  } = useQuery<IOrganizationEntity[]>(['/v1/organizations'], getOrganizations, {
+    enabled: inPrivateRoute,
+    retry: false,
+    onError: (error: any) => {
+      if (error?.statusCode === UNAUTHENTICATED_STATUS_CODE) {
+        logout();
+      }
+    },
+  });
 
   const claims = useMemo(() => (token ? jwtDecode<IJwtClaims>(token) : null), [token]);
 

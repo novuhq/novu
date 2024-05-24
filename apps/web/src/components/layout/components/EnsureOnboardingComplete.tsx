@@ -10,7 +10,7 @@ export function EnsureOnboardingComplete({ children }: any) {
 
   if ((!currentUser?.organizationId || !currentUser?.environmentId) && location.pathname !== ROUTES.AUTH_APPLICATION) {
     return <Navigate to={ROUTES.AUTH_APPLICATION} replace />;
-  } else {
-    return children;
   }
+
+  return children;
 }

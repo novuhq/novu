@@ -7,7 +7,7 @@ import { HeaderNav } from './HeaderNav';
 import { SideNav } from './SideNav';
 import { IntercomProvider } from 'react-use-intercom';
 import { INTERCOM_APP_ID } from '../../../config/index';
-import { EnsureOnboardingComplete } from '../components/EnsureOnboardingComplete';
+import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
 import { useFeatureFlag } from '@novu/shared-web';

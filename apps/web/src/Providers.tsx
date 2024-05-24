@@ -1,13 +1,12 @@
 import { Loader } from '@mantine/core';
 import { colors, ThemeProvider } from '@novu/design-system';
-import { SignedIn, CONTEXT_PATH, SegmentProvider } from '@novu/shared-web';
+import { CONTEXT_PATH, SegmentProvider } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import { api } from './api/api.client';
-import { FeatureFlagsProvider } from './components/providers/FeatureFlagsProvider';
 import { css } from '@novu/novui/css';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
@@ -48,11 +47,7 @@ const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
       <SegmentProvider>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter basename={CONTEXT_PATH}>
-            <SignedIn fallback={Fallback}>
-              <FeatureFlagsProvider>
-                <HelmetProvider>{children}</HelmetProvider>
-              </FeatureFlagsProvider>
-            </SignedIn>
+            <HelmetProvider>{children}</HelmetProvider>
           </BrowserRouter>
         </QueryClientProvider>
       </SegmentProvider>
