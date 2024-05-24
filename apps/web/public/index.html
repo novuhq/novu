@@ -52,14 +52,25 @@
           box-sizing: border-box;
         }
 
-        body {
-          background-color: #EDF0F2;
+        @media (prefers-color-scheme: light) {
+          body {
+            /* surface.page (light mode) */
+            background-color: #EDF0F2;
+          }
+        }
+
+        @media (prefers-color-scheme: dark) {
+          body {
+            /* surface.page (dark mode) */
+            background-color: #1310 ;
+          }
         }
       }
+
       #loader {
           display: grid;
-          width: 100vw;
-          height: 100vh;
+          width: 100dvw;
+          height: 100dvh;
           place-items: center;
         }
     </style>
