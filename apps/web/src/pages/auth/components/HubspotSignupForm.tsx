@@ -5,10 +5,9 @@ import { useMantineColorScheme } from '@mantine/core';
 
 import { JobTitleEnum } from '@novu/shared';
 import type { ProductUseCases, IResponseError, ICreateOrganizationDto, IJwtPayload } from '@novu/shared';
-import { HubspotForm, useAuthController, useSegment } from '@novu/shared-web';
+import { HubspotForm, useAuth, useSegment } from '@novu/shared-web';
 
 import { api } from '../../../api/api.client';
-import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 import { HUBSPOT_FORM_IDS } from '../../../constants/hubspotForms';
@@ -18,13 +17,12 @@ import { successMessage } from '@novu/design-system';
 export function HubspotSignupForm() {
   const [loading, setLoading] = useState<boolean>();
   const navigate = useNavigate();
-  const { setToken, token, currentUser } = useAuthContext();
+  const { login, token, currentUser } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { colorScheme } = useMantineColorScheme();
 
   const segment = useSegment();
-  const { user } = useAuthController();
 
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
@@ -34,7 +32,7 @@ export function HubspotSignupForm() {
 
   useEffect(() => {
     if (token) {
-      if (user?.environmentId) {
+      if (currentUser?.environmentId) {
         if (isFromVercel) {
           startVercelSetup();
 
@@ -44,7 +42,7 @@ export function HubspotSignupForm() {
         navigate(ROUTES.HOME);
       }
     }
-  }, [token, navigate, isFromVercel, startVercelSetup, user]);
+  }, [token, navigate, isFromVercel, startVercelSetup, currentUser]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, jobTitle, ...rest } = data;
@@ -53,9 +51,10 @@ export function HubspotSignupForm() {
 
     successMessage('Your Business trial has started');
 
+    // TODO: Move this into useAuth
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
 
-    setToken(organizationResponseToken);
+    login(organizationResponseToken);
   }
 
   const handleCreateOrganization = async (data: IOrganizationCreateForm) => {
@@ -65,7 +64,7 @@ export function HubspotSignupForm() {
 
     setLoading(true);
 
-    if (!user?.organizationId) {
+    if (!currentUser?.organizationId) {
       await createOrganization({ ...data });
     }
 

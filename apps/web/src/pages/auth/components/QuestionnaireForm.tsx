@@ -19,8 +19,8 @@ import {
 } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
-import { useAuthContext } from '../../../components/providers/AuthProvider';
-import { useAuthController, useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useAuth } from '@novu/shared-web';
+import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes.enum';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
@@ -34,12 +34,11 @@ export function QuestionnaireForm() {
     control,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
-  const { setToken, token } = useAuthContext();
+  const { login, token, currentUser } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { parse } = useDomainParser();
 
-  const { user } = useAuthController();
   const { mutateAsync: createOrganizationMutation } = useMutation<
     { _id: string },
     IResponseError,
@@ -48,7 +47,7 @@ export function QuestionnaireForm() {
 
   useEffect(() => {
     if (token) {
-      if (user?.environmentId) {
+      if (currentUser?.environmentId) {
         if (isFromVercel) {
           startVercelSetup();
 
@@ -58,14 +57,14 @@ export function QuestionnaireForm() {
         navigate(ROUTES.HOME);
       }
     }
-  }, [token, navigate, isFromVercel, startVercelSetup, user]);
+  }, [token, navigate, isFromVercel, startVercelSetup, currentUser]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, ...rest } = data;
     const createDto: ICreateOrganizationDto = { ...rest, name: organizationName };
     const organization = await createOrganizationMutation(createDto);
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
-    setToken(organizationResponseToken);
+    login(organizationResponseToken);
   }
 
   const onCreateOrganization = async (data: IOrganizationCreateForm) => {
@@ -73,7 +72,7 @@ export function QuestionnaireForm() {
 
     setLoading(true);
 
-    if (!user?.organizationId) {
+    if (!currentUser?.organizationId) {
       await createOrganization({ ...data });
     }
 

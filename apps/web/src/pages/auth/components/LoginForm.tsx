@@ -6,7 +6,7 @@ import { Center } from '@mantine/core';
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
 import type { IResponseError } from '@novu/shared';
 
-import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { api } from '../../../api/api.client';
 import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
@@ -29,7 +29,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState;
-  const { setToken } = useAuthContext();
+  const { login } = useAuth();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
     IResponseError,
@@ -66,7 +66,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       const response = await mutateAsync(itemData);
       const token = (response as any).token;
       if (isFromVercel) {
-        setToken(token);
+        login(token);
 
         return;
       }
@@ -77,7 +77,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
         return;
       }
 
-      setToken(token);
+      login(token);
 
       navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
     } catch (e: any) {

@@ -6,7 +6,7 @@ import {
   IconRoomPreferences,
   IconWorkspacePremium,
 } from '@novu/design-system';
-import { ROUTES, useAuthContext } from '@novu/shared-web';
+import { ROUTES, useAuth } from '@novu/shared-web';
 import { useNavigate } from 'react-router-dom';
 import { FreeTrialSidebarWidget } from '../layout/components/FreeTrialSidebarWidget';
 import { NavMenu } from './NavMenu';
@@ -18,7 +18,7 @@ const getScopedTitle = (label: string, scope?: string) => `${label} ${`(${scope}
 
 export const SettingsNavMenu: React.FC = () => {
   const navigate = useNavigate();
-  const { currentOrganization } = useAuthContext();
+  const { currentOrganization } = useAuth();
 
   const onBackButtonClick = () => {
     navigate(ROUTES.HOME);

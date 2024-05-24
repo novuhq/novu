@@ -18,7 +18,7 @@ import {
 } from '../../api/organization';
 import { MembersTable } from './components/MembersTable';
 import { Button, Input, Invite, UserAccess } from '@novu/design-system';
-import { useAuthContext } from '../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { parseUrl } from '../../utils/routeUtils';
 import { ROUTES } from '../../constants/routes.enum';
 import { ProductLead } from '../../components/utils/ProductLead';
@@ -27,7 +27,7 @@ export function MembersInvitePage() {
   const [form] = Form.useForm();
   const clipboardInviteLink = useClipboard({ timeout: 1000 });
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
-  const { currentOrganization, currentUser } = useAuthContext();
+  const { currentOrganization, currentUser } = useAuth();
 
   const {
     data: members,

@@ -7,9 +7,9 @@ import { passwordConstraints, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import type { IResponseError } from '@novu/shared';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '@novu/design-system';
 
-import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { api } from '../../../api/api.client';
-import { applyToken, useVercelParams } from '../../../hooks';
+import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 import { ROUTES } from '../../../constants/routes.enum';
@@ -29,7 +29,7 @@ export type SignUpFormInputType = {
 export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const navigate = useNavigate();
 
-  const { setToken } = useAuthContext();
+  const { login } = useAuth();
   const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
   const { isFromVercel, code, next, configurationId } = useVercelParams();
   const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
@@ -62,7 +62,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
      * To get the correct token when sending the request
      */
     const token = (response as any).token;
-    applyToken(token);
+    // login(token);
 
     if (invitationToken) {
       submitToken(token, invitationToken);
@@ -70,7 +70,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       return true;
     }
 
-    setToken(token);
+    login(token);
     navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : ROUTES.AUTH_APPLICATION);
 
     return true;

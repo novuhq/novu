@@ -7,13 +7,13 @@ import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { css } from '@novu/novui/css';
 import { HStack } from '@novu/novui/jsx';
-import { useAuthContext } from '../../../providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
 import { HeaderMenuItems } from './HeaderMenuItems';
 
 export function HeaderNav() {
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
   const isSelfHosted = IS_DOCKER_HOSTED;
 
   useBootIntercom();
