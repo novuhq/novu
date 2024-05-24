@@ -47,7 +47,7 @@ export function useAuth() {
   const location = useLocation();
   const [token, setToken] = useState<string | null>(getTokenFromStorage());
 
-  const inPublicRoute = PUBLIC_ROUTES.includes(location.pathname as any);
+  const inPublicRoute = PUBLIC_ROUTES.has(location.pathname as any);
   const inPrivateRoute = !inPublicRoute;
 
   const login = useCallback((newToken: string) => {
