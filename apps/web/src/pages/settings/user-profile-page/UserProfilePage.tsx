@@ -1,5 +1,5 @@
 import { FC } from 'react';
-import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { css } from '@novu/novui/css';
 import { Flex, styled } from '@novu/novui/jsx';
 import { title } from '@novu/novui/recipes';
@@ -14,7 +14,7 @@ const Title = styled('h2', title);
 const inputStyles = css({ minWidth: '18.75rem' });
 
 export const UserProfilePage: FC = () => {
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
 
   const email = currentUser?.email ?? '';
 

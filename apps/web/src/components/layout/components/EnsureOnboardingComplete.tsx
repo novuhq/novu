@@ -1,15 +1,16 @@
 import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@novu/shared-web';
 import { ROUTES } from '../../../constants/routes.enum';
-import { useBlueprint, useAuthController } from '../../../hooks/index';
+import { useBlueprint } from '../../../hooks/index';
 
 export function EnsureOnboardingComplete({ children }: any) {
   useBlueprint();
   const location = useLocation();
-  const { user } = useAuthController();
+  const { currentUser } = useAuth();
 
-  if ((!user?.organizationId || !user?.environmentId) && location.pathname !== ROUTES.AUTH_APPLICATION) {
+  if ((!currentUser?.organizationId || !currentUser?.environmentId) && location.pathname !== ROUTES.AUTH_APPLICATION) {
     return <Navigate to={ROUTES.AUTH_APPLICATION} replace />;
-  } else {
-    return children;
   }
+
+  return children;
 }

@@ -1,4 +1,4 @@
-import { ColorSchemeProvider, Loader } from '@mantine/core';
+import { Loader } from '@mantine/core';
 import { colors, ThemeProvider } from '@novu/design-system';
 import { CONTEXT_PATH, SegmentProvider } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
@@ -7,8 +7,6 @@ import { PropsWithChildren } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import { api } from './api/api.client';
-import { LaunchDarklyProvider } from './components/launch-darkly';
-import { AuthProvider } from './components/providers/AuthProvider';
 import { css } from '@novu/novui/css';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
@@ -26,7 +24,7 @@ const queryClient = new QueryClient({
 });
 
 /** Full-page loader that uses color-preferences for background */
-const fallbackDisplay = (
+const Fallback = (
   <div
     className={css({
       h: '100dvh',
@@ -49,11 +47,7 @@ const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
       <SegmentProvider>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter basename={CONTEXT_PATH}>
-            <AuthProvider fallbackComponent={fallbackDisplay}>
-              <LaunchDarklyProvider>
-                <HelmetProvider>{children}</HelmetProvider>
-              </LaunchDarklyProvider>
-            </AuthProvider>
+            <HelmetProvider>{children}</HelmetProvider>
           </BrowserRouter>
         </QueryClientProvider>
       </SegmentProvider>

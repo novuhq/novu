@@ -7,7 +7,7 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
 import { errorMessage, successMessage } from '../../../../utils/notifications';
-import { useAuthContext } from '../../../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import {
   Button,
   Text,
@@ -34,7 +34,7 @@ export function TestSendEmail({
   isIntegrationActive: boolean;
   chimera?: boolean;
 }) {
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
   const { control, watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const stepId = watch(`${path}.uuid`);

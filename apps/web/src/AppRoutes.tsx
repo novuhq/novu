@@ -1,5 +1,5 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { PrivatePageLayout } from './components/layout/components/AppLayout';
+import { PrivatePageLayout } from './components/layout/components/PrivatePageLayout';
 import { PublicPageLayout } from './components/layout/components/PublicPageLayout';
 import { EnsureOnboardingComplete } from './components/layout/components/EnsureOnboardingComplete';
 import { Navigate, Route, Routes } from 'react-router-dom';
