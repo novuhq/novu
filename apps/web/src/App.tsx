@@ -1,13 +1,13 @@
 import { AppRoutes } from './AppRoutes';
 import Providers from './Providers';
-import { Gate } from './Gate';
+import { ApplicationReadyGuard } from './ApplicationReadyGuard';
 
 export default function App() {
   return (
     <Providers>
-      <Gate>
+      <ApplicationReadyGuard>
         <AppRoutes />
-      </Gate>
+      </ApplicationReadyGuard>
     </Providers>
   );
 }

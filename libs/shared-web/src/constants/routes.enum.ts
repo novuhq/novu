@@ -48,9 +48,9 @@ export enum ROUTES {
   BILLING = '/settings/billing',
 }
 
-export const PUBLIC_ROUTES = [
+export const PUBLIC_ROUTES = new Set<ROUTES>([
   ROUTES.AUTH_LOGIN,
   ROUTES.AUTH_SIGNUP,
   ROUTES.AUTH_RESET_REQUEST,
   ROUTES.AUTH_RESET_TOKEN,
-];
+]);

@@ -1,4 +1,5 @@
 import { useEffect, useCallback, useState, useMemo } from 'react';
+import { useLDClient } from 'launchdarkly-react-client-sdk';
 import jwtDecode from 'jwt-decode';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -39,6 +40,7 @@ function getTokenFromStorage(): string {
 }
 
 export function useAuth() {
+  const ldClient = useLDClient();
   const segment = useSegment();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -124,6 +126,25 @@ export function useAuth() {
       Sentry.configureScope((scope) => scope.setUser(null));
     }
   }, [user, currentOrganization, segment]);
+
+  useEffect(() => {
+    if (!ldClient) {
+      return;
+    }
+
+    if (currentOrganization) {
+      ldClient.identify({
+        kind: 'organization',
+        key: currentOrganization._id,
+        name: currentOrganization.name,
+      });
+    } else {
+      ldClient.identify({
+        kind: 'user',
+        anonymous: true,
+      });
+    }
+  }, [ldClient, currentOrganization]);
 
   return {
     inPublicRoute,
