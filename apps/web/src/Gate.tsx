@@ -11,8 +11,6 @@ export function Gate({ children }: { children: ReactNode }) {
       return;
     }
 
-    console.log('Updating LaunchDarkly user context');
-
     if (currentOrganization) {
       ldClient.identify({
         kind: 'organization',

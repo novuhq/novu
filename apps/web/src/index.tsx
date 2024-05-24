@@ -24,6 +24,7 @@ import '@novu/novui/styles.css';
         anonymous: true,
       },
       options: {
+        // eslint-disable-next-line max-len
         // https://docs.launchdarkly.com/sdk/features/bootstrapping#:~:text=Alternatively%2C%20you%20can%20bootstrap%20feature%20flags%20from%20local%20storage%3A
         bootstrap: 'localStorage',
       },

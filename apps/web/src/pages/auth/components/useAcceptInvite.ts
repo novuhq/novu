@@ -39,7 +39,7 @@ export function useAcceptInvite() {
         Sentry.captureException(e);
       }
     },
-    [mutateAsync, navigate, login, state?.redirectTo?.pathname]
+    [mutateAsync, navigate, login, state?.redirectTo?.pathname, queryClient]
   );
 
   return {
