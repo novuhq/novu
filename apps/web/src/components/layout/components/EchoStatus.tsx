@@ -60,7 +60,7 @@ function PopoverContent({ url, status }) {
     return (
       <>
         <Text>
-          <b>Status</b>: {status === 'ok' ? 'Echo Is Up' : 'Echo is Down'}
+          <b>Status</b>: {status === 'ok' ? 'Connected to your application' : 'Disconnected from your application'}
         </Text>
         <Text>
           <b>URL</b>: {url}

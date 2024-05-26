@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Stack, Group, Box } from '@mantine/core';
 import { useQuery, useMutation, useInfiniteQuery } from '@tanstack/react-query';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { useAuth } from '@novu/shared-web';
 
 import {
   completeVercelIntegration,
@@ -9,7 +10,7 @@ import {
   getVercelProjects,
   updateVercelIntegration,
 } from '../../../api/vercel-integration';
-import { useVercelParams, useAuthController } from '../../../hooks';
+import { useVercelParams } from '../../../hooks';
 import { LinkMoreProjectRow } from './LinkMoreProjectRow';
 import { ProjectRow } from './ProjectRow';
 import { Text, colors, Button } from '@novu/design-system';
@@ -24,7 +25,7 @@ export type ProjectLinkFormValues = {
 };
 
 export function LinkProjectContainer({ type }: { type: 'edit' | 'create' }) {
-  const { organizations } = useAuthController();
+  const { organizations } = useAuth();
   const { configurationId, next } = useVercelParams();
   const {
     data: vercelProjects,

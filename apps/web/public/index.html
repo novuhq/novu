@@ -42,6 +42,38 @@
     -->
     <title>Novu Manage Platform</title>
     <script src="%PUBLIC_URL%/env-config.js"></script>
+    <style>
+      /* Critical CSS for the instant loader */
+      @layer critical {
+        /* Override Mantine injected CSS layers to prevent minor jumps */
+        *,::before,::after,::backdrop,::file-selector-button {
+          margin: 0px;
+          padding: 0px;
+          box-sizing: border-box;
+        }
+
+        @media (prefers-color-scheme: light) {
+          body {
+            /* surface.page (light mode) */
+            background-color: #EDF0F2;
+          }
+        }
+
+        @media (prefers-color-scheme: dark) {
+          body {
+            /* surface.page (dark mode) */
+            background-color: #13131A ;
+          }
+        }
+      }
+
+      #loader {
+          display: grid;
+          width: 100dvw;
+          height: 100dvh;
+          place-items: center;
+        }
+    </style>
   </head>
   <body>
     <!-- Google Tag Manager (noscript) -->
@@ -57,6 +89,31 @@
     <% } %>
     <!-- End Google Tag Manager (noscript) -->
     <noscript>You need to enable JavaScript to run this app.</noscript>
+    <!-- Instant loader -->
+    <div id="loader">
+      <svg viewBox="0 0 135 140" xmlns="http://www.w3.org/2000/svg" fill="#ef3f5a" width="64px" role="presentation">
+        <rect y="10" width="15" height="120" rx="6">
+          <animate attributeName="height" begin="0.5s" dur="1s" values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear" repeatCount="indefinite"></animate>
+          <animate attributeName="y" begin="0.5s" dur="1s" values="10;15;20;25;30;35;40;45;50;0;10" calcMode="linear" repeatCount="indefinite"></animate>
+        </rect>
+        <rect x="30" y="10" width="15" height="120" rx="6">
+          <animate attributeName="height" begin="0.25s" dur="1s" values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear" repeatCount="indefinite"></animate>
+          <animate attributeName="y" begin="0.25s" dur="1s" values="10;15;20;25;30;35;40;45;50;0;10" calcMode="linear" repeatCount="indefinite"></animate>
+        </rect>
+        <rect x="60" width="15" height="140" rx="6">
+          <animate attributeName="height" begin="0s" dur="1s" values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear" repeatCount="indefinite"></animate>
+          <animate attributeName="y" begin="0s" dur="1s" values="10;15;20;25;30;35;40;45;50;0;10" calcMode="linear" repeatCount="indefinite"></animate>
+        </rect>
+        <rect x="90" y="10" width="15" height="120" rx="6">
+          <animate attributeName="height" begin="0.25s" dur="1s" values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear" repeatCount="indefinite"></animate>
+          <animate attributeName="y" begin="0.25s" dur="1s" values="10;15;20;25;30;35;40;45;50;0;10" calcMode="linear" repeatCount="indefinite"></animate>
+        </rect>
+        <rect x="120" y="10" width="15" height="120" rx="6">
+          <animate attributeName="height" begin="0.5s" dur="1s" values="120;110;100;90;80;70;60;50;40;140;120" calcMode="linear" repeatCount="indefinite"></animate>
+          <animate attributeName="y" begin="0.5s" dur="1s" values="10;15;20;25;30;35;40;45;50;0;10" calcMode="linear" repeatCount="indefinite"></animate>
+        </rect>
+      </svg>
+    </div>
     <div id="root"></div>
     <% if ( process.env.REACT_APP_DOCKER_HOSTED_ENV === 'false' ) { %>
     <script

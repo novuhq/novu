@@ -3,7 +3,8 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 import { getWebhookSupportStatus } from '../integration';
 import { IS_DOCKER_HOSTED, WEBHOOK_URL } from '../../config';
-import { useAuthController, useEnvController } from '../../hooks';
+import { useEnvController } from '../../hooks';
+import { useAuth } from '@novu/shared-web';
 
 export const useWebhookSupportStatus = ({
   hasCredentials,
@@ -15,7 +16,7 @@ export const useWebhookSupportStatus = ({
   channel?: ChannelTypeEnum;
 }) => {
   const { environment } = useEnvController();
-  const { organization } = useAuthController();
+  const { currentOrganization } = useAuth();
 
   const { data: webhookSupportStatus, ...rest } = useQuery(
     ['webhookSupportStatus', integrationId],
@@ -37,7 +38,7 @@ export const useWebhookSupportStatus = ({
   );
 
   const webhookUrl =
-    `${WEBHOOK_URL}/webhooks/organizations/${organization?._id}` +
+    `${WEBHOOK_URL}/webhooks/organizations/${currentOrganization?._id}` +
     `/environments/${environment?._id}/${channel}/${integrationId}`;
 
   return {

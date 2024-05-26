@@ -18,7 +18,7 @@ describe('API Keys Page', () => {
     cy.intercept('GET', '/v1/environments/api-keys').as('getApiKeys');
 
     cy.waitLoadEnv(() => {
-      cy.visit('/settings/api-keys/Development');
+      cy.visit('/api-keys/Development');
     });
     cy.wait('@getApiKeys');
   });

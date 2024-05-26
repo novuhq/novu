@@ -1,12 +1,10 @@
 import { Center, Loader } from '@mantine/core';
 import { Outlet } from 'react-router-dom';
 import { colors } from '@novu/design-system';
-
-import { useAuthContext } from '../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 
 export function SettingsPageNew() {
-  const { currentOrganization } = useAuthContext();
-
+  const { currentOrganization } = useAuth();
   if (!currentOrganization) {
     return (
       <Center>

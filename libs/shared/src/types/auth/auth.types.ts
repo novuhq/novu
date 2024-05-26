@@ -1,4 +1,4 @@
-export interface IJwtPayload {
+export interface IJwtClaims {
   _id: string;
   firstName?: string;
   lastName?: string;
@@ -9,6 +9,9 @@ export interface IJwtPayload {
   roles: string[];
   exp: number;
 }
+
+// @deprecated Use IJwtClaims instead
+export type IJwtPayload = IJwtClaims;
 
 export enum ApiAuthSchemeEnum {
   BEARER = 'Bearer',

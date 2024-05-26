@@ -5,14 +5,14 @@ import { colors } from '@novu/design-system';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageHeader from '../../../components/layout/components/PageHeader';
-import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useEnvController, useFeatureFlag } from '../../../hooks';
 
 const LAYOUT = 'Layouts';
 
 export function LayoutsPage() {
-  const { currentOrganization, currentUser } = useAuthContext();
+  const { currentOrganization, currentUser } = useAuth();
   const { environment } = useEnvController();
   const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
