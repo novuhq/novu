@@ -59,6 +59,13 @@ export function TestWorkflow({ trigger }) {
 
     return [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
   }, [trigger]);
+
+  const currentUserDependencies = subscriberVariables.map((variable) =>
+    currentUser ? currentUser[variable.name === 'subscriberId' ? '_id' : variable.name] : null
+  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const memoizedCurrentUser = useMemo(() => currentUser, [...currentUserDependencies]);
+
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
   const reservedVariables = useMemo(() => [...(trigger?.reservedVariables || [])], [trigger]);
 
@@ -90,8 +97,8 @@ export function TestWorkflow({ trigger }) {
   const { setValues } = form;
 
   useEffect(() => {
-    setValues({ toValue: makeToValue(subscriberVariables, currentUser) });
-  }, [setValues, subscriberVariables, currentUser]);
+    setValues({ toValue: makeToValue(subscriberVariables, memoizedCurrentUser) });
+  }, [setValues, subscriberVariables, memoizedCurrentUser]);
 
   const onTrigger = async ({ toValue, payloadValue, overridesValue, snippetValue }) => {
     const to = JSON.parse(toValue);
