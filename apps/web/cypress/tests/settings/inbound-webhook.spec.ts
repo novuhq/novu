@@ -39,7 +39,7 @@ const mockEnvs = ({ envName = 'Development', mxRecordConfigured = false, inbound
 };
 
 describe('Inbound Webhook Page', () => {
-  const TEST_URL = '/settings/webhook/Development';
+  const TEST_URL = '/webhook/Development';
   const launchTestPage = () =>
     cy.waitLoadEnv(() => {
       cy.visit(TEST_URL);

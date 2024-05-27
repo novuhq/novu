@@ -5,24 +5,6 @@ import { checkShouldUseLaunchDarkly } from '../utils/checkShouldUseLaunchDarkly'
 
 import { FEATURE_FLAGS } from '../config';
 
-export const useFeatureFlags = (organization?: IOrganizationEntity) => {
-  const ldClient = useLDClient();
-
-  useEffect(() => {
-    if (!checkShouldUseLaunchDarkly() || !organization?._id || !ldClient) {
-      return;
-    }
-
-    ldClient.identify({
-      kind: 'organization',
-      key: organization._id,
-      name: organization.name,
-    });
-  }, [organization?._id, ldClient, organization?.name]);
-
-  return ldClient;
-};
-
 export const useFeatureFlag = (key: FeatureFlagsKeysEnum): boolean => {
   /** We knowingly break the rule of hooks here to avoid making any LaunchDarkly calls when it is disabled */
   // eslint-disable-next-line

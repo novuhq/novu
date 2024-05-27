@@ -1,7 +1,7 @@
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useEffect } from 'react';
 
-import { getToken } from './useAuthController';
+import { useAuth } from '@novu/shared-web';
 import { useSegment } from '../components/providers/SegmentProvider';
 import { ROUTES } from '../constants/routes.enum';
 
@@ -12,10 +12,10 @@ export const useBlueprint = () => {
   const { pathname } = useLocation();
   const segment = useSegment();
   const id = localStorage.getItem('blueprintId');
-  const token = getToken();
+  const { token } = useAuth();
 
   useEffect(() => {
-    if (id && token !== null) {
+    if (id) {
       navigate(ROUTES.WORKFLOWS_CREATE, {
         replace: true,
       });

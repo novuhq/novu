@@ -1,4 +1,4 @@
-export * from './useAuthController';
+export * from './useAuth';
 export * from './useLocalThemePreference';
 export * from './useDataRef';
 export * from './useKeyDown';

@@ -35,6 +35,8 @@ export enum ROUTES {
   BRAND = '/brand',
   TRANSLATIONS = '/translations',
   LAYOUT = '/layouts',
+  API_KEYS = '/api-keys/:env',
+  WEBHOOK = '/webhook/:env',
 
   /** Settings nested routes */
   SETTINGS = '/settings',
@@ -44,6 +46,11 @@ export enum ROUTES {
   ORGANIZATION = '/settings/organization',
   SECURITY = '/settings/security',
   BILLING = '/settings/billing',
-  API_KEYS = '/settings/api-keys/:env',
-  WEBHOOK = '/settings/webhook/:env',
 }
+
+export const PUBLIC_ROUTES = new Set<ROUTES>([
+  ROUTES.AUTH_LOGIN,
+  ROUTES.AUTH_SIGNUP,
+  ROUTES.AUTH_RESET_REQUEST,
+  ROUTES.AUTH_RESET_TOKEN,
+]);

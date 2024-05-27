@@ -18,9 +18,9 @@ import {
   Logout,
   InviteMembers,
 } from '@novu/design-system';
+import { useAuth } from '@novu/shared-web';
 import { useLocalThemePreference, useDebounce, useBootIntercom } from '../../../hooks';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
-import { useAuthContext } from '../../providers/AuthProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_NAV_HEIGHT } from '../constants';
 import { NotificationCenterWidget } from './NotificationCenterWidget';
@@ -55,7 +55,7 @@ const Icon = () => {
  * Use HeaderNav from V2 folder instead.
  */
 export function HeaderNav({ isIntercomOpened }: Props) {
-  const { currentOrganization, currentUser, logout } = useAuthContext();
+  const { currentOrganization, currentUser, logout } = useAuth();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const { themeStatus } = useLocalThemePreference();
   const { addItem, removeItems } = useSpotlightContext();
@@ -116,7 +116,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
           })}
           radius="xl"
           size={45}
-          src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}
+          src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.webp'}
         />
         <div style={{ flex: 1 }}>
           <Text data-test-id="header-dropdown-username" rows={1}>
@@ -198,7 +198,7 @@ export function HeaderNav({ isIntercomOpened }: Props) {
                   size={24}
                   radius="xl"
                   data-test-id="header-profile-avatar"
-                  src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.png'}
+                  src={currentUser?.profilePicture || CONTEXT_PATH + '/static/images/avatar.webp'}
                 />
               </ActionIcon>
             }
