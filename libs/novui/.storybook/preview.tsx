@@ -5,6 +5,7 @@ import { css } from '../styled-system/css';
 
 // Bring in the Panda-generated stylesheets
 import '../src/index.css';
+import { MantineProvider } from '@mantine/core';
 
 export const parameters: Parameters = {
   layout: 'fullscreen',
@@ -36,5 +37,9 @@ function ColorSchemeThemeWrapper({ children }) {
 }
 
 export const decorators: Decorator[] = [
-  (renderStory) => <ColorSchemeThemeWrapper>{renderStory()}</ColorSchemeThemeWrapper>,
+  (renderStory) => (
+    <ColorSchemeThemeWrapper>
+      <MantineProvider>{renderStory()}</MantineProvider>
+    </ColorSchemeThemeWrapper>
+  ),
 ];
