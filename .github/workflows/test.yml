@@ -20,6 +20,7 @@ jobs:
   spellcheck:
     name: Spell check
     runs-on: ubuntu-latest
+    environment: Production
     steps:
       - uses: actions/checkout@v3
       - name: List team members ad check
