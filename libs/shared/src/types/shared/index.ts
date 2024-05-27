@@ -9,3 +9,11 @@ export interface IResponseError {
   message: string;
   statusCode: number;
 }
+
+export interface IPaginatedResponse<T = unknown> {
+  data: T[];
+  hasMore: boolean;
+  totalCount: number;
+  pageSize: number;
+  page: number;
+}

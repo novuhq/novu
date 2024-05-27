@@ -24,10 +24,9 @@
     "start": "npm run build:watch"
   },
   "dependencies": {
-    "@mantine/core": "^5.7.1",
     "@mantine/hooks": "^5.7.1",
-    "@novu/design-system": "^0.24.2",
-    "@novu/shared-web": "^0.24.2",
+    "@novu/design-system": "workspace:*",
+    "@novu/shared-web": "workspace:*",
     "@rjsf/core": "^5.17.1",
     "@rjsf/validator-ajv8": "^5.17.1",
     "@tanstack/react-query": "^4.20.4",
@@ -35,6 +34,7 @@
     "tslib": "^2.3.1"
   },
   "devDependencies": {
+    "@mantine/core": "^5.7.1",
     "@types/node": "^18.11.12",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
@@ -48,6 +48,7 @@
     "typescript": "4.9.5"
   },
   "peerDependencies": {
+    "@mantine/core": "^5.7.1",
     "react": "^16.8.0 || ^17.0.0",
     "react-dom": "^16.8.0 || ^17.0.0"
   }

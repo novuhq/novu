@@ -24,10 +24,3 @@ coverage
 package-lock.json
 
 storybook-static
-
-## Panda
-styled-system
-styled-system-studio
-
-# react-scanner
-src/component-audit/component-scans

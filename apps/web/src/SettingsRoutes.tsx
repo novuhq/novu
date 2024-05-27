@@ -8,13 +8,12 @@ import { useFeatureFlag } from './hooks';
 import { BillingRoutes } from './pages/BillingPages';
 import { BrandingPage } from './pages/brand/tabs/v2';
 import { MembersInvitePage as MembersInvitePageNew } from './pages/invites/v2/MembersInvitePage';
-import { AccessSecurityPage, ApiKeysPage, BillingPage, TeamPage, UserProfilePage } from './pages/settings';
+import { AccessSecurityPage, BillingPage, TeamPage, UserProfilePage } from './pages/settings';
 import { SettingsPage as SettingsPageOld } from './pages/settings/SettingsPage';
 import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { ApiKeysCard } from './pages/settings/tabs';
 import { EmailSettings } from './pages/settings/tabs/EmailSettings';
 import { OrganizationPage } from './pages/settings/organization';
-import { WebhookPage } from './pages/settings/WebhookPage';
 
 /** Note: using a hook is the only way to separate routes */
 export const useSettingsRoutes = () => {
@@ -24,12 +23,10 @@ export const useSettingsRoutes = () => {
     return (
       <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
         <Route path="" element={<Navigate to={ROUTES.PROFILE} replace />} />
-        <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
         <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingPage />} />
         <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
         <Route path={ROUTES.TEAM_SETTINGS} element={<TeamPage />} />
         <Route path={`${ROUTES.BILLING}/*`} element={<BillingPage />} />
-        <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
         <Route path={ROUTES.SECURITY} element={<AccessSecurityPage />} />
         <Route path={`${ROUTES.SETTINGS}`} element={<Navigate to={ROUTES.PROFILE} replace />} />
         <Route path="permissions" element={<Navigate to={ROUTES.SECURITY} replace />} />

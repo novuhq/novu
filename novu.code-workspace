@@ -41,6 +41,10 @@
       "path": "libs/embed"
     },
     {
+      "name": "📦 @novu/novui",
+      "path": "libs/novui"
+    },
+    {
       "name": "📦 @novu/cli",
       "path": "packages/cli"
     },

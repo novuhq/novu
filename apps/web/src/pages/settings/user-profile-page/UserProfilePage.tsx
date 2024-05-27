@@ -1,8 +1,8 @@
 import { FC } from 'react';
-import { useAuthContext } from '../../../components/providers/AuthProvider';
-import { css } from '../../../styled-system/css';
-import { Flex, styled } from '../../../styled-system/jsx';
-import { title } from '../../../styled-system/recipes';
+import { useAuth } from '@novu/shared-web';
+import { css } from '@novu/novui/css';
+import { Flex, styled } from '@novu/novui/jsx';
+import { title } from '@novu/novui/recipes';
 import { InputPlain } from '../components';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { UserProfileForm } from './UserProfileForm';
@@ -14,7 +14,7 @@ const Title = styled('h2', title);
 const inputStyles = css({ minWidth: '18.75rem' });
 
 export const UserProfilePage: FC = () => {
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
 
   const email = currentUser?.email ?? '';
 

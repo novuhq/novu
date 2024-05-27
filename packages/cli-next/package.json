@@ -47,7 +47,7 @@
     "typescript": "4.9.5"
   },
   "dependencies": {
-    "@novu/shared": "^0.23.1",
+    "@novu/shared": "workspace:*",
     "@novu/studio": "^0.0.1-alpha.87",
     "@segment/analytics-node": "^1.1.4",
     "axios": "^1.6.2",

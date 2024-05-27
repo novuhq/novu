@@ -28,15 +28,14 @@
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@handlebars/parser": "^2.1.0",
-    "@mantine/core": "^5.7.1",
     "@mantine/dropzone": "^5.9.2",
     "@mantine/hooks": "^5.7.1",
     "@mantine/prism": "^5.7.1",
     "@monaco-editor/react": "^4.6.0",
-    "@novu/client": "^0.24.2",
-    "@novu/design-system": "^0.24.2",
-    "@novu/shared": "^0.24.2",
-    "@novu/shared-web": "^0.24.2",
+    "@novu/client": "workspace:*",
+    "@novu/design-system": "workspace:*",
+    "@novu/shared": "workspace:*",
+    "@novu/shared-web": "workspace:*",
     "@tanstack/react-query": "^4.20.4",
     "axios": "^1.4.0",
     "date-fns": "^2.29.2",
@@ -49,6 +48,7 @@
     "tslib": "^2.3.1"
   },
   "devDependencies": {
+    "@mantine/core": "^5.7.1",
     "@types/node": "^18.11.12",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
@@ -60,6 +60,7 @@
     "typescript": "4.9.5"
   },
   "peerDependencies": {
+    "@mantine/core": "^5.7.1",
     "react": "^16.8.0 || ^17.0.0",
     "react-dom": "^16.8.0 || ^17.0.0"
   }

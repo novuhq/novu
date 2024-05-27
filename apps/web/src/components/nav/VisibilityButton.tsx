@@ -1,5 +1,5 @@
 import { IconVisibilityOff } from '@novu/design-system';
-import { css } from '../../styled-system/css';
+import { css } from '@novu/novui/css';
 
 const buttonStyles = css({
   bg: 'transparent',

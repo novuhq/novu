@@ -1,19 +1,45 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import App from './App';
 import { initializeApp } from './initializeApp';
 import reportWebVitals from './reportWebVitals';
+import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@novu/shared-web';
 
-import './styled-system/styles.css';
+import '@novu/novui/styles.css';
 
-initializeApp();
+(async () => {
+  initializeApp();
 
-ReactDOM.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-  document.getElementById('root')
-);
+  let FeatureFlagsProvider = ({ children }) => <>{children}</>;
+
+  if (!!LAUNCH_DARKLY_CLIENT_SIDE_ID) {
+    FeatureFlagsProvider = await asyncWithLDProvider({
+      clientSideID: LAUNCH_DARKLY_CLIENT_SIDE_ID,
+      reactOptions: {
+        useCamelCaseFlagKeys: false,
+      },
+      user: {
+        kind: 'user',
+        anonymous: true,
+      },
+      options: {
+        // eslint-disable-next-line max-len
+        // https://docs.launchdarkly.com/sdk/features/bootstrapping#:~:text=Alternatively%2C%20you%20can%20bootstrap%20feature%20flags%20from%20local%20storage%3A
+        bootstrap: 'localStorage',
+      },
+    });
+  }
+
+  ReactDOM.render(
+    <React.StrictMode>
+      <FeatureFlagsProvider>
+        <App />
+      </FeatureFlagsProvider>
+    </React.StrictMode>,
+    document.getElementById('root')
+  );
+})();
 
 /*
  * If you want to start measuring performance in your app, pass a function

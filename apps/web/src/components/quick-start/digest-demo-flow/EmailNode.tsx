@@ -4,10 +4,10 @@ import { NodeStepWithPopover } from './NodeStepWithPopover';
 import { EmailFilled } from '@novu/design-system';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
-import { useAuthContext } from '../../providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 
 export function EmailNode({ data, id }: { data: any; id: string }) {
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
   const { isReadOnly, emailsSentCount } = useDigestDemoFlowContext();
   data.email = currentUser?.email ?? '';
 

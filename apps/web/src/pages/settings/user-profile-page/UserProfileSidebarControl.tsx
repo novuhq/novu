@@ -1,15 +1,15 @@
 import { Button, IconOutlineLockPerson } from '@novu/design-system';
 import { FC, MouseEventHandler, useContext, useMemo } from 'react';
-import { css } from '../../../styled-system/css';
+import { css } from '@novu/novui/css';
 import { UserProfileSidebarContext } from './UserProfileSidebarContext';
 import { UserProfilePasswordSidebar } from './UserProfilePasswordSidebar';
 import { useUserProfileSearchParams } from './useUserProfileSearchParams';
 import { UserProfileSidebarTypeEnum } from './UserProfilePasswordSidebarEnum';
-import { useAuthContext } from '@novu/shared-web';
+import { useAuth } from '@novu/shared-web';
 import { selectUserProfileFlow } from './selectUserProfileFlow';
 
 export const UserProfileSidebarControl: FC = () => {
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
   const email = currentUser?.email ?? '';
   const hasPassword = currentUser?.hasPassword ?? false;
 

@@ -17,8 +17,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set output variables
         id: output-variables
@@ -41,13 +39,21 @@ jobs:
 
       - name: Enable PR automerge
         id: enable-pr-automerge
+        if: ${{ steps.create-pr.outputs.pr_url != '' }}
         run: |
           gh pr merge --auto -r ${{steps.create-pr.outputs.pr_url}}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Delete release branch step on failure
+        id: delete-branch
+        if: ${{ failure() || steps.create-pr.outputs.pr_url == '' }}
+        run: |
+          git push origin -d ${{ steps.output-variables.outputs.branch_name }}
+
       - name: Generate commit log
         id: commit-log
+        if: ${{ success() }}
         run: |
           echo 'COMMIT_LOG<<EOF' >> $GITHUB_ENV
           echo $(git log --format="format:%h %s (@%aL)\n" origin/prod..origin/${{steps.output-variables.outputs.branch_name}} | sed "s/\"/'/g") >> $GITHUB_ENV
@@ -56,6 +62,7 @@ jobs:
       - name: Send commit log to Slack
         id: slack
         uses: slackapi/slack-github-action@v1.26.0
+        if: ${{ success() }}
         with:
           payload: |
             {
