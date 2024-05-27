@@ -46,7 +46,6 @@ export function QuestionnaireForm() {
   >((data: ICreateOrganizationDto) => api.post(`/v1/organizations`, data));
 
   useEffect(() => {
-    // TODO: Do we need this page.
     if (currentUser?.environmentId) {
       if (isFromVercel) {
         startVercelSetup();
