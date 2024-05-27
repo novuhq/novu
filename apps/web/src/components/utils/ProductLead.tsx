@@ -5,7 +5,7 @@ import styled from '@emotion/styled';
 
 import { IS_DOCKER_HOSTED } from '../../config';
 import { Button, colors, Text, Calendar, Close } from '@novu/design-system';
-import { useAuthContext } from '../providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { useSegment } from '../providers/SegmentProvider';
 import { When } from './When';
 
@@ -38,7 +38,7 @@ export const ProductLead = ({
   variant?: ProductLeadVariants;
   style?: CSSProperties;
 }) => {
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
   const [open, setOpen] = useLocalStorage<boolean>({
     key: id,
     defaultValue: true,

@@ -1,4 +1,3 @@
-import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { QuestionnaireForm } from './components/QuestionnaireForm';
 import { useVercelIntegration } from '../../hooks';
@@ -15,23 +14,19 @@ export default function QuestionnairePage() {
 
   const shouldUseHubspotForm = isHubspotFormEnabled && isNovuProd;
 
-  return (
-    <AuthLayout>
-      {isLoading ? (
-        <SetupLoader title="Loading..." />
-      ) : (
-        <AuthContainer
-          title="Customize your experience"
-          description={!shouldUseHubspotForm ? 'Your answers can decrease the time to get started' : ''}
-        >
-          <When truthy={shouldUseHubspotForm}>
-            <HubspotSignupForm />
-          </When>
-          <When truthy={!shouldUseHubspotForm}>
-            <QuestionnaireForm />
-          </When>
-        </AuthContainer>
-      )}
-    </AuthLayout>
+  return isLoading ? (
+    <SetupLoader title="Loading..." />
+  ) : (
+    <AuthContainer
+      title="Customize your experience"
+      description={!shouldUseHubspotForm ? 'Your answers can decrease the time to get started' : ''}
+    >
+      <When truthy={shouldUseHubspotForm}>
+        <HubspotSignupForm />
+      </When>
+      <When truthy={!shouldUseHubspotForm}>
+        <QuestionnaireForm />
+      </When>
+    </AuthContainer>
   );
 }

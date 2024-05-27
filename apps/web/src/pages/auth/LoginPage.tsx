@@ -1,9 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useAuthContext } from '../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { LoginForm } from './components/LoginForm';
-import AuthLayout from '../../components/layout/components/AuthLayout';
 import AuthContainer from '../../components/layout/components/AuthContainer';
 import { useVercelIntegration, useBlueprint, useVercelParams } from '../../hooks';
 import SetupLoader from './components/SetupLoader';
@@ -13,7 +12,7 @@ import { ROUTES } from '../../constants/routes.enum';
 
 export default function LoginPage() {
   useBlueprint();
-  const { setToken, token: oldToken, currentUser } = useAuthContext();
+  const { login, token: oldToken, currentUser } = useAuth();
   const segment = useSegment();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -33,14 +32,14 @@ export default function LoginPage() {
         const authApplicationLink = isFromVercel
           ? `${ROUTES.AUTH_APPLICATION}?code=${code}&next=${next}`
           : ROUTES.AUTH_APPLICATION;
-        setToken(token);
+        login(token);
         navigate(authApplicationLink);
 
         return;
       }
 
       if (isFromVercel) {
-        setToken(token);
+        login(token);
         startVercelSetup();
 
         return;
@@ -51,7 +50,7 @@ export default function LoginPage() {
           widget: sourceWidget || 'unknown',
           source: 'cli',
         });
-        setToken(token);
+        login(token);
         navigate(ROUTES.GET_STARTED);
 
         return;
@@ -63,24 +62,17 @@ export default function LoginPage() {
         return;
       }
 
-      setToken(token);
+      login(token);
       navigate('/');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  return (
-    <AuthLayout>
-      {isLoading || isLoadingAcceptInvite ? (
-        <SetupLoader title="Loading..." />
-      ) : (
-        <AuthContainer
-          title="Sign In"
-          description="Welcome back! Sign in with the data you entered in your registration"
-        >
-          <LoginForm />
-        </AuthContainer>
-      )}
-    </AuthLayout>
+  return isLoading || isLoadingAcceptInvite ? (
+    <SetupLoader title="Loading..." />
+  ) : (
+    <AuthContainer title="Sign In" description="Welcome back! Sign in with the data you entered in your registration">
+      <LoginForm />
+    </AuthContainer>
   );
 }

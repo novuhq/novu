@@ -13,11 +13,11 @@ import type { IntegrationEntity } from '../../integrations/types';
 import { useCreateInAppIntegration } from '../../../hooks/useCreateInAppIntegration';
 import { useCreateOnboardingExperimentWorkflow } from '../../../api/hooks/notification-templates/useCreateOnboardingExperimentWorkflow';
 import { useOnboardingExperiment } from '../../../hooks/useOnboardingExperiment';
-import { useAuthContext } from '@novu/shared-web';
+import { useAuth } from '@novu/shared-web';
 
 export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel: Dispatch<any> }) {
   const segment = useSegment();
-  const { currentOrganization } = useAuthContext();
+  const { currentOrganization } = useAuth();
   const navigate = useNavigate();
   const { integrations } = useActiveIntegrations();
   const { isLimitReached } = useIntegrationLimit(ChannelTypeEnum.EMAIL);

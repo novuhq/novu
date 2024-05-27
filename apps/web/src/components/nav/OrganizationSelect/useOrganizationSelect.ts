@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as capitalize from 'lodash.capitalize';
-import { useAuthContext } from '@novu/shared-web';
+import { useAuth } from '@novu/shared-web';
 import type { IResponseError, IOrganizationEntity } from '@novu/shared';
 import { successMessage } from '@novu/design-system';
 
@@ -15,7 +15,7 @@ export const useOrganizationSelect = () => {
   const { addItem, removeItems } = useSpotlightContext();
 
   const queryClient = useQueryClient();
-  const { currentOrganization, organizations, setToken } = useAuthContext();
+  const { currentOrganization, organizations, login } = useAuth();
 
   const { isLoading: loadingAddOrganization, mutateAsync: createOrganization } = useMutation<
     IOrganizationEntity,
@@ -31,6 +31,7 @@ export const useOrganizationSelect = () => {
     switchOrganization(id)
   );
 
+  // TODO: Move into useAuth
   const switchOrgCallback = useCallback(
     async (organizationId: string | string[] | null) => {
       if (
@@ -44,11 +45,11 @@ export const useOrganizationSelect = () => {
 
       setLoadingSwitch(true);
       const token = await changeOrganization(organizationId);
-      setToken(token);
+      login(token);
       await queryClient.refetchQueries();
       setLoadingSwitch(false);
     },
-    [currentOrganization, search, setToken, changeOrganization, queryClient]
+    [currentOrganization, search, login, changeOrganization, queryClient]
   );
 
   function addOrganizationItem(newOrganization: string): undefined {

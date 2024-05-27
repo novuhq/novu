@@ -20,15 +20,15 @@ export function FrameworkSetup() {
         <Cards
           cells={[
             {
-              imagePath: `/static/images/frameworks/react.png`,
+              imagePath: `/static/images/frameworks/react.webp`,
               navigateTo: '/quickstart/notification-center/set-up/react',
             },
             {
-              imagePath: `/static/images/frameworks/angular.png`,
+              imagePath: `/static/images/frameworks/angular.webp`,
               navigateTo: '/quickstart/notification-center/set-up/angular',
             },
             {
-              imagePath: `/static/images/frameworks/vue.png`,
+              imagePath: `/static/images/frameworks/vue.webp`,
               navigateTo: '/quickstart/notification-center/set-up/vue',
             },
           ]}
@@ -37,7 +37,7 @@ export function FrameworkSetup() {
           <Cards
             cells={[
               {
-                imagePath: `/static/images/frameworks/js.png`,
+                imagePath: `/static/images/frameworks/js.webp`,
                 navigateTo: '/quickstart/notification-center/set-up/js',
               },
             ]}

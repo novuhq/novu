@@ -5,14 +5,13 @@ import * as Sentry from '@sentry/react';
 import type { IResponseError } from '@novu/shared';
 
 import { api } from '../../../api/api.client';
-import { useAuthContext } from '../../../components/providers/AuthProvider';
-import { applyToken } from '../../../hooks';
+import { useAuth } from '@novu/shared-web';
 import { ROUTES } from '../../../constants/routes.enum';
 import { errorMessage } from '../../../utils/notifications';
 import { LocationState } from './LoginForm';
 
 export function useAcceptInvite() {
-  const { setToken } = useAuthContext();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState;
@@ -25,12 +24,9 @@ export function useAcceptInvite() {
   const submitToken = useCallback(
     async (token: string, invitationToken: string, refetch = false) => {
       try {
-        // just set the header, user is logged in after token is submitted
-        applyToken(token);
         const newToken = await mutateAsync(invitationToken);
-        if (!newToken) return;
-
-        setToken(newToken, refetch);
+        login(newToken);
+        // TODO: This refetch shouldn't be necessary anymore. Remove it after testing.
         if (refetch) {
           await queryClient.refetchQueries({
             predicate: (query) => query.queryKey.includes('/v1/organizations'),
@@ -43,7 +39,7 @@ export function useAcceptInvite() {
         Sentry.captureException(e);
       }
     },
-    [mutateAsync, navigate, queryClient, setToken, state?.redirectTo?.pathname]
+    [mutateAsync, navigate, login, state?.redirectTo?.pathname, queryClient]
   );
 
   return {

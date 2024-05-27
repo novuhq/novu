@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes.enum';
-import { useAuthContext } from '../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { When, colors, useTabsStyles } from '@novu/design-system';
 import { useFeatureFlag } from '../../hooks';
 
@@ -24,7 +24,7 @@ const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
 
 /** @deprecated Use `SettingsPageNew` instead */
 export function SettingsPage() {
-  const { currentOrganization } = useAuthContext();
+  const { currentOrganization } = useAuth();
   const selfHosted = process.env.REACT_APP_DOCKER_HOSTED_ENV === 'true';
   const { classes } = useTabsStyles(false);
   const navigate = useNavigate();

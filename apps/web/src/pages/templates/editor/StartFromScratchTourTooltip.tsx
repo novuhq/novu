@@ -14,9 +14,8 @@ import {
   RunTestBell,
   WorkflowSettings,
 } from '@novu/design-system';
-
+import { useAuth } from '@novu/shared-web';
 import { updateUserOnBoardingTour } from '../../../api/user';
-import { useAuthContext } from '../../../components/providers/AuthProvider';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { When } from '../../../components/utils/When';
 import { errorMessage } from '../../../utils/notifications';
@@ -67,7 +66,7 @@ export const StartFromScratchTourTooltip = ({
   const navigate = useNavigate();
   const basePath = useBasePath();
 
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const segment = useSegment();
