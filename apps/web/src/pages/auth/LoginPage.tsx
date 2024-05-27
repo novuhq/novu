@@ -12,7 +12,7 @@ import { ROUTES } from '../../constants/routes.enum';
 
 export default function LoginPage() {
   useBlueprint();
-  const { login, token: oldToken, currentUser } = useAuth();
+  const { login, token: oldToken, currentUser, claims } = useAuth();
   const segment = useSegment();
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -28,7 +28,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (token) {
-      if (!invitationToken && currentUser?._id && (!currentUser?.organizationId || !currentUser?.environmentId)) {
+      if (!invitationToken && currentUser?._id && (!claims?.organizationId || !claims?.environmentId)) {
         const authApplicationLink = isFromVercel
           ? `${ROUTES.AUTH_APPLICATION}?code=${code}&next=${next}`
           : ROUTES.AUTH_APPLICATION;
