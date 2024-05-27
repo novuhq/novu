@@ -1,14 +1,15 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Center } from '@mantine/core';
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
-import type { IResponseError } from '@novu/shared';
-
 import { useAuth } from '@novu/shared-web';
+import type { IResponseError } from '@novu/shared';
+import { useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import { api } from '../../../api/api.client';
-import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { ROUTES } from '../../../constants/routes.enum';
 import { OAuth } from './OAuth';
@@ -26,10 +27,17 @@ export interface LocationState {
 }
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
+  const segment = useSegment();
+  const { login, currentUser } = useAuth();
+  const { startVercelSetup } = useVercelIntegration();
+  const { isFromVercel, params: vercelParams } = useVercelParams();
+  const [params] = useSearchParams();
+  const tokenInQuery = params.get('token');
+  const source = params.get('source');
+  const sourceWidget = params.get('source_widget');
+  const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state as LocationState;
-  const { login } = useAuth();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
     IResponseError,
@@ -38,12 +46,34 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       password: string;
     }
   >((data) => api.post('/v1/auth/login', data));
-  const { isLoading: isLoadingAcceptInvite, submitToken } = useAcceptInvite();
 
-  const { isFromVercel, code, next, configurationId } = useVercelParams();
-  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : ROUTES.AUTH_SIGNUP;
-  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : ROUTES.AUTH_RESET_REQUEST;
+  useEffect(() => {
+    if (tokenInQuery) {
+      debugger;
+      login(tokenInQuery);
+    }
+
+    if (isFromVercel) {
+      startVercelSetup();
+
+      return;
+    }
+
+    if (tokenInQuery && source === 'cli') {
+      segment.track('Dashboard Visit', {
+        widget: sourceWidget || 'unknown',
+        source: 'cli',
+      });
+      navigate(ROUTES.GET_STARTED);
+    }
+
+    navigate(ROUTES.GET_STARTED);
+  }, [currentUser]);
+
+  const signupLink = isFromVercel ? `${ROUTES.AUTH_SIGNUP}?${params.toString()}` : ROUTES.AUTH_SIGNUP;
+  const resetPasswordLink = isFromVercel
+    ? `${ROUTES.AUTH_RESET_REQUEST}?${params.toString()}`
+    : ROUTES.AUTH_RESET_REQUEST;
 
   const {
     register,
@@ -65,21 +95,16 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     try {
       const response = await mutateAsync(itemData);
       const token = (response as any).token;
-      if (isFromVercel) {
-        login(token);
-
-        return;
-      }
-
-      if (invitationToken) {
-        submitToken(token, invitationToken);
-
-        return;
-      }
-
       login(token);
 
-      navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
+      if (invitationToken) {
+        const updatedToken = await acceptInvite(invitationToken);
+        if (updatedToken) {
+          login(updatedToken);
+        }
+      }
+
+      navigate(ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
