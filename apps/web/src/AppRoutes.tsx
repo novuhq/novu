@@ -48,6 +48,7 @@ import { TenantsPage } from './pages/tenants/TenantsPage';
 import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { useSettingsRoutes } from './SettingsRoutes';
+import { EchoOnboarding } from './pages/echo-onboarding/index';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
@@ -79,6 +80,7 @@ export const AppRoutes = () => {
           }
         />
       </Route>
+      <Route path={ROUTES.ECHO_ONBOARDING} element={<EchoOnboarding />} />
       <Route element={<PrivatePageLayout />}>
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
