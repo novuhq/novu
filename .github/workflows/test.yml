@@ -11,6 +11,7 @@ jobs:
   dependency-review:
     name: Dependency review
     runs-on: ubuntu-latest
+    environment: Linting
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
@@ -20,7 +21,7 @@ jobs:
   spellcheck:
     name: Spell check
     runs-on: ubuntu-latest
-    environment: Production
+    environment: Linting
     steps:
       - uses: actions/checkout@v3
       - name: List team members ad check
