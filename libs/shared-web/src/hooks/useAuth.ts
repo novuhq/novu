@@ -150,12 +150,7 @@ export function useAuth() {
     inPublicRoute,
     inPrivateRoute,
     isLoading: inPrivateRoute && (isUserLoading || isOrganizationLoading),
-    // TODO: Remove orgId and envId from currentUser and add them to the useAuth hook returned object
-    currentUser: {
-      ...user,
-      organizationId: claims?.organizationId,
-      environmentId: claims?.environmentId,
-    } satisfies IUserWithContext,
+    currentUser: user,
     organizations,
     currentOrganization,
     token,
