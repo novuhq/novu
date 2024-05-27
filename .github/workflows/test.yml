@@ -27,7 +27,7 @@ jobs:
       - name: List team members ad check
         id: check-user
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           gh auth login --with-token <<< $GH_TOKEN
           members=$(gh api --paginate "organizations/77433905/team/5565599/members" | jq -r '.[] | .login')
