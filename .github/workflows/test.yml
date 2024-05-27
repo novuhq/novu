@@ -25,8 +25,9 @@ jobs:
       - name: List team members ad check
         id: check-user
         env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          gh auth login --with-token <<< $GH_TOKEN
           members=$(gh api --paginate "organizations/77433905/team/5565599/members" | jq -r '.[] | .login')
           echo "Team members: $members"
           if [[ $members == *"$PR_CREATOR"* ]]; then
@@ -37,12 +38,6 @@ jobs:
             echo "SKIP_STEP=false" >> $GITHUB_ENV
           fi
 
-      - name: List team members
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          members=$(gh api --paginate "organizations/77433905/team/5565599/members" | jq -r '.[] | .login')
-          echo "Team members: $members"
       - name: Run Spell Check
         if: env.SKIP_STEP == 'false'
         uses: streetsidesoftware/cspell-action@v5
