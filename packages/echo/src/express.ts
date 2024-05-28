@@ -1,13 +1,13 @@
 import { type VercelRequest, type VercelResponse } from '@vercel/node';
 import { type Request, type Response } from 'express';
 
-import { EchoRequestHandler, IServeHandlerOptions } from './handler';
+import { EchoRequestHandler, ServeHandlerOptions } from './handler';
 import { Either } from './types';
 import { type SupportedFrameworkName } from './types';
 
 export const frameworkName: SupportedFrameworkName = 'express';
 
-export const serve = (options: IServeHandlerOptions): any => {
+export const serve = (options: ServeHandlerOptions): any => {
   const echoHandler = new EchoRequestHandler({
     frameworkName,
     ...options,
