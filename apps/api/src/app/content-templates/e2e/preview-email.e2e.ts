@@ -20,7 +20,7 @@ describe('Preview email - /v1/content-templates/preview/email (POST)', function 
       subject: 'test {{test}} test',
     });
 
-    expect(html.includes('test test test')).true;
-    expect(subject.includes('test test test')).true;
+    expect(html).to.contain('test test test');
+    expect(subject).to.contain('test test test');
   });
 });
