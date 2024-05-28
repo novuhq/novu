@@ -59,6 +59,7 @@ export function TestWorkflow({ trigger }) {
 
     return [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
   }, [trigger]);
+
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
   const reservedVariables = useMemo(() => [...(trigger?.reservedVariables || [])], [trigger]);
 
