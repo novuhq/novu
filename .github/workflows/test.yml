@@ -11,6 +11,7 @@ jobs:
   dependency-review:
     name: Dependency review
     runs-on: ubuntu-latest
+    environment: Linting
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
@@ -20,9 +21,32 @@ jobs:
   spellcheck:
     name: Spell check
     runs-on: ubuntu-latest
+    environment: Linting
     steps:
       - uses: actions/checkout@v3
-      - uses: streetsidesoftware/cspell-action@v5
+      - name: Run Spell Check
+        uses: streetsidesoftware/cspell-action@v6
+        with:
+          root: 'apps/web'
+          files: '**/*'
+          incremental_files_only: true
+
+  find-flags:
+    runs-on: ubuntu-latest
+    name: Find LaunchDarkly feature flags in diff
+    environment: Linting
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find flags
+        uses: launchdarkly/find-code-references-in-pull-request@v2
+        id: find-flags
+        with:
+          project-key: default
+          environment-key: production
+          access-token: ${{ secrets.LD_ACCESS_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
   get-affected:
     name: Get Affected Packages

@@ -24,11 +24,12 @@ import {
 } from './errors';
 import { MaybePromise } from './types';
 
-export interface IServeHandlerOptions {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export interface ServeHandlerOptions {
   client: Echo;
 }
 
-interface IEchoRequestHandlerOptions<Input extends any[] = any[], Output = any> extends IServeHandlerOptions {
+interface IEchoRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
   frameworkName: string;
   client: Echo;
   handler: Handler<Input, Output>;

@@ -9,7 +9,6 @@ import { addOrganization, switchOrganization } from '../../../api/organization';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 
 export const useOrganizationSelect = () => {
-  const [value, setValue] = useState<string>('');
   const [search, setSearch] = useState<string>('');
   const [loadingSwitch, setLoadingSwitch] = useState<boolean>(false);
   const { addItem, removeItems } = useSpotlightContext();
@@ -60,6 +59,8 @@ export const useOrganizationSelect = () => {
     });
   }
 
+  const value = currentOrganization?._id;
+
   const organizationItems = useMemo(() => {
     return (organizations || [])
       .filter((item) => item._id !== value)
@@ -73,12 +74,7 @@ export const useOrganizationSelect = () => {
   }, [organizations, value, switchOrgCallback]);
 
   useEffect(() => {
-    setValue(currentOrganization?._id || '');
-  }, [currentOrganization]);
-
-  useEffect(() => {
     removeItems(['change-org-' + value]);
-
     addItem(organizationItems);
   }, [addItem, removeItems, organizationItems, value]);
 

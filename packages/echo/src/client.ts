@@ -28,15 +28,7 @@ import {
   WorkflowAlreadyExistsError,
   WorkflowNotFoundError,
 } from './errors';
-import {
-  channelStepSchemas,
-  delayOutputSchema,
-  delayResultSchema,
-  digestOutputSchema,
-  digestResultSchema,
-  emptySchema,
-  providerSchemas,
-} from './schemas';
+import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
 import {
   ActionStep,
   ClientConfig,
@@ -145,29 +137,13 @@ export class Echo {
           channelStepSchemas.in_app.output,
           channelStepSchemas.in_app.result
         ),
-        digest: this.discoverStepFactory(workflowId, 'digest', digestOutputSchema, digestResultSchema),
-        delay: this.discoverStepFactory(workflowId, 'delay', delayOutputSchema, delayResultSchema),
-        /*
-         * custom: this.discoverStepFactory(
-         *   workflowId,
-         *   'custom',
-         *   customOutputResultSchema,
-         *   customOutputResultSchema,
-         * ),
-         */
-
-        /*
-         * async custom(outputSchema: Schema) {
-         *   this.discoverStepFactory(
-         *     workflowId,
-         *     'custom',
-         *     outputSchema,
-         *     outputSchema,
-         *   );
-         *   return undefined as any;
-         * },
-         */
-
+        digest: this.discoverStepFactory(
+          workflowId,
+          'digest',
+          digestChannelSchemas.output,
+          digestChannelSchemas.result
+        ),
+        delay: this.discoverStepFactory(workflowId, 'delay', delayChannelSchemas.output, delayChannelSchemas.result),
         custom: this.discoverCustomStepFactory(workflowId, 'custom'),
       },
     });
@@ -698,7 +674,9 @@ export class Echo {
     try {
       if (payload.stepId === step.stepId) {
         const input = this.createStepInputs(step, payload);
-        const result = await provider.resolve(input);
+        const result = await provider.resolve({
+          inputs: input,
+        });
         this.validate(
           result,
           provider.outputs.validate,
