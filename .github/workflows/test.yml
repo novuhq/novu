@@ -41,7 +41,11 @@ jobs:
 
       - name: Run Spell Check
         if: env.SKIP_STEP == 'false'
-        uses: streetsidesoftware/cspell-action@v5
+        uses: streetsidesoftware/cspell-action@v6
+        with:
+          root: 'apps/web'
+          files: '**/*'
+          incremental_files_only: true
 
   get-affected:
     name: Get Affected Packages
