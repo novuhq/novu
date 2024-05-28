@@ -33,3 +33,8 @@ export const digestResultSchema = {
   required: ['events'],
   additionalProperties: false,
 } as const satisfies Schema;
+
+export const digestChannelSchemas = {
+  output: digestOutputSchema,
+  result: digestResultSchema,
+};

@@ -24,24 +24,29 @@ jobs:
     environment: Linting
     steps:
       - uses: actions/checkout@v3
-      - name: List team members ad check
-        id: check-user
-        env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-        run: |
-          members=$(gh api --paginate "organizations/77433905/team/5565599/members" | jq -r '.[] | .login')
-          echo "Team members: $members"
-          if [[ $members == *"$PR_CREATOR"* ]]; then
-            echo "PR creator is a member of the team."
-            echo "SKIP_STEP=true" >> $GITHUB_ENV
-          else
-            echo "PR creator is not a team member."
-            echo "SKIP_STEP=false" >> $GITHUB_ENV
-          fi
-
       - name: Run Spell Check
-        if: env.SKIP_STEP == 'false'
-        uses: streetsidesoftware/cspell-action@v5
+        uses: streetsidesoftware/cspell-action@v6
+        with:
+          root: 'apps/web'
+          files: '**/*'
+          incremental_files_only: true
+
+  find-flags:
+    runs-on: ubuntu-latest
+    name: Find LaunchDarkly feature flags in diff
+    environment: Linting
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Find flags
+        uses: launchdarkly/find-code-references-in-pull-request@v2
+        id: find-flags
+        with:
+          project-key: default
+          environment-key: production
+          access-token: ${{ secrets.LD_ACCESS_TOKEN }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
   get-affected:
     name: Get Affected Packages
