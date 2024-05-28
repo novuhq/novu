@@ -30,10 +30,9 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const navigate = useNavigate();
 
   const { login } = useAuth();
-  const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
-  const { isFromVercel, code, next, configurationId } = useVercelParams();
-  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : ROUTES.AUTH_LOGIN;
+  const { isLoading: isAcceptInviteLoading, acceptInvite } = useAcceptInvite();
+  const { params, isFromVercel } = useVercelParams();
+  const loginLink = isFromVercel ? `${ROUTES.AUTH_LOGIN}?${params.toString()}` : ROUTES.AUTH_LOGIN;
 
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
@@ -56,24 +55,17 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
     };
 
     const response = await mutateAsync(itemData);
-
-    /**
-     * We need to call the applyToken to avoid a race condition for accept invite
-     * To get the correct token when sending the request
-     */
     const token = (response as any).token;
-    // login(token);
+    login(token);
 
     if (invitationToken) {
-      submitToken(token, invitationToken);
-
-      return true;
+      const updatedToken = await acceptInvite(invitationToken);
+      if (updatedToken) {
+        login(updatedToken);
+      }
     }
 
-    login(token);
-    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : ROUTES.AUTH_APPLICATION);
-
-    return true;
+    navigate(isFromVercel ? `${ROUTES.AUTH_APPLICATION}?${params.toString()}` : ROUTES.AUTH_APPLICATION);
   };
 
   const {
@@ -181,7 +173,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
           disabled={!accepted}
           mt={20}
           inherit
-          loading={isLoading || loadingAcceptInvite}
+          loading={isLoading || isAcceptInviteLoading}
           submit
           data-test-id="submitButton"
         >

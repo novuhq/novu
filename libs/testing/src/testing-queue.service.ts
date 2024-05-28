@@ -19,9 +19,5 @@ export class TestingQueueService {
         removeOnComplete: true,
       },
     });
-
-    if (process.env.NODE_ENV === 'test' && !process.env.CI) {
-      this.queue.obliterate({ force: true });
-    }
   }
 }
