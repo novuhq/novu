@@ -35,11 +35,11 @@ function saveToken(token: string | null) {
   }
 }
 
-export function getToken(): string {
+function getToken(): string {
   return localStorage.getItem(LOCAL_STORAGE_AUTH_TOKEN_KEY) || '';
 }
 
-export function getTokenClaims(): IJwtClaims | null {
+function getTokenClaims(): IJwtClaims | null {
   const token = getToken();
 
   return token ? jwtDecode<IJwtClaims>(token) : null;
@@ -161,5 +161,7 @@ export function useAuth() {
     currentOrganization,
     login,
     logout,
+    environmentId,
+    organizationId,
   };
 }

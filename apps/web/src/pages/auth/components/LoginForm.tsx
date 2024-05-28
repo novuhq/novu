@@ -68,6 +68,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     }
 
     navigate(ROUTES.GET_STARTED);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
   const signupLink = isFromVercel ? `${ROUTES.AUTH_SIGNUP}?${params.toString()}` : ROUTES.AUTH_SIGNUP;
