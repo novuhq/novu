@@ -3,12 +3,20 @@ import { useClipboard } from '@mantine/hooks';
 import { useQuery } from '@tanstack/react-query';
 import styled from '@emotion/styled';
 
-import { Input, Tooltip, colors, Check, Copy, inputStyles } from '@novu/design-system';
+import {
+  Input,
+  Tooltip,
+  colors,
+  Check,
+  Copy,
+  inputStyles,
+  IconOutlineVisibility,
+  IconOutlineVisibilityOff,
+} from '@novu/design-system';
 import { getApiKeys } from '../../../api/environment';
 import { useEnvController } from '../../../hooks';
 import { Regenerate } from './components/Regenerate';
 import { When } from '../../../components/utils/When';
-import { EyeInvisibleOutlined, EyeOutlined } from '@ant-design/icons';
 import { useState } from 'react';
 
 export const ApiKeysCard = () => {
@@ -41,20 +49,10 @@ export const ApiKeysCard = () => {
               <>
                 <ActionIcon variant="transparent" onClick={() => setHidden(!hidden)}>
                   <When truthy={hidden}>
-                    <EyeOutlined
-                      style={{
-                        color: colors.B60,
-                        fontSize: '16px',
-                      }}
-                    />
+                    <IconOutlineVisibility />
                   </When>
                   <When truthy={!hidden}>
-                    <EyeInvisibleOutlined
-                      style={{
-                        color: colors.B60,
-                        fontSize: '16px',
-                      }}
-                    />
+                    <IconOutlineVisibilityOff />
                   </When>
                 </ActionIcon>
                 <Tooltip label={clipboardApiKey.copied ? 'Copied!' : 'Copy Key'}>
