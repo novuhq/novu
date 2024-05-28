@@ -45,29 +45,29 @@
   "license": "MIT",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/src/index.js",
+      "import": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
     },
     "./express": {
-      "require": "./dist/express.js",
-      "import": "./dist/express.js",
-      "types": "./dist/express.d.ts"
+      "require": "./dist/src/express.js",
+      "import": "./dist/src/express.js",
+      "types": "./dist/src/express.d.ts"
     },
     "./next": {
-      "require": "./dist/next.js",
-      "import": "./dist/next.js",
-      "types": "./dist/next.d.ts"
+      "require": "./dist/src/next.js",
+      "import": "./dist/src/next.js",
+      "types": "./dist/src/next.d.ts"
     },
     "./nuxt": {
-      "require": "./dist/nuxt.js",
-      "import": "./dist/nuxt.js",
-      "types": "./dist/nuxt.d.ts"
+      "require": "./dist/src/nuxt.js",
+      "import": "./dist/src/nuxt.js",
+      "types": "./dist/src/nuxt.d.ts"
     },
     "./h3": {
-      "require": "./dist/h3.js",
-      "import": "./dist/h3.js",
-      "types": "./dist/h3.d.ts"
+      "require": "./dist/src/h3.js",
+      "import": "./dist/src/h3.js",
+      "types": "./dist/src/h3.d.ts"
     }
   },
   "devDependencies": {
