@@ -709,9 +709,6 @@ importers:
 
   apps/web:
     dependencies:
-      '@ant-design/icons':
-        specifier: 4.6.2
-        version: 4.6.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@babel/plugin-proposal-optional-chaining':
         specifier: ^7.20.7
         version: 7.21.0(@babel/core@7.22.11)
@@ -4707,12 +4704,6 @@ packages:
 
   '@ant-design/icons-svg@4.2.1':
     resolution: {integrity: sha512-EB0iwlKDGpG93hW8f85CTJTs4SvMX7tt5ceupvhALp1IF44SeUFOMhKUOYqpsoYWQKAOuTRDMqn75rEaKDp0Xw==}
-
-  '@ant-design/icons@4.6.2':
-    resolution: {integrity: sha512-QsBG2BxBYU/rxr2eb8b2cZ4rPKAPBpzAR+0v6rrZLp/lnyvflLH3tw1vregK+M7aJauGWjIGNdFmUfpAOtw25A==}
-    engines: {node: '>=8'}
-    peerDependencies:
-      react: '>=16.0.0'
 
   '@ant-design/icons@4.8.0':
     resolution: {integrity: sha512-T89P2jG2vM7OJ0IfGx2+9FC5sQjtTzRSz+mCHTXkFn/ELZc2YpfStmYHmqzq2Jx55J0F7+O6i5/ZKFSVNWCKNg==}
@@ -31773,17 +31764,6 @@ snapshots:
       '@ctrl/tinycolor': 3.6.0
 
   '@ant-design/icons-svg@4.2.1': {}
-
-  '@ant-design/icons@4.6.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
-    dependencies:
-      '@ant-design/colors': 6.0.0
-      '@ant-design/icons-svg': 4.2.1
-      '@babel/runtime': 7.23.2
-      classnames: 2.3.2
-      rc-util: 5.29.3(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      react: 18.3.1
-    transitivePeerDependencies:
-      - react-dom
 
   '@ant-design/icons@4.8.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)':
     dependencies:
