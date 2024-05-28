@@ -21,3 +21,8 @@ export const delayResultSchema = {
   required: ['duration'],
   additionalProperties: false,
 } as const satisfies Schema;
+
+export const delayChannelSchemas = {
+  output: delayOutputSchema,
+  result: delayResultSchema,
+};
