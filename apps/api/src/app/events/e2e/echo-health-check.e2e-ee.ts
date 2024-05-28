@@ -4,7 +4,7 @@ import { UserSession, SubscribersService } from '@novu/testing';
 import { SubscriberEntity } from '@novu/dal';
 import { echoServer } from '../../../../e2e/echo.server';
 
-describe('Echo Health Check ', async () => {
+describe('Echo Health Check', async () => {
   let session: UserSession;
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
