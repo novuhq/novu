@@ -54,4 +54,8 @@ export const SIZES_TOKENS = defineTokens.sizes({
     value: '3rem',
     type: 'sizes',
   },
+  '375': {
+    value: '3.75rem',
+    type: 'spacing',
+  },
 });

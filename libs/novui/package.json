@@ -66,7 +66,7 @@
   "devDependencies": {
     "@pandabox/prettier-plugin": "^0.1.2",
     "@pandacss/dev": "^0.38.0",
-    "@pandacss/eslint-plugin": "^0.1.2",
+    "@pandacss/eslint-plugin": "^0.1.5",
     "@pandacss/studio": "^0.38.0",
     "@storybook/addon-actions": "8.1.0",
     "@storybook/addon-controls": "^8.1.0",

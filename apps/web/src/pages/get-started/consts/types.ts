@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { GetStartedTabsViewsEnum } from './GetStartedTabsViewsEnum';
 import { OnboardingUseCasesTabsEnum } from './OnboardingUseCasesTabsEnum';
 
@@ -13,6 +14,7 @@ type UseCaseViewContext = Partial<IOnboardingUseCaseViewContext>;
 export interface IOnboardingStep {
   title: string;
   Description: React.ComponentType<UseCaseViewContext>;
+  bullet?: ReactNode;
 }
 
 export enum OnboardingWorkflowRouteEnum {

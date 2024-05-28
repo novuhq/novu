@@ -46,7 +46,7 @@ export enum ROUTES {
   ORGANIZATION = '/settings/organization',
   SECURITY = '/settings/security',
   BILLING = '/settings/billing',
-  ECHO_ONBOARDING = '/echo-onboarding',
+  ECHO_ONBOARDING = '/echo-onboarding/:step',
 }
 
 export const PUBLIC_ROUTES = new Set<ROUTES>([
