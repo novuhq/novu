@@ -1,8 +1,9 @@
 import { MantineColor, Title as MantineTitle, useMantineTheme } from '@mantine/core';
+import { ComponentFoundationProps } from '../../types/ComponentFoundationProps';
 import { colors } from '../../config';
 import { SpacingProps } from '../../shared/spacing.props';
 
-interface ITitleProps extends JSX.ElementChildrenAttribute, SpacingProps {
+interface ITitleProps extends ComponentFoundationProps, SpacingProps {
   size?: 1 | 2;
   color?: MantineColor;
 }

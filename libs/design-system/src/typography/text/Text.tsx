@@ -3,8 +3,9 @@ import { Text as MantineText, MantineColor, useMantineTheme, TextProps } from '@
 
 import { colors } from '../../config';
 import { SpacingProps } from '../../shared/spacing.props';
+import { ComponentFoundationProps } from '../../types/ComponentFoundationProps';
 
-interface ITextProps extends JSX.ElementChildrenAttribute, SpacingProps {
+interface ITextProps extends ComponentFoundationProps, SpacingProps {
   size?: TextProps['size'];
   style?: TextProps['style'];
   styles?: TextProps['styles'];
