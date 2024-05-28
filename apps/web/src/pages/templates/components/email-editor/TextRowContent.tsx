@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ClipboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import { getHotkeyHandler } from '@mantine/hooks';
 import { TextAlignEnum } from '@novu/shared';
@@ -10,6 +10,7 @@ import { useStepFormPath } from '../../hooks/useStepFormPath';
 import type { IForm } from '../formTypes';
 import { AutoSuggestionsDropdown } from './AutoSuggestionsDropdown';
 import { useWorkflowVariables } from '../../../../api/hooks';
+import { paste } from '../../../../utils/paste';
 
 export function TextRowContent({ blockIndex }: { blockIndex: number }) {
   const methods = useFormContext<IForm>();
@@ -157,6 +158,13 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, text]);
 
+  const handlePaste = (event: ClipboardEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const pastedData = event?.clipboardData?.getData('text/plain');
+    paste(pastedData);
+    methods.setValue(`${stepFormPath}.template.content.${blockIndex}.content`, ref.current?.innerHTML ?? '');
+  };
+
   return (
     <div style={{ position: 'relative' }}>
       {showAutoSuggestions && (
@@ -270,6 +278,7 @@ export function TextRowContent({ blockIndex }: { blockIndex: number }) {
                 backgroundColor: 'transparent',
                 textAlign: textAlign || TextAlignEnum.LEFT,
               }}
+              onPaste={(event) => handlePaste(event)}
               onClick={() => {
                 if (showAutoSuggestions) {
                   resetAutoSuggestions();

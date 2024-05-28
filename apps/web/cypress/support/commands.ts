@@ -219,4 +219,19 @@ Cypress.Commands.add('getClipboardValue', () => {
     .then((clipboard) => clipboard?.readText());
 });
 
+Cypress.Commands.add('paste', (selector: string, data) => {
+  const pasteEvent = Object.assign(new Event('paste', { bubbles: true, cancelable: true }), {
+    clipboardData: {
+      getData(type) {
+        return data[type];
+      },
+    },
+  });
+  cy.getByTestId(selector)
+    .click()
+    .then(($el) => {
+      $el[0].dispatchEvent(pasteEvent);
+    });
+});
+
 export {};

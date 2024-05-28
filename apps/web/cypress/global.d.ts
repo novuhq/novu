@@ -4,6 +4,10 @@ type IMountType = import('cypress/react').mount;
 type ICreateNotificationTemplateDto = import('@novu/shared').ICreateNotificationTemplateDto;
 type FeatureFlagsKeysEnum = import('@novu/shared').FeatureFlagsKeysEnum;
 type CreateTemplatePayload = import('@novu/testing').CreateTemplatePayload;
+type ClipboardData = {
+  'text/plain'?: string;
+  'text/html'?: string;
+};
 
 declare namespace Cypress {
   interface Chainable {
@@ -62,6 +66,11 @@ declare namespace Cypress {
      * window must remain in focus. Otherwise, you'll see an exception: `Document is not focused`
      */
     getClipboardValue(): Chainable<string>;
+
+    /**
+     * Generates paste event on found by given testIdSelector element
+     */
+    paste(testIdSelector: string, clipboardData: ClipboardData): void;
 
     loginWithGitHub(): Chainable<any>;
 

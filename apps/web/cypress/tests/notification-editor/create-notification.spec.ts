@@ -468,6 +468,44 @@ describe('Creation functionality', function () {
     cy.getByTestId('emailSubject').should('have.value', 'this is email subject');
     cy.getByTestId('emailPreheader').should('have.value', 'this is email preheader');
   });
+
+  it('should paste only text/plain content into email editor', async function () {
+    cy.waitLoadTemplatePage(() => {
+      cy.visit('/workflows/create');
+    });
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('settings-page').click();
+    cy.waitForNetworkIdle(500);
+    cy.getByTestId('title').clear().first().type('Test Notification Title');
+    cy.getByTestId('description').type('This is a test description for a test title');
+    cy.get('body').click();
+    cy.getByTestId('trigger-code-snippet').should('not.exist');
+    cy.getByTestId('groupSelector').should('have.value', 'General');
+
+    addAndEditChannel('email');
+    cy.waitForNetworkIdle(500);
+
+    cy.getByTestId('emailSubject').type('this is email subject');
+    cy.getByTestId('emailSenderName').type('this is email sender name');
+
+    const text = '{{firstName}} someone assigned you to {{taskName}}';
+
+    cy.paste('editable-text-content', {
+      'text/plain': text,
+      'text/html': `<p style="background-color: black">${text}</p>`,
+    });
+
+    cy.getByTestId('var-label').last().contains('Step Variables').click();
+    cy.getByTestId('var-item-firstName-string').contains('firstName');
+    cy.getByTestId('var-item-firstName-string').contains('string');
+    cy.getByTestId('var-item-taskName-string').contains('taskName');
+    cy.getByTestId('var-item-taskName-string').contains('string');
+
+    cy.getByTestId('editor-mode-switch').find('label').last().click();
+
+    cy.getByTestId('test-send-email-btn').click();
+    cy.get('.mantine-Notification-root').contains('Test sent successfully!');
+  });
 });
 
 function awaitGetContains(getSelector: string, contains: string) {
