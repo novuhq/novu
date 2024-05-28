@@ -2,8 +2,8 @@
   "name": "@novu/echo",
   "version": "0.24.3-alpha.0",
   "description": "The Code-First Notifications Workflow SDK.",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
@@ -18,6 +18,7 @@
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
     "clean": "rm -rf ./dist",
+    "prebuild": "rimraf dist",
     "build": "pnpm run clean && tsc --build",
     "build:watch": "tsc --build --watch",
     "$comment:bump:prerelease": "This is a workaround to support `npm version prerelease` with lerna",
@@ -44,29 +45,29 @@
   "license": "MIT",
   "exports": {
     ".": {
-      "require": "./dist/index.js",
-      "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/src/index.js",
+      "import": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
     },
     "./express": {
-      "require": "./dist/express.js",
-      "import": "./dist/express.js",
-      "types": "./dist/express.d.ts"
+      "require": "./dist/src/express.js",
+      "import": "./dist/src/express.js",
+      "types": "./dist/src/express.d.ts"
     },
     "./next": {
-      "require": "./dist/next.js",
-      "import": "./dist/next.js",
-      "types": "./dist/next.d.ts"
+      "require": "./dist/src/next.js",
+      "import": "./dist/src/next.js",
+      "types": "./dist/src/next.d.ts"
     },
     "./nuxt": {
-      "require": "./dist/nuxt.js",
-      "import": "./dist/nuxt.js",
-      "types": "./dist/nuxt.d.ts"
+      "require": "./dist/src/nuxt.js",
+      "import": "./dist/src/nuxt.js",
+      "types": "./dist/src/nuxt.d.ts"
     },
     "./h3": {
-      "require": "./dist/h3.js",
-      "import": "./dist/h3.js",
-      "types": "./dist/h3.d.ts"
+      "require": "./dist/src/h3.js",
+      "import": "./dist/src/h3.js",
+      "types": "./dist/src/h3.d.ts"
     }
   },
   "devDependencies": {
