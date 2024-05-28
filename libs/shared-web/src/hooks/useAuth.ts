@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useState, useMemo } from 'react';
+import { useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import jwtDecode from 'jwt-decode';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -27,7 +27,7 @@ function getOrganizations() {
   return api.get(`/v1/organizations`);
 }
 
-function setTokenInStorage(token: string | null) {
+function saveToken(token: string | null) {
   if (token) {
     localStorage.setItem(LOCAL_STORAGE_AUTH_TOKEN_KEY, token);
   } else {
@@ -35,8 +35,14 @@ function setTokenInStorage(token: string | null) {
   }
 }
 
-function getTokenFromStorage(): string {
+export function getToken(): string {
   return localStorage.getItem(LOCAL_STORAGE_AUTH_TOKEN_KEY) || '';
+}
+
+export function getTokenClaims(): IJwtClaims | null {
+  const token = getToken();
+
+  return token ? jwtDecode<IJwtClaims>(token) : null;
 }
 
 export function useAuth() {
@@ -45,39 +51,19 @@ export function useAuth() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
-  const [token, setToken] = useState<string | null>(getTokenFromStorage());
 
   const inPublicRoute = PUBLIC_ROUTES.has(location.pathname as any);
   const inPrivateRoute = !inPublicRoute;
-
-  const login = useCallback((newToken: string) => {
-    if (newToken) {
-      setTokenInStorage(newToken);
-      setToken(newToken);
-      refetchOrganizations();
-    } else {
-      logout();
-    }
-  }, []);
-
-  const logout = useCallback(() => {
-    setToken(null);
-    setTokenInStorage(null);
-    queryClient.clear();
-    navigate(ROUTES.AUTH_LOGIN);
-    segment.reset();
-  }, []);
-
-  const redirectToLogin = useCallback(() => navigate(ROUTES.AUTH_LOGIN), [navigate]);
+  const hasToken = !!getToken();
 
   useEffect(() => {
-    if (!token && inPrivateRoute) {
-      redirectToLogin();
+    if (!getToken() && inPrivateRoute) {
+      navigate(ROUTES.AUTH_LOGIN);
     }
-  }, [redirectToLogin, token, inPublicRoute]);
+  }, [navigate, inPrivateRoute]);
 
   const { data: user, isLoading: isUserLoading } = useQuery<IUserEntity>(['/v1/users/me'], getUser, {
-    enabled: !!token && inPrivateRoute,
+    enabled: hasToken,
     retry: false,
     onError: (error: any) => {
       if (error?.statusCode === UNAUTHENTICATED_STATUS_CODE) {
@@ -91,7 +77,7 @@ export function useAuth() {
     isLoading: isOrganizationLoading,
     refetch: refetchOrganizations,
   } = useQuery<IOrganizationEntity[]>(['/v1/organizations'], getOrganizations, {
-    enabled: inPrivateRoute,
+    enabled: hasToken,
     retry: false,
     onError: (error: any) => {
       if (error?.statusCode === UNAUTHENTICATED_STATUS_CODE) {
@@ -100,16 +86,36 @@ export function useAuth() {
     },
   });
 
-  const claims = useMemo(() => (token ? jwtDecode<IJwtClaims>(token) : null), [token]);
+  const login = useCallback(
+    (newToken: string, redirectUrl?: string) => {
+      if (!newToken) {
+        return;
+      }
+
+      saveToken(newToken);
+      refetchOrganizations();
+
+      redirectUrl ? navigate(redirectUrl) : void 0;
+    },
+    [navigate, refetchOrganizations]
+  );
+
+  const logout = useCallback(() => {
+    saveToken(null);
+    queryClient.clear();
+    segment.reset();
+    navigate(ROUTES.AUTH_LOGIN);
+  }, [navigate]);
+
+  const { organizationId, environmentId } = getTokenClaims() || {};
 
   const currentOrganization = useMemo(() => {
-    const { organizationId } = claims || {};
     if (organizationId && organizations?.length > 0) {
       return organizations.find((org) => org._id === organizationId);
     }
 
     return null;
-  }, [claims, organizations]);
+  }, [organizations, organizationId]);
 
   useEffect(() => {
     if (user && currentOrganization) {
@@ -150,17 +156,10 @@ export function useAuth() {
     inPublicRoute,
     inPrivateRoute,
     isLoading: inPrivateRoute && (isUserLoading || isOrganizationLoading),
-    // TODO: Remove orgId and envId from currentUser and add them to the useAuth hook returned object
-    currentUser: {
-      ...user,
-      organizationId: claims?.organizationId,
-      environmentId: claims?.environmentId,
-    } satisfies IUserWithContext,
+    currentUser: user,
     organizations,
     currentOrganization,
-    token,
     login,
     logout,
-    claims,
   };
 }

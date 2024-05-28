@@ -80,7 +80,7 @@ test('should update to empty data when switching from editor to customHtml', asy
   await subjectEl.clear();
   await subjectEl.fill('new email subject');
 
-  await updateWorkflowButtonClick(page, { noWaitAfter: true });
+  await updateWorkflowButtonClick(page);
 
   const templatesLinkPage = getByTestId(page, 'side-nav-templates-link');
   await templatesLinkPage.click();
@@ -326,7 +326,7 @@ test('should show the brand logo on main page', async ({ page }) => {
   await addAndEditChannel(page, 'email');
 
   const brandLogo = getByTestId(page, 'brand-logo');
-  await expect(brandLogo).toHaveAttribute('src', 'https://web.novu.co/static/images/logo-light.webp');
+  await expect(brandLogo).toHaveAttribute('src', 'https://web.novu.co/static/images/logo-light.png');
 });
 
 test('should support RTL text content', async ({ page }) => {
