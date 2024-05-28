@@ -11,7 +11,7 @@ import { IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, colors, inputStyles } from '@novu/design-system';
 
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
 import { testTrigger } from '../../../api/notification-templates';
 import { ExecutionDetailsModalWrapper } from './ExecutionDetailsModalWrapper';
@@ -41,7 +41,7 @@ function subscriberExist(subscriberVariables: INotificationTriggerVariable[]) {
 
 export function TestWorkflow({ trigger }) {
   const [transactionId, setTransactionId] = useState<string>('');
-  const { currentUser, currentOrganization } = useAuthContext();
+  const { currentUser, currentOrganization } = useAuth();
   const { mutateAsync: triggerTestEvent, isLoading } = useMutation(testTrigger);
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
 
@@ -59,6 +59,7 @@ export function TestWorkflow({ trigger }) {
 
     return [{ name: 'subscriberId' }, ...(trigger?.subscriberVariables || [])];
   }, [trigger]);
+
   const variables = useMemo(() => [...(trigger?.variables || [])], [trigger]);
   const reservedVariables = useMemo(() => [...(trigger?.reservedVariables || [])], [trigger]);
 

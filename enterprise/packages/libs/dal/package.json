@@ -18,8 +18,8 @@
   "license": "ISC",
   "main": "dist/index.js",
   "dependencies": {
-    "@novu/dal": "^0.24.2",
-    "@novu/shared": "^0.24.2",
+    "@novu/dal": "workspace:*",
+    "@novu/shared": "workspace:*",
     "mongoose": "^7.5.0",
     "mongoose-delete": "^1.0.1",
     "rimraf": "^3.0.2"

@@ -1,6 +1,6 @@
-import { useAuthContext } from '@novu/shared-web';
+import { useAuth } from '@novu/shared-web';
 import { COMPANY_LOGO_PATH } from '../../../constants/assets';
-import { Stack } from '../../../styled-system/jsx';
+import { Stack } from '@novu/novui/jsx';
 import { SettingsPageContainer } from '../SettingsPageContainer';
 import { OrganizationLogo } from './OrganizationLogo';
 import { OrganizationName } from './OrganizationName';
@@ -8,7 +8,7 @@ import { OrganizationName } from './OrganizationName';
 const PAGE_TITLE = 'Organization profile';
 
 export function OrganizationPage() {
-  const { currentOrganization } = useAuthContext();
+  const { currentOrganization } = useAuth();
 
   return (
     <SettingsPageContainer title={PAGE_TITLE}>

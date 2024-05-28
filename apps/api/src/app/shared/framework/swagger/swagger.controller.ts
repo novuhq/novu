@@ -97,11 +97,18 @@ const options = new DocumentBuilder()
     'Execution Details',
     `Execution details are used to track the execution of a workflow. They provided detailed information on the execution of a workflow, including the status of each step, the input and output of each step, and the overall status of the execution.`,
     { url: 'https://docs.novu.co/activity-feed' }
-  )
-  .build();
+  );
+
+if (process.env.NOVU_ENTERPRISE === 'true') {
+  options.addTag(
+    'Translations',
+    `Translations are used to localize your messages for different languages and regions. Novu provides a way to create and manage translations for your messages. You can create translations for your messages in different languages and regions, and assign them to your subscribers based on their preferences.`,
+    { url: 'https://docs.novu.co/content-creation-design/translations' }
+  );
+}
 
 export const setupSwagger = (app: INestApplication) => {
-  const document = injectDocumentComponents(SwaggerModule.createDocument(app, options));
+  const document = injectDocumentComponents(SwaggerModule.createDocument(app, options.build()));
 
   SwaggerModule.setup('api', app, {
     ...document,

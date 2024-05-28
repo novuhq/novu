@@ -13,7 +13,7 @@ export const navigateToGetStarted = async (page: Page, card = 'channel-card-emai
 
   const integrationsModal = getByTestId(page, 'integrations-list-modal');
   await expect(integrationsModal).toBeVisible();
-  await expect(integrationsModal).toContainText('Integrations Store');
+  await expect(integrationsModal.getByRole('heading')).toContainText('Integration Store');
 };
 
 export const checkTableLoading = async (page: Page | Locator) => {

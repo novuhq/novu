@@ -1,18 +1,17 @@
 import { Center, Loader } from '@mantine/core';
 import { colors } from '@novu/design-system';
-import { useSegment } from '@novu/shared-web';
+import { useAuth, useSegment } from '@novu/shared-web';
 import { useEffect } from 'react';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { useAuthContext } from '../../components/providers/AuthProvider';
 import { usePageViewTracking } from '../../hooks/usePageViewTracking';
-import { css } from '../../styled-system/css';
+import { css } from '@novu/novui/css';
 import { EchoTab } from './components/get-started-tabs/EchoTab';
 
 const PAGE_TITLE = 'Get started';
 
 export function GetStartedPage() {
-  const { currentOrganization } = useAuthContext();
+  const { currentOrganization } = useAuth();
   const segment = useSegment();
 
   usePageViewTracking();

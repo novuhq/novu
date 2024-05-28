@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { IParamObject } from '@novu/shared';
+import { CustomDataType } from '@novu/shared';
 
 import { API_ROOT } from '../config';
 
@@ -44,7 +44,7 @@ export const api = {
         return Promise.reject(error?.response?.data || error?.response || error);
       });
   },
-  post(url: string, payload, params?: IParamObject) {
+  post(url: string, payload, params?: CustomDataType) {
     return axios
       .post(`${API_ROOT}${url}`, payload, { params, headers: getHeaders() })
       .then((response) => response.data?.data)
@@ -89,5 +89,5 @@ function getHeaders() {
     ? {
         Authorization: `Bearer ${token}`,
       }
-    : undefined;
+    : {};
 }

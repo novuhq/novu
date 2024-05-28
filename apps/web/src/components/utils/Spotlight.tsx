@@ -4,7 +4,6 @@ import { UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useAuthContext } from '@novu/shared-web';
 import { ROUTES } from '../../constants/routes.enum';
 import useThemeChange from '../../hooks/useThemeChange';
 import { useSpotlightContext } from '../providers/SpotlightProvider';
@@ -13,9 +12,8 @@ import useStyles from './Spotlight.styles';
 export const SpotLight = ({ children }) => {
   const navigate = useNavigate();
   const { items, addItem } = useSpotlightContext();
-  const { logout } = useAuthContext();
   const { themeIcon, toggleColorScheme } = useThemeChange();
-  const { classes, theme } = useStyles();
+  const { classes } = useStyles();
 
   useEffect(() => {
     addItem([
@@ -91,16 +89,8 @@ export const SpotLight = ({ children }) => {
           toggleColorScheme();
         },
       },
-      {
-        id: 'sign-out',
-        title: 'Sign out',
-        icon: <IconLogout />,
-        onTrigger: () => {
-          logout();
-        },
-      },
     ]);
-  }, [navigate, addItem, themeIcon, toggleColorScheme, logout]);
+  }, [navigate, addItem, themeIcon, toggleColorScheme]);
 
   return (
     <SpotlightProvider limit={7} shortcut={['mod + K']} actions={items} classNames={classes}>

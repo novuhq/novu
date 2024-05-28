@@ -80,7 +80,7 @@ test('should update to empty data when switching from editor to customHtml', asy
   await subjectEl.clear();
   await subjectEl.fill('new email subject');
 
-  await updateWorkflowButtonClick(page, { noWaitAfter: true });
+  await updateWorkflowButtonClick(page);
 
   const templatesLinkPage = getByTestId(page, 'side-nav-templates-link');
   await templatesLinkPage.click();

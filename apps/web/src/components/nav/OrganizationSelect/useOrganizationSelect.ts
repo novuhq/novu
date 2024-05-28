@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as capitalize from 'lodash.capitalize';
-import { useAuthContext } from '@novu/shared-web';
+import { useAuth } from '@novu/shared-web';
 import type { IResponseError, IOrganizationEntity } from '@novu/shared';
 import { successMessage } from '@novu/design-system';
 
@@ -9,13 +9,12 @@ import { addOrganization, switchOrganization } from '../../../api/organization';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 
 export const useOrganizationSelect = () => {
-  const [value, setValue] = useState<string>('');
   const [search, setSearch] = useState<string>('');
   const [loadingSwitch, setLoadingSwitch] = useState<boolean>(false);
   const { addItem, removeItems } = useSpotlightContext();
 
   const queryClient = useQueryClient();
-  const { currentOrganization, organizations, setToken } = useAuthContext();
+  const { currentOrganization, organizations, login } = useAuth();
 
   const { isLoading: loadingAddOrganization, mutateAsync: createOrganization } = useMutation<
     IOrganizationEntity,
@@ -31,6 +30,7 @@ export const useOrganizationSelect = () => {
     switchOrganization(id)
   );
 
+  // TODO: Move into useAuth
   const switchOrgCallback = useCallback(
     async (organizationId: string | string[] | null) => {
       if (
@@ -44,11 +44,11 @@ export const useOrganizationSelect = () => {
 
       setLoadingSwitch(true);
       const token = await changeOrganization(organizationId);
-      setToken(token);
+      login(token);
       await queryClient.refetchQueries();
       setLoadingSwitch(false);
     },
-    [currentOrganization, search, setToken, changeOrganization, queryClient]
+    [currentOrganization, search, login, changeOrganization, queryClient]
   );
 
   function addOrganizationItem(newOrganization: string): undefined {
@@ -58,6 +58,8 @@ export const useOrganizationSelect = () => {
       return switchOrgCallback(response._id);
     });
   }
+
+  const value = currentOrganization?._id;
 
   const organizationItems = useMemo(() => {
     return (organizations || [])
@@ -72,12 +74,7 @@ export const useOrganizationSelect = () => {
   }, [organizations, value, switchOrgCallback]);
 
   useEffect(() => {
-    setValue(currentOrganization?._id || '');
-  }, [currentOrganization]);
-
-  useEffect(() => {
     removeItems(['change-org-' + value]);
-
     addItem(organizationItems);
   }, [addItem, removeItems, organizationItems, value]);
 

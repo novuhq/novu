@@ -47,7 +47,10 @@ export class BrevoEmailProvider implements IEmailProvider {
       name: attachment?.name,
       content: attachment?.file.toString('base64'),
     }));
-    email.headers = options.headers;
+
+    if (options.headers && Object.keys(options.headers)?.length) {
+      email.headers = options.headers;
+    }
 
     if (options.cc?.length) {
       email.cc = options.cc?.map((ccItem) => ({ email: ccItem }));

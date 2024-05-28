@@ -30,11 +30,11 @@
     "@nestjs/platform-express": "^10.2.2",
     "@nestjs/swagger": "^7.1.9",
     "@nestjs/terminus": "^10.0.1",
-    "@novu/application-generic": "^0.24.2",
-    "@novu/dal": "^0.24.2",
-    "@novu/shared": "^0.24.2",
-    "@novu/stateless": "^0.24.2",
-    "@novu/testing": "^0.24.2",
+    "@novu/application-generic": "workspace:*",
+    "@novu/dal": "workspace:*",
+    "@novu/shared": "workspace:*",
+    "@novu/stateless": "workspace:*",
+    "@novu/testing": "workspace:*",
     "@sentry/node": "^7.40.0",
     "@sentry/tracing": "^7.40.0",
     "@types/newrelic": "^9.13.0",
@@ -84,11 +84,11 @@
     "typescript": "4.9.5"
   },
   "optionalDependencies": {
-    "@novu/ee-auth": "^0.24.2",
-    "@novu/ee-billing": "^0.24.2",
-    "@novu/ee-echo-worker": "^0.24.2",
-    "@novu/ee-shared-services": "^0.24.2",
-    "@novu/ee-translation": "^0.24.2"
+    "@novu/ee-auth": "workspace:*",
+    "@novu/ee-billing": "workspace:*",
+    "@novu/ee-echo-worker": "workspace:*",
+    "@novu/ee-shared-services": "workspace:*",
+    "@novu/ee-translation": "workspace:*"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

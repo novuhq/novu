@@ -1,7 +1,7 @@
 import styled from '@emotion/styled/macro';
 import { List, Text } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
-import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { colors } from '@novu/design-system';
 import { NovuProviderBase } from './NovuProviderBase';
 
@@ -16,7 +16,7 @@ export function NovuEmailProviderModal({ onClose }: { onClose: () => void }) {
 }
 
 function EmailSenderInformation() {
-  const { currentOrganization } = useAuthContext();
+  const { currentOrganization } = useAuth();
 
   return (
     <div>

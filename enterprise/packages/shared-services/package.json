@@ -30,8 +30,8 @@
   },
   "dependencies": {
     "@handlebars/parser": "^2.1.0",
-    "@novu/ee-dal": "^0.24.2",
-    "@novu/shared": "^0.24.2"
+    "@novu/ee-dal": "workspace:*",
+    "@novu/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^14.6.0",
@@ -44,6 +44,6 @@
   },
   "peerDependencies": {
     "@nestjs/common": "10.2.2",
-    "@novu/dal": "^0.24.1"
+    "@novu/dal": "workspace:*"
   }
 }

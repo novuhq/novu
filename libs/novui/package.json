@@ -1,0 +1,119 @@
+{
+  "name": "@novu/novui",
+  "version": "0.24.2",
+  "repository": "https://github.com/novuhq/novu",
+  "description": "Novu's Design System & Component Library",
+  "types": "./dist/index.d.ts",
+  "main": "./dist/index.js",
+  "files": [
+    "dist",
+    "styled-system"
+  ],
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./css": {
+      "types": "./styled-system/css/index.d.ts",
+      "require": "./styled-system/css/index.js",
+      "import": "./styled-system/css/index.js"
+    },
+    "./tokens": {
+      "types": "./styled-system/tokens/index.d.ts",
+      "require": "./styled-system/tokens/index.js",
+      "import": "./styled-system/tokens/index.js"
+    },
+    "./types": {
+      "types": "./styled-system/types/index.d.ts",
+      "require": "./styled-system/types/index.js",
+      "import": "./styled-system/types/index.js"
+    },
+    "./patterns": {
+      "types": "./styled-system/patterns/index.d.ts",
+      "require": "./styled-system/patterns/index.js",
+      "import": "./styled-system/patterns/index.js"
+    },
+    "./recipes": {
+      "types": "./styled-system/recipes/index.d.ts",
+      "require": "./styled-system/recipes/index.js",
+      "import": "./styled-system/recipes/index.js"
+    },
+    "./jsx": {
+      "types": "./styled-system/jsx/index.d.ts",
+      "require": "./styled-system/jsx/index.js",
+      "import": "./styled-system/jsx/index.js"
+    },
+    "./styles.css": "./styled-system/styles.css"
+  },
+  "scripts": {
+    "prepare:lib": "pnpm prepare:panda && pnpm prepare:audit",
+    "prepare:panda": "pnpm panda codegen",
+    "prepare:audit": "pnpm audit-components",
+    "prebuild": "rimraf dist styled-system && pnpm prepare:lib",
+    "lint": "eslint --ext .ts,.tsx src",
+    "build": "cross-env node_modules/.bin/tsc",
+    "build:watch": "pnpm panda --watch & cross-env node_modules/.bin/tsc -w --preserveWatchOutput",
+    "build:storybook": "pnpm panda && storybook build",
+    "storybook": "pnpm panda --watch & storybook dev -p 6006",
+    "studio": "pnpm panda studio",
+    "audit-components": "pnpm react-scanner -c './react-scanner.config.js'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@pandabox/prettier-plugin": "^0.1.2",
+    "@pandacss/dev": "^0.38.0",
+    "@pandacss/eslint-plugin": "^0.1.2",
+    "@pandacss/studio": "^0.38.0",
+    "@storybook/addon-actions": "8.1.0",
+    "@storybook/addon-controls": "^8.1.0",
+    "@storybook/addon-docs": "^8.1.0",
+    "@storybook/react": "^8.1.0",
+    "@storybook/react-vite": "^8.1.0",
+    "@storybook/theming": "^8.1.0",
+    "@storybook/types": "^8.1.0",
+    "@testing-library/jest-dom": "^6.4.1",
+    "@testing-library/react": "^12.1.5",
+    "@testing-library/react-hooks": "^8.0.1",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^18.11.12",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.1",
+    "@vitejs/plugin-react": "^4.0.3",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "eslint-plugin-storybook": "^0.6.13",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-scanner": "^1.1.0",
+    "rimraf": "^3.0.2",
+    "storybook": "^8.1.0",
+    "storybook-dark-mode": "^4.0.1",
+    "typescript": "^4.9.5",
+    "vite": "^4.5.2",
+    "vite-tsconfig-paths": "^4.3.2",
+    "vitest": "^1.2.1"
+  },
+  "peerDependencies": {
+    "react": ">=17.0.0",
+    "react-dom": ">=17.0.0"
+  },
+  "nx": {
+    "targets": {
+      "build-storybook": {
+        "dependsOn": [
+          "^build"
+        ],
+        "outputs": [
+          "{projectRoot}/storybook-static"
+        ],
+        "inputs": [
+          "{projectRoot}/.storybook",
+          "{projectRoot}/src"
+        ]
+      }
+    }
+  }
+}

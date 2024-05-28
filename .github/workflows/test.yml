@@ -11,18 +11,37 @@ jobs:
   dependency-review:
     name: Dependency review
     runs-on: ubuntu-latest
+    environment: Linting
     steps:
       - name: 'Checkout Repository'
         uses: actions/checkout@v3
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v3
+        uses: actions/dependency-review-action@v4
 
   spellcheck:
     name: Spell check
     runs-on: ubuntu-latest
+    environment: Linting
     steps:
       - uses: actions/checkout@v3
-      - uses: streetsidesoftware/cspell-action@v5
+      - name: List team members ad check
+        id: check-user
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          members=$(gh api --paginate "organizations/77433905/team/5565599/members" | jq -r '.[] | .login')
+          echo "Team members: $members"
+          if [[ $members == *"$PR_CREATOR"* ]]; then
+            echo "PR creator is a member of the team."
+            echo "SKIP_STEP=true" >> $GITHUB_ENV
+          else
+            echo "PR creator is not a team member."
+            echo "SKIP_STEP=false" >> $GITHUB_ENV
+          fi
+
+      - name: Run Spell Check
+        if: env.SKIP_STEP == 'false'
+        uses: streetsidesoftware/cspell-action@v5
 
   get-affected:
     name: Get Affected Packages

@@ -1,7 +1,8 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { Route, Routes } from 'react-router-dom';
-import { AppLayout } from './components/layout/AppLayout';
-import { RequiredAuth } from './components/layout/RequiredAuth';
+import { PrivatePageLayout } from './components/layout/components/PrivatePageLayout';
+import { PublicPageLayout } from './components/layout/components/PublicPageLayout';
+import { EnsureOnboardingComplete } from './components/layout/components/EnsureOnboardingComplete';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { ROUTES } from './constants/routes.enum';
 import { useFeatureFlag } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
@@ -28,6 +29,7 @@ import { GetStarted } from './pages/quick-start/steps/GetStarted';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
 import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
 import { Setup } from './pages/quick-start/steps/Setup';
+import { ApiKeysPage, WebhookPage } from './pages/settings/index';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { ChannelPreview } from './pages/templates/components/ChannelPreview';
 import { ChannelStepEditor } from './pages/templates/components/ChannelStepEditor';
@@ -53,29 +55,31 @@ export const AppRoutes = () => {
 
   return (
     <Routes>
-      <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
-      <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
-      <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
-      <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
-      <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
-      <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
-      <Route
-        path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
-        element={
-          <RequiredAuth>
-            <LinkVercelProjectPage type="create" />
-          </RequiredAuth>
-        }
-      />
-      <Route
-        path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
-        element={
-          <RequiredAuth>
-            <LinkVercelProjectPage type="edit" />
-          </RequiredAuth>
-        }
-      />
-      <Route element={<AppLayout />}>
+      <Route element={<PublicPageLayout />}>
+        <Route path={ROUTES.AUTH_SIGNUP} element={<SignUpPage />} />
+        <Route path={ROUTES.AUTH_LOGIN} element={<LoginPage />} />
+        <Route path={ROUTES.AUTH_RESET_REQUEST} element={<PasswordResetPage />} />
+        <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
+        <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
+        <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
+        <Route
+          path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
+          element={
+            <EnsureOnboardingComplete>
+              <LinkVercelProjectPage type="create" />
+            </EnsureOnboardingComplete>
+          }
+        />
+        <Route
+          path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
+          element={
+            <EnsureOnboardingComplete>
+              <LinkVercelProjectPage type="edit" />
+            </EnsureOnboardingComplete>
+          }
+        />
+      </Route>
+      <Route element={<PrivatePageLayout />}>
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
         <Route path={ROUTES.WORKFLOWS_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
@@ -122,10 +126,19 @@ export const AppRoutes = () => {
             <Route path="layouts" element={<LayoutsListPage />} />
           </Route>
         ) : (
-          <Route path={ROUTES.LAYOUT} element={<LayoutsPage />}>
-            <Route path="" element={<LayoutsListPage />} />
-          </Route>
+          <>
+            <Route path={ROUTES.LAYOUT} element={<LayoutsPage />}>
+              <Route path="" element={<LayoutsListPage />} />
+            </Route>
+            {/* routes previously under settings */}
+            <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
+            <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
+          </>
         )}
+        {isInformationArchitectureEnabled && (
+          <Route path={ROUTES.BRAND} element={<Navigate to={ROUTES.BRAND_SETTINGS} replace />} />
+        )}
+
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>

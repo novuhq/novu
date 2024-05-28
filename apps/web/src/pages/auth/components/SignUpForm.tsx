@@ -7,9 +7,9 @@ import { passwordConstraints, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import type { IResponseError } from '@novu/shared';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '@novu/design-system';
 
-import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { api } from '../../../api/api.client';
-import { applyToken, useVercelParams } from '../../../hooks';
+import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
 import { ROUTES } from '../../../constants/routes.enum';
@@ -29,11 +29,10 @@ export type SignUpFormInputType = {
 export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
   const navigate = useNavigate();
 
-  const { setToken } = useAuthContext();
-  const { isLoading: loadingAcceptInvite, submitToken } = useAcceptInvite();
-  const { isFromVercel, code, next, configurationId } = useVercelParams();
-  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const loginLink = isFromVercel ? `/auth/login?${vercelQueryParams}` : ROUTES.AUTH_LOGIN;
+  const { login } = useAuth();
+  const { isLoading: isAcceptInviteLoading, acceptInvite } = useAcceptInvite();
+  const { params, isFromVercel } = useVercelParams();
+  const loginLink = isFromVercel ? `${ROUTES.AUTH_LOGIN}?${params.toString()}` : ROUTES.AUTH_LOGIN;
 
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
@@ -56,24 +55,17 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
     };
 
     const response = await mutateAsync(itemData);
-
-    /**
-     * We need to call the applyToken to avoid a race condition for accept invite
-     * To get the correct token when sending the request
-     */
     const token = (response as any).token;
-    applyToken(token);
+    login(token);
 
     if (invitationToken) {
-      submitToken(token, invitationToken);
-
-      return true;
+      const updatedToken = await acceptInvite(invitationToken);
+      if (updatedToken) {
+        login(updatedToken);
+      }
     }
 
-    setToken(token);
-    navigate(isFromVercel ? `/auth/application?${vercelQueryParams}` : ROUTES.AUTH_APPLICATION);
-
-    return true;
+    navigate(isFromVercel ? `${ROUTES.AUTH_APPLICATION}?${params.toString()}` : ROUTES.AUTH_APPLICATION);
   };
 
   const {
@@ -181,7 +173,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
           disabled={!accepted}
           mt={20}
           inherit
-          loading={isLoading || loadingAcceptInvite}
+          loading={isLoading || isAcceptInviteLoading}
           submit
           data-test-id="submitButton"
         >
