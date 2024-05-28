@@ -17,7 +17,7 @@ import { successMessage } from '@novu/design-system';
 export function HubspotSignupForm() {
   const [loading, setLoading] = useState<boolean>();
   const navigate = useNavigate();
-  const { login, currentUser, currentOrganization } = useAuth();
+  const { login, currentUser, currentOrganization, environmentId } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { colorScheme } = useMantineColorScheme();
@@ -32,7 +32,7 @@ export function HubspotSignupForm() {
 
   useEffect(() => {
     if (currentUser) {
-      if (currentUser.environmentId) {
+      if (environmentId) {
         if (isFromVercel) {
           startVercelSetup();
 
@@ -42,7 +42,7 @@ export function HubspotSignupForm() {
         navigate(ROUTES.HOME);
       }
     }
-  }, [navigate, isFromVercel, startVercelSetup, currentUser]);
+  }, [navigate, isFromVercel, startVercelSetup, currentUser, environmentId]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, jobTitle, ...rest } = data;
