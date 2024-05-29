@@ -12,7 +12,6 @@ import { MaybePromise } from './util.types';
 export type ActionStepOptions = {
   skip?: Skip;
   inputSchema?: Schema;
-  outputSchema?: Schema;
   credentials?: (input: unknown) => Promise<Record<string, unknown>>;
   providers?: Record<string, (payload: unknown) => unknown | Promise<unknown>>;
   preferences?: (input: unknown) => Promise<Record<string, unknown>>;

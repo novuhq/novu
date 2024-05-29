@@ -6,9 +6,9 @@ import { useBlueprint } from '../../../hooks/index';
 export function EnsureOnboardingComplete({ children }: any) {
   useBlueprint();
   const location = useLocation();
-  const { claims } = useAuth();
+  const { organizationId, environmentId } = useAuth();
 
-  if ((!claims?.organizationId || !claims?.environmentId) && location.pathname !== ROUTES.AUTH_APPLICATION) {
+  if ((!organizationId || !environmentId) && location.pathname !== ROUTES.AUTH_APPLICATION) {
     return <Navigate to={ROUTES.AUTH_APPLICATION} replace />;
   }
 
