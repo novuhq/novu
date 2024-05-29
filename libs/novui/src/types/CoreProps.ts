@@ -3,4 +3,5 @@
  */
 export interface CoreProps {
   className?: string;
+  'data-test-id'?: string;
 }

@@ -2,10 +2,12 @@ import React from 'react';
 import { lightTheme, darkTheme } from './NovuTheme';
 import { Parameters, Decorator } from '@storybook/react';
 import { css } from '../styled-system/css';
+import { MantineThemeProvider } from '@mantine/core';
+import { NovuiProvider } from '../src/components';
 
+import '@mantine/core/styles.css';
 // Bring in the Panda-generated stylesheets
 import '../src/index.css';
-import { MantineProvider } from '@mantine/core';
 
 export const parameters: Parameters = {
   layout: 'fullscreen',
@@ -39,7 +41,9 @@ function ColorSchemeThemeWrapper({ children }) {
 export const decorators: Decorator[] = [
   (renderStory) => (
     <ColorSchemeThemeWrapper>
-      <MantineProvider>{renderStory()}</MantineProvider>
+      <NovuiProvider>
+        <MantineThemeProvider>{renderStory()}</MantineThemeProvider>
+      </NovuiProvider>
     </ColorSchemeThemeWrapper>
   ),
 ];
