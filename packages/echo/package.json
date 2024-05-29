@@ -72,6 +72,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@sveltejs/kit": "^2.5.10",
     "@types/express": "^4.17.13",
     "@types/jest": "^29.5.12",
     "@types/json-schema": "^7.0.15",
