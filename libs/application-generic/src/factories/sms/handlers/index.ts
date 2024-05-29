@@ -28,3 +28,4 @@ export * from './isend-sms.handler';
 export * from './ring-central.handler';
 export * from './brevo-sms.handler';
 export * from './eazy-sms.handler';
+export * from './mobishastra.handler';
