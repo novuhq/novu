@@ -1,20 +1,31 @@
+import { FC, MouseEventHandler } from 'react';
+import { Button as ExternalButton } from '@mantine/core';
 import { css } from '../../styled-system/css';
-import { FC } from 'react';
 
-/**
- * An example component using Panda.
- * TODO remove this in a future iteration.
- */
-export const Test: FC = () => {
+interface ITestProps {
+  onClick: MouseEventHandler<HTMLButtonElement>;
+}
+
+export const Test: FC<ITestProps> = ({ onClick }) => {
   return (
-    <p
-      className={css({
-        bg: 'legacy.warning',
-        textAlign: 'center',
-        textStyle: 'title.page',
-      })}
+    <ExternalButton
+      onClick={onClick}
+      leftSection={'hello'}
+      classNames={{
+        root: css({
+          color: 'typography.text.feedback.alert',
+          fontSize: '225 !important',
+          bg: 'typography.text.feedback.success',
+          p: '100',
+        }),
+        inner: css({
+          color: 'typography.text.feedback.alert',
+          fontSize: '225 !important',
+          bg: 'typography.text.feedback.success',
+        }),
+      }}
     >
-      Testing everything now
-    </p>
+      Test
+    </ExternalButton>
   );
 };
