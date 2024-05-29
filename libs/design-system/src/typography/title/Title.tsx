@@ -1,9 +1,9 @@
 import { MantineColor, Title as MantineTitle, useMantineTheme } from '@mantine/core';
-import { ComponentFoundationProps } from '../../types/ComponentFoundationProps';
+import { PropsWithChildren } from 'react';
 import { colors } from '../../config';
 import { SpacingProps } from '../../shared/spacing.props';
 
-interface ITitleProps extends ComponentFoundationProps, SpacingProps {
+interface ITitleProps extends PropsWithChildren<{}>, SpacingProps {
   size?: 1 | 2;
   color?: MantineColor;
 }

@@ -1,8 +1,8 @@
 import { Badge } from '@mantine/core';
-import { ComponentFoundationProps } from '../types/ComponentFoundationProps';
+import { PropsWithChildren } from 'react';
 import { colors } from '../config';
 
-interface ITagProps extends ComponentFoundationProps {
+interface ITagProps extends PropsWithChildren<{}> {
   color?: string;
   border?: string;
   ml?: number;

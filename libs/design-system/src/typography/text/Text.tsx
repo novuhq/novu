@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 import { Text as MantineText, MantineColor, useMantineTheme, TextProps } from '@mantine/core';
 
 import { colors } from '../../config';
 import { SpacingProps } from '../../shared/spacing.props';
-import { ComponentFoundationProps } from '../../types/ComponentFoundationProps';
 
-interface ITextProps extends ComponentFoundationProps, SpacingProps {
+interface ITextProps extends PropsWithChildren<{}>, SpacingProps {
   size?: TextProps['size'];
   style?: TextProps['style'];
   styles?: TextProps['styles'];
