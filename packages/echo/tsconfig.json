@@ -10,10 +10,10 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "rootDir": "./src",
+    "rootDir": ".",
     "outDir": "./dist",
     "strictNullChecks": true
   },
-  "include": ["./src/**/*"],
+  "include": ["./src/**/*", "./package.json"],
   "exclude": ["node_modules", "**/*.spec.ts"]
 }

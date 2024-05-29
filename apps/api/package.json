@@ -93,7 +93,6 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
-    "@faker-js/faker": "^6.0.0",
     "@nestjs/cli": "^10.1.16",
     "@nestjs/schematics": "^10.0.2",
     "@nestjs/testing": "^10.2.2",

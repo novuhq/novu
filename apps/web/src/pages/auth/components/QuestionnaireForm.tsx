@@ -34,7 +34,7 @@ export function QuestionnaireForm() {
     control,
   } = useForm<IOrganizationCreateForm>({});
   const navigate = useNavigate();
-  const { login, currentUser, currentOrganization } = useAuth();
+  const { login, currentUser, currentOrganization, environmentId } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel } = useVercelParams();
   const { parse } = useDomainParser();
@@ -46,14 +46,14 @@ export function QuestionnaireForm() {
   >((data: ICreateOrganizationDto) => api.post(`/v1/organizations`, data));
 
   useEffect(() => {
-    if (currentUser?.environmentId) {
+    if (environmentId) {
       if (isFromVercel) {
         startVercelSetup();
 
         return;
       }
     }
-  }, [navigate, isFromVercel, startVercelSetup, currentUser]);
+  }, [navigate, isFromVercel, startVercelSetup, currentUser, environmentId]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, ...rest } = data;
