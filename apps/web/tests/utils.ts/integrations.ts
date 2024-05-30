@@ -1,39 +1,37 @@
 import { expect, Locator, Page } from '@playwright/test';
 
-import { getByTestId } from './browser';
-
 export const navigateToGetStarted = async (page: Page, card = 'channel-card-email') => {
   await page.goto('/get-started');
   await expect(page).toHaveURL(/\/get-started/);
 
-  const cardComponent = getByTestId(page, card);
+  const cardComponent = page.getByTestId(card);
   const button = cardComponent.locator('button');
   await expect(button).toContainText('Change Provider');
   await button.click();
 
-  const integrationsModal = getByTestId(page, 'integrations-list-modal');
+  const integrationsModal = page.getByTestId('integrations-list-modal');
   await expect(integrationsModal).toBeVisible();
   await expect(integrationsModal.getByRole('heading')).toContainText('Integration Store');
 };
 
 export const checkTableLoading = async (page: Page | Locator) => {
-  const nameCellLoadingElements = getByTestId(page, 'integration-name-cell-loading');
+  const nameCellLoadingElements = page.getByTestId('integration-name-cell-loading');
   await expect(nameCellLoadingElements).toHaveCount(10);
   await expect(nameCellLoadingElements.first()).toBeVisible();
 
-  const providerCellLoadingElements = getByTestId(page, 'integration-provider-cell-loading');
+  const providerCellLoadingElements = page.getByTestId('integration-provider-cell-loading');
   await expect(providerCellLoadingElements).toHaveCount(10);
   await expect(providerCellLoadingElements.first()).toBeVisible();
 
-  const channelCellLoadingElements = getByTestId(page, 'integration-channel-cell-loading');
+  const channelCellLoadingElements = page.getByTestId('integration-channel-cell-loading');
   await expect(channelCellLoadingElements).toHaveCount(10);
   await expect(channelCellLoadingElements.first()).toBeVisible();
 
-  const envCellLoadingElements = getByTestId(page, 'integration-environment-cell-loading');
+  const envCellLoadingElements = page.getByTestId('integration-environment-cell-loading');
   await expect(envCellLoadingElements).toHaveCount(10);
   await expect(envCellLoadingElements.first()).toBeVisible();
 
-  const statusCellLoadingElements = getByTestId(page, 'integration-status-cell-loading');
+  const statusCellLoadingElements = page.getByTestId('integration-status-cell-loading');
   await expect(statusCellLoadingElements).toHaveCount(10);
   await expect(statusCellLoadingElements.first()).toBeVisible();
 };
@@ -56,33 +54,34 @@ export const checkTableRow = async (
     status: string;
   }
 ) => {
-  const integrationsTable = getByTestId(page, 'integrations-list-table');
-  const nthRow = integrationsTable.locator('tbody tr', { hasText: new RegExp(`${name}.*${environment ?? ''}`) });
-  const nameCell = getByTestId(nthRow, 'integration-name-cell', { hasText: name });
+  const integrationsTable = page.getByTestId('integrations-list-table');
+  const nthRow = integrationsTable.locator('tbody tr', { hasText: new RegExp(`^${name}.*${environment ?? ''}`) });
+  const nameCell = nthRow.getByTestId('integration-name-cell').getByText(name, { exact: true });
+  await expect(nthRow).toBeVisible();
   await expect(nameCell).toBeVisible();
 
   if (isFree) {
     await expect(nameCell).toContainText('Test Provider');
   }
 
-  const providerCell = getByTestId(nthRow, 'integration-provider-cell', { hasText: provider });
+  const providerCell = nthRow.getByTestId('integration-provider-cell').getByText(provider);
   await expect(providerCell).toBeVisible();
 
-  const channelCell = getByTestId(nthRow, 'integration-channel-cell', { hasText: channel });
+  const channelCell = nthRow.getByTestId('integration-channel-cell').getByText(channel);
   await expect(channelCell).toBeVisible();
 
   if (environment) {
-    const environmentCell = getByTestId(nthRow, 'integration-environment-cell', { hasText: environment });
+    const environmentCell = nthRow.getByTestId('integration-environment-cell').getByText(environment);
     await expect(environmentCell).toBeVisible();
   }
 
-  const statusCell = getByTestId(nthRow, 'integration-status-cell', { hasText: status });
+  const statusCell = nthRow.getByTestId('integration-status-cell').getByText(status);
   await expect(statusCell).toBeVisible();
 };
 
 export const clickOnListRow = async (page: Page | Locator, name: string | RegExp) => {
-  const integrationsTable = getByTestId(page, 'integrations-list-table');
-  const row = integrationsTable.locator('tr', { hasText: name }).first();
+  const integrationsTable = page.getByTestId('integrations-list-table');
+  const row = integrationsTable.locator('tr').getByText(name).first();
   await expect(row).toBeVisible();
   await row.click();
 };

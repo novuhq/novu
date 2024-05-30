@@ -116,7 +116,7 @@ jobs:
           fi
 
   test_web:
-    name: Test Web Cypress
+    name: Test Web Playwright
     needs: [get-affected]
 #    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
     if: contains(github.event.pull_request.labels.*.name, 'run-e2e')
