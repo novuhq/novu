@@ -1,16 +1,18 @@
 import { FC, MouseEventHandler } from 'react';
 import { Button as ExternalButton } from '@mantine/core';
 import { css } from '../../styled-system/css';
+import { CoreProps } from '../types';
 
-interface ITestProps {
+interface ITestProps extends CoreProps {
   onClick: MouseEventHandler<HTMLButtonElement>;
 }
 
-export const Test: FC<ITestProps> = ({ onClick }) => {
+export const Test: FC<ITestProps> = ({ onClick, className }) => {
   return (
     <ExternalButton
       onClick={onClick}
       leftSection={'hello'}
+      className={className}
       classNames={{
         root: css({
           color: 'typography.text.feedback.alert',
