@@ -4,7 +4,7 @@ import {
   ISmsOptions,
   ISmsProvider,
 } from '@novu/stateless';
-
+import { v4 as uuid } from 'uuid';
 import axios, { AxiosInstance } from 'axios';
 
 export class MobishastraProvider implements ISmsProvider {
@@ -46,10 +46,11 @@ export class MobishastraProvider implements ISmsProvider {
       ]),
     });
 
-    const responseData = response;
+    const responseData = response.data;
+    const messageId = responseData?.[0]?.msg_id?.trim() ?? uuid();
 
     return {
-      id: responseData?.[0]?.msg_id,
+      id: messageId,
       date: new Date().toISOString(),
     };
   }
