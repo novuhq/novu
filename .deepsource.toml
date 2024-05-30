@@ -4,7 +4,6 @@ test_patterns = [
   "apps/api/src/**/**/*.spec.ts",
   "apps/api/e2e/**/*.e2e.ts",
   "apps/api/src/**/*.e2e.ts",
-  "apps/web/cypress/**/*.spec.ts",
   "apps/widget/cypress/**/*.spec.ts"
 ]
 
