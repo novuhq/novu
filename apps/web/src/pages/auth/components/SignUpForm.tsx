@@ -56,16 +56,17 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
 
     const response = await mutateAsync(itemData);
     const token = (response as any).token;
-    login(token);
+    await login(token);
 
     if (invitationToken) {
       const updatedToken = await acceptInvite(invitationToken);
       if (updatedToken) {
-        login(updatedToken);
+        await login(updatedToken);
+        navigate(ROUTES.WORKFLOWS);
       }
+    } else {
+      navigate(isFromVercel ? `${ROUTES.AUTH_APPLICATION}?${params.toString()}` : ROUTES.AUTH_APPLICATION);
     }
-
-    navigate(isFromVercel ? `${ROUTES.AUTH_APPLICATION}?${params.toString()}` : ROUTES.AUTH_APPLICATION);
   };
 
   const {

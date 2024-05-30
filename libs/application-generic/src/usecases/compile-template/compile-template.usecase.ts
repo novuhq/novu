@@ -43,7 +43,9 @@ Handlebars.registerHelper(
 Handlebars.registerHelper(
   HandlebarHelpersEnum.EQUALS,
   function (arg1, arg2, options) {
-    return assertResult(arg1 == arg2, options);
+    // eslint-disable-next-line
+    // @ts-expect-error
+    return arg1 == arg2 ? options.fn(this) : options.inverse(this);
   }
 );
 

@@ -38,7 +38,6 @@ export function HubspotSignupForm() {
 
           return;
         }
-
         navigate(ROUTES.HOME);
       }
     }

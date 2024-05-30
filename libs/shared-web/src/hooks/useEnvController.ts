@@ -70,7 +70,7 @@ export const useEnvController = (
       if (!tokenResponse.token) {
         return;
       }
-      login(tokenResponse.token);
+      await login(tokenResponse.token);
 
       await queryClient.invalidateQueries();
       if (route) {
