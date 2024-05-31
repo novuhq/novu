@@ -5,6 +5,7 @@ import * as ReactRouterDOM from 'react-router-dom';
 import { afterEach, expect, it, vi } from 'vitest';
 
 import { IUsePaginationQueryParamsStateOptions, usePaginationQueryParamsState } from './usePaginationQueryParamsState';
+import { PropsWithChildren } from 'react';
 
 const initialPageNumber = 1;
 const pageSizes = [10, 20, 30];
@@ -15,7 +16,9 @@ const callHook = (options: IUsePaginationQueryParamsStateOptions, initialParams?
   const paramStr = initialParams ? `?page=${initialParams.page}&size=${initialParams.size}` : '';
 
   return renderHook(() => usePaginationQueryParamsState(options), {
-    wrapper: ({ children }) => <MemoryRouter initialEntries={[paramStr]}>{children}</MemoryRouter>,
+    wrapper: ({ children }: PropsWithChildren<{}>) => (
+      <MemoryRouter initialEntries={[paramStr]}>{children}</MemoryRouter>
+    ),
   });
 };
 

@@ -288,7 +288,7 @@ export const TranslationSectionItem = ({
       />
       <When truthy={!keys?.length && !search.length}>
         <VarLabel label={sectionName} Icon={Translation}>
-          <UpgradePlanBanner FeatureActivatedBanner={TranslationsGetStartedText} />
+          <UpgradePlanBanner FeatureActivatedBanner={<TranslationsGetStartedText />} />
         </VarLabel>
       </When>
     </>

@@ -29,8 +29,20 @@ function isFlagMissingInLdResponse(key: FeatureFlagsKeysEnum, keysFromLunchDarkl
 
 export const useFeatureFlag = (key: FeatureFlagsKeysEnum): boolean => {
   const shouldUseLaunchDarkly = checkShouldUseLaunchDarkly();
+  let flagValue = undefined;
+
   /** We knowingly break the rule of hooks here to avoid making any LaunchDarkly calls when it is disabled */
-  const flagValue = shouldUseLaunchDarkly ? useFlags()[key] : undefined;
+  if (shouldUseLaunchDarkly) {
+    const flags = useFlags();
+    if (!flags || Object.keys(flags).length === 0) {
+      throw new Error(
+        'No flags were returned by LaunchDarkly, Please ensure that the app is wrapped in an LDProvider!'
+      );
+    }
+
+    flagValue = flags[key];
+  }
+
   e2eExplicitFlagAssertion(key);
   const fallbackValue = false;
   const value = FEATURE_FLAGS[key];
