@@ -10,8 +10,6 @@ import { ROUTES } from '../../constants/routes.enum';
 import { useAuth } from '@novu/shared-web';
 import { When, colors, useTabsStyles } from '@novu/design-system';
 import { useFeatureFlag } from '../../hooks';
-import { Test } from '@novu/novui';
-import { css } from '@novu/novui/css';
 
 const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -56,11 +54,6 @@ export function SettingsPage() {
 
   return (
     <SettingsPageWrapper>
-      <Test
-        onClick={() => alert('GZH')}
-        className={css({ fontWeight: 'strong', color: 'typography.text.feedback.info', borderRadius: '150' })}
-      />
-
       <Tabs
         orientation="horizontal"
         keepMounted={true}
