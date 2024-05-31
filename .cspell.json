@@ -598,7 +598,8 @@
     "whatsappbusiness",
     "xkeysib",
     "zulip",
-    "zwnj"
+    "zwnj",
+    "prepush"
   ],
   "flagWords": [],
   "patterns": [
