@@ -48,7 +48,7 @@
     ".": {
       "require": "./dist/index.js",
       "import": "./dist/index.js",
-      "types": ["./dist/index.d.ts"]
+      "types": "./dist/index.d.ts"
     },
     "./express": {
       "require": "./dist/express.js",
