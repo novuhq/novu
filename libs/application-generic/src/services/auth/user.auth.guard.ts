@@ -1,5 +1,5 @@
 import { Injectable, ExecutionContext, Logger } from '@nestjs/common';
-import { ModuleRef } from '@nestjs/core';
+import { Reflector } from '@nestjs/core';
 import { IAuthGuard, IAuthModuleOptions } from '@nestjs/passport';
 import { IJwtClaims } from '@novu/shared';
 import { CommunityUserAuthGuard } from './community.user.auth.guard';
@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 import { Instrument } from '../../instrumentation';
 import { PlatformException } from '../../utils/exceptions';
 
-function initiateAuthGuard(moduleRef: ModuleRef) {
+function initiateAuthGuard(reflector: Reflector) {
   try {
     if (process.env.NOVU_ENTERPRISE === 'true') {
       const eeAuthModule = require('@novu/ee-auth');
@@ -15,9 +15,9 @@ function initiateAuthGuard(moduleRef: ModuleRef) {
         throw new PlatformException('EEUserAuthGuard is not loaded');
       }
 
-      return moduleRef.get(eeAuthModule.EEUserAuthGuard, { strict: false });
+      return new eeAuthModule.EEUserAuthGuard(reflector);
     } else {
-      return moduleRef.get(CommunityUserAuthGuard, { strict: false });
+      return new CommunityUserAuthGuard(reflector);
     }
   } catch (e) {
     Logger.error(
@@ -33,8 +33,8 @@ function initiateAuthGuard(moduleRef: ModuleRef) {
 export class UserAuthGuard {
   private readonly authGuard: IAuthGuard;
 
-  constructor(moduleRef: ModuleRef) {
-    this.authGuard = initiateAuthGuard(moduleRef);
+  constructor(reflector: Reflector) {
+    this.authGuard = initiateAuthGuard(reflector);
   }
 
   @Instrument()

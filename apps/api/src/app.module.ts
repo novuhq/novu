@@ -42,9 +42,6 @@ import { AnalyticsModule } from './app/analytics/analytics.module';
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-    if (require('@novu/ee-auth')?.EEAuthModule) {
-      modules.push(require('@novu/ee-auth')?.EEAuthModule);
-    }
     if (require('@novu/ee-echo-api')?.EchoModule) {
       modules.push(require('@novu/ee-echo-api')?.EchoModule);
     }
@@ -71,39 +68,39 @@ const enterpriseQuotaThrottlerInterceptor =
     : [];
 
 const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
-  InboundParseModule,
-  OrganizationModule,
-  SharedModule,
-  UserModule,
   AuthModule,
-  HealthModule,
-  EnvironmentsModule,
-  ExecutionDetailsModule,
-  WorkflowModule,
-  EventsModule,
-  WidgetsModule,
-  NotificationModule,
-  StorageModule,
-  NotificationGroupsModule,
-  InvitesModule,
-  ContentTemplatesModule,
-  IntegrationModule,
-  ChangeModule,
-  SubscribersModule,
-  FeedsModule,
-  LayoutsModule,
-  MessagesModule,
-  PartnerIntegrationsModule,
-  TopicsModule,
-  BlueprintModule,
-  TenantModule,
-  WorkflowOverridesModule,
-  RateLimitingModule,
-  ProfilingModule.register(packageJson.name),
-  TracingModule.register(packageJson.name, packageJson.version),
+  InboundParseModule, //
+  SharedModule, // DALS, analytics, cache ....
+  HealthModule, //
+  EnvironmentsModule, // maybe
+  ExecutionDetailsModule, //
+  WorkflowModule, //
+  EventsModule, //
+  NotificationModule, //
+  NotificationGroupsModule, //
+  ContentTemplatesModule, //
+  IntegrationModule, //
+  ChangeModule, //
+  SubscribersModule, // kept - subs are not users, they can live in external systems
+  FeedsModule, //
+  LayoutsModule, //
+  MessagesModule, //
+  PartnerIntegrationsModule, //
+  TopicsModule, //
+  BlueprintModule, //
+  TenantModule, //
+  WorkflowOverridesModule, //
+  RateLimitingModule, //
+  ProfilingModule.register(packageJson.name), //
+  TracingModule.register(packageJson.name, packageJson.version), //
 ];
 
 const enterpriseModules = enterpriseImports();
+
+if (process.env.NOVU_ENTERPRISE !== 'true') {
+  const communityModules = [OrganizationModule, UserModule, StorageModule, InvitesModule, WidgetsModule];
+  baseModules.push(...communityModules);
+}
 
 const modules = baseModules.concat(enterpriseModules);
 
