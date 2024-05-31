@@ -22,7 +22,7 @@ export default defineConfig({
   ],
 
   // Files to exclude
-  exclude: ['**/*.cy.{js,jsx,ts,tsx}', '**/*/styled-system'],
+  exclude: ['**/*.spec.{js,jsx,ts,tsx}', '**/*/styled-system'],
 
   presets: [novuPandaPreset],
 

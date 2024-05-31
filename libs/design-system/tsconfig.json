@@ -20,7 +20,6 @@
   },
   "exclude": [
     "src/**/*.test.*",
-    "src/**/*.cy.*",
     "src/**/*.stories.*",
     "src/*.test.*",
     "node_modules",

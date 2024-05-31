@@ -1,5 +1,5 @@
 import { TemplateVariableTypeEnum, IMustacheVariable, ITemplateVariable } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import * as set from 'lodash.set';
 import * as get from 'lodash.get';
 
@@ -37,17 +37,13 @@ const getVariableValue = (variable: IMustacheVariable) => {
 };
 
 export const useProcessVariables = (variables: ITemplateVariable[] | undefined = [], asString = true) => {
-  const [processedVariables, setProcessedVariables] = useState(JSON.stringify({}, null, 2));
-
-  useEffect(() => {
+  return useMemo(() => {
     let processed = processVariables(variables);
 
     if (!asString) {
       processed = JSON.parse(processed);
     }
 
-    setProcessedVariables(processed);
-  }, [variables, setProcessedVariables, asString]);
-
-  return processedVariables;
+    return processed;
+  }, [variables, asString]);
 };
