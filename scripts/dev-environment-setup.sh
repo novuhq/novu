@@ -28,6 +28,12 @@ success_message () {
     echo " "
 }
 
+start_success_message () {
+    echo " "
+    echo "✅ $1 has been started"
+    echo " "
+}
+
 already_installed_message () {
     echo " "
     echo "✅ $1 is already installed"
@@ -398,18 +404,14 @@ start_database() {
      exit 1
    fi
 
-   # If neither mongodb nor redis is installed
-   echo "Starting up Docker Compose as MongoDB and Redis are not installed..."
-
-   echo "Mongodb or Redis is not installed. Starting Docker Compose..."
-
    # Copy the example env file
-   cp ../docker/.env.example ../docker/local/deployment/.env
+   cp ./docker/.env.example ./docker/local/development/.env
 
-   # Start Docker Compose
-   docker-compose -f ../docker/local/deployment/docker-compose.yml up
+   # Start Docker Compose detached
+   docker-compose -f ./docker/local/development/docker-compose.yml up -d
 
-   echo "Started databases in docker"
+   start_success_message "Docker Infrastructure"
+   echo "Note: To manually start go to /docker in the project"
 }
 
 create_local_dev_domain () {
@@ -438,6 +440,9 @@ check_git () {
         echo "⛔️ Git is a hard dependency to clone the monorepo"
         exit 1
     fi
+
+    already_installed_message "git"
+
 }
 
 clone_monorepo () {
