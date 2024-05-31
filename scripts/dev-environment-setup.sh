@@ -383,43 +383,33 @@ install_aws_cli () {
     fi
 }
 
-install_databases () {
-    SKIP="$(check_homebrew)"
+start_database() {
+  # Check if mongodb is installed
+  brew ls --versions mongodb > /dev/null
+  if [ $? -eq 0 ]; then
+    echo "Error: MongoDB is already installed via brew. Please uninstall it first."
+    exit 1
+  fi
 
-    if [[ -z "$SKIP" ]]; then
-        installing_dependency "Databases"
+   # Check if redis is installed
+   brew ls --versions redis > /dev/null
+   if [ $? -eq 0 ]; then
+     echo "Error: Redis is already installed via brew. Please uninstall it first."
+     exit 1
+   fi
 
-        brew tap mongodb/brew
+   # If neither mongodb nor redis is installed
+   echo "Starting up Docker Compose as MongoDB and Redis are not installed..."
 
-        DATABASES=(
-            mongodb-community@5.0
-            redis
-        )
-        brew install "${DATABASES[@]}"
+   echo "Mongodb or Redis is not installed. Starting Docker Compose..."
 
-        echo "Run the services in the background"
+   # Copy the example env file
+   cp ../docker/.env.example ../docker/local/deployment/.env
 
-        TEST_REDIS_CMD=$(execute_command_without_error_print "redis-cli --version")
-        if [[ -z "$TEST_REDIS_CMD" ]] || [[ "$TEST_REDIS_CMD" == "zsh: command not found: redis-cli" ]]; then
-            error_message "Redis"
-        else
-            echo "Run Redis service in the background"
-    	    brew services restart redis
-            success_message "MongoDB"
-        fi
+   # Start Docker Compose
+   docker-compose -f ../docker/local/deployment/docker-compose.yml up
 
-        TEST_MONGO_CMD=$(execute_command_without_error_print "mongosh --version")
-        if [[ -z "$TEST_MONGO_CMD" ]] || [[ "$TEST_MONGO_CMD" == "zsh: command not found: mongosh" ]]; then
-            error_message "MongoDB"
-        else
-            echo "Run MongoDB service in the background"
-    	    brew services start mongodb/brew/mongodb-community@5.0
-            success_message "MongoDB"
-        fi
-    else
-        skip_message "Databases"
-        echo "$SKIP"
-    fi
+   echo "Started databases in docker"
 }
 
 create_local_dev_domain () {
@@ -489,8 +479,8 @@ install_novu_tools () {
     install_node
     install_pnpm
     install_docker
-    install_databases
     install_aws_cli
+    start_database
     create_local_dev_domain
 }
 
