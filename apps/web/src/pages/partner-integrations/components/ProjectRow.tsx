@@ -1,12 +1,11 @@
 import { forwardRef, useRef, useEffect } from 'react';
 import { Box, Group, CloseButton } from '@mantine/core';
-import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useWatch, Control, Controller } from 'react-hook-form';
 import { useIntersection } from '@mantine/hooks';
 import type { FetchNextPageOptions, InfiniteQueryObserverResult } from '@tanstack/react-query';
 import { IOrganizationEntity } from '@novu/shared';
 
-import { Text, Select } from '@novu/design-system';
+import { Text, Select, IconOutlineArrowLeft, IconOutlineArrowRight } from '@novu/design-system';
 import { ProjectLinkFormValues } from './LinkProjectContainer';
 
 type ProjectDataType = {
@@ -110,9 +109,9 @@ export function ProjectRow(props: ProjectRowProps) {
         />
       </Box>
       <Group grow position="apart">
-        <ArrowLeftOutlined />
+        <IconOutlineArrowLeft />
         <Text align="center">links to</Text>
-        <ArrowRightOutlined />
+        <IconOutlineArrowRight />
       </Group>
       <Box>
         <Group position="left" noWrap>
