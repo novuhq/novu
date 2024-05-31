@@ -40,7 +40,9 @@ import '@novu/novui/styles.css';
 
   root.render(
     <React.StrictMode>
-      <App />
+      <FeatureFlagsProvider>
+        <App />
+      </FeatureFlagsProvider>
     </React.StrictMode>
   );
 })();
