@@ -60,7 +60,7 @@ export function QuestionnaireForm() {
     const createDto: ICreateOrganizationDto = { ...rest, name: organizationName };
     const organization = await createOrganizationMutation(createDto);
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
-    login(organizationResponseToken);
+    await login(organizationResponseToken);
   }
 
   const onCreateOrganization = async (data: IOrganizationCreateForm) => {

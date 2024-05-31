@@ -49,7 +49,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
             value={field.value ? field.value : provider?.displayName}
             required
             label="Name"
-            error={errors.name?.message}
+            error={errors.name?.message as string}
             data-test-id="provider-instance-name"
           />
         )}
@@ -70,7 +70,7 @@ export const UpdateIntegrationCommonFields = ({ provider }: { provider: IIntegra
             {...field}
             required
             label="Provider identifier"
-            error={errors.identifier?.message}
+            error={errors.identifier?.message as string}
             rightSection={
               <CopyWrapper onClick={() => identifierClipboard.copy(field.value)}>
                 {identifierClipboard.copied ? <Check /> : <Copy />}
