@@ -2,10 +2,18 @@ import { useRef, useState } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { ActionIcon, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
-import { AlignCenterOutlined, AlignLeftOutlined, AlignRightOutlined } from '@ant-design/icons';
 import { TextAlignEnum } from '@novu/shared';
 
-import { DotsHorizontalOutlined, Trash, Button, colors, Dropdown } from '@novu/design-system';
+import {
+  DotsHorizontalOutlined,
+  Trash,
+  Button,
+  colors,
+  Dropdown,
+  IconOutlineAlignHorizontalLeft,
+  IconOutlineAlignHorizontalCenter,
+  IconOutlineAlignHorizontalRight,
+} from '@novu/design-system';
 import { useEnvController } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 
@@ -30,9 +38,9 @@ export function ContentRow({
   const stepFormPath = useStepFormPath();
 
   const textAlignments = [
-    ['left', <AlignLeftOutlined key="left-align-icon" />],
-    ['center', <AlignCenterOutlined key="center-align-icon" />],
-    ['right', <AlignRightOutlined key="right-align-icon" />],
+    ['left', <IconOutlineAlignHorizontalLeft key="left-align-icon" />],
+    ['center', <IconOutlineAlignHorizontalCenter key="center-align-icon" />],
+    ['right', <IconOutlineAlignHorizontalRight key="right-align-icon" />],
   ];
 
   function onHover() {
