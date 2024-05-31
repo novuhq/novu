@@ -3,5 +3,6 @@
  */
 export interface CoreProps {
   className?: string;
-  'data-test-id'?: string;
 }
+
+export type CorePropsWithChildren = React.PropsWithChildren<CoreProps>;
