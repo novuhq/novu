@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import App from './App';
 import { initializeApp } from './initializeApp';
@@ -31,13 +31,19 @@ import '@novu/novui/styles.css';
     });
   }
 
-  ReactDOM.render(
+  const container = document.getElementById('root');
+  if (!container) {
+    throw new Error("No element 'root' is defined in index.html!");
+  }
+
+  const root = createRoot(container);
+
+  root.render(
     <React.StrictMode>
       <FeatureFlagsProvider>
         <App />
       </FeatureFlagsProvider>
-    </React.StrictMode>,
-    document.getElementById('root')
+    </React.StrictMode>
   );
 })();
 
