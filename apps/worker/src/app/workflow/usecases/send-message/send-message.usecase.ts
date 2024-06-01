@@ -108,7 +108,7 @@ export class SendMessage {
         ExecuteOutput<IChimeraChannelResponse> | null
       >({
         ...command,
-        variables: variables,
+        variables,
       });
     }
     const echoSkip = resonateResponse?.options?.skip;
@@ -170,12 +170,10 @@ export class SendMessage {
       }
       case StepTypeEnum.EMAIL: {
         await this.sendMessageEmail.execute(sendMessageCommand);
-
         break;
       }
       case StepTypeEnum.CHAT: {
         await this.sendMessageChat.execute(sendMessageCommand);
-
         break;
       }
       case StepTypeEnum.PUSH: {

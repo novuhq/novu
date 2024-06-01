@@ -60,7 +60,7 @@ export class SelectVariant {
           userId: command.userId,
           step: command.step,
           job: command.job,
-          variables: variables,
+          variables,
         })
       );
 

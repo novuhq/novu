@@ -11,6 +11,17 @@ import { CachedEntity } from '../../services/cache/interceptors/cached-entity.in
 import { buildSubscriberKey } from '../../services/cache/key-builders/entities';
 import { ConditionsFilterCommand } from '../conditions-filter';
 
+/**
+ * This service class is responsible for normalizing the variables used within the message filtering process.
+ * Normalization in this context refers to ensuring all necessary data is present for filter evaluation.
+ *
+ * It achieves this by:
+ *  1. Checking if subscriber and tenant information are provided in the command itself.
+ *  2. If missing, it tries to infer them from the filters and job data (if available).
+ *  3. Finally, it fetches the complete subscriber and tenant entities from the database if necessary.
+ *
+ * By providing a normalized set of variables, this service simplifies filter evaluation and promotes code clarity.
+ */
 @Injectable()
 export class NormalizeVariables {
   constructor(

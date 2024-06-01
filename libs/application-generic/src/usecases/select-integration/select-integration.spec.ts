@@ -101,27 +101,24 @@ describe('select integration', function () {
   const executionDetailsRepository: ExecutionDetailsRepository =
     new ExecutionDetailsRepository();
 
+  const conditionsFilter = new ConditionsFilter(
+    new SubscriberRepository(),
+    new MessageRepository(),
+    executionDetailsRepository,
+    new JobRepository(),
+    new EnvironmentRepository(),
+    new ExecutionLogRoute(
+      new CreateExecutionDetails(new ExecutionDetailsRepository()),
+      new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
+      new GetFeatureFlag(new FeatureFlagsService())
+    ),
+    new CompileTemplate()
+  );
   beforeEach(async function () {
     // @ts-ignore
     useCase = new SelectIntegration(
       integrationRepository,
-      new ConditionsFilter(
-        new SubscriberRepository(),
-        new MessageRepository(),
-        executionDetailsRepository,
-        new JobRepository(),
-        new TenantRepository(),
-        new EnvironmentRepository(),
-        new ExecutionLogRoute(
-          new CreateExecutionDetails(new ExecutionDetailsRepository()),
-          new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
-          new GetFeatureFlag(new FeatureFlagsService())
-        ),
-        // @ts-ignore
-        new CompileTemplate(),
-        // @ts-ignore
-        new NormalizeVariables()
-      ),
+      conditionsFilter,
       new TenantRepository()
     );
     jest.clearAllMocks();
