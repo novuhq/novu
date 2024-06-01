@@ -46,8 +46,14 @@ export class MobishastraProvider implements ISmsProvider {
       ]),
     });
 
-    const responseData = response.data;
-    const messageId = responseData?.[0]?.msg_id?.trim() ?? uuid();
+    const responseData = response.data?.[0];
+    const messageId = responseData?.msg_id?.trim();
+
+    if (!messageId) {
+      const errorMessage =
+        responseData?.str_response || 'Failed to send message';
+      throw new Error(errorMessage);
+    }
 
     return {
       id: messageId,
