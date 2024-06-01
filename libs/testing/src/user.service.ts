@@ -10,7 +10,7 @@ export class UserService {
   private organizationService = new OrganizationService();
   private userRepository = new UserRepository();
 
-  async createCypressTestUser(): Promise<UserEntity> {
+  async createTestUser(): Promise<UserEntity> {
     const data = {
       email: 'test-user-1@example.com',
       firstName: faker.name.firstName(),

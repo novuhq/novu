@@ -14,16 +14,17 @@ export function PasswordResetPage() {
   const { isFromVercel, params } = useVercelParams();
 
   const loginLink = isFromVercel ? `${ROUTES.AUTH_LOGIN}?${params.toString()}` : ROUTES.AUTH_LOGIN;
-
   if (showSentSuccess) {
-    <AuthLayout
-      title="Reset Sent!"
-      description="We've sent a password reset link to the account associated with your email"
-    >
-      <Button data-test-id="success-screen-reset" onClick={() => navigate(loginLink)} inherit>
-        Go Back
-      </Button>
-    </AuthLayout>;
+    return (
+      <AuthLayout
+        title="Reset Sent!"
+        description="We've sent a password reset link to the account associated with your email"
+      >
+        <Button data-test-id="success-screen-reset" onClick={() => navigate(loginLink)} inherit>
+          Go Back
+        </Button>
+      </AuthLayout>
+    );
   }
 
   return (

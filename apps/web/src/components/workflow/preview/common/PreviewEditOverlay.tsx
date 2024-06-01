@@ -1,7 +1,8 @@
 import styled from '@emotion/styled';
-import { Flex, Group, Overlay, UnstyledButton, useMantineColorScheme } from '@mantine/core';
+import { Flex, Group, Overlay, OverlayProps, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { colors, PencilOutlined, Text } from '@novu/design-system';
 import { StepTypeEnum } from '@novu/shared';
+import { PropsWithChildren } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useBasePath } from '../../../../pages/templates/hooks/useBasePath';
 
@@ -44,7 +45,7 @@ export function PreviewEditOverlay() {
   );
 }
 
-const OverlayStyled = styled(Overlay)`
+const OverlayStyled = styled(Overlay)<PropsWithChildren<OverlayProps>>`
   border: 1px solid ${({ theme }) => (theme.colorScheme === 'dark' ? colors.B30 : colors.BGLight)};
   background: ${({ theme }) => (theme.colorScheme === 'dark' ? 'rgba(41, 41, 51, 0.8)' : 'rgba(255, 255, 255, 0.8)')};
 `;

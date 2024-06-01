@@ -139,7 +139,7 @@ spec:
               value: {{ .Values.externalS3.gcsBucketName | quote }}
             - name: GOOGLE_APPLICATION_CREDENTIALS
               value: {{ .Values.externalS3.googleApplicationCredentials | quote }}
-            {{- else -}}
+            {{- else }}
             - name: S3_BUCKET_NAME
               valueFrom :
                 secretKeyRef:
