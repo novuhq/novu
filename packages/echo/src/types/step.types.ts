@@ -91,7 +91,7 @@ export type CustomStep = <
      *
      * @param inputs The inputs for the step.
      */
-    skip?: (inputs: T_Inputs) => MaybePromise<boolean>;
+    skip?: Skip;
     /**
      * The schema for the inputs of the step. Used to validate the user-provided input from Novu Web.
      */
@@ -145,7 +145,7 @@ export type ChannelStep<
      *
      * @param inputs The inputs for the step.
      */
-    skip?: (inputs: T_Inputs) => MaybePromise<boolean>;
+    skip?: Skip;
     /**
      * The schema for the inputs of the step. Used to validate the user-provided input from Novu Web.
      */

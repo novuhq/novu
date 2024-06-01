@@ -111,27 +111,16 @@ export class SendMessage {
         variables: variables,
       });
     }
-
-    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(
-      resonateResponse?.options?.skip,
-      command,
-      variables
-    );
+    const echoSkip = resonateResponse?.options?.skip;
+    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(echoSkip, command, variables);
 
     if (!command.payload?.$on_boarding_trigger) {
-      this.sendProcessStepEvent(
-        command,
-        resonateResponse?.options?.skip,
-        filterResult,
-        channelPreferenceResult,
-        !!resonateResponse?.outputs
-      );
+      this.sendProcessStepEvent(command, echoSkip, filterResult, channelPreferenceResult, !!resonateResponse?.outputs);
     }
 
-    if (!filterResult?.passed || !channelPreferenceResult || resonateResponse?.options?.skip) {
+    if (!filterResult?.passed || !channelPreferenceResult || echoSkip) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
-      const echoSkip = resonateResponse?.options?.skip;
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
           ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),

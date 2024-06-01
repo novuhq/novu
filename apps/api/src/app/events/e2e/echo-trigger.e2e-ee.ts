@@ -8,7 +8,7 @@ import {
   JobRepository,
   ExecutionDetailsRepository,
 } from '@novu/dal';
-import { JobStatusEnum, StepTypeEnum } from '@novu/shared';
+import { ExecutionDetailsStatusEnum, JobStatusEnum, MarkMessagesAsEnum, StepTypeEnum } from '@novu/shared';
 import { echoServer } from '../../../../e2e/echo.server';
 
 const eventTriggerPath = '/v1/events/trigger';
@@ -73,7 +73,7 @@ describe('Echo Trigger ', async () => {
       throw new Error('Workflow not found');
     }
 
-    await triggerEvent(session, workflowId, { name: 'test_name' });
+    await triggerEvent(session, workflowId, subscriber, { name: 'test_name' });
     await session.awaitRunningJobs(workflow._id);
 
     const messagesAfter = await messageRepository.find({
@@ -106,7 +106,7 @@ describe('Echo Trigger ', async () => {
                 name: { type: 'string', default: 'TEST' },
               },
             } as const,
-            skip: () => true,
+            skip: true,
           }
         );
       },
@@ -183,7 +183,7 @@ describe('Echo Trigger ', async () => {
       throw new Error('Workflow not found');
     }
 
-    await triggerEvent(workflowId, {});
+    await triggerEvent(session, workflowId, subscriber, {});
 
     await session.awaitRunningJobs(workflow._id);
 
@@ -207,7 +207,7 @@ describe('Echo Trigger ', async () => {
 
     await executionDetailsRepository.delete({ _environmentId: session.environment._id });
 
-    await triggerEvent(workflowId, { name: 4 });
+    await triggerEvent(session, workflowId, subscriber, { name: 4 });
     await session.awaitRunningJobs(workflow._id);
 
     const executionDetailsInvalidType = await executionDetailsRepository.find({
@@ -269,7 +269,7 @@ describe('Echo Trigger ', async () => {
       throw new Error('Workflow not found');
     }
 
-    await triggerEvent(workflowId, {});
+    await triggerEvent(session, workflowId, subscriber, {});
 
     await session.awaitRunningJobs(workflow._id);
 
@@ -350,8 +350,8 @@ describe('Echo Trigger ', async () => {
       throw new Error('Workflow not found');
     }
 
-    await triggerEvent(workflowId, { name: 'John' });
-    await triggerEvent(workflowId, { name: 'Bela' });
+    await triggerEvent(session, workflowId, subscriber, { name: 'John' });
+    await triggerEvent(session, workflowId, subscriber, { name: 'Bela' });
 
     await session.awaitRunningJobs(workflow?._id, false, 0);
 
@@ -375,7 +375,7 @@ async function syncWorkflow(session) {
   });
 }
 
-async function triggerEvent(session, workflowId: string, subscriber, payload) {
+async function triggerEvent(session, workflowId: string, subscriber, payload?: any) {
   const defaultPayload = {
     name: 'test_name',
   };
