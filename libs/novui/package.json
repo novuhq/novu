@@ -51,7 +51,8 @@
     "prepare:lib": "pnpm prepare:panda && pnpm prepare:audit",
     "prepare:panda": "pnpm panda codegen",
     "prepare:audit": "pnpm audit-components",
-    "prebuild": "rimraf dist styled-system && pnpm prepare:lib",
+    "clean": "rimraf dist styled-system",
+    "prebuild": "pnpm prepare:panda",
     "lint": "eslint --ext .ts,.tsx src",
     "build": "cross-env node_modules/.bin/tsc",
     "build:watch": "pnpm panda --watch & cross-env node_modules/.bin/tsc -w --preserveWatchOutput",
@@ -85,6 +86,9 @@
     "@vitejs/plugin-react": "^4.0.3",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-storybook": "^0.6.13",
+    "postcss": "^8.4.38",
+    "postcss-preset-mantine": "^1.15.0",
+    "postcss-simple-vars": "^7.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-scanner": "^1.1.0",
@@ -115,5 +119,9 @@
         ]
       }
     }
+  },
+  "dependencies": {
+    "@mantine/core": "^7.10.0",
+    "@mantine/hooks": "^7.10.0"
   }
 }

@@ -8,6 +8,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import { api } from './api/api.client';
 import { css } from '@novu/novui/css';
+import { NovuiProvider } from '@novu/novui';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
@@ -31,13 +32,15 @@ const queryClient = new QueryClient({
 const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
     <ThemeProvider>
-      <SegmentProvider>
-        <QueryClientProvider client={queryClient}>
-          <BrowserRouter basename={CONTEXT_PATH}>
-            <HelmetProvider>{children}</HelmetProvider>
-          </BrowserRouter>
-        </QueryClientProvider>
-      </SegmentProvider>
+      <NovuiProvider>
+        <SegmentProvider>
+          <QueryClientProvider client={queryClient}>
+            <BrowserRouter basename={CONTEXT_PATH}>
+              <HelmetProvider>{children}</HelmetProvider>
+            </BrowserRouter>
+          </QueryClientProvider>
+        </SegmentProvider>
+      </NovuiProvider>
     </ThemeProvider>
   );
 };
