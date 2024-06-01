@@ -103,11 +103,7 @@ export const ProductLead = ({
               segment.track('Scheduled call clicked - [Product lead]', {
                 feature: id,
               });
-              window.open(
-                `https://calendly.com/novuhq/novu-meeting?full_name=${currentUser?.firstName}&email=${
-                  currentUser?.email
-                }&utm_campaign=${id}&utm_source=${isSelfHosted ? 'self-hosted' : 'cloud'}`
-              );
+              window.open('https://notify.novu.co/meetings/novuhq/notifications-45min?utm_campaign=in-app');
             }}
             variant="outline"
           >
