@@ -3,7 +3,6 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
 import { ChannelTypeEnum, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
-import { faker } from '@faker-js/faker';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
 import { SharedModule } from '../../shared/shared.module';
 
@@ -418,10 +417,10 @@ describe('Update Subscriber channel credentials', function () {
   it('should update deviceTokens without duplication on channel creation (addChannelToSubscriber)', async function () {
     const subscriberId = SubscriberRepository.createObjectId();
     const test = await subscriberRepository.create({
-      lastName: faker.name.lastName(),
-      firstName: faker.name.firstName(),
-      email: faker.internet.email(),
-      phone: faker.phone.phoneNumber(),
+      firstName: faker.firstName(),
+      lastName: faker.lastName(),
+      email: faker.email(),
+      phone: faker.phoneNumber(),
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
       subscriberId: subscriberId,

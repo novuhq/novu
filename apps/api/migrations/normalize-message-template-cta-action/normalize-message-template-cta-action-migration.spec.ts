@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import { faker } from '@faker-js/faker';
 
 import { UserSession } from '@novu/testing';
 import { MessageRepository, MessageTemplateRepository } from '@novu/dal';
@@ -29,8 +28,8 @@ describe('Normalize cta action', function () {
         action: {
           buttons: [
             {
-              title: faker.lorem.words(3),
-              url: faker.internet.url(),
+              title: faker.words(3),
+              url: faker.url(),
             },
           ],
         },
@@ -70,8 +69,8 @@ describe('Normalize cta action', function () {
         action: {
           buttons: [
             {
-              title: faker.lorem.words(3),
-              url: faker.internet.url(),
+              title: faker.words(3),
+              url: faker.url(),
             },
           ],
         },
