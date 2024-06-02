@@ -7,7 +7,11 @@ export interface SessionOptions {
 }
 
 export class Session {
-  constructor(private emitter: NovuEventEmitter, options: SessionOptions) {}
+  #emitter: NovuEventEmitter;
+
+  constructor(emitter: NovuEventEmitter, options: SessionOptions) {
+    this.#emitter = emitter;
+  }
 
   public initialize(): void {}
 }

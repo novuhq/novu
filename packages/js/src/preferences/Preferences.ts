@@ -1,5 +1,9 @@
 import { NovuEventEmitter } from '../event-emitter';
 
 export class Preferences {
-  constructor(private emitter: NovuEventEmitter) {}
+  #emitter: NovuEventEmitter;
+
+  constructor(emitter: NovuEventEmitter) {
+    this.#emitter = emitter;
+  }
 }

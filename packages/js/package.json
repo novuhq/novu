@@ -5,14 +5,28 @@
   "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
   "author": "",
   "license": "ISC",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
   "files": [
     "dist/*"
   ],
   "sideEffects": false,
   "private": true,
-  "types": "dist/index.d.ts",
   "scripts": {
     "start": "pnpm run build -- --watch --sourcemap",
     "build": "tsup",
