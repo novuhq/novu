@@ -370,7 +370,7 @@ async function syncWorkflow(session) {
   const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
 
   await session.testAgent.post(`/v1/echo/sync`).send({
-    chimeraUrl: echoServer.serverPath + '/echo',
+    url: echoServer.serverPath + '/echo',
     workflows: resultDiscover.data.workflows,
   });
 }
@@ -402,7 +402,7 @@ async function discoverAndSyncEcho(session: UserSession) {
   const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
 
   await session.testAgent.post(`/v1/echo/sync`).send({
-    chimeraUrl: echoServer.serverPath + '/echo',
+    url: echoServer.serverPath + '/echo',
     workflows: resultDiscover.data.workflows,
   });
 }
