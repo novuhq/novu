@@ -1,5 +1,5 @@
 import { Global, MiddlewareConsumer, Module, ModuleMetadata } from '@nestjs/common';
-import { getCommunityAuthModuleConfig, configure } from './auth.module.config';
+import { getCommunityAuthModuleConfig, configure } from './community.auth.module.config';
 import { getEEModuleConfig } from './ee.auth.module.config';
 
 function getModuleConfig(): ModuleMetadata {

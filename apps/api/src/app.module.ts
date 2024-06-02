@@ -72,7 +72,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   InboundParseModule, //
   SharedModule, // DALS, analytics, cache ....
   HealthModule, //
-  EnvironmentsModule, // maybe
+  EnvironmentsModule, //
   ExecutionDetailsModule, //
   WorkflowModule, //
   EventsModule, //
@@ -81,7 +81,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   ContentTemplatesModule, //
   IntegrationModule, //
   ChangeModule, //
-  SubscribersModule, // kept - subs are not users, they can live in external systems
+  SubscribersModule, //
   FeedsModule, //
   LayoutsModule, //
   MessagesModule, //
@@ -91,6 +91,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   TenantModule, //
   WorkflowOverridesModule, //
   RateLimitingModule, //
+  WidgetsModule, //
   ProfilingModule.register(packageJson.name), //
   TracingModule.register(packageJson.name, packageJson.version), //
 ];
@@ -103,7 +104,6 @@ if (process.env.NOVU_ENTERPRISE !== 'true') {
     UserModule, // no interdeps
     StorageModule, // no interdeps
     InvitesModule, // no interdeps
-    WidgetsModule, // TOOD: solve as last
   ];
   baseModules.push(...communityModules);
 }
