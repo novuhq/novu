@@ -5,7 +5,7 @@ import {
   TenantEntity,
   TenantRepository,
 } from '@novu/dal';
-import { IMessageFilter } from '@novu/shared';
+import { FilterPartTypeEnum, IMessageFilter } from '@novu/shared';
 import { IFilterVariables } from '../../utils/filter-processing-details';
 import { CachedEntity } from '../../services/cache/interceptors/cached-entity.interceptor';
 import { buildSubscriberKey } from '../../services/cache/key-builders/entities';
@@ -63,7 +63,9 @@ export class NormalizeVariables {
     }
 
     const subscriberFilterExist = filters?.find((filter) => {
-      return filter?.children?.find((item) => item?.on === 'subscriber');
+      return filter?.children?.find(
+        (item) => item?.on === FilterPartTypeEnum.SUBSCRIBER
+      );
     });
 
     if (subscriberFilterExist && command.job) {
@@ -91,7 +93,9 @@ export class NormalizeVariables {
         ? command.job?.tenant
         : command.job?.tenant?.identifier;
     const tenantFilterExist = filters?.find((filter) => {
-      return filter?.children?.find((item) => item?.on === 'tenant');
+      return filter?.children?.find(
+        (item) => item?.on === FilterPartTypeEnum.TENANT
+      );
     });
 
     if (tenantFilterExist && tenantIdentifier && command.job) {

@@ -49,7 +49,6 @@ import {
 import { Schema } from './types/schema.types';
 import { EMOJI, log } from './utils';
 import { VERSION } from './version';
-import { Skip } from './types/skip.types';
 
 JSONSchemaFaker.option({
   useDefaultValue: true,
