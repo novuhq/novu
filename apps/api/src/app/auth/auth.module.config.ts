@@ -1,10 +1,18 @@
 import { MiddlewareConsumer, ModuleMetadata, Provider, RequestMethod } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import * as passport from 'passport';
 
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
-import { AuthService } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  AuthService,
+  CommunityAuthService,
+  CreateUser,
+  IAuthService,
+  SwitchEnvironment,
+  SwitchOrganization,
+} from '@novu/application-generic';
 
 import { RolesGuard } from './framework/roles.guard';
 import { JwtStrategy } from './services/passport/jwt.strategy';
@@ -19,6 +27,13 @@ import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strate
 import { UserAuthGuard } from './framework/user.auth.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
+import {
+  UserRepository,
+  SubscriberRepository,
+  OrganizationRepository,
+  EnvironmentRepository,
+  MemberRepository,
+} from '@novu/dal';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
 
@@ -26,26 +41,75 @@ if (process.env.GITHUB_OAUTH_CLIENT_ID) {
   AUTH_STRATEGIES.push(GitHubStrategy);
 }
 
-const authModuleConfig: ModuleMetadata = {
-  imports: [
-    OrganizationModule,
-    SharedModule,
-    UserModule,
-    PassportModule.register({
-      defaultStrategy: PassportStrategyEnum.JWT,
-    }),
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-      signOptions: {
-        expiresIn: 360000,
-      },
-    }),
-    EnvironmentsModule,
+const communityAuthServiceProvider = {
+  provide: 'AUTH_SERVICE',
+  useFactory: (
+    userRepository: UserRepository,
+    subscriberRepository: SubscriberRepository,
+    createUserUsecase: CreateUser,
+    jwtService: JwtService,
+    analyticsService: AnalyticsService,
+    organizationRepository: OrganizationRepository,
+    environmentRepository: EnvironmentRepository,
+    memberRepository: MemberRepository,
+    switchOrganizationUsecase: SwitchOrganization,
+    switchEnvironmentUsecase: SwitchEnvironment
+  ): IAuthService => {
+    return new CommunityAuthService(
+      userRepository,
+      subscriberRepository,
+      createUserUsecase,
+      jwtService,
+      analyticsService,
+      organizationRepository,
+      environmentRepository,
+      memberRepository,
+      switchOrganizationUsecase,
+      switchEnvironmentUsecase
+    );
+  },
+  inject: [
+    UserRepository,
+    SubscriberRepository,
+    CreateUser,
+    JwtService,
+    AnalyticsService,
+    OrganizationRepository,
+    EnvironmentRepository,
+    MemberRepository,
   ],
-  controllers: [AuthController],
-  providers: [UserAuthGuard, ...USE_CASES, ...AUTH_STRATEGIES, AuthService, RolesGuard, RootEnvironmentGuard],
-  exports: [RolesGuard, RootEnvironmentGuard, AuthService, ...USE_CASES, UserAuthGuard],
 };
+
+export function getCommunityAuthModuleConfig(): ModuleMetadata {
+  return {
+    imports: [
+      OrganizationModule,
+      SharedModule,
+      UserModule,
+      PassportModule.register({
+        defaultStrategy: PassportStrategyEnum.JWT,
+      }),
+      JwtModule.register({
+        secret: process.env.JWT_SECRET,
+        signOptions: {
+          expiresIn: 360000,
+        },
+      }),
+      EnvironmentsModule,
+    ],
+    controllers: [AuthController],
+    providers: [
+      UserAuthGuard,
+      ...USE_CASES,
+      ...AUTH_STRATEGIES,
+      AuthService,
+      RolesGuard,
+      RootEnvironmentGuard,
+      communityAuthServiceProvider,
+    ],
+    exports: [RolesGuard, RootEnvironmentGuard, AuthService, ...USE_CASES, UserAuthGuard],
+  };
+}
 
 export function configure(consumer: MiddlewareConsumer) {
   if (process.env.GITHUB_OAUTH_CLIENT_ID) {
@@ -62,5 +126,3 @@ export function configure(consumer: MiddlewareConsumer) {
       });
   }
 }
-
-export { authModuleConfig };

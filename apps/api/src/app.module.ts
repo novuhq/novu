@@ -98,7 +98,13 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
 const enterpriseModules = enterpriseImports();
 
 if (process.env.NOVU_ENTERPRISE !== 'true') {
-  const communityModules = [OrganizationModule, UserModule, StorageModule, InvitesModule, WidgetsModule];
+  const communityModules = [
+    OrganizationModule, // no interdeps
+    UserModule, // no interdeps
+    StorageModule, // no interdeps
+    InvitesModule, // no interdeps
+    WidgetsModule, // TOOD: solve as last
+  ];
   baseModules.push(...communityModules);
 }
 
