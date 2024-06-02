@@ -15,7 +15,7 @@ const prePopulateEnv = (folders, folderBasePath, exampleEnvFilePath = 'src/.exam
 };
 
 (async () => {
-  const apps = ['api', 'ws', 'worker'];
+  const apps = ['api', 'ws', 'worker', 'web', 'widget'];
   const appsBasePath = `${__dirname}/../apps`;
 
   console.log('----------------------------------------');
