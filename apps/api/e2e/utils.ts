@@ -1,4 +1,6 @@
-const faker = {
+//# cSpell:disable
+
+export const fakerUtil = {
   phoneNumber: () =>
     `(${Math.floor(100 * Math.random()) + 100}) ${Math.floor(100 * Math.random()) + 100}-${
       Math.floor(10000 * Math.random()) + 10000

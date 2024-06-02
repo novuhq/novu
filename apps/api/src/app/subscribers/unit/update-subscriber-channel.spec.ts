@@ -5,6 +5,7 @@ import { expect } from 'chai';
 import { ChannelTypeEnum, ChatProviderIdEnum, PushProviderIdEnum } from '@novu/shared';
 import { OAuthHandlerEnum, UpdateSubscriberChannel, UpdateSubscriberChannelCommand } from '@novu/application-generic';
 import { SharedModule } from '../../shared/shared.module';
+import { fakerUtil } from '../../../../e2e/utils';
 
 describe('Update Subscriber channel credentials', function () {
   let updateSubscriberChannelUsecase: UpdateSubscriberChannel;
@@ -417,10 +418,10 @@ describe('Update Subscriber channel credentials', function () {
   it('should update deviceTokens without duplication on channel creation (addChannelToSubscriber)', async function () {
     const subscriberId = SubscriberRepository.createObjectId();
     const test = await subscriberRepository.create({
-      firstName: faker.firstName(),
-      lastName: faker.lastName(),
-      email: faker.email(),
-      phone: faker.phoneNumber(),
+      firstName: fakerUtil.firstName(),
+      lastName: fakerUtil.lastName(),
+      email: fakerUtil.email(),
+      phone: fakerUtil.phoneNumber(),
       _environmentId: session.environment._id,
       _organizationId: session.organization._id,
       subscriberId: subscriberId,

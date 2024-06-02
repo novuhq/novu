@@ -7,6 +7,7 @@ import { EnvironmentRepository } from '@novu/dal';
 import { decryptApiKey } from '@novu/application-generic';
 
 import { encryptApiKeysMigration } from './encrypt-api-keys-migration';
+import { fakerUtil } from '../../e2e/utils';
 
 async function pruneIntegration({ environmentRepository }: { environmentRepository: EnvironmentRepository }) {
   const old = await environmentRepository.find({});
@@ -31,7 +32,7 @@ describe('Encrypt Old api keys', function () {
     for (let i = 0; i < 2; i++) {
       await environmentRepository.create({
         identifier: 'identifier' + i,
-        name: faker.jobTitle(),
+        name: fakerUtil.jobTitle(),
         _organizationId: session.organization._id,
         apiKeys: [
           {
@@ -84,7 +85,7 @@ describe('Encrypt Old api keys', function () {
     for (let i = 0; i < 2; i++) {
       await environmentRepository.create({
         identifier: 'identifier' + i,
-        name: faker.jobTitle(),
+        name: fakerUtil.jobTitle(),
         _organizationId: session.organization._id,
         apiKeys: [
           {

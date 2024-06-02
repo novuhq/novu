@@ -6,6 +6,7 @@ import { StepTypeEnum } from '@novu/shared';
 
 import { normalizeMessageTemplateCtaAction } from './normalize-message-template-cta-action-migration';
 import { normalizeMessageCtaAction } from './normalize-message-cta-action-migration';
+import { fakerUtil } from '../../e2e/utils';
 
 describe('Normalize cta action', function () {
   let session: UserSession;
@@ -28,8 +29,8 @@ describe('Normalize cta action', function () {
         action: {
           buttons: [
             {
-              title: faker.words(3),
-              url: faker.url(),
+              title: fakerUtil.words(3),
+              url: fakerUtil.url(),
             },
           ],
         },
@@ -69,8 +70,8 @@ describe('Normalize cta action', function () {
         action: {
           buttons: [
             {
-              title: faker.words(3),
-              url: faker.url(),
+              title: fakerUtil.words(3),
+              url: fakerUtil.url(),
             },
           ],
         },
