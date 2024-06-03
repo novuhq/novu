@@ -66,10 +66,16 @@
       "require": "./dist/h3.js",
       "import": "./dist/h3.mjs",
       "types": "./dist/h3.d.ts"
+    },
+    "./sveltekit": {
+      "require": "./dist/sveltekit.js",
+      "import": "./dist/sveltekit.mjs",
+      "types": "./dist/sveltekit.d.ts"
     }
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@sveltejs/kit": "^2.5.10",
     "@types/express": "^4.17.13",
     "@types/jest": "^29.5.12",
     "@types/json-schema": "^7.0.15",
