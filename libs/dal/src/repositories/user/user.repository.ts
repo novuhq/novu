@@ -36,8 +36,4 @@ export class UserRepository extends BaseRepository<UserDBModel, UserEntity, obje
   async findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity | null> {
     return this.userRepository.findByLoginProvider(profileId, provider);
   }
-
-  async userExists(userId: string): Promise<boolean> {
-    return this.userRepository.userExists(userId);
-  }
 }

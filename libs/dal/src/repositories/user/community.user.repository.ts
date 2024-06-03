@@ -57,13 +57,4 @@ export class CommunityUserRepository
       'tokens.provider': provider,
     });
   }
-
-  async userExists(userId: string) {
-    return !!(await this.findOne(
-      {
-        _id: userId,
-      },
-      '_id'
-    ));
-  }
 }

@@ -11,5 +11,4 @@ export interface IUserRepository {
     resetTokenCount: IUserResetTokenCount
   ): Promise<{ matched: number; modified: number }>;
   findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity | null>;
-  userExists(userId: string): Promise<boolean>;
 }
