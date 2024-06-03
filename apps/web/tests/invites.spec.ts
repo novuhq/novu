@@ -31,15 +31,22 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
+// This is flaky in Github actions but passeslocally
 test('invite a new user to the organization', async ({ context, page }) => {
   const newSession = await inviteUser(session, TestUserConstants.Email);
   await logout(page, session);
   await registerFromInvitation(page, newSession.token);
 
-  const headerPage = await HeaderPage.goTo(page);
-  await headerPage.clickAvatar();
-  const orgName = headerPage.getOrganizationName();
-  expect(orgName).toContainText(newSession.organization.name, { ignoreCase: true });
+  /*
+   * const headerPage = await HeaderPage.goTo(page);
+   * await headerPage.clickAvatar();
+   * const orgName = headerPage.getOrganizationName();
+   * expect(orgName).toContainText(newSession.organization.name, { ignoreCase: true });
+   */
+
+  const sidebarPage = await SidebarPage.goTo(page);
+  const orgSwitchValue = (await sidebarPage.getOrganizationSwitch().inputValue()).toLowerCase();
+  expect(orgSwitchValue).toBe(newSession.organization.name.toLowerCase());
 });
 
 test('invite an existing user to the organization', async ({ context, page }) => {
