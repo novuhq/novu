@@ -15,13 +15,13 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test.skip('TODO - updates logo', async ({ page }) => {
+test.skip('updates logo', async ({ page }) => {
   const brandPage = await BrandPage.goTo(page);
   await brandPage.uploadLogoImage('../fixtures/test-logo.png');
   await brandPage.assertImageSourceSetCorrectly(session.organization._id);
 });
 
-test.skip('TODO: - changes the color settings', async ({ page }) => {
+test.skip('changes the color settings', async ({ page }) => {
   // NV-3793: browser freezes when clicking on the color picker
   const colorChoice = '#BA68C8';
   const brandPage = await BrandPage.goTo(page);
