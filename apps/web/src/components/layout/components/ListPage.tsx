@@ -54,23 +54,21 @@ export const ListPage = <TRow extends object>({
       <PageHeader title={title} />
       {children}
       {paginationInfo && (
-        <>
-          <StickyFooter>
-            <PaginationWrapper>
-              <Pagination
-                totalItemCount={paginationInfo.totalItemCount}
-                totalPageCount={paginationInfo.totalPageCount}
-                currentPageNumber={paginationInfo.currentPageNumber}
-                pageSize={paginationInfo.pageSize}
-                onPageChange={paginationInfo.onPageChange}
-              >
-                <Pagination.PageSizeSelect onPageSizeChange={paginationInfo.onPageSizeChange} />
-                <Pagination.ControlBar />
-                <Pagination.GoToPageInput label={'Go to'} placeholder={'page'} />
-              </Pagination>
-            </PaginationWrapper>
-          </StickyFooter>
-        </>
+        <StickyFooter>
+          <PaginationWrapper>
+            <Pagination
+              totalItemCount={paginationInfo.totalItemCount}
+              totalPageCount={paginationInfo.totalPageCount}
+              currentPageNumber={paginationInfo.currentPageNumber}
+              pageSize={paginationInfo.pageSize}
+              onPageChange={paginationInfo.onPageChange}
+            >
+              <Pagination.PageSizeSelect onPageSizeChange={paginationInfo.onPageSizeChange} />
+              <Pagination.ControlBar />
+              <Pagination.GoToPageInput label={'Go to'} placeholder={'page'} />
+            </Pagination>
+          </PaginationWrapper>
+        </StickyFooter>
       )}
     </PageContainer>
   );

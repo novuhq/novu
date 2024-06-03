@@ -306,7 +306,7 @@ const CenterDiv = styled.div`
   line-height: 20px;
 `;
 
-const SelectProviderBodyContainer = styled.form`
+const SelectProviderBodyContainer = styled.div`
   flex: 1;
   display: flex;
   flex-direction: column;
