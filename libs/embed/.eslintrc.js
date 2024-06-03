@@ -6,4 +6,5 @@ module.exports = {
     sourceType: 'module',
     tsconfigRootDir: __dirname,
   },
+  ignorePatterns: ['./tools/*.ts'],
 };

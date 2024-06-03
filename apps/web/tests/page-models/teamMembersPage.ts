@@ -5,6 +5,7 @@ export class TeamMembersPage {
 
   static async goTo(page: Page): Promise<TeamMembersPage> {
     await page.goto('/settings/team');
+
     return new TeamMembersPage(page);
   }
 
@@ -13,16 +14,20 @@ export class TeamMembersPage {
   }
 
   async inviteUserByEmail(email: string) {
+    const responsePromise = this.page.waitForResponse('**/invites');
     const inputBox = this.getInviteUserInputBox();
     await expect(inputBox).toBeVisible();
 
     await inputBox.fill(email);
     await this.page.getByTestId('submit-btn').click();
+    await responsePromise;
   }
 
   async removeUserFromTeam() {
+    const responsePromise = this.page.waitForResponse('**/organizations/members/**');
     await this.page.getByTestId('actions-row-btn').click();
     await this.page.getByTestId('remove-row-btn').click();
+    await responsePromise;
   }
 
   async assertNumberOfUsersInTeamMembersList(count: number) {
