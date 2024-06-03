@@ -6,7 +6,7 @@ import { Either } from './types';
 import { type SupportedFrameworkName } from './types';
 import { getResponse } from './utils';
 
-export const frameworkName: SupportedFrameworkName = 'nextjs';
+export const frameworkName: SupportedFrameworkName = 'next';
 
 /**
  * In Next.js, serve and register any declared workflows with Echo, making
