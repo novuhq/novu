@@ -1,5 +1,6 @@
 import { defineConfig, Options } from 'tsup';
 import { name, version } from './package.json';
+import { compress } from 'esbuild-plugin-compress';
 
 const isProd = process.env?.NODE_ENV === 'production';
 
@@ -33,5 +34,13 @@ export default defineConfig([
         js: '.min.js',
       };
     },
+    esbuildPlugins: [
+      compress({
+        gzip: true,
+        brotli: false,
+        outputDir: '.',
+        exclude: ['**/*.map'],
+      }),
+    ],
   },
 ]);

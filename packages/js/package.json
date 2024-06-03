@@ -41,6 +41,7 @@
     "@types/node": "^18.11.12",
     "bytes-iec": "^3.1.1",
     "chalk": "^5.3.0",
+    "esbuild-plugin-compress": "^1.0.1",
     "jest": "^29.3.1",
     "size-limit": "^11.1.4",
     "ts-jest": "^29.0.3",
