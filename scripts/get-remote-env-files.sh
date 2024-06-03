@@ -12,6 +12,7 @@ echo "Downloading secrets for the Worker..."
 doppler secrets download --project worker --config dev --no-file --format env > apps/worker/src/.env
 
 echo "Downloading secrets for the Web app..."
-doppler secrets download --project web --config dev --no-file --format env > apps/web/src/.env
+doppler secrets download --project web --config dev --no-file --format env > apps/web/.env.local
+
 
 echo "All done! ✅"
