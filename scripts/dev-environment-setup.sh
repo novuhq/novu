@@ -390,34 +390,52 @@ install_aws_cli () {
 }
 
 start_database() {
-   # Initialize flag
-   already_installed=0
+  # Check if brew is installed
+  command -v brew > /dev/null 2>&1
 
-   # Check if mongodb is installed
-   brew ls --versions mongodb > /dev/null
-   if [ $? -eq 0 ]; then
-     echo "Warning: MongoDB is already installed via brew. Please uninstall it first."
-     already_installed=1
-   fi
+  # Initialize flag
+  already_installed=0
 
-   # Check if redis is installed
-   brew ls --versions redis > /dev/null
-   if [ $? -eq 0 ]; then
-     echo "Warning: Redis is already installed via brew. Please uninstall it first."
-     already_installed=1
-   fi
+  if [ $? -eq 0 ]; then
 
-   # Only copy the example env file and start Docker Compose if both MongoDB and Redis are not already installed
-   if [ $already_installed -ne 1 ]; then
-     # Copy the example env file
-     cp ./docker/.env.example ./docker/local/development/.env
 
-     # Start Docker Compose detached
-     docker-compose -f ./docker/local/development/docker-compose.yml up -d
+      # Check if mongodb is installed
+      brew ls --versions mongodb > /dev/null
+      if [ $? -eq 0 ]; then
+        echo "Warning: MongoDB is already installed via brew. Please uninstall it first."
+        already_installed=1
+      fi
 
-     start_success_message "Docker Infrastructure"
-     echo "Note: To manually start go to /docker in the project"
-   fi
+      # Check if redis is installed
+      brew ls --versions redis > /dev/null
+      if [ $? -eq 0 ]; then
+        echo "Warning: Redis is already installed via brew. Please uninstall it first."
+        already_installed=1
+      fi
+  else
+      echo "brew is not installed, checking default ports for MongoDB and Redis"
+      # Check MongoDB (port 27017) and Redis (port 6379)
+      if lsof -Pi :27017 -sTCP:LISTEN -t >/dev/null ; then
+        echo "Warning: MongoDB is running on port 27017. Please stop it first."
+        already_installed=1
+      fi
+      if lsof -Pi :6379 -sTCP:LISTEN -t >/dev/null ; then
+        echo "Warning: Redis is running on port 6379. Please stop it first."
+        already_installed=1
+      fi
+  fi
+
+  # Only copy the example env file and start Docker Compose if both MongoDB and Redis are not already installed
+  if [ $already_installed -ne 1 ]; then
+      # Copy the example env file
+      cp ./docker/.env.example ./docker/local/development/.env
+
+      # Start Docker Compose detached
+      docker-compose -f ./docker/local/development/docker-compose.yml up -d
+
+      start_success_message "Docker Infrastructure"
+      echo "Note: To manually start go to /docker in the project"
+  fi
 }
 
 create_local_dev_domain () {
