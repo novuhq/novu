@@ -77,6 +77,8 @@ const communityAuthServiceProvider = {
     OrganizationRepository,
     EnvironmentRepository,
     MemberRepository,
+    SwitchOrganization,
+    SwitchEnvironment,
   ],
 };
 
