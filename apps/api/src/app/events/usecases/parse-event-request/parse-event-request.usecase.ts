@@ -248,9 +248,7 @@ export class ParseEventRequest {
     if (notification) return;
 
     // check if user is using personal email
-    const user = await this.userRepository.findOne({
-      _id: command.userId,
-    });
+    const user = await this.userRepository.findById(command.userId);
 
     if (this.checkEmail(user?.email)) return;
 
