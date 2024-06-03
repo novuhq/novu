@@ -15,6 +15,7 @@
     "start": "pnpm start:dev",
     "start:dev": "cross-env TZ=UTC nest start --watch",
     "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nest start --watch",
+    "start:test-ee": "cross-env NODE_ENV=test NOVU_ENTERPRISE=true PORT=1336 TZ=UTC nest start --watch",
     "start:debug": "TZ=UTC nodemon --config nodemon-debug.json --debug",
     "start:prod": "pnpm start:build",
     "start:build": "TZ=UTC node dist/main.js",
@@ -93,6 +94,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@faker-js/faker": "^6.0.0",
     "@nestjs/cli": "^10.1.16",
     "@nestjs/schematics": "^10.0.2",
     "@nestjs/testing": "^10.2.2",

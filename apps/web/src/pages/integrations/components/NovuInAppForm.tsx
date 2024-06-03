@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
 import styled from '@emotion/styled/macro';
-import { Title, Text, Grid, Stack, useMantineColorScheme } from '@mantine/core';
+import { Title, Text, Grid, Stack, useMantineColorScheme, TextProps } from '@mantine/core';
 import { useMutation } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 import type { IResponseError, ICredentialsDto } from '@novu/shared';
@@ -157,7 +157,7 @@ export const NovuInAppForm = ({
   );
 };
 
-const StyledText = styled(Text)`
+const StyledText = styled(Text)<PropsWithChildren<TextProps>>`
   display: inline-block;
   word-break: normal;
   margin: 0 10px;

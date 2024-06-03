@@ -1,4 +1,4 @@
-import { MouseEventHandler, useMemo } from 'react';
+import { MouseEventHandler, PropsWithChildren, useMemo } from 'react';
 import styled from '@emotion/styled';
 import { Group, Stack, Text, UnstyledButton, useMantineColorScheme } from '@mantine/core';
 import { ChannelTypeEnum, NOVU_SMS_EMAIL_PROVIDERS } from '@novu/shared';
@@ -37,7 +37,7 @@ const ConfigureButton = styled(Button)`
 `;
 
 const IntegrationButton = styled(UnstyledButton)<
-  { isActive: boolean; isDark: boolean } & { onClick?: MouseEventHandler<HTMLButtonElement> }
+  PropsWithChildren<{ isActive: boolean; isDark: boolean } & { onClick?: MouseEventHandler<HTMLButtonElement> }>
 >`
   width: 100%;
   padding: 0.5rem 0.75rem;
