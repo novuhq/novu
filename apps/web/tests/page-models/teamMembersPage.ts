@@ -5,6 +5,7 @@ export class TeamMembersPage {
 
   static async goTo(page: Page): Promise<TeamMembersPage> {
     await page.goto('/settings/team');
+
     return new TeamMembersPage(page);
   }
 
@@ -27,7 +28,7 @@ export class TeamMembersPage {
     await this.page.getByTestId('actions-row-btn').click();
     await this.page.getByTestId('remove-row-btn').click();
     await responsePromise;
-  } 
+  }
 
   async assertNumberOfUsersInTeamMembersList(count: number) {
     const memberRows = this.page.getByTestId(/^member-row-.*$/);
