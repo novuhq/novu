@@ -33,7 +33,7 @@ services:
     image: redis
     network_mode: bridge
     ports:
-      - "${DOCKER_REDIS_SERVICE_PORT}:6379"
+      - "${DOCKER_REDIS_SERVICE_PORT:-6379}:6379"
     healthcheck:
       test: "bash -c 'redis-cli ping'"
       retries: 5
