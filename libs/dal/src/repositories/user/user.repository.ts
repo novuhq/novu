@@ -1,65 +1,43 @@
 import { AuthProviderEnum } from '@novu/shared';
-import { createHash } from 'crypto';
 import { BaseRepository } from '../base-repository';
-import { IUserResetTokenCount, UserEntity, UserDBModel } from './user.entity';
+import { IUserRepository } from './user-repository.interface';
+import { UserEntity, UserDBModel, IUserResetTokenCount } from './user.entity';
+import { createUserRepository } from './user.repository.factory';
 import { User } from './user.schema';
 
-export class UserRepository extends BaseRepository<UserDBModel, UserEntity, object> {
+export class UserRepository extends BaseRepository<UserDBModel, UserEntity, object> implements IUserRepository {
+  private userRepository: IUserRepository;
+
   constructor() {
     super(User, UserEntity);
+    this.userRepository = createUserRepository();
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {
-    return this.findOne({
-      email,
-    });
+    return this.userRepository.findByEmail(email);
   }
 
   async findById(id: string, select?: string): Promise<UserEntity | null> {
-    const data = await this.MongooseModel.findById(id, select);
-    if (!data) return null;
-
-    return this.mapEntity(data.toObject());
+    return this.userRepository.findById(id, select);
   }
 
-  private hashResetToken(token: string) {
-    return createHash('sha256').update(token).digest('hex');
+  async findUserByToken(token: string): Promise<UserEntity | null> {
+    return this.userRepository.findUserByToken(token);
   }
 
-  async findUserByToken(token: string) {
-    return await this.findOne({
-      resetToken: this.hashResetToken(token),
-    });
-  }
-
-  async updatePasswordResetToken(userId: string, token: string, resetTokenCount: IUserResetTokenCount) {
-    return await this.update(
-      {
-        _id: userId,
-      },
-      {
-        $set: {
-          resetToken: this.hashResetToken(token),
-          resetTokenDate: new Date(),
-          resetTokenCount,
-        },
-      }
-    );
+  async updatePasswordResetToken(
+    userId: string,
+    token: string,
+    resetTokenCount: IUserResetTokenCount
+  ): Promise<{ matched: number; modified: number }> {
+    return this.userRepository.updatePasswordResetToken(userId, token, resetTokenCount);
   }
 
   async findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity | null> {
-    return this.findOne({
-      'tokens.providerId': profileId,
-      'tokens.provider': provider,
-    });
+    return this.userRepository.findByLoginProvider(profileId, provider);
   }
 
-  async userExists(userId: string) {
-    return !!(await this.findOne(
-      {
-        _id: userId,
-      },
-      '_id'
-    ));
+  async userExists(userId: string): Promise<boolean> {
+    return this.userRepository.userExists(userId);
   }
 }
