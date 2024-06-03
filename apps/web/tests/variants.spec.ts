@@ -260,7 +260,7 @@ test('ensure the variant step editor has expected actions', async ({ page }) => 
   await assertHasExpectedVariantEditorButtons(page);
 });
 
-test.skip('TODO - ensure production node editor only shows close button for simple case', async ({ page }) => {
+test.skip('ensure production node editor only shows close button for simple case', async ({ page }) => {
   let workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   await workflowEditorPage.addAndFillSmsNode('this is a test paragraph', 'Test Add Flow for SMS');
 
@@ -336,7 +336,7 @@ test('Allows adding second variant condition from the variants overview modal he
   await expect(variantOverview.getVariantAtIndex(0)).toContainText('2');
 });
 
-test.skip('TODO - Allows adding second condition from the in step editor', async ({ page }) => {
+test.skip('Allows adding second condition from the in step editor', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const inAppEditor = await workflowEditorPage.addAndEditInAppNode();
   await inAppEditor.fillNotificationBody('some content');

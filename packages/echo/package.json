@@ -71,6 +71,11 @@
       "require": "./dist/sveltekit.js",
       "import": "./dist/sveltekit.mjs",
       "types": "./dist/sveltekit.d.ts"
+    },
+    "./remix": {
+      "require": "./dist/remix.js",
+      "import": "./dist/remix.mjs",
+      "types": "./dist/remix.d.ts"
     }
   },
   "devDependencies": {
