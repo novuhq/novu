@@ -49,7 +49,6 @@ export type ITriggerOverrides = {
     | 'plivo'
     | 'postmark'
     | 'sendgrid'
-    | 'chat'
     | 'twilio']?: object;
 } & {
   [key in 'fcm']?: ITriggerOverrideFCM;
@@ -67,6 +66,8 @@ export type ITriggerOverrides = {
   [key in 'sms']?: ITriggerOverrideSMS;
 } & {
   [key in SmsProviderIdEnum]?: ITriggerOverrideSMS;
+} & {
+  [key in 'chat']?: IChatOverrides;
 };
 
 export type ITriggerOverrideDelayAction = {
@@ -153,6 +154,16 @@ export type ITriggerOverrideExpo = {
   channelId?: string;
   categoryId?: string;
   mutableContent?: boolean;
+};
+
+export type IChatOverrides = {
+  template?: {
+    name: string;
+    language: {
+      code: string;
+    };
+    components?: Record<string, any>[];
+  };
 };
 
 export interface IBulkEvents extends ITriggerPayloadOptions {
