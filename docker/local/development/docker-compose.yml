@@ -21,7 +21,7 @@ services:
     image: mongo
     network_mode: bridge
     ports:
-      - "${DOCKER_MONGO_PORT}:27017"
+      - "${DOCKER_MONGO_PORT:-27017}:27017"
     volumes:
       - "${TMPDIR:-/tmp/mongo}:/db/data"
     healthcheck:
