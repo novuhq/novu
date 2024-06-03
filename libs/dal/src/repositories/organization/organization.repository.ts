@@ -1,118 +1,50 @@
 import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
 import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
-import { MemberRepository } from '../member';
 import { ApiServiceLevelEnum } from '@novu/shared';
+import { IOrganizationRepository } from './organization-repository.interface';
+import { createOrganizationRepository } from './organization.repository.factory';
 
-export class OrganizationRepository extends BaseRepository<OrganizationDBModel, OrganizationEntity, object> {
-  private memberRepository = new MemberRepository();
+export class OrganizationRepository
+  extends BaseRepository<OrganizationDBModel, OrganizationEntity, object>
+  implements IOrganizationRepository
+{
+  private organizationRepository: IOrganizationRepository;
 
   constructor() {
     super(Organization, OrganizationEntity);
+    this.organizationRepository = createOrganizationRepository();
   }
 
   async findById(id: string, select?: string): Promise<OrganizationEntity | null> {
-    const data = await this.MongooseModel.findById(id, select).read('secondaryPreferred');
-    if (!data) return null;
-
-    return this.mapEntity(data.toObject());
+    return this.organizationRepository.findById(id, select);
   }
 
   async findUserActiveOrganizations(userId: string): Promise<OrganizationEntity[]> {
-    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
-
-    return await this.find({
-      _id: { $in: organizationIds },
-    });
-  }
-
-  private async getUsersMembersOrganizationIds(userId: string): Promise<string[]> {
-    const members = await this.memberRepository.findUserActiveMembers(userId);
-
-    return members.map((member) => member._organizationId);
+    return this.organizationRepository.findUserActiveOrganizations(userId);
   }
 
   async updateBrandingDetails(organizationId: string, branding: { color: string; logo: string }) {
-    return this.update(
-      {
-        _id: organizationId,
-      },
-      {
-        $set: {
-          branding,
-        },
-      }
-    );
+    return this.organizationRepository.updateBrandingDetails(organizationId, branding);
   }
 
   async renameOrganization(organizationId: string, payload: { name: string }) {
-    return this.update(
-      {
-        _id: organizationId,
-      },
-      {
-        $set: {
-          name: payload.name,
-        },
-      }
-    );
+    return this.organizationRepository.renameOrganization(organizationId, payload);
   }
 
   async updateServiceLevel(organizationId: string, apiServiceLevel: ApiServiceLevelEnum) {
-    return this.update(
-      {
-        _id: organizationId,
-      },
-      {
-        $set: {
-          apiServiceLevel,
-        },
-      }
-    );
+    return this.organizationRepository.updateServiceLevel(organizationId, apiServiceLevel);
   }
 
   async findPartnerConfigurationDetails(organizationId: string, userId: string, configurationId: string) {
-    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
-
-    return await this.find(
-      {
-        _id: { $in: organizationIds },
-        'partnerConfigurations.configurationId': configurationId,
-      },
-      { 'partnerConfigurations.$': 1 }
-    );
+    return this.organizationRepository.findPartnerConfigurationDetails(organizationId, userId, configurationId);
   }
 
   async updatePartnerConfiguration(organizationId: string, userId: string, configuration: IPartnerConfiguration) {
-    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
-
-    return this.update(
-      {
-        _id: { $in: organizationIds },
-      },
-      {
-        $push: {
-          partnerConfigurations: configuration,
-        },
-      }
-    );
+    return this.organizationRepository.updatePartnerConfiguration(organizationId, userId, configuration);
   }
 
   async bulkUpdatePartnerConfiguration(userId: string, data: Record<string, string[]>, configurationId: string) {
-    const organizationIds = await this.getUsersMembersOrganizationIds(userId);
-    const usedOrgIds = Object.keys(data);
-    const unusedOrgIds = organizationIds.filter((org) => !usedOrgIds.includes(org));
-    const bulkWriteOps = organizationIds.map((orgId) => {
-      return {
-        updateOne: {
-          filter: { _id: orgId, 'partnerConfigurations.configurationId': configurationId },
-          update: {
-            'partnerConfigurations.$.projectIds': unusedOrgIds.includes(orgId) ? [] : data[orgId],
-          },
-        },
-      };
-    });
-
-    return await this.bulkWrite(bulkWriteOps);
+    return this.organizationRepository.bulkUpdatePartnerConfiguration(userId, data, configurationId);
   }
 }
