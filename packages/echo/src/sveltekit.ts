@@ -4,32 +4,59 @@ import { type SupportedFrameworkName } from './types';
 
 export const frameworkName: SupportedFrameworkName = 'sveltekit';
 
-export const serve = (options: ServeHandlerOptions): any => {
-  const echoHandler = new EchoRequestHandler({
+export const serve = (
+  options: ServeHandlerOptions
+): ((event: RequestEvent) => Promise<Response>) & {
+  GET: (event: RequestEvent) => Promise<Response>;
+  POST: (event: RequestEvent) => Promise<Response>;
+  PUT: (event: RequestEvent) => Promise<Response>;
+} => {
+  const handler = new EchoRequestHandler({
     frameworkName,
     ...options,
-    handler: (incomingRequest: RequestEvent, response: Response) => ({
-      body: () => incomingRequest.request.body,
-      headers: (key) => {
-        const header = incomingRequest.request.headers[key];
+    handler: (reqMethod: 'GET' | 'POST' | 'PUT' | undefined, event: RequestEvent) => {
+      return {
+        method: () => reqMethod || event.request.method || '',
+        body: () => event.request.json(),
+        headers: (key) => event.request.headers.get(key),
+        url: () => {
+          const protocol = process.env.NODE_ENV === 'development' ? 'http' : 'https';
 
-        return Array.isArray(header) ? header[0] : header;
-      },
-      method: () => incomingRequest.request.method || 'GET',
-      url: () => incomingRequest.url,
-      queryString: (key) => {
-        const qs = incomingRequest.url.searchParams.get(key);
+          return new URL(event.request.url, `${protocol}://${event.request.headers.get('host') || ''}`);
+        },
+        transformResponse: ({ body, headers, status }) => {
+          // Handle Response polyfilling
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          let Res: typeof Response;
 
-        return Array.isArray(qs) ? qs[0] : qs;
-      },
-      transformResponse: ({ body, headers, status }) => {
-        return new Response(JSON.stringify(body), {
-          status,
-          headers,
-        });
-      },
-    }),
+          if (typeof Response === 'undefined') {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-var-requires
+            Res = require('cross-fetch').Response;
+          } else {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            Res = Response;
+          }
+
+          return new Res(body, { status, headers });
+        },
+      };
+    },
   });
 
-  return echoHandler.createHandler();
+  const baseFn = handler.createHandler();
+
+  const fn = baseFn.bind(null, undefined);
+  type Fn = typeof fn;
+
+  const handlerFn = Object.defineProperties(fn, {
+    GET: { value: baseFn.bind(null, 'GET') },
+    POST: { value: baseFn.bind(null, 'POST') },
+    PUT: { value: baseFn.bind(null, 'PUT') },
+  }) as Fn & {
+    GET: Fn;
+    POST: Fn;
+    PUT: Fn;
+  };
+
+  return handlerFn;
 };
