@@ -28,7 +28,7 @@ export interface LocationState {
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const segment = useSegment();
-  const { login, currentUser } = useAuth();
+  const { login, currentUser, organizationId, environmentId } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel, params: vercelParams } = useVercelParams();
   const [params] = useSearchParams();
@@ -48,31 +48,39 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   >((data) => api.post('/v1/auth/login', data));
 
   useEffect(() => {
-    async () => {
-      if (tokenInQuery) {
-        await login(tokenInQuery);
-
-        if (isFromVercel) {
-          startVercelSetup();
-
-          return;
-        }
-
-        if (source === 'cli') {
-          segment.track('Dashboard Visit', {
-            widget: sourceWidget || 'unknown',
-            source: 'cli',
-          });
-          navigate(ROUTES.GET_STARTED);
-
-          return;
-        }
-
-        navigate(ROUTES.WORKFLOWS);
+    (async () => {
+      if (!tokenInQuery) {
+        return;
       }
-    };
+
+      if (!invitationToken && (!organizationId || !environmentId)) {
+        await login(tokenInQuery, ROUTES.AUTH_APPLICATION);
+
+        return;
+      }
+
+      if (isFromVercel) {
+        await login(tokenInQuery);
+        startVercelSetup();
+
+        return;
+      }
+
+      if (source === 'cli') {
+        segment.track('Dashboard Visit', {
+          widget: sourceWidget || 'unknown',
+          source: 'cli',
+        });
+        await login(tokenInQuery, ROUTES.GET_STARTED);
+
+        return;
+      }
+
+      await login(tokenInQuery);
+      navigate(ROUTES.WORKFLOWS);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [login, navigate, currentUser, tokenInQuery, segment]);
+  }, [login, navigate, currentUser, tokenInQuery, segment, organizationId, environmentId]);
 
   const signupLink = isFromVercel ? `${ROUTES.AUTH_SIGNUP}?${params.toString()}` : ROUTES.AUTH_SIGNUP;
   const resetPasswordLink = isFromVercel
