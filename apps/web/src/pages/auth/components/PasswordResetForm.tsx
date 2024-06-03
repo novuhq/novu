@@ -77,7 +77,7 @@ export function PasswordResetForm({ token }: Props) {
       <form noValidate name="reset-form" onSubmit={handleSubmit(onForgotPassword)}>
         <PasswordRequirementPopover control={control}>
           <PasswordInput
-            error={errors.password?.message}
+            error={errors.password?.message as string}
             mt={20}
             {...register('password', {
               required: 'Please input your password',

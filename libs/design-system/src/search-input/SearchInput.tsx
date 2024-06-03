@@ -33,9 +33,8 @@ const StyledInput = styled(Input)<InputProps & ISearchInputProps>`
   }
 `;
 
-const IconCloseStyled = styled(IconClose)<{ isVisible: boolean }>`
+const IconCloseStyled = styled(IconClose)`
   cursor: pointer;
-  display: ${({ isVisible }) => (isVisible ? 'initial' : 'none')};
 `;
 
 export const SearchInput = forwardRef<HTMLInputElement, ISearchInputProps>(
@@ -47,13 +46,9 @@ export const SearchInput = forwardRef<HTMLInputElement, ISearchInputProps>(
         value={value}
         icon={<IconSearch title="search" />}
         rightSection={
-          <IconCloseStyled
-            isVisible={!!value}
-            title="clear"
-            onClick={onClearClick}
-            data-test-id="search-input-clear"
-            role="button"
-          />
+          !!value && (
+            <IconCloseStyled title="clear" onClick={onClearClick} data-test-id="search-input-clear" role="button" />
+          )
         }
       />
     );
