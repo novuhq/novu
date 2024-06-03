@@ -390,28 +390,34 @@ install_aws_cli () {
 }
 
 start_database() {
-  # Check if mongodb is installed
-  brew ls --versions mongodb > /dev/null
-  if [ $? -eq 0 ]; then
-    echo "Error: MongoDB is already installed via brew. Please uninstall it first."
-    exit 1
-  fi
+   # Initialize flag
+   already_installed=0
+
+   # Check if mongodb is installed
+   brew ls --versions mongodb > /dev/null
+   if [ $? -eq 0 ]; then
+     echo "Warning: MongoDB is already installed via brew. Please uninstall it first."
+     already_installed=1
+   fi
 
    # Check if redis is installed
    brew ls --versions redis > /dev/null
    if [ $? -eq 0 ]; then
-     echo "Error: Redis is already installed via brew. Please uninstall it first."
-     exit 1
+     echo "Warning: Redis is already installed via brew. Please uninstall it first."
+     already_installed=1
    fi
 
-   # Copy the example env file
-   cp ./docker/.env.example ./docker/local/development/.env
+   # Only copy the example env file and start Docker Compose if both MongoDB and Redis are not already installed
+   if [ $already_installed -ne 1 ]; then
+     # Copy the example env file
+     cp ./docker/.env.example ./docker/local/development/.env
 
-   # Start Docker Compose detached
-   docker-compose -f ./docker/local/development/docker-compose.yml up -d
+     # Start Docker Compose detached
+     docker-compose -f ./docker/local/development/docker-compose.yml up -d
 
-   start_success_message "Docker Infrastructure"
-   echo "Note: To manually start go to /docker in the project"
+     start_success_message "Docker Infrastructure"
+     echo "Note: To manually start go to /docker in the project"
+   fi
 }
 
 create_local_dev_domain () {
