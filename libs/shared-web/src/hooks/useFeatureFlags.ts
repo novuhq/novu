@@ -5,6 +5,8 @@ import { checkShouldUseLaunchDarkly } from '../utils/checkShouldUseLaunchDarkly'
 
 import { FEATURE_FLAGS } from '../config';
 
+const isPlaywright = window && (window as any).isPlaywright;
+
 export const useFeatureFlags = (organization?: IOrganizationEntity) => {
   const ldClient = useLDClient();
 
@@ -34,7 +36,7 @@ export const useFeatureFlag = (key: FeatureFlagsKeysEnum): boolean => {
   /** We knowingly break the rule of hooks here to avoid making any LaunchDarkly calls when it is disabled */
   if (shouldUseLaunchDarkly) {
     const flags = useFlags();
-    if (!flags || Object.keys(flags).length === 0) {
+    if (!isPlaywright && (!flags || Object.keys(flags).length === 0)) {
       throw new Error(
         'No flags were returned by LaunchDarkly, Please ensure that the app is wrapped in an LDProvider!'
       );
@@ -57,7 +59,6 @@ export const useFeatureFlag = (key: FeatureFlagsKeysEnum): boolean => {
  * in playwright tests and to avoid any unexpected behavior caused by missing mocks when adding a new feature flag ot a piece of UI
  */
 function e2eExplicitFlagAssertion(key: FeatureFlagsKeysEnum) {
-  const isPlaywright = window && (window as any).isPlaywright;
   const featureFlagValueMap = checkShouldUseLaunchDarkly() ? useFlags() : {};
   const isFeatureFlagsPopulated = Object.keys(featureFlagValueMap).length !== 0;
   if (isFeatureFlagsPopulated && isFlagMissingInLdResponse(key, featureFlagValueMap) && isPlaywright) {
