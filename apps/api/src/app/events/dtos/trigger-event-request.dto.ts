@@ -119,7 +119,7 @@ export class TriggerEventRequestDto {
 
   @ApiProperty({
     description: `It is used to specify a tenant context during trigger event.
-    Existing tenant will be updated if tenant details are provided, but new tenant will not be created.
+    Existing tenants will be updated with the provided details.
     `,
     oneOf: [
       { type: 'string', description: 'Unique identifier of a tenant in your system' },
