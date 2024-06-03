@@ -8,7 +8,7 @@ services:
     environment:
       - SERVICES=s3
     ports:
-      - "${DOCKER_LOCALSTACK_PORT}:4566"
+      - "${DOCKER_LOCALSTACK_PORT:-4566}:4566"
     volumes:
       - "${TMPDIR:-/tmp/localstack}:/tmp/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
@@ -21,7 +21,7 @@ services:
     image: mongo
     network_mode: bridge
     ports:
-      - "${DOCKER_MONGO_PORT}:27017"
+      - "${DOCKER_MONGO_PORT:-27017}:27017"
     volumes:
       - "${TMPDIR:-/tmp/mongo}:/db/data"
     healthcheck:
@@ -33,7 +33,7 @@ services:
     image: redis
     network_mode: bridge
     ports:
-      - "${DOCKER_REDIS_SERVICE_PORT}:6379"
+      - "${DOCKER_REDIS_SERVICE_PORT:-6379}:6379"
     healthcheck:
       test: "bash -c 'redis-cli ping'"
       retries: 5
