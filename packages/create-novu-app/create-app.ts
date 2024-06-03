@@ -201,11 +201,11 @@ export async function createApp({
     console.log();
   }
 
-  let cdpath: string;
+  let cdPath: string;
   if (path.join(originalDirectory, appName) === appPath) {
-    cdpath = appName;
+    cdPath = appName;
   } else {
-    cdpath = appPath;
+    cdPath = appPath;
   }
 
   console.log(`${green('Success!')} Created ${appName} at ${appPath}`);
@@ -224,7 +224,7 @@ export async function createApp({
     console.log();
     console.log('We suggest that you begin by typing:');
     console.log();
-    console.log(cyan('  cd'), cdpath);
+    console.log(cyan('  cd'), cdPath);
     console.log(`  ${cyan(`${packageManager} ${useYarn ? '' : 'run '}dev`)}`);
   }
   console.log();
