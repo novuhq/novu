@@ -1,4 +1,4 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { Injectable, Scope, Logger } from '@nestjs/common';
 import { MemberRepository } from '@novu/dal';
 import { GetFeatureFlag, GetFeatureFlagCommand, createHash } from '@novu/application-generic';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
@@ -41,7 +41,7 @@ export class InviteNudgeWebhook {
       });
 
       if (membersCount === 1) {
-        await axiosInstance.post(
+        const hubspotAddUserIntoListResponse = await axiosInstance.post(
           `https://api.hubapi.com/contacts/v1/lists/${process.env.HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST_ID}/add`,
           {
             emails: [command?.body?.subscriber?.email],
@@ -52,6 +52,11 @@ export class InviteNudgeWebhook {
             },
           }
         );
+        if (hubspotAddUserIntoListResponse.data.updated.length !== 1) {
+          Logger.log(
+            `Failed to add user ${command?.body?.subscriber?.email} into list ${process.env.HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST_ID}`
+          );
+        }
       }
     }
 
