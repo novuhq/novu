@@ -66,6 +66,11 @@
       "require": "./dist/h3.js",
       "import": "./dist/h3.mjs",
       "types": "./dist/h3.d.ts"
+    },
+    "./sveltekit": {
+      "require": "./dist/sveltekit.js",
+      "import": "./dist/sveltekit.mjs",
+      "types": "./dist/sveltekit.d.ts"
     }
   },
   "devDependencies": {
