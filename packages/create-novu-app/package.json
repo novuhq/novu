@@ -1,6 +1,6 @@
 {
   "name": "create-novu-app",
-  "version": "0.0.1-alpha.4",
+  "version": "0.24.2",
   "keywords": [
     "novu"
   ],
@@ -49,8 +49,5 @@
     "validate-npm-package-name": "3.0.0",
     "typescript": "5.2.2",
     "async-sema": "3.0.1"
-  },
-  "engines": {
-    "node": ">=18.17.0"
   }
 }
