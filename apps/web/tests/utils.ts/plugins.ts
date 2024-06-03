@@ -246,7 +246,7 @@ export async function inviteUser(
   };
 }
 
-export async function makeBlueprints() {
+export async function populateBlueprints() {
   const dal = new DalService();
   await dal.connect(process.env.MONGODB_URL ?? '');
 
@@ -329,83 +329,6 @@ export async function makeBlueprints() {
         noLayoutId: true,
         name: ':fa-solid fa-star: Super cool workflow',
         isBlueprint: true,
-      }),
-      productionNotificationTemplateService.createTemplate({
-        _id: popularTemplateIds[1],
-        noFeedId: true,
-        noLayoutId: true,
-        name: ':fa-solid fa-lock: Password reset',
-        isBlueprint: true,
-      }),
-      productionNotificationTemplateService.createTemplate({
-        _id: getStartedTemplateIds[0],
-        noFeedId: true,
-        noLayoutId: true,
-        name: ':fa-solid fa-clock: Delay',
-        isBlueprint: true,
-        steps: [
-          {
-            type: StepTypeEnum.DELAY,
-            name: 'Delay',
-            content: '',
-          },
-        ],
-        triggers: [
-          {
-            identifier: 'get-started-delay',
-            type: TriggerTypeEnum.EVENT,
-            variables: [],
-          },
-        ],
-      }),
-      productionNotificationTemplateService.createTemplate({
-        _id: getStartedTemplateIds[1],
-        noFeedId: true,
-        noLayoutId: true,
-        name: ':fa-solid fa-layer-group: Digest',
-        isBlueprint: true,
-        steps: [
-          {
-            type: StepTypeEnum.DIGEST,
-            name: 'Digest',
-            content: '',
-          },
-        ],
-        triggers: [
-          {
-            identifier: 'get-started-digest',
-            type: TriggerTypeEnum.EVENT,
-            variables: [],
-          },
-        ],
-      }),
-      productionNotificationTemplateService.createTemplate({
-        _id: getStartedTemplateIds[2],
-        noFeedId: true,
-        noLayoutId: true,
-        name: ':fa-solid fa-bell: In-App',
-        isBlueprint: true,
-        triggers: [
-          {
-            identifier: 'get-started-in-app',
-            type: TriggerTypeEnum.EVENT,
-            variables: [],
-          },
-        ],
-      }),
-      productionNotificationTemplateService.createTemplate({
-        _id: getStartedTemplateIds[3],
-        noFeedId: true,
-        noLayoutId: true,
-        name: ':fa-solid fa-earth-americas: Multi-channel',
-        isBlueprint: true,
-        triggers: [
-          {
-            identifier: 'get-started-multi-channel',
-            type: TriggerTypeEnum.EVENT,
-            variables: [],
-          },
-        ],
       }),
     ]);
   }
