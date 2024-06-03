@@ -58,7 +58,7 @@ module.exports = (on, config) => {
       return 'ok';
     },
 
-    async clearDatabase() {
+    async dropDatabase() {
       const dal = new DalService();
       await dal.connect('mongodb://127.0.0.1:27017/novu-test');
       await dal.destroy();
