@@ -170,7 +170,7 @@ jobs:
     timeout-minutes: 80
     steps:
       - name: Affected libs
-        - run: echo '${{ needs.get-affected.outputs.test-libs }}'
+        run: echo '${{ needs.get-affected.outputs.test-libs }}'
       - uses: actions/checkout@v3
 
       - uses: ./.github/actions/setup-project
