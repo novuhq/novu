@@ -599,7 +599,8 @@
     "xkeysib",
     "zulip",
     "zwnj",
-    "prepush"
+    "prepush",
+    "xcodebuild"
   ],
   "flagWords": [],
   "patterns": [
