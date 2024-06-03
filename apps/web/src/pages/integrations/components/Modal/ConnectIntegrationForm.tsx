@@ -3,7 +3,6 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useClipboard } from '@mantine/hooks';
 import { ActionIcon, Alert, Center, Image, Stack, useMantineColorScheme } from '@mantine/core';
-import { WarningOutlined } from '@ant-design/icons';
 import { ChannelTypeEnum, ChatProviderIdEnum, CredentialsKeyEnum, ProvidersIdEnum } from '@novu/shared';
 import type {
   IResponseError,
@@ -15,7 +14,18 @@ import type {
 } from '@novu/shared';
 import styled from '@emotion/styled';
 import { keyframes } from '@emotion/react';
-import { Button, colors, Input, shadows, Switch, Text, Close, Check, Copy } from '@novu/design-system';
+import {
+  Button,
+  colors,
+  Input,
+  shadows,
+  Switch,
+  Text,
+  Close,
+  Check,
+  Copy,
+  IconOutlineWarning,
+} from '@novu/design-system';
 
 import type { IIntegratedProvider } from '../../types';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../../api/integration';
@@ -370,7 +380,7 @@ export function ConnectIntegrationForm({
           )}
           <Alert
             ref={alertRef}
-            icon={<WarningOutlined size={16} />}
+            icon={<IconOutlineWarning size={'16'} />}
             title="An error occurred!"
             color="red"
             mb={30}

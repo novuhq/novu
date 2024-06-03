@@ -1,4 +1,4 @@
-import React, { FunctionComponent, createContext, useMemo, useContext } from 'react';
+import React, { FunctionComponent, createContext, useMemo, useContext, PropsWithChildren } from 'react';
 import { CSSInterpolation } from '@emotion/css';
 
 import type { INotificationCenterStyles, StylesPaths } from './styles-provider.types';
@@ -38,7 +38,10 @@ export const useStyles = (path: StylesPaths | StylesPaths[]): CSSInterpolation[]
   ];
 };
 
-export const StylesProvider: FunctionComponent<{ styles?: INotificationCenterStyles }> = ({ styles, children }) => {
+export const StylesProvider: FunctionComponent<PropsWithChildren<{ styles?: INotificationCenterStyles }>> = ({
+  styles,
+  children,
+}) => {
   const contextValue = useMemo(() => ({ styles }), [styles]);
 
   return <StylesContext.Provider value={contextValue}>{children}</StylesContext.Provider>;

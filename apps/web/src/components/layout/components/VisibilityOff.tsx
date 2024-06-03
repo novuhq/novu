@@ -1,4 +1,4 @@
-import { EyeInvisibleOutlined } from '@ant-design/icons';
+import { IconOutlineVisibilityOff } from '@novu/design-system';
 import styled from '@emotion/styled';
 
 import { colors } from '@novu/design-system';
@@ -7,11 +7,7 @@ import { colors } from '@novu/design-system';
 export const VisibilityOff = ({ onClick }: { onClick: React.MouseEventHandler<HTMLDivElement> }) => {
   return (
     <IconContainer onClick={onClick}>
-      <EyeInvisibleOutlined
-        style={{
-          fontSize: '20px',
-        }}
-      />
+      <IconOutlineVisibilityOff />
     </IconContainer>
   );
 };
