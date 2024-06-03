@@ -4,7 +4,6 @@
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "type": "module",
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
@@ -45,27 +44,27 @@
   "exports": {
     ".": {
       "require": "./dist/index.js",
-      "import": "./dist/index.js",
+      "import": "./dist/index.mjs",
       "types": "./dist/index.d.ts"
     },
     "./express": {
       "require": "./dist/express.js",
-      "import": "./dist/express.js",
+      "import": "./dist/express.mjs",
       "types": "./dist/express.d.ts"
     },
     "./next": {
       "require": "./dist/next.js",
-      "import": "./dist/next.js",
+      "import": "./dist/next.mjs",
       "types": "./dist/next.d.ts"
     },
     "./nuxt": {
       "require": "./dist/nuxt.js",
-      "import": "./dist/nuxt.js",
+      "import": "./dist/nuxt.mjs",
       "types": "./dist/nuxt.d.ts"
     },
     "./h3": {
       "require": "./dist/h3.js",
-      "import": "./dist/h3.js",
+      "import": "./dist/h3.mjs",
       "types": "./dist/h3.d.ts"
     }
   },
