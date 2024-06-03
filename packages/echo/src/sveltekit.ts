@@ -25,7 +25,7 @@ export const serve = (
           return new URL(event.request.url, `${protocol}://${event.request.headers.get('host') || ''}`);
         },
         transformResponse: ({ body, headers, status }) => {
-          // Handle Response polyfilling
+          // Handle Response polyfills
           // eslint-disable-next-line @typescript-eslint/naming-convention
           let Res: typeof Response;
 
