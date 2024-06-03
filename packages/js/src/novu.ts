@@ -1,9 +1,13 @@
+import { ApiService } from '@novu/client';
+
 import { NovuEventEmitter } from './event-emitter';
 import type { EventHandler, EventNames, Events } from './event-emitter';
 import { Feeds } from './feeds';
 import { Session } from './session';
 import { Preferences } from './preferences';
 import { ApiServiceSingleton } from './utils/api-service-singleton';
+
+const PRODUCTION_BACKEND_URL = 'https://api.novu.co';
 
 type NovuOptions = {
   applicationIdentifier: string;
@@ -15,12 +19,13 @@ type NovuOptions = {
 export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
   #emitter: NovuEventEmitter;
   #session: Session;
+  #apiService: ApiService;
 
   public readonly feeds: Feeds;
   public readonly preferences: Preferences;
 
   constructor(options: NovuOptions) {
-    ApiServiceSingleton.getInstance({ backendUrl: options.backendUrl });
+    ApiServiceSingleton.getInstance({ backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL });
     this.#emitter = NovuEventEmitter.getInstance({ recreate: true });
     this.#session = new Session({
       applicationIdentifier: options.applicationIdentifier,
