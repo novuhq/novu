@@ -176,7 +176,7 @@ jobs:
       - uses: ./.github/actions/setup-project
       
       - name: Run Lint, Build, Test
-      - uses: mansagroup/nrwl-nx-action@v3
+        uses: mansagroup/nrwl-nx-action@v3
         with:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
