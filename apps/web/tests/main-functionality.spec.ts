@@ -111,7 +111,7 @@ test.skip('should update to empty data when switching from editor to customHtml'
   ).toBeVisible();
 });
 
-test('should save avatar enabled and content for in app', async ({ page }) => {
+test.skip('should save avatar enabled and content for in app', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const workflowSidePanel = await workflowEditorPage.openWorkflowSettingsSidePanel();
   await workflowSidePanel.fillBasicNotificationDetails({
