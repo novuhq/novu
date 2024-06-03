@@ -22,6 +22,7 @@ type NotificationLike = Pick<
   | 'actor'
   | 'subscriber'
   | 'transactionId'
+  | 'templateIdentifier'
   | 'content'
   | 'read'
   | 'seen'
@@ -42,6 +43,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   actor?: Actor;
   subscriber?: Subscriber;
   transactionId: string;
+  templateIdentifier: string;
   content: string;
   read: boolean;
   seen: boolean;
@@ -61,6 +63,7 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
     this.actor = notification.actor;
     this.subscriber = notification.subscriber;
     this.transactionId = notification.transactionId;
+    this.templateIdentifier = notification.templateIdentifier;
     this.content = notification.content;
     this.read = notification.read;
     this.seen = notification.seen;
