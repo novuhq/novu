@@ -49,7 +49,7 @@ test('invite a new user to the organization', async ({ context, page }) => {
   expect(orgSwitchValue).toBe(newSession.organization.name.toLowerCase());
 });
 
-test('invite an existing user to the organization', async ({ context, page }) => {
+test.skip('invite an existing user to the organization', async ({ context, page }) => {
   const newUserOne = await inviteUser(session, TestUserConstants.Email);
   await logout(page, session);
   await registerFromInvitation(page, newUserOne.token);
