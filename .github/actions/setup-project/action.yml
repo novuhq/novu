@@ -47,7 +47,6 @@ runs:
       shell: bash
       run: pnpm install --frozen-lockfile
 
-
     - name: Link submodules
       shell: bash
       if: ${{ inputs.submodules == 'true' }}
