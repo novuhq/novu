@@ -152,7 +152,7 @@ export async function createNotifications({
   return 'ok';
 }
 
-export async function clearDatabase() {
+export async function dropDatabase() {
   const dal = new DalService();
   await dal.connect(process.env.MONGODB_URL ?? '');
   await dal.destroy();

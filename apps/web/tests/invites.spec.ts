@@ -7,7 +7,7 @@ import { SignUpPage } from './page-models/signupPage';
 import { validateTokenNotExisting } from './utils.ts/authUtils';
 import { initializeSession } from './utils.ts/browser';
 import { logout } from './utils.ts/commands';
-import { clearDatabase, inviteUser, SessionData } from './utils.ts/plugins';
+import { dropDatabase, inviteUser, SessionData } from './utils.ts/plugins';
 
 export const TestUserConstants = {
   Email: 'testing-amazing@user.com',
@@ -17,7 +17,7 @@ export const TestUserConstants = {
 let session: SessionData;
 
 test.beforeEach(async ({ page }) => {
-  await clearDatabase();
+  await dropDatabase();
   const { featureFlagsMock, session: newSession } = await initializeSession(page);
   session = newSession;
   featureFlagsMock.setFlagsToMock({
