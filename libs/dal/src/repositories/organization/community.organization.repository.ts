@@ -1,7 +1,7 @@
 import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
 import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
-import { MemberRepository } from '../member';
+import { CommunityMemberRepository, MemberRepository } from '../member';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { IOrganizationRepository } from './organization-repository.interface';
 
@@ -9,7 +9,7 @@ export class CommunityOrganizationRepository
   extends BaseRepository<OrganizationDBModel, OrganizationEntity, object>
   implements IOrganizationRepository
 {
-  private memberRepository = new MemberRepository();
+  private memberRepository = new MemberRepository(new CommunityMemberRepository());
 
   constructor() {
     super(Organization, OrganizationEntity);

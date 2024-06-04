@@ -1,11 +1,16 @@
 import { ApiServiceLevelEnum, MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { faker } from '@faker-js/faker';
-import { MemberRepository, OrganizationRepository } from '@novu/dal';
+import {
+  CommunityMemberRepository,
+  CommunityOrganizationRepository,
+  MemberRepository,
+  OrganizationRepository,
+} from '@novu/dal';
 
 export class OrganizationService {
-  private organizationRepository = new OrganizationRepository();
+  private organizationRepository = new OrganizationRepository(new CommunityOrganizationRepository());
 
-  private memberRepository = new MemberRepository();
+  private memberRepository = new MemberRepository(new CommunityMemberRepository());
 
   async createOrganization(options?: Parameters<OrganizationRepository['create']>[0]) {
     if (options) {

@@ -15,6 +15,42 @@ const eeAuthServiceProvider = {
   },
 };
 
+const eeUserRepositoryProvider = {
+  provide: 'USER_REPOSITORY',
+  useFactory: () => {
+    const eeAuthPackage = require('@novu/ee-auth');
+    if (!eeAuthPackage?.EEUserRepository) {
+      throw new PlatformException('EEUserRepository is not loaded');
+    }
+
+    return new eeAuthPackage.EEUserRepository();
+  },
+};
+
+const eeMemberRepositoryProvider = {
+  provide: 'MEMBER_REPOSITORY',
+  useFactory: () => {
+    const eeAuthPackage = require('@novu/ee-auth');
+    if (!eeAuthPackage?.EEMemberRepository) {
+      throw new PlatformException('EEMemberRepository is not loaded');
+    }
+
+    return new eeAuthPackage.EEMemberRepository();
+  },
+};
+
+const eeOrganizationRepositoryProvider = {
+  provide: 'ORGANIZATION_REPOSITORY',
+  useFactory: () => {
+    const eeAuthPackage = require('@novu/ee-auth');
+    if (!eeAuthPackage?.EEOrganizationRepository) {
+      throw new PlatformException('EEOrganizationRepository is not loaded');
+    }
+
+    return new eeAuthPackage.EEOrganizationRepository();
+  },
+};
+
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
   const eeAuthModuleConfig = eeAuthPackage?.eeAuthModuleConfig;
@@ -30,6 +66,9 @@ export function getEEModuleConfig(): ModuleMetadata {
     providers: [
       ...(eeAuthModuleConfig.providers || []),
       eeAuthServiceProvider,
+      eeUserRepositoryProvider,
+      eeMemberRepositoryProvider,
+      eeOrganizationRepositoryProvider,
       UserAuthGuard,
       RolesGuard,
       AuthService,
@@ -42,6 +81,9 @@ export function getEEModuleConfig(): ModuleMetadata {
       AuthService,
       UserAuthGuard,
       'AUTH_SERVICE',
+      'USER_REPOSITORY',
+      'MEMBER_REPOSITORY',
+      'ORGANIZATION_REPOSITORY',
     ],
   };
 }

@@ -2,15 +2,12 @@ import { AuthProviderEnum } from '@novu/shared';
 import { BaseRepository } from '../base-repository';
 import { IUserRepository } from './user-repository.interface';
 import { UserEntity, UserDBModel, IUserResetTokenCount } from './user.entity';
-import { createUserRepository } from './user.repository.factory';
 import { User } from './user.schema';
+import { Inject } from '@nestjs/common';
 
 export class UserRepository extends BaseRepository<UserDBModel, UserEntity, object> implements IUserRepository {
-  private userRepository: IUserRepository;
-
-  constructor() {
+  constructor(@Inject('USER_REPOSITORY') private userRepository: IUserRepository) {
     super(User, UserEntity);
-    this.userRepository = createUserRepository();
   }
 
   async findByEmail(email: string): Promise<UserEntity | null> {

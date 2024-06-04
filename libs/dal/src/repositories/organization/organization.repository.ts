@@ -3,17 +3,14 @@ import { BaseRepository } from '../base-repository';
 import { Organization } from './organization.schema';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { IOrganizationRepository } from './organization-repository.interface';
-import { createOrganizationRepository } from './organization.repository.factory';
+import { Inject } from '@nestjs/common';
 
 export class OrganizationRepository
   extends BaseRepository<OrganizationDBModel, OrganizationEntity, object>
   implements IOrganizationRepository
 {
-  private organizationRepository: IOrganizationRepository;
-
-  constructor() {
+  constructor(@Inject('ORGANIZATION_REPOSITORY') private organizationRepository: IOrganizationRepository) {
     super(Organization, OrganizationEntity);
-    this.organizationRepository = createOrganizationRepository();
   }
 
   async findById(id: string, select?: string): Promise<OrganizationEntity | null> {

@@ -33,6 +33,9 @@ import {
   OrganizationRepository,
   EnvironmentRepository,
   MemberRepository,
+  CommunityMemberRepository,
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
 } from '@novu/dal';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
@@ -41,7 +44,7 @@ if (process.env.GITHUB_OAUTH_CLIENT_ID) {
   AUTH_STRATEGIES.push(GitHubStrategy);
 }
 
-const communityAuthServiceProvider = {
+const authServiceProvider = {
   provide: 'AUTH_SERVICE',
   useFactory: (
     userRepository: UserRepository,
@@ -82,6 +85,21 @@ const communityAuthServiceProvider = {
   ],
 };
 
+const userRepositoryProvider = {
+  provide: 'USER_REPOSITORY',
+  useClass: CommunityUserRepository,
+};
+
+const memberRepositoryProvider = {
+  provide: 'MEMBER_REPOSITORY',
+  useClass: CommunityMemberRepository,
+};
+
+const organizationRepositoryProvider = {
+  provide: 'ORGANIZATION_REPOSITORY',
+  useClass: CommunityOrganizationRepository,
+};
+
 export function getCommunityAuthModuleConfig(): ModuleMetadata {
   return {
     imports: [
@@ -107,9 +125,22 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
       AuthService,
       RolesGuard,
       RootEnvironmentGuard,
-      communityAuthServiceProvider,
+      authServiceProvider,
+      userRepositoryProvider,
+      memberRepositoryProvider,
+      organizationRepositoryProvider,
     ],
-    exports: [RolesGuard, RootEnvironmentGuard, AuthService, ...USE_CASES, UserAuthGuard],
+    exports: [
+      RolesGuard,
+      RootEnvironmentGuard,
+      AuthService,
+      'AUTH_SERVICE',
+      'USER_REPOSITORY',
+      'MEMBER_REPOSITORY',
+      'ORGANIZATION_REPOSITORY',
+      ...USE_CASES,
+      UserAuthGuard,
+    ],
   };
 }
 
