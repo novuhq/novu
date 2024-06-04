@@ -122,6 +122,7 @@
   },
   "dependencies": {
     "@mantine/core": "^7.10.0",
-    "@mantine/hooks": "^7.10.0"
+    "@mantine/hooks": "^7.10.0",
+    "react-icons": "^5.0.1"
   }
 }
