@@ -1,0 +1,18 @@
+name: Check pull request source branch
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+jobs:
+  check-branches:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check branches
+        run: |
+          if [ ${{ github.head_ref }} != "next" ] && [ ${{ github.base_ref }} == "prod" ]; then
+            echo "Merge requests to prod branch are only allowed from next branch."
+            exit 1
+          fi
