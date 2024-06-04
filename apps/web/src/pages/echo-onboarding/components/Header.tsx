@@ -2,13 +2,11 @@ import { css } from '@novu/novui/css';
 import { hstack, vstack } from '@novu/novui/patterns';
 import { COMPANY_LOGO_PATH } from '../../../constants/assets';
 import { Stepper } from '@mantine/core';
-import { useParams } from 'react-router-dom';
+import { IconCheck } from '@novu/design-system';
 
-export const Header = () => {
-  const { step: page } = useParams();
-
+export const Header = ({ active = 0 }: { active?: number }) => {
   return (
-    <>
+    <div className={css({ backgroundColor: 'surface.panel', zIndex: 1, position: 'relative', paddingBottom: '375' })}>
       <div className={css({ padding: '100', width: '100%', height: '375' })}>
         <div className={hstack({ gap: '150' })}>
           <img
@@ -16,7 +14,7 @@ export const Header = () => {
             className={css({
               w: '200',
               h: '200',
-              borderRadius: '8px',
+              borderRadius: '50',
             })}
           />
           <svg width="60" height="14" viewBox="0 0 60 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -28,7 +26,7 @@ export const Header = () => {
           </svg>
         </div>
       </div>
-      <div className={vstack({ alignContent: 'center', marginBottom: '375' })}>
+      <div className={vstack({ alignContent: 'center' })}>
         <div
           className={css({
             width: '680px',
@@ -43,9 +41,33 @@ export const Header = () => {
                 borderBottom: `1px dashed`,
                 borderColor: 'legacy.B30',
               }),
+              stepIcon: css({
+                border: 'none !important',
+                width: '300 !important',
+                height: '300 !important',
+                backgroundColor: 'surface.popover !important',
+                color: 'typography.text.secondary !important',
+                '&[data-progress]': {
+                  backgroundColor: 'legacy.B30 !important',
+                  color: 'typography.text.main !important',
+                },
+              }),
+              stepCompletedIcon: css({
+                backgroundColor: 'typography.text.feedback.success',
+                borderRadius: '200',
+              }),
             }}
-            completedIcon={({ step }) => step + 1}
-            active={parseInt(page || '1', 10)}
+            progressIcon={({ step }) => step + 1}
+            completedIcon={() => {
+              return (
+                <IconCheck
+                  className={css({
+                    color: 'typography.text.main !important',
+                  })}
+                />
+              );
+            }}
+            active={active}
           >
             <Stepper.Step label="Add the Echo endpoint"></Stepper.Step>
             <Stepper.Step label="Create a workflow"></Stepper.Step>
@@ -53,6 +75,6 @@ export const Header = () => {
           </Stepper>
         </div>
       </div>
-    </>
+    </div>
   );
 };
