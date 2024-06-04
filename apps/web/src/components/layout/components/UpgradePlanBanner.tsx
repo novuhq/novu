@@ -1,7 +1,8 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { IS_DOCKER_HOSTED, useFeatureFlag } from '@novu/shared-web';
+import { ComponentType } from 'react';
 
-export function UpgradePlanBanner({ FeatureActivatedBanner }: { FeatureActivatedBanner: React.ReactNode }) {
+export function UpgradePlanBanner({ FeatureActivatedBanner }: { FeatureActivatedBanner: ComponentType }) {
   const isEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_BILLING_REVERSE_TRIAL_ENABLED);
 
   if (IS_DOCKER_HOSTED) {
