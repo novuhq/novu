@@ -1,9 +1,5 @@
 # Icon
 
-## Plan
-
-This directory, `iconV2`, will be moved renamed to `icons` once we remove all the older Icons from the design system. They have all been marked as deprecated in the meantime.
-
 ## Background
 
 This group of icons comes from the Material Icons by means of the [react-icons](https://react-icons.github.io/react-icons/icons/md/) package.
