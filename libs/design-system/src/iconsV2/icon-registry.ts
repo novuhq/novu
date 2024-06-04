@@ -4345,4344 +4345,8687 @@ import {
 } from 'react-icons/md';
 
 export {
+  /** @deprecated Use icons from @novu/novui instead */
   Icon123,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon3DRotation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAbc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccessibilityNew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccessibility,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccessibleForward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccessible,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccountBalanceWallet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccountBalance,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccountBox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccountCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddCard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddHome,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddShoppingCart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddTask,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddToDrive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddchart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAdminPanelSettings,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAdsClick,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlarmAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlarmOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlarmOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlarm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAllInbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAllOut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAnalytics,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAnchor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAndroid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAnnouncement,
+  /** @deprecated Use icons from @novu/novui instead */
   IconApi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAppBlocking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAppShortcut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowCircleDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowCircleLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowCircleRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowCircleUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowOutward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowRightAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArticle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAspectRatio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssessment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssignmentAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssignmentInd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssignmentLate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssignmentReturn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssignmentReturned,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssignmentTurnedIn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssignment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssuredWorkload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutorenew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBackupTable,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBackup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBalance,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBarcodeReader,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatchPrediction,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBookOnline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBook,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBookmarkAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBookmarkAdded,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBookmarkBorder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBookmarkRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBookmark,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBookmarks,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrowseGallery,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBugReport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBuildCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBuild,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCached,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCalendarMonth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCalendarToday,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCalendarViewDay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCalendarViewMonth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCalendarViewWeek,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCameraEnhance,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCancelScheduleSend,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCardGiftcard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCardMembership,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCardTravel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChangeHistory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCheckCircleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCheckCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChromeReaderMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCircleNotifications,
+  /** @deprecated Use icons from @novu/novui instead */
   IconClass,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCloseFullscreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCodeOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCommentBank,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCommit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCommute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCompareArrows,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCompress,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContactPage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContactSupport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContactless,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCopyright,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCreditCardOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCreditCard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCss,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurrencyExchange,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDangerous,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDashboardCustomize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDashboard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDataExploration,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDataThresholding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDateRange,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeleteForever,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeleteOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDelete,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDensityLarge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDensityMedium,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDensitySmall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDescription,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDisabledByDefault,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDisabledVisible,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDisplaySettings,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDns,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoneAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoneOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDonutLarge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDonutSmall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDragIndicator,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDynamicForm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEco,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEditCalendar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEditDocument,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEditOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEditSquare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEject,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEuroSymbol,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEventRepeat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEventSeat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEvent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExitToApp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExpand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExploreOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExplore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExtensionOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExtension,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFactCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFavoriteBorder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFavorite,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFax,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFeedback,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilePresent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterAltOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterListAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFindInPage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFindReplace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFingerprint,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFitScreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlaky,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlightLand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlightTakeoff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlipToBack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlipToFront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlutterDash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFreeCancellation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGTranslate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGavel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGeneratingTokens,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGetApp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGifBox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGif,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGrade,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGrading,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGroupWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHelpCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHelpOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHelp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHideSource,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHighlightAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHighlightOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHistoryToggleOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHistory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHlsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHls,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHomeFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHome,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHorizontalSplit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHotelClass,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHourglassDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHourglassEmpty,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHourglassFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHtml,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHttp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHttps,
+  /** @deprecated Use icons from @novu/novui instead */
   IconImportantDevices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInfoOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInfo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInput,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInstallDesktop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInstallMobile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconIntegrationInstructions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInvertColors,
+  /** @deprecated Use icons from @novu/novui instead */
   IconJavascript,
+  /** @deprecated Use icons from @novu/novui instead */
   IconJoinFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconJoinInner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconJoinLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconJoinRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLabelImportantOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLabelImportant,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLabelOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLabelOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLabel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLanguage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLaunch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLeaderboard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLightbulbCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLightbulbOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLightbulb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLineStyle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLineWeight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconList,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLockClock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLockOpen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLockOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLockPerson,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLockReset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLogin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLogout,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLoyalty,
+  /** @deprecated Use icons from @novu/novui instead */
   IconManageAccounts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconManageHistory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMarkAsUnread,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMarkunreadMailbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMaximize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMediation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMinimize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconModelTraining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNetworkPing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNewLabel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNextPlan,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNightlightRound,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoAccounts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoiseAware,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoiseControlOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotAccessible,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotStarted,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoteAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOfflineBolt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOfflinePin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOnDeviceTraining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOnlinePrediction,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOpacity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOpenInBrowser,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOpenInFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOpenInNewOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOpenInNew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOpenWith,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutbond,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutbound,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutgoingMail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutput,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPageview,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPaid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanToolAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanTool,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPayment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPendingActions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPending,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPercent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPermCameraMic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPermContactCalendar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPermDataSetting,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPermDeviceInformation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPermIdentity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPermMedia,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPermPhoneMsg,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPermScanWifi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPets,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPictureInPictureAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPictureInPicture,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPinEnd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPinInvoke,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPinch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlagiarism,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlayForWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPolymer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPowerSettingsNew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPregnantWoman,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPreview,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPrint,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPrivacyTip,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPrivateConnectivity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconProductionQuantityLimits,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPublishedWithChanges,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQueryBuilder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQuestionAnswer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQuestionMark,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQuickreply,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRebaseEdit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReceipt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRecordVoiceOver,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRedeem,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRemoveDone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRemoveShoppingCart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReorder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRepartition,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReportProblem,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRequestPage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRestoreFromTrash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRestorePage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRestore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRocketLaunch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRocket,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRoom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRoundedCorner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRowing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRule,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSatelliteAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSavedSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSavings,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScheduleSend,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSchedule,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSearchOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSegment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSendAndArchive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSensorsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSensors,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsAccessibility,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsApplications,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsBackupRestore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsBluetooth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsBrightness,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsCell,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsEthernet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsInputAntenna,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsInputComponent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsInputComposite,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsInputHdmi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsInputSvideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsOverscan,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsPhone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsPower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsRemote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsVoice,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettings,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShop2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShopTwo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShoppingBag,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShoppingBasket,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShoppingCartCheckout,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShoppingCart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSmartButton,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSource,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpaceDashboard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpatialAudioOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpatialAudio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpatialTracking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpeakerNotesOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpeakerNotes,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpellcheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStarRate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStars,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStickyNote2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSubject,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSubtitlesOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSupervisedUserCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSupervisorAccount,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSupport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwapHoriz,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwapHorizontalCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwapVert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwapVerticalCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwipeDownAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwipeDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwipeLeftAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwipeLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwipeRightAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwipeRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwipeUpAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwipeUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwipeVertical,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwipe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwitchAccessShortcutAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwitchAccessShortcut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSyncAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSystemUpdateAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTabUnselected,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTab,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTableView,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTaskAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTerminal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextRotateUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextRotateVertical,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextRotationAngledown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextRotationAngleup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextRotationDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextRotationNone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTheaters,
+  /** @deprecated Use icons from @novu/novui instead */
   IconThumbDownOffAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconThumbDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconThumbUpOffAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconThumbUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconThumbsUpDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTimeline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTipsAndUpdates,
+  /** @deprecated Use icons from @novu/novui instead */
   IconToc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconToday,
+  /** @deprecated Use icons from @novu/novui instead */
   IconToken,
+  /** @deprecated Use icons from @novu/novui instead */
   IconToll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTouchApp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTour,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTrackChanges,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTranscribe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTranslate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTrendingDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTrendingFlat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTrendingUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTroubleshoot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTry,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTurnedInNot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTurnedIn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUnfoldLessDouble,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUnfoldMoreDouble,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUnpublished,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUpdateDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUpdate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUpgrade,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVerifiedUser,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVerified,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVerticalSplit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewAgenda,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewArray,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewCarousel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewColumn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewComfyAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewCompactAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewCozy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewDay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewHeadline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewInAr,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewKanban,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewList,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewModule,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewQuilt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewSidebar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewStream,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewTimeline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewWeek,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVisibilityOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVisibility,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVoiceOverOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWatchLater,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWebhook,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWidthFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWidthNormal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWidthWide,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiProtectedSetup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWorkHistory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWorkOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWorkOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWysiwyg,
+  /** @deprecated Use icons from @novu/novui instead */
   IconYoutubeSearchedFor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconZoomIn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconZoomOut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutoDelete,
+  /** @deprecated Use icons from @novu/novui instead */
   IconErrorOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconError,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotificationImportant,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWarningAmber,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWarning,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon10K,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon1KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon1K,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon2KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon2K,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon3KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon3K,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon4KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon4K,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon5G,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon5KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon5K,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon6KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon6K,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon7KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon7K,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon8KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon8K,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon9KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon9K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddToQueue,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirplay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlbum,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArtTrack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAudioFile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAvTimer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrandingWatermark,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCallToAction,
+  /** @deprecated Use icons from @novu/novui instead */
   IconClosedCaptionDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconClosedCaptionOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconClosedCaption,
+  /** @deprecated Use icons from @novu/novui instead */
   IconControlCamera,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEqualizer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExplicit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFastForward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFastRewind,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFeaturedPlayList,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFeaturedVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFiberDvr,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFiberManualRecord,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFiberNew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFiberPin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFiberSmartRecord,
+  /** @deprecated Use icons from @novu/novui instead */
   IconForward10,
+  /** @deprecated Use icons from @novu/novui instead */
   IconForward30,
+  /** @deprecated Use icons from @novu/novui instead */
   IconForward5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGames,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHearingDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHearing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHighQuality,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInterpreterMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLibraryAddCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLibraryAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLibraryBooks,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLibraryMusic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLoop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLyrics,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMicNone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMicOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMissedVideoCall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMovieEdit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMovie,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMusicVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNewReleases,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotInterested,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPauseCircleFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPauseCircleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPauseCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPause,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlayArrow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlayCircleFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlayCircleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlayCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlayDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlaylistAddCheckCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlaylistAddCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlaylistAddCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlaylistAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlaylistPlay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlaylistRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQueueMusic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQueuePlayNext,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQueue,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRadio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRecentActors,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRemoveFromQueue,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRepeatOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRepeatOneOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRepeatOne,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRepeat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReplay10,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReplay30,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReplay5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReplayCircleFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReplay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShuffleOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShuffle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSkipNext,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSkipPrevious,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSlowMotionVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSnooze,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSortByAlpha,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpeed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStopCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSubscriptions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSubtitles,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSurroundSound,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideoCall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideoFile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideoLabel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideoLibrary,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideoSettings,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideocamOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideocam,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVolumeDownAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVolumeDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVolumeMute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVolumeOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVolumeUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWebAssetOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWebAsset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWeb,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon3P,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddIcCall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlternateEmail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAppRegistration,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBusiness,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCallEnd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCallMade,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCallMerge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCallMissedOutgoing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCallMissed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCallReceived,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCallSplit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCancelPresentation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCellTower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCellWifi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChatBubbleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChatBubble,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconClearAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCoPresent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconComment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCommentsDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContactEmergency,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContactMail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContactPhone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContacts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDesktopAccessDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDialerSip,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDialpad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDocumentScanner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDomainDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDomainVerification,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDuo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconForum,
+  /** @deprecated Use icons from @novu/novui instead */
   IconForwardToInbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHourglassBottom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHourglassTop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHub,
+  /** @deprecated Use icons from @novu/novui instead */
   IconImportContacts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconImportExport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInvertColorsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconListAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLiveHelp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocationOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocationOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMailLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMailOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMarkChatRead,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMarkChatUnread,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMarkEmailRead,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMarkEmailUnread,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMarkUnreadChatAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMessage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMobileScreenShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoreTime,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoSim,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPausePresentation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonAddDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoneDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoneEnabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhonelinkErase,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhonelinkLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhonelinkRing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhonelinkSetup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPortableWifiOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPresentToAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPrintDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQrCode2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQrCodeScanner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQrCode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReadMore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRingVolume,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRssFeed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRtt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScreenShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSendTimeExtension,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSentimentSatisfiedAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSip,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpeakerPhone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpoke,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStayCurrentLandscape,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStayCurrentPortrait,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStayPrimaryLandscape,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStayPrimaryPortrait,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStopScreenShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwapCalls,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextsms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUnsubscribe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVoicemail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVpnKeyOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVpnKey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiCalling,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddBox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddCircleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddLink,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAmpStories,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArchive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAttribution,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBackspace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBallot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBiotech,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBlockFlipped,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBlock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBolt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCalculate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChangeCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconClear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContentCopy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContentCut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContentPasteGo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContentPasteOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContentPasteSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContentPaste,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCopyAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCreate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeleteSweep,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeselect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDrafts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDynamicFeed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFileCopy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterListOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterList,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlagCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlag,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFontDownloadOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFontDownload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconForward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGesture,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHowToReg,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHowToVote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInsights,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInventory2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInventory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLinkOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLink,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLowPriority,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMarkunread,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoveToInbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNextWeek,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinedFlag,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPolicy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPushPin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRedo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRemoveCircleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRemoveCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReplyAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReply,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReportGmailerrorred,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReportOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSaveAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSaveAs,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSave,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSelectAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSend,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShield,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSort,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSquareFoot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStackedBarChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStream,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTag,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextFormat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUnarchive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUndo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUpcoming,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWaves,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWebStories,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWeekend,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWhereToVote,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon1XMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon30Fps,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon3GMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon4GMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon4GPlusMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon60Fps,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccessAlarm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccessAlarms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccessTimeFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccessTime,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAdUnits,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddAlarm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddToHomeScreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAir,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirplaneTicket,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirplanemodeActive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirplanemodeInactive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAod,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery0Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery3Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery4Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery5Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery6Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryChargingFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatterySaver,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryStd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryUnknown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBloodtype,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBluetoothConnected,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBluetoothDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBluetoothDrive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBluetoothSearching,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBluetooth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightnessAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightnessHigh,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightnessLow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightnessMedium,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCable,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCameraswitch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCreditScore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDarkMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDataSaverOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDataSaverOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDataUsage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDatasetLinked,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDataset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeveloperMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeviceThermostat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDevicesFold,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDevices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDiscount,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoNotDisturbOnTotalSilence,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDvr,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEdgesensorHigh,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEdgesensorLow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlashlightOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlashlightOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlourescent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFluorescent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFmdBad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFmdGood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGppBad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGppGood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGppMaybe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGpsFixed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGpsNotFixed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGpsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGraphicEq,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGrid3X3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGrid4X4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGridGoldenratio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHPlusMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHdrAutoSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHdrAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHdrOffSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHdrOnSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLan,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLensBlur,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLightMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocationDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocationSearching,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLteMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLtePlusMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMacroOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMediaBluetoothOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMediaBluetoothOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMedicationLiquid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMedication,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMobileFriendly,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMobileOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMobiledataOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconModeNight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconModeStandby,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMonitorHeart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMonitorWeight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNearbyError,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNearbyOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNetworkCell,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNetworkWifi1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNetworkWifi2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNetworkWifi3Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNetworkWifi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNfc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNightlight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoteAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPassword,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPattern,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhishing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlayLesson,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPriceChange,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPriceCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPunchClock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQuiz,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRadar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRememberMe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconResetTv,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRestartAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReviews,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRsvp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScreenLockLandscape,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScreenLockPortrait,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScreenLockRotation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScreenRotation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScreenSearchDesktop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScreenshotMonitor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScreenshot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSdStorage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSecurityUpdateGood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSecurityUpdateWarning,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSecurityUpdate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSell,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSendToMobile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsSuggest,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSettingsSystemDaydream,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShareLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShortcut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellular0Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellular4Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularAlt1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularAlt2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularConnectedNoInternet0Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularConnectedNoInternet4Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularNoSim,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularNodata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularNull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifi0Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifi4BarLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifi4Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiBad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiConnectedNoInternet4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbar4Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbarConnectedNoInternet4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbarNull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSimCardDownload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSplitscreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsScore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSsidChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStorage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStorm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSummarize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSystemSecurityUpdateGood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSystemSecurityUpdateWarning,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSystemSecurityUpdate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTask,
+  /** @deprecated Use icons from @novu/novui instead */
   IconThermostat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTimer10Select,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTimer3Select,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTungsten,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUsbOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUsb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWallpaper,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWater,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWidgets,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifi1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifi2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiCalling3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiChannel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiFind,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiPassword,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiTetheringErrorRounded,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiTetheringError,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiTetheringOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiTethering,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddComment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlignHorizontalCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlignHorizontalLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlignHorizontalRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlignVerticalBottom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlignVerticalCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAlignVerticalTop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAreaChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAttachFile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAttachMoney,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutoGraph,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBarChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderBottom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderClear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderColor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderHorizontal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderInner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderOuter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderStyle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderTop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBorderVertical,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBubbleChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCandlestickChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChecklistRtl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChecklist,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDataArray,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDataObject,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDragHandle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDraw,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEditNote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatAlignCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatAlignJustify,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatAlignLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatAlignRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatBold,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatClear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatColorFill,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatColorReset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatColorText,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatIndentDecrease,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatIndentIncrease,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatItalic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatLineSpacing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatListBulletedAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatListBulleted,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatListNumberedRtl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatListNumbered,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatPaint,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatQuote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatShapes,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatSize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatStrikethrough,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatTextdirectionLToR,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatTextdirectionRToL,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatUnderlined,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFunctions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHeight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHexagon,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHighlight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHorizontalDistribute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHorizontalRule,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInsertChartOutlined,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInsertChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInsertComment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInsertDriveFile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInsertEmoticon,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInsertInvitation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInsertLink,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInsertPageBreak,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInsertPhoto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLineAxis,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLinearScale,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMargin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMergeType,
+  /** @deprecated Use icons from @novu/novui instead */
   IconModeComment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconModeEditOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconModeEdit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMonetizationOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoneyOffCsred,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoneyOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoveDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoveUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMultilineChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotes,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNumbers,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPadding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPentagon,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPieChartOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPieChartOutlined,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPieChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPolyline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPostAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPublish,
+  /** @deprecated Use icons from @novu/novui instead */
   IconQueryStats,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRectangle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScatterPlot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSchema,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShapeLine,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShortText,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShowChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpaceBar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSquare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStackedLineChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStrikethroughS,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSubscript,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSuperscript,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTableChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTableRows,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextDecrease,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextFields,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextIncrease,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTitle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTypeSpecimen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVerticalAlignBottom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVerticalAlignCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVerticalAlignTop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVerticalDistribute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWrapText,
+  /** @deprecated Use icons from @novu/novui instead */
   IconApproval,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAttachEmail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAttachment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCloudCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCloudDone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCloudDownload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCloudOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCloudQueue,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCloudSync,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCloudUpload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCloud,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCreateNewFolder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDifference,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDownloadDone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDownloadForOffline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDownload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDownloading,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDriveFileMoveOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDriveFileMoveRtl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDriveFileMove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDriveFileRenameOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDriveFolderUpload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFileDownloadDone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFileDownloadOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFileDownload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFileOpen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFileUploadOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFileUpload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFolderCopy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFolderDelete,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFolderOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFolderOpen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFolderShared,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFolderZip,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFolder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFormatOverline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGridView,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNewspaper,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRequestQuote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRuleFolder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSnippetFolder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTextSnippet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTopic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUploadFile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUpload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWorkspacesFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWorkspacesOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWorkspaces,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAdfScanner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrowserNotSupported,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrowserUpdated,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCastConnected,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCastForEducation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconComputer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconConnectedTv,
+  /** @deprecated Use icons from @novu/novui instead */
   IconConveyorBelt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDesktopMac,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDesktopWindows,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeveloperBoardOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeveloperBoard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeviceHub,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeviceUnknown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDevicesOther,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEarbudsBattery,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEarbuds,
+  /** @deprecated Use icons from @novu/novui instead */
   IconForklift,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFrontLoader,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGamepad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHeadphonesBattery,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHeadphones,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHeadsetMic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHeadsetOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHeadset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHomeMax,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHomeMini,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardArrowDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardArrowLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardArrowRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardArrowUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardBackspace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardCapslock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardCommandKey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardControlKey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardDoubleArrowDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardDoubleArrowLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardDoubleArrowRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardDoubleArrowUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardHide,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardOptionKey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardReturn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardTab,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboardVoice,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKeyboard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLaptopChromebook,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLaptopMac,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLaptopWindows,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLaptop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMemory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMonitor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMouse,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPallet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoneAndroid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoneIphone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhonelinkOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhonelink,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPointOfSale,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPowerInput,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRouter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScanner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSecurity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSimCard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSmartDisplay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSmartScreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSmartToy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSmartphone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpeakerGroup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpeaker,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTabletAndroid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTabletMac,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTablet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconToys,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTrolley,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTv,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideogameAssetOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideogameAsset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWatchOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWatch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutoMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBlindsClosed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBlinds,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBroadcastOnHome,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBroadcastOnPersonal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCloudySnowing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurtainsClosed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurtains,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElectricBolt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElectricMeter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEnergySavingsLeaf,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFoggy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGasMeter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHeatPump,
+  /** @deprecated Use icons from @novu/novui instead */
   IconModeFanOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNestCamWiredStand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOilBarrel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPropaneTank,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPropane,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRollerShadesClosed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRollerShades,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSensorDoor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSensorOccupied,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSensorWindow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShelves,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShieldMoon,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSnowing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSolarPower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSunnySnowing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSunny,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVerticalShadesClosed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVerticalShades,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWindPower,
+  /**
+   * @deprecated
+   * Use icons from @novu/novui instead
+   */
   Icon10Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon11Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon12Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon13Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon14Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon15Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon16Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon17Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon18Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon19Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon20Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon21Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon22Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon23Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon24Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon2Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon30FpsSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon3Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon4Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon5Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon60FpsSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon6Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon7Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon8Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon9Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddAPhoto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddPhotoAlternate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddToPhotos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAdjust,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAnimation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssistantPhoto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssistant,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAudiotrack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutoAwesomeMosaic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutoAwesomeMotion,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutoAwesome,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutoFixHigh,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutoFixNormal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutoFixOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutoStories,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAutofpsSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBedtimeOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBedtime,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBlurCircular,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBlurLinear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBlurOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBlurOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightness1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightness2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightness3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightness4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightness5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightness6,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrightness7,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrokenImage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrush,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBurstMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCameraAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCameraFront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCameraRear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCameraRoll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCamera,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCases,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCenterFocusStrong,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCenterFocusWeak,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCollectionsBookmark,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCollections,
+  /** @deprecated Use icons from @novu/novui instead */
   IconColorLens,
+  /** @deprecated Use icons from @novu/novui instead */
   IconColorize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCompare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconContrast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconControlPointDuplicate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconControlPoint,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCrop169,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCrop32,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCrop54,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCrop75,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCropDin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCropFree,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCropLandscape,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCropOriginal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCropPortrait,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCropRotate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCropSquare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCrop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurrencyBitcoin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurrencyFranc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurrencyLira,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurrencyPound,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurrencyRuble,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurrencyRupee,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurrencyYen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCurrencyYuan,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeblur,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDehaze,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDetails,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirtyLens,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEdit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEuro,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExposureNeg1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExposureNeg2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExposurePlus1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExposurePlus2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExposureZero,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExposure,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFaceRetouchingNatural,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFaceRetouchingOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter6,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter7,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter8,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter9Plus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter9,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterBAndW,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterCenterFocus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterDrama,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterFrames,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterHdr,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterNone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterTiltShift,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilterVintage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFilter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlashAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlashOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlashOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlipCameraAndroid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlipCameraIos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlip,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGradient,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGrain,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGridOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGridOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHdrEnhancedSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHdrOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHdrOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHdrPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHdrStrong,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHdrWeak,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHealing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHevc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHideImage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconImageAspectRatio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconImageNotSupported,
+  /** @deprecated Use icons from @novu/novui instead */
   IconImageSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconImage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconIncompleteCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconIso,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLandscape,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLeakAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLeakRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLens,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLinkedCamera,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLogoDev,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLooks3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLooks4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLooks5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLooks6,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLooksOne,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLooksTwo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLooks,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLoupe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMicExternalOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMicExternalOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMonochromePhotos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMotionPhotosAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMotionPhotosOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMotionPhotosOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMotionPhotosPause,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMotionPhotosPaused,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMovieCreation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMovieFilter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMusicNote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMusicOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNaturePeople,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNature,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNavigateBefore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNavigateNext,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPalette,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanoramaFishEye,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanoramaHorizontalSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanoramaHorizontal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanoramaPhotosphereSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanoramaPhotosphere,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanoramaVerticalSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanoramaVertical,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanoramaWideAngleSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanoramaWideAngle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPanorama,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhotoAlbum,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhotoCameraBack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhotoCameraFront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhotoCamera,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhotoFilter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhotoLibrary,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhotoSizeSelectActual,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhotoSizeSelectLarge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhotoSizeSelectSmall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPictureAsPdf,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPortrait,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRawOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRawOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReceiptLong,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRemoveRedEye,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRotate90DegreesCcw,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRotate90DegreesCw,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRotateLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRotateRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShutterSpeed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSlideshow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStraighten,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStyle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwitchCamera,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwitchVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTagFaces,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTexture,
+  /** @deprecated Use icons from @novu/novui instead */
   IconThermostatAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTimelapse,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTimer10,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTimer3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTimerOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTimer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTonality,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTransform,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTune,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideoCameraBack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideoCameraFront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideoStable,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewComfy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconViewCompact,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVignette,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVrpano,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWbAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWbCloudy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWbIncandescent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWbIridescent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWbShade,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWbSunny,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWbTwighlight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWbTwilight,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon360,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddBusiness,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddLocationAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddRoad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAgriculture,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirlineStops,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirlines,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAltRoute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAtm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAttractions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBadge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBakeryDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBeenhere,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBikeScooter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBreakfastDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBrunchDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBusAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCarCrash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCarRental,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCarRepair,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCastle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCategory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCelebration,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChurch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCleaningServices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCompassCalibration,
+  /** @deprecated Use icons from @novu/novui instead */
   IconConnectingAirports,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCrisisAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeliveryDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDepartureBoard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDesignServices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDiamond,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDinnerDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsBike,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsBoatFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsBoat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsBusFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsBus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsCarFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsCar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsRailwayFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsRailway,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsRun,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsSubwayFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsSubway,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsTransitFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsTransit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsWalk,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirections,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDryCleaning,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEditAttributes,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEditLocationAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEditLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEditRoad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEggAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEgg,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElectricBike,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElectricCar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElectricMoped,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElectricRickshaw,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElectricScooter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElectricalServices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmergencyRecording,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmergencyShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmergency,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEvStation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFactory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFastfood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFestival,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFireHydrantAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFireTruck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlightClass,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconForest,
+  /** @deprecated Use icons from @novu/novui instead */
   IconForkLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconForkRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFort,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHandyman,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHardware,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHomeRepairService,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHotel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHvac,
+  /** @deprecated Use icons from @novu/novui instead */
   IconIcecream,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKebabDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLayersClear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLayers,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLiquor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalActivity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalAirport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalAtm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalBar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalCafe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalCarWash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalConvenienceStore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalDrink,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalFireDepartment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalFlorist,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalGasStation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalGroceryStore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalHospital,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalHotel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalLaundryService,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalLibrary,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalMall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalMovies,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalOffer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalParking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalPharmacy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalPhone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalPizza,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalPlay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalPolice,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalPostOffice,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalPrintshop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalSee,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalShipping,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocalTaxi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocationPin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLunchDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMap,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMapsUgc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMedicalInformation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMedicalServices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMenuBook,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMerge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMinorCrash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMiscellaneousServices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconModeOfTravel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoney,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoped,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMosque,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoving,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMultipleStop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMuseum,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMyLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNavigation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNearMeDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNearMe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNightlife,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoCrash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoMealsOuline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoMeals,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoTransfer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotListedLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPark,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPedalBike,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonPinCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonPin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPestControlRodent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPestControl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPinDrop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlumbing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRailwayAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRamenDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRampLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRampRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRateReview,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRemoveRoad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRestaurantMenu,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRestaurant,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRoundaboutLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRoundaboutRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRoute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRunCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSafetyCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSailing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSatellite,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScreenRotationAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSetMeal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignpost,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSnowmobile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSoupKitchen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStadium,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStoreMallDirectory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStraight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStreetview,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSubway,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSynagogue,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTakeoutDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTaxiAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTempleBuddhist,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTempleHindu,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTerrain,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTheaterComedy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTireRepair,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTraffic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTrain,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTram,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTransferWithinAStation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTransitEnterexit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTripOrigin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTurnLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTurnRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTurnSharpLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTurnSharpRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTurnSlightLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTurnSlightRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTwoWheeler,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUTurnLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUTurnRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVolunteerActivism,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWarehouse,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWineBar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWrongLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconZoomInMap,
+  /** @deprecated Use icons from @novu/novui instead */
   IconZoomOutMap,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddHomeWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAppSettingsAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAppsOutage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconApps,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowBackIosNew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowBackIos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowBack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowDownward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowDropDownCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowDropDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowDropUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowForwardIos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowForward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArrowUpward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssistantDirection,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssistantNavigation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCampaign,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCancel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChevronLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChevronRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconClose,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoubleArrow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExpandCircleDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExpandLess,
+  /** @deprecated Use icons from @novu/novui instead */
   IconExpandMore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFirstPage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFullscreenExit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFullscreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHomeWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLastPage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLegendToggle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMapsHomeWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMenuOpen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMenu,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoreHoriz,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoreVert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNorthEast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNorthWest,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNorth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOfflineShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPayments,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPivotTableChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRefresh,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSouthEast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSouthWest,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSouth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSubdirectoryArrowLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSubdirectoryArrowRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwitchLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwitchRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUnfoldLess,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUnfoldMore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWaterfallChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWest,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAccountTree,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAdb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddCall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirlineSeatFlatAngled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirlineSeatFlat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirlineSeatIndividualSuite,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirlineSeatLegroomExtra,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirlineSeatLegroomNormal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirlineSeatLegroomReduced,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirlineSeatReclineExtra,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirlineSeatReclineNormal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBluetoothAudio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconConfirmationNumber,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDirectionsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDiscFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoDisturbAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoDisturbOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoDisturbOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoDisturb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoNotDisturbAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoNotDisturbOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoNotDisturbOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoNotDisturb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDriveEta,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEnhancedEncryption,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEventAvailable,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEventBusy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEventNote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFolderSpecial,
+  /** @deprecated Use icons from @novu/novui instead */
   IconImagesearchRoller,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLiveTv,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNetworkCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNetworkLocked,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoEncryptionGmailerrorred,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoEncryption,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOndemandVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonalVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoneBluetoothSpeaker,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoneCallback,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoneForwarded,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoneInTalk,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoneLocked,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhoneMissed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPhonePaused,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPowerOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPriorityHigh,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRunningWithErrors,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSdCardAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSdCard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSimCardAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSmsFailed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSupportAgent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSyncDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSyncLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSyncProblem,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSync,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSystemUpdate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTapAndPlay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTimeToLeave,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTvOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVibration,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVideoChat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVoiceChat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVpnLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAcUnit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAirportShuttle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAllInclusive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconApartment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBabyChangingStation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBackpack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBalcony,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBathtub,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBeachAccess,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBento,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBungalow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBusinessCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCabin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCarpenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCasino,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChalet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChargingStation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCheckroom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChildCare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChildFriendly,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCorporateFare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCottage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCountertops,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCrib,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDesk,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoNotStep,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoNotTouch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDry,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElevator,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEscalatorWarning,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEscalator,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFamilyRestroom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFence,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFireExtinguisher,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFitnessCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFoodBank,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFoundation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFreeBreakfast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGite,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGolfCourse,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGrass,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHolidayVillage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHotTub,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHouseSiding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHouse,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHouseboat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconIron,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKitchen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMeetingRoom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMicrowave,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNightShelter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoBackpack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoCell,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoDrinks,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoFlash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoFood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoMeetingRoom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoPhotography,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoStroller,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOtherHouses,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPool,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRiceBowl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRoofing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRoomPreferences,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRoomService,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRvHookup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSmokeFree,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSmokingRooms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSoap,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSpa,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsBar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStairs,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStorefront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStroller,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTapas,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTty,
+  /** @deprecated Use icons from @novu/novui instead */
   IconUmbrella,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVapeFree,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVapingRooms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVilla,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWaterDamage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWheelchairPickup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBathroom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBedroomBaby,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBedroomChild,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBedroomParent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBlender,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCameraIndoor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCameraOutdoor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChairAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconChair,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCoffeeMaker,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCoffee,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoorBack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoorFront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoorSliding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDoorbell,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFeed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlatware,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGarage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLiving,
+  /** @deprecated Use icons from @novu/novui instead */
   IconManageSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPodcasts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTableBar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTableRestaurant,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWindow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconYard,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon18UpRating,
+  /** @deprecated Use icons from @novu/novui instead */
   Icon6FtApart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddModerator,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAddReaction,
+  /** @deprecated Use icons from @novu/novui instead */
   IconArchitecture,
+  /** @deprecated Use icons from @novu/novui instead */
   IconAssistWalker,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBackHand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBlind,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBoy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCake,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCatchingPokemon,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCleanHands,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCo2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCompost,
+  /** @deprecated Use icons from @novu/novui instead */
   IconConnectWithoutContact,
+  /** @deprecated Use icons from @novu/novui instead */
   IconConstruction,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCookie,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCoronavirus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCrueltyFree,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCyclone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDeck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDewPoint,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDiversity1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDiversity2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDiversity3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDomainAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDomain,
+  /** @deprecated Use icons from @novu/novui instead */
   IconDownhillSkiing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEditNotifications,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElderlyWoman,
+  /** @deprecated Use icons from @novu/novui instead */
   IconElderly,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmojiEmotions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmojiEvents,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmojiFlags,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmojiFoodBeverage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmojiNature,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmojiObjects,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmojiPeople,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmojiSymbols,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEmojiTransportation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconEngineering,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFace2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFace3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFace4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFace5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFace6,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFacebook,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFemale,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFireplace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFitbit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFlood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFollowTheSigns,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFrontHand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGirl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGroupAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGroupOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGroupRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGroup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGroups2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGroups3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconGroups,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHandshake,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHealthAndSafety,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHeartBroken,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHiking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHistoryEdu,
+  /** @deprecated Use icons from @novu/novui instead */
   IconHive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconIceSkating,
+  /** @deprecated Use icons from @novu/novui instead */
   IconInterests,
+  /** @deprecated Use icons from @novu/novui instead */
   IconIosShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKayaking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKingBed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconKitesurfing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLandslide,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLocationCity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconLuggage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMale,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMan2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMan3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMan4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMan,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMasks,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMilitaryTech,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMoodBad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconMood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNightsStay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoAdultContent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNoLuggage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNordicWalking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotificationAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotificationsActive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotificationsNone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotificationsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotificationsPaused,
+  /** @deprecated Use icons from @novu/novui instead */
   IconNotifications,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutdoorGrill,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPages,
+  /** @deprecated Use icons from @novu/novui instead */
   IconParagliding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPartyMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPeopleAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPeopleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPeople,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPerson2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPerson3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPerson4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonAddAlt1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonAddAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonRemoveAlt1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPerson,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPersonalInjury,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPianoOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPiano,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPix,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPlusOne,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPoll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPrecisionManufacturing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPsychologyAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPsychology,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPublicOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconPublic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRealEstateAgent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRecommend,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRecycling,
+  /** @deprecated Use icons from @novu/novui instead */
   IconReduceCapacity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRemoveModerator,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRollerSkating,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSafetyDivider,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSanitizer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScale,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSchool,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScience,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScoreboard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconScubaDiving,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSelfImprovement,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSentimentDissatisfied,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSentimentNeutral,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSentimentSatisfied,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSentimentVeryDissatisfied,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSentimentVerySatisfied,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSevereCold,
+  /** @deprecated Use icons from @novu/novui instead */
   IconShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSick,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignLanguage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSingleBed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSkateboarding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSledding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSnowboarding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSnowshoeing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSocialDistance,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSouthAmerica,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsBaseball,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsBasketball,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsCricket,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsEsports,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsFootball,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsGolf,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsGymnastics,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsHandball,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsHockey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsKabaddi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsMartialArts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsMma,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsMotorsports,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsRugby,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsSoccer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsTennis,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSportsVolleyball,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSports,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSurfing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSwitchAccount,
+  /** @deprecated Use icons from @novu/novui instead */
   IconThumbDownAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconThumbUpAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconThunderstorm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTornado,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTransgender,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTravelExplore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconTsunami,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVaccines,
+  /** @deprecated Use icons from @novu/novui instead */
   IconVolcano,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWallet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWaterDrop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWavingHand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWhatsapp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWhatshot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWoman2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWoman,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWorkspacePremium,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCheckBoxOutlineBlank,
+  /** @deprecated Use icons from @novu/novui instead */
   IconCheckBox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconIndeterminateCheckBox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRadioButtonChecked,
+  /** @deprecated Use icons from @novu/novui instead */
   IconRadioButtonUnchecked,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStarBorderPurple500,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStarBorder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStarHalf,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStarOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStarPurple500,
+  /** @deprecated Use icons from @novu/novui instead */
   IconStar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconToggleOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconToggleOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconFaceUnlock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery20,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery30,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery50,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery60,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery80,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBattery90,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryCharging20,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryCharging30,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryCharging50,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryCharging60,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryCharging80,
+  /** @deprecated Use icons from @novu/novui instead */
   IconBatteryCharging90,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellular1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellular2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellular3Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularConnectedNoInternet1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularConnectedNoInternet2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalCellularConnectedNoInternet3Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifi1BarLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifi1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifi2BarLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifi2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifi3BarLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifi3Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiConnectedNoInternet0,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiConnectedNoInternet1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiConnectedNoInternet2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiConnectedNoInternet3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbar1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbar2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbar3Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbarConnectedNoInternet1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbarConnectedNoInternet2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbarConnectedNoInternet3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbarConnectedNoInternet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconSignalWifiStatusbarNotConnected,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiCalling1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconWifiCalling2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline123,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline3DRotation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAbc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccessibilityNew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccessibility,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccessibleForward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccessible,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccountBalanceWallet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccountBalance,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccountBox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccountCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddCard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddHome,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddShoppingCart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddTask,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddToDrive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddchart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAdminPanelSettings,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAdsClick,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlarmAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlarmOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlarmOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlarm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAllInbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAllOut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAnalytics,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAnchor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAndroid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAnnouncement,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineApi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAppBlocking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAppShortcut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowCircleDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowCircleLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowCircleRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowCircleUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowOutward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowRightAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArticle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAspectRatio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssessment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssignmentInd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssignmentLate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssignmentReturn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssignmentReturned,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssignmentTurnedIn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssignment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssuredWorkload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutorenew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBackupTable,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBackup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBalance,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBatchPrediction,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBookOnline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBook,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBookmarkAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBookmarkAdded,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBookmarkBorder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBookmarkRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBookmark,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBookmarks,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrowseGallery,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBugReport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBuildCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBuild,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCached,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCalendarMonth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCalendarToday,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCalendarViewDay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCalendarViewMonth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCalendarViewWeek,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCameraEnhance,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCancelScheduleSend,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCardGiftcard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCardMembership,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCardTravel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChangeHistory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCheckCircleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCheckCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChromeReaderMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCircleNotifications,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineClass,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCloseFullscreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCodeOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCommentBank,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCommit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCommute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCompareArrows,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCompress,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContactPage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContactSupport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContactless,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCopyright,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCreditCardOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCreditCard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCss,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurrencyExchange,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDangerous,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDashboardCustomize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDashboard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDataExploration,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDataThresholding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDateRange,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeleteForever,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeleteOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDelete,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDensityLarge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDensityMedium,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDensitySmall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDescription,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDisabledByDefault,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDisabledVisible,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDisplaySettings,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDns,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoneAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoneOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDonutLarge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDonutSmall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDragIndicator,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDynamicForm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEco,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEditCalendar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEditOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEject,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEuroSymbol,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEventRepeat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEventSeat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEvent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExitToApp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExpand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExploreOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExplore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExtensionOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExtension,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFaceUnlock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFactCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFavoriteBorder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFavorite,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFax,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFeedback,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilePresent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterAltOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFindInPage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFindReplace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFingerprint,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFitScreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlaky,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlightLand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlightTakeoff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlipToBack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlipToFront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlutterDash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFreeCancellation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGTranslate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGavel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGeneratingTokens,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGetApp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGifBox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGif,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGrade,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGrading,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGroupWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHelpCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHelpOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHelp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHideSource,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHighlightAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHighlightOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHistoryToggleOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHistory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHlsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHls,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHome,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHorizontalSplit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHotelClass,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHourglassDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHourglassEmpty,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHourglassFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHtml,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHttp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHttps,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineImportantDevices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInfo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInput,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInstallDesktop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInstallMobile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineIntegrationInstructions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInvertColors,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineJavascript,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineJoinFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineJoinInner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineJoinLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineJoinRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLabelImportant,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLabelOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLabel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLanguage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLaunch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLeaderboard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLightbulbCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLightbulb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLineStyle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLineWeight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineList,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLockClock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLockOpen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLockPerson,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLockReset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLogin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLogout,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLoyalty,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineManageAccounts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineManageHistory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMarkAsUnread,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMarkunreadMailbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMaximize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMediation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMinimize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineModelTraining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNetworkPing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNewLabel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNextPlan,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNightlightRound,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoAccounts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoiseAware,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoiseControlOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotAccessible,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotStarted,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoteAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOfflineBolt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOfflinePin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOnDeviceTraining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOnlinePrediction,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOpacity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOpenInBrowser,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOpenInFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOpenInNewOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOpenInNew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOpenWith,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOutbond,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOutbound,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOutbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOutlet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOutput,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePageview,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePaid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanToolAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanTool,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePayment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePendingActions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePending,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePercent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePermCameraMic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePermContactCalendar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePermDataSetting,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePermDeviceInformation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePermIdentity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePermMedia,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePermPhoneMsg,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePermScanWifi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePets,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePictureInPictureAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePictureInPicture,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePinEnd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePinInvoke,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePinch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlagiarism,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlayForWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePolymer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePowerSettingsNew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePregnantWoman,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePreview,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePrint,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePrivacyTip,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePrivateConnectivity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineProductionQuantityLimits,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePublishedWithChanges,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQueryBuilder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQuestionAnswer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQuestionMark,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQuickreply,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReceipt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRecordVoiceOver,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRedeem,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRemoveDone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRemoveShoppingCart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReorder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRepartition,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReportProblem,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRequestPage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRestoreFromTrash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRestorePage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRestore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRocketLaunch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRocket,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRoom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRoundedCorner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRowing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRule,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSatelliteAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSavedSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSavings,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScheduleSend,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSchedule,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSearchOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSegment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSendAndArchive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSensorsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSensors,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsAccessibility,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsApplications,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsBackupRestore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsBluetooth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsBrightness,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsCell,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsEthernet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsInputAntenna,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsInputComponent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsInputComposite,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsInputHdmi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsInputSvideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsOverscan,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsPhone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsPower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsRemote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsVoice,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettings,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShop2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShopTwo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShoppingBag,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShoppingBasket,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShoppingCartCheckout,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShoppingCart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSmartButton,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSource,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpaceDashboard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpatialAudioOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpatialAudio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpatialTracking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpeakerNotesOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpeakerNotes,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpellcheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStarRate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStars,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStickyNote2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSubject,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSubtitlesOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSupervisedUserCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSupervisorAccount,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSupport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwapHoriz,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwapHorizontalCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwapVert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwapVerticalCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwipeDownAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwipeDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwipeLeftAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwipeLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwipeRightAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwipeRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwipeUpAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwipeUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwipeVertical,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwipe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwitchAccessShortcutAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwitchAccessShortcut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSyncAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSystemUpdateAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTabUnselected,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTab,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTableView,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTaskAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTerminal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextRotateUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextRotateVertical,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextRotationAngledown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextRotationAngleup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextRotationDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextRotationNone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTheaters,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineThumbDownOffAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineThumbDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineThumbUpOffAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineThumbUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineThumbsUpDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTimeline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTipsAndUpdates,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineToc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineToday,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineToken,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineToll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTouchApp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTour,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTrackChanges,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTranscribe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTranslate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTrendingDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTrendingFlat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTrendingUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTroubleshoot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTry,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTurnedInNot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTurnedIn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUnfoldLessDouble,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUnfoldMoreDouble,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUnpublished,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUpdateDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUpdate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUpgrade,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVerifiedUser,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVerified,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVerticalSplit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewAgenda,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewArray,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewCarousel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewColumn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewComfyAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewCompactAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewCozy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewDay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewHeadline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewInAr,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewKanban,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewList,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewModule,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewQuilt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewSidebar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewStream,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewTimeline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewWeek,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVisibilityOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVisibility,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVoiceOverOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWatchLater,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWebhook,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWidthFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWidthNormal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWidthWide,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiProtectedSetup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWorkHistory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWorkOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWorkOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWysiwyg,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineYoutubeSearchedFor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineZoomIn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineZoomOut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutoDelete,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineErrorOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineError,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotificationImportant,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWarningAmber,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWarning,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline10K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline1KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline1K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline2KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline2K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline3KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline3K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline4KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline4K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline5G,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline5KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline5K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline6KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline6K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline7KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline7K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline8KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline8K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline9KPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline9K,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddToQueue,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirplay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlbum,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArtTrack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAudioFile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAvTimer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrandingWatermark,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCallToAction,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineClosedCaptionDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineClosedCaptionOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineClosedCaption,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineControlCamera,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEqualizer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExplicit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFastForward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFastRewind,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFeaturedPlayList,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFeaturedVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFiberDvr,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFiberManualRecord,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFiberNew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFiberPin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFiberSmartRecord,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineForward10,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineForward30,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineForward5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGames,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHearingDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHearing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHighQuality,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInterpreterMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLibraryAddCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLibraryAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLibraryBooks,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLibraryMusic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLoop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLyrics,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMicNone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMicOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMissedVideoCall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMovie,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMusicVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNewReleases,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotInterested,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePauseCircleFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePauseCircleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePauseCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePause,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlayArrow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlayCircleFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlayCircleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlayCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlayDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlaylistAddCheckCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlaylistAddCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlaylistAddCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlaylistAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlaylistPlay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlaylistRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQueueMusic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQueuePlayNext,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQueue,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRadio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRecentActors,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRemoveFromQueue,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRepeatOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRepeatOneOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRepeatOne,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRepeat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReplay10,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReplay30,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReplay5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReplayCircleFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReplay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShuffleOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShuffle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSkipNext,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSkipPrevious,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSlowMotionVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSnooze,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSortByAlpha,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpeed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStopCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSubscriptions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSubtitles,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSurroundSound,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideoCall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideoFile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideoLabel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideoLibrary,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideoSettings,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideocamOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideocam,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVolumeDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVolumeMute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVolumeOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVolumeUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWebAssetOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWebAsset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWeb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline3P,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddIcCall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlternateEmail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAppRegistration,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBusiness,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCallEnd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCallMade,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCallMerge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCallMissedOutgoing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCallMissed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCallReceived,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCallSplit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCancelPresentation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCellTower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCellWifi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChatBubbleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChatBubble,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineClearAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCoPresent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineComment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCommentsDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContactEmergency,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContactMail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContactPhone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContacts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDesktopAccessDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDialerSip,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDialpad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDocumentScanner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDomainDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDomainVerification,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDuo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineForum,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineForwardToInbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHourglassBottom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHourglassTop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHub,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineImportContacts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineImportExport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInvertColorsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineListAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLiveHelp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocationOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocationOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMailLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMailOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMarkChatRead,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMarkChatUnread,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMarkEmailRead,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMarkEmailUnread,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMarkUnreadChatAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMessage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMobileScreenShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoreTime,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoSim,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePausePresentation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonAddDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoneDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoneEnabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhonelinkErase,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhonelinkLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhonelinkRing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhonelinkSetup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePortableWifiOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePresentToAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePrintDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQrCode2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQrCodeScanner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQrCode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReadMore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRingVolume,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRssFeed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRtt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScreenShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSendTimeExtension,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSentimentSatisfiedAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSip,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpeakerPhone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpoke,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStayCurrentLandscape,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStayCurrentPortrait,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStayPrimaryLandscape,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStayPrimaryPortrait,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStopScreenShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwapCalls,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextsms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUnsubscribe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVoicemail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVpnKeyOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVpnKey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiCalling,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddBox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddCircleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddLink,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAmpStories,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArchive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAttribution,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBackspace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBallot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBiotech,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBlock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBolt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCalculate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChangeCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineClear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContentCopy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContentCut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContentPasteGo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContentPasteOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContentPasteSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContentPaste,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCopyAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCreate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeleteSweep,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeselect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDrafts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDynamicFeed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFileCopy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterListOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterList,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlagCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlag,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFontDownloadOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFontDownload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineForward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGesture,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHowToReg,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHowToVote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInsights,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInventory2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInventory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLinkOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLink,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLowPriority,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMarkunread,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoveToInbox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNextWeek,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOutlinedFlag,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePolicy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePushPin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRedo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRemoveCircleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRemoveCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReplyAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReply,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReportGmailerrorred,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReportOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSaveAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSaveAs,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSave,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSelectAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSend,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShield,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSort,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSquareFoot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStackedBarChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStream,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTag,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextFormat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUnarchive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUndo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUpcoming,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWaves,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWebStories,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWeekend,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWhereToVote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline1XMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline30Fps,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline3GMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline4GMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline4GPlusMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline60Fps,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccessAlarm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccessAlarms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccessTimeFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccessTime,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAdUnits,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddAlarm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddToHomeScreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAir,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirplaneTicket,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirplanemodeActive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirplanemodeInactive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAod,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBattery0Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBattery1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBattery2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBattery3Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBattery4Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBattery5Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBattery6Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBatteryAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBatteryChargingFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBatteryFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBatterySaver,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBatteryStd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBatteryUnknown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBloodtype,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBluetoothConnected,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBluetoothDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBluetoothDrive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBluetoothSearching,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBluetooth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightnessAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightnessHigh,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightnessLow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightnessMedium,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCable,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCameraswitch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCreditScore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDarkMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDataSaverOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDataSaverOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDataUsage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDatasetLinked,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDataset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeveloperMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeviceThermostat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDevicesFold,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDevices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDiscount,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoNotDisturbOnTotalSilence,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDvr,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEdgesensorHigh,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEdgesensorLow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlashlightOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlashlightOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlourescent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFluorescent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFmdBad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFmdGood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGppBad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGppGood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGppMaybe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGpsFixed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGpsNotFixed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGpsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGraphicEq,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGrid3X3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGrid4X4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGridGoldenratio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHPlusMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHdrAutoSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHdrAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHdrOffSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHdrOnSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLan,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLensBlur,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLightMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocationDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocationSearching,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLteMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLtePlusMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMacroOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMediaBluetoothOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMediaBluetoothOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMedicationLiquid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMedication,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMobileFriendly,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMobileOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMobiledataOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineModeNight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineModeStandby,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMonitorHeart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMonitorWeight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNearbyError,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNearbyOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNetworkCell,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNetworkWifi1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNetworkWifi2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNetworkWifi3Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNetworkWifi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNfc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNightlight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoteAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePassword,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePattern,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhishing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlayLesson,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePriceChange,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePriceCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePunchClock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQuiz,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRMobiledata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRadar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRememberMe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineResetTv,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRestartAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReviews,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRsvp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScreenLockLandscape,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScreenLockPortrait,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScreenLockRotation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScreenRotation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScreenSearchDesktop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScreenshotMonitor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScreenshot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSdStorage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSecurityUpdateGood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSecurityUpdateWarning,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSecurityUpdate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSell,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSendToMobile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsSuggest,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSettingsSystemDaydream,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShareLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShortcut,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellular0Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellular4Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellularAlt1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellularAlt2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellularAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellularConnectedNoInternet0Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellularConnectedNoInternet4Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellularNoSim,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellularNodata,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellularNull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalCellularOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalWifi0Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalWifi4BarLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalWifi4Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalWifiBad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalWifiConnectedNoInternet4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalWifiOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalWifiStatusbar4Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalWifiStatusbarConnectedNoInternet4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignalWifiStatusbarNull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSimCardDownload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSplitscreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsScore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSsidChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStorage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStorm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSummarize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSystemSecurityUpdateGood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSystemSecurityUpdateWarning,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSystemSecurityUpdate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTask,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineThermostat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTimer10Select,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTimer3Select,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTungsten,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUsbOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUsb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWallpaper,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWater,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWidgets,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifi1Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifi2Bar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiCalling3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiChannel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiFind,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiPassword,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiTetheringErrorRounded,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiTetheringError,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiTetheringOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiTethering,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddComment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlignHorizontalCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlignHorizontalLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlignHorizontalRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlignVerticalBottom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlignVerticalCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAlignVerticalTop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAreaChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAttachFile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAttachMoney,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutoGraph,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBarChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderAll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderBottom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderClear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderColor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderHorizontal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderInner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderOuter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderStyle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderTop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBorderVertical,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBubbleChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCandlestickChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChecklistRtl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChecklist,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDataArray,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDataObject,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDragHandle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDraw,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEditNote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatAlignCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatAlignJustify,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatAlignLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatAlignRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatBold,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatClear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatColorFill,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatColorReset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatColorText,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatIndentDecrease,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatIndentIncrease,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatItalic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatLineSpacing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatListBulleted,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatListNumberedRtl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatListNumbered,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatPaint,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatQuote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatShapes,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatSize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatStrikethrough,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatTextdirectionLToR,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatTextdirectionRToL,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatUnderlined,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFunctions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHeight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHexagon,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHighlight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHorizontalDistribute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHorizontalRule,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInsertChartOutlined,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInsertChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInsertComment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInsertDriveFile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInsertEmoticon,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInsertInvitation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInsertLink,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInsertPageBreak,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInsertPhoto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLineAxis,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLinearScale,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMargin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMergeType,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineModeComment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineModeEditOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineModeEdit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMonetizationOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoneyOffCsred,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoneyOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoveDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoveUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMultilineChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotes,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNumbers,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePadding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePentagon,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePieChartOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePieChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePolyline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePostAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePublish,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineQueryStats,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRectangle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScatterPlot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSchema,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShapeLine,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShortText,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShowChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpaceBar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSquare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStackedLineChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStrikethroughS,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSubscript,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSuperscript,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTableChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTableRows,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextDecrease,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextFields,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextIncrease,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTitle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTypeSpecimen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVerticalAlignBottom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVerticalAlignCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVerticalAlignTop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVerticalDistribute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWrapText,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineApproval,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAttachEmail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAttachment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCloudCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCloudDone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCloudDownload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCloudOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCloudQueue,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCloudSync,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCloudUpload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCloud,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCreateNewFolder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDifference,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDownloadDone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDownloadForOffline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDownload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDownloading,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDriveFileMoveRtl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDriveFileMove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDriveFileRenameOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDriveFolderUpload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFileDownloadDone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFileDownloadOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFileDownload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFileOpen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFileUpload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFolderCopy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFolderDelete,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFolderOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFolderOpen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFolderShared,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFolderZip,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFolder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFormatOverline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGridView,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNewspaper,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRequestQuote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRuleFolder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSnippetFolder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTextSnippet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTopic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUploadFile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUpload,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWorkspaces,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAdfScanner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrowserNotSupported,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrowserUpdated,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCastConnected,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCastForEducation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineComputer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineConnectedTv,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDesktopMac,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDesktopWindows,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeveloperBoardOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeveloperBoard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeviceHub,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeviceUnknown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDevicesOther,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEarbudsBattery,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEarbuds,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGamepad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHeadphonesBattery,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHeadphones,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHeadsetMic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHeadsetOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHeadset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHomeMax,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHomeMini,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardArrowDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardArrowLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardArrowRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardArrowUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardBackspace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardCapslock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardCommandKey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardControlKey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardDoubleArrowDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardDoubleArrowLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardDoubleArrowRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardDoubleArrowUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardHide,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardOptionKey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardReturn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardTab,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboardVoice,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKeyboard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLaptopChromebook,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLaptopMac,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLaptopWindows,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLaptop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMemory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMonitor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMouse,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoneAndroid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoneIphone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhonelinkOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhonelink,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePointOfSale,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePowerInput,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRouter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScanner,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSecurity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSimCard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSmartDisplay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSmartScreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSmartToy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSmartphone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpeakerGroup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpeaker,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTabletAndroid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTabletMac,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTablet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineToys,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTv,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideogameAssetOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideogameAsset,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWatchOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWatch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutoMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBlindsClosed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBlinds,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBroadcastOnHome,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBroadcastOnPersonal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurtainsClosed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurtains,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElectricBolt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElectricMeter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEnergySavingsLeaf,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGasMeter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHeatPump,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineModeFanOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNestCamWiredStand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOilBarrel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePropaneTank,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePropane,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRollerShadesClosed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRollerShades,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSensorDoor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSensorOccupied,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSensorWindow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShieldMoon,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSolarPower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVerticalShadesClosed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVerticalShades,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWindPower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline10Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline11Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline12Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline13Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline14Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline15Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline16Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline17Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline18Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline19Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline20Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline21Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline22Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline23Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline24Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline2Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline30FpsSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline3Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline4Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline5Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline60FpsSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline6Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline7Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline8Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline9Mp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddAPhoto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddPhotoAlternate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddToPhotos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAdjust,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAnimation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssistantPhoto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssistant,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAudiotrack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutoAwesomeMosaic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutoAwesomeMotion,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutoAwesome,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutoFixHigh,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutoFixNormal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutoFixOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutoStories,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAutofpsSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBedtimeOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBedtime,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBlurCircular,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBlurLinear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBlurOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBlurOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightness1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightness2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightness3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightness4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightness5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightness6,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrightness7,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrokenImage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrush,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBurstMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCameraAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCameraFront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCameraRear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCameraRoll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCamera,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCases,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCenterFocusStrong,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCenterFocusWeak,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCollectionsBookmark,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCollections,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineColorLens,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineColorize,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCompare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineContrast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineControlPointDuplicate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineControlPoint,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCrop169,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCrop32,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCrop54,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCrop75,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCropDin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCropFree,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCropLandscape,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCropOriginal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCropPortrait,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCropRotate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCropSquare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCrop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurrencyBitcoin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurrencyFranc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurrencyLira,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurrencyPound,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurrencyRuble,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurrencyRupee,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurrencyYen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCurrencyYuan,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeblur,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDehaze,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDetails,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirtyLens,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEdit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEuro,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExposureNeg1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExposureNeg2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExposurePlus1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExposurePlus2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExposureZero,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExposure,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFaceRetouchingNatural,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFaceRetouchingOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter6,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter7,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter8,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter9Plus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter9,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterBAndW,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterCenterFocus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterDrama,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterFrames,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterHdr,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterNone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterTiltShift,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilterVintage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFilter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlashAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlashOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlashOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlipCameraAndroid,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlipCameraIos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlip,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGradient,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGrain,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGridOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGridOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHdrEnhancedSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHdrOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHdrOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHdrPlus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHdrStrong,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHdrWeak,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHealing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHevc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHideImage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineImageAspectRatio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineImageNotSupported,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineImageSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineImage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineIncompleteCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineIso,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLandscape,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLeakAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLeakRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLens,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLinkedCamera,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLogoDev,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLooks3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLooks4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLooks5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLooks6,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLooksOne,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLooksTwo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLooks,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLoupe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMicExternalOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMicExternalOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMonochromePhotos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMotionPhotosAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMotionPhotosOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMotionPhotosOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMotionPhotosPause,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMotionPhotosPaused,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMovieCreation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMovieFilter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMusicNote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMusicOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNaturePeople,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNature,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNavigateBefore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNavigateNext,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePalette,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanoramaFishEye,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanoramaHorizontalSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanoramaHorizontal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanoramaPhotosphereSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanoramaPhotosphere,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanoramaVerticalSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanoramaVertical,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanoramaWideAngleSelect,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanoramaWideAngle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePanorama,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhotoAlbum,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhotoCameraBack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhotoCameraFront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhotoCamera,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhotoFilter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhotoLibrary,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhotoSizeSelectActual,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhotoSizeSelectLarge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhotoSizeSelectSmall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePictureAsPdf,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePortrait,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRawOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRawOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReceiptLong,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRemoveRedEye,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRotate90DegreesCcw,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRotate90DegreesCw,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRotateLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRotateRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShutterSpeed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSlideshow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStraighten,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStyle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwitchCamera,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwitchVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTagFaces,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTexture,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineThermostatAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTimelapse,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTimer10,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTimer3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTimerOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTimer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTonality,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTransform,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTune,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideoCameraBack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideoCameraFront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideoStable,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewComfy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineViewCompact,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVignette,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVrpano,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWbAuto,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWbCloudy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWbIncandescent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWbIridescent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWbShade,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWbSunny,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWbTwilight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline360,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddBusiness,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddLocationAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddRoad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAgriculture,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirlineStops,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirlines,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAltRoute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAtm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAttractions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBadge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBakeryDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBeenhere,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBikeScooter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBreakfastDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBrunchDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBusAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCarCrash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCarRental,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCarRepair,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCastle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCategory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCelebration,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChurch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCleaningServices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCompassCalibration,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineConnectingAirports,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCrisisAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeliveryDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDepartureBoard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDesignServices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDiamond,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDinnerDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsBike,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsBoatFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsBoat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsBusFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsBus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsCarFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsCar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsRailwayFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsRailway,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsRun,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsSubwayFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsSubway,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsTransitFilled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsTransit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsWalk,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirections,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDryCleaning,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEditAttributes,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEditLocationAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEditLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEditRoad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEggAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEgg,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElectricBike,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElectricCar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElectricMoped,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElectricRickshaw,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElectricScooter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElectricalServices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmergencyRecording,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmergencyShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmergency,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEvStation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFactory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFastfood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFestival,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFireHydrantAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFireTruck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlightClass,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineForest,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineForkLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineForkRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFort,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHail,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHandyman,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHardware,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHomeRepairService,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHotel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHvac,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineIcecream,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKebabDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLayersClear,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLayers,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLiquor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalActivity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalAirport,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalAtm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalBar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalCafe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalCarWash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalConvenienceStore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalDrink,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalFireDepartment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalFlorist,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalGasStation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalGroceryStore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalHospital,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalHotel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalLaundryService,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalLibrary,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalMall,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalMovies,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalOffer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalParking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalPharmacy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalPhone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalPizza,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalPlay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalPolice,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalPostOffice,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalPrintshop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalSee,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalShipping,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocalTaxi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLunchDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMap,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMapsUgc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMedicalInformation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMedicalServices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMenuBook,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMerge,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMinorCrash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMiscellaneousServices,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineModeOfTravel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoney,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoped,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMosque,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoving,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMultipleStop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMuseum,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMyLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNavigation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNearMeDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNearMe,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNightlife,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoCrash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoMeals,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoTransfer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotListedLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePark,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePedalBike,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonPinCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonPin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePestControlRodent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePestControl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePinDrop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlumbing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRailwayAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRamenDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRampLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRampRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRateReview,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRemoveRoad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRestaurantMenu,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRestaurant,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRoundaboutLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRoundaboutRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRoute,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRunCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSafetyCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSailing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSatellite,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScreenRotationAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSetMeal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignpost,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSnowmobile,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSoupKitchen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStadium,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStoreMallDirectory,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStraight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStreetview,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSubway,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSynagogue,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTakeoutDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTaxiAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTempleBuddhist,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTempleHindu,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTerrain,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTheaterComedy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTireRepair,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTraffic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTrain,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTram,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTransferWithinAStation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTransitEnterexit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTripOrigin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTurnLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTurnRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTurnSharpLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTurnSharpRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTurnSlightLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTurnSlightRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTwoWheeler,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUTurnLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUTurnRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVolunteerActivism,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWarehouse,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWineBar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWrongLocation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineZoomInMap,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineZoomOutMap,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddHomeWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAppSettingsAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAppsOutage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineApps,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowBackIosNew,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowBackIos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowBack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowDownward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowDropDownCircle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowDropDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowDropUp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowForwardIos,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowForward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArrowUpward,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssistantDirection,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCampaign,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCancel,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChevronLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChevronRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineClose,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoubleArrow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExpandCircleDown,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExpandLess,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineExpandMore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFirstPage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFullscreenExit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFullscreen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHomeWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLastPage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLegendToggle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMapsHomeWork,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMenuOpen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMenu,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoreHoriz,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoreVert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNorthEast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNorthWest,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNorth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOfflineShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePayments,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePivotTableChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRefresh,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSouthEast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSouthWest,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSouth,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSubdirectoryArrowLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSubdirectoryArrowRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwitchLeft,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwitchRight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUnfoldLess,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUnfoldMore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWaterfallChart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWest,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAccountTree,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAdb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirlineSeatFlatAngled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirlineSeatFlat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirlineSeatIndividualSuite,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirlineSeatLegroomExtra,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirlineSeatLegroomNormal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirlineSeatLegroomReduced,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirlineSeatReclineExtra,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirlineSeatReclineNormal,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBluetoothAudio,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineConfirmationNumber,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDirectionsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDiscFull,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoDisturbAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoDisturbOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoDisturbOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoDisturb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoNotDisturbAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoNotDisturbOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoNotDisturbOn,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoNotDisturb,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDriveEta,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEnhancedEncryption,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEventAvailable,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEventBusy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEventNote,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFolderSpecial,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineImagesearchRoller,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLiveTv,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNetworkCheck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNetworkLocked,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoEncryptionGmailerrorred,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoEncryption,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOndemandVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonalVideo,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoneBluetoothSpeaker,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoneCallback,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoneForwarded,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoneInTalk,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoneLocked,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhoneMissed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePhonePaused,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePowerOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePriorityHigh,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRunningWithErrors,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSdCardAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSdCard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSimCardAlert,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSmsFailed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSupportAgent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSyncDisabled,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSyncLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSyncProblem,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSync,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSystemUpdate,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTapAndPlay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTimeToLeave,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTvOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVibration,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVideoChat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVoiceChat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVpnLock,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWc,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifiOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWifi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAcUnit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAirportShuttle,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAllInclusive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineApartment,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBabyChangingStation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBackpack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBalcony,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBathtub,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBeachAccess,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBento,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBungalow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBusinessCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCabin,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCarpenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCasino,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChalet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChargingStation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCheckroom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChildCare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChildFriendly,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCorporateFare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCottage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCountertops,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCrib,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDesk,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoNotStep,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoNotTouch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDry,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElevator,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEscalatorWarning,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEscalator,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFamilyRestroom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFence,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFireExtinguisher,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFitnessCenter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFoodBank,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFoundation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFreeBreakfast,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGite,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGolfCourse,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGrass,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHolidayVillage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHotTub,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHouseSiding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHouse,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHouseboat,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineIron,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKitchen,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMeetingRoom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMicrowave,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNightShelter,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoBackpack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoCell,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoDrinks,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoFlash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoFood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoMeetingRoom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoPhotography,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoStroller,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOtherHouses,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePool,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRiceBowl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRoofing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRoomPreferences,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRoomService,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRvHookup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSmokeFree,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSmokingRooms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSoap,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSpa,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsBar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStairs,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStorefront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStroller,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTapas,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTty,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineUmbrella,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVapeFree,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVapingRooms,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVilla,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWash,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWaterDamage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWheelchairPickup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBathroom,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBedroomBaby,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBedroomChild,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBedroomParent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBlender,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCameraIndoor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCameraOutdoor,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChairAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineChair,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCoffeeMaker,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCoffee,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDining,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoorBack,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoorFront,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoorSliding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDoorbell,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFeed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlatware,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGarage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLight,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLiving,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineManageSearch,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePodcasts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShower,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTableBar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTableRestaurant,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWindow,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineYard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline18UpRating,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutline6FtApart,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddModerator,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAddReaction,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineArchitecture,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineAssistWalker,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBackHand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBlind,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineBoy,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCake,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCatchingPokemon,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCleanHands,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCo2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCompost,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineConnectWithoutContact,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineConstruction,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCookie,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCoronavirus,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCrueltyFree,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCyclone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDeck,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDiversity1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDiversity2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDiversity3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDomainAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDomain,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineDownhillSkiing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEditNotifications,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElderlyWoman,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineElderly,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmojiEmotions,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmojiEvents,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmojiFlags,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmojiFoodBeverage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmojiNature,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmojiObjects,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmojiPeople,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmojiSymbols,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEmojiTransportation,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineEngineering,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFace2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFace3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFace4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFace5,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFace6,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFacebook,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFemale,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFireplace,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFitbit,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFlood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFollowTheSigns,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineFrontHand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGirl,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGroupAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGroupOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGroupRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGroup,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGroups2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGroups3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineGroups,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHandshake,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHealthAndSafety,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHeartBroken,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHiking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHistoryEdu,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineHive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineIceSkating,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineInterests,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineIosShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKayaking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKingBed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineKitesurfing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLandslide,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLocationCity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineLuggage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMale,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMan2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMan3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMan4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMan,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMasks,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMilitaryTech,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMoodBad,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineMood,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNightsStay,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoAdultContent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNoLuggage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNordicWalking,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotificationAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotificationsActive,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotificationsNone,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotificationsOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotificationsPaused,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineNotifications,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineOutdoorGrill,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePages,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineParagliding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePartyMode,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePeopleAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePeopleOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePeople,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePerson2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePerson3,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePerson4,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonAddAlt1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonAddAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonAdd,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonRemoveAlt1,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonRemove,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePerson,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePersonalInjury,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePianoOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePiano,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePix,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePlusOne,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePoll,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePrecisionManufacturing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePsychologyAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePsychology,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePublicOff,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlinePublic,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRealEstateAgent,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRecommend,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRecycling,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineReduceCapacity,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRemoveModerator,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRollerSkating,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSafetyDivider,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSanitizer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScale,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSchool,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScience,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScoreboard,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineScubaDiving,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSelfImprovement,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSentimentDissatisfied,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSentimentNeutral,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSentimentSatisfied,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSentimentVeryDissatisfied,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSentimentVerySatisfied,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSevereCold,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineShare,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSick,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSignLanguage,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSingleBed,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSkateboarding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSledding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSnowboarding,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSnowshoeing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSocialDistance,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSouthAmerica,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsBaseball,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsBasketball,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsCricket,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsEsports,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsFootball,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsGolf,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsGymnastics,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsHandball,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsHockey,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsKabaddi,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsMartialArts,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsMma,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsMotorsports,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsRugby,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsSoccer,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsTennis,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSportsVolleyball,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSports,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSurfing,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineSwitchAccount,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineThumbDownAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineThumbUpAlt,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineThunderstorm,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTornado,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTransgender,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTravelExplore,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineTsunami,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVaccines,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineVolcano,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWallet,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWaterDrop,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWavingHand,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWhatsapp,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWhatshot,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWoman2,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWoman,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineWorkspacePremium,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCheckBoxOutlineBlank,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineCheckBox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineIndeterminateCheckBox,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRadioButtonChecked,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineRadioButtonUnchecked,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStarBorderPurple500,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStarBorder,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStarHalf,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStarOutline,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStarPurple500,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineStar,
+  /** @deprecated Use icons from @novu/novui instead */
   IconOutlineToggleOff,
 };
