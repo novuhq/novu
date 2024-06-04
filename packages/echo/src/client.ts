@@ -49,6 +49,7 @@ import {
 import { Schema } from './types/schema.types';
 import { EMOJI, log } from './utils';
 import { VERSION } from './version';
+import { Skip } from './types/skip.types';
 
 JSONSchemaFaker.option({
   useDefaultValue: true,
@@ -472,7 +473,7 @@ export class Echo {
 
   private executeStepFactory<T, U>(event: IEvent, setResult: (result: any) => void): ActionStep<T, U> {
     return async (stepId, stepResolve, options) => {
-      if (options?.skip) {
+      if (await this.shouldSkip(options?.skip, event.data)) {
         const skippedResult = { options: { skip: true } };
         setResult(skippedResult);
 
@@ -508,6 +509,14 @@ export class Echo {
 
       return stepResult.outputs as any;
     };
+  }
+
+  private async shouldSkip(skip: Skip | undefined, payload: Record<string, unknown>): Promise<boolean> {
+    if (!skip) {
+      return false;
+    }
+
+    return skip(payload);
   }
 
   public async executeWorkflow(event: IEvent): Promise<ExecuteOutput> {

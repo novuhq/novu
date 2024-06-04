@@ -106,7 +106,7 @@ describe('Echo Trigger ', async () => {
                 name: { type: 'string', default: 'TEST' },
               },
             } as const,
-            skip: true,
+            skip: () => true,
           }
         );
       },

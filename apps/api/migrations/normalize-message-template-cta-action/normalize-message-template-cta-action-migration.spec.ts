@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import faker from '@faker-js/faker';
 
 import { UserSession } from '@novu/testing';
 import { MessageRepository, MessageTemplateRepository } from '@novu/dal';
@@ -6,7 +7,6 @@ import { StepTypeEnum } from '@novu/shared';
 
 import { normalizeMessageTemplateCtaAction } from './normalize-message-template-cta-action-migration';
 import { normalizeMessageCtaAction } from './normalize-message-cta-action-migration';
-import { fakerUtil } from '../../e2e/utils';
 
 describe('Normalize cta action', function () {
   let session: UserSession;
@@ -29,8 +29,8 @@ describe('Normalize cta action', function () {
         action: {
           buttons: [
             {
-              title: fakerUtil.words(3),
-              url: fakerUtil.url(),
+              title: faker.lorem.words(3),
+              url: faker.internet.url(),
             },
           ],
         },
@@ -70,8 +70,8 @@ describe('Normalize cta action', function () {
         action: {
           buttons: [
             {
-              title: fakerUtil.words(3),
-              url: fakerUtil.url(),
+              title: faker.lorem.words(3),
+              url: faker.internet.url(),
             },
           ],
         },
