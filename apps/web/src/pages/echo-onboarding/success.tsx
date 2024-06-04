@@ -2,29 +2,34 @@ import { css } from '@novu/novui/css';
 import { vstack } from '@novu/novui/patterns';
 import { ROUTES } from '@novu/shared-web';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getActivityList, getNotification } from '../../api/activity';
+import { getActivityList } from '../../api/activity';
 import { ExecutionDetailsAccordion } from '../../components/execution-detail/ExecutionDetailsAccordion';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 
 export const EchoOnboardingSuccess = () => {
-  const [notificationId, setNotificationId] = useState<string>('');
   const { data, isLoading } = useQuery<{ data: any[]; hasMore: boolean; pageSize: number }>(['activitiesList', 0], () =>
     getActivityList(0, undefined)
   );
 
-  console.log(data);
-
-  const { data: response, isInitialLoading } = useQuery(
-    ['activity', notificationId],
-    () => getNotification(notificationId),
-    {
-      enabled: notificationId.length > 0,
-      refetchInterval: false,
+  const item = useMemo(() => {
+    if (!data) {
+      return null;
     }
-  );
+
+    return data.data.at(-1);
+  }, [data]);
+
+  const identifier = useMemo(() => {
+    if (item === null) {
+      return undefined;
+    }
+
+    return item?.trigger?.identifier;
+  }, [item]);
+
   const navigate = useNavigate();
 
   return (
@@ -38,10 +43,10 @@ export const EchoOnboardingSuccess = () => {
       <div className={vstack({ alignContent: 'center' })}>
         <div
           className={css({
-            width: '680px',
+            width: '880px',
           })}
         >
-          <ExecutionDetailsAccordion identifier={undefined} steps={undefined} subscriberVariables={{}} />
+          <ExecutionDetailsAccordion identifier={identifier} steps={item?.jobs} subscriberVariables={{}} />
         </div>
       </div>
       <Footer
