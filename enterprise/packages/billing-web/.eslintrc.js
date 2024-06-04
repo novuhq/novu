@@ -29,12 +29,9 @@ module.exports = {
     ],
     '@typescript-eslint/no-empty-function': 'off',
   },
-  env: {
-    'cypress/globals': true,
-  },
-  ignorePatterns: ['craco.config.js', 'cypress/*'],
-  extends: ['plugin:cypress/recommended', '../../../.eslintrc.js'],
-  plugins: ['cypress'],
+
+  ignorePatterns: ['craco.config.js'],
+  extends: ['../../../.eslintrc.js'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,

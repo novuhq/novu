@@ -1,12 +1,12 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
 import { type NextRequest } from 'next/server';
 
-import { EchoRequestHandler, IServeHandlerOptions } from './handler';
+import { EchoRequestHandler, ServeHandlerOptions } from './handler';
 import { Either } from './types';
 import { type SupportedFrameworkName } from './types';
 import { getResponse } from './utils';
 
-export const frameworkName: SupportedFrameworkName = 'nextjs';
+export const frameworkName: SupportedFrameworkName = 'next';
 
 /**
  * In Next.js, serve and register any declared workflows with Echo, making
@@ -24,7 +24,7 @@ export const frameworkName: SupportedFrameworkName = 'nextjs';
  * export const { GET, POST, PUT } = serve({ client: echo });
  * ```
  */
-export const serve = (options: IServeHandlerOptions): any => {
+export const serve = (options: ServeHandlerOptions): any => {
   const echoHandler = new EchoRequestHandler({
     frameworkName,
     ...options,

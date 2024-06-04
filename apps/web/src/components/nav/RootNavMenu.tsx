@@ -4,15 +4,17 @@ import {
   IconCellTower,
   IconDomain,
   IconGroup,
+  IconKey,
   IconOutlineMonitorHeart,
   IconRoute,
   IconSettings,
   IconTaskAlt,
   IconTranslate,
   IconViewQuilt,
+  IconWebhook,
 } from '@novu/design-system';
 import { ChangesCountBadge } from '../layout/components/ChangesCountBadge';
-import { ROUTES, useEnvController, useSegment } from '@novu/shared-web';
+import { BaseEnvironmentEnum, ROUTES, useEnvController, useSegment } from '@novu/shared-web';
 import { useUserOnboardingStatus } from '../../api/hooks/useUserOnboardingStatus';
 import { EnvironmentSelect } from './EnvironmentSelect';
 import { NavMenu } from './NavMenu';
@@ -22,11 +24,14 @@ import { OrganizationSelect } from './OrganizationSelect/v2/OrganizationSelect';
 import { RootNavMenuFooter } from './RootNavMenuFooter';
 import { VisibilityButton } from './VisibilityButton';
 import { FreeTrialSidebarWidget } from '../layout/components/FreeTrialSidebarWidget';
+import { parseUrl } from '../../utils/routeUtils';
+
+const getEnvPageRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });
 
 export const RootNavMenu: React.FC = () => {
   const segment = useSegment();
   const { updateOnboardingStatus, showOnboarding, isLoading: isLoadingOnboardingStatus } = useUserOnboardingStatus();
-  const { readonly: isEnvReadonly } = useEnvController();
+  const { readonly: isEnvReadonly, environment } = useEnvController();
 
   const handleHideOnboardingClick: React.MouseEventHandler = async () => {
     segment.track('Click Hide Get Started Page - [Get Started]');
@@ -110,6 +115,26 @@ export const RootNavMenu: React.FC = () => {
           link={ROUTES.TRANSLATIONS}
           testId="side-nav-translations-link"
         />
+        <NavMenuLinkButton
+          label="API keys"
+          isVisible
+          icon={<IconKey />}
+          link={getEnvPageRoute(
+            ROUTES.API_KEYS,
+            (environment?.name as BaseEnvironmentEnum) ?? BaseEnvironmentEnum.DEVELOPMENT
+          )}
+          testId="side-nav-settings-api-keys"
+        ></NavMenuLinkButton>
+        <NavMenuLinkButton
+          label="Inbound webhook"
+          isVisible
+          icon={<IconWebhook />}
+          link={getEnvPageRoute(
+            ROUTES.WEBHOOK,
+            (environment?.name as BaseEnvironmentEnum) ?? BaseEnvironmentEnum.DEVELOPMENT
+          )}
+          testId="side-nav-settings-inbound-webhook"
+        ></NavMenuLinkButton>
       </NavMenuSection>
       <FreeTrialSidebarWidget />
       <RootNavMenuFooter />

@@ -86,7 +86,8 @@ export class SendMessageSms extends SendMessageBase {
       step.template = template;
     }
 
-    let content: string | null = '';
+    const chimeraBody = command.chimeraData?.outputs.body;
+    let content: string = chimeraBody || '';
 
     try {
       if (!command.chimeraData) {

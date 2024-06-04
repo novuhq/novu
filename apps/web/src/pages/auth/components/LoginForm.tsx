@@ -1,14 +1,15 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Center } from '@mantine/core';
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
+import { useAuth } from '@novu/shared-web';
 import type { IResponseError } from '@novu/shared';
-
-import { useAuthContext } from '../../../components/providers/AuthProvider';
+import { useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import { api } from '../../../api/api.client';
-import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { ROUTES } from '../../../constants/routes.enum';
 import { OAuth } from './OAuth';
@@ -26,10 +27,17 @@ export interface LocationState {
 }
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
+  const segment = useSegment();
+  const { login, currentUser, organizationId, environmentId } = useAuth();
+  const { startVercelSetup } = useVercelIntegration();
+  const { isFromVercel, params: vercelParams } = useVercelParams();
+  const [params] = useSearchParams();
+  const tokenInQuery = params.get('token');
+  const source = params.get('source');
+  const sourceWidget = params.get('source_widget');
+  const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();
   const location = useLocation();
-  const state = location.state as LocationState;
-  const { setToken } = useAuthContext();
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
     IResponseError,
@@ -38,12 +46,46 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       password: string;
     }
   >((data) => api.post('/v1/auth/login', data));
-  const { isLoading: isLoadingAcceptInvite, submitToken } = useAcceptInvite();
 
-  const { isFromVercel, code, next, configurationId } = useVercelParams();
-  const vercelQueryParams = `code=${code}&next=${next}&configurationId=${configurationId}`;
-  const signupLink = isFromVercel ? `/auth/signup?${vercelQueryParams}` : ROUTES.AUTH_SIGNUP;
-  const resetPasswordLink = isFromVercel ? `/auth/reset/request?${vercelQueryParams}` : ROUTES.AUTH_RESET_REQUEST;
+  useEffect(() => {
+    (async () => {
+      if (!tokenInQuery) {
+        return;
+      }
+
+      if (!invitationToken && (!organizationId || !environmentId)) {
+        await login(tokenInQuery, ROUTES.AUTH_APPLICATION);
+
+        return;
+      }
+
+      if (isFromVercel) {
+        await login(tokenInQuery);
+        startVercelSetup();
+
+        return;
+      }
+
+      if (source === 'cli') {
+        segment.track('Dashboard Visit', {
+          widget: sourceWidget || 'unknown',
+          source: 'cli',
+        });
+        await login(tokenInQuery, ROUTES.GET_STARTED);
+
+        return;
+      }
+
+      await login(tokenInQuery);
+      navigate(ROUTES.WORKFLOWS);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [login, navigate, currentUser, tokenInQuery, segment, organizationId, environmentId]);
+
+  const signupLink = isFromVercel ? `${ROUTES.AUTH_SIGNUP}?${params.toString()}` : ROUTES.AUTH_SIGNUP;
+  const resetPasswordLink = isFromVercel
+    ? `${ROUTES.AUTH_RESET_REQUEST}?${params.toString()}`
+    : ROUTES.AUTH_RESET_REQUEST;
 
   const {
     register,
@@ -65,21 +107,16 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     try {
       const response = await mutateAsync(itemData);
       const token = (response as any).token;
-      if (isFromVercel) {
-        setToken(token);
-
-        return;
-      }
+      login(token);
 
       if (invitationToken) {
-        submitToken(token, invitationToken);
-
-        return;
+        const updatedToken = await acceptInvite(invitationToken);
+        if (updatedToken) {
+          await login(updatedToken);
+        }
       }
 
-      setToken(token);
-
-      navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
+      navigate(ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EmailContentCard } from './EmailContentCard';
-import { useAuthContext } from '../../../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import { When } from '../../../../components/utils/When';
 import { EmailPreview } from '../../../../components/workflow/preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
@@ -36,7 +36,7 @@ export enum ViewEnum {
 const templateFields = ['content', 'htmlContent', 'subject', 'preheader', 'senderName'];
 
 export function EmailMessagesCards() {
-  const { currentOrganization } = useAuthContext();
+  const { currentOrganization } = useAuth();
   const { template } = useTemplateEditorForm();
   const { environment, chimera } = useEnvController({}, template?.chimera);
   const [view, setView] = useState<ViewEnum>(chimera ? ViewEnum.PREVIEW : ViewEnum.EDIT);
@@ -93,7 +93,7 @@ export function EmailMessagesCards() {
         {hasActiveIntegration && !primaryIntegration && (
           <LackIntegrationAlert
             channelType={ChannelTypeEnum.EMAIL}
-            text={`You have multiple provider instances for Email in the ${environment?.name} environment. 
+            text={`You have multiple provider instances for Email in the ${environment?.name} environment.
             Please select the primary instance.`}
             isPrimaryMissing
           />

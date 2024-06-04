@@ -11,15 +11,15 @@ import { updateBrandingSettings } from '../../../api/organization';
 import Card from '../../../components/layout/components/Card';
 import { successMessage } from '../../../utils/notifications';
 import { useUploadToStorage } from '../../../api/hooks/useUploadToStorage';
-import { useAuthContext } from '@novu/shared-web';
+import { useAuth } from '@novu/shared-web';
 
 /**
  * @deprecated Use `BrandingForm` from the v2 folder instead
  */
 export function BrandingForm() {
-  const { currentOrganization: organization } = useAuthContext();
+  const { currentOrganization } = useAuth();
 
-  return <BrandingFormRenderer organization={organization} />;
+  return <BrandingFormRenderer organization={currentOrganization} />;
 }
 
 /**

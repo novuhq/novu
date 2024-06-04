@@ -1,4 +1,4 @@
-import { Popover } from '@mantine/core';
+import { Popover, PopoverProps } from '@mantine/core';
 import { IconClose } from '@novu/design-system';
 import { MouseEventHandler, PropsWithChildren } from 'react';
 import { popoverArrowStyle, popoverDropdownStyle, closeButtonStyles, linkStyles } from './EnvironmentPopover.styles';
@@ -7,6 +7,7 @@ interface IEnvironmentPopoverProps {
   handlePopoverLinkClick: MouseEventHandler;
   isPopoverOpened: boolean;
   setIsPopoverOpened: (newVal: boolean) => void;
+  position?: PopoverProps['position'];
 }
 
 export const EnvironmentPopover: React.FC<PropsWithChildren<IEnvironmentPopoverProps>> = ({
@@ -14,6 +15,7 @@ export const EnvironmentPopover: React.FC<PropsWithChildren<IEnvironmentPopoverP
   isPopoverOpened,
   setIsPopoverOpened,
   handlePopoverLinkClick,
+  position = 'right',
 }) => {
   return (
     <Popover
@@ -27,7 +29,7 @@ export const EnvironmentPopover: React.FC<PropsWithChildren<IEnvironmentPopoverP
       withinPortal={true}
       transition="rotate-left"
       transitionDuration={250}
-      position="right"
+      position={position}
       radius="md"
     >
       <Popover.Target>{children}</Popover.Target>

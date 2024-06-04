@@ -28,7 +28,6 @@
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
     "@handlebars/parser": "^2.1.0",
-    "@mantine/core": "^5.7.1",
     "@mantine/dropzone": "^5.9.2",
     "@mantine/hooks": "^5.7.1",
     "@mantine/prism": "^5.7.1",
@@ -49,18 +48,20 @@
     "tslib": "^2.3.1"
   },
   "devDependencies": {
+    "@mantine/core": "^5.7.1",
     "@types/node": "^18.11.12",
-    "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "rimraf": "^3.0.2",
     "ts-loader": "~9.4.0",
     "tslib": "^2.3.1",
     "typescript": "4.9.5"
   },
   "peerDependencies": {
-    "react": "^16.8.0 || ^17.0.0",
-    "react-dom": "^16.8.0 || ^17.0.0"
+    "@mantine/core": "^5.7.1",
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
   }
 }

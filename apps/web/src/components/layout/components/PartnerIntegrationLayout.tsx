@@ -5,7 +5,7 @@ export function PartnerIntegrationLayout({ children }: { children: React.ReactNo
   const { colorScheme } = useMantineColorScheme();
 
   const isDark = colorScheme === 'dark';
-  const logoUrl = isDark ? CONTEXT_PATH + '/static/images/logo-light.png' : CONTEXT_PATH + '/static/images/logo.png';
+  const logoUrl = isDark ? CONTEXT_PATH + '/static/images/logo-light.webp' : CONTEXT_PATH + '/static/images/logo.webp';
 
   return (
     <div>

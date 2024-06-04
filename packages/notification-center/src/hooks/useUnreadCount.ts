@@ -23,7 +23,7 @@ const dispatchUnreadCountEvent = (count: number) => {
  *
  * Can also happen in real scenarios, so we need to review how we handle concurrency in the future
  */
-const DEBOUNCE_TIME = typeof window !== 'undefined' && (window as any)?.Cypress ? 1000 : 100;
+const DEBOUNCE_TIME = 100;
 
 export const useUnreadCount = ({ onSuccess, ...restOptions }: UseQueryOptions<ICountData, Error, ICountData> = {}) => {
   const { apiService, socket, isSessionInitialized, fetchingStrategy } = useNovuContext();
