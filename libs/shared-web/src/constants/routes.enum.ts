@@ -49,7 +49,7 @@ export enum ROUTES {
 
   /** Novu V2 routes */
   STUDIO = '/studio',
-  FLOWS = 'flows',
+  STUDIO_FLOWS = '/studio/flows',
 }
 
 export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth', '/partner-integrations']);

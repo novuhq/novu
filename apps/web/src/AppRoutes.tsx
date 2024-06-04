@@ -140,7 +140,7 @@ export const AppRoutes = () => {
         )}
         <Route path={ROUTES.STUDIO}>
           <Route path="" element={<WorkflowListPage />} />
-          <Route path={ROUTES.FLOWS} element={<WorkflowListPage />} />
+          <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowListPage />} />
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />

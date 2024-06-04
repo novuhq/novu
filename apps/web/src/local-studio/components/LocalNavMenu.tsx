@@ -22,7 +22,7 @@ export const LocalNavMenu: React.FC = () => {
         <NavMenuLinkButton
           label="Workflows"
           icon={<IconRoute />}
-          link={ROUTES.FLOWS}
+          link={ROUTES.STUDIO_FLOWS}
           testId="side-nav-templates-link"
         />
       </NavMenuSection>
