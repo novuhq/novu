@@ -121,7 +121,7 @@ export async function createApp({
   const isOnline = !useYarn || (await getOnline());
   const originalDirectory = process.cwd();
 
-  console.log(`Creating a new Echo app in ${green(root)}.`);
+  console.log(`Creating a new Novu app in ${green(root)}.`);
   console.log();
 
   process.chdir(root);

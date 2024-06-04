@@ -113,7 +113,7 @@ const packageManager = !!program.useNpm
   : getPkgManager();
 
 async function run(): Promise<void> {
-  const conf = new Conf({ projectName: 'create-echo-app' });
+  const conf = new Conf({ projectName: 'create-novu-app' });
 
   if (program.resetPreferences) {
     conf.clear();
@@ -132,7 +132,7 @@ async function run(): Promise<void> {
       type: 'text',
       name: 'path',
       message: 'What is your project named?',
-      initial: 'my-echo-app',
+      initial: 'my-novu-app',
       validate: (name) => {
         const validation = validateNpmName(path.basename(path.resolve(name)));
         if (validation.valid) {
