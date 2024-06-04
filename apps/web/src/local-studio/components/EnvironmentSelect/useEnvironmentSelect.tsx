@@ -1,9 +1,14 @@
-import { type IIconProps, IconConstruction, IconRocketLaunch, IconComputer } from '@novu/design-system';
-import { useEnvController, ROUTES } from '@novu/shared-web';
+import {
+  IconComputer,
+  IconConstruction,
+  IconRocketLaunch,
+  type IIconProps,
+  type ISelectProps,
+} from '@novu/design-system';
+import { ROUTES, useEnvController } from '@novu/shared-web';
 import { useState } from 'react';
-import { type ISelectProps } from '@novu/design-system';
-import { matchPath, useLocation, useMatch, useNavigate } from 'react-router-dom';
-import { EnvironmentEnum } from './EnvironmentEnum';
+import { matchPath, useLocation } from 'react-router-dom';
+import { EnvironmentEnum } from '../../constants/EnvironmentEnum';
 
 const ENVIRONMENT_ICON_LOOKUP: Record<EnvironmentEnum, React.ReactElement<IIconProps>> = {
   [EnvironmentEnum.LOCAL]: <IconComputer />,
