@@ -1,10 +1,10 @@
 import { IconRoute, IconSettings } from '@novu/design-system';
 import { ROUTES } from '@novu/shared-web';
-import { EnvironmentSelect } from './EnvironmentSelect';
+import { EnvironmentSelect } from './EnvironmentSelect/index';
 import { NavMenu } from '../../components/nav/NavMenu';
 import { NavMenuLinkButton } from '../../components/nav/NavMenuButton/NavMenuLinkButton';
 import { NavMenuSection } from '../../components/nav/NavMenuSection';
-import { OrganizationSelect } from '../../components/nav/OrganizationSelect/v2';
+import { OrganizationSelect } from '../../components/nav/OrganizationSelect/v2/index';
 import { RootNavMenuFooter } from '../../components/nav/RootNavMenuFooter';
 
 export const LocalNavMenu: React.FC = () => {
