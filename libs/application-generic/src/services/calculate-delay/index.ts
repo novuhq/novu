@@ -1,1 +1,1 @@
-export * from './calculate-delay.service';
+export * from './compute-job-wait-duration.service';

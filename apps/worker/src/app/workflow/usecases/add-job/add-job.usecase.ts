@@ -15,7 +15,7 @@ import { AddJobCommand } from './add-job.command';
 import { validateDigest } from './validation';
 import { ModuleRef } from '@nestjs/core';
 import {
-  CalculateDelayService,
+  ComputeJobWaitDurationService,
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
@@ -50,8 +50,8 @@ export class AddJob {
     private executionLogRoute: ExecutionLogRoute,
     private mergeOrCreateDigestUsecase: MergeOrCreateDigest,
     private addDelayJob: AddDelayJob,
-    @Inject(forwardRef(() => CalculateDelayService))
-    private calculateDelayService: CalculateDelayService,
+    @Inject(forwardRef(() => ComputeJobWaitDurationService))
+    private computeJobWaitDurationService: ComputeJobWaitDurationService,
     @Inject(forwardRef(() => ConditionsFilter))
     private conditionsFilter: ConditionsFilter,
     private moduleRef: ModuleRef
@@ -197,7 +197,7 @@ export class AddJob {
 
     validateDigest(job);
 
-    digestAmount = this.calculateDelayService.calculateDelay({
+    digestAmount = this.computeJobWaitDurationService.calculateDelay({
       stepMetadata: job.digest,
       payload: job.payload,
       overrides: job.overrides,

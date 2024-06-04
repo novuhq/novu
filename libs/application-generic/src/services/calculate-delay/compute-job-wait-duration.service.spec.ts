@@ -1,12 +1,12 @@
 import { DigestUnitEnum } from '@novu/shared';
-import { CalculateDelayService } from './calculate-delay.service';
+import { ComputeJobWaitDurationService } from './compute-job-wait-duration.service';
 
-describe('Calculate Delay Service', function () {
+describe('Compute Job Wait Duration Service', function () {
   describe('toMilliseconds', function () {
-    const calculateDelayService = new CalculateDelayService();
+    const computeJobWaitDurationService = new ComputeJobWaitDurationService();
 
     it('should convert seconds to milliseconds', function () {
-      const result = (calculateDelayService as any).toMilliseconds(
+      const result = (computeJobWaitDurationService as any).toMilliseconds(
         5,
         DigestUnitEnum.SECONDS
       );
@@ -14,7 +14,7 @@ describe('Calculate Delay Service', function () {
     });
 
     it('should convert minutes to milliseconds', function () {
-      const result = (calculateDelayService as any).toMilliseconds(
+      const result = (computeJobWaitDurationService as any).toMilliseconds(
         5,
         DigestUnitEnum.MINUTES
       );
@@ -22,7 +22,7 @@ describe('Calculate Delay Service', function () {
     });
 
     it('should convert hours to milliseconds', function () {
-      const result = (calculateDelayService as any).toMilliseconds(
+      const result = (computeJobWaitDurationService as any).toMilliseconds(
         5,
         DigestUnitEnum.HOURS
       );
@@ -30,7 +30,7 @@ describe('Calculate Delay Service', function () {
     });
 
     it('should convert days to milliseconds', function () {
-      const result = (calculateDelayService as any).toMilliseconds(
+      const result = (computeJobWaitDurationService as any).toMilliseconds(
         1,
         DigestUnitEnum.DAYS
       );

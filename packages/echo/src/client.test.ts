@@ -157,6 +157,7 @@ describe('Echo Client', () => {
         }));
 
         await step.delay('delay', async () => ({
+          type: 'regular',
           amount: 1,
           unit: 'hours',
         }));
@@ -344,9 +345,10 @@ describe('Echo Client', () => {
     it('should execute workflow successfully when action is execute and data is provided', async () => {
       await echo.workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
+        await step.delay('delay', async () => ({ type: 'regular', unit: 'seconds', amount: 1 }));
       });
 
-      const event: IEvent = {
+      const emailEvent: IEvent = {
         action: 'execute',
         data: {},
         workflowId: 'test-workflow',
@@ -356,24 +358,52 @@ describe('Echo Client', () => {
         inputs: {},
       };
 
-      const executionResult = await echo.executeWorkflow(event);
+      const emailExecutionResult = await echo.executeWorkflow(emailEvent);
 
-      expect(executionResult).toBeDefined();
-      expect(executionResult.outputs).toBeDefined();
-      if (!executionResult.outputs) throw new Error('executionResult.outputs is undefined');
-
-      const body = (executionResult.outputs as any).body as string;
+      expect(emailExecutionResult).toBeDefined();
+      expect(emailExecutionResult.outputs).toBeDefined();
+      if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const body = (emailExecutionResult.outputs as any).body as string;
       expect(body).toBe('Test Body');
-
-      const subject = (executionResult.outputs as any).subject as string;
+      const subject = (emailExecutionResult.outputs as any).subject as string;
       expect(subject).toBe('Subject');
-
-      expect(executionResult.providers).toEqual({});
-
-      const metadata = executionResult.metadata;
+      expect(emailExecutionResult.providers).toEqual({});
+      const metadata = emailExecutionResult.metadata;
       expect(metadata.status).toBe('success');
       expect(metadata.error).toBe(false);
       expect(metadata.duration).toEqual(expect.any(Number));
+
+      const delayEvent: IEvent = {
+        action: 'execute',
+        data: {},
+        workflowId: 'test-workflow',
+        stepId: 'delay',
+        subscriber: {},
+        state: [
+          {
+            stepId: 'send-email',
+            outputs: {},
+            state: {
+              status: 'completed',
+              error: undefined,
+            },
+          },
+        ],
+        inputs: {},
+      };
+
+      const delayExecutionResult = await echo.executeWorkflow(delayEvent);
+
+      expect(delayExecutionResult).toBeDefined();
+      expect(delayExecutionResult.outputs).toBeDefined();
+      if (!delayExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const unit = (delayExecutionResult.outputs as any).unit as string;
+      expect(unit).toBe('seconds');
+      const amount = (delayExecutionResult.outputs as any).amount as string;
+      expect(amount).toBe(1);
+      expect(delayExecutionResult.providers).toEqual({});
+      const type = (delayExecutionResult.outputs as any).type as string;
+      expect(type).toBe('regular');
     });
 
     it('should throw error on execute action without data', async () => {

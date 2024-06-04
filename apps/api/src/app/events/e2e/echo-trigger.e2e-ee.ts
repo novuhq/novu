@@ -314,6 +314,81 @@ describe('Echo Trigger ', async () => {
     expect(messagesAfter.length).to.be.eq(1);
     expect(messagesAfter[0].content).to.include('2 people liked your post');
   });
+
+  it('should trigger the echo workflow with delay', async () => {
+    const workflowId = 'delay-workflow';
+    await echoServer.echo.workflow(
+      workflowId,
+      async ({ step }) => {
+        const delayResponse = await step.delay(
+          'delay-id',
+          async (inputs) => {
+            return {
+              type: 'regular',
+              amount: inputs.amount,
+              unit: inputs.unit,
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                amount: {
+                  type: 'number',
+                  default: 2,
+                },
+                unit: {
+                  type: 'string',
+                  enum: ['seconds', 'minutes', 'hours', 'days', 'weeks', 'months'],
+                  default: 'seconds',
+                },
+              },
+            },
+          }
+        );
+
+        await step.sms('send-sms', async () => {
+          const duration = delayResponse.duration;
+
+          return {
+            body: `people waited for ${duration} seconds`,
+          };
+        });
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await discoverAndSyncEcho(session);
+
+    const workflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(workflow).to.be.ok;
+
+    if (!workflow) {
+      throw new Error('Workflow not found');
+    }
+
+    await triggerEvent(workflowId, { name: 'John' });
+
+    await session.awaitRunningJobs(workflow?._id, false, 0);
+
+    const messagesAfter = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.SMS,
+    });
+
+    expect(messagesAfter.length).to.be.eq(1);
+    expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
+  });
 });
 
 async function discoverAndSyncEcho(session: UserSession) {

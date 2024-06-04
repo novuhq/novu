@@ -3,13 +3,16 @@ import { Schema } from '../../../types/schema.types';
 export const delayOutputSchema = {
   type: 'object',
   properties: {
+    type: {
+      enum: ['regular'],
+    },
     amount: { type: 'number' },
     unit: {
       type: 'string',
       enum: ['seconds', 'minutes', 'hours', 'days', 'weeks', 'months'],
     },
   },
-  required: ['amount', 'unit'],
+  required: ['amount', 'unit', 'type'],
   additionalProperties: false,
 } as const satisfies Schema;
 

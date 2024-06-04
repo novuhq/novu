@@ -18,7 +18,7 @@ import {
   IChimeraDigestResponse,
 } from '../../utils/require-inject';
 
-export class CalculateDelayService {
+export class ComputeJobWaitDurationService {
   calculateDelay({
     stepMetadata,
     payload,
@@ -41,7 +41,6 @@ export class CalculateDelayService {
       if (!delayPath) throw new ApiException(`Delay path not found`);
 
       const delayDate = payload[delayPath];
-
       const delay = differenceInMilliseconds(new Date(delayDate), new Date());
 
       if (delay < 0) {
@@ -51,12 +50,10 @@ export class CalculateDelayService {
       }
 
       return delay;
-    }
+    } else if (isRegularDigest(digestType)) {
+      const userUnit = castToDigestUnitEnum(chimeraResponse?.unit);
+      const userAmount = chimeraResponse?.amount;
 
-    const userUnit = castToDigestUnitEnum(chimeraResponse?.unit);
-    const userAmount = chimeraResponse?.amount;
-
-    if (isRegularDigest(digestType)) {
       if (this.isValidDelayOverride(overrides)) {
         return this.toMilliseconds(
           userAmount ?? (overrides.delay.amount as number),
@@ -70,9 +67,7 @@ export class CalculateDelayService {
         userAmount ?? regularDigestMeta.amount,
         userUnit ?? regularDigestMeta.unit
       );
-    }
-
-    if (digestType === DigestTypeEnum.TIMED) {
+    } else if (digestType === DigestTypeEnum.TIMED) {
       const timedDigestMeta = stepMetadata as IDigestTimedMetadata;
 
       return TimedDigestDelayService.calculate({
