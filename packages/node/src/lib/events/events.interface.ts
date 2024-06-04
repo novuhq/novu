@@ -162,7 +162,7 @@ export type IWhatsappOverrides = {
     language: {
       code: string;
     };
-    components?: Record<string, any>[];
+    components?: IWhatsappComponent[];
   };
 } & {
   [key in
@@ -232,26 +232,6 @@ export interface IWhatsappSections {
   title?: string;
 }
 
-const testwhatsappOverrides: IWhatsappOverrides = {
-  template: {
-    name: 'string',
-    language: {
-      code: 'string',
-    },
-    components: [
-      {
-        type: 'text',
-        text: 'string',
-      },
-    ],
-  },
-  audio: {
-    id: 'string',
-    link: 'string',
-    caption: 'string',
-    filename: 'string',
-  },
-};
 export interface IWhatsappComponent {
   type: 'body' | 'header' | 'button';
   sub_type?: 'quick_reply' | 'url' | 'catalog';
