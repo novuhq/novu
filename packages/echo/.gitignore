@@ -8,8 +8,5 @@ node_modules
 *.log*
 logs
 
-# Environment
-*.env*
-
 # Misc
 .DS_Store
