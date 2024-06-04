@@ -15,4 +15,18 @@ export const SEMANTIC_SIZES_TOKENS = defineSemanticTokens.sizes({
       },
     },
   },
+  icon: {
+    '16': {
+      value: '{sizes.100}',
+      type: 'sizes',
+    },
+    '20': {
+      value: '{sizes.125}',
+      type: 'sizes',
+    },
+    '24': {
+      value: '{sizes.150}',
+      type: 'sizes',
+    },
+  },
 });
