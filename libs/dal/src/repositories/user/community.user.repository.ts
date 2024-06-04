@@ -1,4 +1,3 @@
-import { AuthProviderEnum } from '@novu/shared';
 import { createHash } from 'crypto';
 import { BaseRepository } from '../base-repository';
 import { IUserRepository } from './user-repository.interface';
@@ -49,12 +48,5 @@ export class CommunityUserRepository
         },
       }
     );
-  }
-
-  async findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity | null> {
-    return this.findOne({
-      'tokens.providerId': profileId,
-      'tokens.provider': provider,
-    });
   }
 }

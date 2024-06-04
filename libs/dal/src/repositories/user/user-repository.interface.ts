@@ -1,4 +1,3 @@
-import { AuthProviderEnum } from '@novu/shared';
 import { IUserResetTokenCount, UserEntity } from './user.entity';
 
 export interface IUserRepository {
@@ -10,5 +9,4 @@ export interface IUserRepository {
     token: string,
     resetTokenCount: IUserResetTokenCount
   ): Promise<{ matched: number; modified: number }>;
-  findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity | null>;
 }

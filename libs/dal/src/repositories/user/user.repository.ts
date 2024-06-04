@@ -29,8 +29,4 @@ export class UserRepository extends BaseRepository<UserDBModel, UserEntity, obje
   ): Promise<{ matched: number; modified: number }> {
     return this.userRepository.updatePasswordResetToken(userId, token, resetTokenCount);
   }
-
-  async findByLoginProvider(profileId: string, provider: AuthProviderEnum): Promise<UserEntity | null> {
-    return this.userRepository.findByLoginProvider(profileId, provider);
-  }
 }
