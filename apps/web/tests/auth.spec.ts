@@ -5,13 +5,13 @@ import { PasswordResetPage } from './page-models/passwordResetPage';
 import { SignUpPage } from './page-models/signupPage';
 import { assertPageShowsMessage, initializeSession } from './utils.ts/browser';
 import { faker } from '@faker-js/faker';
-import { clearDatabase, seedDatabase } from './utils.ts/plugins';
+import { dropDatabase, seedDatabase } from './utils.ts/plugins';
 import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
 
 let knownTestUser;
 
 test.beforeAll(async () => {
-  await clearDatabase();
+  await dropDatabase();
   knownTestUser = await seedDatabase();
 });
 test.beforeEach(async ({ page }) => {

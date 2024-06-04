@@ -1,1 +1,1 @@
-export type SupportedFrameworkName = 'nextjs' | 'express' | 'nuxt' | 'h3';
+export type SupportedFrameworkName = 'next' | 'express' | 'nuxt' | 'h3' | 'sveltekit' | 'remix';
