@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
+import { useEffect, useCallback, useMemo } from 'react';
 import { useLDClient } from 'launchdarkly-react-client-sdk';
 import jwtDecode from 'jwt-decode';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -8,7 +8,7 @@ import type { IJwtClaims, IOrganizationEntity, IUserEntity } from '@novu/shared'
 
 import { useSegment } from '../providers';
 import { api } from '../api';
-import { ROUTES, PUBLIC_ROUTES } from '../constants';
+import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants';
 
 // TODO: Add a novu prefix to the local storage key
 const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
@@ -51,8 +51,9 @@ export function useAuth() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
-
-  const inPublicRoute = PUBLIC_ROUTES.has(location.pathname as any);
+  const inPublicRoute = Array.from(PUBLIC_ROUTES_PREFIXES.values()).find((prefix) =>
+    location.pathname.startsWith(prefix)
+  );
   const inPrivateRoute = !inPublicRoute;
   const hasToken = !!getToken();
 
@@ -87,13 +88,13 @@ export function useAuth() {
   });
 
   const login = useCallback(
-    (newToken: string, redirectUrl?: string) => {
+    async (newToken: string, redirectUrl?: string) => {
       if (!newToken) {
         return;
       }
 
       saveToken(newToken);
-      refetchOrganizations();
+      await refetchOrganizations();
 
       redirectUrl ? navigate(redirectUrl) : void 0;
     },

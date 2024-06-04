@@ -1,0 +1,56 @@
+{
+  "name": "@novu/js",
+  "version": "0.24.2",
+  "repository": "https://github.com/novuhq/novu",
+  "description": "Novu's JavaScript SDK for building custom inbox notification experiences",
+  "author": "",
+  "license": "ISC",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/*"
+  ],
+  "sideEffects": false,
+  "private": true,
+  "scripts": {
+    "start": "pnpm run build -- --watch --sourcemap",
+    "build": "tsup && pnpm run post:build",
+    "post:build": "node scripts/size-limit.js",
+    "lint": "eslint --ext .ts,.tsx src",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@size-limit/esbuild": "^11.1.4",
+    "@size-limit/file": "^11.1.4",
+    "@types/jest": "^29.2.3",
+    "@types/node": "^18.11.12",
+    "bytes-iec": "^3.1.1",
+    "chalk": "^5.3.0",
+    "esbuild-plugin-compress": "^1.0.1",
+    "jest": "^29.3.1",
+    "size-limit": "^11.1.4",
+    "ts-jest": "^29.0.3",
+    "tsup": "^8.0.2",
+    "typescript": "4.9.5"
+  },
+  "dependencies": {
+    "@novu/client": "workspace:*",
+    "@novu/shared": "workspace:*",
+    "mitt": "^3.0.1"
+  }
+}

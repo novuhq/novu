@@ -1,17 +1,23 @@
 import { useState, Dispatch, SetStateAction } from 'react';
 import { Box, Group, Divider, Popover, Stack, Avatar as MAvatar } from '@mantine/core';
-import {
-  WarningFilled,
-  InfoCircleFilled,
-  CheckCircleFilled,
-  CloseCircleFilled,
-  UpCircleFilled,
-  QuestionCircleFilled,
-} from '@ant-design/icons';
 import { useController } from 'react-hook-form';
 import { SystemAvatarIconEnum, IActor, ActorTypeEnum } from '@novu/shared';
 
-import { colors, Input, Switch, Text, Tooltip, Avatar, Camera } from '@novu/design-system';
+import {
+  colors,
+  Input,
+  Switch,
+  Text,
+  Tooltip,
+  Avatar,
+  Camera,
+  IconWarning,
+  IconInfo,
+  IconCheckCircle,
+  IconCancel,
+  IconArrowCircleUp,
+  IconHelp,
+} from '@novu/design-system';
 import { AvatarWrapper, IconWrapper, useStyles } from './AvatarContainer.styles';
 import { useStepFormPath } from '../../../hooks/useStepFormPath';
 
@@ -19,37 +25,37 @@ const MENU_CLICK_OUTSIDE_EVENTS = ['click', 'mousedown', 'touchstart'];
 
 const systemIcons = [
   {
-    icon: <WarningFilled />,
+    icon: <IconWarning />,
     type: SystemAvatarIconEnum.WARNING,
     iconColor: '#FFF000',
     containerBgColor: '#FFF00026',
   },
   {
-    icon: <InfoCircleFilled />,
+    icon: <IconInfo />,
     type: SystemAvatarIconEnum.INFO,
     iconColor: '#0000FF',
     containerBgColor: '#0000FF26',
   },
   {
-    icon: <UpCircleFilled />,
+    icon: <IconArrowCircleUp />,
     type: SystemAvatarIconEnum.UP,
     iconColor: colors.B70,
     containerBgColor: `${colors.B70}26`,
   },
   {
-    icon: <QuestionCircleFilled />,
+    icon: <IconHelp />,
     type: SystemAvatarIconEnum.QUESTION,
     iconColor: colors.B70,
     containerBgColor: `${colors.B70}26`,
   },
   {
-    icon: <CheckCircleFilled />,
+    icon: <IconCheckCircle />,
     type: SystemAvatarIconEnum.SUCCESS,
     iconColor: colors.success,
     containerBgColor: `${colors.success}26`,
   },
   {
-    icon: <CloseCircleFilled />,
+    icon: <IconCancel />,
     type: SystemAvatarIconEnum.ERROR,
     iconColor: colors.error,
     containerBgColor: `${colors.error}26`,

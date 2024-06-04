@@ -17,10 +17,7 @@ export default function QuestionnairePage() {
   }
 
   return (
-    <AuthLayout
-      title="Customize your experience"
-      description={!isHubspotEnabled ? 'Your answers can decrease the time to get started' : ''}
-    >
+    <AuthLayout title="Tell us more about you">
       {isHubspotEnabled ? <HubspotSignupForm /> : <QuestionnaireForm />}
     </AuthLayout>
   );
