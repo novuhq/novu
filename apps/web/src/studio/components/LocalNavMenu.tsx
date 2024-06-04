@@ -1,4 +1,4 @@
-import { IconRoute, IconSettings } from '@novu/design-system';
+import { IconRoute, IconSettings } from '@novu/novui/icons';
 import { ROUTES } from '@novu/shared-web';
 import { EnvironmentSelect } from './EnvironmentSelect/index';
 import { NavMenu } from '../../components/nav/NavMenu';
