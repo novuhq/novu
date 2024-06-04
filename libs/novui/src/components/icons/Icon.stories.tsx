@@ -8,7 +8,7 @@ import { styled, VStack } from '../../../styled-system/jsx';
 import { text } from '../../../styled-system/recipes';
 
 export default {
-  title: 'Icons/IconsV2',
+  title: 'Icons/Icons',
   args: {
     size: DEFAULT_ICON_SIZE as IconSize,
     color: undefined,
