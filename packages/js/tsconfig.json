@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types"],
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+    "removeComments": false,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".."
+  },
+  "include": ["src/**/*", "src/**/*.d.ts"],
+  "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]
+}

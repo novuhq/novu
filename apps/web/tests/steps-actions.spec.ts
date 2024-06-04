@@ -294,7 +294,7 @@ test('should be able to add multiple filters to a particular step', async ({ pag
   await expect(inAppModalPage.getAddConditionsAction()).toHaveText('2');
 });
 
-test.skip('TODO - should re-render content on between step click', async ({ page }) => {
+test.skip('should re-render content on between step click', async ({ page }) => {
   await page.goto('/workflows/create');
 
   const workflowEditorPage = new WorkflowEditorPage(page);

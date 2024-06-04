@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   extends: ['../../.eslintrc.js'],
   parserOptions: {
     project: './tsconfig.json',

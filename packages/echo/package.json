@@ -2,8 +2,8 @@
   "name": "@novu/echo",
   "version": "0.24.3-alpha.0",
   "description": "The Code-First Notifications Workflow SDK.",
-  "main": "./dist/src/index.js",
-  "types": "./dist/src/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "publishConfig": {
     "registry": "https://registry.npmjs.org",
     "access": "public"
@@ -17,10 +17,8 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --check --ignore-path .gitignore .",
     "format:fix": "prettier --write --ignore-path .gitignore .",
-    "clean": "rm -rf ./dist",
-    "prebuild": "rimraf dist",
-    "build": "pnpm run clean && tsc --build",
-    "build:watch": "tsc --build --watch",
+    "build": "tsup",
+    "build:watch": "tsup --watch",
     "$comment:bump:prerelease": "This is a workaround to support `npm version prerelease` with lerna",
     "bump:prerelease": "npm version prerelease --preid=alpha & PID=$!; (sleep 1 && kill -9 $PID) & wait $PID",
     "release:alpha": "pnpm bump:prerelease || pnpm build && npm publish"
@@ -45,33 +43,44 @@
   "license": "MIT",
   "exports": {
     ".": {
-      "require": "./dist/src/index.js",
-      "import": "./dist/src/index.js",
-      "types": "./dist/src/index.d.ts"
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
     },
     "./express": {
-      "require": "./dist/src/express.js",
-      "import": "./dist/src/express.js",
-      "types": "./dist/src/express.d.ts"
+      "require": "./dist/express.js",
+      "import": "./dist/express.mjs",
+      "types": "./dist/express.d.ts"
     },
     "./next": {
-      "require": "./dist/src/next.js",
-      "import": "./dist/src/next.js",
-      "types": "./dist/src/next.d.ts"
+      "require": "./dist/next.js",
+      "import": "./dist/next.mjs",
+      "types": "./dist/next.d.ts"
     },
     "./nuxt": {
-      "require": "./dist/src/nuxt.js",
-      "import": "./dist/src/nuxt.js",
-      "types": "./dist/src/nuxt.d.ts"
+      "require": "./dist/nuxt.js",
+      "import": "./dist/nuxt.mjs",
+      "types": "./dist/nuxt.d.ts"
     },
     "./h3": {
-      "require": "./dist/src/h3.js",
-      "import": "./dist/src/h3.js",
-      "types": "./dist/src/h3.d.ts"
+      "require": "./dist/h3.js",
+      "import": "./dist/h3.mjs",
+      "types": "./dist/h3.d.ts"
+    },
+    "./sveltekit": {
+      "require": "./dist/sveltekit.js",
+      "import": "./dist/sveltekit.mjs",
+      "types": "./dist/sveltekit.d.ts"
+    },
+    "./remix": {
+      "require": "./dist/remix.js",
+      "import": "./dist/remix.mjs",
+      "types": "./dist/remix.d.ts"
     }
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@sveltejs/kit": "^2.5.10",
     "@types/express": "^4.17.13",
     "@types/jest": "^29.5.12",
     "@types/json-schema": "^7.0.15",
@@ -84,6 +93,7 @@
     "prettier": "^3.2.5",
     "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
+    "tsup": "^8.0.2",
     "typescript": "^5.3.3"
   },
   "dependencies": {
