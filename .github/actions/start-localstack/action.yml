@@ -16,7 +16,7 @@ runs:
         AWS_EC2_METADATA_DISABLED: true
       working-directory: docker/local
       run: |
-        docker-compose -f docker-compose.localstack.yml up -d
+        docker-compose -f docker-compose.e2e.yml up -d
         sleep 10
         max_retry=30
         counter=0
@@ -28,5 +28,5 @@ runs:
           echo "Trying again. Try #$counter"
           ((counter++))
         done
-        docker-compose -f docker-compose.localstack.yml logs --tail="all"
+        docker-compose -f docker-compose.e2e.yml logs --tail="all"
         aws --endpoint-url=http://127.0.0.1:4566 --cli-connect-timeout 600 s3 mb s3://novu-test
