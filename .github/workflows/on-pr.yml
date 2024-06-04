@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
+
   dependency-review:
     name: Dependency review
     runs-on: ubuntu-latest
@@ -174,7 +175,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - uses: ./.github/actions/setup-project
-      
+
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@v3
         with:
