@@ -15,6 +15,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./icons": {
+      "source": "./src/icons/index.ts",
+      "types": "./dist/icons/index.d.ts",
+      "require": "./dist/icons/index.js",
+      "import": "./dist/icons/index.js"
+    },
     "./css": {
       "types": "./styled-system/css/index.d.ts",
       "require": "./styled-system/css/index.js",
