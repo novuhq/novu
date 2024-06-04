@@ -8,50 +8,6 @@ const Text = styled('p', text);
 
 export type Voting = 'up' | 'down';
 
-const VotedDownButtonRecipe = cva<{
-  colorScheme: Record<ColorScheme, SystemStyleObject>;
-  voted: Record<Voting, SystemStyleObject>;
-}>({
-  compoundVariants: [
-    {
-      voted: 'down',
-      colorScheme: 'dark',
-      css: {
-        color: 'legacy.white !important',
-      },
-    },
-    {
-      voted: 'down',
-      colorScheme: 'light',
-      css: {
-        color: 'legacy.white !important',
-      },
-    },
-  ],
-});
-
-const VotedUpButtonRecipe = cva<{
-  colorScheme: Record<ColorScheme, SystemStyleObject>;
-  voted: Record<Voting, SystemStyleObject>;
-}>({
-  compoundVariants: [
-    {
-      voted: 'up',
-      colorScheme: 'dark',
-      css: {
-        color: 'legacy.white !important',
-      },
-    },
-    {
-      voted: 'up',
-      colorScheme: 'light',
-      css: {
-        color: 'legacy.white !important',
-      },
-    },
-  ],
-});
-
 export const VotingWidget = ({
   voted,
   onVoteClick,
@@ -73,11 +29,37 @@ export const VotingWidget = ({
       <Flex gap="50" align="center">
         <ActionButton
           onClick={onVoteClick('up')}
-          Icon={() => <IconThumbUpAlt className={VotedUpButtonRecipe({ colorScheme, voted })} size={20} />}
+          Icon={() => (
+            <IconThumbUpAlt
+              {...{ dataVote: voted }}
+              className={css({
+                '&[data-vote="up"]': {
+                  color: {
+                    base: 'legacy.white !important',
+                    _dark: 'legacy.white !important',
+                  },
+                },
+              })}
+              size={20}
+            />
+          )}
         />
         <ActionButton
           onClick={onVoteClick('down')}
-          Icon={() => <IconThumbDownAlt className={VotedDownButtonRecipe({ colorScheme, voted })} size={20} />}
+          Icon={() => (
+            <IconThumbDownAlt
+              {...{ dataVote: voted }}
+              className={css({
+                '&[data-vote="down"]': {
+                  color: {
+                    base: 'legacy.white !important',
+                    _dark: 'legacy.white !important',
+                  },
+                },
+              })}
+              size={20}
+            />
+          )}
         />
       </Flex>
     </Flex>
