@@ -1,6 +1,6 @@
 {
   "name": "@novu/echo",
-  "version": "0.24.3-alpha.0",
+  "version": "0.24.3-alpha.1",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -9,7 +9,10 @@
     "access": "public"
   },
   "private": false,
-  "repository": "https://github.com/novuhq/novu",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/novuhq/novu.git"
+  },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "test": "jest",
