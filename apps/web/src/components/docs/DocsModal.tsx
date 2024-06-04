@@ -19,15 +19,15 @@ export const DocsModal = ({ open, toggle, path }) => {
   }, [path]);
 
   const onVoteClick = (vote: Voting) => () => {
-    if (voted === undefined) {
-      return;
+    if (vote) {
+      segment.track('Inline docs voting used', {
+        documentationPage: path,
+        pageURL: window.location.href,
+        vote,
+      });
     }
-    segment.track('Inline docs voting used', {
-      documentationPage: path,
-      pageURL: window.location.href,
-      vote,
-    });
-    setVoted(vote);
+    // if the user hits the same vote, deselect the vote.
+    setVoted((_prevVote) => (_prevVote === vote ? undefined : vote));
   };
 
   // TODO: remove styles when modal have common style ground
