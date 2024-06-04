@@ -11,8 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check branches
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ ${{ github.head_ref }} != "next" ] && [ ${{ github.base_ref }} == "prod" ]; then
+          if [[ "${{ env.HEAD_REF }}" =~ [^a-zA-Z0-9-_] ]]; then
+            echo "head_ref has invalid characters."
+            exit 1
+          fi
+          if [[ "${{ env.BASE_REF }}" =~ [^a-zA-Z0-9-_] ]]; then
+            echo "base_ref has invalid characters."
+            exit 1
+          fi
+          if [ ${{ env.HEAD_REF }} != "next" ] && [ ${{ env.BASE_REF }} == "prod" ]; then
             echo "Merge requests to prod branch are only allowed from next branch."
             exit 1
           fi
