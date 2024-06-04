@@ -29,8 +29,8 @@ export const linkStyles = css({
 export const closeButtonStyles = css({
   position: 'absolute',
   cursor: 'pointer',
-  top: '7px',
-  right: '10px',
+  top: '50',
+  right: '[10px]',
   zIndex: '2',
   p: '25',
   borderRadius: '25',
