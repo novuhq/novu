@@ -15,9 +15,7 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
           BASE_REF: ${{ github.base_ref }}
         run: |
-          HEAD="${{ env.HEAD_REF }}"
-          BASE="${{ env.BASE_REF }}"
-          if [ $HEAD != "next" ] && [ $BASE == "prod" ]; then
+          if [ $HEAD_REF != "next" ] && [ $BASE_REF == "prod" ]; then
             echo "Merge requests to prod branch are only allowed from next branch."
             exit 1
           fi
