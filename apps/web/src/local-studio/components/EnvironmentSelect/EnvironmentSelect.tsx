@@ -1,7 +1,7 @@
 import { Select, When } from '@novu/design-system';
 import { css } from '@novu/novui/css';
-import { navSelectStyles } from '../../NavSelect.styles';
-import { EnvironmentPopover } from '../EnvironmentPopover';
+import { navSelectStyles } from '../../../components/nav/NavSelect.styles';
+import { EnvironmentPopover } from '../../../components/nav/EnvironmentSelect/EnvironmentPopover';
 import { useEnvironmentSelect } from './useEnvironmentSelect';
 
 export const EnvironmentSelectRenderer: React.FC<ReturnType<typeof useEnvironmentSelect>> = ({
