@@ -67,7 +67,7 @@ export type ITriggerOverrides = {
 } & {
   [key in SmsProviderIdEnum]?: ITriggerOverrideSMS;
 } & {
-  [key in 'chat']?: IChatOverrides;
+  [key in 'whatsapp']?: IWhatsappOverrides;
 };
 
 export type ITriggerOverrideDelayAction = {
@@ -156,7 +156,7 @@ export type ITriggerOverrideExpo = {
   mutableContent?: boolean;
 };
 
-export type IChatOverrides = {
+export type IWhatsappOverrides = {
   template?: {
     name: string;
     language: {
@@ -164,7 +164,114 @@ export type IChatOverrides = {
     };
     components?: Record<string, any>[];
   };
+} & {
+  [key in
+    | 'audio'
+    | 'document'
+    | 'image'
+    | 'sticker'
+    | 'video']?: IWhatsappMedia;
+} & {
+  interactive?: {
+    type:
+      | 'button'
+      | 'catalog_message'
+      | 'list'
+      | 'product'
+      | 'product_list'
+      | 'flow';
+    action: {
+      button?: string;
+      buttons?: {
+        type: 'reply';
+        title: string;
+        id: string;
+      }[];
+      catalog_id?: string;
+      product_retailer_id?: string;
+      sections?: IWhatsappSections[];
+      mode?: 'draft' | 'published';
+      flow_message_version?: '3';
+      flow_token?: string;
+      flow_id?: string;
+      flow_cta?: string;
+      flow_action?: string;
+      flow_action_payload?: {
+        screen: string;
+        data?: {
+          [key: string]: string;
+        };
+      };
+    };
+    header?: {
+      type: 'text' | 'image' | 'video' | 'document';
+      document?: IWhatsappMedia;
+      image?: IWhatsappMedia;
+      text?: string;
+      video?: IWhatsappMedia;
+    };
+    body?: {
+      text: string;
+    };
+    footer?: {
+      text: string;
+    };
+  };
 };
+
+export type IWhatsappMedia = {
+  id?: string;
+  link?: string;
+  caption?: string;
+  filename?: string;
+};
+
+export interface IWhatsappSections {
+  product_items?: { product_retailer_id: string }[];
+  rows?: { id: string; title: string; description: string }[];
+  title?: string;
+}
+
+const testwhatsappOverrides: IWhatsappOverrides = {
+  template: {
+    name: 'string',
+    language: {
+      code: 'string',
+    },
+    components: [
+      {
+        type: 'text',
+        text: 'string',
+      },
+    ],
+  },
+  audio: {
+    id: 'string',
+    link: 'string',
+    caption: 'string',
+    filename: 'string',
+  },
+};
+export interface IWhatsappComponent {
+  type: 'body' | 'header' | 'button';
+  sub_type?: 'quick_reply' | 'url' | 'catalog';
+  parameters: {
+    type: 'currency' | 'date_time' | 'document' | 'image' | 'text' | 'video';
+    text?: string;
+    currency?: {
+      fallback_value: string;
+      code: string;
+      amount_1000: number;
+    };
+    date_time?: {
+      fallback_value: string;
+    };
+    image?: IWhatsappMedia;
+    document?: IWhatsappMedia;
+    video?: IWhatsappMedia;
+  }[];
+  index?: number;
+}
 
 export interface IBulkEvents extends ITriggerPayloadOptions {
   name: string;
