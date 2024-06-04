@@ -406,6 +406,34 @@ describe('Echo Client', () => {
       expect(type).toBe('regular');
     });
 
+    it('should execute scheduled delay successfully', async () => {
+      const DATE = '2018-11-13T20:20:39+00:00';
+      await echo.workflow('scheduled-delay-workflow', async ({ step }) => {
+        await step.delay('delay', async () => ({ type: 'scheduled', date: DATE }));
+      });
+
+      const delayEvent: IEvent = {
+        action: 'execute',
+        data: {},
+        workflowId: 'scheduled-delay-workflow',
+        stepId: 'delay',
+        subscriber: {},
+        state: [],
+        inputs: {},
+      };
+
+      const delayExecutionResult = await echo.executeWorkflow(delayEvent);
+
+      expect(delayExecutionResult).toBeDefined();
+      expect(delayExecutionResult.outputs).toBeDefined();
+      if (!delayExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const type = (delayExecutionResult.outputs as any).type as string;
+      expect(type).toBe('scheduled');
+
+      const date = (delayExecutionResult.outputs as any).date as string;
+      expect(date).toBe(DATE);
+    });
+
     it('should throw error on execute action without data', async () => {
       await echo.workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));

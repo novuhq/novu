@@ -1,7 +1,13 @@
-import { PlatformException } from './exceptions';
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { ChatProviderIdEnum } from '@novu/shared';
+
+import {
+  ChatProviderIdEnum,
+  DelayTypeEnum,
+  DigestUnitEnum,
+} from '@novu/shared';
+
+import { PlatformException } from './exceptions';
 
 export const requireInject = (inject: RequireInject, moduleRef?: ModuleRef) => {
   if (inject === RequireInjectEnum.RESONATE) {
@@ -47,17 +53,26 @@ enum RequireInjectEnum {
 
 export interface IChimeraDigestResponse {
   amount: number;
-  unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
+  unit: DigestUnitEnum;
   type: 'regular';
   backoff: boolean;
   digestKey: string;
 }
 
-export interface IChimeraDelayResponse {
-  amount: number;
-  unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
-  type: 'regular';
+interface IDelay {
+  type: DelayTypeEnum;
 }
+
+export interface IScheduledDelay extends IDelay {
+  date: string;
+}
+
+export interface IRegularDelay extends IDelay {
+  amount: number;
+  unit: DigestUnitEnum;
+}
+
+export type IDelayOutput = IRegularDelay | IScheduledDelay;
 
 export interface IChimeraInAppResponse {
   body: string;
@@ -88,9 +103,7 @@ export type IChimeraChannelResponse =
   | IChimeraPushResponse
   | IChimeraSmsResponse;
 
-export type IChimeraActionResponse =
-  | IChimeraDelayResponse
-  | IChimeraDigestResponse;
+export type IChimeraActionResponse = IDelayOutput | IChimeraDigestResponse;
 
 export type IChimeraStepResponse =
   | IChimeraChannelResponse

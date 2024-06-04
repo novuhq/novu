@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import { ExecutionDetailsStatusEnum, MarkMessagesAsEnum, StepTypeEnum } from '@novu/shared';
 import { echoServer } from '../../../../e2e/echo.server';
+import { formatISO } from 'date-fns';
 
 describe('Echo Trigger ', async () => {
   let session: UserSession;
@@ -388,6 +389,55 @@ describe('Echo Trigger ', async () => {
 
     expect(messagesAfter.length).to.be.eq(1);
     expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
+  });
+
+  it('should trigger the scheduled delay with invalid date', async () => {
+    const workflowId = 'scheduled-delay-workflow';
+    await echoServer.echo.workflow(
+      workflowId,
+      async ({ step }) => {
+        const delayResponse = await step.delay(
+          'delay-id',
+          async (inputs) => {
+            return {
+              type: 'scheduled',
+              date: formatISO(Date.now()),
+            };
+          },
+          {}
+        );
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await discoverAndSyncEcho(session);
+
+    const workflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(workflow).to.be.ok;
+
+    await triggerEvent(workflowId, { name: 'John' });
+
+    await session.awaitRunningJobs(workflow?._id, true, 0);
+
+    const executionDetails = await executionDetailsRepository.find({
+      _environmentId: session.environment._id,
+      _notificationTemplateId: workflow?._id,
+      channel: StepTypeEnum.DELAY,
+      status: ExecutionDetailsStatusEnum.FAILED,
+    } as any);
+
+    expect(executionDetails.length).to.be.eq(1);
+    expect(executionDetails[0].detail).to.equal('Invalid delay configuration');
+    expect(executionDetails[0].raw).to.equal('{"error":"Delay date at must be a future date"}');
   });
 });
 

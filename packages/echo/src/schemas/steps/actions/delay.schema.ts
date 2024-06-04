@@ -1,6 +1,6 @@
 import { Schema } from '../../../types/schema.types';
 
-export const delayOutputSchema = {
+const regularDelayOutputSchema = {
   type: 'object',
   properties: {
     type: {
@@ -14,6 +14,22 @@ export const delayOutputSchema = {
   },
   required: ['amount', 'unit', 'type'],
   additionalProperties: false,
+} as const satisfies Schema;
+
+const schedulareDelayOutputSchema = {
+  type: 'object',
+  properties: {
+    type: {
+      enum: ['scheduled'],
+    },
+    date: { type: 'string', format: 'date-time' },
+  },
+  required: ['date', 'type'],
+  additionalProperties: false,
+} as const satisfies Schema;
+
+export const delayOutputSchema = {
+  oneOf: [regularDelayOutputSchema, schedulareDelayOutputSchema],
 } as const satisfies Schema;
 
 export const delayResultSchema = {

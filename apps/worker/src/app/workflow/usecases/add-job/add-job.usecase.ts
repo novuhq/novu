@@ -23,6 +23,7 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
   IChimeraDigestResponse,
+  IDelayOutput,
   IFilterVariables,
   InstrumentUsecase,
   IUseCaseInterfaceInline,
@@ -168,7 +169,7 @@ export class AddJob {
   ) {
     command.chimeraResponse = await this.resonateUsecase.execute<
       AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraDigestResponse>
+      ExecuteOutput<IDelayOutput>
     >({
       ...command,
       variables: filterVariables,
