@@ -43,7 +43,7 @@ export const NavMenuLinkButton: FC<PropsWithChildren<INavMenuLinkButtonProps>> =
 
   return isVisible ? (
     <NavLink
-      className={cx(css({ colorPalette: 'green' }, rawButtonBaseStyles, rawLinkButtonStyles), className)}
+      className={cx(css(rawButtonBaseStyles, rawLinkButtonStyles), className)}
       to={link}
       data-test-id={testId}
       onMouseEnter={() => setIsHovered(true)}
