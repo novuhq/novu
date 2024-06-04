@@ -20,7 +20,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "ncc build ./index.ts -w -o dist/",
-    "prerelease": "node ../../scripts/rm.mjs dist",
+    "prerelease": "rimraf dist",
     "release": "ncc build ./index.ts -o ./dist/ --minify --no-cache --no-source-map-register",
     "build": "pnpm release",
     "lint-fix": "pnpm prettier -w --plugin prettier-plugin-tailwindcss 'templates/*-tw/{ts,js}/{app,pages}/**/*.{js,ts,tsx}'",
