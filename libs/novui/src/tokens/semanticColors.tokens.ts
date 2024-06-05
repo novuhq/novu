@@ -59,6 +59,12 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       },
     },
   },
+  icon: {
+    main: {
+      value: { base: '{colors.legacy.B60}', _dark: '{colors.legacy.B60}' },
+      type: 'color',
+    },
+  },
 });
 
 export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
@@ -168,6 +174,12 @@ export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
     },
     popover: {
       value: { base: '{colors.mauve.120.light}', _dark: '{colors.mauve.120.dark}' },
+      type: 'color',
+    },
+  },
+  icon: {
+    main: {
+      value: { base: '{colors.mauve.20.light}', _dark: '{colors.mauve.20.dark}' },
       type: 'color',
     },
   },

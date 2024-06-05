@@ -1,6 +1,6 @@
 name: Testing Pipeline
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
 on:
@@ -14,7 +14,7 @@ jobs:
     environment: Linting
     steps:
       - name: 'Checkout Repository'
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: 'Dependency Review'
         uses: actions/dependency-review-action@v4
 
@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: Linting
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Run Spell Check
         uses: streetsidesoftware/cspell-action@v6
         with:
@@ -78,7 +78,7 @@ jobs:
           else
             echo "branch=main" >> $GITHUB_OUTPUT
           fi
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: ./.github/actions/setup-project
@@ -123,7 +123,7 @@ jobs:
     timeout-minutes: 80
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-providers }}'
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
@@ -148,7 +148,7 @@ jobs:
       - name: Affected packages
         run: echo '${{ needs.get-affected.outputs.test-packages }}'
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/setup-project
         with:
@@ -171,10 +171,10 @@ jobs:
     steps:
       - name: Affected libs
         run: echo '${{ needs.get-affected.outputs.test-libs }}'
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: ./.github/actions/setup-project
-      
+
       - name: Run Lint, Build, Test
         uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -214,7 +214,7 @@ jobs:
       id-token: write
     steps:
       - run: echo ${{ matrix.projectName }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-project
         with:
           # Don't run redis and etc... for other unit tests
@@ -238,7 +238,7 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: ./.github/actions/run-api
