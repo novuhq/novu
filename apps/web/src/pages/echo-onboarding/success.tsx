@@ -1,5 +1,7 @@
 import { css } from '@novu/novui/css';
+import { styled } from '@novu/novui/jsx';
 import { vstack } from '@novu/novui/patterns';
+import { text, title } from '@novu/novui/recipes';
 import { ROUTES } from '@novu/shared-web';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -9,8 +11,11 @@ import { ExecutionDetailsAccordion } from '../../components/execution-detail/Exe
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 
+const Heading = styled('h1', title);
+const Text = styled('p', text);
+
 export const EchoOnboardingSuccess = () => {
-  const { data, isLoading } = useQuery<{ data: any[]; hasMore: boolean; pageSize: number }>(['activitiesList', 0], () =>
+  const { data } = useQuery<{ data: any[]; hasMore: boolean; pageSize: number }>(['activitiesList', 0], () =>
     getActivityList(0, undefined)
   );
 
@@ -30,6 +35,14 @@ export const EchoOnboardingSuccess = () => {
     return item?.trigger?.identifier;
   }, [item]);
 
+  const email = useMemo(() => {
+    if (item === null) {
+      return null;
+    }
+
+    return item.subscriber.email;
+  }, [item]);
+
   const navigate = useNavigate();
 
   return (
@@ -46,6 +59,10 @@ export const EchoOnboardingSuccess = () => {
             width: '880px',
           })}
         >
+          <Heading>Success, you sent an email to {email}</Heading>
+          <Text className={css({ color: 'typography.text.secondary', lineHeight: '150', marginBottom: '150' })}>
+            Proceed to customize your Echo Workflows or continue your onboarding by reviewing our documentation.
+          </Text>
           <ExecutionDetailsAccordion identifier={identifier} steps={item?.jobs} subscriberVariables={{}} />
         </div>
       </div>

@@ -45,6 +45,7 @@ export const EchoOnboarding = () => {
 
           return;
         }
+        localStorage.setItem('echo-onboarding', url);
         navigate(ROUTES.ECHO_ONBOARDING_TEST);
       },
       onError: (e) => {

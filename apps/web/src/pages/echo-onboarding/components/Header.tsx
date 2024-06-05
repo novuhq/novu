@@ -57,7 +57,7 @@ export const Header = ({ active = 0 }: { active?: number }) => {
                 borderRadius: '200',
               }),
             }}
-            progressIcon={({ step }) => step + 1}
+            progressIcon={({ step }) => <>{step + 1}</>}
             completedIcon={() => {
               return (
                 <IconCheck

@@ -12,7 +12,9 @@ import {
 import { css } from '@novu/novui/css';
 import { hstack, vstack } from '@novu/novui/patterns';
 import { IStepVariant } from '@novu/shared';
-import { useMemo, useState } from 'react';
+import { ROUTES } from '@novu/shared-web';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PreviewWeb } from '../../components/workflow/preview/email/PreviewWeb';
 import { useActiveIntegrations } from '../../hooks/index';
 import { useTemplates } from '../../hooks/useTemplates';
@@ -25,11 +27,27 @@ export const EchoOnboardingTest = () => {
   const [tab, setTab] = useState('Preview');
   const [content, setContent] = useState('');
   const [subject, setSubject] = useState('');
+  const [url, setUrl] = useState('');
+  const navigate = useNavigate();
   const { integrations = [] } = useActiveIntegrations();
   const integration = useMemo(() => {
     return integrations.find((item) => item.channel === 'email' && item.primary) || null;
   }, [integrations]);
   const { templates, loading } = useTemplates({ pageSize: 1, areSearchParamsEnabled: false });
+
+  useEffect(() => {
+    const storageUrl = localStorage.getItem('echo-onboarding');
+
+    if (!storageUrl) {
+      navigate(ROUTES.ECHO_ONBOARDING);
+
+      return;
+    }
+
+    setUrl(storageUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const template = useMemo(() => {
     if (!templates) {
       return null;
