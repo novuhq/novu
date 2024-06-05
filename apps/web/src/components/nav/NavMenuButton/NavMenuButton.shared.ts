@@ -2,8 +2,7 @@ import { IIconProps } from '@novu/design-system';
 import { LocalizedMessage } from '@novu/shared-web';
 import { ReactNode } from 'react';
 import { css } from '@novu/novui/css';
-import { styled } from '@novu/novui/jsx';
-import { text } from '@novu/novui/recipes';
+import { CoreProps } from '@novu/novui';
 
 export type RightSideTrigger = 'hover';
 
@@ -12,7 +11,7 @@ export interface INavMenuButtonRightSideConfig {
   tooltip?: LocalizedMessage;
   triggerOn?: RightSideTrigger;
 }
-export interface INavMenuButtonProps {
+export interface INavMenuButtonProps extends CoreProps {
   icon: React.ReactElement<IIconProps>;
   label: LocalizedMessage;
   rightSide?: INavMenuButtonRightSideConfig;
