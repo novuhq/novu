@@ -59,7 +59,7 @@ export function useAuth() {
 
   useEffect(() => {
     if (!getToken() && inPrivateRoute) {
-      navigate(ROUTES.AUTH_LOGIN);
+      navigate(ROUTES.AUTH_LOGIN, { state: { redirectTo: location } });
     }
   }, [navigate, inPrivateRoute]);
 
