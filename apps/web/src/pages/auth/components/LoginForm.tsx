@@ -21,8 +21,8 @@ type LoginFormProps = {
 };
 
 export interface LocationState {
-  redirectTo: {
-    pathname: string;
+  redirectTo?: {
+    pathname?: string;
   };
 }
 
