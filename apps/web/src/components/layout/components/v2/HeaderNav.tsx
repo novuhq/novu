@@ -1,5 +1,6 @@
 import { ActionIcon, Header } from '@mantine/core';
-import { IconHelpOutline, Tooltip } from '@novu/design-system';
+import { IconHelpOutline } from '@novu/novui/icons';
+import { Tooltip } from '@novu/design-system';
 import { IS_DOCKER_HOSTED } from '../../../../config';
 import { useBootIntercom } from '../../../../hooks';
 import useThemeChange from '../../../../hooks/useThemeChange';
