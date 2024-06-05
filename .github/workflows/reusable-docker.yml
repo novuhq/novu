@@ -61,7 +61,7 @@ jobs:
       matrix:
         name: [ '${{ inputs.package_name }}-ee', '${{ inputs.package_name }}' ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: ${{ contains (matrix.name,'-ee') }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
