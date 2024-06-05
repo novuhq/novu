@@ -4,7 +4,7 @@ import { GetFeatureFlag, GetFeatureFlagCommand, createHash } from '@novu/applica
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import axios from 'axios';
 
-import { InviteNudgeWebhookCommand } from './invite-nudge-command';
+import { InviteNudgeWebhookCommand } from './invite-nudge.command';
 
 const axiosInstance = axios.create();
 
@@ -18,33 +18,29 @@ export class InviteNudgeWebhook {
     const isEnabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
         key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
-        organizationId: command.body?.subscriber?._organizationId,
+        organizationId: command.subscriber._organizationId,
         userId: 'system',
         environmentId: 'system',
       })
     );
 
-    if (
-      isEnabled &&
-      (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') &&
-      process.env.NOVU_API_KEY
-    ) {
-      const hmacHash = createHash(process.env.NOVU_API_KEY || '', command?.body?.subscriber?._environmentId || '');
-      const hmacHashFromWebhook = command?.headers?.['nv-hmac-256'];
+    if (isEnabled && process.env.NOVU_API_KEY) {
+      const hmacHash = createHash(process.env.NOVU_API_KEY, command.subscriber._environmentId);
+      const hmacHashFromWebhook = command.hmacHeader;
 
       if (hmacHash !== hmacHashFromWebhook) {
         throw new Error('Unauthorized request');
       }
 
       const membersCount = await this.memberRepository.count({
-        _organizationId: command?.body?.subscriber?._organizationId,
+        _organizationId: command.subscriber._organizationId,
       });
 
       if (membersCount === 1) {
         await axiosInstance.post(
           `https://api.hubapi.com/contacts/v1/lists/${process.env.HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST_ID}/add`,
           {
-            emails: [command?.body?.subscriber?.email],
+            emails: [command.subscriber.email],
           },
           {
             headers: {
