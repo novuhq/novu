@@ -50,7 +50,7 @@ export class InviteNudgeWebhook {
         );
         if (hubspotAddUserIntoListResponse.data.updated.length !== 1) {
           Logger.log(
-            `Failed to add user ${command?.body?.subscriber?.email} into list ${process.env.HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST_ID}`
+            `Failed to add user ${command.subscriber.email} into list ${process.env.HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST_ID}`
           );
         }
       }
