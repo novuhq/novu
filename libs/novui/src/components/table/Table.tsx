@@ -1,11 +1,25 @@
 import { Table as ExternalTable } from '@mantine/core';
-import { flexRender, getCoreRowModel, Row, useReactTable } from '@tanstack/react-table';
-import React, { useMemo } from 'react';
+import {
+  CellContext,
+  flexRender,
+  getCoreRowModel,
+  Row,
+  useReactTable,
+  createColumnHelper as _createColumnHelper,
+  ColumnDefTemplate,
+} from '@tanstack/react-table';
+import React, { ComponentType, useMemo } from 'react';
 import { CoreProps } from 'src/types';
 
 import classes from './Table.styles';
 
 export type IRow<T extends object = {}> = Row<T>;
+
+/** Component used to render the contents of a cell */
+export type CellRendererComponent<TRow, TCellValue> = ColumnDefTemplate<CellContext<TRow, TCellValue>>;
+
+/** Helper for type-safe column definitions */
+export const createColumnHelper = _createColumnHelper;
 
 export interface ITableProps<T extends object> extends CoreProps {
   columns?: any[];
