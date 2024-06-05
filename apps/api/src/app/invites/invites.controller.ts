@@ -20,7 +20,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
 import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
 import { Roles } from '../auth/framework/roles.decorator';
-import { InviteMemberDto } from './dtos/invite-member.dto';
+import { InviteMemberDto, InviteWebhookDto } from './dtos/invite-member.dto';
 import { InviteMemberCommand } from './usecases/invite-member/invite-member.command';
 import { BulkInviteMembersDto } from './dtos/bulk-invite-members.dto';
 import { BulkInviteCommand } from './usecases/bulk-invite/bulk-invite.command';
@@ -134,10 +134,10 @@ export class InvitesController {
   }
 
   @Post('/webhook')
-  async inviteCheckWebhook(@Headers() headers: Record<string, string>, @Body() body: Record<string, any>) {
+  async inviteCheckWebhook(@Headers('nv-hmac-256') hmacHeader: string, @Body() body: InviteWebhookDto) {
     const command = InviteNudgeWebhookCommand.create({
-      headers,
-      body,
+      hmacHeader,
+      subscriber: body.subscriber,
     });
 
     const response = await this.inviteNudgeWebhookUsecase.execute(command);
