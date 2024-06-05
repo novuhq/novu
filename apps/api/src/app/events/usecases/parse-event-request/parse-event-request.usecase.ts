@@ -5,6 +5,7 @@ import { merge } from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
 import {
   buildNotificationTemplateIdentifierKey,
+  buildHasNotificationKey,
   CachedEntity,
   Instrument,
   InstrumentUsecase,
@@ -15,6 +16,7 @@ import {
   AnalyticsService,
   GetFeatureFlag,
   GetFeatureFlagCommand,
+  InvalidateCacheService,
 } from '@novu/application-generic';
 import {
   FeatureFlagsKeysEnum,
@@ -55,11 +57,12 @@ export class ParseEventRequest {
     private tenantRepository: TenantRepository,
     private workflowOverrideRepository: WorkflowOverrideRepository,
     private analyticsService: AnalyticsService,
-    private getFeatureFlag: GetFeatureFlag
+    private getFeatureFlag: GetFeatureFlag,
+    private invalidateCacheService: InvalidateCacheService
   ) {}
 
   @InstrumentUsecase()
-  async execute(command: ParseEventRequestCommand) {
+  public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
@@ -155,18 +158,7 @@ export class ParseEventRequest {
       transactionId,
     };
 
-    const isEnabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
-        organizationId: command.organizationId,
-        userId: 'system',
-        environmentId: 'system',
-      })
-    );
-
-    if (isEnabled && (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production')) {
-      await this.sendInAppNudgeForTeamMemberInvite(command);
-    }
+    await this.sendInAppNudgeForTeamMemberInvite(command);
 
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
 
@@ -223,7 +215,7 @@ export class ParseEventRequest {
     }
   }
 
-  private modifyAttachments(command: ParseEventRequestCommand) {
+  private modifyAttachments(command: ParseEventRequestCommand): void {
     command.payload.attachments = command.payload.attachments.map((attachment) => ({
       ...attachment,
       name: attachment.name,
@@ -232,52 +224,89 @@ export class ParseEventRequest {
     }));
   }
 
-  public getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {
+  private getReservedVariablesTypes(template: NotificationTemplateEntity): TriggerContextTypeEnum[] {
     const reservedVariables = template.triggers[0].reservedVariables;
 
     return reservedVariables?.map((reservedVariable) => reservedVariable.type) || [];
   }
 
-  public async sendInAppNudgeForTeamMemberInvite(command: ParseEventRequestCommand) {
-    // check if this is first trigger
-    const notification = await this.notificationRepository.findOne({
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
-    });
+  @Instrument()
+  @CachedEntity({
+    builder: (command: ParseEventRequestCommand) =>
+      buildHasNotificationKey({
+        _organizationId: command.organizationId,
+      }),
+  })
+  private async getNotificationCount(command: ParseEventRequestCommand): Promise<number> {
+    return await this.notificationRepository.count(
+      {
+        _organizationId: command.organizationId,
+      },
+      1
+    );
+  }
 
-    if (notification) return;
+  @Instrument()
+  private async sendInAppNudgeForTeamMemberInvite(command: ParseEventRequestCommand): Promise<void> {
+    const isEnabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
+        organizationId: command.organizationId,
+        userId: 'system',
+        environmentId: 'system',
+      })
+    );
+
+    if (!isEnabled) return;
+
+    // check if this is first trigger
+    const notificationCount = await this.getNotificationCount(command);
+
+    if (notificationCount > 0) return;
+
+    // After the first trigger, we invalidate the cache to ensure the next event trigger
+    // will update the cache with a count of 1.
+    this.invalidateCacheService.invalidateByKey({
+      key: buildHasNotificationKey({
+        _organizationId: command.organizationId,
+      }),
+    });
 
     // check if user is using personal email
     const user = await this.userRepository.findOne({
       _id: command.userId,
     });
 
-    if (this.checkEmail(user?.email)) return;
+    if (!user) throw new ApiException('User not found');
+
+    if (this.isBlockedEmail(user.email)) return;
 
     // check if organization has more than 1 member
-    const membersCount = await this.memberRepository.count({
-      _organizationId: command.organizationId,
-    });
+    const membersCount = await this.memberRepository.count(
+      {
+        _organizationId: command.organizationId,
+      },
+      2
+    );
 
     if (membersCount > 1) return;
 
-    if ((process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production') && process.env.NOVU_API_KEY) {
+    Logger.log('No notification found', LOG_CONTEXT);
+
+    if (process.env.NOVU_API_KEY) {
       if (!command.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]) {
         const novu = new Novu(process.env.NOVU_API_KEY);
 
-        novu.trigger(
-          process.env.NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER || 'in-app-invite-team-member-nudge',
-          {
-            to: {
-              subscriberId: command.userId,
-              email: user?.email as string,
-            },
-            payload: {
-              [INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]: true,
-              webhookUrl: `${process.env.API_ROOT_URL}/v1/invites/webhook`,
-            },
-          }
-        );
+        await novu.trigger(process.env.NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER, {
+          to: {
+            subscriberId: command.userId,
+            email: user?.email as string,
+          },
+          payload: {
+            [INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]: true,
+            webhookUrl: `${process.env.API_ROOT_URL}/v1/invites/webhook`,
+          },
+        });
 
         this.analyticsService.track('Invite Nudge Sent', command.userId, {
           _organization: command.organizationId,
@@ -286,19 +315,19 @@ export class ParseEventRequest {
     }
   }
 
-  public checkEmail(email) {
-    const includedDomains = [
-      '@gmail',
-      '@outlook',
-      '@yahoo',
-      '@icloud',
-      '@mail',
-      '@hotmail',
-      '@protonmail',
-      '@gmx',
-      '@novu',
-    ];
-
-    return includedDomains.some((domain) => email.includes(domain));
+  private isBlockedEmail(email: string): boolean {
+    return BLOCKED_DOMAINS.some((domain) => email.includes(domain));
   }
 }
+
+const BLOCKED_DOMAINS = [
+  '@gmail',
+  '@outlook',
+  '@yahoo',
+  '@icloud',
+  '@mail',
+  '@hotmail',
+  '@protonmail',
+  '@gmx',
+  '@novu',
+];
