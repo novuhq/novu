@@ -4,7 +4,7 @@ import { GetFeatureFlag, GetFeatureFlagCommand, createHash } from '@novu/applica
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import axios from 'axios';
 
-import { InviteNudgeWebhookCommand } from './invite-nudge-command';
+import { InviteNudgeWebhookCommand } from './invite-nudge.command';
 
 const axiosInstance = axios.create();
 

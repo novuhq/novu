@@ -35,8 +35,8 @@ import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthGuard } from '../auth/framework/user.auth.guard';
-import { InviteNudgeWebhookCommand } from './usecases/invite-nudge-webhook/invite-nudge-command';
-import { InviteNudgeWebhook } from './usecases/invite-nudge-webhook/invite-nudge-usecase';
+import { InviteNudgeWebhookCommand } from './usecases/invite-nudge/invite-nudge.command';
+import { InviteNudgeWebhook } from './usecases/invite-nudge/invite-nudge.usecase';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiCommonResponses()
