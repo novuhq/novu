@@ -138,6 +138,10 @@ export const AppRoutes = () => {
         {isInformationArchitectureEnabled && (
           <Route path={ROUTES.BRAND} element={<Navigate to={ROUTES.BRAND_SETTINGS} replace />} />
         )}
+        <Route path={ROUTES.STUDIO}>
+          <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
+          <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowListPage />} />
+        </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
