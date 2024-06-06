@@ -104,7 +104,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
 
   return (
     <>
-      <OAuth />
+      <OAuth invitationToken={invitationToken} />
       <form noValidate name="login-form" onSubmit={handleSubmit(onSubmit)}>
         <Input
           error={errors.fullName?.message}

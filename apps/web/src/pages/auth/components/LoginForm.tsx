@@ -35,6 +35,9 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const tokenInQuery = params.get('token');
   const source = params.get('source');
   const sourceWidget = params.get('source_widget');
+  const invitationTokenFromGithub = params.get('invitationToken') as string;
+  const isRedirectedFromLoginPage = params.get('isLoginPage') as string;
+
   const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();
   const location = useLocation();
@@ -52,6 +55,28 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     (async () => {
       if (!tokenInQuery) {
         return;
+      }
+
+      // handle github login after invitation
+      if (!invitationToken && invitationTokenFromGithub) {
+        await login(tokenInQuery);
+        const updatedToken = await acceptInvite(invitationTokenFromGithub);
+        if (updatedToken) {
+          await login(updatedToken);
+          isRedirectedFromLoginPage === 'true' ? ROUTES.WORKFLOWS : ROUTES.AUTH_APPLICATION;
+
+          return;
+        }
+      }
+
+      if (invitationToken) {
+        const updatedToken = await acceptInvite(invitationToken);
+        if (updatedToken) {
+          await login(updatedToken);
+          navigate(ROUTES.AUTH_APPLICATION);
+
+          return;
+        }
       }
 
       if (!invitationToken && (!organizationId || !environmentId)) {
@@ -135,7 +160,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
 
   return (
     <>
-      <OAuth />
+      <OAuth invitationToken={invitationToken} isLoginPage={true} />
       <form noValidate onSubmit={handleSubmit(onLogin)}>
         <Input
           error={emailClientError || emailServerError}

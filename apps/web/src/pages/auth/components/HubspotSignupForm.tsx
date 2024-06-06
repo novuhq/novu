@@ -73,7 +73,7 @@ export function HubspotSignupForm() {
       return;
     }
 
-    navigate(ROUTES.GET_STARTED);
+    navigate(ROUTES.WORKFLOWS);
   };
 
   if (!currentUser || loading) {
