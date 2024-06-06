@@ -1,10 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { MemberRoleEnum, IMemberInvite, MemberStatusEnum } from '@novu/shared';
-import { EnforceOrgId } from '../../types';
-import { BaseRepository } from '../base-repository';
 import { IMemberRepository } from './member-repository.interface';
-import { MemberDBModel, MemberEntity } from './member.entity';
-import { Member } from './member.schema';
+import { MemberEntity } from './member.entity';
 
 export interface IAddMemberData {
   _userId?: string;
@@ -13,13 +10,8 @@ export interface IAddMemberData {
   memberStatus: MemberStatusEnum;
 }
 
-export class MemberRepository
-  extends BaseRepository<MemberDBModel, MemberEntity, EnforceOrgId>
-  implements IMemberRepository
-{
-  constructor(@Inject('MEMBER_REPOSITORY') private memberRepository: IMemberRepository) {
-    super(Member, MemberEntity);
-  }
+export class MemberRepository implements IMemberRepository {
+  constructor(@Inject('MEMBER_REPOSITORY') private memberRepository: IMemberRepository) {}
 
   removeMemberById(organizationId: string, memberId: string): Promise<{ acknowledged: boolean; deletedCount: number }> {
     return this.memberRepository.removeMemberById(organizationId, memberId);
@@ -89,5 +81,58 @@ export class MemberRepository
 
   findMemberById(organizationId: string, memberId: string): Promise<MemberEntity | null> {
     return this.memberRepository.findMemberById(organizationId, memberId);
+  }
+
+  create(data: any, options?: any): Promise<MemberEntity> {
+    return this.memberRepository.create(data, options);
+  }
+
+  update(query: any, body: any): Promise<{ matched: number; modified: number }> {
+    return this.memberRepository.update(query, body);
+  }
+
+  delete(query: any): Promise<{ acknowledged: boolean; deletedCount: number }> {
+    return this.memberRepository.delete(query);
+  }
+
+  count(query: any, limit?: number): Promise<number> {
+    return this.memberRepository.count(query, limit);
+  }
+
+  aggregate(query: any[], options?: { readPreference?: 'secondaryPreferred' | 'primary' }): Promise<any> {
+    return this.memberRepository.aggregate(query, options);
+  }
+
+  findOne(query: any, select?: any, options?: any): Promise<MemberEntity | null> {
+    return this.memberRepository.findOne(query, select, options);
+  }
+
+  find(query: any, select?: any, options?: any): Promise<MemberEntity[]> {
+    return this.memberRepository.find(query, select, options);
+  }
+
+  async *findBatch(
+    query: any,
+    select?: string | undefined,
+    options?: any,
+    batchSize?: number | undefined
+  ): AsyncGenerator<any, any, unknown> {
+    return this.memberRepository.findBatch(query, select, options, batchSize);
+  }
+
+  insertMany(data: any, ordered: boolean): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: any }> {
+    return this.memberRepository.insertMany(data, ordered);
+  }
+
+  updateOne(query: any, body: any): Promise<{ matched: number; modified: number }> {
+    return this.memberRepository.updateOne(query, body);
+  }
+
+  upsertMany(data: any): Promise<any> {
+    return this.memberRepository.upsertMany(data);
+  }
+
+  bulkWrite(bulkOperations: any, ordered: boolean): Promise<any> {
+    return this.memberRepository.bulkWrite(bulkOperations, ordered);
   }
 }
