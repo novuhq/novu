@@ -9,14 +9,12 @@ jobs:
   pre-release:
     runs-on: ubuntu-latest
     steps:
-
       - name: Start Deployment Notification
-        uses: actions/slack@master
+        uses: ravsamhq/notify-slack-action@v2
         with:
-          channel: '#eng-feed-deployments'
-          message: 'Release has started'
+          notification_title: "Release has started"
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
 
   release-api:
     needs: [pre-release]
@@ -86,20 +84,19 @@ jobs:
           url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
           method: 'POST'
 
-      - name: Start Deployment Notification
+      - name: Failed Deployment Notification
         if: ${{ failure() }}   # This step runs only if any of the previous jobs fail.
-        uses: actions/slack@master
+        uses: ravsamhq/notify-slack-action@v2
         with:
-          channel: '#eng-feed-deployments'
-          message: 'Release has failed'
+          notification_title: "Release has failed"
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
 
-      - name: Start Deployment Notification
+
+      - name: Success Deployment Notification
         if: ${{ success() }}   # This step runs only if all the previous jobs succeed.
-        uses: actions/slack@master
+        uses: ravsamhq/notify-slack-action@v2
         with:
-          channel: '#eng-feed-deployments'
-          message: 'Release has finished'
+          notification_title: "Release was successful"
         env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
