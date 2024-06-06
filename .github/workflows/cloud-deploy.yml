@@ -9,6 +9,7 @@ jobs:
   pre-release:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Start Deployment Notification
         uses: ravsamhq/notify-slack-action@v2
         with:
@@ -20,48 +21,56 @@ jobs:
     needs: [pre-release]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
 
   release-embed:
     needs: [pre-release]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/cloud-deploy/cloud-deploy-embed.yml
 
   release-web:
     needs: [pre-release]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/cloud-deploy/cloud-deploy-web.yml
 
   release-web-components:
     needs: [pre-release]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/cloud-deploy/cloud-deploy-web-components.yml
 
   release-webhook:
     needs: [pre-release]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/cloud-deploy/cloud-deploy-webhook.yml
 
   release-widget:
     needs: [pre-release]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/cloud-deploy/cloud-deploy-widget.yml
 
   release-worker:
     needs: [pre-release]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/cloud-deploy/cloud-deploy-worker.yml
 
   release-ws:
     needs: [pre-release]
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: ./.github/workflows/cloud-deploy/cloud-deploy-ws.yml
 
   post-release:
