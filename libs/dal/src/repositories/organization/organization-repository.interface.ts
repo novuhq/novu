@@ -1,7 +1,8 @@
-import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
+import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
 import { ApiServiceLevelEnum } from '@novu/shared';
+import { BaseRepository } from '../base-repository';
 
-export interface IOrganizationRepository {
+export interface IOrganizationRepository extends BaseRepository<OrganizationDBModel, OrganizationEntity, object> {
   findById(id: string, select?: string): Promise<OrganizationEntity | null>;
   findUserActiveOrganizations(userId: string): Promise<OrganizationEntity[]>;
   updateBrandingDetails(

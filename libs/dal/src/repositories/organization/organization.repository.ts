@@ -44,4 +44,16 @@ export class OrganizationRepository
   async bulkUpdatePartnerConfiguration(userId: string, data: Record<string, string[]>, configurationId: string) {
     return this.organizationRepository.bulkUpdatePartnerConfiguration(userId, data, configurationId);
   }
+
+  async create(data: any, options?: any): Promise<any> {
+    return this.organizationRepository.create(data, options);
+  }
+
+  async update(query: any, body: any): Promise<any> {
+    return this.organizationRepository.update(query, body);
+  }
+
+  async delete(query: any): Promise<{ acknowledged: boolean; deletedCount: number }> {
+    return this.organizationRepository.delete(query);
+  }
 }
