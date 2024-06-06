@@ -8,12 +8,12 @@ import {
   createColumnHelper as _createColumnHelper,
   ColumnDefTemplate,
 } from '@tanstack/react-table';
-import React, { ComponentType, useMemo } from 'react';
-import { CoreProps } from 'src/types';
+import React, { useMemo } from 'react';
+import { CoreProps } from '../../types';
 
 import classes from './Table.styles';
 
-export type IRow<T extends object = {}> = Row<T>;
+export type IRow<TRow extends object = {}> = Row<TRow>;
 
 /** Component used to render the contents of a cell */
 export type CellRendererComponent<TRow, TCellValue> = ColumnDefTemplate<CellContext<TRow, TCellValue>>;
@@ -21,23 +21,23 @@ export type CellRendererComponent<TRow, TCellValue> = ColumnDefTemplate<CellCont
 /** Helper for type-safe column definitions */
 export const createColumnHelper = _createColumnHelper;
 
-export interface ITableProps<T extends object> extends CoreProps {
+export interface ITableProps<TRow extends object> extends CoreProps {
   columns?: any[];
-  data?: T[];
+  data?: TRow[];
   isLoading?: boolean;
   pagination?: any;
   noDataPlaceholder?: React.ReactNode;
   loadingItems?: number;
   hasMore?: boolean;
-  onRowClick?: (row: Row<T>) => void;
-  onRowSelect?: (row: Row<T>) => void;
+  onRowClick?: (row: Row<TRow>) => void;
+  onRowSelect?: (row: Row<TRow>) => void;
 }
 
 /**
  * Table component
  *
  */
-export function Table<T extends object>({
+export function Table<TRow extends object>({
   columns: userColumns,
   data: userData,
   isLoading = false,
@@ -46,14 +46,14 @@ export function Table<T extends object>({
   onRowClick,
   onRowSelect,
   ...props
-}: ITableProps<T>) {
+}: ITableProps<TRow>) {
   const columns = useMemo(() => userColumns?.map((col) => ({ ...col })), [userColumns]);
   const data = useMemo(() => (userData || [])?.map((row) => ({ ...row })), [userData]);
   const fakeData = useMemo(() => Array.from({ length: loadingItems }).map((_, index) => ({ index })), [loadingItems]);
 
-  const table = useReactTable<T>({
+  const table = useReactTable<TRow>({
     columns,
-    data: isLoading ? (fakeData as T[]) : data,
+    data: isLoading ? (fakeData as TRow[]) : data,
     getCoreRowModel: getCoreRowModel(),
     // FIXME: remove this
     debugTable: true,

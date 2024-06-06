@@ -1,4 +1,5 @@
 import { createColumnHelper, Table } from '@novu/novui';
+import { css } from '@novu/novui/css';
 import format from 'date-fns/format';
 import { FC } from 'react';
 import { WorkflowTableRow } from './WorkflowsTable.types';
@@ -97,6 +98,10 @@ const WORKFLOW_COLUMNS = [
   }),
 ];
 
-export const WorkflowsTable: FC<IWorkflowsTableProps> = (props) => {
-  return <Table<typeof TEST_FLOW> columns={WORKFLOW_COLUMNS} data={[TEST_FLOW]} />;
+export const WorkflowsTable: FC<IWorkflowsTableProps> = () => {
+  return (
+    <div className={css({ display: 'flex', flex: '1' })}>
+      <Table<typeof TEST_FLOW> columns={WORKFLOW_COLUMNS} data={[TEST_FLOW]} className={css({ w: '100%' })} />
+    </div>
+  );
 };
