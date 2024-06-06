@@ -1,5 +1,7 @@
-import { ApiService } from 'client/dist/cjs';
-import { NovuEventEmitter } from '../event-emitter';
+import { ApiService } from '@novu/client';
+
+import { NovuEventEmitter } from './event-emitter';
+import { ApiServiceSingleton } from './utils/api-service-signleton';
 
 interface CallQueueItem {
   fn: () => Promise<unknown>;
@@ -14,9 +16,9 @@ export class BaseModule {
   #callsQueue: CallQueueItem[] = [];
   #sessionError: unknown;
 
-  constructor(emitter: NovuEventEmitter, apiService: ApiService) {
-    this._emitter = emitter;
-    this._apiService = apiService;
+  constructor() {
+    this._emitter = NovuEventEmitter.getInstance();
+    this._apiService = ApiServiceSingleton.getInstance();
     this._emitter.on('session.initialize.success', () => {
       this.#callsQueue.forEach(async ({ fn, resolve }) => {
         resolve(await fn());

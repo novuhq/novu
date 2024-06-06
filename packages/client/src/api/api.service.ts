@@ -5,6 +5,7 @@ import {
   IPaginatedResponse,
   ISessionDto,
   INotificationDto,
+  MarkMessagesAsEnum,
 } from '@novu/shared';
 import { HttpClient } from '../http-client';
 import {
@@ -43,6 +44,12 @@ export class ApiService {
     }
   }
 
+  private removeNullUndefined(obj) {
+    return Object.fromEntries(
+      Object.entries(obj).filter(([_, value]) => value != null)
+    );
+  }
+
   setAuthorizationToken(token: string) {
     this.httpClient.setAuthorizationToken(token);
 
@@ -57,10 +64,10 @@ export class ApiService {
 
   async updateAction(
     messageId: string,
-    executedType: ButtonTypeEnum,
-    status: MessageActionStatusEnum,
+    executedType: `${ButtonTypeEnum}`,
+    status: `${MessageActionStatusEnum}`,
     payload?: Record<string, unknown>
-  ): Promise<any> {
+  ): Promise<INotificationDto> {
     return await this.httpClient.post(
       `/widgets/messages/${messageId}/actions/${executedType}`,
       {
@@ -71,6 +78,9 @@ export class ApiService {
     );
   }
 
+  /**
+   * @deprecated use markMessagesAs instead
+   */
   async markMessageAs(
     messageId: string | string[],
     mark: { seen?: boolean; read?: boolean }
@@ -83,6 +93,19 @@ export class ApiService {
     return await this.httpClient.post(`/widgets/messages/markAs`, {
       messageId,
       mark: markPayload,
+    });
+  }
+
+  async markMessagesAs({
+    messageId,
+    markAs,
+  }: {
+    messageId: string | string[];
+    markAs: `${MarkMessagesAsEnum}`;
+  }): Promise<INotificationDto[]> {
+    return await this.httpClient.post(`/widgets/messages/mark-as`, {
+      messageId,
+      markAs,
     });
   }
 
@@ -104,13 +127,13 @@ export class ApiService {
     return await this.httpClient.delete(url);
   }
 
-  async markAllMessagesAsRead(feedId?: string | string[]): Promise<any> {
+  async markAllMessagesAsRead(feedId?: string | string[]): Promise<number> {
     return await this.httpClient.post(`/widgets/messages/read`, {
       feedId,
     });
   }
 
-  async markAllMessagesAsSeen(feedId?: string | string[]): Promise<any> {
+  async markAllMessagesAsSeen(feedId?: string | string[]): Promise<number> {
     return await this.httpClient.post(`/widgets/messages/seen`, {
       feedId,
     });
@@ -154,17 +177,21 @@ export class ApiService {
     });
   }
 
-  async getUnseenCount(query: IUnseenCountQuery = {}) {
+  async getUnseenCount(
+    query: IUnseenCountQuery = {}
+  ): Promise<{ count: number }> {
     return await this.httpClient.get(
       '/widgets/notifications/unseen',
-      query as unknown as CustomDataType
+      this.removeNullUndefined(query) as unknown as CustomDataType
     );
   }
 
-  async getUnreadCount(query: IUnreadCountQuery = {}) {
+  async getUnreadCount(
+    query: IUnreadCountQuery = {}
+  ): Promise<{ count: number }> {
     return await this.httpClient.get(
       '/widgets/notifications/unread',
-      query as unknown as CustomDataType
+      this.removeNullUndefined(query) as unknown as CustomDataType
     );
   }
 
