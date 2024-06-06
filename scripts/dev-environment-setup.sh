@@ -105,36 +105,36 @@ install_apple_chip_dependencies () {
 }
 
 install_xcode () {
-    echo ""
-    echo "❓ Do you want to install Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
+  echo ""
+  echo "❓ Do you want to install Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
+  read -p " > " RESPONSE
+  echo ""
+
+  if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
+	  installing_dependency "Xcode"
+	  xcode-select --install &
+	  PID=$!
+	  wait $PID
+	  sudo xcode-select --switch /Library/Developer/CommandLineTools
+	  sudo xcodebuild -license accept
+	  xcodebuild -runFirstLaunch
+	  success_message "Xcode"
+  fi
+
+  if [[ "$RESPONSE" == "$NEGATIVE_RESPONSE" ]]; then
+	  echo ""
+	  echo "❓ Do you want to update Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
     read -p " > " RESPONSE
-    echo ""
+	  echo ""
 
     if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
-	installing_dependency "Xcode"
-	xcode-select --install &
-	PID=$!
-	wait $PID
-	sudo xcode-select --switch /Library/Developer/CommandLineTools
-	sudo xcodebuild -license accept
-	xcodebuild -runFirstLaunch
-	success_message "Xcode"
-    fi
-
-    if [[ "$RESPONSE" == "$NEGATIVE_RESPONSE" ]]; then
-	echo ""
-	echo "❓ Do you want to update Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
-        read -p " > " RESPONSE
-	echo ""
-
-        if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
 	    updating_dependency "Xcode"
-            softwareupdate --install --verbose Xcode &
+      softwareupdate --install --verbose Xcode &
 	    PID=$!
 	    wait $PID
 	    success_message "Xcode"
-        fi
     fi
+  fi
 }
 
 set_macosx_generics () {
@@ -214,8 +214,7 @@ install_homebrew_recipes () {
 
     if [[ -z "$SKIP" ]]; then
         # Update Homebrew recipes
-        echo "Tap, update and upgrade Homebrew"
-        brew tap homebrew/cask
+        echo "Update and Upgrade Homebrew"
         brew update
         brew upgrade
     else
