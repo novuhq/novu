@@ -15,4 +15,16 @@ export const SEMANTIC_SPACING_TOKENS = defineSemanticTokens.spacing({
       },
     },
   },
+  page: {
+    padding: {
+      value: `{spacing.150}`,
+      description: 'The space around page content',
+      type: 'spacing',
+    },
+    majorElements: {
+      value: `{spacing.150}`,
+      description: 'The spacing between major elements in a page',
+      type: 'spacing',
+    },
+  },
 });

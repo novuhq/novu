@@ -50,8 +50,24 @@ export const SPACING_TOKENS = defineTokens.spacing({
     value: '2.5rem',
     type: 'spacing',
   },
+  '275': {
+    value: '2.75rem',
+    type: 'spacing',
+  },
   '300': {
     value: '3rem',
+    type: 'spacing',
+  },
+  '325': {
+    value: '3.25rem',
+    type: 'spacing',
+  },
+  '350': {
+    value: '3.5rem',
+    type: 'spacing',
+  },
+  '375': {
+    value: '3.75rem',
     type: 'spacing',
   },
 });
