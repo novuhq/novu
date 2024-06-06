@@ -16,13 +16,16 @@ export const MANTINE_THEME: MantineThemeOverride = {
   // colors
   white: token('colors.legacy.white'),
   black: token('colors.legacy.black'),
-  primaryColor: 'red',
+  primaryColor: 'gradient',
+  primaryShade: 6,
   colors: {
     gray: generateMantineColorTokens('mauve'),
     yellow: generateMantineColorTokens('amber'),
     blue: generateMantineColorTokens('blue'),
     green: generateMantineColorTokens('green'),
     red: generateMantineColorTokens('red'),
+    // must have a tuple of 10 strings, but replace the value at primaryShade with our gradient
+    gradient: ['', '', '', '', '', '', token('gradients.horizontal'), '', '', ''],
   },
 
   // typography
