@@ -31,7 +31,6 @@ jobs:
 
   deploy_prod_webhook_us:
     needs:
-      - deploy_prod_webhook_eu
       - publish_docker_image_webhook
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit

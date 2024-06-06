@@ -6,7 +6,6 @@ on:
 jobs:
 
   deploy_widget_eu:
-    needs: test_widget
     uses: ./.github/workflows/reusable-widget-deploy.yml
     with:
       environment: Production
@@ -24,7 +23,6 @@ jobs:
   deploy_widget_us:
     needs:
       - test_widget
-      - deploy_widget_eu
     uses: ./.github/workflows/reusable-widget-deploy.yml
     with:
       environment: Production

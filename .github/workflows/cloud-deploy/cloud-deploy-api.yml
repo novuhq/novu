@@ -9,8 +9,7 @@ jobs:
 
   build_prod_image:
     runs-on: ubuntu-latest
-    needs: test_api
-    timeout-minutes: 80
+    timeout-minutes: 15
     environment: Production
     strategy:
       matrix:
@@ -106,7 +105,6 @@ jobs:
 
   deploy_prod_api_us:
     needs:
-#      - deploy_prod_api_eu
       - build_prod_image
     uses: ./.github/workflows/reusable-app-service-deploy.yml
     secrets: inherit
@@ -114,7 +112,6 @@ jobs:
       environment: Production
       service_name: api
       terraform_workspace: novu-prod
-      # This is a workaround to an issue with matrix outputs
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
       deploy_sentry_release: true
       sentry_project: api
