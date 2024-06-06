@@ -55,8 +55,6 @@ export function Table<TRow extends object>({
     columns,
     data: isLoading ? (fakeData as TRow[]) : data,
     getCoreRowModel: getCoreRowModel(),
-    // FIXME: remove this
-    debugTable: true,
   });
 
   return (
