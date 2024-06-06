@@ -36,9 +36,7 @@ export class OrganizationService {
   }
 
   async getOrganization(organizationId: string) {
-    return await this.organizationRepository.findOne({
-      _id: organizationId,
-    });
+    return await this.organizationRepository.findById(organizationId);
   }
 
   async updateServiceLevel(organizationId: string, serviceLevel: ApiServiceLevelEnum) {
