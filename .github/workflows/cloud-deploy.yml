@@ -1,0 +1,44 @@
+name: Release Prod
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - prod
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Start Deployment Notification
+        uses: actions/slack@master
+        with:
+          channel: '#eng-feed-deployments'
+          message: 'Release has started'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+
+  post-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Deploy API Documentation
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
+          method: 'POST'
+
+      - name: Start Deployment Notification
+        uses: actions/slack@master
+        with:
+          channel: '#eng-feed-deployments'
+          message: 'Release has finished'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+
+
+
