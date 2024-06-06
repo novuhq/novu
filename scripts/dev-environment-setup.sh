@@ -153,7 +153,7 @@ install_os_dependencies () {
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         installing_dependency "Linux dependencies"
         echo "//TODO"
-	install_novu_tools
+	  install_novu_tools
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         installing_dependency "MacOsx dependencies"
         install_macosx_dependencies
@@ -434,7 +434,9 @@ start_database() {
       docker-compose -f ./docker/local/development/docker-compose.yml up -d
 
       start_success_message "Docker Infrastructure"
-      echo "Note: To manually start go to /docker in the project"
+  else
+      echo "We recommend removing mongodb and redis databases from brew with 'brew remove <package_name>'."
+      echo "To manually start the containerized databases by going to /docker in the novu project"
   fi
 }
 
