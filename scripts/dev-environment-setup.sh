@@ -440,24 +440,6 @@ start_database() {
   fi
 }
 
-create_local_dev_domain () {
-    FILENAME="/etc/hosts"
-    HOST="local.novu.co"
-    IP="127.0.0.1"
-    ENTRY="$IP\t$HOST"
-
-    CMD=$(execute_command_without_error_print "grep -R $HOST $FILENAME")
-
-    if [[ -z $CMD ]]; then
-        echo "$ENTRY" | sudo tee -a $FILENAME
-        success_message "Local DEV domain"
-    elif [[ $CMD == *"$HOST"* ]]; then
-        already_installed_message "Local DEV domain"
-    else
-        error_message "Local DEV domain"
-    fi
-}
-
 check_git () {
     TEST_GIT_CMD=$(execute_command_without_error_print "git --version")
 
@@ -512,7 +494,6 @@ install_novu_tools () {
     install_docker
     install_aws_cli
     start_database
-    create_local_dev_domain
 }
 
 install_os_dependencies () {
