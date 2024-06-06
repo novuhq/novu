@@ -67,6 +67,7 @@ jobs:
       - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
 
   post-release:
+    if: ${{ always() }}
     needs: [
       release-api,
       release-embed,
@@ -86,6 +87,16 @@ jobs:
           method: 'POST'
 
       - name: Start Deployment Notification
+        if: ${{ failure() }}   # This step runs only if any of the previous jobs fail.
+        uses: actions/slack@master
+        with:
+          channel: '#eng-feed-deployments'
+          message: 'Release has failed'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Start Deployment Notification
+        if: ${{ success() }}   # This step runs only if all the previous jobs succeed.
         uses: actions/slack@master
         with:
           channel: '#eng-feed-deployments'
