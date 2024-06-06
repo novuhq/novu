@@ -31,7 +31,7 @@ jobs:
           submodules: ${{ contains (matrix.name,'-ee') }}
 
       - name: build api
-        run: pnpm build:api --skip-nx-cache
+        run: pnpm build:api
 
       - uses: crazy-max/ghaction-setup-docker@v2
         with:
