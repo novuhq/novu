@@ -77,7 +77,7 @@ export const SEMANTIC_SPACING_TOKENS = defineSemanticTokens.spacing({
           value: '{spacing.50}',
         },
       },
-      futer: {
+      footer: {
         top: {
           type: 'spacing',
           value: '{spacing.50}',
