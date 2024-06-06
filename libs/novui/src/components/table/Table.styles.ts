@@ -12,11 +12,9 @@ const tableStyles: Partial<Record<TableStylesNames, string>> = {
     borderSpacingX: '125',
     textStyle: 'text.main',
     '& tr td:first-of-type': {
-      pl: '200',
       pr: '200',
     },
     '& tr th:first-of-type': {
-      pl: '200',
       pr: '200',
     },
     '& tr td:last-child': {

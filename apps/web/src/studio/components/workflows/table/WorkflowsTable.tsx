@@ -104,7 +104,11 @@ const WORKFLOW_COLUMNS = [
 export const WorkflowsTable: FC<IWorkflowsTableProps> = () => {
   return (
     <div className={css({ display: 'flex', flex: '1' })}>
-      <Table<typeof TEST_FLOW> columns={WORKFLOW_COLUMNS} data={[TEST_FLOW]} className={css({ w: '100%' })} />
+      <Table<typeof TEST_FLOW>
+        columns={WORKFLOW_COLUMNS}
+        data={[TEST_FLOW, { ...TEST_FLOW, active: true }]}
+        className={css({ w: '100%' })}
+      />
     </div>
   );
 };
