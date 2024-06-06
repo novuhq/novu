@@ -15,7 +15,8 @@
     "@clerk/clerk-sdk-node": "^5.0.9",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
-    "jwks-rsa": "^3.1.0"
+    "jwks-rsa": "^3.1.0",
+    "class-transformer": "^0.5.1"
   },
   "devDependencies": {
     "@clerk/types": "^4.5.1",

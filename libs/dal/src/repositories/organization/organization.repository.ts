@@ -1,17 +1,10 @@
-import { IPartnerConfiguration, OrganizationDBModel, OrganizationEntity } from './organization.entity';
-import { BaseRepository } from '../base-repository';
-import { Organization } from './organization.schema';
+import { IPartnerConfiguration, OrganizationEntity } from './organization.entity';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { IOrganizationRepository } from './organization-repository.interface';
 import { Inject } from '@nestjs/common';
 
-export class OrganizationRepository
-  extends BaseRepository<OrganizationDBModel, OrganizationEntity, object>
-  implements IOrganizationRepository
-{
-  constructor(@Inject('ORGANIZATION_REPOSITORY') private organizationRepository: IOrganizationRepository) {
-    super(Organization, OrganizationEntity);
-  }
+export class OrganizationRepository implements IOrganizationRepository {
+  constructor(@Inject('ORGANIZATION_REPOSITORY') private organizationRepository: IOrganizationRepository) {}
 
   async findById(id: string, select?: string): Promise<OrganizationEntity | null> {
     return this.organizationRepository.findById(id, select);
@@ -45,15 +38,59 @@ export class OrganizationRepository
     return this.organizationRepository.bulkUpdatePartnerConfiguration(userId, data, configurationId);
   }
 
-  async create(data: any, options?: any): Promise<any> {
+  async create(data: any, options?: any): Promise<OrganizationEntity> {
     return this.organizationRepository.create(data, options);
   }
 
-  async update(query: any, body: any): Promise<any> {
+  async update(query: any, body: any): Promise<{ matched: number; modified: number }> {
     return this.organizationRepository.update(query, body);
   }
 
   async delete(query: any): Promise<{ acknowledged: boolean; deletedCount: number }> {
     return this.organizationRepository.delete(query);
+  }
+
+  async count(query: any, limit?: number): Promise<number> {
+    return this.organizationRepository.count(query, limit);
+  }
+
+  async aggregate(query: any[], options?: { readPreference?: 'secondaryPreferred' | 'primary' }): Promise<any> {
+    return this.organizationRepository.aggregate(query, options);
+  }
+
+  async findOne(query: any, select?: any, options?: any): Promise<OrganizationEntity | null> {
+    return this.organizationRepository.findOne(query, select, options);
+  }
+
+  async find(query: any, select?: any, options?: any): Promise<OrganizationEntity[]> {
+    return this.organizationRepository.find(query, select, options);
+  }
+
+  async *findBatch(
+    query: any,
+    select?: string | undefined,
+    options?: any,
+    batchSize?: number | undefined
+  ): AsyncGenerator<any, any, unknown> {
+    return this.organizationRepository.findBatch(query, select, options, batchSize);
+  }
+
+  async insertMany(
+    data: any,
+    ordered: boolean
+  ): Promise<{ acknowledged: boolean; insertedCount: number; insertedIds: any }> {
+    return this.organizationRepository.insertMany(data, ordered);
+  }
+
+  async updateOne(query: any, body: any): Promise<{ matched: number; modified: number }> {
+    return this.organizationRepository.updateOne(query, body);
+  }
+
+  async upsertMany(data: any): Promise<any> {
+    return this.organizationRepository.upsertMany(data);
+  }
+
+  async bulkWrite(bulkOperations: any, ordered: boolean): Promise<any> {
+    return this.organizationRepository.bulkWrite(bulkOperations, ordered);
   }
 }
