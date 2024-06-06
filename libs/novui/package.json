@@ -129,6 +129,7 @@
   "dependencies": {
     "@mantine/core": "^7.10.0",
     "@mantine/hooks": "^7.10.0",
+    "@tanstack/react-table": "^8.17.3",
     "react-icons": "^5.0.1"
   }
 }

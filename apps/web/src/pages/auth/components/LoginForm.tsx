@@ -21,8 +21,8 @@ type LoginFormProps = {
 };
 
 export interface LocationState {
-  redirectTo: {
-    pathname: string;
+  redirectTo?: {
+    pathname?: string;
   };
 }
 
@@ -38,6 +38,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();
   const location = useLocation();
+  const state = location.state as LocationState;
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
     IResponseError,
@@ -116,7 +117,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
         }
       }
 
-      navigate(ROUTES.WORKFLOWS);
+      navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
