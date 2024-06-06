@@ -40,4 +40,6 @@ export default defineConfig({
 
   // Enables JSX util generation!
   jsxFramework: 'react',
+
+  validation: 'error',
 });
