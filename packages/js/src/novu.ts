@@ -1,5 +1,3 @@
-import { ApiService } from '@novu/client';
-
 import { NovuEventEmitter } from './event-emitter';
 import type { EventHandler, EventNames, Events } from './event-emitter';
 import { Feeds } from './feeds';
