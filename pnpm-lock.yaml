@@ -3711,7 +3711,7 @@ importers:
         version: 3.0.1
       ci-info:
         specifier: watson/ci-info#f43f6a1cefff47fb361c88cf4b943fdbcaafe540
-        version: https://codeload.github.com/watson/ci-info/tar.gz/f43f6a1cefff47fb361c88cf4b943fdbcaafe540
+        version: git+https://git@github.com:watson/ci-info.git#f43f6a1cefff47fb361c88cf4b943fdbcaafe540
       commander:
         specifier: 2.20.0
         version: 2.20.0
@@ -3804,8 +3804,8 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.12.12)(typescript@5.4.5))
       next:
-        specifier: ^13.5.4
-        version: 13.5.6(@babel/core@7.24.4)(@opentelemetry/api@1.7.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.64.1)
+        specifier: ^14.1.1
+        version: 14.1.1(@babel/core@7.24.4)(@opentelemetry/api@1.7.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.64.1)
       prettier:
         specifier: ^3.2.5
         version: 3.2.5
@@ -4249,7 +4249,7 @@ importers:
     devDependencies:
       '@angular-devkit/build-angular':
         specifier: ^16.2.5
-        version: 16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107)(@types/node@20.12.12)(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)))(jest-environment-jsdom@29.5.0)(jest@29.7.0(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.23.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(typescript@4.9.5)
+        version: 16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107)(@types/node@20.12.12)(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(jest-environment-jsdom@29.5.0)(jest@29.7.0(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.23.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(typescript@4.9.5)
       '@angular/cli':
         specifier: ^16.2.5
         version: 16.2.8(chokidar@3.5.3)
@@ -5807,6 +5807,7 @@ packages:
   '@babel/plugin-proposal-async-generator-functions@7.20.7':
     resolution: {integrity: sha512-xMbiLsn/8RK7Wq7VeVytytS2L6qE69bXPB10YCmMdDZbKF4okCqY74pI/jJQ/8U0b/F6NrT2+14b8/P9/3AMGA==}
     engines: {node: '>=6.9.0'}
+    deprecated: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-async-generator-functions instead.
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
@@ -5826,24 +5827,28 @@ packages:
   '@babel/plugin-proposal-nullish-coalescing-operator@7.18.6':
     resolution: {integrity: sha512-wQxQzxYeJqHcfppzBDnm1yAY0jSRkUXR2z8RePZYrKwMKgMlE8+Z6LUno+bd6LvbGh8Gltvy74+9pIYkr+XkKA==}
     engines: {node: '>=6.9.0'}
+    deprecated: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-nullish-coalescing-operator instead.
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
   '@babel/plugin-proposal-numeric-separator@7.18.6':
     resolution: {integrity: sha512-ozlZFogPqoLm8WBr5Z8UckIoE4YQ5KESVcNudyXOR8uqIkliTEgJ3RoketfG6pmzLdeZF0H/wjE9/cCEitBl7Q==}
     engines: {node: '>=6.9.0'}
+    deprecated: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-numeric-separator instead.
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
   '@babel/plugin-proposal-optional-chaining@7.21.0':
     resolution: {integrity: sha512-p4zeefM72gpmEe2fkUr/OnOXpWEf8nAgk7ZYVqqfFiyIG7oFfVZcCrU64hWn5xp4tQ9LkV4bTIa5rD0KANpKNA==}
     engines: {node: '>=6.9.0'}
+    deprecated: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-optional-chaining instead.
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
   '@babel/plugin-proposal-private-methods@7.18.6':
     resolution: {integrity: sha512-nutsvktDItsNn4rpGItSNV2sz1XwS+nfU0Rg8aCx3W3NOKVzdMjJRu0O5OkgDp3ZGICSTbgRpxZoWsxoKRvbeA==}
     engines: {node: '>=6.9.0'}
+    deprecated: This proposal has been merged to the ECMAScript standard and thus this plugin is no longer maintained. Please use @babel/plugin-transform-private-methods instead.
     peerDependencies:
       '@babel/core': ^7.0.0-0
 
@@ -9257,18 +9262,22 @@ packages:
   '@lerna/add@5.6.2':
     resolution: {integrity: sha512-NHrm7kYiqP+EviguY7/NltJ3G9vGmJW6v2BASUOhP9FZDhYbq3O+rCDlFdoVRNtcyrSg90rZFMOWHph4KOoCQQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/bootstrap@5.6.2':
     resolution: {integrity: sha512-S2fMOEXbef7nrybQhzBywIGSLhuiQ5huPp1sU+v9Y6XEBsy/2IA+lb0gsZosvPqlRfMtiaFstL+QunaBhlWECA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/changed@5.6.2':
     resolution: {integrity: sha512-uUgrkdj1eYJHQGsXXlpH5oEAfu3x0qzeTjgvpdNrxHEdQWi7zWiW59hRadmiImc14uJJYIwVK5q/QLugrsdGFQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/check-working-tree@5.6.2':
     resolution: {integrity: sha512-6Vf3IB6p+iNIubwVgr8A/KOmGh5xb4SyRmhFtAVqe33yWl2p3yc+mU5nGoz4ET3JLF1T9MhsePj0hNt6qyOTLQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/child-process@5.6.2':
     resolution: {integrity: sha512-QIOQ3jIbWdduHd5892fbo3u7/dQgbhzEBB7cvf+Ys/iCPP8UQrBECi1lfRgA4kcTKC2MyMz0SoyXZz/lFcXc3A==}
@@ -9277,30 +9286,37 @@ packages:
   '@lerna/clean@5.6.2':
     resolution: {integrity: sha512-A7j8r0Hk2pGyLUyaCmx4keNHen1L/KdcOjb4nR6X8GtTJR5AeA47a8rRKOCz9wwdyMPlo2Dau7d3RV9viv7a5g==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/cli@5.6.2':
     resolution: {integrity: sha512-w0NRIEqDOmYKlA5t0iyqx0hbY7zcozvApmfvwF0lhkuhf3k6LRAFSamtimGQWicC779a7J2NXw4ASuBV47Fs1Q==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/collect-uncommitted@5.6.2':
     resolution: {integrity: sha512-i0jhxpypyOsW2PpPwIw4xg6EPh7/N3YuiI6P2yL7PynZ8nOv8DkIdoyMkhUP4gALjBfckH8Bj94eIaKMviqW4w==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/collect-updates@5.6.2':
     resolution: {integrity: sha512-DdTK13X6PIsh9HINiMniFeiivAizR/1FBB+hDVe6tOhsXFBfjHMw1xZhXlE+mYIoFmDm1UFK7zvQSexoaxRqFA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/command@5.6.2':
     resolution: {integrity: sha512-eLVGI9TmxcaGt1M7TXGhhBZoeWOtOedMiH7NuCGHtL6TMJ9k+SCExyx+KpNmE6ImyNOzws6EvYLPLjftiqmoaA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/conventional-commits@5.6.2':
     resolution: {integrity: sha512-fPrJpYJhxCgY2uyOCTcAAC6+T6lUAtpEGxLbjWHWTb13oKKEygp9THoFpe6SbAD0fYMb3jeZCZCqNofM62rmuA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/create-symlink@5.6.2':
     resolution: {integrity: sha512-0WIs3P6ohPVh2+t5axrLZDE5Dt7fe3Kv0Auj0sBiBd6MmKZ2oS76apIl0Bspdbv8jX8+TRKGv6ib0280D0dtEw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/create@5.6.2':
     resolution: {integrity: sha512-+Y5cMUxMNXjTTU9IHpgRYIwKo39w+blui1P+s+qYlZUSCUAew0xNpOBG8iN0Nc5X9op4U094oIdHxv7Dyz6tWQ==}
@@ -9309,189 +9325,236 @@ packages:
   '@lerna/describe-ref@5.6.2':
     resolution: {integrity: sha512-UqU0N77aT1W8duYGir7R+Sk3jsY/c4lhcCEcnayMpFScMbAp0ETGsW04cYsHK29sgg+ZCc5zEwebBqabWhMhnA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/diff@5.6.2':
     resolution: {integrity: sha512-aHKzKvUvUI8vOcshC2Za/bdz+plM3r/ycqUrPqaERzp+kc1pYHyPeXezydVdEmgmmwmyKI5hx4+2QNnzOnun2A==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/exec@5.6.2':
     resolution: {integrity: sha512-meZozok5stK7S0oAVn+kdbTmU+kHj9GTXjW7V8kgwG9ld+JJMTH3nKK1L3mEKyk9TFu9vFWyEOF7HNK6yEOoVg==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/filter-options@5.6.2':
     resolution: {integrity: sha512-4Z0HIhPak2TabTsUqEBQaQeOqgqEt0qyskvsY0oviYvqP/nrJfJBZh4H93jIiNQF59LJCn5Ce3KJJrLExxjlzw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/filter-packages@5.6.2':
     resolution: {integrity: sha512-el9V2lTEG0Bbz+Omo45hATkRVnChCTJhcTpth19cMJ6mQ4M5H4IgbWCJdFMBi/RpTnOhz9BhJxDbj95kuIvvzw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/get-npm-exec-opts@5.6.2':
     resolution: {integrity: sha512-0RbSDJ+QC9D5UWZJh3DN7mBIU1NhBmdHOE289oHSkjDY+uEjdzMPkEUy+wZ8fCzMLFnnNQkAEqNaOAzZ7dmFLA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/get-packed@5.6.2':
     resolution: {integrity: sha512-pp5nNDmtrtd21aKHjwwOY5CS7XNIHxINzGa+Jholn1jMDYUtdskpN++ZqYbATGpW831++NJuiuBVyqAWi9xbXg==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/github-client@5.6.2':
     resolution: {integrity: sha512-pjALazZoRZtKqfwLBwmW3HPptVhQm54PvA8s3qhCQ+3JkqrZiIFwkkxNZxs3jwzr+aaSOzfhSzCndg0urb0GXA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/gitlab-client@5.6.2':
     resolution: {integrity: sha512-TInJmbrsmYIwUyrRxytjO82KjJbRwm67F7LoZs1shAq6rMvNqi4NxSY9j+hT/939alFmEq1zssoy/caeLXHRfQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/global-options@5.6.2':
     resolution: {integrity: sha512-kaKELURXTlczthNJskdOvh6GGMyt24qat0xMoJZ8plYMdofJfhz24h1OFcvB/EwCUwP/XV1+ohE5P+vdktbrEg==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/has-npm-version@5.6.2':
     resolution: {integrity: sha512-kXCnSzffmTWsaK0ol30coyCfO8WH26HFbmJjRBzKv7VGkuAIcB6gX2gqRRgNLLlvI+Yrp+JSlpVNVnu15SEH2g==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/import@5.6.2':
     resolution: {integrity: sha512-xQUE49mtcP0z3KUdXBsyvp8rGDz6phuYUoQbhcFRJ7WPcQKzMvtm0XYrER6c2YWEX7QOuDac6tU82P8zTrTBaA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/info@5.6.2':
     resolution: {integrity: sha512-MPjY5Olj+fiZHgfEdwXUFRKamdEuLr9Ob/qut8JsB/oQSQ4ALdQfnrOcMT8lJIcC2R67EA5yav2lHPBIkezm8A==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/init@5.6.2':
     resolution: {integrity: sha512-ahU3/lgF+J8kdJAQysihFJROHthkIDXfHmvhw7AYnzf94HjxGNXj7nz6i3At1/dM/1nQhR+4/uNR1/OU4tTYYQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/link@5.6.2':
     resolution: {integrity: sha512-hXxQ4R3z6rUF1v2x62oIzLyeHL96u7ZBhxqYMJrm763D1VMSDcHKF9CjJfc6J9vH5Z2ZbL6CQg50Hw5mUpJbjg==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/list@5.6.2':
     resolution: {integrity: sha512-WjE5O2tQ3TcS+8LqXUaxi0YdldhxUhNihT5+Gg4vzGdIlrPDioO50Zjo9d8jOU7i3LMIk6EzCma0sZr2CVfEGg==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/listable@5.6.2':
     resolution: {integrity: sha512-8Yp49BwkY/5XqVru38Zko+6Wj/sgbwzJfIGEPy3Qu575r1NA/b9eI1gX22aMsEeXUeGOybR7nWT5ewnPQHjqvA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/log-packed@5.6.2':
     resolution: {integrity: sha512-O9GODG7tMtWk+2fufn2MOkIDBYMRoKBhYMHshO5Aw/VIsH76DIxpX1koMzWfUngM/C70R4uNAKcVWineX4qzIw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/npm-conf@5.6.2':
     resolution: {integrity: sha512-gWDPhw1wjXYXphk/PAghTLexO5T6abVFhXb+KOMCeem366mY0F5bM88PiorL73aErTNUoR8n+V4X29NTZzDZpQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/npm-dist-tag@5.6.2':
     resolution: {integrity: sha512-t2RmxV6Eog4acXkUI+EzWuYVbeVVY139pANIWS9qtdajfgp4GVXZi1S8mAIb70yeHdNpCp1mhK0xpCrFH9LvGQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/npm-install@5.6.2':
     resolution: {integrity: sha512-AT226zdEo+uGENd37jwYgdALKJAIJK4pNOfmXWZWzVb9oMOr8I2YSjPYvSYUNG7gOo2YJQU8x5Zd7OShv2924Q==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/npm-publish@5.6.2':
     resolution: {integrity: sha512-ldSyewCfv9fAeC5xNjL0HKGSUxcC048EJoe/B+KRUmd+IPidvZxMEzRu08lSC/q3V9YeUv9ZvRnxATXOM8CffA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/npm-run-script@5.6.2':
     resolution: {integrity: sha512-MOQoWNcAyJivM8SYp0zELM7vg/Dj07j4YMdxZkey+S1UO0T4/vKBxb575o16hH4WeNzC3Pd7WBlb7C8dLOfNwQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/otplease@5.6.2':
     resolution: {integrity: sha512-dGS4lzkEQVTMAgji82jp8RK6UK32wlzrBAO4P4iiVHCUTuwNLsY9oeBXvVXSMrosJnl6Hbe0NOvi43mqSucGoA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/output@5.6.2':
     resolution: {integrity: sha512-++d+bfOQwY66yo7q1XuAvRcqtRHCG45e/awP5xQomTZ6R1rhWiZ3whWdc9Z6lF7+UtBB9toSYYffKU/xc3L0yQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/pack-directory@5.6.2':
     resolution: {integrity: sha512-w5Jk5fo+HkN4Le7WMOudTcmAymcf0xPd302TqAQncjXpk0cb8tZbj+5bbNHsGb58GRjOIm5icQbHXooQUxbHhA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/package-graph@5.6.2':
     resolution: {integrity: sha512-TmL61qBBvA3Tc4qICDirZzdFFwWOA6qicIXUruLiE2PblRowRmCO1bKrrP6XbDOspzwrkPef6N2F2/5gHQAnkQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/package@5.6.2':
     resolution: {integrity: sha512-LaOC8moyM5J9WnRiWZkedjOninSclBOJyPqhif6mHb2kCFX6jAroNYzE8KM4cphu8CunHuhI6Ixzswtv+Dultw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/prerelease-id-from-version@5.6.2':
     resolution: {integrity: sha512-7gIm9fecWFVNy2kpj/KbH11bRcpyANAwpsft3X5m6J7y7A6FTUscCbEvl3ZNdpQKHNuvnHgCtkm3A5PMSCEgkA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/profiler@5.6.2':
     resolution: {integrity: sha512-okwkagP5zyRIOYTceu/9/esW7UZFt7lyL6q6ZgpSG3TYC5Ay+FXLtS6Xiha/FQdVdumFqKULDWTGovzUlxcwaw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/project@5.6.2':
     resolution: {integrity: sha512-kPIMcIy/0DVWM91FPMMFmXyAnCuuLm3NdhnA8NusE//VuY9wC6QC/3OwuCY39b2dbko/fPZheqKeAZkkMH6sGg==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/prompt@5.6.2':
     resolution: {integrity: sha512-4hTNmVYADEr0GJTMegWV+GW6n+dzKx1vN9v2ISqyle283Myv930WxuyO0PeYGqTrkneJsyPreCMovuEGCvZ0iQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/publish@5.6.2':
     resolution: {integrity: sha512-QaW0GjMJMuWlRNjeDCjmY/vjriGSWgkLS23yu8VKNtV5U3dt5yIKA3DNGV3HgZACuu45kQxzMDsfLzgzbGNtYA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/pulse-till-done@5.6.2':
     resolution: {integrity: sha512-eA/X1RCxU5YGMNZmbgPi+Kyfx1Q3bn4P9jo/LZy+/NRRr1po3ASXP2GJZ1auBh/9A2ELDvvKTOXCVHqczKC6rA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/query-graph@5.6.2':
     resolution: {integrity: sha512-KRngr96yBP8XYDi9/U62fnGO+ZXqm04Qk6a2HtoTr/ha8QvO1s7Tgm0xs/G7qWXDQHZgunWIbmK/LhxM7eFQrw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/resolve-symlink@5.6.2':
     resolution: {integrity: sha512-PDQy+7M8JEFtwIVHJgWvSxHkxJf9zXCENkvIWDB+SsoDPhw9+caewt46bTeP5iGm9pOMu3oZukaWo/TvF7sNjg==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/rimraf-dir@5.6.2':
     resolution: {integrity: sha512-jgEfzz7uBUiQKteq3G8MtJiA2D2VoKmZSSY3VSiW/tPOSXYxxSHxEsClQdCeNa6+sYrDNDT8fP6MJ3lPLjDeLA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/run-lifecycle@5.6.2':
     resolution: {integrity: sha512-u9gGgq/50Fm8dvfcc/TSHOCAQvzLD7poVanDMhHYWOAqRDnellJEEmA1K/Yka4vZmySrzluahkry9G6jcREt+g==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/run-topologically@5.6.2':
     resolution: {integrity: sha512-QQ/jGOIsVvUg3izShWsd67RlWYh9UOH2yw97Ol1zySX9+JspCMVQrn9eKq1Pk8twQOFhT87LpT/aaxbTBgREPw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/run@5.6.2':
     resolution: {integrity: sha512-c2kJxdFrNg5KOkrhmgwKKUOsfSrGNlFCe26EttufOJ3xfY0VnXlEw9rHOkTgwtu7969rfCdyaVP1qckMrF1Dgw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/symlink-binary@5.6.2':
     resolution: {integrity: sha512-Cth+miwYyO81WAmrQbPBrLHuF+F0UUc0el5kRXLH6j5zzaRS3kMM68r40M7MmfH8m3GPi7691UARoWFEotW5jw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/symlink-dependencies@5.6.2':
     resolution: {integrity: sha512-dUVNQLEcjVOIQiT9OlSAKt0ykjyJPy8l9i4NJDe2/0XYaUjo8PWsxJ0vrutz27jzi2aZUy07ASmowQZEmnLHAw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/temp-write@5.6.2':
     resolution: {integrity: sha512-S5ZNVTurSwWBmc9kh5alfSjmO3+BnRT6shYtOlmVIUYqWeYVYA5C1Htj322bbU4CSNCMFK6NQl4qGKL17HMuig==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/timer@5.6.2':
     resolution: {integrity: sha512-AjMOiLc2B+5Nzdd9hNORetAdZ/WK8YNGX/+2ypzM68TMAPfIT5C40hMlSva9Yg4RsBz22REopXgM5s2zQd5ZQA==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/validation-error@5.6.2':
     resolution: {integrity: sha512-4WlDUHaa+RSJNyJRtX3gVIAPVzjZD2tle8AJ0ZYBfdZnZmG0VlB2pD1FIbOQPK8sY2h5m0cHLRvfLoLncqHvdQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/version@5.6.2':
     resolution: {integrity: sha512-odNSR2rTbHW++xMZSQKu/F6Syrd/sUvwDLPaMKktoOSPKmycHt/eWcuQQyACdtc43Iqeu4uQd7PCLsniqOVFrw==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lerna/write-log-file@5.6.2':
     resolution: {integrity: sha512-J09l18QnWQ3sXIRwuJkjXY3+KwPR2uO5NgbZGE3GXJK1V/LzOBRMvjGAIbuQHXw25uqe7vpLUpB8drtnFrubCQ==}
     engines: {node: ^14.15.0 || >=16.0.0}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@lukeed/csprng@1.1.0':
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
@@ -9988,17 +10051,11 @@ packages:
   '@next/bundle-analyzer@14.2.3':
     resolution: {integrity: sha512-Z88hbbngMs7njZKI8kTJIlpdLKYfMSLwnsqYe54AP4aLmgL70/Ynx/J201DQ+q2Lr6FxFw1uCeLGImDrHOl2ZA==}
 
-  '@next/env@13.5.6':
-    resolution: {integrity: sha512-Yac/bV5sBGkkEXmAX5FWPS9Mmo2rthrOPRQQNfycJPkjUAUclomCPH7QFVCDQ4Mp2k2K1SSM6m0zrxYrOwtFQw==}
-
   '@next/env@14.1.0':
     resolution: {integrity: sha512-Py8zIo+02ht82brwwhTg36iogzFqGLPXlRGKQw5s+qP/kMNc4MAyDeEwBKDijk6zTIbegEgu8Qy7C1LboslQAw==}
 
-  '@next/swc-darwin-arm64@13.5.6':
-    resolution: {integrity: sha512-5nvXMzKtZfvcu4BhtV0KH1oGv4XEW+B+jOfmBdpFI3C7FrB/MfujRpWYSBBO64+qbW8pkZiSyQv9eiwnn5VIQA==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [darwin]
+  '@next/env@14.1.1':
+    resolution: {integrity: sha512-7CnQyD5G8shHxQIIg3c7/pSeYFeMhsNbpU/bmvH7ZnDql7mNRgg8O2JZrhrc/soFnfBnKP4/xXNiiSIPn2w8gA==}
 
   '@next/swc-darwin-arm64@14.1.0':
     resolution: {integrity: sha512-nUDn7TOGcIeyQni6lZHfzNoo9S0euXnu0jhsbMOmMJUBfgsnESdjN97kM7cBqQxZa8L/bM9om/S5/1dzCrW6wQ==}
@@ -10006,10 +10063,10 @@ packages:
     cpu: [arm64]
     os: [darwin]
 
-  '@next/swc-darwin-x64@13.5.6':
-    resolution: {integrity: sha512-6cgBfxg98oOCSr4BckWjLLgiVwlL3vlLj8hXg2b+nDgm4bC/qVXXLfpLB9FHdoDu4057hzywbxKvmYGmi7yUzA==}
+  '@next/swc-darwin-arm64@14.1.1':
+    resolution: {integrity: sha512-yDjSFKQKTIjyT7cFv+DqQfW5jsD+tVxXTckSe1KIouKk75t1qZmj/mV3wzdmFb0XHVGtyRjDMulfVG8uCKemOQ==}
     engines: {node: '>= 10'}
-    cpu: [x64]
+    cpu: [arm64]
     os: [darwin]
 
   '@next/swc-darwin-x64@14.1.0':
@@ -10018,11 +10075,11 @@ packages:
     cpu: [x64]
     os: [darwin]
 
-  '@next/swc-linux-arm64-gnu@13.5.6':
-    resolution: {integrity: sha512-txagBbj1e1w47YQjcKgSU4rRVQ7uF29YpnlHV5xuVUsgCUf2FmyfJ3CPjZUvpIeXCJAoMCFAoGnbtX86BK7+sg==}
+  '@next/swc-darwin-x64@14.1.1':
+    resolution: {integrity: sha512-KCQmBL0CmFmN8D64FHIZVD9I4ugQsDBBEJKiblXGgwn7wBCSe8N4Dx47sdzl4JAg39IkSN5NNrr8AniXLMb3aw==}
     engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [linux]
+    cpu: [x64]
+    os: [darwin]
 
   '@next/swc-linux-arm64-gnu@14.1.0':
     resolution: {integrity: sha512-RHo7Tcj+jllXUbK7xk2NyIDod3YcCPDZxj1WLIYxd709BQ7WuRYl3OWUNG+WUfqeQBds6kvZYlc42NJJTNi4tQ==}
@@ -10030,8 +10087,8 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-arm64-musl@13.5.6':
-    resolution: {integrity: sha512-cGd+H8amifT86ZldVJtAKDxUqeFyLWW+v2NlBULnLAdWsiuuN8TuhVBt8ZNpCqcAuoruoSWynvMWixTFcroq+Q==}
+  '@next/swc-linux-arm64-gnu@14.1.1':
+    resolution: {integrity: sha512-YDQfbWyW0JMKhJf/T4eyFr4b3tceTorQ5w2n7I0mNVTFOvu6CGEzfwT3RSAQGTi/FFMTFcuspPec/7dFHuP7Eg==}
     engines: {node: '>= 10'}
     cpu: [arm64]
     os: [linux]
@@ -10042,10 +10099,10 @@ packages:
     cpu: [arm64]
     os: [linux]
 
-  '@next/swc-linux-x64-gnu@13.5.6':
-    resolution: {integrity: sha512-Mc2b4xiIWKXIhBy2NBTwOxGD3nHLmq4keFk+d4/WL5fMsB8XdJRdtUlL87SqVCTSaf1BRuQQf1HvXZcy+rq3Nw==}
+  '@next/swc-linux-arm64-musl@14.1.1':
+    resolution: {integrity: sha512-fiuN/OG6sNGRN/bRFxRvV5LyzLB8gaL8cbDH5o3mEiVwfcMzyE5T//ilMmaTrnA8HLMS6hoz4cHOu6Qcp9vxgQ==}
     engines: {node: '>= 10'}
-    cpu: [x64]
+    cpu: [arm64]
     os: [linux]
 
   '@next/swc-linux-x64-gnu@14.1.0':
@@ -10054,8 +10111,8 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-linux-x64-musl@13.5.6':
-    resolution: {integrity: sha512-CFHvP9Qz98NruJiUnCe61O6GveKKHpJLloXbDSWRhqhkJdZD2zU5hG+gtVJR//tyW897izuHpM6Gtf6+sNgJPQ==}
+  '@next/swc-linux-x64-gnu@14.1.1':
+    resolution: {integrity: sha512-rv6AAdEXoezjbdfp3ouMuVqeLjE1Bin0AuE6qxE6V9g3Giz5/R3xpocHoAi7CufRR+lnkuUjRBn05SYJ83oKNQ==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [linux]
@@ -10066,11 +10123,11 @@ packages:
     cpu: [x64]
     os: [linux]
 
-  '@next/swc-win32-arm64-msvc@13.5.6':
-    resolution: {integrity: sha512-aFv1ejfkbS7PUa1qVPwzDHjQWQtknzAZWGTKYIAaS4NMtBlk3VyA6AYn593pqNanlicewqyl2jUhQAaFV/qXsg==}
+  '@next/swc-linux-x64-musl@14.1.1':
+    resolution: {integrity: sha512-YAZLGsaNeChSrpz/G7MxO3TIBLaMN8QWMr3X8bt6rCvKovwU7GqQlDu99WdvF33kI8ZahvcdbFsy4jAFzFX7og==}
     engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [win32]
+    cpu: [x64]
+    os: [linux]
 
   '@next/swc-win32-arm64-msvc@14.1.0':
     resolution: {integrity: sha512-o1N5TsYc8f/HpGt39OUQpQ9AKIGApd3QLueu7hXk//2xq5Z9OxmV6sQfNp8C7qYmiOlHYODOGqNNa0e9jvchGQ==}
@@ -10078,10 +10135,10 @@ packages:
     cpu: [arm64]
     os: [win32]
 
-  '@next/swc-win32-ia32-msvc@13.5.6':
-    resolution: {integrity: sha512-XqqpHgEIlBHvzwG8sp/JXMFkLAfGLqkbVsyN+/Ih1mR8INb6YCc2x/Mbwi6hsAgUnqQztz8cvEbHJUbSl7RHDg==}
+  '@next/swc-win32-arm64-msvc@14.1.1':
+    resolution: {integrity: sha512-1L4mUYPBMvVDMZg1inUYyPvFSduot0g73hgfD9CODgbr4xiTYe0VOMTZzaRqYJYBA9mana0x4eaAaypmWo1r5A==}
     engines: {node: '>= 10'}
-    cpu: [ia32]
+    cpu: [arm64]
     os: [win32]
 
   '@next/swc-win32-ia32-msvc@14.1.0':
@@ -10090,14 +10147,20 @@ packages:
     cpu: [ia32]
     os: [win32]
 
-  '@next/swc-win32-x64-msvc@13.5.6':
-    resolution: {integrity: sha512-Cqfe1YmOS7k+5mGu92nl5ULkzpKuxJrP3+4AEuPmrpFZ3BHxTY3TnHmU1On3bFmFFs6FbTcdF58CCUProGpIGQ==}
+  '@next/swc-win32-ia32-msvc@14.1.1':
+    resolution: {integrity: sha512-jvIE9tsuj9vpbbXlR5YxrghRfMuG0Qm/nZ/1KDHc+y6FpnZ/apsgh+G6t15vefU0zp3WSpTMIdXRUsNl/7RSuw==}
     engines: {node: '>= 10'}
-    cpu: [x64]
+    cpu: [ia32]
     os: [win32]
 
   '@next/swc-win32-x64-msvc@14.1.0':
     resolution: {integrity: sha512-9WEbVRRAqJ3YFVqEZIxUqkiO8l1nool1LmNxygr5HWF8AcSYsEpneUDhmjUVJEzO2A04+oPtZdombzzPPkTtgg==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
+
+  '@next/swc-win32-x64-msvc@14.1.1':
+    resolution: {integrity: sha512-S6K6EHDU5+1KrBDLko7/c1MNy/Ya73pIAmvKeFwsF4RmBFJSO7/7YeD4FnZ4iBdzE69PpQ4sOMU9ORKeNuxe8A==}
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
@@ -15922,6 +15985,7 @@ packages:
 
   '@volar/vue-typescript@1.2.0':
     resolution: {integrity: sha512-zjmRi9y3J1EkG+pfuHp8IbHmibihrKK485cfzsHjiuvJMGrpkWvlO5WVEk8oslMxxeGC5XwBFE9AOlvh378EPA==}
+    deprecated: 'WARNING: This project has been renamed to @vue/typescript. Install using @vue/typescript instead.'
 
   '@vonage/accounts@1.9.0':
     resolution: {integrity: sha512-4cW/tfYpL53uHR3YjTbLL/kn23/RllPmFkFf3LAhdvratwtnDSYiOy/nZooATjmon3fzdOYLW0kYGAvoeWlHUg==}
@@ -16245,6 +16309,7 @@ packages:
 
   abab@2.0.6:
     resolution: {integrity: sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==}
+    deprecated: Use your platform's native atob() and btoa() methods instead
 
   abbrev@1.1.1:
     resolution: {integrity: sha512-nne9/IiQ/hzIhY6pdDnbBtz7DjPTKrY00P/zvPSm5pOFkl6xuGrGnXn/VtTNNfNtAfZ9/1RtehkszU9qcTii0Q==}
@@ -16575,10 +16640,12 @@ packages:
   are-we-there-yet@2.0.0:
     resolution: {integrity: sha512-Ci/qENmwHnsYo9xKIcUJN5LeDKdJ6R1Z1j9V/J5wyq8nh/mYPEpIKJbBZXtZjG04HiK7zV/p6Vs9952MrMeUIw==}
     engines: {node: '>=10'}
+    deprecated: This package is no longer supported.
 
   are-we-there-yet@3.0.1:
     resolution: {integrity: sha512-QZW4EDmGwlYur0Yyf/b2uGucHQMa8aFUP7eu9ddR73vvhFyt4V0Vl3QHPcTNJ8l6qYOBdxgXdnBXQrHilfRQBg==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
+    deprecated: This package is no longer supported.
 
   arg@4.1.3:
     resolution: {integrity: sha512-58S9QDqG0Xx27YwPSt9fJxivjYl432YCwfDMfZ+71RAqUrZef7LrKQZ3LHLOwCS4FLNBplP533Zx895SeOCHvA==}
@@ -17134,7 +17201,7 @@ packages:
     engines: {node: '>=10.0.0'}
 
   batch@0.6.1:
-    resolution: {integrity: sha1-3DQxT05nkxgJP8dgJyUl+UvyXBY=}
+    resolution: {integrity: sha512-x+VAiMRL6UPkx+kudNvxTl6hB2XNNCG2r+7wixVfIYwu/2HKRXimwQyaumLjMveWvT2Hkd/cAJw+QBMfJ/EKVw==}
 
   bcrypt-pbkdf@1.0.2:
     resolution: {integrity: sha512-qeFIXtP4MSoi6NLqO12WfqARWWuCKi2Rn/9hJLEmtB5yTNr9DqFWkJRCf2qShWzPeAMRnOgCrq0sg/KLv5ES9w==}
@@ -17306,7 +17373,7 @@ packages:
     resolution: {integrity: sha512-VO9Ht/+p3SN7SKWqcrgEzjGbRSJYTx+Q1pTQC0wrWqHx0vpJraQ6GtHx8tvcg1rlK1byhU5gccxgOgj7B0TDkQ==}
 
   buffer-equal-constant-time@1.0.1:
-    resolution: {integrity: sha1-+OcRMvf/5uAaXJaXpMbz5I1cyBk=}
+    resolution: {integrity: sha512-zRpUiDwd/xk6ADqPMATG8vc9VPrkck7T07OIx0gnjmJAnHnTVXNQG3vfvWNuiZIkwu9KrKdA1iJKfsfTVxE6NA==}
 
   buffer-from@1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
@@ -17370,7 +17437,7 @@ packages:
     engines: {node: '>= 0.8'}
 
   bytes@3.0.0:
-    resolution: {integrity: sha1-0ygVQE1olpn4Wk6k+odV3ROpYEg=}
+    resolution: {integrity: sha512-pMhOfFDPiv9t5jjIXkHosWmkSyQbvsgEVNkz0ERHbuLh2T/7j4Mqqpz523Fe8MVY89KC6Sh/QfS2sM+SjgFDcw==}
     engines: {node: '>= 0.8'}
 
   bytes@3.1.2:
@@ -17659,8 +17726,8 @@ packages:
     resolution: {integrity: sha512-TdHqgGf9odd8SXNuxtUBVx8Nv+qZOejE6qyqiy5NtbYYQOeFa6zmHkxlPzmaLxWWHsU6nJmB7AETdVPi+2NBUg==}
     engines: {node: '>=8'}
 
-  ci-info@https://codeload.github.com/watson/ci-info/tar.gz/f43f6a1cefff47fb361c88cf4b943fdbcaafe540:
-    resolution: {tarball: https://codeload.github.com/watson/ci-info/tar.gz/f43f6a1cefff47fb361c88cf4b943fdbcaafe540}
+  ci-info@git+https://git@github.com:watson/ci-info.git#f43f6a1cefff47fb361c88cf4b943fdbcaafe540:
+    resolution: {commit: f43f6a1cefff47fb361c88cf4b943fdbcaafe540, repo: git@github.com:watson/ci-info.git, type: git}
     version: 2.0.0
 
   cjs-module-lexer@1.2.2:
@@ -18768,6 +18835,7 @@ packages:
 
   debuglog@1.0.1:
     resolution: {integrity: sha512-syBZ+rnAK3EgMsH2aYEOLUW7mZSY9Gb+0wUMCFsZvcmiz+HigA0LOcq/HoQqVuGG+EKykunc7QG2bzrponfaSw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   decamelize-keys@1.1.1:
     resolution: {integrity: sha512-WiPxgEirIV0/eIOMcnFBA3/IJZAZqKnwAwWyvvdi4lsr1WCN22nhdf/3db3DoZcUjTV2SqfzIwNyp6y2xs3nmg==}
@@ -19097,6 +19165,7 @@ packages:
   domexception@4.0.0:
     resolution: {integrity: sha512-A2is4PLG+eeSfoTMA95/s4pvAoSo2mKtiM5jlHkAVewmiO8ISFTFKZjH7UAM1Atli/OT/7JHOrJRJiMKUZKYBw==}
     engines: {node: '>=12'}
+    deprecated: Use your platform's native DOMException instead
 
   domhandler@4.3.1:
     resolution: {integrity: sha512-GrwoxYN+uWlzO8uhUXRl0P+kHE4GtVPfYzVLcUxPL7KNdHKj66vvlhiweIHqYYXWlw+T8iLMp42Lm67ghw4WMQ==}
@@ -19194,7 +19263,7 @@ packages:
     hasBin: true
 
   ee-first@1.1.1:
-    resolution: {integrity: sha1-WQxhFWsK4vTwJVcyoViyZrxWsh0=}
+    resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
 
   ejs@3.1.10:
     resolution: {integrity: sha512-UeJmFfOrAQS8OJWPZ4qtgHyWExa088/MtK5UEyoJGFH67cDEXkZSviOiKRCZ4Xij0zxI3JECgYs3oKx+AizQBA==}
@@ -20753,10 +20822,12 @@ packages:
   gauge@3.0.2:
     resolution: {integrity: sha512-+5J6MS/5XksCuXq++uFRsnUd7Ovu1XenbeuIuNRJxYWjgQbPuFhT14lAvsWfqfAmnwluf1OwMjz39HjfLPci0Q==}
     engines: {node: '>=10'}
+    deprecated: This package is no longer supported.
 
   gauge@4.0.4:
     resolution: {integrity: sha512-f9m+BEN5jkg6a0fZjleidjN51VE1X+mPFQ2DJ0uv1V39oCLCbsGe6yjbBnp7eK7z/+GAon99a3nHuqbuuthyPg==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
+    deprecated: This package is no longer supported.
 
   gaxios@4.3.3:
     resolution: {integrity: sha512-gSaYYIO1Y3wUtdfHmjDUZ8LWaxJQpiavzbF5Kq53akSzvmVg0RfyOcFDbO1KJ/KCGRFz2qG+lS81F0nkr7cRJA==}
@@ -20985,19 +21056,24 @@ packages:
 
   glob@7.1.4:
     resolution: {integrity: sha512-hkLPepehmnKk41pUGm3sYxoFs/umurYfYJCerbXEyFIWcAzvpipAgVkBqqT9RBKMGjnq6kMuyYwha6csxbiM1A==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@7.1.6:
     resolution: {integrity: sha512-LwaxwyZ72Lk7vZINtNNrywX0ZuLyStrdDtabefZKAY5ZGJhVtgdznluResxNmPitE0SAO+O26sWTHeKSI2wMBA==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@7.2.0:
     resolution: {integrity: sha512-lmLf6gtyrPq8tTjSmrO94wBeQbFR3HbLHbuyD69wuyQkImp2hWqMGB47OX65FBkPffO641IP9jWa1z4ivqG26Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@7.2.3:
     resolution: {integrity: sha512-nFR0zLpU2YCaRxwoCJvL6UvCH2JFyFVIvwTLsIf21AuHlMskA1hhTdk+LlYJtOlYt9v6dvszD2BGRqBL+iQK9Q==}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@8.0.3:
     resolution: {integrity: sha512-ull455NHSHI/Y1FqGaaYFaLGkNMMJbavMrEGFXG/PGrg6y7sutWHUHrz6gy6WEBH6akM1M414dWKCNs+IhKdiQ==}
     engines: {node: '>=12'}
+    deprecated: Glob versions prior to v9 are no longer supported
 
   glob@8.1.0:
     resolution: {integrity: sha512-r8hpEjiQEYlF2QU0df3dS+nxxSIreXQS1qRhMJM0Q5NDdR386C7jb7Hwwod8Fgiuex+k0GFjgft18yvxm5XoCQ==}
@@ -21834,10 +21910,12 @@ packages:
   is-accessor-descriptor@0.1.6:
     resolution: {integrity: sha512-e1BM1qnDbMRG3ll2U9dSK0UMHuWOs3pY3AtcFsmvwPtKL3MML/Q86i+GilLfvqEs4GW+ExB91tQ3Ig9noDIZ+A==}
     engines: {node: '>=0.10.0'}
+    deprecated: Please upgrade to v0.1.7
 
   is-accessor-descriptor@1.0.0:
     resolution: {integrity: sha512-m5hnHTkcVsPfqx3AKlyttIPb7J+XykHvJP2B9bZDjlhLIoEq4XoK64Vg7boZlVWYK6LUY94dYPEE7Lh0ZkZKcQ==}
     engines: {node: '>=0.10.0'}
+    deprecated: Please upgrade to v1.0.1
 
   is-alphabetical@1.0.4:
     resolution: {integrity: sha512-DwzsA04LQ10FHTZuL0/grVDk4rFoVH1pjAToYwBrHSxcrBIGQuXrQMtD5U1b0U2XVgKZCTLLP8u2Qxqhy3l2Vg==}
@@ -21905,10 +21983,12 @@ packages:
   is-data-descriptor@0.1.4:
     resolution: {integrity: sha512-+w9D5ulSoBNlmw9OHn3U2v51SyoCd0he+bB3xMl62oijhrspxowjU+AIcDY0N3iEJbUEkB15IlMASQsxYigvXg==}
     engines: {node: '>=0.10.0'}
+    deprecated: Please upgrade to v0.1.5
 
   is-data-descriptor@1.0.0:
     resolution: {integrity: sha512-jbRXy1FmtAoCjQkVmIVYwuuqDFUbaOeDjmed1tOGPrsMhtJA4rD9tkgA0F1qJ3gRFRXcHYVkdeaP50Q5rE/jLQ==}
     engines: {node: '>=0.10.0'}
+    deprecated: Please upgrade to v1.0.1
 
   is-date-object@1.0.5:
     resolution: {integrity: sha512-9YQaSxsAiSwcvS33MBk3wTCVnWK+HhF8VZR2jRxehM16QcVOdHqPn4VPHmRK4lSr38n9JriurInLcP90xsYNfQ==}
@@ -23876,7 +23956,7 @@ packages:
     resolution: {integrity: sha512-88ZRGcNxAq4EH38cQ4D85PM57pikCwS8Z99EWHODxN7KBY+UuPiqzRTtZzS8KTXO/ywSWbdjjJST2Hly/EQxLw==}
 
   media-typer@0.3.0:
-    resolution: {integrity: sha1-hxDXrwqmJvj/+hzgAWhUUmMlV0g=}
+    resolution: {integrity: sha512-dq+qelQ9akHpcOl/gUVRTxVIOkAJ1wR3QAvb4RsVjS8oVoFjDGTc679wJYmUmknUF5HwMLOgb5O+a3KxfWapPQ==}
     engines: {node: '>= 0.6'}
 
   mediaquery-text@1.2.0:
@@ -24601,9 +24681,9 @@ packages:
     engines: {node: '>=14', npm: '>=6.0.0'}
     hasBin: true
 
-  next@13.5.6:
-    resolution: {integrity: sha512-Y2wTcTbO4WwEsVb4A8VSnOsG1I9ok+h74q0ZdxkwM3EODqrs4pasq7O0iUxbcS9VtWMicG7f3+HAj0r1+NtKSw==}
-    engines: {node: '>=16.14.0'}
+  next@14.1.0:
+    resolution: {integrity: sha512-wlzrsbfeSU48YQBjZhDzOwhWhGsy+uQycR8bHAOt1LY1bn3zZEcDyHQOEoN3aWzQ8LHCAJ1nqrWCc9XF2+O45Q==}
+    engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
       '@opentelemetry/api': ^1.1.0
@@ -24616,8 +24696,8 @@ packages:
       sass:
         optional: true
 
-  next@14.1.0:
-    resolution: {integrity: sha512-wlzrsbfeSU48YQBjZhDzOwhWhGsy+uQycR8bHAOt1LY1bn3zZEcDyHQOEoN3aWzQ8LHCAJ1nqrWCc9XF2+O45Q==}
+  next@14.1.1:
+    resolution: {integrity: sha512-McrGJqlGSHeaz2yTRPkEucxQKe5Zq7uPwyeHNmJaZNY4wx9E9QdxmTp310agFRoMuIYgQrCrT3petg13fSVOww==}
     engines: {node: '>=18.17.0'}
     hasBin: true
     peerDependencies:
@@ -24946,10 +25026,12 @@ packages:
 
   npmlog@5.0.1:
     resolution: {integrity: sha512-AqZtDUWOMKs1G/8lwylVjrdYgqA4d9nu8hc+0gzRxlDb1I10+FHBGMXs6aiQHFdCUUlqH99MUMuLfzWDNDtfxw==}
+    deprecated: This package is no longer supported.
 
   npmlog@6.0.2:
     resolution: {integrity: sha512-/vBvz5Jfr9dT/aFWd0FIRf+T/Q2WBsLENygUaFUqstqsycmZAP/t5BvFJTK0viFmSUxiUKTUplWy5vt+rvKIxg==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
+    deprecated: This package is no longer supported.
 
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
@@ -27502,10 +27584,12 @@ packages:
   read-package-json@5.0.2:
     resolution: {integrity: sha512-BSzugrt4kQ/Z0krro8zhTwV1Kd79ue25IhNN/VtHFy1mG/6Tluyi+msc0UpwaoQzxSHa28mntAjIZY6kEgfR9Q==}
     engines: {node: ^12.13.0 || ^14.15.0 || >=16.0.0}
+    deprecated: This package is no longer supported. Please use @npmcli/package-json instead.
 
   read-package-json@6.0.1:
     resolution: {integrity: sha512-AaHqXxfAVa+fNL07x8iAghfKOds/XXsu7zoouIVsbm7PEbQ3nMWXlvjcbrNLjElnUHWQtAo4QEa0RXuvD4XlpA==}
     engines: {node: ^14.17.0 || ^16.13.0 || >=18.0.0}
+    deprecated: This package is no longer supported. Please use @npmcli/package-json instead.
 
   read-pkg-up@3.0.0:
     resolution: {integrity: sha512-YFzFrVvpC6frF1sz8psoHDBGF7fLPc+llq/8NB43oagqWkx8ar5zYtsTORtOjw9W2RHLpWP+zTWwBvf1bCmcSw==}
@@ -27978,6 +28062,7 @@ packages:
   right-pad@1.0.1:
     resolution: {integrity: sha512-bYBjgxmkvTAfgIYy328fmkwhp39v8lwVgWhhrzxPV3yHtcSqyYKe9/XOhvW48UFjATg3VuJbpsp5822ACNvkmw==}
     engines: {node: '>= 0.10'}
+    deprecated: Please use String.prototype.padEnd() over this package.
 
   rimraf@2.4.5:
     resolution: {integrity: sha512-J5xnxTyqaiw06JjMftq7L9ouA448dw/E7dKghkP9WpKNuwmARNNg+Gk8/u5ryb9N/Yo2+z3MCwuqFK/+qPOPfQ==}
@@ -27991,10 +28076,12 @@ packages:
 
   rimraf@2.7.1:
     resolution: {integrity: sha512-uWjbaKIK3T1OSVptzX7Nl6PvQ3qAGtKEtVRjRuazjfL3Bx5eI409VZSqgND+4UNnmzLVdPj9FqFJNPqBZFve4w==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
 
   rimraf@3.0.2:
     resolution: {integrity: sha512-JZkJMZkAGFFPP2YqXZXPbMlMBgsxzE8ILs4lMIX/2o0L9UBw9O/Y3o6wFw/i9YLapcUJWwqbi3kdxIPdC62TIA==}
+    deprecated: Rimraf versions prior to v4 are no longer supported
     hasBin: true
 
   rimraf@4.4.1:
@@ -28419,6 +28506,7 @@ packages:
 
   shortid@2.2.16:
     resolution: {integrity: sha512-Ugt+GIZqvGXCIItnsL+lvFJOiN7RYqlGy7QE41O3YC1xbNSeDGIRO7xg2JJXIAj1cAGnOeC1r7/T9pgrtQbv4g==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   side-channel@1.0.4:
     resolution: {integrity: sha512-q5XPytqFEIKHkGdiMIrY10mvLRvnQh42/+GoBlFW3b2LXLE2xxJpZFdm94we0BaoV3RwJyGqg5wS7epxTv0Zvw==}
@@ -29137,15 +29225,17 @@ packages:
   superagent@6.1.0:
     resolution: {integrity: sha512-OUDHEssirmplo3F+1HWKUrUjvnQuA+nZI6i/JJBdXb5eq9IyEQwPyPpqND+SSsxf6TygpBEkUjISVRN4/VOpeg==}
     engines: {node: '>= 7.0.0'}
-    deprecated: Please upgrade to v7.0.2+ of superagent.  We have fixed numerous issues with streams, form-data, attach(), filesystem errors not bubbling up (ENOENT on attach()), and all tests are now passing.  See the releases tab for more information at <https://github.com/visionmedia/superagent/releases>.
+    deprecated: Please upgrade to v9.0.0+ as we have fixed a public vulnerability with formidable dependency. Note that v9.0.0+ requires Node.js v14.18.0+. See https://github.com/ladjs/superagent/pull/1800 for insight. This project is supported and maintained by the team at Forward Email @ https://forwardemail.net
 
   superagent@8.0.9:
     resolution: {integrity: sha512-4C7Bh5pyHTvU33KpZgwrNKh/VQnvgtCSqPRfJAUdmrtSYePVzVg4E4OzsrbkhJj9O7SO6Bnv75K/F8XVZT8YHA==}
     engines: {node: '>=6.4.0 <13 || >=14'}
+    deprecated: Please upgrade to v9.0.0+ as we have fixed a public vulnerability with formidable dependency. Note that v9.0.0+ requires Node.js v14.18.0+. See https://github.com/ladjs/superagent/pull/1800 for insight. This project is supported and maintained by the team at Forward Email @ https://forwardemail.net
 
   superagent@8.1.2:
     resolution: {integrity: sha512-6WTxW1EB6yCxV5VFOIPQruWGHqc3yI7hEmZK6h+pyk69Lk/Ut7rLUY6W/ONF2MjBuGjvmMiIpsrVJ2vjrHlslA==}
     engines: {node: '>=6.4.0 <13 || >=14'}
+    deprecated: Please upgrade to v9.0.0+ as we have fixed a public vulnerability with formidable dependency. Note that v9.0.0+ requires Node.js v14.18.0+. See https://github.com/ladjs/superagent/pull/1800 for insight. This project is supported and maintained by the team at Forward Email @ https://forwardemail.net
 
   superjson@1.12.2:
     resolution: {integrity: sha512-ugvUo9/WmvWOjstornQhsN/sR9mnGtWGYeTxFuqLb4AiT4QdUavjGFRALCPKWWnAiUJ4HTpytj5e0t5HoMRkXg==}
@@ -31122,6 +31212,7 @@ packages:
 
   workbox-google-analytics@6.5.4:
     resolution: {integrity: sha512-8AU1WuaXsD49249Wq0B2zn4a/vvFfHkpcFfqAFHNHwln3jK9QUYmzdkKXGIZl9wyKNP+RRX30vcgcyWMcZ9VAg==}
+    deprecated: It is not compatible with newer versions of GA starting with v4, as long as you are using GAv3 it should be ok, but the package is not longer being maintained
 
   workbox-navigation-preload@6.5.4:
     resolution: {integrity: sha512-IIwf80eO3cr8h6XSQJF+Hxj26rg2RPFVUmJLUlM0+A2GzB4HFbQyKkrgD5y2d84g2IbJzP4B4j5dPBRzamHrng==}
@@ -31490,11 +31581,11 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@angular-devkit/build-angular@16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107)(@types/node@20.12.12)(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)))(jest-environment-jsdom@29.5.0)(jest@29.7.0(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.23.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(typescript@4.9.5)':
+  '@angular-devkit/build-angular@16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107)(@types/node@20.12.12)(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(jest-environment-jsdom@29.5.0)(jest@29.7.0(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.23.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(typescript@4.9.5)':
     dependencies:
       '@ampproject/remapping': 2.2.1
       '@angular-devkit/architect': 0.1602.8(chokidar@3.5.3)
-      '@angular-devkit/build-webpack': 0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      '@angular-devkit/build-webpack': 0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
       '@angular-devkit/core': 16.2.8(chokidar@3.5.3)
       '@angular/compiler-cli': 16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5)
       '@babel/core': 7.22.9
@@ -31555,9 +31646,9 @@ snapshots:
       vite: 4.4.7(@types/node@20.12.12)(less@4.1.3)(lightningcss@1.23.0)(sass@1.64.1)(sugarss@4.0.1(postcss@8.4.38))(terser@5.19.2)
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
       webpack-dev-middleware: 6.1.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
-      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107))
+      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
       webpack-merge: 5.9.0
-      webpack-subresource-integrity: 5.1.0(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      webpack-subresource-integrity: 5.1.0(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
     optionalDependencies:
       esbuild: 0.18.17
       jest: 29.7.0(@types/node@20.12.12)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5))
@@ -31583,12 +31674,12 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@angular-devkit/build-webpack@0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))':
+  '@angular-devkit/build-webpack@0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))':
     dependencies:
       '@angular-devkit/architect': 0.1602.8(chokidar@3.5.3)
       rxjs: 7.8.1
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
-      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107))
+      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
     transitivePeerDependencies:
       - chokidar
 
@@ -32077,10 +32168,10 @@ snapshots:
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/core': 3.575.0
-      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
       '@aws-sdk/middleware-logger': 3.575.0
       '@aws-sdk/middleware-recursion-detection': 3.575.0
@@ -32504,6 +32595,52 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
+  '@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0)':
+    dependencies:
+      '@aws-crypto/sha256-browser': 3.0.0
+      '@aws-crypto/sha256-js': 3.0.0
+      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/core': 3.575.0
+      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/middleware-host-header': 3.575.0
+      '@aws-sdk/middleware-logger': 3.575.0
+      '@aws-sdk/middleware-recursion-detection': 3.575.0
+      '@aws-sdk/middleware-user-agent': 3.575.0
+      '@aws-sdk/region-config-resolver': 3.575.0
+      '@aws-sdk/types': 3.575.0
+      '@aws-sdk/util-endpoints': 3.575.0
+      '@aws-sdk/util-user-agent-browser': 3.575.0
+      '@aws-sdk/util-user-agent-node': 3.575.0
+      '@smithy/config-resolver': 3.0.0
+      '@smithy/core': 2.0.0
+      '@smithy/fetch-http-handler': 3.0.0
+      '@smithy/hash-node': 3.0.0
+      '@smithy/invalid-dependency': 3.0.0
+      '@smithy/middleware-content-length': 3.0.0
+      '@smithy/middleware-endpoint': 3.0.0
+      '@smithy/middleware-retry': 3.0.0
+      '@smithy/middleware-serde': 3.0.0
+      '@smithy/middleware-stack': 3.0.0
+      '@smithy/node-config-provider': 3.0.0
+      '@smithy/node-http-handler': 3.0.0
+      '@smithy/protocol-http': 4.0.0
+      '@smithy/smithy-client': 3.0.0
+      '@smithy/types': 3.0.0
+      '@smithy/url-parser': 3.0.0
+      '@smithy/util-base64': 3.0.0
+      '@smithy/util-body-length-browser': 3.0.0
+      '@smithy/util-body-length-node': 3.0.0
+      '@smithy/util-defaults-mode-browser': 3.0.0
+      '@smithy/util-defaults-mode-node': 3.0.0
+      '@smithy/util-endpoints': 2.0.0
+      '@smithy/util-middleware': 3.0.0
+      '@smithy/util-retry': 3.0.0
+      '@smithy/util-utf8': 3.0.0
+      tslib: 2.6.2
+    transitivePeerDependencies:
+      - '@aws-sdk/client-sts'
+      - aws-crt
+
   '@aws-sdk/client-sso@3.382.0':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
@@ -32802,7 +32939,7 @@ snapshots:
       '@aws-crypto/sha256-js': 3.0.0
       '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/core': 3.575.0
-      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
       '@aws-sdk/middleware-logger': 3.575.0
       '@aws-sdk/middleware-recursion-detection': 3.575.0
@@ -32839,52 +32976,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.6.2
     transitivePeerDependencies:
-      - aws-crt
-
-  '@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
-    dependencies:
-      '@aws-crypto/sha256-browser': 3.0.0
-      '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0
-      '@aws-sdk/core': 3.575.0
-      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
-      '@aws-sdk/middleware-host-header': 3.575.0
-      '@aws-sdk/middleware-logger': 3.575.0
-      '@aws-sdk/middleware-recursion-detection': 3.575.0
-      '@aws-sdk/middleware-user-agent': 3.575.0
-      '@aws-sdk/region-config-resolver': 3.575.0
-      '@aws-sdk/types': 3.575.0
-      '@aws-sdk/util-endpoints': 3.575.0
-      '@aws-sdk/util-user-agent-browser': 3.575.0
-      '@aws-sdk/util-user-agent-node': 3.575.0
-      '@smithy/config-resolver': 3.0.0
-      '@smithy/core': 2.0.0
-      '@smithy/fetch-http-handler': 3.0.0
-      '@smithy/hash-node': 3.0.0
-      '@smithy/invalid-dependency': 3.0.0
-      '@smithy/middleware-content-length': 3.0.0
-      '@smithy/middleware-endpoint': 3.0.0
-      '@smithy/middleware-retry': 3.0.0
-      '@smithy/middleware-serde': 3.0.0
-      '@smithy/middleware-stack': 3.0.0
-      '@smithy/node-config-provider': 3.0.0
-      '@smithy/node-http-handler': 3.0.0
-      '@smithy/protocol-http': 4.0.0
-      '@smithy/smithy-client': 3.0.0
-      '@smithy/types': 3.0.0
-      '@smithy/url-parser': 3.0.0
-      '@smithy/util-base64': 3.0.0
-      '@smithy/util-body-length-browser': 3.0.0
-      '@smithy/util-body-length-node': 3.0.0
-      '@smithy/util-defaults-mode-browser': 3.0.0
-      '@smithy/util-defaults-mode-node': 3.0.0
-      '@smithy/util-endpoints': 2.0.0
-      '@smithy/util-middleware': 3.0.0
-      '@smithy/util-retry': 3.0.0
-      '@smithy/util-utf8': 3.0.0
-      tslib: 2.6.2
-    transitivePeerDependencies:
-      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/core@3.496.0':
@@ -33020,13 +33111,13 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))':
+  '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
+      '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
-      '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
-      '@aws-sdk/credential-provider-web-identity': 3.575.0(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
+      '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))
+      '@aws-sdk/credential-provider-web-identity': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/credential-provider-imds': 3.0.0
       '@smithy/property-provider': 3.0.0
@@ -33104,14 +33195,14 @@ snapshots:
       - aws-crt
     optional: true
 
-  '@aws-sdk/credential-provider-node@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))':
+  '@aws-sdk/credential-provider-node@3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)':
     dependencies:
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-http': 3.575.0
-      '@aws-sdk/credential-provider-ini': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
+      '@aws-sdk/credential-provider-ini': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/credential-provider-process': 3.575.0
-      '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
-      '@aws-sdk/credential-provider-web-identity': 3.575.0(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))
+      '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))
+      '@aws-sdk/credential-provider-web-identity': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/credential-provider-imds': 3.0.0
       '@smithy/property-provider': 3.0.0
@@ -33213,6 +33304,19 @@ snapshots:
       - aws-crt
     optional: true
 
+  '@aws-sdk/credential-provider-sso@3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))':
+    dependencies:
+      '@aws-sdk/client-sso': 3.575.0
+      '@aws-sdk/token-providers': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))
+      '@aws-sdk/types': 3.575.0
+      '@smithy/property-provider': 3.0.0
+      '@smithy/shared-ini-file-loader': 3.0.0
+      '@smithy/types': 3.0.0
+      tslib: 2.6.2
+    transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
+      - aws-crt
+
   '@aws-sdk/credential-provider-sso@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
       '@aws-sdk/client-sso': 3.575.0
@@ -33251,14 +33355,6 @@ snapshots:
       - '@aws-sdk/credential-provider-node'
       - aws-crt
     optional: true
-
-  '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0))':
-    dependencies:
-      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
-      '@aws-sdk/types': 3.575.0
-      '@smithy/property-provider': 3.0.0
-      '@smithy/types': 3.0.0
-      tslib: 2.6.2
 
   '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
@@ -33683,6 +33779,15 @@ snapshots:
       - '@aws-sdk/credential-provider-node'
       - aws-crt
     optional: true
+
+  '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))':
+    dependencies:
+      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/types': 3.575.0
+      '@smithy/property-provider': 3.0.0
+      '@smithy/shared-ini-file-loader': 3.0.0
+      '@smithy/types': 3.0.0
+      tslib: 2.6.2
 
   '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
@@ -34536,7 +34641,7 @@ snapshots:
       '@babel/helper-validator-identifier': 7.24.5
       chalk: 2.4.2
       js-tokens: 4.0.0
-      picocolors: 1.0.1
+      picocolors: 1.0.0
 
   '@babel/parser@7.22.16':
     dependencies:
@@ -41863,7 +41968,7 @@ snapshots:
       tsconfig-paths: 4.2.0
       tsconfig-paths-webpack-plugin: 4.1.0
       typescript: 5.1.6
-      webpack: 5.88.2(@swc/core@1.3.107)
+      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
       webpack-node-externals: 3.0.0
     optionalDependencies:
       '@swc/core': 1.3.107(@swc/helpers@0.5.2)
@@ -42115,62 +42220,62 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@next/env@13.5.6': {}
-
   '@next/env@14.1.0': {}
 
-  '@next/swc-darwin-arm64@13.5.6':
-    optional: true
+  '@next/env@14.1.1': {}
 
   '@next/swc-darwin-arm64@14.1.0':
     optional: true
 
-  '@next/swc-darwin-x64@13.5.6':
+  '@next/swc-darwin-arm64@14.1.1':
     optional: true
 
   '@next/swc-darwin-x64@14.1.0':
     optional: true
 
-  '@next/swc-linux-arm64-gnu@13.5.6':
+  '@next/swc-darwin-x64@14.1.1':
     optional: true
 
   '@next/swc-linux-arm64-gnu@14.1.0':
     optional: true
 
-  '@next/swc-linux-arm64-musl@13.5.6':
+  '@next/swc-linux-arm64-gnu@14.1.1':
     optional: true
 
   '@next/swc-linux-arm64-musl@14.1.0':
     optional: true
 
-  '@next/swc-linux-x64-gnu@13.5.6':
+  '@next/swc-linux-arm64-musl@14.1.1':
     optional: true
 
   '@next/swc-linux-x64-gnu@14.1.0':
     optional: true
 
-  '@next/swc-linux-x64-musl@13.5.6':
+  '@next/swc-linux-x64-gnu@14.1.1':
     optional: true
 
   '@next/swc-linux-x64-musl@14.1.0':
     optional: true
 
-  '@next/swc-win32-arm64-msvc@13.5.6':
+  '@next/swc-linux-x64-musl@14.1.1':
     optional: true
 
   '@next/swc-win32-arm64-msvc@14.1.0':
     optional: true
 
-  '@next/swc-win32-ia32-msvc@13.5.6':
+  '@next/swc-win32-arm64-msvc@14.1.1':
     optional: true
 
   '@next/swc-win32-ia32-msvc@14.1.0':
     optional: true
 
-  '@next/swc-win32-x64-msvc@13.5.6':
+  '@next/swc-win32-ia32-msvc@14.1.1':
     optional: true
 
   '@next/swc-win32-x64-msvc@14.1.0':
+    optional: true
+
+  '@next/swc-win32-x64-msvc@14.1.1':
     optional: true
 
   '@ngtools/webpack@16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(typescript@4.9.5)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))':
@@ -44538,7 +44643,7 @@ snapshots:
       cross-spawn: 7.0.3
       is-glob: 4.0.3
       open: 8.4.2
-      picocolors: 1.0.1
+      picocolors: 1.0.0
       tiny-glob: 0.2.9
       tslib: 2.6.2
 
@@ -46169,7 +46274,7 @@ snapshots:
       rollup: 2.78.0
       stacktrace-parser: 0.1.10
     optionalDependencies:
-      webpack: 5.88.2(@swc/core@1.3.107)
+      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -52274,7 +52379,7 @@ snapshots:
       '@babel/parser': 7.24.4
       '@vue/shared': 3.3.7
       estree-walker: 2.0.2
-      source-map-js: 1.0.2
+      source-map-js: 1.2.0
 
   '@vue/compiler-core@3.4.19':
     dependencies:
@@ -52282,7 +52387,7 @@ snapshots:
       '@vue/shared': 3.4.19
       entities: 4.5.0
       estree-walker: 2.0.2
-      source-map-js: 1.0.2
+      source-map-js: 1.2.0
 
   '@vue/compiler-dom@3.2.47':
     dependencies:
@@ -52322,7 +52427,7 @@ snapshots:
       estree-walker: 2.0.2
       magic-string: 0.30.10
       postcss: 8.4.38
-      source-map-js: 1.0.2
+      source-map-js: 1.2.0
 
   '@vue/compiler-ssr@3.2.47':
     dependencies:
@@ -54797,7 +54902,7 @@ snapshots:
 
   ci-info@4.0.0: {}
 
-  ci-info@https://codeload.github.com/watson/ci-info/tar.gz/f43f6a1cefff47fb361c88cf4b943fdbcaafe540: {}
+  ci-info@git+https://git@github.com:watson/ci-info.git#f43f6a1cefff47fb361c88cf4b943fdbcaafe540: {}
 
   cjs-module-lexer@1.2.2: {}
 
@@ -57402,7 +57507,7 @@ snapshots:
       lodash: 4.17.21
       resolve: 2.0.0-next.4
       semver: 5.7.2
-      webpack: 5.88.2(@swc/core@1.3.107)
+      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
     transitivePeerDependencies:
       - supports-color
 
@@ -58598,7 +58703,7 @@ snapshots:
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.3.0
-      webpack: 5.88.2(@swc/core@1.3.107)
+      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
     optional: true
 
   file-selector@0.6.0:
@@ -58929,7 +59034,7 @@ snapshots:
       semver: 7.5.4
       tapable: 2.2.1
       typescript: 5.1.6
-      webpack: 5.88.2(@swc/core@1.3.107)
+      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
 
   form-data@2.3.3:
     dependencies:
@@ -60120,7 +60225,7 @@ snapshots:
       tapable: 2.2.1
       webpack: 5.78.0(@swc/core@1.3.107)
 
-  html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)):
+  html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
     dependencies:
       '@types/html-minifier-terser': 6.1.0
       html-minifier-terser: 6.1.0
@@ -63622,7 +63727,7 @@ snapshots:
 
   launch-editor@2.6.1:
     dependencies:
-      picocolors: 1.0.1
+      picocolors: 1.0.0
       shell-quote: 1.8.1
 
   launchdarkly-eventsource@1.4.4: {}
@@ -65793,33 +65898,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  next@13.5.6(@babel/core@7.24.4)(@opentelemetry/api@1.7.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.64.1):
-    dependencies:
-      '@next/env': 13.5.6
-      '@swc/helpers': 0.5.2
-      busboy: 1.6.0
-      caniuse-lite: 1.0.30001589
-      postcss: 8.4.31
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      styled-jsx: 5.1.1(@babel/core@7.24.4)(babel-plugin-macros@3.1.0)(react@18.3.1)
-      watchpack: 2.4.0
-    optionalDependencies:
-      '@next/swc-darwin-arm64': 13.5.6
-      '@next/swc-darwin-x64': 13.5.6
-      '@next/swc-linux-arm64-gnu': 13.5.6
-      '@next/swc-linux-arm64-musl': 13.5.6
-      '@next/swc-linux-x64-gnu': 13.5.6
-      '@next/swc-linux-x64-musl': 13.5.6
-      '@next/swc-win32-arm64-msvc': 13.5.6
-      '@next/swc-win32-ia32-msvc': 13.5.6
-      '@next/swc-win32-x64-msvc': 13.5.6
-      '@opentelemetry/api': 1.7.0
-      sass: 1.64.1
-    transitivePeerDependencies:
-      - '@babel/core'
-      - babel-plugin-macros
-
   next@14.1.0(@babel/core@7.24.4)(@opentelemetry/api@1.7.0)(babel-plugin-macros@3.1.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)(sass@1.64.1):
     dependencies:
       '@next/env': 14.1.0
@@ -65841,6 +65919,33 @@ snapshots:
       '@next/swc-win32-arm64-msvc': 14.1.0
       '@next/swc-win32-ia32-msvc': 14.1.0
       '@next/swc-win32-x64-msvc': 14.1.0
+      '@opentelemetry/api': 1.7.0
+      sass: 1.64.1
+    transitivePeerDependencies:
+      - '@babel/core'
+      - babel-plugin-macros
+
+  next@14.1.1(@babel/core@7.24.4)(@opentelemetry/api@1.7.0)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(sass@1.64.1):
+    dependencies:
+      '@next/env': 14.1.1
+      '@swc/helpers': 0.5.2
+      busboy: 1.6.0
+      caniuse-lite: 1.0.30001589
+      graceful-fs: 4.2.11
+      postcss: 8.4.31
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      styled-jsx: 5.1.1(@babel/core@7.24.4)(babel-plugin-macros@3.1.0)(react@18.3.1)
+    optionalDependencies:
+      '@next/swc-darwin-arm64': 14.1.1
+      '@next/swc-darwin-x64': 14.1.1
+      '@next/swc-linux-arm64-gnu': 14.1.1
+      '@next/swc-linux-arm64-musl': 14.1.1
+      '@next/swc-linux-x64-gnu': 14.1.1
+      '@next/swc-linux-x64-musl': 14.1.1
+      '@next/swc-win32-arm64-msvc': 14.1.1
+      '@next/swc-win32-ia32-msvc': 14.1.1
+      '@next/swc-win32-x64-msvc': 14.1.1
       '@opentelemetry/api': 1.7.0
       sass: 1.64.1
     transitivePeerDependencies:
@@ -68111,7 +68216,7 @@ snapshots:
     dependencies:
       nanoid: 3.3.7
       picocolors: 1.0.0
-      source-map-js: 1.0.2
+      source-map-js: 1.2.0
 
   postcss@8.4.35:
     dependencies:
@@ -72275,7 +72380,7 @@ snapshots:
       css-select: 4.3.0
       css-tree: 1.1.3
       csso: 4.2.0
-      picocolors: 1.0.1
+      picocolors: 1.0.0
       stable: 0.1.8
 
   swagger-ui-dist@4.18.2: {}
@@ -72597,7 +72702,7 @@ snapshots:
     optionalDependencies:
       '@swc/core': 1.3.107(@swc/helpers@0.5.2)
 
-  terser-webpack-plugin@5.3.9(@swc/core@1.3.107)(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107)):
+  terser-webpack-plugin@5.3.9(@swc/core@1.3.107)(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.18
       jest-worker: 27.5.1
@@ -72639,17 +72744,6 @@ snapshots:
       serialize-javascript: 6.0.1
       terser: 5.16.9
       webpack: 5.82.1(@swc/core@1.3.107)(webpack-cli@5.1.4)
-    optionalDependencies:
-      '@swc/core': 1.3.107(@swc/helpers@0.5.2)
-
-  terser-webpack-plugin@5.3.9(@swc/core@1.3.107)(webpack@5.88.2(@swc/core@1.3.107)):
-    dependencies:
-      '@jridgewell/trace-mapping': 0.3.18
-      jest-worker: 27.5.1
-      schema-utils: 3.1.2
-      serialize-javascript: 6.0.1
-      terser: 5.16.9
-      webpack: 5.88.2(@swc/core@1.3.107)
     optionalDependencies:
       '@swc/core': 1.3.107(@swc/helpers@0.5.2)
 
@@ -73174,7 +73268,7 @@ snapshots:
       micromatch: 4.0.5
       semver: 7.5.2
       typescript: 4.9.5
-      webpack: 5.88.2(@swc/core@1.3.107)
+      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
 
   ts-morph@12.0.0:
     dependencies:
@@ -74009,19 +74103,19 @@ snapshots:
     dependencies:
       browserslist: 4.21.10
       escalade: 3.1.2
-      picocolors: 1.0.1
+      picocolors: 1.0.0
 
   update-browserslist-db@1.0.11(browserslist@4.21.5):
     dependencies:
       browserslist: 4.21.5
       escalade: 3.1.2
-      picocolors: 1.0.1
+      picocolors: 1.0.0
 
   update-browserslist-db@1.0.13(browserslist@4.23.0):
     dependencies:
       browserslist: 4.23.0
       escalade: 3.1.2
-      picocolors: 1.0.1
+      picocolors: 1.0.0
 
   update-check@1.5.4:
     dependencies:
@@ -74062,7 +74156,7 @@ snapshots:
       loader-utils: 2.0.4
       mime-types: 2.1.35
       schema-utils: 3.3.0
-      webpack: 5.88.2(@swc/core@1.3.107)
+      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
     optionalDependencies:
       file-loader: 6.2.0(webpack@5.88.2(@swc/core@1.3.107))
 
@@ -74489,7 +74583,7 @@ snapshots:
       less: 4.1.3
       lightningcss: 1.23.0
       sass: 1.64.1
-      sugarss: 4.0.1(postcss@8.4.31)
+      sugarss: 4.0.1(postcss@8.4.38)
       terser: 5.22.0
 
   vite@4.5.2(@types/node@18.16.9)(less@4.1.3)(lightningcss@1.23.0)(sass@1.64.1)(sugarss@4.0.1(postcss@8.4.38))(terser@5.22.0):
@@ -74517,7 +74611,7 @@ snapshots:
       less: 4.1.3
       lightningcss: 1.23.0
       sass: 1.64.1
-      sugarss: 4.0.1(postcss@8.4.31)
+      sugarss: 4.0.1(postcss@8.4.38)
       terser: 5.22.0
 
   vite@5.1.7(@types/node@12.20.55)(less@4.1.3)(lightningcss@1.23.0)(sass@1.64.1)(sugarss@4.0.1(postcss@8.4.31))(terser@5.22.0):
@@ -74559,7 +74653,7 @@ snapshots:
       less: 4.1.3
       lightningcss: 1.23.0
       sass: 1.64.1
-      sugarss: 4.0.1(postcss@8.4.31)
+      sugarss: 4.0.1(postcss@8.4.38)
       terser: 5.22.0
 
   vite@5.1.7(@types/node@20.12.12)(less@4.1.3)(lightningcss@1.23.0)(sass@1.64.1)(sugarss@4.0.1(postcss@8.4.38))(terser@5.22.0):
@@ -74806,7 +74900,7 @@ snapshots:
       html-escaper: 2.0.2
       is-plain-object: 5.0.0
       opener: 1.5.2
-      picocolors: 1.0.1
+      picocolors: 1.0.0
       sirv: 2.0.4
       ws: 7.5.9
     transitivePeerDependencies:
@@ -74866,7 +74960,7 @@ snapshots:
       schema-utils: 4.0.0
       webpack: 5.78.0(@swc/core@1.3.107)
 
-  webpack-dev-middleware@5.3.3(webpack@5.88.2(@swc/core@1.3.107)):
+  webpack-dev-middleware@5.3.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
     dependencies:
       colorette: 2.0.19
       memfs: 3.5.0
@@ -74991,7 +75085,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)):
+  webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
     dependencies:
       '@types/bonjour': 3.5.10
       '@types/connect-history-api-fallback': 1.3.5
@@ -75021,7 +75115,7 @@ snapshots:
       serve-index: 1.9.1
       sockjs: 0.3.24
       spdy: 4.0.2
-      webpack-dev-middleware: 5.3.3(webpack@5.88.2(@swc/core@1.3.107))
+      webpack-dev-middleware: 5.3.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
       ws: 8.13.0
     optionalDependencies:
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
@@ -75073,12 +75167,12 @@ snapshots:
 
   webpack-sources@3.2.3: {}
 
-  webpack-subresource-integrity@5.1.0(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  webpack-subresource-integrity@5.1.0(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
     dependencies:
       typed-assert: 1.0.9
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
     optionalDependencies:
-      html-webpack-plugin: 5.5.3(webpack@5.88.2(@swc/core@1.3.107))
+      html-webpack-plugin: 5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
 
   webpack-virtual-modules@0.5.0: {}
 
@@ -75274,37 +75368,6 @@ snapshots:
       - esbuild
       - uglify-js
 
-  webpack@5.88.2(@swc/core@1.3.107):
-    dependencies:
-      '@types/eslint-scope': 3.7.4
-      '@types/estree': 1.0.5
-      '@webassemblyjs/ast': 1.11.5
-      '@webassemblyjs/wasm-edit': 1.11.5
-      '@webassemblyjs/wasm-parser': 1.11.5
-      acorn: 8.11.3
-      acorn-import-assertions: 1.9.0(acorn@8.11.3)
-      browserslist: 4.23.0
-      chrome-trace-event: 1.0.3
-      enhanced-resolve: 5.15.0
-      es-module-lexer: 1.2.1
-      eslint-scope: 5.1.1
-      events: 3.3.0
-      glob-to-regexp: 0.4.1
-      graceful-fs: 4.2.11
-      json-parse-even-better-errors: 2.3.1
-      loader-runner: 4.3.0
-      mime-types: 2.1.35
-      neo-async: 2.6.2
-      schema-utils: 3.3.0
-      tapable: 2.2.1
-      terser-webpack-plugin: 5.3.9(@swc/core@1.3.107)(webpack@5.88.2(@swc/core@1.3.107))
-      watchpack: 2.4.0
-      webpack-sources: 3.2.3
-    transitivePeerDependencies:
-      - '@swc/core'
-      - esbuild
-      - uglify-js
-
   webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17):
     dependencies:
       '@types/eslint-scope': 3.7.4
@@ -75328,7 +75391,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 3.3.0
       tapable: 2.2.1
-      terser-webpack-plugin: 5.3.9(@swc/core@1.3.107)(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107))
+      terser-webpack-plugin: 5.3.9(@swc/core@1.3.107)(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
       watchpack: 2.4.0
       webpack-sources: 3.2.3
     transitivePeerDependencies:
