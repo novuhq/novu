@@ -6,10 +6,9 @@ on:
       - prod
 
 jobs:
-  release:
+  pre-release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
 
       - name: Start Deployment Notification
         uses: actions/slack@master
@@ -19,12 +18,67 @@ jobs:
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
-
-  post-release:
+  release-api:
+    needs: [pre-release]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
 
+  release-embed:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
+
+  release-web:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
+
+  release-web-components:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
+
+  release-webhook:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
+
+  release-widget:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
+
+  release-worker:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
+
+  release-ws:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
+
+  post-release:
+    needs: [
+      release-api,
+      release-embed,
+      release-web,
+      release-web-components,
+      release-webhook,
+      release-widget,
+      release-worker,
+      release-ws
+    ]
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy API Documentation
         uses: fjogeleit/http-request-action@v1
         with:
@@ -38,7 +92,3 @@ jobs:
           message: 'Release has finished'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-
-
-
