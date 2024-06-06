@@ -476,6 +476,7 @@ export class WidgetsController {
   ): Promise<LogUsageResponseDto> {
     this.analyticsService.track(body.name, subscriberSession._organizationId, {
       environmentId: subscriberSession._environmentId,
+      _organization: subscriberSession._organizationId,
       ...(body.payload || {}),
     });
 
