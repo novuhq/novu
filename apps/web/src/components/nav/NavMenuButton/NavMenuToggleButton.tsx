@@ -1,6 +1,6 @@
 import { IconArrowDropUp, IconArrowDropDown } from '@novu/design-system';
 import { FC, PropsWithChildren, useState } from 'react';
-import { css } from '@novu/novui/css';
+import { css, cx } from '@novu/novui/css';
 import { Flex, HStack } from '@novu/novui/jsx';
 import { INavMenuButtonProps, rawButtonBaseStyles } from './NavMenuButton.shared';
 
@@ -11,6 +11,7 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
   icon,
   label,
   children,
+  className,
 }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
@@ -20,7 +21,7 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
 
   return (
     <>
-      <button className={css(rawButtonBaseStyles)} data-test-id={testId} onClick={handleClick}>
+      <button className={cx(css(rawButtonBaseStyles), className)} data-test-id={testId} onClick={handleClick}>
         <HStack justifyContent={'space-between'} w="inherit">
           <HStack gap="75">
             {icon}
