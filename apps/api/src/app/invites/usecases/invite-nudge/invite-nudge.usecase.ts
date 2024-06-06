@@ -18,7 +18,7 @@ export class InviteNudgeWebhook {
     const isEnabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
         key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
-        organizationId: command.subscriber._organizationId,
+        organizationId: command.orgaanizationId,
         userId: 'system',
         environmentId: 'system',
       })
@@ -33,7 +33,7 @@ export class InviteNudgeWebhook {
       }
 
       const membersCount = await this.memberRepository.count({
-        _organizationId: command.subscriber._organizationId,
+        _organizationId: command.orgaanizationId,
       });
 
       if (membersCount === 1) {

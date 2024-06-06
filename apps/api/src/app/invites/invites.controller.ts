@@ -138,6 +138,7 @@ export class InvitesController {
     const command = InviteNudgeWebhookCommand.create({
       hmacHeader,
       subscriber: body.subscriber,
+      orgaanizationId: body.payload.organizationId,
     });
 
     const response = await this.inviteNudgeWebhookUsecase.execute(command);
