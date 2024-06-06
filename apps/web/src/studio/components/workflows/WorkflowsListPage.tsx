@@ -1,10 +1,10 @@
-import { SettingsPageContainer } from '../../../pages/settings/SettingsPageContainer';
+import { PageContainer } from '../../layout';
 import { WorkflowsTable } from './table';
 
 export const WorkflowsListPage = () => {
   return (
-    <SettingsPageContainer title="Workflows">
+    <PageContainer title="Workflows">
       <WorkflowsTable />
-    </SettingsPageContainer>
+    </PageContainer>
   );
 };
