@@ -18,7 +18,7 @@ export class InviteNudgeWebhook {
     const isEnabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
         key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
-        organizationId: command.orgaanizationId,
+        organizationId: command.organizationId,
         userId: 'system',
         environmentId: 'system',
       })
@@ -33,8 +33,12 @@ export class InviteNudgeWebhook {
       }
 
       const membersCount = await this.memberRepository.count({
-        _organizationId: command.orgaanizationId,
+        _organizationId: command.organizationId,
       });
+
+      Logger.log(
+        `membersCount: ${membersCount} for organization ${command.organizationId} and user/subscriber ${command.subscriber.subscriberId}`
+      );
 
       if (membersCount === 1) {
         const hubspotAddUserIntoListResponse = await axiosInstance.post(
@@ -48,6 +52,7 @@ export class InviteNudgeWebhook {
             },
           }
         );
+        Logger.log(JSON.stringify(hubspotAddUserIntoListResponse.data));
         if (hubspotAddUserIntoListResponse.data.updated.length !== 1) {
           Logger.log(
             `Failed to add user ${command.subscriber.email} into list ${process.env.HUBSPOT_INVITE_NUDGE_EMAIL_USER_LIST_ID}`

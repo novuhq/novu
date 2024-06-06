@@ -9,6 +9,6 @@ export class InviteNudgeWebhookCommand extends BaseCommand {
   @IsObject()
   subscriber: SubscriberEntity;
 
-  @IsObject()
-  orgaanizationId: string;
+  @IsString()
+  organizationId: string;
 }
