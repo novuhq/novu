@@ -25,94 +25,94 @@ jobs:
 
   # Production release
   release-prod-api:
-    uses: ./.github/workflows/cloud-deploy/prod/cloud-deploy-api.yml
+    uses: ./.github/workflows/cloud-deploy-prod-api.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
 
   release-prod-embed:
-    uses: ./.github/workflows/cloud-deploy/prod/cloud-deploy-embed.yml
+    uses: ./.github/workflows/cloud-deploy-prod-embed.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
 
   release-prod-inbound-mail:
-    uses: ./.github/workflows/cloud-deploy/prod/cloud-deploy-embed.yml
+    uses: ./.github/workflows/cloud-deploy-prod-embed.yml
     needs: [ pre-release ]
     if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
 
 
   release-prod-web:
-    uses: ./.github/workflows/cloud-deploy/prod/cloud-deploy-web.yml
+    uses: ./.github/workflows/cloud-deploy-prod-web.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
 
   release-prod-web-components:
-    uses: ./.github/workflows/cloud-deploy/prod/cloud-deploy-web-components.yml
+    uses: ./.github/workflows/cloud-deploy-prod-web-components.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
 
   release-prod-webhook:
-    uses: ./.github/workflows/cloud-deploy/prod/cloud-deploy-webhook.yml
+    uses: ./.github/workflows/cloud-deploy-prod-webhook.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
 
   release-prod-widget:
-    uses: ./.github/workflows/cloud-deploy/prod/cloud-deploy-widget.yml
+    uses: ./.github/workflows/cloud-deploy-prod-widget.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
 
   release-prod-worker:
-    uses: ./.github/workflows/cloud-deploy/prod/cloud-deploy-worker.yml
+    uses: ./.github/workflows/cloud-deploy-prod-worker.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
 
   release-prod-ws:
-    uses: ./.github/workflows/cloud-deploy/prod/cloud-deploy-ws.yml
+    uses: ./.github/workflows/cloud-deploy-prod-ws.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
 
   # Dev release
   release-dev-api:
-    uses: ./.github/workflows/cloud-deploy/dev/cloud-deploy-api.yml
+    uses: ./.github/workflows/cloud-deploy-dev-api.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
 
   release-dev-embed:
-    uses: ./.github/workflows/cloud-deploy/dev/cloud-deploy-embed.yml
+    uses: ./.github/workflows/cloud-deploy-dev-embed.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
 
   release-dev-inbound-mail:
-    uses: ./.github/workflows/cloud-deploy/dev/cloud-deploy-embed.yml
+    uses: ./.github/workflows/cloud-deploy-dev-embed.yml
     needs: [ pre-release ]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
 
   release-dev-web:
-    uses: ./.github/workflows/cloud-deploy/dev/cloud-deploy-web.yml
+    uses: ./.github/workflows/cloud-deploy-dev-web.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
 
   release-dev-web-components:
-    uses: ./.github/workflows/cloud-deploy/dev/cloud-deploy-web-components.yml
+    uses: ./.github/workflows/cloud-deploy-dev-web-components.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
 
   release-dev-webhook:
-    uses: ./.github/workflows/cloud-deploy/dev/cloud-deploy-webhook.yml
+    uses: ./.github/workflows/cloud-deploy-dev-webhook.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
 
   release-dev-widget:
-    uses: ./.github/workflows/cloud-deploy/dev/cloud-deploy-widget.yml
+    uses: ./.github/workflows/cloud-deploy-dev-widget.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
 
   release-dev-worker:
-    uses: ./.github/workflows/cloud-deploy/dev/cloud-deploy-worker.yml
+    uses: ./.github/workflows/cloud-deploy-dev-worker.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
 
   release-dev-ws:
-    uses: ./.github/workflows/cloud-deploy/dev/cloud-deploy-ws.yml
+    uses: ./.github/workflows/cloud-deploy-dev-ws.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
 
