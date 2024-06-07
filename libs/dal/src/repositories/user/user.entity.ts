@@ -18,8 +18,6 @@ export interface IUserResetTokenCount {
 }
 
 export class UserEntity implements IUserEntity {
-  hasPassword: boolean;
-
   _id: UserId;
 
   resetToken?: string;
@@ -55,6 +53,8 @@ export class UserEntity implements IUserEntity {
   servicesHashes?: { intercom?: string };
 
   jobTitle?: JobTitleEnum;
+
+  hasPassword: boolean;
 
   externalId?: string;
 }
