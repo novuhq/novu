@@ -107,7 +107,7 @@ jobs:
 
   release-dev-embed:
     needs: [pre-release]
-    if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -115,7 +115,7 @@ jobs:
 
   release-dev-inbound-mail:
     needs: [ pre-release ]
-    if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -123,7 +123,7 @@ jobs:
 
   release-dev-web:
     needs: [pre-release]
-    if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -131,7 +131,7 @@ jobs:
 
   release-dev-web-components:
     needs: [pre-release]
-    if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -139,7 +139,7 @@ jobs:
 
   release-dev-webhook:
     needs: [pre-release]
-    if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -147,7 +147,7 @@ jobs:
 
   release-dev-widget:
     needs: [pre-release]
-    if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -155,7 +155,7 @@ jobs:
 
   release-dev-worker:
     needs: [pre-release]
-    if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -163,7 +163,7 @@ jobs:
 
   release-dev-ws:
     needs: [pre-release]
-    if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
