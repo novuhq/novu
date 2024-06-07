@@ -1,63 +1,90 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-
-export interface IAuthService {
-  authenticate(...args: any[]): any;
-  refreshToken(...args: any[]): any;
-  isAuthenticatedForOrganization(...args: any[]): any;
-  validateApiKey(...args: any[]): any;
-  getSubscriberWidgetToken(...args: any[]): any;
-  generateUserToken(...args: any[]): any;
-  getSignedToken(...args: any[]): any;
-  validateUser(...args: any[]): any;
-  validateSubscriber(...args: any[]): any;
-  isRootEnvironment(...args: any[]): any;
-}
+import { Inject, Injectable } from '@nestjs/common';
+import { SubscriberEntity, UserEntity, MemberEntity } from '@novu/dal';
+import {
+  AuthProviderEnum,
+  SignUpOriginEnum,
+  IJwtClaims,
+  ISubscriberJwt,
+} from '@novu/shared';
+import { IAuthService } from './auth.service.interface';
 
 @Injectable()
 export class AuthService implements IAuthService {
-  private authService: IAuthService;
+  constructor(@Inject('AUTH_SERVICE') private authService: IAuthService) {}
 
-  constructor(@Inject('AUTH_SERVICE') authService: IAuthService) {
-    this.authService = authService;
+  authenticate(
+    authProvider: AuthProviderEnum,
+    accessToken: string,
+    refreshToken: string,
+    profile: {
+      name: string;
+      login: string;
+      email: string;
+      avatar_url: string;
+      id: string;
+    },
+    distinctId: string,
+    origin?: SignUpOriginEnum
+  ): Promise<{ newUser: boolean; token: string }> {
+    return this.authService.authenticate(
+      authProvider,
+      accessToken,
+      refreshToken,
+      profile,
+      distinctId,
+      origin
+    );
   }
 
-  authenticate(...args: any[]): any {
-    return this.authService.authenticate(...args);
+  refreshToken(userId: string): Promise<string> {
+    return this.authService.refreshToken(userId);
   }
 
-  refreshToken(...args: any[]): any {
-    return this.authService.refreshToken(...args);
+  isAuthenticatedForOrganization(
+    userId: string,
+    organizationId: string
+  ): Promise<boolean> {
+    return this.authService.isAuthenticatedForOrganization(
+      userId,
+      organizationId
+    );
   }
 
-  isAuthenticatedForOrganization(...args: any[]): any {
-    return this.authService.isAuthenticatedForOrganization(...args);
+  validateApiKey(apiKey: string): Promise<IJwtClaims> {
+    return this.authService.validateApiKey(apiKey);
   }
 
-  validateApiKey(...args: any[]): any {
-    return this.authService.validateApiKey(...args);
+  getSubscriberWidgetToken(subscriber: SubscriberEntity): Promise<string> {
+    return this.authService.getSubscriberWidgetToken(subscriber);
   }
 
-  getSubscriberWidgetToken(...args: any[]): any {
-    return this.authService.getSubscriberWidgetToken(...args);
+  generateUserToken(user: UserEntity): Promise<string> {
+    return this.authService.generateUserToken(user);
   }
 
-  generateUserToken(...args: any[]): any {
-    return this.authService.generateUserToken(...args);
+  getSignedToken(
+    user: UserEntity,
+    organizationId?: string,
+    member?: MemberEntity,
+    environmentId?: string
+  ): Promise<string> {
+    return this.authService.getSignedToken(
+      user,
+      organizationId,
+      member,
+      environmentId
+    );
   }
 
-  getSignedToken(...args: any[]): any {
-    return this.authService.getSignedToken(...args);
+  validateUser(payload: IJwtClaims): Promise<UserEntity> {
+    return this.authService.validateUser(payload);
   }
 
-  validateUser(...args: any[]): any {
-    return this.authService.validateUser(...args);
+  validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity> {
+    return this.authService.validateSubscriber(payload);
   }
 
-  validateSubscriber(...args: any[]): any {
-    return this.authService.validateSubscriber(...args);
-  }
-
-  isRootEnvironment(...args: any[]): any {
-    return this.authService.isRootEnvironment(...args);
+  isRootEnvironment(payload: IJwtClaims): Promise<boolean> {
+    return this.authService.isRootEnvironment(payload);
   }
 }

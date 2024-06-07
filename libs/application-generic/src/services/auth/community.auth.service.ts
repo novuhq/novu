@@ -46,7 +46,7 @@ import {
   CachedEntity,
 } from '../cache';
 import { normalizeEmail } from '../../utils/email-normalization';
-import { IAuthService } from './auth.service';
+import { IAuthService } from './auth.service.interface';
 
 @Injectable()
 export class CommunityAuthService implements IAuthService {

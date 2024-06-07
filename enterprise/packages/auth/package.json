@@ -15,6 +15,7 @@
     "@clerk/clerk-sdk-node": "^5.0.9",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
+    "@novu/application-generic": "workspace:*",
     "jwks-rsa": "^3.1.0",
     "class-transformer": "^0.5.1"
   },
@@ -33,6 +34,7 @@
     "@nestjs/core": ">=10",
     "@nestjs/jwt": "10.2.0",
     "@nestjs/passport": "9.0.3",
+    "@nestjs/swagger": "^7.1.9",
     "passport": "0.6.0",
     "passport-jwt": "^4.0.0"
   }

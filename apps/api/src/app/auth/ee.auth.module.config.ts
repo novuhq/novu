@@ -53,18 +53,22 @@ const eeOrganizationRepositoryProvider = {
 
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
-  const eeAuthModuleConfig = eeAuthPackage?.eeAuthModuleConfig;
+  const jwtClerkStrategy = eeAuthPackage?.JwtClerkStrategy;
+  const eeAuthController = eeAuthPackage?.EEAuthController;
 
-  if (!eeAuthModuleConfig) {
-    throw new Error('eeAuthModuleConfig is not loaded');
+  if (!jwtClerkStrategy) {
+    throw new Error('jwtClerkStrategy is not loaded');
+  }
+
+  if (!eeAuthController) {
+    throw new Error('EEAuthController is not loaded');
   }
 
   return {
-    ...eeAuthModuleConfig,
-    imports: [...(eeAuthModuleConfig.imports || [])],
-    controllers: [...(eeAuthModuleConfig.controllers || [])],
+    imports: [],
+    controllers: [eeAuthController],
     providers: [
-      ...(eeAuthModuleConfig.providers || []),
+      jwtClerkStrategy,
       eeAuthServiceProvider,
       eeUserRepositoryProvider,
       eeMemberRepositoryProvider,
@@ -75,7 +79,7 @@ export function getEEModuleConfig(): ModuleMetadata {
       RootEnvironmentGuard,
     ],
     exports: [
-      ...(eeAuthModuleConfig.exports || []),
+      jwtClerkStrategy,
       RolesGuard,
       RootEnvironmentGuard,
       AuthService,
