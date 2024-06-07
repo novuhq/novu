@@ -22,8 +22,7 @@ inputs:
     required: true
   environment:
     required: false
-    type: string
-
+    description: 'Github Environment to get secrets from'
   bullmq_secret:
     description: 'Bullmq secret api token'
     required: true
