@@ -140,9 +140,7 @@ describe('User login - /auth/login (POST)', async () => {
           _id: session.user._id,
         },
         {
-          $set: {
-            failedLogin,
-          },
+          failedLogin,
         }
       );
 

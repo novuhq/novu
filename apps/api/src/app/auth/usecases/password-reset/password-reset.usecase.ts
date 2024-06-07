@@ -38,9 +38,7 @@ export class PasswordReset {
         _id: user._id,
       },
       {
-        $set: {
-          password: passwordHash,
-        },
+        password: passwordHash,
         $unset: {
           resetToken: 1,
           resetTokenDate: 1,

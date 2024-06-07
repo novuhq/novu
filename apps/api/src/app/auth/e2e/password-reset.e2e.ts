@@ -144,9 +144,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
         _id: session.user._id,
       },
       {
-        $set: {
-          resetTokenDate: subDays(new Date(), 20),
-        },
+        resetTokenDate: subDays(new Date(), 20),
       }
     );
 
@@ -189,11 +187,9 @@ describe('Password reset - /auth/reset (POST)', async () => {
         _id: session.user._id,
       },
       {
-        $set: {
-          resetTokenCount: {
-            reqInMinute: 0,
-            reqInDay: 10,
-          },
+        resetTokenCount: {
+          reqInMinute: 0,
+          reqInDay: 10,
         },
       }
     );
@@ -226,9 +222,7 @@ describe('Password reset - /auth/reset (POST)', async () => {
         _id: session.user._id,
       },
       {
-        $set: {
-          resetTokenDate: subMinutes(new Date(), 1),
-        },
+        resetTokenDate: subMinutes(new Date(), 1),
       }
     );
 
@@ -256,12 +250,10 @@ describe('Password reset - /auth/reset (POST)', async () => {
         _id: session.user._id,
       },
       {
-        $set: {
-          resetTokenDate: subDays(new Date(), 1),
-          resetTokenCount: {
-            reqInMinute: 5,
-            reqInDay: 15,
-          },
+        resetTokenDate: subDays(new Date(), 1),
+        resetTokenCount: {
+          reqInMinute: 5,
+          reqInDay: 15,
         },
       }
     );

@@ -22,8 +22,6 @@ export class UpdateNameAndProfilePicture extends BaseUserProfileUsecase {
       lastName: command.lastName,
     };
 
-    const unsetPayload: Partial<Record<keyof UserEntity, string>> = {};
-
     if (command.profilePicture) {
       updatePayload.profilePicture = command.profilePicture;
     }
@@ -33,8 +31,7 @@ export class UpdateNameAndProfilePicture extends BaseUserProfileUsecase {
         _id: command.userId,
       },
       {
-        $set: updatePayload,
-        $unset: unsetPayload,
+        updatePayload,
       }
     );
 

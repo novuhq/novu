@@ -21,9 +21,7 @@ export class UpdateOnBoardingTourUsecase extends BaseUserProfileUsecase {
         _id: command.userId,
       },
       {
-        $set: {
-          showOnBoardingTour: command.showOnBoardingTour,
-        },
+        showOnBoardingTour: command.showOnBoardingTour,
       }
     );
 

@@ -118,11 +118,9 @@ export class Login {
         _id: user._id,
       },
       {
-        $set: {
-          failedLogin: {
-            times,
-            lastFailedAttempt: now,
-          },
+        failedLogin: {
+          times,
+          lastFailedAttempt: now,
         },
       }
     );
@@ -136,9 +134,7 @@ export class Login {
         _id: user._id,
       },
       {
-        $set: {
-          'failedLogin.times': 0,
-        },
+        'failedLogin.times': 0,
       }
     );
   }
