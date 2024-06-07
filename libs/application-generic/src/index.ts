@@ -21,6 +21,7 @@ export * from './utils/hmac';
 export * from './utils/novu-integrations';
 export * from './utils/require-inject';
 export * from './utils/variants';
+export * from './utils/buildBridgeEndpointUrl';
 export * from './decorators';
 export * from './tracing';
 export * from './dtos';

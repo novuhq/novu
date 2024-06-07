@@ -12,6 +12,7 @@ import pkg from "../package.json";
 
 import { GetTemplateFileArgs, InstallTemplateArgs } from "./types";
 
+import { buildBridgeSubdomain } from "@novu/application-generic";
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
  */
@@ -39,6 +40,8 @@ export const installTemplate = async ({
   eslint,
   srcDir,
   importAlias,
+  apiKey,
+  tunnelHost,
 }: InstallTemplateArgs) => {
   console.log(bold(`Using ${packageManager}.`));
 
@@ -167,12 +170,18 @@ export const installTemplate = async ({
   }
 
   /* write .env file */
-  const port = 4000; //TODO: probably take this from env
-  const subdomain = "some-static-value"; //TODO: generated based on api key provided
+  const port = 4000;
+  const subdomain = buildBridgeSubdomain(apiKey);
+  const host = tunnelHost;
 
   await fs.writeFile(
     path.join(root, ".env"),
-    `PORT=${port}` + os.EOL + `SUBDOMAIN=${subdomain}` + os.EOL,
+    `PORT=${port}` +
+      os.EOL +
+      `TUNNEL_SUBDOMAIN=${subdomain}` +
+      os.EOL +
+      `TUNNEL_HOST=${host}` +
+      os.EOL,
   );
 
   /** Copy the version from package.json or override for tests. */

@@ -33,6 +33,8 @@ export async function createApp({
   eslint,
   srcDir,
   importAlias,
+  apiKey,
+  tunnelHost,
 }: {
   appPath: string;
   packageManager: PackageManager;
@@ -43,6 +45,8 @@ export async function createApp({
   eslint: boolean;
   srcDir: boolean;
   importAlias: string;
+  apiKey: string;
+  tunnelHost: string;
 }): Promise<void> {
   let repoInfo: RepoInfo | undefined;
   const mode: TemplateMode = typescript ? 'ts' : 'js';
@@ -193,6 +197,8 @@ export async function createApp({
       eslint,
       srcDir,
       importAlias,
+      apiKey,
+      tunnelHost,
     });
   }
 
