@@ -52,7 +52,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   >((data) => api.post('/v1/auth/login', data));
 
   const handleLoginInUseEffect = async () => {
-    // if currrentUser is true, it means user exists, then while accepting invitation, InvitationPage will handle accept this case
+    // if currentUser is true, it means user exists, then while accepting invitation, InvitationPage will handle accept this case
     if (currentUser) {
       return;
     }
