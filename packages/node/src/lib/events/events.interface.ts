@@ -49,7 +49,6 @@ export type ITriggerOverrides = {
     | 'plivo'
     | 'postmark'
     | 'sendgrid'
-    | 'chat'
     | 'twilio']?: object;
 } & {
   [key in 'fcm']?: ITriggerOverrideFCM;

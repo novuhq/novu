@@ -2,11 +2,18 @@ import { MobishastraProvider } from './mobishastra.provider';
 import crypto from 'crypto';
 
 test('should trigger Mobishastra library correctly', async () => {
+  const baseUrl = 'https://mshastra.com/sendsms_api_json.aspx';
+  const senderName = 'sender-name';
+  const testMobileNumber = '+123456789';
+  const smsMessageContent = 'SMS Content form Mobishastra SMS Provider';
+  const username = 'profile-username';
+  const password = 'profile-password';
+
   const provider = new MobishastraProvider({
-    baseUrl: 'https://mshastra.com/sendsms_api_json.aspx',
-    from: 'sender-name',
-    username: 'profile-username',
-    password: 'profile-password',
+    baseUrl,
+    from: senderName,
+    username: username,
+    password: password,
   });
 
   const spy = jest
@@ -23,9 +30,9 @@ test('should trigger Mobishastra library correctly', async () => {
     });
 
   await provider.sendMessage({
-    to: '+123456789',
-    from: 'sender-name',
-    content: 'SMS Content form Mobishastra SMS Provider',
+    to: testMobileNumber,
+    from: senderName,
+    content: smsMessageContent,
   });
 
   expect(spy).toHaveBeenCalled();
@@ -33,11 +40,11 @@ test('should trigger Mobishastra library correctly', async () => {
     method: 'POST',
     data: JSON.stringify([
       {
-        Sender: 'sender-name',
-        number: '+123456789',
-        msg: 'SMS Content form Mobishastra SMS Provider',
-        user: 'profile-username',
-        pwd: 'profile-password',
+        Sender: senderName,
+        number: testMobileNumber,
+        msg: smsMessageContent,
+        user: username,
+        pwd: password,
       },
     ]),
   });
