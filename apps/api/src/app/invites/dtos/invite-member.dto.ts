@@ -13,4 +13,7 @@ export class InviteWebhookDto {
   @ValidateNested()
   @Type(() => SubscriberEntity)
   subscriber: SubscriberEntity;
+
+  @IsObject()
+  payload: { organizationId: string };
 }
