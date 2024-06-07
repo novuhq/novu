@@ -40,7 +40,7 @@ export function HubspotSignupForm() {
         }
       }
     }
-  }, [navigate, isFromVercel, startVercelSetup, currentUser, environmentId]);
+  }, [isFromVercel, startVercelSetup, currentUser, environmentId]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, jobTitle, ...rest } = data;
@@ -52,7 +52,7 @@ export function HubspotSignupForm() {
     // TODO: Move this into useAuth
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
 
-    login(organizationResponseToken);
+    login(organizationResponseToken, ROUTES.GET_STARTED);
   }
 
   const handleCreateOrganization = async (data: IOrganizationCreateForm) => {
@@ -72,8 +72,7 @@ export function HubspotSignupForm() {
 
       return;
     }
-
-    navigate(ROUTES.WORKFLOWS);
+    navigate(ROUTES.GET_STARTED);
   };
 
   if (!currentUser || loading) {
