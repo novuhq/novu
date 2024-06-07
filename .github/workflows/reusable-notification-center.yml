@@ -2,6 +2,12 @@ name: Test and build @novu/notification-center
 
 on:
   workflow_call:
+    inputs:
+      tests:
+        description: 'Determines if tests are need to be executed'
+        required: false
+        type: boolean
+        default: true
 
 jobs:
   build_test:
@@ -12,8 +18,16 @@ jobs:
       - uses: ./.github/actions/setup-project
 
       - uses: mansagroup/nrwl-nx-action@v3
+        if: ${{ inputs.tests}}
         with:
           targets: build,test
+          projects: '@novu/notification-center'
+          nxCloud: true
+
+      - uses: mansagroup/nrwl-nx-action@v3
+        if: ${{ !inputs.tests }}
+        with:
+          targets: build
           projects: '@novu/notification-center'
           nxCloud: true
 
