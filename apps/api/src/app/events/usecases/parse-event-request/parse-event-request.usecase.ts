@@ -158,7 +158,11 @@ export class ParseEventRequest {
       transactionId,
     };
 
-    await this.sendInAppNudgeForTeamMemberInvite(command);
+    try {
+      await this.sendInAppNudgeForTeamMemberInvite(command);
+    } catch (error) {
+      Logger.error(error, 'Invite nudge failed', LOG_CONTEXT);
+    }
 
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
 
@@ -264,8 +268,10 @@ export class ParseEventRequest {
 
     if (notificationCount > 0) return;
 
-    // After the first trigger, we invalidate the cache to ensure the next event trigger
-    // will update the cache with a count of 1.
+    /*
+     * After the first trigger, we invalidate the cache to ensure the next event trigger
+     * will update the cache with a count of 1.
+     */
     this.invalidateCacheService.invalidateByKey({
       key: buildHasNotificationKey({
         _organizationId: command.organizationId,
@@ -305,6 +311,7 @@ export class ParseEventRequest {
           payload: {
             [INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]: true,
             webhookUrl: `${process.env.API_ROOT_URL}/v1/invites/webhook`,
+            organizationId: command.organizationId,
           },
         });
 
