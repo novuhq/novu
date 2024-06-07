@@ -9,7 +9,6 @@ on:
   push:
     branches:
       - prod
-      - next
 
 jobs:
   pre-release:
@@ -70,73 +69,18 @@ jobs:
     needs: [pre-release]
     if: github.ref == 'refs/heads/prod' || github.event.inputs.environment == 'prod'
 
-  # Dev release
-  release-dev-api:
-    uses: ./.github/workflows/cloud-deploy-dev-api.yml
-    needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
-
-  release-dev-embed:
-    uses: ./.github/workflows/cloud-deploy-dev-embed.yml
-    needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
-
-  release-dev-inbound-mail:
-    uses: ./.github/workflows/cloud-deploy-dev-embed.yml
-    needs: [ pre-release ]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
-
-  release-dev-web:
-    uses: ./.github/workflows/cloud-deploy-dev-web.yml
-    needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
-
-  release-dev-web-components:
-    uses: ./.github/workflows/cloud-deploy-dev-web-components.yml
-    needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
-
-  release-dev-webhook:
-    uses: ./.github/workflows/cloud-deploy-dev-webhook.yml
-    needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
-
-  release-dev-widget:
-    uses: ./.github/workflows/cloud-deploy-dev-widget.yml
-    needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
-
-  release-dev-worker:
-    uses: ./.github/workflows/cloud-deploy-dev-worker.yml
-    needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
-
-  release-dev-ws:
-    uses: ./.github/workflows/cloud-deploy-dev-ws.yml
-    needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
-
   post-release:
     if: ${{ always() }}
     needs: [
       release-prod-api,
-      release-dev-api,
       release-prod-embed,
-      release-dev-embed,
       release-prod-inbound-mail,
-      release-dev-inbound-mail,
       release-prod-web,
-      release-dev-web,
       release-prod-web-components,
-      release-dev-web-components,
       release-prod-webhook,
-      release-dev-webhook,
       release-prod-widget,
-      release-dev-widget,
       release-prod-worker,
-      release-dev-worker,
       release-prod-ws,
-      release-dev-ws
     ]
     runs-on: ubuntu-latest
     steps:

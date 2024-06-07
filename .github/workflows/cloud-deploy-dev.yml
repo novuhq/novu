@@ -1,0 +1,106 @@
+name: Release Dev
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment (prod, dev)'
+        required: true
+        default: 'dev'
+  push:
+    branches:
+      - next
+
+jobs:
+  pre-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start Deployment Notification
+        uses: ravsamhq/notify-slack-action@v2
+        with:
+          notification_title: "Release has started"
+        env:
+          SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
+
+  release-dev-api:
+    uses: ./.github/workflows/cloud-deploy-dev-api.yml
+    needs: [pre-release]
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+
+  release-dev-embed:
+    uses: ./.github/workflows/cloud-deploy-dev-embed.yml
+    needs: [pre-release]
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+
+  release-dev-inbound-mail:
+    uses: ./.github/workflows/cloud-deploy-dev-embed.yml
+    needs: [ pre-release ]
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+
+  release-dev-web:
+    uses: ./.github/workflows/cloud-deploy-dev-web.yml
+    needs: [pre-release]
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+
+  release-dev-web-components:
+    uses: ./.github/workflows/cloud-deploy-dev-web-components.yml
+    needs: [pre-release]
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+
+  release-dev-webhook:
+    uses: ./.github/workflows/cloud-deploy-dev-webhook.yml
+    needs: [pre-release]
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+
+  release-dev-widget:
+    uses: ./.github/workflows/cloud-deploy-dev-widget.yml
+    needs: [pre-release]
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+
+  release-dev-worker:
+    uses: ./.github/workflows/cloud-deploy-dev-worker.yml
+    needs: [pre-release]
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+
+  release-dev-ws:
+    uses: ./.github/workflows/cloud-deploy-dev-ws.yml
+    needs: [pre-release]
+    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+
+  post-release:
+    if: ${{ always() }}
+    needs: [
+      release-dev-api,
+      release-dev-embed,
+      release-dev-inbound-mail,
+      release-dev-web,
+      release-dev-web-components,
+      release-dev-webhook,
+      release-dev-widget,
+      release-dev-worker,
+      release-dev-ws
+    ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy API Documentation
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
+          method: 'POST'
+
+      - name: Failed Deployment Notification
+        if: ${{ failure() }}   # This step runs only if any of the previous jobs fail.
+        uses: ravsamhq/notify-slack-action@v2
+        with:
+          notification_title: "Release has failed"
+        env:
+          SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
+
+
+      - name: Success Deployment Notification
+        if: ${{ success() }}   # This step runs only if all the previous jobs succeed.
+        uses: ravsamhq/notify-slack-action@v2
+        with:
+          notification_title: "Release was successful"
+        env:
+          SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
