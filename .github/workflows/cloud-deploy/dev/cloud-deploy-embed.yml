@@ -1,0 +1,34 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Deploy DEV EMBED
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  workflow_call:
+
+jobs:
+  # This workflow contains a single job called "build"
+  deploy_embed:
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    uses: ./.github/workflows/reusable-embed-deploy.yml
+    with:
+      environment: Development
+      widget_url: https://dev.widget.novu.co
+      netlify_deploy_message: Dev deployment
+      netlify_alias: dev
+      netlify_gh_env: development
+      netlify_site_id: 22682666-3a8d-40be-af26-017bfadf5ae9
+    secrets: inherit
+
+  publish_docker_image_embed:
+    needs: deploy_embed
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    uses: ./.github/workflows/reusable-docker.yml
+    with:
+      environment: Development
+      package_name: novu/embed
+      project_path: libs/embed
+      local_tag: novu-embed
+      env_tag: dev
+    secrets: inherit
