@@ -8,10 +8,10 @@ import fs from "fs/promises";
 import path from "path";
 import { cyan, bold } from "picocolors";
 import { Sema } from "async-sema";
-import pkg from "../package.json";
 
 import { GetTemplateFileArgs, InstallTemplateArgs } from "./types";
 
+import { buildBridgeSubdomain } from "@novu/application-generic";
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
  */
@@ -39,6 +39,8 @@ export const installTemplate = async ({
   eslint,
   srcDir,
   importAlias,
+  apiKey,
+  tunnelHost,
 }: InstallTemplateArgs) => {
   console.log(bold(`Using ${packageManager}.`));
 
@@ -166,6 +168,21 @@ export const installTemplate = async ({
     }
   }
 
+  /* write .env file */
+  const port = 4000;
+  const subdomain = buildBridgeSubdomain(apiKey);
+  const host = tunnelHost;
+
+  await fs.writeFile(
+    path.join(root, ".env"),
+    `PORT=${port}` +
+      os.EOL +
+      `TUNNEL_SUBDOMAIN=${subdomain}` +
+      os.EOL +
+      `TUNNEL_HOST=${host}` +
+      os.EOL,
+  );
+
   /** Copy the version from package.json or override for tests. */
   const version = "14.2.3";
 
@@ -175,7 +192,9 @@ export const installTemplate = async ({
     version: "0.1.0",
     private: true,
     scripts: {
-      dev: "next dev --port=4000",
+      tunnel: "node scripts/tunnel.mjs",
+      "next-dev": `next dev --port=${port}`,
+      dev: "concurrently 'npm run tunnel' 'npm run next-dev'",
       build: "next build",
       start: "next start",
       lint: "next lint",
@@ -229,6 +248,25 @@ export const installTemplate = async ({
       "eslint-config-next": version,
     };
   }
+
+  /* local tunnel */
+  packageJson.devDependencies = {
+    ...packageJson.devDependencies,
+    "@types/localtunnel": "^2.0.4",
+    localtunnel: "^2.0.2",
+  };
+
+  /* dotenv */
+  packageJson.devDependencies = {
+    ...packageJson.devDependencies,
+    dotenv: "^16.4.5",
+  };
+
+  /* concurrently */
+  packageJson.devDependencies = {
+    ...packageJson.devDependencies,
+    concurrently: "^8.2.2",
+  };
 
   const devDeps = Object.keys(packageJson.devDependencies).length;
   if (!devDeps) delete packageJson.devDependencies;

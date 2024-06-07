@@ -13,7 +13,7 @@
     "clean": "lerna clean --yes && rimraf node_modules",
     "commit": "cz",
     "nx": "nx",
-    "lint-staged": "lint-staged",
+    "lint-staged": "NODE_OPTIONS=--max_old_space_size=8192 lint-staged",
     "generate:provider": "cd libs/automation && npm run generate:provider",
     "lint": "nx run-many  --target=lint --all",
     "test": "cross-env CI=true lerna run test:watch --parallel",
