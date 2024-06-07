@@ -26,6 +26,7 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-dev-api.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    secrets: inherit
     permissions:
       contents: read
       packages: write
@@ -36,6 +37,7 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-dev-embed.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    secrets: inherit
     permissions:
       contents: read
       packages: write
@@ -46,6 +48,7 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-dev-embed.yml
     needs: [ pre-release ]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    secrets: inherit
     permissions:
       contents: read
       packages: write
@@ -56,6 +59,7 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-dev-web.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    secrets: inherit
     permissions:
       contents: read
       packages: write
@@ -66,6 +70,7 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-dev-web-components.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    secrets: inherit
     permissions:
       contents: read
       packages: write
@@ -76,6 +81,7 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-dev-webhook.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    secrets: inherit
     permissions:
       contents: read
       packages: write
@@ -86,6 +92,7 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-dev-widget.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    secrets: inherit
     permissions:
       contents: read
       packages: write
@@ -96,6 +103,7 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-dev-worker.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    secrets: inherit
     permissions:
       contents: read
       packages: write
@@ -106,6 +114,7 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-dev-ws.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    secrets: inherit
     permissions:
       contents: read
       packages: write

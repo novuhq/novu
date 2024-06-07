@@ -134,6 +134,11 @@ jobs:
     name: New Relic Deploy
     needs: deploy_dev_api
     environment: Development
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
     steps:
       # This step builds a var with the release tag value to use later
       - name: Set Release Version from Tag
