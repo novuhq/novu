@@ -26,46 +26,91 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-dev-api.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
   release-dev-embed:
     uses: ./.github/workflows/cloud-deploy-dev-embed.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
   release-dev-inbound-mail:
     uses: ./.github/workflows/cloud-deploy-dev-embed.yml
     needs: [ pre-release ]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
   release-dev-web:
     uses: ./.github/workflows/cloud-deploy-dev-web.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
   release-dev-web-components:
     uses: ./.github/workflows/cloud-deploy-dev-web-components.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
   release-dev-webhook:
     uses: ./.github/workflows/cloud-deploy-dev-webhook.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
   release-dev-widget:
     uses: ./.github/workflows/cloud-deploy-dev-widget.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
   release-dev-worker:
     uses: ./.github/workflows/cloud-deploy-dev-worker.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
   release-dev-ws:
     uses: ./.github/workflows/cloud-deploy-dev-ws.yml
     needs: [pre-release]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+      id-token: write
 
   post-release:
     if: ${{ always() }}

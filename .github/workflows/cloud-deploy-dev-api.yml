@@ -28,6 +28,7 @@ jobs:
         with:
           submodules: ${{ contains (matrix.name,'-ee') }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
+
       - uses: ./.github/actions/setup-project
         with:
           submodules: ${{ contains (matrix.name,'-ee') }}
