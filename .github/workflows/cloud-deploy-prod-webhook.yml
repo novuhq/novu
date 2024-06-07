@@ -6,7 +6,6 @@ on:
 jobs:
 
   publish_docker_image_webhook:
-    needs: test_webhook
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Production
