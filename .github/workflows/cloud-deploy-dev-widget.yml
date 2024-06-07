@@ -11,7 +11,6 @@ on:
 jobs:
 
   deploy_widget:
-    needs: test_widget
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-widget-deploy.yml
     with:
