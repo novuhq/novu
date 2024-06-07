@@ -11,7 +11,6 @@ on:
 jobs:
 
   deploy_widget:
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-widget-deploy.yml
     with:
       environment: Development
@@ -27,8 +26,6 @@ jobs:
     secrets: inherit
 
   publish_docker_image_widget:
-    needs: test_widget
-    if: "!contains(github.event.head_commit.message, 'ci skip')"
     uses: ./.github/workflows/reusable-docker.yml
     with:
       environment: Development
