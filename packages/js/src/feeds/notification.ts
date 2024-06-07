@@ -16,14 +16,12 @@ import { markActionAs, markNotificationAs, remove } from './helpers';
 type NotificationLike = Pick<
   Notification,
   | '_id'
-  | '_subscriberId'
   | '_feedId'
   | 'createdAt'
   | 'updatedAt'
   | 'actor'
   | 'subscriber'
   | 'transactionId'
-  | 'templateIdentifier'
   | 'content'
   | 'read'
   | 'seen'
@@ -38,14 +36,12 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   #apiService: ApiService;
 
   _id: string;
-  _subscriberId: string;
   _feedId?: string | null;
   createdAt: string;
   updatedAt: string;
   actor?: Actor;
   subscriber?: Subscriber;
   transactionId: string;
-  templateIdentifier: string;
   content: string;
   read: boolean;
   seen: boolean;
@@ -59,14 +55,12 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
     this.#apiService = ApiServiceSingleton.getInstance();
 
     this._id = notification._id;
-    this._subscriberId = notification._subscriberId;
     this._feedId = notification._feedId;
     this.createdAt = notification.createdAt;
     this.updatedAt = notification.updatedAt;
     this.actor = notification.actor;
     this.subscriber = notification.subscriber;
     this.transactionId = notification.transactionId;
-    this.templateIdentifier = notification.templateIdentifier;
     this.content = notification.content;
     this.read = notification.read;
     this.seen = notification.seen;
