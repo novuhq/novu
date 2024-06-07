@@ -20,7 +20,7 @@ const baseModuleConfig: Options = {
   treeshake: true,
   bundle: false,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
-  entry: await glob('./src/**/!(*.d|*.spec).ts'),
+  entry: await glob('./src/**/!(*.d|*.test).ts'),
   outExtension: ({ format }) => {
     return {
       js: format === 'cjs' ? '.cjs' : '.js',
