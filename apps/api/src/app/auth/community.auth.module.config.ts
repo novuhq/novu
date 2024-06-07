@@ -1,18 +1,10 @@
 import { MiddlewareConsumer, ModuleMetadata, Provider, RequestMethod } from '@nestjs/common';
-import { JwtModule, JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import * as passport from 'passport';
 
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
-import {
-  AnalyticsService,
-  AuthService,
-  CommunityAuthService,
-  CreateUser,
-  IAuthService,
-  SwitchEnvironment,
-  SwitchOrganization,
-} from '@novu/application-generic';
+import { AuthService, CommunityAuthService, CommunityUserAuthGuard } from '@novu/application-generic';
 
 import { RolesGuard } from './framework/roles.guard';
 import { JwtStrategy } from './services/passport/jwt.strategy';
@@ -24,19 +16,9 @@ import { GitHubStrategy } from './services/passport/github.strategy';
 import { OrganizationModule } from '../organization/organization.module';
 import { EnvironmentsModule } from '../environments/environments.module';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
-import { UserAuthGuard } from './framework/user.auth.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
-import {
-  UserRepository,
-  SubscriberRepository,
-  OrganizationRepository,
-  EnvironmentRepository,
-  MemberRepository,
-  CommunityMemberRepository,
-  CommunityOrganizationRepository,
-  CommunityUserRepository,
-} from '@novu/dal';
+import { CommunityMemberRepository, CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
 
@@ -46,43 +28,12 @@ if (process.env.GITHUB_OAUTH_CLIENT_ID) {
 
 const authServiceProvider = {
   provide: 'AUTH_SERVICE',
-  useFactory: (
-    userRepository: UserRepository,
-    subscriberRepository: SubscriberRepository,
-    createUserUsecase: CreateUser,
-    jwtService: JwtService,
-    analyticsService: AnalyticsService,
-    organizationRepository: OrganizationRepository,
-    environmentRepository: EnvironmentRepository,
-    memberRepository: MemberRepository,
-    switchOrganizationUsecase: SwitchOrganization,
-    switchEnvironmentUsecase: SwitchEnvironment
-  ): IAuthService => {
-    return new CommunityAuthService(
-      userRepository,
-      subscriberRepository,
-      createUserUsecase,
-      jwtService,
-      analyticsService,
-      organizationRepository,
-      environmentRepository,
-      memberRepository,
-      switchOrganizationUsecase,
-      switchEnvironmentUsecase
-    );
-  },
-  inject: [
-    UserRepository,
-    SubscriberRepository,
-    CreateUser,
-    JwtService,
-    AnalyticsService,
-    OrganizationRepository,
-    EnvironmentRepository,
-    MemberRepository,
-    SwitchOrganization,
-    SwitchEnvironment,
-  ],
+  useClass: CommunityAuthService,
+};
+
+const userAuthGuardProvider = {
+  provide: 'USER_AUTH_GUARD',
+  useClass: CommunityUserAuthGuard,
 };
 
 const userRepositoryProvider = {
@@ -119,13 +70,13 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     ],
     controllers: [AuthController],
     providers: [
-      UserAuthGuard,
       ...USE_CASES,
       ...AUTH_STRATEGIES,
       AuthService,
       RolesGuard,
       RootEnvironmentGuard,
       authServiceProvider,
+      userAuthGuardProvider,
       userRepositoryProvider,
       memberRepositoryProvider,
       organizationRepositoryProvider,
@@ -135,11 +86,11 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
       RootEnvironmentGuard,
       AuthService,
       'AUTH_SERVICE',
+      'USER_AUTH_GUARD',
       'USER_REPOSITORY',
       'MEMBER_REPOSITORY',
       'ORGANIZATION_REPOSITORY',
       ...USE_CASES,
-      UserAuthGuard,
     ],
   };
 }

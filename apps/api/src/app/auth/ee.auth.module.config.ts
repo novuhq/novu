@@ -1,7 +1,14 @@
-import { AuthService, IAuthService, PlatformException, UserAuthGuard } from '@novu/application-generic';
+import {
+  AuthService,
+  IAuthService,
+  PlatformException,
+  SwitchEnvironment,
+  SwitchOrganization,
+} from '@novu/application-generic';
 import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ModuleMetadata } from '@nestjs/common';
+import { EnvironmentRepository, MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
 
 const eeAuthServiceProvider = {
   provide: 'AUTH_SERVICE',
@@ -12,6 +19,18 @@ const eeAuthServiceProvider = {
     }
 
     return new eeAuthPackage.EEAuthService();
+  },
+};
+
+const eeUserAuthGuard = {
+  provide: 'USER_AUTH_GUARD',
+  useFactory: () => {
+    const eeAuthPackage = require('@novu/ee-auth');
+    if (!eeAuthPackage?.EEUserAuthGuard) {
+      throw new PlatformException('EEUserAuthGuard is not loaded');
+    }
+
+    return new eeAuthPackage.EEUserAuthGuard();
   },
 };
 
@@ -73,7 +92,13 @@ export function getEEModuleConfig(): ModuleMetadata {
       eeUserRepositoryProvider,
       eeMemberRepositoryProvider,
       eeOrganizationRepositoryProvider,
-      UserAuthGuard,
+      eeUserAuthGuard,
+      UserRepository,
+      MemberRepository,
+      EnvironmentRepository,
+      OrganizationRepository,
+      SwitchEnvironment,
+      SwitchOrganization,
       RolesGuard,
       AuthService,
       RootEnvironmentGuard,
@@ -83,8 +108,8 @@ export function getEEModuleConfig(): ModuleMetadata {
       RolesGuard,
       RootEnvironmentGuard,
       AuthService,
-      UserAuthGuard,
       'AUTH_SERVICE',
+      'USER_AUTH_GUARD',
       'USER_REPOSITORY',
       'MEMBER_REPOSITORY',
       'ORGANIZATION_REPOSITORY',

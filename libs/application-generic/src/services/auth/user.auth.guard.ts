@@ -1,41 +1,12 @@
-import { Injectable, ExecutionContext, Logger } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { Injectable, ExecutionContext, Inject } from '@nestjs/common';
 import { IAuthGuard, IAuthModuleOptions } from '@nestjs/passport';
 import { IJwtClaims } from '@novu/shared';
-import { CommunityUserAuthGuard } from './community.user.auth.guard';
 import { Observable } from 'rxjs';
 import { Instrument } from '../../instrumentation';
-import { PlatformException } from '../../utils/exceptions';
-
-function initiateAuthGuard(reflector: Reflector) {
-  try {
-    if (process.env.NOVU_ENTERPRISE === 'true') {
-      const eeAuthModule = require('@novu/ee-auth');
-      if (!eeAuthModule?.EEUserAuthGuard) {
-        throw new PlatformException('EEUserAuthGuard is not loaded');
-      }
-
-      return new eeAuthModule.EEUserAuthGuard(reflector);
-    } else {
-      return new CommunityUserAuthGuard(reflector);
-    }
-  } catch (e) {
-    Logger.error(
-      e,
-      'Unexpected error while importing enterprise modules',
-      'EEUserAuthGuard'
-    );
-    throw e;
-  }
-}
 
 @Injectable()
 export class UserAuthGuard {
-  private readonly authGuard: IAuthGuard;
-
-  constructor(reflector: Reflector) {
-    this.authGuard = initiateAuthGuard(reflector);
-  }
+  constructor(@Inject('USER_AUTH_GUARD') private authGuard: IAuthGuard) {}
 
   @Instrument()
   canActivate(

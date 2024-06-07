@@ -2753,9 +2753,6 @@ importers:
         specifier: ^1.4.6
         version: 1.6.6
     optionalDependencies:
-      '@novu/ee-auth':
-        specifier: workspace:*
-        version: link:../../enterprise/packages/auth
       '@novu/ee-echo-worker':
         specifier: workspace:*
         version: link:../../enterprise/packages/echo/echo-worker
@@ -72183,7 +72180,7 @@ snapshots:
       jest-worker: 26.6.2
       rollup: 2.79.1
       serialize-javascript: 4.0.0
-      terser: 5.22.0
+      terser: 5.16.9
 
   rollup-plugin-terser@7.0.2(rollup@3.20.2):
     dependencies:
