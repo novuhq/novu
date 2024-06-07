@@ -21,8 +21,6 @@ jobs:
     secrets: inherit
 
   deploy_widget_us:
-    needs:
-      - test_widget
     uses: ./.github/workflows/reusable-widget-deploy.yml
     with:
       environment: Production
