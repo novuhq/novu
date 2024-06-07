@@ -18,6 +18,7 @@ jobs:
       - uses: ./.github/actions/setup-project
 
       - uses: mansagroup/nrwl-nx-action@v3
+        name: build and test
         if: ${{ inputs.tests}}
         with:
           targets: build,test
@@ -25,6 +26,7 @@ jobs:
           nxCloud: true
 
       - uses: mansagroup/nrwl-nx-action@v3
+        name: build
         if: ${{ !inputs.tests }}
         with:
           targets: build
