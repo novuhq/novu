@@ -69,42 +69,39 @@ const enterpriseQuotaThrottlerInterceptor =
 
 const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   AuthModule,
-  InboundParseModule, //
-  SharedModule, // DALS, analytics, cache ....
-  HealthModule, //
-  EnvironmentsModule, //
-  ExecutionDetailsModule, //
-  WorkflowModule, //
-  EventsModule, //
-  NotificationModule, //
-  NotificationGroupsModule, //
-  ContentTemplatesModule, //
-  IntegrationModule, //
-  ChangeModule, //
-  SubscribersModule, //
-  FeedsModule, //
-  LayoutsModule, //
-  MessagesModule, //
-  PartnerIntegrationsModule, //
-  TopicsModule, //
-  BlueprintModule, //
-  TenantModule, //
-  WorkflowOverridesModule, //
-  RateLimitingModule, //
-  WidgetsModule, //
-  ProfilingModule.register(packageJson.name), //
-  TracingModule.register(packageJson.name, packageJson.version), //
+  InboundParseModule,
+  SharedModule,
+  HealthModule,
+  EnvironmentsModule,
+  ExecutionDetailsModule,
+  WorkflowModule,
+  EventsModule,
+  NotificationModule,
+  NotificationGroupsModule,
+  ContentTemplatesModule,
+  OrganizationModule,
+  UserModule,
+  IntegrationModule,
+  ChangeModule,
+  SubscribersModule,
+  FeedsModule,
+  LayoutsModule,
+  MessagesModule,
+  PartnerIntegrationsModule,
+  TopicsModule,
+  BlueprintModule,
+  TenantModule,
+  WorkflowOverridesModule,
+  RateLimitingModule,
+  WidgetsModule,
+  ProfilingModule.register(packageJson.name),
+  TracingModule.register(packageJson.name, packageJson.version),
 ];
 
 const enterpriseModules = enterpriseImports();
 
 if (process.env.NOVU_ENTERPRISE !== 'true') {
-  const communityModules = [
-    OrganizationModule, // no interdeps
-    UserModule, // no interdeps
-    StorageModule, // no interdeps
-    InvitesModule, // no interdeps
-  ];
+  const communityModules = [StorageModule, InvitesModule];
   baseModules.push(...communityModules);
 }
 

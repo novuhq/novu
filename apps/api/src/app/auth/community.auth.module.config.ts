@@ -51,6 +51,12 @@ const organizationRepositoryProvider = {
   useClass: CommunityOrganizationRepository,
 };
 
+export const COMMUNITY_REPOSITORIES = [
+  userRepositoryProvider,
+  memberRepositoryProvider,
+  organizationRepositoryProvider,
+];
+
 export function getCommunityAuthModuleConfig(): ModuleMetadata {
   return {
     imports: [
@@ -72,14 +78,12 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     providers: [
       ...USE_CASES,
       ...AUTH_STRATEGIES,
+      ...COMMUNITY_REPOSITORIES,
       AuthService,
       RolesGuard,
       RootEnvironmentGuard,
       authServiceProvider,
       userAuthGuardProvider,
-      userRepositoryProvider,
-      memberRepositoryProvider,
-      organizationRepositoryProvider,
     ],
     exports: [
       RolesGuard,

@@ -7,8 +7,10 @@ import {
 } from '@novu/application-generic';
 import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
-import { ModuleMetadata } from '@nestjs/common';
+import { ModuleMetadata, Provider } from '@nestjs/common';
 import { EnvironmentRepository, MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
+import { ApiKeyStrategy } from './services/passport/apikey.strategy';
+import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 
 const eeAuthServiceProvider = {
   provide: 'AUTH_SERVICE',
@@ -70,6 +72,8 @@ const eeOrganizationRepositoryProvider = {
   },
 };
 
+export const EE_REPOSITORIES = [eeUserRepositoryProvider, eeMemberRepositoryProvider, eeOrganizationRepositoryProvider];
+
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
   const jwtClerkStrategy = eeAuthPackage?.JwtClerkStrategy;
@@ -83,28 +87,28 @@ export function getEEModuleConfig(): ModuleMetadata {
     throw new Error('EEAuthController is not loaded');
   }
 
+  const AUTH_STRATEGIES: Provider[] = [jwtClerkStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
+  const EE_AUTH_PROVIDERS: Provider[] = [eeAuthServiceProvider, AuthService, eeUserAuthGuard];
+
   return {
     imports: [],
     controllers: [eeAuthController],
     providers: [
-      jwtClerkStrategy,
-      eeAuthServiceProvider,
-      eeUserRepositoryProvider,
-      eeMemberRepositoryProvider,
-      eeOrganizationRepositoryProvider,
-      eeUserAuthGuard,
+      ...AUTH_STRATEGIES,
+      ...EE_AUTH_PROVIDERS,
+      ...EE_REPOSITORIES,
+      // original repositories need to be here for the DI to work
       UserRepository,
       MemberRepository,
-      EnvironmentRepository,
       OrganizationRepository,
+      EnvironmentRepository,
+      // reused services
       SwitchEnvironment,
       SwitchOrganization,
       RolesGuard,
-      AuthService,
       RootEnvironmentGuard,
     ],
     exports: [
-      jwtClerkStrategy,
       RolesGuard,
       RootEnvironmentGuard,
       AuthService,
