@@ -6,11 +6,14 @@ import {
   MemberRepository,
   OrganizationRepository,
 } from '@novu/dal';
+import { getRepository } from './repository.factory';
 
 export class OrganizationService {
-  private organizationRepository = new OrganizationRepository(new CommunityOrganizationRepository());
+  private organizationRepository = new OrganizationRepository(
+    getRepository('EEOrganizationRepository', CommunityOrganizationRepository)
+  );
 
-  private memberRepository = new MemberRepository(new CommunityMemberRepository());
+  private memberRepository = new MemberRepository(getRepository('EEMemberRepository', CommunityMemberRepository));
 
   async createOrganization(options?: Parameters<OrganizationRepository['create']>[0]) {
     if (options) {

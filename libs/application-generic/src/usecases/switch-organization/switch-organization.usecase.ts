@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import {
   MemberRepository,
-  OrganizationRepository,
   UserRepository,
   EnvironmentRepository,
 } from '@novu/dal';
@@ -17,7 +16,6 @@ import { ApiException } from '../../utils/exceptions';
 @Injectable()
 export class SwitchOrganization {
   constructor(
-    private organizationRepository: OrganizationRepository,
     private userRepository: UserRepository,
     private memberRepository: MemberRepository,
     private environmentRepository: EnvironmentRepository,
