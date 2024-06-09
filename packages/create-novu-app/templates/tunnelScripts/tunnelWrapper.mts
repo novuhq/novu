@@ -1,12 +1,12 @@
-import localtunnel from "localtunnel";
+import localtunnel from 'localtunnel';
 
 export default class LocalTunnelWrapper {
-  port;
-  subdomain;
-  tunnel;
-  host;
+  private port: number;
+  private subdomain: string;
+  private tunnel: localtunnel.Tunnel | undefined;
+  private host: string;
 
-  constructor(port, subdomain, host) {
+  constructor(port: number, subdomain: string, host: string) {
     this.port = port;
     this.subdomain = subdomain;
     this.host = host;
@@ -21,6 +21,6 @@ export default class LocalTunnelWrapper {
   }
 
   getUrl() {
-    return this.tunnel.url;
+    return this.tunnel?.url;
   }
 }

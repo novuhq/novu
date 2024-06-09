@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "ncc build ./index.ts -w -o dist/",
+    "dev": "rm -rf dist/ && ncc build ./index.ts -w -o dist/",
     "prerelease": "rimraf dist",
     "release": "ncc build ./index.ts -o ./dist/ --minify --no-cache --no-source-map-register",
     "build": "pnpm release",

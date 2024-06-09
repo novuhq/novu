@@ -197,7 +197,8 @@ export const installTemplate = async ({
     version: "0.1.0",
     private: true,
     scripts: {
-      tunnel: "node scripts/tunnel.mjs",
+      tunnel:
+        "node --loader ts-node/esm --no-warnings=ExperimentalWarning scripts/tunnel.mts",
       "next-dev": `next dev --port=${port}`,
       dev: "concurrently 'npm run tunnel' 'npm run next-dev'",
       build: "next build",
