@@ -1,0 +1,105 @@
+name: Release Prod
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - prod
+
+jobs:
+  pre-release:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Start Deployment Notification
+        uses: actions/slack@master
+        with:
+          channel: '#eng-feed-deployments'
+          message: 'Release has started'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  release-api:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-api.yml
+
+  release-embed:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-embed.yml
+
+  release-web:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-web.yml
+
+  release-web-components:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-web-components.yml
+
+  release-webhook:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-webhook.yml
+
+  release-widget:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-widget.yml
+
+  release-worker:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-worker.yml
+
+  release-ws:
+    needs: [pre-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: ./.github/workflows/cloud-deploy/cloud-deploy-ws.yml
+
+  post-release:
+    if: ${{ always() }}
+    needs: [
+      release-api,
+      release-embed,
+      release-web,
+      release-web-components,
+      release-webhook,
+      release-widget,
+      release-worker,
+      release-ws
+    ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy API Documentation
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.API_DOCS_BUILD_WEBHOOK }}
+          method: 'POST'
+
+      - name: Start Deployment Notification
+        if: ${{ failure() }}   # This step runs only if any of the previous jobs fail.
+        uses: actions/slack@master
+        with:
+          channel: '#eng-feed-deployments'
+          message: 'Release has failed'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+      - name: Start Deployment Notification
+        if: ${{ success() }}   # This step runs only if all the previous jobs succeed.
+        uses: actions/slack@master
+        with:
+          channel: '#eng-feed-deployments'
+          message: 'Release has finished'
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
