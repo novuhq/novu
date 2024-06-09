@@ -2,7 +2,6 @@ import { WidgetProps } from '@rjsf/utils';
 import { Input } from '../../components/input/Input';
 
 export const InputWidget = (props: WidgetProps) => {
-  console.log('input', props);
   let type: 'text' | 'password' | 'email' | 'search' | 'tel' | 'url' | 'number' | 'time' = 'text';
   if (['number', 'search', 'tel', 'url', 'email', 'time', 'password'].includes(props.schema.type as string)) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
