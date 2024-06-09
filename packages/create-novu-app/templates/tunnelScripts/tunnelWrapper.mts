@@ -1,6 +1,11 @@
-import localtunnel from 'localtunnel';
+import localtunnel from "localtunnel";
 
-export default class LocalTunnelWrapper {
+export interface ITunnelWrapper {
+  connect(): Promise<void>;
+  getUrl(): string | undefined;
+}
+
+export default class LocalTunnelWrapper implements ITunnelWrapper {
   private port: number;
   private subdomain: string;
   private tunnel: localtunnel.Tunnel | undefined;
@@ -20,7 +25,7 @@ export default class LocalTunnelWrapper {
     });
   }
 
-  getUrl() {
+  public getUrl() {
     return this.tunnel?.url;
   }
 }
