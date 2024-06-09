@@ -94,41 +94,4 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
       </Grid.Col>
     </Grid>
   );
-  // return (
-  //   <Grid columns={12} key={index}>
-  //     <GridItem colStart={1} colEnd={12}>
-  //       <div className={css({ px: '125' })}>{children}</div>
-  //     </GridItem>
-  //     <GridItem colSpan={1} colStart={12}>
-  //       <Button.Group>
-  //         {(hasMoveUp || hasMoveDown) && (
-  //           <MoveUpButton
-  //             disabled={disabled || readonly || !hasMoveUp}
-  //             onClick={onReorderClick(index, index - 1)}
-  //             // style={BTN_STYLE}
-  //             // uiSchema={uiSchema}
-  //             registry={registry}
-  //           />
-  //         )}
-  //         {(hasMoveUp || hasMoveDown) && (
-  //           <MoveDownButton
-  //             disabled={disabled || readonly || !hasMoveDown}
-  //             onClick={onReorderClick(index, index + 1)}
-  //             // style={BTN_STYLE}
-  //             // uiSchema={uiSchema}
-  //             registry={registry}
-  //           />
-  //         )}
-  //         {hasRemove && (
-  //           <RemoveButton
-  //             disabled={disabled || readonly}
-  //             onClick={onDropIndexClick(index)}
-  //             // uiSchema={uiSchema}
-  //             registry={registry}
-  //           />
-  //         )}
-  //       </Button.Group>
-  //     </GridItem>
-  //   </Grid>
-  // );
 }
