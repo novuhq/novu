@@ -78,6 +78,11 @@ export const installTemplate = async ({
       }
     },
   });
+  // move tunnel scripts to the project folder
+  await copy(copySource, `${root}/scripts`, {
+    parents: true,
+    cwd: path.join(__dirname, `tunnelScripts`),
+  });
 
   const tsconfigFile = path.join(root, "tsconfig.json");
   await fs.writeFile(
