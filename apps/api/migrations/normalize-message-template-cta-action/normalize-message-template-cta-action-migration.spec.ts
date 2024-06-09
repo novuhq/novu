@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 
 import { UserSession } from '@novu/testing';
 import { MessageRepository, MessageTemplateRepository } from '@novu/dal';

@@ -473,7 +473,7 @@ export class Echo {
 
   private executeStepFactory<T, U>(event: IEvent, setResult: (result: any) => void): ActionStep<T, U> {
     return async (stepId, stepResolve, options) => {
-      if (await this.shouldSkip(options?.skip, event.data)) {
+      if (await this.shouldSkip(options?.skip, event.inputs)) {
         const skippedResult = { options: { skip: true } };
         setResult(skippedResult);
 
@@ -511,12 +511,12 @@ export class Echo {
     };
   }
 
-  private async shouldSkip(skip: Skip | undefined, payload: Record<string, unknown>): Promise<boolean> {
+  private async shouldSkip(skip: Skip | undefined, inputs: Record<string, unknown>): Promise<boolean> {
     if (!skip) {
       return false;
     }
 
-    return skip(payload);
+    return skip(inputs);
   }
 
   public async executeWorkflow(event: IEvent): Promise<ExecuteOutput> {

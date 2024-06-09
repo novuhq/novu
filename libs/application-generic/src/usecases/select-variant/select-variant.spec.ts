@@ -5,11 +5,15 @@ import {
   FieldOperatorEnum,
   StepTypeEnum,
 } from '@novu/shared';
-import { MessageTemplateEntity } from '@novu/dal';
+import {
+  MessageTemplateEntity,
+  TenantRepository,
+  SubscriberRepository,
+  MessageTemplateRepository,
+} from '@novu/dal';
 
 import { ConditionsFilter } from '../conditions-filter';
 import { SelectVariant } from './select-variant.usecase';
-import { MessageTemplateRepository } from '@novu/dal';
 import { SelectVariantCommand } from './select-variant.command';
 import { NormalizeVariables } from '../normalize-variables';
 
@@ -30,8 +34,7 @@ describe('select variant', function () {
       // @ts-ignore
       new ConditionsFilter(),
       new MessageTemplateRepository(),
-      // @ts-ignore
-      new NormalizeVariables()
+      new NormalizeVariables(new SubscriberRepository(), new TenantRepository())
     );
     jest.clearAllMocks();
   });

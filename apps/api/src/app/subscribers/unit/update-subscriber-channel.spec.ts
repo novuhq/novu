@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { expect } from 'chai';
-import faker from '@faker-js/faker';
+import { faker } from '@faker-js/faker';
 
 import { IntegrationRepository, SubscriberRepository } from '@novu/dal';
 import { SubscribersService, UserSession } from '@novu/testing';
