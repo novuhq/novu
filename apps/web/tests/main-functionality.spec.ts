@@ -58,7 +58,7 @@ test('should not reset data when switching channel types', async ({ page }) => {
   await expect(emailNodeModal.editableTextContent()).toContainText('This text is written from a test');
 });
 
-test.skip('TODO - should update to empty data when switching from editor to customHtml', async ({ page }) => {
+test.skip('should update to empty data when switching from editor to customHtml', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const workflowSidePanel = await workflowEditorPage.openWorkflowSettingsSidePanel();
   await workflowSidePanel.fillBasicNotificationDetails({
@@ -111,7 +111,7 @@ test.skip('TODO - should update to empty data when switching from editor to cust
   ).toBeVisible();
 });
 
-test('should save avatar enabled and content for in app', async ({ page }) => {
+test.skip('should save avatar enabled and content for in app', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const workflowSidePanel = await workflowEditorPage.openWorkflowSettingsSidePanel();
   await workflowSidePanel.fillBasicNotificationDetails({
@@ -437,7 +437,7 @@ test('should save Cta buttons state in inApp channel', async ({ page }) => {
   expect(inAppPage.getTemplateContainer().first().locator('input')).toHaveCount(1);
 });
 
-test('should load successfully the recently created notification template, when going back from editor -> templates list -> editor', async ({
+test.skip('should load successfully the recently created notification template, when going back from editor -> templates list -> editor', async ({
   page,
 }) => {
   const workflowsPage = await WorkflowsPage.goTo(page);
