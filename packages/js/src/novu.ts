@@ -6,8 +6,7 @@ import { Feeds } from './feeds';
 import { Session } from './session';
 import { Preferences } from './preferences';
 import { ApiServiceSingleton } from './utils/api-service-singleton';
-
-const PRODUCTION_BACKEND_URL = 'https://api.novu.co';
+import { Socket } from './socket';
 
 const PRODUCTION_BACKEND_URL = 'https://api.novu.co';
 
@@ -16,12 +15,13 @@ type NovuOptions = {
   subscriberId: string;
   subscriberHash?: string;
   backendUrl?: string;
+  socketUrl?: string;
 };
 
 export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
   #emitter: NovuEventEmitter;
   #session: Session;
-  #apiService: ApiService;
+  #socket: Socket;
 
   public readonly feeds: Feeds;
   public readonly preferences: Preferences;
@@ -37,13 +37,17 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
     this.#session.initialize();
     this.feeds = new Feeds();
     this.preferences = new Preferences();
+    this.#socket = new Socket({ socketUrl: options.socketUrl });
   }
 
   on<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
+    if (this.#socket.isSocketEvent(eventName)) {
+      this.#socket.initialize();
+    }
     this.#emitter.on(eventName, listener);
   }
 
   off<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
-    this.#emitter.on(eventName, listener);
+    this.#emitter.off(eventName, listener);
   }
 }

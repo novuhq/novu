@@ -1,4 +1,4 @@
-import {
+import type {
   ButtonTypeEnum,
   MessageActionStatusEnum,
   CustomDataType,
@@ -222,7 +222,7 @@ export class ApiService {
   }
 
   async getPreferences({
-    level = PreferenceLevelEnum.TEMPLATE,
+    level,
   }: {
     level?: `${PreferenceLevelEnum}`;
   }): Promise<Array<IUserPreferenceSettings | IUserGlobalPreferenceSettings>> {

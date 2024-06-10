@@ -45,6 +45,12 @@ export enum PreferenceOverrideSource {
   WORKFLOW_OVERRIDE = 'workflowOverride',
 }
 
+export enum WebSocketEvent {
+  RECEIVED = 'notification_received',
+  UNREAD = 'unread_count_changed',
+  UNSEEN = 'unseen_count_changed',
+}
+
 export type Session = {
   token: string;
   profile: {

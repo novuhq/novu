@@ -1,6 +1,7 @@
-import { ApiService } from '@novu/client';
+import type { ApiService } from '@novu/client';
 
 import { NovuEventEmitter } from './event-emitter';
+import { Session } from './types';
 import { ApiServiceSingleton } from './utils/api-service-singleton';
 
 interface CallQueueItem {
@@ -19,13 +20,15 @@ export class BaseModule {
   constructor() {
     this._emitter = NovuEventEmitter.getInstance();
     this._apiService = ApiServiceSingleton.getInstance();
-    this._emitter.on('session.initialize.success', () => {
+    this._emitter.on('session.initialize.success', ({ result }) => {
+      this.onSessionSuccess(result);
       this.#callsQueue.forEach(async ({ fn, resolve }) => {
         resolve(await fn());
       });
       this.#callsQueue = [];
     });
     this._emitter.on('session.initialize.error', ({ error }) => {
+      this.onSessionError(error);
       this.#sessionError = error;
       this.#callsQueue.forEach(({ reject }) => {
         reject(error);
@@ -33,6 +36,10 @@ export class BaseModule {
       this.#callsQueue = [];
     });
   }
+
+  protected onSessionSuccess(_: Session): void {}
+
+  protected onSessionError(_: unknown): void {}
 
   async callWithSession<T>(fn: () => Promise<T>): Promise<T> {
     if (this._apiService.isAuthenticated) {
