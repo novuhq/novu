@@ -130,5 +130,10 @@
     "*.{js,jsx,ts,tsx}": [
       "eslint"
     ]
-  }
+  },
+  "files": [
+    "dist",
+    "nest-cli.json",
+    "package.json"
+  ]
 }
