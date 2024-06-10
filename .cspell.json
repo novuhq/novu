@@ -610,7 +610,9 @@
     "whatsappbusiness",
     "xkeysib",
     "zulip",
-    "zwnj"
+    "zwnj",
+    "prepush",
+    "xcodebuild"
   ],
   "flagWords": [],
   "patterns": [

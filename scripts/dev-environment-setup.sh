@@ -28,6 +28,12 @@ success_message () {
     echo " "
 }
 
+start_success_message () {
+    echo " "
+    echo "✅ $1 has been started"
+    echo " "
+}
+
 already_installed_message () {
     echo " "
     echo "✅ $1 is already installed"
@@ -99,36 +105,36 @@ install_apple_chip_dependencies () {
 }
 
 install_xcode () {
-    echo ""
-    echo "❓ Do you want to install Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
+  echo ""
+  echo "❓ Do you want to install Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
+  read -p " > " RESPONSE
+  echo ""
+
+  if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
+	  installing_dependency "Xcode"
+	  xcode-select --install &
+	  PID=$!
+	  wait $PID
+	  sudo xcode-select --switch /Library/Developer/CommandLineTools
+	  sudo xcodebuild -license accept
+	  xcodebuild -runFirstLaunch
+	  success_message "Xcode"
+  fi
+
+  if [[ "$RESPONSE" == "$NEGATIVE_RESPONSE" ]]; then
+	  echo ""
+	  echo "❓ Do you want to update Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
     read -p " > " RESPONSE
-    echo ""
+	  echo ""
 
     if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
-	installing_dependency "Xcode"
-	xcode-select --install &
-	PID=$!
-	wait $PID
-	sudo xcode-select --switch /Library/Developer/CommandLineTools
-	sudo xcodebuild -license accept
-	xcodebuild -runFirstLaunch
-	success_message "Xcode"
-    fi
-
-    if [[ "$RESPONSE" == "$NEGATIVE_RESPONSE" ]]; then
-	echo ""
-	echo "❓ Do you want to update Xcode? ($POSITIVE_RESPONSE / $NEGATIVE_RESPONSE)"
-        read -p " > " RESPONSE
-	echo ""
-
-        if [[ "$RESPONSE" == "$POSITIVE_RESPONSE" ]]; then
 	    updating_dependency "Xcode"
-            softwareupdate --install --verbose Xcode &
+      softwareupdate --install --verbose Xcode &
 	    PID=$!
 	    wait $PID
 	    success_message "Xcode"
-        fi
     fi
+  fi
 }
 
 set_macosx_generics () {
@@ -147,7 +153,7 @@ install_os_dependencies () {
     if [[ "$OSTYPE" == "linux-gnu"* ]]; then
         installing_dependency "Linux dependencies"
         echo "//TODO"
-	install_novu_tools
+	  install_novu_tools
     elif [[ "$OSTYPE" == "darwin"* ]]; then
         installing_dependency "MacOsx dependencies"
         install_macosx_dependencies
@@ -208,8 +214,7 @@ install_homebrew_recipes () {
 
     if [[ -z "$SKIP" ]]; then
         # Update Homebrew recipes
-        echo "Tap, update and upgrade Homebrew"
-        brew tap homebrew/cask
+        echo "Update and Upgrade Homebrew"
         brew update
         brew upgrade
     else
@@ -383,61 +388,55 @@ install_aws_cli () {
     fi
 }
 
-install_databases () {
-    SKIP="$(check_homebrew)"
+start_database() {
+  # Check if brew is installed
+  command -v brew > /dev/null 2>&1
 
-    if [[ -z "$SKIP" ]]; then
-        installing_dependency "Databases"
+  # Initialize flag
+  already_installed=0
 
-        brew tap mongodb/brew
+  if [ $? -eq 0 ]; then
 
-        DATABASES=(
-            mongodb-community@5.0
-            redis
-        )
-        brew install "${DATABASES[@]}"
 
-        echo "Run the services in the background"
+      # Check if mongodb is installed
+      brew ls --versions mongodb > /dev/null
+      if [ $? -eq 0 ]; then
+        echo "Warning: MongoDB is already installed via brew. Please uninstall it first."
+        already_installed=1
+      fi
 
-        TEST_REDIS_CMD=$(execute_command_without_error_print "redis-cli --version")
-        if [[ -z "$TEST_REDIS_CMD" ]] || [[ "$TEST_REDIS_CMD" == "zsh: command not found: redis-cli" ]]; then
-            error_message "Redis"
-        else
-            echo "Run Redis service in the background"
-    	    brew services restart redis
-            success_message "MongoDB"
-        fi
+      # Check if redis is installed
+      brew ls --versions redis > /dev/null
+      if [ $? -eq 0 ]; then
+        echo "Warning: Redis is already installed via brew. Please uninstall it first."
+        already_installed=1
+      fi
+  else
+      echo "brew is not installed, checking default ports for MongoDB and Redis"
+      # Check MongoDB (port 27017) and Redis (port 6379)
+      if lsof -Pi :27017 -sTCP:LISTEN -t >/dev/null ; then
+        echo "Warning: MongoDB is running on port 27017. Please stop it first."
+        already_installed=1
+      fi
+      if lsof -Pi :6379 -sTCP:LISTEN -t >/dev/null ; then
+        echo "Warning: Redis is running on port 6379. Please stop it first."
+        already_installed=1
+      fi
+  fi
 
-        TEST_MONGO_CMD=$(execute_command_without_error_print "mongosh --version")
-        if [[ -z "$TEST_MONGO_CMD" ]] || [[ "$TEST_MONGO_CMD" == "zsh: command not found: mongosh" ]]; then
-            error_message "MongoDB"
-        else
-            echo "Run MongoDB service in the background"
-    	    brew services start mongodb/brew/mongodb-community@5.0
-            success_message "MongoDB"
-        fi
-    else
-        skip_message "Databases"
-        echo "$SKIP"
-    fi
-}
+  # Only copy the example env file and start Docker Compose if both MongoDB and Redis are not already installed
+  if [ $already_installed -ne 1 ]; then
+      # Copy the example env file
+      cp ./docker/.env.example ./docker/local/development/.env
 
-create_local_dev_domain () {
-    FILENAME="/etc/hosts"
-    HOST="local.novu.co"
-    IP="127.0.0.1"
-    ENTRY="$IP\t$HOST"
+      # Start Docker Compose detached
+      docker-compose -f ./docker/local/development/docker-compose.yml up -d
 
-    CMD=$(execute_command_without_error_print "grep -R $HOST $FILENAME")
-
-    if [[ -z $CMD ]]; then
-        echo "$ENTRY" | sudo tee -a $FILENAME
-        success_message "Local DEV domain"
-    elif [[ $CMD == *"$HOST"* ]]; then
-        already_installed_message "Local DEV domain"
-    else
-        error_message "Local DEV domain"
-    fi
+      start_success_message "Docker Infrastructure"
+  else
+      echo "We recommend removing mongodb and redis databases from brew with 'brew remove <package_name>'."
+      echo "To manually start the containerized databases by going to /docker in the novu project"
+  fi
 }
 
 check_git () {
@@ -448,6 +447,9 @@ check_git () {
         echo "⛔️ Git is a hard dependency to clone the monorepo"
         exit 1
     fi
+
+    already_installed_message "git"
+
 }
 
 clone_monorepo () {
@@ -489,9 +491,8 @@ install_novu_tools () {
     install_node
     install_pnpm
     install_docker
-    install_databases
     install_aws_cli
-    create_local_dev_domain
+    start_database
 }
 
 install_os_dependencies () {
