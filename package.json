@@ -6,7 +6,6 @@
     "bootstrap": "npm run setup:dev",
     "start": "npm run jarvis",
     "preinstall": "npx only-allow pnpm",
-    "prepare": "husky install",
     "publish": "nx release version && git add . && git commit -m 'chore: release' && pnpm publish:npm",
     "publish:npm": "lerna publish from-package",
     "setup:project": "npx --yes pnpm@9.1.4 i && node scripts/setup-env-files.js && pnpm build",
