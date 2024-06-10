@@ -7,15 +7,17 @@ import { styled } from '@novu/novui/jsx';
 import { CodeSnippet } from '../get-started/components/CodeSnippet';
 import { Timeline } from '../get-started/components/timeline/Timeline';
 import { useMemo, useState } from 'react';
-import { IconCheck, Input, When } from '@novu/design-system';
+import { Input } from '@novu/design-system';
+import { IconCheck } from '@novu/novui/icons';
 import { getApiKeys, ROUTES } from '@novu/shared-web';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { When } from '../../components/utils/When';
 
 const Heading = styled('h1', title);
 const Text = styled('p', text);
 
-export const EchoOnboarding = () => {
+export const StudioOnboarding = () => {
   const [active, setActive] = useState(0);
   const { data: apiKeys = [] } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const key = useMemo(() => apiKeys[0]?.key, [apiKeys]);
@@ -45,8 +47,8 @@ export const EchoOnboarding = () => {
 
           return;
         }
-        localStorage.setItem('echo-onboarding', url);
-        navigate(ROUTES.ECHO_ONBOARDING_TEST);
+        localStorage.setItem('studio-onboarding', url);
+        navigate(ROUTES.STUDIO_ONBOARDING_TEST);
       },
       onError: (e) => {
         setError((e as Error).message);

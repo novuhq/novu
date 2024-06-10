@@ -1,10 +1,12 @@
 import { hstack, vstack } from '@novu/novui/patterns';
 import { text } from '@novu/novui/recipes';
 import { styled } from '@novu/novui/jsx';
-import { Button, IconOutlineMenuBook, When } from '@novu/design-system';
+import { Button } from '@novu/design-system';
+import { IconOutlineMenuBook } from '@novu/novui/icons';
 import { ROUTES } from '@novu/shared-web';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@novu/novui/css';
+import { When } from '../../../components/utils/When';
 
 const Text = styled('a', text);
 

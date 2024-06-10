@@ -1,14 +1,6 @@
 import { Prism } from '@mantine/prism';
-import {
-  Button,
-  IconCode,
-  IconPlayCircleOutline,
-  IconVisibility,
-  Input,
-  Modal,
-  Tabs,
-  Title,
-} from '@novu/design-system';
+import { Button, Input, Modal, Tabs } from '@novu/design-system';
+import { IconCode, IconPlayCircleOutline, IconVisibility } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
 import { hstack, vstack } from '@novu/novui/patterns';
 import { IStepVariant } from '@novu/shared';
@@ -21,8 +13,12 @@ import { useTemplates } from '../../hooks/useTemplates';
 import { Background } from './components/Background';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
+import { styled } from '@novu/novui/jsx';
+import { title } from '@novu/novui/recipes';
 
-export const EchoOnboardingTest = () => {
+const Title = styled('h2', title);
+
+export const StudioOnboardingTest = () => {
   const [opened, setOpened] = useState(false);
   const [tab, setTab] = useState('Preview');
   const [content, setContent] = useState('');
@@ -36,10 +32,10 @@ export const EchoOnboardingTest = () => {
   const { templates, loading } = useTemplates({ pageSize: 1, areSearchParamsEnabled: false });
 
   useEffect(() => {
-    const storageUrl = localStorage.getItem('echo-onboarding');
+    const storageUrl = localStorage.getItem('studio-onboarding');
 
     if (!storageUrl) {
-      navigate(ROUTES.ECHO_ONBOARDING);
+      navigate(ROUTES.STUDIO_ONBOARDING);
 
       return;
     }
@@ -135,7 +131,7 @@ export const EchoOnboardingTest = () => {
       />
       <Modal
         opened={opened}
-        title={<Title size={2}>Test workflow</Title>}
+        title={<Title>Test workflow</Title>}
         onClose={() => {
           setOpened(false);
         }}

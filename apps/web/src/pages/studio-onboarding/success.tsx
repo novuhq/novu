@@ -14,7 +14,7 @@ import { Header } from './components/Header';
 const Heading = styled('h1', title);
 const Text = styled('p', text);
 
-export const EchoOnboardingSuccess = () => {
+export const StudioOnboardingSuccess = () => {
   const { data } = useQuery<{ data: any[]; hasMore: boolean; pageSize: number }>(['activitiesList', 0], () =>
     getActivityList(0, undefined)
   );

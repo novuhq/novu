@@ -48,9 +48,9 @@ import { TenantsPage } from './pages/tenants/TenantsPage';
 import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { useSettingsRoutes } from './SettingsRoutes';
-import { EchoOnboarding } from './pages/echo-onboarding/index';
-import { EchoOnboardingTest } from './pages/echo-onboarding/test';
-import { EchoOnboardingSuccess } from './pages/echo-onboarding/success';
+import { StudioOnboarding } from './pages/studio-onboarding/index';
+import { StudioOnboardingTest } from './pages/studio-onboarding/test';
+import { StudioOnboardingSuccess } from './pages/studio-onboarding/success';
 import { WorkflowsListPage } from './studio/components/workflows/WorkflowsListPage';
 
 export const AppRoutes = () => {
@@ -83,9 +83,6 @@ export const AppRoutes = () => {
           }
         />
       </Route>
-      <Route path={ROUTES.ECHO_ONBOARDING} element={<EchoOnboarding />} />
-      <Route path={ROUTES.ECHO_ONBOARDING_TEST} element={<EchoOnboardingTest />} />
-      <Route path={ROUTES.ECHO_ONBOARDING_SUCCESS} element={<EchoOnboardingSuccess />} />
       <Route element={<PrivatePageLayout />}>
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
@@ -148,6 +145,9 @@ export const AppRoutes = () => {
         <Route path={ROUTES.STUDIO}>
           <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
           <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
+          <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />
+          <Route path={ROUTES.STUDIO_ONBOARDING_TEST} element={<StudioOnboardingTest />} />
+          <Route path={ROUTES.STUDIO_ONBOARDING_SUCCESS} element={<StudioOnboardingSuccess />} />
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />

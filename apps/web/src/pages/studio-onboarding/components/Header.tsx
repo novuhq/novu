@@ -2,7 +2,7 @@ import { css } from '@novu/novui/css';
 import { hstack, vstack } from '@novu/novui/patterns';
 import { COMPANY_LOGO_PATH } from '../../../constants/assets';
 import { Stepper } from '@mantine/core';
-import { IconCheck } from '@novu/design-system';
+import { IconCheck } from '@novu/novui/icons';
 
 export const Header = ({ active = 0 }: { active?: number }) => {
   return (
