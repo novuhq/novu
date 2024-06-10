@@ -22,7 +22,6 @@ type NotificationLike = Pick<
   | 'actor'
   | 'subscriber'
   | 'transactionId'
-  | 'templateIdentifier'
   | 'content'
   | 'read'
   | 'seen'
@@ -36,21 +35,20 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   #emitter: NovuEventEmitter;
   #apiService: ApiService;
 
-  _id: string;
-  _feedId?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  actor?: Actor;
-  subscriber?: Subscriber;
-  transactionId: string;
-  templateIdentifier: string;
-  content: string;
-  read: boolean;
-  seen: boolean;
-  deleted: boolean;
-  cta: Cta;
-  payload: Record<string, unknown>;
-  overrides: Record<string, unknown>;
+  readonly _id: string;
+  readonly _feedId?: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly actor?: Actor;
+  readonly subscriber?: Subscriber;
+  readonly transactionId: string;
+  readonly content: string;
+  readonly read: boolean;
+  readonly seen: boolean;
+  readonly deleted: boolean;
+  readonly cta: Cta;
+  readonly payload: Record<string, unknown>;
+  readonly overrides: Record<string, unknown>;
 
   constructor(notification: NotificationLike) {
     this.#emitter = NovuEventEmitter.getInstance();
@@ -63,7 +61,6 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
     this.actor = notification.actor;
     this.subscriber = notification.subscriber;
     this.transactionId = notification.transactionId;
-    this.templateIdentifier = notification.templateIdentifier;
     this.content = notification.content;
     this.read = notification.read;
     this.seen = notification.seen;

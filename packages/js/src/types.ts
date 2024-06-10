@@ -26,6 +26,25 @@ export enum CtaType {
   REDIRECT = 'redirect',
 }
 
+export enum PreferenceLevel {
+  GLOBAL = 'global',
+  TEMPLATE = 'template',
+}
+
+export enum ChannelType {
+  IN_APP = 'in_app',
+  EMAIL = 'email',
+  SMS = 'sms',
+  CHAT = 'chat',
+  PUSH = 'push',
+}
+
+export enum PreferenceOverrideSource {
+  SUBSCRIBER = 'subscriber',
+  TEMPLATE = 'template',
+  WORKFLOW_OVERRIDE = 'workflowOverride',
+}
+
 export type Session = {
   token: string;
   profile: {
@@ -97,6 +116,29 @@ export type Cta = {
     url?: string;
   };
   action?: MessageAction;
+};
+
+export type WorkflowInfo = {
+  _id: string;
+  name: string;
+  critical: boolean;
+  tags?: string[];
+  identifier: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: Record<string, any>;
+};
+
+export type ChannelPreference = {
+  email?: boolean;
+  sms?: boolean;
+  in_app?: boolean;
+  chat?: boolean;
+  push?: boolean;
+};
+
+export type ChannelPreferenceOverride = {
+  channel: ChannelType;
+  source: PreferenceOverrideSource;
 };
 
 export type PaginatedResponse<T = unknown> = {
