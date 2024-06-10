@@ -21,7 +21,7 @@ export class HttpClient {
     this.backendUrl = `${backendUrl}/${this.apiVersion}`;
     this.headers = {
       'Content-Type': 'application/json',
-      'X-Novu-User-Agent:': novuUserAgent,
+      'User-Agent:': novuUserAgent,
     };
   }
 
