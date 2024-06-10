@@ -21,7 +21,13 @@
       }
     ],
     "plugins": [],
-    "webpack": true
+    "builder": {
+      "type": "swc",
+      "options": {
+        "stripLeadingPaths": true
+      }
+    },
+    "typeCheck": true
   },
   "projects": {
     "dal": {

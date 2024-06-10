@@ -3,5 +3,12 @@
   "sourceRoot": "src",
   "compilerOptions": {
     "assets": [".env.test", ".env.development"]
-  }
+  },
+  "builder": {
+    "type": "swc",
+    "options": {
+      "stripLeadingPaths": true
+    }
+  },
+  "typeCheck": true
 }
