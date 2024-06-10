@@ -2,7 +2,10 @@ const path = require('path');
 const webpack = require('webpack');
 const CompressionPlugin = require('compression-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
+const { name, version } = require('./package.json');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+
+const isProd = process.env?.NODE_ENV === 'production';
 
 module.exports = {
   entry: './src/umd.ts',
@@ -14,9 +17,8 @@ module.exports = {
   output: {
     library: 'NotificationCenterWebComponent',
     libraryTarget: 'umd',
-    filename: 'index.js',
-    path: path.resolve(__dirname, 'dist/umd'),
-    clean: true,
+    filename: 'novu.min.js',
+    path: path.resolve(__dirname, 'dist'),
   },
   optimization: {
     minimize: true,
@@ -40,7 +42,9 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify('production'),
+      PACKAGE_NAME: `"${name}"`,
+      PACKAGE_VERSION: `"${version}"`,
+      __DEV__: `${!isProd}`,
     }),
     new CompressionPlugin({
       test: /\.js(\?.*)?$/i,
