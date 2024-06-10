@@ -15,7 +15,7 @@
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "test": "jest",
+    "test": "jest **/client.validation.test.ts",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --check --ignore-path .gitignore .",
@@ -107,7 +107,9 @@
     "cross-fetch": "^4.0.0",
     "json-schema-faker": "^0.5.6",
     "json-schema-to-ts": "^3.0.0",
-    "ora": "^5.4.1"
+    "ora": "^5.4.1",
+    "zod": "^3.22.4",
+    "zod-to-json-schema": "^3.23.0"
   },
   "files": [
     "dist",

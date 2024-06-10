@@ -1,10 +1,8 @@
-import { FromSchema } from 'json-schema-to-ts';
-
 import { ChannelStepEnum } from '../constants';
 import { delayOutputSchema, delayResultSchema, digestOutputSchema, digestResultSchema } from '../schemas';
 import { channelStepSchemas } from '../schemas/steps/channels';
 import { Providers } from './provider.types';
-import { Schema } from './schema.types';
+import { Schema, FromSchema } from './schema.types';
 import { Skip } from './skip.types';
 import { MaybePromise } from './util.types';
 

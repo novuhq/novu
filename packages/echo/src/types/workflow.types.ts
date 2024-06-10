@@ -1,5 +1,6 @@
 import { Step } from './step.types';
 import { Subscriber } from './subscriber.types';
+import { z } from 'zod';
 
 /**
  * The input for the workflow function.

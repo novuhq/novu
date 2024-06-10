@@ -1,9 +1,9 @@
-import Ajv, { ValidateFunction } from 'ajv';
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import betterAjvErrors from 'better-ajv-errors';
 import { JSONSchema7 } from 'json-schema';
 import { JSONSchemaFaker } from 'json-schema-faker';
-import { FromSchema } from 'json-schema-to-ts';
 import ora from 'ora';
 
 import {
@@ -43,10 +43,9 @@ import {
   HealthCheck,
   IEvent,
   StepType,
-  Validate,
   WorkflowOptions,
 } from './types';
-import { Schema } from './types/schema.types';
+import { FromSchema, Schema, ValidateFunction } from './types/schema.types';
 import { EMOJI, log } from './utils';
 import { VERSION } from './version';
 
@@ -108,16 +107,17 @@ export class Echo {
     workflowOptions?: WorkflowOptions<T_PayloadSchema, T_InputSchema>
   ): Promise<void> {
     // TODO: Transparently register the trigger step here
-    this.discoverWorkflow(workflowId, execute, workflowOptions);
+    this.discoverWorkflow(workflowId, execute as Execute<unknown, unknown>, workflowOptions);
 
     await execute({
       payload: {} as T_Payload,
       subscriber: {},
       environment: {},
       input: {} as T_Input,
+      // @ts-ignore
       step: {
         ...Object.entries(channelStepSchemas).reduce((acc, [channel, schemas]) => {
-          acc[channel] = this.discoverStepFactory(
+          acc[channel as ChannelStepEnum] = this.discoverStepFactory(
             workflowId,
             channel as ChannelStepEnum,
             schemas.output,
@@ -225,6 +225,7 @@ export class Echo {
           schema: outputSchema,
           validate: this.ajv.compile(outputSchema),
         },
+        // @ts-ignore
         resolve,
         code: resolve.toString(),
         options,
@@ -242,6 +243,7 @@ export class Echo {
     providers: Record<string, (payload: unknown) => unknown | Promise<unknown>>
   ): void {
     const step = this.getStep(workflowId, stepId);
+    // @ts-ignore
     const channelSchemas = providerSchemas[channelType];
 
     Object.entries(providers).forEach(([type, resolve]) => {
@@ -326,7 +328,7 @@ export class Echo {
   }
 
   private getHeaders(anonymous?: string): Record<string, string> {
-    const headers = {
+    const headers: Record<string, string> = {
       [HttpHeaderKeysEnum.CONTENT_TYPE]: 'application/json',
       [HttpHeaderKeysEnum.AUTHORIZATION]: `ApiKey ${this.apiKey}`,
     };
@@ -376,7 +378,7 @@ export class Echo {
 
   private validate(
     data: unknown,
-    validate: Validate,
+    validate: ValidateFunction,
     schema: Schema,
     component: 'event' | 'step' | 'provider',
     payloadType: 'input' | 'output' | 'result' | 'data',
@@ -438,18 +440,22 @@ export class Echo {
       throw new Error('stepId is required');
     }
 
-    switch (payloadType) {
-      case 'output':
-        throw new ExecutionStateOutputInvalidError(workflowId, stepId, validate.errors);
+    const errorMap: Record<
+      string,
+      new (_workflowId: string, _stepId: string, errors?: ValidateFunction<unknown>['errors']) => Error
+    > = {
+      output: ExecutionStateOutputInvalidError,
+      result: ExecutionStateResultInvalidError,
+      input: ExecutionStateInputInvalidError,
+    };
 
-      case 'result':
-        throw new ExecutionStateResultInvalidError(workflowId, stepId, validate.errors);
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const ErrorClass = errorMap[payloadType];
 
-      case 'input':
-        throw new ExecutionStateInputInvalidError(workflowId, stepId, validate.errors);
-
-      default:
-        throw new Error(`Invalid payload type: '${payloadType}'`);
+    if (ErrorClass) {
+      throw new ErrorClass(workflowId, stepId, validate.errors);
+    } else {
+      throw new Error(`Invalid payload type: '${payloadType}'`);
     }
   }
 
@@ -554,19 +560,21 @@ export class Echo {
           input: {},
           subscriber: event.subscriber,
           step: {
+            // @ts-ignore
             email: this.executeStepFactory(event, setResult),
             sms: this.executeStepFactory(event, setResult),
             inApp: this.executeStepFactory(event, setResult),
             digest: this.executeStepFactory(event, setResult),
             delay: this.executeStepFactory(event, setResult),
             push: this.executeStepFactory(event, setResult),
+            // @ts-ignore
             chat: this.executeStepFactory(event, setResult),
             custom: this.executeStepFactory(event, setResult),
           },
         }),
       ]);
     } catch (error) {
-      executionError = error;
+      executionError = error as Error;
     }
     const endTime = process.hrtime(startTime);
 
@@ -683,7 +691,9 @@ export class Echo {
         symbol: EMOJI.ERROR,
         text: `Failed to execute provider: \`${provider.type}\``,
       });
-      throw new ProviderExecutionFailedError(`Failed to execute provider: '${provider.type}'.\n${error.message}`);
+      throw new ProviderExecutionFailedError(
+        `Failed to execute provider: '${provider.type}'.\n${(error as Error).message}`
+      );
     }
   }
 

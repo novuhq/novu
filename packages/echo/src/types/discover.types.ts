@@ -1,13 +1,9 @@
-import { ValidateFunction } from 'ajv';
-
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import { Schema } from './schema.types';
+import { Schema, ValidateFunction } from './schema.types';
 import { ActionStepOptions } from './step.types';
 import { Execute, WorkflowOptions } from './workflow.types';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
-
-export type Validate = ValidateFunction;
 
 export type DiscoverProviderOutput = {
   type: string;
@@ -15,7 +11,7 @@ export type DiscoverProviderOutput = {
   resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
   outputs: {
     schema: Schema;
-    validate: Validate;
+    validate: ValidateFunction;
   };
 };
 
@@ -24,15 +20,15 @@ export type DiscoverStepOutput = {
   type: StepType;
   inputs: {
     schema: Schema;
-    validate: Validate;
+    validate: ValidateFunction;
   };
   outputs: {
     schema: Schema;
-    validate: Validate;
+    validate: ValidateFunction;
   };
   results: {
     schema: Schema;
-    validate: Validate;
+    validate: ValidateFunction;
   };
   code: string;
   resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
@@ -48,11 +44,11 @@ export type DiscoverWorkflowOutput = {
   steps: Array<DiscoverStepOutput>;
   data: {
     schema: Schema;
-    validate: Validate;
+    validate: ValidateFunction;
   };
   inputs: {
     schema: Schema;
-    validate: Validate;
+    validate: ValidateFunction;
   };
 };
 

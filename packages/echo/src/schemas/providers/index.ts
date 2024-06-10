@@ -11,4 +11,4 @@ export const providerSchemas = {
   email: emailProviderSchemas,
   push: pushProviderSchemas,
   in_app: inAppProviderSchemas,
-} satisfies Record<ChannelStepEnum, any>;
+} as const satisfies Record<ChannelStepEnum, any>;
