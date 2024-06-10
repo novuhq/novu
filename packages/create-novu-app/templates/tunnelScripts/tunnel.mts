@@ -34,5 +34,7 @@ dotenv.config();
     process.env.TUNNEL_HOST,
   );
   await wrapper.connect();
-  console.log(wrapper.getUrl());
+  console.log(
+    `Your app is available on the following address: ${wrapper.getUrl()}`,
+  );
 })();
