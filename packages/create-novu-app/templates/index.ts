@@ -174,17 +174,13 @@ export const installTemplate = async ({
 
   /* write .env file */
   const port = 4000;
-  // This function is also present in @novu/application-generic and is used
-  // to generate the subdomain per api key in the buildBridgeSubdomain() function.
-  // It should be kept in sync with the implementation in the library
-  const subdomain = createHash("md5").update(apiKey).digest("hex");
   const host = tunnelHost;
 
   await fs.writeFile(
     path.join(root, ".env"),
     `PORT=${port}` +
       os.EOL +
-      `TUNNEL_SUBDOMAIN=${subdomain}` +
+      `API_KEY=${apiKey}` +
       os.EOL +
       `TUNNEL_HOST=${host}` +
       os.EOL,
@@ -199,8 +195,7 @@ export const installTemplate = async ({
     version: "0.1.0",
     private: true,
     scripts: {
-      tunnel:
-        "node --loader ts-node/esm --no-warnings=ExperimentalWarning scripts/tunnel.mts",
+      tunnel: "tsx scripts/tunnel.mts",
       "next-dev": `next dev --port=${port}`,
       dev: "concurrently 'npm run tunnel' 'npm run next-dev'",
       build: "next build",
@@ -226,6 +221,7 @@ export const installTemplate = async ({
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
       typescript: "^5",
+      tsx: "^4.15.1",
       "@types/node": "^20",
       "@types/react": "^18",
       "@types/react-dom": "^18",
