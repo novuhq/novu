@@ -13,7 +13,7 @@ jobs:
   deploy_dev_api:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     environment: Development
     permissions:
       contents: read

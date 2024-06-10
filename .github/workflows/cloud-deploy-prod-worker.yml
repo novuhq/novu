@@ -7,7 +7,7 @@ jobs:
 
   build_prod_image:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     environment: Production
     strategy:
       # The order is important for ee to be first, otherwise outputs not work correctly

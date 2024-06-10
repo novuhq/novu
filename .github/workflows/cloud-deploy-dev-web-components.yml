@@ -12,7 +12,7 @@ jobs:
   deploy_web_component:
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 80
+    timeout-minutes: 30
     environment: Development
 
     steps:

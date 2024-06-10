@@ -14,7 +14,7 @@ jobs:
   deploy_ws:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     environment: Development
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     strategy:
