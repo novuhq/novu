@@ -36,15 +36,37 @@ docker-compose -f ./docker-compose.enterprise.yml up
 
 Now visit [http://127.0.0.1:4200](http://127.0.0.1:4200) to start using Novu.
 
+
+
 ## Secure Your Setup
 Though we provide some example secrets for getting started, it's highly recommended NOT to deploy your Novu setup using the defaults provided.
 Update the .env file with your own secrets, in particular, make sure you replace:
 JWT_SECRET: A secret key used by the API to generate JWT tokens.
 
-## Redis Configuration
+## Alterations
+
+### Redis Configuration
 You can configure Redis TLS by adding the following variables to the .env file and specifying the needed properties:
 REDIS_TLS={"servername":"localhost"}
 REDIS_CACHE_SERVICE_TLS={"servername":"localhost"}
+
+### Running ARM Only
+In order to force each service to run in ARM only,
+you need to add the following tag `platform: linux/arm64` to
+each of the services in their respective configuration files.
+To do this, go through each service listed in your completed configuration
+and add the ```platform: linux/arm64``` line.
+This will ensure your services are run in ARM only.
+Ex:
+```
+  redis:
+    platform: linux/arm64
+    image: 'redis:alpine'
+    container_name: redis
+    restart: unless-stopped
+    logging:
+      driver: 'none'
+```
 
 ## Configuration
 For simplicity, we made decisions that might not be optimal for production:

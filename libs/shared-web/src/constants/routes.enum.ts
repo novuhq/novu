@@ -46,11 +46,10 @@ export enum ROUTES {
   ORGANIZATION = '/settings/organization',
   SECURITY = '/settings/security',
   BILLING = '/settings/billing',
+
+  /** Novu V2 routes */
+  STUDIO = '/studio',
+  STUDIO_FLOWS = '/studio/flows',
 }
 
-export const PUBLIC_ROUTES = new Set<ROUTES>([
-  ROUTES.AUTH_LOGIN,
-  ROUTES.AUTH_SIGNUP,
-  ROUTES.AUTH_RESET_REQUEST,
-  ROUTES.AUTH_RESET_TOKEN,
-]);
+export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth', '/partner-integrations']);

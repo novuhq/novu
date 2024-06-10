@@ -8,6 +8,7 @@ import { When } from '../../../components/utils/When';
 import { IS_DOCKER_HOSTED } from '../../../config';
 import { buildGithubLink, buildGoogleLink, buildVercelGithubLink } from './gitHubUtils';
 import { useVercelParams } from '../../../hooks';
+import { PropsWithChildren } from 'react';
 
 export function OAuth({ invitationToken }: { invitationToken?: string | undefined }) {
   const { isFromVercel, code, next, configurationId } = useVercelParams();
@@ -59,16 +60,18 @@ const Container = styled.div`
   justify-content: space-between;
 `;
 
-const OAuthButton = styled(MantineButton)<{
-  component: 'a';
-  my: number;
-  href: string;
-  variant: 'white';
-  fullWidth: boolean;
-  radius: 'md';
-  leftIcon: any;
-  sx: any;
-}>`
+const OAuthButton = styled(MantineButton)<
+  PropsWithChildren<{
+    component: 'a';
+    my: number;
+    href: string;
+    variant: 'white';
+    fullWidth: boolean;
+    radius: 'md';
+    leftIcon: any;
+    sx: any;
+  }>
+>`
   :hover {
     color: ${colors.B40};
   }

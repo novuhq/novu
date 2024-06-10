@@ -59,6 +59,58 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       },
     },
   },
+  table: {
+    header: {
+      border: {
+        value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+        type: 'color',
+      },
+    },
+    row: {
+      border: {
+        value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
+        type: 'color',
+      },
+      surface: {
+        hover: {
+          value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
+          type: 'color',
+        },
+      },
+    },
+    bottom: {
+      border: {
+        value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+        type: 'color',
+      },
+    },
+  },
+  badge: {
+    border: {
+      value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B30}' },
+      type: 'color',
+    },
+  },
+  icon: {
+    main: {
+      value: { base: '{colors.legacy.B60}', _dark: '{colors.legacy.B60}' },
+      type: 'color',
+    },
+    secondary: {
+      value: { base: '{colors.legacy.B70}', _dark: '{colors.legacy.B40}' },
+      type: 'color',
+    },
+  },
+  status: {
+    active: {
+      value: { base: '{colors.legacy.success}', _dark: '{colors.legacy.success}' },
+      type: 'color',
+    },
+    inactive: {
+      value: { base: '{colors.legacy.B40}', _dark: '{colors.legacy.B40}' },
+      type: 'color',
+    },
+  },
 });
 
 export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
@@ -168,6 +220,12 @@ export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
     },
     popover: {
       value: { base: '{colors.mauve.120.light}', _dark: '{colors.mauve.120.dark}' },
+      type: 'color',
+    },
+  },
+  icon: {
+    main: {
+      value: { base: '{colors.mauve.20.light}', _dark: '{colors.mauve.20.dark}' },
       type: 'color',
     },
   },

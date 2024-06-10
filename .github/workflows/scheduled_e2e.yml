@@ -18,7 +18,7 @@ env:
 
 jobs:
   test_web:
-    name: Test Web Cypress
+    name: Test Web Playwright
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
     with:

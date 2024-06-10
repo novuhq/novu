@@ -21,14 +21,14 @@ type LoginFormProps = {
 };
 
 export interface LocationState {
-  redirectTo: {
-    pathname: string;
+  redirectTo?: {
+    pathname?: string;
   };
 }
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const segment = useSegment();
-  const { login, currentUser } = useAuth();
+  const { login, currentUser, organizationId, environmentId } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel, params: vercelParams } = useVercelParams();
   const [params] = useSearchParams();
@@ -38,6 +38,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();
   const location = useLocation();
+  const state = location.state as LocationState;
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
     IResponseError,
@@ -48,28 +49,39 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   >((data) => api.post('/v1/auth/login', data));
 
   useEffect(() => {
-    if (tokenInQuery) {
-      debugger;
-      login(tokenInQuery);
-    }
+    (async () => {
+      if (!tokenInQuery) {
+        return;
+      }
 
-    if (isFromVercel) {
-      startVercelSetup();
+      if (!invitationToken && (!organizationId || !environmentId)) {
+        await login(tokenInQuery, ROUTES.AUTH_APPLICATION);
 
-      return;
-    }
+        return;
+      }
 
-    if (tokenInQuery && source === 'cli') {
-      segment.track('Dashboard Visit', {
-        widget: sourceWidget || 'unknown',
-        source: 'cli',
-      });
-      navigate(ROUTES.GET_STARTED);
-    }
+      if (isFromVercel) {
+        await login(tokenInQuery);
+        startVercelSetup();
 
-    navigate(ROUTES.GET_STARTED);
+        return;
+      }
+
+      if (source === 'cli') {
+        segment.track('Dashboard Visit', {
+          widget: sourceWidget || 'unknown',
+          source: 'cli',
+        });
+        await login(tokenInQuery, ROUTES.GET_STARTED);
+
+        return;
+      }
+
+      await login(tokenInQuery);
+      navigate(ROUTES.WORKFLOWS);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]);
+  }, [login, navigate, currentUser, tokenInQuery, segment, organizationId, environmentId]);
 
   const signupLink = isFromVercel ? `${ROUTES.AUTH_SIGNUP}?${params.toString()}` : ROUTES.AUTH_SIGNUP;
   const resetPasswordLink = isFromVercel
@@ -101,11 +113,11 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       if (invitationToken) {
         const updatedToken = await acceptInvite(invitationToken);
         if (updatedToken) {
-          login(updatedToken);
+          await login(updatedToken);
         }
       }
 
-      navigate(ROUTES.WORKFLOWS);
+      navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
