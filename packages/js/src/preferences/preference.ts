@@ -1,4 +1,4 @@
-import { ApiService } from '@novu/client';
+import type { ApiService } from '@novu/client';
 
 import { NovuEventEmitter } from '../event-emitter';
 import { ChannelPreference, ChannelType, PreferenceLevel, Workflow } from '../types';

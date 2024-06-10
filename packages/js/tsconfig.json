@@ -15,8 +15,8 @@
     "removeComments": false,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".."
+    "baseUrl": "."
   },
   "include": ["src/**/*", "src/**/*.d.ts"],
-  "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]
+  "exclude": ["src/**/*.test.ts", "src/*.test.ts", "node_modules", "**/node_modules/*"]
 }

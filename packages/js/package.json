@@ -32,6 +32,7 @@
   "scripts": {
     "start": "pnpm run build -- --watch --sourcemap",
     "build": "tsup && pnpm run post:build",
+    "build:umd": "webpack --config webpack.config.cjs",
     "post:build": "node scripts/size-limit.js",
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"
@@ -46,10 +47,17 @@
     "tiny-glob": "^0.2.9",
     "ts-jest": "^29.0.3",
     "tsup": "^8.0.2",
-    "typescript": "4.9.5"
+    "typescript": "4.9.5",
+    "ts-loader": "~9.4.0",
+    "compression-webpack-plugin": "^10.0.0",
+    "terser-webpack-plugin": "^5.3.9",
+    "webpack": "^5.74.0",
+    "webpack-bundle-analyzer": "^4.9.0",
+    "webpack-cli": "^5.1.4"
   },
   "dependencies": {
     "@novu/client": "workspace:*",
-    "mitt": "^3.0.1"
+    "mitt": "^3.0.1",
+    "socket.io-client": "4.7.2"
   }
 }

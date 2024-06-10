@@ -1,4 +1,4 @@
-import { ApiService } from '@novu/client';
+import type { ApiService } from '@novu/client';
 
 import type { NovuEventEmitter } from '../event-emitter';
 import { NotificationActionStatus, NotificationButton, NotificationStatus, TODO } from '../types';
