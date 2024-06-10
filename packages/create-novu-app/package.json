@@ -19,7 +19,7 @@
   ],
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "ncc build ./index.ts -w -o dist/",
+    "dev": "rm -rf dist/ && ncc build ./index.ts -w -o dist/",
     "prerelease": "rimraf dist",
     "release": "ncc build ./index.ts -o ./dist/ --minify --no-cache --no-source-map-register",
     "build": "pnpm release",
@@ -27,6 +27,7 @@
     "release:alpha": "npm i && npm run build && npm version prerelease --preid=alpha && npm publish"
   },
   "devDependencies": {
+    "@novu/application-generic": "workspace:*",
     "@types/async-retry": "1.4.2",
     "@types/ci-info": "2.0.0",
     "@types/cross-spawn": "6.0.0",

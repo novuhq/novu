@@ -3679,6 +3679,9 @@ importers:
 
   packages/create-novu-app:
     devDependencies:
+      '@novu/application-generic':
+        specifier: workspace:*
+        version: link:../../libs/application-generic
       '@types/async-retry':
         specifier: 1.4.2
         version: 1.4.2

@@ -10,16 +10,16 @@ describe('Update Environment - /environments (PUT)', async () => {
     await session.initialize();
   });
 
-  it('should update environment entity correctly', async () => {
+  it('should update bridge data correctly', async () => {
     const updatePayload: UpdateEnvironmentRequestDto = {
-      name: 'New Name',
-      identifier: 'New Identifier',
+      name: 'Development',
+      bridge: { url: 'http://example.com' },
     };
 
     await session.testAgent.put(`/v1/environments/${session.environment._id}`).send(updatePayload).expect(200);
     const { body } = await session.testAgent.get('/v1/environments/me');
 
     expect(body.data.name).to.eq(updatePayload.name);
-    expect(body.data.identifier).to.equal(updatePayload.identifier);
+    expect(body.data.echo.url).to.equal(updatePayload.bridge?.url);
   });
 });
