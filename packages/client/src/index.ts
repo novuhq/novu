@@ -53,7 +53,7 @@ export type PreferenceSettingsType = {
 export type ApiOptions = {
   apiVersion?: string;
   backendUrl?: string;
-  novuUserAgent?: string;
+  UserAgent?: string;
 };
 
 export { ApiService } from './api/api.service';
