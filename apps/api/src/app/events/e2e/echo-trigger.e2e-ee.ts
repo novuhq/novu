@@ -87,9 +87,10 @@ describe('Echo Trigger ', async () => {
   });
 
   it('should skip step', async () => {
-    const workflowId = 'hello-world-2';
+    // should skip static value
+    const workflowIdSkipByStatic = 'skip-by-static-value-workflow';
     await echoServer.echo.workflow(
-      workflowId,
+      workflowIdSkipByStatic,
       async ({ step, payload }) => {
         await step.email(
           'send-email',
@@ -124,12 +125,82 @@ describe('Echo Trigger ', async () => {
 
     await syncWorkflow(session);
 
-    const workflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    const workflowByStatic = await workflowsRepository.findByTriggerIdentifier(
+      session.environment._id,
+      workflowIdSkipByStatic
+    );
+
+    expect(workflowByStatic).to.be.ok;
+    if (!workflowByStatic) throw new Error('Workflow not found');
+
+    await triggerEvent(session, workflowIdSkipByStatic, subscriber);
+    await session.awaitRunningJobs(workflowByStatic._id);
+
+    const executedMessageByStatic = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.EMAIL,
+    });
+
+    expect(executedMessageByStatic.length).to.be.eq(0);
+
+    const cancelledJobByStatic = await jobRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      type: StepTypeEnum.EMAIL,
+    });
+
+    expect(cancelledJobByStatic.length).to.be.eq(1);
+    expect(cancelledJobByStatic[0].status).to.be.eq(JobStatusEnum.CANCELED);
+
+    // should skip by variable default value
+    const workflowIdSkipByVariable = 'skip-by-variable-default-value';
+    await echoServer.echo.workflow(
+      workflowIdSkipByVariable,
+      async ({ step, payload }) => {
+        await step.email(
+          'send-email',
+          async (inputs) => {
+            return {
+              subject: 'This is an email subject ' + inputs.name,
+              body: 'Body result ' + payload.name,
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', default: 'TEST' },
+                shouldSkipVar: { type: 'boolean', default: true },
+              },
+            } as const,
+            skip: (inputs) => inputs.shouldSkipVar,
+          }
+        );
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await syncWorkflow(session);
+
+    const workflow = await workflowsRepository.findByTriggerIdentifier(
+      session.environment._id,
+      workflowIdSkipByVariable
+    );
 
     expect(workflow).to.be.ok;
     if (!workflow) throw new Error('Workflow not found');
 
-    await triggerEvent(session, workflowId, subscriber);
+    await triggerEvent(session, workflowIdSkipByVariable, subscriber);
     await session.awaitRunningJobs(workflow._id);
 
     const executedMessage = await messageRepository.find({
@@ -140,14 +211,14 @@ describe('Echo Trigger ', async () => {
 
     expect(executedMessage.length).to.be.eq(0);
 
-    const executedMessage2 = await jobRepository.find({
+    const cancelledJobByVariable = await jobRepository.find({
       _environmentId: session.environment._id,
       _subscriberId: subscriber._id,
       type: StepTypeEnum.EMAIL,
     });
 
-    expect(executedMessage2.length).to.be.eq(1);
-    expect(executedMessage2[0].status).to.be.eq(JobStatusEnum.CANCELED);
+    expect(cancelledJobByVariable.length).to.be.eq(2);
+    expect(cancelledJobByVariable[1].status).to.be.eq(JobStatusEnum.CANCELED);
   });
 
   it('should have execution detail errors for invalid trigger payload', async () => {

@@ -473,14 +473,16 @@ export class Echo {
 
   private executeStepFactory<T, U>(event: IEvent, setResult: (result: any) => void): ActionStep<T, U> {
     return async (stepId, stepResolve, options) => {
-      if (await this.shouldSkip(options?.skip, event.inputs)) {
+      const step = this.getStep(event.workflowId, stepId);
+      const eventClone = clone<IEvent>(event);
+      const inputs = this.createStepInputs(step, eventClone);
+
+      if (await this.shouldSkip(options?.skip, inputs)) {
         const skippedResult = { options: { skip: true } };
         setResult(skippedResult);
 
         return {} as any;
       }
-
-      const step = this.getStep(event.workflowId, stepId);
 
       const previewStepHandler = this.previewStep.bind(this);
       const executeStepHandler = this.executeStep.bind(this);
@@ -873,4 +875,8 @@ export class Echo {
 
     return getCodeResult;
   }
+}
+
+function clone<Result>(data: unknown) {
+  return JSON.parse(JSON.stringify(data)) as Result;
 }
