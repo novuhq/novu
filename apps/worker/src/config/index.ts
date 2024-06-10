@@ -14,7 +14,9 @@ const envFileMapper = {
 };
 const selectedEnvFile = envFileMapper[String(process.env.NODE_ENV)] || '.env';
 
-const { error } = dotenv.config({ path: `${__dirname}/${process.env.E2E_RUNNER ? '..' : 'src'}/${selectedEnvFile}` });
+const { error } = dotenv.config({
+  path: `${__dirname}/${process.env.E2E_RUNNER ? '..' : '..'}/${selectedEnvFile}`,
+});
 
 if (error && !process.env.LAMBDA_TASK_ROOT) throw error;
 

@@ -2,9 +2,13 @@
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
   "compilerOptions": {
-    "assets": [
-      ".env.test",
-      ".env.development"
-    ]
-  }
+    "assets": [".env.test", ".env.development"]
+  },
+  "builder": {
+    "type": "swc",
+    "options": {
+      "stripLeadingPaths": true
+    }
+  },
+  "typeCheck": true
 }
