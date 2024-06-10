@@ -3,6 +3,7 @@ import { install } from "../helpers/install";
 import { copy } from "../helpers/copy";
 
 import { async as glob } from "fast-glob";
+import { createHash } from "crypto";
 import os from "os";
 import fs from "fs/promises";
 import path from "path";
@@ -10,8 +11,6 @@ import { cyan, bold } from "picocolors";
 import { Sema } from "async-sema";
 
 import { GetTemplateFileArgs, InstallTemplateArgs } from "./types";
-
-import { buildBridgeSubdomain } from "@novu/application-generic";
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
  */
@@ -175,7 +174,10 @@ export const installTemplate = async ({
 
   /* write .env file */
   const port = 4000;
-  const subdomain = buildBridgeSubdomain(apiKey);
+  // This function is also present in @novu/application-generic and is used
+  // to generate the subdomain per api key in the buildBridgeSubdomain() function.
+  // It should be kept in sync with the implementation in the library
+  const subdomain = createHash("md5").update(apiKey).digest("hex");
   const host = tunnelHost;
 
   await fs.writeFile(

@@ -52,7 +52,7 @@ const program = new Commander.Command(packageJson.name)
 `
   )
   .option(
-    '-th, --tunnel-host',
+    '-t, --tunnel-host',
     `
 
   Set's the tunnel host url that will be used to request local tunnels,

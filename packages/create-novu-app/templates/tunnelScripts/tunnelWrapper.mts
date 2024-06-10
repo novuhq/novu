@@ -23,9 +23,20 @@ export default class LocalTunnelWrapper implements ITunnelWrapper {
       subdomain: this.subdomain,
       host: this.host,
     });
+
+    this.tunnel.on("error", this.errorHandler);
+    this.tunnel.on("close", this.closeHandler);
   }
 
   public getUrl() {
     return this.tunnel?.url;
+  }
+
+  private errorHandler(err: Error) {
+    console.log("Error on socket communication", err);
+  }
+
+  private closeHandler() {
+    console.log("Tunnel was closed");
   }
 }

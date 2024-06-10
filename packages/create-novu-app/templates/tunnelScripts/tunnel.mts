@@ -9,7 +9,7 @@ dotenv.config();
     Number.isNaN(parseInt(process.env.PORT))
   ) {
     throw new Error(
-      "POST environment variable value is required and should be a positive integer",
+      "PORT environment variable value is required and should be a positive integer",
     );
   }
 
