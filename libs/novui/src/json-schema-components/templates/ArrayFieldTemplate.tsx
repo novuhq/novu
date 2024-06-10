@@ -1,3 +1,4 @@
+import React from 'react';
 import {
   ArrayFieldTitleProps,
   ArrayFieldTemplateProps,
@@ -5,10 +6,9 @@ import {
   getUiOptions,
   ArrayFieldTemplateItemType,
 } from '@rjsf/utils';
-import { Grid, Button } from '@mantine/core';
+import { Grid } from '@mantine/core';
 import { css } from '../../../styled-system/css';
-import React from 'react';
-import { Box, Flex, GridItem, HStack, styled } from '../../../styled-system/jsx';
+import { Box, Flex, styled } from '../../../styled-system/jsx';
 import { title } from '../../../styled-system/recipes';
 
 const Title = styled('h2', title);

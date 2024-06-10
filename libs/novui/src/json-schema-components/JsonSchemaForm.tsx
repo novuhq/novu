@@ -1,17 +1,13 @@
 import React from 'react';
-import { RJSFSchema, ObjectFieldTemplateProps } from '@rjsf/utils';
+import { RJSFSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
 import Form from '@rjsf/core';
 
 import { CheckboxWidget, SelectWidget, InputWidget } from './widgets';
 
-import { styled } from 'styled-system/jsx';
-import { title } from '../../styled-system/recipes';
-import { css } from '../../styled-system/css';
-
-import { AddButton, MoveDownButton, RemoveButton, MoveUpButton } from './templates/RemoveButton';
+import { AddButton, MoveDownButton, RemoveButton, MoveUpButton } from './templates/IconButton';
 import { ArrayFieldItemTemplate, ArrayFieldTemplate, ArrayFieldTitleTemplate } from './templates/ArrayFieldTemplate';
-const Title = styled('h2', title);
+import { ObjectFieldTemplate } from './templates/ObjectFieldTemplate';
 
 export const JsonSchemaForm = ({
   schema,
@@ -27,6 +23,7 @@ export const JsonSchemaForm = ({
     SelectWidget: SelectWidget,
     TextWidget: InputWidget,
   };
+
   const uiSchema = {
     'ui:globalOptions': { addable: true, copyable: false, label: true, hideError: true, orderable: true },
     'ui:options': {
@@ -37,27 +34,12 @@ export const JsonSchemaForm = ({
     },
   };
 
-  function ObjectFieldTemplate(props: ObjectFieldTemplateProps) {
-    return (
-      <div>
-        <Title variant={'subsection'}>{props.title}</Title>
-        {props.properties.map((element) => (
-          <div key={element.name} className={css({ px: '125' })}>
-            {element.content}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <>
       <style>
-        {`
-            .control-label {
+        {` .control-label {
               display: none;
             }
-           
             `}
       </style>
       <Form
@@ -66,7 +48,7 @@ export const JsonSchemaForm = ({
         formData={formData}
         widgets={widgets}
         validator={validator}
-        onChange={({ formData }) => onChange && onChange(formData)}
+        onChange={onChange}
         liveValidate={true}
         templates={{
           ArrayFieldTitleTemplate,
