@@ -47,10 +47,12 @@ export enum ROUTES {
   SECURITY = '/settings/security',
   BILLING = '/settings/billing',
 
-  /** Onboarding routes */
   ECHO_ONBOARDING = '/echo-onboarding',
   ECHO_ONBOARDING_TEST = '/echo-onboarding/test',
   ECHO_ONBOARDING_SUCCESS = '/echo-onboarding/success',
+  /** Novu V2 routes */
+  STUDIO = '/studio',
+  STUDIO_FLOWS = '/studio/flows',
 }
 
 export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth', '/partner-integrations']);

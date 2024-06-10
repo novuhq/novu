@@ -51,6 +51,7 @@ import { useSettingsRoutes } from './SettingsRoutes';
 import { EchoOnboarding } from './pages/echo-onboarding/index';
 import { EchoOnboardingTest } from './pages/echo-onboarding/test';
 import { EchoOnboardingSuccess } from './pages/echo-onboarding/success';
+import { WorkflowsListPage } from './studio/components/workflows/WorkflowsListPage';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
@@ -144,6 +145,10 @@ export const AppRoutes = () => {
         {isInformationArchitectureEnabled && (
           <Route path={ROUTES.BRAND} element={<Navigate to={ROUTES.BRAND_SETTINGS} replace />} />
         )}
+        <Route path={ROUTES.STUDIO}>
+          <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
+          <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
+        </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />

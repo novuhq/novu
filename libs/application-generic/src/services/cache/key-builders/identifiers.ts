@@ -28,6 +28,7 @@ export enum CacheKeyPrefixEnum {
   SERVICE_CONFIG = 'service_config',
   SUBSCRIPTION = 'subscription',
   USAGE = 'usage',
+  HAS_NOTIFICATION = 'has_notification',
 }
 
 /**

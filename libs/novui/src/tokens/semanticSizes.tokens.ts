@@ -29,4 +29,17 @@ export const SEMANTIC_SIZES_TOKENS = defineSemanticTokens.sizes({
       type: 'sizes',
     },
   },
+  // From Figma
+  s: {
+    value: '{sizes.200}',
+    type: 'sizes',
+  },
+  m: {
+    value: '{sizes.250}',
+    type: 'sizes',
+  },
+  l: {
+    value: '{sizes.300}',
+    type: 'sizes',
+  },
 });
