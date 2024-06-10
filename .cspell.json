@@ -630,7 +630,9 @@
     "amannn",
     "pandabox",
     "zulip",
-    "zwnj"
+    "zwnj",
+    "prepush",
+    "xcodebuild"
   ],
   "flagWords": [],
   "patterns": [
