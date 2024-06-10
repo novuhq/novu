@@ -1,5 +1,5 @@
 import { defineConfig, Options } from 'tsup';
-import { compress } from 'esbuild-plugin-compress';
+// import { compress } from 'esbuild-plugin-compress';
 import glob from 'tiny-glob';
 
 import { name, version } from './package.json';
@@ -39,24 +39,24 @@ export default defineConfig([
     format: 'cjs',
     outDir: 'dist/cjs',
   },
-  {
-    ...baseConfig,
-    entry: { novu: 'src/umd.ts' },
-    format: ['iife'],
-    minify: true,
-    dts: false,
-    outExtension: () => {
-      return {
-        js: '.min.js',
-      };
-    },
-    esbuildPlugins: [
-      compress({
-        gzip: true,
-        brotli: false,
-        outputDir: '.',
-        exclude: ['**/*.map'],
-      }),
-    ],
-  },
+  // {
+  //   ...baseConfig,
+  //   entry: { novu: 'src/umd.ts' },
+  //   format: ['iife'],
+  //   minify: true,
+  //   dts: false,
+  //   outExtension: () => {
+  //     return {
+  //       js: '.min.js',
+  //     };
+  //   },
+  //   esbuildPlugins: [
+  //     compress({
+  //       gzip: true,
+  //       brotli: false,
+  //       outputDir: '.',
+  //       exclude: ['**/*.map'],
+  //     }),
+  //   ],
+  // },
 ]);
