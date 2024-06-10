@@ -12,7 +12,7 @@ jobs:
 
   build_dev_worker:
     runs-on: ubuntu-latest
-    timeout-minutes: 80
+    timeout-minutes: 30
     environment: Development
     permissions:
       contents: read

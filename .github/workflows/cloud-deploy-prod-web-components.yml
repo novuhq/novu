@@ -10,7 +10,7 @@ jobs:
   deploy_web_component:
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     environment: Production
 

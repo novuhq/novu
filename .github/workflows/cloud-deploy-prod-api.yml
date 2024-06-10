@@ -9,7 +9,7 @@ jobs:
 
   build_prod_image:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     environment: Production
     strategy:
       matrix:
