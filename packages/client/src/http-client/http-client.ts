@@ -21,7 +21,7 @@ export class HttpClient {
     this.backendUrl = `${backendUrl}/${this.apiVersion}`;
     this.headers = {
       'Content-Type': 'application/json',
-      'User-Agent:': userAgent,
+      'User-Agent': userAgent,
     };
   }
 
