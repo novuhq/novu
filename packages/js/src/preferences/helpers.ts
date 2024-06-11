@@ -1,7 +1,7 @@
 import { ApiService } from '@novu/client';
 
 import type { NovuEventEmitter } from '../event-emitter';
-import type { ChannelPreferenceOverride, TODO } from '../types';
+import type { TODO } from '../types';
 import { PreferenceLevel } from '../types';
 import { Preference } from './preference';
 import type { UpdatePreferencesArgs } from './types';
@@ -17,7 +17,6 @@ export const mapPreference = (apiPreference: {
       chat?: boolean;
       push?: boolean;
     };
-    overrides?: ChannelPreferenceOverride[];
   };
 }): Preference => {
   const { template: workflow, preference } = apiPreference;
@@ -28,8 +27,15 @@ export const mapPreference = (apiPreference: {
     level,
     enabled: preference.enabled,
     channels: preference.channels,
-    workflow,
-    overrides: preference.overrides,
+    workflow: hasWorkflow
+      ? {
+          id: workflow?._id,
+          name: workflow?.name,
+          critical: workflow?.critical,
+          identifier: workflow?.identifier,
+          data: workflow?.data,
+        }
+      : undefined,
   });
 };
 

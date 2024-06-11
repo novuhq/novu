@@ -15,7 +15,7 @@ export enum NotificationActionStatus {
   DONE = 'done',
 }
 
-export enum ActorType {
+export enum AvatarType {
   NONE = 'none',
   USER = 'user',
   SYSTEM_ICON = 'system_icon',
@@ -59,8 +59,8 @@ export type Session = {
   };
 };
 
-export type Actor = {
-  type: ActorType;
+export type Avatar = {
+  type: AvatarType;
   data: string | null;
 };
 
@@ -118,11 +118,10 @@ export type Cta = {
   action?: MessageAction;
 };
 
-export type WorkflowInfo = {
-  _id: string;
+export type Workflow = {
+  id: string;
   name: string;
   critical: boolean;
-  tags?: string[];
   identifier: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data?: Record<string, any>;
@@ -134,11 +133,6 @@ export type ChannelPreference = {
   in_app?: boolean;
   chat?: boolean;
   push?: boolean;
-};
-
-export type ChannelPreferenceOverride = {
-  channel: ChannelType;
-  source: PreferenceOverrideSource;
 };
 
 export type PaginatedResponse<T = unknown> = {
