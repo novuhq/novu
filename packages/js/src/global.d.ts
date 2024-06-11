@@ -1,4 +1,4 @@
-import { Novu } from './Novu';
+import { Novu } from './novu';
 
 declare global {
   interface Window {
