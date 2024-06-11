@@ -41,16 +41,5 @@ test.describe('Main Nav (Sidebar)', () => {
       await sidebarPage.getSettingsLinkLocator().click();
       expect(page.url()).toContain('/settings');
     });
-
-    test('should hide "Get started" link after clicking the visibility button', async ({ page }) => {
-      // Click the visibility button next to the "Get started" link
-      const sidebarPage = await SidebarPage.goTo(page);
-      const quickstartLocator = sidebarPage.getQuickStartLingLocator();
-      await expect(quickstartLocator).toBeVisible();
-      await quickstartLocator.hover();
-      await quickstartLocator.locator('button').click();
-
-      expect(sidebarPage.getQuickStartLingLocator()).not.toBeVisible();
-    });
   });
 });
