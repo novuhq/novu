@@ -116,6 +116,7 @@ export class EnvironmentsController {
         identifier: payload.identifier,
         _parentId: payload.parentId,
         dns: payload.dns,
+        bridge: payload.bridge,
       })
     );
   }
