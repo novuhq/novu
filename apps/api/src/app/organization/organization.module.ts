@@ -17,7 +17,7 @@ import { OrganizationController } from './organization.controller';
 import { USE_CASES } from './usecases';
 import { AuthModule } from '../auth/auth.module';
 import { Type } from '@nestjs/common/interfaces/type.interface';
-import { EEOrganizationController } from 'enterprise/packages/auth/dist';
+import { EEOrganizationController } from './ee.organization.controller';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
