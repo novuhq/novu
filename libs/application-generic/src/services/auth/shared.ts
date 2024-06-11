@@ -48,6 +48,10 @@ export const buildOauthRedirectUrl = (request): string => {
   if (invitationToken) {
     url += `&invitationToken=${invitationToken}`;
   }
+  const isLoginPage = JSON.parse(request.query.state).isLoginPage;
+  if (isLoginPage) {
+    url += `&isLoginPage=${isLoginPage}`;
+  }
 
   return url;
 };

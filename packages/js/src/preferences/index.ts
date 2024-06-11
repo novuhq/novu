@@ -1,1 +1,1 @@
-export * from './Preferences';
+export * from './preferences';
