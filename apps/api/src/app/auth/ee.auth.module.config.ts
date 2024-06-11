@@ -97,9 +97,14 @@ export const EE_REPOSITORIES = [eeUserRepositoryProvider, eeMemberRepositoryProv
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
   const jwtClerkStrategy = eeAuthPackage?.JwtClerkStrategy;
+  const eeUserController = eeAuthPackage?.EEUserController;
 
   if (!jwtClerkStrategy) {
     throw new Error('jwtClerkStrategy is not loaded');
+  }
+
+  if (!eeUserController) {
+    throw new Error('eeUserController is not loaded');
   }
 
   const AUTH_STRATEGIES: Provider[] = [jwtClerkStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
@@ -114,6 +119,7 @@ export function getEEModuleConfig(): ModuleMetadata {
         },
       }),
     ],
+    controllers: [eeUserController],
     providers: [
       ...AUTH_STRATEGIES,
       ...EE_AUTH_PROVIDERS,

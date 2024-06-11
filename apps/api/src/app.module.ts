@@ -80,7 +80,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   NotificationGroupsModule,
   ContentTemplatesModule,
   OrganizationModule,
-  UserModule,
+  // UserModule,
   IntegrationModule,
   ChangeModule,
   SubscribersModule,
@@ -101,7 +101,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
 const enterpriseModules = enterpriseImports();
 
 if (process.env.NOVU_ENTERPRISE !== 'true') {
-  const communityModules = [StorageModule, InvitesModule];
+  const communityModules = [UserModule, StorageModule, InvitesModule];
   baseModules.push(...communityModules);
 }
 
