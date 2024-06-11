@@ -25,6 +25,8 @@ export class OrganizationEntity implements IOrganizationEntity {
   updatedAt: string;
 
   externalId?: string;
+
+  createdBy?: string;
 }
 
 export type Branding = {
