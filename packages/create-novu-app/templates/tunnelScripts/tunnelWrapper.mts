@@ -33,10 +33,14 @@ export default class LocalTunnelWrapper implements ITunnelWrapper {
   }
 
   private errorHandler(err: Error) {
-    console.log("Error on socket communication", err);
+    console.log(err);
+    console.log(
+      "Localtunnel seems to have crashed, the process will attempt to restart...",
+    );
+    process.exit(1);
   }
 
   private closeHandler() {
-    console.log("Tunnel was closed");
+    console.log("Successfully closed the tunnel.");
   }
 }
