@@ -23,11 +23,11 @@ novu.on('notification.remove.error', (args) => {
 const feed = await novu.feeds.fetch();
 console.log(feed);
 
-const notificatio1 = await novu.feeds.markNotificationAs({
+const notification1 = await novu.feeds.markNotificationAs({
   id: '123',
   status: NotificationStatus.SEEN,
 });
-const notificatio2 = await novu.feeds.markNotificationAs({
+const notification2 = await novu.feeds.markNotificationAs({
   notification: feed.data[0],
   status: NotificationStatus.SEEN,
 });

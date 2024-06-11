@@ -1,7 +1,7 @@
 import { ApiService } from '@novu/client';
 
 import { NovuEventEmitter } from './event-emitter';
-import { ApiServiceSingleton } from './utils/api-service-signleton';
+import { ApiServiceSingleton } from './utils/api-service-singleton';
 
 interface CallQueueItem {
   fn: () => Promise<unknown>;

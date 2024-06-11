@@ -3,7 +3,7 @@ import type { EventHandler, EventNames, Events } from './event-emitter';
 import { Feeds } from './feeds';
 import { Session } from './session';
 import { Preferences } from './preferences';
-import { ApiServiceSingleton } from './utils/api-service-signleton';
+import { ApiServiceSingleton } from './utils/api-service-singleton';
 
 type NovuOptions = {
   applicationIdentifier: string;
