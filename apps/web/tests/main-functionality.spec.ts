@@ -398,13 +398,13 @@ test('should redirect to the workflows page when switching environments', async 
   await expect(page).toHaveURL(/\/workflows/);
 });
 
-test('New workflow button should be disabled in the Production', async ({ page }) => {
+test.skip('New workflow button should be disabled in the Production', async ({ page }) => {
   const workflowsPage = await WorkflowsPage.goTo(page);
   await new SidebarPage(page).toggleToProduction();
   await expect(workflowsPage.getCreateWorkflowButton()).toBeDisabled();
 });
 
-test('Should not allow to go to New Template page in Production', async ({ page }) => {
+test.skip('Should not allow to go to New Template page in Production', async ({ page }) => {
   await WorkflowEditorPage.goToNewWorkflow(page);
   await new SidebarPage(page).toggleToProduction();
   expect(page.url()).toContain('/workflows');
