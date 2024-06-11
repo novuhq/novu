@@ -1,7 +1,7 @@
 import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
-import { Group } from '@mantine/core';
 import { Button } from './Button';
+import { HStack } from '../../../novui/styled-system/jsx';
 
 export default {
   title: 'Components/Button',
@@ -20,26 +20,26 @@ Loading.args = {
 };
 
 export const filled = () => (
-  <Group>
+  <HStack>
     <Button size="lg">Large</Button>
     <Button>Medium</Button>
-  </Group>
+  </HStack>
 );
 
 export const outline = () => (
-  <Group>
+  <HStack>
     <Button size="lg" variant="outline">
       Large
     </Button>
     <Button variant="outline">Medium</Button>
-  </Group>
+  </HStack>
 );
 
 export const disabled = () => (
-  <Group>
+  <HStack>
     <Button disabled>Filled</Button>
     <Button variant="outline" disabled>
       Outline
     </Button>
-  </Group>
+  </HStack>
 );

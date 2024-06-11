@@ -1,8 +1,8 @@
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
-import { Button } from './Button';
-import { Flex } from '../../../styled-system/jsx';
+import { HStack } from '../../../styled-system/jsx';
 import { Icon10K, IconInfo } from '../../icons';
+import { Button } from './Button';
 
 export default {
   title: 'Components/Button',
@@ -21,35 +21,43 @@ Loading.args = {
 };
 
 export const icon = () => (
-  <Flex>
+  <HStack>
     <Button size="lg" Icon={Icon10K}>
       Large
     </Button>
     <Button Icon={IconInfo}>Medium</Button>
-  </Flex>
+  </HStack>
 );
 
 export const filled = () => (
-  <Flex>
+  <HStack>
     <Button size="lg">Large</Button>
-    <Button>Medium</Button>
-  </Flex>
+    <Button size="md">Medium</Button>
+    <Button size="sm">Small</Button>
+    <Button>Default</Button>
+  </HStack>
 );
 
 export const outline = () => (
-  <Flex>
+  <HStack>
     <Button size="lg" variant="outline">
       Large
     </Button>
     <Button variant="outline">Medium</Button>
-  </Flex>
+    <Button size="lg" Icon={Icon10K} variant="outline">
+      Large
+    </Button>
+    <Button Icon={IconInfo} variant="outline">
+      Medium
+    </Button>
+  </HStack>
 );
 
 export const disabled = () => (
-  <Flex>
+  <HStack>
     <Button disabled>Filled</Button>
     <Button variant="outline" disabled>
       Outline
     </Button>
-  </Flex>
+  </HStack>
 );
