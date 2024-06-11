@@ -174,17 +174,15 @@ export const installTemplate = async ({
 
   /* write .env file */
   const port = 4000;
-  const host = tunnelHost;
+  const val = Object.entries({
+    PORT: port,
+    API_KEY: apiKey,
+    TUNNEL_HOST: tunnelHost,
+  }).reduce((acc, [key, value]) => {
+    return `${acc}${key}=${value}${os.EOL}`;
+  }, "");
 
-  await fs.writeFile(
-    path.join(root, ".env"),
-    `PORT=${port}` +
-      os.EOL +
-      `API_KEY=${apiKey}` +
-      os.EOL +
-      `TUNNEL_HOST=${host}` +
-      os.EOL,
-  );
+  await fs.writeFile(path.join(root, ".env"), val);
 
   /** Copy the version from package.json or override for tests. */
   const version = "14.2.3";
