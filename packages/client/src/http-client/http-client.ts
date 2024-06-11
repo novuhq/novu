@@ -3,6 +3,10 @@ import { CustomDataType } from '@novu/shared';
 
 const DEFAULT_API_VERSION = 'v1';
 const DEFAULT_BACKEND_URL = 'https://api.novu.co';
+const PACKAGE_NAME = '@novu/client';
+const PACKAGE_VERSION = '0.42.0';
+const DEFAULT_USER_AGENT = `${PACKAGE_NAME}-${PACKAGE_VERSION}`;
+
 export class HttpClient {
   private backendUrl: string;
   private apiVersion: string;
@@ -11,11 +15,13 @@ export class HttpClient {
   constructor({
     apiVersion = DEFAULT_API_VERSION,
     backendUrl = DEFAULT_BACKEND_URL,
+    userAgent = DEFAULT_USER_AGENT,
   }: ApiOptions = {}) {
     this.apiVersion = apiVersion;
     this.backendUrl = `${backendUrl}/${this.apiVersion}`;
     this.headers = {
       'Content-Type': 'application/json',
+      'User-Agent': userAgent,
     };
   }
 
