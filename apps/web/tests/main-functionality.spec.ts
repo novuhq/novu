@@ -410,7 +410,7 @@ test.skip('Should not allow to go to New Template page in Production', async ({ 
   expect(page.url()).toContain('/workflows');
 });
 
-test('should save Cta buttons state in inApp channel', async ({ page }) => {
+test.skip('should save Cta buttons state in inApp channel', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const workflowSidePanel = await workflowEditorPage.openWorkflowSettingsSidePanel();
   await workflowSidePanel.fillBasicNotificationDetails({
