@@ -6,6 +6,7 @@ import {
   EmailBlockTypeEnum,
   MessageActionStatusEnum,
   TextAlignEnum,
+  INotificationDto,
 } from '@novu/shared';
 import { SubscriberResponseDto } from '../../subscribers/dtos';
 import { WorkflowResponse } from '../../workflows/dto/workflow-response.dto';
@@ -85,7 +86,7 @@ class MessageCTA {
 }
 
 @ApiExtraModels(EmailBlock, MessageCTA)
-export class MessageResponseDto {
+export class MessageResponseDto implements INotificationDto {
   @ApiPropertyOptional()
   _id?: string;
 

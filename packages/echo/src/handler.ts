@@ -2,6 +2,7 @@ import { createHmac } from 'node:crypto';
 
 import { Echo } from './client';
 import {
+  ErrorCodeEnum,
   GetActionEnum,
   HttpHeaderKeysEnum,
   HttpMethodEnum,
@@ -261,8 +262,12 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private handleError(error: any): IActionResponse {
-    if (error instanceof EchoError) {
+  private isClientError(error: unknown): error is EchoError {
+    return Object.values(ErrorCodeEnum).includes((error as EchoError).code);
+  }
+
+  private handleError(error: unknown): IActionResponse {
+    if (this.isClientError(error)) {
       if (error.statusCode === HttpStatusEnum.INTERNAL_SERVER_ERROR) {
         // eslint-disable-next-line no-console
         console.error(error);

@@ -147,17 +147,6 @@ export class AddJob {
     Logger.verbose(`Updating status to queued for job ${job._id}`, LOG_CONTEXT);
     await this.jobRepository.updateStatus(command.environmentId, job._id, JobStatusEnum.QUEUED);
 
-    await this.executionLogRoute.execute(
-      ExecutionLogRouteCommand.create({
-        ...ExecutionLogRouteCommand.getDetailsFromJob(job),
-        detail: DetailEnum.STEP_QUEUED,
-        source: ExecutionDetailsSourceEnum.INTERNAL,
-        status: ExecutionDetailsStatusEnum.PENDING,
-        isTest: false,
-        isRetry: false,
-      })
-    );
-
     await this.queueJob(job, 0);
   }
 
