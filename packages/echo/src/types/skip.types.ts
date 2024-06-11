@@ -1,3 +1,3 @@
-import { MaybePromise } from './util.types';
+import { Awaitable } from './util.types';
 
-export type Skip<T_Inputs = any> = (inputs: T_Inputs) => MaybePromise<boolean>;
+export type Skip<T> = (inputs: T) => Awaitable<boolean>;

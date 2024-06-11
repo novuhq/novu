@@ -513,7 +513,10 @@ export class Echo {
     };
   }
 
-  private async shouldSkip(skip: Skip | undefined, inputs: Record<string, unknown>): Promise<boolean> {
+  private async shouldSkip(
+    skip: Skip<Record<string, unknown>> | undefined,
+    inputs: Record<string, unknown>
+  ): Promise<boolean> {
     if (!skip) {
       return false;
     }

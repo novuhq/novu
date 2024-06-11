@@ -33,7 +33,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
 
   it('should update echo url', async () => {
     const result = await session.testAgent.post(`/v1/echo/sync`).send({
-      url: 'https://chimera.novu.com',
+      url: 'https://novu.co',
       workflows: [],
     });
 
@@ -41,7 +41,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
 
     const environment = await environmentRepository.findOne({ _id: session.environment._id });
 
-    expect(environment?.echo.url).to.equal('https://chimera.novu.com');
+    expect(environment?.echo.url).to.equal('https://novu.co');
 
     const workflows = await workflowsRepository.find({ _environmentId: session.environment._id });
     expect(workflows.length).to.equal(0);
@@ -49,7 +49,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
 
   it('should create a workflow', async () => {
     const result = await session.testAgent.post(`/v1/echo/sync`).send({
-      url: 'https://chimera.novu.com',
+      url: 'https://novu.co',
       workflows: [
         {
           workflowId: 'test-workflow',
@@ -94,7 +94,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
 
   it('should create a message template', async () => {
     const result = await session.testAgent.post(`/v1/echo/sync`).send({
-      url: 'https://chimera.novu.com',
+      url: 'https://novu.co',
       workflows: [
         {
           workflowId: 'test-workflow',
@@ -138,7 +138,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
 
   it('should update a workflow', async () => {
     await session.testAgent.post(`/v1/echo/sync`).send({
-      url: 'https://chimera.novu.com',
+      url: 'https://novu.co',
       workflows: [
         {
           workflowId: 'test-workflow',
@@ -160,7 +160,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     });
 
     await session.testAgent.post(`/v1/echo/sync`).send({
-      url: 'https://chimera.novu.com',
+      url: 'https://novu.co',
       workflows: [
         {
           workflowId: 'test-workflow',
@@ -208,7 +208,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     expect(workflow.steps[1].name).to.equal('send-sms');
 
     await session.testAgent.post(`/v1/echo/sync`).send({
-      url: 'https://chimera.novu.com',
+      url: 'https://novu.co',
       workflows: [
         {
           workflowId: 'test-workflow',
@@ -227,7 +227,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
 
   it('should update a existing steps', async () => {
     await session.testAgent.post(`/v1/echo/sync`).send({
-      url: 'https://chimera.novu.com',
+      url: 'https://novu.co',
       workflows: [
         {
           workflowId: 'test-workflow',
@@ -260,7 +260,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     expect(messageTemplatesToTest.output).to.equal(undefined);
 
     await session.testAgent.post(`/v1/echo/sync`).send({
-      url: 'https://chimera.novu.com',
+      url: 'https://novu.co',
       workflows: [
         {
           workflowId: 'test-workflow',
