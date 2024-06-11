@@ -21,6 +21,7 @@ import {
 import { Z_INDEX_TOKENS } from './tokens/zIndex.tokens';
 import { SEMANTIC_SIZES_TOKENS } from './tokens/semanticSizes.tokens';
 import { SEMANTIC_SPACING_TOKENS } from './tokens/semanticSpacing.tokens';
+import { SEMANTIC_RADIUS_TOKENS } from './tokens/semanticRadius.tokens';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -63,6 +64,7 @@ export const novuPandaPreset = definePreset({
         ...COLOR_SEMANTIC_TOKENS,
         ...LEGACY_COLOR_SEMANTIC_TOKENS,
       },
+      radii: SEMANTIC_RADIUS_TOKENS,
       shadows: LEGACY_SHADOW_TOKENS,
       gradients: {
         ...GRADIENT_TOKENS,

@@ -143,6 +143,17 @@ export const buildEvaluateApiRateLimitKey = ({
     identifier: apiRateLimitCategory,
   });
 
+export const buildHasNotificationKey = ({
+  _organizationId,
+}: {
+  _organizationId: string;
+}): string =>
+  buildOrganizationScopedKey({
+    type: CacheKeyTypeEnum.ENTITY,
+    keyEntity: CacheKeyPrefixEnum.HAS_NOTIFICATION,
+    organizationId: _organizationId,
+  });
+
 export const buildUsageKey = ({
   _organizationId,
   resourceType,

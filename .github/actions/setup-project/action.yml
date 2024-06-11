@@ -27,7 +27,7 @@ runs:
     - name: Install pnpm
       uses: pnpm/action-setup@v3
 
-    - uses: actions/setup-node@v3
+    - uses: actions/setup-node@v4
       name: ⚙️ Setup Node Version
       with:
         node-version: '20.8.1'
@@ -46,7 +46,6 @@ runs:
     - name: 🛟 Install dependencies
       shell: bash
       run: pnpm install --frozen-lockfile
-
 
     - name: Link submodules
       shell: bash
