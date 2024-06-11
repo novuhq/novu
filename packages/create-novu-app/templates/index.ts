@@ -195,7 +195,7 @@ export const installTemplate = async ({
     scripts: {
       tunnel: "tsx scripts/tunnel.mts",
       "next-dev": `next dev --port=${port}`,
-      dev: 'concurrently -k --restart-tries 5 --restart-after 500 --names "📡 TUNNEL,🖥️  SERVER" -c "bgBlue.bold,bgMagenta.bold" "npm:tunnel" "npm:next-dev"',
+      dev: 'concurrently -k --restart-tries 5 --restart-after 1000 --names "📡 TUNNEL,🖥️  SERVER" -c "bgBlue.bold,bgMagenta.bold" "npm:tunnel" "npm:next-dev"',
       build: "next build",
       start: "next start",
       lint: "next lint",
