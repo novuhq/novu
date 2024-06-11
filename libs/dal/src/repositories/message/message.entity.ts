@@ -31,10 +31,13 @@ export class MessageEntity {
 
   template?: NotificationTemplateEntity;
 
-  templateIdentifier?: string;
+  templateIdentifier: string;
 
-  createdAt?: string;
-  expireAt?: string;
+  createdAt: string;
+
+  expireAt: string;
+
+  updatedAt: string;
 
   content: string | IEmailBlock[];
 
@@ -48,6 +51,8 @@ export class MessageEntity {
 
   read: boolean;
 
+  deleted: boolean;
+
   email?: string;
 
   phone?: string;
@@ -56,7 +61,7 @@ export class MessageEntity {
 
   directWebhookUrl?: string;
 
-  providerId?: string;
+  providerId: string;
 
   deviceTokens?: string[];
 

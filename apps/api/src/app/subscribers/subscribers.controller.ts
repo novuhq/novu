@@ -101,6 +101,7 @@ import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { MessageMarkAsRequestDto } from '../widgets/dtos/mark-as-request.dto';
 import { MarkMessageAsByMarkCommand } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
 import { MarkMessageAsByMark } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
+import { FeedResponseDto } from '../widgets/dtos/feeds-response.dto';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -476,12 +477,12 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Get in-app notification feed for a particular subscriber',
   })
-  @ApiOkPaginatedResponse(MessageResponseDto)
+  @ApiOkPaginatedResponse(FeedResponseDto)
   async getNotificationsFeed(
     @UserSession() user: IJwtPayload,
     @Param('subscriberId') subscriberId: string,
     @Query() query: GetInAppNotificationsFeedForSubscriberDto
-  ): Promise<PaginatedResponseDto<MessageResponseDto>> {
+  ): Promise<FeedResponseDto> {
     let feedsQuery: string[] | undefined;
     if (query.feedIdentifier) {
       feedsQuery = Array.isArray(query.feedIdentifier) ? query.feedIdentifier : [query.feedIdentifier];
