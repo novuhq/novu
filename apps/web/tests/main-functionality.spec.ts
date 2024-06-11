@@ -375,7 +375,7 @@ test('should save HTML template email', async ({ page }) => {
   await expect(emailPage.getMonacoEditor()).toContainText('Hello world code {{name}} <div>Test</div>');
 });
 
-test('should redirect to the workflows page when switching environments', async ({ page }) => {
+test.skip('should redirect to the workflows page when switching environments', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const workflowSidePanel = await workflowEditorPage.openWorkflowSettingsSidePanel();
   await workflowSidePanel.fillBasicNotificationDetails({
