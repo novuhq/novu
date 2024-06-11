@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule, Provider, RequestMethod } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import * as passport from 'passport';
+const passport = require('passport');
 
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
 import { AuthService } from '@novu/application-generic';

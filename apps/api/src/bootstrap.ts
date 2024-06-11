@@ -4,8 +4,8 @@ import '@sentry/tracing';
 
 import helmet from 'helmet';
 import { INestApplication, Logger, ValidationPipe } from '@nestjs/common';
-import * as passport from 'passport';
-import * as compression from 'compression';
+const passport = require('passport');
+const compression = require('compression');
 import { NestFactory, Reflector } from '@nestjs/core';
 import * as bodyParser from 'body-parser';
 import * as Sentry from '@sentry/node';
