@@ -23,7 +23,14 @@ import type {
   MarkNotificationActionAsByInstanceArgs,
 } from './types';
 import { READ_OR_UNREAD, SEEN_OR_UNSEEN } from '../utils/notification-utils';
-import { markActionAs, markNotificationAs, markNotificationsAs, remove, removeNotifications } from './helpers';
+import {
+  mapFromApiNotification,
+  markActionAs,
+  markNotificationAs,
+  markNotificationsAs,
+  remove,
+  removeNotifications,
+} from './helpers';
 
 export class Feeds extends BaseModule {
   async fetch({ page = 0, status, ...restOptions }: FetchFeedArgs = {}): Promise<PaginatedResponse<Notification>> {
@@ -39,7 +46,7 @@ export class Feeds extends BaseModule {
         });
         const modifiedResponse: PaginatedResponse<Notification> = {
           ...response,
-          data: response.data.map((el) => new Notification(el as TODO)),
+          data: response.data.map((el) => new Notification(mapFromApiNotification(el as TODO))),
         };
 
         this._emitter.emit('feeds.fetch.success', { args, result: modifiedResponse });

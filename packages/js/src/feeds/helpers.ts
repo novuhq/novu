@@ -11,6 +11,19 @@ import {
   RemoveNotificationsArgs,
 } from './types';
 
+export const mapFromApiNotification = (apiNotification: TODO): Notification =>
+  new Notification({
+    id: apiNotification.id,
+    feedIdentifier: apiNotification._feedId,
+    createdAt: apiNotification.createdAt,
+    avatar: apiNotification.actor,
+    body: apiNotification.content,
+    read: apiNotification.read,
+    seen: apiNotification.seen,
+    deleted: apiNotification.deleted,
+    cta: apiNotification.cta,
+  });
+
 const getOptimisticMarkAs = (status: NotificationStatus): Partial<Notification> => {
   switch (status) {
     case NotificationStatus.READ:
@@ -49,7 +62,7 @@ export const markNotificationAs = async ({
   args: MarkNotificationAsArgs;
 }): Promise<Notification> => {
   const isNotification = typeof notification !== 'undefined';
-  const notificationId = isNotification ? notification._id : id ?? '';
+  const notificationId = isNotification ? notification.id : id ?? '';
   const args = { id, notification, status };
   try {
     emitter.emit('notification.mark_as.pending', {
@@ -61,7 +74,7 @@ export const markNotificationAs = async ({
       messageId: [notificationId],
       markAs: status,
     });
-    const updatedNotification = new Notification(response[0] as TODO);
+    const updatedNotification = new Notification(mapFromApiNotification(response[0] as TODO));
 
     emitter.emit('notification.mark_as.success', { args, result: updatedNotification });
 
@@ -121,7 +134,7 @@ export const markActionAs = async ({
   args: MarkNotificationActionAsArgs;
 }): Promise<Notification> => {
   const isNotification = typeof notification !== 'undefined';
-  const notificationId = isNotification ? notification._id : id ?? '';
+  const notificationId = isNotification ? notification.id : id ?? '';
   const args = { id, notification, button, status };
   try {
     emitter.emit('notification.mark_action_as.pending', {
@@ -132,7 +145,7 @@ export const markActionAs = async ({
     });
 
     const response = await apiService.updateAction(notificationId, button, status);
-    const updatedNotification = new Notification(response as TODO);
+    const updatedNotification = new Notification(mapFromApiNotification(response as TODO));
 
     emitter.emit('notification.mark_action_as.success', {
       args,
@@ -162,7 +175,7 @@ export const remove = async ({
   args: RemoveNotificationArgs;
 }): Promise<Notification | void> => {
   const isNotification = typeof notification !== 'undefined';
-  const notificationId = isNotification ? notification._id : id ?? '';
+  const notificationId = isNotification ? notification.id : id ?? '';
   const args = { id, notification };
   try {
     const deletedNotification = isNotification
@@ -205,7 +218,7 @@ export const removeNotifications = async ({
       : undefined;
     emitter.emit('feeds.remove_notifications.pending', { args, optimistic: optimisticNotifications });
 
-    const notificationIds = isNotificationArray ? notifications.map((el) => el._id) : ids ?? [];
+    const notificationIds = isNotificationArray ? notifications.map((el) => el.id) : ids ?? [];
     await apiService.removeMessages(notificationIds);
 
     emitter.emit('feeds.remove_notifications.success', { args, result: optimisticNotifications });
@@ -239,14 +252,14 @@ export const markNotificationsAs = async ({
     emitter.emit('feeds.mark_notifications_as.pending', { args, optimistic: optimisticNotifications });
 
     const notificationIds = isNotificationArray
-      ? notifications.map((el) => (typeof el === 'string' ? el : el._id))
+      ? notifications.map((el) => (typeof el === 'string' ? el : el.id))
       : ids ?? [];
     const response = await apiService.markMessagesAs({
       messageId: notificationIds,
       markAs: status,
     });
 
-    const updatedNotifications = response.map((el) => new Notification(el as TODO));
+    const updatedNotifications = response.map((el) => new Notification(mapFromApiNotification(el as TODO)));
     emitter.emit('feeds.mark_notifications_as.success', {
       args,
       result: updatedNotifications,
