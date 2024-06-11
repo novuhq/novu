@@ -57,7 +57,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       return;
     }
 
-    // if token from github is not present
+    // if token from OAuth or CLI is not present
     if (!tokenInQuery) {
       return;
     }
