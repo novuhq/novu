@@ -8,6 +8,15 @@ import { UpdateBrandingDetails } from './update-branding-details/update-branding
 import { GetOrganizations } from './get-organizations/get-organizations.usecase';
 import { GetMyOrganization } from './get-my-organization/get-my-organization.usecase';
 import { RenameOrganization } from './rename-organization/rename-organization.usecase';
+import { SyncExternalOrganization } from 'enterprise/packages/auth/dist';
+
+function getEnterpriseUsecases() {
+  if (process.env.NOVU_ENTERPRISE === 'true') {
+    return [SyncExternalOrganization];
+  }
+
+  return [];
+}
 
 export const USE_CASES = [
   AddMember,
@@ -20,4 +29,5 @@ export const USE_CASES = [
   GetOrganizations,
   GetMyOrganization,
   RenameOrganization,
+  ...getEnterpriseUsecases(),
 ];

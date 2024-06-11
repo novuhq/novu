@@ -17,6 +17,7 @@ import { OrganizationController } from './organization.controller';
 import { USE_CASES } from './usecases';
 import { AuthModule } from '../auth/auth.module';
 import { Type } from '@nestjs/common/interfaces/type.interface';
+import { EEOrganizationController } from 'enterprise/packages/auth/dist';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -33,6 +34,14 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
   return modules;
 };
 
+function getControllers() {
+  if (process.env.NOVU_ENTERPRISE === 'true') {
+    return [EEOrganizationController];
+  }
+
+  return [OrganizationController];
+}
+
 @Module({
   imports: [
     SharedModule,
@@ -42,15 +51,17 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     forwardRef(() => AuthModule),
     ...enterpriseImports(),
   ],
-  controllers: [OrganizationController],
+  controllers: [...getControllers()],
   providers: [...USE_CASES],
   exports: [...USE_CASES],
 })
 export class OrganizationModule implements NestModule {
   configure(consumer: MiddlewareConsumer): MiddlewareConsumer | void {
-    consumer.apply(AuthGuard).exclude({
-      method: RequestMethod.GET,
-      path: '/organizations/invite/:inviteToken',
-    });
+    if (process.env.NOVU_ENTERPRISE !== 'true') {
+      consumer.apply(AuthGuard).exclude({
+        method: RequestMethod.GET,
+        path: '/organizations/invite/:inviteToken',
+      });
+    }
   }
 }

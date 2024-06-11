@@ -103,10 +103,6 @@ export function getEEModuleConfig(): ModuleMetadata {
     throw new Error('jwtClerkStrategy is not loaded');
   }
 
-  if (!eeUserController) {
-    throw new Error('eeUserController is not loaded');
-  }
-
   const AUTH_STRATEGIES: Provider[] = [jwtClerkStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
   const EE_AUTH_PROVIDERS: Provider[] = [eeAuthServiceProvider, AuthService, eeUserAuthGuard];
 
