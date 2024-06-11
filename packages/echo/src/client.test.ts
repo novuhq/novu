@@ -8,7 +8,10 @@ import {
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
-import { IEvent } from './types';
+import { IEvent, Step } from './types';
+import { delayOutputSchema } from './schemas';
+import { FromSchema } from 'json-schema-to-ts';
+import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
 
 describe('Echo Client', () => {
   let echo: Echo;
@@ -343,9 +346,14 @@ describe('Echo Client', () => {
     beforeEach(() => {});
 
     it('should execute workflow successfully when action is execute and data is provided', async () => {
+      const delayConfiguration: FromSchema<typeof delayOutputSchema> = { type: 'regular', unit: 'seconds', amount: 1 };
+      const emailConfiguration: FromSchema<typeof emailChannelSchemas.output> = {
+        body: 'Test Body',
+        subject: 'Subject',
+      };
       await echo.workflow('test-workflow', async ({ step }) => {
-        await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
-        await step.delay('delay', async () => ({ type: 'regular', unit: 'seconds', amount: 1 }));
+        await step.email('send-email', async () => emailConfiguration);
+        await step.delay('delay', async () => delayConfiguration);
       });
 
       const emailEvent: IEvent = {
@@ -364,9 +372,9 @@ describe('Echo Client', () => {
       expect(emailExecutionResult.outputs).toBeDefined();
       if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
       const body = (emailExecutionResult.outputs as any).body as string;
-      expect(body).toBe('Test Body');
+      expect(body).toBe(emailConfiguration.body);
       const subject = (emailExecutionResult.outputs as any).subject as string;
-      expect(subject).toBe('Subject');
+      expect(subject).toBe(emailConfiguration.subject);
       expect(emailExecutionResult.providers).toEqual({});
       const metadata = emailExecutionResult.metadata;
       expect(metadata.status).toBe('success');
@@ -398,12 +406,12 @@ describe('Echo Client', () => {
       expect(delayExecutionResult.outputs).toBeDefined();
       if (!delayExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
       const unit = (delayExecutionResult.outputs as any).unit as string;
-      expect(unit).toBe('seconds');
+      expect(unit).toBe(delayConfiguration.unit);
       const amount = (delayExecutionResult.outputs as any).amount as string;
-      expect(amount).toBe(1);
+      expect(amount).toBe(delayConfiguration.amount);
       expect(delayExecutionResult.providers).toEqual({});
       const type = (delayExecutionResult.outputs as any).type as string;
-      expect(type).toBe('regular');
+      expect(type).toBe(delayConfiguration.type);
     });
 
     it('should throw error on execute action without data', async () => {
