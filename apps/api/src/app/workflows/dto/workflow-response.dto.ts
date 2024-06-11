@@ -7,7 +7,7 @@ import { NotificationStep } from '../../shared/dtos/notification-step';
 import { PreferenceChannels } from '../../shared/dtos/preference-channels';
 import { WorkflowIntegrationStatus } from '@novu/shared';
 
-class NotificationGroup {
+export class NotificationGroup {
   @ApiPropertyOptional()
   _id?: string;
 
@@ -24,11 +24,11 @@ class NotificationGroup {
   _parentId?: string;
 }
 
-class NotificationTriggerVariable {
+export class NotificationTriggerVariable {
   name: string;
 }
 
-class NotificationTrigger {
+export class NotificationTrigger {
   @ApiProperty()
   type: TriggerTypeEnum;
 
