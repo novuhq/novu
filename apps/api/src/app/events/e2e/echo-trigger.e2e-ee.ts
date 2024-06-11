@@ -391,7 +391,7 @@ describe('Echo Trigger ', async () => {
     expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
   });
 
-  it('should trigger the scheduled delay with invalid date', async () => {
+  it('should report error on date that is in the past from now', async () => {
     const workflowId = 'scheduled-delay-workflow';
     await echoServer.echo.workflow(
       workflowId,

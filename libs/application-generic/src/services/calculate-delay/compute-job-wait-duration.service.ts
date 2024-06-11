@@ -42,7 +42,7 @@ export class ComputeJobWaitDurationService {
       const userMetadata = this.getUserScheduledDelayMetadata(chimeraResponse);
       let delay = 0;
 
-      if (userMetadata.date) {
+      if (userMetadata?.date) {
         const delayDate = userMetadata.date;
         delay = differenceInMilliseconds(new Date(delayDate), new Date());
 
@@ -100,7 +100,7 @@ export class ComputeJobWaitDurationService {
   ): { amount: number; unit: DigestUnitEnum } | undefined {
     if (isUserRegular(chimeraResponse)) {
       const unit = castToDigestUnitEnum(chimeraResponse?.unit);
-      const amount = chimeraResponse?.amount;
+      const amount = chimeraResponse.amount;
 
       return { amount, unit };
     }
@@ -112,7 +112,7 @@ export class ComputeJobWaitDurationService {
     chimeraResponse: IChimeraDigestResponse | IDelayOutput
   ): { date: string } | undefined {
     if (isUserScheduled(chimeraResponse)) {
-      return { date: chimeraResponse?.date };
+      return { date: chimeraResponse.date };
     }
 
     return;
