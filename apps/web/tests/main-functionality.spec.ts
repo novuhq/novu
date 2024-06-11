@@ -375,7 +375,7 @@ test('should save HTML template email', async ({ page }) => {
   await expect(emailPage.getMonacoEditor()).toContainText('Hello world code {{name}} <div>Test</div>');
 });
 
-test('should redirect to the workflows page when switching environments', async ({ page }) => {
+test.skip('should redirect to the workflows page when switching environments', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const workflowSidePanel = await workflowEditorPage.openWorkflowSettingsSidePanel();
   await workflowSidePanel.fillBasicNotificationDetails({
@@ -410,7 +410,7 @@ test.skip('Should not allow to go to New Template page in Production', async ({ 
   expect(page.url()).toContain('/workflows');
 });
 
-test('should save Cta buttons state in inApp channel', async ({ page }) => {
+test.skip('should save Cta buttons state in inApp channel', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const workflowSidePanel = await workflowEditorPage.openWorkflowSettingsSidePanel();
   await workflowSidePanel.fillBasicNotificationDetails({

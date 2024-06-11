@@ -24,7 +24,6 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_web:
     strategy:
-      fail-fast: true
       matrix:
         # run 5 copies of the current job in parallel
         containers: [1, 2, 3, 4, 5]
