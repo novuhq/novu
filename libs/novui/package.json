@@ -51,7 +51,8 @@
       "require": "./styled-system/jsx/index.js",
       "import": "./styled-system/jsx/index.js"
     },
-    "./styles.css": "./styled-system/styles.css"
+    "./styles.css": "./styled-system/styles.css",
+    "./components.css": "./node_modules/@mantine/core/styles.css"
   },
   "scripts": {
     "prepare:lib": "pnpm prepare:panda && pnpm prepare:audit",

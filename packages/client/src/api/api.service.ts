@@ -1,9 +1,10 @@
 import {
-  IMessage,
   ButtonTypeEnum,
   MessageActionStatusEnum,
   CustomDataType,
   IPaginatedResponse,
+  ISessionDto,
+  INotificationDto,
 } from '@novu/shared';
 import { HttpClient } from '../http-client';
 import {
@@ -118,7 +119,7 @@ export class ApiService {
   async getNotificationsList(
     page: number,
     { payload, ...rest }: IStoreQuery = {}
-  ): Promise<IPaginatedResponse<IMessage>> {
+  ): Promise<IPaginatedResponse<INotificationDto>> {
     const payloadString = payload ? btoa(JSON.stringify(payload)) : undefined;
 
     return await this.httpClient.getFullResponse(
@@ -135,7 +136,7 @@ export class ApiService {
     appId: string,
     subscriberId: string,
     hmacHash = null
-  ) {
+  ): Promise<ISessionDto> {
     return await this.httpClient.post(`/widgets/session/initialize`, {
       applicationIdentifier: appId,
       subscriberId: subscriberId,
