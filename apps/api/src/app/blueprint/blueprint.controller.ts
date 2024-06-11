@@ -6,10 +6,12 @@ import { GetBlueprint, GetBlueprintCommand } from './usecases/get-blueprint';
 import { GetGroupedBlueprints, GetGroupedBlueprintsCommand } from './usecases/get-grouped-blueprints';
 import { GetBlueprintResponse } from './dto/get-blueprint.response.dto';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
+import { ApiExcludeController } from '@nestjs/swagger';
 
 @ApiCommonResponses()
 @Controller('/blueprints')
 @UseInterceptors(ClassSerializerInterceptor)
+@ApiExcludeController()
 export class BlueprintController {
   constructor(
     private environmentRepository: EnvironmentRepository,

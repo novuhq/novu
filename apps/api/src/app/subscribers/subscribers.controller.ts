@@ -13,29 +13,27 @@ import {
   Put,
   Query,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import {
   CreateSubscriber,
   CreateSubscriberCommand,
-  UpdateSubscriber,
-  UpdateSubscriberCommand,
   OAuthHandlerEnum,
+  UpdateSubscriber,
   UpdateSubscriberChannel,
   UpdateSubscriberChannelCommand,
+  UpdateSubscriberCommand,
 } from '@novu/application-generic';
-import { ApiOperation, ApiTags, ApiParam } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import {
   ApiRateLimitCategoryEnum,
   ApiRateLimitCostEnum,
   ButtonTypeEnum,
   ChatProviderIdEnum,
-  IJwtPayload,
+  UserSessionData,
 } from '@novu/shared';
 import { MessageEntity, PreferenceLevelEnum } from '@novu/dal';
 
 import { RemoveSubscriber, RemoveSubscriberCommand } from './usecases/remove-subscriber';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import {
@@ -77,15 +75,15 @@ import { ApiOkPaginatedResponse } from '../shared/framework/paginated-ok-respons
 import { PaginatedResponseDto } from '../shared/dtos/pagination-response';
 import { GetSubscribersDto } from './dtos/get-subscribers.dto';
 import { GetInAppNotificationsFeedForSubscriberDto } from './dtos/get-in-app-notification-feed-for-subscriber.dto';
-import { ApiCommonResponses, ApiResponse, ApiNoContentResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiNoContentResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { ChatOauthCallbackRequestDto, ChatOauthRequestDto } from './dtos/chat-oauth-request.dto';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ChatOauth } from './usecases/chat-oauth/chat-oauth.usecase';
 import { ChatOauthCommand } from './usecases/chat-oauth/chat-oauth.command';
 import {
-  DeleteSubscriberCredentialsCommand,
   DeleteSubscriberCredentials,
+  DeleteSubscriberCredentialsCommand,
 } from './usecases/delete-subscriber-credentials';
 import { MarkAllMessagesAsCommand } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.command';
 import { MarkAllMessagesAs } from '../widgets/usecases/mark-all-messages-as/mark-all-messages-as.usecase';
@@ -102,11 +100,14 @@ import { MessageMarkAsRequestDto } from '../widgets/dtos/mark-as-request.dto';
 import { MarkMessageAsByMarkCommand } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.command';
 import { MarkMessageAsByMark } from '../widgets/usecases/mark-message-as-by-mark/mark-message-as-by-mark.usecase';
 import { FeedResponseDto } from '../widgets/dtos/feeds-response.dto';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/method.name.decorator';
+import { SdkUsePagination } from '../shared/framework/swagger/pagination.decorator';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
-@Controller('/subscribers')
 @ApiTags('Subscribers')
+@Controller('/subscribers')
 export class SubscribersController {
   constructor(
     private createSubscriberUsecase: CreateSubscriber,
@@ -133,14 +134,15 @@ export class SubscribersController {
 
   @Get('')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiOkPaginatedResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Get subscribers',
     description: 'Returns a list of subscribers, could paginated using the `page` and `limit` query parameter',
   })
-  async getSubscribers(
-    @UserSession() user: IJwtPayload,
+  @SdkUsePagination()
+  async listSubscribers(
+    @UserSession() user: UserSessionData,
     @Query() query: GetSubscribersDto
   ): Promise<PaginatedResponseDto<SubscriberResponseDto>> {
     return await this.getSubscribersUsecase.execute(
@@ -155,14 +157,14 @@ export class SubscribersController {
 
   @Get('/:subscriberId')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Get subscriber',
     description: 'Get subscriber by your internal id used to identify the subscriber',
   })
   async getSubscriber(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
   ): Promise<SubscriberResponseDto> {
     return await this.getSubscriberUseCase.execute(
@@ -176,7 +178,7 @@ export class SubscribersController {
 
   @Post('/')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(SubscriberResponseDto, 201)
   @ApiOperation({
     summary: 'Create subscriber',
@@ -186,7 +188,7 @@ export class SubscribersController {
       'Communication credentials such as email, phone number, and 3 rd party credentials i.e slack tokens could be later associated to this entity.',
   })
   async createSubscriber(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: CreateSubscriberRequestDto
   ): Promise<SubscriberResponseDto> {
     return await this.createSubscriberUsecase.execute(
@@ -209,7 +211,7 @@ export class SubscribersController {
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiOperation({
     summary: 'Bulk create subscribers',
     description: `
@@ -217,7 +219,8 @@ export class SubscribersController {
       The bulk API is limited to 500 subscribers per request.
     `,
   })
-  async bulkCreateSubscribers(@UserSession() user: IJwtPayload, @Body() body: BulkSubscriberCreateDto) {
+  @SdkMethodName('createBulk')
+  async bulkCreateSubscribers(@UserSession() user: UserSessionData, @Body() body: BulkSubscriberCreateDto) {
     return await this.bulkCreateSubscribersUsecase.execute(
       BulkCreateSubscribersCommand.create({
         environmentId: user.environmentId,
@@ -229,14 +232,14 @@ export class SubscribersController {
 
   @Put('/:subscriberId')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber',
     description: 'Used to update the subscriber entity with new information',
   })
   async updateSubscriber(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Body() body: UpdateSubscriberRequestDto
   ): Promise<SubscriberResponseDto> {
@@ -258,14 +261,15 @@ export class SubscribersController {
 
   @Put('/:subscriberId/credentials')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber credentials',
     description: 'Subscriber credentials associated to the delivery methods such as slack and push tokens.',
   })
+  @SdkGroupName('Subscribers.Credentials')
   async updateSubscriberChannel(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Body() body: UpdateSubscriberChannelRequestDto
   ): Promise<SubscriberResponseDto> {
@@ -285,15 +289,17 @@ export class SubscribersController {
 
   @Patch('/:subscriberId/credentials')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Modify subscriber credentials',
     description: `Subscriber credentials associated to the delivery methods such as slack and push tokens.
     This endpoint appends provided credentials and deviceTokens to the existing ones.`,
   })
+  @SdkGroupName('Subscribers.Credentials')
+  @SdkMethodName('append')
   async modifySubscriberChannel(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Body() body: UpdateSubscriberChannelRequestDto
   ): Promise<SubscriberResponseDto> {
@@ -313,15 +319,16 @@ export class SubscribersController {
 
   @Delete('/:subscriberId/credentials/:providerId')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete subscriber credentials by providerId',
     description: 'Delete subscriber credentials such as slack and expo tokens.',
   })
+  @SdkGroupName('Subscribers.Credentials')
   async deleteSubscriberCredentials(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Param('providerId') providerId: string
   ): Promise<void> {
@@ -337,14 +344,16 @@ export class SubscribersController {
 
   @Patch('/:subscriberId/online-status')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(SubscriberResponseDto)
   @ApiOperation({
     summary: 'Update subscriber online status',
     description: 'Used to update the subscriber isOnline flag.',
   })
+  @SdkGroupName('Subscribers.properties')
+  @SdkMethodName('updateOnlineFlag')
   async updateSubscriberOnlineFlag(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Body() body: UpdateSubscriberOnlineFlagRequestDto
   ): Promise<SubscriberResponseDto> {
@@ -360,14 +369,14 @@ export class SubscribersController {
 
   @Delete('/:subscriberId')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(DeleteSubscriberResponseDto)
   @ApiOperation({
     summary: 'Delete subscriber',
     description: 'Deletes a subscriber entity from the Novu platform',
   })
   async removeSubscriber(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
   ): Promise<DeleteSubscriberResponseDto> {
     return await this.removeSubscriberUsecase.execute(
@@ -381,13 +390,14 @@ export class SubscribersController {
 
   @Get('/:subscriberId/preferences')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(UpdateSubscriberPreferenceResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get subscriber preferences',
   })
-  async getSubscriberPreference(
-    @UserSession() user: IJwtPayload,
+  @SdkGroupName('Subscribers.Preferences')
+  async listSubscriberPreferences(
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string
   ): Promise<UpdateSubscriberPreferenceResponseDto[]> {
     const command = GetPreferencesByLevelCommand.create({
@@ -400,17 +410,19 @@ export class SubscribersController {
     return (await this.getPreferenceUsecase.execute(command)) as UpdateSubscriberPreferenceResponseDto[];
   }
 
-  @Get('/:subscriberId/preferences/:level')
+  @Get('/:subscriberId/preferences/:parameter')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(GetSubscriberPreferencesResponseDto, 200, true)
   @ApiOperation({
     summary: 'Get subscriber preferences by level',
   })
   @ApiParam({ name: 'subscriberId', type: String, required: true })
-  @ApiParam({ name: 'level', type: String, required: true })
+  @ApiParam({ name: 'parameter', type: String, required: true })
+  @SdkGroupName('Subscribers.Preferences')
+  @SdkMethodName('retrieveByLevel')
   async getSubscriberPreferenceByLevel(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param() { level, subscriberId }: GetSubscriberPreferencesByLevelParams
   ): Promise<GetSubscriberPreferencesResponseDto[]> {
     const command = GetPreferencesByLevelCommand.create({
@@ -423,17 +435,20 @@ export class SubscribersController {
     return await this.getPreferenceUsecase.execute(command);
   }
 
-  @Patch('/:subscriberId/preferences/:templateId')
+  @Patch('/:subscriberId/preferences/:parameter')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(UpdateSubscriberPreferenceResponseDto)
+  @ApiParam({ name: 'subscriberId', type: String, required: true })
+  @ApiParam({ name: 'parameter', type: String, required: true })
   @ApiOperation({
     summary: 'Update subscriber preference',
   })
+  @SdkGroupName('Subscribers.Preferences')
   async updateSubscriberPreference(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
-    @Param('templateId') templateId: string,
+    @Param('parameter') templateId: string,
     @Body() body: UpdateSubscriberPreferenceRequestDto
   ): Promise<UpdateSubscriberPreferenceResponseDto> {
     const command = UpdateSubscriberPreferenceCommand.create({
@@ -450,13 +465,15 @@ export class SubscribersController {
 
   @Patch('/:subscriberId/preferences')
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ApiResponse(UpdateSubscriberPreferenceResponseDto)
   @ApiOperation({
     summary: 'Update subscriber global preferences',
   })
+  @SdkGroupName('Subscribers.Preferences')
+  @SdkMethodName('updateGlobal')
   async updateSubscriberGlobalPreferences(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Body() body: UpdateSubscriberGlobalPreferencesRequestDto
   ) {
@@ -472,14 +489,15 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Get('/:subscriberId/notifications/feed')
   @ApiOperation({
     summary: 'Get in-app notification feed for a particular subscriber',
   })
   @ApiOkPaginatedResponse(FeedResponseDto)
+  @SdkGroupName('Subscribers.Notifications')
   async getNotificationsFeed(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Query() query: GetInAppNotificationsFeedForSubscriberDto
   ): Promise<FeedResponseDto> {
@@ -503,14 +521,16 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Get('/:subscriberId/notifications/unseen')
   @ApiResponse(UnseenCountResponse)
   @ApiOperation({
     summary: 'Get the unseen in-app notifications count for subscribers feed',
   })
+  @SdkGroupName('Subscribers.Notifications')
+  @SdkMethodName('unseenCount')
   async getUnseenCount(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Query('feedIdentifier') feedId: string[] | string,
     @Query('seen') seen: boolean,
     @Param('subscriberId') subscriberId: string,
@@ -537,9 +557,9 @@ export class SubscribersController {
 
     return await this.getFeedCountUsecase.execute(command);
   }
-
+  @ApiExcludeEndpoint()
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Post('/:subscriberId/messages/markAs')
   @ApiOperation({
     summary: 'Mark a subscriber feed messages as seen or as read',
@@ -547,9 +567,11 @@ export class SubscribersController {
      deprecating old legacy endpoint.`,
     deprecated: true,
   })
+  @SdkGroupName('Subscribers.Messages')
+  @SdkMethodName('markAs')
   @ApiResponse(MessageResponseDto, 201, true)
   async markMessageAs(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Body() body: MarkMessageAsRequestDto
   ): Promise<MessageEntity[]> {
@@ -573,10 +595,12 @@ export class SubscribersController {
     summary: 'Mark a subscriber messages as seen, read, unseen or unread',
   })
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Post('/:subscriberId/messages/mark-as')
+  @SdkGroupName('Subscribers.Messages')
+  @SdkMethodName('markAllAs')
   async markMessagesAs(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Body() body: MessageMarkAsRequestDto
   ): Promise<MessageEntity[]> {
@@ -596,15 +620,17 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Post('/:subscriberId/messages/mark-all')
   @ApiOperation({
     summary:
       'Marks all the subscriber messages as read, unread, seen or unseen. ' +
       'Optionally you can pass feed id (or array) to mark messages of a particular feed.',
   })
+  @SdkGroupName('Subscribers.Messages')
+  @SdkMethodName('markAll')
   async markAllUnreadAsRead(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('subscriberId') subscriberId: string,
     @Body() body: MarkAllMessageAsRequestDto
   ) {
@@ -621,14 +647,16 @@ export class SubscribersController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Post('/:subscriberId/messages/:messageId/actions/:type')
   @ApiOperation({
     summary: 'Mark message action as seen',
   })
   @ApiResponse(MessageResponseDto, 201)
+  @SdkGroupName('Subscribers.Messages')
+  @SdkMethodName('updateAsSeen')
   async markActionAsSeen(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('messageId') messageId: string,
     @Param('type') type: ButtonTypeEnum,
     @Body() body: MarkMessageActionAsSeenDto,
@@ -652,6 +680,8 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Handle providers oauth redirect',
   })
+  @SdkGroupName('Subscribers.Authentication')
+  @SdkMethodName('chatAccessOauthCallBack')
   async chatOauthCallback(
     @Param('subscriberId') subscriberId: string,
     @Param('providerId') providerId: ChatProviderIdEnum,
@@ -683,6 +713,8 @@ export class SubscribersController {
   @ApiOperation({
     summary: 'Handle chat oauth',
   })
+  @SdkGroupName('Subscribers.Authentication')
+  @SdkMethodName('chatAccessOauth')
   async chatAccessOauth(
     @Param('subscriberId') subscriberId: string,
     @Param('providerId') providerId: ChatProviderIdEnum,

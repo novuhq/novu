@@ -13,9 +13,9 @@ import { Type } from 'class-transformer';
 import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import {
   TopicKey,
-  TriggerRecipientSubscriber,
   TriggerRecipients,
   TriggerRecipientsTypeEnum,
+  TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
 import { CreateSubscriberRequestDto } from '../../subscribers/dtos';
@@ -76,21 +76,22 @@ export class TriggerEventRequestDto {
 
   @ApiProperty({
     description: 'The recipients list of people who will receive the notification.',
-    oneOf: [
-      {
-        $ref: getSchemaPath(SubscriberPayloadDto),
-      },
-      {
-        type: 'string',
-        description: 'Unique identifier of a subscriber in your systems',
-        example: 'SUBSCRIBER_ID',
-      },
-      {
-        $ref: getSchemaPath(TopicPayloadDto),
-      },
-    ],
-    type: [String, SubscriberPayloadDto, TopicPayloadDto],
-    isArray: true,
+    type: 'array',
+    items: {
+      oneOf: [
+        {
+          $ref: getSchemaPath(SubscriberPayloadDto),
+        },
+        {
+          type: 'string',
+          description: 'Unique identifier of a subscriber in your systems',
+          example: 'SUBSCRIBER_ID',
+        },
+        {
+          $ref: getSchemaPath(TopicPayloadDto),
+        },
+      ],
+    },
   })
   @IsDefined()
   to: TriggerRecipients;

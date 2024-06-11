@@ -1,8 +1,17 @@
 /* eslint-disable max-len */
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { DocumentBuilder, SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
 import { injectDocumentComponents } from './injection';
+import { transformDocument } from './unwrap';
+import { API_KEY_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
+import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
 
+export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
+  type: 'apiKey',
+  name: 'Authorization',
+  in: 'header',
+  description: 'API key authentication. Allowed headers-- "Authorization: ApiKey <api_key>".',
+};
 const options = new DocumentBuilder()
   .setTitle('Novu API')
   .setDescription('Novu REST API. Please see https://docs.novu.co/api-reference for more details.')
@@ -11,13 +20,10 @@ const options = new DocumentBuilder()
   .setExternalDoc('Novu Documentation', 'https://docs.novu.co')
   .setTermsOfService('https://novu.co/terms')
   .setLicense('MIT', 'https://opensource.org/license/mit')
-  .addServer(process.env.API_ROOT_URL)
-  .addApiKey({
-    type: 'apiKey',
-    name: 'Authorization',
-    in: 'header',
-    description: 'API key authentication. Allowed headers-- "Authorization: ApiKey <api_key>".',
-  })
+  .addServer('https://api.novu.co/v1')
+  .addServer('https://eu.api.novu.co/v1')
+  .addServer('http://localhost:3000/v1')
+  .addApiKey(API_KEY_SECURITY_DEFINITIONS, API_KEY_SWAGGER_SECURITY_NAME)
   .addTag(
     'Events',
     `Events represent a change in state of a subscriber. They are used to trigger workflows, and enable you to send notifications to subscribers based on their actions.`,
@@ -106,9 +112,27 @@ if (process.env.NOVU_ENTERPRISE === 'true') {
     { url: 'https://docs.novu.co/content-creation-design/translations' }
   );
 }
+const swaggerDocumentOptions: SwaggerDocumentOptions = {
+  operationIdFactory: (controllerKey: string, methodKey: string) => `${controllerKey}_${methodKey}`,
+  deepScanRoutes: true,
+  ignoreGlobalPrefix: true,
+  include: [],
+  extraModels: [],
+};
 
 export const setupSwagger = (app: INestApplication) => {
-  const document = injectDocumentComponents(SwaggerModule.createDocument(app, options.build()));
+  const document1 = SwaggerModule.createDocument(app, options.build(), swaggerDocumentOptions);
+  // Add custom metadata to the OpenAPI document
+  document1['x-speakeasy-name-override'] = [
+    { operationId: '^.*get.*', methodNameOverride: 'retrieve' },
+    { operationId: '^.*retrieve.*', methodNameOverride: 'retrieve' },
+    { operationId: '^.*create.*', methodNameOverride: 'create' },
+    { operationId: '^.*update.*', methodNameOverride: 'update' },
+    { operationId: '^.*list.*', methodNameOverride: 'list' },
+    { operationId: '^.*delete.*', methodNameOverride: 'delete' },
+    { operationId: '^.*remove.*', methodNameOverride: 'delete' },
+  ];
+  const document = injectDocumentComponents(document1);
 
   SwaggerModule.setup('api', app, {
     ...document,
@@ -120,6 +144,11 @@ export const setupSwagger = (app: INestApplication) => {
   SwaggerModule.setup('openapi', app, document, {
     jsonDocumentUrl: 'openapi.json',
     yamlDocumentUrl: 'openapi.yaml',
+    explorer: process.env.NODE_ENV !== 'production',
+  });
+  SwaggerModule.setup('openapi-hoisted', app, transformDocument(document), {
+    jsonDocumentUrl: 'openapi-hoisted.json',
+    yamlDocumentUrl: 'openapi-hoisted.yaml',
     explorer: process.env.NODE_ENV !== 'production',
   });
 };
