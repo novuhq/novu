@@ -1,7 +1,6 @@
 import * as dotenv from 'dotenv';
 import { getContextPath, NovuComponentEnum } from '@novu/shared';
-
-const path = require('path');
+import path from 'node:path';
 
 dotenv.config();
 
