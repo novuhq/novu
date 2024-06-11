@@ -5,19 +5,19 @@
     "assets": [
       {
         "include": ".env",
-        "outDir": "dist/src"
+        "outDir": "dist"
       },
       {
         "include": ".env.development",
-        "outDir": "dist/src"
+        "outDir": "dist"
       },
       {
         "include": ".env.test",
-        "outDir": "dist/src"
+        "outDir": "dist"
       },
       {
         "include": ".env.production",
-        "outDir": "dist/src"
+        "outDir": "dist"
       }
     ],
     "plugins": [
