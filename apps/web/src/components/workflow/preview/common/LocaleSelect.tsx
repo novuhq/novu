@@ -70,7 +70,7 @@ export const FlagIcon = ({ locale }) => {
   }
 
   try {
-    const module = require('@novu/ee-translation-web');
+    const module = require('../../../../ee/translations');
 
     return module.FlagIcon({ locale });
   } catch (e) {}

@@ -6,11 +6,14 @@ export const TranslationRoutes = () => {
   }
 
   try {
-    const module = require('@novu/ee-translation-web');
+    const module = require('../ee/translations');
     const Routes = module.Routes;
 
     return <Routes />;
-  } catch (e) {}
+  } catch (e) {
+    debugger;
+    console.error('Failed to load EE translations routes', e);
+  }
 
   return null;
 };
