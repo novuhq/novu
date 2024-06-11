@@ -19,6 +19,8 @@ let projectPath = '';
 
 const handleSigTerm = () => process.exit(0);
 
+const defaultTunnelHost = 'https://localtunnel.me';
+
 process.on('SIGINT', handleSigTerm);
 process.on('SIGTERM', handleSigTerm);
 
@@ -41,6 +43,22 @@ const program = new Commander.Command(packageJson.name)
   .action((name) => {
     projectPath = name;
   })
+  .option(
+    '-k, --api-key [apiKey]',
+    `
+
+  Your Novu Development environment apiKey. Note that your novu app won't
+  work with a non development environment apiKey.
+`
+  )
+  .option(
+    '-t, --tunnel-host',
+    `
+
+  Set's the tunnel host url that will be used to request local tunnels,
+  defaults to ${defaultTunnelHost}
+`
+  )
   .option(
     '--ts, --typescript',
     `
@@ -113,7 +131,7 @@ const packageManager = !!program.useNpm
   : getPkgManager();
 
 async function run(): Promise<void> {
-  const conf = new Conf({ projectName: 'create-echo-app' });
+  const conf = new Conf({ projectName: 'create-novu-app' });
 
   if (program.resetPreferences) {
     conf.clear();
@@ -132,7 +150,7 @@ async function run(): Promise<void> {
       type: 'text',
       name: 'path',
       message: 'What is your project named?',
-      initial: 'my-echo-app',
+      initial: 'my-novu-app',
       validate: (name) => {
         const validation = validateNpmName(path.basename(path.resolve(name)));
         if (validation.valid) {
@@ -172,6 +190,11 @@ async function run(): Promise<void> {
 
   if (program.example === true) {
     console.error('Please provide an example name or url, otherwise remove the example option.');
+    process.exit(1);
+  }
+
+  if (program.apiKey === true || !program.apiKey) {
+    console.error('Please provide a valid apiKey value.');
     process.exit(1);
   }
 
@@ -260,6 +283,8 @@ async function run(): Promise<void> {
       eslint: program.eslint,
       srcDir: program.srcDir,
       importAlias: program.importAlias,
+      apiKey: program.apiKey,
+      tunnelHost: program.tunnelHost ? program.tunnelHost : defaultTunnelHost,
     });
   } catch (reason) {
     if (!(reason instanceof DownloadError)) {
@@ -287,6 +312,8 @@ async function run(): Promise<void> {
       reactEmail: program.reactEmail,
       srcDir: program.srcDir,
       importAlias: program.importAlias,
+      apiKey: program.apiKey,
+      tunnelHost: program.tunnelHost ? program.tunnelHost : defaultTunnelHost,
     });
   }
   conf.set('preferences', preferences);
