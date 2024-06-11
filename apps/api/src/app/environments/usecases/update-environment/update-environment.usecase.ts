@@ -20,8 +20,17 @@ export class UpdateEnvironment {
       updatePayload.identifier = command.identifier;
     }
 
-    if (command.dns && command.dns.inboundParseDomain !== '') {
+    if (command.dns && command.dns.inboundParseDomain && command.dns.inboundParseDomain !== '') {
       updatePayload[`dns.inboundParseDomain`] = command.dns.inboundParseDomain;
+    }
+
+    if (
+      (await this.shouldUpdateEchoConfiguration(command)) &&
+      command.bridge &&
+      command.bridge.url &&
+      command.bridge.url !== ''
+    ) {
+      updatePayload['echo.url'] = command.bridge.url;
     }
 
     return await this.environmentRepository.update(
@@ -31,5 +40,25 @@ export class UpdateEnvironment {
       },
       { $set: updatePayload }
     );
+  }
+  async shouldUpdateEchoConfiguration(command: UpdateEnvironmentCommand): Promise<boolean> {
+    if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
+      let name: string;
+      if (command.name && command.name !== '') {
+        name = command.name;
+      } else {
+        const env = await this.environmentRepository.findOne({ _id: command.environmentId });
+
+        if (!env) {
+          return false;
+        }
+
+        name = env.name;
+      }
+
+      return name === 'Development';
+    } else {
+      return false;
+    }
   }
 }

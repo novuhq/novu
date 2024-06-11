@@ -6,6 +6,11 @@ export class InBoundParseDomainDto {
   inboundParseDomain?: string;
 }
 
+export class BridgeConfigurationDto {
+  @ApiPropertyOptional({ type: String })
+  url?: string;
+}
+
 export class UpdateEnvironmentRequestDto {
   @ApiProperty()
   @IsOptional()
@@ -26,4 +31,9 @@ export class UpdateEnvironmentRequestDto {
     type: InBoundParseDomainDto,
   })
   dns?: InBoundParseDomainDto;
+
+  @ApiPropertyOptional({
+    type: BridgeConfigurationDto,
+  })
+  bridge?: BridgeConfigurationDto;
 }
