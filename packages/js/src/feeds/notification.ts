@@ -10,7 +10,7 @@ import {
   Subscriber,
   TODO,
 } from '../types';
-import { ApiServiceSingleton } from '../utils/api-service-signleton';
+import { ApiServiceSingleton } from '../utils/api-service-singleton';
 import { markActionAs, markNotificationAs, remove } from './helpers';
 
 type NotificationLike = Pick<
