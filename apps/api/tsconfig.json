@@ -7,9 +7,9 @@
     "allowSyntheticDefaultImports": true,
     "emitDecoratorMetadata": true,
     "types": ["node", "mocha", "chai", "sinon"],
-    "target": "es2017",
+    "target": "es5",
     "allowJs": false,
-    "esModuleInterop": false,
+    "esModuleInterop": true,
     "declarationMap": true,
     "skipLibCheck": true
   },
