@@ -30,7 +30,7 @@ const getVariableContents = (template: ITemplates) => {
 
 export function TemplateInAppEditor() {
   const { template } = useTemplateEditorForm();
-  const { readonly, chimera } = useEnvController({}, template?.chimera);
+  const { readonly, bridge } = useEnvController({}, template?.bridge);
   const { control, watch } = useFormContext<IForm>();
   const [modalOpen, setModalOpen] = useState(false);
   const stepFormPath = useStepFormPath();
@@ -45,7 +45,7 @@ export function TemplateInAppEditor() {
       {!hasActiveIntegration && <LackIntegrationAlert channelType={ChannelTypeEnum.IN_APP} />}
       <StepSettings />
       <Stack spacing={24}>
-        <When truthy={!chimera}>
+        <When truthy={!bridge}>
           <Controller
             name={`${stepFormPath}.template.cta.data.url` as any}
             defaultValue=""

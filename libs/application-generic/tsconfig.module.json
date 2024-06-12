@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig",
   "compilerOptions": {
+    "sourceMap": true,
     "target": "esnext",
     "outDir": "build/module",
     "module": "esnext",
