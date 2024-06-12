@@ -1,7 +1,7 @@
 import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
-import { HStack } from '../../../styled-system/jsx';
-import { Icon10K, IconInfo } from '../../icons';
+import { Grid } from '../../../styled-system/jsx';
+import { Icon10K, IconAddBox, IconInfo } from '../../icons';
 import { Button } from './Button';
 
 export default {
@@ -21,25 +21,25 @@ Loading.args = {
 };
 
 export const icon = () => (
-  <HStack>
+  <Grid>
     <Button size="lg" Icon={Icon10K}>
       Large
     </Button>
     <Button Icon={IconInfo}>Medium</Button>
-  </HStack>
+  </Grid>
 );
 
 export const filled = () => (
-  <HStack>
+  <Grid>
     <Button size="lg">Large</Button>
     <Button size="md">Medium</Button>
     <Button size="sm">Small</Button>
     <Button>Default</Button>
-  </HStack>
+  </Grid>
 );
 
 export const outline = () => (
-  <HStack>
+  <Grid>
     <Button size="lg" variant="outline">
       Large
     </Button>
@@ -50,32 +50,32 @@ export const outline = () => (
     <Button Icon={IconInfo} variant="outline">
       Medium
     </Button>
-  </HStack>
+  </Grid>
 );
 
 export const borderless = () => (
-  <HStack>
+  <Grid>
     <Button size="lg" variant="borderless">
       Large
     </Button>
     <Button variant="borderless">Medium</Button>
-    <Button size="lg" Icon={Icon10K} variant="borderless">
+    <Button size="lg" Icon={IconAddBox} variant="borderless">
       Large
     </Button>
-    <Button Icon={IconInfo} variant="borderless">
+    <Button Icon={IconAddBox} variant="borderless">
       Medium
     </Button>
-    <Button Icon={IconInfo} variant="borderless" disabled>
+    <Button Icon={IconAddBox} variant="borderless" disabled>
       Disabled
     </Button>
-  </HStack>
+  </Grid>
 );
 
 export const disabled = () => (
-  <HStack>
+  <Grid>
     <Button disabled>Filled</Button>
     <Button variant="outline" disabled>
       Outline
     </Button>
-  </HStack>
+  </Grid>
 );

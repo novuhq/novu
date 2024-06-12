@@ -30,14 +30,13 @@ const buttonRecipe = sva({
       '&:hover:not(:disabled)': {
         opacity: 'hover',
       },
+      display: 'inline !important',
+      width: '[fit-content !important]',
     },
     label: {
       color: 'typography.text.main',
       width: '[fit-content]',
       lineClamp: 1,
-    },
-    inner: {
-      width: '[fit-content]',
     },
   },
   variants: {
@@ -101,7 +100,7 @@ export const Button: FC<IButtonProps> = ({
         Icon ? (
           <Icon
             title="button-icon"
-            size={variant === 'borderless' ? '24' : '16'}
+            size={variant === 'borderless' ? '32' : '16'}
             className={css({ color: 'legacy.white' })}
           />
         ) : undefined
