@@ -32,7 +32,7 @@ import {
   IProviderOverride,
   IProvidersOverride,
   ExecuteOutput,
-  IChimeraChannelResponse,
+  IBridgeChannelResponse,
   IBlock,
   SelectIntegrationCommand,
 } from '@novu/application-generic';
@@ -80,7 +80,11 @@ export class SendMessageChat extends SendMessageBase {
     if (!step?.template) throw new PlatformException('Chat channel template not found');
 
     const { subscriber } = command.compileContext;
-    await this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale);
+    const i18nextInstance = await this.initiateTranslations(
+      command.environmentId,
+      command.organizationId,
+      subscriber.locale
+    );
 
     const template = await this.processVariants(command);
 
@@ -91,7 +95,7 @@ export class SendMessageChat extends SendMessageBase {
     let content = '';
 
     try {
-      if (!command.chimeraData) {
+      if (!command.bridgeData) {
         content = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template.content as string,
@@ -212,10 +216,10 @@ export class SendMessageChat extends SendMessageBase {
       return;
     }
 
-    const chimeraOverride = this.getChimeraOverride(command.chimeraData?.providers, integration);
+    const bridgeOverride = this.getBridgeOverride(command.bridgeData?.providers, integration);
 
     const chatWebhookUrl =
-      chimeraOverride?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
+      bridgeOverride?.webhookUrl || command.payload.webhookUrl || subscriberChannel.credentials?.webhookUrl;
     const phoneNumber = subscriberChannel.credentials?.phoneNumber;
     const channelSpecification = subscriberChannel.credentials?.channel;
 
@@ -259,7 +263,7 @@ export class SendMessageChat extends SendMessageBase {
     await this.sendErrors(chatWebhookUrl, integration, message, command, phoneNumber);
   }
 
-  private getChimeraOverride(
+  private getBridgeOverride(
     providersOverrides: IProvidersOverride | undefined,
     integration: IntegrationEntity
   ): IProviderOverride | null {
@@ -379,7 +383,7 @@ export class SendMessageChat extends SendMessageBase {
         throw new PlatformException(`Chat handler for provider ${integration.providerId} is  not found`);
       }
 
-      const chimeraContent = this.getOverrideContent(command.chimeraData, integration);
+      const bridgeContent = this.getOverrideContent(command.bridgeData, integration);
       const overrides = {
         ...(command.overrides[integration?.channel] || {}),
         ...(command.overrides[integration?.providerId] || {}),
@@ -390,7 +394,7 @@ export class SendMessageChat extends SendMessageBase {
         customData: overrides,
         webhookUrl: chatWebhookUrl,
         channel: channelSpecification,
-        ...(chimeraContent?.content ? (chimeraContent as DefinedContent) : { content }),
+        ...(bridgeContent?.content ? (bridgeContent as DefinedContent) : { content }),
       });
 
       await this.executionLogRoute.execute(
@@ -432,19 +436,19 @@ export class SendMessageChat extends SendMessageBase {
   }
 
   private getOverrideContent(
-    chimeraData: ExecuteOutput<IChimeraChannelResponse> | undefined | null,
+    bridgeData: ExecuteOutput<IBridgeChannelResponse> | undefined | null,
     integration: IntegrationEntity
   ): { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined } {
-    const chimeraProviderOverride = this.getChimeraOverride(chimeraData?.providers, integration);
+    const bridgeProviderOverride = this.getBridgeOverride(bridgeData?.providers, integration);
 
-    let chimeraContent: { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined };
-    if (chimeraProviderOverride) {
-      chimeraContent = { content: chimeraProviderOverride.text, blocks: chimeraProviderOverride.blocks };
+    let bridgeContent: { content: string | undefined; blocks: IBlock[] | undefined } | { content: string | undefined };
+    if (bridgeProviderOverride) {
+      bridgeContent = { content: bridgeProviderOverride.text, blocks: bridgeProviderOverride.blocks };
     } else {
-      chimeraContent = { content: chimeraData?.outputs.body };
+      bridgeContent = { content: bridgeData?.outputs.body };
     }
 
-    return chimeraContent;
+    return bridgeContent;
   }
 }
 

@@ -17,15 +17,15 @@ const INPUTS = 'Inputs';
 
 export function InAppContentCard({ openVariablesModal }: { openVariablesModal: () => void }) {
   const { template } = useTemplateEditorForm();
-  const { readonly, chimera } = useEnvController({}, template?.chimera);
+  const { readonly, bridge } = useEnvController({}, template?.bridge);
   const theme = useMantineTheme();
 
-  const [activeTab, setActiveTab] = useState<string>(chimera ? PREVIEW : EDITOR);
+  const [activeTab, setActiveTab] = useState<string>(bridge ? PREVIEW : EDITOR);
   const stepFormPath = useStepFormPath();
 
   return (
     <div data-test-id="editor-type-selector">
-      {!chimera ? (
+      {!bridge ? (
         <SegmentedControl
           data-test-id="editor-mode-switch"
           styles={{
@@ -53,7 +53,7 @@ export function InAppContentCard({ openVariablesModal }: { openVariablesModal: (
               lineHeight: '24px',
             },
           }}
-          data={chimera ? [PREVIEW] : [EDITOR, PREVIEW]}
+          data={bridge ? [PREVIEW] : [EDITOR, PREVIEW]}
           value={activeTab}
           onChange={(value) => {
             setActiveTab(value);
@@ -85,7 +85,7 @@ export function InAppContentCard({ openVariablesModal }: { openVariablesModal: (
             }}
           >
             <VariablesManagement
-              chimera={chimera}
+              bridge={bridge}
               path={`${stepFormPath}.template.variables`}
               openVariablesModal={openVariablesModal}
             />
