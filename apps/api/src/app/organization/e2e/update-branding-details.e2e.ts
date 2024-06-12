@@ -1,10 +1,10 @@
-import { OrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, OrganizationRepository } from '@novu/dal';
 import { processTestAgentExpectedStatusCode, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Update Branding Details - /organizations/branding (PUT)', function () {
+describe('Update Branding Details - /organizations/branding (PUT) @skip-in-ee', function () {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository();
+  const organizationRepository = new OrganizationRepository(new CommunityOrganizationRepository());
 
   beforeEach(async () => {
     session = new UserSession();

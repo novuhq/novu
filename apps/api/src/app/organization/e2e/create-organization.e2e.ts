@@ -6,6 +6,9 @@ import {
   UserRepository,
   IntegrationRepository,
   EnvironmentRepository,
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
+  CommunityMemberRepository,
 } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import {
@@ -17,11 +20,11 @@ import {
   SmsProviderIdEnum,
 } from '@novu/shared';
 
-describe('Create Organization - /organizations (POST)', async () => {
+describe('Create Organization - /organizations (POST) @skip-in-ee', async () => {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository();
-  const userRepository = new UserRepository();
-  const memberRepository = new MemberRepository();
+  const organizationRepository = new OrganizationRepository(new CommunityOrganizationRepository());
+  const userRepository = new UserRepository(new CommunityUserRepository());
+  const memberRepository = new MemberRepository(new CommunityMemberRepository());
   const integrationRepository = new IntegrationRepository();
   const environmentRepository = new EnvironmentRepository();
 

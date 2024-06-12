@@ -1,10 +1,10 @@
-import { OrganizationRepository } from '@novu/dal';
+import { OrganizationRepository, CommunityOrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Set default locale for organization - /organizations (POST)', async () => {
+describe('Set default locale for organization - /organizations (POST) @skip-in-ee', async () => {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository();
+  const organizationRepository = new OrganizationRepository(new CommunityOrganizationRepository());
 
   before(async () => {
     session = new UserSession();

@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Get my organization - /organizations/me (GET)', async () => {
+describe('Get my organization - /organizations/me (GET) @skip-in-ee', async () => {
   let session: UserSession;
 
   before(async () => {

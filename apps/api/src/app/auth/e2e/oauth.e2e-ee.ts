@@ -1,7 +1,7 @@
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('User login - /auth/google (GET)', async () => {
+describe('User login - /auth/google (GET) @skip-in-ee', async () => {
   let session: UserSession;
 
   before(async () => {

@@ -1,12 +1,9 @@
-import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Change Profile Email - /users/profile/email (PUT)', async () => {
+describe('Change Profile Email - /users/profile/email (PUT) @skip-in-ee', async () => {
   let session: UserSession;
   let existingSession: UserSession;
-  const environmentRepository = new EnvironmentRepository();
-  const organizationRepository = new OrganizationRepository();
 
   before(async () => {
     session = new UserSession();

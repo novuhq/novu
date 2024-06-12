@@ -23,6 +23,7 @@ import {
   SubscriberEntity,
   OrganizationRepository,
   NotificationTemplateEntity,
+  CommunityOrganizationRepository,
 } from '@novu/dal';
 import { isSameDay } from 'date-fns';
 import { CreateWorkflowRequestDto } from '../dto';
@@ -505,11 +506,13 @@ describe('Create Workflow - /workflows (POST)', async () => {
   }
 });
 
-describe('Create Notification template from blueprint - /notification-templates (POST)', async () => {
+describe('Create Notification template from blueprint - /notification-templates (POST) @skip-in-ee', async () => {
   let session: UserSession;
   const notificationTemplateRepository: NotificationTemplateRepository = new NotificationTemplateRepository();
   const environmentRepository: EnvironmentRepository = new EnvironmentRepository();
-  const organizationRepository: OrganizationRepository = new OrganizationRepository();
+  const organizationRepository: OrganizationRepository = new OrganizationRepository(
+    new CommunityOrganizationRepository()
+  );
 
   before(async () => {
     session = new UserSession();

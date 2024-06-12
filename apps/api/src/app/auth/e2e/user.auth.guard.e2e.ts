@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { ApiAuthSchemeEnum } from '@novu/shared';
 import { HttpRequestHeaderKeysEnum } from '../../shared/framework/types';
 
-describe('UserAuthGuard', () => {
+describe('UserAuthGuard @skip-in-ee', () => {
   let session: UserSession;
   const defaultPath = '/v1/test-auth/user-route';
   const apiInaccessiblePath = '/v1/test-auth/user-api-inaccessible-route';
