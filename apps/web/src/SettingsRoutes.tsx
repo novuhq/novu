@@ -17,7 +17,7 @@ import { OrganizationPage } from './pages/settings/organization';
 
 /** Note: using a hook is the only way to separate routes */
 export const useSettingsRoutes = () => {
-  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
+  const isInformationArchitectureEnabled = true;
 
   if (isInformationArchitectureEnabled) {
     return (

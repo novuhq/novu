@@ -80,7 +80,7 @@ export function SideNav({}: Props) {
     updateOnboardingStatus,
   } = useUserOnboardingStatus();
   const showOnBoarding = isLoadingShowOnBoarding ? false : showOnBoardingState;
-  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
+  const isInformationArchitectureEnabled = true;
 
   useEffect(() => {
     removeItems(['toggle-environment']);

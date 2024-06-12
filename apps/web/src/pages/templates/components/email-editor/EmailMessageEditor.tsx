@@ -32,7 +32,7 @@ export function EmailMessageEditor({
   branding: { color: string; logo: string } | undefined;
   readonly: boolean;
 }) {
-  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
+  const isInformationArchitectureEnabled = true;
   const methods = useFormContext<IFormExtended>();
   const stepFormPath = useStepFormPath();
   const contentBlocks = useFieldArray<IFormExtended, any, 'id' | 'type'>({
