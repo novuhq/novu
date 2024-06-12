@@ -14,7 +14,7 @@ const LAYOUT = 'Layouts';
 export function LayoutsPage() {
   const { currentOrganization, currentUser } = useAuth();
   const { environment } = useEnvController();
-  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
+  const isInformationArchitectureEnabled = true;
 
   const segment = useSegment();
 
