@@ -1,5 +1,5 @@
-import { test } from './utils.ts/baseTest';
-import { initializeSession } from './utils.ts/browser';
+import { test } from './utils/baseTest';
+import { initializeSession } from './utils/browser';
 import { GetStartedPage, Tab } from './page-models/getStartedPage';
 
 test.beforeEach(async ({ context, page }) => {

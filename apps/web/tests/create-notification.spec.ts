@@ -1,8 +1,8 @@
 import { expect, Page } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 import { WorkflowEditorPage } from './page-models/workflowEditorPage';
-import { initializeSession } from './utils.ts/browser';
-import { ChannelType } from './utils.ts/ChannelType';
+import { initializeSession } from './utils/browser';
+import { ChannelType } from './utils/ChannelType';
 import { CodeSnippetSidePanelPageModel, SNIPPET_TAB } from './page-models/codeSnippetSidePanelPageModel';
 import { NodeEmailEditorPageModal } from './page-models/nodeEmailEditorPageModal';
 import { NodeSmsEditingModalPageModel } from './page-models/nodeSmsEditingModalPageModel';
@@ -13,12 +13,7 @@ import { EditorState } from './page-models/editorState';
 
 test.describe('Creation functionality', () => {
   test.beforeEach(async ({ page }) => {
-    const { featureFlagsMock } = await initializeSession(page);
-    featureFlagsMock.setFlagsToMock({
-      IS_IMPROVED_ONBOARDING_ENABLED: false,
-      IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-      IS_TEMPLATE_STORE_ENABLED: false,
-    });
+    await initializeSession(page);
   });
   test('should create in-app notification', async ({ page }) => {
     const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
@@ -109,11 +104,6 @@ test.describe('Creation functionality', () => {
   test.beforeEach(async ({ page }) => {
     const newSession = await initializeSession(page);
     sessionData = newSession.session;
-    newSession.featureFlagsMock.setFlagsToMock({
-      IS_IMPROVED_ONBOARDING_ENABLED: false,
-      IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-      IS_TEMPLATE_STORE_ENABLED: false,
-    });
   });
 });
 async function AddButtonToMailBodyEditTextAndValidate(emailEditorModal: NodeEmailEditorPageModal) {

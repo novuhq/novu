@@ -1,27 +1,16 @@
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 import { AuthLoginPage } from './page-models/authLoginPage';
 import { PasswordResetPage } from './page-models/passwordResetPage';
 import { SignUpPage } from './page-models/signupPage';
-import { assertPageShowsMessage, initializeSession } from './utils.ts/browser';
+import { assertPageShowsMessage, initializeSession } from './utils/browser';
 import { faker } from '@faker-js/faker';
-import { createUser, testPassword } from './utils.ts/plugins';
-import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
+import { createUser, testPassword } from './utils/plugins';
 
 let testUser;
 
 test.beforeAll(async () => {
   testUser = await createUser();
-});
-
-test.beforeEach(async ({ page }) => {
-  const featureFlagsMock = new FeatureFlagsMock(page);
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: true,
-    IS_HUBSPOT_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
 });
 
 test('should allow a visitor to sign-up and login', async ({ page }) => {
@@ -57,14 +46,7 @@ test('should show password reset link sent message on any email input', async ({
 });
 
 test('should redirect to the dashboard page when a token exists in query', async ({ page }) => {
-  const { featureFlagsMock, session } = await initializeSession(page);
-
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: true,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
-
+  const { session } = await initializeSession(page);
   const authLoginPage = await AuthLoginPage.goTo(page, session.token);
   await authLoginPage.assertNavigationPath('/workflows**');
 });

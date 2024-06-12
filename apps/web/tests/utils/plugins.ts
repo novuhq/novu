@@ -131,7 +131,7 @@ export async function createNotifications({
 
   const triggerIdentifier = identifier;
   const service = new NotificationsService(token);
-  const session = new UserSession(process.env.API_URL);
+  const session = new UserSession(process.env.REACT_APP_API_URL);
 
   // eslint-disable-next-line no-plusplus
   for (let i = 0; i < count; i++) {
@@ -217,7 +217,7 @@ export async function inviteUser(
   session: SessionData,
   email: string
 ): Promise<{ token: string; inviter: any; organization: any }> {
-  const apiUrl = process.env.API_URL;
+  const apiUrl = process.env.REACT_APP_API_URL;
 
   const inviteResponse = await fetch(`${apiUrl}/v1/invites`, {
     method: 'POST',

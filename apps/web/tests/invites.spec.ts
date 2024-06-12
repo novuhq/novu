@@ -1,13 +1,13 @@
 import { expect, Page } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 import { AuthLoginPage } from './page-models/authLoginPage';
 import { HeaderPage } from './page-models/headerPage';
 import { SidebarPage } from './page-models/sidebarPage';
 import { SignUpPage } from './page-models/signupPage';
-import { initializeSession } from './utils.ts/browser';
-import { logout } from './utils.ts/commands';
-import { createUser, randomEmail, testPassword } from './utils.ts/plugins';
-import { inviteUser, SessionData } from './utils.ts/plugins';
+import { initializeSession } from './utils/browser';
+import { logout } from './utils/commands';
+import { createUser, randomEmail, testPassword } from './utils/plugins';
+import { inviteUser, SessionData } from './utils/plugins';
 
 let session: SessionData;
 
@@ -21,14 +21,8 @@ test.describe('Invites', () => {
   });
 
   test.beforeEach(async ({ page }) => {
-    const { featureFlagsMock, session: newSession } = await initializeSession(page);
+    const { session: newSession } = await initializeSession(page);
     session = newSession;
-    featureFlagsMock.setFlagsToMock({
-      IS_IMPROVED_ONBOARDING_ENABLED: false,
-      IS_HUBSPOT_ONBOARDING_ENABLED: false,
-      IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-      IS_TEMPLATE_STORE_ENABLED: false,
-    });
   });
 
   test('invite a new user to the organization', async ({ context, page }) => {

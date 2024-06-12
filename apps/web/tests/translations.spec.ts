@@ -1,18 +1,20 @@
-import { test } from './utils.ts/baseTest';
-import { assertPageShowsMessage, initializeSession } from './utils.ts/browser';
+import { test } from './utils/baseTest';
+import { assertPageShowsMessage, initializeSession, setFeatureFlag } from './utils/browser';
 import { TranslationsPage } from './page-models/translationsPage';
 import path from 'path';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+
+declare global {
+  interface Window {
+    _env_: any;
+  }
+}
 
 test.describe('Translations', () => {
   test.skip(process.env.NOVU_ENTERPRISE !== 'true', 'Skipping tests for non enterprise variant...');
 
   test.beforeEach(async ({ page }) => {
-    const { featureFlagsMock } = await initializeSession(page, { noTemplates: true });
-    featureFlagsMock.setFlagsToMock({
-      IS_IMPROVED_ONBOARDING_ENABLED: false,
-      IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-      IS_TEMPLATE_STORE_ENABLED: false,
-    });
+    await initializeSession(page, { noTemplates: true });
   });
 
   test('Can create translation group', async ({ page }) => {
