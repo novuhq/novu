@@ -5,12 +5,17 @@ import {
   FieldOperatorEnum,
   StepTypeEnum,
 } from '@novu/shared';
-import { MessageTemplateEntity } from '@novu/dal';
+import {
+  MessageTemplateEntity,
+  TenantRepository,
+  SubscriberRepository,
+  MessageTemplateRepository,
+} from '@novu/dal';
 
 import { ConditionsFilter } from '../conditions-filter';
 import { SelectVariant } from './select-variant.usecase';
-import { MessageTemplateRepository } from '@novu/dal';
 import { SelectVariantCommand } from './select-variant.command';
+import { NormalizeVariables } from '../normalize-variables';
 
 const findOneMessageTemplateMock = jest.fn(() => testVariant);
 
@@ -28,8 +33,8 @@ describe('select variant', function () {
     selectVariantUsecase = new SelectVariant(
       // @ts-ignore
       new ConditionsFilter(),
-      new MessageTemplateRepository()
-      // @ts-ignore
+      new MessageTemplateRepository(),
+      new NormalizeVariables(new SubscriberRepository(), new TenantRepository())
     );
     jest.clearAllMocks();
   });
