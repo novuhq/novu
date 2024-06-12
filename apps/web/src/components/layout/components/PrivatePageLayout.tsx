@@ -33,7 +33,7 @@ const ContentShell = styled.div`
 export function PrivatePageLayout() {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
 
-  const isInformationArchitectureEnabled = true;
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   return (
     <EnsureOnboardingComplete>
