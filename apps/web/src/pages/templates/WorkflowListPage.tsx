@@ -51,7 +51,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     Cell: withCellLoading(({ row: { original } }) => (
       <Group spacing={8}>
         <Group spacing={4}>
-          <When truthy={original.chimera}>
+          <When truthy={original.bridge}>
             <Tooltip label="Workflow is handled by Echo" position="top">
               <div>
                 <Bolt color="#4c6dd4" width="24px" height="24px" />
@@ -73,7 +73,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
             <div>
               {original.workflowIntegrationStatus?.hasActiveIntegrations &&
               original.workflowIntegrationStatus?.hasPrimaryIntegrations !== false ? (
-                !original.chimera ? (
+                !original.bridge ? (
                   <Bolt color={colors.B40} width="24px" height="24px" />
                 ) : null
               ) : (
@@ -101,7 +101,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
     width: 240,
     maxWidth: 240,
     Cell: withCellLoading(({ row: { original } }) =>
-      original.chimera ? null : <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
+      original.bridge ? null : <StyledTag data-test-id="category-label"> {original.notificationGroup?.name}</StyledTag>
     ),
   },
   {

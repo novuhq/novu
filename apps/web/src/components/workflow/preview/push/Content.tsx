@@ -35,7 +35,7 @@ export default function Content({
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const { template } = useTemplateEditorForm();
-  const { chimera } = useEnvController({}, template?.chimera);
+  const { bridge } = useEnvController({}, template?.bridge);
 
   const { watch, formState } = useFormContext<IForm>();
   const path = useStepFormPath();
@@ -43,37 +43,37 @@ export default function Content({
   const stepId = watch(`${path}.uuid`);
   const title = watch(`${path}.template.title`);
   const content = watch(`${path}.template.content`);
-  const [chimeraContent, setChimeraContent] = useState('');
-  const [chimeraSubject, setChimeraSubject] = useState('');
+  const [bridgeContent, setBridgeContent] = useState('');
+  const [bridgeSubject, setBridgeSubject] = useState('');
 
   const {
     mutateAsync,
-    isLoading: isChimeraLoading,
+    isLoading: isBridgeLoading,
     error: previewError,
   } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
     onSuccess(data) {
-      setChimeraContent(data.outputs.body);
-      setChimeraSubject(data.outputs.subject);
+      setBridgeContent(data.outputs.body);
+      setBridgeSubject(data.outputs.subject);
     },
   });
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
     title: title,
-    disabled: showLoading || chimera,
+    disabled: showLoading || bridge,
   });
 
   const { isPreviewLoading, parsedPreviewState, templateError } = usePreviewPushTemplate({
-    disabled: showLoading || chimera,
+    disabled: showLoading || bridge,
     locale: selectedLocale,
   });
 
   useEffect(() => {
-    if (chimera) {
+    if (bridge) {
       mutateAsync(inputVariables);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chimera, inputVariables]);
+  }, [bridge, inputVariables]);
 
   if (previewError) {
     return (
@@ -94,13 +94,13 @@ export default function Content({
         />
       </Group>
       <ContentAndOVerlayWrapperStyled
-        isError={!!templateError && !chimera}
+        isError={!!templateError && !bridge}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
         {showOverlay && isHovered && <PreviewEditOverlay />}
         <ContentStyled isBlur={showOverlay && isHovered}>
-          {isPreviewLoading || isChimeraLoading || showLoading ? (
+          {isPreviewLoading || isBridgeLoading || showLoading ? (
             <Skeletons />
           ) : (
             <>
@@ -115,10 +115,10 @@ export default function Content({
               </ContentHeaderStyled>
               <div>
                 <Text color={colors.B15} weight="bold" rows={1}>
-                  {parsedPreviewState.title || chimeraSubject || ''}
+                  {parsedPreviewState.title || bridgeSubject || ''}
                 </Text>
                 <Text color={colors.B15} rows={3}>
-                  {parsedPreviewState.content || chimeraContent || ''}
+                  {parsedPreviewState.content || bridgeContent || ''}
                 </Text>
               </div>
             </>
@@ -126,7 +126,7 @@ export default function Content({
         </ContentStyled>
       </ContentAndOVerlayWrapperStyled>
 
-      {templateError && !chimera && !isPreviewLoading && !showLoading && (
+      {templateError && !bridge && !isPreviewLoading && !showLoading && (
         <Text color={colors.error}>{templateError}</Text>
       )}
     </ContentWrapperStyled>
