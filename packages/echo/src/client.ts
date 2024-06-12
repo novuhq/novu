@@ -344,7 +344,7 @@ export class Echo {
     const workflowsResponse = await fetch(this.backendUrl + NovuApiEndpointsEnum.DIFF, {
       method: HttpMethodEnum.POST,
       headers: this.getHeaders(anonymous),
-      body: JSON.stringify({ workflows, chimeraUrl: echoUrl }),
+      body: JSON.stringify({ workflows, bridgeUrl: echoUrl }),
     });
 
     return workflowsResponse.json();
@@ -356,7 +356,7 @@ export class Echo {
     const workflowsResponse = await fetch(`${this.backendUrl}${NovuApiEndpointsEnum.SYNC}?source=${source || 'sdk'}`, {
       method: HttpMethodEnum.POST,
       headers: this.getHeaders(anonymous),
-      body: JSON.stringify({ workflows, chimeraUrl: echoUrl }),
+      body: JSON.stringify({ workflows, bridgeUrl: echoUrl }),
     });
 
     return workflowsResponse.json();
