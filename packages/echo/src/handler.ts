@@ -23,16 +23,18 @@ import {
   SignatureNotFoundError,
   SigningKeyNotFoundError,
 } from './errors';
-import { Awaitable } from './types';
+import { Awaitable, DiscoverWorkflowOutput } from './types';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
-  client: Echo;
+  client?: Echo;
+  workflow: Array<DiscoverWorkflowOutput>;
 }
 
 interface IEchoRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
   frameworkName: string;
   client: Echo;
+  workflow: Array<DiscoverWorkflowOutput>;
   handler: Handler<Input, Output>;
 }
 
@@ -65,6 +67,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
   constructor(options: IEchoRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
     this.client = options.client;
+    this.client.addWorkflows(options.workflow);
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = !options.client.devModeBypassAuthentication;
   }

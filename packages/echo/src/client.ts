@@ -72,13 +72,24 @@ export class Echo {
   public static NOVU_SIGNATURE_HEADER = HttpHeaderKeysEnum.SIGNATURE;
 
   constructor(config?: ClientConfig) {
-    this.apiKey = config?.apiKey;
+    // TODO: transform this as per notion DX guide
+    this.apiKey = config?.apiKey ?? process.env.NOVU_API_KEY;
     this.backendUrl = config?.backendUrl ?? DEFAULT_NOVU_API_BASE_URL;
-    this.devModeBypassAuthentication = config?.devModeBypassAuthentication || false;
+    this.devModeBypassAuthentication = config?.devModeBypassAuthentication || process.env.NODE_ENV === 'development';
 
     const ajv = new Ajv({ useDefaults: true });
     addFormats(ajv);
     this.ajv = ajv;
+  }
+
+  public addWorkflows(workflows: Array<DiscoverWorkflowOutput>) {
+    for (const workflow of workflows) {
+      if (this.discoveredWorkflows.some((existing) => existing.workflowId === workflow.workflowId)) {
+        throw new WorkflowAlreadyExistsError(workflow.workflowId);
+      } else {
+        this.discoveredWorkflows.push(workflow);
+      }
+    }
   }
 
   public healthCheck(): HealthCheck {

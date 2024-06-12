@@ -1,3 +1,4 @@
+import { Echo } from './client';
 import { EchoRequestHandler, ServeHandlerOptions } from './handler';
 import { type SupportedFrameworkName } from './types';
 
@@ -6,9 +7,11 @@ export const frameworkName: SupportedFrameworkName = 'remix';
 export const serve = (
   options: ServeHandlerOptions
 ): ((ctx: { request: Request; context?: unknown }) => Promise<Response>) => {
+  const client = options.client ? options.client : new Echo();
   const handler = new EchoRequestHandler({
     frameworkName,
     ...options,
+    client,
     handler: ({ request: req }: { request: Request }) => {
       return {
         body: () => req.json(),

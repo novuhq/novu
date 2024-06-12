@@ -1,5 +1,6 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
 import { type NextRequest } from 'next/server';
+import { Echo } from './client';
 
 import { EchoRequestHandler, ServeHandlerOptions } from './handler';
 import { Either } from './types';
@@ -25,9 +26,11 @@ export const frameworkName: SupportedFrameworkName = 'next';
  * ```
  */
 export const serve = (options: ServeHandlerOptions): any => {
+  const client = options.client ? options.client : new Echo();
   const echoHandler = new EchoRequestHandler({
     frameworkName,
     ...options,
+    client,
     handler: (
       requestMethod: 'GET' | 'POST' | 'PUT' | undefined,
       incomingRequest: NextRequest,
