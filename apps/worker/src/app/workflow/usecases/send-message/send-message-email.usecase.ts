@@ -235,7 +235,7 @@ export class SendMessageEmail extends SendMessageBase {
         });
       }
     } catch (e) {
-      Logger.error({ payload }, 'Compiling the email template or storing it or inlining it has failed', LOG_CONTEXT);
+      Logger.error({ payload, e }, 'Compiling the email template or storing it or inlining it has failed', LOG_CONTEXT);
       await this.sendErrorHandlebars(command.job, e.message);
 
       return;

@@ -80,7 +80,11 @@ export class SendMessagePush extends SendMessageBase {
     const { subscriber, step: stepData } = command.compileContext;
 
     const template = await this.processVariants(command);
-    await this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale);
+    const i18nInstance = await this.initiateTranslations(
+      command.environmentId,
+      command.organizationId,
+      subscriber.locale
+    );
 
     if (template) {
       step.template = template;
