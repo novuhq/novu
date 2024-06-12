@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 
 import {
@@ -17,19 +17,22 @@ import {
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
+  ExecuteOutput,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
   GetSubscriberGlobalPreference,
   GetSubscriberGlobalPreferenceCommand,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
+  IConditionsFilterResponse,
   IFilterVariables,
   Instrument,
   InstrumentUsecase,
-  IChimeraChannelResponse,
+  IBridgeChannelResponse,
   IUseCaseInterfaceInline,
+  NormalizeVariables,
+  NormalizeVariablesCommand,
   requireInject,
-  ExecuteOutput,
 } from '@novu/application-generic';
 import {
   JobEntity,
@@ -74,83 +77,73 @@ export class SendMessage {
     private subscriberRepository: SubscriberRepository,
     private tenantRepository: TenantRepository,
     private analyticsService: AnalyticsService,
+    private normalizeVariablesUsecase: NormalizeVariables,
     protected moduleRef: ModuleRef
   ) {
     this.resonateUsecase = requireInject('resonate', this.moduleRef);
   }
 
   @InstrumentUsecase()
-  public async execute(command: SendMessageCommand) {
+  public async execute(command: SendMessageCommand): Promise<{ status: 'success' | 'canceled' }> {
     const payload = await this.buildCompileContext(command);
 
-    const [shouldRun, preferred] = await Promise.all([
-      this.filter(command, payload),
-      this.filterPreferredChannels(command.job),
-    ]);
+    const variables = await this.normalizeVariablesUsecase.execute(
+      NormalizeVariablesCommand.create({
+        filters: command.job.step.filters || [],
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        step: command.step,
+        job: command.job,
+        variables: payload,
+      })
+    );
 
     const stepType = command.step?.template?.type;
 
-    let resonateResponse: ExecuteOutput<IChimeraChannelResponse> | null = null;
+    let resonateResponse: ExecuteOutput<IBridgeChannelResponse> | null = null;
     if (!['digest', 'delay'].includes(stepType as any)) {
       resonateResponse = await this.resonateUsecase.execute<
         SendMessageCommand & { variables: IFilterVariables },
-        ExecuteOutput<IChimeraChannelResponse> | null
+        ExecuteOutput<IBridgeChannelResponse> | null
       >({
         ...command,
-        variables: shouldRun.variables,
+        variables,
       });
     }
+    const endpointSkip = resonateResponse?.options?.skip;
+    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(endpointSkip, command, variables);
 
     if (!command.payload?.$on_boarding_trigger) {
-      const usedFilters = shouldRun?.conditions.reduce(ConditionsFilter.sumFilters, {
-        filters: [],
-        failedFilters: [],
-        passedFilters: [],
-      });
-
-      const digest = command.job.digest;
-      let timedInfo: any = {};
-
-      if (digest && digest.type === DigestTypeEnum.TIMED && digest.timed) {
-        timedInfo = {
-          digestAtTime: digest.timed.atTime,
-          digestWeekDays: digest.timed.weekDays,
-          digestMonthDays: digest.timed.monthDays,
-          digestOrdinal: digest.timed.ordinal,
-          digestOrdinalValue: digest.timed.ordinalValue,
-        };
-      }
-
-      /**
-       * userId is empty string due to mixpanel hot shard events.
-       * This is intentional, so that mixpanel can automatically reshard it.
-       */
-      this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
-        workflowType: resonateResponse?.outputs ? 'ECHO' : 'REGULAR',
-        _template: command.job._templateId,
-        _organization: command.organizationId,
-        _environment: command.environmentId,
-        _subscriber: command.job?._subscriberId,
-        provider: command.job?.providerId,
-        delay: command.job?.delay,
-        jobType: command.job?.type,
-        digestType: digest?.type,
-        digestEventsCount: digest?.events?.length,
-        digestUnit: digest && 'unit' in digest ? digest.unit : undefined,
-        digestAmount: digest && 'amount' in digest ? digest.amount : undefined,
-        digestBackoff: digest?.type === DigestTypeEnum.BACKOFF || (digest as IDigestRegularMetadata)?.backoff === true,
-        ...timedInfo,
-        filterPassed: shouldRun,
-        preferencesPassed: preferred,
-        ...(usedFilters || {}),
-        source: command.payload.__source || 'api',
-      });
+      this.sendProcessStepEvent(
+        command,
+        endpointSkip,
+        filterResult,
+        channelPreferenceResult,
+        !!resonateResponse?.outputs
+      );
     }
 
-    if (!shouldRun?.passed || !preferred) {
+    if (!filterResult?.passed || !channelPreferenceResult || endpointSkip) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
-      return;
+      await this.executionLogRoute.execute(
+        ExecutionLogRouteCommand.create({
+          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.FILTER_STEPS,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: JSON.stringify({
+            ...(filterResult ? { filter: { conditions: filterResult?.conditions, passed: filterResult?.passed } } : {}),
+            ...(channelPreferenceResult ? { preferences: { passed: channelPreferenceResult } } : {}),
+            ...(endpointSkip ? { skip: endpointSkip } : {}),
+          }),
+        })
+      );
+
+      return { status: 'canceled' };
     }
 
     if (stepType !== StepTypeEnum.DELAY) {
@@ -169,31 +162,66 @@ export class SendMessage {
     const sendMessageCommand = SendMessageCommand.create({
       ...command,
       compileContext: payload,
-      chimeraData: resonateResponse,
+      bridgeData: resonateResponse,
     });
 
     switch (stepType) {
-      case StepTypeEnum.SMS:
-        return await this.sendMessageSms.execute(sendMessageCommand);
-      case StepTypeEnum.IN_APP:
-        return await this.sendMessageInApp.execute(sendMessageCommand);
-      case StepTypeEnum.EMAIL:
-        return await this.sendMessageEmail.execute(sendMessageCommand);
-      case StepTypeEnum.CHAT:
-        return await this.sendMessageChat.execute(sendMessageCommand);
-      case StepTypeEnum.PUSH:
-        return await this.sendMessagePush.execute(sendMessageCommand);
-      case StepTypeEnum.DIGEST:
-        return await this.digest.execute(command);
-      case StepTypeEnum.DELAY:
-        return await this.sendMessageDelay.execute(command);
-      case StepTypeEnum.CUSTOM:
-        return await this.executeStepCustom.execute(sendMessageCommand);
+      case StepTypeEnum.SMS: {
+        await this.sendMessageSms.execute(sendMessageCommand);
+        break;
+      }
+      case StepTypeEnum.IN_APP: {
+        await this.sendMessageInApp.execute(sendMessageCommand);
+        break;
+      }
+      case StepTypeEnum.EMAIL: {
+        await this.sendMessageEmail.execute(sendMessageCommand);
+        break;
+      }
+      case StepTypeEnum.CHAT: {
+        await this.sendMessageChat.execute(sendMessageCommand);
+        break;
+      }
+      case StepTypeEnum.PUSH: {
+        await this.sendMessagePush.execute(sendMessageCommand);
+        break;
+      }
+      case StepTypeEnum.DIGEST: {
+        await this.digest.execute(command);
+        break;
+      }
+      case StepTypeEnum.DELAY: {
+        await this.sendMessageDelay.execute(command);
+        break;
+      }
+      case StepTypeEnum.CUSTOM: {
+        await this.executeStepCustom.execute(sendMessageCommand);
+        break;
+      }
     }
+
+    return { status: 'success' };
   }
 
-  private async filter(command: SendMessageCommand, payload: IFilterVariables) {
-    const shouldRun = await this.conditionsFilter.filter(
+  private async getStepExecutionHalt(
+    resonateSkip: boolean | undefined,
+    command: SendMessageCommand,
+    variables: IFilterVariables
+  ): Promise<{ filterResult: IConditionsFilterResponse | null; channelPreferenceResult: boolean | null }> {
+    if (resonateSkip === true) {
+      return { filterResult: null, channelPreferenceResult: null };
+    }
+
+    const [filterResult, channelPreferenceResult] = await Promise.all([
+      this.filter(command, variables),
+      this.filterPreferredChannels(command.job),
+    ]);
+
+    return { filterResult, channelPreferenceResult };
+  }
+
+  private async filter(command: SendMessageCommand, variables: IFilterVariables) {
+    return await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
         filters: command.job.step.filters || [],
         environmentId: command.environmentId,
@@ -201,27 +229,62 @@ export class SendMessage {
         userId: command.userId,
         step: command.step,
         job: command.job,
-        variables: payload,
+        variables,
       })
     );
+  }
 
-    if (!shouldRun.passed) {
-      await this.executionLogRoute.execute(
-        ExecutionLogRouteCommand.create({
-          ...ExecutionLogRouteCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.FILTER_STEPS,
-          source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.SUCCESS,
-          isTest: false,
-          isRetry: false,
-          raw: JSON.stringify({
-            conditions: shouldRun.conditions,
-          }),
-        })
-      );
+  private sendProcessStepEvent(
+    command: SendMessageCommand,
+    resonateSkip: boolean | undefined,
+    filterResult: IConditionsFilterResponse | null,
+    preferredResult: boolean | null,
+    isEcho: boolean
+  ) {
+    const usedFilters = filterResult?.conditions?.reduce(ConditionsFilter.sumFilters, {
+      filters: [],
+      failedFilters: [],
+      passedFilters: [],
+    });
+
+    const digest = command.job.digest;
+    let timedInfo: any = {};
+
+    if (digest && digest.type === DigestTypeEnum.TIMED && digest.timed) {
+      timedInfo = {
+        digestAtTime: digest.timed.atTime,
+        digestWeekDays: digest.timed.weekDays,
+        digestMonthDays: digest.timed.monthDays,
+        digestOrdinal: digest.timed.ordinal,
+        digestOrdinalValue: digest.timed.ordinalValue,
+      };
     }
 
-    return shouldRun;
+    /**
+     * userId is empty string due to mixpanel hot shard events.
+     * This is intentional, so that mixpanel can automatically reshard it.
+     */
+    this.analyticsService.mixpanelTrack('Process Workflow Step - [Triggers]', '', {
+      workflowType: isEcho ? 'ECHO' : 'REGULAR',
+      _template: command.job._templateId,
+      _organization: command.organizationId,
+      _environment: command.environmentId,
+      _subscriber: command.job?._subscriberId,
+      provider: command.job?.providerId,
+      delay: command.job?.delay,
+      jobType: command.job?.type,
+      digestType: digest?.type,
+      digestEventsCount: digest?.events?.length,
+      digestUnit: digest && 'unit' in digest ? digest.unit : undefined,
+      digestAmount: digest && 'amount' in digest ? digest.amount : undefined,
+      digestBackoff: digest?.type === DigestTypeEnum.BACKOFF || (digest as IDigestRegularMetadata)?.backoff === true,
+      ...timedInfo,
+      filterPassed: filterResult?.passed,
+      preferencesPassed: preferredResult,
+      echoSkip: resonateSkip,
+      ...(usedFilters || {}),
+      source: command.payload.__source || 'api',
+    });
   }
 
   @Instrument()

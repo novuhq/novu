@@ -20,7 +20,7 @@ export async function executeSync(
   return await axios.post(
     url,
     {
-      chimeraUrl: echoUrl,
+      bridgeUrl: echoUrl,
       workflows: discover.data.workflows,
     },
     {

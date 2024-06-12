@@ -28,13 +28,16 @@ export interface LocationState {
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const segment = useSegment();
-  const { login, currentUser, organizationId, environmentId } = useAuth();
+  const { login, currentUser, organizations } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel, params: vercelParams } = useVercelParams();
   const [params] = useSearchParams();
   const tokenInQuery = params.get('token');
   const source = params.get('source');
   const sourceWidget = params.get('source_widget');
+  const invitationTokenFromGithub = params.get('invitationToken') as string;
+  const isRedirectedFromLoginPage = params.get('isLoginPage') as string;
+
   const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,40 +51,59 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     }
   >((data) => api.post('/v1/auth/login', data));
 
-  useEffect(() => {
-    (async () => {
-      if (!tokenInQuery) {
-        return;
-      }
+  const handleLoginInUseEffect = async () => {
+    // if currentUser is true, it means user exists, then while accepting invitation, InvitationPage will handle accept this case
+    if (currentUser) {
+      return;
+    }
 
-      if (!invitationToken && (!organizationId || !environmentId)) {
-        await login(tokenInQuery, ROUTES.AUTH_APPLICATION);
+    // if token from OAuth or CLI is not present
+    if (!tokenInQuery) {
+      return;
+    }
 
-        return;
-      }
-
-      if (isFromVercel) {
-        await login(tokenInQuery);
-        startVercelSetup();
-
-        return;
-      }
-
-      if (source === 'cli') {
-        segment.track('Dashboard Visit', {
-          widget: sourceWidget || 'unknown',
-          source: 'cli',
-        });
-        await login(tokenInQuery, ROUTES.GET_STARTED);
-
-        return;
-      }
-
+    // handle github login after invitation
+    if (invitationTokenFromGithub) {
       await login(tokenInQuery);
+      const updatedToken = await acceptInvite(invitationTokenFromGithub);
+
+      if (updatedToken) {
+        await login(updatedToken, isRedirectedFromLoginPage === 'true' ? ROUTES.WORKFLOWS : ROUTES.AUTH_APPLICATION);
+
+        return;
+      }
+    }
+
+    if (organizations) {
       navigate(ROUTES.WORKFLOWS);
-    })();
+    } else {
+      await login(tokenInQuery, ROUTES.AUTH_APPLICATION);
+    }
+
+    if (isFromVercel) {
+      await login(tokenInQuery);
+      startVercelSetup();
+
+      return;
+    }
+
+    if (source === 'cli') {
+      segment.track('Dashboard Visit', {
+        widget: sourceWidget || 'unknown',
+        source: 'cli',
+      });
+      await login(tokenInQuery, ROUTES.GET_STARTED);
+
+      return;
+    }
+
+    await login(tokenInQuery, ROUTES.WORKFLOWS);
+  };
+
+  useEffect(() => {
+    handleLoginInUseEffect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [login, navigate, currentUser, tokenInQuery, segment, organizationId, environmentId]);
+  }, [login]);
 
   const signupLink = isFromVercel ? `${ROUTES.AUTH_SIGNUP}?${params.toString()}` : ROUTES.AUTH_SIGNUP;
   const resetPasswordLink = isFromVercel
@@ -135,7 +157,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
 
   return (
     <>
-      <OAuth />
+      <OAuth invitationToken={invitationToken} isLoginPage={true} />
       <form noValidate onSubmit={handleSubmit(onLogin)}>
         <Input
           error={emailClientError || emailServerError}

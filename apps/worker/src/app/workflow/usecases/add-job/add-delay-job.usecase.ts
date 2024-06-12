@@ -43,10 +43,10 @@ export class AddDelayJob {
         payload: data.payload,
         overrides: data.overrides,
         // TODO: Remove fallback after other delay types are implemented.
-        chimeraResponse: command.chimeraResponse?.outputs
+        bridgeResponse: command.bridgeResponse?.outputs
           ? {
               type: DelayTypeEnum.REGULAR,
-              ...command.chimeraResponse?.outputs,
+              ...command.bridgeResponse?.outputs,
             }
           : undefined,
       });

@@ -19,7 +19,11 @@ class EchoServer {
     this.server.use(express.json());
     this.server.use(serve({ client: this.echo }));
 
-    this.app = await this.server.listen(this.port);
+    await new Promise<void>((resolve) => {
+      this.app = this.server.listen(this.port, () => {
+        resolve();
+      });
+    });
   }
 
   async stop() {

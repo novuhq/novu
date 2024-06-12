@@ -14,8 +14,8 @@ import { ApiException } from '../../utils/exceptions';
 import { isRegularDigest } from '../../utils/digest';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
 import {
-  IChimeraDelayResponse,
-  IChimeraDigestResponse,
+  IBridgeDelayResponse,
+  IBridgeDigestResponse,
 } from '../../utils/require-inject';
 
 export class CalculateDelayService {
@@ -23,16 +23,18 @@ export class CalculateDelayService {
     stepMetadata,
     payload,
     overrides,
-    chimeraResponse,
+    bridgeResponse,
   }: {
     stepMetadata?: IWorkflowStepMetadata;
     payload: any;
     overrides: any;
-    chimeraResponse?: IChimeraDigestResponse | IChimeraDelayResponse;
+    bridgeResponse?: IBridgeDigestResponse | IBridgeDelayResponse;
   }): number {
-    const digestType =
-      (chimeraResponse?.type as DigestTypeEnum) ?? stepMetadata.type;
     if (!stepMetadata) throw new ApiException(`Step metadata not found`);
+
+    const digestType =
+      (bridgeResponse?.type as DigestTypeEnum | DelayTypeEnum) ??
+      stepMetadata.type;
 
     if (digestType === DelayTypeEnum.SCHEDULED) {
       const delayPath = (stepMetadata as IDelayScheduledMetadata).delayPath;
@@ -51,21 +53,22 @@ export class CalculateDelayService {
       return delay;
     }
 
-    const chimeraUnit = castToDigestUnitEnum(chimeraResponse?.unit);
+    const userUnit = castToDigestUnitEnum(bridgeResponse?.unit);
+    const userAmount = bridgeResponse?.amount;
 
     if (isRegularDigest(digestType)) {
-      if (this.checkValidDelayOverride(overrides)) {
+      if (this.isValidDelayOverride(overrides)) {
         return this.toMilliseconds(
-          chimeraResponse?.amount ?? (overrides.delay.amount as number),
-          chimeraUnit ?? (overrides.delay.unit as DigestUnitEnum)
+          userAmount ?? (overrides.delay.amount as number),
+          userUnit ?? (overrides.delay.unit as DigestUnitEnum)
         );
       }
 
       const regularDigestMeta = stepMetadata as IDigestRegularMetadata;
 
       return this.toMilliseconds(
-        chimeraResponse?.amount ?? regularDigestMeta.amount,
-        chimeraUnit ?? regularDigestMeta.unit
+        userAmount ?? regularDigestMeta.amount,
+        userUnit ?? regularDigestMeta.unit
       );
     }
 
@@ -105,16 +108,18 @@ export class CalculateDelayService {
     return delay;
   }
 
-  private checkValidDelayOverride(overrides: any): boolean {
+  private isValidDelayOverride(overrides: any): boolean {
     if (!overrides?.delay) {
       return false;
     }
-    const values = Object.values(DigestUnitEnum);
 
-    return (
-      typeof overrides.delay.amount === 'number' &&
-      values.includes(overrides.delay.unit as unknown as DigestUnitEnum)
+    const isDelayAmountANumber = typeof overrides.delay.amount === 'number';
+    const digestUnits = Object.values(DigestUnitEnum);
+    const includesValidDelayUnit = digestUnits.includes(
+      overrides.delay.unit as unknown as DigestUnitEnum
     );
+
+    return isDelayAmountANumber && includesValidDelayUnit;
   }
 }
 

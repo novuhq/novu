@@ -4,11 +4,11 @@ import { channelStepSchemas } from '../schemas/steps/channels';
 import { Providers } from './provider.types';
 import { Schema, FromSchema } from './schema.types';
 import { Skip } from './skip.types';
-import { MaybePromise } from './util.types';
+import { Awaitable } from './util.types';
 
 // @TODO: remove the credentials, providers, and preferences from the ActionStepOptions (fix the client typings)
 export type ActionStepOptions = {
-  skip?: Skip;
+  skip?: Skip<unknown>;
   inputSchema?: Schema;
   credentials?: (input: unknown) => Promise<Record<string, unknown>>;
   providers?: Record<string, (payload: unknown) => unknown | Promise<unknown>>;
@@ -46,7 +46,7 @@ type StepOutput<T_Result> = Promise<T_Result & StepContext>;
 
 export type ActionStep<T_Outputs, T_Result> = (
   name: string,
-  resolve: (inputs: any) => MaybePromise<T_Outputs>,
+  resolve: (inputs: any) => Awaitable<T_Outputs>,
   options?: ActionStepOptions
 ) => StepOutput<T_Result>;
 
@@ -79,7 +79,7 @@ export type CustomStep = <
    *
    * @param inputs The inputs for the step.
    */
-  resolve: (inputs: T_Inputs) => MaybePromise<T_Outputs>,
+  resolve: (inputs: T_Inputs) => Awaitable<T_Outputs>,
   /**
    * The options for the step.
    */
@@ -87,9 +87,9 @@ export type CustomStep = <
     /**
      * Skip the step. If the skip function returns true, the step will be skipped.
      *
-     * @param payload The payload for the step.
+     * @param inputs The inputs for the step.
      */
-    skip?: (inputs: T_Inputs) => MaybePromise<boolean>;
+    skip?: Skip<T_Inputs>;
     /**
      * The schema for the inputs of the step. Used to validate the user-provided input from Novu Web.
      */
@@ -133,7 +133,7 @@ export type ChannelStep<
    *
    * @param inputs The inputs for the step.
    */
-  resolve: (inputs: T_Inputs) => MaybePromise<T_Outputs>,
+  resolve: (inputs: T_Inputs) => Awaitable<T_Outputs>,
   /**
    * The options for the step.
    */
@@ -141,9 +141,9 @@ export type ChannelStep<
     /**
      * Skip the step. If the skip function returns true, the step will be skipped.
      *
-     * @param payload The payload for the step.
+     * @param inputs The inputs for the step.
      */
-    skip?: (inputs: T_Inputs) => MaybePromise<boolean>;
+    skip?: Skip<T_Inputs>;
     /**
      * The schema for the inputs of the step. Used to validate the user-provided input from Novu Web.
      */

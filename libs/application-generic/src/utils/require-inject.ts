@@ -45,7 +45,7 @@ enum RequireInjectEnum {
   RESONATE = 'resonate',
 }
 
-export interface IChimeraDigestResponse {
+export interface IBridgeDigestResponse {
   amount: number;
   unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
   type: 'regular';
@@ -53,48 +53,48 @@ export interface IChimeraDigestResponse {
   digestKey: string;
 }
 
-export interface IChimeraDelayResponse {
+export interface IBridgeDelayResponse {
   amount: number;
   unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
   type: 'regular';
 }
 
-export interface IChimeraInAppResponse {
+export interface IBridgeInAppResponse {
   body: string;
 }
 
-export interface IChimeraChatResponse {
+export interface IBridgeChatResponse {
   body: string;
 }
 
-export interface IChimeraEmailResponse {
+export interface IBridgeEmailResponse {
   subject: string;
   body: string;
 }
 
-export interface IChimeraPushResponse {
+export interface IBridgePushResponse {
   subject: string;
   body: string;
 }
 
-export interface IChimeraSmsResponse {
+export interface IBridgeSmsResponse {
   body: string;
 }
 
-export type IChimeraChannelResponse =
-  | IChimeraInAppResponse
-  | IChimeraChatResponse
-  | IChimeraEmailResponse
-  | IChimeraPushResponse
-  | IChimeraSmsResponse;
+export type IBridgeChannelResponse =
+  | IBridgeInAppResponse
+  | IBridgeChatResponse
+  | IBridgeEmailResponse
+  | IBridgePushResponse
+  | IBridgeSmsResponse;
 
-export type IChimeraActionResponse =
-  | IChimeraDelayResponse
-  | IChimeraDigestResponse;
+export type IBridgeActionResponse =
+  | IBridgeDelayResponse
+  | IBridgeDigestResponse;
 
-export type IChimeraStepResponse =
-  | IChimeraChannelResponse
-  | IChimeraActionResponse;
+export type IBridgeStepResponse =
+  | IBridgeChannelResponse
+  | IBridgeActionResponse;
 
 export interface IUseCaseInterface<TInput, TResponse> {
   execute: (arg0: TInput) => TResponse;
@@ -138,8 +138,13 @@ export interface IBlock {
 
 export type IProvidersOverride = Record<ChatProviderIdEnum, IProviderOverride>;
 
+interface IExecutionOptions {
+  skip?: boolean;
+}
+
 export type ExecuteOutput<OutputResult> = {
   outputs: OutputResult;
   metadata: ExecuteOutputMetadata;
   providers?: IProvidersOverride;
+  options?: IExecutionOptions;
 };

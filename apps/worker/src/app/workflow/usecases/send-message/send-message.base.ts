@@ -149,7 +149,8 @@ export abstract class SendMessageBase extends SendMessageType {
           organizationId
         );
 
-        await i18next.init({
+        const instance = i18next.createInstance();
+        await instance.init({
           resources,
           ns: namespaces,
           defaultNS: false,
@@ -168,6 +169,8 @@ export abstract class SendMessageBase extends SendMessageType {
             },
           },
         });
+
+        return instance;
       }
     } catch (e) {
       Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');

@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { Center, LoadingOverlay } from '@mantine/core';
@@ -8,7 +8,7 @@ import { getInviteTokenData } from '../../api/invitation';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import { SignUpForm } from './components/SignUpForm';
 import { colors, Text, Button } from '@novu/design-system';
-import { useAuth } from '@novu/shared-web';
+import { ROUTES, useAuth } from '@novu/shared-web';
 import { useAcceptInvite } from './components/useAcceptInvite';
 import { LoginForm } from './components/LoginForm';
 
@@ -17,6 +17,7 @@ export default function InvitationPage() {
   const { currentUser, logout } = useAuth();
   const { token: invitationToken } = useParams<{ token: string }>();
   const { isLoading: isAcceptingInvite, acceptInvite } = useAcceptInvite();
+  const navigate = useNavigate();
   const { data, isLoading: isInviteTokenDataLoading } = useQuery<IGetInviteResponseDto, IGetInviteResponseDto>(
     ['getInviteTokenData'],
     () => getInviteTokenData(invitationToken || ''),
@@ -34,8 +35,10 @@ export default function InvitationPage() {
   useEffect(() => {
     if (invitationToken && isLoggedInAsInvitedUser) {
       acceptInvite(invitationToken);
+      navigate(ROUTES.WORKFLOWS);
     }
-  }, [isLoggedInAsInvitedUser, acceptInvite, invitationToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [acceptInvite, invitationToken, isLoggedInAsInvitedUser]);
 
   useEffect(() => {
     return () => {
