@@ -27,7 +27,6 @@
     "release:alpha": "npm i && npm run build && npm version prerelease --preid=alpha && npm publish"
   },
   "devDependencies": {
-    "@novu/application-generic": "workspace:*",
     "@types/async-retry": "1.4.2",
     "@types/ci-info": "2.0.0",
     "@types/cross-spawn": "6.0.0",
