@@ -250,7 +250,7 @@ jobs:
   test_e2e_web:
     name: Test E2E Web
     needs: [get-affected]
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/web') }}
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
     with:

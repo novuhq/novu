@@ -97,13 +97,13 @@ jobs:
 
       - name: Playwright Install
         working-directory: apps/web
-        run: pnpm playwright:install
+        run: pnpm test:e2e:install
 
       - name: Run Playwright tests
         working-directory: apps/web
         env:
           REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: some_fake_id
-        run: pnpm playwright:test --shard=${{ matrix.containers }}/${{ matrix.total }}
+        run: pnpm test:e2e --shard=${{ matrix.containers }}/${{ matrix.total }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
