@@ -24,6 +24,7 @@ import {
 import { ExecutionLogRoute } from '../execution-log-route';
 import { CreateExecutionDetails } from '../create-execution-details';
 import { GetFeatureFlag } from '../get-feature-flag';
+import { NormalizeVariables } from '../normalize-variables';
 
 const testIntegration: IntegrationEntity = {
   _environmentId: 'env-test-123',
@@ -100,25 +101,24 @@ describe('select integration', function () {
   const executionDetailsRepository: ExecutionDetailsRepository =
     new ExecutionDetailsRepository();
 
+  const conditionsFilter = new ConditionsFilter(
+    new SubscriberRepository(),
+    new MessageRepository(),
+    executionDetailsRepository,
+    new JobRepository(),
+    new EnvironmentRepository(),
+    new ExecutionLogRoute(
+      new CreateExecutionDetails(new ExecutionDetailsRepository()),
+      new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
+      new GetFeatureFlag(new FeatureFlagsService())
+    ),
+    new CompileTemplate()
+  );
   beforeEach(async function () {
     // @ts-ignore
     useCase = new SelectIntegration(
       integrationRepository,
-      new GetDecryptedIntegrations(integrationRepository),
-      new ConditionsFilter(
-        new SubscriberRepository(),
-        new MessageRepository(),
-        executionDetailsRepository,
-        new JobRepository(),
-        new TenantRepository(),
-        new EnvironmentRepository(),
-        new ExecutionLogRoute(
-          new CreateExecutionDetails(new ExecutionDetailsRepository()),
-          new ExecutionLogQueueService(new WorkflowInMemoryProviderService()),
-          new GetFeatureFlag(new FeatureFlagsService())
-        ),
-        new CompileTemplate()
-      ),
+      conditionsFilter,
       new TenantRepository()
     );
     jest.clearAllMocks();
