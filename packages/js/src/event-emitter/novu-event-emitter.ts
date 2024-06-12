@@ -17,7 +17,7 @@ export class NovuEventEmitter {
     this.emitter.on(eventName, listener);
   }
 
-  emit<Key extends EventNames>(type: Key, event: Events[Key]): void {
+  emit<Key extends EventNames>(type: Key, event?: Events[Key]): void {
     this.emitter.emit(type, event);
   }
 }

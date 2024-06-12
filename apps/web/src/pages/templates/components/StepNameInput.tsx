@@ -22,7 +22,7 @@ export const StepNameInput = ({
   } = useFormContext<IForm>();
 
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvController({}, template?.chimera);
+  const { readonly } = useEnvController({}, template?.bridge);
   const showErrors = isSubmitted && errors?.steps;
   const { colorScheme } = useMantineColorScheme();
 

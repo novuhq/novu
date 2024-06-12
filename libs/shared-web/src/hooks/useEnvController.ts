@@ -25,12 +25,12 @@ export type EnvironmentContext = {
   environment: IEnvironment | undefined;
   setEnvironment: (environment: EnvironmentName, options?: ISetEnvironmentOptions) => void;
   refetchEnvironment: () => void;
-  chimera: boolean;
+  bridge: boolean;
 };
 
 export const useEnvController = (
   options: UseQueryOptions<IEnvironment, any, IEnvironment> = {},
-  chimera = false
+  bridge = false
 ): EnvironmentContext => {
   const navigate = useNavigate();
 
@@ -83,8 +83,8 @@ export const useEnvController = (
   return {
     refetchEnvironment,
     environment,
-    readonly: environment?._parentId !== undefined || (!IS_DOCKER_HOSTED && chimera),
-    chimera: !IS_DOCKER_HOSTED && chimera,
+    readonly: environment?._parentId !== undefined || (!IS_DOCKER_HOSTED && bridge),
+    bridge: !IS_DOCKER_HOSTED && bridge,
     setEnvironment: setEnvironmentCallback,
     isLoading: isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading,
   };

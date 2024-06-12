@@ -39,8 +39,9 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     const verifyPayloadService = new VerifyPayloadService();
     const organization = await this.getOrganization(command.organizationId);
 
+    let i18nInstance;
     if (initiateTranslations) {
-      await initiateTranslations(
+      i18nInstance = await initiateTranslations(
         command.environmentId,
         command.organizationId,
         command.locale ||
@@ -97,23 +98,47 @@ export class CompileEmailTemplate extends CompileTemplateBase {
     };
 
     try {
-      subject = await this.renderContent(command.subject, payload);
+      subject = await this.renderContent(
+        command.subject,
+        payload,
+        i18nInstance
+      );
 
       if (preheader) {
-        preheader = await this.renderContent(preheader, payload);
+        preheader = await this.renderContent(preheader, payload, i18nInstance);
       }
+
       if (command.senderName) {
-        senderName = await this.renderContent(command.senderName, payload);
+        senderName = await this.renderContent(
+          command.senderName,
+          payload,
+          i18nInstance
+        );
       }
     } catch (e: any) {
       throw new ApiException(
-        e?.message || `Message content could not be generated`
+        e?.message || `Email subject message content could not be generated`
       );
     }
 
     const customLayout = CompileEmailTemplate.addPreheader(
       layoutContent as string
     );
+
+    if (isEditorMode) {
+      for (const block of content as IEmailBlock[]) {
+        block.content = await this.renderContent(
+          block.content,
+          payload,
+          i18nInstance
+        );
+        block.url = await this.renderContent(
+          block.url || '',
+          payload,
+          i18nInstance
+        );
+      }
+    }
 
     const templateVariables = {
       ...payload,
@@ -123,31 +148,22 @@ export class CompileEmailTemplate extends CompileTemplateBase {
       blocks: isEditorMode ? content : [],
     };
 
-    if (isEditorMode) {
-      for (const block of content as IEmailBlock[]) {
-        block.content = await this.renderContent(block.content, payload);
-        block.url = await this.renderContent(block.url || '', payload);
-      }
-    }
-
-    const body = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        template: !isEditorMode
-          ? (content as string)
-          : (helperBlocksContent as string),
-        data: templateVariables,
-      })
-    );
+    const body = await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: !isEditorMode
+        ? (content as string)
+        : (helperBlocksContent as string),
+      data: templateVariables,
+    });
 
     templateVariables.body = body as string;
 
     const html = customLayout
-      ? await this.compileTemplate.execute(
-          CompileTemplateCommand.create({
-            template: customLayout,
-            data: templateVariables,
-          })
-        )
+      ? await this.compileTemplate.execute({
+          i18next: i18nInstance,
+          template: customLayout,
+          data: templateVariables,
+        })
       : body;
 
     return { html, content, subject, senderName };
@@ -155,16 +171,16 @@ export class CompileEmailTemplate extends CompileTemplateBase {
 
   private async renderContent(
     content: string,
-    payload: Record<string, unknown>
+    payload: Record<string, unknown>,
+    i18nInstance: any
   ) {
-    const renderedContent = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        template: content,
-        data: {
-          ...payload,
-        },
-      })
-    );
+    const renderedContent = await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: content,
+      data: {
+        ...payload,
+      },
+    });
 
     return renderedContent?.trim() || '';
   }

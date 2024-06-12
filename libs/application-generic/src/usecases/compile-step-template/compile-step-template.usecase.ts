@@ -30,8 +30,9 @@ export class CompileStepTemplate extends CompileTemplateBase {
   ) {
     const organization = await this.getOrganization(command.organizationId);
 
+    let i18nInstance;
     if (initiateTranslations) {
-      await initiateTranslations(
+      i18nInstance = await initiateTranslations(
         command.environmentId,
         command.organizationId,
         command.locale ||
@@ -47,14 +48,22 @@ export class CompileStepTemplate extends CompileTemplateBase {
     let title: string | undefined = undefined;
 
     try {
-      content = await this.compileStepTemplate(command.content, payload);
+      content = await this.compileStepTemplate(
+        command.content,
+        payload,
+        i18nInstance
+      );
 
       if (command.title) {
-        title = await this.compileStepTemplate(command.title, payload);
+        title = await this.compileStepTemplate(
+          command.title,
+          payload,
+          i18nInstance
+        );
       }
     } catch (e: any) {
       throw new ApiException(
-        e?.message || `Message content could not be generated`
+        e?.message || `Compile step content failed to generate`
       );
     }
 
@@ -63,15 +72,15 @@ export class CompileStepTemplate extends CompileTemplateBase {
 
   private async compileStepTemplate(
     content: string,
-    payload: any
+    payload: any,
+    i18nInstance?: any
   ): Promise<string> {
-    return await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        template: content as string,
-        data: {
-          ...payload,
-        },
-      })
-    );
+    return await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: content as string,
+      data: {
+        ...payload,
+      },
+    });
   }
 }

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { faker } from '@faker-js/faker';
 import { createHash } from 'crypto';
+import { faker } from '@faker-js/faker';
 
 import { UserSession } from '@novu/testing';
 import { ChannelTypeEnum } from '@novu/stateless';

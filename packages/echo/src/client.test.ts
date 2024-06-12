@@ -274,8 +274,8 @@ describe('Echo Client', () => {
   describe('diff method', () => {
     const globalFetchRef = global.fetch;
     const DIFF_MOCK_RESPONSE = {
-      current: { workflows: { data: 'long string' }, chimeraUrl: 'url' },
-      new: { workflows: { data: 'new long string' }, chimeraUrl: 'new url' },
+      current: { workflows: { data: 'long string' }, bridgeUrl: 'url' },
+      new: { workflows: { data: 'new long string' }, bridgeUrl: 'new url' },
     };
 
     beforeEach(() => {
@@ -305,8 +305,8 @@ describe('Echo Client', () => {
   describe('sync method', () => {
     const globalFetchRef = global.fetch;
     const DIFF_MOCK_RESPONSE = {
-      current: { workflows: { data: 'long string' }, chimeraUrl: 'url' },
-      new: { workflows: { data: 'new long string' }, chimeraUrl: 'new url' },
+      current: { workflows: { data: 'long string' }, bridgeUrl: 'url' },
+      new: { workflows: { data: 'new long string' }, bridgeUrl: 'new url' },
     };
 
     beforeEach(() => {});
@@ -335,7 +335,7 @@ describe('Echo Client', () => {
 
       expect(syncRestCallSpy).toBeCalledTimes(1);
       expect(syncRestCallSpy).toBeCalledWith(`${DEFAULT_NOVU_API_BASE_URL}${NovuApiEndpointsEnum.SYNC}?source=sdk`, {
-        body: JSON.stringify({ workflows, chimeraUrl: echoUrl }),
+        body: JSON.stringify({ workflows, bridgeUrl: echoUrl }),
         headers: { 'content-type': 'application/json', authorization: 'ApiKey undefined' },
         method: HttpMethodEnum.POST,
       });
@@ -435,6 +435,43 @@ describe('Echo Client', () => {
     it('should preview workflow successfully when action is preview', async () => {
       await echo.workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
+      });
+
+      const event: IEvent = {
+        action: 'preview',
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        inputs: {},
+      };
+
+      const executionResult = await echo.executeWorkflow(event);
+
+      expect(executionResult).toBeDefined();
+      expect(executionResult.outputs).toBeDefined();
+      if (!executionResult.outputs) throw new Error('executionResult.outputs is undefined');
+
+      const body = (executionResult.outputs as any).body as string;
+      expect(body).toBe('Test Body');
+
+      const subject = (executionResult.outputs as any).subject as string;
+      expect(subject).toBe('Subject');
+
+      expect(executionResult.providers).toEqual({});
+
+      const metadata = executionResult.metadata;
+      expect(metadata.status).toBe('success');
+      expect(metadata.error).toBe(false);
+      expect(metadata.duration).toEqual(expect.any(Number));
+    });
+
+    it('should preview workflow successfully when action is preview and skipped', async () => {
+      await echo.workflow('test-workflow', async ({ step }) => {
+        await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          skip: () => true,
+        });
       });
 
       const event: IEvent = {

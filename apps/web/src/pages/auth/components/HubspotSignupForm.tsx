@@ -38,10 +38,9 @@ export function HubspotSignupForm() {
 
           return;
         }
-        navigate(ROUTES.HOME);
       }
     }
-  }, [navigate, isFromVercel, startVercelSetup, currentUser, environmentId]);
+  }, [isFromVercel, startVercelSetup, currentUser, environmentId]);
 
   async function createOrganization(data: IOrganizationCreateForm) {
     const { organizationName, jobTitle, ...rest } = data;
@@ -53,7 +52,7 @@ export function HubspotSignupForm() {
     // TODO: Move this into useAuth
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
 
-    login(organizationResponseToken);
+    login(organizationResponseToken, ROUTES.GET_STARTED);
   }
 
   const handleCreateOrganization = async (data: IOrganizationCreateForm) => {
@@ -73,7 +72,6 @@ export function HubspotSignupForm() {
 
       return;
     }
-
     navigate(ROUTES.GET_STARTED);
   };
 
@@ -88,15 +86,15 @@ export function HubspotSignupForm() {
           lastname: currentUser?.lastName as string,
           email: currentUser?.email as string,
 
-          company: '',
+          company: (currentOrganization?.name as string) || '',
           role___onboarding: '',
           heard_about_novu: '',
           use_case___onboarding: '',
           role___onboarding__other_: '',
           heard_about_novu__other_: '',
         }}
-        readonlyProperties={['email']}
-        focussedProperty="company"
+        readonlyProperties={currentOrganization ? ['email', 'company'] : ['email']}
+        focussedProperty={currentOrganization ? 'role___onboarding' : 'company'}
         onFormSubmitted={($form, values) => {
           const submissionValues = values?.submissionValues as unknown as {
             company: string;
