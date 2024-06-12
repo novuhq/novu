@@ -34,6 +34,7 @@ import { CreateTemplatePayload } from './create-notification-template.interface'
 import { IntegrationService } from './integration.service';
 import { UserService } from './user.service';
 import { JobsService } from './jobs.service';
+import { TEST_USER_PASSWORD } from './constants';
 
 const EMAIL_BLOCK: IEmailBlock[] = [
   {
