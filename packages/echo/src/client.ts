@@ -476,8 +476,9 @@ export class Echo {
       const step = this.getStep(event.workflowId, stepId);
       const eventClone = clone<IEvent>(event);
       const inputs = this.createStepInputs(step, eventClone);
+      const isPreview = event.action === 'preview';
 
-      if (await this.shouldSkip(options?.skip, inputs)) {
+      if (!isPreview && (await this.shouldSkip(options?.skip, inputs))) {
         const skippedResult = { options: { skip: true } };
         setResult(skippedResult);
 
@@ -486,7 +487,7 @@ export class Echo {
 
       const previewStepHandler = this.previewStep.bind(this);
       const executeStepHandler = this.executeStep.bind(this);
-      const handler = event.action === 'preview' ? previewStepHandler : executeStepHandler;
+      const handler = isPreview ? previewStepHandler : executeStepHandler;
 
       const stepResult = await handler(event, {
         ...step,

@@ -111,14 +111,20 @@ export class SendMessage {
         variables,
       });
     }
-    const echoSkip = resonateResponse?.options?.skip;
-    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(echoSkip, command, variables);
+    const endpointSkip = resonateResponse?.options?.skip;
+    const { filterResult, channelPreferenceResult } = await this.getStepExecutionHalt(endpointSkip, command, variables);
 
     if (!command.payload?.$on_boarding_trigger) {
-      this.sendProcessStepEvent(command, echoSkip, filterResult, channelPreferenceResult, !!resonateResponse?.outputs);
+      this.sendProcessStepEvent(
+        command,
+        endpointSkip,
+        filterResult,
+        channelPreferenceResult,
+        !!resonateResponse?.outputs
+      );
     }
 
-    if (!filterResult?.passed || !channelPreferenceResult || echoSkip) {
+    if (!filterResult?.passed || !channelPreferenceResult || endpointSkip) {
       await this.jobRepository.updateStatus(command.environmentId, command.jobId, JobStatusEnum.CANCELED);
 
       await this.executionLogRoute.execute(
@@ -132,7 +138,7 @@ export class SendMessage {
           raw: JSON.stringify({
             ...(filterResult ? { filter: { conditions: filterResult?.conditions, passed: filterResult?.passed } } : {}),
             ...(channelPreferenceResult ? { preferences: { passed: channelPreferenceResult } } : {}),
-            ...(echoSkip ? { echo: { skip: echoSkip } } : {}),
+            ...(endpointSkip ? { skip: endpointSkip } : {}),
           }),
         })
       );
