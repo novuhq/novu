@@ -612,7 +612,8 @@
     "zulip",
     "zwnj",
     "prepush",
-    "xcodebuild"
+    "xcodebuild",
+    "vstack"
   ],
   "flagWords": [],
   "patterns": [
