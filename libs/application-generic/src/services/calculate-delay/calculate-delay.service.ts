@@ -14,8 +14,8 @@ import { ApiException } from '../../utils/exceptions';
 import { isRegularDigest } from '../../utils/digest';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
 import {
-  IChimeraDelayResponse,
-  IChimeraDigestResponse,
+  IBridgeDelayResponse,
+  IBridgeDigestResponse,
 } from '../../utils/require-inject';
 
 export class CalculateDelayService {
@@ -23,17 +23,17 @@ export class CalculateDelayService {
     stepMetadata,
     payload,
     overrides,
-    chimeraResponse,
+    bridgeResponse,
   }: {
     stepMetadata?: IWorkflowStepMetadata;
     payload: any;
     overrides: any;
-    chimeraResponse?: IChimeraDigestResponse | IChimeraDelayResponse;
+    bridgeResponse?: IBridgeDigestResponse | IBridgeDelayResponse;
   }): number {
     if (!stepMetadata) throw new ApiException(`Step metadata not found`);
 
     const digestType =
-      (chimeraResponse?.type as DigestTypeEnum | DelayTypeEnum) ??
+      (bridgeResponse?.type as DigestTypeEnum | DelayTypeEnum) ??
       stepMetadata.type;
 
     if (digestType === DelayTypeEnum.SCHEDULED) {
@@ -53,8 +53,8 @@ export class CalculateDelayService {
       return delay;
     }
 
-    const userUnit = castToDigestUnitEnum(chimeraResponse?.unit);
-    const userAmount = chimeraResponse?.amount;
+    const userUnit = castToDigestUnitEnum(bridgeResponse?.unit);
+    const userAmount = bridgeResponse?.amount;
 
     if (isRegularDigest(digestType)) {
       if (this.isValidDelayOverride(overrides)) {

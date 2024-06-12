@@ -94,8 +94,8 @@ export const PreviewWeb = ({
   onLocaleChange,
   selectedLocale,
   locales,
-  chimera = false,
   className,
+  bridge = false,
 }: {
   integration: any;
   subject?: string;
@@ -106,8 +106,8 @@ export const PreviewWeb = ({
   onLocaleChange: (locale: string) => void;
   selectedLocale?: string;
   locales: any[];
-  chimera?: boolean;
   className?: string;
+  bridge?: boolean;
 }) => {
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
 
@@ -153,7 +153,7 @@ export const PreviewWeb = ({
               <When truthy={!loading}>
                 <PreviewUserIcon />
                 <div>
-                  {!chimera && error && error.template?.subject && error.template?.subject?.message ? (
+                  {!bridge && error && error.template?.subject && error.template?.subject?.message ? (
                     <Text color={colors.error}>{error.template.subject.message}</Text>
                   ) : (
                     <>

@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { PackageManager } from "../helpers/get-pkg-manager";
 
 export type TemplateType =

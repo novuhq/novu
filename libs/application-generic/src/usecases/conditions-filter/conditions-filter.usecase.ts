@@ -645,14 +645,12 @@ export class ConditionsFilter extends Filter {
     job: IJob
   ): Promise<string | undefined> {
     try {
-      return await this.compileTemplate.execute(
-        CompileTemplateCommand.create({
-          template: value,
-          data: {
-            ...variables,
-          },
-        })
-      );
+      return await this.compileTemplate.execute({
+        template: value,
+        data: {
+          ...variables,
+        },
+      });
     } catch (e: any) {
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
