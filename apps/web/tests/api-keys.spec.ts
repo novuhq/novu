@@ -12,13 +12,11 @@ test.beforeEach(async ({ page }) => {
   featureFlagsMock.setFlagsToMock({
     IS_IMPROVED_ONBOARDING_ENABLED: false,
     IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_BILLING_ENABLED: false,
     IS_TEMPLATE_STORE_ENABLED: false,
   });
 });
 
-test('should show/hide the API key, and display the application and environment identifierw', async ({ page }) => {
+test('should show/hide the API key, and display the application and environment identifier', async ({ page }) => {
   const apiKeysPage = await ApiKeysPage.goTo(page);
   const apiKeyContainer = apiKeysPage.getApiKeyContainer();
   const apiKey = session.environment.apiKeys[0].key;

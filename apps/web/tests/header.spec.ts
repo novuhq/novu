@@ -17,8 +17,6 @@ test.describe('App Header', () => {
     featureFlagsMock.setFlagsToMock({
       IS_IMPROVED_ONBOARDING_ENABLED: false,
       IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-      IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-      IS_BILLING_ENABLED: false,
       IS_TEMPLATE_STORE_ENABLED: false,
     });
     user = session.user;

@@ -16,8 +16,6 @@ test.describe('Billing', () => {
     featureFlagsMock.setFlagsToMock({
       IS_IMPROVED_ONBOARDING_ENABLED: false,
       IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-      IS_BILLING_REVERSE_TRIAL_ENABLED: true,
-      IS_BILLING_ENABLED: false,
       IS_TEMPLATE_STORE_ENABLED: false,
     });
   });
