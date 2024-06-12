@@ -3,15 +3,14 @@ import { install } from "../helpers/install";
 import { copy } from "../helpers/copy";
 
 import { async as glob } from "fast-glob";
+import { createHash } from "crypto";
 import os from "os";
 import fs from "fs/promises";
 import path from "path";
 import { cyan, bold } from "picocolors";
 import { Sema } from "async-sema";
-import pkg from "../package.json";
 
 import { GetTemplateFileArgs, InstallTemplateArgs } from "./types";
-
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
  */
@@ -39,6 +38,8 @@ export const installTemplate = async ({
   eslint,
   srcDir,
   importAlias,
+  apiKey,
+  tunnelHost,
 }: InstallTemplateArgs) => {
   console.log(bold(`Using ${packageManager}.`));
 
@@ -75,6 +76,11 @@ export const installTemplate = async ({
         }
       }
     },
+  });
+  // move tunnel scripts to the project folder
+  await copy(copySource, `${root}/scripts`, {
+    parents: true,
+    cwd: path.join(__dirname, `tunnelScripts`),
   });
 
   const tsconfigFile = path.join(root, "tsconfig.json");
@@ -166,6 +172,18 @@ export const installTemplate = async ({
     }
   }
 
+  /* write .env file */
+  const port = 4000;
+  const val = Object.entries({
+    PORT: port,
+    API_KEY: apiKey,
+    TUNNEL_HOST: tunnelHost,
+  }).reduce((acc, [key, value]) => {
+    return `${acc}${key}=${value}${os.EOL}`;
+  }, "");
+
+  await fs.writeFile(path.join(root, ".env"), val);
+
   /** Copy the version from package.json or override for tests. */
   const version = "14.2.3";
 
@@ -175,7 +193,9 @@ export const installTemplate = async ({
     version: "0.1.0",
     private: true,
     scripts: {
-      dev: "next dev --port=4000",
+      tunnel: "tsx scripts/tunnel.mts",
+      "next-dev": `next dev --port=${port}`,
+      dev: 'concurrently -k --restart-tries 5 --restart-after 1000 --names "📡 TUNNEL,🖥️  SERVER" -c "bgBlue.bold,bgMagenta.bold" "npm:tunnel" "npm:next-dev"',
       build: "next build",
       start: "next start",
       lint: "next lint",
@@ -199,6 +219,7 @@ export const installTemplate = async ({
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
       typescript: "^5",
+      tsx: "^4.15.1",
       "@types/node": "^20",
       "@types/react": "^18",
       "@types/react-dom": "^18",
@@ -229,6 +250,25 @@ export const installTemplate = async ({
       "eslint-config-next": version,
     };
   }
+
+  /* local tunnel */
+  packageJson.devDependencies = {
+    ...packageJson.devDependencies,
+    "@types/localtunnel": "^2.0.4",
+    localtunnel: "^2.0.2",
+  };
+
+  /* dotenv */
+  packageJson.devDependencies = {
+    ...packageJson.devDependencies,
+    dotenv: "^16.4.5",
+  };
+
+  /* concurrently */
+  packageJson.devDependencies = {
+    ...packageJson.devDependencies,
+    concurrently: "^8.2.2",
+  };
 
   const devDeps = Object.keys(packageJson.devDependencies).length;
   if (!devDeps) delete packageJson.devDependencies;
