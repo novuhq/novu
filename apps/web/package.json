@@ -57,6 +57,7 @@
     "@novu/notification-center": "workspace:*",
     "@novu/novui": "workspace:*",
     "@novu/shared": "workspace:*",
+"@novu/js": "workspace:*",
     "@novu/shared-web": "workspace:*",
     "@rive-app/react-canvas": "^4.8.1",
     "@segment/analytics-next": "^1.48.0",
