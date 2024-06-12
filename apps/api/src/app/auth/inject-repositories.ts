@@ -23,39 +23,49 @@ export function injectRepositories() {
 
   const eeUserRepositoryProvider = {
     provide: 'USER_REPOSITORY',
-    useFactory: () => {
+    useFactory: (userRepository: CommunityUserRepository) => {
       const eeAuthPackage = require('@novu/ee-auth');
       if (!eeAuthPackage?.EEUserRepository) {
         throw new PlatformException('EEUserRepository is not loaded');
       }
 
-      return new eeAuthPackage.EEUserRepository();
+      return new eeAuthPackage.EEUserRepository(userRepository);
     },
+    inject: [CommunityUserRepository],
   };
 
   const eeMemberRepositoryProvider = {
     provide: 'MEMBER_REPOSITORY',
-    useFactory: () => {
+    useFactory: (organizationRepository: CommunityOrganizationRepository, userRepository: CommunityUserRepository) => {
       const eeAuthPackage = require('@novu/ee-auth');
       if (!eeAuthPackage?.EEMemberRepository) {
         throw new PlatformException('EEMemberRepository is not loaded');
       }
 
-      return new eeAuthPackage.EEMemberRepository();
+      return new eeAuthPackage.EEMemberRepository(organizationRepository, userRepository);
     },
+    inject: [CommunityOrganizationRepository, CommunityUserRepository],
   };
 
   const eeOrganizationRepositoryProvider = {
     provide: 'ORGANIZATION_REPOSITORY',
-    useFactory: () => {
+    useFactory: (organizationRepository: CommunityOrganizationRepository) => {
       const eeAuthPackage = require('@novu/ee-auth');
       if (!eeAuthPackage?.EEOrganizationRepository) {
         throw new PlatformException('EEOrganizationRepository is not loaded');
       }
 
-      return new eeAuthPackage.EEOrganizationRepository();
+      return new eeAuthPackage.EEOrganizationRepository(organizationRepository);
     },
+    inject: [CommunityOrganizationRepository],
   };
 
-  return [eeUserRepositoryProvider, eeMemberRepositoryProvider, eeOrganizationRepositoryProvider];
+  return [
+    eeUserRepositoryProvider,
+    CommunityUserRepository,
+    eeMemberRepositoryProvider,
+    CommunityMemberRepository,
+    eeOrganizationRepositoryProvider,
+    CommunityOrganizationRepository,
+  ];
 }

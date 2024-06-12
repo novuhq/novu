@@ -57,8 +57,6 @@ const eeUserAuthGuard = {
   },
 };
 
-// export const EE_REPOSITORIES = [eeUserRepositoryProvider, eeMemberRepositoryProvider, eeOrganizationRepositoryProvider];
-
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
   const jwtClerkStrategy = eeAuthPackage?.JwtClerkStrategy;
