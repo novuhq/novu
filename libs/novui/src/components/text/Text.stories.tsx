@@ -1,7 +1,6 @@
 import { Meta } from '@storybook/react';
 import React from 'react';
 import { Flex } from '../../../styled-system/jsx';
-import { css } from '../../../styled-system/css';
 import { Text } from './Text';
 
 export default {
