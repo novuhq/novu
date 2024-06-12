@@ -6,26 +6,20 @@
   "author": "",
   "license": "ISC",
   "main": "dist/cjs/index.cjs",
-  "module": "dist/esm/index.js",
-  "types": "dist/esm/index.d.ts",
-  "type": "module",
+  "module": "dist/esm/index.mjs",
+  "types": "dist/types/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/esm/index.d.ts",
-        "default": "./dist/esm/index.js"
-      },
-      "require": {
-        "types": "./dist/cjs/index.d.cts",
-        "default": "./dist/cjs/index.cjs"
-      }
-    },
-    "./package.json": "./package.json"
+      "types": "./dist/types/index.d.ts",
+      "require": "./dist/cjs/index.cjs",
+      "import": "./dist/esm/index.mjs",
+      "default": "./dist/esm/index.mjs"
+    }
   },
   "files": [
-    "dist/*",
-    "dist/esm/*",
-    "dist/cjs/*"
+    "dist/cjs",
+    "dist/esm",
+    "dist/types"
   ],
   "sideEffects": false,
   "private": true,
@@ -33,7 +27,7 @@
     "start": "pnpm run build -- --watch --sourcemap",
     "build": "tsup && pnpm run build:umd && pnpm run post:build",
     "build:umd": "webpack --config webpack.config.cjs",
-    "post:build": "node scripts/size-limit.js",
+    "post:build": "node scripts/size-limit.mjs",
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"
   },

@@ -16,14 +16,13 @@ const baseConfig: Options = {
 
 const baseModuleConfig: Options = {
   ...baseConfig,
-  splitting: true,
   treeshake: true,
-  bundle: false,
+  dts: false,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
   entry: await glob('./src/**/!(*.d|*.test).ts'),
   outExtension: ({ format }) => {
     return {
-      js: format === 'cjs' ? '.cjs' : '.js',
+      js: format === 'cjs' ? '.cjs' : '.mjs',
     };
   },
 };
@@ -33,11 +32,13 @@ export default defineConfig([
     ...baseModuleConfig,
     format: 'esm',
     outDir: 'dist/esm',
+    tsconfig: 'tsconfig.json',
   },
   {
     ...baseModuleConfig,
     format: 'cjs',
     outDir: 'dist/cjs',
+    tsconfig: 'tsconfig.cjs.json',
   },
   // {
   //   ...baseConfig,

@@ -4,7 +4,7 @@
     "lib": ["ESNext"],
     "target": "ESNext",
     "module": "ESNext",
-    "outDir": "./dist/esm",
+    "outDir": "./dist/types",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
