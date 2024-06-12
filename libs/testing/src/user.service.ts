@@ -17,7 +17,6 @@ export class UserService {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
       password: '123qwe!@#',
-      organizationName: faker.company.companyName(),
     });
 
     const organization = await this.organizationService.createOrganization();
