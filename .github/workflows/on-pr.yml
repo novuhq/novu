@@ -1,4 +1,4 @@
-name: Testing Pipeline
+name: Check pull request
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
