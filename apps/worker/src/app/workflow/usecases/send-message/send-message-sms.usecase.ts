@@ -80,7 +80,11 @@ export class SendMessageSms extends SendMessageBase {
 
     const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
-    await this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale);
+    const i18nextInstance = await this.initiateTranslations(
+      command.environmentId,
+      command.organizationId,
+      subscriber.locale
+    );
 
     if (template) {
       step.template = template;
@@ -91,12 +95,11 @@ export class SendMessageSms extends SendMessageBase {
 
     try {
       if (!command.chimeraData) {
-        content = await this.compileTemplate.execute(
-          CompileTemplateCommand.create({
-            template: step.template.content as string,
-            data: this.getCompilePayload(command.compileContext),
-          })
-        );
+        content = await this.compileTemplate.execute({
+          template: step.template.content as string,
+          data: this.getCompilePayload(command.compileContext),
+          i18next: i18nextInstance,
+        });
 
         if (!content) {
           throw new PlatformException(`Unexpected error: SMS content is missing`);
