@@ -1,5 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { UserEntity, UserRepository } from '@novu/dal';
+import { normalizeEmail } from '@novu/shared';
 import * as bcrypt from 'bcrypt';
 
 import { EnvironmentService } from './environment.service';
@@ -11,15 +12,13 @@ export class UserService {
   private userRepository = new UserRepository();
 
   async createTestUser(): Promise<UserEntity> {
-    const data = {
-      email: 'test-user-1@example.com',
+    const user = await this.createUser({
+      email: faker.internet.email(),
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
       password: '123qwe!@#',
-      organizationName: 'Test Organization',
-    };
-
-    const user = await this.createUser(data);
+      organizationName: faker.company.companyName(),
+    });
 
     const organization = await this.organizationService.createOrganization();
 
@@ -35,7 +34,7 @@ export class UserService {
     const passwordHash = await bcrypt.hash(password, 10);
 
     const user = await this.userRepository.create({
-      email: userEntity?.email ?? faker.internet.email(),
+      email: normalizeEmail(userEntity?.email ?? faker.internet.email()),
       firstName: userEntity?.firstName ?? faker.name.firstName(),
       lastName: userEntity?.lastName ?? faker.name.lastName(),
       password: passwordHash,
