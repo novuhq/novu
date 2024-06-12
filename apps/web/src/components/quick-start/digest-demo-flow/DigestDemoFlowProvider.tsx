@@ -8,7 +8,7 @@ import {
 } from '@novu/shared';
 
 import { testTrigger } from '../../../api/notification-templates';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { useDebounce } from '../../../hooks';
 import { useTemplateFetcher, useUpdateTemplate } from '../../../api/hooks';
 

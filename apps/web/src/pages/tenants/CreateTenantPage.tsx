@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 import { CreateTenantSidebar } from './components/CreateTenantSidebar';
 
 export function CreateTenantPage() {

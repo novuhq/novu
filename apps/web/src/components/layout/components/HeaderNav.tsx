@@ -4,7 +4,7 @@ import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 
 import { CONTEXT_PATH, IS_DOCKER_HOSTED, REACT_APP_VERSION } from '../../../config';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import {
   colors,
   Dropdown,
@@ -18,7 +18,7 @@ import {
   Logout,
   InviteMembers,
 } from '@novu/design-system';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { useLocalThemePreference, useDebounce, useBootIntercom } from '../../../hooks';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';

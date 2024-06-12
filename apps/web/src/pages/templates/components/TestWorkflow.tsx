@@ -11,7 +11,7 @@ import { IUserEntity, INotificationTriggerVariable } from '@novu/shared';
 import { Button, colors, inputStyles } from '@novu/design-system';
 
 import { errorMessage, successMessage } from '../../../utils/notifications';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { getSubscriberValue, getPayloadValue } from './TriggerSnippetTabs';
 import { testTrigger } from '../../../api/notification-templates';
 import { ExecutionDetailsModalWrapper } from './ExecutionDetailsModalWrapper';

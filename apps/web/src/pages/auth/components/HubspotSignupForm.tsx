@@ -9,7 +9,7 @@ import { HubspotForm, useAuth, useSegment } from '@novu/shared-web';
 
 import { api } from '../../../api/api.client';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { HUBSPOT_FORM_IDS } from '../../../constants/hubspotForms';
 import SetupLoader from './SetupLoader';
 import { successMessage } from '@novu/design-system';
