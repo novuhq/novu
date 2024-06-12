@@ -497,7 +497,7 @@ describe('Echo Trigger ', async () => {
       throw new Error('Workflow not found');
     }
 
-    await triggerEvent(workflowId, { name: 'John' });
+    await triggerEvent(session, workflowId, { name: 'John' });
 
     await session.awaitRunningJobs(workflow?._id, false, 0);
 
