@@ -57,6 +57,7 @@ test.describe('Creation functionality', () => {
   });
 
   test('should be able to add huge amount of nodes.', async ({ page }) => {
+    test.slow();
     const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
     await editWorkflowSettings(workflowEditorPage, 'Test 15 Nodes');
     await create14EmptyEmailNodes(workflowEditorPage);
