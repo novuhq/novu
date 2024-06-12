@@ -5,6 +5,7 @@ export const delayOutputSchema = {
   properties: {
     type: {
       enum: ['regular'],
+      default: 'regular',
     },
     amount: { type: 'number' },
     unit: {
@@ -12,7 +13,7 @@ export const delayOutputSchema = {
       enum: ['seconds', 'minutes', 'hours', 'days', 'weeks', 'months'],
     },
   },
-  required: ['amount', 'unit', 'type'],
+  required: ['amount', 'unit'],
   additionalProperties: false,
 } as const satisfies Schema;
 

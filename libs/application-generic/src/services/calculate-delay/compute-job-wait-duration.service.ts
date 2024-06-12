@@ -51,7 +51,7 @@ export class ComputeJobWaitDurationService {
 
       return delay;
     } else if (isRegularDigest(digestType)) {
-      const userUnit = castToDigestUnitEnum(chimeraResponse?.unit);
+      const userUnit = castToDigestUnitEnum(bridgeResponse?.unit);
       const userAmount = bridgeResponse?.amount;
 
       if (this.isValidDelayOverride(overrides)) {
