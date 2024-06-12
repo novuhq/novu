@@ -44,8 +44,8 @@ export class MergeOrCreateDigest {
   public async execute(command: MergeOrCreateDigestCommand): Promise<MergeOrCreateDigestResultType> {
     const { job } = command;
 
-    const digestMeta = command.chimeraData ?? (job.digest as IDigestBaseMetadata | undefined);
-    const digestKey = command.chimeraData?.digestKey ?? digestMeta?.digestKey;
+    const digestMeta = command.bridgeData ?? (job.digest as IDigestBaseMetadata | undefined);
+    const digestKey = command.bridgeData?.digestKey ?? digestMeta?.digestKey;
     const digestValue = getNestedValue(job.payload, digestKey);
 
     const digestAction = command.filtered

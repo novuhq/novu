@@ -13,7 +13,6 @@ import { useProcessVariables } from '../../../../hooks';
 import { api, useEnvController } from '@novu/shared-web';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
-import { InputVariables } from '../../../../pages/templates/components/InputVariables';
 import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
 import { ErrorPrettyRender } from '../ErrorPrettyRender';
 
@@ -22,7 +21,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   const [payloadValue, setPayloadValue] = useState('{}');
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
-  const { chimera } = useEnvController({}, template?.chimera);
+  const { bridge } = useEnvController({}, template?.bridge);
   const path = useStepFormPath();
 
   const content = watch(`${path}.template.content`);
@@ -31,15 +30,15 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   const processedVariables = useProcessVariables(variables);
 
   const stepId = watch(`${path}.uuid`);
-  const [chimeraContent, setChimeraContent] = useState({ content: '', ctaButtons: [] });
+  const [bridgeContent, setBridgeContent] = useState({ content: '', ctaButtons: [] });
 
   const {
     mutateAsync,
-    isLoading: isChimeraLoading,
+    isLoading: isBridgeLoading,
     error: previewError,
   } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
     onSuccess(data) {
-      setChimeraContent({
+      setBridgeContent({
         content: data.outputs.body,
         ctaButtons: [],
       });
@@ -47,11 +46,11 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   });
 
   useEffect(() => {
-    if (chimera) {
+    if (bridge) {
       mutateAsync();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chimera]);
+  }, [bridge]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
@@ -72,16 +71,16 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
           <Header
             selectedLocale={selectedLocale}
             locales={locales}
-            areLocalesLoading={areLocalesLoading || isChimeraLoading}
+            areLocalesLoading={areLocalesLoading || isBridgeLoading}
             onLocaleChange={onLocaleChange}
           />
-          {previewError && chimera ? (
+          {previewError && bridge ? (
             <ErrorPrettyRender error={previewError} />
           ) : (
             <Content
-              isPreviewLoading={isPreviewLoading || isChimeraLoading}
-              parsedPreviewState={chimera ? chimeraContent : parsedPreviewState}
-              templateError={chimera ? '' : templateError}
+              isPreviewLoading={isPreviewLoading || isBridgeLoading}
+              parsedPreviewState={bridge ? bridgeContent : parsedPreviewState}
+              templateError={bridge ? '' : templateError}
               showOverlay={!showVariables}
               enableAvatar={enableAvatar}
             />
@@ -101,7 +100,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
               paddingTop: 0,
             }}
           >
-            <When truthy={!chimera}>
+            <When truthy={!bridge}>
               <JsonInput
                 data-test-id="preview-json-param"
                 formatOnBlur
@@ -125,7 +124,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
                 Apply Variables
               </Button>
             </When>
-            <When truthy={chimera}>
+            <When truthy={bridge}>
               <InputVariablesForm
                 onChange={(values) => {
                   mutateAsync(values);

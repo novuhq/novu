@@ -10,7 +10,7 @@ export type INotificationTemplateExtended = INotificationTemplate & {
   status: string;
   notificationGroup: { name: string };
   workflowIntegrationStatus?: WorkflowIntegrationStatus;
-  chimera?: boolean;
+  bridge?: boolean;
 };
 
 /** allow override of paginated inputs */
@@ -56,7 +56,7 @@ export function useTemplates({
     templates: data?.data.map((template) => {
       return {
         ...template,
-        chimera: template.type === NotificationTemplateTypeEnum.ECHO,
+        bridge: template.type === NotificationTemplateTypeEnum.ECHO,
       };
     }),
     loading: isLoading,

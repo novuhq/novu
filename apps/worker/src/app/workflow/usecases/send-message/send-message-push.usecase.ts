@@ -31,7 +31,7 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IChimeraPushResponse,
+  IBridgePushResponse,
 } from '@novu/application-generic';
 import type { IPushOptions } from '@novu/stateless';
 
@@ -91,7 +91,7 @@ export class SendMessagePush extends SendMessageBase {
     let title = '';
 
     try {
-      if (!command.chimeraData) {
+      if (!command.bridgeData) {
         content = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template?.content as string,
@@ -287,12 +287,12 @@ export class SendMessagePush extends SendMessageBase {
   ): Promise<boolean> {
     try {
       const pushHandler = this.getIntegrationHandler(integration);
-      const chimeraOutputs = command.chimeraData?.outputs;
+      const bridgeOutputs = command.bridgeData?.outputs;
 
       const result = await pushHandler.send({
         target: [deviceToken],
-        title: (chimeraOutputs as IChimeraPushResponse)?.subject || title,
-        content: (chimeraOutputs as IChimeraPushResponse)?.body || content,
+        title: (bridgeOutputs as IBridgePushResponse)?.subject || title,
+        content: (bridgeOutputs as IBridgePushResponse)?.body || content,
         payload: command.payload,
         overrides,
         subscriber,

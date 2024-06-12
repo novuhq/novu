@@ -31,7 +31,7 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IChimeraEmailResponse,
+  IBridgeEmailResponse,
 } from '@novu/application-generic';
 import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
@@ -151,10 +151,10 @@ export class SendMessageEmail extends SendMessageBase {
       command.overrides.email || {},
       command.overrides[integration?.providerId] || {}
     );
-    const chimeraOutputs = command.chimeraData?.outputs;
+    const bridgeOutputs = command.bridgeData?.outputs;
 
     let html;
-    let subject = (chimeraOutputs as IChimeraEmailResponse)?.subject || step?.template?.subject || '';
+    let subject = (bridgeOutputs as IBridgeEmailResponse)?.subject || step?.template?.subject || '';
     let content;
     let senderName;
 
@@ -203,7 +203,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      if (!command.chimeraData) {
+      if (!command.bridgeData) {
         ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
           CompileEmailTemplateCommand.create({
             environmentId: command.environmentId,
@@ -268,7 +268,7 @@ export class SendMessageEmail extends SendMessageBase {
       {
         to: email,
         subject: subject,
-        html: (chimeraOutputs as IChimeraEmailResponse)?.body || html,
+        html: (bridgeOutputs as IBridgeEmailResponse)?.body || html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
         senderName,

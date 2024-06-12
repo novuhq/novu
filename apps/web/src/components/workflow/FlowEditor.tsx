@@ -93,7 +93,7 @@ export function FlowEditor({
   const [edges, setEdges, onEdgesChange] = useEdgesState<IEdge>([]);
   const reactFlowInstance = useReactFlow();
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvController({}, template?.chimera);
+  const { readonly } = useEnvController({}, template?.bridge);
 
   useEffect(() => {
     const clientWidth = reactFlowWrapper.current?.clientWidth;

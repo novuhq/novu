@@ -58,7 +58,7 @@ const WorkflowEditor = () => {
     trigger,
     formState: { errors, isDirty },
   } = useFormContext<IForm>();
-  const { readonly, chimera } = useEnvController({}, template?.chimera);
+  const { readonly, bridge } = useEnvController({}, template?.bridge);
   const steps = useWatch({
     name: 'steps',
     control,
@@ -267,7 +267,7 @@ const WorkflowEditor = () => {
                 }}
               >
                 <Group>
-                  <When truthy={chimera}>
+                  <When truthy={bridge}>
                     <Bolt color="#4c6dd4" width="24px" height="24px" />
                   </When>
                   <NameInput />
