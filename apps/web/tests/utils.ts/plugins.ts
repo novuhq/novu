@@ -151,7 +151,7 @@ export async function createNotifications({
 }
 
 /*
- * Use only before or afte the suite execution. Do not drop the database in tests as
+ * Use only before or after the suite execution. Do not drop the database in tests as
  * it will break parallel test runs.
  */
 export async function dropDatabase() {
