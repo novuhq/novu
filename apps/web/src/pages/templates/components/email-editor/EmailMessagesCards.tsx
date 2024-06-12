@@ -24,7 +24,6 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
-import { InputVariablesForm } from '../InputVariablesForm';
 
 export enum ViewEnum {
   EDIT = 'Edit',
@@ -38,8 +37,8 @@ const templateFields = ['content', 'htmlContent', 'subject', 'preheader', 'sende
 export function EmailMessagesCards() {
   const { currentOrganization } = useAuth();
   const { template } = useTemplateEditorForm();
-  const { environment, chimera } = useEnvController({}, template?.chimera);
-  const [view, setView] = useState<ViewEnum>(chimera ? ViewEnum.PREVIEW : ViewEnum.EDIT);
+  const { environment, bridge } = useEnvController({}, template?.bridge);
+  const [view, setView] = useState<ViewEnum>(bridge ? ViewEnum.PREVIEW : ViewEnum.EDIT);
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();
   const [modalOpen, setModalOpen] = useState(false);
@@ -101,7 +100,7 @@ export function EmailMessagesCards() {
         <StepSettings />
         <Grid m={0} mt={24}>
           <Grid.Col p={0} mr={20} span={7}>
-            <EditorPreviewSwitch view={view} setView={setView} chimera={chimera} />
+            <EditorPreviewSwitch view={view} setView={setView} bridge={bridge} />
           </Grid.Col>
           <Grid.Col p={0} span={2}>
             <When truthy={view === ViewEnum.PREVIEW}>
@@ -152,7 +151,7 @@ export function EmailMessagesCards() {
         <EmailPreview view={preview} />
       </When>
       <When truthy={view === ViewEnum.TEST}>
-        <TestSendEmail chimera={chimera} isIntegrationActive={hasActiveIntegration} />
+        <TestSendEmail bridge={bridge} isIntegrationActive={hasActiveIntegration} />
       </When>
       <When truthy={view === ViewEnum.EDIT}>
         <Grid grow>
@@ -166,7 +165,7 @@ export function EmailMessagesCards() {
             }}
           >
             <VariablesManagement
-              chimera={chimera}
+              bridge={bridge}
               path={`${stepFormPath}.template.variables`}
               openVariablesModal={() => {
                 setModalOpen(true);

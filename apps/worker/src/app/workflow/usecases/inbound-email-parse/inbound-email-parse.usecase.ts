@@ -44,12 +44,10 @@ export class InboundEmailParse {
       );
     }
 
-    const compiledDomain = await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        template: currentParseWebhook as string,
-        data: job.payload,
-      })
-    );
+    const compiledDomain = await this.compileTemplate.execute({
+      template: currentParseWebhook as string,
+      data: job.payload,
+    });
 
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId),

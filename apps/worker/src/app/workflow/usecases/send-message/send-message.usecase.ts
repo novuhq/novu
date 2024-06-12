@@ -26,7 +26,7 @@ import {
   IFilterVariables,
   Instrument,
   InstrumentUsecase,
-  IChimeraChannelResponse,
+  IBridgeChannelResponse,
   IUseCaseInterfaceInline,
   requireInject,
   ExecuteOutput,
@@ -90,11 +90,11 @@ export class SendMessage {
 
     const stepType = command.step?.template?.type;
 
-    let resonateResponse: ExecuteOutput<IChimeraChannelResponse> | null = null;
+    let resonateResponse: ExecuteOutput<IBridgeChannelResponse> | null = null;
     if (!['digest', 'delay'].includes(stepType as any)) {
       resonateResponse = await this.resonateUsecase.execute<
         SendMessageCommand & { variables: IFilterVariables },
-        ExecuteOutput<IChimeraChannelResponse> | null
+        ExecuteOutput<IBridgeChannelResponse> | null
       >({
         ...command,
         variables: shouldRun.variables,
@@ -169,7 +169,7 @@ export class SendMessage {
     const sendMessageCommand = SendMessageCommand.create({
       ...command,
       compileContext: payload,
-      chimeraData: resonateResponse,
+      bridgeData: resonateResponse,
     });
 
     switch (stepType) {
