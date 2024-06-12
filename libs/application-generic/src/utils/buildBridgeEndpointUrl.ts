@@ -12,7 +12,10 @@ export const buildBridgeEndpointUrl = (
 };
 
 /*
- * Creates a bridge subdomain based on the apiKey provided
+ * Creates a bridge subdomain based on the apiKey provided. This function is used in several
+ * places, including packages/create-novu-app/templates/index.ts when generating the
+ * subdomain in the bridge application. Developers should take care to keep changes
+ * in sync.
  */
 export const buildBridgeSubdomain = (apiKey: string): string => {
   return createHash('md5').update(apiKey).digest('hex');

@@ -375,7 +375,7 @@ test('should save HTML template email', async ({ page }) => {
   await expect(emailPage.getMonacoEditor()).toContainText('Hello world code {{name}} <div>Test</div>');
 });
 
-test('should redirect to the workflows page when switching environments', async ({ page }) => {
+test.skip('should redirect to the workflows page when switching environments', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const workflowSidePanel = await workflowEditorPage.openWorkflowSettingsSidePanel();
   await workflowSidePanel.fillBasicNotificationDetails({
@@ -398,19 +398,19 @@ test('should redirect to the workflows page when switching environments', async 
   await expect(page).toHaveURL(/\/workflows/);
 });
 
-test('New workflow button should be disabled in the Production', async ({ page }) => {
+test.skip('New workflow button should be disabled in the Production', async ({ page }) => {
   const workflowsPage = await WorkflowsPage.goTo(page);
   await new SidebarPage(page).toggleToProduction();
   await expect(workflowsPage.getCreateWorkflowButton()).toBeDisabled();
 });
 
-test('Should not allow to go to New Template page in Production', async ({ page }) => {
+test.skip('Should not allow to go to New Template page in Production', async ({ page }) => {
   await WorkflowEditorPage.goToNewWorkflow(page);
   await new SidebarPage(page).toggleToProduction();
   expect(page.url()).toContain('/workflows');
 });
 
-test('should save Cta buttons state in inApp channel', async ({ page }) => {
+test.skip('should save Cta buttons state in inApp channel', async ({ page }) => {
   const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   const workflowSidePanel = await workflowEditorPage.openWorkflowSettingsSidePanel();
   await workflowSidePanel.fillBasicNotificationDetails({

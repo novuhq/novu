@@ -3,6 +3,7 @@ import { install } from "../helpers/install";
 import { copy } from "../helpers/copy";
 
 import { async as glob } from "fast-glob";
+import { createHash } from "crypto";
 import os from "os";
 import fs from "fs/promises";
 import path from "path";
@@ -10,8 +11,6 @@ import { cyan, bold } from "picocolors";
 import { Sema } from "async-sema";
 
 import { GetTemplateFileArgs, InstallTemplateArgs } from "./types";
-
-import { buildBridgeSubdomain } from "@novu/application-generic";
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
  */
@@ -175,18 +174,15 @@ export const installTemplate = async ({
 
   /* write .env file */
   const port = 4000;
-  const subdomain = buildBridgeSubdomain(apiKey);
-  const host = tunnelHost;
+  const val = Object.entries({
+    PORT: port,
+    API_KEY: apiKey,
+    TUNNEL_HOST: tunnelHost,
+  }).reduce((acc, [key, value]) => {
+    return `${acc}${key}=${value}${os.EOL}`;
+  }, "");
 
-  await fs.writeFile(
-    path.join(root, ".env"),
-    `PORT=${port}` +
-      os.EOL +
-      `TUNNEL_SUBDOMAIN=${subdomain}` +
-      os.EOL +
-      `TUNNEL_HOST=${host}` +
-      os.EOL,
-  );
+  await fs.writeFile(path.join(root, ".env"), val);
 
   /** Copy the version from package.json or override for tests. */
   const version = "14.2.3";
@@ -197,10 +193,9 @@ export const installTemplate = async ({
     version: "0.1.0",
     private: true,
     scripts: {
-      tunnel:
-        "node --loader ts-node/esm --no-warnings=ExperimentalWarning scripts/tunnel.mts",
+      tunnel: "tsx scripts/tunnel.mts",
       "next-dev": `next dev --port=${port}`,
-      dev: "concurrently 'npm run tunnel' 'npm run next-dev'",
+      dev: 'concurrently -k --restart-tries 5 --restart-after 1000 --names "📡 TUNNEL,🖥️  SERVER" -c "bgBlue.bold,bgMagenta.bold" "npm:tunnel" "npm:next-dev"',
       build: "next build",
       start: "next start",
       lint: "next lint",
@@ -224,6 +219,7 @@ export const installTemplate = async ({
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
       typescript: "^5",
+      tsx: "^4.15.1",
       "@types/node": "^20",
       "@types/react": "^18",
       "@types/react-dom": "^18",
