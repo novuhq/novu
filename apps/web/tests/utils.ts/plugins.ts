@@ -6,8 +6,6 @@ import {
   getPopularTemplateIds,
   MemberStatusEnum,
   ProvidersIdEnum,
-  StepTypeEnum,
-  TriggerTypeEnum,
 } from '@novu/shared';
 import {
   CreateTemplatePayload,
@@ -181,6 +179,10 @@ export function randomPassword() {
   return new UserService().randomPassword();
 }
 
+export function testPassword() {
+  return new UserService().testPassword();
+}
+
 export async function addOrganization(userId: string) {
   const dal = new DalService();
   await dal.connect(process.env.MONGODB_URL ?? '');
@@ -326,7 +328,6 @@ export async function populateBlueprints() {
   );
 
   const popularTemplateIds = getPopularTemplateIds({ production: false });
-  const getStartedTemplateIds = getGetStartedTemplateIds({ production: false });
 
   const blueprintTemplates = await productionNotificationTemplateService.getBlueprintTemplates(
     organizationId,

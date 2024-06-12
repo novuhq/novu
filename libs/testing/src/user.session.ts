@@ -3,7 +3,6 @@ import { faker } from '@faker-js/faker';
 import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
-import { v4 as uuid } from 'uuid';
 import {
   ApiServiceLevelEnum,
   EmailBlockTypeEnum,
@@ -42,8 +41,6 @@ const EMAIL_BLOCK: IEmailBlock[] = [
     content: 'Email Content',
   },
 ];
-
-export const CYPRESS_USER_PASSWORD = '123Qwe!@#';
 
 export class UserSession {
   private notificationGroupRepository = new NotificationGroupRepository();
@@ -102,7 +99,7 @@ export class UserSession {
       email: `${card.firstName}_${card.lastName}_${faker.datatype.uuid()}@gmail.com`.toLowerCase(),
       profilePicture: `https://randomuser.me/api/portraits/men/${Math.floor(Math.random() * 60) + 1}.jpg`,
       tokens: [],
-      password: CYPRESS_USER_PASSWORD,
+      password: TEST_USER_PASSWORD,
       showOnBoarding: true,
       showOnBoardingTour: options.showOnBoardingTour ? 0 : 2,
     };

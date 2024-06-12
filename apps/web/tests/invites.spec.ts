@@ -6,7 +6,7 @@ import { SidebarPage } from './page-models/sidebarPage';
 import { SignUpPage } from './page-models/signupPage';
 import { initializeSession } from './utils.ts/browser';
 import { logout } from './utils.ts/commands';
-import { createUser, randomEmail, randomPassword } from './utils.ts/plugins';
+import { createUser, randomEmail, testPassword } from './utils.ts/plugins';
 import { inviteUser, SessionData } from './utils.ts/plugins';
 
 let session: SessionData;
@@ -39,7 +39,7 @@ test('invite a new user to the organization', async ({ context, page }) => {
 
   const signUpPage = new SignUpPage(page);
   await signUpPage.getFullNameLocator().fill('Invited User');
-  await signUpPage.getPasswordLocator().fill(randomPassword());
+  await signUpPage.getPasswordLocator().fill(testPassword());
   await signUpPage.getAcceptTermsAndConditionsCheckMark().click();
   await signUpPage.clickSignUpButton();
 
@@ -62,7 +62,7 @@ test('invite an existing user to the organization', async ({ context, page }) =>
 
   const loginPage = new AuthLoginPage(page);
   await expect(loginPage.getEmailLocator()).toHaveValue(testUser.email);
-  await loginPage.setPasswordTo(randomPassword());
+  await loginPage.setPasswordTo(testPassword());
   await loginPage.clickSignInButton();
 
   await new HeaderPage(page).clickAvatar();

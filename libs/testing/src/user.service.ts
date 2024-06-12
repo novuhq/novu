@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt';
 
 import { EnvironmentService } from './environment.service';
 import { OrganizationService } from './organization.service';
+import { TEST_USER_PASSWORD } from './constants';
 
 export class UserService {
   private environmentService = new EnvironmentService();
@@ -13,7 +14,7 @@ export class UserService {
 
   async createTestUser(): Promise<UserEntity> {
     const user = await this.createUser({
-      email: faker.internet.email(),
+      email: this.randomEmail(),
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
       password: this.randomPassword(),
@@ -61,8 +62,11 @@ export class UserService {
     return faker.internet.email();
   }
 
-  // Not so random, but meets the password policy requirements
   randomPassword(): string {
-    return 'asd#Faf4fd';
+    return faker.internet.password();
+  }
+
+  testPassword(): string {
+    return TEST_USER_PASSWORD;
   }
 }

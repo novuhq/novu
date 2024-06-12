@@ -5,7 +5,7 @@ import { PasswordResetPage } from './page-models/passwordResetPage';
 import { SignUpPage } from './page-models/signupPage';
 import { assertPageShowsMessage, initializeSession } from './utils.ts/browser';
 import { faker } from '@faker-js/faker';
-import { createUser, randomPassword } from './utils.ts/plugins';
+import { createUser, testPassword } from './utils.ts/plugins';
 import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
 
 let testUser;
@@ -80,7 +80,7 @@ test('should be redirect login with no auth', async ({ page }) => {
 
 test('should successfully login the user', async ({ page }) => {
   const authLoginPage = await AuthLoginPage.goTo(page);
-  await authLoginPage.fillLoginForm({ email: testUser.email, password: randomPassword() });
+  await authLoginPage.fillLoginForm({ email: testUser.email, password: testPassword() });
   await authLoginPage.clickSignInButton();
   await authLoginPage.assertNavigationPath('/workflows**');
 });
@@ -112,7 +112,7 @@ test('should show incorrect email or password error when authenticating with non
 test('should logout user when auth token is expired', async ({ page }) => {
   const authLoginPage = await AuthLoginPage.goTo(page);
   await authLoginPage.setEmailTo(testUser.email);
-  await authLoginPage.setPasswordTo(randomPassword());
+  await authLoginPage.setPasswordTo(testPassword());
   await authLoginPage.clickSignInButton();
   await authLoginPage.passAuthTokenExpirationTime();
   await page.goto('/subscribers');
