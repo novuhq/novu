@@ -9,31 +9,35 @@ test('should trigger Mobishastra library correctly', async () => {
   const username = 'profile-username';
   const password = 'profile-password';
 
-  const provider = new MobishastraProvider({
+  const providerOptions = {
     baseUrl,
     from: senderName,
     username: username,
     password: password,
-  });
+  };
+
+  const provider = new MobishastraProvider(providerOptions);
+
+  const options = {
+    to: testMobileNumber,
+    from: senderName,
+    content: smsMessageContent,
+  };
 
   const spy = jest
     .spyOn(provider.axiosInstance, 'request')
     .mockImplementation(async () => {
       return {
-        data: {
-          message: {
-            id: crypto.randomUUID(),
-            date: new Date().toISOString(),
+        data: [
+          {
+            msg_id: '123',
+            str_response: 'Message Sent',
           },
-        },
+        ],
       } as any;
     });
 
-  await provider.sendMessage({
-    to: testMobileNumber,
-    from: senderName,
-    content: smsMessageContent,
-  });
+  await provider.sendMessage(options);
 
   expect(spy).toHaveBeenCalled();
   expect(spy).toHaveBeenCalledWith({
