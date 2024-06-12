@@ -8,6 +8,10 @@ import { ConditionsFilter } from '../conditions-filter';
 import { ConditionsFilterCommand } from '../conditions-filter';
 import { PlatformException } from '../../utils/exceptions';
 import { IFilterVariables } from '../../utils/filter-processing-details';
+import {
+  NormalizeVariables,
+  NormalizeVariablesCommand,
+} from '../normalize-variables';
 
 const LOG_CONTEXT = 'SelectVariant';
 
@@ -15,7 +19,8 @@ const LOG_CONTEXT = 'SelectVariant';
 export class SelectVariant {
   constructor(
     private conditionsFilter: ConditionsFilter,
-    private messageTemplateRepository: MessageTemplateRepository
+    private messageTemplateRepository: MessageTemplateRepository,
+    private normalizeVariablesUsecase: NormalizeVariables
   ) {}
 
   async execute(command: SelectVariantCommand): Promise<{
@@ -35,6 +40,18 @@ export class SelectVariant {
         continue;
       }
 
+      const variables = await this.normalizeVariablesUsecase.execute(
+        NormalizeVariablesCommand.create({
+          filters: variant.filters || [],
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          userId: command.userId,
+          step: command.step,
+          job: command.job,
+          variables: command.filterData,
+        })
+      );
+
       const { passed, conditions } = await this.conditionsFilter.filter(
         ConditionsFilterCommand.create({
           filters: variant.filters,
@@ -43,7 +60,7 @@ export class SelectVariant {
           userId: command.userId,
           step: command.step,
           job: command.job,
-          variables: command.filterData,
+          variables,
         })
       );
 
