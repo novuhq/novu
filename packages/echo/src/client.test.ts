@@ -270,8 +270,8 @@ describe('Echo Client', () => {
   describe('diff method', () => {
     const globalFetchRef = global.fetch;
     const DIFF_MOCK_RESPONSE = {
-      current: { workflows: { data: 'long string' }, url: 'url' },
-      new: { workflows: { data: 'new long string' }, url: 'new url' },
+      current: { workflows: { data: 'long string' }, bridgeUrl: 'url' },
+      new: { workflows: { data: 'new long string' }, bridgeUrl: 'new url' },
     };
 
     beforeEach(() => {
@@ -301,8 +301,8 @@ describe('Echo Client', () => {
   describe('sync method', () => {
     const globalFetchRef = global.fetch;
     const DIFF_MOCK_RESPONSE = {
-      current: { workflows: { data: 'long string' }, url: 'url' },
-      new: { workflows: { data: 'new long string' }, url: 'new url' },
+      current: { workflows: { data: 'long string' }, bridgeUrl: 'url' },
+      new: { workflows: { data: 'new long string' }, bridgeUrl: 'new url' },
     };
 
     beforeEach(() => {});
@@ -331,7 +331,7 @@ describe('Echo Client', () => {
 
       expect(syncRestCallSpy).toBeCalledTimes(1);
       expect(syncRestCallSpy).toBeCalledWith(`${DEFAULT_NOVU_API_BASE_URL}${NovuApiEndpointsEnum.SYNC}?source=sdk`, {
-        body: JSON.stringify({ workflows, url: echoUrl }),
+        body: JSON.stringify({ workflows, bridgeUrl: echoUrl }),
         headers: { 'content-type': 'application/json', authorization: 'ApiKey undefined' },
         method: HttpMethodEnum.POST,
       });

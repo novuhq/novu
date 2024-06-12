@@ -473,7 +473,7 @@ async function discoverAndSyncEcho(session: UserSession) {
   const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
 
   await session.testAgent.post(`/v1/echo/sync`).send({
-    url: echoServer.serverPath + '/echo',
+    bridgeUrl: echoServer.serverPath + '/echo',
     workflows: resultDiscover.data.workflows,
   });
 }
