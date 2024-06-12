@@ -52,7 +52,7 @@ import { WorkflowsListPage } from './studio/components/workflows/WorkflowsListPa
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
-  const isInformationArchitectureEnabled = true;
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   return (
     <Routes>

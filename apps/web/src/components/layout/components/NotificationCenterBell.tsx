@@ -12,7 +12,7 @@ export function NotificationCenterBell({
   unseenCount?: number;
   colorScheme: ColorScheme;
 }) {
-  const isInformationArchitectureEnabled = true;
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   if (!isInformationArchitectureEnabled) {
     return <NotificationBell unseenCount={unseenCount} colorScheme={colorScheme} />;

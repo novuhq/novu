@@ -30,7 +30,7 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const billingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_BILLING_ENABLED);
-  const isInformationArchitectureEnabled = true;
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   const value = useMemo(() => {
     return pathname === ROUTES.SETTINGS ? '/' : pathname.replace(ROUTES.SETTINGS, '');
