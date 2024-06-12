@@ -18,6 +18,7 @@ import {
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { JwtModule, JwtService } from '@nestjs/jwt';
+import { injectRepositories } from './inject-repositories';
 
 const eeAuthServiceProvider = {
   provide: 'AUTH_SERVICE',
@@ -56,43 +57,7 @@ const eeUserAuthGuard = {
   },
 };
 
-const eeUserRepositoryProvider = {
-  provide: 'USER_REPOSITORY',
-  useFactory: () => {
-    const eeAuthPackage = require('@novu/ee-auth');
-    if (!eeAuthPackage?.EEUserRepository) {
-      throw new PlatformException('EEUserRepository is not loaded');
-    }
-
-    return new eeAuthPackage.EEUserRepository();
-  },
-};
-
-const eeMemberRepositoryProvider = {
-  provide: 'MEMBER_REPOSITORY',
-  useFactory: () => {
-    const eeAuthPackage = require('@novu/ee-auth');
-    if (!eeAuthPackage?.EEMemberRepository) {
-      throw new PlatformException('EEMemberRepository is not loaded');
-    }
-
-    return new eeAuthPackage.EEMemberRepository();
-  },
-};
-
-const eeOrganizationRepositoryProvider = {
-  provide: 'ORGANIZATION_REPOSITORY',
-  useFactory: () => {
-    const eeAuthPackage = require('@novu/ee-auth');
-    if (!eeAuthPackage?.EEOrganizationRepository) {
-      throw new PlatformException('EEOrganizationRepository is not loaded');
-    }
-
-    return new eeAuthPackage.EEOrganizationRepository();
-  },
-};
-
-export const EE_REPOSITORIES = [eeUserRepositoryProvider, eeMemberRepositoryProvider, eeOrganizationRepositoryProvider];
+// export const EE_REPOSITORIES = [eeUserRepositoryProvider, eeMemberRepositoryProvider, eeOrganizationRepositoryProvider];
 
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
@@ -113,7 +78,7 @@ export function getEEModuleConfig(): ModuleMetadata {
     providers: [
       ...AUTH_STRATEGIES,
       ...EE_AUTH_PROVIDERS,
-      ...EE_REPOSITORIES,
+      ...injectRepositories(),
       // original repositories need to be here for the DI to work
       UserRepository,
       MemberRepository,

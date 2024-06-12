@@ -18,7 +18,7 @@ import { EnvironmentsModule } from '../environments/environments.module';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
-import { CommunityMemberRepository, CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
+import { injectRepositories } from './inject-repositories';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
 
@@ -35,27 +35,6 @@ const userAuthGuardProvider = {
   provide: 'USER_AUTH_GUARD',
   useClass: CommunityUserAuthGuard,
 };
-
-const userRepositoryProvider = {
-  provide: 'USER_REPOSITORY',
-  useClass: CommunityUserRepository,
-};
-
-const memberRepositoryProvider = {
-  provide: 'MEMBER_REPOSITORY',
-  useClass: CommunityMemberRepository,
-};
-
-const organizationRepositoryProvider = {
-  provide: 'ORGANIZATION_REPOSITORY',
-  useClass: CommunityOrganizationRepository,
-};
-
-export const COMMUNITY_REPOSITORIES = [
-  userRepositoryProvider,
-  memberRepositoryProvider,
-  organizationRepositoryProvider,
-];
 
 export function getCommunityAuthModuleConfig(): ModuleMetadata {
   return {
@@ -78,7 +57,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     providers: [
       ...USE_CASES,
       ...AUTH_STRATEGIES,
-      ...COMMUNITY_REPOSITORIES,
+      ...injectRepositories(),
       AuthService,
       RolesGuard,
       RootEnvironmentGuard,

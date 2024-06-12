@@ -47,26 +47,7 @@ import {
 
 import * as packageJson from '../../../package.json';
 import { JobTopicNameEnum } from '@novu/shared';
-import { EE_REPOSITORIES } from '../auth/ee.auth.module.config';
-
-const userRepositoryProvider = {
-  provide: 'USER_REPOSITORY',
-  useClass: CommunityUserRepository,
-};
-
-const memberRepositoryProvider = {
-  provide: 'MEMBER_REPOSITORY',
-  useClass: CommunityMemberRepository,
-};
-
-const organizationRepositoryProvider = {
-  provide: 'ORGANIZATION_REPOSITORY',
-  useClass: CommunityOrganizationRepository,
-};
-
-const COMMUNITY_REPOSITORIES = [userRepositoryProvider, memberRepositoryProvider, organizationRepositoryProvider];
-
-const VERSION_SPECIFIC_DAL_MODELS = process.env.NOVU_ENTERPRISE ? EE_REPOSITORIES : COMMUNITY_REPOSITORIES;
+import { injectRepositories } from '../auth/inject-repositories';
 
 const DAL_MODELS = [
   UserRepository,
@@ -91,7 +72,7 @@ const DAL_MODELS = [
   TopicSubscribersRepository,
   TenantRepository,
   WorkflowOverrideRepository,
-  ...VERSION_SPECIFIC_DAL_MODELS,
+  ...injectRepositories(),
 ];
 
 const dalService = {
