@@ -7,57 +7,24 @@ export const echo = new Echo({
   devModeBypassAuthentication: process.env.NODE_ENV === "development",
 });
 
-echo.workflow(
-  "hello-world",
-  async ({ step }) => {
-    await step.email(
-      "send-email",
-      async (inputs) => {
-        return {
-          subject: "This is an email subject",
-          body: "Test Email " + inputs.showButton,
-        };
-      },
-      {
-        inputSchema: {
-          type: "object",
-
-          properties: {
-            showButton: { type: "boolean", default: true },
-            username: { type: "string", default: "alanturing" },
-            userImage: {
-              type: "string",
-              default:
-                "https://react-email-demo-bdj5iju9r-resend.vercel.app/static/vercel-user.png",
-              format: "uri",
-            },
-            invitedByUsername: { type: "string", default: "Alan" },
-            invitedByEmail: {
-              type: "string",
-              default: "alan.turing@example.com",
-              format: "email",
-            },
-            teamName: { type: "string", default: "Team Tomer" },
-            teamImage: {
-              type: "string",
-              default:
-                "https://react-email-demo-bdj5iju9r-resend.vercel.app/static/vercel-team.png",
-              format: "uri",
-            },
-            inviteLink: {
-              type: "string",
-              default: "https://vercel.com/teams/invite/foo",
-              format: "uri",
-            },
-            inviteFromIp: { type: "string", default: "204.13.186.218" },
-            inviteFromLocation: {
-              type: "string",
-              default: "São Paulo, Brazil",
-            },
-          },
-        },
-      },
-    );
-  },
-  { payloadSchema: { type: "object", properties: {} } },
-);
+echo.workflow("onboarding", async ({ step }) => {
+  await step.email("send-email", async () => {
+    return {
+      subject: `New Job HVAC`,
+      body: `<html xmlns="http://www.w3.org/1999/xhtml">
+        <head>
+          <title>New Job HVAC</title>
+          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+        </head>
+        <body>
+          <h1>New Job HVAC</h1>
+          <p>Hello Alan Turing,</p>
+          <p>Alan <a href="mailto:alan.turing@example.com">alan.turing@example.com</a> has invited you to the HVAC</p>
+          <p>A brilliant British mind, cracked Nazi codes in WWII and is considered the father of theoretical computer science
+            and artificial intelligence.</p>
+        </body>
+        </html>`,
+    };
+  });
+});

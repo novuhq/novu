@@ -1,5 +1,6 @@
 import { createStyles, Group } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
+import { cx } from '@novu/novui/css';
 import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import Frame from 'react-frame-component';
@@ -94,6 +95,7 @@ export const PreviewWeb = ({
   selectedLocale,
   locales,
   chimera = false,
+  className,
 }: {
   integration: any;
   subject?: string;
@@ -105,6 +107,7 @@ export const PreviewWeb = ({
   selectedLocale?: string;
   locales: any[];
   chimera?: boolean;
+  className?: string;
 }) => {
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
 
@@ -135,7 +138,7 @@ export const PreviewWeb = ({
             <div className={classes.barAction}></div>
           </Group>
         </div>
-        <div className={classes.contentContainer}>
+        <div className={cx(classes.contentContainer, className)}>
           <div className={classes.header}>
             <Group
               sx={{

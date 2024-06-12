@@ -1,7 +1,7 @@
 import { hstack, vstack } from '@novu/novui/patterns';
 import { text } from '@novu/novui/recipes';
 import { styled } from '@novu/novui/jsx';
-import { Button } from '@novu/design-system';
+import { Button, Tooltip } from '@novu/design-system';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
 import { ROUTES } from '@novu/shared-web';
 import { useNavigate } from 'react-router-dom';
@@ -15,11 +15,15 @@ export const Footer = ({
   learnMoreLink = '',
   buttonText = 'Continue',
   onClick,
+  loading = false,
+  tooltip = '',
 }: {
   canSkipSetup?: boolean;
   learnMoreLink?: string;
   buttonText?: string;
   onClick?: () => void;
+  loading?: boolean;
+  tooltip?: string;
 }) => {
   const navigate = useNavigate();
 
@@ -38,7 +42,7 @@ export const Footer = ({
       <div className={vstack({ alignContent: 'center', height: '250' })}>
         <div
           className={hstack({
-            width: '680px',
+            width: '880px',
             justify: 'space-between',
           })}
         >
@@ -52,7 +56,11 @@ export const Footer = ({
                 Skip setup
               </Button>
             </When>
-            <Button onClick={onClick}>{buttonText}</Button>
+            <Tooltip label={tooltip} disabled={tooltip.length === 0}>
+              <Button loading={loading} onClick={onClick}>
+                {buttonText}
+              </Button>
+            </Tooltip>
           </div>
         </div>
       </div>

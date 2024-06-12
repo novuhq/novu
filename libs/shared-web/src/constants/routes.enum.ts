@@ -50,7 +50,7 @@ export enum ROUTES {
   STUDIO = '/studio',
   STUDIO_FLOWS = '/studio/flows',
   STUDIO_ONBOARDING = '/studio/onboarding',
-  STUDIO_ONBOARDING_TEST = '/studio/onboarding/test',
+  STUDIO_ONBOARDING_PREVIEW = '/studio/onboarding/preview',
   STUDIO_ONBOARDING_SUCCESS = '/studio/onboarding/success',
 }
 

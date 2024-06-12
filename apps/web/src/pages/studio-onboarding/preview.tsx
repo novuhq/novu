@@ -1,10 +1,9 @@
 import { Prism } from '@mantine/prism';
-import { Button, Input, Modal, Tabs } from '@novu/design-system';
-import { IconCode, IconPlayCircleOutline, IconVisibility } from '@novu/novui/icons';
+import { Tabs } from '@novu/design-system';
+import { IconCode, IconVisibility } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
-import { hstack, vstack } from '@novu/novui/patterns';
-import { IStepVariant } from '@novu/shared';
-import { ROUTES } from '@novu/shared-web';
+import { vstack } from '@novu/novui/patterns';
+import { api, ROUTES, useAuth } from '@novu/shared-web';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PreviewWeb } from '../../components/workflow/preview/email/PreviewWeb';
@@ -13,36 +12,24 @@ import { useTemplates } from '../../hooks/useTemplates';
 import { Background } from './components/Background';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
-import { styled } from '@novu/novui/jsx';
-import { title } from '@novu/novui/recipes';
+import { testTrigger } from '../../api/notification-templates';
+import { useMutation } from '@tanstack/react-query';
+import * as Sentry from '@sentry/react';
+import { IStepVariant } from '@novu/shared';
 
-const Title = styled('h2', title);
-
-export const StudioOnboardingTest = () => {
-  const [opened, setOpened] = useState(false);
+export const StudioOnboardingPreview = () => {
+  const { currentUser } = useAuth();
   const [tab, setTab] = useState('Preview');
   const [content, setContent] = useState('');
   const [subject, setSubject] = useState('');
-  const [url, setUrl] = useState('');
+
   const navigate = useNavigate();
   const { integrations = [] } = useActiveIntegrations();
   const integration = useMemo(() => {
     return integrations.find((item) => item.channel === 'email' && item.primary) || null;
   }, [integrations]);
+  const { mutateAsync: triggerTestEvent, isLoading } = useMutation(testTrigger);
   const { templates, loading } = useTemplates({ pageSize: 1, areSearchParamsEnabled: false });
-
-  useEffect(() => {
-    const storageUrl = localStorage.getItem('studio-onboarding');
-
-    if (!storageUrl) {
-      navigate(ROUTES.STUDIO_ONBOARDING);
-
-      return;
-    }
-
-    setUrl(storageUrl);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const template = useMemo(() => {
     if (!templates) {
@@ -68,6 +55,45 @@ export const StudioOnboardingTest = () => {
     return (template.steps[0] as IStepVariant).uuid;
   }, [template]);
 
+  const { mutateAsync, isLoading: previewLoading } = useMutation(
+    (data) => api.post('/v1/echo/preview/' + identifier + '/' + stepId, data),
+    {
+      onSuccess(data: any) {
+        setContent(data.outputs.body);
+        setSubject(data.outputs.subject);
+      },
+    }
+  );
+
+  useEffect(() => {
+    if (!identifier || !stepId) {
+      return;
+    }
+
+    mutateAsync();
+  }, [identifier, mutateAsync, stepId]);
+
+  const onTrigger = async () => {
+    const to = {
+      subscriberId: currentUser._id,
+      email: currentUser.email,
+    };
+
+    try {
+      await triggerTestEvent({
+        name: identifier,
+        to,
+        payload: {
+          __source: 'onboarding-test-workflow',
+        },
+      });
+
+      navigate(ROUTES.STUDIO_ONBOARDING_SUCCESS);
+    } catch (e: any) {
+      Sentry.captureException(e);
+    }
+  };
+
   if (loading) {
     return null;
   }
@@ -89,7 +115,7 @@ export const StudioOnboardingTest = () => {
       >
         <div
           className={css({
-            width: '680px',
+            width: '880px',
             zIndex: 1,
             paddingTop: '100',
           })}
@@ -111,13 +137,38 @@ export const StudioOnboardingTest = () => {
                     subject={subject}
                     onLocaleChange={() => {}}
                     locales={[]}
+                    loading={previewLoading}
+                    className={css({
+                      height: 'calc(50vh - 28px) !important',
+                    })}
                   />
                 ),
               },
               {
                 icon: <IconCode />,
                 value: 'Code',
-                content: <Prism language="javascript">test</Prism>,
+                content: (
+                  <Prism withLineNumbers={true} language="javascript">
+                    {`
+{
+    subject: "New Job HVAC",
+    body: \`<html xmlns="http://www.w3.org/1999/xhtml">
+      <head>
+        <title>New Job HVAC</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+      </head>
+      <body>
+        <h1>New Job HVAC</h1>
+        <p>Hello Alan Turing,</p>
+        <p>Alan <a href="mailto:alan.turing@example.com">alan.turing@example.com</a> has invited you to the HVAC</p>
+        <p>A brilliant British mind, cracked Nazi codes in WWII and is considered the father of theoretical computer science
+          and artificial intelligence.</p>
+     </body>
+    </html>\`,
+}`}
+                  </Prism>
+                ),
               },
             ]}
           />
@@ -126,46 +177,11 @@ export const StudioOnboardingTest = () => {
       <Footer
         buttonText="Test workflow"
         onClick={() => {
-          setOpened(true);
+          onTrigger();
         }}
+        loading={isLoading}
+        tooltip={`We'll send you a notification to ${currentUser.email}`}
       />
-      <Modal
-        opened={opened}
-        title={<Title>Test workflow</Title>}
-        onClose={() => {
-          setOpened(false);
-        }}
-      >
-        <div
-          className={hstack({
-            alignItems: 'end',
-          })}
-        >
-          <Input
-            classNames={{
-              input: css({
-                marginBottom: '0 !important',
-              }),
-            }}
-            className={css({
-              width: '100%',
-            })}
-            label="Email address"
-          />
-          <Button
-            className={css({
-              height: '300 !important',
-            })}
-          >
-            <IconPlayCircleOutline
-              className={css({
-                color: 'typography.text.main !important',
-              })}
-            />
-            <span>Run a test</span>
-          </Button>
-        </div>
-      </Modal>
     </div>
   );
 };

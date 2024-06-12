@@ -52,7 +52,7 @@ export const StudioOnboardingSuccess = () => {
         height: '100dvh',
       })}
     >
-      <Header active={2} />
+      <Header active={3} />
       <div className={vstack({ alignContent: 'center' })}>
         <div
           className={css({
@@ -61,7 +61,7 @@ export const StudioOnboardingSuccess = () => {
         >
           <Heading>Success, you sent an email to {email}</Heading>
           <Text className={css({ color: 'typography.text.secondary', lineHeight: '150', marginBottom: '150' })}>
-            Proceed to customize your Echo Workflows or continue your onboarding by reviewing our documentation.
+            Proceed to customize your Workflows or continue your onboarding by reviewing our documentation.
           </Text>
           <ExecutionDetailsAccordion identifier={identifier} steps={item?.jobs} subscriberVariables={{}} />
         </div>

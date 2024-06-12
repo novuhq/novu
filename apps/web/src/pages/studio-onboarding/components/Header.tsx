@@ -32,7 +32,7 @@ export const Header = ({ active = 0 }: { active?: number }) => {
       <div className={vstack({ alignContent: 'center' })}>
         <div
           className={css({
-            width: '680px',
+            width: '880px',
           })}
         >
           <Stepper
@@ -42,7 +42,7 @@ export const Header = ({ active = 0 }: { active?: number }) => {
                 marginRight: '50 !important',
                 backgroundColor: 'transparent !important',
                 borderBottom: `1px dashed`,
-                borderColor: 'legacy.B30',
+                borderColor: 'table.header.border',
               }),
               stepIcon: css({
                 border: 'none !important',
@@ -51,7 +51,7 @@ export const Header = ({ active = 0 }: { active?: number }) => {
                 backgroundColor: 'surface.popover !important',
                 color: 'typography.text.secondary !important',
                 '&[data-progress]': {
-                  backgroundColor: 'legacy.B30 !important',
+                  backgroundColor: 'table.header.border !important',
                   color: 'typography.text.main !important',
                 },
               }),
@@ -72,9 +72,9 @@ export const Header = ({ active = 0 }: { active?: number }) => {
             }}
             active={active}
           >
-            <Stepper.Step label="Add the Echo endpoint"></Stepper.Step>
-            <Stepper.Step label="Create a workflow"></Stepper.Step>
-            <Stepper.Step label="Test a workflow"></Stepper.Step>
+            <Stepper.Step label="Add the endpoint"></Stepper.Step>
+            <Stepper.Step label="Create workflow"></Stepper.Step>
+            <Stepper.Step label="Test workflow"></Stepper.Step>
           </Stepper>
         </div>
       </div>

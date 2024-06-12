@@ -49,7 +49,7 @@ import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { useSettingsRoutes } from './SettingsRoutes';
 import { StudioOnboarding } from './pages/studio-onboarding/index';
-import { StudioOnboardingTest } from './pages/studio-onboarding/test';
+import { StudioOnboardingPreview } from './pages/studio-onboarding/preview';
 import { StudioOnboardingSuccess } from './pages/studio-onboarding/success';
 import { WorkflowsListPage } from './studio/components/workflows/WorkflowsListPage';
 
@@ -145,14 +145,14 @@ export const AppRoutes = () => {
         <Route path={ROUTES.STUDIO}>
           <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
           <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
-          <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />
-          <Route path={ROUTES.STUDIO_ONBOARDING_TEST} element={<StudioOnboardingTest />} />
-          <Route path={ROUTES.STUDIO_ONBOARDING_SUCCESS} element={<StudioOnboardingSuccess />} />
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
+      <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />
+      <Route path={ROUTES.STUDIO_ONBOARDING_PREVIEW} element={<StudioOnboardingPreview />} />
+      <Route path={ROUTES.STUDIO_ONBOARDING_SUCCESS} element={<StudioOnboardingSuccess />} />
     </Routes>
   );
 };
