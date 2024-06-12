@@ -148,8 +148,8 @@ export class ContentTemplatesController {
           environmentId,
           organizationId
         );
-
-        await i18next.init({
+        const instance = i18next.createInstance();
+        await instance.init({
           resources,
           ns: namespaces,
           defaultNS: false,
@@ -168,6 +168,8 @@ export class ContentTemplatesController {
             },
           },
         });
+
+        return instance;
       }
     } catch (e) {
       Logger.error(e, `Unexpected error while importing enterprise modules`, 'TranslationsService');

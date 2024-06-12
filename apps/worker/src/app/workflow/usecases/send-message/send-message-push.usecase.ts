@@ -80,7 +80,11 @@ export class SendMessagePush extends SendMessageBase {
     const { subscriber, step: stepData } = command.compileContext;
 
     const template = await this.processVariants(command);
-    await this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale);
+    const i18nInstance = await this.initiateTranslations(
+      command.environmentId,
+      command.organizationId,
+      subscriber.locale
+    );
 
     if (template) {
       step.template = template;
@@ -92,19 +96,17 @@ export class SendMessagePush extends SendMessageBase {
 
     try {
       if (!command.chimeraData) {
-        content = await this.compileTemplate.execute(
-          CompileTemplateCommand.create({
-            template: step.template?.content as string,
-            data,
-          })
-        );
+        content = await this.compileTemplate.execute({
+          template: step.template?.content as string,
+          data,
+          i18next: i18nInstance,
+        });
 
-        title = await this.compileTemplate.execute(
-          CompileTemplateCommand.create({
-            template: step.template?.title as string,
-            data,
-          })
-        );
+        title = await this.compileTemplate.execute({
+          template: step.template?.title as string,
+          data,
+          i18next: i18nInstance,
+        });
       }
     } catch (e) {
       await this.sendErrorHandlebars(command.job, e.message);
