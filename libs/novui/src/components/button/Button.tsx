@@ -71,6 +71,7 @@ const buttonRecipe = sva({
         root: {
           border: 'none !important',
           bg: '[transparent !important]',
+          px: '0 !important',
         },
         label: {
           color: 'colorPalette.start',
@@ -96,15 +97,7 @@ export const Button: FC<IButtonProps> = ({
   return (
     <ExternalButton
       size={size}
-      leftSection={
-        Icon ? (
-          <Icon
-            title="button-icon"
-            size={variant === 'borderless' ? '32' : '16'}
-            className={css({ color: 'legacy.white' })}
-          />
-        ) : undefined
-      }
+      leftSection={Icon ? <Icon title="button-icon" size={variant === 'borderless' ? '32' : '16'} /> : undefined}
       variant={variant}
       classNames={buttonRecipe({ variant })}
       className={cx(className)}
