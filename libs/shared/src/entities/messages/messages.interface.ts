@@ -16,11 +16,11 @@ export interface IMessage {
   channel: ChannelTypeEnum;
   seen: boolean;
   read: boolean;
-  lastSeenDate: string;
-  lastReadDate: string;
+  lastSeenDate?: string;
+  lastReadDate?: string;
   createdAt: string;
   cta?: IMessageCTA;
-  _feedId: string;
+  _feedId?: string | null;
   _layoutId?: string;
   payload: Record<string, unknown>;
   actor?: IActor;

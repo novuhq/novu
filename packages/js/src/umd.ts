@@ -1,3 +1,3 @@
-import { Novu } from './Novu';
+import { Novu } from './novu';
 
 window.Novu = Novu;
