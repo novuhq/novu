@@ -159,7 +159,7 @@ export class EventsController {
         organizationId: user.organizationId,
         workflowId: body.workflowId,
         stepId: body.stepId,
-        chimera: body.chimera,
+        bridge: body.bridge,
         inputs: body.inputs,
       })
     );

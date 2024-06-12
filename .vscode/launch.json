@@ -230,7 +230,7 @@
   "compounds": [
     {
       "name": "-- RUN FULL ENV - Local",
-      "configurations": ["API", "DAL", "EMBED", "SHARED", "TESTING LIB", "WS", "WEB", "WIDGET"]
+      "configurations": ["API", "DAL", "EMBED", "SHARED", "TESTING LIB", "WS", "WEB", "WIDGET", "worker"]
     },
     {
       "name": "-- RUN FULL ENV - Test",
@@ -242,7 +242,8 @@
         "TESTING LIB",
         "WS - TEST ENV",
         "WEB",
-        "WIDGET - test"
+        "WIDGET - test",
+        "worker"
       ]
     }
   ]

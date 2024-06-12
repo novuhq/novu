@@ -31,8 +31,9 @@ export class CompileInAppTemplate extends CompileTemplateBase {
   ) {
     const organization = await this.getOrganization(command.organizationId);
 
+    let i18nInstance;
     if (initiateTranslations) {
-      await initiateTranslations(
+      i18nInstance = await initiateTranslations(
         command.environmentId,
         command.organizationId,
         command.locale ||
@@ -52,7 +53,8 @@ export class CompileInAppTemplate extends CompileTemplateBase {
         ? await this.compileInAppTemplate(
             command.content,
             payload,
-            organization
+            organization,
+            i18nInstance
           )
         : '';
 
@@ -60,7 +62,8 @@ export class CompileInAppTemplate extends CompileTemplateBase {
         url = await this.compileInAppTemplate(
           command.cta?.data?.url,
           payload,
-          organization
+          organization,
+          i18nInstance
         );
       }
 
@@ -69,14 +72,15 @@ export class CompileInAppTemplate extends CompileTemplateBase {
           const buttonContent = await this.compileInAppTemplate(
             action.content,
             payload,
-            organization
+            organization,
+            i18nInstance
           );
           ctaButtons.push({ type: action.type, content: buttonContent });
         }
       }
     } catch (e: any) {
       throw new ApiException(
-        e?.message || `Message content could not be generated`
+        e?.message || `In-App Message content could not be generated`
       );
     }
 
@@ -86,19 +90,19 @@ export class CompileInAppTemplate extends CompileTemplateBase {
   private async compileInAppTemplate(
     content: string,
     payload: any,
-    organization: OrganizationEntity | null
+    organization: OrganizationEntity | null,
+    i18nInstance: any
   ): Promise<string> {
-    return await this.compileTemplate.execute(
-      CompileTemplateCommand.create({
-        template: content as string,
-        data: {
-          ...payload,
-          branding: {
-            logo: organization?.branding?.logo,
-            color: organization?.branding?.color || '#f47373',
-          },
+    return await this.compileTemplate.execute({
+      i18next: i18nInstance,
+      template: content as string,
+      data: {
+        ...payload,
+        branding: {
+          logo: organization?.branding?.logo,
+          color: organization?.branding?.color || '#f47373',
         },
-      })
-    );
+      },
+    });
   }
 }

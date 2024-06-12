@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { PackageManager } from "../helpers/get-pkg-manager";
 
 export type TemplateType =
@@ -26,4 +25,6 @@ export interface InstallTemplateArgs {
   reactEmail: boolean;
   srcDir: boolean;
   importAlias: string;
+  apiKey: string;
+  tunnelHost: string;
 }
