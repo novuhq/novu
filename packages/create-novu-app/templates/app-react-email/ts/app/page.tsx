@@ -1,6 +1,5 @@
 import Image from "next/image";
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">

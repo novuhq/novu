@@ -22,7 +22,6 @@ const baseUrl = process.env.VERCEL_URL
   ? `https://react-email-demo-bdj5iju9r-resend.vercel.app`
   : "https://react-email-demo-bdj5iju9r-resend.vercel.app";
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const VercelInviteUserEmail = ({
   username,
   showButton,
