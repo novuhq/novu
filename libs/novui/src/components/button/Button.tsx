@@ -29,6 +29,8 @@ const buttonRecipe = sva({
     },
     label: {
       color: 'typography.text.main',
+      width: '[fit-content]',
+      lineClamp: 1,
     },
     inner: {
       width: '[fit-content]',
@@ -47,10 +49,7 @@ const buttonRecipe = sva({
           border: 'solid !important',
           borderColor: 'colorPalette.start !important',
           bg: 'button.secondary.background',
-          color: {
-            base: 'typography.text.main',
-            _dark: '[transparent]',
-          },
+
           boxShadow: 'medium',
           _disabled: {
             bg: '[transparent !important]',
@@ -58,6 +57,11 @@ const buttonRecipe = sva({
         },
         label: {
           color: 'typography.text.main !important',
+        },
+        section: {
+          '& svg': {
+            color: 'typography.text.main !important',
+          },
         },
       },
       borderless: {
