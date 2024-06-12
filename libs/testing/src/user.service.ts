@@ -17,7 +17,7 @@ export class UserService {
       email: this.randomEmail(),
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
-      password: this.randomPassword(),
+      password: this.testPassword(),
     });
 
     const organization = await this.organizationService.createOrganization();
