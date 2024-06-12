@@ -15,7 +15,8 @@
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "test": "jest **/client.validation.test.ts",
+    "test": "jest",
+    "test:watch": "jest --watch",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --check --ignore-path .gitignore .",

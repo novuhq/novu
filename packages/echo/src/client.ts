@@ -1,7 +1,4 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import Ajv from 'ajv';
-import addFormats from 'ajv-formats';
-import betterAjvErrors from 'better-ajv-errors';
 import { JSONSchema7 } from 'json-schema';
 import { JSONSchemaFaker } from 'json-schema-faker';
 import ora from 'ora';
@@ -45,7 +42,7 @@ import {
   StepType,
   WorkflowOptions,
 } from './types';
-import { FromSchema, Schema, ValidateFunction } from './types/schema.types';
+import { FromSchema, Schema, validateData, ValidateFunction, ValidationError } from './types/schema.types';
 import { EMOJI, log } from './utils';
 import { VERSION } from './version';
 import { Skip } from './types/skip.types';
@@ -57,8 +54,6 @@ JSONSchemaFaker.option({
 
 export class Echo {
   private discoveredWorkflows: Array<DiscoverWorkflowOutput> = [];
-
-  private ajv: Ajv;
 
   private backendUrl?: string;
 
@@ -74,10 +69,6 @@ export class Echo {
     this.apiKey = config?.apiKey;
     this.backendUrl = config?.backendUrl ?? DEFAULT_NOVU_API_BASE_URL;
     this.devModeBypassAuthentication = config?.devModeBypassAuthentication || false;
-
-    const ajv = new Ajv({ useDefaults: true });
-    addFormats(ajv);
-    this.ajv = ajv;
   }
 
   public healthCheck(): HealthCheck {
@@ -182,15 +173,12 @@ export class Echo {
         type,
         inputs: {
           schema: inputSchema,
-          validate: this.ajv.compile(inputSchema),
         },
         outputs: {
           schema: outputSchema,
-          validate: this.ajv.compile(outputSchema),
         },
         results: {
           schema: resultSchema,
-          validate: this.ajv.compile(resultSchema),
         },
         resolve,
         code: resolve.toString(),
@@ -216,15 +204,12 @@ export class Echo {
         type,
         inputs: {
           schema: inputSchema,
-          validate: this.ajv.compile(inputSchema),
         },
         outputs: {
           schema: outputSchema,
-          validate: this.ajv.compile(outputSchema),
         },
         results: {
           schema: outputSchema,
-          validate: this.ajv.compile(outputSchema),
         },
         // @ts-ignore
         resolve,
@@ -255,7 +240,6 @@ export class Echo {
         resolve,
         outputs: {
           schema: schemas.output,
-          validate: this.ajv.compile(schemas.output),
         },
       });
     });
@@ -276,11 +260,9 @@ export class Echo {
         code: execute.toString(),
         data: {
           schema: options.payloadSchema || emptySchema,
-          validate: this.ajv.compile(options.payloadSchema || emptySchema),
         },
         inputs: {
           schema: options.inputSchema || emptySchema,
-          validate: this.ajv.compile(options.inputSchema || emptySchema),
         },
         execute,
       });
@@ -377,33 +359,33 @@ export class Echo {
     return JSONSchemaFaker.generate(schema as JSONSchema7) as Record<string, unknown>;
   }
 
-  private validate(
-    data: unknown,
-    validate: ValidateFunction,
+  private async validate<T>(
+    data: T,
     schema: Schema,
     component: 'event' | 'step' | 'provider',
     payloadType: 'input' | 'output' | 'result' | 'data',
     workflowId: string,
     stepId?: string,
     providerId?: string
-  ): void {
-    const valid = validate(data);
+  ): Promise<T> {
+    const result = await validateData(schema, data);
 
-    if (!valid) {
-      const betterErrors = betterAjvErrors(schema, data, validate.errors || []);
-      // eslint-disable-next-line no-console
-      console.error(`\n${betterErrors}`);
-
+    if (!result.success) {
       switch (component) {
         case 'event':
-          this.validateEvent(payloadType, workflowId, validate);
+          this.validateEvent(payloadType, workflowId, result.errors);
 
         case 'step':
-          this.validateStep(stepId, payloadType, workflowId, validate);
+          this.validateStep(stepId, payloadType, workflowId, result.errors);
 
         case 'provider':
-          this.validateProvider(stepId, providerId, payloadType, workflowId, validate);
+          this.validateProvider(stepId, providerId, payloadType, workflowId, result.errors);
+
+        default:
+          throw new Error(`Invalid component: '${component}'`);
       }
+    } else {
+      return result.data;
     }
   }
 
@@ -412,7 +394,7 @@ export class Echo {
     providerId: string | undefined,
     payloadType: 'input' | 'output' | 'result' | 'data',
     workflowId: string,
-    validate: ValidateFunction<unknown>
+    errors: Array<ValidationError>
   ) {
     if (!stepId) {
       throw new Error('stepId is required');
@@ -424,7 +406,7 @@ export class Echo {
 
     switch (payloadType) {
       case 'output':
-        throw new ExecutionProviderOutputInvalidError(workflowId, stepId, providerId, validate.errors);
+        throw new ExecutionProviderOutputInvalidError(workflowId, stepId, providerId, errors);
 
       default:
         throw new Error(`Invalid payload type: '${payloadType}'`);
@@ -435,42 +417,38 @@ export class Echo {
     stepId: string | undefined,
     payloadType: 'input' | 'output' | 'result' | 'data',
     workflowId: string,
-    validate: ValidateFunction<unknown>
+    errors: Array<ValidationError>
   ) {
     if (!stepId) {
       throw new Error('stepId is required');
     }
 
-    const errorMap: Record<
-      string,
-      new (_workflowId: string, _stepId: string, errors?: ValidateFunction<unknown>['errors']) => Error
-    > = {
-      output: ExecutionStateOutputInvalidError,
-      result: ExecutionStateResultInvalidError,
-      input: ExecutionStateInputInvalidError,
-    };
+    switch (payloadType) {
+      case 'output':
+        throw new ExecutionStateOutputInvalidError(workflowId, stepId, errors);
 
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const ErrorClass = errorMap[payloadType];
+      case 'result':
+        throw new ExecutionStateResultInvalidError(workflowId, stepId, errors);
 
-    if (ErrorClass) {
-      throw new ErrorClass(workflowId, stepId, validate.errors);
-    } else {
-      throw new Error(`Invalid payload type: '${payloadType}'`);
+      case 'input':
+        throw new ExecutionStateInputInvalidError(workflowId, stepId, errors);
+
+      default:
+        throw new Error(`Invalid payload type: '${payloadType}'`);
     }
   }
 
   private validateEvent(
     payloadType: 'input' | 'output' | 'result' | 'data',
     workflowId: string,
-    validate: ValidateFunction<unknown>
+    errors: Array<ValidationError>
   ) {
     switch (payloadType) {
       case 'input':
-        throw new ExecutionEventInputInvalidError(workflowId, validate.errors);
+        throw new ExecutionEventInputInvalidError(workflowId, errors);
 
       case 'data':
-        throw new ExecutionEventDataInvalidError(workflowId, validate.errors);
+        throw new ExecutionEventDataInvalidError(workflowId, errors);
 
       default:
         throw new Error(`Invalid payload type: '${payloadType}'`);
@@ -633,7 +611,7 @@ export class Echo {
   private createExecutionInputs(event: IEvent, workflow: DiscoverWorkflowOutput): Record<string, unknown> {
     const executionData = event.data;
 
-    this.validate(event.data, workflow.data.validate, workflow.data.schema, 'event', 'input', event.workflowId);
+    this.validate(event.data, workflow.data.schema, 'event', 'input', event.workflowId);
 
     return executionData;
   }
@@ -691,9 +669,8 @@ export class Echo {
         const result = await provider.resolve({
           inputs: input,
         });
-        this.validate(
+        await this.validate(
           result,
-          provider.outputs.validate,
           provider.outputs.schema,
           'step',
           'output',
@@ -731,15 +708,7 @@ export class Echo {
       try {
         const input = this.createStepInputs(step, event);
         const result = await step.resolve(input);
-        this.validate(
-          result,
-          step.outputs.validate,
-          step.outputs.schema,
-          'step',
-          'output',
-          event.workflowId,
-          step.stepId
-        );
+        this.validate(result, step.outputs.schema, 'step', 'output', event.workflowId, step.stepId);
 
         const providers = await this.executeProviders(event, step);
 
@@ -763,15 +732,7 @@ export class Echo {
         const result = event.state.find((state) => state.stepId === step.stepId);
 
         if (result) {
-          this.validate(
-            result.outputs,
-            step.results.validate,
-            step.results.schema,
-            'step',
-            'result',
-            event.workflowId,
-            step.stepId
-          );
+          this.validate(result.outputs, step.results.schema, 'step', 'result', event.workflowId, step.stepId);
           spinner.stopAndPersist({
             symbol: EMOJI.HYDRATED,
             text: `Hydrated stepId: \`${step.stepId}\``,
@@ -804,7 +765,7 @@ export class Echo {
   private createStepInputs(step: DiscoverStepOutput, event: IEvent): Record<string, unknown> {
     const stepInputs = event.inputs;
 
-    this.validate(stepInputs, step.inputs.validate, step.inputs.schema, 'step', 'input', event.workflowId, step.stepId);
+    this.validate(stepInputs, step.inputs.schema, 'step', 'input', event.workflowId, step.stepId);
 
     return stepInputs;
   }
@@ -818,15 +779,7 @@ export class Echo {
       if (payload.stepId === step.stepId) {
         const input = this.createStepInputs(step, payload);
         const previewOutput = await step.resolve(input);
-        this.validate(
-          previewOutput,
-          step.outputs.validate,
-          step.outputs.schema,
-          'step',
-          'output',
-          payload.workflowId,
-          step.stepId
-        );
+        this.validate(previewOutput, step.outputs.schema, 'step', 'output', payload.workflowId, step.stepId);
 
         spinner.stopAndPersist({
           symbol: EMOJI.MOCK,

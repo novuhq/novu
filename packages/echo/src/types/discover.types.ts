@@ -11,7 +11,6 @@ export type DiscoverProviderOutput = {
   resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
   outputs: {
     schema: Schema;
-    validate: ValidateFunction;
   };
 };
 
@@ -20,15 +19,12 @@ export type DiscoverStepOutput = {
   type: StepType;
   inputs: {
     schema: Schema;
-    validate: ValidateFunction;
   };
   outputs: {
     schema: Schema;
-    validate: ValidateFunction;
   };
   results: {
     schema: Schema;
-    validate: ValidateFunction;
   };
   code: string;
   resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
@@ -44,11 +40,9 @@ export type DiscoverWorkflowOutput = {
   steps: Array<DiscoverStepOutput>;
   data: {
     schema: Schema;
-    validate: ValidateFunction;
   };
   inputs: {
     schema: Schema;
-    validate: ValidateFunction;
   };
 };
 
