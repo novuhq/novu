@@ -778,6 +778,9 @@ importers:
       '@novu/design-system':
         specifier: workspace:*
         version: link:../../libs/design-system
+      '@novu/js':
+        specifier: workspace:*
+        version: link:../../packages/js
       '@novu/notification-center':
         specifier: workspace:*
         version: link:../../packages/notification-center
