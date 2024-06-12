@@ -22,7 +22,7 @@ import {
   ExecuteOutput,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IChimeraDigestResponse,
+  IBridgeDigestResponse,
   IFilterVariables,
   InstrumentUsecase,
   IUseCaseInterfaceInline,
@@ -155,9 +155,9 @@ export class AddJob {
     filterVariables: IFilterVariables,
     delayAmount: number | undefined
   ) {
-    command.chimeraResponse = await this.resonateUsecase.execute<
+    command.bridgeResponse = await this.resonateUsecase.execute<
       AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraDigestResponse>
+      ExecuteOutput<IBridgeDigestResponse>
     >({
       ...command,
       variables: filterVariables,
@@ -178,7 +178,7 @@ export class AddJob {
   ) {
     const resonateResponse = await this.resonateUsecase.execute<
       AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraDigestResponse>
+      ExecuteOutput<IBridgeDigestResponse>
     >({
       ...command,
       variables: filterVariables,
@@ -190,7 +190,7 @@ export class AddJob {
       stepMetadata: job.digest,
       payload: job.payload,
       overrides: job.overrides,
-      chimeraResponse: this.fallbackToRegularDigest(resonateResponse?.outputs),
+      bridgeResponse: this.fallbackToRegularDigest(resonateResponse?.outputs),
     });
 
     Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
@@ -199,7 +199,7 @@ export class AddJob {
       MergeOrCreateDigestCommand.create({
         job,
         filtered,
-        chimeraData: resonateResponse?.outputs,
+        bridgeData: resonateResponse?.outputs,
       })
     );
 
@@ -253,8 +253,8 @@ export class AddJob {
    *  Fallback to regular digest type.
    *  This is a temporary solution until other digest types are implemented.
    */
-  private fallbackToRegularDigest(outputs: IChimeraDigestResponse | undefined): IChimeraDigestResponse | undefined {
-    let resonateResponseOutput: IChimeraDigestResponse | undefined = undefined;
+  private fallbackToRegularDigest(outputs: IBridgeDigestResponse | undefined): IBridgeDigestResponse | undefined {
+    let resonateResponseOutput: IBridgeDigestResponse | undefined = undefined;
 
     if (outputs) {
       const { type, ...resonateResponseOutputsOmitType } = outputs;

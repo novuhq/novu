@@ -9,11 +9,11 @@ import { When } from '../../../../components/utils/When';
 
 export const EmailInboxContent = ({
   integration,
-  chimera,
+  bridge,
   readonly,
 }: {
   readonly: boolean;
-  chimera: boolean;
+  bridge: boolean;
   integration: any;
 }) => {
   const theme = useMantineTheme();
@@ -96,7 +96,7 @@ export const EmailInboxContent = ({
           </div>
         </Grid.Col>
         <Grid.Col span={4}>
-          <When truthy={!chimera}>
+          <When truthy={!bridge}>
             <Controller
               name={`${stepFormPath}.template.preheader`}
               defaultValue=""
@@ -118,7 +118,7 @@ export const EmailInboxContent = ({
           </When>
         </Grid.Col>
       </Grid>
-      <When truthy={!chimera}>
+      <When truthy={!bridge}>
         <Controller
           name={`${stepFormPath}.template.layoutId`}
           defaultValue=""
