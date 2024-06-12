@@ -28,5 +28,6 @@ export type ExecuteOutputMetadata = {
 export type ExecuteOutput = {
   outputs: unknown;
   providers: unknown;
+  options: unknown;
   metadata: ExecuteOutputMetadata;
 };

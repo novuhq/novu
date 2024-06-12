@@ -36,7 +36,7 @@ describe('sync command', () => {
       const expectBackendUrl = `${backendUrl}/v1/echo/sync?source=cli`;
       expect(syncRestCallSpy).toHaveBeenCalledWith(
         expectBackendUrl,
-        expect.objectContaining({ chimeraUrl: echoUrl, ...discoverData }),
+        expect.objectContaining({ bridgeUrl: echoUrl, ...discoverData }),
         expect.objectContaining({ headers: { Authorization: expect.any(String), 'Content-Type': 'application/json' } })
       );
       expect(response).toEqual(syncData);

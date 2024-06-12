@@ -9,5 +9,5 @@ export class AddJobCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   job: JobEntity;
 
-  chimeraResponse?: any;
+  bridgeResponse?: any;
 }

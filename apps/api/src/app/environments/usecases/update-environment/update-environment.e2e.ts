@@ -1,4 +1,3 @@
-import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { UpdateEnvironmentRequestDto } from '../../dtos/update-environment-request.dto';

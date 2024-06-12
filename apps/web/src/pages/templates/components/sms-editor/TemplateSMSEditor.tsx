@@ -29,7 +29,7 @@ const INPUTS = 'Inputs';
 export function TemplateSMSEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const { template } = useTemplateEditorForm();
-  const { environment, chimera } = useEnvController({}, template?.chimera);
+  const { environment, bridge } = useEnvController({}, template?.bridge);
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);
@@ -70,9 +70,9 @@ export function TemplateSMSEditor() {
                   openEditVariablesModal={() => {
                     setEditVariablesModalOpen(true);
                   }}
-                  label={chimera ? 'Input variables' : undefined}
+                  label={bridge ? 'Input variables' : undefined}
                 />
-                <When truthy={!chimera}>
+                <When truthy={!bridge}>
                   <CustomCodeEditor
                     value={(field.value as string) || ''}
                     onChange={(value) => {
@@ -80,7 +80,7 @@ export function TemplateSMSEditor() {
                     }}
                   />
                 </When>
-                <When truthy={chimera}>
+                <When truthy={bridge}>
                   <InputVariablesForm
                     onChange={(values) => {
                       setInputVariables(values);

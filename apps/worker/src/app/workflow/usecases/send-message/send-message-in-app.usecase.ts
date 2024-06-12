@@ -107,7 +107,7 @@ export class SendMessageInApp extends SendMessageBase {
     }
 
     try {
-      if (!command.chimeraData) {
+      if (!command.bridgeData) {
         const compiled = await this.compileInAppTemplate.execute(
           CompileInAppTemplateCommand.create({
             organizationId: command.organizationId,
@@ -166,7 +166,7 @@ export class SendMessageInApp extends SendMessageBase {
       }),
     });
 
-    const chimeraBody = command.chimeraData?.outputs.body;
+    const bridgeBody = command.bridgeData?.outputs.body;
 
     if (!oldMessage) {
       message = await this.messageRepository.create({
@@ -180,7 +180,7 @@ export class SendMessageInApp extends SendMessageBase {
         cta: step.template.cta,
         _feedId: step.template._feedId,
         transactionId: command.transactionId,
-        content: this.storeContent() ? chimeraBody || content : null,
+        content: this.storeContent() ? bridgeBody || content : null,
         payload: messagePayload,
         providerId: integration.providerId,
         templateIdentifier: command.identifier,
