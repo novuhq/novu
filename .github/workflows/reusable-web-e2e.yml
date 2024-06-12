@@ -93,7 +93,6 @@ jobs:
           REACT_APP_API_URL: http://127.0.0.1:1336
           REACT_APP_WS_URL: http://127.0.0.1:1340
           REACT_APP_WEBHOOK_URL: http://127.0.0.1:1341
-          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: some_fake_id
           NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
         run: pnpm start:static:build &
 
