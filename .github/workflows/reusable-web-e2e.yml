@@ -53,7 +53,7 @@ jobs:
       - id: checkout-enterprise-code
         name: Checkout enterprise code from the submodule
         uses: actions/checkout@v4
-        if: steps.setup.outputs.enterprise_run == 'true'
+        if: steps.determine_run_type.outputs.enterprise_run == 'true'
         with:
           submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
@@ -61,7 +61,7 @@ jobs:
       - id: checkout-community-code
         name: Checkout community code
         uses: actions/checkout@v4
-        if: steps.setup.outputs.enterprise_run != 'true'
+        if: steps.determine_run_type.outputs.enterprise_run != 'true'
 
       - uses: ./.github/actions/setup-project
         with:
@@ -81,7 +81,7 @@ jobs:
           cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
           cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-          ci_ee_test: ${{ steps.setup.outputs.enterprise_run }}
+          ci_ee_test: ${{ steps.determine_run_type.outputs.enterprise_run }}
 
       - name: Start WS
         run: |
@@ -94,7 +94,7 @@ jobs:
           REACT_APP_WS_URL: http://127.0.0.1:1340
           REACT_APP_WEBHOOK_URL: http://127.0.0.1:1341
           REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: some_fake_id
-          NOVU_ENTERPRISE: ${{ steps.setup.outputs.enterprise_run }}
+          NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
         run: pnpm start:static:build
 
       - name: Wait on Services
@@ -107,7 +107,7 @@ jobs:
       - name: Run E2E tests
         working-directory: apps/web
         env:
-          NOVU_ENTERPRISE: ${{ steps.setup.outputs.enterprise_run }}
+          NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
         run: pnpm test:e2e --shard=${{ matrix.containers }}/${{ matrix.total }}
 
       - uses: actions/upload-artifact@v4
