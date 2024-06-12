@@ -10,8 +10,6 @@ import { SidebarPage } from './page-models/sidebarPage';
 import { WorkflowsPage } from './page-models/workflowsPage';
 import { addConditions } from './utils.ts/commands';
 
-test.describe.configure({ timeout: 60_000 });
-
 test.beforeEach(async ({ page }) => {
   const { featureFlagsMock } = await initializeSession(page, { noTemplates: true });
   featureFlagsMock.setFlagsToMock({

@@ -13,61 +13,65 @@ let session: SessionData;
 
 let testUser;
 
-test.beforeAll(async () => {
-  testUser = await createUser();
-});
+test.describe('Invites', () => {
+  test.skip(process.env.NOVU_ENTERPRISE !== 'true', 'Skipping tests for non enterprise variant...');
 
-test.beforeEach(async ({ page }) => {
-  const { featureFlagsMock, session: newSession } = await initializeSession(page);
-  session = newSession;
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: false,
-    IS_HUBSPOT_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_BILLING_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
+  test.beforeAll(async () => {
+    testUser = await createUser();
   });
-});
 
-test('invite a new user to the organization', async ({ context, page }) => {
-  const inviteeEmail = randomEmail();
-  const invitation = await inviteUser(session, inviteeEmail);
-  await logout(page, session);
+  test.beforeEach(async ({ page }) => {
+    const { featureFlagsMock, session: newSession } = await initializeSession(page);
+    session = newSession;
+    featureFlagsMock.setFlagsToMock({
+      IS_IMPROVED_ONBOARDING_ENABLED: false,
+      IS_HUBSPOT_ONBOARDING_ENABLED: false,
+      IS_INFORMATION_ARCHITECTURE_ENABLED: true,
+      IS_BILLING_REVERSE_TRIAL_ENABLED: false,
+      IS_BILLING_ENABLED: false,
+      IS_TEMPLATE_STORE_ENABLED: false,
+    });
+  });
 
-  await page.goto(`/auth/invitation/${invitation.token}`);
+  test('invite a new user to the organization', async ({ context, page }) => {
+    const inviteeEmail = randomEmail();
+    const invitation = await inviteUser(session, inviteeEmail);
+    await logout(page, session);
 
-  const signUpPage = new SignUpPage(page);
-  await signUpPage.getFullNameLocator().fill('Invited User');
-  await signUpPage.getPasswordLocator().fill(testPassword());
-  await signUpPage.getAcceptTermsAndConditionsCheckMark().click();
-  await signUpPage.clickSignUpButton();
+    await page.goto(`/auth/invitation/${invitation.token}`);
 
-  await signUpPage.assertNavigationPath('/auth/application');
-  await signUpPage.fillUseCaseData();
-  await signUpPage.clickGetStartedButton();
+    const signUpPage = new SignUpPage(page);
+    await signUpPage.getFullNameLocator().fill('Invited User');
+    await signUpPage.getPasswordLocator().fill(testPassword());
+    await signUpPage.getAcceptTermsAndConditionsCheckMark().click();
+    await signUpPage.clickSignUpButton();
 
-  await signUpPage.assertNavigationPath('/get-started**');
+    await signUpPage.assertNavigationPath('/auth/application');
+    await signUpPage.fillUseCaseData();
+    await signUpPage.clickGetStartedButton();
 
-  const sidebarPage = await SidebarPage.goTo(page);
-  const orgSwitchValue = (await sidebarPage.getOrganizationSwitch().inputValue()).toLowerCase();
-  expect(orgSwitchValue).toBe(invitation.organization.name.toLowerCase());
-});
+    await signUpPage.assertNavigationPath('/get-started**');
 
-test('invite an existing user to the organization', async ({ context, page }) => {
-  const invitation = await inviteUser(session, testUser.email);
-  await logout(page, session);
+    const sidebarPage = await SidebarPage.goTo(page);
+    const orgSwitchValue = (await sidebarPage.getOrganizationSwitch().inputValue()).toLowerCase();
+    expect(orgSwitchValue).toBe(invitation.organization.name.toLowerCase());
+  });
 
-  await page.goto(`/auth/invitation/${invitation.token}`);
+  test('invite an existing user to the organization', async ({ context, page }) => {
+    const invitation = await inviteUser(session, testUser.email);
+    await logout(page, session);
 
-  const loginPage = new AuthLoginPage(page);
-  await expect(loginPage.getEmailLocator()).toHaveValue(testUser.email);
-  await loginPage.setPasswordTo(testPassword());
-  await loginPage.clickSignInButton();
+    await page.goto(`/auth/invitation/${invitation.token}`);
 
-  await new HeaderPage(page).clickAvatar();
-  const orgSwitch = new SidebarPage(page).getOrganizationSwitch();
-  await orgSwitch.focus();
-  const orgOptions = orgSwitch.page().getByRole('option', { name: invitation.organization.name });
-  await expect(orgOptions).toBeVisible();
+    const loginPage = new AuthLoginPage(page);
+    await expect(loginPage.getEmailLocator()).toHaveValue(testUser.email);
+    await loginPage.setPasswordTo(testPassword());
+    await loginPage.clickSignInButton();
+
+    await new HeaderPage(page).clickAvatar();
+    const orgSwitch = new SidebarPage(page).getOrganizationSwitch();
+    await orgSwitch.focus();
+    const orgOptions = orgSwitch.page().getByRole('option', { name: invitation.organization.name });
+    await expect(orgOptions).toBeVisible();
+  });
 });

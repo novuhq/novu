@@ -11,8 +11,6 @@ import { WorkflowsPage } from './page-models/workflowsPage';
 import { WorkflowSettingsSidePanel } from './page-models/workflowSettingsSidePanel';
 import { EditorState } from './page-models/editorState';
 
-test.describe.configure({ timeout: 60_000 });
-
 test.describe('Creation functionality', () => {
   test.beforeEach(async ({ page }) => {
     const { featureFlagsMock } = await initializeSession(page);
