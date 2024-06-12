@@ -19,7 +19,6 @@ import {
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
-  ExecuteOutput,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
   IBridgeDigestResponse,
@@ -30,6 +29,9 @@ import {
   LogDecorator,
   requireInject,
   StandardQueueService,
+  ExecuteOutput,
+  NormalizeVariablesCommand,
+  NormalizeVariables,
 } from '@novu/application-generic';
 
 export enum BackoffStrategiesEnum {
@@ -54,6 +56,7 @@ export class AddJob {
     private calculateDelayService: CalculateDelayService,
     @Inject(forwardRef(() => ConditionsFilter))
     private conditionsFilter: ConditionsFilter,
+    private normalizeVariablesUsecase: NormalizeVariables,
     private moduleRef: ModuleRef
   ) {
     this.resonateUsecase = requireInject('resonate', this.moduleRef);
@@ -98,6 +101,17 @@ export class AddJob {
     let digestAmount: number | undefined;
     let delayAmount: number | undefined = undefined;
 
+    const variables = await this.normalizeVariablesUsecase.execute(
+      NormalizeVariablesCommand.create({
+        filters: command.job.step.filters || [],
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        step: job.step,
+        job: job,
+      })
+    );
+
     const shouldRun = await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
         filters: job.step.filters || [],
@@ -106,6 +120,7 @@ export class AddJob {
         userId: command.userId,
         step: job.step,
         job,
+        variables,
       })
     );
 

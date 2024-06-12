@@ -71,7 +71,7 @@ export class RunJob {
 
       await this.storageHelperService.getAttachments(job.payload?.attachments);
 
-      await this.sendMessage.execute(
+      const sendMessageResult = await this.sendMessage.execute(
         SendMessageCommand.create({
           identifier: job.identifier,
           payload: job.payload ?? {},
@@ -92,7 +92,9 @@ export class RunJob {
         })
       );
 
-      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
+      if (sendMessageResult.status === 'success') {
+        await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.COMPLETED);
+      }
     } catch (error: any) {
       Logger.error({ error }, `Running job ${job._id} has thrown an error`, LOG_CONTEXT);
       if (job.step.shouldStopOnFail || this.shouldBackoff(error)) {

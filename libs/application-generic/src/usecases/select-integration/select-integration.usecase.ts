@@ -13,6 +13,10 @@ import { CachedQuery } from '../../services/cache/interceptors/cached-query.inte
 import { buildIntegrationKey } from '../../services/cache/key-builders/queries';
 import { GetDecryptedIntegrations } from '../get-decrypted-integrations';
 import { ConditionsFilterCommand } from '../conditions-filter';
+import {
+  NormalizeVariables,
+  NormalizeVariablesCommand,
+} from '../normalize-variables';
 
 const LOG_CONTEXT = 'SelectIntegration';
 
@@ -20,9 +24,9 @@ const LOG_CONTEXT = 'SelectIntegration';
 export class SelectIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
-    protected getDecryptedIntegrationsUsecase: GetDecryptedIntegrations,
     protected conditionsFilter: ConditionsFilter,
-    private tenantRepository: TenantRepository
+    private tenantRepository: TenantRepository,
+    private normalizeVariablesUsecase: NormalizeVariables
   ) {}
 
   @CachedQuery({
@@ -64,15 +68,25 @@ export class SelectIntegration {
           continue;
         }
 
-        const { passed } = await this.conditionsFilter.filter(
-          ConditionsFilterCommand.create({
-            filters: currentIntegration.conditions,
+        const variables = await this.normalizeVariablesUsecase.execute(
+          NormalizeVariablesCommand.create({
+            filters: currentIntegration.conditions || [],
             environmentId: command.environmentId,
             organizationId: command.organizationId,
             userId: command.userId,
             variables: {
               tenant,
             },
+          })
+        );
+
+        const { passed } = await this.conditionsFilter.filter(
+          ConditionsFilterCommand.create({
+            filters: currentIntegration.conditions,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            userId: command.userId,
+            variables,
           })
         );
 
