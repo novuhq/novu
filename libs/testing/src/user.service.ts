@@ -16,7 +16,7 @@ export class UserService {
       email: faker.internet.email(),
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
-      password: '123qwe!@#',
+      password: this.randomPassword(),
     });
 
     const organization = await this.organizationService.createOrganization();
@@ -55,5 +55,14 @@ export class UserService {
     }
 
     return user;
+  }
+
+  randomEmail(): string {
+    return faker.internet.email();
+  }
+
+  // Not so random, but meets the password policy requirements
+  randomPassword(): string {
+    return 'asd#Faf4fd';
   }
 }

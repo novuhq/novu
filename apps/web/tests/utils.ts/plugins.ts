@@ -152,6 +152,10 @@ export async function createNotifications({
   return 'ok';
 }
 
+/*
+ * Use only before or afte the suite execution. Do not drop the database in tests as
+ * it will break parallel test runs.
+ */
 export async function dropDatabase() {
   const dal = new DalService();
   await dal.connect(process.env.MONGODB_URL ?? '');
@@ -160,13 +164,21 @@ export async function dropDatabase() {
   return true;
 }
 
-export async function seedDatabase(): Promise<UserEntity> {
+export async function createUser(): Promise<UserEntity> {
   const dal = new DalService();
   await dal.connect(process.env.MONGODB_URL ?? '');
 
   const userService = new UserService();
 
   return await userService.createTestUser();
+}
+
+export function randomEmail() {
+  return new UserService().randomEmail();
+}
+
+export function randomPassword() {
+  return new UserService().randomPassword();
 }
 
 export async function addOrganization(userId: string) {

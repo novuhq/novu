@@ -12,11 +12,6 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('should display subscribers page', async ({ page }) => {
-  const subscribersPage = await SubscribersPage.goTo(page);
-  await subscribersPage.assertSubscribersPageIsVisible();
-});
-
 test('should display subscribers list', async ({ page }) => {
   const subscribersPage = await SubscribersPage.goTo(page);
   await subscribersPage.assertSubscribersPageIsVisible();

@@ -6,19 +6,18 @@ import { SidebarPage } from './page-models/sidebarPage';
 import { SignUpPage } from './page-models/signupPage';
 import { initializeSession } from './utils.ts/browser';
 import { logout } from './utils.ts/commands';
-import { dropDatabase, inviteUser, SessionData } from './utils.ts/plugins';
-
-test.describe.configure({ mode: 'serial' });
-
-export const TestUserConstants = {
-  Email: 'testing-amazing@user.com',
-  Password: 'asd#Faf4fd',
-};
+import { createUser, randomEmail, randomPassword } from './utils.ts/plugins';
+import { inviteUser, SessionData } from './utils.ts/plugins';
 
 let session: SessionData;
 
+let testUser;
+
+test.beforeAll(async () => {
+  testUser = await createUser();
+});
+
 test.beforeEach(async ({ page }) => {
-  await dropDatabase();
   const { featureFlagsMock, session: newSession } = await initializeSession(page);
   session = newSession;
   featureFlagsMock.setFlagsToMock({
@@ -31,54 +30,44 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-// This is flaky in Github actions but passeslocally
 test('invite a new user to the organization', async ({ context, page }) => {
-  const newSession = await inviteUser(session, TestUserConstants.Email);
+  const inviteeEmail = randomEmail();
+  const invitation = await inviteUser(session, inviteeEmail);
   await logout(page, session);
-  await registerFromInvitation(page, newSession.token);
 
-  /*
-   * const headerPage = await HeaderPage.goTo(page);
-   * await headerPage.clickAvatar();
-   * const orgName = headerPage.getOrganizationName();
-   * expect(orgName).toContainText(newSession.organization.name, { ignoreCase: true });
-   */
+  await page.goto(`/auth/invitation/${invitation.token}`);
+
+  const signUpPage = new SignUpPage(page);
+  await signUpPage.getFullNameLocator().fill('Invited User');
+  await signUpPage.getPasswordLocator().fill(randomPassword());
+  await signUpPage.getAcceptTermsAndConditionsCheckMark().click();
+  await signUpPage.clickSignUpButton();
+
+  await signUpPage.assertNavigationPath('/auth/application');
+  await signUpPage.fillUseCaseData();
+  await signUpPage.clickGetStartedButton();
+
+  await signUpPage.assertNavigationPath('/get-started**');
 
   const sidebarPage = await SidebarPage.goTo(page);
   const orgSwitchValue = (await sidebarPage.getOrganizationSwitch().inputValue()).toLowerCase();
-  expect(orgSwitchValue).toBe(newSession.organization.name.toLowerCase());
+  expect(orgSwitchValue).toBe(invitation.organization.name.toLowerCase());
 });
 
-test.skip('invite an existing user to the organization', async ({ context, page }) => {
-  const newUserOne = await inviteUser(session, TestUserConstants.Email);
+test('invite an existing user to the organization', async ({ context, page }) => {
+  const invitation = await inviteUser(session, testUser.email);
   await logout(page, session);
-  await registerFromInvitation(page, newUserOne.token);
 
-  const { session: newSession } = await initializeSession(page, {
-    overrideSessionOptions: { page, singleTokenInjection: true },
-  });
-  const newUserTwo = await inviteUser(newSession, TestUserConstants.Email);
-  await logout(page, session);
-  await page.goto(`/auth/invitation/${newUserTwo.token}`);
+  await page.goto(`/auth/invitation/${invitation.token}`);
 
   const loginPage = new AuthLoginPage(page);
-  await expect(loginPage.getEmailLocator()).toHaveValue(TestUserConstants.Email);
-  await loginPage.setPasswordTo('asd#Faf4fd');
+  await expect(loginPage.getEmailLocator()).toHaveValue(testUser.email);
+  await loginPage.setPasswordTo(randomPassword());
   await loginPage.clickSignInButton();
 
   await new HeaderPage(page).clickAvatar();
   const orgSwitch = new SidebarPage(page).getOrganizationSwitch();
   await orgSwitch.focus();
-  const orgOptions = orgSwitch.page().getByRole('option', { name: newUserTwo.organization.name });
+  const orgOptions = orgSwitch.page().getByRole('option', { name: invitation.organization.name });
   await expect(orgOptions).toBeVisible();
 });
-
-async function registerFromInvitation(page: Page, token: string) {
-  await page.goto(`/auth/invitation/${token}`);
-  const singUpPage = new SignUpPage(page);
-  await singUpPage.getFullNameLocator().fill('Invited User');
-  await singUpPage.getPasswordLocator().fill(TestUserConstants.Password);
-  await singUpPage.getAcceptTermsAndConditionsCheckMark().click();
-  await singUpPage.clickSignUpButton();
-  await expect(page).toHaveURL(/\/workflows/);
-}

@@ -5,15 +5,15 @@ import { PasswordResetPage } from './page-models/passwordResetPage';
 import { SignUpPage } from './page-models/signupPage';
 import { assertPageShowsMessage, initializeSession } from './utils.ts/browser';
 import { faker } from '@faker-js/faker';
-import { dropDatabase, seedDatabase } from './utils.ts/plugins';
+import { createUser, randomPassword } from './utils.ts/plugins';
 import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
 
-let knownTestUser;
+let testUser;
 
 test.beforeAll(async () => {
-  await dropDatabase();
-  knownTestUser = await seedDatabase();
+  testUser = await createUser();
 });
+
 test.beforeEach(async ({ page }) => {
   const featureFlagsMock = new FeatureFlagsMock(page);
   featureFlagsMock.setFlagsToMock({
@@ -39,7 +39,7 @@ test('should allow a visitor to sign-up and login', async ({ page }) => {
 
 test('should show account already exists when signing up with already registered mail', async ({ page }) => {
   const signUpPage = await SignUpPage.goTo(page);
-  await signUpPage.fillSignUpData({ email: knownTestUser.email });
+  await signUpPage.fillSignUpData({ email: testUser.email });
   await signUpPage.clickSignUpButton();
   await assertPageShowsMessage(page, 'An account with this email already exists');
 });
@@ -80,14 +80,14 @@ test('should be redirect login with no auth', async ({ page }) => {
 
 test('should successfully login the user', async ({ page }) => {
   const authLoginPage = await AuthLoginPage.goTo(page);
-  await authLoginPage.fillLoginForm({ email: knownTestUser.email, password: '123qwe!@#' });
+  await authLoginPage.fillLoginForm({ email: testUser.email, password: randomPassword() });
   await authLoginPage.clickSignInButton();
   await authLoginPage.assertNavigationPath('/workflows**');
 });
 
 test('should show incorrect email or password error when authenticating with bad credentials', async ({ page }) => {
   const authLoginPage = await AuthLoginPage.goTo(page);
-  await authLoginPage.fillLoginForm({ email: knownTestUser.email, password: 'bad_PASSWORD_v4|_ue' });
+  await authLoginPage.fillLoginForm({ email: testUser.email, password: 'bad_PASSWORD_v4|_ue' });
   await authLoginPage.clickSignInButton();
   await assertPageShowsMessage(page, 'Incorrect email or password provided');
 });
@@ -111,8 +111,8 @@ test('should show incorrect email or password error when authenticating with non
 
 test('should logout user when auth token is expired', async ({ page }) => {
   const authLoginPage = await AuthLoginPage.goTo(page);
-  await authLoginPage.setEmailTo(knownTestUser.email);
-  await authLoginPage.setPasswordTo('123qwe!@#');
+  await authLoginPage.setEmailTo(testUser.email);
+  await authLoginPage.setPasswordTo(randomPassword());
   await authLoginPage.clickSignInButton();
   await authLoginPage.passAuthTokenExpirationTime();
   await page.goto('/subscribers');
