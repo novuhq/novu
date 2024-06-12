@@ -1,6 +1,6 @@
 {
   "name": "@novu/webhook",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "description": "",
   "author": "",
   "private": true,
@@ -17,7 +17,6 @@
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts src/**/**/*.spec.ts",
     "test:e2e": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file e2e/setup.ts e2e/**/*.e2e.ts src/**/*.e2e.ts"
   },
   "dependencies": {
@@ -26,11 +25,11 @@
     "@nestjs/core": "^10.2.2",
     "@nestjs/platform-express": "^10.2.2",
     "@nestjs/terminus": "^10.0.1",
-    "@novu/application-generic": "^0.24.1",
-    "@novu/dal": "^0.24.1",
-    "@novu/shared": "^0.24.1",
-    "@novu/stateless": "^0.24.1",
-    "@novu/testing": "^0.24.1",
+    "@novu/application-generic": "workspace:*",
+    "@novu/dal": "workspace:*",
+    "@novu/shared": "workspace:*",
+    "@novu/stateless": "workspace:*",
+    "@novu/testing": "workspace:*",
     "@sentry/node": "^7.66.0",
     "axios": "^1.6.2",
     "class-transformer": "^0.5.1",

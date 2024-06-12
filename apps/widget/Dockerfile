@@ -2,7 +2,7 @@ FROM node:20-alpine3.19
 ENV NX_DAEMON=false
 
 RUN apk add --no-cache bash g++ make py3-pip
-RUN npm install -g pnpm@8.9.0 --loglevel notice
+RUN npm install -g pnpm@9.1.4 --loglevel notice
 
 USER 1000
 WORKDIR /usr/src/app

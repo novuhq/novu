@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-billing",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -13,14 +13,14 @@
     "start:proxy": "ngrok http http://localhost:3000"
   },
   "dependencies": {
-    "@nestjs/swagger": "^7.1.8",
-    "@nestjs/throttler": "^5.0.1",
-    "@novu/application-generic": "^0.24.1",
-    "@novu/ee-dal": "^0.24.1",
-    "@novu/shared": "^0.24.1",
+    "@novu/application-generic": "workspace:*",
+    "@novu/ee-dal": "workspace:*",
+    "@novu/shared": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "date-fns": "^2.29.2",
+    "mongoose": "^7.5.0",
+    "rxjs": "7.8.1",
     "shortid": "^2.2.16",
     "slugify": "^1.4.6",
     "stripe": "^11.18.0",
@@ -41,8 +41,11 @@
   },
   "peerDependencies": {
     "@nestjs/common": "10.2.2",
+    "@nestjs/core": "^10.2.2",
     "@nestjs/jwt": "10.2.0",
     "@nestjs/platform-express": "^10.2.2",
-    "@novu/dal": "^0.24.1"
+    "@nestjs/swagger": "^7.1.8",
+    "@nestjs/throttler": "^5.0.1",
+    "@novu/dal": "workspace:*"
   }
 }

@@ -2,7 +2,7 @@ import { type IIconProps, IconConstruction, IconRocketLaunch } from '@novu/desig
 import { useEnvController, ROUTES, BaseEnvironmentEnum } from '@novu/shared-web';
 import { useState } from 'react';
 import { type ISelectProps } from '@novu/design-system';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { matchPath, useLocation, useMatch, useNavigate } from 'react-router-dom';
 
 const ENVIRONMENT_ICON_LOOKUP: Record<BaseEnvironmentEnum, React.ReactElement<IIconProps>> = {
   [BaseEnvironmentEnum.DEVELOPMENT]: <IconConstruction />,
@@ -11,9 +11,7 @@ const ENVIRONMENT_ICON_LOOKUP: Record<BaseEnvironmentEnum, React.ReactElement<II
 
 export const useEnvironmentSelect = () => {
   const [isPopoverOpened, setIsPopoverOpened] = useState<boolean>(false);
-
   const location = useLocation();
-  const navigate = useNavigate();
 
   const { setEnvironment, isLoading, environment, readonly } = useEnvController({
     onSuccess: (newEnvironment) => {
@@ -34,11 +32,11 @@ export const useEnvironmentSelect = () => {
 
     /*
      * this navigates users to the "base" page of the application to avoid sub-pages opened with data from other
-     * environments.
+     * environments -- unless the path itself is based on a specific environment (e.g. API Keys)
      */
     const urlParts = location.pathname.replace('/', '').split('/');
-    const baseRoute = urlParts[0];
-    await setEnvironment(value as BaseEnvironmentEnum, { route: baseRoute });
+    const redirectRoute: string | undefined = checkIfEnvBasedRoute() ? undefined : urlParts[0];
+    await setEnvironment(value as BaseEnvironmentEnum, { route: redirectRoute });
   };
 
   return {
@@ -56,3 +54,8 @@ export const useEnvironmentSelect = () => {
     handlePopoverLinkClick,
   };
 };
+
+/** Determine if the current pathname is dependent on the current env */
+function checkIfEnvBasedRoute() {
+  return [ROUTES.API_KEYS, ROUTES.WEBHOOK].some((route) => matchPath(route, window.location.pathname));
+}

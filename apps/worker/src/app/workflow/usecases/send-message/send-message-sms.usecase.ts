@@ -80,16 +80,21 @@ export class SendMessageSms extends SendMessageBase {
 
     const { subscriber } = command.compileContext;
     const template = await this.processVariants(command);
-    await this.initiateTranslations(command.environmentId, command.organizationId, subscriber.locale);
+    const i18nextInstance = await this.initiateTranslations(
+      command.environmentId,
+      command.organizationId,
+      subscriber.locale
+    );
 
     if (template) {
       step.template = template;
     }
 
-    let content: string | null = '';
+    const bridgeBody = command.bridgeData?.outputs.body;
+    let content: string = bridgeBody || '';
 
     try {
-      if (!command.chimeraData) {
+      if (!command.bridgeData) {
         content = await this.compileTemplate.execute(
           CompileTemplateCommand.create({
             template: step.template.content as string,
@@ -265,7 +270,7 @@ export class SendMessageSms extends SendMessageBase {
     overrides: Record<string, any> = {}
   ) {
     try {
-      const chimeraBody = command.chimeraData?.outputs.body;
+      const bridgeBody = command.bridgeData?.outputs.body;
 
       const smsFactory = new SmsFactory();
       const smsHandler = smsFactory.getHandler(this.buildFactoryIntegration(integration));
@@ -276,7 +281,7 @@ export class SendMessageSms extends SendMessageBase {
       const result = await smsHandler.send({
         to: overrides.to || phone,
         from: overrides.from || integration.credentials.from,
-        content: chimeraBody || overrides.content || content,
+        content: bridgeBody || overrides.content || content,
         id: message._id,
         customData: overrides.customData || {},
       });
@@ -313,8 +318,7 @@ export class SendMessageSms extends SendMessageBase {
         'unexpected_sms_error',
         e.message || e.name || 'Un-expect SMS provider error',
         command,
-        LogCodeEnum.SMS_ERROR,
-        e
+        LogCodeEnum.SMS_ERROR
       );
 
       await this.executionLogRoute.execute(
@@ -326,7 +330,7 @@ export class SendMessageSms extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({ message: e.message, name: e.name }),
+          raw: JSON.stringify({ message: e?.response?.data || e.message, name: e.name }),
         })
       );
     }

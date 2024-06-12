@@ -1,6 +1,6 @@
 {
   "name": "@novu/notification-center-angular",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "peerDependencies": {
     "@angular/common": "^15.0.0 || ^16.0.0 || ^17.0.0",
     "@angular/core": "^15.0.0 || ^16.0.0 || ^17.0.0",
@@ -8,10 +8,10 @@
     "@angular/platform-browser-dynamic": "^15.0.0 || ^16.0.0 || ^17.0.0"
   },
   "dependencies": {
-    "@novu/notification-center": "^0.24.1",
-    "@types/react": "^17.0.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "@novu/notification-center": "workspace:*",
+    "@types/react": "^18.3.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tslib": "^2.3.0"
   },
   "files": [

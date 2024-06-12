@@ -1,11 +1,287 @@
 name: Rollback
+run-name: Rollback the ${{ inputs.service }} service in the ${{ inputs.environment }} environment
 
 on:
   workflow_dispatch:
+    inputs:
+      service:
+        type: choice
+        description: Select service to rollback.
+        options:
+          - inbound_mail
+          - api
+          - web
+          - webhook
+          - widget
+          - worker
+          - ws
+      environment:
+        type: choice
+        description: Select the environment
+        options:
+          - Production
+          - Development
+      region:
+        type: choice
+        description: Select the environment region. Required only in production.
+        options:
+          - [EU,US]
+          - [EU]
+          - [US]
+      mode:
+        type: choice
+        description: The Rollback mode. You can roll back to the previously deployed version or to the version that has the current commit hash of this branch in an image tag name or a deployment info.
+        options:
+          - Previous Version
+          - Commit Hash
 
 jobs:
   ecs:
+    if: contains(fromJson('["api", "inbound_mail", "webhook", "worker", "ws"]'), github.event.inputs.service)
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        region: ${{ fromJSON(github.event.inputs.region) }}
     timeout-minutes: 60
+    environment: ${{ github.event.inputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
     steps:
-      - run: echo "Rolling back"
+      - run: echo "Rolling back ${{ github.event.inputs.service }} in ${{ github.event.inputs.environment }}"
+
+      - id: commit
+        if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
+        uses: prompt/actions-commit-hash@v3
+
+      - name: Prepare variables
+        id: variables
+        run: |
+          if [[ "${{ matrix.region }}" == "EU" && "${{ github.event.inputs.environment }}" == "Production" ]]; then
+            echo "Using Terraform Workspace: novu-prod-eu"
+            echo "TF_WORKSPACE=novu-prod-eu" >> $GITHUB_ENV
+          elif [[ "${{ matrix.region }}" == "US" && "${{ github.event.inputs.environment }}" == "Production" ]]; then
+            echo "Using Terraform Workspace: novu-prod"
+            echo "TF_WORKSPACE=novu-prod" >> $GITHUB_ENV
+          elif [[ "${{ matrix.region }}" == "EU" && "${{ github.event.inputs.environment }}" == "Development" ]]; then
+            echo "Using Terraform Workspace: novu-dev"
+            echo "TF_WORKSPACE=novu-dev" >> $GITHUB_ENV
+          elif [[ "${{ matrix.region }}" == "US" && "${{ github.event.inputs.environment }}" == "Development" ]]; then
+            echo "Using Terraform Workspace: novu-dev"
+            echo "TF_WORKSPACE=novu-dev" >> $GITHUB_ENV
+            echo "Error: Development environment doesn't exist in the US region." >&2
+            exit 1
+          else
+            echo "Using Terraform Workspace: novu-dev"
+            echo "TF_WORKSPACE=novu-dev" >> $GITHUB_ENV
+          fi
+
+      - name: Checkout cloud infra
+        uses: actions/checkout@master
+        with:
+          repository: novuhq/cloud-infra
+          token: ${{ secrets.GH_PACKAGES }}
+          path: cloud-infra
+
+      - name: Terraform setup
+        uses: hashicorp/setup-terraform@v3
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_version: 1.5.5
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: cloud-infra/terraform/novu/aws
+        run: terraform init
+
+      - name: Terraform get output
+        working-directory: cloud-infra/terraform/novu/aws
+        id: terraform
+        env:
+          SERVICE_NAME: ${{ github.event.inputs.service }}
+        run: |
+          echo "ecs_container_name=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_container_name | jq -r .)" >> $GITHUB_ENV
+          echo "ecs_service=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_service | jq -r .)" >> $GITHUB_ENV
+          echo "ecs_cluster=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_cluster | jq -r .)" >> $GITHUB_ENV
+          echo "task_name=$(terraform output -json ${{ env.SERVICE_NAME }}_task_name | jq -r .)" >> $GITHUB_ENV
+          echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_ENV
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.aws_region }}
+
+      - name: ECS get output
+        if: contains(fromJson('["Previous Version"]'), github.event.inputs.mode)
+        id: ecs-output
+        run: |
+          echo "Retrieving current_task_definition_arn..."
+          current_task_definition_arn=$(aws ecs describe-services --cluster ${{ env.ecs_cluster }} --services ${{ env.ecs_service }} --query 'services[0].taskDefinition' --output text)
+          echo "current_task_definition_arn=$current_task_definition_arn" >> $GITHUB_ENV
+          
+          echo "Retrieving task_definition_family..."
+          task_definition_family=$(aws ecs describe-task-definition --task-definition ${{ env.task_name }} --query 'taskDefinition.family' --output text)
+          echo "task_definition_family=$task_definition_family" >> $GITHUB_ENV
+          
+          echo "Retrieving task_definition_list..."
+          task_definition_list=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --output text --sort DESC | grep 'TASKDEFINITIONARNS' | cut -f 2)
+          task_definition_list_formatted=$(echo "$task_definition_list" | tr '\n' '|')  # Replace newline with '|'
+          echo "task_definition_list=$task_definition_list_formatted" >> $GITHUB_ENV
+
+          if [ -n "$task_definition_list" ]; then
+            echo "Retrieving previous_task_definition_arn..."
+            index=$(echo "$task_definition_list" | grep -n "$current_task_definition_arn" | cut -d ':' -f 1)
+            if [ -n "$index" ]; then
+              if [ "$index" -ge 1 ]; then  # Greater than or equal to 1
+                previous_index=$((index + 1))
+                previous_task_definition_arn=$(echo "$task_definition_list" | sed -n "${previous_index}p")
+                echo "previous_task_definition_arn=$previous_task_definition_arn" >> $GITHUB_ENV
+              else
+                echo "Invalid index value: $index"
+              fi
+            else
+              echo "Previous task definition not found. It seems to me someone deleted the current task from the list and that is why I can't find the previous task."
+              exit 1
+            fi
+          else
+            echo "No task definitions found."
+            exit 1
+          fi
+
+      - name: ECS get output by using commit hash
+        if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
+        id: ecs-output-commit-hash
+        env:
+          IMAGE_TAG: ${{ steps.commit.outputs.hash }}
+        run: |
+          task_definition_family=$(aws ecs describe-task-definition --task-definition ${{ env.task_name }} --query 'taskDefinition.family' --output text)
+          task_definition_arns=$(aws ecs list-task-definitions --family-prefix "${task_definition_family}" --query 'taskDefinitionArns' --output text --sort DESC)
+          found=false
+          for arn in $(echo "$task_definition_arns" | tr '\t' '\n' | head -n 20); do
+            task_definition=$(aws ecs describe-task-definition --task-definition $arn)
+            if echo "$task_definition" | grep -q "$IMAGE_TAG"; then
+              echo "Found task definition with image tag $IMAGE_TAG: $arn"
+              found=true
+              needed_arn=$arn
+              break
+            fi
+          done
+          if [ "$found" = false ]; then
+            echo "Error: Task definition with image tag $IMAGE_TAG not found within the last 20 tasks."
+            exit 1
+          fi
+          current_task_definition_arn=$(aws ecs describe-services --cluster ${{ env.ecs_cluster }} --services ${{ env.ecs_service }} --query 'services[0].taskDefinition' --output text)
+          echo "current_task_definition_arn=$current_task_definition_arn" >> $GITHUB_ENV
+          echo "previous_task_definition_arn=$needed_arn" >> $GITHUB_ENV
+          echo "Your task definition ARN is $needed_arn"
+
+
+      - name: Rollback a service to the previous task definition
+        id: rollback
+        env:
+          PREVIOUS_TASK: ${{ env.previous_task_definition_arn }}
+          CURRENT_TASK: ${{ env.current_task_definition_arn }}
+        run: |
+          aws ecs update-service --cluster ${{ env.ecs_cluster }} --service ${{ env.ecs_service }} --task-definition ${{ env.PREVIOUS_TASK }}
+          aws ecs wait services-stable --cluster ${{ env.ecs_cluster }} --service ${{ env.ecs_service }}
+          echo "After Rollback:"
+          echo "The previous task definition: $(echo $CURRENT_TASK | awk -F'task-definition/' '{print $2}')"
+          echo "The current task definition: $(echo $PREVIOUS_TASK | awk -F'task-definition/' '{print $2}')"
+
+
+  netlify:
+    if: contains(fromJson('["web", "widget"]'), github.event.inputs.service)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        region: ${{ fromJSON(github.event.inputs.region) }}
+    timeout-minutes: 60
+    environment: ${{ github.event.inputs.environment }}
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+    env:
+      NETLIFY_ACCESS_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+    steps:
+      - run: echo "Rolling back ${{ github.event.inputs.service }} in ${{ github.event.inputs.environment }}"
+
+      - id: commit-netlify
+        if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
+        uses: prompt/actions-commit-hash@v3
+
+      - name: Prepare variables
+        id: variables
+        run: |
+          if [[ "${{ github.event.inputs.service }}" == "widget" && "${{ github.event.inputs.environment }}" == "Development" && "${{ matrix.region }}" == "EU" ]]; then
+            echo "Using netlify_site_id: b9147448-b835-4eb1-a2f0-11102f611f5f"
+            echo "netlify_site_id=b9147448-b835-4eb1-a2f0-11102f611f5f" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.service }}" == "web" && "${{ github.event.inputs.environment }}" == "Development" && "${{ matrix.region }}" == "EU" ]]; then
+            echo "Using netlify_site_id: 45396446-dc86-4ad6-81e4-86d3eb78d06f"
+            echo "netlify_site_id=45396446-dc86-4ad6-81e4-86d3eb78d06f" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.environment }}" == "Development" && "${{ matrix.region }}" == "US" ]]; then
+            echo "Error: Development environment doesn't exist in the US region." >&2
+            exit 1
+          elif [[ "${{ github.event.inputs.service }}" == "web" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "EU" ]]; then
+            echo "Using netlify_site_id: d2e8b860-7016-4202-9256-ebca0f13259a"
+            echo "netlify_site_id=d2e8b860-7016-4202-9256-ebca0f13259a" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.service }}" == "web" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "US" ]]; then
+            echo "Using netlify_site_id: 8639d8b9-81f9-44c3-b885-585a7fd2b5ff"
+            echo "netlify_site_id=8639d8b9-81f9-44c3-b885-585a7fd2b5ff" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.service }}" == "widget" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "EU" ]]; then
+            echo "Using netlify_site_id: 20a64bdd-1934-4284-875f-862410c69a3b"
+            echo "netlify_site_id=20a64bdd-1934-4284-875f-862410c69a3b" >> $GITHUB_ENV
+          elif [[ "${{ github.event.inputs.service }}" == "widget" && "${{ github.event.inputs.environment }}" == "Production" && "${{ matrix.region }}" == "US" ]]; then
+            echo "Using netlify_site_id: 6f927fd4-dcb0-4cf3-8c0b-8c5539d0d034"
+            echo "netlify_site_id=6f927fd4-dcb0-4cf3-8c0b-8c5539d0d034" >> $GITHUB_ENV
+          fi
+
+      - name: Get Current Deploy ID
+        if: contains(fromJson('["Previous Version"]'), github.event.inputs.mode)
+        id: get_current_deploy
+        env:
+          NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
+        run: |
+          response=$(curl -s -H "Authorization: Bearer $NETLIFY_ACCESS_TOKEN" "https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}")
+          current_deploy_id=$(echo "$response" | jq -r '.published_deploy.id')
+          echo "current_deploy_id=$current_deploy_id" >> $GITHUB_ENV
+
+      - name: Find Previous Production Deployments and Determine Previous Deploy ID
+        if: contains(fromJson('["Previous Version"]'), github.event.inputs.mode)
+        id: previous_deploy_id
+        env:
+          NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
+        run: |
+          response=$(curl -s -H "Authorization: Bearer $NETLIFY_ACCESS_TOKEN" "https://api.netlify.com/api/v1/sites/${NETLIFY_SITE_ID}/deploys?per_page=100")
+          deploy_ids=$(echo "$response" | jq -r '.[] | select(.context == "production" and .state == "ready" and .published_at != null) | .id' | sort)
+          current_index=$(echo "$deploy_ids" | grep -n "$current_deploy_id" | cut -d ":" -f 1)
+          previous_index=$((current_index - 1))
+          previous_deploy_id=$(echo "$deploy_ids" | sed "${previous_index}q;d")
+          echo "previous_deploy_id=$previous_deploy_id" >> $GITHUB_ENV
+
+      - name: Determine Previous Deploy ID
+        if: contains(fromJson('["Commit Hash"]'), github.event.inputs.mode)
+        env:
+          NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
+          COMMIT_REF: ${{ steps.commit-netlify.outputs.hash }}
+        run: |
+          response=$(curl -s -H "Authorization: Bearer $NETLIFY_ACCESS_TOKEN" "https://api.netlify.com/api/v1/sites/$NETLIFY_SITE_ID/deploys")
+          deploy_id=$(echo "$response" | jq -r ".[] | select(.commit_ref == \"$COMMIT_REF\") | .id")
+          if [ -n "$deploy_id" ]; then
+              echo "Deploy ID for commit $COMMIT_REF: $deploy_id"
+              echo "previous_deploy_id=$deploy_id" >> $GITHUB_ENV
+          else
+              echo "Deploy not found for commit $COMMIT_REF"
+              exit 1
+          fi
+
+      - name: Rollback to Previous Deploy
+        if: env.previous_deploy_id != null
+        env:
+          NETLIFY_SITE_ID: ${{ env.netlify_site_id }}
+        run: |
+          echo "Restoring previous deploy..."
+          curl -X POST -H "Authorization: Bearer $NETLIFY_ACCESS_TOKEN" "https://api.netlify.com/api/v1/sites/${{ env.netlify_site_id }}/deploys/${{ env.previous_deploy_id }}/restore"

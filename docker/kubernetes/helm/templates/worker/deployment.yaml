@@ -124,33 +124,44 @@ spec:
                 secretKeyRef:
                   name: {{ include "novu.mongodb.secretName" .}}
                   key: mongoUrl
+            {{- if eq .Values.externalS3.storageService "GCS" }}
+            - name: STORAGE_SERVICE
+              value: {{ .Values.externalS3.storageService | quote }}
+            - name: GCS_DOMAIN
+              value: {{ .Values.externalS3.gcsDomain | quote }}
+            - name: GCS_BUCKET_NAME
+              value: {{ .Values.externalS3.gcsBucketName | quote }}
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: {{ .Values.externalS3.googleApplicationCredentials | quote }}
+            {{- else }}
             - name: S3_BUCKET_NAME
               valueFrom :
-               secretKeyRef:
+                secretKeyRef:
                   name: {{ include "novu.s3.secretName" . }}
                   key: bucketName
             - name: S3_REGION
               valueFrom :
-               secretKeyRef:
+                secretKeyRef:
                   name: {{ include "novu.s3.secretName" . }}
                   key: region
             - name: AWS_ACCESS_KEY_ID
               valueFrom :
-               secretKeyRef:
+                secretKeyRef:
                   name: {{ include "novu.s3.secretName" . }}
                   key: accessKey
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom :
-               secretKeyRef:
+                secretKeyRef:
                   name: {{ include "novu.s3.secretName" . }}
                   key: secretKey
+            {{- end }}
             - name: STORE_ENCRYPTION_KEY
               valueFrom :
-               secretKeyRef:
-                  name: {{ include "common.names.fullname" . }}
+                secretKeyRef:
+                  name: {{ if .Values.existingSecret -}} {{ .Values.existingSecret }} {{- else -}} {{ include "common.names.fullname" . }} {{- end }}
                   key: store-encryption-key
-            {{- if .Values.api.extraEnvVars }}
-            {{- include "common.tplvalues.render" (dict "value" .Values.api.extraEnvVars "context" $) | nindent 12 }}
+            {{- if .Values.worker.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.worker.extraEnvVars "context" $) | nindent 12 }}
             {{- end }}
           envFrom:
             {{- if .Values.worker.extraEnvVarsCM }}

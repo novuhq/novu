@@ -6,9 +6,9 @@ import {
   Param,
   Post,
   UseGuards,
+  Headers,
   UseInterceptors,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
 import {
   ApiRateLimitCostEnum,
   IBulkInviteResponse,
@@ -20,7 +20,7 @@ import { UserSession } from '../shared/framework/user.decorator';
 import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
 import { AcceptInviteCommand } from './usecases/accept-invite/accept-invite.command';
 import { Roles } from '../auth/framework/roles.decorator';
-import { InviteMemberDto } from './dtos/invite-member.dto';
+import { InviteMemberDto, InviteWebhookDto } from './dtos/invite-member.dto';
 import { InviteMemberCommand } from './usecases/invite-member/invite-member.command';
 import { BulkInviteMembersDto } from './dtos/bulk-invite-members.dto';
 import { BulkInviteCommand } from './usecases/bulk-invite/bulk-invite.command';
@@ -35,6 +35,8 @@ import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UserAuthGuard } from '../auth/framework/user.auth.guard';
+import { InviteNudgeWebhookCommand } from './usecases/invite-nudge/invite-nudge.command';
+import { InviteNudgeWebhook } from './usecases/invite-nudge/invite-nudge.usecase';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiCommonResponses()
@@ -47,7 +49,8 @@ export class InvitesController {
     private bulkInviteUsecase: BulkInvite,
     private acceptInviteUsecase: AcceptInvite,
     private getInvite: GetInvite,
-    private resendInviteUsecase: ResendInvite
+    private resendInviteUsecase: ResendInvite,
+    private inviteNudgeWebhookUsecase: InviteNudgeWebhook
   ) {}
 
   @Get('/:inviteToken')
@@ -126,6 +129,19 @@ export class InvitesController {
     });
 
     const response = await this.bulkInviteUsecase.execute(command);
+
+    return response;
+  }
+
+  @Post('/webhook')
+  async inviteCheckWebhook(@Headers('nv-hmac-256') hmacHeader: string, @Body() body: InviteWebhookDto) {
+    const command = InviteNudgeWebhookCommand.create({
+      hmacHeader,
+      subscriber: body.subscriber,
+      organizationId: body.payload.organizationId,
+    });
+
+    const response = await this.inviteNudgeWebhookUsecase.execute(command);
 
     return response;
   }

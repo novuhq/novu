@@ -10,3 +10,5 @@ export * from './topic';
 export * from './workflows';
 export * from './tenant';
 export * from './workflow-override';
+export * from './widget';
+export * from './session';

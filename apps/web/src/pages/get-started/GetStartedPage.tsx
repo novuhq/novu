@@ -1,25 +1,32 @@
 import { Center, Loader } from '@mantine/core';
 import { colors } from '@novu/design-system';
+import { useAuth, useSegment } from '@novu/shared-web';
+import { useEffect } from 'react';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { useAuthContext } from '../../components/providers/AuthProvider';
 import { usePageViewTracking } from '../../hooks/usePageViewTracking';
-import { GetStartedTabs } from './components/get-started-tabs/GetStartedTabs';
-import { useGetStartedTabs } from './components/get-started-tabs/useGetStartedTabs';
+import { css } from '@novu/novui/css';
+import { EchoTab } from './components/get-started-tabs/EchoTab';
 
 const PAGE_TITLE = 'Get started';
 
 export function GetStartedPage() {
-  const { currentOrganization } = useAuthContext();
-  const { currentTab, setTab } = useGetStartedTabs();
+  const { currentOrganization } = useAuth();
+  const segment = useSegment();
 
   usePageViewTracking();
+
+  useEffect(() => {
+    segment.track('Page visit - [Get Started]');
+  }, [segment]);
 
   return (
     <PageContainer title={PAGE_TITLE}>
       <PageHeader title={PAGE_TITLE} />
       {currentOrganization ? (
-        <GetStartedTabs currentTab={currentTab} setTab={setTab} />
+        <EchoTab
+          className={css({ marginTop: '-100', paddingLeft: '150', paddingRight: '150', paddingBottom: '100' })}
+        />
       ) : (
         <Center>
           <Loader color={colors.error} size={32} />

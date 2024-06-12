@@ -6,6 +6,9 @@ import {
   EmailBlockTypeEnum,
   MessageActionStatusEnum,
   TextAlignEnum,
+  IMessage,
+  IMessageCTA,
+  IMessageAction,
 } from '@novu/shared';
 import { SubscriberResponseDto } from '../../subscribers/dtos';
 import { WorkflowResponse } from '../../workflows/dto/workflow-response.dto';
@@ -17,7 +20,7 @@ class EmailBlockStyles {
   textAlign?: TextAlignEnum;
 }
 
-class EmailBlock {
+export class EmailBlock {
   @ApiProperty({
     enum: ['text', 'button'],
   })
@@ -52,7 +55,7 @@ class MessageButton {
   resultContent?: string;
 }
 
-class MessageAction {
+class MessageAction implements IMessageAction {
   @ApiPropertyOptional({
     enum: MessageActionStatusEnum,
   })
@@ -67,7 +70,7 @@ class MessageAction {
   @ApiPropertyOptional({
     type: MessageActionResult,
   })
-  result?: MessageActionResult;
+  result: MessageActionResult;
 }
 
 class MessageCTAData {
@@ -75,19 +78,21 @@ class MessageCTAData {
   url?: string;
 }
 
-class MessageCTA {
+export class MessageCTA implements IMessageCTA {
   @ApiPropertyOptional()
-  type?: ChannelCTATypeEnum;
+  type: ChannelCTATypeEnum;
+
   @ApiProperty()
   data: MessageCTAData;
+
   @ApiPropertyOptional()
   action?: MessageAction;
 }
 
 @ApiExtraModels(EmailBlock, MessageCTA)
-export class MessageResponseDto {
+export class MessageResponseDto implements IMessage {
   @ApiPropertyOptional()
-  _id?: string;
+  _id: string;
 
   @ApiProperty()
   _templateId: string;
@@ -120,8 +125,14 @@ export class MessageResponseDto {
   @ApiPropertyOptional()
   templateIdentifier?: string;
 
+  @ApiProperty()
+  createdAt: string;
+
   @ApiPropertyOptional()
-  createdAt?: string;
+  lastSeenDate?: string;
+
+  @ApiPropertyOptional()
+  lastReadDate?: string;
 
   @ApiProperty({
     oneOf: [
@@ -147,6 +158,9 @@ export class MessageResponseDto {
   channel: ChannelTypeEnum;
 
   @ApiProperty()
+  read: boolean;
+
+  @ApiProperty()
   seen: boolean;
 
   @ApiPropertyOptional()
@@ -167,16 +181,13 @@ export class MessageResponseDto {
   @ApiPropertyOptional()
   title?: string;
 
-  @ApiProperty()
-  lastSeenDate: string;
-
   @ApiProperty({
     type: MessageCTA,
   })
   cta: MessageCTA;
 
-  @ApiProperty()
-  _feedId?: string;
+  @ApiPropertyOptional()
+  _feedId?: string | null;
 
   @ApiProperty({
     enum: ['sent', 'error', 'warning'],

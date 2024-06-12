@@ -7,7 +7,7 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
 import { errorMessage, successMessage } from '../../../../utils/notifications';
-import { useAuthContext } from '../../../../components/providers/AuthProvider';
+import { useAuth } from '@novu/shared-web';
 import {
   Button,
   Text,
@@ -29,12 +29,12 @@ import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 
 export function TestSendEmail({
   isIntegrationActive,
-  chimera = false,
+  bridge = false,
 }: {
   isIntegrationActive: boolean;
-  chimera?: boolean;
+  bridge?: boolean;
 }) {
-  const { currentUser } = useAuthContext();
+  const { currentUser } = useAuth();
   const { control, watch } = useFormContext<IForm>();
   const path = useStepFormPath();
   const stepId = watch(`${path}.uuid`);
@@ -88,8 +88,8 @@ export function TestSendEmail({
         payload,
         inputs,
         to: sendTo,
-        chimera,
-        content: chimera
+        bridge,
+        content: bridge
           ? ''
           : template.contentType === 'customHtml'
           ? (template.htmlContent as string)
@@ -142,7 +142,7 @@ export function TestSendEmail({
           mt={20}
           autosize
           styles={inputStyles}
-          label={chimera ? 'Trigger Data' : 'Variables'}
+          label={bridge ? 'Trigger Data' : 'Variables'}
           value={payloadValue}
           onChange={setPayloadValue}
           minRows={12}
@@ -158,7 +158,7 @@ export function TestSendEmail({
           }
         />
 
-        {chimera ? (
+        {bridge ? (
           <JsonInput
             data-test-id="test-email-json-inputs"
             formatOnBlur

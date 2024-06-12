@@ -41,6 +41,10 @@
       "path": "libs/embed"
     },
     {
+      "name": "📦 @novu/novui",
+      "path": "libs/novui"
+    },
+    {
       "name": "📦 @novu/cli",
       "path": "packages/cli"
     },
@@ -88,102 +92,6 @@
       "name": "📦 @novu/application-generic",
       "path": "packages/application-generic"
     },
-    {
-      "name": "🔔 @novu/apns",
-      "path": "providers/apns"
-    },
-    {
-      "name": "🔔 @novu/discord",
-      "path": "providers/discord"
-    },
-    {
-      "name": "🔔 @novu/fcm",
-      "path": "providers/fcm"
-    },
-    {
-      "name": "🔔 @novu/gupshup",
-      "path": "providers/gupshup"
-    },
-    {
-      "name": "🔔 @novu/mailersend",
-      "path": "providers/mailersend"
-    },
-    {
-      "name": "🔔 @novu/mailgun",
-      "path": "providers/mailgun"
-    },
-    {
-      "name": "🔔 @novu/mailjet",
-      "path": "providers/mailjet"
-    },
-    {
-      "name": "🔔 @novu/mandrill",
-      "path": "providers/mandrill"
-    },
-    {
-      "name": "🔔 @novu/netcore",
-      "path": "providers/netcore"
-    },
-    {
-      "name": "🔔 @novu/nexmo",
-      "path": "providers/nexmo"
-    },
-    {
-      "name": "🔔 @novu/nodemailer",
-      "path": "providers/nodemailer"
-    },
-    {
-      "name": "🔔 @novu/plivo",
-      "path": "providers/plivo"
-    },
-    {
-      "name": "🔔 @novu/postmark",
-      "path": "providers/postmark"
-    },
-    {
-      "name": "🔔 @novu/sendgrid",
-      "path": "providers/sendgrid"
-    },
-    {
-      "name": "🔔 @novu/sendinblue",
-      "path": "providers/sendinblue"
-    },
-    {
-      "name": "🔔 @novu/ses",
-      "path": "providers/ses"
-    },
-    {
-      "name": "🔔 @novu/slack",
-      "path": "providers/slack"
-    },
-    {
-      "name": "🔔 @novu/sms77",
-      "path": "providers/sms77"
-    },
-    {
-      "name": "🔔 @novu/sns",
-      "path": "providers/sns"
-    },
-    {
-      "name": "🔔 @novu/telnyx",
-      "path": "providers/telnyx"
-    },
-    {
-      "name": "🔔 @novu/termii",
-      "path": "providers/termii"
-    },
-    {
-      "name": "🔔 @novu/twilio",
-      "path": "providers/twilio"
-    },
-    {
-      "name": "🔔 @novu/maqsam",
-      "path": "providers/maqsam"
-    },
-    {
-      "name": "🔔 @novu/generic-sms",
-      "path": "providers/generic-sms"
-    }
   ],
   "settings": {
     "typescript.tsdk": "node_modules/typescript/lib",

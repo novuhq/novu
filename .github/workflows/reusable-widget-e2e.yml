@@ -34,13 +34,13 @@ jobs:
             echo "has_token=false" >> $GITHUB_OUTPUT
           fi
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         if: steps.setup.outputs.has_token == 'true'
         with:
           submodules: ${{ inputs.ee }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
       # else checkout without submodules if the token is not provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         if: steps.setup.outputs.has_token != 'true'
 
       - uses: ./.github/actions/setup-project
@@ -51,11 +51,6 @@ jobs:
           submodules: ${{ inputs.ee && steps.setup.outputs.has_token == 'true' }}
 
       - uses: ./.github/actions/setup-redis-cluster
-
-      - uses: mansagroup/nrwl-nx-action@v3
-        with:
-          targets: lint
-          projects: '@novu/widget'
 
       - uses: mansagroup/nrwl-nx-action@v3
         with:
@@ -116,3 +111,9 @@ jobs:
         with:
           name: cypress-videos
           path: apps/widget/cypress/videos
+
+      - name: Send Slack notifications
+        uses: ./.github/actions/slack-notify-on-failure
+        if: failure()
+        with:
+          slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}

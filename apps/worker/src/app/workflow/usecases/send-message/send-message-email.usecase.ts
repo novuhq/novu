@@ -31,7 +31,7 @@ import {
   SelectVariant,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IChimeraEmailResponse,
+  IBridgeEmailResponse,
 } from '@novu/application-generic';
 import * as inlineCss from 'inline-css';
 import { CreateLog } from '../../../shared/logs';
@@ -151,9 +151,10 @@ export class SendMessageEmail extends SendMessageBase {
       command.overrides.email || {},
       command.overrides[integration?.providerId] || {}
     );
+    const bridgeOutputs = command.bridgeData?.outputs;
 
     let html;
-    let subject = step?.template?.subject || '';
+    let subject = (bridgeOutputs as IBridgeEmailResponse)?.subject || step?.template?.subject || '';
     let content;
     let senderName;
 
@@ -202,7 +203,7 @@ export class SendMessageEmail extends SendMessageBase {
     }
 
     try {
-      if (!command.chimeraData) {
+      if (!command.bridgeData) {
         ({ html, content, subject, senderName } = await this.compileEmailTemplateUsecase.execute(
           CompileEmailTemplateCommand.create({
             environmentId: command.environmentId,
@@ -234,7 +235,7 @@ export class SendMessageEmail extends SendMessageBase {
         });
       }
     } catch (e) {
-      Logger.error({ payload }, 'Compiling the email template or storing it or inlining it has failed', LOG_CONTEXT);
+      Logger.error({ payload, e }, 'Compiling the email template or storing it or inlining it has failed', LOG_CONTEXT);
       await this.sendErrorHandlebars(command.job, e.message);
 
       return;
@@ -263,12 +264,11 @@ export class SendMessageEmail extends SendMessageBase {
         }
     );
 
-    const chimeraOutputs = command.chimeraData?.outputs;
     const mailData: IEmailOptions = createMailData(
       {
         to: email,
-        subject: (chimeraOutputs as IChimeraEmailResponse)?.subject || subject,
-        html: (chimeraOutputs as IChimeraEmailResponse)?.body || html,
+        subject: subject,
+        html: (bridgeOutputs as IBridgeEmailResponse)?.body || html,
         from: integration?.credentials.from || 'no-reply@novu.co',
         attachments,
         senderName,
@@ -455,9 +455,16 @@ export class SendMessageEmail extends SendMessageBase {
         'mail_unexpected_error',
         error.message || error.name || 'Error while sending email with provider',
         command,
-        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR,
-        error
+        LogCodeEnum.MAIL_PROVIDER_DELIVERY_ERROR
       );
+
+      /*
+       * Axios Error, to provide better readability, otherwise stringify ignores response object
+       * TODO: Handle this at the handler level globally
+       */
+      if (error?.isAxiosError && error.response) {
+        error = error.response;
+      }
 
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({
@@ -538,6 +545,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
     senderName: overrides?.senderName || options.senderName,
     subject: overrides?.subject || options.subject,
     customData: overrides?.customData || {},
+    headers: overrides?.headers || {},
   };
 };
 

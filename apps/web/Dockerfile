@@ -7,23 +7,15 @@ WORKDIR /usr/src/app
 
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@8.9.0 --loglevel notice
+RUN npm install -g pnpm@9.1.4 --loglevel notice
 
 COPY .npmrc .
 COPY package.json .
 
 COPY apps/web ./apps/web
-COPY libs/dal ./libs/dal
-COPY libs/testing ./libs/testing
-COPY packages/client ./packages/client
-COPY libs/shared ./libs/shared
-COPY libs/design-system ./libs/design-system
-COPY libs/shared-web ./libs/shared-web
-
-COPY packages/notification-center ./packages/notification-center
-COPY packages/stateless ./packages/stateless
-COPY packages/node ./packages/node
-
+COPY libs ./libs
+COPY packages ./packages
+COPY enterprise ./enterprise
 COPY tsconfig.json .
 COPY tsconfig.base.json .
 
@@ -45,7 +37,7 @@ RUN NX_DAEMON=false pnpm build:web
 FROM node:20-alpine
 
 RUN apk add --no-cache bash
-RUN npm install -g pnpm@8.9.0 http-server --loglevel notice
+RUN npm install -g pnpm@9.1.4 http-server --loglevel notice
 
 USER 1000
 WORKDIR /app

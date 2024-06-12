@@ -1,0 +1,35 @@
+{
+  "name": "@novu/automation",
+  "version": "0.24.2",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "generate:provider": "pnpm nx g automation:provider",
+    "fix:lint": "eslint src --ext .ts --fix"
+  },
+  "dependencies": {
+    "@nx/devkit": "^16.10.0"
+  },
+  "devDependencies": {
+    "@nx/eslint": "^17.0.0",
+    "@nx/js": "^16.10.0",
+    "@swc-node/register": "~1.8.0",
+    "@swc/core": "~1.3.85",
+    "@types/jest": "^29.4.0",
+    "@types/node": "18.16.9",
+    "@typescript-eslint/parser": "^7.3.0",
+    "eslint": "~8.57.0",
+    "eslint-config-prettier": "^9.0.0",
+    "jest": "^29.4.1",
+    "jest-environment-jsdom": "^29.4.1",
+    "knip": "^5.11.0",
+    "nx": "^16.10.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "~5.4.5",
+    "verdaccio": "^5.0.4"
+  },
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "typings": "./src/index.d.ts",
+  "generators": "./generators.json"
+}

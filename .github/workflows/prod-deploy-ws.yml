@@ -29,7 +29,7 @@ jobs:
     outputs:
       docker_image: ${{ steps.build-image.outputs.IMAGE }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: ${{ contains (matrix.name,'-ee') }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
@@ -83,7 +83,7 @@ jobs:
           DOCKER_BUILD_ARGUMENTS: >
             --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-prod
             --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-prod,mode=max
-            --platform=linux/amd64,linux/arm64 --provenance=false
+            --platform=linux/amd64
             --output=type=image,name=ghcr.io/novuhq/${{ matrix.name }},push-by-digest=true,name-canonical=true
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin 

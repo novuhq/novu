@@ -1,12 +1,14 @@
-import { CONTEXT_PATH, LAUNCH_DARKLY_CLIENT_SIDE_ID, SegmentProvider } from '@novu/shared-web';
+import { Loader } from '@mantine/core';
+import { colors, ThemeProvider } from '@novu/design-system';
+import { CONTEXT_PATH, SegmentProvider } from '@novu/shared-web';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { withLDProvider } from 'launchdarkly-react-client-sdk';
 import { PropsWithChildren } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import { api } from './api/api.client';
-import { AuthProvider } from './components/providers/AuthProvider';
+import { css } from '@novu/novui/css';
+import { NovuiProvider } from '@novu/novui';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
   const response = await api.get(`${queryKey[0]}`);
@@ -18,6 +20,8 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: defaultQueryFn as any,
+      refetchOnWindowFocus: false,
+      retry: false,
     },
   },
 });
@@ -27,23 +31,18 @@ const queryClient = new QueryClient({
  */
 const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
-    <SegmentProvider>
-      <HelmetProvider>
-        <BrowserRouter basename={CONTEXT_PATH}>
+    <ThemeProvider>
+      <NovuiProvider>
+        <SegmentProvider>
           <QueryClientProvider client={queryClient}>
-            <AuthProvider>{children}</AuthProvider>
+            <BrowserRouter basename={CONTEXT_PATH}>
+              <HelmetProvider>{children}</HelmetProvider>
+            </BrowserRouter>
           </QueryClientProvider>
-        </BrowserRouter>
-      </HelmetProvider>
-    </SegmentProvider>
+        </SegmentProvider>
+      </NovuiProvider>
+    </ThemeProvider>
   );
 };
 
-export default Sentry.withProfiler(
-  withLDProvider({
-    clientSideID: LAUNCH_DARKLY_CLIENT_SIDE_ID,
-    reactOptions: {
-      useCamelCaseFlagKeys: false,
-    },
-  })(Providers)
-);
+export default Sentry.withProfiler(Providers);

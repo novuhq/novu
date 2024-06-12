@@ -4,13 +4,13 @@ import { IEnvironment } from '@novu/shared';
 
 import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
 
-import { useAuthContext } from '../providers/AuthProvider';
+import { useAuth } from '../hooks/useAuth';
 import { QueryKeys } from '../api/query.keys';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes.enum';
 import { api } from '../api';
 import { IS_DOCKER_HOSTED } from '../config';
-import { BaseEnvironmentEnum } from 'src/constants';
+import { BaseEnvironmentEnum } from '../constants';
 
 interface ISetEnvironmentOptions {
   /** using null will prevent a reroute */
@@ -25,17 +25,17 @@ export type EnvironmentContext = {
   environment: IEnvironment | undefined;
   setEnvironment: (environment: EnvironmentName, options?: ISetEnvironmentOptions) => void;
   refetchEnvironment: () => void;
-  chimera: boolean;
+  bridge: boolean;
 };
 
 export const useEnvController = (
   options: UseQueryOptions<IEnvironment, any, IEnvironment> = {},
-  chimera = false
+  bridge = false
 ): EnvironmentContext => {
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
-  const { setToken } = useAuthContext();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
     [QueryKeys.myEnvironments],
@@ -64,26 +64,27 @@ export const useEnvController = (
       }
 
       setIsLoading(true);
+      // TODO: Do we need to get the token from this endpoint?
       const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
       setIsLoading(false);
       if (!tokenResponse.token) {
         return;
       }
-      setToken(tokenResponse.token);
+      await login(tokenResponse.token);
 
       await queryClient.invalidateQueries();
       if (route) {
         await navigate(route);
       }
     },
-    [isAllLoading, environments, navigate, queryClient, setToken]
+    [isAllLoading, environments, navigate, queryClient, login]
   );
 
   return {
     refetchEnvironment,
     environment,
-    readonly: environment?._parentId !== undefined || (!IS_DOCKER_HOSTED && chimera),
-    chimera: !IS_DOCKER_HOSTED && chimera,
+    readonly: environment?._parentId !== undefined || (!IS_DOCKER_HOSTED && bridge),
+    bridge: !IS_DOCKER_HOSTED && bridge,
     setEnvironment: setEnvironmentCallback,
     isLoading: isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading,
   };

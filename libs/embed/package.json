@@ -1,6 +1,6 @@
 {
   "name": "@novu/embed",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "private": true,
   "description": "",
   "keywords": [],
@@ -35,10 +35,7 @@
     "test": "echo \"Error: no test specified\"",
     "test:watch": "jest --coverage --watch",
     "test:prod": "pnpm lint && pnpm test -- --no-cache",
-    "deploy-docs": "ts-node tools/gh-pages-publish",
     "commit": "git-cz",
-    "semantic-release": "semantic-release",
-    "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
     "precommit": "lint-staged"
   },
   "lint-staged": {
@@ -79,14 +76,7 @@
       "src/*.{js,ts}"
     ]
   },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
   "devDependencies": {
-    "@commitlint/cli": "^17.0.0",
-    "@commitlint/config-conventional": "^17.0.0",
     "@rollup/plugin-node-resolve": "^6.0.0",
     "@rollup/plugin-replace": "^5.0.2",
     "@types/jest": "29.5.2",
@@ -109,7 +99,6 @@
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.34.1",
-    "semantic-release": "^19.0.3",
     "shelljs": "^0.8.3",
     "ts-jest": "^27.1.3",
     "ts-node": "~10.9.1",
@@ -117,7 +106,7 @@
     "typescript": "4.9.5"
   },
   "dependencies": {
-    "@novu/notification-center": "^0.24.1",
+    "@novu/notification-center": "workspace:*",
     "@types/iframe-resizer": "^3.5.8",
     "iframe-resizer": "^4.3.1"
   }

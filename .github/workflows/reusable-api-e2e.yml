@@ -27,7 +27,6 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   check_submodule_token:
-    if: ${{ inputs.ee }}
     name: Check if the secret exists or not.
     runs-on: ubuntu-latest
     outputs:
@@ -45,7 +44,7 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_api:
     name: Test E2E
-    # The type of runner that the job will run on
+    if: ${{ (contains(inputs.job-name, '-ee') && inputs.test-e2e-ee-affected) || (!contains(inputs.job-name, '-ee') && inputs.test-e2e-affected) }}
     runs-on: ubuntu-latest
     timeout-minutes: 80
     permissions:
@@ -54,13 +53,9 @@ jobs:
       deployments: write
       id-token: write
     needs: [check_submodule_token]
-    if: |
-      ${{ contains (inputs.job-name,'-ee') && inputs.test-e2e-ee-affected == 'true' }} ||
-      ${{ !contains (inputs.job-name,'-ee') && inputs.test-e2e-affected == 'true' }}
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # checkout with submodules if token is provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Checkout with submodules
         if: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
         with:
@@ -68,7 +63,7 @@ jobs:
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       # else checkout without submodules if the token is not provided
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         name: Checkout
         if: ${{ needs.check_submodule_token.outputs.has_token != 'true' || !contains (inputs.job-name,'-ee') }}
 
@@ -80,12 +75,6 @@ jobs:
       - uses: ./.github/actions/setup-redis-cluster
         name: Setup redis cluster
 
-      - uses: mansagroup/nrwl-nx-action@v3
-        name: Run Lint
-        with:
-          targets: lint
-          projects: '@novu/api'
-
       - uses: ./.github/actions/start-localstack
         name: Start localstack
 
@@ -94,6 +83,7 @@ jobs:
         name: Run worker
         with:
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
+          ee: ${{ needs.check_submodule_token.outputs.has_token == 'true' && inputs.ee }}
 
         # Runs a single command using the runners shell
       - name: Build API
@@ -121,3 +111,9 @@ jobs:
       - name: Run unit tests
         run: |
           cd apps/api && pnpm test
+
+      - name: Send Slack notifications
+        uses: ./.github/actions/slack-notify-on-failure
+        if: failure()
+        with:
+          slackWebhookURL: ${{ secrets.SLACK_WEBHOOK_URL_ENG_FEED_GITHUB }}

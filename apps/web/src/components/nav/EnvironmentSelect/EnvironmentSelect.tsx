@@ -1,5 +1,5 @@
 import { Select, When } from '@novu/design-system';
-import { css } from '../../../styled-system/css';
+import { css } from '@novu/novui/css';
 import { navSelectStyles } from '../NavSelect.styles';
 import { EnvironmentPopover } from './EnvironmentPopover';
 import { useEnvironmentSelect } from './useEnvironmentSelect';
@@ -19,6 +19,7 @@ export const EnvironmentSelectRenderer: React.FC<ReturnType<typeof useEnvironmen
     >
       <Select
         className={navSelectStyles}
+        data-test-id="environment-switch"
         allowDeselect={false}
         icon={
           <When truthy={!selectProps.loading}>

@@ -35,7 +35,7 @@ export function TemplatePushEditor() {
     channelType: ChannelTypeEnum.PUSH,
   });
   const { template } = useTemplateEditorForm();
-  const { chimera } = useEnvController({}, template?.chimera);
+  const { bridge } = useEnvController({}, template?.bridge);
   const [activeTab, setActiveTab] = useState<string>(PREVIEW);
   const theme = useMantineTheme();
 
@@ -53,12 +53,12 @@ export function TemplatePushEditor() {
               control={control}
               render={({ field }) => (
                 <Stack spacing={8} data-test-id="push-title-container">
-                  <When truthy={!chimera}>
+                  <When truthy={!bridge}>
                     <VariableManagementButton
                       openEditVariablesModal={() => {
                         setEditVariablesModalOpen(true);
                       }}
-                      label={chimera ? 'Input variables' : 'Title'}
+                      label={bridge ? 'Input variables' : 'Title'}
                     />
 
                     <CustomCodeEditor
@@ -69,13 +69,13 @@ export function TemplatePushEditor() {
                       height="128px"
                     />
                   </When>
-                  <When truthy={chimera}>
+                  <When truthy={bridge}>
                     <InputVariablesForm onChange={setInputVariables} />
                   </When>
                 </Stack>
               )}
             />
-            <When truthy={!chimera}>
+            <When truthy={!bridge}>
               <Controller
                 name={`${stepFormPath}.template.content` as any}
                 defaultValue=""

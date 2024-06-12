@@ -3,5 +3,6 @@ import { GetInvite } from './get-invite/get-invite.usecase';
 import { BulkInvite } from './bulk-invite/bulk-invite.usecase';
 import { InviteMember } from './invite-member/invite-member.usecase';
 import { ResendInvite } from './resend-invite/resend-invite.usecase';
+import { InviteNudgeWebhook } from './invite-nudge/invite-nudge.usecase';
 
-export const USE_CASES = [AcceptInvite, GetInvite, BulkInvite, InviteMember, ResendInvite];
+export const USE_CASES = [AcceptInvite, GetInvite, BulkInvite, InviteMember, ResendInvite, InviteNudgeWebhook];

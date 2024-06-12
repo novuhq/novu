@@ -14,14 +14,9 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - uses: ./.github/actions/setup-project
-
-    - uses: mansagroup/nrwl-nx-action@v3
-      with:
-        targets: lint
-        projects: '@novu/webhook'
 
     - uses: ./.github/actions/start-localstack
 
@@ -31,6 +26,5 @@ jobs:
 
     # Runs a set of commands using the runners shell
     - name: Run a test
-      run: | 
+      run: |
         cd apps/webhook && pnpm test:e2e
-        pnpm test

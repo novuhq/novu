@@ -1,7 +1,7 @@
 import { FC, PropsWithChildren, useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { css } from '../../../styled-system/css';
-import { HStack } from '../../../styled-system/jsx';
+import { css, cx } from '@novu/novui/css';
+import { HStack } from '@novu/novui/jsx';
 import { INavMenuButtonProps, rawButtonBaseStyles } from './NavMenuButton.shared';
 import { NavMenuRightSide } from './NavMenuButtonRightSide';
 
@@ -33,6 +33,7 @@ export const NavMenuLinkButton: FC<PropsWithChildren<INavMenuLinkButtonProps>> =
   link,
   label,
   isVisible = true,
+  className,
 }) => {
   const [isHovered, setIsHovered] = useState<boolean>(false);
 
@@ -42,7 +43,7 @@ export const NavMenuLinkButton: FC<PropsWithChildren<INavMenuLinkButtonProps>> =
 
   return isVisible ? (
     <NavLink
-      className={css(rawButtonBaseStyles, rawLinkButtonStyles)}
+      className={cx(css(rawButtonBaseStyles, rawLinkButtonStyles), className)}
       to={link}
       data-test-id={testId}
       onMouseEnter={() => setIsHovered(true)}

@@ -5,7 +5,7 @@ on:
     types: [opened]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
 jobs:
@@ -13,13 +13,13 @@ jobs:
     name: Verify
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           node-version: 20.8.1
       - name: Install Octokit
-        run: npm --prefix .github/workflows/scripts install @octokit/action
+        run: npm --prefix .github/workflows/scripts install @octokit/action@6
 
       - name: Check if user is a community contributor
         id: check

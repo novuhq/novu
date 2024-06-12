@@ -4,6 +4,7 @@ import {
   UpdateSubscriber,
   CreateSubscriber,
   GetSubscriberGlobalPreference,
+  UpdateSubscriberChannel,
 } from '@novu/application-generic';
 
 import { GetSubscribers } from './get-subscribers';
@@ -12,7 +13,6 @@ import { GetPreferencesByLevel } from './get-preferences-by-level/get-preference
 import { RemoveSubscriber } from './remove-subscriber';
 import { SearchByExternalSubscriberIds } from './search-by-external-subscriber-ids';
 import { UpdatePreference } from './update-preference/update-preference.usecase';
-import { UpdateSubscriberChannel } from './update-subscriber-channel';
 import { UpdateSubscriberPreference } from './update-subscriber-preference';
 import { UpdateSubscriberOnlineFlag } from './update-subscriber-online-flag';
 import { ChatOauth } from './chat-oauth/chat-oauth.usecase';

@@ -1695,6 +1695,8 @@ metrics:
 
 ##@section Secrets definition
 ##
+existingSecret: ''
+
 jwt:
   ## @param jwt.secret The secret keybase which is used to encrypt / verify the tokens issued for authentication
   ## Please change this for production use !
@@ -1792,8 +1794,15 @@ externalRedis:
 ## @param externalS3.accessKey access Key for external S3 storage access
 ## @param externalS3.secretKey secret Key for external S3 storage access
 externalS3:
+  ## S3, LOCALSTACK or GCS
+  storageService: s3
+  ## for storageService: s3 and localstack
   endpoint: http://localstack:4566
   bucketName: novu-local
   region: us-east-1
   accessKey: test
   secretKey: test
+  ## for storageService: gcs
+  gcsBucketName: ''
+  gcsDomain: 'https://storage.googleapis.com'
+  googleApplicationCredentials: ''

@@ -1,0 +1,12 @@
+# Distribution
+dist
+out
+build
+node_modules
+
+# Logs
+*.log*
+logs
+
+# Misc
+.DS_Store

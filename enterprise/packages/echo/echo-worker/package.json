@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-echo-worker",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -12,11 +12,11 @@
     "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
-    "@novu/ee-dal": "^0.24.1",
-    "@novu/stateless": "^0.24.1",
-    "@novu/dal": "^0.24.1",
-    "@novu/shared": "^0.24.1",
-    "@novu/testing": "^0.24.1",
+    "@novu/dal": "workspace:*",
+    "@novu/ee-dal": "workspace:*",
+    "@novu/shared": "workspace:*",
+    "@novu/stateless": "workspace:*",
+    "@novu/testing": "workspace:*",
     "axios": "^1.6.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
@@ -25,8 +25,8 @@
     "slugify": "^1.4.6"
   },
   "devDependencies": {
-    "@types/got": "^9.6.12",
     "@types/chai": "^4.2.11",
+    "@types/got": "^9.6.12",
     "@types/json-schema": "^7.0.15",
     "@types/mocha": "^8.0.1",
     "@types/node": "^14.6.0",

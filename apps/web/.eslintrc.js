@@ -22,8 +22,24 @@ module.exports = {
     'no-restricted-imports': [
       'error',
       {
-        paths: ['src'],
-        patterns: ['@novu/dal'],
+        paths: [
+          {
+            name: '@novu/dal',
+          },
+          {
+            name: '@playwright/test',
+            importNames: ['test'],
+            message: `please use import { test } from './utils.ts/baseTest' instead.`,
+          },
+          // TODO: re-enable this once we have de-coupled web's build from linting
+          /*
+          {
+            name: '@mantine/core',
+            message:
+              'Please avoid referencing @mantine/core directly in new or updated code. Instead, import from @novu/novui',
+          },
+          */
+        ],
       },
     ],
     '@typescript-eslint/naming-convention': [
@@ -35,16 +51,12 @@ module.exports = {
         format: ['PascalCase', 'camelCase', 'UPPER_CASE'],
       },
     ],
-    "react-hooks/rules-of-hooks": 'error',
-    "react-hooks/exhaustive-deps": 'warn',
-    "import/extensions": 'off',
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
+    'import/extensions': 'off',
   },
-  env: {
-    'cypress/globals': true,
-  },
-  ignorePatterns: ['craco.config.js', 'cypress/*', '**/styled-system/**/*', 'tests/*'],
-  extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
-  plugins: ['cypress', 'react-hooks'],
+  ignorePatterns: ['craco.config.js', '**/styled-system/**/*'],
+  plugins: ['react-hooks'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,

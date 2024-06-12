@@ -37,7 +37,7 @@ import { WorkflowOverridesModule } from './app/workflow-overrides/workflow-overr
 import { ApiRateLimitInterceptor } from './app/rate-limiting/guards';
 import { RateLimitingModule } from './app/rate-limiting/rate-limiting.module';
 import { ProductFeatureInterceptor } from './app/shared/interceptors/product-feature.interceptor';
-import { ResourceThrottlerInterceptor } from './app/resource-limiting/guards';
+import { AnalyticsModule } from './app/analytics/analytics.module';
 
 const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> => {
   const modules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [];
@@ -58,6 +58,17 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 
   return modules;
 };
+
+const enterpriseQuotaThrottlerInterceptor =
+  (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') &&
+  require('@novu/ee-billing')?.QuotaThrottlerInterceptor
+    ? [
+        {
+          provide: APP_INTERCEPTOR,
+          useClass: require('@novu/ee-billing')?.QuotaThrottlerInterceptor,
+        },
+      ]
+    : [];
 
 const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | ForwardReference> = [
   InboundParseModule,
@@ -105,10 +116,7 @@ const providers: Provider[] = [
     provide: APP_INTERCEPTOR,
     useClass: ProductFeatureInterceptor,
   },
-  {
-    provide: APP_INTERCEPTOR,
-    useClass: ResourceThrottlerInterceptor,
-  },
+  ...enterpriseQuotaThrottlerInterceptor,
   {
     provide: APP_INTERCEPTOR,
     useClass: IdempotencyInterceptor,
@@ -130,6 +138,10 @@ if (process.env.SENTRY_DSN) {
       user: ['_id', 'firstName', 'organizationId', 'environmentId', 'roles', 'domain'],
     }),
   });
+}
+
+if (process.env.SEGMENT_TOKEN) {
+  modules.push(AnalyticsModule);
 }
 
 if (process.env.NODE_ENV === 'test') {

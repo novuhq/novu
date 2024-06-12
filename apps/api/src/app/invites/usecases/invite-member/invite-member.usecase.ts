@@ -3,6 +3,7 @@ import { OrganizationRepository, UserRepository, MemberRepository, IAddMemberDat
 import { MemberRoleEnum, MemberStatusEnum } from '@novu/shared';
 import { Novu } from '@novu/node';
 import { AnalyticsService } from '@novu/application-generic';
+import { Logger, LoggerService } from '@nestjs/common';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { InviteMemberCommand } from './invite-member.command';
@@ -34,8 +35,6 @@ export class InviteMember {
 
     if (process.env.NOVU_API_KEY && (process.env.NODE_ENV === 'dev' || process.env.NODE_ENV === 'production')) {
       const novu = new Novu(process.env.NOVU_API_KEY);
-
-      // cspell:disable-next
       await novu.trigger(process.env.NOVU_TEMPLATEID_INVITE_TO_ORGANISATION || 'invite-to-organization-wBnO8NpDn', {
         to: {
           subscriberId: command.email,
