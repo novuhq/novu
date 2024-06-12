@@ -29,6 +29,9 @@ export default defineConfig({
     permissions: ['clipboard-read'],
   },
   timeout: 30_000,
+  expect: {
+    timeout: 15000,
+  },
   /* Configure projects for major browsers */
   projects: [
     {
