@@ -58,6 +58,7 @@ import { CreateLog } from './logs';
 import { JobTopicNameEnum } from '@novu/shared';
 import { ActiveJobsMetricService } from '../workflow/services';
 import { UNIQUE_WORKER_DEPENDENCIES, workersToProcess } from '../../config/worker-init.config';
+import { injectRepositories } from './inject-repositories';
 
 const DAL_MODELS = [
   UserRepository,
@@ -82,6 +83,7 @@ const DAL_MODELS = [
   TopicSubscribersRepository,
   TenantRepository,
   WorkflowOverrideRepository,
+  ...injectRepositories(),
 ];
 
 const dalService = {
