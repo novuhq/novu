@@ -1,4 +1,4 @@
-import { ApiService } from 'client/dist/cjs';
+import { ApiService } from '@novu/client';
 import { NovuEventEmitter } from '../event-emitter';
 
 interface CallQueueItem {
