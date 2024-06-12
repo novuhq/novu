@@ -21,10 +21,14 @@ const buttonRecipe = sva({
   slots: SLOTS,
   base: {
     root: {
+      // default color palette
       colorPalette: 'mode.cloud',
       border: '[none !important]',
       _disabled: {
-        opacity: '0.4',
+        opacity: 'disabled',
+      },
+      '&:hover:not(:disabled)': {
+        opacity: 'hover',
       },
     },
     label: {
@@ -66,8 +70,16 @@ const buttonRecipe = sva({
       },
       borderless: {
         root: {
-          border: 'none',
-          bg: '[transparent]',
+          border: 'none !important',
+          bg: '[transparent !important]',
+        },
+        label: {
+          color: 'colorPalette.start',
+        },
+        section: {
+          '& svg': {
+            fill: 'colorPalette.start',
+          },
         },
       },
     },
@@ -85,7 +97,15 @@ export const Button: FC<IButtonProps> = ({
   return (
     <ExternalButton
       size={size}
-      leftSection={Icon ? <Icon title="button-icon" size="16" className={css({ color: 'legacy.white' })} /> : undefined}
+      leftSection={
+        Icon ? (
+          <Icon
+            title="button-icon"
+            size={variant === 'borderless' ? '24' : '16'}
+            className={css({ color: 'legacy.white' })}
+          />
+        ) : undefined
+      }
       variant={variant}
       classNames={buttonRecipe({ variant })}
       className={cx(className)}

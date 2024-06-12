@@ -53,6 +53,24 @@ export const outline = () => (
   </HStack>
 );
 
+export const borderless = () => (
+  <HStack>
+    <Button size="lg" variant="borderless">
+      Large
+    </Button>
+    <Button variant="borderless">Medium</Button>
+    <Button size="lg" Icon={Icon10K} variant="borderless">
+      Large
+    </Button>
+    <Button Icon={IconInfo} variant="borderless">
+      Medium
+    </Button>
+    <Button Icon={IconInfo} variant="borderless" disabled>
+      Disabled
+    </Button>
+  </HStack>
+);
+
 export const disabled = () => (
   <HStack>
     <Button disabled>Filled</Button>
