@@ -9,7 +9,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes.enum';
 import { useAuth } from '@novu/shared-web';
 import { When, colors, useTabsStyles } from '@novu/design-system';
-import { useFeatureFlag } from '../../hooks';
+import { useFeatureFlag } from '@novu/shared-web';
 
 const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
