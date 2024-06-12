@@ -53,19 +53,19 @@ export const outline = () => (
   </Grid>
 );
 
-export const borderless = () => (
+export const transparent = () => (
   <Grid>
-    <Button size="lg" variant="borderless">
+    <Button size="lg" variant="transparent">
       Large
     </Button>
-    <Button variant="borderless">Medium</Button>
-    <Button size="lg" Icon={IconAddBox} variant="borderless">
+    <Button variant="transparent">Medium</Button>
+    <Button size="lg" Icon={IconAddBox} variant="transparent">
       Large
     </Button>
-    <Button Icon={IconAddBox} variant="borderless">
+    <Button Icon={IconAddBox} variant="transparent">
       Medium
     </Button>
-    <Button Icon={IconAddBox} variant="borderless" disabled>
+    <Button Icon={IconAddBox} variant="transparent" disabled>
       Disabled
     </Button>
   </Grid>

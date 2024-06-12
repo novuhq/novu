@@ -1,106 +1,26 @@
-import { Button as ExternalButton, ButtonProps, ButtonStylesNames } from '@mantine/core';
+import { Button as ExternalButton, ButtonProps, ButtonVariant } from '@mantine/core';
 import { FC } from 'react';
-import { colorPaletteGradient } from '../../ingredients/colorPaletteGradient.ingredient';
-import { css, cx, sva } from '../../../styled-system/css';
+import { cx, RecipeVariantProps } from '../../../styled-system/css';
+import { button } from '../../../styled-system/recipes';
 import { IconType } from '../../icons';
 import { CorePropsWithChildren } from '../../types';
 
-type ButtonVariant = 'filled' | 'outline' | 'borderless';
-
 export interface IButtonProps
-  extends CorePropsWithChildren,
+  extends RecipeVariantProps<typeof button>,
+    CorePropsWithChildren,
     React.ButtonHTMLAttributes<HTMLButtonElement>,
     Pick<ButtonProps, 'size'> {
   Icon?: IconType;
-  variant?: ButtonVariant;
 }
 
-const SLOTS: ButtonStylesNames[] = ['root', 'inner', 'label', 'loader', 'section'];
-
-const buttonRecipe = sva({
-  slots: SLOTS,
-  base: {
-    root: {
-      // default color palette
-      colorPalette: 'mode.cloud',
-      border: '[none !important]',
-      _disabled: {
-        opacity: 'disabled',
-      },
-      '&:hover:not(:disabled)': {
-        opacity: 'hover',
-      },
-      display: 'inline !important',
-      width: '[fit-content !important]',
-    },
-    label: {
-      color: 'typography.text.main',
-      width: '[fit-content]',
-      lineClamp: 1,
-    },
-  },
-  variants: {
-    variant: {
-      filled: {
-        root: { ...colorPaletteGradient },
-        label: {
-          color: 'button.text.filled',
-        },
-      },
-      outline: {
-        root: {
-          border: 'solid !important',
-          borderColor: 'colorPalette.start !important',
-          bg: 'button.secondary.background',
-
-          boxShadow: 'medium',
-          _disabled: {
-            bg: '[transparent !important]',
-          },
-        },
-        label: {
-          color: 'typography.text.main !important',
-        },
-        section: {
-          '& svg': {
-            color: 'typography.text.main !important',
-          },
-        },
-      },
-      borderless: {
-        root: {
-          border: 'none !important',
-          bg: '[transparent !important]',
-          px: '0 !important',
-        },
-        label: {
-          color: 'colorPalette.start',
-        },
-        section: {
-          '& svg': {
-            fill: 'colorPalette.start',
-          },
-        },
-      },
-    },
-  },
-});
-
-export const Button: FC<IButtonProps> = ({
-  children,
-  Icon,
-  size = 'md',
-  variant = 'filled',
-  className,
-  ...buttonProps
-}) => {
+export const Button: FC<IButtonProps> = ({ children, Icon, size = 'md', className, variant, ...buttonProps }) => {
   return (
     <ExternalButton
       size={size}
-      leftSection={Icon ? <Icon title="button-icon" size={variant === 'borderless' ? '32' : '16'} /> : undefined}
-      variant={variant}
-      classNames={buttonRecipe({ variant })}
+      leftSection={Icon ? <Icon title="button-icon" size={variant === 'transparent' ? '32' : '16'} /> : undefined}
+      classNames={button({ variant })}
       className={cx(className)}
+      variant={['outline', 'filled'].includes(variant as ButtonVariant) ? (variant as ButtonVariant) : undefined}
       {...buttonProps}
     >
       {children}
