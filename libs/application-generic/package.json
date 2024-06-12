@@ -101,7 +101,7 @@
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
-    "@types/jest": "29.5.2",
+    "@types/jest": "29.5.12",
     "@types/json-schema": "^7.0.15",
     "@types/newrelic": "^9",
     "@types/sanitize-html": "^2.11.0",

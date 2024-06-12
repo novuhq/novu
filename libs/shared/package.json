@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@types/bluebird": "^3.5.24",
-    "@types/jest": "29.5.2",
+    "@types/jest": "29.5.12",
     "@types/json-schema": "^7.0.15",
     "jest": "^27.1.0",
     "rimraf": "^3.0.2",
