@@ -1,29 +1,16 @@
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 import { AuthLoginPage } from './page-models/authLoginPage';
 import { PasswordResetPage } from './page-models/passwordResetPage';
 import { SignUpPage } from './page-models/signupPage';
-import { assertPageShowsMessage, initializeSession } from './utils.ts/browser';
+import { assertPageShowsMessage, initializeSession } from './utils/browser';
 import { faker } from '@faker-js/faker';
-import { dropDatabase, seedDatabase } from './utils.ts/plugins';
-import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
+import { createUser, testPassword } from './utils/plugins';
 
-let knownTestUser;
+let testUser;
 
 test.beforeAll(async () => {
-  await dropDatabase();
-  knownTestUser = await seedDatabase();
-});
-test.beforeEach(async ({ page }) => {
-  const featureFlagsMock = new FeatureFlagsMock(page);
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: true,
-    IS_HUBSPOT_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_BILLING_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
+  testUser = await createUser();
 });
 
 test('should allow a visitor to sign-up and login', async ({ page }) => {
@@ -39,7 +26,7 @@ test('should allow a visitor to sign-up and login', async ({ page }) => {
 
 test('should show account already exists when signing up with already registered mail', async ({ page }) => {
   const signUpPage = await SignUpPage.goTo(page);
-  await signUpPage.fillSignUpData({ email: knownTestUser.email });
+  await signUpPage.fillSignUpData({ email: testUser.email });
   await signUpPage.clickSignUpButton();
   await assertPageShowsMessage(page, 'An account with this email already exists');
 });
@@ -59,16 +46,7 @@ test('should show password reset link sent message on any email input', async ({
 });
 
 test('should redirect to the dashboard page when a token exists in query', async ({ page }) => {
-  const { featureFlagsMock, session } = await initializeSession(page);
-
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: true,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_BILLING_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
-
+  const { session } = await initializeSession(page);
   const authLoginPage = await AuthLoginPage.goTo(page, session.token);
   await authLoginPage.assertNavigationPath('/workflows**');
 });
@@ -80,14 +58,14 @@ test('should be redirect login with no auth', async ({ page }) => {
 
 test('should successfully login the user', async ({ page }) => {
   const authLoginPage = await AuthLoginPage.goTo(page);
-  await authLoginPage.fillLoginForm({ email: knownTestUser.email, password: '123qwe!@#' });
+  await authLoginPage.fillLoginForm({ email: testUser.email, password: testPassword() });
   await authLoginPage.clickSignInButton();
   await authLoginPage.assertNavigationPath('/workflows**');
 });
 
 test('should show incorrect email or password error when authenticating with bad credentials', async ({ page }) => {
   const authLoginPage = await AuthLoginPage.goTo(page);
-  await authLoginPage.fillLoginForm({ email: knownTestUser.email, password: 'bad_PASSWORD_v4|_ue' });
+  await authLoginPage.fillLoginForm({ email: testUser.email, password: 'bad_PASSWORD_v4|_ue' });
   await authLoginPage.clickSignInButton();
   await assertPageShowsMessage(page, 'Incorrect email or password provided');
 });
@@ -111,8 +89,8 @@ test('should show incorrect email or password error when authenticating with non
 
 test('should logout user when auth token is expired', async ({ page }) => {
   const authLoginPage = await AuthLoginPage.goTo(page);
-  await authLoginPage.setEmailTo(knownTestUser.email);
-  await authLoginPage.setPasswordTo('123qwe!@#');
+  await authLoginPage.setEmailTo(testUser.email);
+  await authLoginPage.setPasswordTo(testPassword());
   await authLoginPage.clickSignInButton();
   await authLoginPage.passAuthTokenExpirationTime();
   await page.goto('/subscribers');

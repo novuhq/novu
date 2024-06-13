@@ -1,5 +1,5 @@
-import { Page, expect } from '@playwright/test';
-import { fillTextInAMonacoEditor } from '../utils.ts/browser';
+import { expect } from '@playwright/test';
+import { fillTextInAMonacoEditor } from '../utils/browser';
 import { ConditionsPage } from './conditionsPage';
 import { VariantPreviewModalPage } from './variantPreviewModalPage';
 import { WorkflowBaseSidePanelPage } from './workflowSettingsSidePanel';
@@ -16,14 +16,12 @@ export class NodeEmailEditorPageModal extends WorkflowBaseSidePanelPage {
     await this.editEmailBodyTextParagraph(emailParagraphVariant);
     await this.nodeSettingsUpdateButton().click();
     await this.closeSidePanel();
+
     return new VariantPreviewModalPage(this.page);
   }
-  constructor(page: Page) {
-    super(page);
-  }
 
-  async clickSettingsRowButton(instance: number = 0) {
-    let locators = await this.getAllRowSettingsLocators();
+  async clickSettingsRowButton(instance = 0) {
+    const locators = await this.getAllRowSettingsLocators();
     await locators[instance].dispatchEvent('click');
   }
 
@@ -49,6 +47,7 @@ export class NodeEmailEditorPageModal extends WorkflowBaseSidePanelPage {
 
   async openAddConditionsSidebar() {
     await this.page.getByTestId('add-conditions-action').click();
+
     return new ConditionsPage(this.page);
   }
 
@@ -110,6 +109,7 @@ export class NodeEmailEditorPageModal extends WorkflowBaseSidePanelPage {
 
   async clickEmailEditor() {
     await this.page.getByTestId('email-editor').click();
+
     return new NodeEmailEditorPageModal(this.page);
   }
 
@@ -129,15 +129,16 @@ export class NodeEmailEditorPageModal extends WorkflowBaseSidePanelPage {
     await this.page.getByTestId('button-text-input').fill(EXAMPLE_TEXT);
   }
 
-  async editEmailBodyTextParagraph(TEST_TEXT: string, instance: number = 0) {
-    let locator = await this.getEditableTextContentByIndex(instance);
+  async editEmailBodyTextParagraph(TEST_TEXT: string, instance = 0) {
+    const locator = await this.getEditableTextContentByIndex(instance);
     await locator.fill(TEST_TEXT);
     await locator.focus();
     await this.page.keyboard.press('Enter');
   }
 
   public async getEditableTextContentByIndex(instance: number) {
-    let locators = await this.page.getByTestId('editable-text-content').all();
+    const locators = await this.page.getByTestId('editable-text-content').all();
+
     return locators[instance];
   }
 

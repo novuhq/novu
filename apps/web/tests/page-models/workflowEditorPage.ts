@@ -1,7 +1,7 @@
 import { Locator, Page, expect } from '@playwright/test';
-import { dragAndDrop } from '../utils.ts/browser';
+import { dragAndDrop } from '../utils/browser';
 import { WorkflowBaseSidePanelPage, WorkflowSettingsSidePanel } from './workflowSettingsSidePanel';
-import { ChannelType } from '../utils.ts/ChannelType';
+import { ChannelType } from '../utils/ChannelType';
 import { NodeInAppEditingModalPageModel } from './nodeInAppEditingModalPageModel';
 import { CodeSnippetSidePanelPageModel } from './codeSnippetSidePanelPageModel';
 import { NodeEmailEditorPageModal } from './nodeEmailEditorPageModal';
@@ -12,7 +12,7 @@ import { NodeChatEditingModalPageModel } from './nodeChatEditingModalPageModel';
 import { NodePushEditorPageModal } from './nodePushEditorPageModal';
 import { NodeDelayEditorPageModal } from './nodeDelayEditorPageModal';
 import { ConditionsPage } from './conditionsPage';
-import { addConditions } from '../utils.ts/commands';
+import { addConditions } from '../utils/commands';
 
 export class WorkflowEditorPage {
   async getFirstSmsNodeEditor() {
@@ -30,6 +30,7 @@ export class WorkflowEditorPage {
   }
   async addVariantToPushNode() {
     await this.addVariantToNode(ChannelType.PUSH);
+
     return new NodePushEditorPageModal(this.page);
   }
   async addAndFillPushNode(pushSubject: string, pushBody: string, workflowTitle: string) {
@@ -41,6 +42,7 @@ export class WorkflowEditorPage {
   }
   async addVariantToChatNode() {
     await this.addVariantToNode(ChannelType.CHAT);
+
     return new NodeChatEditingModalPageModel(this.page);
   }
   async addAndFillChatNode(chatBody: string, workflowTitle: string) {
@@ -51,6 +53,7 @@ export class WorkflowEditorPage {
   }
   async addVariantToSmsNode() {
     await this.addVariantToNode(ChannelType.SMS);
+
     return new NodeSmsEditingModalPageModel(this.page);
   }
   async addAndFillSmsNode(smsBody: string, workflowTitle: string) {
@@ -65,6 +68,7 @@ export class WorkflowEditorPage {
   }
   async addVariantToInAppNode() {
     await this.addVariantToNode(ChannelType.IN_APP);
+
     return new NodeInAppEditingModalPageModel(this.page);
   }
   async addAndFillInAppNode(inAppBody: string, workflowTitle: string) {
@@ -75,6 +79,7 @@ export class WorkflowEditorPage {
   }
   async addVariantToEmailNode() {
     await this.addVariantToNode(ChannelType.EMAIL);
+
     return new NodeEmailEditorPageModal(this.page);
   }
   async addVariantToNode(channel: ChannelType, last?: boolean) {
@@ -89,6 +94,7 @@ export class WorkflowEditorPage {
   async addVariantViaStepActions() {
     await this.getStepActionsMenuButtonLocator().click();
     await this.getAddVariantActionLocator().click();
+
     return new ConditionsPage(this.page);
   }
   async addAndFillEmailNode(emailSubject: string, emailParagraph: string, workflowTitle: string) {
@@ -115,10 +121,12 @@ export class WorkflowEditorPage {
 
   static async goToNewWorkflow(page: Page): Promise<WorkflowEditorPage> {
     await page.goto('../workflows/create');
+
     return new WorkflowEditorPage(page);
   }
   static async goToEditWorkflow(page: Page, templateId: string): Promise<WorkflowEditorPage> {
     await page.goto('../workflows/edit/' + templateId);
+
     return new WorkflowEditorPage(page);
   }
 
@@ -128,17 +136,20 @@ export class WorkflowEditorPage {
   public async openWorkflowSettingsSidePanel() {
     await this.page.getByTestId('settings-page').click();
     this.workflowSettingsSidePanel = new WorkflowSettingsSidePanel(this.page);
+
     return this.workflowSettingsSidePanel;
   }
 
   public async openWorkflowTriggerSidebar() {
     await this.nodeTriggerSelector().click();
     this.workflowTriggerSidebar = new WorkflowTriggerSidebar(this.page);
+
     return this.workflowTriggerSidebar;
   }
 
   async clickTriggerWorkflow() {
     await this.page.getByTestId('get-snippet-btn').click();
+
     return new CodeSnippetSidePanelPageModel(this.page);
   }
 
@@ -248,34 +259,41 @@ export class WorkflowEditorPage {
 
   public async addAndEditInAppNode() {
     await this.addAndEditChannel(ChannelType.IN_APP);
+
     return new NodeInAppEditingModalPageModel(this.page);
   }
 
   public async addAndEditInSmsNode() {
     await this.addAndEditChannel(ChannelType.SMS);
+
     return new NodeSmsEditingModalPageModel(this.page);
   }
   public async addAndEditInChatNode() {
     await this.addAndEditChannel(ChannelType.CHAT);
+
     return new NodeChatEditingModalPageModel(this.page);
   }
 
   public async addAndEditEmailNode() {
     await this.addAndEditChannel(ChannelType.EMAIL);
+
     return new NodeEmailEditorPageModal(this.page);
   }
 
   async addAndEditDigestNode() {
     await this.addAndEditChannel(ChannelType.DIGEST);
+
     return new NodeDigestEditorPageModal(this.page);
   }
 
   async addAndEditDelayNode() {
     await this.addAndEditChannel(ChannelType.DELAY);
+
     return new NodeDelayEditorPageModal(this.page);
   }
   public async addAndEditPushNode() {
     await this.addAndEditChannel(ChannelType.PUSH);
+
     return new NodePushEditorPageModal(this.page);
   }
   public async addAndEditChannel(channel: ChannelType) {
@@ -291,8 +309,8 @@ export class WorkflowEditorPage {
   }
 
   public async addChannelToWorkflow(channel: ChannelType) {
-    let source = this.page.getByTestId(`dnd-${channel}Selector`);
-    let dest = this.page.getByTestId('addNodeButton').locator('..');
+    const source = this.page.getByTestId(`dnd-${channel}Selector`);
+    const dest = this.page.getByTestId('addNodeButton').locator('..');
     await dragAndDrop(source, dest);
   }
 
@@ -320,6 +338,7 @@ export class WorkflowEditorPage {
   async getNodeSettings(channel: ChannelType) {
     await this.clickWorkflowNode(channel, true);
     await this.openNodeForEditing(channel);
+
     return new NodeDigestEditorPageModal(this.page);
   }
   getNodeSubtitle(channel: ChannelType, number: number) {

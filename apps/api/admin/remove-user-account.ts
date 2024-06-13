@@ -3,7 +3,7 @@ import '../src/config';
 import { UserRepository, MemberRepository } from '@novu/dal';
 
 import { connect } from './connect-to-dal';
-import { normalizeEmail } from '../src/app/shared/helpers/email-normalization.service';
+import { normalizeEmail } from '@novu/shared';
 import { makeJsonBackup } from './make-json-backup';
 
 const args = process.argv.slice(2);

@@ -1,4 +1,4 @@
-name: Testing Pipeline
+name: Check pull request
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
@@ -134,7 +134,7 @@ jobs:
           projects: ${{join(fromJson(needs.get-affected.outputs.test-providers), ',')}}
 
   test_unit_packages:
-    name: Unit test @novu/* public NPM packages (except providers)
+    name: Unit test @novu public NPM packages (except providers)
     runs-on: ubuntu-latest
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-packages)[0] }}
@@ -163,7 +163,7 @@ jobs:
           projects: ${{join(fromJson(needs.get-affected.outputs.test-packages), ',')}}
 
   test_unit_libs:
-    name: Unit test internal novu lib packages
+    name: Unit test @novu internal packages
     runs-on: ubuntu-latest
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-libs)[0] }}
@@ -181,24 +181,8 @@ jobs:
           targets: lint,build,test
           projects: ${{join(fromJson(needs.get-affected.outputs.test-libs), ',')}}
 
-  test_unit_api:
-    name: Test API
-    needs: [get-affected]
-    strategy:
-      # The order is important for ee to be first, otherwise outputs not work correctly
-      matrix:
-        name: ['novu/api-ee', 'novu/api']
-    uses: ./.github/workflows/reusable-api-e2e.yml
-    with:
-      ee: ${{ contains (matrix.name,'-ee') }}
-      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
-      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') }}
-      job-name: ${{ matrix.name }}
-    secrets: inherit
-
-  # TODO: Merge this step with test_unit_api
-  test_unit:
-    name: Unit Test
+  test_unit_services:
+    name: Unit test backend services
     runs-on: ubuntu-latest
     needs: [get-affected]
     if: ${{ fromJson(needs.get-affected.outputs.test-unit)[0] }}
@@ -226,6 +210,22 @@ jobs:
           targets: lint,build,test
           projects: ${{matrix.projectName}}
 
+  test_e2e_api:
+    name: E2E test API
+    needs: [get-affected]
+    strategy:
+      # The order is important for ee to be first, otherwise outputs not work correctly
+      matrix:
+        name: ['novu/api-ee', 'novu/api']
+    uses: ./.github/workflows/reusable-api-e2e.yml
+    with:
+      ee: ${{ contains (matrix.name,'-ee') }}
+      test-e2e-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/api') }}
+      test-e2e-ee-affected: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e-ee), '@novu/api') }}
+      job-name: ${{ matrix.name }}
+    secrets: inherit
+
+
   validate_openapi:
     name: Validate OpenAPI
     runs-on: ubuntu-latest
@@ -248,16 +248,16 @@ jobs:
       - uses: ./.github/actions/validate-openapi
 
   test_e2e_web:
-    name: Test E2E Web
+    name: E2E test Web app
     needs: [get-affected]
-    if: ${{ contains(fromJson(needs.get-affected.outputs.test-cypress), '@novu/web') }}
+    if: ${{ contains(fromJson(needs.get-affected.outputs.test-e2e), '@novu/web') }}
     uses: ./.github/workflows/reusable-web-e2e.yml
     secrets: inherit
     with:
       ee: true
 
   test_e2e_widget:
-    name: Test E2E Widget
+    name: E2E test Widget
     needs: [get-affected]
     uses: ./.github/workflows/reusable-widget-e2e.yml
     with:

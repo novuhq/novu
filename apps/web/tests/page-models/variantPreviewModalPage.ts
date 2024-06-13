@@ -1,6 +1,5 @@
-import { expect, Page } from '@playwright/test';
-import { addConditions } from '../utils.ts/commands';
-import { ConditionsPage } from './conditionsPage';
+import { expect } from '@playwright/test';
+import { addConditions } from '../utils/commands';
 import { WorkflowBaseSidePanelPage } from './workflowSettingsSidePanel';
 
 export class VariantPreviewModalPage extends WorkflowBaseSidePanelPage {
@@ -43,9 +42,6 @@ export class VariantPreviewModalPage extends WorkflowBaseSidePanelPage {
 
   getVariantPreviewAddVariantButton() {
     return this.page.getByTestId('variant-sidebar-add-variant');
-  }
-  constructor(page: Page) {
-    super(page);
   }
 }
 

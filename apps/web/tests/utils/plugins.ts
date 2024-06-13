@@ -6,8 +6,6 @@ import {
   getPopularTemplateIds,
   MemberStatusEnum,
   ProvidersIdEnum,
-  StepTypeEnum,
-  TriggerTypeEnum,
 } from '@novu/shared';
 import {
   CreateTemplatePayload,
@@ -133,7 +131,7 @@ export async function createNotifications({
 
   const triggerIdentifier = identifier;
   const service = new NotificationsService(token);
-  const session = new UserSession(process.env.API_URL);
+  const session = new UserSession(process.env.REACT_APP_API_URL);
 
   // eslint-disable-next-line no-plusplus
   for (let i = 0; i < count; i++) {
@@ -152,6 +150,10 @@ export async function createNotifications({
   return 'ok';
 }
 
+/*
+ * Use only before or after the suite execution. Do not drop the database in tests as
+ * it will break parallel test runs.
+ */
 export async function dropDatabase() {
   const dal = new DalService();
   await dal.connect(process.env.MONGODB_URL ?? '');
@@ -160,13 +162,25 @@ export async function dropDatabase() {
   return true;
 }
 
-export async function seedDatabase(): Promise<UserEntity> {
+export async function createUser(): Promise<UserEntity> {
   const dal = new DalService();
   await dal.connect(process.env.MONGODB_URL ?? '');
 
   const userService = new UserService();
 
   return await userService.createTestUser();
+}
+
+export function randomEmail() {
+  return new UserService().randomEmail();
+}
+
+export function randomPassword() {
+  return new UserService().randomPassword();
+}
+
+export function testPassword() {
+  return new UserService().testPassword();
 }
 
 export async function addOrganization(userId: string) {
@@ -203,7 +217,7 @@ export async function inviteUser(
   session: SessionData,
   email: string
 ): Promise<{ token: string; inviter: any; organization: any }> {
-  const apiUrl = process.env.API_URL;
+  const apiUrl = process.env.REACT_APP_API_URL;
 
   const inviteResponse = await fetch(`${apiUrl}/v1/invites`, {
     method: 'POST',
@@ -314,7 +328,6 @@ export async function populateBlueprints() {
   );
 
   const popularTemplateIds = getPopularTemplateIds({ production: false });
-  const getStartedTemplateIds = getGetStartedTemplateIds({ production: false });
 
   const blueprintTemplates = await productionNotificationTemplateService.getBlueprintTemplates(
     organizationId,
