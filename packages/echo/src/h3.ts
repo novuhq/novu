@@ -10,7 +10,6 @@ export const serve = (options: ServeHandlerOptions) => {
   const handler = new EchoRequestHandler({
     frameworkName,
     ...options,
-    client,
     handler: (event: H3Event) => ({
       body: () => readBody(event),
       headers: (key) => getHeader(event, key),
