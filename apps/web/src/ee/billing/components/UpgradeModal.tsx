@@ -198,7 +198,7 @@ export const UpgradeModal = ({
                       </Text>
                       <When truthy={billingInterval === 'month'}>
                         <Text color={isDark ? colors.B80 : colors.B40} size={12}>
-                          billed monthy
+                          billed monthly
                         </Text>
                       </When>
                       <When truthy={billingInterval === 'year'}>

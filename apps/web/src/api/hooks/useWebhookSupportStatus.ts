@@ -4,7 +4,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { getWebhookSupportStatus } from '../integration';
 import { IS_DOCKER_HOSTED, WEBHOOK_URL } from '../../config';
 import { useEnvController } from '../../hooks';
-import { useAuth } from './useAuth';
+import { useAuth } from '../../hooks/useAuth';
 
 export const useWebhookSupportStatus = ({
   hasCredentials,

@@ -19,6 +19,10 @@ import { useAuth } from '../../../hooks/useAuth';
 export function BrandingForm() {
   const { currentOrganization } = useAuth();
 
+  if (!currentOrganization) {
+    return null;
+  }
+
   return <BrandingFormRenderer organization={currentOrganization} />;
 }
 

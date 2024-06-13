@@ -40,7 +40,7 @@ export const DeleteLocaleModal = ({
     >
       <Text size={14} weight="normal" color={colors.B60}>
         Deleting a language removes its JSON file, and notifications using keys from that file will switch to the
-        default {getLocale(currentOrganization.defaultLocale!)?.langName} language.
+        default {getLocale(currentOrganization!.defaultLocale!)?.langName} language.
       </Text>
       <Group position="right" spacing={24} mt={30}>
         <Button

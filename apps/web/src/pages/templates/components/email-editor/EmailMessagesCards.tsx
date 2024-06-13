@@ -156,7 +156,7 @@ export function EmailMessagesCards() {
       <When truthy={view === ViewEnum.EDIT}>
         <Grid grow>
           <Grid.Col span={9}>
-            <EmailContentCard organization={currentOrganization} />
+            <EmailContentCard organization={currentOrganization!} />
           </Grid.Col>
           <Grid.Col
             span={3}
