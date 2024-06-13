@@ -3,6 +3,7 @@ import {
   chatProviders,
   EmailProviderIdEnum,
   emailProviders,
+  FeatureFlagsKeysEnum,
   InAppProviderIdEnum,
   inAppProviders,
   pushProviders,
@@ -12,7 +13,7 @@ import {
 import { expect } from '@playwright/test';
 import { test } from './utils/baseTest';
 
-import { initializeSession, isDarkTheme } from './utils/browser';
+import { initializeSession, isDarkTheme, setFeatureFlag } from './utils/browser';
 import {
   checkTableLoading,
   checkTableRow,
@@ -24,6 +25,7 @@ import { deleteProvider, SessionData } from './utils/plugins';
 
 let session: SessionData;
 test.beforeEach(async ({ page }) => {
+  await setFeatureFlag(page, FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED, false);
   ({ session } = await initializeSession(page));
 });
 

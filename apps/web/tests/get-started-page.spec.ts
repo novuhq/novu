@@ -3,7 +3,6 @@ import { initializeSession } from './utils/browser';
 import { GetStartedPage, Tab } from './page-models/getStartedPage';
 
 test.beforeEach(async ({ context, page }) => {
-  await mockFeatureFlags(page, { IS_IMPROVED_ONBOARDING_ENABLED: true });
   await initializeSession(page, { noTemplates: true });
 });
 
