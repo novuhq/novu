@@ -46,14 +46,18 @@ export const Header = ({ active = 0 }: { active?: number }) => {
               }),
               stepIcon: css({
                 border: 'none !important',
-                width: '300 !important',
-                height: '300 !important',
+                width: '200 !important',
+                minWidth: '200 !important',
+                height: '200 !important',
                 backgroundColor: 'surface.popover !important',
                 color: 'typography.text.secondary !important',
                 '&[data-progress]': {
                   backgroundColor: 'table.header.border !important',
                   color: 'typography.text.main !important',
                 },
+              }),
+              stepBody: css({
+                marginLeft: '50 !important',
               }),
               stepCompletedIcon: css({
                 backgroundColor: 'typography.text.feedback.success',

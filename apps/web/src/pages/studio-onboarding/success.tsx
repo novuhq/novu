@@ -60,7 +60,14 @@ export const StudioOnboardingSuccess = () => {
           })}
         >
           <Heading>Success, you sent an email to {email}</Heading>
-          <Text className={css({ color: 'typography.text.secondary', lineHeight: '150', marginBottom: '150' })}>
+          <Text
+            className={css({
+              color: 'typography.text.secondary',
+              lineHeight: '125',
+              marginTop: '25',
+              marginBottom: '150',
+            })}
+          >
             Proceed to customize your Workflows or continue your onboarding by reviewing our documentation.
           </Text>
           <ExecutionDetailsAccordion identifier={identifier} steps={item?.jobs} subscriberVariables={{}} />

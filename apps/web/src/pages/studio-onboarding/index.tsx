@@ -88,7 +88,14 @@ export const StudioOnboarding = () => {
           })}
         >
           <Heading>Create an Novu endpoint</Heading>
-          <Text className={css({ color: 'typography.text.secondary', lineHeight: '150', marginBottom: '150' })}>
+          <Text
+            className={css({
+              color: 'typography.text.secondary',
+              lineHeight: '125',
+              marginBottom: '150',
+              marginTop: '50',
+            })}
+          >
             The first step adds an Novu endpoint, and creates your first workflow automatically. The workflow will be
             created with an email step with sample content.
           </Text>
