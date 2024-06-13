@@ -79,6 +79,7 @@ export const UpgradeModal = ({
 
       return;
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!intentSecret || intentSecret.length === 0 || !open) {

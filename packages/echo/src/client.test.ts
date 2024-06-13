@@ -414,6 +414,76 @@ describe('Echo Client', () => {
       expect(type).toBe(delayConfiguration.type);
     });
 
+    it('should compile default input variable', async () => {
+      const bodyTemplate = `
+{% for element in elements %}
+  {{ element }}
+{% endfor %}`;
+
+      await echo.workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (inputs) => {
+              return {
+                subject: 'body static prefix' + ' ' + inputs.name + ' ' + inputs.lastName + ' ' + inputs.role,
+                body: inputs.body,
+              };
+            },
+            {
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', default: '{{name}}' },
+                  lastName: { type: 'string', default: '{{subscriber.lastName}}' },
+                  role: { type: 'string', default: '{{role}}' },
+                  body: { type: 'string', default: bodyTemplate },
+                },
+                required: [],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', default: '`default_name`' },
+              role: { type: 'string' },
+              elements: { type: 'array' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      const emailEvent: IEvent = {
+        action: 'execute',
+        data: { role: 'product manager', elements: ['cat', 'dog'] },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {
+          lastName: "Smith's",
+        },
+        state: [],
+        inputs: {},
+      };
+
+      const emailExecutionResult = await echo.executeWorkflow(emailEvent);
+
+      expect(emailExecutionResult).toBeDefined();
+      expect(emailExecutionResult.outputs).toBeDefined();
+      if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const subject = (emailExecutionResult.outputs as any).subject as string;
+      expect(subject).toBe("body static prefix `default_name` Smith's product manager");
+      const body = (emailExecutionResult.outputs as any).body as string;
+      expect(body).toContain('cat');
+      expect(body).toContain('dog');
+    });
+
     it('should throw error on execute action without data', async () => {
       await echo.workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));

@@ -30,9 +30,13 @@ export function HeaderMenuItems({}) {
   const isDark = useIsDarkTheme();
   const iconColor = isDark ? colors.white : colors.B40;
 
+  if (!currentOrganization) {
+    return null;
+  }
+
   const profileMenuItems = [
     <Dropdown.Item disabled key="user">
-      <ProfileMenuItem currentOrganization={currentOrganization!} currentUser={currentUser} />
+      <ProfileMenuItem currentOrganization={currentOrganization} currentUser={currentUser} />
     </Dropdown.Item>,
     ...menuItems.map(({ title, icon, path }) => (
       <Link to={path} key={`link-${title}`}>
