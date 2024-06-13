@@ -1,7 +1,7 @@
 import { expect, Locator, Page, selectors } from '@playwright/test';
-import { getSession, ISessionOptions, OverrideSessionOptions, SessionData } from './plugins';
+import { getSession, ISessionOptions } from './plugins';
 import os from 'node:os';
-import { FeatureFlagsMock } from './featureFlagsMock';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const isMac = os.platform() === 'darwin';
 const modifier = isMac ? 'Meta' : 'Control';
@@ -10,33 +10,16 @@ export async function initializeSession(page: Page, settings: ISessionOptions = 
   selectors.setTestIdAttribute('data-test-id');
   const session = await getSession(settings);
   await page.goto('/');
-  await page.evaluate((session) => {
-    if (session.token) {
-      localStorage.setItem('auth_token', session.token);
+  await page.evaluate((sess) => {
+    if (sess.token) {
+      localStorage.setItem('auth_token', sess.token);
     } else {
-      localStorage.setItem('auth_token', null);
+      localStorage.setItem('auth_token', '');
     }
   }, session);
   await page.goto('/');
-  const featureFlagsMock = new FeatureFlagsMock(page);
-  return { session, featureFlagsMock };
-}
 
-export async function setPlaywrightFlag(page: Page) {
-  await page.evaluate(() => {
-    window['isPlaywright'] = true;
-  });
-}
-
-async function handleAuthOverrideOptions(settings: OverrideSessionOptions, session: SessionData) {
-  await settings.page.goto('/');
-  await settings.page.evaluate((session) => {
-    if (session.token) {
-      localStorage.setItem('auth_token', session.token);
-    } else {
-      localStorage.setItem('auth_token', null);
-    }
-  }, session);
+  return { session };
 }
 
 export async function fillTextInAMonacoEditor(page: Page, selector: string, textToType: string) {
@@ -57,16 +40,18 @@ export async function dragAndDrop(dragSelector: Locator, dropSelector: Locator) 
 
 export async function deleteIndexedDB(page: Page, dbName: string) {
   await page.goto('/');
-  await page.evaluate((dbName) => {
-    indexedDB.deleteDatabase(dbName);
+  await page.evaluate((name) => {
+    indexedDB.deleteDatabase(name);
   }, dbName);
 }
 
 export async function isDarkTheme(page: Page) {
   const backgroundColor = await page.evaluate(() => {
     const body = document.body;
+
     return window.getComputedStyle(body).backgroundColor;
   });
+
   return backgroundColor.toLowerCase() !== '#EDF0F2' && backgroundColor.toLowerCase() !== 'rgb(237, 240, 242)';
 }
 export function isLoginPage(page: Page) {
@@ -101,4 +86,19 @@ export async function setBrowserDateTimeTo(page: Page, value: Date) {
 
 export async function assertPageShowsMessage(page: Page, text: string) {
   await expect(page.getByText(text)).toBeVisible();
+}
+
+declare global {
+  interface Window {
+    _env_: any;
+  }
+}
+
+export async function setFeatureFlag(page: Page, key: FeatureFlagsKeysEnum, value: string | boolean) {
+  await page.addInitScript(
+    ({ k, v }) => {
+      window._env_ = window._env_ || { [k]: v.toString() };
+    },
+    { k: key, v: value }
+  );
 }

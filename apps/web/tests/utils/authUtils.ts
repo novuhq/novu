@@ -3,6 +3,7 @@ import { expect, Page } from '@playwright/test';
 export async function validateTokenNotExisting(page: Page) {
   const authToken = await getAuthToken(page);
   expect(authToken).toBeNull();
+
   return authToken;
 }
 

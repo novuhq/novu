@@ -1,6 +1,6 @@
 import { expect, Page } from '@playwright/test';
 import { faker } from '@faker-js/faker';
-import { setFileForFilePicker } from '../utils.ts/commands';
+import { setFileForFilePicker } from '../utils/commands';
 
 export class TranslationsPage {
   public async uploadTranslationFile(fileName: string) {

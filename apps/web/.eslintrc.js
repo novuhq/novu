@@ -29,7 +29,7 @@ module.exports = {
           {
             name: '@playwright/test',
             importNames: ['test'],
-            message: `please use import { test } from './utils.ts/baseTest' instead.`,
+            message: `please use import { test } from './utils/baseTest' instead.`,
           },
           // TODO: re-enable this once we have de-coupled web's build from linting
           /*
