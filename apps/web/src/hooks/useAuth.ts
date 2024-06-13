@@ -61,7 +61,7 @@ export function useAuth() {
     if (!getToken() && inPrivateRoute) {
       navigate(ROUTES.AUTH_LOGIN, { state: { redirectTo: location } });
     }
-  }, [navigate, inPrivateRoute]);
+  }, [navigate, inPrivateRoute, location]);
 
   const { data: user, isLoading: isUserLoading } = useQuery<IUserEntity>(['/v1/users/me'], getUser, {
     enabled: hasToken,
@@ -106,7 +106,7 @@ export function useAuth() {
     queryClient.clear();
     segment.reset();
     navigate(ROUTES.AUTH_LOGIN);
-  }, [navigate]);
+  }, [navigate, queryClient, segment]);
 
   const { organizationId, environmentId } = getTokenClaims() || {};
 

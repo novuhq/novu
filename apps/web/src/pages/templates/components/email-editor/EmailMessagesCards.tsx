@@ -156,6 +156,7 @@ export function EmailMessagesCards() {
       <When truthy={view === ViewEnum.EDIT}>
         <Grid grow>
           <Grid.Col span={9}>
+            {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
             <EmailContentCard organization={currentOrganization!} />
           </Grid.Col>
           <Grid.Col

@@ -78,6 +78,7 @@ export const DefaultLocaleModal = ({
         defaultLocale: currentOrganization.defaultLocale,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrganization?.defaultLocale]);
 
   return (
