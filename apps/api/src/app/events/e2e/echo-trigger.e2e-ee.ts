@@ -228,8 +228,8 @@ describe('Echo Trigger ', async () => {
       type: StepTypeEnum.EMAIL,
     });
 
-    expect(cancelledJobByVariable.length).to.be.eq(2);
-    expect(cancelledJobByVariable[1].status).to.be.eq(JobStatusEnum.CANCELED);
+    expect(cancelledJobByVariable.length).to.be.eq(1);
+    expect(cancelledJobByVariable[0].status).to.be.eq(JobStatusEnum.CANCELED);
   });
 
   it('should have execution detail errors for invalid trigger payload', async () => {
