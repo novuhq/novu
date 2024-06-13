@@ -632,7 +632,10 @@
     "amannn",
     "pandabox",
     "zulip",
-    "zwnj"
+    "zwnj",
+    "prepush",
+    "xcodebuild",
+    "liquidjs"
   ],
   "flagWords": [],
   "patterns": [

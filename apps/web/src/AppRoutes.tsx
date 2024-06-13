@@ -49,6 +49,7 @@ import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { useSettingsRoutes } from './SettingsRoutes';
 import { WorkflowsListPage } from './studio/components/workflows/WorkflowsListPage';
+import { WorkflowsDetailPage } from './studio/components/workflows/WorkflowsDetailPage';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
@@ -142,6 +143,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.STUDIO}>
           <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
           <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
+          <Route path={'/studio/flows/:templateId'} element={<WorkflowsDetailPage />} />
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />

@@ -538,6 +538,68 @@ describe('Echo Trigger ', async () => {
     expect(messagesAfter.length).to.be.eq(1);
     expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
   });
+
+  it('should trigger the echo workflow with input variables', async () => {
+    const workflowId = 'input-variables-workflow';
+    const newWorkflow = await workflow(
+      workflowId,
+      async ({ step, payload }) => {
+        await step.email(
+          'send-email',
+          async (inputs) => {
+            return {
+              subject: 'prefix ' + inputs.name,
+              body: 'Body result',
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', default: 'Hello {{name}}' },
+              },
+            } as const,
+          }
+        );
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await echoServer.start([newWorkflow]);
+
+    await discoverAndSyncEcho(session);
+
+    const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(foundWorkflow).to.be.ok;
+
+    if (!foundWorkflow) {
+      throw new Error('Workflow not found');
+    }
+
+    await triggerEvent(session, workflowId, subscriber, {});
+    await session.awaitRunningJobs(foundWorkflow._id);
+    await triggerEvent(session, workflowId, subscriber, { name: 'payload_name' });
+    await session.awaitRunningJobs(foundWorkflow._id);
+
+    const sentMessage = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.EMAIL,
+    });
+
+    expect(sentMessage.length).to.be.eq(2);
+    expect(sentMessage[1].subject).to.include('prefix Hello default_name');
+    expect(sentMessage[0].subject).to.include('prefix Hello payload_name');
+  });
 });
 
 async function syncWorkflow(session) {
