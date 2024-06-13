@@ -83,7 +83,6 @@ function WorkflowFloatingMenuButton({ Icon, tooltipLabel }: IWorkflowFloatingMen
       <IconButton
         Icon={Icon}
         className={css({
-          // TODO: this doesn't work due to all the !important in novui... need to fix layer styles
           padding: '75 !important',
           borderRadius: '100',
           _hover: {
