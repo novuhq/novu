@@ -1,4 +1,4 @@
-import { api } from '@novu/shared-web';
+import { api } from '../../../api';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React, { useEffect } from 'react';
 import { InputVariables } from './InputVariables';

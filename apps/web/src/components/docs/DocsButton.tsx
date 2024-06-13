@@ -1,6 +1,6 @@
 import { ColorScheme, Popover } from '@mantine/core';
 import { ActionButton, Button, IconOutlineMenuBook, QuickGuide, Tooltip, useColorScheme } from '@novu/design-system';
-import { useSegment } from '@novu/shared-web';
+import { useSegment } from '../providers/SegmentProvider';
 import { useEffect, useMemo, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { css, cva } from '@novu/novui/css';

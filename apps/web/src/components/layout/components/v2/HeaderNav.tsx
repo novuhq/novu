@@ -7,7 +7,7 @@ import useThemeChange from '../../../../hooks/useThemeChange';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
 import { css } from '@novu/novui/css';
 import { HStack } from '@novu/novui/jsx';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../../hooks/useAuth';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
 import { HeaderMenuItems } from './HeaderMenuItems';

@@ -1,5 +1,5 @@
 import { Drawer, Loader, Stack } from '@mantine/core';
-import { useKeyDown } from '@novu/shared-web';
+import { useKeyDown } from '../hooks/useKeyDown';
 
 import { ActionButton } from '../button/ActionButton';
 import { colors } from '../config';
@@ -22,12 +22,13 @@ export const Sidebar = ({
   isLoading = false,
   isParentScrollable = false,
   styles,
+  navigationWidth,
   'data-test-id': dataTestId,
   onClose,
   onBack,
   onSubmit,
 }: ISidebarProps) => {
-  const { classes: drawerClasses } = useDrawerStyles({ isExpanded });
+  const { classes: drawerClasses } = useDrawerStyles({ isExpanded, navigationWidth });
   const onCloseCallback = () => {
     onClose();
   };

@@ -32,9 +32,8 @@ import {
 import { FeatureFlagsKeysEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import { FreeTrialSidebarWidget } from './FreeTrialSidebarWidget';
 import { useUserOnboardingStatus } from '../../../api/hooks/useUserOnboardingStatus';
-import { ROUTES } from '../../../constants/routes.enum';
-import { useEnvController } from '../../../hooks';
-import { useFeatureFlag } from '@novu/shared-web';
+import { ROUTES } from '../../../constants/routes';
+import { useEnvController, useFeatureFlag } from '../../../hooks';
 import { useSegment } from '../../providers/SegmentProvider';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { ChangesCountBadge } from './ChangesCountBadge';

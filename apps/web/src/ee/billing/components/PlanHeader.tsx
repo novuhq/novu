@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
 import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
-import { api, useAuth, useSegment } from '@novu/shared-web';
+import { api } from '../../../api';
+import { useAuth } from '../../../hooks/useAuth';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { PLANS_COLUMN_WIDTH } from '../utils/plansColumnWidths';

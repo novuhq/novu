@@ -10,7 +10,8 @@ import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplat
 import Content from './Content';
 import { Header } from './Header';
 import { useProcessVariables } from '../../../../hooks';
-import { api, useEnvController } from '@novu/shared-web';
+import { api } from '../../../../api';
+import { useEnvController } from '../../../../hooks/useEnvController';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';

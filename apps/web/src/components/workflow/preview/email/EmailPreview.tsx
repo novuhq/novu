@@ -11,10 +11,11 @@ import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPa
 import { When } from '../../../utils/When';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
+import { api } from '../../../../api';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePreviewEmailTemplate';
 import { useMutation } from '@tanstack/react-query';
-import { api, useEnvController } from '@novu/shared-web';
+import { useEnvController } from '../../../../hooks/useEnvController';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
 import { ErrorPrettyRender } from '../ErrorPrettyRender';

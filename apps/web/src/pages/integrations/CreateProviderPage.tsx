@@ -1,7 +1,7 @@
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { CreateProviderInstanceSidebar } from './components/multi-provider/CreateProviderInstanceSidebar';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 
 export function CreateProviderPage() {
   const { channel, providerId } = useParams();

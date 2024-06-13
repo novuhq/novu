@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { ActionIcon, FileButton, Group, Indicator, Stack, useMantineColorScheme } from '@mantine/core';
 import { Dropzone } from '@mantine/dropzone';
 import { colors, Edit, Sidebar, Table, Text, Title, Tooltip, Trash, Upload, When } from '@novu/design-system';
-import { useAuth, useEnvController } from '@novu/shared-web';
+import { useAuth, useEnvController } from '../../../hooks';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Outlet } from 'react-router-dom';

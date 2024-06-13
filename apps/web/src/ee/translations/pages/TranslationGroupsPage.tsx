@@ -1,7 +1,7 @@
 import { Container, Group, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { colors, PageContainer, Text, Title, When, IRow } from '@novu/design-system';
-import { useAuth, useEnvController } from '@novu/shared-web';
+import { useAuth, useEnvController } from '../../../hooks';
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { FlagIcon } from '../components/shared';

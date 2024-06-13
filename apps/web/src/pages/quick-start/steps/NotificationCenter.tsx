@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { InAppSandbox, SandboxFooter } from '../../../components/quick-start/in-app-onboarding';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { FlowTypeEnum, OnBoardingAnalyticsEnum } from '../consts';
 

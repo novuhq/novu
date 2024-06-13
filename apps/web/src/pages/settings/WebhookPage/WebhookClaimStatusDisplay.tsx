@@ -5,7 +5,7 @@ import {
   IconRefresh,
   When,
 } from '@novu/design-system';
-import { LocalizedMessage } from '@novu/shared-web';
+import { LocalizedMessage } from '../../../types/LocalizedMessage';
 import { FC } from 'react';
 import { IconButton } from '../../../components';
 import { cva } from '@novu/novui/css';

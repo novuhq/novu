@@ -1,4 +1,4 @@
-import { ROUTES } from '@novu/shared-web';
+import { ROUTES } from '../../../constants/routes';
 
 import { GetStartedAnimation } from '../components/GetStartedAnimation';
 import { GetStartedLink, StepDescription, StepText } from './shared';

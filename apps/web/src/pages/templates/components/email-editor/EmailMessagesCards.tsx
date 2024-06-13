@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EmailContentCard } from './EmailContentCard';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../../hooks/useAuth';
 import { When } from '../../../../components/utils/When';
 import { EmailPreview } from '../../../../components/workflow/preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
