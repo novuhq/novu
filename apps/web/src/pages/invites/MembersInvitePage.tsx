@@ -18,9 +18,9 @@ import {
 } from '../../api/organization';
 import { MembersTable } from './components/MembersTable';
 import { Button, Input, Invite, UserAccess } from '@novu/design-system';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../hooks/useAuth';
 import { parseUrl } from '../../utils/routeUtils';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 import { ProductLead } from '../../components/utils/ProductLead';
 
 export function MembersInvitePage() {

@@ -1,6 +1,7 @@
 import { ColorScheme, useMantineColorScheme } from '@mantine/core';
 import { IconOutlineDarkMode, IconOutlineLightMode, IconOutlineTonality } from '@novu/novui/icons';
-import { ColorSchemePreferenceEnum, THEME_TITLE_LOOKUP, useLocalThemePreference, useSegment } from '@novu/shared-web';
+import { ColorSchemePreferenceEnum, THEME_TITLE_LOOKUP, useLocalThemePreference } from '@novu/design-system';
+import { useSegment } from '../components/providers/SegmentProvider';
 import { useEffect, useMemo } from 'react';
 import { useDebounce } from './useDebounce';
 

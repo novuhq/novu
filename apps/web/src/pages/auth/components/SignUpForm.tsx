@@ -7,12 +7,12 @@ import { passwordConstraints, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import type { IResponseError } from '@novu/shared';
 import { PasswordInput, Button, colors, Input, Text, Checkbox } from '@novu/design-system';
 
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { api } from '../../../api/api.client';
 import { useVercelParams } from '../../../hooks';
 import { useAcceptInvite } from './useAcceptInvite';
 import { PasswordRequirementPopover } from './PasswordRequirementPopover';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { OAuth } from './OAuth';
 
 type SignUpFormProps = {

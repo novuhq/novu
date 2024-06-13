@@ -1,5 +1,5 @@
 import { IIconProps, IconCheck, IconContentCopy } from '@novu/design-system';
-import { LocalizedMessage } from '@novu/shared-web';
+import { LocalizedMessage } from '../types/LocalizedMessage';
 import { FC } from 'react';
 import { IconButton } from './IconButton';
 

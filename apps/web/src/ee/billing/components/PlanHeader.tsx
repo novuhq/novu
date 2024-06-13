@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Group, Stack, useMantineTheme } from '@mantine/core';
 import { Button, Text, When, colors, errorMessage } from '@novu/design-system';
-import { api, useAuth, useSegment } from '@novu/shared-web';
+import { api } from '../../../api';
+import { useAuth } from '../../../hooks/useAuth';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { PLANS_COLUMN_WIDTH } from '../utils/plansColumnWidths';
@@ -36,7 +38,7 @@ export const PlanHeader = () => {
     setApiServiceLevel(currentOrganization?.apiServiceLevel || ApiServiceLevelEnum.FREE);
   }, [currentOrganization]);
 
-  const { mutateAsync: checkout, isLoading: isCheckingout } = useMutation<
+  const { mutateAsync: checkout, isLoading: isCheckingOut } = useMutation<
     any,
     any,
     { billingInterval: 'month' | 'year'; apiServiceLevel: ApiServiceLevelEnum }
@@ -59,6 +61,7 @@ export const PlanHeader = () => {
       return;
     }
     checkout({ billingInterval, apiServiceLevel: ApiServiceLevelEnum.BUSINESS });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billingInterval, intentSecret, apiServiceLevel]);
 
   const { mutateAsync: goToPortal, isLoading: isGoingToPortal } = useMutation<any, any, any>(
@@ -149,7 +152,7 @@ export const PlanHeader = () => {
             <When truthy={apiServiceLevel === ApiServiceLevelEnum.FREE}>
               <Button
                 data-test-id="plan-business-upgrade"
-                loading={isCheckingout}
+                loading={isCheckingOut}
                 onClick={() => {
                   segment.track('Upgrade Now Clicked - Plans List');
                   checkout({
@@ -180,7 +183,7 @@ export const PlanHeader = () => {
                 <Button
                   variant="outline"
                   data-test-id="plan-business-add-payment"
-                  loading={isCheckingout}
+                  loading={isCheckingOut}
                   onClick={() => {
                     checkout({
                       billingInterval,
@@ -247,7 +250,7 @@ export const PlanHeader = () => {
         </div>
       </Group>
       <UpgradeModal
-        loading={isCheckingout}
+        loading={isCheckingOut}
         billingInterval={billingInterval}
         setBillingInterval={setBillingInterval}
         intentSecret={intentSecret}

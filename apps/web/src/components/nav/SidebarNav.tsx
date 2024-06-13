@@ -1,4 +1,4 @@
-import { ROUTES } from '@novu/shared-web';
+import { ROUTES } from '../../constants/routes';
 import { FC, useMemo } from 'react';
 import { matchRoutes, useLocation } from 'react-router-dom';
 import { css } from '@novu/novui/css';

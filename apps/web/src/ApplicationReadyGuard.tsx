@@ -1,5 +1,5 @@
 import { type PropsWithChildren, useLayoutEffect } from 'react';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from './hooks/useAuth';
 
 export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
   const { isLoading, inPublicRoute } = useAuth();

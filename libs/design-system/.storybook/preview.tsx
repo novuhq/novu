@@ -2,8 +2,7 @@ import React, { useEffect } from 'react';
 import { addons } from '@storybook/preview-api';
 import { DARK_MODE_EVENT_NAME } from 'storybook-dark-mode';
 import { ThemeProvider } from '../src/ThemeProvider';
-import { DocsContainer } from './Doc.container';
-import { useLocalThemePreference } from '@novu/shared-web';
+import { useLocalThemePreference } from '@novu/design-system';
 import { lightTheme, darkTheme } from './NovuTheme';
 import { Parameters, Decorator } from '@storybook/react';
 

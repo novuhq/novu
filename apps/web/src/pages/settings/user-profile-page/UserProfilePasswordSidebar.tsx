@@ -8,6 +8,8 @@ import { IUserProfilePasswordSidebarProps } from './UserProfilePasswordSidebar.s
 import { UserProfileSidebarContext } from './UserProfileSidebarContext';
 import { UserProfileUpdatePasswordForm } from './UserProfileUpdatePasswordForm';
 import { useUserProfileSearchParams } from './useUserProfileSearchParams';
+import { useFeatureFlag } from '../../../hooks';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 // TODO: replace with design-system components in future iteration
 const Title = styled('h2', title);
@@ -20,6 +22,9 @@ export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarPro
 }) => {
   const { countdownTimerSeconds, sendVerificationEmail, stopTimer } = useContext(UserProfileSidebarContext);
   const { token, clearTokenParam } = useUserProfileSearchParams();
+
+  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
+  const navigationWidth = isInformationArchitectureEnabled ? 272 : 300;
 
   // ensure the timer is not running if we are in an unrelated flow
   useEffect(() => {
@@ -63,6 +68,7 @@ export const UserProfilePasswordSidebar: React.FC<IUserProfilePasswordSidebarPro
 
   return (
     <SidebarFormless
+      navigationWidth={navigationWidth}
       isOpened={isOpened}
       onClose={onClose}
       customHeader={

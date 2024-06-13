@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { APP_ID, ENV, WIDGET_EMBED_PATH } from '../config';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from './useAuth';
 
 export function useNovu() {
   const authContext = useAuth();

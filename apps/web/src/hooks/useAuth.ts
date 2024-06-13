@@ -6,9 +6,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import type { IJwtClaims, IOrganizationEntity, IUserEntity } from '@novu/shared';
 
-import { useSegment } from '../providers';
+import { useSegment } from '../components/providers/SegmentProvider';
 import { api } from '../api';
-import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants';
+import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
 
 // TODO: Add a novu prefix to the local storage key
 const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
@@ -61,7 +61,7 @@ export function useAuth() {
     if (!getToken() && inPrivateRoute) {
       navigate(ROUTES.AUTH_LOGIN, { state: { redirectTo: location } });
     }
-  }, [navigate, inPrivateRoute]);
+  }, [navigate, inPrivateRoute, location]);
 
   const { data: user, isLoading: isUserLoading } = useQuery<IUserEntity>(['/v1/users/me'], getUser, {
     enabled: hasToken,
@@ -106,12 +106,12 @@ export function useAuth() {
     queryClient.clear();
     segment.reset();
     navigate(ROUTES.AUTH_LOGIN);
-  }, [navigate]);
+  }, [navigate, queryClient, segment]);
 
   const { organizationId, environmentId } = getTokenClaims() || {};
 
   const currentOrganization = useMemo(() => {
-    if (organizationId && organizations?.length > 0) {
+    if (organizationId && organizations && organizations?.length > 0) {
       return organizations.find((org) => org._id === organizationId);
     }
 

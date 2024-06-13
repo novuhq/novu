@@ -1,10 +1,10 @@
-import { api } from '@novu/shared-web';
+import { api } from '../../../api';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React, { useEffect } from 'react';
 import { InputVariables } from './InputVariables';
 import { useDebouncedState, useDisclosure } from '@mantine/hooks';
-import { Accordion, Card, Code, Group, Popover, Tabs } from '@mantine/core';
-import { Button, Text, When, Question } from '@novu/design-system';
+import { Accordion, Code, Group } from '@mantine/core';
+import { Button, Text } from '@novu/design-system';
 
 export const InputVariablesForm = ({ schema, payloadSchema, formData, onChange }) => {
   const [value, setValue] = useDebouncedState<any>({}, 500);
@@ -23,6 +23,7 @@ export const InputVariablesForm = ({ schema, payloadSchema, formData, onChange }
       inputs: value,
       payload: payloadSchemaData,
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, payloadSchemaData]);
 
   if (isLoading) {

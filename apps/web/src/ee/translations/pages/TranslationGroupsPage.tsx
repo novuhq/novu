@@ -1,7 +1,7 @@
 import { Container, Group, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { colors, PageContainer, Text, Title, When, IRow } from '@novu/design-system';
-import { useAuth, useEnvController } from '@novu/shared-web';
+import { useAuth, useEnvController } from '../../../hooks';
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { FlagIcon } from '../components/shared';
@@ -27,7 +27,8 @@ export const TranslationGroupsPage = () => {
   };
 
   const handleAddGroupButtonClick = () => {
-    if (!currentOrganization.defaultLocale) {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    if (!currentOrganization!.defaultLocale) {
       openDefaultLocale();
 
       return;
@@ -75,11 +76,14 @@ export const TranslationGroupsPage = () => {
           />
         </Container>
         <TranslationGroupsList
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           data={translationGroups!}
           onRowClick={onRowClick}
           isLoading={isLoading}
           page={page}
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           pageSize={pageSize!}
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           totalCount={totalCount!}
           handlePageChange={handlePageChange}
         />

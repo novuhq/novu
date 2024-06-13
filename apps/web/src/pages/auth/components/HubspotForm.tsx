@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import styled from '@emotion/styled';
-import { HUBSPOT_PORTAL_ID } from '../config';
+import { HUBSPOT_PORTAL_ID } from '../../../config';
 
 // TODO: remove design system colors after fixing circular dependency from ee
 const colors = {
@@ -229,6 +229,7 @@ export const HubspotForm = <TProperties extends Record<string, string>>(props: H
     } else {
       createForm();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props]);
 
   return (

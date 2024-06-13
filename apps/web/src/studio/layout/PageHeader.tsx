@@ -1,7 +1,7 @@
 import { CoreProps } from '@novu/novui';
 import { styled, Flex } from '@novu/novui/jsx';
 import { title as titleRecipe } from '@novu/novui/recipes';
-import { LocalizedMessage } from '@novu/shared-web';
+import { LocalizedMessage } from '../../types/LocalizedMessage';
 
 const Title = styled('h1', titleRecipe);
 

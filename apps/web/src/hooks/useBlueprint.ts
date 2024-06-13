@@ -2,7 +2,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect } from 'react';
 
 import { useSegment } from '../components/providers/SegmentProvider';
-import { ROUTES } from '../constants/routes.enum';
+import { ROUTES } from '../constants/routes';
 
 export const useBlueprint = () => {
   const [params] = useSearchParams();

@@ -5,7 +5,7 @@ import { Control, Controller } from 'react-hook-form';
 
 import { FlagIcon, ICreateGroup, SelectItem } from './shared';
 import { useFetchLocales } from '../hooks';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks';
 import { DeleteLocaleModal } from './DeleteLocaleModal';
 
 export const GroupFormCommonFields = ({
@@ -62,7 +62,8 @@ export const GroupFormCommonFields = ({
       />
       <Controller
         rules={{
-          validate: (value) => value.includes(currentOrganization.defaultLocale!) || 'Default locale must be included',
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          validate: (value) => value.includes(currentOrganization!.defaultLocale!) || 'Default locale must be included',
         }}
         render={({ field, fieldState }) => (
           <Select

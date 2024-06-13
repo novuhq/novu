@@ -6,31 +6,31 @@ export const OPACITY_TOKENS = defineTokens.opacity({
     type: 'opacity',
   },
   '40': {
-    value: '40%',
+    value: '0.4',
     type: 'opacity',
   },
   '80': {
-    value: '80%',
+    value: '0.8',
     type: 'opacity',
   },
   '100': {
-    value: '100%',
+    value: '1',
     type: 'opacity',
   },
 });
 
 /** @deprecated */
-export const LEGACY_OPACITY_TOKENS = defineTokens.radii({
+export const LEGACY_OPACITY_TOKENS = defineTokens.opacity({
   '20': {
-    value: '20%',
+    value: '0.2',
     type: 'opacity',
   },
   '50': {
-    value: '50%',
+    value: '0.5',
     type: 'opacity',
   },
   '60': {
-    value: '60%',
+    value: '0.6',
     type: 'opacity',
   },
 });

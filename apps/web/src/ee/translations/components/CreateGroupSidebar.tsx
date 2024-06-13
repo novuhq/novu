@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Sidebar, Title, errorMessage } from '@novu/design-system';
-import { api, useAuth, useEnvController } from '@novu/shared-web';
+import { api } from '../../../api';
+import { useAuth, useEnvController } from '../../../hooks';
 import { Group } from '@mantine/core';
 import slugify from 'slugify';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -65,6 +66,7 @@ export const CreateGroupSidebar = ({
     if (localesForm.length === 0) {
       setValue('locales', [currentOrganization?.defaultLocale]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrganization?.defaultLocale, localesForm]);
 
   useEffect(() => {
@@ -78,6 +80,7 @@ export const CreateGroupSidebar = ({
     }
 
     setValue('identifier', newIdentifier);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
 
   const onSubmit = async (data: any) => {

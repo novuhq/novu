@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Sidebar, Title, errorMessage } from '@novu/design-system';
-import { api, useAuth, useEnvController } from '@novu/shared-web';
+import { api } from '../../../api';
+import { useAuth, useEnvController } from '../../../hooks';
 import { Group } from '@mantine/core';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -75,6 +76,7 @@ export const EditGroupSidebar = ({
     if (localesForm.length === 0) {
       setValue('locales', [currentOrganization?.defaultLocale]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrganization?.defaultLocale, localesForm]);
 
   const onUpdateGroup = async (form) => {

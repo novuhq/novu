@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useLocalThemePreference, ColorSchemePreferenceEnum } from '@novu/shared-web';
+import { useLocalThemePreference, ColorSchemePreferenceEnum } from '../hooks/useLocalThemePreference';
 import { useColorScheme as useMantineColorScheme } from '@mantine/hooks';
 import { ColorScheme } from './ColorScheme';
 import { mapThemeStatusToColorScheme } from './mapThemeStatusToColorScheme';

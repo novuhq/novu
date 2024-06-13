@@ -28,6 +28,7 @@ export function FilesDiffSection({
       return;
     }
     monacoRef.current.editor.setTheme(isDark ? 'novu-dark' : 'novu');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [colorScheme]);
 
   if (!text) return null;

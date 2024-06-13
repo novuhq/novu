@@ -1,13 +1,13 @@
-import { Box, CloseButton, createStyles, Group, MultiSelectValueProps, Stack, useMantineTheme } from '@mantine/core';
+import { createStyles, Group, Stack } from '@mantine/core';
 import { colors, Label, Popover, Text, Select } from '@novu/design-system';
 
 import React, { useState } from 'react';
 import { Control, Controller, useWatch } from 'react-hook-form';
 import { useFetchLocales } from '../../hooks';
-import { TranslateIcon, TranslationFileIcon, TranslationFolderIconSmall } from '../../icons';
+import { TranslateIcon } from '../../icons';
 import { LocalesFormSchema } from '../EditTranslationsSidebar';
 import { FlagIcon, SelectItem } from '../shared';
-import { useEnvController } from '@novu/shared-web';
+import { useEnvController } from '../../../../hooks';
 
 type Props = {
   control: Control<LocalesFormSchema>;

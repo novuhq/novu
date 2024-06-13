@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import styled from '@emotion/styled';
-import { useMantineTheme } from '@mantine/core';
+import { useMantineTheme, ColorScheme } from '@mantine/core';
 import { colors } from '@novu/design-system';
 import { HUBSPOT_PORTAL_ID } from '../utils/environment';
 
@@ -38,7 +38,9 @@ export type HubspotFormProps<
   /**
    * Callback function to be called when the form is submitted.
    */
-  onFormSubmitted?: () => void;
+  onFormSubmitted?: (...args: any) => void;
+
+  colorScheme?: ColorScheme;
 };
 
 const HUBSPOT_FORMS_URL = 'https://js.hsforms.net/forms/v2.js';
@@ -222,6 +224,7 @@ export const HubspotForm = <TProperties extends Record<string, string>>(props: H
     } else {
       createForm();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [props]);
 
   if (!HUBSPOT_PORTAL_ID) {

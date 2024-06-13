@@ -27,7 +27,7 @@ import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
 import { useWorkflowVariables } from '../../../../../api/hooks';
 
-import { ROUTES } from '../../../../../constants/routes.enum';
+import { ROUTES } from '../../../../../constants/routes';
 import { UpgradePlanBanner } from '../../../../../components/layout/components/UpgradePlanBanner';
 
 interface IVariablesList {

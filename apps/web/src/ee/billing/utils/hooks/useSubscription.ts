@@ -1,10 +1,13 @@
-import { api, useAuth } from '@novu/shared-web';
+import { api } from '../../../../api';
+import { useAuth } from '../../../../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { differenceInDays, isSameDay } from 'date-fns';
 import { ApiServiceLevelEnum } from '@novu/shared';
 
 export const useSubscription = () => {
+  // TODO: Fix with a useMemo
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = new Date();
   const { currentOrganization } = useAuth();
   const { data, isLoading } = useQuery(

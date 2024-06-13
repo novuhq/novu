@@ -8,7 +8,8 @@ import { getInviteTokenData } from '../../api/invitation';
 import AuthLayout from '../../components/layout/components/AuthLayout';
 import { SignUpForm } from './components/SignUpForm';
 import { colors, Text, Button } from '@novu/design-system';
-import { ROUTES, useAuth } from '@novu/shared-web';
+import { useAuth } from '../../hooks/useAuth';
+import { ROUTES } from '../../constants/routes';
 import { useAcceptInvite } from './components/useAcceptInvite';
 import { LoginForm } from './components/LoginForm';
 
