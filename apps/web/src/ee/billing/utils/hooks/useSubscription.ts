@@ -1,4 +1,5 @@
-import { api, useAuth } from '@novu/shared-web';
+import { api } from '../../../../api';
+import { useAuth } from '../../../../hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { differenceInDays, isSameDay } from 'date-fns';

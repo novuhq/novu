@@ -13,7 +13,8 @@ import { TextRowContent } from './TextRowContent';
 import type { IForm, IFormStep, ITemplates } from '../formTypes';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { ROUTES, useFeatureFlag } from '@novu/shared-web';
+import { ROUTES } from '../../../../constants/routes';
+import { useFeatureFlag } from '../../../../hooks/useFeatureFlag';
 
 interface IStepEntityExtended extends IFormStep {
   template: ITemplates & {

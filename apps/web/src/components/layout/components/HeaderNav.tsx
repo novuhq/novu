@@ -19,7 +19,8 @@ import {
   InviteMembers,
 } from '@novu/design-system';
 import { useAuth } from '../../../hooks/useAuth';
-import { useLocalThemePreference, useDebounce, useBootIntercom } from '../../../hooks';
+import { useDebounce, useBootIntercom } from '../../../hooks';
+import { useLocalThemePreference } from '@novu/design-system';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
 import { useSpotlightContext } from '../../providers/SpotlightProvider';
 import { HEADER_NAV_HEIGHT } from '../constants';

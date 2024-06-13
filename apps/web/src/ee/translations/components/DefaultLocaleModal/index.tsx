@@ -14,7 +14,8 @@ import {
   WarningIcon,
   When,
 } from '@novu/design-system';
-import { api, useAuth } from '@novu/shared-web';
+import { api } from '../../../../api';
+import { useAuth } from '../../../../hooks/useAuth';
 
 import { LocaleIcon } from '../../icons/LocaleIcon';
 import { useFetchLocales } from '../../hooks/useFetchLocales';

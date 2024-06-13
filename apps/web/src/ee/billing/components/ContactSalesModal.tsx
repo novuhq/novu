@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, Title, successMessage } from '@novu/design-system';
 import { HubspotForm } from './HubspotForm';
 import { HUBSPOT_FORM_IDS } from '../utils/hubspot.constants';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { ApiServiceLevelEnum } from '@novu/shared';
 
 type ContactSalesModalProps = {

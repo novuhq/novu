@@ -5,7 +5,9 @@ import { useMantineColorScheme } from '@mantine/core';
 
 import { JobTitleEnum } from '@novu/shared';
 import type { ProductUseCases, IResponseError, ICreateOrganizationDto, IJwtPayload } from '@novu/shared';
-import { HubspotForm, useAuth, useSegment } from '@novu/shared-web';
+import { useAuth } from '../../../hooks';
+import { useSegment } from '../../../components/providers/SegmentProvider';
+import { HubspotForm } from '../../../ee/billing/components/HubspotForm';
 
 import { api } from '../../../api/api.client';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';

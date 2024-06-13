@@ -7,9 +7,8 @@ import { useMemo } from 'react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth, useFeatureFlag } from '../../hooks';
 import { When, colors, useTabsStyles } from '@novu/design-system';
-import { useFeatureFlag } from '@novu/shared-web';
 
 const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
   return (

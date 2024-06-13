@@ -1,5 +1,5 @@
 import { IconOpenInNew, IconOutlineClose, Modal, ActionButton } from '@novu/design-system';
-import { useSegment } from '@novu/shared-web';
+import { useSegment } from '../providers/SegmentProvider';
 import { useEffect, useState } from 'react';
 import { css } from '@novu/novui/css';
 import { Flex } from '@novu/novui/jsx';

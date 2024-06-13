@@ -1,5 +1,5 @@
 import { IconRoute, IconSettings } from '@novu/novui/icons';
-import { ROUTES } from '@novu/shared-web';
+import { ROUTES } from '../../constants/routes';
 import { EnvironmentSelect } from './EnvironmentSelect/index';
 import { NavMenu } from '../../components/nav/NavMenu';
 import { NavMenuLinkButton } from '../../components/nav/NavMenuButton/NavMenuLinkButton';

@@ -2,6 +2,7 @@ import { Styles, DrawerStylesNames } from '@mantine/core';
 import { ReactNode } from 'react';
 
 export interface ISidebarBaseProps {
+  navigationWidth?: number;
   customHeader?: ReactNode;
   customFooter?: ReactNode;
   children: ReactNode;
