@@ -22,7 +22,6 @@ const options = new DocumentBuilder()
   .setLicense('MIT', 'https://opensource.org/license/mit')
   .addServer('https://api.novu.co/v1')
   .addServer('https://eu.api.novu.co/v1')
-  .addServer('http://localhost:3000/v1')
   .addApiKey(API_KEY_SECURITY_DEFINITIONS, API_KEY_SWAGGER_SECURITY_NAME)
   .addTag(
     'Events',
@@ -132,6 +131,17 @@ export const setupSwagger = (app: INestApplication) => {
     { operationId: '^.*delete.*', methodNameOverride: 'delete' },
     { operationId: '^.*remove.*', methodNameOverride: 'delete' },
   ];
+  document1['x-speakeasy-retries'] = {
+    strategy: 'backoff',
+    backoff: {
+      initialInterval: 500,
+      maxInterval: 30000,
+      maxElapsedTime: 3600000,
+      exponent: 1.5,
+    },
+    statusCodes: ['408', '409', '429', '5XX'],
+    retryConnectionErrors: true,
+  };
   const document = injectDocumentComponents(document1);
 
   SwaggerModule.setup('api', app, {
@@ -146,9 +156,9 @@ export const setupSwagger = (app: INestApplication) => {
     yamlDocumentUrl: 'openapi.yaml',
     explorer: process.env.NODE_ENV !== 'production',
   });
-  SwaggerModule.setup('openapi-hoisted', app, transformDocument(document), {
-    jsonDocumentUrl: 'openapi-hoisted.json',
-    yamlDocumentUrl: 'openapi-hoisted.yaml',
+  SwaggerModule.setup('openapi.sdk', app, transformDocument(document), {
+    jsonDocumentUrl: 'openapi.sdk.json',
+    yamlDocumentUrl: 'openapi.sdk.yaml',
     explorer: process.env.NODE_ENV !== 'production',
   });
 };
