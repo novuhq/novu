@@ -61,6 +61,7 @@ export function SingleTranslationFileEditSidebar({
     if (!locale) {
       handleClose();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uploadedFile, handleClose, mode]);
 
   const handleUpdateFile = async () => {
@@ -166,6 +167,7 @@ export function SingleTranslationFileEditSidebar({
     >
       <Wrapper>
         <Stack>
+          {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
           <FileNameInput currentFileName={isTranslationExists ? fileName! : uploadedFile!.name} readonly={readonly} />
           {mode === 'replace' && isTranslationExists && (
             <FilesDiffSection

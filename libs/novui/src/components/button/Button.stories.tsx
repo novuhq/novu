@@ -1,8 +1,8 @@
+import { Meta, StoryFn } from '@storybook/react';
 import React from 'react';
-import { StoryFn, Meta } from '@storybook/react';
+import { Grid } from '../../../styled-system/jsx';
+import { Icon10K, IconAddBox, IconInfo } from '../../icons';
 import { Button } from './Button';
-import { Flex } from '../../../styled-system/jsx';
-import { Icon10K, IconInfo } from '../../icons';
 
 export default {
   title: 'Components/Button',
@@ -21,35 +21,61 @@ Loading.args = {
 };
 
 export const icon = () => (
-  <Flex>
+  <Grid>
     <Button size="lg" Icon={Icon10K}>
       Large
     </Button>
     <Button Icon={IconInfo}>Medium</Button>
-  </Flex>
+  </Grid>
 );
 
 export const filled = () => (
-  <Flex>
+  <Grid>
     <Button size="lg">Large</Button>
-    <Button>Medium</Button>
-  </Flex>
+    <Button size="md">Medium</Button>
+    <Button size="sm">Small</Button>
+    <Button>Default</Button>
+  </Grid>
 );
 
 export const outline = () => (
-  <Flex>
+  <Grid>
     <Button size="lg" variant="outline">
       Large
     </Button>
     <Button variant="outline">Medium</Button>
-  </Flex>
+    <Button size="lg" Icon={Icon10K} variant="outline">
+      Large
+    </Button>
+    <Button Icon={IconInfo} variant="outline">
+      Medium
+    </Button>
+  </Grid>
+);
+
+export const transparent = () => (
+  <Grid>
+    <Button size="lg" variant="transparent">
+      Large
+    </Button>
+    <Button variant="transparent">Medium</Button>
+    <Button size="lg" Icon={IconAddBox} variant="transparent">
+      Large
+    </Button>
+    <Button Icon={IconAddBox} variant="transparent">
+      Medium
+    </Button>
+    <Button Icon={IconAddBox} variant="transparent" disabled>
+      Disabled
+    </Button>
+  </Grid>
 );
 
 export const disabled = () => (
-  <Flex>
+  <Grid>
     <Button disabled>Filled</Button>
     <Button variant="outline" disabled>
       Outline
     </Button>
-  </Flex>
+  </Grid>
 );

@@ -11,6 +11,7 @@ export const InputVariables = ({ schema = {}, onChange = (values) => {}, default
       return;
     }
     onChange(values);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [values]);
 
   return (

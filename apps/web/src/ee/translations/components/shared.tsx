@@ -23,6 +23,7 @@ export interface ILocale {
 export const FlagIcon = ({ locale, width = 16, height = 16 }: { locale: string; width?: number; height?: number }) => {
   const Icon = useMemo(() => {
     return FlagMap[locale];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale, FlagMap]);
 
   return Icon ? <Icon width={width} height={height} viewBox="0 0 40 40" /> : null;

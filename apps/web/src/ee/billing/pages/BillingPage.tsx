@@ -8,6 +8,7 @@ export const BillingPage = () => {
 
   useEffect(() => {
     segment.track('Billing Page Viewed');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

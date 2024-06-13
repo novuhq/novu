@@ -10,4 +10,6 @@ export enum HttpHeaderKeysEnum {
   ACCESS_CONTROL_ALLOW_ORIGIN = 'access-control-allow-origin',
   ACCESS_CONTROL_ALLOW_METHODS = 'access-control-allow-methods',
   ACCESS_CONTROL_ALLOW_HEADERS = 'access-control-allow-headers',
+  ACCESS_CONTROL_ALLOW_CREDENTIALS = 'access-control-allow-credentials',
+  ACCESS_CONTROL_MAX_AGE = 'access-control-max-age',
 }

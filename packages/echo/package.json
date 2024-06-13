@@ -1,6 +1,6 @@
 {
   "name": "@novu/echo",
-  "version": "0.24.3-alpha.2",
+  "version": "0.24.3-alpha.3",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -47,37 +47,37 @@
   "exports": {
     ".": {
       "require": "./dist/index.js",
-      "import": "./dist/index.mjs",
+      "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./express": {
       "require": "./dist/express.js",
-      "import": "./dist/express.mjs",
+      "import": "./dist/express.js",
       "types": "./dist/express.d.ts"
     },
     "./next": {
       "require": "./dist/next.js",
-      "import": "./dist/next.mjs",
+      "import": "./dist/next.js",
       "types": "./dist/next.d.ts"
     },
     "./nuxt": {
       "require": "./dist/nuxt.js",
-      "import": "./dist/nuxt.mjs",
+      "import": "./dist/nuxt.js",
       "types": "./dist/nuxt.d.ts"
     },
     "./h3": {
       "require": "./dist/h3.js",
-      "import": "./dist/h3.mjs",
+      "import": "./dist/h3.js",
       "types": "./dist/h3.d.ts"
     },
     "./sveltekit": {
       "require": "./dist/sveltekit.js",
-      "import": "./dist/sveltekit.mjs",
+      "import": "./dist/sveltekit.js",
       "types": "./dist/sveltekit.d.ts"
     },
     "./remix": {
       "require": "./dist/remix.js",
-      "import": "./dist/remix.mjs",
+      "import": "./dist/remix.js",
       "types": "./dist/remix.d.ts"
     }
   },
@@ -107,6 +107,7 @@
     "cross-fetch": "^4.0.0",
     "json-schema-faker": "^0.5.6",
     "json-schema-to-ts": "^3.0.0",
+    "liquidjs": "^10.13.1",
     "ora": "^5.4.1"
   },
   "files": [

@@ -88,6 +88,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_ORIGIN]: '*',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_METHODS]: 'GET, POST',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_HEADERS]: '*',
+      [HttpHeaderKeysEnum.ACCESS_CONTROL_MAX_AGE]: '604800',
       [HttpHeaderKeysEnum.FRAMEWORK]: this.frameworkName,
       [HttpHeaderKeysEnum.USER_AGENT]: sdkVersion,
       [HttpHeaderKeysEnum.SDK_VERSION]: sdkVersion,
