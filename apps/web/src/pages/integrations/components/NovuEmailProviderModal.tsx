@@ -1,7 +1,7 @@
 import styled from '@emotion/styled/macro';
 import { List, Text } from '@mantine/core';
 import { ChannelTypeEnum } from '@novu/shared';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { colors } from '@novu/design-system';
 import { NovuProviderBase } from './NovuProviderBase';
 

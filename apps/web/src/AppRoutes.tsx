@@ -3,8 +3,8 @@ import { PrivatePageLayout } from './components/layout/components/PrivatePageLay
 import { PublicPageLayout } from './components/layout/components/PublicPageLayout';
 import { EnsureOnboardingComplete } from './components/layout/components/EnsureOnboardingComplete';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { ROUTES } from './constants/routes.enum';
-import { useFeatureFlag } from '@novu/shared-web';
+import { ROUTES } from './constants/routes';
+import { useFeatureFlag } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import InvitationPage from './pages/auth/InvitationPage';
 import LoginPage from './pages/auth/LoginPage';

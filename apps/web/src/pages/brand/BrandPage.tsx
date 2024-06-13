@@ -5,9 +5,9 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { colors, useTabsStyles } from '@novu/design-system';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../hooks/useAuth';
 import { useSegment } from '../../components/providers/SegmentProvider';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 import { useEnvController } from '../../hooks';
 
 const BRAND = 'Brand';

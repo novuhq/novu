@@ -4,7 +4,7 @@ import { NavigateFunction } from 'react-router-dom';
 import { ChannelTypeEnum, UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import { Bell, Chat, Mail, Mobile, Sms } from '@novu/design-system';
 
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 import { WIDGET_EMBED_PATH } from '../../config';
 
 export const onBoardingSubscriberId = 'on-boarding-subscriber-id-123';

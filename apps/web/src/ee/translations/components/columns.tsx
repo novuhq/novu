@@ -13,7 +13,7 @@ import {
   When,
   withCellLoading,
 } from '@novu/design-system';
-import { useAuth, useEnvController } from '@novu/shared-web';
+import { useAuth, useEnvController } from '../../../hooks';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { FlagMap } from '../icons/flags';

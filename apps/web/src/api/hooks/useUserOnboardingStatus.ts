@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { IUserEntity } from '@novu/shared';
 
 import { updateUserOnBoarding } from '../user';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../hooks/useAuth';
 
 interface IErrorResponseType {
   error: string;

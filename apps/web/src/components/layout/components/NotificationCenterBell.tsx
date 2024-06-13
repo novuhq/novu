@@ -3,7 +3,7 @@ import { ColorScheme } from '@mantine/core';
 import { colors, IconNotifications } from '@novu/design-system';
 import { NotificationBell } from '@novu/notification-center';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag } from '@novu/shared-web';
+import { useFeatureFlag } from '../../../hooks/useFeatureFlag';
 
 export function NotificationCenterBell({
   unseenCount,

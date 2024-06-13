@@ -1,13 +1,12 @@
-import { Loader } from '@mantine/core';
-import { colors, ThemeProvider } from '@novu/design-system';
-import { CONTEXT_PATH, SegmentProvider } from '@novu/shared-web';
+import { ThemeProvider } from '@novu/design-system';
+import { SegmentProvider } from './components/providers/SegmentProvider';
+import { CONTEXT_PATH } from './config';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { PropsWithChildren } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 import { api } from './api/api.client';
-import { css } from '@novu/novui/css';
 import { NovuiProvider } from '@novu/novui';
 
 const defaultQueryFn = async ({ queryKey }: { queryKey: string }) => {
@@ -26,9 +25,6 @@ const queryClient = new QueryClient({
   },
 });
 
-/**
- * Centralized Provider hierarchy.
- */
 const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
   return (
     <ThemeProvider>

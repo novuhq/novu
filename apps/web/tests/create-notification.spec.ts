@@ -62,7 +62,7 @@ test.describe('Creation functionality', () => {
     await editWorkflowSettings(workflowEditorPage, 'Test 10 Nodes');
     await createEmptyEmailNodes(workflowEditorPage, 10);
     await createEmailNodeAndFillWithTestData(workflowEditorPage, page);
-    expect(await workflowEditorPage.nodeEmailSelector().count()).toBe(10);
+    expect(await workflowEditorPage.nodeEmailSelector().count()).toBe(11);
     await assertTestDataSaved(workflowEditorPage, page);
   });
   test('should add digest node', async ({ page }) => {

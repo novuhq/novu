@@ -1,5 +1,5 @@
 import { UseMutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '@novu/shared-web';
+import { api } from '../../../api';
 import { ITranslationGroup } from './useFetchTranslationGroups';
 
 export const useEditTranslation = (

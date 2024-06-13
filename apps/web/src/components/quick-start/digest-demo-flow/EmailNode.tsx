@@ -4,7 +4,7 @@ import { NodeStepWithPopover } from './NodeStepWithPopover';
 import { EmailFilled } from '@novu/design-system';
 import { useDigestDemoFlowContext } from './DigestDemoFlowProvider';
 import { Indicator } from './Indicator';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 
 export function EmailNode({ data, id }: { data: any; id: string }) {
   const { currentUser } = useAuth();

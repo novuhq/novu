@@ -13,7 +13,7 @@ import { When } from '../../../components/utils/When';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useCreateTemplateFromBlueprint } from '../../../api/hooks';
 import { TemplateCreationSourceEnum } from '../shared';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 
 export function BlueprintModal() {
   const theme = useMantineTheme();

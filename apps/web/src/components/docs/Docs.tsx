@@ -4,7 +4,7 @@ import { PropsWithChildren, ReactNode, useEffect, useMemo } from 'react';
 import * as mdxBundler from 'mdx-bundler/client';
 import { Highlight } from './Highlight';
 import { useQuery } from '@tanstack/react-query';
-import { useSegment } from '@novu/shared-web';
+import { useSegment } from '../providers/SegmentProvider';
 import { Center, Flex, Grid, GridItem, styled, VStack } from '@novu/novui/jsx';
 import { css } from '@novu/novui/css';
 import { text, title as RTitle } from '@novu/novui/recipes';

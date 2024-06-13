@@ -1,4 +1,4 @@
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { COMPANY_LOGO_PATH } from '../../../constants/assets';
 import { Stack } from '@novu/novui/jsx';
 import { SettingsPageContainer } from '../SettingsPageContainer';

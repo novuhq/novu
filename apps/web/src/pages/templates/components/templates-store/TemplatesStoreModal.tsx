@@ -30,7 +30,7 @@ import { FlowEditor } from '../../../../components/workflow';
 import { useCreateTemplateFromBlueprint } from '../../../../api/hooks';
 import { errorMessage } from '../../../../utils/notifications';
 import { parseUrl } from '../../../../utils/routeUtils';
-import { ROUTES } from '../../../../constants/routes.enum';
+import { ROUTES } from '../../../../constants/routes';
 import { TemplateCreationSourceEnum } from '../../shared';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { IBlueprintTemplate } from '../../../../api/types';

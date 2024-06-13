@@ -14,7 +14,10 @@ import {
   IconWebhook,
 } from '@novu/design-system';
 import { ChangesCountBadge } from '../layout/components/ChangesCountBadge';
-import { BaseEnvironmentEnum, ROUTES, useEnvController, useSegment } from '@novu/shared-web';
+import { ROUTES } from '../../constants/routes';
+import { useSegment } from '../../components/providers/SegmentProvider';
+import { useEnvController } from '../../hooks/useEnvController';
+import { BaseEnvironmentEnum } from '../../constants/BaseEnvironmentEnum';
 import { useUserOnboardingStatus } from '../../api/hooks/useUserOnboardingStatus';
 import { EnvironmentSelect } from './EnvironmentSelect';
 import { NavMenu } from './NavMenu';

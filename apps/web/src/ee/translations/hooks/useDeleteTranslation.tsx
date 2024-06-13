@@ -1,6 +1,6 @@
 import { MutationOptions, useMutation, useQueryClient } from '@tanstack/react-query';
 
-import { api } from '@novu/shared-web';
+import { api } from '../../../api';
 import { errorMessage, successMessage } from '@novu/design-system';
 
 export const useDeleteTranslation = (

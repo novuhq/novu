@@ -4,7 +4,7 @@ import { asyncWithLDProvider } from 'launchdarkly-react-client-sdk';
 import App from './App';
 import { initializeApp } from './initializeApp';
 import reportWebVitals from './reportWebVitals';
-import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from '@novu/shared-web';
+import { LAUNCH_DARKLY_CLIENT_SIDE_ID } from './config';
 
 // TODO: would like to figure out a better solution, but this unblocks for now
 import '@novu/novui/components.css';
