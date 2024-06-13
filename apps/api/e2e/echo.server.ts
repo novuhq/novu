@@ -17,7 +17,7 @@ class EchoServer {
   async start() {
     this.server = express();
     this.server.use(express.json());
-    this.server.use(serve({ client: this.echo }));
+    this.server.use(serve({ client: this.echo, workflow: [] }));
 
     await new Promise<void>((resolve) => {
       this.app = this.server.listen(this.port, () => {
