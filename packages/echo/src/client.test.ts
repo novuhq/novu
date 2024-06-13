@@ -359,7 +359,7 @@ describe('Novu Client', () => {
   {{ element }}
 {% endfor %}`;
 
-      await echo.workflow(
+      const newWorkflow = await workflow(
         'test-workflow',
         async ({ step }) => {
           await step.email(
@@ -399,6 +399,8 @@ describe('Novu Client', () => {
         }
       );
 
+      client.addWorkflows([newWorkflow]);
+
       const emailEvent: IEvent = {
         action: 'execute',
         data: { role: 'product manager', elements: ['cat', 'dog'] },
@@ -411,7 +413,7 @@ describe('Novu Client', () => {
         inputs: {},
       };
 
-      const emailExecutionResult = await echo.executeWorkflow(emailEvent);
+      const emailExecutionResult = await client.executeWorkflow(emailEvent);
 
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
