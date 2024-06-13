@@ -27,7 +27,7 @@ export const TranslationGroupsPage = () => {
   };
 
   const handleAddGroupButtonClick = () => {
-    if (!currentOrganization.defaultLocale) {
+    if (!currentOrganization!.defaultLocale) {
       openDefaultLocale();
 
       return;

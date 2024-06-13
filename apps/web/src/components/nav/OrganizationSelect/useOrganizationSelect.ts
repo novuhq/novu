@@ -59,7 +59,7 @@ export const useOrganizationSelect = () => {
     });
   }
 
-  const value = currentOrganization?._id;
+  const value = currentOrganization?._id || '';
 
   const organizationItems = useMemo(() => {
     return (organizations || [])

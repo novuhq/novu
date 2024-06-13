@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import styled from '@emotion/styled';
-import { HUBSPOT_PORTAL_ID } from '../config';
+import { HUBSPOT_PORTAL_ID } from '../../../config';
 
 // TODO: remove design system colors after fixing circular dependency from ee
 const colors = {
