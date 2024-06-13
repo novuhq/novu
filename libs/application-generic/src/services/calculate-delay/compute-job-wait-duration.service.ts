@@ -14,7 +14,7 @@ import { ApiException } from '../../utils/exceptions';
 import { isRegularDigest } from '../../utils/digest';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
 import {
-  IChimeraDigestResponse,
+  IDigestResponse,
   IDelayOutput,
   IRegularDelay,
   IScheduledDelay,
@@ -25,21 +25,20 @@ export class ComputeJobWaitDurationService {
     stepMetadata,
     payload,
     overrides,
-    chimeraResponse,
+    response,
   }: {
     stepMetadata?: IWorkflowStepMetadata;
     payload: any;
     overrides: any;
-    chimeraResponse?: IChimeraDigestResponse | IDelayOutput;
+    response?: IDigestResponse | IDelayOutput;
   }): number {
     if (!stepMetadata) throw new ApiException(`Step metadata not found`);
 
     const digestType =
-      (chimeraResponse?.type as DigestTypeEnum | DelayTypeEnum) ??
-      stepMetadata.type;
+      (response?.type as DigestTypeEnum | DelayTypeEnum) ?? stepMetadata.type;
 
     if (digestType === DelayTypeEnum.SCHEDULED) {
-      const userMetadata = this.getUserScheduledDelayMetadata(chimeraResponse);
+      const userMetadata = this.getUserScheduledDelayMetadata(response);
       let delay = 0;
 
       if (userMetadata?.date) {
@@ -65,7 +64,7 @@ export class ComputeJobWaitDurationService {
 
       return delay;
     } else if (isRegularDigest(digestType)) {
-      const userMetadata = this.getUserRegularDelayMetadata(chimeraResponse);
+      const userMetadata = this.getUserRegularDelayMetadata(response);
 
       if (this.isValidDelayOverride(overrides)) {
         return this.toMilliseconds(
@@ -96,7 +95,7 @@ export class ComputeJobWaitDurationService {
   }
 
   private getUserRegularDelayMetadata(
-    chimeraResponse: IChimeraDigestResponse | IDelayOutput
+    chimeraResponse: IDigestResponse | IDelayOutput
   ): { amount: number; unit: DigestUnitEnum } | undefined {
     if (isUserRegular(chimeraResponse)) {
       const unit = castToDigestUnitEnum(chimeraResponse?.unit);
@@ -109,7 +108,7 @@ export class ComputeJobWaitDurationService {
   }
 
   private getUserScheduledDelayMetadata(
-    chimeraResponse: IChimeraDigestResponse | IDelayOutput
+    chimeraResponse: IDigestResponse | IDelayOutput
   ): { date: string } | undefined {
     if (isUserScheduled(chimeraResponse)) {
       return { date: chimeraResponse.date };
@@ -174,13 +173,13 @@ function castToDigestUnitEnum(unit: string): DigestUnitEnum | undefined {
 }
 
 const isUserRegular = (
-  chimeraResponse: IChimeraDigestResponse | IDelayOutput
-): chimeraResponse is IChimeraDigestResponse | IRegularDelay =>
+  chimeraResponse: IDigestResponse | IDelayOutput
+): chimeraResponse is IDigestResponse | IRegularDelay =>
   chimeraResponse?.type === 'regular' &&
   (chimeraResponse as any)?.unit &&
   (chimeraResponse as any)?.amount;
 
 const isUserScheduled = (
-  chimeraResponse: IChimeraDigestResponse | IDelayOutput
+  chimeraResponse: IDigestResponse | IDelayOutput
 ): chimeraResponse is IScheduledDelay =>
   chimeraResponse?.type === 'scheduled' && (chimeraResponse as any)?.date;

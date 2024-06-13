@@ -42,7 +42,7 @@ export class AddDelayJob {
         stepMetadata: data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
-        chimeraResponse: command.chimeraResponse?.outputs,
+        response: command.chimeraResponse?.outputs,
       });
 
       await this.jobRepository.updateStatus(command.environmentId, data._id, JobStatusEnum.DELAYED);

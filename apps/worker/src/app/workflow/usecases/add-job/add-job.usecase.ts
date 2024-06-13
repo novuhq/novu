@@ -22,7 +22,7 @@ import {
   ExecuteOutput,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IChimeraDigestResponse,
+  IDigestResponse,
   IDelayOutput,
   IFilterVariables,
   InstrumentUsecase,
@@ -179,7 +179,7 @@ export class AddJob {
   ) {
     const resonateResponse = await this.resonateUsecase.execute<
       AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraDigestResponse>
+      ExecuteOutput<IDigestResponse>
     >({
       ...command,
       variables: filterVariables,
@@ -191,7 +191,7 @@ export class AddJob {
       stepMetadata: job.digest,
       payload: job.payload,
       overrides: job.overrides,
-      chimeraResponse: this.fallbackToRegularDigest(resonateResponse?.outputs),
+      response: this.fallbackToRegularDigest(resonateResponse?.outputs),
     });
 
     Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
@@ -254,8 +254,8 @@ export class AddJob {
    *  Fallback to regular digest type.
    *  This is a temporary solution until other digest types are implemented.
    */
-  private fallbackToRegularDigest(outputs: IChimeraDigestResponse | undefined): IChimeraDigestResponse | undefined {
-    let resonateResponseOutput: IChimeraDigestResponse | undefined = undefined;
+  private fallbackToRegularDigest(outputs: IDigestResponse | undefined): IDigestResponse | undefined {
+    let resonateResponseOutput: IDigestResponse | undefined = undefined;
 
     if (outputs) {
       const { type, ...resonateResponseOutputsOmitType } = outputs;

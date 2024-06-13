@@ -51,7 +51,7 @@ enum RequireInjectEnum {
   RESONATE = 'resonate',
 }
 
-export interface IChimeraDigestResponse {
+export interface IDigestResponse {
   amount: number;
   unit: DigestUnitEnum;
   type: 'regular';
@@ -103,7 +103,7 @@ export type IChimeraChannelResponse =
   | IChimeraPushResponse
   | IChimeraSmsResponse;
 
-export type IChimeraActionResponse = IDelayOutput | IChimeraDigestResponse;
+export type IChimeraActionResponse = IDelayOutput | IDigestResponse;
 
 export type IChimeraStepResponse =
   | IChimeraChannelResponse
