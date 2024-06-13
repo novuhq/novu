@@ -195,24 +195,6 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
           [HttpHeaderKeysEnum.EXECUTION_DURATION]: result.metadata.duration.toString(),
         });
       },
-      [PostActionEnum.SYNC]: async () => {
-        if (!this.client.apiKey) {
-          throw new MissingApiKeyError();
-        }
-
-        const result = await this.client.sync(body.echoUrl, anonymousHeader, source);
-
-        return this.createResponse(HttpStatusEnum.OK, result);
-      },
-      [PostActionEnum.DIFF]: async () => {
-        if (!this.client.apiKey) {
-          throw new MissingApiKeyError();
-        }
-
-        const result = await this.client.diff(body.echoUrl, anonymousHeader);
-
-        return this.createResponse(HttpStatusEnum.OK, result);
-      },
     };
   }
 

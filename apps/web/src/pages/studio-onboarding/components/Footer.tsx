@@ -47,8 +47,10 @@ export const Footer = ({
           })}
         >
           <div className={hstack({ gap: '100', color: 'typography.text.secondary' })}>
-            <IconOutlineMenuBook />
-            <Text href={learnMoreLink}>Learn more in our docs</Text>
+            <When truthy={learnMoreLink.length > 0}>
+              <IconOutlineMenuBook />
+              <Text href={learnMoreLink}>Learn more in our docs</Text>
+            </When>
           </div>
           <div className={hstack({ gap: '100' })}>
             <When truthy={canSkipSetup}>
