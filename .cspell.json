@@ -12,6 +12,7 @@
     "alexjoverm",
     "alist",
     "aliyun",
+    "ALLCAPS",
     "amannn",
     "antd",
     "anthonybaxter",
@@ -608,11 +609,10 @@
     "websockets",
     "whatsapp",
     "whatsappbusiness",
+    "xcodebuild",
     "xkeysib",
     "zulip",
-    "zwnj",
-    "prepush",
-    "xcodebuild"
+    "zwnj"
   ],
   "flagWords": [],
   "patterns": [

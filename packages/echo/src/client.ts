@@ -47,7 +47,7 @@ import {
   WorkflowOptions,
 } from './types';
 import { Schema } from './types/schema.types';
-import { EMOJI, log } from './utils';
+import { EMOJI, log, toConstantCase } from './utils';
 import { VERSION } from './version';
 import { Skip } from './types/skip.types';
 
@@ -72,14 +72,35 @@ export class Echo {
   public static NOVU_SIGNATURE_HEADER = HttpHeaderKeysEnum.SIGNATURE;
 
   constructor(config?: ClientConfig) {
-    // TODO: transform this as per notion DX guide
-    this.apiKey = config?.apiKey ?? process.env.NOVU_API_KEY;
-    this.backendUrl = config?.backendUrl ?? DEFAULT_NOVU_API_BASE_URL;
-    this.devModeBypassAuthentication = config?.devModeBypassAuthentication || process.env.NODE_ENV === 'development';
+    const builtConfiguration = this.buildConfiguration(config);
+    this.apiKey = builtConfiguration.apiKey;
+    this.backendUrl = builtConfiguration.backendUrl;
+    this.devModeBypassAuthentication = builtConfiguration.devModeBypassAuthentication;
 
     const ajv = new Ajv({ useDefaults: true });
     addFormats(ajv);
     this.ajv = ajv;
+  }
+
+  private buildConfiguration(config?: ClientConfig) {
+    const builtConfiguration: { apiKey?: string; backendUrl: string; devModeBypassAuthentication: boolean } = {
+      apiKey: undefined,
+      backendUrl: DEFAULT_NOVU_API_BASE_URL,
+      devModeBypassAuthentication: process.env.NODE_ENV === 'development',
+    };
+
+    Object.entries(builtConfiguration).reduce((_acc, [prop]) => {
+      const envVar = `NOVU_${toConstantCase(prop)}`;
+      if (config && config[prop]) {
+        builtConfiguration[prop] = config[prop];
+      } else if (process.env[envVar]) {
+        builtConfiguration[prop] = process.env[envVar];
+      }
+
+      return '';
+    }, '');
+
+    return builtConfiguration;
   }
 
   public addWorkflows(workflows: Array<DiscoverWorkflowOutput>) {
