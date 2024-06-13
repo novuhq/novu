@@ -2,7 +2,7 @@ import React from 'react';
 import { Group } from '@mantine/core';
 import { useFormContext } from 'react-hook-form';
 import { Modal, Text, colors, Button } from '@novu/design-system';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks';
 import { useFetchLocales } from '../hooks/useFetchLocales';
 import { FlagIcon } from './shared';
 import { Warning } from '../icons';

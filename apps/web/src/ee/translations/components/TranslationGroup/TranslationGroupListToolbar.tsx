@@ -1,7 +1,6 @@
 import styled from '@emotion/styled';
 import React from 'react';
 import { PlusButton } from '@novu/design-system';
-import { useEnvController } from '@novu/shared-web';
 
 const Container = styled.div`
   display: flex;

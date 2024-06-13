@@ -8,7 +8,7 @@ import type { IResponseError } from '@novu/shared';
 
 import { api } from '../../../api/api.client';
 import { useVercelParams } from '../../../hooks';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 
 type Props = {
   onSent: () => void;

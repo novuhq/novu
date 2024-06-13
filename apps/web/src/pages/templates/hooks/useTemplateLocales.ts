@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { IEmailBlock } from '@novu/shared';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { useGetLocalesFromContent } from '../../../api/hooks';
 
 export const useTemplateLocales = ({

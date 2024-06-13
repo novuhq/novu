@@ -1,6 +1,6 @@
 import { errorMessage } from '@novu/design-system';
 import type { IResponseError, IEmailBlock } from '@novu/shared';
-import { IS_DOCKER_HOSTED } from '@novu/shared-web';
+import { IS_DOCKER_HOSTED } from '../../config';
 import { useMutation } from '@tanstack/react-query';
 import { useCallback } from 'react';
 

@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '@novu/shared-web';
-import { ROUTES } from '../../../constants/routes.enum';
+import { useAuth } from '../../../hooks/useAuth';
+import { ROUTES } from '../../../constants/routes';
 import { useBlueprint } from '../../../hooks/index';
 
 export function EnsureOnboardingComplete({ children }: any) {

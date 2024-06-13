@@ -1,6 +1,7 @@
 import { Center, Loader } from '@mantine/core';
 import { colors } from '@novu/design-system';
-import { useAuth, useSegment } from '@novu/shared-web';
+import { useAuth } from '../../hooks/useAuth';
+import { useSegment } from '../../components/providers/SegmentProvider';
 import { useEffect } from 'react';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';

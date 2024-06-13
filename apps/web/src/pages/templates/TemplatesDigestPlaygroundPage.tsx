@@ -8,7 +8,7 @@ import { ArrowButton, colors, Title, Text, Button } from '@novu/design-system';
 
 import PageContainer from '../../components/layout/components/PageContainer';
 import { parseUrl } from '../../utils/routeUtils';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 import { DigestDemoFlow } from '../../components';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { DigestPlaygroundAnalyticsEnum } from './constants';

@@ -13,7 +13,7 @@ import type { IntegrationEntity } from '../../integrations/types';
 import { useCreateInAppIntegration } from '../../../hooks/useCreateInAppIntegration';
 import { useCreateOnboardingExperimentWorkflow } from '../../../api/hooks/notification-templates/useCreateOnboardingExperimentWorkflow';
 import { useOnboardingExperiment } from '../../../hooks/useOnboardingExperiment';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 
 export function ChannelsConfiguration({ setClickedChannel }: { setClickedChannel: Dispatch<any> }) {
   const segment = useSegment();

@@ -7,7 +7,7 @@ import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
 import { useAuth } from '../hooks/useAuth';
 import { QueryKeys } from '../api/query.keys';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../constants/routes.enum';
+import { ROUTES } from '../constants/routes';
 import { api } from '../api';
 import { IS_DOCKER_HOSTED } from '../config';
 import { BaseEnvironmentEnum } from '../constants';

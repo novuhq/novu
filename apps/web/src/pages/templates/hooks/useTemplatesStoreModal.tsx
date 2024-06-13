@@ -3,7 +3,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { IBlueprintsGrouped } from '../../../api/hooks';
 import { useInlineComponent } from '../../../hooks';
-import { useFeatureFlag } from '@novu/shared-web';
+import { useFeatureFlag } from '../../../hooks';
 import { ITemplatesStoreModalProps, TemplatesStoreModal } from '../components/templates-store';
 
 const NULL_COMPONENT = () => null;

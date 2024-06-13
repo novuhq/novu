@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useIntercom } from 'react-use-intercom';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from './useAuth';
 import { INTERCOM_APP_ID } from '../config';
 
 export function useBootIntercom() {

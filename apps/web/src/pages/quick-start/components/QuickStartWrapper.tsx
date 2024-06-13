@@ -8,7 +8,7 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { When } from '../../../components/utils/When';
 import { INTERCOM_APP_ID } from '../../../config';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { ArrowButton, colors, Text, Discord } from '@novu/design-system';
 import { useEffectOnce } from '../../../hooks';
 import { discordInviteUrl, notificationCenterDocsUrl, OnBoardingAnalyticsEnum } from '../consts';

@@ -1,4 +1,4 @@
-import { ROUTES } from '@novu/shared-web';
+import { ROUTES } from '../../constants/routes';
 
 export const PATHS: { [key in ROUTES]?: string } = {
   [ROUTES.ACTIVITIES]: 'activity-feed/introduction',

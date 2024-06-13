@@ -1,4 +1,4 @@
-import { ROUTES } from '../../../../constants/routes.enum';
+import { ROUTES } from '../../../../constants/routes';
 
 export function currentOnboardingStep() {
   const LOCAL_STORAGE_STEP = 'onboarding-step';

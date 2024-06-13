@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { colors } from '@novu/design-system';
 import { getStartedSteps, OnBoardingAnalyticsEnum } from '../../consts';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
-import { ROUTES } from '../../../../constants/routes.enum';
+import { ROUTES } from '../../../../constants/routes';
 
 const BULLET_TOP_MARGIN = 20;
 

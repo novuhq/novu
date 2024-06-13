@@ -5,7 +5,7 @@ import { Control, Controller } from 'react-hook-form';
 
 import { FlagIcon, ICreateGroup, SelectItem } from './shared';
 import { useFetchLocales } from '../hooks';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks';
 import { DeleteLocaleModal } from './DeleteLocaleModal';
 
 export const GroupFormCommonFields = ({

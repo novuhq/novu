@@ -15,7 +15,7 @@ import {
   UseRowSelectInstanceProps,
   UseRowSelectState,
 } from 'react-table';
-import { useDataRef } from '@novu/shared-web';
+import { useDataRef } from '../hooks/useDataRef';
 
 import useStyles from './Table.styles';
 import { colors } from '../config';

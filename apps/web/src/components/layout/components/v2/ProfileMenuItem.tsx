@@ -1,7 +1,7 @@
 import { Avatar, Group } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
 import { IOrganizationEntity, IUserEntity } from '@novu/shared';
-import { CONTEXT_PATH } from '@novu/shared-web';
+import { CONTEXT_PATH } from '../../../../config';
 
 const FALLBACK_AVATAR = CONTEXT_PATH + '/static/images/avatar.webp';
 

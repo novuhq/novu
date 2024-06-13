@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useStripe, useElements } from '@stripe/react-stripe-js';
 import { errorMessage, Button, When } from '@novu/design-system';
-import { useSegment } from '@novu/shared-web';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 import { useSubscription } from '../utils/hooks/useSubscription';
 
 export const UpgradeSubmitButton = ({ intervalChanging }: { intervalChanging: boolean }) => {

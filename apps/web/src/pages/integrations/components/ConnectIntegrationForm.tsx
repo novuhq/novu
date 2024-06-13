@@ -6,7 +6,7 @@ import { showNotification } from '@mantine/notifications';
 import { useClipboard } from '@mantine/hooks';
 import { Image, useMantineColorScheme, Stack, Alert } from '@mantine/core';
 import { ChannelTypeEnum, CredentialsKeyEnum } from '@novu/shared';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import type { IResponseError, ICredentialsDto, IConfigCredentials, ICreateIntegrationBodyDto } from '@novu/shared';
 
 import { Button, colors, Input, Switch, Text, Close, Check, Copy, IconOutlineWarning } from '@novu/design-system';
