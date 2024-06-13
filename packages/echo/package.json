@@ -107,6 +107,7 @@
     "cross-fetch": "^4.0.0",
     "json-schema-faker": "^0.5.6",
     "json-schema-to-ts": "^3.0.0",
+    "liquidjs": "^10.13.1",
     "ora": "^5.4.1"
   },
   "files": [
