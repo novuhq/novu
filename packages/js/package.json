@@ -32,7 +32,7 @@
   "private": true,
   "scripts": {
     "start": "pnpm run build -- --watch --sourcemap",
-    "build": "tsup && pnpm run build:umd && pnpm run post:build",
+    "build": "tsup --config tsup.solid.config.ts && tsup && pnpm run build:umd && pnpm run post:build",
     "build:umd": "webpack --config webpack.config.cjs",
     "post:build": "node scripts/size-limit.mjs",
     "lint": "eslint --ext .ts,.tsx src",
@@ -41,6 +41,7 @@
   "devDependencies": {
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.12",
+    "babel-preset-solid": "^1.8.17",
     "bytes-iec": "^3.1.1",
     "chalk": "^5.3.0",
     "compression-webpack-plugin": "^10.0.0",
