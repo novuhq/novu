@@ -42,7 +42,7 @@ export class AddDelayJob {
         stepMetadata: data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
-        bridgeResponse: command.bridgeResponse?.outputs,
+        response: command.bridgeResponse?.outputs,
       });
 
       await this.jobRepository.updateStatus(command.environmentId, data._id, JobStatusEnum.DELAYED);

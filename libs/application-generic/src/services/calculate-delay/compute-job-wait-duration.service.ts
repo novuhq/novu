@@ -14,7 +14,7 @@ import { ApiException } from '../../utils/exceptions';
 import { isRegularDigest } from '../../utils/digest';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
 import {
-  IBridgeDigestResponse,
+  IDigestResponse,
   IDelayOutput,
   IRegularDelay,
   IScheduledDelay,
@@ -25,21 +25,20 @@ export class ComputeJobWaitDurationService {
     stepMetadata,
     payload,
     overrides,
-    bridgeResponse,
+    response,
   }: {
     stepMetadata?: IWorkflowStepMetadata;
     payload: any;
     overrides: any;
-    bridgeResponse?: IBridgeDigestResponse | IDelayOutput;
+    response?: IDigestResponse | IDelayOutput;
   }): number {
     if (!stepMetadata) throw new ApiException(`Step metadata not found`);
 
     const digestType =
-      (bridgeResponse?.type as DigestTypeEnum | DelayTypeEnum) ??
-      stepMetadata.type;
+      (response?.type as DigestTypeEnum | DelayTypeEnum) ?? stepMetadata.type;
 
     if (digestType === DelayTypeEnum.SCHEDULED) {
-      const userMetadata = this.getUserScheduledDelayMetadata(bridgeResponse);
+      const userMetadata = this.getUserScheduledDelayMetadata(response);
       let delay = 0;
 
       if (userMetadata?.date) {
@@ -65,7 +64,7 @@ export class ComputeJobWaitDurationService {
 
       return delay;
     } else if (isRegularDigest(digestType)) {
-      const userMetadata = this.getUserRegularDelayMetadata(bridgeResponse);
+      const userMetadata = this.getUserRegularDelayMetadata(response);
 
       if (this.isValidDelayOverride(overrides)) {
         return this.toMilliseconds(
@@ -96,7 +95,7 @@ export class ComputeJobWaitDurationService {
   }
 
   private getUserRegularDelayMetadata(
-    bridgeResponse: IBridgeDigestResponse | IDelayOutput
+    bridgeResponse: IDigestResponse | IDelayOutput
   ): { amount: number; unit: DigestUnitEnum } | undefined {
     if (isUserRegular(bridgeResponse)) {
       const unit = castToDigestUnitEnum(bridgeResponse?.unit);
@@ -109,7 +108,7 @@ export class ComputeJobWaitDurationService {
   }
 
   private getUserScheduledDelayMetadata(
-    bridgeResponse: IBridgeDigestResponse | IDelayOutput
+    bridgeResponse: IDigestResponse | IDelayOutput
   ): { date: string } | undefined {
     if (isUserScheduled(bridgeResponse)) {
       return { date: bridgeResponse.date };
@@ -174,13 +173,13 @@ function castToDigestUnitEnum(unit: string): DigestUnitEnum | undefined {
 }
 
 const isUserRegular = (
-  bridgeResponse: IBridgeDigestResponse | IDelayOutput
-): bridgeResponse is IBridgeDigestResponse | IRegularDelay =>
+  bridgeResponse: IDigestResponse | IDelayOutput
+): bridgeResponse is IDigestResponse | IRegularDelay =>
   bridgeResponse?.type === 'regular' &&
   (bridgeResponse as any)?.unit &&
   (bridgeResponse as any)?.amount;
 
 const isUserScheduled = (
-  bridgeResponse: IBridgeDigestResponse | IDelayOutput
+  bridgeResponse: IDigestResponse | IDelayOutput
 ): bridgeResponse is IScheduledDelay =>
   bridgeResponse?.type === 'scheduled' && (bridgeResponse as any)?.date;

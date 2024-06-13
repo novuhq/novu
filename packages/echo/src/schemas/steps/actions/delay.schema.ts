@@ -17,7 +17,7 @@ const regularDelayOutputSchema = {
   additionalProperties: false,
 } as const satisfies Schema;
 
-const schedulareDelayOutputSchema = {
+const scheduledDelayOutputSchema = {
   type: 'object',
   properties: {
     type: {
@@ -30,7 +30,7 @@ const schedulareDelayOutputSchema = {
 } as const satisfies Schema;
 
 export const delayOutputSchema = {
-  oneOf: [regularDelayOutputSchema, schedulareDelayOutputSchema],
+  oneOf: [regularDelayOutputSchema, scheduledDelayOutputSchema],
 } as const satisfies Schema;
 
 export const delayResultSchema = {

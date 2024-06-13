@@ -51,7 +51,7 @@ enum RequireInjectEnum {
   RESONATE = 'resonate',
 }
 
-export interface IBridgeDigestResponse {
+export interface IDigestResponse {
   amount: number;
   unit: DigestUnitEnum;
   type: 'regular';
@@ -103,7 +103,7 @@ export type IBridgeChannelResponse =
   | IBridgePushResponse
   | IBridgeSmsResponse;
 
-export type IBridgeActionResponse = IDelayOutput | IBridgeDigestResponse;
+export type IBridgeActionResponse = IDelayOutput | IDigestResponse;
 
 export type IBridgeStepResponse =
   | IBridgeChannelResponse
