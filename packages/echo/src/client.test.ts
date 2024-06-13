@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 
-import { Echo } from './client';
+import { Client } from './client';
 import { DEFAULT_NOVU_API_BASE_URL, HttpMethodEnum, NovuApiEndpointsEnum } from './constants';
 import {
   ExecutionEventInputInvalidError,
@@ -15,7 +15,7 @@ import { FromSchema } from 'json-schema-to-ts';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
 
 describe('Echo Client', () => {
-  let echo: Echo;
+  let echo: Client;
 
   beforeEach(async () => {
     const newWorkflow = await workflow('setup-workflow', async ({ step }) => {
@@ -25,7 +25,7 @@ describe('Echo Client', () => {
       }));
     });
 
-    echo = new Echo();
+    echo = new Client();
     echo.addWorkflows([newWorkflow]);
   });
 
@@ -519,7 +519,7 @@ describe('Echo Client', () => {
   });
 
   describe('getCode method', () => {
-    let getCodeEchoInstance: Echo;
+    let getCodeEchoInstance: Client;
 
     const stepExecuteFunc = async () => ({
       body: 'Test Body',
@@ -531,7 +531,7 @@ describe('Echo Client', () => {
     };
 
     beforeEach(() => {
-      getCodeEchoInstance = new Echo();
+      getCodeEchoInstance = new Client();
 
       getCodeEchoInstance.workflow('setup-workflow', workflowExecuteFunc);
     });

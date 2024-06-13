@@ -56,7 +56,7 @@ JSONSchemaFaker.option({
   alwaysFakeOptionals: true,
 });
 
-export class Echo {
+export class Client {
   private discoveredWorkflows: Array<DiscoverWorkflowOutput> = [];
 
   private ajv: Ajv;

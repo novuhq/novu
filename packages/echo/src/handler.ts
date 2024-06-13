@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 
-import { Echo } from './client';
+import { Client } from './client';
 import {
   ErrorCodeEnum,
   GetActionEnum,
@@ -27,13 +27,13 @@ import { Awaitable, DiscoverWorkflowOutput } from './types';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
-  client?: Echo;
+  client?: Client;
   workflow: Array<DiscoverWorkflowOutput>;
 }
 
 interface IEchoRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
   frameworkName: string;
-  client?: Echo;
+  client?: Client;
   workflow: Array<DiscoverWorkflowOutput>;
   handler: Handler<Input, Output>;
 }
@@ -60,13 +60,13 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
 
   public readonly handler: Handler;
 
-  public readonly client: Echo;
+  public readonly client: Client;
 
   private readonly hmacEnabled: boolean;
 
   constructor(options: IEchoRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
-    this.client = options.client ? options.client : new Echo();
+    this.client = options.client ? options.client : new Client();
     this.client.addWorkflows(options.workflow);
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.devModeBypassAuthentication;
