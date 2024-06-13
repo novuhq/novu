@@ -33,7 +33,7 @@ export interface ServeHandlerOptions {
 
 interface IEchoRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
   frameworkName: string;
-  client: Echo;
+  client?: Echo;
   workflow: Array<DiscoverWorkflowOutput>;
   handler: Handler<Input, Output>;
 }
@@ -66,10 +66,10 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
 
   constructor(options: IEchoRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
-    this.client = options.client;
+    this.client = options.client ? options.client : new Echo();
     this.client.addWorkflows(options.workflow);
     this.frameworkName = options.frameworkName;
-    this.hmacEnabled = !options.client.devModeBypassAuthentication;
+    this.hmacEnabled = this.client.devModeBypassAuthentication;
   }
 
   public createHandler(): (...args: Input) => Promise<Output> {

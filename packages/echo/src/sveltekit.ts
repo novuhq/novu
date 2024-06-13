@@ -1,5 +1,4 @@
 import { RequestEvent } from '@sveltejs/kit';
-import { Echo } from './client';
 import { EchoRequestHandler, ServeHandlerOptions } from './handler';
 import { type SupportedFrameworkName } from './types';
 
@@ -12,11 +11,9 @@ export const serve = (
   POST: (event: RequestEvent) => Promise<Response>;
   PUT: (event: RequestEvent) => Promise<Response>;
 } => {
-  const client = options.client ? options.client : new Echo();
   const handler = new EchoRequestHandler({
     frameworkName,
     ...options,
-    client,
     handler: (reqMethod: 'GET' | 'POST' | 'PUT' | undefined, event: RequestEvent) => {
       return {
         method: () => reqMethod || event.request.method || '',

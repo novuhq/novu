@@ -1,5 +1,4 @@
 import { getHeader, getQuery, type H3Event, readBody, send, setHeaders } from 'h3';
-import { Echo } from './client';
 
 import { EchoRequestHandler, ServeHandlerOptions } from './handler';
 import { type SupportedFrameworkName } from './types';
@@ -8,7 +7,6 @@ export const frameworkName: SupportedFrameworkName = 'h3';
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const serve = (options: ServeHandlerOptions) => {
-  const client = options.client ? options.client : new Echo();
   const handler = new EchoRequestHandler({
     frameworkName,
     ...options,

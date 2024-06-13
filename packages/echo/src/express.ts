@@ -1,6 +1,5 @@
 import { type VercelRequest, type VercelResponse } from '@vercel/node';
 import { type Request, type Response } from 'express';
-import { Echo } from './client';
 
 import { EchoRequestHandler, ServeHandlerOptions } from './handler';
 import { Either } from './types';
@@ -9,11 +8,9 @@ import { type SupportedFrameworkName } from './types';
 export const frameworkName: SupportedFrameworkName = 'express';
 
 export const serve = (options: ServeHandlerOptions): any => {
-  const client = options.client ? options.client : new Echo();
   const echoHandler = new EchoRequestHandler({
     frameworkName,
     ...options,
-    client,
     handler: (incomingRequest: Either<VercelRequest, Request>, response: Either<Response, VercelResponse>) => ({
       body: () => incomingRequest.body,
       headers: (key) => {
