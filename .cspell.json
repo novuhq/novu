@@ -633,7 +633,8 @@
     "zwnj",
     "prepush",
     "xcodebuild",
-    "liquidjs"
+    "liquidjs",
+    "vstack"
   ],
   "flagWords": [],
   "patterns": [
