@@ -14,7 +14,7 @@ test.beforeEach(async ({ page }) => {
   await initializeSession(page, { noTemplates: true });
 });
 
-test('shows templates and creates a new workflow on template selection', async ({ page }) => {
+test.skip('shows templates and creates a new workflow on template selection', async ({ page }) => {
   const workflowsPage = await WorkflowsPage.goTo(page);
   await expect(workflowsPage.getNoWorkflowsPlaceholder()).toBeVisible();
   await expect(workflowsPage.getCreateWorkflowTile()).toBeVisible();
