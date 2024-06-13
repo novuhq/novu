@@ -1,19 +1,21 @@
-name: Deploy DEV Notification Center Web Component
+name: Deploy Notification Center Web Component
 
 on:
   workflow_call:
+    env:
+      description: 'Deployment environment - choose between dev and prod'
+      required: true
+      type: string
 
 jobs:
   build:
     uses: ./.github/workflows/reusable-notification-center.yml
-    with:
-      tests: false
 
   deploy_web_component:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    environment: Development
+    environment: Production
 
     steps:
       - uses: actions/checkout@v4
@@ -24,7 +26,8 @@ jobs:
           name: notification-center-web-component
           path: packages/notification-center/dist/umd
 
-      - name: Deploy Notification Center Web Component to DEV
+      - name: Deploy Notification Center Web Component
+        if: ${{ contains(inputs.env, 'dev') }}
         uses: scopsy/actions-netlify@develop
         with:
           publish-dir: packages/notification-center/dist/umd
@@ -38,4 +41,21 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: 69f27d21-6946-455f-8715-eae2c7931fe0
+        timeout-minutes: 1
+
+      - name: Deploy Notification Center Web Component
+        if: ${{ !contains(inputs.env, 'dev') }}
+        uses: scopsy/actions-netlify@develop
+        with:
+          publish-dir: packages/notification-center/dist/umd
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: prod
+          production-deploy: true
+          alias: prod
+          github-deployment-environment: Production
+          github-deployment-description: Notification Center Web Component Deployment
+          netlify-config-path: packages/notification-center/netlify.toml
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: 468165e2-bd64-4f33-9fd9-4b93ef8a0be0
         timeout-minutes: 1
