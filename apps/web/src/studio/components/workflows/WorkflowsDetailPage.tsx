@@ -1,8 +1,8 @@
 import { SearchInput } from '@novu/design-system';
 import { Button } from '@novu/novui';
+import { css } from '@novu/novui/css';
 import { IconAddBox } from '@novu/novui/icons';
 import { Flex } from '@novu/novui/jsx';
-import { css } from '../../../styled-system/css/css';
 import { PageContainer } from '../../layout/PageContainer';
 import { PageMeta } from '../../layout/PageMeta';
 
