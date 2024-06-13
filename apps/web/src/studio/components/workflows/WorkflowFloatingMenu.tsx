@@ -20,7 +20,7 @@ type IWorkflowFloatingMenuProps = CoreProps;
 
 export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className }) => {
   return (
-    <menu className={cx(vstack({ display: 'flex !important', gap: '150' }), className)}>
+    <menu className={cx(vstack({ display: 'flex !important', gap: '150', p: '25' }), className)}>
       <WorkflowFloatingMenuSection title="Actions">
         <WorkflowFloatingMenuButton
           Icon={IconOutlineAutoAwesomeMotion}
@@ -83,7 +83,8 @@ function WorkflowFloatingMenuButton({ Icon, tooltipLabel }: IWorkflowFloatingMen
       <IconButton
         Icon={Icon}
         className={css({
-          padding: '50',
+          // TODO: this doesn't work due to all the !important in novui... need to fix layer styles
+          padding: '75 !important',
           borderRadius: '100',
           _hover: {
             // TODO: this doesn't work due to all the !important in novui... need to fix layer styles
