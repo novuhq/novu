@@ -1,4 +1,5 @@
-import { BaseEnvironmentEnum, useEnvController } from '@novu/shared-web';
+import { useEnvController } from '../../hooks';
+import { BaseEnvironmentEnum } from '../../constants/BaseEnvironmentEnum';
 import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 

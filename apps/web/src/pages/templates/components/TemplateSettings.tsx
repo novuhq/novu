@@ -10,7 +10,7 @@ import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { useEnvController } from '../../../hooks';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { deleteTemplateById } from '../../../api/notification-templates';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { WorkflowSettingsTabs } from './WorkflowSettingsTabs';
 import { IForm } from './formTypes';
 import { WorkflowSidebar } from './WorkflowSidebar';

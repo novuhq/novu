@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { ActionIcon, FileButton, Group, Stack } from '@mantine/core';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEnvController } from '@novu/shared-web';
+import { useEnvController } from '../../../../hooks';
 import { Button, colors, Sidebar, Text, Title, Tooltip, Trash, When } from '@novu/design-system';
 
 import { useFetchLocales, useFetchTranslation } from '../../hooks';

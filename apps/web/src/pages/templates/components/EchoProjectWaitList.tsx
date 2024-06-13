@@ -3,7 +3,7 @@ import { Badge } from '@mantine/core';
 
 import { TemplateItem } from './templates-store/templateStoreStyles';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 
 const SEGMENT_EVENT = 'Button Clicked - [Echo promotion]';
 const segmentEventAction = {

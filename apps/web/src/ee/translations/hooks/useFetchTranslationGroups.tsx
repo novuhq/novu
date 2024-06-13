@@ -1,6 +1,6 @@
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 import React from 'react';
-import { api } from '@novu/shared-web';
+import { api } from '../../../api';
 
 export interface ITranslationGroup {
   _id: string;

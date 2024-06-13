@@ -4,7 +4,7 @@ import AuthLayout from '../../components/layout/components/AuthLayout';
 import { PasswordResetRequestForm } from './components/PasswordResetRequestForm';
 import { PasswordResetForm } from './components/PasswordResetForm';
 import { Button } from '@novu/design-system';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 import { useVercelParams } from '../../hooks';
 
 export function PasswordResetPage() {

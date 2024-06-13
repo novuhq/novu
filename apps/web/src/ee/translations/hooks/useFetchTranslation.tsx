@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import React from 'react';
-import { api } from '@novu/shared-web';
+import { api } from '../../../api';
 import { ITranslation } from './useFetchTranslationGroup';
 
 export const useFetchTranslation = (identifier?: string, locale?: string) => {

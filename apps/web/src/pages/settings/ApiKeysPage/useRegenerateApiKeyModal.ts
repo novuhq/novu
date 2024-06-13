@@ -1,5 +1,5 @@
 import { IResponseError } from '@novu/shared';
-import { getApiKeys, regenerateApiKeys } from '@novu/shared-web';
+import { getApiKeys, regenerateApiKeys } from '../../../api';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 

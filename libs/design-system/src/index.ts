@@ -41,6 +41,9 @@ export * from './sidebar';
 export * from './when';
 export * from './ThemeProvider';
 export * from './search-input';
+export * from './hooks/useKeyDown';
+export * from './hooks/useDataRef';
+export * from './hooks/useLocalThemePreference';
 /** @deprecated */
 export * from './icons';
 export * from './iconsV2';

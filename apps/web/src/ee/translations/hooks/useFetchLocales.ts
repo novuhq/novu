@@ -1,6 +1,6 @@
 import { useQuery, UseQueryOptions } from '@tanstack/react-query';
 import { ILocale } from '../components/shared';
-import { api } from '@novu/shared-web';
+import { api } from '../../../api';
 
 export const useFetchLocales = (options: UseQueryOptions<ILocale[], any, ILocale[]> = {}) => {
   const { data: locales, ...rest } = useQuery<ILocale[], any, ILocale[]>(

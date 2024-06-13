@@ -7,12 +7,13 @@ import {
   IUserEntity,
   MessageActionStatusEnum,
 } from '@novu/shared';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { API_ROOT, APP_ID, IS_EU_ENV, WS_URL } from '../../../config';
 import { useEnvController } from '../../../hooks';
 import { NotificationCenterBell } from './NotificationCenterBell';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES, useSegment } from '@novu/shared-web';
+import { ROUTES } from '../../../constants/routes';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 const BACKEND_URL = IS_EU_ENV ? 'https://api.novu.co' : API_ROOT;
 const SOCKET_URL = IS_EU_ENV ? 'https://ws.novu.co' : WS_URL;

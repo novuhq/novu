@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { SetupTimeline } from '../components/SetupTimeline';
 import { demoSetupSecondaryTitle, OnBoardingAnalyticsEnum } from '../consts';
