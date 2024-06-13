@@ -21,7 +21,6 @@ import {
   DetailEnum,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IBridgeDigestResponse,
   IDigestResponse,
   IDelayOutput,
   IFilterVariables,
@@ -34,6 +33,7 @@ import {
   ExecuteOutput,
   NormalizeVariablesCommand,
   NormalizeVariables,
+  IRegularDelay,
 } from '@novu/application-generic';
 
 export enum BackoffStrategiesEnum {
@@ -183,11 +183,13 @@ export class AddJob {
   private async fetchResonateData(command: AddJobCommand, filterVariables: IFilterVariables) {
     const response = await this.resonateUsecase.execute<
       AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IDelayOutput>
+      ExecuteOutput<IDelayOutput | IDigestResponse>
     >({
       ...command,
       variables: filterVariables,
     });
+
+    const outputs = response?.outputs as IDelayOutput | IDigestResponse;
 
     await this.jobRepository.updateOne(
       {
@@ -196,9 +198,9 @@ export class AddJob {
       },
       {
         $set: {
-          'digest.amount': response?.outputs?.amount,
-          'digest.unit': response?.outputs?.unit,
-          'digest.type': response?.outputs?.type,
+          'digest.amount': (outputs as IRegularDelay | IDigestResponse)?.amount,
+          'digest.unit': (outputs as IRegularDelay | IDigestResponse)?.unit,
+          'digest.type': outputs?.type,
           // TODO: Add other types for scheduled etc..
         },
       }
@@ -222,7 +224,7 @@ export class AddJob {
       stepMetadata: job.digest,
       payload: job.payload,
       overrides: job.overrides,
-      response: this.fallbackToRegularDigest(resonateResponse?.outputs),
+      response: this.fallbackToRegularDigest(resonateResponse?.outputs as IDigestResponse | undefined),
     });
 
     Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
@@ -231,7 +233,7 @@ export class AddJob {
       MergeOrCreateDigestCommand.create({
         job,
         filtered,
-        bridgeData: resonateResponse?.outputs,
+        bridgeData: resonateResponse?.outputs as IDigestResponse | undefined,
       })
     );
 
