@@ -18,10 +18,8 @@ export const StepNode: FC<IStepNodeProps> = ({ icon, title }) => {
             content: '""',
             position: 'relative',
             borderLeft: 'dashed',
-            // TODO: extract to semantic token
-            borderColor: 'legacy.B40',
-            // TODO: extract to semantic token
-            height: '250',
+            borderColor: 'workflow.node.connector',
+            height: 'workflow.nodes.gap',
             display: 'block',
             left: '[calc(50% - 1px)]',
           },
@@ -33,8 +31,7 @@ export const StepNode: FC<IStepNodeProps> = ({ icon, title }) => {
           gap: '50',
           p: '150',
           shadow: 'medium',
-          // TODO: extract to semantic token
-          bg: { base: 'legacy.white', _dark: 'legacy.B17' },
+          bg: 'workflow.node.surface',
           borderRadius: '150',
           _hover: {
             opacity: 'hover',
