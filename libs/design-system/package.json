@@ -36,7 +36,6 @@
     "@emotion/styled": "^11.6.0",
     "@mantine/hooks": "^5.7.1",
     "@mantine/notifications": "^5.7.1",
-    "@novu/client": "workspace:*",
     "@novu/shared": "workspace:*",
     "@segment/analytics-next": "1.59.0",
     "@sentry/react": "^7.40.0",

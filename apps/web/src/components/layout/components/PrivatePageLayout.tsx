@@ -10,7 +10,7 @@ import { INTERCOM_APP_ID } from '../../../config';
 import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
-import { useFeatureFlag } from '../../../hooks/useFeatureFlags';
+import { useFeatureFlag } from '../../../hooks';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { HeaderNav as HeaderNavNew } from './v2/HeaderNav';
 import { MainNav } from '../../nav/MainNav';
