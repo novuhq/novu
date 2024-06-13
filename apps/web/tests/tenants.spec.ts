@@ -1,15 +1,9 @@
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 import { TenantsPage } from './page-models/tenantsPage';
-import { assertPageShowsMessage, initializeSession } from './utils.ts/browser';
+import { assertPageShowsMessage, initializeSession } from './utils/browser';
 
 test.beforeEach(async ({ page }) => {
-  const { featureFlagsMock } = await initializeSession(page, { noTemplates: true });
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
+  await initializeSession(page, { noTemplates: true });
 });
 
 test('should display empty tenants info', async ({ page }) => {

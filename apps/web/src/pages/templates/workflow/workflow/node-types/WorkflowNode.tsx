@@ -89,7 +89,7 @@ export function WorkflowNode({
   const segment = useSegment();
 
   const { template } = useTemplateEditorForm();
-  const { readonly: readonlyEnv, environment, chimera } = useEnvController({}, template?.chimera);
+  const { readonly: readonlyEnv, environment, bridge } = useEnvController({}, template?.bridge);
   const { cx, classes, theme } = useTemplateButtonStyles();
   const [popoverOpened, setPopoverOpened] = useState(false);
   const [disabled, setDisabled] = useState(initDisabled);
@@ -251,12 +251,12 @@ export function WorkflowNode({
                 {label}
               </Text>
 
-              {Object.keys(stepErrorContent).length > 0 && !chimera && (
+              {Object.keys(stepErrorContent).length > 0 && !bridge && (
                 <Text {...disabledColor} size={12} color={colors.error} rows={1} data-test-id="workflow-node-error">
                   {stepErrorContent}
                 </Text>
               )}
-              {!(Object.keys(stepErrorContent).length > 0) && !chimera && subtitle && (
+              {!(Object.keys(stepErrorContent).length > 0) && !bridge && subtitle && (
                 <Text {...disabledColor} size={12} color={colors.B60} rows={1} data-test-id="workflow-node-subtitle">
                   {subtitle}
                 </Text>
@@ -365,7 +365,7 @@ export function WorkflowNode({
               isVariant ||
               hasActiveIntegration) &&
               stepErrorContent &&
-              !chimera && (
+              !bridge && (
                 <NodeErrorPopover
                   withinPortal
                   opened={popoverOpened && Object.keys(stepErrorContent).length > 0}

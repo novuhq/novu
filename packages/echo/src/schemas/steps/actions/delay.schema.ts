@@ -5,6 +5,7 @@ const regularDelayOutputSchema = {
   properties: {
     type: {
       enum: ['regular'],
+      default: 'regular',
     },
     amount: { type: 'number' },
     unit: {

@@ -62,8 +62,8 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
       const updatedToken = await acceptInvite(invitationToken);
       if (updatedToken) {
         await login(updatedToken);
-        navigate(ROUTES.WORKFLOWS);
       }
+      navigate(ROUTES.AUTH_APPLICATION);
     } else {
       navigate(isFromVercel ? `${ROUTES.AUTH_APPLICATION}?${params.toString()}` : ROUTES.AUTH_APPLICATION);
     }
@@ -104,7 +104,7 @@ export function SignUpForm({ invitationToken, email }: SignUpFormProps) {
 
   return (
     <>
-      <OAuth />
+      <OAuth invitationToken={invitationToken} />
       <form noValidate name="login-form" onSubmit={handleSubmit(onSubmit)}>
         <Input
           error={errors.fullName?.message}

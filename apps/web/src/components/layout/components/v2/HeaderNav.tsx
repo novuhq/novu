@@ -1,5 +1,4 @@
 import { ActionIcon, Header } from '@mantine/core';
-
 import { IconHelpOutline } from '@novu/novui/icons';
 import { Tooltip } from '@novu/design-system';
 import { IS_DOCKER_HOSTED } from '../../../../config';

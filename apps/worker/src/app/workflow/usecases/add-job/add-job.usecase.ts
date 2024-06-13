@@ -19,10 +19,9 @@ import {
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
-  ExecuteOutput,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IChimeraDigestResponse,
+  IBridgeDigestResponse,
   IDelayOutput,
   IFilterVariables,
   InstrumentUsecase,
@@ -31,6 +30,9 @@ import {
   LogDecorator,
   requireInject,
   StandardQueueService,
+  ExecuteOutput,
+  NormalizeVariablesCommand,
+  NormalizeVariables,
 } from '@novu/application-generic';
 
 export enum BackoffStrategiesEnum {
@@ -55,6 +57,7 @@ export class AddJob {
     private computeJobWaitDurationService: ComputeJobWaitDurationService,
     @Inject(forwardRef(() => ConditionsFilter))
     private conditionsFilter: ConditionsFilter,
+    private normalizeVariablesUsecase: NormalizeVariables,
     private moduleRef: ModuleRef
   ) {
     this.resonateUsecase = requireInject('resonate', this.moduleRef);
@@ -99,6 +102,17 @@ export class AddJob {
     let digestAmount: number | undefined;
     let delayAmount: number | undefined = undefined;
 
+    const variables = await this.normalizeVariablesUsecase.execute(
+      NormalizeVariablesCommand.create({
+        filters: command.job.step.filters || [],
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        step: job.step,
+        job: job,
+      })
+    );
+
     const shouldRun = await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
         filters: job.step.filters || [],
@@ -107,6 +121,7 @@ export class AddJob {
         userId: command.userId,
         step: job.step,
         job,
+        variables,
       })
     );
 
@@ -156,18 +171,39 @@ export class AddJob {
     filterVariables: IFilterVariables,
     delayAmount: number | undefined
   ) {
-    command.chimeraResponse = await this.resonateUsecase.execute<
+    command.bridgeResponse = await this.fetchResonateData(command, filterVariables);
+    delayAmount = await this.addDelayJob.execute(command);
+
+    Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
+
+    return delayAmount;
+  }
+
+  private async fetchResonateData(command: AddJobCommand, filterVariables: IFilterVariables) {
+    const response = await this.resonateUsecase.execute<
       AddJobCommand & { variables: IFilterVariables },
       ExecuteOutput<IDelayOutput>
     >({
       ...command,
       variables: filterVariables,
     });
-    delayAmount = await this.addDelayJob.execute(command);
 
-    Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
+    await this.jobRepository.updateOne(
+      {
+        _id: command.job._id,
+        _environmentId: command.environmentId,
+      },
+      {
+        $set: {
+          'digest.amount': response?.outputs?.amount,
+          'digest.unit': response?.outputs?.unit,
+          'digest.type': response?.outputs?.type,
+          // TODO: Add other types for scheduled etc..
+        },
+      }
+    );
 
-    return delayAmount;
+    return response;
   }
 
   private async handleDigest(
@@ -177,13 +213,7 @@ export class AddJob {
     digestAmount: number | undefined,
     filtered: boolean
   ) {
-    const resonateResponse = await this.resonateUsecase.execute<
-      AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraDigestResponse>
-    >({
-      ...command,
-      variables: filterVariables,
-    });
+    const resonateResponse = await this.fetchResonateData(command, filterVariables);
 
     validateDigest(job);
 
@@ -191,7 +221,7 @@ export class AddJob {
       stepMetadata: job.digest,
       payload: job.payload,
       overrides: job.overrides,
-      chimeraResponse: this.fallbackToRegularDigest(resonateResponse?.outputs),
+      bridgeResponse: this.fallbackToRegularDigest(resonateResponse?.outputs),
     });
 
     Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
@@ -200,7 +230,7 @@ export class AddJob {
       MergeOrCreateDigestCommand.create({
         job,
         filtered,
-        chimeraData: resonateResponse?.outputs,
+        bridgeData: resonateResponse?.outputs,
       })
     );
 
@@ -254,8 +284,8 @@ export class AddJob {
    *  Fallback to regular digest type.
    *  This is a temporary solution until other digest types are implemented.
    */
-  private fallbackToRegularDigest(outputs: IChimeraDigestResponse | undefined): IChimeraDigestResponse | undefined {
-    let resonateResponseOutput: IChimeraDigestResponse | undefined = undefined;
+  private fallbackToRegularDigest(outputs: IBridgeDigestResponse | undefined): IBridgeDigestResponse | undefined {
+    let resonateResponseOutput: IBridgeDigestResponse | undefined = undefined;
 
     if (outputs) {
       const { type, ...resonateResponseOutputsOmitType } = outputs;

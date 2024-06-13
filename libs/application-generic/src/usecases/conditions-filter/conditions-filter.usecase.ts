@@ -56,6 +56,12 @@ import {
 } from '../execution-log-route';
 import { decryptApiKey } from '../../encryption';
 
+export interface IConditionsFilterResponse {
+  passed: boolean;
+  conditions: ICondition[];
+  variables: IFilterVariables;
+}
+
 @Injectable()
 export class ConditionsFilter extends Filter {
   constructor(
@@ -63,7 +69,6 @@ export class ConditionsFilter extends Filter {
     private messageRepository: MessageRepository,
     private executionDetailsRepository: ExecutionDetailsRepository,
     private jobRepository: JobRepository,
-    private tenantRepository: TenantRepository,
     private environmentRepository: EnvironmentRepository,
     @Inject(forwardRef(() => ExecutionLogRoute))
     private executionLogRoute: ExecutionLogRoute,
@@ -72,12 +77,10 @@ export class ConditionsFilter extends Filter {
     super();
   }
 
-  public async filter(command: ConditionsFilterCommand): Promise<{
-    passed: boolean;
-    conditions: ICondition[];
-    variables: IFilterVariables;
-  }> {
-    const variables = await this.normalizeVariablesData(command);
+  public async filter(
+    command: ConditionsFilterCommand
+  ): Promise<IConditionsFilterResponse> {
+    const variables = command.variables;
     const filters = this.extractFilters(command);
 
     if (!filters || !Array.isArray(filters) || filters.length === 0) {
@@ -560,99 +563,18 @@ export class ConditionsFilter extends Filter {
     ));
   }
 
-  @Instrument()
-  private async normalizeVariablesData(command: ConditionsFilterCommand) {
-    const filterVariables: IFilterVariables = {};
-
-    const combinedFilters = [
-      command.step,
-      ...(command.step?.variants || []),
-    ].flatMap((variant) => (variant?.filters ? variant?.filters : []));
-
-    filterVariables.subscriber = await this.fetchSubscriberIfMissing(
-      command,
-      combinedFilters
-    );
-    filterVariables.tenant = await this.fetchTenantIfMissing(
-      command,
-      combinedFilters
-    );
-    filterVariables.payload = command.variables?.payload
-      ? command.variables?.payload
-      : command.job?.payload ?? undefined;
-
-    filterVariables.step = command.variables?.step ?? undefined;
-    filterVariables.actor = command.variables?.actor ?? undefined;
-
-    return filterVariables;
-  }
-
-  private async fetchSubscriberIfMissing(
-    command: ConditionsFilterCommand,
-    filters: IMessageFilter[]
-  ): Promise<SubscriberEntity | undefined> {
-    if (command.variables?.subscriber) {
-      return command.variables.subscriber;
-    }
-
-    const subscriberFilterExist = filters?.find((filter) => {
-      return filter?.children?.find((item) => item?.on === 'subscriber');
-    });
-
-    if (subscriberFilterExist && command.job) {
-      return (
-        (await this.getSubscriberBySubscriberId({
-          subscriberId: command.job.subscriberId,
-          _environmentId: command.environmentId,
-        })) ?? undefined
-      );
-    }
-
-    return undefined;
-  }
-
-  private async fetchTenantIfMissing(
-    command: ConditionsFilterCommand,
-    filters: IMessageFilter[]
-  ): Promise<TenantEntity | undefined> {
-    if (command.variables?.tenant) {
-      return command.variables.tenant;
-    }
-
-    const tenantIdentifier =
-      typeof command.job?.tenant === 'string'
-        ? command.job?.tenant
-        : command.job?.tenant?.identifier;
-    const tenantFilterExist = filters?.find((filter) => {
-      return filter?.children?.find((item) => item?.on === 'tenant');
-    });
-
-    if (tenantFilterExist && tenantIdentifier && command.job) {
-      return (
-        (await this.tenantRepository.findOne({
-          _environmentId: command.job._environmentId,
-          identifier: tenantIdentifier,
-        })) ?? undefined
-      );
-    }
-
-    return undefined;
-  }
-
   private async compileFilter(
     value: string,
     variables: IFilterVariables,
     job: IJob
   ): Promise<string | undefined> {
     try {
-      return await this.compileTemplate.execute(
-        CompileTemplateCommand.create({
-          template: value,
-          data: {
-            ...variables,
-          },
-        })
-      );
+      return await this.compileTemplate.execute({
+        template: value,
+        data: {
+          ...variables,
+        },
+      });
     } catch (e: any) {
       await this.executionLogRoute.execute(
         ExecutionLogRouteCommand.create({

@@ -13,7 +13,6 @@ import {
   WEBHOOK_URL,
   MAIL_SERVER_DOMAIN,
   LAUNCH_DARKLY_CLIENT_SIDE_ID,
-  FEATURE_FLAGS,
 } from '@novu/shared-web';
 
 export {
@@ -31,7 +30,6 @@ export {
   WEBHOOK_URL,
   MAIL_SERVER_DOMAIN,
   LAUNCH_DARKLY_CLIENT_SIDE_ID,
-  FEATURE_FLAGS,
 };
 
 export const IS_EU_ENV = (ENV === 'production' || ENV === 'prod') && API_ROOT.includes('eu.api.novu.co');

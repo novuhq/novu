@@ -1,5 +1,5 @@
 import { Page, selectors } from '@playwright/test';
-import { setBrowserDateTimeTo } from '../utils.ts/browser';
+import { setBrowserDateTimeTo } from '../utils/browser';
 
 export class LoginData {
   email: string;
@@ -28,6 +28,7 @@ export class AuthLoginPage {
     } else {
       await page.goto(`auth/login`);
     }
+
     return new AuthLoginPage(page);
   }
 

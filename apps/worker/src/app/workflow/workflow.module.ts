@@ -15,6 +15,7 @@ import {
   ProcessTenant,
   SelectIntegration,
   ConditionsFilter,
+  NormalizeVariables,
   TriggerEvent,
   SelectVariant,
   GetTopicSubscribersUseCase,
@@ -75,7 +76,7 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       }
 
       if (require('@novu/ee-echo-worker')?.EchoGatewayModule) {
-        Logger.log('Importing enterprise chimera connector module', 'EnterpriseImport');
+        Logger.log('Importing enterprise bridge connector module', 'EnterpriseImport');
 
         modules.push(require('@novu/ee-echo-worker')?.EchoGatewayModule);
       }
@@ -97,6 +98,7 @@ const USE_CASES = [
   CompileTemplate,
   CreateExecutionDetails,
   ConditionsFilter,
+  NormalizeVariables,
   BulkCreateExecutionDetails,
   Digest,
   GetDecryptedIntegrations,
