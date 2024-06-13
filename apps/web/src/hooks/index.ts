@@ -9,7 +9,6 @@ export * from './useDebouncedSearch';
 export * from './useEffectOnce';
 export * from './useEnvController';
 export * from './useEnvironmentChanges';
-export * from './useFeatureFlags';
 export * from './useHover';
 export * from './useHoverOverItem';
 export * from './useInlineComponent';

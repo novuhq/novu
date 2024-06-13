@@ -9,7 +9,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes.enum';
 import { useAuth } from '@novu/shared-web';
 import { When, colors, useTabsStyles } from '@novu/design-system';
-import { useFeatureFlag } from '../../hooks';
+import { useFeatureFlag } from '@novu/shared-web';
 
 const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -29,7 +29,6 @@ export function SettingsPage() {
   const { classes } = useTabsStyles(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const billingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_BILLING_ENABLED);
   const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   const value = useMemo(() => {
@@ -68,9 +67,7 @@ export function SettingsPage() {
         <Tabs.List>
           <Tabs.Tab value="/">API Keys</Tabs.Tab>
           <Tabs.Tab value="/email">Email Settings</Tabs.Tab>
-          <When truthy={billingEnabled}>
-            <Tabs.Tab value="/billing">Billing</Tabs.Tab>
-          </When>
+          <Tabs.Tab value="/billing">Billing</Tabs.Tab>
           <When truthy={isInformationArchitectureEnabled}>
             <Tabs.Tab value="/brand">Branding</Tabs.Tab>
             <Tabs.Tab value="/team">Team Members</Tabs.Tab>

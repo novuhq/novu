@@ -1,15 +1,9 @@
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
-import { initializeSession } from './utils.ts/browser';
+import { test } from './utils/baseTest';
+import { initializeSession } from './utils/browser';
 
 test.beforeEach(async ({ page }) => {
-  const { featureFlagsMock } = await initializeSession(page, { showOnBoardingTour: true });
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
+  await initializeSession(page, { showOnBoardingTour: true });
 });
 
 test('should show the start from scratch intro step', async ({ page }) => {

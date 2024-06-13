@@ -229,11 +229,11 @@ async function setupRunner() {
         host: 'localhost',
         port: 4200,
       });
-      shell.exec('cd apps/web && npm run playwright:install');
+      shell.exec('cd apps/web && npm run test:e2e:install');
       if (answers.runWebConfiguration === RUN_PLAYWRIGHT_UI) {
-        shell.exec('cd apps/web && npm run playwright:test-ui');
+        shell.exec('cd apps/web && npm run test:e2e:ui');
       } else if (answers.runWebConfiguration === RUN_PLAYWRIGHT_CLI) {
-        shell.exec('cd apps/web && npm run playwright:test');
+        shell.exec('cd apps/web && npm run test:e2e');
       }
     }
 

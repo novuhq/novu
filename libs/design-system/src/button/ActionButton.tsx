@@ -16,6 +16,7 @@ export const ActionButton = React.forwardRef<
     style?: React.CSSProperties;
     sx?: Sx;
     onClick?: MouseEventHandler<HTMLButtonElement>;
+    className?: string;
   }
 >(({ tooltip, tooltipPosition, text, Icon, style, color, sx, onClick, ...rest }, ref) => {
   const pickedColor = color ?? colors.B60;

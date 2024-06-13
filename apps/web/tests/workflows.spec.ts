@@ -1,24 +1,16 @@
 import { TriggerTypeEnum } from '@novu/shared';
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 
 import { WorkflowsPage } from './page-models/workflowsPage';
-import { initializeSession } from './utils.ts/browser';
-import { createWorkflows, SessionData } from './utils.ts/plugins';
-import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
+import { initializeSession } from './utils/browser';
+import { createWorkflows, SessionData } from './utils/plugins';
 
 let session: SessionData;
-let featureFlagsMock: FeatureFlagsMock;
-const WORKFLOWS_ACTIVE_FEATURE_FLAGS = {
-  IS_IMPROVED_ONBOARDING_ENABLED: false,
-  IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-  IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-  IS_TEMPLATE_STORE_ENABLED: false,
-};
+
 test.describe('Workflows tests without templates', () => {
   test.beforeEach(async ({ page }) => {
-    ({ session, featureFlagsMock } = await initializeSession(page, { noTemplates: true }));
-    featureFlagsMock.setFlagsToMock(WORKFLOWS_ACTIVE_FEATURE_FLAGS);
+    ({ session } = await initializeSession(page, { noTemplates: true }));
   });
   test('when no workflows created it should show the page placeholder', async ({ page }) => {
     const workflowsPage = await WorkflowsPage.goTo(page);
@@ -35,8 +27,7 @@ test.describe('Workflows tests without templates', () => {
 });
 test.describe('Workflows tests with templates', () => {
   test.beforeEach(async ({ page }) => {
-    ({ session, featureFlagsMock } = await initializeSession(page));
-    featureFlagsMock.setFlagsToMock(WORKFLOWS_ACTIVE_FEATURE_FLAGS);
+    ({ session } = await initializeSession(page));
   });
 
   test('should display workflows list', async ({ page }) => {

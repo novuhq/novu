@@ -1,26 +1,19 @@
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
-import { initializeSession, isLoginPage } from './utils.ts/browser';
+import { test } from './utils/baseTest';
+import { initializeSession, isLoginPage } from './utils/browser';
 import { HeaderPage } from './page-models/headerPage';
-import { validateTokenNotExisting } from './utils.ts/authUtils';
+import { validateTokenNotExisting } from './utils/authUtils';
 import { OrganizationEntity, UserEntity } from '@novu/dal/src';
-import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
-import { SessionData } from './utils.ts/plugins';
+import { FeatureFlagsMock } from './utils/featureFlagsMock';
+import { SessionData } from './utils/plugins';
 
 test.describe('App Header', () => {
   let user: UserEntity;
   let organization: OrganizationEntity;
-  let featureFlagsMock: FeatureFlagsMock, session: SessionData;
+  let session: SessionData;
 
   test.beforeEach(async ({ page }) => {
-    ({ featureFlagsMock, session } = await initializeSession(page, { noTemplates: true }));
-    featureFlagsMock.setFlagsToMock({
-      IS_IMPROVED_ONBOARDING_ENABLED: false,
-      IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-      IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-      IS_BILLING_ENABLED: false,
-      IS_TEMPLATE_STORE_ENABLED: false,
-    });
+    ({ session } = await initializeSession(page, { noTemplates: true }));
     user = session.user;
     organization = session.organization;
   });

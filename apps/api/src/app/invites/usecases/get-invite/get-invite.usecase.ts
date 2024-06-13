@@ -3,7 +3,7 @@ import { OrganizationRepository, UserRepository, MemberRepository } from '@novu/
 import { MemberStatusEnum } from '@novu/shared';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
+import { normalizeEmail } from '@novu/shared';
 import { GetInviteCommand } from './get-invite.command';
 
 @Injectable({

@@ -1,18 +1,11 @@
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 import { BrandPage } from './page-models/brandPage';
-import { assertPageShowsMessage, initializeSession } from './utils.ts/browser';
+import { assertPageShowsMessage, initializeSession } from './utils/browser';
 
 let session;
 test.beforeEach(async ({ page }) => {
-  const { featureFlagsMock, session: newSession } = await initializeSession(page);
+  const { session: newSession } = await initializeSession(page);
   session = newSession;
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_BILLING_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
 });
 
 test.skip('updates logo', async ({ page }) => {

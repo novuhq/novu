@@ -1,6 +1,6 @@
 import { expect, Page } from '@playwright/test';
 import path from 'path';
-import { setFileForFilePicker } from '../utils.ts/commands';
+import { setFileForFilePicker } from '../utils/commands';
 import { SidebarPage } from './sidebarPage';
 
 export class BrandPage {
@@ -19,6 +19,7 @@ export class BrandPage {
   static async goTo(page: Page): Promise<BrandPage> {
     const sidebarPage = await SidebarPage.goTo(page);
     const settingsMenuPage = await sidebarPage.clickSettings();
+
     return await settingsMenuPage.clickBrandLink();
   }
 
@@ -33,8 +34,8 @@ export class BrandPage {
 
   public async uploadLogoImage(imagePath: string) {
     await this.page.waitForTimeout(3000);
-    let fileUploader = this.page.getByTestId('upload-image-button').locator('input[type="file"]');
-    let logoPath = path.join(__dirname, imagePath);
+    const fileUploader = this.page.getByTestId('upload-image-button').locator('input[type="file"]');
+    const logoPath = path.join(__dirname, imagePath);
     await setFileForFilePicker(fileUploader, logoPath);
     await this.page.waitForTimeout(3000);
     const failed = await this.page.getByText('Failed to upload branding').isVisible();

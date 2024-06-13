@@ -1,20 +1,13 @@
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 import { WorkflowEditorPage } from './page-models/workflowEditorPage';
-import { initializeSession } from './utils.ts/browser';
-import { SessionData } from './utils.ts/plugins';
-import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
+import { initializeSession } from './utils/browser';
+import { SessionData } from './utils/plugins';
+import { FeatureFlagsMock } from './utils/featureFlagsMock';
 
-let featureFlagsMock: FeatureFlagsMock, session: SessionData;
+let session: SessionData;
 test.beforeEach(async ({ page }) => {
-  ({ featureFlagsMock, session } = await initializeSession(page));
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_BILLING_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
+  ({ session } = await initializeSession(page));
 });
 
 test('should open test trigger modal', async ({ page }) => {
