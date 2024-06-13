@@ -468,13 +468,22 @@ describe('Echo Trigger ', async () => {
           }
         );
 
-        await step.sms('send-sms', async () => {
-          const duration = delayResponse.duration;
+        await step.sms(
+          'send-sms',
+          async () => {
+            const duration = delayResponse.duration;
 
-          return {
-            body: `people waited for ${duration} seconds`,
-          };
-        });
+            return {
+              body: `people waited for ${duration} seconds`,
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {},
+            },
+          }
+        );
       },
       {
         payloadSchema: {
@@ -497,9 +506,9 @@ describe('Echo Trigger ', async () => {
       throw new Error('Workflow not found');
     }
 
-    await triggerEvent(session, workflowId, { name: 'John' });
+    await triggerEvent(session, workflowId, subscriber);
 
-    await session.awaitRunningJobs(workflow?._id, false, 0);
+    await session.awaitRunningJobs(workflow?._id, true, 0);
 
     const messagesAfter = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -547,10 +556,12 @@ async function triggerEvent(session, workflowId: string, subscriber, payload?: a
 async function discoverAndSyncEcho(session: UserSession) {
   const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
 
-  await session.testAgent.post(`/v1/echo/sync`).send({
+  const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
     bridgeUrl: echoServer.serverPath + '/echo',
     workflows: resultDiscover.data.workflows,
   });
+
+  return discoverResponse;
 }
 
 async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MarkMessagesAsEnum) {
