@@ -19,7 +19,6 @@ export * from './useIsMounted';
 export * from './useKeyDown';
 export * from './useLayouts';
 export * from './useLayoutsEditor';
-export * from './useLocalThemePreference';
 export * from './useNotificationGroup';
 export * from './useNovu';
 export * from './useProcessVariables';
