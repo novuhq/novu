@@ -61,6 +61,7 @@ export const PlanHeader = () => {
       return;
     }
     checkout({ billingInterval, apiServiceLevel: ApiServiceLevelEnum.BUSINESS });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [billingInterval, intentSecret, apiServiceLevel]);
 
   const { mutateAsync: goToPortal, isLoading: isGoingToPortal } = useMutation<any, any, any>(

@@ -66,6 +66,7 @@ export const CreateGroupSidebar = ({
     if (localesForm.length === 0) {
       setValue('locales', [currentOrganization?.defaultLocale]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrganization?.defaultLocale, localesForm]);
 
   useEffect(() => {
@@ -79,6 +80,7 @@ export const CreateGroupSidebar = ({
     }
 
     setValue('identifier', newIdentifier);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [name]);
 
   const onSubmit = async (data: any) => {
