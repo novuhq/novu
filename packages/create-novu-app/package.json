@@ -1,13 +1,16 @@
 {
   "name": "create-novu-app",
-  "version": "0.24.2",
+  "version": "0.24.3-alpha.4",
   "keywords": [
-    "novu"
+    "novu",
+    "create",
+    "notifications",
+    "next.js"
   ],
   "description": "Create Novu-powered apps with one command",
   "repository": {
     "type": "git",
-    "url": "https://github.com/novuhq/novu"
+    "url": "git+https://github.com/novuhq/novu.git"
   },
   "author": "Novu Team <engineering@novu.co>",
   "license": "MIT",

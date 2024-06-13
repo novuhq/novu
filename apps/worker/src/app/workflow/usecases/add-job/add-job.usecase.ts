@@ -19,10 +19,9 @@ import {
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
-  ExecuteOutput,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
-  IChimeraDigestResponse,
+  IBridgeDigestResponse,
   IFilterVariables,
   InstrumentUsecase,
   IUseCaseInterfaceInline,
@@ -30,6 +29,9 @@ import {
   LogDecorator,
   requireInject,
   StandardQueueService,
+  ExecuteOutput,
+  NormalizeVariablesCommand,
+  NormalizeVariables,
 } from '@novu/application-generic';
 
 export enum BackoffStrategiesEnum {
@@ -54,6 +56,7 @@ export class AddJob {
     private calculateDelayService: CalculateDelayService,
     @Inject(forwardRef(() => ConditionsFilter))
     private conditionsFilter: ConditionsFilter,
+    private normalizeVariablesUsecase: NormalizeVariables,
     private moduleRef: ModuleRef
   ) {
     this.resonateUsecase = requireInject('resonate', this.moduleRef);
@@ -98,6 +101,17 @@ export class AddJob {
     let digestAmount: number | undefined;
     let delayAmount: number | undefined = undefined;
 
+    const variables = await this.normalizeVariablesUsecase.execute(
+      NormalizeVariablesCommand.create({
+        filters: command.job.step.filters || [],
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        step: job.step,
+        job: job,
+      })
+    );
+
     const shouldRun = await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
         filters: job.step.filters || [],
@@ -106,6 +120,7 @@ export class AddJob {
         userId: command.userId,
         step: job.step,
         job,
+        variables,
       })
     );
 
@@ -155,9 +170,9 @@ export class AddJob {
     filterVariables: IFilterVariables,
     delayAmount: number | undefined
   ) {
-    command.chimeraResponse = await this.resonateUsecase.execute<
+    command.bridgeResponse = await this.resonateUsecase.execute<
       AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraDigestResponse>
+      ExecuteOutput<IBridgeDigestResponse>
     >({
       ...command,
       variables: filterVariables,
@@ -178,7 +193,7 @@ export class AddJob {
   ) {
     const resonateResponse = await this.resonateUsecase.execute<
       AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IChimeraDigestResponse>
+      ExecuteOutput<IBridgeDigestResponse>
     >({
       ...command,
       variables: filterVariables,
@@ -190,7 +205,7 @@ export class AddJob {
       stepMetadata: job.digest,
       payload: job.payload,
       overrides: job.overrides,
-      chimeraResponse: this.fallbackToRegularDigest(resonateResponse?.outputs),
+      bridgeResponse: this.fallbackToRegularDigest(resonateResponse?.outputs),
     });
 
     Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
@@ -199,7 +214,7 @@ export class AddJob {
       MergeOrCreateDigestCommand.create({
         job,
         filtered,
-        chimeraData: resonateResponse?.outputs,
+        bridgeData: resonateResponse?.outputs,
       })
     );
 
@@ -253,8 +268,8 @@ export class AddJob {
    *  Fallback to regular digest type.
    *  This is a temporary solution until other digest types are implemented.
    */
-  private fallbackToRegularDigest(outputs: IChimeraDigestResponse | undefined): IChimeraDigestResponse | undefined {
-    let resonateResponseOutput: IChimeraDigestResponse | undefined = undefined;
+  private fallbackToRegularDigest(outputs: IBridgeDigestResponse | undefined): IBridgeDigestResponse | undefined {
+    let resonateResponseOutput: IBridgeDigestResponse | undefined = undefined;
 
     if (outputs) {
       const { type, ...resonateResponseOutputsOmitType } = outputs;

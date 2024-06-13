@@ -49,6 +49,7 @@ import {
 import { Schema } from './types/schema.types';
 import { EMOJI, log } from './utils';
 import { VERSION } from './version';
+import { Skip } from './types/skip.types';
 
 JSONSchemaFaker.option({
   useDefaultValue: true,
@@ -344,7 +345,7 @@ export class Echo {
     const workflowsResponse = await fetch(this.backendUrl + NovuApiEndpointsEnum.DIFF, {
       method: HttpMethodEnum.POST,
       headers: this.getHeaders(anonymous),
-      body: JSON.stringify({ workflows, chimeraUrl: echoUrl }),
+      body: JSON.stringify({ workflows, bridgeUrl: echoUrl }),
     });
 
     return workflowsResponse.json();
@@ -356,7 +357,7 @@ export class Echo {
     const workflowsResponse = await fetch(`${this.backendUrl}${NovuApiEndpointsEnum.SYNC}?source=${source || 'sdk'}`, {
       method: HttpMethodEnum.POST,
       headers: this.getHeaders(anonymous),
-      body: JSON.stringify({ workflows, chimeraUrl: echoUrl }),
+      body: JSON.stringify({ workflows, bridgeUrl: echoUrl }),
     });
 
     return workflowsResponse.json();
@@ -473,10 +474,20 @@ export class Echo {
   private executeStepFactory<T, U>(event: IEvent, setResult: (result: any) => void): ActionStep<T, U> {
     return async (stepId, stepResolve, options) => {
       const step = this.getStep(event.workflowId, stepId);
+      const eventClone = clone<IEvent>(event);
+      const inputs = this.createStepInputs(step, eventClone);
+      const isPreview = event.action === 'preview';
+
+      if (!isPreview && (await this.shouldSkip(options?.skip, inputs))) {
+        const skippedResult = { options: { skip: true } };
+        setResult(skippedResult);
+
+        return {} as any;
+      }
 
       const previewStepHandler = this.previewStep.bind(this);
       const executeStepHandler = this.executeStep.bind(this);
-      const handler = event.action === 'preview' ? previewStepHandler : executeStepHandler;
+      const handler = isPreview ? previewStepHandler : executeStepHandler;
 
       const stepResult = await handler(event, {
         ...step,
@@ -503,6 +514,17 @@ export class Echo {
     };
   }
 
+  private async shouldSkip(
+    skip: Skip<Record<string, unknown>> | undefined,
+    inputs: Record<string, unknown>
+  ): Promise<boolean> {
+    if (!skip) {
+      return false;
+    }
+
+    return skip(inputs);
+  }
+
   public async executeWorkflow(event: IEvent): Promise<ExecuteOutput> {
     const actionMessages = {
       execute: 'Executing',
@@ -520,9 +542,11 @@ export class Echo {
     let result: {
       outputs: Record<string, unknown>;
       providers: Record<string, unknown>;
+      options: Record<string, unknown>;
     } = {
       outputs: {},
       providers: {},
+      options: {},
     };
     let resolveEarlyExit: (value?: unknown) => void;
     const earlyExitPromise = new Promise((resolve) => {
@@ -589,6 +613,7 @@ export class Echo {
     return {
       outputs: result.outputs,
       providers: result.providers,
+      options: result.options,
       metadata: {
         status: 'success',
         error: false,
@@ -854,4 +879,8 @@ export class Echo {
 
     return getCodeResult;
   }
+}
+
+function clone<Result>(data: unknown) {
+  return JSON.parse(JSON.stringify(data)) as Result;
 }

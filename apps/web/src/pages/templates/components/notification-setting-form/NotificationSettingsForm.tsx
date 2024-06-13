@@ -22,7 +22,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
   } = useFormContext<IForm>();
 
   const { template } = useTemplateEditorForm();
-  const { readonly, chimera } = useEnvController({}, template?.chimera);
+  const { readonly, bridge } = useEnvController({}, template?.bridge);
   const { templateId = '' } = useParams<{ templateId: string }>();
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
@@ -61,7 +61,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
 
   return (
     <>
-      <When truthy={!chimera}>
+      <When truthy={!bridge}>
         <Grid gutter={0} mt={-8} mb={-8}>
           <Grid.Col span={6}>
             <Stack
