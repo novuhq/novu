@@ -1,4 +1,4 @@
-import { IS_DOCKER_HOSTED } from '@novu/shared-web';
+import { IS_DOCKER_HOSTED } from '../../../config';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useStepFormPath } from '../hooks/useStepFormPath';
@@ -27,7 +27,7 @@ export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => voi
   }
 
   try {
-    const module = require('@novu/ee-echo-web');
+    const module = require('../../../ee/editor');
     const InputVariablesComponent = module.InputVariablesForm;
 
     return (

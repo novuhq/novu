@@ -1,6 +1,7 @@
 import { type ISelectProps } from '@novu/design-system';
 import { IconComputer, IconConstruction, IconRocketLaunch, type IIconProps } from '@novu/novui/icons';
-import { ROUTES, useEnvController } from '@novu/shared-web';
+import { useEnvController } from '../../../hooks';
+import { ROUTES } from '../../../constants/routes';
 import { useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { EnvironmentEnum } from '../../constants/EnvironmentEnum';

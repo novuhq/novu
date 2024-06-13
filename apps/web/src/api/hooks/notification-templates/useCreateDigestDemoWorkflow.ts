@@ -6,7 +6,7 @@ import type { IResponseError, ICreateNotificationTemplateDto, INotificationTempl
 
 import { createTemplate } from '../../notification-templates';
 import { parseUrl } from '../../../utils/routeUtils';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { errorMessage } from '../../../utils/notifications';
 import { useNotificationGroup, useTemplates } from '../../../hooks';
 import { v4 as uuid4 } from 'uuid';

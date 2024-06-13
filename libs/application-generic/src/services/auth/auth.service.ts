@@ -45,7 +45,7 @@ import {
   buildUserKey,
   CachedEntity,
 } from '../cache';
-import { normalizeEmail } from '../../utils/email-normalization';
+import { normalizeEmail } from '@novu/shared';
 
 @Injectable()
 export class AuthService {

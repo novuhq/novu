@@ -3,7 +3,7 @@ import { Cloud, SSO, UserAccess } from '@novu/design-system';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { ProductLead } from './components/utils/ProductLead';
-import { ROUTES } from './constants/routes.enum';
+import { ROUTES } from './constants/routes';
 import { useFeatureFlag } from './hooks';
 import { BillingRoutes } from './pages/BillingPages';
 import { BrandingPage } from './pages/brand/tabs/v2';

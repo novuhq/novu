@@ -15,11 +15,10 @@ import { AddJobCommand } from './add-job.command';
 import { validateDigest } from './validation';
 import { ModuleRef } from '@nestjs/core';
 import {
-  CalculateDelayService,
+  ComputeJobWaitDurationService,
   ConditionsFilter,
   ConditionsFilterCommand,
   DetailEnum,
-  ExecuteOutput,
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
   IBridgeDigestResponse,
@@ -30,6 +29,9 @@ import {
   LogDecorator,
   requireInject,
   StandardQueueService,
+  ExecuteOutput,
+  NormalizeVariablesCommand,
+  NormalizeVariables,
 } from '@novu/application-generic';
 
 export enum BackoffStrategiesEnum {
@@ -50,10 +52,11 @@ export class AddJob {
     private executionLogRoute: ExecutionLogRoute,
     private mergeOrCreateDigestUsecase: MergeOrCreateDigest,
     private addDelayJob: AddDelayJob,
-    @Inject(forwardRef(() => CalculateDelayService))
-    private calculateDelayService: CalculateDelayService,
+    @Inject(forwardRef(() => ComputeJobWaitDurationService))
+    private computeJobWaitDurationService: ComputeJobWaitDurationService,
     @Inject(forwardRef(() => ConditionsFilter))
     private conditionsFilter: ConditionsFilter,
+    private normalizeVariablesUsecase: NormalizeVariables,
     private moduleRef: ModuleRef
   ) {
     this.resonateUsecase = requireInject('resonate', this.moduleRef);
@@ -98,6 +101,17 @@ export class AddJob {
     let digestAmount: number | undefined;
     let delayAmount: number | undefined = undefined;
 
+    const variables = await this.normalizeVariablesUsecase.execute(
+      NormalizeVariablesCommand.create({
+        filters: command.job.step.filters || [],
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        userId: command.userId,
+        step: job.step,
+        job: job,
+      })
+    );
+
     const shouldRun = await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
         filters: job.step.filters || [],
@@ -106,6 +120,7 @@ export class AddJob {
         userId: command.userId,
         step: job.step,
         job,
+        variables,
       })
     );
 
@@ -155,18 +170,39 @@ export class AddJob {
     filterVariables: IFilterVariables,
     delayAmount: number | undefined
   ) {
-    command.bridgeResponse = await this.resonateUsecase.execute<
+    command.bridgeResponse = await this.fetchResonateData(command, filterVariables);
+    delayAmount = await this.addDelayJob.execute(command);
+
+    Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
+
+    return delayAmount;
+  }
+
+  private async fetchResonateData(command: AddJobCommand, filterVariables: IFilterVariables) {
+    const response = await this.resonateUsecase.execute<
       AddJobCommand & { variables: IFilterVariables },
       ExecuteOutput<IBridgeDigestResponse>
     >({
       ...command,
       variables: filterVariables,
     });
-    delayAmount = await this.addDelayJob.execute(command);
 
-    Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
+    await this.jobRepository.updateOne(
+      {
+        _id: command.job._id,
+        _environmentId: command.environmentId,
+      },
+      {
+        $set: {
+          'digest.amount': response?.outputs?.amount,
+          'digest.unit': response?.outputs?.unit,
+          'digest.type': response?.outputs?.type,
+          // TODO: Add other types for scheduled etc..
+        },
+      }
+    );
 
-    return delayAmount;
+    return response;
   }
 
   private async handleDigest(
@@ -176,17 +212,11 @@ export class AddJob {
     digestAmount: number | undefined,
     filtered: boolean
   ) {
-    const resonateResponse = await this.resonateUsecase.execute<
-      AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IBridgeDigestResponse>
-    >({
-      ...command,
-      variables: filterVariables,
-    });
+    const resonateResponse = await this.fetchResonateData(command, filterVariables);
 
     validateDigest(job);
 
-    digestAmount = this.calculateDelayService.calculateDelay({
+    digestAmount = this.computeJobWaitDurationService.calculateDelay({
       stepMetadata: job.digest,
       payload: job.payload,
       overrides: job.overrides,

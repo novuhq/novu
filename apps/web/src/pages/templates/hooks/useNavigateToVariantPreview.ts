@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { StepTypeEnum } from '@novu/shared';
-import { ROUTES } from '@novu/shared-web';
+import { ROUTES } from '../../../constants/routes';
 
 import { parseUrl } from '../../../utils/routeUtils';
 

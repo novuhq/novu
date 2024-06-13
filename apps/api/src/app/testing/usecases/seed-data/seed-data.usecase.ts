@@ -16,7 +16,7 @@ export class SeedData {
       email: 'test-user-1@example.com',
       firstName: `John-${new Date().toISOString()}`,
       lastName: `Doe-${new Date().toISOString()}`,
-      password: '123qwe!@#',
+      password: 'asd#Faf4fd',
       organizationName: 'Test Organization',
     };
 

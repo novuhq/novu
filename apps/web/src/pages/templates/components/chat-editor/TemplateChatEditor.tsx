@@ -15,7 +15,7 @@ import { EditVariablesModal } from '../EditVariablesModal';
 import { VariableManagementButton } from '../VariableManagementButton';
 import { useEditTemplateContent } from '../../hooks/useEditTemplateContent';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
-import { colors, When } from '@novu/design-system';
+import { When } from '@novu/design-system';
 import { InputVariablesForm } from '../InputVariablesForm';
 
 const templateFields = ['content'];
