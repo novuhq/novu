@@ -7,7 +7,8 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { useAuth } from '@novu/shared-web';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { useEnvController, useFeatureFlag } from '../../../hooks';
+import { useEnvController } from '../../../hooks';
+import { useFeatureFlag } from '@novu/shared-web';
 
 const LAYOUT = 'Layouts';
 

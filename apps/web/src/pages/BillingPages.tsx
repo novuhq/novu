@@ -6,7 +6,7 @@ export const BillingRoutes = () => {
   }
 
   try {
-    const module = require('@novu/ee-billing-web');
+    const module = require('../ee/billing');
     const Routes = module.Routes;
 
     return <Routes />;

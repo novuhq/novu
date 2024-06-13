@@ -18,8 +18,7 @@ import { CustomCodeEditor } from '../CustomCodeEditor';
 import { SmsPreview } from '../../../../components/workflow/preview';
 import { EditVariablesModal } from '../EditVariablesModal';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
-import { colors, When } from '@novu/design-system';
-import { InputVariables } from '../InputVariables';
+import { When } from '@novu/design-system';
 import { InputVariablesForm } from '../InputVariablesForm';
 
 const templateFields = ['content'];
