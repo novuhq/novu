@@ -27,7 +27,7 @@ export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => voi
   }
 
   try {
-    const module = require('@novu/ee-echo-web');
+    const module = require('../../../ee/editor');
     const InputVariablesComponent = module.InputVariablesForm;
 
     return (
