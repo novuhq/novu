@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
 import { api } from '../api';
 import { IS_DOCKER_HOSTED } from '../config';
-import { BaseEnvironmentEnum } from '../constants';
+import { BaseEnvironmentEnum } from '../constants/BaseEnvironmentEnum';
 
 interface ISetEnvironmentOptions {
   /** using null will prevent a reroute */
@@ -25,12 +25,14 @@ export type EnvironmentContext = {
   environment: IEnvironment | undefined;
   setEnvironment: (environment: EnvironmentName, options?: ISetEnvironmentOptions) => void;
   refetchEnvironment: () => void;
+  // @deprecated
   chimera: boolean;
+  bridge: boolean;
 };
 
 export const useEnvController = (
   options: UseQueryOptions<IEnvironment, any, IEnvironment> = {},
-  chimera = false
+  bridge = false
 ): EnvironmentContext => {
   const navigate = useNavigate();
 
@@ -83,8 +85,9 @@ export const useEnvController = (
   return {
     refetchEnvironment,
     environment,
-    readonly: environment?._parentId !== undefined || (!IS_DOCKER_HOSTED && chimera),
-    chimera: !IS_DOCKER_HOSTED && chimera,
+    readonly: environment?._parentId !== undefined || (!IS_DOCKER_HOSTED && bridge),
+    chimera: !IS_DOCKER_HOSTED && bridge,
+    bridge: !IS_DOCKER_HOSTED && bridge,
     setEnvironment: setEnvironmentCallback,
     isLoading: isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading,
   };

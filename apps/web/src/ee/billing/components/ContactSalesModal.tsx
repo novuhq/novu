@@ -13,7 +13,7 @@ type ContactSalesModalProps = {
 
 export const ContactSalesModal = ({ isOpen, onClose, intendedApiServiceLevel }: ContactSalesModalProps) => {
   const { currentUser, currentOrganization } = useAuth();
-  if (!isOpen) {
+  if (!isOpen || !currentUser || !currentOrganization) {
     return null;
   }
 

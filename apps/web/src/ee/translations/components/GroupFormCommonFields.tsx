@@ -62,7 +62,7 @@ export const GroupFormCommonFields = ({
       />
       <Controller
         rules={{
-          validate: (value) => value.includes(currentOrganization.defaultLocale!) || 'Default locale must be included',
+          validate: (value) => value.includes(currentOrganization!.defaultLocale!) || 'Default locale must be included',
         }}
         render={({ field, fieldState }) => (
           <Select
