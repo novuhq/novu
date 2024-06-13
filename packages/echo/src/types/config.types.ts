@@ -1,4 +1,4 @@
-export type ClientConfig = {
+export type ClientOptions = {
   /**
    * Specify your Novu API key, to secure your Echo API endpoint.
    * Novu communicates securely with your endpoint using a signed HMAC header,

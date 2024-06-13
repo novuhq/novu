@@ -31,7 +31,7 @@ import {
 import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
 import {
   ActionStep,
-  ClientConfig,
+  ClientOptions,
   CodeResult,
   CustomStep,
   DiscoverOutput,
@@ -71,8 +71,8 @@ export class Client {
 
   public static NOVU_SIGNATURE_HEADER = HttpHeaderKeysEnum.SIGNATURE;
 
-  constructor(config?: ClientConfig) {
-    const builtConfiguration = this.buildConfiguration(config);
+  constructor(options?: ClientOptions) {
+    const builtConfiguration = this.buildConfiguration(options);
     this.apiKey = builtConfiguration.apiKey;
     this.backendUrl = builtConfiguration.backendUrl;
     this.devModeBypassAuthentication = builtConfiguration.devModeBypassAuthentication;
@@ -82,7 +82,7 @@ export class Client {
     this.ajv = ajv;
   }
 
-  private buildConfiguration(config?: ClientConfig) {
+  private buildConfiguration(providedOptions?: ClientOptions) {
     const builtConfiguration: { apiKey?: string; backendUrl: string; devModeBypassAuthentication: boolean } = {
       apiKey: undefined,
       backendUrl: DEFAULT_NOVU_API_BASE_URL,
@@ -91,8 +91,8 @@ export class Client {
 
     Object.entries(builtConfiguration).reduce((_acc, [prop]) => {
       const envVar = `NOVU_${toConstantCase(prop)}`;
-      if (config && config[prop]) {
-        builtConfiguration[prop] = config[prop];
+      if (providedOptions && providedOptions[prop]) {
+        builtConfiguration[prop] = providedOptions[prop];
       } else if (process.env[envVar]) {
         builtConfiguration[prop] = process.env[envVar];
       }
