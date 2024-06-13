@@ -26,9 +26,7 @@
     "dist/cjs",
     "dist/esm",
     "dist/types",
-    "dist/ui/cjs",
-    "dist/ui/esm",
-    "dist/ui/types"
+    "dist/ui"
   ],
   "sideEffects": false,
   "private": true,
