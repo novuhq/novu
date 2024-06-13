@@ -183,7 +183,6 @@ export const StudioOnboardingPreview = () => {
         }}
         loading={isLoading}
         tooltip={`We'll send you a notification to ${currentUser.email}`}
-        learnMoreLink="echo/concepts/workflows"
       />
     </div>
   );

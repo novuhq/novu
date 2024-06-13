@@ -161,7 +161,6 @@ export const StudioOnboarding = () => {
           mutate();
         }}
         loading={isSyncing || isLoading}
-        learnMoreLink="echo/quickstart"
       />
     </div>
   );

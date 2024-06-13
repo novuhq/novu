@@ -64,7 +64,7 @@ export const StudioOnboardingSuccess = () => {
             className={css({
               color: 'typography.text.secondary',
               lineHeight: '125',
-              marginTop: '25',
+              marginTop: '50',
               marginBottom: '150',
             })}
           >
@@ -79,6 +79,7 @@ export const StudioOnboardingSuccess = () => {
         }}
         canSkipSetup={false}
         buttonText="Explore workflows"
+        showLearnMore={false}
       />
     </div>
   );

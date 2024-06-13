@@ -7,19 +7,20 @@ import { ROUTES } from '@novu/shared-web';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@novu/novui/css';
 import { When } from '../../../components/utils/When';
+import { DocsButton } from '../../../components/docs/DocsButton';
 
 const Text = styled('a', text);
 
 export const Footer = ({
   canSkipSetup = true,
-  learnMoreLink = '',
+  showLearnMore = true,
   buttonText = 'Continue',
   onClick,
   loading = false,
   tooltip = '',
 }: {
   canSkipSetup?: boolean;
-  learnMoreLink?: string;
+  showLearnMore?: boolean;
   buttonText?: string;
   onClick?: () => void;
   loading?: boolean;
@@ -47,9 +48,23 @@ export const Footer = ({
           })}
         >
           <div className={hstack({ gap: '100', color: 'typography.text.secondary' })}>
-            <When truthy={learnMoreLink.length > 0}>
-              <IconOutlineMenuBook />
-              <Text href={learnMoreLink}>Learn more in our docs</Text>
+            <When truthy={showLearnMore}>
+              <DocsButton
+                TriggerButton={({ onClick: onDocsClick }) => (
+                  <>
+                    <IconOutlineMenuBook />
+                    <Text
+                      onClick={(e) => {
+                        e.preventDefault();
+                        onDocsClick();
+                      }}
+                      href=""
+                    >
+                      Learn more in our docs
+                    </Text>
+                  </>
+                )}
+              />
             </When>
           </div>
           <div className={hstack({ gap: '100' })}>
