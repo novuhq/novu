@@ -9,16 +9,40 @@ on:
   push:
     branches:
       - next
+      - prod
 
 jobs:
   pre-release:
     runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.setenv.outputs.envvalue }}
     steps:
       - uses: actions/checkout@v4
+      - name: Set environment name
+
+        id: env_name
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/next" ]]; then
+            echo "::set-output name=env_Name::Dev";
+          elif [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+            echo "::set-output name=env_name::Prod";
+          fi
+
+      - name: Check branch and set environment
+        id: setenv
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/next" ]]; then
+            envvalue="dev"
+          else
+            envvalue="prod"
+          fi
+          echo "::set-output name=environvalue::$environvalue"    
+      
+
       - name: Start Deployment Notification
         uses: ravsamhq/notify-slack-action@v2
         with:
-          notification_title: "Release has started"
+          notification_title: "Release has started for ${{ steps.env_name.outputs.env }} "
         env:
           SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
 
@@ -33,10 +57,9 @@ jobs:
       deployments: write
       id-token: write
 
-  release-dev-embed:
-    uses: ./.github/workflows/cloud-deploy-dev-embed.yml
+  release-embed:
+    uses: ./.github/workflows/cloud-deploy-embed.yml
     needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     secrets: inherit
     permissions:
       contents: read
@@ -55,22 +78,24 @@ jobs:
       deployments: write
       id-token: write
 
-  release-dev-web:
-    uses: ./.github/workflows/cloud-deploy-dev-web.yml
+  release-web:
+    uses: ./.github/workflows/cloud-deploy-web.yml
     needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     secrets: inherit
+    with:
+      env: ${{ needs.set-env.outputs.environment }}
     permissions:
       contents: read
       packages: write
       deployments: write
       id-token: write
 
-  release-dev-web-components:
-    uses: ./.github/workflows/cloud-deploy-dev-web-components.yml
+  release-web-components:
+    uses: ./.github/workflows/cloud-deploy-web-components.yml
     needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     secrets: inherit
+    with:
+      env: ${{ needs.set-env.outputs.environment }}
     permissions:
       contents: read
       packages: write
