@@ -6,7 +6,7 @@ This page is a wiki about how to test the Novu web app with Playwright.
 
 ### Use Jarvis (WIP)
 
-Jarvis is not fully updated yet to run the E2E suite with Playwright
+Jarvis is not fully updated yet to run the E2E suite with Playwright. It will be done very soon!
 
 ### Run individually in separate shells
 

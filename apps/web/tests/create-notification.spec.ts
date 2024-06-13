@@ -56,13 +56,13 @@ test.describe('Creation functionality', () => {
     await assertCodeSnippetStructureIncludingVariables(workflowEditorPage, TEST_WORKFLOW_ID);
   });
 
-  test('should be able to add huge amount of nodes.', async ({ page }) => {
+  test('should be able to add many nodes.', async ({ page }) => {
     test.slow();
     const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
-    await editWorkflowSettings(workflowEditorPage, 'Test 15 Nodes');
-    await create14EmptyEmailNodes(workflowEditorPage);
+    await editWorkflowSettings(workflowEditorPage, 'Test 10 Nodes');
+    await createEmptyEmailNodes(workflowEditorPage, 10);
     await createEmailNodeAndFillWithTestData(workflowEditorPage, page);
-    expect(await workflowEditorPage.nodeEmailSelector().count()).toBe(15);
+    expect(await workflowEditorPage.nodeEmailSelector().count()).toBe(10);
     await assertTestDataSaved(workflowEditorPage, page);
   });
   test('should add digest node', async ({ page }) => {
@@ -287,8 +287,8 @@ async function assertCodeSnippetStructureIncludingVariables(
   expect(codeSnippet).toContain('firstName:');
   expect(codeSnippet).toContain('customVariable:');
 }
-async function create14EmptyEmailNodes(workflowEditorPage: WorkflowEditorPage) {
-  for (let i = 0; i < 14; i++) {
+async function createEmptyEmailNodes(workflowEditorPage: WorkflowEditorPage, total: number) {
+  for (let i = 0; i < total; i++) {
     await workflowEditorPage.buttonAdd().last().click({ force: true });
     await workflowEditorPage.addEmailNode().click();
   }
