@@ -42,7 +42,14 @@ import {
   StepType,
   WorkflowOptions,
 } from './types';
-import { FromSchema, Schema, validateData, ValidateFunction, ValidationError } from './types/schema.types';
+import {
+  FromSchema,
+  Schema,
+  transformSchema,
+  validateData,
+  ValidateFunction,
+  ValidationError,
+} from './types/schema.types';
 import { EMOJI, log } from './utils';
 import { VERSION } from './version';
 import { Skip } from './types/skip.types';
@@ -172,13 +179,16 @@ export class Echo {
         stepId,
         type,
         inputs: {
-          schema: inputSchema,
+          schema: transformSchema(inputSchema),
+          unknownSchema: inputSchema,
         },
         outputs: {
-          schema: outputSchema,
+          schema: transformSchema(outputSchema),
+          unknownSchema: outputSchema,
         },
         results: {
-          schema: resultSchema,
+          schema: transformSchema(resultSchema),
+          unknownSchema: resultSchema,
         },
         resolve,
         code: resolve.toString(),
@@ -203,13 +213,16 @@ export class Echo {
         stepId,
         type,
         inputs: {
-          schema: inputSchema,
+          schema: transformSchema(inputSchema),
+          unknownSchema: inputSchema,
         },
         outputs: {
-          schema: outputSchema,
+          schema: transformSchema(outputSchema),
+          unknownSchema: outputSchema,
         },
         results: {
-          schema: outputSchema,
+          schema: transformSchema(outputSchema),
+          unknownSchema: outputSchema,
         },
         // @ts-ignore
         resolve,
@@ -239,7 +252,8 @@ export class Echo {
         code: resolve.toString(),
         resolve,
         outputs: {
-          schema: schemas.output,
+          schema: transformSchema(schemas.output),
+          unknownSchema: schemas.output,
         },
       });
     });
@@ -259,10 +273,12 @@ export class Echo {
         steps: [],
         code: execute.toString(),
         data: {
-          schema: options.payloadSchema || emptySchema,
+          schema: transformSchema(options.payloadSchema || emptySchema),
+          unknownSchema: options.payloadSchema || emptySchema,
         },
         inputs: {
-          schema: options.inputSchema || emptySchema,
+          schema: transformSchema(options.inputSchema || emptySchema),
+          unknownSchema: options.inputSchema || emptySchema,
         },
         execute,
       });
@@ -356,7 +372,7 @@ export class Echo {
    * @returns mocked data
    */
   private mock(schema: Schema): Record<string, unknown> {
-    return JSONSchemaFaker.generate(schema as JSONSchema7) as Record<string, unknown>;
+    return JSONSchemaFaker.generate(transformSchema(schema) as any) as Record<string, unknown>;
   }
 
   private async validate<T>(
@@ -611,7 +627,7 @@ export class Echo {
   private createExecutionInputs(event: IEvent, workflow: DiscoverWorkflowOutput): Record<string, unknown> {
     const executionData = event.data;
 
-    this.validate(event.data, workflow.data.schema, 'event', 'input', event.workflowId);
+    this.validate(event.data, workflow.data.unknownSchema, 'event', 'input', event.workflowId);
 
     return executionData;
   }
@@ -652,7 +668,7 @@ export class Echo {
   private previewProvider(payload: IEvent, step: DiscoverStepOutput, provider: DiscoverProviderOutput): unknown {
     // eslint-disable-next-line no-console
     console.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
-    const mockOutput = this.mock(provider.outputs.schema);
+    const mockOutput = this.mock(provider.outputs.unknownSchema);
 
     return mockOutput;
   }
@@ -671,7 +687,7 @@ export class Echo {
         });
         await this.validate(
           result,
-          provider.outputs.schema,
+          provider.outputs.unknownSchema,
           'step',
           'output',
           payload.workflowId,
@@ -708,7 +724,7 @@ export class Echo {
       try {
         const input = this.createStepInputs(step, event);
         const result = await step.resolve(input);
-        this.validate(result, step.outputs.schema, 'step', 'output', event.workflowId, step.stepId);
+        this.validate(result, step.outputs.unknownSchema, 'step', 'output', event.workflowId, step.stepId);
 
         const providers = await this.executeProviders(event, step);
 
@@ -732,7 +748,7 @@ export class Echo {
         const result = event.state.find((state) => state.stepId === step.stepId);
 
         if (result) {
-          this.validate(result.outputs, step.results.schema, 'step', 'result', event.workflowId, step.stepId);
+          this.validate(result.outputs, step.results.unknownSchema, 'step', 'result', event.workflowId, step.stepId);
           spinner.stopAndPersist({
             symbol: EMOJI.HYDRATED,
             text: `Hydrated stepId: \`${step.stepId}\``,
@@ -765,7 +781,7 @@ export class Echo {
   private createStepInputs(step: DiscoverStepOutput, event: IEvent): Record<string, unknown> {
     const stepInputs = event.inputs;
 
-    this.validate(stepInputs, step.inputs.schema, 'step', 'input', event.workflowId, step.stepId);
+    this.validate(stepInputs, step.inputs.unknownSchema, 'step', 'input', event.workflowId, step.stepId);
 
     return stepInputs;
   }
@@ -779,7 +795,7 @@ export class Echo {
       if (payload.stepId === step.stepId) {
         const input = this.createStepInputs(step, payload);
         const previewOutput = await step.resolve(input);
-        this.validate(previewOutput, step.outputs.schema, 'step', 'output', payload.workflowId, step.stepId);
+        this.validate(previewOutput, step.outputs.unknownSchema, 'step', 'output', payload.workflowId, step.stepId);
 
         spinner.stopAndPersist({
           symbol: EMOJI.MOCK,
@@ -792,7 +808,7 @@ export class Echo {
         };
       } else {
         // TODO: add capability to mock parts of the step results during preview
-        const mockResult = this.mock(step.results.schema);
+        const mockResult = this.mock(step.results.unknownSchema);
 
         spinner.stopAndPersist({
           symbol: EMOJI.MOCK,

@@ -1,6 +1,6 @@
 import { expect } from '@jest/globals';
 import { Echo } from './client';
-
+jest.retryTimes(0);
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import { z } from 'zod';
 
@@ -18,7 +18,7 @@ const zodSchema = z.object({
 });
 
 describe('client.validation', () => {
-  it.only('test', () => {
+  it('test', () => {
     /*
      * const zodSchema = z.object({
      *   subject: z.string(),
@@ -63,42 +63,35 @@ describe('client.validation', () => {
   it.only('should throw an error if the input is invalid', () => {
     const echo = new Echo();
 
-    echo.workflow(
-      'zod-validation',
-      async ({ step, input, payload }) => {
-        await step.email(
-          'zod-validation',
-          async (inputs) => ({
-            subject: 'Test subject',
-            body: 'Test body',
+    echo.workflow('zod-validation', async ({ step, input, payload }) => {
+      await step.email(
+        'zod-validation',
+        async (inputs) => ({
+          subject: 'Test subject',
+          body: 'Test body',
+        }),
+        {
+          inputSchema: z.object({
+            foo: z.string(),
+            baz: z.string(),
           }),
-          {
-            inputSchema: zodSchema,
-            providers: {
-              sendgrid: async (inputs) => ({
-                ipPoolName: 'test',
-              }),
-            },
-          }
-        );
-      },
-      {
-        inputSchema: zodSchema,
-      }
-    );
+          providers: {
+            sendgrid: async (inputs) => ({
+              ipPoolName: 'test',
+            }),
+          },
+        }
+      );
+    });
 
     expect(() =>
       echo.executeWorkflow({
         action: 'execute',
         workflowId: 'zod-validation',
         inputs: {
-          foo: 'bar',
           baz: 'qux',
         },
-        data: {
-          foo: 'bar',
-          baz: 'qux',
-        },
+        data: {},
         stepId: 'zod-validation',
         state: [],
         subscriber: {},

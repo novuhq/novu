@@ -1,5 +1,5 @@
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import { Schema, ValidateFunction } from './schema.types';
+import { JsonSchema, Schema, ValidateFunction } from './schema.types';
 import { ActionStepOptions } from './step.types';
 import { Execute, WorkflowOptions } from './workflow.types';
 
@@ -10,7 +10,8 @@ export type DiscoverProviderOutput = {
   code: string;
   resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
   outputs: {
-    schema: Schema;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
 };
 
@@ -18,13 +19,16 @@ export type DiscoverStepOutput = {
   stepId: string;
   type: StepType;
   inputs: {
-    schema: Schema;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
   outputs: {
-    schema: Schema;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
   results: {
-    schema: Schema;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
   code: string;
   resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
@@ -39,10 +43,12 @@ export type DiscoverWorkflowOutput = {
   code: string;
   steps: Array<DiscoverStepOutput>;
   data: {
-    schema: Schema;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
   inputs: {
-    schema: Schema;
+    schema: JsonSchema;
+    unknownSchema: Schema;
   };
 };
 
