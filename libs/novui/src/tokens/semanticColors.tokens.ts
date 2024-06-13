@@ -16,20 +16,6 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
   },
-  table: {
-    header: {
-      border: {
-        value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
-        type: 'color',
-      },
-    },
-    row: {
-      border: {
-        value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
-        type: 'color',
-      },
-    },
-  },
   typography: {
     text: {
       main: {
