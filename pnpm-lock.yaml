@@ -778,9 +778,6 @@ importers:
       '@novu/design-system':
         specifier: workspace:*
         version: link:../../libs/design-system
-      '@novu/js':
-        specifier: workspace:*
-        version: link:../../packages/js
       '@novu/notification-center':
         specifier: workspace:*
         version: link:../../packages/notification-center
@@ -3569,6 +3566,9 @@ importers:
       '@types/node':
         specifier: ^18.11.12
         version: 18.16.9
+      babel-preset-solid:
+        specifier: ^1.8.17
+        version: 1.8.17(@babel/core@7.24.4)
       bytes-iec:
         specifier: ^3.1.1
         version: 3.1.1
