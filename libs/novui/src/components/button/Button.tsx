@@ -1,22 +1,26 @@
+import { Button as ExternalButton, ButtonProps, ButtonVariant } from '@mantine/core';
 import { FC } from 'react';
-import { CorePropsWithChildren } from '../../types';
-import { Button as ExternalButton, ButtonProps } from '@mantine/core';
+import { cx, RecipeVariantProps } from '../../../styled-system/css';
+import { button } from '../../../styled-system/recipes';
 import { IconType } from '../../icons';
-import { css } from '../../../styled-system/css';
+import { CorePropsWithChildren } from '../../types';
 
 export interface IButtonProps
-  extends CorePropsWithChildren,
+  extends RecipeVariantProps<typeof button>,
+    CorePropsWithChildren,
     React.ButtonHTMLAttributes<HTMLButtonElement>,
-    Pick<ButtonProps, 'size' | 'variant'> {
+    Pick<ButtonProps, 'size'> {
   Icon?: IconType;
 }
 
-export const Button: FC<IButtonProps> = ({ children, Icon, size = 'md', variant = 'filled', ...buttonProps }) => {
+export const Button: FC<IButtonProps> = ({ children, Icon, size = 'md', className, variant, ...buttonProps }) => {
   return (
     <ExternalButton
       size={size}
-      leftSection={Icon ? <Icon title="button-icon" size="16" className={css({ color: 'legacy.white' })} /> : undefined}
-      variant={variant}
+      leftSection={Icon ? <Icon title="button-icon" size={variant === 'transparent' ? '32' : '16'} /> : undefined}
+      classNames={button({ variant })}
+      className={cx(className)}
+      variant={['outline', 'filled'].includes(variant as ButtonVariant) ? (variant as ButtonVariant) : undefined}
       {...buttonProps}
     >
       {children}
