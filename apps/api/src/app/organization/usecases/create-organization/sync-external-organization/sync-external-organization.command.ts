@@ -5,7 +5,7 @@ import { JobTitleEnum, ProductUseCases } from '@novu/shared';
 export class SyncExternalOrganizationCommand extends AuthenticatedCommand {
   @IsDefined()
   @IsString()
-  externalOrganizationId: string;
+  externalId: string;
 
   @IsOptional()
   @IsEnum(JobTitleEnum)

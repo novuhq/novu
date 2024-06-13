@@ -32,10 +32,12 @@ export class SyncExternalOrganization {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new ApiException('User not found');
 
-    const organization = await this.organizationRepository.create(
-      {},
-      { linkOnly: true, externalId: command.externalOrganizationId }
-    );
+    const organization = await this.organizationRepository.create({
+      externalId: command.externalId,
+      jobTitle: command.jobTitle,
+      domain: command.domain,
+      productUseCases: command.productUseCases,
+    });
 
     if (!organization) {
       throw new BadRequestException('Organization does not exist in Clerk');
