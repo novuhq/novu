@@ -72,17 +72,17 @@ export class Client {
   public static NOVU_SIGNATURE_HEADER = HttpHeaderKeysEnum.SIGNATURE;
 
   constructor(options?: ClientOptions) {
-    const builtConfiguration = this.buildConfiguration(options);
-    this.apiKey = builtConfiguration.apiKey;
-    this.backendUrl = builtConfiguration.backendUrl;
-    this.devModeBypassAuthentication = builtConfiguration.devModeBypassAuthentication;
+    const builtOpts = this.buildOptions(options);
+    this.apiKey = builtOpts.apiKey;
+    this.backendUrl = builtOpts.backendUrl;
+    this.devModeBypassAuthentication = builtOpts.devModeBypassAuthentication;
 
     const ajv = new Ajv({ useDefaults: true });
     addFormats(ajv);
     this.ajv = ajv;
   }
 
-  private buildConfiguration(providedOptions?: ClientOptions) {
+  private buildOptions(providedOptions?: ClientOptions) {
     const builtConfiguration: { apiKey?: string; backendUrl: string; devModeBypassAuthentication: boolean } = {
       apiKey: undefined,
       backendUrl: DEFAULT_NOVU_API_BASE_URL,
