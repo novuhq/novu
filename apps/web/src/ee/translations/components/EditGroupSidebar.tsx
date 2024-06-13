@@ -76,6 +76,7 @@ export const EditGroupSidebar = ({
     if (localesForm.length === 0) {
       setValue('locales', [currentOrganization?.defaultLocale]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentOrganization?.defaultLocale, localesForm]);
 
   const onUpdateGroup = async (form) => {
