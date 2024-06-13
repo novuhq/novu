@@ -20,7 +20,7 @@ import {
 import { InstrumentUsecase } from '../../instrumentation';
 import { CreateNotificationJobsCommand } from './create-notification-jobs.command';
 import { PlatformException } from '../../utils/exceptions';
-import { CalculateDelayService } from '../../services';
+import { ComputeJobWaitDurationService } from '../../services';
 
 const LOG_CONTEXT = 'CreateNotificationUseCase';
 type NotificationJob = Omit<JobEntity, '_id' | 'createdAt' | 'updatedAt'>;
@@ -30,8 +30,8 @@ export class CreateNotificationJobs {
   constructor(
     private digestFilterSteps: DigestFilterSteps,
     private notificationRepository: NotificationRepository,
-    @Inject(forwardRef(() => CalculateDelayService))
-    private calculateDelayService: CalculateDelayService
+    @Inject(forwardRef(() => ComputeJobWaitDurationService))
+    private computeJobWaitDurationService: ComputeJobWaitDurationService
   ) {}
 
   @InstrumentUsecase()
@@ -171,7 +171,7 @@ export class CreateNotificationJobs {
 
       const delay = delayedSteps
         .map((step) =>
-          this.calculateDelayService.calculateDelay({
+          this.computeJobWaitDurationService.calculateDelay({
             stepMetadata: step.metadata,
             payload: command.payload,
             overrides: command.overrides,
