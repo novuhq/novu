@@ -17,9 +17,7 @@
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
     "types": [],
-    "baseUrl": ".",
-    "noImplicitAny": false,
-    "emitDecoratorMetadata": false
+    "baseUrl": "."
   },
   "include": ["src/**/*", "src/**/*.d.ts"],
   "exclude": ["src/**/*.test.ts", "src/*.test.ts", "node_modules", "**/node_modules/*"]
