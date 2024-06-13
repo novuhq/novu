@@ -3,6 +3,10 @@ import { Schema } from '../../../types/schema.types';
 export const delayOutputSchema = {
   type: 'object',
   properties: {
+    type: {
+      enum: ['regular'],
+      default: 'regular',
+    },
     amount: { type: 'number' },
     unit: {
       type: 'string',
