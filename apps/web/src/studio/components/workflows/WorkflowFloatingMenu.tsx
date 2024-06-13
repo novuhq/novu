@@ -1,12 +1,11 @@
 import { Tooltip } from '@novu/design-system';
-import { IconButton, Text, type CoreProps, type IIconButtonProps } from '@novu/novui';
+import { IconButton, Text, type CoreProps, type IconButtonProps } from '@novu/novui';
 import { css, cx } from '@novu/novui/css';
 import {
   IconOutlineAutoAwesomeMotion,
   IconOutlineAvTimer,
   IconOutlineEmail,
   IconOutlineForum,
-  IconOutlineLayers,
   IconOutlineMobileFriendly,
   IconOutlineNotifications,
   IconOutlineSms,
@@ -23,8 +22,14 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
   return (
     <menu className={cx(vstack({ display: 'flex !important', gap: '150' }), className)}>
       <WorkflowFloatingMenuSection title="Actions">
-        <WorkflowFloatingMenuButton Icon={IconOutlineAutoAwesomeMotion} />
-        <WorkflowFloatingMenuButton Icon={IconOutlineAvTimer} />
+        <WorkflowFloatingMenuButton
+          Icon={IconOutlineAutoAwesomeMotion}
+          tooltipLabel="Guide of how to add a Digest step for embedding in code"
+        />
+        <WorkflowFloatingMenuButton
+          Icon={IconOutlineAvTimer}
+          tooltipLabel="Guide of how to add a Delay step for embedding in code"
+        />
       </WorkflowFloatingMenuSection>
       <WorkflowFloatingMenuSection title="Channels">
         <WorkflowFloatingMenuButton
@@ -67,14 +72,14 @@ function WorkflowFloatingMenuSection({ title, children }: IWorkflowFloatingMenuS
   );
 }
 
-interface IWorkflowFloatingMenuButtonProps extends IIconButtonProps {
+interface IWorkflowFloatingMenuButtonProps extends IconButtonProps {
   Icon: IconType;
   tooltipLabel?: LocalizedMessage;
 }
 
 function WorkflowFloatingMenuButton({ Icon, tooltipLabel }: IWorkflowFloatingMenuButtonProps) {
   return (
-    <Tooltip label={tooltipLabel}>
+    <Tooltip label={tooltipLabel} position="left">
       <IconButton
         Icon={Icon}
         className={css({
