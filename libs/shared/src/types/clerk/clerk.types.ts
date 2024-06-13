@@ -1,4 +1,4 @@
-import { OrganizationMembership } from '@clerk/clerk-sdk-node';
+import { OrganizationMembership } from './clerk.organization-membership.types';
 import {
   GetOrganizationMembershipListParams,
   Organization,
@@ -14,7 +14,7 @@ export interface IUserAPI {
 }
 
 export interface IOrganizationAPI {
-  getOrganization(organizationId: string): Promise<Organization>;
+  getOrganization(params: { organizationId: string }): Promise<Organization>;
   getOrganizationMembershipList(
     params: GetOrganizationMembershipListParams
   ): Promise<PaginatedResourceResponse<OrganizationMembership[]>>;

@@ -1,0 +1,77 @@
+import { User } from '@novu/shared';
+
+const CLERK_USER_1: User = {
+  id: 'clerk_user_1',
+  externalId: 'novu_user_objectid_1',
+  firstName: 'firstName',
+  lastName: 'lastName',
+  emailAddresses: [],
+  username: 'username',
+  fullName: null,
+  imageUrl: 'https://example.com',
+  hasImage: true,
+  publicMetadata: {
+    showOnBoarding: true,
+    showOnBoardingTour: 2,
+    servicesHashes: {},
+    jobTitle: 'jobTitle',
+  },
+  privateMetadata: {},
+  unsafeMetadata: {},
+  banned: false,
+  createdAt: 1,
+  updatedAt: 1,
+  primaryEmailAddressId: '1',
+  primaryPhoneNumberId: '1',
+  primaryWeb3WalletId: '1',
+  lastSignInAt: 1,
+  phoneNumbers: [],
+  web3Wallets: [],
+  externalAccounts: [],
+  samlAccounts: [],
+  lastActiveAt: 1,
+  createOrganizationEnabled: true,
+  primaryEmailAddress: {
+    id: '1',
+    emailAddress: 'emailAddress',
+    verification: null,
+    linkedTo: [],
+  },
+  primaryPhoneNumber: null,
+  primaryWeb3Wallet: null,
+  passwordEnabled: true,
+  totpEnabled: true,
+  backupCodeEnabled: true,
+  twoFactorEnabled: true,
+};
+
+const CLERK_USER_2: User = {
+  ...CLERK_USER_1,
+  id: 'clerk_user_2',
+  externalId: 'novu_user_objectid_2',
+  firstName: 'firstName2',
+  lastName: 'lastName2',
+  emailAddresses: [],
+  username: 'username2',
+  fullName: null,
+  imageUrl: 'https://example2.com',
+  publicMetadata: {
+    showOnBoarding: false,
+    showOnBoardingTour: 2,
+    servicesHashes: {},
+    jobTitle: 'jobTitle2',
+  },
+  primaryEmailAddress: {
+    id: '2',
+    emailAddress: 'emailAddress',
+    verification: null,
+    linkedTo: [],
+  },
+  primaryPhoneNumber: null,
+  primaryWeb3Wallet: null,
+};
+
+export const CLERK_USERS = new Map<string, User>([
+  [CLERK_USER_1.id, CLERK_USER_1],
+  [CLERK_USER_2.id, CLERK_USER_2],
+]);
