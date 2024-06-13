@@ -371,25 +371,25 @@ export class Client {
     return headers;
   }
 
-  public async diff(echoUrl: string, anonymous?: string): Promise<unknown> {
+  public async diff(bridgeUrl: string, anonymous?: string): Promise<unknown> {
     const workflows = this.discover()?.workflows || [];
 
     const workflowsResponse = await fetch(this.backendUrl + NovuApiEndpointsEnum.DIFF, {
       method: HttpMethodEnum.POST,
       headers: this.getHeaders(anonymous),
-      body: JSON.stringify({ workflows, bridgeUrl: echoUrl }),
+      body: JSON.stringify({ workflows, bridgeUrl }),
     });
 
     return workflowsResponse.json();
   }
 
-  public async sync(echoUrl: string, anonymous?: string, source?: string): Promise<unknown> {
+  public async sync(bridgeUrl: string, anonymous?: string, source?: string): Promise<unknown> {
     const { workflows } = this.discover();
 
     const workflowsResponse = await fetch(`${this.backendUrl}${NovuApiEndpointsEnum.SYNC}?source=${source || 'sdk'}`, {
       method: HttpMethodEnum.POST,
       headers: this.getHeaders(anonymous),
-      body: JSON.stringify({ workflows, bridgeUrl: echoUrl }),
+      body: JSON.stringify({ workflows, bridgeUrl }),
     });
 
     return workflowsResponse.json();

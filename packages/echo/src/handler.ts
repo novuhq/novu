@@ -12,7 +12,7 @@ import {
   SIGNATURE_TIMESTAMP_TOLERANCE,
 } from './constants';
 import {
-  EchoError,
+  BaseError,
   InvalidActionError,
   MethodNotAllowedError,
   MissingApiKeyError,
@@ -31,7 +31,7 @@ export interface ServeHandlerOptions {
   workflow: Array<DiscoverWorkflowOutput>;
 }
 
-interface IEchoRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
+interface INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
   frameworkName: string;
   client?: Client;
   workflow: Array<DiscoverWorkflowOutput>;
@@ -55,7 +55,7 @@ interface IActionResponse<TBody extends string = string> {
   body: TBody;
 }
 
-export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
+export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   public readonly frameworkName: string;
 
   public readonly handler: Handler;
@@ -64,7 +64,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
 
   private readonly hmacEnabled: boolean;
 
-  constructor(options: IEchoRequestHandlerOptions<Input, Output>) {
+  constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
     this.client = options.client ? options.client : new Client();
     this.client.addWorkflows(options.workflow);
@@ -113,7 +113,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
     };
   }
 
-  private createError<TBody extends string = string>(error: EchoError): IActionResponse<TBody> {
+  private createError<TBody extends string = string>(error: BaseError): IActionResponse<TBody> {
     return {
       status: error.statusCode,
       body: JSON.stringify({
@@ -204,7 +204,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
           throw new MissingApiKeyError();
         }
 
-        const result = await this.client.sync(body.echoUrl, anonymousHeader, source);
+        const result = await this.client.sync(body.bridgeUrl, anonymousHeader, source);
 
         return this.createResponse(HttpStatusEnum.OK, result);
       },
@@ -213,7 +213,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
           throw new MissingApiKeyError();
         }
 
-        const result = await this.client.diff(body.echoUrl, anonymousHeader);
+        const result = await this.client.diff(body.bridgeUrl, anonymousHeader);
 
         return this.createResponse(HttpStatusEnum.OK, result);
       },
@@ -266,8 +266,8 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private isClientError(error: unknown): error is EchoError {
-    return Object.values(ErrorCodeEnum).includes((error as EchoError).code);
+  private isClientError(error: unknown): error is BaseError {
+    return Object.values(ErrorCodeEnum).includes((error as BaseError).code);
   }
 
   private handleError(error: unknown): IActionResponse {

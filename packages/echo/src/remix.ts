@@ -1,4 +1,4 @@
-import { EchoRequestHandler, ServeHandlerOptions } from './handler';
+import { NovuRequestHandler, ServeHandlerOptions } from './handler';
 import { type SupportedFrameworkName } from './types';
 
 export const frameworkName: SupportedFrameworkName = 'remix';
@@ -6,7 +6,7 @@ export const frameworkName: SupportedFrameworkName = 'remix';
 export const serve = (
   options: ServeHandlerOptions
 ): ((ctx: { request: Request; context?: unknown }) => Promise<Response>) => {
-  const handler = new EchoRequestHandler({
+  const handler = new NovuRequestHandler({
     frameworkName,
     ...options,
     handler: ({ request: req }: { request: Request }) => {
