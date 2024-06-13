@@ -80,22 +80,26 @@ const StepLogo = ({ status, type }) => {
   );
 };
 
-const generateDetailByStepAndStatus = (status, step) => {
+const generateDetailByStepAndStatus = (status, job) => {
   if (status === JobStatusEnum.COMPLETED) {
-    return `Success! ${step.executionDetails?.at(-1)?.detail}`;
+    return `Success! ${job.executionDetails?.at(-1)?.detail}`;
   }
 
-  if (step.type === StepTypeEnum.DIGEST) {
+  if (job.type === StepTypeEnum.DIGEST) {
     if (status === JobStatusEnum.SKIPPED) {
-      return step.executionDetails?.at(-1)?.detail;
+      return job.executionDetails?.at(-1)?.detail;
     }
-    const { digest } = step;
+    const { digest } = job;
+
+    if (!digest.amount && !digest.unit) return `Waiting to receive digest times from bridge endpoint`;
 
     return `Digesting events for ${digest.amount} ${digest.unit}`;
   }
 
-  if (step.type === StepTypeEnum.DELAY) {
-    const { digest, step: stepMetadata, payload } = step;
+  if (job.type === StepTypeEnum.DELAY) {
+    const { digest, step: stepMetadata, payload } = job;
+
+    if (!digest.amount && !digest.unit) return `Waiting to receive execution delay from bridge endpoint`;
     if (stepMetadata.metadata.type === DelayTypeEnum.SCHEDULED) {
       return `Delaying execution until ${payload[stepMetadata.metadata.delayPath]}`;
     }
@@ -103,7 +107,7 @@ const generateDetailByStepAndStatus = (status, step) => {
     return `Delaying execution for ${digest.amount} ${digest.unit}`;
   }
 
-  return step.executionDetails?.at(-1)?.detail;
+  return job.executionDetails?.at(-1)?.detail;
 };
 
 const getDetailsStyledComponentByStepStatus = (status) => {
