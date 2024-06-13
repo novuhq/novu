@@ -12,9 +12,10 @@ import { Flex, HStack, VStack } from '@novu/novui/jsx';
 import { PageContainer } from '../../layout/PageContainer';
 import { PageMeta } from '../../layout/PageMeta';
 import { StepNode } from './StepNode';
+import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
 
 export const WorkflowsDetailPage = () => {
-  const title = 'Example';
+  const title = 'Workflow name';
 
   const handleSettingsClick = () => {};
   const handleTestClick = () => {};
@@ -35,7 +36,8 @@ export const WorkflowsDetailPage = () => {
         </HStack>
       </Flex>
       <Flex
-        h="[100%]"
+        // TODO fix this
+        h="[95%]"
         justifyContent="center"
         className={css({
           // FIXME: popover token isn't correct. Also, ideally there should be a better way to use a token here
@@ -51,6 +53,15 @@ export const WorkflowsDetailPage = () => {
           <StepNode icon={<IconOutlineEmail size="32" />} title={'Workflow trigger'} />
         </VStack>
       </Flex>
+      <WorkflowFloatingMenu
+        className={css({
+          zIndex: 'docked',
+          position: 'fixed',
+          // TODO: need to talk with Nik about how to position this
+          top: '[182px]',
+          right: '50',
+        })}
+      />
     </PageContainer>
   );
 };

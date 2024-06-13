@@ -1,12 +1,12 @@
 import { ActionIcon } from '@mantine/core';
 import { FC } from 'react';
-import { token } from '../../../styled-system/tokens';
-import { css, cx } from '../../../styled-system/css';
+import { cx } from '../../../styled-system/css';
 import { button, type ButtonVariant } from '../../../styled-system/recipes';
+import { token } from '../../../styled-system/tokens';
 import { IconType } from '../../icons';
 import { CoreProps } from '../../types';
 
-interface IIconButtonProps
+export interface IIconButtonProps
   extends CoreProps,
     Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'children'>,
     Partial<ButtonVariant> {
