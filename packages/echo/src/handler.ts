@@ -69,7 +69,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     this.client = options.client ? options.client : new Client();
     this.client.addWorkflows(options.workflow);
     this.frameworkName = options.frameworkName;
-    this.hmacEnabled = !this.client.devModeBypassAuthentication;
+    this.hmacEnabled = this.client.strictAuthentication;
   }
 
   public createHandler(): (...args: Input) => Promise<Output> {

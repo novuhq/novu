@@ -8,7 +8,7 @@ class EchoServer {
   private server: express.Express;
   private app: http.Server;
   private port = 9999;
-  public echo = new Client({ devModeBypassAuthentication: true });
+  public echo = new Client({ strictAuthentication: false });
 
   get serverPath() {
     return `http://localhost:${this.port}`;
