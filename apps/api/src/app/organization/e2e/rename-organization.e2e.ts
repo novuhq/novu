@@ -1,10 +1,10 @@
-import { CommunityOrganizationRepository, OrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
 describe('Rename Organization - /organizations (PATCH) @skip-in-ee', function () {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository(new CommunityOrganizationRepository());
+  const organizationRepository = new CommunityOrganizationRepository();
 
   beforeEach(async () => {
     session = new UserSession();

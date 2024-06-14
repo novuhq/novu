@@ -3,11 +3,11 @@ import * as jwt from 'jsonwebtoken';
 import { subMinutes } from 'date-fns';
 import { expect } from 'chai';
 import { IJwtPayload } from '@novu/shared';
-import { CommunityUserRepository, UserRepository } from '@novu/dal';
+import { CommunityUserRepository } from '@novu/dal';
 
 describe('User login - /auth/login (POST) @skip-in-ee', async () => {
   let session: UserSession;
-  const userRepository = new UserRepository(new CommunityUserRepository());
+  const userRepository = new CommunityUserRepository();
   const userCredentials = {
     email: 'Testy.test22@gmail.com',
     password: '123Qwerty@',

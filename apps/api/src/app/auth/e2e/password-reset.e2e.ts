@@ -1,4 +1,4 @@
-import { CommunityUserRepository, UserRepository } from '@novu/dal';
+import { CommunityUserRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { v4 as uuidv4 } from 'uuid';
 import { expect } from 'chai';
@@ -8,7 +8,7 @@ import { PasswordResetFlowEnum } from '@novu/shared';
 
 describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
   let session: UserSession;
-  const userRepository = new UserRepository(new CommunityUserRepository());
+  const userRepository = new CommunityUserRepository();
 
   const requestResetToken = async (payload) => {
     let plainToken: string;
@@ -16,11 +16,11 @@ describe('Password reset - /auth/reset (POST) @skip-in-ee', async () => {
      * Wrapper for method to obtain plain reset token before hashing.
      * Stub is created on Prototype because API and tests use different UserRepository instances.
      */
-    stub(UserRepository.prototype, 'updatePasswordResetToken').callsFake((...args) => {
+    stub(CommunityUserRepository.prototype, 'updatePasswordResetToken').callsFake((...args) => {
       plainToken = args[1];
       (
-        UserRepository.prototype.updatePasswordResetToken as SinonStubbedMember<
-          typeof UserRepository.prototype.updatePasswordResetToken
+        CommunityUserRepository.prototype.updatePasswordResetToken as SinonStubbedMember<
+          typeof CommunityUserRepository.prototype.updatePasswordResetToken
         >
       ).restore();
 

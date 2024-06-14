@@ -1,9 +1,6 @@
 import { expect } from 'chai';
 
 import {
-  MemberRepository,
-  OrganizationRepository,
-  UserRepository,
   IntegrationRepository,
   EnvironmentRepository,
   CommunityOrganizationRepository,
@@ -22,9 +19,9 @@ import {
 
 describe('Create Organization - /organizations (POST) @skip-in-ee', async () => {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository(new CommunityOrganizationRepository());
-  const userRepository = new UserRepository(new CommunityUserRepository());
-  const memberRepository = new MemberRepository(new CommunityMemberRepository());
+  const organizationRepository = new CommunityOrganizationRepository();
+  const userRepository = new CommunityUserRepository();
+  const memberRepository = new CommunityMemberRepository();
   const integrationRepository = new IntegrationRepository();
   const environmentRepository = new EnvironmentRepository();
 

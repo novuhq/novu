@@ -4,7 +4,7 @@ import { expect } from 'chai';
 
 describe('Update Branding Details - /organizations/branding (PUT) @skip-in-ee', function () {
   let session: UserSession;
-  const organizationRepository = new OrganizationRepository(new CommunityOrganizationRepository());
+  const organizationRepository = new CommunityOrganizationRepository();
 
   beforeEach(async () => {
     session = new UserSession();

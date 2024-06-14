@@ -1,4 +1,4 @@
-import { CommunityOrganizationRepository, EnvironmentRepository, OrganizationRepository } from '@novu/dal';
+import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
@@ -7,7 +7,7 @@ import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
 describe('User registration - /auth/register (POST) @skip-in-ee', async () => {
   let session: UserSession;
   const environmentRepository = new EnvironmentRepository();
-  const organizationRepository = new OrganizationRepository(new CommunityOrganizationRepository());
+  const organizationRepository = new CommunityOrganizationRepository();
 
   before(async () => {
     session = new UserSession();

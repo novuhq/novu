@@ -1,4 +1,4 @@
-import { CommunityMemberRepository, MemberRepository, OrganizationEntity } from '@novu/dal';
+import { CommunityMemberRepository, OrganizationEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { MemberRoleEnum } from '@novu/shared';
@@ -10,7 +10,7 @@ describe('Get organizations - /organizations (GET) @skip-in-ee', async () => {
 
   let thirdOldOrganization: OrganizationEntity;
 
-  const memberRepository = new MemberRepository(new CommunityMemberRepository());
+  const memberRepository = new CommunityMemberRepository();
 
   before(async () => {
     session = new UserSession();

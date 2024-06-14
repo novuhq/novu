@@ -6,7 +6,7 @@ import { describe } from 'mocha';
 
 describe('Get Organization members - /organizations/members (GET) @skip-in-ee', async () => {
   let session: UserSession;
-  const memberRepository = new MemberRepository(new CommunityMemberRepository());
+  const memberRepository = new CommunityMemberRepository();
   let user2: UserSession;
   let user3: UserSession;
 
