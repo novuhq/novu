@@ -38,7 +38,17 @@ jobs:
             envvalue="prod"
           fi
           echo "environvalue=$envvalue" >> $GITHUB_ENV  
-      
+
+      - name: Check output values
+        run: |
+          echo "Environment Name: ${{ steps.env_name.outputs.env_Name }}"
+          echo "Environment Value: ${{ steps.setenv.outputs.envvalue }}"
+          if [ -z "${{ steps.env_name.outputs.env_Name }}" ] || [ -z "${{ steps.setenv.outputs.envvalue }}" ]; then
+            echo "One of the required output values has not been set. Failing..."
+            exit 1
+          else
+            echo "All output values have been set successfully."
+          fi
 
       - name: Start Deployment Notification
         uses: ravsamhq/notify-slack-action@v2
