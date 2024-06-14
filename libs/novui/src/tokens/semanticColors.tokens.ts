@@ -105,6 +105,12 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       },
     },
   },
+  tabs: {
+    border: {
+      value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+      type: 'color',
+    },
+  },
   badge: {
     border: {
       value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B30}' },
