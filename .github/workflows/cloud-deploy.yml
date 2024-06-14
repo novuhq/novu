@@ -69,7 +69,7 @@ jobs:
       id-token: write
 
   release-dev-inbound-mail:
-    uses: ./.github/workflows/cloud-deploy-dev-embed.yml
+    uses: ./.github/workflows/cloud-deploy-dev-inbound-mail.yml
     needs: [ pre-release ]
     if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     secrets: inherit
