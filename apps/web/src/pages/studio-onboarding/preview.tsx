@@ -1,14 +1,13 @@
+/* eslint-disable max-len */
 import { Prism } from '@mantine/prism';
 import { Tabs } from '@novu/design-system';
 import { IconCode, IconVisibility } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
-import { vstack } from '@novu/novui/patterns';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PreviewWeb } from '../../components/workflow/preview/email/PreviewWeb';
 import { useActiveIntegrations, useAuth } from '../../hooks/index';
 import { useTemplates } from '../../hooks/useTemplates';
-import { Background } from './components/Background';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { testTrigger } from '../../api/notification-templates';
@@ -17,12 +16,13 @@ import * as Sentry from '@sentry/react';
 import { IStepVariant } from '@novu/shared';
 import { api } from '../../api/index';
 import { ROUTES } from '../../constants/routes';
+import { Flex, VStack } from '@novu/novui/jsx';
 
 export const StudioOnboardingPreview = () => {
   const { currentUser } = useAuth();
-  const [tab, setTab] = useState('Preview');
-  const [content, setContent] = useState('');
-  const [subject, setSubject] = useState('');
+  const [tab, setTab] = useState<string>('Preview');
+  const [content, setContent] = useState<string>('');
+  const [subject, setSubject] = useState<string>('');
 
   const navigate = useNavigate();
   const { integrations = [] } = useActiveIntegrations();
@@ -107,50 +107,57 @@ export const StudioOnboardingPreview = () => {
       })}
     >
       <Header active={1} />
-      <Background />
-      <div
-        className={vstack({
-          alignContent: 'center',
+      <Flex
+        justifyContent="center"
+        className={css({
+          backgroundImage: '[radial-gradient(#292933 1.5px, transparent 0)]',
+          backgroundSize: '[16px 16px]',
           height: '100%',
         })}
       >
-        <div
+        <VStack
+          alignContent="center"
           className={css({
-            width: '880px',
-            zIndex: 1,
-            paddingTop: '100',
+            height: '100%',
           })}
         >
-          <Tabs
-            withIcon={true}
-            value={tab}
-            onTabChange={(value) => {
-              setTab(value as string);
-            }}
-            menuTabs={[
-              {
-                icon: <IconVisibility />,
-                value: 'Preview',
-                content: (
-                  <PreviewWeb
-                    integration={integration}
-                    content={content}
-                    subject={subject}
-                    onLocaleChange={() => {}}
-                    locales={[]}
-                    loading={previewLoading}
-                    className={css({
-                      height: 'calc(50vh - 28px) !important',
-                    })}
-                  />
-                ),
-              },
-              {
-                icon: <IconCode />,
-                value: 'Code',
-                content: (
-                  <Prism withLineNumbers={true} language="javascript">
-                    {`
+          <div
+            className={css({
+              width: '880px',
+              zIndex: 1,
+              paddingTop: '100',
+            })}
+          >
+            <Tabs
+              withIcon={true}
+              value={tab}
+              onTabChange={(value) => {
+                setTab(value as string);
+              }}
+              menuTabs={[
+                {
+                  icon: <IconVisibility />,
+                  value: 'Preview',
+                  content: (
+                    <PreviewWeb
+                      integration={integration}
+                      content={content}
+                      subject={subject}
+                      onLocaleChange={() => {}}
+                      locales={[]}
+                      loading={previewLoading}
+                      className={css({
+                        height: 'calc(50vh - 28px) !important',
+                      })}
+                    />
+                  ),
+                },
+                {
+                  icon: <IconCode />,
+                  value: 'Code',
+                  content: (
+                    <Prism withLineNumbers={true} language="javascript">
+                      {`
 {
     subject: "Welcome to Novu! Ready to code?",
     body: \`<html xmlns="http://www.w3.org/1999/xhtml">
@@ -170,13 +177,14 @@ export const StudioOnboardingPreview = () => {
         </body>
         </html>\`,
 }`}
-                  </Prism>
-                ),
-              },
-            ]}
-          />
-        </div>
-      </div>
+                    </Prism>
+                  ),
+                },
+              ]}
+            />
+          </div>
+        </VStack>
+      </Flex>
       <Footer
         buttonText="Test workflow"
         onClick={() => {

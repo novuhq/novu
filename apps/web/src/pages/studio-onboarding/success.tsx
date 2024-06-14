@@ -1,7 +1,6 @@
+import { Title, Text } from '@novu/novui';
 import { css } from '@novu/novui/css';
-import { styled } from '@novu/novui/jsx';
-import { vstack } from '@novu/novui/patterns';
-import { text, title } from '@novu/novui/recipes';
+import { VStack } from '@novu/novui/jsx';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -10,9 +9,6 @@ import { ExecutionDetailsAccordion } from '../../components/execution-detail/Exe
 import { ROUTES } from '../../constants/routes';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
-
-const Heading = styled('h1', title);
-const Text = styled('p', text);
 
 export const StudioOnboardingSuccess = () => {
   const { data } = useQuery<{ data: any[]; hasMore: boolean; pageSize: number }>(['activitiesList', 0], () =>
@@ -53,13 +49,13 @@ export const StudioOnboardingSuccess = () => {
       })}
     >
       <Header active={3} />
-      <div className={vstack({ alignContent: 'center' })}>
+      <VStack alignContent="center">
         <div
           className={css({
             width: '880px',
           })}
         >
-          <Heading>Success, you sent an email to {email}</Heading>
+          <Title variant="section">Success, you sent an email to {email}</Title>
           <Text
             className={css({
               color: 'typography.text.secondary',
@@ -72,7 +68,7 @@ export const StudioOnboardingSuccess = () => {
           </Text>
           <ExecutionDetailsAccordion identifier={identifier} steps={item?.jobs} subscriberVariables={{}} />
         </div>
-      </div>
+      </VStack>
       <Footer
         onClick={() => {
           navigate(ROUTES.WORKFLOWS);

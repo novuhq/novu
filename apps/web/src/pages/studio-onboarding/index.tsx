@@ -1,9 +1,6 @@
 import { css } from '@novu/novui/css';
-import { vstack } from '@novu/novui/patterns';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
-import { text, title } from '@novu/novui/recipes';
-import { styled } from '@novu/novui/jsx';
 import { CodeSnippet } from '../get-started/components/CodeSnippet';
 import { Timeline } from '../get-started/components/timeline/Timeline';
 import { useEffect, useMemo, useState } from 'react';
@@ -16,9 +13,8 @@ import { useEnvController } from '../../hooks/useEnvController';
 import { getApiKeys } from '../../api/environment';
 import { ROUTES } from '../../constants/routes';
 import { api } from '../../api/index';
-
-const Heading = styled('h1', title);
-const Text = styled('p', text);
+import { Title, Text } from '@novu/novui';
+import { VStack } from '@novu/novui/jsx';
 
 export const StudioOnboarding = () => {
   const [active, setActive] = useState(0);
@@ -84,13 +80,13 @@ export const StudioOnboarding = () => {
       })}
     >
       <Header />
-      <div className={vstack({ alignContent: 'center' })}>
+      <VStack alignContent="center">
         <div
           className={css({
             width: '880px',
           })}
         >
-          <Heading>Create an Novu endpoint</Heading>
+          <Title variant="section">Create an Novu endpoint</Title>
           <Text
             className={css({
               color: 'typography.text.secondary',
@@ -158,7 +154,7 @@ export const StudioOnboarding = () => {
             ]}
           />
         </div>
-      </div>
+      </VStack>
       <Footer
         onClick={() => {
           mutate();

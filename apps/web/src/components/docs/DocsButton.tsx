@@ -54,7 +54,7 @@ const DefaultButton = ({ onClick }: { onClick: () => void }) => (
       minHeight: '150  !important',
     })}
     Icon={() => <IconOutlineMenuBook />}
-    onClick={() => onClick}
+    onClick={onClick}
   />
 );
 

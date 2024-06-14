@@ -1,6 +1,5 @@
-import { hstack, vstack } from '@novu/novui/patterns';
 import { text } from '@novu/novui/recipes';
-import { styled } from '@novu/novui/jsx';
+import { HStack, styled, VStack } from '@novu/novui/jsx';
 import { Button, Tooltip } from '@novu/design-system';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
 import { useNavigate } from 'react-router-dom';
@@ -40,14 +39,14 @@ export const Footer = ({
         right: 0,
       })}
     >
-      <div className={vstack({ alignContent: 'center', height: '250' })}>
-        <div
-          className={hstack({
+      <VStack alignContent="center" className={css({ height: '250' })}>
+        <HStack
+          justify="space-between"
+          className={css({
             width: '880px',
-            justify: 'space-between',
           })}
         >
-          <div className={hstack({ gap: '100', color: 'typography.text.secondary' })}>
+          <HStack gap="100" className={css({ color: 'typography.text.secondary' })}>
             <When truthy={showLearnMore}>
               <DocsButton
                 TriggerButton={({ onClick: onDocsClick }) => (
@@ -66,21 +65,21 @@ export const Footer = ({
                 )}
               />
             </When>
-          </div>
-          <div className={hstack({ gap: '100' })}>
+          </HStack>
+          <HStack gap="100">
             <When truthy={canSkipSetup}>
               <Button onClick={() => navigate(ROUTES.WORKFLOWS)} variant="outline">
                 Skip setup
               </Button>
             </When>
-            <Tooltip label={tooltip} disabled={tooltip.length === 0}>
+            <Tooltip label={tooltip} disabled={!tooltip}>
               <Button loading={loading} onClick={onClick}>
                 {buttonText}
               </Button>
             </Tooltip>
-          </div>
-        </div>
-      </div>
+          </HStack>
+        </HStack>
+      </VStack>
     </div>
   );
 };
