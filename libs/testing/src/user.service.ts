@@ -1,15 +1,14 @@
 import { faker } from '@faker-js/faker';
-import { UserEntity, UserRepository, CommunityUserRepository } from '@novu/dal';
+import { UserEntity, CommunityUserRepository } from '@novu/dal';
 import * as bcrypt from 'bcrypt';
 
 import { EnvironmentService } from './environment.service';
 import { OrganizationService } from './organization.service';
-import { getRepository } from './repository.factory';
 
 export class UserService {
   private environmentService = new EnvironmentService();
   private organizationService = new OrganizationService();
-  private userRepository = new UserRepository(getRepository('EEUserRepository', CommunityUserRepository));
+  private userRepository = new CommunityUserRepository();
 
   async createCypressTestUser(): Promise<UserEntity> {
     const data = {

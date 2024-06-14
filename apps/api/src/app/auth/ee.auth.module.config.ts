@@ -8,6 +8,7 @@ import {
 import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ModuleMetadata, Provider } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import {
   EnvironmentRepository,
   MemberRepository,
@@ -47,14 +48,15 @@ const eeAuthServiceProvider = {
 
 const eeUserAuthGuard = {
   provide: 'USER_AUTH_GUARD',
-  useFactory: () => {
+  useFactory: (reflector: Reflector) => {
     const eeAuthPackage = require('@novu/ee-auth');
     if (!eeAuthPackage?.EEUserAuthGuard) {
       throw new PlatformException('EEUserAuthGuard is not loaded');
     }
 
-    return new eeAuthPackage.EEUserAuthGuard();
+    return new eeAuthPackage.EEUserAuthGuard(reflector);
   },
+  inject: [Reflector],
 };
 
 export function getEEModuleConfig(): ModuleMetadata {

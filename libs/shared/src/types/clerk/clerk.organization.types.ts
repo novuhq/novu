@@ -16,6 +16,8 @@ export type UpdateOrganizationParams = {
   maxAllowedMemberships?: number;
 } & OrganizationMetadataParams;
 
+export type UpdateMetadataParams = OrganizationMetadataParams;
+
 type OrganizationMetadataParams = {
   publicMetadata?: OrganizationPublicMetadata;
   privateMetadata?: OrganizationPrivateMetadata;

@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 import { SuperTest, Test } from 'supertest';
 import * as request from 'supertest';
 import * as defaults from 'superagent-defaults';
-import { v4 as uuid } from 'uuid';
+import * as jwt from 'jsonwebtoken';
 import {
   ApiServiceLevelEnum,
   EmailBlockTypeEnum,
@@ -24,7 +24,6 @@ import {
   ChangeEntity,
   SubscriberRepository,
   LayoutRepository,
-  IntegrationRepository,
 } from '@novu/dal';
 
 import { NotificationTemplateService } from './notification-template.service';
@@ -35,6 +34,18 @@ import { CreateTemplatePayload } from './create-notification-template.interface'
 import { IntegrationService } from './integration.service';
 import { UserService } from './user.service';
 import { JobsService } from './jobs.service';
+import { EEUserService } from './ee/ee.user.service';
+import { EEOrganizationService } from './ee/ee.organization.service';
+
+type UserSessionOptions = {
+  noOrganization?: boolean;
+  noEnvironment?: boolean;
+  showOnBoardingTour?: boolean;
+  ee?: {
+    userId: 'clerk_user_1' | 'clerk_user_2';
+    orgId: 'clerk_org_1';
+  };
+};
 
 const EMAIL_BLOCK: IEmailBlock[] = [
   {
@@ -49,7 +60,6 @@ export class UserSession {
   private notificationGroupRepository = new NotificationGroupRepository();
   private feedRepository = new FeedRepository();
   private layoutRepository = new LayoutRepository();
-  private integrationRepository = new IntegrationRepository();
   private changeRepository: ChangeRepository = new ChangeRepository();
   private environmentService: EnvironmentService = new EnvironmentService();
   private integrationService: IntegrationService = new IntegrationService();
@@ -83,13 +93,16 @@ export class UserSession {
     this.jobsService = new JobsService();
   }
 
-  async initialize(
-    options: {
-      noOrganization?: boolean;
-      noEnvironment?: boolean;
-      showOnBoardingTour?: boolean;
-    } = {}
-  ) {
+  async initialize(options?: UserSessionOptions) {
+    if (process.env.NOVU_ENTERPRISE === 'true') {
+      // ids of preseeded Clerk resources (MongoDB: clerk_users, clerk_organizations, clerk_organization_memberships)
+      await this.initializeEE(options);
+    } else {
+      await this.initializeCommunity(options);
+    }
+  }
+
+  private async initializeCommunity(options: UserSessionOptions = {}) {
     const card = {
       firstName: faker.name.firstName(),
       lastName: faker.name.lastName(),
@@ -110,16 +123,58 @@ export class UserSession {
     this.user = await userService.createUser(userEntity);
 
     if (!options.noOrganization) {
-      await this.addOrganization();
+      await this.addOrganizationCommunity();
     }
 
-    await this.fetchJWT();
+    await this.fetchJwtCommunity();
 
     if (!options.noOrganization && !options?.noEnvironment) {
       await this.createEnvironmentsAndFeeds();
     }
 
-    await this.fetchJWT();
+    await this.fetchJwtCommunity();
+
+    if (!options.noOrganization) {
+      if (!options?.noEnvironment) {
+        await this.updateOrganizationDetails();
+      }
+    }
+
+    if (!options.noOrganization && !options.noEnvironment) {
+      const { token, profile } = await this.initializeWidgetSession();
+      this.subscriberToken = token;
+      this.subscriberProfile = profile;
+    }
+  }
+
+  private async initializeEE(options: UserSessionOptions = { ee: { userId: 'clerk_user_1', orgId: 'clerk_org_1' } }) {
+    const userService = new EEUserService();
+
+    // user is already in org
+    const userId = options.ee?.userId || 'clerk_user_1';
+    const orgId = options.ee?.orgId || 'clerk_org_1';
+
+    // already existing user in Clerk
+    const user = await userService.getUser(userId);
+
+    if (!user._id) {
+      // not linked in clerk
+      this.user = await userService.createUser(userId);
+    } else {
+      this.user = user;
+    }
+
+    if (!options.noOrganization) {
+      await this.addOrganizationEE(orgId);
+    }
+
+    await this.fetchJwtEE();
+
+    if (!options.noOrganization && !options?.noEnvironment) {
+      await this.createEnvironmentsAndFeeds();
+    }
+
+    await this.fetchJwtEE();
 
     if (!options.noOrganization) {
       if (!options?.noEnvironment) {
@@ -162,6 +217,22 @@ export class UserSession {
   }
 
   async fetchJWT() {
+    if (process.env.NOVU_ENTERPRISE === 'true') {
+      await this.fetchJwtEE();
+    } else {
+      await this.fetchJwtCommunity();
+    }
+  }
+
+  async addOrganization() {
+    if (process.env.NOVU_ENTERPRISE === 'true') {
+      return await this.addOrganizationEE('clerk_org_1');
+    } else {
+      return await this.addOrganizationCommunity();
+    }
+  }
+
+  private async fetchJwtCommunity() {
     const response = await request(this.requestEndpoint).get(
       `/v1/auth/test/token/${this.user._id}?environmentId=${
         this.environment ? this.environment._id : ''
@@ -170,6 +241,31 @@ export class UserSession {
 
     this.token = `Bearer ${response.body.data}`;
     this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
+  }
+
+  private async fetchJwtEE() {
+    const decoded = await this.decodeClerkJWT(process.env.CLERK_LONG_LIVED_TOKEN as string);
+
+    const newToken = {
+      ...decoded,
+      environmentId: this.environment ? this.environment._id : '',
+      externalOrgId: this.organization ? this.organization._id : '',
+      externalId: this.user ? this.user._id : '',
+    };
+
+    const reencoded = jwt.sign(newToken, process.env.CLERK_PRIVATE_KEY as string, {
+      algorithm: 'RS256',
+    });
+
+    this.token = `Bearer ${reencoded}`;
+
+    this.testAgent = defaults(request(this.requestEndpoint)).set('Authorization', this.token);
+  }
+
+  private async decodeClerkJWT(token: string) {
+    const publicKey = process.env.CLERK_PEM_PUBLIC_KEY;
+
+    return jwt.verify(token, publicKey);
   }
 
   async createEnvironmentsAndFeeds(): Promise<void> {
@@ -260,11 +356,25 @@ export class UserSession {
     });
   }
 
-  async addOrganization() {
+  private async addOrganizationCommunity() {
     const organizationService = new OrganizationService();
 
     this.organization = await organizationService.createOrganization();
     await organizationService.addMember(this.organization._id, this.user._id);
+
+    return this.organization;
+  }
+
+  private async addOrganizationEE(orgId: string) {
+    const organizationService = new EEOrganizationService();
+
+    try {
+      // is not linked
+      this.organization = await organizationService.createOrganization(orgId);
+    } catch (e) {
+      // is already linked
+      this.organization = (await organizationService.getOrganization(orgId)) as OrganizationEntity;
+    }
 
     return this.organization;
   }
@@ -283,6 +393,7 @@ export class UserSession {
     }
   }
 
+  // TODO: create EE version
   async switchEnvironment(environmentId: string) {
     const environment = await this.environmentService.getEnvironment(environmentId);
 
@@ -290,7 +401,11 @@ export class UserSession {
       this.environment = environment;
       await this.testAgent.post(`/v1/auth/environments/${environmentId}/switch`);
 
-      await this.fetchJWT();
+      if (process.env.NOVU_ENTERPRISE === 'true') {
+        await this.fetchJwtEE();
+      } else {
+        await this.fetchJwtCommunity();
+      }
     }
   }
 

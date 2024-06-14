@@ -3,6 +3,7 @@ import {
   GetOrganizationMembershipListParams,
   Organization,
   UpdateOrganizationParams,
+  UpdateMetadataParams,
 } from './clerk.organization.types';
 import { UpdateUserParams, User, UserListParams } from './clerk.user.types';
 
@@ -19,6 +20,7 @@ export interface IOrganizationAPI {
     params: GetOrganizationMembershipListParams
   ): Promise<PaginatedResourceResponse<OrganizationMembership[]>>;
   updateOrganization(organizationId: string, params?: UpdateOrganizationParams): Promise<Organization>;
+  updateOrganizationMetadata(organizationId: string, params: UpdateMetadataParams): Promise<Organization>;
   deleteOrganization(organizationId: string): Promise<Organization>;
 }
 

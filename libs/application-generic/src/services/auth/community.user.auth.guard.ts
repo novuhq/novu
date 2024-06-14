@@ -64,7 +64,6 @@ export class CommunityUserAuthGuard extends AuthGuard([
     status?: any
   ): TUser {
     let handledUser: HandledUser;
-    console.log('Community', user);
     if (typeof user === 'object') {
       /**
        * This helps with sentry and other tools that need to know who the user is based on `id` property.

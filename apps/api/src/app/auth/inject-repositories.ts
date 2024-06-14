@@ -1,6 +1,14 @@
 import { CommunityUserRepository, CommunityMemberRepository, CommunityOrganizationRepository } from '@novu/dal';
 import { PlatformException } from '@novu/application-generic';
 
+function injectClerkClientMock() {
+  if (process.env.NODE_ENV === 'test') {
+    const clerkClientMock = require('@novu/ee-auth').ClerkClientMock;
+
+    return new clerkClientMock();
+  }
+}
+
 export function injectRepositories() {
   if (process.env.NOVU_ENTERPRISE !== 'true') {
     const userRepositoryProvider = {
@@ -29,7 +37,7 @@ export function injectRepositories() {
         throw new PlatformException('EEUserRepository is not loaded');
       }
 
-      return new eeAuthPackage.EEUserRepository(userRepository);
+      return new eeAuthPackage.EEUserRepository(userRepository, injectClerkClientMock());
     },
     inject: [CommunityUserRepository],
   };
@@ -42,7 +50,7 @@ export function injectRepositories() {
         throw new PlatformException('EEMemberRepository is not loaded');
       }
 
-      return new eeAuthPackage.EEMemberRepository(organizationRepository, userRepository);
+      return new eeAuthPackage.EEMemberRepository(organizationRepository, userRepository, injectClerkClientMock());
     },
     inject: [CommunityOrganizationRepository, CommunityUserRepository],
   };
@@ -55,7 +63,7 @@ export function injectRepositories() {
         throw new PlatformException('EEOrganizationRepository is not loaded');
       }
 
-      return new eeAuthPackage.EEOrganizationRepository(organizationRepository);
+      return new eeAuthPackage.EEOrganizationRepository(organizationRepository, injectClerkClientMock());
     },
     inject: [CommunityOrganizationRepository],
   };
