@@ -9,6 +9,6 @@ export class SyncExternalUser {
 
   @InstrumentUsecase()
   public async execute(command: SyncExternalUserCommand): Promise<UserEntity> {
-    return this.userRepository.create({}, { linkOnly: true, externalId: command.externalUserId });
+    return this.userRepository.create({}, { linkOnly: true, externalId: command.userId });
   }
 }

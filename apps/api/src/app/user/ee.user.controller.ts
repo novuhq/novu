@@ -3,7 +3,6 @@ import { IJwtPayload } from '@novu/shared';
 import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserAuthGuard, UserSession } from '@novu/application-generic';
 import { UserEntity } from '@novu/dal';
-import { SyncExternalUserDto } from './dtos/sync-user.dto';
 import { SyncExternalUserCommand } from './usecases/sync-external-user/sync-external-user.command';
 import { SyncExternalUser } from './usecases/sync-external-user/sync-external-user.usecase';
 
@@ -19,13 +18,12 @@ export class EEUserController {
   @ApiOperation({
     summary: 'Sync external Clerk user with internal db',
   })
-  async syncExternalUser(@UserSession() user: IJwtPayload, @Body() body: SyncExternalUserDto): Promise<UserEntity> {
-    Logger.verbose('Syncing external Clerk user', body.externalUserId);
+  async syncExternalUser(@UserSession() user: IJwtPayload): Promise<UserEntity> {
+    Logger.verbose('Syncing external Clerk user', user._id);
 
     return this.syncExternalUserUsecase.execute(
       SyncExternalUserCommand.create({
         userId: user._id,
-        externalUserId: body.externalUserId,
       })
     );
   }
