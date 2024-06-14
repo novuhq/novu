@@ -49,7 +49,7 @@ jobs:
     outputs:
       platforms: ${{ steps.set-platforms.outputs.platforms }}
     steps:
-      - id: set-matrix
+      - id: set-names
         run: |
           if [[ "${{ github.event.inputs.environment }}" == "Production" ]]; then
             echo "::set-output name=matrix::[\"${{ github.event.inputs.package_name }}-ee\", \"${{ github.event.inputs.package_name }}\"]"
