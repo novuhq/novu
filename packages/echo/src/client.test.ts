@@ -602,18 +602,22 @@ describe('Novu Client', () => {
       await step.email('send-email', stepExecuteFunc);
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
       getCodeClientInstance = new Client();
 
-      getCodeClientInstance.workflow('setup-workflow', workflowExecuteFunc);
+      const newWorkflow = await workflow('setup-workflow', workflowExecuteFunc);
+
+      getCodeClientInstance.addWorkflows([newWorkflow]);
     });
 
     it('should throw an error when workflow ID is not found', () => {
       expect(() => getCodeClientInstance.getCode('non-existent-workflow')).toThrow(WorkflowNotFoundError);
     });
 
-    it('should throw an error when step ID is provided but not found in the workflow', () => {
-      getCodeClientInstance.workflow('test-workflow', async () => {});
+    it('should throw an error when step ID is provided but not found in the workflow', async () => {
+      const newWorkflow = await workflow('test-workflow', workflowExecuteFunc);
+
+      getCodeClientInstance.addWorkflows([newWorkflow]);
 
       expect(() => getCodeClientInstance.getCode('test-workflow', 'non-existent-step')).toThrow(StepNotFoundError);
     });
