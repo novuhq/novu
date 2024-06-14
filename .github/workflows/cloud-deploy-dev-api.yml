@@ -5,9 +5,6 @@ name: Deploy DEV API
 on:
   workflow_call:
 
-env:
-  TF_WORKSPACE: novu-dev
-
 jobs:
 
   deploy_dev_api:
