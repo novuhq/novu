@@ -45,7 +45,7 @@ export const Footer = ({
         <HStack
           justify="space-between"
           className={css({
-            width: '880px',
+            width: 'onboarding',
           })}
         >
           <div>
@@ -75,7 +75,7 @@ export const Footer = ({
               </Button>
             </When>
             <Tooltip label={tooltip} disabled={!tooltip}>
-              <Button disabled={loading} onClick={onClick}>
+              <Button loading={loading} onClick={onClick}>
                 {buttonText}
               </Button>
             </Tooltip>

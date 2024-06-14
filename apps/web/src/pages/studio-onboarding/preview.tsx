@@ -106,7 +106,7 @@ export const StudioOnboardingPreview = () => {
         height: '100dvh',
       })}
     >
-      <Header active={1} />
+      <Header activeStepIndex={1} />
       <Flex
         justifyContent="center"
         className={css({
@@ -123,7 +123,7 @@ export const StudioOnboardingPreview = () => {
         >
           <div
             className={css({
-              width: '880px',
+              width: 'onboarding',
               zIndex: 1,
               paddingTop: '100',
             })}

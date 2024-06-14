@@ -11,6 +11,7 @@ export interface IButtonProps
     React.ButtonHTMLAttributes<HTMLButtonElement>,
     Pick<ButtonProps, 'size'> {
   Icon?: IconType;
+  loading?: boolean;
 }
 
 export const Button: FC<IButtonProps> = ({
@@ -19,6 +20,7 @@ export const Button: FC<IButtonProps> = ({
   size = 'md',
   className,
   variant = 'filled',
+  loading,
   ...buttonProps
 }) => {
   return (
@@ -32,6 +34,7 @@ export const Button: FC<IButtonProps> = ({
           ? (variant as ExternalButtonVariant)
           : undefined
       }
+      loading={loading}
       {...buttonProps}
     >
       {children}

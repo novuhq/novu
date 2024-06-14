@@ -48,18 +48,17 @@ export const StudioOnboardingSuccess = () => {
         height: '100dvh',
       })}
     >
-      <Header active={3} />
+      <Header activeStepIndex={3} />
       <VStack alignContent="center">
         <div
           className={css({
-            width: '880px',
+            width: 'onboarding',
           })}
         >
           <Title variant="section">Success, you sent an email to {email}</Title>
           <Text
+            variant="secondary"
             className={css({
-              color: 'typography.text.secondary',
-              lineHeight: '125',
               marginTop: '50',
               marginBottom: '150',
             })}

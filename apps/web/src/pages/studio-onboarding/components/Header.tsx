@@ -4,7 +4,7 @@ import { Stepper } from '@mantine/core';
 import { IconCheck } from '@novu/novui/icons';
 import { HStack, VStack } from '@novu/novui/jsx';
 
-export const Header = ({ active = 0 }: { active?: number }) => {
+export const Header = ({ activeStepIndex = 0 }: { activeStepIndex?: number }) => {
   return (
     <div
       className={css({
@@ -25,7 +25,7 @@ export const Header = ({ active = 0 }: { active?: number }) => {
       <VStack alignContent="center">
         <div
           className={css({
-            width: '880px',
+            width: 'onboarding',
           })}
         >
           <Stepper
@@ -67,7 +67,7 @@ export const Header = ({ active = 0 }: { active?: number }) => {
                 />
               );
             }}
-            active={active}
+            active={activeStepIndex}
           >
             <Stepper.Step label="Add the endpoint"></Stepper.Step>
             <Stepper.Step label="Create workflow"></Stepper.Step>

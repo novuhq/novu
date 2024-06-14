@@ -38,7 +38,13 @@ export default defineConfig({
    * theme-oriented that is unique to `web`, include it below
    */
   theme: {
-    extend: {},
+    extend: {
+      tokens: {
+        sizes: {
+          onboarding: { value: '880px' },
+        },
+      },
+    },
   },
 
   outExtension: 'js',
