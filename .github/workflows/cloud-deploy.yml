@@ -16,36 +16,32 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       environment: ${{ steps.setenv.outputs.envValue }}
-      name: ${{ steps.env_name.outputs.envName }}
+      name: ${{ steps.setenvname.outputs.envName }}
     steps:
       - uses: actions/checkout@v4
       - name: Set environment name
-        id: env_name
+        id: setenvname
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/next" ]]; then
-            echo "envName=Dev" >> $GITHUB_ENV;
-            echo "::set-output name=envName::Dev"
-          elif [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
             echo "envName=Prod" >> $GITHUB_ENV;
-            echo "::set-output name=envName::Prod"
+            echo "::set-output name=envName::Prod"          
           fi
+          echo "::set-output name=envName::Dev"
 
       - name: Check branch and set environment
         id: setenv
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/next" ]]; then
-            envValue="dev"
-          else
-            envValue="prod"
+          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+            envValue="prod"            
           fi
-          echo "environvalue=$envValue" >> $GITHUB_ENV
+          envValue="dev"
           echo "::set-output name=envValue::$envvalue"
 
       - name: Check output values
         run: |
-          echo "Environment Name: ${{ steps.env_name.outputs.envName }}"
+          echo "Environment Name: ${{ steps.setenvname.outputs.envName }}"
           echo "Environment Value: ${{ steps.setenv.outputs.envValue }}"
-          if [ -z "${{ steps.env_name.outputs.envName }}" ] || [ -z "${{ steps.setenv.outputs.envValue }}" ]; then
+          if [ -z "${{ steps.setenvname.outputs.envName }}" ] || [ -z "${{ steps.setenv.outputs.envValue }}" ]; then
             echo "One of the required output values has not been set. Failing..."
             exit 1
           else
