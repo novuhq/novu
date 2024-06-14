@@ -11,7 +11,7 @@ jobs:
   # This workflow contains a single job called "build"
   deploy_embed:
     if: ${{ contains(inputs.env, 'dev') }}
-    uses: ./.github/workflows/reusable-embed-deploy.yml
+    uses: ./.github/workflows/cloud-deploy-reusable-embed-deploy.yml
     with:
       environment: Development
       widget_url: https://dev.widget.novu.co
@@ -23,7 +23,7 @@ jobs:
 
   deploy_embed_eu:
     if: ${{ !contains(inputs.env, 'dev') }}
-    uses: ./.github/workflows/reusable-embed-deploy.yml
+    uses: ./.github/workflows/cloud-deploy-reusable-embed-deploy.yml
     with:
       environment: Production
       widget_url: https://eu.widget.novu.co
@@ -35,7 +35,7 @@ jobs:
 
   deploy_embed_us:
     if: ${{ !contains(inputs.env, 'dev') }}
-    uses: ./.github/workflows/reusable-embed-deploy.yml
+    uses: ./.github/workflows/cloud-deploy-reusable-embed-deploy.yml
     with:
       environment: Production
       widget_url: https://widget.novu.co

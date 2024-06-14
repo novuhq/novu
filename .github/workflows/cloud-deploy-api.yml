@@ -27,7 +27,7 @@ jobs:
 
   build_image:
     needs: set_environment
-    uses: ./.github/workflows/reusable-docker.yml
+    uses: ./.github/workflows/cloud-deploy-reusable-docker.yml
     with:
       environment: ${{ needs.set_environment.outputs.environment }}
       package_name: novu/api
@@ -41,7 +41,7 @@ jobs:
 
   deploy_dev_api:
     needs: build_image
-    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ contains(inputs.env, 'dev') }}
     secrets: inherit
     with:
@@ -53,7 +53,7 @@ jobs:
 
   deploy_prod_api_eu:
     needs: build_image
-    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit
     with:
@@ -64,7 +64,7 @@ jobs:
 
   deploy_prod_api_us:
     needs: build_image
-    uses: ./.github/workflows/reusable-app-service-deploy.yml
+    uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit
     with:

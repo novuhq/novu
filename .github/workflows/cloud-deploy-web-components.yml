@@ -10,7 +10,7 @@ on:
 
 jobs:
   build:
-    uses: ./.github/workflows/reusable-notification-center.yml
+    uses: ./.github/workflows/cloud-deploy-reusable-notification-center.yml
 
   deploy_web_component:
     needs: build

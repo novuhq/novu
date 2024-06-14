@@ -1,0 +1,39 @@
+name: Test and build @novu/notification-center
+
+on:
+  workflow_call:
+    inputs:
+      tests:
+        description: 'Determines if tests are need to be executed'
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  build_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-project
+
+      - uses: mansagroup/nrwl-nx-action@v3
+        name: build and test
+        if: ${{ inputs.tests}}
+        with:
+          targets: build,test
+          projects: '@novu/notification-center'
+          nxCloud: true
+
+      - uses: mansagroup/nrwl-nx-action@v3
+        name: build
+        if: ${{ !inputs.tests }}
+        with:
+          targets: build
+          projects: '@novu/notification-center'
+          nxCloud: true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: notification-center-web-component
+          path: packages/notification-center/dist/umd
