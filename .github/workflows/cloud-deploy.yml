@@ -16,6 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       environment: ${{ steps.setenv.outputs.envvalue }}
+      name: ${{ steps.env_name.outputs.env_Name }}
     steps:
       - uses: actions/checkout@v4
       - name: Set environment name
@@ -56,7 +57,7 @@ jobs:
       deployments: write
       id-token: write
     with:
-      env: ${{ needs.set-env.outputs.environment }}
+      env: ${{ needs.pre-release.outputs.environment }}
 
   release-embed:
     uses: ./.github/workflows/cloud-deploy-embed.yml
@@ -84,7 +85,7 @@ jobs:
     needs: [pre-release]
     secrets: inherit
     with:
-      env: ${{ needs.set-env.outputs.environment }}
+      env: ${{ needs.pre-release.outputs.environment }}
     permissions:
       contents: read
       packages: write
@@ -96,7 +97,7 @@ jobs:
     needs: [pre-release]
     secrets: inherit
     with:
-      env: ${{ needs.set-env.outputs.environment }}
+      env: ${{ needs.pre-release.outputs.environment }}
     permissions:
       contents: read
       packages: write
