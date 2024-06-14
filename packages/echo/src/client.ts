@@ -79,26 +79,23 @@ export class Client {
       strictAuthentication: true,
     };
 
-    // boolean flag risks getting parsed wrong in Object.entries, so this is to compensate
-    if (providedOptions && typeof providedOptions.strictAuthentication === 'boolean') {
-      builtConfiguration.strictAuthentication = providedOptions.strictAuthentication;
-    } else if (process.env.NOVU_STRICT_AUTHENTICATION === 'false') {
-      builtConfiguration.strictAuthentication = false;
+    if (providedOptions?.apiKey !== undefined) {
+      builtConfiguration.apiKey = providedOptions.apiKey;
+    } else if (process.env.NOVU_API_KEY !== undefined) {
+      builtConfiguration.apiKey = process.env.NOVU_API_KEY;
     }
 
-    Object.entries(builtConfiguration).reduce((_acc, [prop]) => {
-      if (prop === 'strictAuthentication') {
-        return '';
-      }
-      const envVar = `NOVU_${toConstantCase(prop)}`;
-      if (providedOptions && providedOptions[prop]) {
-        builtConfiguration[prop] = providedOptions[prop];
-      } else if (process.env[envVar]) {
-        builtConfiguration[prop] = process.env[envVar];
-      }
+    if (providedOptions?.apiUrl !== undefined) {
+      builtConfiguration.apiUrl = providedOptions.apiUrl;
+    } else if (process.env.NOVU_API_URL !== undefined) {
+      builtConfiguration.apiUrl = process.env.NOVU_API_URL;
+    }
 
-      return '';
-    }, '');
+    if (providedOptions?.strictAuthentication !== undefined) {
+      builtConfiguration.strictAuthentication = providedOptions.strictAuthentication;
+    } else if (process.env.NOVU_STRICT_AUTHENTICATION !== undefined) {
+      builtConfiguration.strictAuthentication = process.env.NOVU_STRICT_AUTHENTICATION === 'true';
+    }
 
     return builtConfiguration;
   }
