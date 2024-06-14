@@ -24,9 +24,9 @@ jobs:
         id: env_name
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/next" ]]; then
-            echo "::set-output name=env_Name::Dev";
+            echo "env_Name=Dev" >> $GITHUB_ENV;
           elif [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
-            echo "::set-output name=env_name::Prod";
+            echo "env_name=Prod" >> $GITHUB_ENV;
           fi
 
       - name: Check branch and set environment
@@ -37,7 +37,7 @@ jobs:
           else
             envvalue="prod"
           fi
-          echo "::set-output name=environvalue::$environvalue"    
+          echo "environvalue=$envvalue" >> $GITHUB_ENV  
       
 
       - name: Start Deployment Notification
