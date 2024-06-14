@@ -61,9 +61,10 @@ export const StudioOnboardingSuccess = () => {
             width: 'onboarding',
           })}
         >
-          <Title variant="section">Success, you sent an email to {email}</Title>
+          <Title variant="page">Success, you sent an email to {email}</Title>
           <Text
-            variant="secondary"
+            variant="main"
+            color="typography.text.secondary"
             className={css({
               marginTop: '50',
               marginBottom: '150',

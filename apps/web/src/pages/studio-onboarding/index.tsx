@@ -42,9 +42,10 @@ export const StudioOnboarding = () => {
             width: 'onboarding',
           })}
         >
-          <Title variant="section">Create an Novu endpoint</Title>
+          <Title variant="page">Create an Novu endpoint</Title>
           <Text
-            variant="secondary"
+            variant="main"
+            color="typography.text.secondary"
             className={css({
               marginBottom: '150',
               marginTop: '50',

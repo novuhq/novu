@@ -1,4 +1,3 @@
-import { css } from '@novu/novui/css';
 import { CodeSnippet } from '../../get-started/components/CodeSnippet';
 import { Timeline } from '../../get-started/components/timeline/Timeline';
 import { useMemo, useState } from 'react';
@@ -57,10 +56,12 @@ export const SetupTimeline = ({
           Description: () => (
             <>
               <When truthy={isLoading}>
-                <Text className={css({ color: 'typography.text.secondary', lineHeight: '150' })}>Processing...</Text>
+                <Text variant="main" color="typography.text.secondary">
+                  Processing...
+                </Text>
               </When>
               <When truthy={!isLoading}>
-                <Text className={css({ color: 'typography.text.secondary', lineHeight: '150' })}>
+                <Text variant="main" color="typography.text.secondary">
                   Enter endpoint URL
                 </Text>
                 <Input

@@ -12,7 +12,6 @@ import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { testTrigger } from '../../api/notification-templates';
 import { useMutation } from '@tanstack/react-query';
-import * as Sentry from '@sentry/react';
 import { IStepVariant } from '@novu/shared';
 import { api } from '../../api/index';
 import { ROUTES } from '../../constants/routes';
@@ -86,19 +85,15 @@ export const StudioOnboardingPreview = () => {
       email: currentUser?.email,
     };
 
-    try {
-      await triggerTestEvent({
-        name: identifier,
-        to,
-        payload: {
-          __source: 'onboarding-test-workflow',
-        },
-      });
+    await triggerTestEvent({
+      name: identifier,
+      to,
+      payload: {
+        __source: 'onboarding-test-workflow',
+      },
+    });
 
-      navigate(ROUTES.STUDIO_ONBOARDING_SUCCESS);
-    } catch (e: any) {
-      Sentry.captureException(e);
-    }
+    navigate(ROUTES.STUDIO_ONBOARDING_SUCCESS);
   };
 
   if (loading) {
@@ -198,7 +193,6 @@ export const StudioOnboardingPreview = () => {
       <Footer
         buttonText="Test workflow"
         onClick={() => {
-          segment.track('Test workflow clicked - [Onboarding - Signup]');
           onTrigger();
         }}
         loading={isLoading}
