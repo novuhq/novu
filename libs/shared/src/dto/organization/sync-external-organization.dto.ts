@@ -3,10 +3,6 @@ import { JobTitleEnum } from '../../types';
 import { ProductUseCases } from './create-organization.dto';
 
 export class SyncExternalOrganizationDto {
-  @IsDefined()
-  @IsString()
-  externalId: string;
-
   @IsOptional()
   @IsEnum(JobTitleEnum)
   jobTitle?: JobTitleEnum;

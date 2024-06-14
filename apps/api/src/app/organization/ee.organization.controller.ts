@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { IJwtPayload, MemberRoleEnum, SyncExternalOrganizationDto } from '@novu/shared';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -36,7 +36,6 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
 import { MemberResponseDto } from './dtos/member-response.dto';
-import { SyncExternalOrganizationDto } from './usecases/create-organization/sync-external-organization/sync-external-organization.dto';
 import { SyncExternalOrganizationCommand } from './usecases/create-organization/sync-external-organization/sync-external-organization.command';
 import { SyncExternalOrganization } from './usecases/create-organization/sync-external-organization/sync-external-organization.usecase';
 
@@ -55,6 +54,7 @@ export class EEOrganizationController {
     private renameOrganizationUsecase: RenameOrganization
   ) {}
 
+  //TODO this should not be public
   @Post('/')
   @ExternalApiAccessible()
   @ApiResponse(OrganizationResponseDto, 201)
@@ -65,11 +65,11 @@ export class EEOrganizationController {
     @UserSession() user: IJwtPayload,
     @Body() body: SyncExternalOrganizationDto
   ): Promise<OrganizationEntity> {
-    Logger.verbose('Syncing external Clerk organization', body.externalOrganizationId);
+    Logger.verbose('Syncing external Clerk organization', user.organizationId);
 
     return await this.syncExternalOrganizationUsecase.execute(
       SyncExternalOrganizationCommand.create({
-        externalOrganizationId: body.externalOrganizationId,
+        externalId: user.organizationId,
         userId: user._id,
         jobTitle: body.jobTitle,
         domain: body.domain,
