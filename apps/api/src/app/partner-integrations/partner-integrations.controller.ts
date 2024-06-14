@@ -1,19 +1,16 @@
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import {
-  Controller,
-  Post,
-  Param,
-  UseInterceptors,
-  UseGuards,
-  ClassSerializerInterceptor,
   Body,
+  ClassSerializerInterceptor,
+  Controller,
   Get,
+  Param,
+  Post,
   Put,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
-import { IJwtPayload } from '@novu/shared';
-
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
+import { UserSessionData } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CompleteAndUpdateVercelIntegrationRequestDto } from './dtos/complete-and-update-vercel-integration-request.dto';
 import { SetVercelConfigurationRequestDto } from './dtos/setup-vercel-integration-request.dto';
@@ -28,10 +25,11 @@ import { SetVercelConfigurationCommand } from './usecases/set-vercel-configurati
 import { SetVercelConfiguration } from './usecases/set-vercel-configuration/set-vercel-configuration.usecase';
 import { UpdateVercelConfigurationCommand } from './usecases/update-vercel-configuration/update-vercel-configuration.command';
 import { UpdateVercelConfiguration } from './usecases/update-vercel-configuration/update-vercel-configuration.usecase';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @Controller('/partner-integrations')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(UserAuthGuard)
+@UserAuthentication()
 @ApiTags('Partner Integrations')
 @ApiExcludeController()
 export class PartnerIntegrationsController {
@@ -45,7 +43,7 @@ export class PartnerIntegrationsController {
 
   @Post('/vercel')
   async setupVercelIntegration(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: SetVercelConfigurationRequestDto
   ): Promise<SetupVercelConfigurationResponseDto> {
     return await this.setVercelConfigurationUsecase.execute(
@@ -61,7 +59,7 @@ export class PartnerIntegrationsController {
 
   @Get('/vercel/projects/:configurationId')
   async getVercelProjects(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('configurationId') configurationId: string,
     @Query('nextPage') nextPage?: string
   ) {
@@ -78,7 +76,7 @@ export class PartnerIntegrationsController {
 
   @Post('/vercel/configuration/complete')
   async completeVercelIntegration(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: CompleteAndUpdateVercelIntegrationRequestDto
   ) {
     return await this.completeVercelIntegrationUsecase.execute(
@@ -94,7 +92,7 @@ export class PartnerIntegrationsController {
 
   @Get('vercel/configuration/:configurationId')
   async getVercelConfigurationDetails(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('configurationId') configurationId: string
   ) {
     return await this.getVercelConfigurationUsecase.execute(
@@ -109,7 +107,7 @@ export class PartnerIntegrationsController {
 
   @Put('/vercel/configuration/update')
   async updateVercelConfiguration(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: CompleteAndUpdateVercelIntegrationRequestDto
   ) {
     return await this.updateVercelConfigurationUsecase.execute(

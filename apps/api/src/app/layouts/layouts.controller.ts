@@ -6,24 +6,23 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Logger,
   Param,
   Patch,
   Post,
   Query,
-  UseGuards,
-  Logger,
 } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
-  ApiCommonResponses,
-  ApiResponse,
   ApiBadRequestResponse,
+  ApiCommonResponses,
   ApiConflictResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
+  ApiResponse,
 } from '../shared/framework/response.decorator';
-import { IJwtPayload } from '@novu/shared';
+import { OrderByEnum, OrderDirectionEnum, UserSessionData } from '@novu/shared';
 import { GetLayoutCommand, GetLayoutUseCase, OtelSpan } from '@novu/application-generic';
 
 import {
@@ -48,15 +47,15 @@ import {
   UpdateLayoutUseCase,
 } from './usecases';
 import { LayoutId } from './types';
-
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/layouts')
 @ApiTags('Layouts')
-@UseGuards(UserAuthGuard)
+@UserAuthentication()
 export class LayoutsController {
   constructor(
     private createLayoutUseCase: CreateLayoutUseCase,
@@ -72,8 +71,9 @@ export class LayoutsController {
   @ApiResponse(CreateLayoutResponseDto, 201)
   @ApiOperation({ summary: 'Layout creation', description: 'Create a layout' })
   @OtelSpan()
+  @SdkMethodName('create')
   async createLayout(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: CreateLayoutRequestDto
   ): Promise<CreateLayoutResponseDto> {
     Logger.verbose('Executing new layout command');
@@ -99,34 +99,9 @@ export class LayoutsController {
     };
   }
 
-  @Get('')
+  @Get()
   @ExternalApiAccessible()
-  @ApiQuery({
-    name: 'page',
-    type: Number,
-    description: 'Number of page for the pagination',
-    required: false,
-  })
-  @ApiQuery({
-    name: 'pageSize',
-    type: Number,
-    description: 'Size of page for the pagination',
-    required: false,
-  })
-  @ApiQuery({
-    name: 'sortBy',
-    type: String,
-    description: 'Sort field. Currently only supported `createdAt`',
-    required: false,
-  })
-  @ApiQuery({
-    name: 'orderBy',
-    type: Number,
-    description: 'Direction of the sorting query param. Either ascending (1) or descending (-1)',
-    required: false,
-  })
   @ApiOkResponse({
-    type: FilterLayoutsResponseDto,
     description: 'The list of layouts that match the criteria of the query params are successfully returned.',
   })
   @ApiBadRequestResponse({
@@ -135,10 +110,11 @@ export class LayoutsController {
   @ApiOperation({
     summary: 'Filter layouts',
     description:
-      'Returns a list of layouts that can be paginated using the `page` query parameter and filtered by the environment where it is executed from the organization the user belongs to.',
+      'Returns a list of layouts that can be paginated using the `page` query parameter and filtered by' +
+      ' the environment where it is executed from the organization the user belongs to.',
   })
-  async filterLayouts(
-    @UserSession() user: IJwtPayload,
+  async listLayouts(
+    @UserSession() user: UserSessionData,
     @Query() query?: FilterLayoutsRequestDto
   ): Promise<FilterLayoutsResponseDto> {
     return await this.filterLayoutsUseCase.execute(
@@ -148,9 +124,29 @@ export class LayoutsController {
         page: query?.page,
         pageSize: query?.pageSize,
         sortBy: query?.sortBy,
-        orderBy: query?.orderBy,
+        orderBy: this.resolveOrderBy(query),
       })
     );
+  }
+
+  private resolveOrderBy(query?: FilterLayoutsRequestDto): OrderDirectionEnum {
+    if (!query || !query.orderBy) {
+      return OrderDirectionEnum.DESC;
+    }
+    if (query?.orderBy === OrderByEnum.ASC) {
+      return OrderDirectionEnum.ASC;
+    }
+    if (query?.orderBy === OrderByEnum.DESC) {
+      return OrderDirectionEnum.DESC;
+    }
+    if (query?.orderBy === OrderDirectionEnum.DESC) {
+      return OrderDirectionEnum.DESC;
+    }
+    if (query?.orderBy === OrderDirectionEnum.ASC) {
+      return OrderDirectionEnum.ASC;
+    }
+
+    return query?.orderBy;
   }
 
   @Get('/:layoutId')
@@ -161,7 +157,7 @@ export class LayoutsController {
   })
   @ApiOperation({ summary: 'Get layout', description: 'Get a layout by its ID' })
   async getLayout(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('layoutId') layoutId: LayoutId
   ): Promise<GetLayoutResponseDto> {
     return await this.getLayoutUseCase.execute(
@@ -187,7 +183,7 @@ export class LayoutsController {
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete layout', description: 'Execute a soft delete of a layout given a certain ID.' })
-  async deleteLayout(@UserSession() user: IJwtPayload, @Param('layoutId') layoutId: LayoutId): Promise<void> {
+  async deleteLayout(@UserSession() user: UserSessionData, @Param('layoutId') layoutId: LayoutId): Promise<void> {
     return await this.deleteLayoutUseCase.execute(
       DeleteLayoutCommand.create({
         environmentId: user.environmentId,
@@ -217,7 +213,7 @@ export class LayoutsController {
     description: 'Update the name, content and variables of a layout. Also change it to be default or no.',
   })
   async updateLayout(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('layoutId') layoutId: LayoutId,
     @Body() body: UpdateLayoutRequestDto
   ): Promise<UpdateLayoutResponseDto> {
@@ -256,7 +252,8 @@ export class LayoutsController {
     description:
       'Sets the default layout for the environment and updates to non default to the existing default layout (if any).',
   })
-  async setDefaultLayout(@UserSession() user: IJwtPayload, @Param('layoutId') layoutId: LayoutId): Promise<void> {
+  @SdkMethodName('setAsDefault')
+  async setDefaultLayout(@UserSession() user: UserSessionData, @Param('layoutId') layoutId: LayoutId): Promise<void> {
     await this.setDefaultLayoutUseCase.execute(
       SetDefaultLayoutCommand.create({
         environmentId: user.environmentId,
