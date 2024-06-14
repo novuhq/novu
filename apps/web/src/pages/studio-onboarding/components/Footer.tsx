@@ -2,12 +2,13 @@ import { text } from '@novu/novui/recipes';
 import { HStack, styled, VStack } from '@novu/novui/jsx';
 import { Tooltip } from '@novu/design-system';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@novu/novui/css';
 import { When } from '../../../components/utils/When';
 import { DocsButton } from '../../../components/docs/DocsButton';
 import { ROUTES } from '../../../constants/routes';
 import { Button } from '@novu/novui';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 const Text = styled('a', text);
 
@@ -26,7 +27,9 @@ export const Footer = ({
   loading?: boolean;
   tooltip?: string;
 }) => {
+  const segment = useSegment();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
 
   return (
     <div
@@ -57,6 +60,9 @@ export const Footer = ({
                     <Text
                       onClick={(e) => {
                         e.preventDefault();
+                        segment.track('Documentation linked clicked - [Onboarding - Signup]', {
+                          step: pathname,
+                        });
                         onDocsClick();
                       }}
                       href=""
@@ -70,7 +76,15 @@ export const Footer = ({
           </div>
           <HStack gap="100">
             <When truthy={canSkipSetup}>
-              <Button onClick={() => navigate(ROUTES.WORKFLOWS)} variant="outline">
+              <Button
+                onClick={() => {
+                  segment.track('Skip setup button clicked - [Onboarding - Signup]', {
+                    step: pathname,
+                  });
+                  navigate(ROUTES.WORKFLOWS);
+                }}
+                variant="outline"
+              >
                 Skip setup
               </Button>
             </When>

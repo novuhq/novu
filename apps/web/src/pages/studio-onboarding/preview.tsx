@@ -17,13 +17,14 @@ import { IStepVariant } from '@novu/shared';
 import { api } from '../../api/index';
 import { ROUTES } from '../../constants/routes';
 import { Flex, VStack } from '@novu/novui/jsx';
+import { useSegment } from '../../components/providers/SegmentProvider';
 
 export const StudioOnboardingPreview = () => {
   const { currentUser } = useAuth();
   const [tab, setTab] = useState<string>('Preview');
   const [content, setContent] = useState<string>('');
   const [subject, setSubject] = useState<string>('');
-
+  const segment = useSegment();
   const navigate = useNavigate();
   const { integrations = [] } = useActiveIntegrations();
   const integration = useMemo(() => {
@@ -73,6 +74,11 @@ export const StudioOnboardingPreview = () => {
 
     mutateAsync();
   }, [identifier, mutateAsync, stepId]);
+
+  useEffect(() => {
+    segment.track('Create workflow step started - [Onboarding - Signup]');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const onTrigger = async () => {
     const to = {

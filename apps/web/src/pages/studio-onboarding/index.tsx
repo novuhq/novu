@@ -7,12 +7,19 @@ import { Title, Text } from '@novu/novui';
 import { VStack } from '@novu/novui/jsx';
 import { SetupTimeline } from './components/SetupTimeline';
 import { useSetupBridge } from './useSetupBridge';
+import { useSegment } from '../../components/providers/SegmentProvider';
 
 export const StudioOnboarding = () => {
   const { environment } = useEnvController();
   const [url, setUrl] = useState('http://localhost:9999/api/echo');
   const [error, setError] = useState<string>('');
   const { loading, setup } = useSetupBridge(url, setError);
+  const segment = useSegment();
+
+  useEffect(() => {
+    segment.track('Add endpoint step started - [Onboarding - Signup]');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!environment?.echo?.url) {
