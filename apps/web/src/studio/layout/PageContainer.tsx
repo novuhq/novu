@@ -1,17 +1,11 @@
-import { FC, PropsWithChildren, ReactNode } from 'react';
-import { css, cx } from '@novu/novui/css';
-import { PageHeader } from './PageHeader';
-import { PageMeta } from './PageMeta';
-import { Container } from '@novu/novui/jsx';
 import { CoreProps } from '@novu/novui';
+import { css, cx } from '@novu/novui/css';
+import { Container } from '@novu/novui/jsx';
+import { FC, PropsWithChildren } from 'react';
 
-export interface IPageContainerProps extends CoreProps {
-  // TODO: this should be LocalizedMessage, but PageContainer and PageHeader don't accept it
-  title: string;
-  header?: ReactNode;
-}
+export type IPageContainerProps = CoreProps;
 
-export const PageContainer: FC<PropsWithChildren<IPageContainerProps>> = ({ title, children, header, className }) => {
+export const PageContainer: FC<PropsWithChildren<IPageContainerProps>> = ({ children, className }) => {
   return (
     <Container
       className={cx(
@@ -27,18 +21,7 @@ export const PageContainer: FC<PropsWithChildren<IPageContainerProps>> = ({ titl
         className
       )}
     >
-      <PageMeta title={title} />
-      <PageHeader title={title} className={css({ mb: 'margins.layout.page.titleBottom' })} />
-      {!!header && (
-        <section
-          className={css({
-            mx: 'paddings.page.horizontal',
-          })}
-        >
-          {header}
-        </section>
-      )}
-      <section>{children}</section>
+      {children}
     </Container>
   );
 };

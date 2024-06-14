@@ -9,7 +9,7 @@ export default defineConfig({
   clean: true,
   treeshake: true,
   dts: true,
-  format: ['cjs', 'esm'],
+  format: ['cjs'],
   minify: true,
   minifyWhitespace: true,
   minifyIdentifiers: true,

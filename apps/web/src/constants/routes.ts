@@ -49,6 +49,7 @@ export enum ROUTES {
   /** Novu V2 routes */
   STUDIO = '/studio',
   STUDIO_FLOWS = '/studio/flows',
+  STUDIO_FLOWS_VIEW = '/studio/flows/:templateId',
   STUDIO_ONBOARDING = '/studio/onboarding',
   STUDIO_ONBOARDING_PREVIEW = '/studio/onboarding/preview',
   STUDIO_ONBOARDING_SUCCESS = '/studio/onboarding/success',

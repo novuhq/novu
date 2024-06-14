@@ -27,6 +27,7 @@ export const TranslationGroupsPage = () => {
   };
 
   const handleAddGroupButtonClick = () => {
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     if (!currentOrganization!.defaultLocale) {
       openDefaultLocale();
 
@@ -75,11 +76,14 @@ export const TranslationGroupsPage = () => {
           />
         </Container>
         <TranslationGroupsList
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           data={translationGroups!}
           onRowClick={onRowClick}
           isLoading={isLoading}
           page={page}
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           pageSize={pageSize!}
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           totalCount={totalCount!}
           handlePageChange={handlePageChange}
         />
