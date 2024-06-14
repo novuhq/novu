@@ -1,6 +1,6 @@
 /* eslint-disable max-len */
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 import os from 'node:os';
 import { ChangesPage } from './page-models/changesPage';
 import { NodeEmailEditorPageModal } from './page-models/nodeEmailEditorPageModal';
@@ -8,24 +8,17 @@ import { NodeInAppEditingModalPageModel } from './page-models/nodeInAppEditingMo
 import { SidebarPage } from './page-models/sidebarPage';
 import { WorkflowEditorPage } from './page-models/workflowEditorPage';
 import { WorkflowsPage } from './page-models/workflowsPage';
-import { initializeSession, waitForNetworkIdle } from './utils.ts/browser';
-import { ChannelType } from './utils.ts/ChannelType';
-import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
-import { SessionData } from './utils.ts/plugins';
+import { initializeSession, waitForNetworkIdle } from './utils/browser';
+import { ChannelType } from './utils/ChannelType';
+import { FeatureFlagsMock } from './utils/featureFlagsMock';
+import { SessionData } from './utils/plugins';
 
 const isMac = os.platform() === 'darwin';
 const modifier = isMac ? 'Meta' : 'Control';
 
-let featureFlagsMock: FeatureFlagsMock, session: SessionData;
+let session: SessionData;
 test.beforeEach(async ({ page }) => {
-  ({ featureFlagsMock, session } = await initializeSession(page));
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_BILLING_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
+  ({ session } = await initializeSession(page));
 });
 
 test('should not reset data when switching channel types', async ({ page }) => {

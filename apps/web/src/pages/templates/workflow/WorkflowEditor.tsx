@@ -5,7 +5,8 @@ import { Link, Outlet, useLocation, useNavigate, useParams } from 'react-router-
 import { Node, NodeProps } from 'react-flow-renderer';
 import { useDidUpdate, useTimeout } from '@mantine/hooks';
 import { FilterPartTypeEnum, StepTypeEnum } from '@novu/shared';
-import { useAuth, useSegment } from '@novu/shared-web';
+import { useAuth } from '../../../hooks';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 import { When } from '../../../components/utils/When';
 import type { IFlowEditorProps } from '../../../components/workflow';

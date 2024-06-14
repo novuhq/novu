@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EmailContentCard } from './EmailContentCard';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../../hooks/useAuth';
 import { When } from '../../../../components/utils/When';
 import { EmailPreview } from '../../../../components/workflow/preview';
 import { EditorPreviewSwitch } from '../EditorPreviewSwitch';
@@ -156,7 +156,8 @@ export function EmailMessagesCards() {
       <When truthy={view === ViewEnum.EDIT}>
         <Grid grow>
           <Grid.Col span={9}>
-            <EmailContentCard organization={currentOrganization} />
+            {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+            <EmailContentCard organization={currentOrganization!} />
           </Grid.Col>
           <Grid.Col
             span={3}

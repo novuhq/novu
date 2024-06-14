@@ -10,28 +10,15 @@ import {
   smsProviders,
 } from '@novu/shared';
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 
-import { initializeSession, isDarkTheme } from './utils.ts/browser';
-import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
-import {
-  checkTableLoading,
-  checkTableRow,
-  clickOnListRow,
-  interceptIntegrationsRequest,
-} from './utils.ts/integrations';
-import { deleteProvider, SessionData } from './utils.ts/plugins';
+import { initializeSession, isDarkTheme } from './utils/browser';
+import { checkTableLoading, checkTableRow, clickOnListRow, interceptIntegrationsRequest } from './utils/integrations';
+import { deleteProvider, SessionData } from './utils/plugins';
 
-let featureFlagsMock: FeatureFlagsMock, session: SessionData;
+let session: SessionData;
 test.beforeEach(async ({ page }) => {
-  ({ featureFlagsMock, session } = await initializeSession(page));
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_BILLING_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
+  ({ session } = await initializeSession(page));
 });
 
 test('should show the table loading skeleton and empty state', async ({ page }) => {

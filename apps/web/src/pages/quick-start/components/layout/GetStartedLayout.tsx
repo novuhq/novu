@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import PageContainer from '../../../../components/layout/components/PageContainer';
-import { ROUTES } from '../../../../constants/routes.enum';
+import { ROUTES } from '../../../../constants/routes';
 import { currentOnboardingStep } from '../route/store';
 import { BodyLayout } from './BodyLayout';
 import { FooterLayout } from './FooterLayout';

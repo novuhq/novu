@@ -5,13 +5,13 @@ import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Center } from '@mantine/core';
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import type { IResponseError } from '@novu/shared';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { api } from '../../../api/api.client';
 import { useAcceptInvite } from './useAcceptInvite';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { OAuth } from './OAuth';
 import { parseServerErrorMessage } from '../../../utils/errors';
 

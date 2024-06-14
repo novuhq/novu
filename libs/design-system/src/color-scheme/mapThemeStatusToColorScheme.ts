@@ -1,4 +1,4 @@
-import { ColorSchemePreferenceEnum } from '@novu/shared-web';
+import { ColorSchemePreferenceEnum } from '../hooks/useLocalThemePreference';
 import { ColorScheme } from './ColorScheme';
 
 const COLOR_SCHEME_PREFERENCE_TO_COLOR_SCHEME_MAP: Record<ColorSchemePreferenceEnum, ColorScheme | null> = {

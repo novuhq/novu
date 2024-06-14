@@ -1,18 +1,12 @@
-import { initializeSession } from './utils.ts/browser';
+import { initializeSession } from './utils/browser';
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 import { SidebarPage } from './page-models/sidebarPage';
 
 test.describe('Main Nav (Sidebar)', () => {
   test.describe('Information Architecture enabled', () => {
     test.beforeEach(async ({ page, context }) => {
-      const { featureFlagsMock } = await initializeSession(page, { noTemplates: false });
-      featureFlagsMock.setFlagsToMock({
-        IS_IMPROVED_ONBOARDING_ENABLED: false,
-        IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-        IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-        IS_TEMPLATE_STORE_ENABLED: false,
-      });
+      await initializeSession(page, { noTemplates: false });
     });
 
     test('should render all navigation links', async ({ page }) => {

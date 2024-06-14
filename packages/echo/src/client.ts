@@ -53,6 +53,7 @@ import {
 import { EMOJI, log } from './utils';
 import { VERSION } from './version';
 import { Skip } from './types/skip.types';
+import { Liquid } from 'liquidjs';
 
 JSONSchemaFaker.option({
   useDefaultValue: true,
@@ -62,7 +63,9 @@ JSONSchemaFaker.option({
 export class Echo {
   private discoveredWorkflows: Array<DiscoverWorkflowOutput> = [];
 
-  private backendUrl?: string;
+  private templateEngine = new Liquid();
+
+  private readonly backendUrl?: string;
 
   public apiKey?: string;
 
@@ -722,8 +725,9 @@ export class Echo {
     if (event.stepId === step.stepId) {
       const spinner = ora({ indent: 1 }).start(`Executing stepId: \`${step.stepId}\``);
       try {
-        const input = this.createStepInputs(step, event);
-        const result = await step.resolve(input);
+        const templateInputs = this.createStepInputs(step, event);
+        const inputs = await this.compileInputs(templateInputs, event);
+        const result = await step.resolve(inputs);
         this.validate(result, step.outputs.unknownSchema, 'step', 'output', event.workflowId, step.stepId);
 
         const providers = await this.executeProviders(event, step);
@@ -769,6 +773,17 @@ export class Echo {
         throw error;
       }
     }
+  }
+
+  private async compileInputs(templateInputs: Record<string, unknown>, event: IEvent) {
+    const templateString = this.templateEngine.parse(JSON.stringify(templateInputs));
+
+    const compiledString = await this.templateEngine.render(templateString, {
+      ...event.data,
+      subscriber: event.subscriber,
+    });
+
+    return JSON.parse(compiledString);
   }
 
   /**

@@ -11,7 +11,7 @@ import { ChangesTable } from './components/ChangesTableLayout';
 import { bulkPromoteChanges } from '../../api/changes';
 import { QueryKeys } from '../../api/query.keys';
 import { errorMessage, successMessage } from '../../utils/notifications';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 
 const PENDING = 'Pending';
 const HISTORY = 'History';

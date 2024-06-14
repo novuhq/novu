@@ -7,7 +7,7 @@ import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
 
-import { Flex, Grid, SegmentedControl, Stack, useMantineTheme } from '@mantine/core';
+import { Flex, Grid, Stack, useMantineTheme } from '@mantine/core';
 import { useState } from 'react';
 import { PushPreview } from '../../../components/workflow/preview';
 import { useEditTemplateContent } from '../hooks/useEditTemplateContent';
@@ -15,7 +15,6 @@ import { CustomCodeEditor } from './CustomCodeEditor';
 import { EditVariablesModal } from './EditVariablesModal';
 import { VariableManagementButton } from './VariableManagementButton';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
-import { InputVariables } from './InputVariables';
 import { InputVariablesForm } from './InputVariablesForm';
 
 const templateFields = ['content', 'title'];

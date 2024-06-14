@@ -2,7 +2,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Row } from 'react-table';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 
 import { IntegrationsList } from './IntegrationsList';
 import { ITableIntegration } from './types';

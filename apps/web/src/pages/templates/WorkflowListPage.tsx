@@ -27,7 +27,7 @@ import {
   INotificationTemplateExtended,
   useDebouncedSearch,
 } from '../../hooks';
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 import { parseUrl } from '../../utils/routeUtils';
 import { TemplatesListNoData } from './TemplatesListNoData';
 import { useSegment } from '../../components/providers/SegmentProvider';

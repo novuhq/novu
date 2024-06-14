@@ -24,10 +24,11 @@ jobs:
   # This workflow contains a single job called "build"
   e2e_web:
     strategy:
+      fail-fast: false
       matrix:
-        # run 5 copies of the current job in parallel
-        containers: [1, 2, 3, 4, 5]
-        total: [5]
+        # run 4 copies of the current job in parallel
+        containers: [1, 2, 3, 4]
+        total: [4]
 
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
@@ -39,27 +40,30 @@ jobs:
       deployments: write
       id-token: write
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      - id: setup
+      - id: determine_run_type
+        name: Determing community vs enterprise run
         run: |
           if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo "has_token=true" >> $GITHUB_OUTPUT
+            echo "enterprise_run=true" >> $GITHUB_OUTPUT
           else
-            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "enterprise_run=false" >> $GITHUB_OUTPUT
           fi
 
-      # checkout with submodules if token is provided
-      - uses: actions/checkout@v4
-        if: steps.setup.outputs.has_token == 'true'
+      - id: checkout-enterprise-code
+        name: Checkout enterprise code from the submodule
+        uses: actions/checkout@v4
+        if: steps.determine_run_type.outputs.enterprise_run == 'true'
         with:
-          submodules: ${{ inputs.ee }}
+          submodules: true
           token: ${{ secrets.SUBMODULES_TOKEN }}
-      # else checkout without submodules if the token is not provided
-      - uses: actions/checkout@v4
-        if: steps.setup.outputs.has_token != 'true'
+          
+      - id: checkout-community-code
+        name: Checkout community code
+        uses: actions/checkout@v4
+        if: steps.determine_run_type.outputs.enterprise_run != 'true'
+
       - uses: ./.github/actions/setup-project
-        id: setup-project
         with:
           submodules: true
 
@@ -77,33 +81,35 @@ jobs:
           cypress_github_oauth_client_id: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_ID }}
           cypress_github_oauth_client_secret: ${{ secrets.CYPRESS_GITHUB_OAUTH_CLIENT_SECRET }}
           launch_darkly_sdk_key: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
-          ci_ee_test: ${{ steps.setup.outputs.has_token }}
-
-      - name: Start Client
-        working-directory: apps/web
-        env:
-          REACT_APP_API_URL: http://127.0.0.1:1336
-          REACT_APP_WS_URL: http://127.0.0.1:1340
-          REACT_APP_WEBHOOK_URL: http://127.0.0.1:1341
-          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: some_fake_id
-        run: pnpm start:static:build &
+          ci_ee_test: ${{ steps.determine_run_type.outputs.enterprise_run }}
 
       - name: Start WS
         run: |
           cd apps/ws && pnpm start:test &
 
+      - name: Start Novu web app
+        working-directory: apps/web
+        env:
+          REACT_APP_API_URL: http://127.0.0.1:1336
+          REACT_APP_WS_URL: http://127.0.0.1:1340
+          REACT_APP_WEBHOOK_URL: http://127.0.0.1:1341
+          # Disable LaunchDarkly client-side SDK in the test environment to reduce E2E flakiness
+          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: ''
+          NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
+        run: pnpm start:static:build &
+
       - name: Wait on Services
         run: wait-on --timeout=180000 http://127.0.0.1:1340/v1/health-check http://127.0.0.1:4200/
 
-      - name: Playwright Install
+      - name: Install Playwright
         working-directory: apps/web
-        run: pnpm playwright:install
+        run: pnpm test:e2e:install
 
-      - name: Run Playwright tests
+      - name: Run E2E tests
         working-directory: apps/web
         env:
-          REACT_APP_LAUNCH_DARKLY_CLIENT_SIDE_ID: some_fake_id
-        run: pnpm playwright:test --shard=${{ matrix.containers }}/${{ matrix.total }}
+          NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
+        run: pnpm test:e2e --shard=${{ matrix.containers }}/${{ matrix.total }}
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

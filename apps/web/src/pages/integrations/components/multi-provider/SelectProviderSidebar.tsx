@@ -26,7 +26,7 @@ import { When } from '../../../../components/utils/When';
 import { CONTEXT_PATH } from '../../../../config';
 import { useProviders } from '../../useProviders';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../../../constants/routes.enum';
+import { ROUTES } from '../../../../constants/routes';
 
 const filterSearch = (list, search: string) =>
   list.filter((prov) => prov.displayName.toLowerCase().includes(search.toLowerCase()));

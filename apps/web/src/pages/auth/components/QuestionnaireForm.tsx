@@ -19,9 +19,9 @@ import {
 } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
 import { useDomainParser } from './useDomainHook';

@@ -7,7 +7,7 @@ import styled from '@emotion/styled';
 import { ChannelTypeEnum, MemberStatusEnum } from '@novu/shared';
 
 import { errorMessage, successMessage } from '../../../../utils/notifications';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../../hooks';
 import {
   Button,
   Text,

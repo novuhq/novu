@@ -4,9 +4,9 @@ import { IMemberEntity, MemberRoleEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 
 import { errorMessage, successMessage, Title, UserAccess } from '@novu/design-system';
-import { IS_DOCKER_HOSTED } from '@novu/shared-web';
+import { IS_DOCKER_HOSTED } from '../../../config';
 import { changeMemberRole, getOrganizationMembers, removeMember, resendInviteMember } from '../../../api/organization';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { ProductLead } from '../../../components/utils/ProductLead';
 import { MembersTable } from '../components/MembersTable';
 import { CopyInviteLink } from './CopyInviteLink';

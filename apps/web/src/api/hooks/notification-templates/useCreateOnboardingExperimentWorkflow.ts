@@ -4,11 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { v4 as uuid4 } from 'uuid';
 import { EmailProviderIdEnum, StepTypeEnum } from '@novu/shared';
 import type { IResponseError, ICreateNotificationTemplateDto, INotificationTemplate } from '@novu/shared';
-import { QueryKeys } from '@novu/shared-web';
+import { QueryKeys } from '../../../api/query.keys';
 
 import { createTemplate } from '../../notification-templates';
 import { parseUrl } from '../../../utils/routeUtils';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { errorMessage } from '../../../utils/notifications';
 import { useNotificationGroup, useTemplates, useIntegrations } from '../../../hooks';
 import { FIRST_100_WORKFLOWS } from '../../../constants/workflowConstants';

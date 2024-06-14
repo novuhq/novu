@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 
 import { useVercelParams } from './useVercelParams';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from './useAuth';
 import { errorMessage } from '../utils/notifications';
 import { vercelIntegrationSetup } from '../api/vercel-integration';
 

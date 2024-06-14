@@ -11,7 +11,7 @@ import {
   HINT_MIDDLE_OPACITY,
   HINT_VISIBLE_OPACITY,
 } from './consts';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { parseUrl } from '../../../utils/routeUtils';
 import { OnBoardingAnalyticsEnum } from '../../../pages/quick-start/consts';
 import { useSegment } from '../../providers/SegmentProvider';

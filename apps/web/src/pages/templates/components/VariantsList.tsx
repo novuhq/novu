@@ -3,7 +3,7 @@ import styled from '@emotion/styled';
 import { useFormContext } from 'react-hook-form';
 import { ScrollArea } from '@mantine/core';
 import { useParams } from 'react-router-dom';
-import { useEnvController } from '@novu/shared-web';
+import { useEnvController } from '../../../hooks';
 import { StepTypeEnum } from '@novu/shared';
 
 import { FloatingButton } from './FloatingButton';
