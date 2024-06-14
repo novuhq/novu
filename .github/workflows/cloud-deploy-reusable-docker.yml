@@ -51,14 +51,14 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          if [[ "${{ github.event.inputs.environment }}" == "your-condition-here" ]]; then
+          if [[ "${{ github.event.inputs.environment }}" == "Production" ]]; then
             echo "::set-output name=matrix::[\"${{ github.event.inputs.package_name }}-ee\", \"${{ github.event.inputs.package_name }}\"]"
           else
             echo "::set-output name=matrix::[\"${{ github.event.inputs.package_name }}\"]"
           fi
       - id: set-platforms
         run: |
-          if [[ "${{ github.event.inputs.environment }}" == "your-condition-here" ]]; then
+          if [[ "${{ github.event.inputs.environment }}" == "Production" ]]; then
             echo "::set-output name=platforms::linux/amd64,linux/arm64"
           else
             echo "::set-output name=platforms::linux/amd64"
