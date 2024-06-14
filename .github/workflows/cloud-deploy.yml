@@ -150,11 +150,11 @@ jobs:
   post-release:
     if: ${{ always() }}
     needs: [
-      release-dev-api,
-      release-dev-embed,
+      release-api,
+      release-embed,
       release-dev-inbound-mail,
-      release-dev-web,
-      release-dev-web-components,
+      release-web,
+      release-web-components,
       release-dev-webhook,
       release-dev-widget,
       release-dev-worker,
