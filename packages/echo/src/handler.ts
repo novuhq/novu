@@ -84,7 +84,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   }
 
   private getStaticHeaders(): Partial<Record<HttpHeaderKeysEnum, string>> {
-    const sdkVersion = `novu-echo:v${this.client.version}`;
+    const sdkVersion = `novu-framework:v${this.client.version}`;
 
     return {
       [HttpHeaderKeysEnum.CONTENT_TYPE]: 'application/json',

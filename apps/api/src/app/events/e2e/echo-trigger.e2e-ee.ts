@@ -36,7 +36,7 @@ describe('Echo Trigger ', async () => {
 
   it('should trigger the echo workflow', async () => {
     const workflowId = 'hello-world';
-    const newWorkflow = await workflow(
+    const newWorkflow = workflow(
       workflowId,
       async ({ step, payload }) => {
         await step.email(
@@ -95,7 +95,7 @@ describe('Echo Trigger ', async () => {
 
   it('should skip by static value', async () => {
     const workflowIdSkipByStatic = 'skip-by-static-value-workflow';
-    const newWorkflow = await workflow(
+    const newWorkflow = workflow(
       workflowIdSkipByStatic,
       async ({ step, payload }) => {
         await step.email(
@@ -164,7 +164,7 @@ describe('Echo Trigger ', async () => {
 
   it('should skip by variable default value', async () => {
     const workflowIdSkipByVariable = 'skip-by-variable-default-value';
-    const newWorkflow = await workflow(
+    const newWorkflow = workflow(
       workflowIdSkipByVariable,
       async ({ step, payload }) => {
         await step.email(
@@ -234,7 +234,7 @@ describe('Echo Trigger ', async () => {
 
   it('should have execution detail errors for invalid trigger payload', async () => {
     const workflowId = 'missing-payload-var';
-    const newWorkflow = await workflow(
+    const newWorkflow = workflow(
       workflowId,
       async ({ step, payload }) => {
         await step.email('send-email', async () => {
@@ -307,7 +307,7 @@ describe('Echo Trigger ', async () => {
 
   it('should use custom step', async () => {
     const workflowId = 'with-custom-step';
-    const newWorkflow = await workflow(workflowId, async ({ step }) => {
+    const newWorkflow = workflow(workflowId, async ({ step }) => {
       const resInApp = await step.inApp('send-in-app', async () => {
         return {
           body: `Hello There`,
@@ -378,7 +378,7 @@ describe('Echo Trigger ', async () => {
 
   it('should trigger the echo workflow with digest', async () => {
     const workflowId = 'digest-workflow';
-    const newWorkflow = await workflow(
+    const newWorkflow = workflow(
       workflowId,
       async ({ step }) => {
         const digestResponse = await step.digest(
@@ -455,7 +455,7 @@ describe('Echo Trigger ', async () => {
 
   it('should trigger the echo workflow with delay', async () => {
     const workflowId = 'delay-workflow';
-    const newWorkflow = await workflow(
+    const newWorkflow = workflow(
       workflowId,
       async ({ step }) => {
         const delayResponse = await step.delay(
@@ -541,7 +541,7 @@ describe('Echo Trigger ', async () => {
 
   it('should trigger the echo workflow with input variables', async () => {
     const workflowId = 'input-variables-workflow';
-    const newWorkflow = await workflow(
+    const newWorkflow = workflow(
       workflowId,
       async ({ step, payload }) => {
         await step.email(

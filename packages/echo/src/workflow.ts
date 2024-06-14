@@ -18,7 +18,7 @@ import { EMOJI, log } from './utils';
 /**
  * Define a new notification workflow.
  */
-export async function workflow<
+export function workflow<
   T_PayloadSchema extends Schema,
   T_InputSchema extends Schema,
   T_Payload = FromSchema<T_PayloadSchema>,
@@ -27,7 +27,7 @@ export async function workflow<
   workflowId: string,
   execute: Execute<T_Payload, T_Input>,
   workflowOptions?: WorkflowOptions<T_PayloadSchema, T_InputSchema>
-): Promise<DiscoverWorkflowOutput> {
+): DiscoverWorkflowOutput {
   const options = workflowOptions ? workflowOptions : {};
   const ajv = new Ajv({ useDefaults: true });
   addFormats(ajv);
@@ -48,7 +48,7 @@ export async function workflow<
     execute,
   };
 
-  await execute({
+  execute({
     payload: {} as T_Payload,
     subscriber: {},
     environment: {},

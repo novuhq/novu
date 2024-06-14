@@ -11,7 +11,7 @@ describe('Echo Health Check', async () => {
   let subscriberService: SubscribersService;
 
   before(async () => {
-    const healthCheckWorkflow = await workflow('health-check', async ({ step }) => {
+    const healthCheckWorkflow = workflow('health-check', async ({ step }) => {
       await step.email('send-email', async (inputs) => {
         return {
           subject: 'This is an email subject',
