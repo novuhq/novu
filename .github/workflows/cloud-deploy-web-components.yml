@@ -2,10 +2,11 @@ name: Deploy Notification Center Web Component
 
 on:
   workflow_call:
-    env:
-      description: 'Deployment environment - choose between dev and prod'
-      required: true
-      type: string
+    inputs:
+      env:
+        description: 'Deployment environment - choose between dev and prod'
+        required: true
+        type: string
 
 jobs:
   build:
