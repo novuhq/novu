@@ -20,7 +20,7 @@ export interface ITabsProps<TTabType extends string = string>
     Pick<ExternalTabsProps, 'keepMounted'> {
   value?: TTabType;
   defaultValue?: TTabType;
-  onTabChange: (tab: TTabType) => void;
+  onTabChange?: (tab: TTabType) => void;
   tabConfigs: ITabProps[];
 }
 
@@ -34,7 +34,7 @@ export const Tabs = forwardRef(
     return (
       <ExternalTabs
         ref={ref}
-        onChange={(newTab: string) => onTabChange(newTab as TTabType)}
+        onChange={(newTab: string) => onTabChange?.(newTab as TTabType)}
         orientation="horizontal"
         variant="default"
         classNames={styles}
