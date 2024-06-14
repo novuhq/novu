@@ -102,7 +102,8 @@ import { MarkMessageAsByMark } from '../widgets/usecases/mark-message-as-by-mark
 import { FeedResponseDto } from '../widgets/dtos/feeds-response.dto';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/method.name.decorator';
-import { SdkUsePagination } from '../shared/framework/swagger/pagination.decorator';
+
+import { SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()

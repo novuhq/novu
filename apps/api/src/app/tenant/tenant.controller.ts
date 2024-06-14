@@ -48,7 +48,8 @@ import {
 } from './dtos';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkUsePagination } from '../shared/framework/swagger/pagination.decorator';
+
+import { SdkUsePagination } from '../shared/framework/swagger/sdk.decorators';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
