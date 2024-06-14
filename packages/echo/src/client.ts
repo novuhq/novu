@@ -64,7 +64,7 @@ export class Client {
 
   private templateEngine = new Liquid();
 
-  private readonly backendUrl?: string;
+  private readonly apiUrl: string;
 
   public apiKey?: string;
 
@@ -77,7 +77,7 @@ export class Client {
   constructor(options?: ClientOptions) {
     const builtOpts = this.buildOptions(options);
     this.apiKey = builtOpts.apiKey;
-    this.backendUrl = builtOpts.backendUrl;
+    this.apiUrl = builtOpts.apiUrl;
     this.strictAuthentication = builtOpts.strictAuthentication;
 
     const ajv = new Ajv({ useDefaults: true });
@@ -86,13 +86,23 @@ export class Client {
   }
 
   private buildOptions(providedOptions?: ClientOptions) {
-    const builtConfiguration: { apiKey?: string; backendUrl: string; strictAuthentication: boolean } = {
+    const builtConfiguration: { apiKey?: string; apiUrl: string; strictAuthentication: boolean } = {
       apiKey: undefined,
-      backendUrl: DEFAULT_NOVU_API_BASE_URL,
-      strictAuthentication: process.env.NODE_ENV !== 'development',
+      apiUrl: DEFAULT_NOVU_API_BASE_URL,
+      strictAuthentication: true,
     };
 
+    // boolean flag risks getting parsed wrong in Object.entries, so this is to compensate
+    if (providedOptions && typeof providedOptions.strictAuthentication === 'boolean') {
+      builtConfiguration.strictAuthentication = providedOptions.strictAuthentication;
+    } else if (process.env.NOVU_STRICT_AUTHENTICATION === 'false') {
+      builtConfiguration.strictAuthentication = false;
+    }
+
     Object.entries(builtConfiguration).reduce((_acc, [prop]) => {
+      if (prop === 'strictAuthentication') {
+        return '';
+      }
       const envVar = `NOVU_${toConstantCase(prop)}`;
       if (providedOptions && providedOptions[prop]) {
         builtConfiguration[prop] = providedOptions[prop];
@@ -377,7 +387,7 @@ export class Client {
   public async diff(bridgeUrl: string, anonymous?: string): Promise<unknown> {
     const workflows = this.discover()?.workflows || [];
 
-    const workflowsResponse = await fetch(this.backendUrl + NovuApiEndpointsEnum.DIFF, {
+    const workflowsResponse = await fetch(this.apiUrl + NovuApiEndpointsEnum.DIFF, {
       method: HttpMethodEnum.POST,
       headers: this.getHeaders(anonymous),
       body: JSON.stringify({ workflows, bridgeUrl }),
@@ -389,7 +399,7 @@ export class Client {
   public async sync(bridgeUrl: string, anonymous?: string, source?: string): Promise<unknown> {
     const { workflows } = this.discover();
 
-    const workflowsResponse = await fetch(`${this.backendUrl}${NovuApiEndpointsEnum.SYNC}?source=${source || 'sdk'}`, {
+    const workflowsResponse = await fetch(`${this.apiUrl}${NovuApiEndpointsEnum.SYNC}?source=${source || 'sdk'}`, {
       method: HttpMethodEnum.POST,
       headers: this.getHeaders(anonymous),
       body: JSON.stringify({ workflows, bridgeUrl }),
