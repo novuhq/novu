@@ -15,37 +15,37 @@ jobs:
   pre-release:
     runs-on: ubuntu-latest
     outputs:
-      environment: ${{ steps.setenv.outputs.envvalue }}
-      name: ${{ steps.env_name.outputs.env_Name }}
+      environment: ${{ steps.setenv.outputs.envValue }}
+      name: ${{ steps.env_name.outputs.envName }}
     steps:
       - uses: actions/checkout@v4
       - name: Set environment name
         id: env_name
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/next" ]]; then
-            echo "env_Name=Dev" >> $GITHUB_ENV;
-            echo "::set-output name=env_Name::Dev"
+            echo "envName=Dev" >> $GITHUB_ENV;
+            echo "::set-output name=envName::Dev"
           elif [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
-            echo "env_name=Prod" >> $GITHUB_ENV;
-            echo "::set-output name=env_Name::Prod"
+            echo "envName=Prod" >> $GITHUB_ENV;
+            echo "::set-output name=envName::Prod"
           fi
 
       - name: Check branch and set environment
         id: setenv
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/next" ]]; then
-            envvalue="dev"
+            envValue="dev"
           else
-            envvalue="prod"
+            envValue="prod"
           fi
-          echo "environvalue=$envvalue" >> $GITHUB_ENV
-          echo "::set-output name=envvalue::$envvalue"
+          echo "environvalue=$envValue" >> $GITHUB_ENV
+          echo "::set-output name=envValue::$envvalue"
 
       - name: Check output values
         run: |
-          echo "Environment Name: ${{ steps.env_name.outputs.env_Name }}"
-          echo "Environment Value: ${{ steps.setenv.outputs.envvalue }}"
-          if [ -z "${{ steps.env_name.outputs.env_Name }}" ] || [ -z "${{ steps.setenv.outputs.envvalue }}" ]; then
+          echo "Environment Name: ${{ steps.env_name.outputs.envName }}"
+          echo "Environment Value: ${{ steps.setenv.outputs.envValue }}"
+          if [ -z "${{ steps.env_name.outputs.envName }}" ] || [ -z "${{ steps.setenv.outputs.envValue }}" ]; then
             echo "One of the required output values has not been set. Failing..."
             exit 1
           else
