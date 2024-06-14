@@ -16,6 +16,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   deploy_web_dev:
+    name: Deploy Web Dev
     uses: ./.github/workflows/cloud-deploy-reusable-web-deploy.yml
     if: ${{ contains(inputs.env, 'dev') }}
     with:
@@ -35,6 +36,7 @@ jobs:
     secrets: inherit
 
   deploy_web_eu:
+    name: Deploy Web EU
     uses: ./.github/workflows/cloud-deploy-reusable-web-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     with:
@@ -54,6 +56,7 @@ jobs:
     secrets: inherit
 
   deploy_web_us:
+    name: Deploy Web US
     uses: ./.github/workflows/cloud-deploy-reusable-web-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     with:

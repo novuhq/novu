@@ -22,7 +22,7 @@ jobs:
           if echo "${{ inputs.env }}" | grep -qwi 'prod'; then
             echo "::set-output name=environment::Production"
           else
-          echo "::set-output name=environment::Development"
+            echo "::set-output name=environment::Development"
           fi
 
   build_image:
