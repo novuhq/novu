@@ -46,11 +46,11 @@ export const Footer = ({
             width: '880px',
           })}
         >
-          <HStack gap="100" className={css({ color: 'typography.text.secondary' })}>
+          <div>
             <When truthy={showLearnMore}>
               <DocsButton
                 TriggerButton={({ onClick: onDocsClick }) => (
-                  <>
+                  <HStack gap="50" className={css({ color: 'typography.text.secondary' })}>
                     <IconOutlineMenuBook />
                     <Text
                       onClick={(e) => {
@@ -61,11 +61,11 @@ export const Footer = ({
                     >
                       Learn more in our docs
                     </Text>
-                  </>
+                  </HStack>
                 )}
               />
             </When>
-          </HStack>
+          </div>
           <HStack gap="100">
             <When truthy={canSkipSetup}>
               <Button onClick={() => navigate(ROUTES.WORKFLOWS)} variant="outline">
