@@ -16,12 +16,12 @@ export const frameworkName: SupportedFrameworkName = 'next';
  *
  * @example Next.js <=12 or the pages router can export the handler directly
  * ```ts
- * export default serve({ workflow: [yourWorkflow] });
+ * export default serve({ workflows: [yourWorkflow] });
  * ```
  *
  * @example Next.js >=13 with the `app` dir must export individual methods
  * ```ts
- * export const { GET, POST, PUT } = serve({ workflow: [yourWorkflow] });
+ * export const { GET, POST, PUT } = serve({ workflows: [yourWorkflow] });
  * ```
  */
 export const serve = (options: ServeHandlerOptions): any => {

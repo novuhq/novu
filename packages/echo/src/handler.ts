@@ -28,13 +28,13 @@ import { Awaitable, DiscoverWorkflowOutput } from './types';
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
   client?: Client;
-  workflow: Array<DiscoverWorkflowOutput>;
+  workflows: Array<DiscoverWorkflowOutput>;
 }
 
 interface INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
   frameworkName: string;
   client?: Client;
-  workflow: Array<DiscoverWorkflowOutput>;
+  workflows: Array<DiscoverWorkflowOutput>;
   handler: Handler<Input, Output>;
 }
 
@@ -67,7 +67,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
     this.client = options.client ? options.client : new Client();
-    this.client.addWorkflows(options.workflow);
+    this.client.addWorkflows(options.workflows);
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.strictAuthentication;
   }

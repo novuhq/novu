@@ -68,5 +68,5 @@ const commentWorkflow = await workflow(
   }
 );
 
-serve({ workflow: [commentWorkflow] });
+serve({ workflows: [commentWorkflow] });
 ```
