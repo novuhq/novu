@@ -9,6 +9,8 @@ import {
   IconSettings,
 } from '@novu/novui/icons';
 import { Flex, HStack, VStack } from '@novu/novui/jsx';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../constants/routes';
 import { PageContainer } from '../../layout/PageContainer';
 import { PageMeta } from '../../layout/PageMeta';
 import { StepNode } from './StepNode';
@@ -16,9 +18,14 @@ import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
 
 export const WorkflowsDetailPage = () => {
   const title = 'Workflow name';
+  const navigate = useNavigate();
 
   const handleSettingsClick = () => {};
   const handleTestClick = () => {};
+  const handleStepClick = () => {
+    // TODO: this is just a temporary step for connecting the prototype
+    navigate(ROUTES.STUDIO_FLOWS_STEP_EDITOR);
+  };
 
   return (
     <PageContainer className={css({ colorPalette: 'mode.local' })}>
@@ -49,8 +56,8 @@ export const WorkflowsDetailPage = () => {
       >
         <VStack gap="0">
           <StepNode icon={<IconOutlineBolt size="32" />} title={'Workflow trigger'} />
-          <StepNode icon={<IconOutlineNotifications size="32" />} title={'Workflow trigger'} />
-          <StepNode icon={<IconOutlineEmail size="32" />} title={'Workflow trigger'} />
+          <StepNode icon={<IconOutlineNotifications size="32" />} title={'In-app step'} onClick={handleStepClick} />
+          <StepNode icon={<IconOutlineEmail size="32" />} title={'Email step'} onClick={handleStepClick} />
         </VStack>
       </Flex>
       <WorkflowFloatingMenu

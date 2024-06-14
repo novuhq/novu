@@ -1,5 +1,5 @@
 import { Prism } from '@mantine/prism';
-import { IconOutlineCode, IconOutlineVisibility } from '@novu/design-system';
+import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
 import { Tabs } from '@novu/novui';
 import { FC, useMemo } from 'react';
 import { PreviewWeb } from '../../../components/workflow/preview/email/PreviewWeb';
@@ -21,7 +21,7 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
       defaultValue="preview"
       tabConfigs={[
         {
-          icon: <IconOutlineVisibility />,
+          icon: <IconVisibility />,
           value: 'preview',
           label: 'Preview',
           content: (

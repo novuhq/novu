@@ -8,7 +8,7 @@ import { WorkflowsTable } from './table';
 
 export const WorkflowsListPage = () => {
   return (
-    <PageTemplate title="Workflows" className={css({ colorPalette: 'mode.cloud' })}>
+    <PageTemplate title="Workflows">
       <Flex justify={'space-between'}>
         <Button onClick={() => alert('Add workflow!')} Icon={IconAddBox} size={'sm'} variant="transparent">
           Add workflow
