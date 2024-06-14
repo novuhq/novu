@@ -633,7 +633,11 @@
     "zwnj",
     "prepush",
     "xcodebuild",
-    "liquidjs"
+    "liquidjs",
+    "nimma",
+    "jpath",
+    "Nimma",
+    "jpath"
   ],
   "flagWords": [],
   "patterns": [

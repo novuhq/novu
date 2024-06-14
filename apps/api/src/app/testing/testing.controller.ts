@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpException, NotFoundException, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpException, NotFoundException, Post } from '@nestjs/common';
 import { DalService, UserEntity } from '@novu/dal';
 import { ProductFeatureKeyEnum, ResourceEnum } from '@novu/shared';
 
@@ -9,10 +9,10 @@ import { SeedDataCommand } from './usecases/seed-data/seed-data.command';
 import { CreateSession } from './usecases/create-session/create-session.usecase';
 import { CreateSessionCommand } from './usecases/create-session/create-session.command';
 import { ApiExcludeController } from '@nestjs/swagger';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ProductFeature } from '../shared/decorators/product-feature.decorator';
 import { ResourceCategory } from '@novu/application-generic';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @Controller('/testing')
 @ApiExcludeController()
@@ -55,7 +55,7 @@ export class TestingController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Post('/idempotency')
   async idempotency(@Body() body: IdempotencyBodyDto): Promise<{ number: number }> {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
@@ -79,7 +79,7 @@ export class TestingController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Get('/product-feature')
   @ProductFeature(ProductFeatureKeyEnum.TRANSLATIONS)
   async productFeatureGet(): Promise<{ number: number }> {
@@ -89,7 +89,7 @@ export class TestingController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Get('/resource-limiting-default')
   async resourceLimitingDefaultGet(): Promise<{ number: number }> {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
@@ -98,7 +98,7 @@ export class TestingController {
   }
 
   @ExternalApiAccessible()
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Get('/resource-limiting-events')
   @ResourceCategory(ResourceEnum.EVENTS)
   async resourceLimitingEventsGet(): Promise<{ number: number }> {

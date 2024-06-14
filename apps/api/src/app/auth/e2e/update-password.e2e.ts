@@ -1,4 +1,4 @@
-import { IJwtPayload } from '@novu/shared';
+import { UserSessionData } from '@novu/shared';
 import { TEST_USER_PASSWORD, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import * as jwt from 'jsonwebtoken';
@@ -30,7 +30,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
       password: NEW_PASSWORD,
     });
 
-    const jwtContent = (await jwt.decode(loginBody.data.token)) as IJwtPayload;
+    const jwtContent = (await jwt.decode(loginBody.data.token)) as UserSessionData;
 
     expect(jwtContent.firstName).to.equal(session.user.firstName);
     expect(jwtContent.lastName).to.equal(session.user.lastName);

@@ -1,18 +1,6 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { ApiRateLimitCategoryEnum, ExternalSubscriberId, IJwtPayload, TopicKey } from '@novu/shared';
+import { ApiRateLimitCategoryEnum, ExternalSubscriberId, TopicKey, UserSessionData } from '@novu/shared';
 
 import {
   AddSubscribersRequestDto,
@@ -36,32 +24,33 @@ import {
   FilterTopicsCommand,
   FilterTopicsUseCase,
   GetTopicCommand,
-  GetTopicUseCase,
   GetTopicSubscriberCommand,
   GetTopicSubscriberUseCase,
+  GetTopicUseCase,
   RemoveSubscribersCommand,
   RemoveSubscribersUseCase,
   RenameTopicCommand,
   RenameTopicUseCase,
 } from './use-cases';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import {
   ApiCommonResponses,
-  ApiResponse,
   ApiConflictResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
+  ApiResponse,
 } from '../shared/framework/response.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
 @Controller('/topics')
+@UserAuthentication()
 @ApiTags('Topics')
-@UseGuards(UserAuthGuard)
 export class TopicsController {
   constructor(
     private addSubscribersUseCase: AddSubscribersUseCase,
@@ -79,7 +68,7 @@ export class TopicsController {
   @ApiResponse(CreateTopicResponseDto, 201)
   @ApiOperation({ summary: 'Topic creation', description: 'Create a topic' })
   async createTopic(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: CreateTopicRequestDto
   ): Promise<CreateTopicResponseDto> {
     const topic = await this.createTopicUseCase.execute(
@@ -102,8 +91,10 @@ export class TopicsController {
   @ApiNoContentResponse()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Subscribers addition', description: 'Add subscribers to a topic by key' })
+  @SdkGroupName('Topics.Subscribers')
+  @SdkMethodName('assign')
   async addSubscribers(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: TopicKey,
     @Body() body: AddSubscribersRequestDto
   ): Promise<{
@@ -135,8 +126,9 @@ export class TopicsController {
   @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Check topic subscriber', description: 'Check if a subscriber belongs to a certain topic' })
+  @SdkGroupName('Topics.Subscribers')
   async getTopicSubscriber(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: TopicKey,
     @Param('externalSubscriberId') externalSubscriberId: ExternalSubscriberId
   ): Promise<TopicSubscriberDto> {
@@ -155,8 +147,9 @@ export class TopicsController {
   @ApiNoContentResponse()
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Subscribers removal', description: 'Remove subscribers from a topic' })
+  @SdkGroupName('Topics.Subscribers')
   async removeSubscribers(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: TopicKey,
     @Body() body: RemoveSubscribersRequestDto
   ): Promise<void> {
@@ -196,10 +189,11 @@ export class TopicsController {
   @ApiOperation({
     summary: 'Filter topics',
     description:
-      'Returns a list of topics that can be paginated using the `page` query parameter and filtered by the topic key with the `key` query parameter',
+      'Returns a list of topics that can be paginated using the `page` query ' +
+      'parameter and filtered by the topic key with the `key` query parameter',
   })
-  async filterTopics(
-    @UserSession() user: IJwtPayload,
+  async listTopics(
+    @UserSession() user: UserSessionData,
     @Query() query?: FilterTopicsRequestDto
   ): Promise<FilterTopicsResponseDto> {
     return await this.filterTopicsUseCase.execute(
@@ -227,7 +221,7 @@ export class TopicsController {
   })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete topic', description: 'Delete a topic by its topic key if it has no subscribers' })
-  async deleteTopic(@UserSession() user: IJwtPayload, @Param('topicKey') topicKey: TopicKey): Promise<void> {
+  async deleteTopic(@UserSession() user: UserSessionData, @Param('topicKey') topicKey: TopicKey): Promise<void> {
     return await this.deleteTopicUseCase.execute(
       DeleteTopicCommand.create({
         environmentId: user.environmentId,
@@ -242,7 +236,7 @@ export class TopicsController {
   @ApiResponse(GetTopicResponseDto)
   @ApiOperation({ summary: 'Get topic', description: 'Get a topic by its topic key' })
   async getTopic(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: TopicKey
   ): Promise<GetTopicResponseDto> {
     return await this.getTopicUseCase.execute(
@@ -258,8 +252,9 @@ export class TopicsController {
   @ExternalApiAccessible()
   @ApiResponse(RenameTopicResponseDto)
   @ApiOperation({ summary: 'Rename a topic', description: 'Rename a topic by providing a new name' })
+  @SdkMethodName('rename')
   async renameTopic(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('topicKey') topicKey: TopicKey,
     @Body() body: RenameTopicRequestDto
   ): Promise<RenameTopicResponseDto> {

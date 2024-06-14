@@ -7,8 +7,8 @@ import { AuthGuard, IAuthModuleOptions } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import {
   ApiAuthSchemeEnum,
-  IJwtPayload,
   PassportStrategyEnum,
+  UserSessionData,
 } from '@novu/shared';
 import { Instrument } from '../../instrumentation';
 import { Observable } from 'rxjs';
@@ -18,7 +18,7 @@ type SentryUser = {
   username: string;
   domain: string;
 };
-type HandledUser = (IJwtPayload & SentryUser) | false;
+type HandledUser = (UserSessionData & SentryUser) | false;
 
 const NONE_AUTH_SCHEME = 'None';
 
@@ -72,9 +72,9 @@ export class UserAuthGuard extends AuthGuard([
     }
   }
 
-  handleRequest<TUser = IJwtPayload>(
+  handleRequest<TUser = UserSessionData>(
     err: any,
-    user: IJwtPayload | false,
+    user: UserSessionData | false,
     info: any,
     context: ExecutionContext,
     status?: any
