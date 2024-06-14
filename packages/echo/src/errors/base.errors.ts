@@ -4,7 +4,7 @@ import { ErrorCodeEnum } from '../constants/error.constants';
 /**
  * Base error class.
  */
-export abstract class BaseError extends Error {
+export abstract class NovuError extends Error {
   /**
    * HTTP status code.
    */
@@ -21,26 +21,26 @@ export abstract class BaseError extends Error {
   public abstract readonly code: ErrorCodeEnum;
 }
 
-export abstract class NotFoundError extends BaseError {
+export abstract class NotFoundError extends NovuError {
   statusCode = HttpStatusEnum.NOT_FOUND;
 }
 
-export abstract class BadRequestError extends BaseError {
+export abstract class BadRequestError extends NovuError {
   statusCode = HttpStatusEnum.BAD_REQUEST;
 }
 
-export abstract class UnauthorizedError extends BaseError {
+export abstract class UnauthorizedError extends NovuError {
   statusCode = HttpStatusEnum.UNAUTHORIZED;
 }
 
-export abstract class InternalServerError extends BaseError {
+export abstract class InternalServerError extends NovuError {
   statusCode = HttpStatusEnum.INTERNAL_SERVER_ERROR;
 }
 
-export abstract class ConflictError extends BaseError {
+export abstract class ConflictError extends NovuError {
   statusCode = HttpStatusEnum.CONFLICT;
 }
 
-export abstract class ForbiddenError extends BaseError {
+export abstract class ForbiddenError extends NovuError {
   statusCode = HttpStatusEnum.FORBIDDEN;
 }

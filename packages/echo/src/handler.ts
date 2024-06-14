@@ -12,7 +12,7 @@ import {
   SIGNATURE_TIMESTAMP_TOLERANCE,
 } from './constants';
 import {
-  BaseError,
+  NovuError,
   InvalidActionError,
   MethodNotAllowedError,
   MissingApiKeyError,
@@ -113,7 +113,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     };
   }
 
-  private createError<TBody extends string = string>(error: BaseError): IActionResponse<TBody> {
+  private createError<TBody extends string = string>(error: NovuError): IActionResponse<TBody> {
     return {
       status: error.statusCode,
       body: JSON.stringify({
@@ -266,8 +266,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private isClientError(error: unknown): error is BaseError {
-    return Object.values(ErrorCodeEnum).includes((error as BaseError).code);
+  private isClientError(error: unknown): error is NovuError {
+    return Object.values(ErrorCodeEnum).includes((error as NovuError).code);
   }
 
   private handleError(error: unknown): IActionResponse {

@@ -1,8 +1,8 @@
 import { ErrorCodeEnum, HttpMethodEnum, HttpStatusEnum } from '../constants';
 import { enumToPrettyString } from '../utils';
-import { BadRequestError, BaseError } from './base.errors';
+import { BadRequestError, NovuError } from './base.errors';
 
-export class MethodNotAllowedError extends BaseError {
+export class MethodNotAllowedError extends NovuError {
   code = ErrorCodeEnum.METHOD_NOT_ALLOWED_ERROR;
 
   statusCode = HttpStatusEnum.METHOD_NOT_ALLOWED;
