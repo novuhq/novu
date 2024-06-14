@@ -3,11 +3,10 @@ import { Tabs } from '@novu/design-system';
 import { IconCode, IconVisibility } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
 import { vstack } from '@novu/novui/patterns';
-import { api, ROUTES, useAuth } from '@novu/shared-web';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PreviewWeb } from '../../components/workflow/preview/email/PreviewWeb';
-import { useActiveIntegrations } from '../../hooks/index';
+import { useActiveIntegrations, useAuth } from '../../hooks/index';
 import { useTemplates } from '../../hooks/useTemplates';
 import { Background } from './components/Background';
 import { Footer } from './components/Footer';
@@ -16,6 +15,8 @@ import { testTrigger } from '../../api/notification-templates';
 import { useMutation } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import { IStepVariant } from '@novu/shared';
+import { api } from '../../api/index';
+import { ROUTES } from '../../constants/routes';
 
 export const StudioOnboardingPreview = () => {
   const { currentUser } = useAuth();
@@ -75,8 +76,8 @@ export const StudioOnboardingPreview = () => {
 
   const onTrigger = async () => {
     const to = {
-      subscriberId: currentUser._id,
-      email: currentUser.email,
+      subscriberId: currentUser?._id,
+      email: currentUser?.email,
     };
 
     try {
@@ -182,7 +183,7 @@ export const StudioOnboardingPreview = () => {
           onTrigger();
         }}
         loading={isLoading}
-        tooltip={`We'll send you a notification to ${currentUser.email}`}
+        tooltip={`We'll send you a notification to ${currentUser?.email}`}
       />
     </div>
   );

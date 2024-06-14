@@ -2,12 +2,12 @@ import { css } from '@novu/novui/css';
 import { styled } from '@novu/novui/jsx';
 import { vstack } from '@novu/novui/patterns';
 import { text, title } from '@novu/novui/recipes';
-import { ROUTES } from '@novu/shared-web';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getActivityList } from '../../api/activity';
 import { ExecutionDetailsAccordion } from '../../components/execution-detail/ExecutionDetailsAccordion';
+import { ROUTES } from '../../constants/routes';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 

@@ -3,11 +3,11 @@ import { text } from '@novu/novui/recipes';
 import { styled } from '@novu/novui/jsx';
 import { Button, Tooltip } from '@novu/design-system';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
-import { ROUTES } from '@novu/shared-web';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@novu/novui/css';
 import { When } from '../../../components/utils/When';
 import { DocsButton } from '../../../components/docs/DocsButton';
+import { ROUTES } from '../../../constants/routes';
 
 const Text = styled('a', text);
 

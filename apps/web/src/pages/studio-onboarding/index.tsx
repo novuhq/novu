@@ -9,10 +9,13 @@ import { Timeline } from '../get-started/components/timeline/Timeline';
 import { useEffect, useMemo, useState } from 'react';
 import { Input } from '@novu/design-system';
 import { IconCheck } from '@novu/novui/icons';
-import { api, getApiKeys, ROUTES, useEnvController } from '@novu/shared-web';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { When } from '../../components/utils/When';
+import { useEnvController } from '../../hooks/useEnvController';
+import { getApiKeys } from '../../api/environment';
+import { ROUTES } from '../../constants/routes';
+import { api } from '../../api/index';
 
 const Heading = styled('h1', title);
 const Text = styled('p', text);
