@@ -1,6 +1,6 @@
 import { Prism } from '@mantine/prism';
-import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
 import { Tabs } from '@novu/novui';
+import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
 import { FC, useMemo } from 'react';
 import { PreviewWeb } from '../../../components/workflow/preview/email/PreviewWeb';
 import { useActiveIntegrations } from '../../../hooks/index';
@@ -32,11 +32,6 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
               onLocaleChange={() => {}}
               locales={[]}
               loading={false}
-              /*
-               * className={css({
-               *   height: '[calc(50vh - 28px) !important]',
-               * })}
-               */
             />
           ),
         },

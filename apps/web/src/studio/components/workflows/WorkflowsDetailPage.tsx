@@ -1,4 +1,4 @@
-import { Button, IconButton, Title } from '@novu/novui';
+import { Button, IconButton } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import {
   IconCable,
@@ -8,11 +8,10 @@ import {
   IconPlayArrow,
   IconSettings,
 } from '@novu/novui/icons';
-import { Flex, HStack, VStack } from '@novu/novui/jsx';
+import { Flex, VStack } from '@novu/novui/jsx';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../constants/routes';
-import { PageContainer } from '../../layout/PageContainer';
-import { PageMeta } from '../../layout/PageMeta';
+import { WorkflowsPageTemplate } from './layout/WorkflowsPageTemplate';
 import { StepNode } from './StepNode';
 import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
 
@@ -28,20 +27,18 @@ export const WorkflowsDetailPage = () => {
   };
 
   return (
-    <PageContainer className={css({ colorPalette: 'mode.local' })}>
-      <PageMeta title={title} />
-      <Flex justify={'space-between'} mb="100">
-        <HStack gap="50">
-          <IconCable size="32" />
-          <Title variant="section">{title}</Title>
-        </HStack>
-        <HStack gap="100">
+    <WorkflowsPageTemplate
+      icon={<IconCable size="32" />}
+      title={title}
+      actions={
+        <>
           <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
             Test workflow
           </Button>
           <IconButton Icon={IconSettings} onClick={handleSettingsClick} />
-        </HStack>
-      </Flex>
+        </>
+      }
+    >
       <Flex
         // TODO fix this
         h="[95%]"
@@ -69,6 +66,6 @@ export const WorkflowsDetailPage = () => {
           right: '50',
         })}
       />
-    </PageContainer>
+    </WorkflowsPageTemplate>
   );
 };

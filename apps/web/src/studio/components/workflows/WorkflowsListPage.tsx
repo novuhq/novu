@@ -1,8 +1,7 @@
-import { Button } from '@novu/novui';
 import { SearchInput } from '@novu/design-system';
+import { Button } from '@novu/novui';
 import { IconAddBox } from '@novu/novui/icons';
 import { Flex } from '@novu/novui/jsx';
-import { css } from '@novu/novui/css';
 import { PageTemplate } from '../../layout';
 import { WorkflowsTable } from './table';
 

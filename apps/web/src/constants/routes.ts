@@ -52,6 +52,7 @@ export enum ROUTES {
   STUDIO_FLOWS = '/studio/flows',
   STUDIO_FLOWS_VIEW = '/studio/flows/:templateId',
   STUDIO_FLOWS_STEP_EDITOR = '/studio/flows/:templateId/step/:stepId',
+  STUDIO_FLOWS_TEST_STEP = '/studio/flows/:templateId/step/:stepId/test',
 }
 
 export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth', '/partner-integrations']);

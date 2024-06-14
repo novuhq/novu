@@ -1,10 +1,10 @@
-import { FC, forwardRef, ReactNode } from 'react';
-import { CoreProps, LocalizedMessage } from 'src/types';
-import { JsxStyleProps } from '../../../styled-system/types';
-import { tabs } from '../../../styled-system/recipes';
-import { splitCssProps } from '../../../styled-system/jsx';
 import { Tabs as ExternalTabs, type TabsProps as ExternalTabsProps } from '@mantine/core';
+import { forwardRef, ReactNode } from 'react';
+import { CoreProps, LocalizedMessage } from 'src/types';
 import { css, cx } from '../../../styled-system/css';
+import { splitCssProps } from '../../../styled-system/jsx';
+import { tabs } from '../../../styled-system/recipes';
+import { JsxStyleProps } from '../../../styled-system/types';
 import { PolymorphicRef } from '../../types/props-helpers';
 
 interface ITabProps<TTabType extends string = string> {
