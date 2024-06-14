@@ -20,13 +20,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set environment name
-
         id: env_name
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/next" ]]; then
             echo "env_Name=Dev" >> $GITHUB_ENV;
+            echo "::set-output name=env_Name::Dev"
           elif [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
             echo "env_name=Prod" >> $GITHUB_ENV;
+            echo "::set-output name=env_Name::Prod"
           fi
 
       - name: Check branch and set environment
@@ -37,7 +38,8 @@ jobs:
           else
             envvalue="prod"
           fi
-          echo "environvalue=$envvalue" >> $GITHUB_ENV  
+          echo "environvalue=$envvalue" >> $GITHUB_ENV
+          echo "::set-output name=envvalue::$envvalue"
 
       - name: Check output values
         run: |
