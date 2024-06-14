@@ -98,14 +98,14 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
   private createResponse<TBody extends string = string>(
     status: number,
     body: any,
-    headers: Record<string, string> = {}
+    responseHeaders: Record<string, string> = {}
   ): IActionResponse<TBody> {
     return {
       status,
       body: JSON.stringify(body) as TBody,
       headers: {
         ...this.getStaticHeaders(),
-        ...headers,
+        ...responseHeaders,
       },
     };
   }
@@ -129,6 +129,8 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
     const workflowId = url.searchParams.get(HttpQueryKeysEnum.WORKFLOW_ID) || '';
     const stepId = url.searchParams.get(HttpQueryKeysEnum.STEP_ID) || '';
     const signatureHeader = (await actions.headers(HttpHeaderKeysEnum.SIGNATURE)) || '';
+    const originHeader = (await actions.headers(HttpHeaderKeysEnum.ORIGIN)) || '';
+
     const anonymousHeader = (await actions.headers(HttpHeaderKeysEnum.ANONYMOUS)) || '';
     const source = url.searchParams.get(HttpQueryKeysEnum.SOURCE) || '';
 
@@ -146,7 +148,10 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
         this.validateHmac(body, signatureHeader);
       }
 
-      const postActionMap = this.getPostActionMap(body, workflowId, stepId, action, anonymousHeader, source);
+      const postActionMap = this.getPostActionMap(body, workflowId, stepId, action, source, {
+        originHeader,
+        anonymousHeader,
+      });
       const getActionMap = this.getGetActionMap(workflowId, stepId);
 
       if (method === HttpMethodEnum.POST) {
@@ -168,9 +173,23 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
     workflowId: string,
     stepId: string,
     action: string,
-    anonymousHeader: string,
-    source: string
+    source: string,
+    headers: { originHeader: string; anonymousHeader: string }
   ): Record<PostActionEnum, () => Promise<IActionResponse>> {
+    const { originHeader, anonymousHeader } = headers;
+    const isProduction = process.env.NODE_ENV === 'production';
+    const isValidOrigin =
+      originHeader.includes('https://web.novu.co') ||
+      originHeader.includes('https://eu.web.novu.co') ||
+      originHeader.includes('https://dev.web.novu.co');
+
+    /**
+     * We want to enforce cors only for production and only for valid origins coming from our web interface.
+     */
+    const corsOriginHeader = {
+      [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_ORIGIN]: isProduction && isValidOrigin ? originHeader : '*',
+    };
+
     return {
       [PostActionEnum.EXECUTE]: async () => {
         const result = await this.client.executeWorkflow({
@@ -182,6 +201,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
 
         return this.createResponse(HttpStatusEnum.OK, result, {
           [HttpHeaderKeysEnum.EXECUTION_DURATION]: result.metadata.duration.toString(),
+          ...corsOriginHeader,
         });
       },
       [PostActionEnum.PREVIEW]: async () => {
@@ -194,6 +214,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
 
         return this.createResponse(HttpStatusEnum.OK, result, {
           [HttpHeaderKeysEnum.EXECUTION_DURATION]: result.metadata.duration.toString(),
+          ...corsOriginHeader,
         });
       },
       [PostActionEnum.SYNC]: async () => {
@@ -203,7 +224,9 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
 
         const result = await this.client.sync(body.echoUrl, anonymousHeader, source);
 
-        return this.createResponse(HttpStatusEnum.OK, result);
+        return this.createResponse(HttpStatusEnum.OK, result, {
+          ...corsOriginHeader,
+        });
       },
       [PostActionEnum.DIFF]: async () => {
         if (!this.client.apiKey) {
@@ -212,7 +235,9 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
 
         const result = await this.client.diff(body.echoUrl, anonymousHeader);
 
-        return this.createResponse(HttpStatusEnum.OK, result);
+        return this.createResponse(HttpStatusEnum.OK, result, {
+          ...corsOriginHeader,
+        });
       },
     };
   }
