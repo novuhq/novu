@@ -16,7 +16,7 @@ pnpm dev
 bun dev
 ```
 
-By default, the [Next.js](https://nextjs.org/) server will start in parallel with [localtunnel](https://github.com/localtunnel/localtunnel) and your workflow definition can be synced with Novu Cloud via the provided endpoint. Your server will by default run on [http://localhost:4000](http://localhost:4000).
+By default, the [Next.js](https://nextjs.org/) server will start in parallel with [localtunnel](https://github.com/localtunnel/localtunnel) and your workflow definition can be synchronized with Novu Cloud via the provided endpoint. Your server will by default run on [http://localhost:4000](http://localhost:4000).
 
 ## Your local tunnel
 
