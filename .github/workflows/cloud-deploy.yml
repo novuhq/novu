@@ -1,4 +1,4 @@
-name: Release Dev
+name: Release App
 on:
   workflow_dispatch:
     inputs:
