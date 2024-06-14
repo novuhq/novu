@@ -47,7 +47,6 @@ jobs:
   job-setup:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
       platforms: ${{ steps.set-platforms.outputs.platforms }}
     steps:
       - id: set-matrix
@@ -72,15 +71,11 @@ jobs:
     environment: ${{ inputs.environment }}
     outputs:
       docker_image: ${{ steps.save-image-to-output.outputs.IMAGE }}
-      docker_image_ee: ${{ steps.save-image-to-output.outputs.IMAGE_EE }}
     permissions:
       contents: read
       packages: write
       deployments: write
       id-token: write
-    strategy:
-      matrix:
-        name: ${{fromJson(needs.job-setup.outputs.matrix)}}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -178,7 +173,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           OUTPUT_NAME: ${{ contains(matrix.name,'-ee') && 'IMAGE_EE' || 'IMAGE' }}
         run: |
-          echo "$OUTPUT_NAME=ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "::set-output name=$OUTPUT_NAME::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
       - name: Health check test
         id: health-check

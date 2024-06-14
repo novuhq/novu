@@ -46,16 +46,17 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ inputs.slackWebhookURL }}
 
-  release-dev-api:
-    uses: ./.github/workflows/cloud-deploy-dev-api.yml
+  release-api:
+    uses: ./.github/workflows/cloud-deploy-api.yml
     needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     secrets: inherit
     permissions:
       contents: read
       packages: write
       deployments: write
       id-token: write
+    with:
+      env: ${{ needs.set-env.outputs.environment }}
 
   release-embed:
     uses: ./.github/workflows/cloud-deploy-embed.yml
