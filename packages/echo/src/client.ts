@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import { JSONSchema7 } from 'json-schema';
 import { JSONSchemaFaker } from 'json-schema-faker';
 import ora from 'ora';
 
@@ -42,14 +41,7 @@ import {
   StepType,
   WorkflowOptions,
 } from './types';
-import {
-  FromSchema,
-  Schema,
-  transformSchema,
-  validateData,
-  ValidateFunction,
-  ValidationError,
-} from './types/schema.types';
+import { FromSchema, Schema, transformSchema, validateData, ValidationError } from './types/schema.types';
 import { EMOJI, log } from './utils';
 import { VERSION } from './version';
 import { Skip } from './types/skip.types';
