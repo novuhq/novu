@@ -1,10 +1,12 @@
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/index';
+import { useSegment } from '../../components/providers/SegmentProvider';
 import { ROUTES } from '../../constants/routes';
 
 export const useSetupBridge = (url: string, setError: (error: string) => void) => {
   const navigate = useNavigate();
+  const segment = useSegment();
 
   const { mutate: sync, isLoading: isSyncing } = useMutation(
     (data: { bridgeUrl: string }) => api.post('/v1/echo/sync', data),
@@ -33,6 +35,9 @@ export const useSetupBridge = (url: string, setError: (error: string) => void) =
     {
       onSuccess: (data) => {
         if (!data.discovered.workflows && !data.discovered.steps) {
+          segment.track('Wrong endpoint provided - [Onboarding - Signup]', {
+            endpoint: url,
+          });
           setError('This is not the Novu endpoint URL');
 
           return;
@@ -42,6 +47,9 @@ export const useSetupBridge = (url: string, setError: (error: string) => void) =
         });
       },
       onError: (e) => {
+        segment.track('Wrong endpoint provided - [Onboarding - Signup]', {
+          endpoint: url,
+        });
         setError((e as Error).message);
       },
     }

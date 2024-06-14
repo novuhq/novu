@@ -198,6 +198,7 @@ export const StudioOnboardingPreview = () => {
       <Footer
         buttonText="Test workflow"
         onClick={() => {
+          segment.track('Test workflow clicked - [Onboarding - Signup]');
           onTrigger();
         }}
         loading={isLoading}
