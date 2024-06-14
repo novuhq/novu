@@ -30,7 +30,7 @@ import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framew
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { ThrottlerCategory, ThrottlerCost } from '../rate-limiting/guards';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
+import { SdkGroupName, SdkMethodName, SdkUsageExample } from '../shared/framework/swagger/sdk.decorators';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.TRIGGER)
 @ResourceCategory(ResourceEnum.EVENTS)
@@ -63,6 +63,7 @@ export class EventsController {
   })
   @SdkMethodName('trigger')
   @SdkUsageExample('Trigger Notification Event')
+  @SdkGroupName('')
   async trigger(
     @UserSession() user: UserSessionData,
     @Body() body: TriggerEventRequestDto
