@@ -69,7 +69,7 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start([newWorkflow]);
+    await echoServer.start({ workflows: [newWorkflow] });
 
     await discoverAndSyncEcho(session);
 
@@ -129,7 +129,7 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start([newWorkflow]);
+    await echoServer.start({ workflows: [newWorkflow] });
 
     await syncWorkflow(session);
 
@@ -199,7 +199,7 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start([newWorkflow]);
+    await echoServer.start({ workflows: [newWorkflow] });
 
     await syncWorkflow(session);
 
@@ -256,7 +256,7 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start([newWorkflow]);
+    await echoServer.start({ workflows: [newWorkflow] });
 
     await discoverAndSyncEcho(session);
 
@@ -344,7 +344,7 @@ describe('Echo Trigger ', async () => {
       });
     });
 
-    await echoServer.start([newWorkflow]);
+    await echoServer.start({ workflows: [newWorkflow] });
 
     await discoverAndSyncEcho(session);
 
@@ -427,7 +427,7 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start([newWorkflow]);
+    await echoServer.start({ workflows: [newWorkflow] });
 
     await discoverAndSyncEcho(session);
 
@@ -514,7 +514,7 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start([newWorkflow]);
+    await echoServer.start({ workflows: [newWorkflow] });
 
     await discoverAndSyncEcho(session);
 
@@ -574,7 +574,7 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start([newWorkflow]);
+    await echoServer.start({ workflows: [newWorkflow] });
 
     await discoverAndSyncEcho(session);
 

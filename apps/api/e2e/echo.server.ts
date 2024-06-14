@@ -4,6 +4,10 @@ import * as express from 'express';
 import { serve } from '../../../packages/echo/dist/express';
 import { Client, DiscoverWorkflowOutput } from '@novu/echo';
 
+export type ServerStartOptions = {
+  workflows: Array<DiscoverWorkflowOutput>;
+};
+
 class EchoServer {
   private server: express.Express;
   private app: http.Server;
@@ -14,10 +18,10 @@ class EchoServer {
     return `http://localhost:${this.port}`;
   }
 
-  async start(workflows: Array<DiscoverWorkflowOutput> = []) {
+  async start(options: ServerStartOptions) {
     this.server = express();
     this.server.use(express.json());
-    this.server.use(serve({ client: this.echo, workflows: workflows }));
+    this.server.use(serve({ client: this.echo, workflows: options.workflows }));
 
     await new Promise<void>((resolve) => {
       this.app = this.server.listen(this.port, () => {

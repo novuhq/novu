@@ -19,7 +19,7 @@ describe('Echo Health Check', async () => {
         };
       });
     });
-    await echoServer.start([healthCheckWorkflow]);
+    await echoServer.start({ workflows: [healthCheckWorkflow] });
   });
 
   after(async () => {
