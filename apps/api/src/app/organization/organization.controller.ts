@@ -42,7 +42,7 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
 import { MemberResponseDto } from './dtos/member-response.dto';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/method.name.decorator';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)

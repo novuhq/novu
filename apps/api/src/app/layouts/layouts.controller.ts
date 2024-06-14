@@ -50,7 +50,7 @@ import { LayoutId } from './types';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkMethodName } from '../shared/framework/swagger/method.name.decorator';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/layouts')

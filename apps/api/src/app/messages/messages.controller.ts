@@ -20,7 +20,7 @@ import { RemoveMessagesByTransactionId } from './usecases/remove-messages-by-tra
 import { RemoveMessagesByTransactionIdCommand } from './usecases/remove-messages-by-transactionId/remove-messages-by-transactionId.command';
 import { DeleteMessageByTransactionIdRequestDto } from './dtos/remove-messages-by-transactionId-request.dto';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkMethodName } from '../shared/framework/swagger/method.name.decorator';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/messages')

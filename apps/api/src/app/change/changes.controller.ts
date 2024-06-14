@@ -17,7 +17,7 @@ import { DataNumberDto } from '../shared/dtos/data-wrapper-dto';
 import { BulkApplyChangeDto } from './dtos/bulk-apply-change.dto';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
-import { SdkMethodName } from '../shared/framework/swagger/method.name.decorator';
+import { SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/changes')
