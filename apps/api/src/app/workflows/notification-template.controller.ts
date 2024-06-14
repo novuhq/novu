@@ -11,7 +11,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IJwtPayload, MemberRoleEnum, WorkflowTypeEnum } from '@novu/shared';
+import { MemberRoleEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared';
 import {
   CreateWorkflow,
   CreateWorkflowCommand,
@@ -28,9 +28,8 @@ import { GetNotificationTemplateCommand } from './usecases/get-notification-temp
 import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { WorkflowResponse } from './dto/workflow-response.dto';
 import { WorkflowsResponseDto } from './dto/workflows.response.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -40,11 +39,13 @@ import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framew
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowQuery } from './queries';
 import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @ApiCommonResponses()
+@ApiExcludeController()
 @Controller('/notification-templates')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(UserAuthGuard)
+@UserAuthentication()
 @ApiTags('Notification Templates')
 export class NotificationTemplateController {
   constructor(
@@ -65,7 +66,7 @@ export class NotificationTemplateController {
   })
   @ExternalApiAccessible()
   getNotificationTemplates(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Query() queryParams: WorkflowsRequestDto
   ): Promise<WorkflowsResponseDto> {
     return this.getNotificationTemplatesUsecase.execute(
@@ -89,7 +90,7 @@ export class NotificationTemplateController {
   })
   @ExternalApiAccessible()
   async updateTemplateById(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('templateId') templateId: string,
     @Body() body: UpdateWorkflowRequestDto
   ): Promise<WorkflowResponse> {
@@ -125,7 +126,7 @@ export class NotificationTemplateController {
     deprecated: true,
   })
   @ExternalApiAccessible()
-  deleteTemplateById(@UserSession() user: IJwtPayload, @Param('templateId') templateId: string): Promise<boolean> {
+  deleteTemplateById(@UserSession() user: UserSessionData, @Param('templateId') templateId: string): Promise<boolean> {
     return this.deleteTemplateByIdUsecase.execute(
       DeleteNotificationTemplateCommand.create({
         environmentId: user.environmentId,
@@ -146,7 +147,7 @@ export class NotificationTemplateController {
   })
   @ExternalApiAccessible()
   getNotificationTemplateById(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string
   ): Promise<WorkflowResponse> {
     return this.getNotificationTemplateUsecase.execute(
@@ -169,8 +170,8 @@ export class NotificationTemplateController {
     deprecated: true,
   })
   @Roles(MemberRoleEnum.ADMIN)
-  createNotificationTemplates(
-    @UserSession() user: IJwtPayload,
+  create(
+    @UserSession() user: UserSessionData,
     @Query() query: CreateWorkflowQuery,
     @Body() body: CreateWorkflowRequestDto
   ): Promise<WorkflowResponse> {
@@ -208,7 +209,7 @@ export class NotificationTemplateController {
   })
   @ExternalApiAccessible()
   changeActiveStatus(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: ChangeWorkflowStatusRequestDto,
     @Param('templateId') templateId: string
   ): Promise<WorkflowResponse> {

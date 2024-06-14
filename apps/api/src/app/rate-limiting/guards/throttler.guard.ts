@@ -12,13 +12,13 @@ import { EvaluateApiRateLimit, EvaluateApiRateLimitCommand } from '../usecases/e
 import { Reflector } from '@nestjs/core';
 import { GetFeatureFlag, GetFeatureFlagCommand, Instrument } from '@novu/application-generic';
 import {
+  ApiAuthSchemeEnum,
   ApiRateLimitCategoryEnum,
   ApiRateLimitCostEnum,
-  ApiAuthSchemeEnum,
-  IJwtPayload,
   FeatureFlagsKeysEnum,
+  UserSessionData,
 } from '@novu/shared';
-import { ThrottlerCost, ThrottlerCategory } from './throttler.decorator';
+import { ThrottlerCategory, ThrottlerCost } from './throttler.decorator';
 import { HttpRequestHeaderKeysEnum, HttpResponseHeaderKeysEnum } from '../../shared/framework/types';
 
 export const THROTTLED_EXCEPTION_MESSAGE = 'API rate limit exceeded';
@@ -191,7 +191,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
     return ALLOWED_AUTH_SCHEMES.some((scheme) => authScheme === scheme);
   }
 
-  private getReqUser(context: ExecutionContext): IJwtPayload {
+  private getReqUser(context: ExecutionContext): UserSessionData {
     const req = context.switchToHttp().getRequest();
 
     return req.user;

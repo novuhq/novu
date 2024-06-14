@@ -1,5 +1,5 @@
 import { Analytics } from '@segment/analytics-node';
-import { IJwtPayload } from '@novu/shared';
+import { UserSessionData } from '@novu/shared';
 import { ANALYTICS_ENABLED, SEGMENTS_WRITE_KEY } from '../constants';
 
 export const ANALYTICS_SOURCE = '[Echo CLI]';
@@ -28,7 +28,7 @@ export class AnalyticService {
     });
   }
 
-  identify(user: IJwtPayload) {
+  identify(user: UserSessionData) {
     if (!this.isAnalyticsEnabled()) {
       return;
     }

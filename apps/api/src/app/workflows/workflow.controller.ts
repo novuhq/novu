@@ -17,7 +17,7 @@ import {
   UpdateWorkflow,
   UpdateWorkflowCommand,
 } from '@novu/application-generic';
-import { IJwtPayload, MemberRoleEnum, WorkflowTypeEnum } from '@novu/shared';
+import { MemberRoleEnum, UserSessionData, WorkflowTypeEnum } from '@novu/shared';
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetNotificationTemplates } from './usecases/get-notification-templates/get-notification-templates.usecase';
@@ -33,7 +33,6 @@ import { GetNotificationTemplateCommand } from './usecases/get-notification-temp
 import { DeleteNotificationTemplate } from './usecases/delete-notification-template/delete-notification-template.usecase';
 import { ChangeTemplateActiveStatus } from './usecases/change-template-active-status/change-template-active-status.usecase';
 import { ChangeTemplateActiveStatusCommand } from './usecases/change-template-active-status/change-template-active-status.command';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { WorkflowResponse } from './dto/workflow-response.dto';
@@ -47,11 +46,13 @@ import { CreateWorkflowQuery } from './queries';
 import { DeleteNotificationTemplateCommand } from './usecases/delete-notification-template/delete-notification-template.command';
 import { GetWorkflowVariables } from './usecases/get-workflow-variables/get-workflow-variables.usecase';
 import { GetWorkflowVariablesCommand } from './usecases/get-workflow-variables/get-workflow-variables.command';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { SdkGroupName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/workflows')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(UserAuthGuard)
+@UserAuthentication()
 @ApiTags('Workflows')
 export class WorkflowController {
   constructor(
@@ -71,8 +72,8 @@ export class WorkflowController {
     description: `Workflows were previously named notification templates`,
   })
   @ExternalApiAccessible()
-  getWorkflows(
-    @UserSession() user: IJwtPayload,
+  listWorkflows(
+    @UserSession() user: UserSessionData,
     @Query() queryParams: WorkflowsRequestDto
   ): Promise<WorkflowsResponseDto> {
     return this.getWorkflowsUsecase.execute(
@@ -95,7 +96,7 @@ export class WorkflowController {
   })
   @ExternalApiAccessible()
   async updateWorkflowById(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string,
     @Body() body: UpdateWorkflowRequestDto
   ): Promise<WorkflowResponse> {
@@ -130,7 +131,7 @@ export class WorkflowController {
     description: `Workflow was previously named notification template`,
   })
   @ExternalApiAccessible()
-  deleteWorkflowById(@UserSession() user: IJwtPayload, @Param('workflowId') workflowId: string): Promise<boolean> {
+  deleteWorkflowById(@UserSession() user: UserSessionData, @Param('workflowId') workflowId: string): Promise<boolean> {
     return this.deleteWorkflowByIdUsecase.execute(
       DeleteNotificationTemplateCommand.create({
         environmentId: user.environmentId,
@@ -149,7 +150,8 @@ export class WorkflowController {
     description: 'Get the variables that can be used in the workflow',
   })
   @ExternalApiAccessible()
-  getWorkflowVariables(@UserSession() user: IJwtPayload): Promise<VariablesResponseDto> {
+  @SdkGroupName('Workflows.Variables')
+  getWorkflowVariables(@UserSession() user: UserSessionData): Promise<VariablesResponseDto> {
     return this.getWorkflowVariablesUsecase.execute(
       GetWorkflowVariablesCommand.create({
         environmentId: user.environmentId,
@@ -159,7 +161,7 @@ export class WorkflowController {
     );
   }
 
-  @Get('/:workflowIdOrIdentifier')
+  @Get('/:workflowId')
   @ApiResponse(WorkflowResponse)
   @ApiOperation({
     summary: 'Get workflow',
@@ -167,15 +169,15 @@ export class WorkflowController {
   })
   @ExternalApiAccessible()
   getWorkflowById(
-    @UserSession() user: IJwtPayload,
-    @Param('workflowIdOrIdentifier') workflowIdOrIdentifier: string
+    @UserSession() user: UserSessionData,
+    @Param('workflowId') workflowId: string
   ): Promise<WorkflowResponse> {
     return this.getWorkflowUsecase.execute(
       GetNotificationTemplateCommand.create({
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         userId: user._id,
-        workflowIdOrIdentifier: workflowIdOrIdentifier,
+        workflowIdOrIdentifier: workflowId,
       })
     );
   }
@@ -189,8 +191,8 @@ export class WorkflowController {
     description: `Workflow was previously named notification template`,
   })
   @Roles(MemberRoleEnum.ADMIN)
-  createWorkflows(
-    @UserSession() user: IJwtPayload,
+  create(
+    @UserSession() user: UserSessionData,
     @Query() query: CreateWorkflowQuery,
     @Body() body: CreateWorkflowRequestDto
   ): Promise<WorkflowResponse> {
@@ -226,8 +228,9 @@ export class WorkflowController {
     description: `Workflow was previously named notification template`,
   })
   @ExternalApiAccessible()
-  changeActiveStatus(
-    @UserSession() user: IJwtPayload,
+  @SdkGroupName('Workflows.Status')
+  updateActiveStatus(
+    @UserSession() user: UserSessionData,
     @Body() body: ChangeWorkflowStatusRequestDto,
     @Param('workflowId') workflowId: string
   ): Promise<WorkflowResponse> {

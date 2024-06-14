@@ -8,11 +8,10 @@ import {
   Patch,
   Post,
   Put,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -21,7 +20,6 @@ import { CreateOrganizationCommand } from './usecases/create-organization/create
 import { CreateOrganization } from './usecases/create-organization/create-organization.usecase';
 import { RemoveMember } from './usecases/membership/remove-member/remove-member.usecase';
 import { RemoveMemberCommand } from './usecases/membership/remove-member/remove-member.command';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { GetMembersCommand } from './usecases/membership/get-members/get-members.command';
 import { GetMembers } from './usecases/membership/get-members/get-members.usecase';
 import { ChangeMemberRoleCommand } from './usecases/membership/change-member-role/change-member-role.command';
@@ -43,10 +41,12 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
 import { MemberResponseDto } from './dtos/member-response.dto';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @Controller('/organizations')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(UserAuthGuard)
+@UserAuthentication()
 @ApiTags('Organizations')
 @ApiCommonResponses()
 export class OrganizationController {
@@ -68,7 +68,7 @@ export class OrganizationController {
     summary: 'Create an organization',
   })
   async createOrganization(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: CreateOrganizationDto
   ): Promise<OrganizationEntity> {
     return await this.createOrganizationUsecase.execute(
@@ -89,7 +89,7 @@ export class OrganizationController {
   @ApiOperation({
     summary: 'Fetch all organizations',
   })
-  async getOrganizations(@UserSession() user: IJwtPayload): Promise<IGetOrganizationsDto> {
+  async listOrganizations(@UserSession() user: UserSessionData): Promise<IGetOrganizationsDto> {
     const command = GetOrganizationsCommand.create({
       userId: user._id,
     });
@@ -103,7 +103,7 @@ export class OrganizationController {
   @ApiOperation({
     summary: 'Fetch current organization details',
   })
-  async getMyOrganization(@UserSession() user: IJwtPayload): Promise<IGetMyOrganizationDto> {
+  async getSelfOrganizationData(@UserSession() user: UserSessionData): Promise<IGetMyOrganizationDto> {
     const command = GetMyOrganizationCommand.create({
       userId: user._id,
       id: user.organizationId,
@@ -111,7 +111,7 @@ export class OrganizationController {
 
     return await this.getMyOrganizationUsecase.execute(command);
   }
-
+  @SdkGroupName('Organizations.Members')
   @Delete('/members/:memberId')
   @ExternalApiAccessible()
   @Roles(MemberRoleEnum.ADMIN)
@@ -120,7 +120,7 @@ export class OrganizationController {
     summary: 'Remove a member from organization using memberId',
   })
   @ApiParam({ name: 'memberId', type: String, required: true })
-  async removeMember(@UserSession() user: IJwtPayload, @Param('memberId') memberId: string) {
+  async remove(@UserSession() user: UserSessionData, @Param('memberId') memberId: string) {
     return await this.removeMemberUsecase.execute(
       RemoveMemberCommand.create({
         userId: user._id,
@@ -129,7 +129,7 @@ export class OrganizationController {
       })
     );
   }
-
+  @SdkGroupName('Organizations.Members.Roles')
   @Put('/members/:memberId/roles')
   @ExternalApiAccessible()
   @ApiExcludeEndpoint()
@@ -140,7 +140,7 @@ export class OrganizationController {
   })
   @ApiParam({ name: 'memberId', type: String, required: true })
   async updateMemberRoles(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('memberId') memberId: string,
     @Body() body: UpdateMemberRolesDto
   ) {
@@ -157,14 +157,14 @@ export class OrganizationController {
       })
     );
   }
-
+  @SdkGroupName('Organizations.Members')
   @Get('/members')
   @ExternalApiAccessible()
   @ApiResponse(MemberResponseDto, 200, true)
   @ApiOperation({
     summary: 'Fetch all members of current organizations',
   })
-  async getMember(@UserSession() user: IJwtPayload) {
+  async listOrganizationMembers(@UserSession() user: UserSessionData) {
     return await this.getMembers.execute(
       GetMembersCommand.create({
         user,
@@ -173,14 +173,14 @@ export class OrganizationController {
       })
     );
   }
-
+  @SdkGroupName('Organizations.Branding')
   @Put('/branding')
   @ExternalApiAccessible()
   @ApiResponse(OrganizationBrandingResponseDto)
   @ApiOperation({
     summary: 'Update organization branding details',
   })
-  async updateBrandingDetails(@UserSession() user: IJwtPayload, @Body() body: UpdateBrandingDetailsDto) {
+  async updateBrandingDetails(@UserSession() user: UserSessionData, @Body() body: UpdateBrandingDetailsDto) {
     return await this.updateBrandingDetailsUsecase.execute(
       UpdateBrandingDetailsCommand.create({
         logo: body.logo,
@@ -201,7 +201,8 @@ export class OrganizationController {
   @ApiOperation({
     summary: 'Rename organization name',
   })
-  async renameOrganization(@UserSession() user: IJwtPayload, @Body() body: RenameOrganizationDto) {
+  @SdkMethodName('rename')
+  async rename(@UserSession() user: UserSessionData, @Body() body: RenameOrganizationDto) {
     return await this.renameOrganizationUsecase.execute(
       RenameOrganizationCommand.create({
         name: body.name,
