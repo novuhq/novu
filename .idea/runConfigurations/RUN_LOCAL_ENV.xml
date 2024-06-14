@@ -5,7 +5,6 @@
     <toRun name="DAL" type="js.build_tools.npm" />
     <toRun name="EE-AUTH" type="js.build_tools.npm" />
     <toRun name="SHARED" type="js.build_tools.npm" />
-    <toRun name="SHARED-WEB" type="js.build_tools.npm" />
     <toRun name="TESTING" type="js.build_tools.npm" />
     <toRun name="WEB" type="js.build_tools.npm" />
     <toRun name="WORKER" type="js.build_tools.npm" />
