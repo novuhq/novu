@@ -6,7 +6,11 @@ name: Deploy EMBED
 # events but only for the master branch
 on:
   workflow_call:
-
+    inputs:
+      env:
+        description: 'Deployment environment - choose between dev and prod'
+        required: true
+        type: string
 jobs:
   # This workflow contains a single job called "build"
   deploy_embed:
