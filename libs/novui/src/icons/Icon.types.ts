@@ -1,7 +1,7 @@
 import { CSSProperties, SVGAttributes } from 'react';
 
 /** Icon Size in pixels (to be replaced with values directly from Design System) */
-export type IconSize = '16' | '20' | '24';
+export type IconSize = '16' | '20' | '24' | '32' | '40';
 
 /** A temporary type that accepts a typical CSS color until we have our strict Design System types defined */
 type UnsafeIconColor = CSSProperties['color'];

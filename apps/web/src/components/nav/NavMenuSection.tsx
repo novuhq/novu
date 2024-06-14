@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import { styled, Stack } from '@novu/novui/jsx';
 import { text } from '@novu/novui/recipes';
-import { LocalizedMessage } from '@novu/shared-web';
+import { LocalizedMessage } from '../../types/LocalizedMessage';
 import { css } from '@novu/novui/css';
 
 interface INavMenuSectionProps {

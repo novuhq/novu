@@ -1,20 +1,13 @@
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
-import { initializeSession } from './utils.ts/browser';
+import { test } from './utils/baseTest';
+import { initializeSession } from './utils/browser';
 import { SidebarPage } from './page-models/sidebarPage';
-import { addOrganization, SessionData } from './utils.ts/plugins';
-import { getAuthToken } from './utils.ts/authUtils';
-import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
+import { addOrganization, SessionData } from './utils/plugins';
+import { getAuthToken } from './utils/authUtils';
 
-let featureFlagsMock: FeatureFlagsMock, session: SessionData;
-test.beforeEach(async ({ context, page }) => {
-  ({ featureFlagsMock, session } = await initializeSession(page));
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
+let session: SessionData;
+test.beforeEach(async ({ page }) => {
+  ({ session } = await initializeSession(page));
 });
 
 test('should display switch when page is loaded', async ({ page }) => {

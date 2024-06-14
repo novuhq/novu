@@ -1,4 +1,4 @@
-import { ROUTES } from '@novu/shared-web';
+import { ROUTES } from '../../constants/routes';
 import { FC } from 'react';
 import { LocalNavMenu } from '../../studio/components/LocalNavMenu';
 import { RootNavMenu } from './RootNavMenu';

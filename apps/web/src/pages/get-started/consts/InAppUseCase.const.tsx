@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, StepTypeEnum } from '@novu/shared';
-import { ROUTES } from '@novu/shared-web';
+import { ROUTES } from '../../../constants/routes';
 
 import { useGetIntegrationsByChannel } from '../../integrations/useGetIntegrationsByChannel';
 import { GetStartedAnimation } from '../components/GetStartedAnimation';

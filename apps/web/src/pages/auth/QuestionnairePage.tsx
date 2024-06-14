@@ -3,7 +3,8 @@ import { QuestionnaireForm } from './components/QuestionnaireForm';
 import { useVercelIntegration } from '../../hooks';
 import SetupLoader from './components/SetupLoader';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag, HUBSPOT_PORTAL_ID } from '@novu/shared-web';
+import { useFeatureFlag } from '../../hooks';
+import { HUBSPOT_PORTAL_ID } from '../../config';
 import { HubspotSignupForm } from './components/HubspotSignupForm';
 
 export default function QuestionnairePage() {

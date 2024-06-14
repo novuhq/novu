@@ -1,4 +1,4 @@
-import { useSegment } from '@novu/shared-web';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { css, cx } from '@novu/novui/css';
 import { Flex, styled } from '@novu/novui/jsx';
 import { OnboardingUseCasesTabsEnum } from '../../consts/OnboardingUseCasesTabsEnum';

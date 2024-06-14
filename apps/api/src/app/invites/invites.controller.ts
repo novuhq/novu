@@ -3,18 +3,17 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
-  UseGuards,
-  Headers,
   UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiRateLimitCostEnum,
   IBulkInviteResponse,
   IGetInviteResponseDto,
-  IJwtPayload,
   MemberRoleEnum,
+  UserSessionData,
 } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { GetInviteCommand } from './usecases/get-invite/get-invite.command';
@@ -34,9 +33,9 @@ import { ResendInvite } from './usecases/resend-invite/resend-invite.usecase';
 import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
 import { ThrottlerCost } from '../rate-limiting/guards';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { InviteNudgeWebhookCommand } from './usecases/invite-nudge/invite-nudge.command';
 import { InviteNudgeWebhook } from './usecases/invite-nudge/invite-nudge.usecase';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @UseInterceptors(ClassSerializerInterceptor)
 @ApiCommonResponses()
@@ -63,9 +62,9 @@ export class InvitesController {
   }
 
   @Post('/:inviteToken/accept')
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   async acceptInviteToken(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('inviteToken') inviteToken: string
   ): Promise<string> {
     const command = AcceptInviteCommand.create({
@@ -78,8 +77,11 @@ export class InvitesController {
 
   @Post('/')
   @Roles(MemberRoleEnum.ADMIN)
-  @UseGuards(UserAuthGuard)
-  async inviteMember(@UserSession() user: IJwtPayload, @Body() body: InviteMemberDto): Promise<{ success: boolean }> {
+  @UserAuthentication()
+  async inviteMember(
+    @UserSession() user: UserSessionData,
+    @Body() body: InviteMemberDto
+  ): Promise<{ success: boolean }> {
     const command = InviteMemberCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -96,9 +98,9 @@ export class InvitesController {
 
   @Post('/resend')
   @Roles(MemberRoleEnum.ADMIN)
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   async resendInviteMember(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: ResendInviteDto
   ): Promise<{ success: boolean }> {
     const command = ResendInviteCommand.create({
@@ -116,10 +118,10 @@ export class InvitesController {
 
   @ThrottlerCost(ApiRateLimitCostEnum.BULK)
   @Post('/bulk')
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Roles(MemberRoleEnum.ADMIN)
   async bulkInviteMembers(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: BulkInviteMembersDto
   ): Promise<IBulkInviteResponse[]> {
     const command = BulkInviteCommand.create({

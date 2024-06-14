@@ -30,7 +30,7 @@ const convertUnitToLabel = (unit: DigestUnitEnum) => {
 
 export const TimedDigestMetadata = () => {
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvController({}, template?.chimera);
+  const { readonly } = useEnvController({}, template?.bridge);
   const { control, watch, setValue } = useFormContext();
   const stepFormPath = useStepFormPath();
   const unit: DigestUnitEnum =

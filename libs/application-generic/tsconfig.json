@@ -1,6 +1,7 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "sourceMap": true,
     "strictNullChecks": false,
     "allowSyntheticDefaultImports": true,
     "outDir": "build/main",

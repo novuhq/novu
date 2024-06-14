@@ -25,7 +25,7 @@ export interface INotificationTemplate {
   preferenceSettings: IPreferenceChannels;
   createdAt?: string;
   updatedAt?: string;
-  steps: INotificationTemplateStep[] | INotificationChimeraTrigger[];
+  steps: INotificationTemplateStep[] | INotificationBridgeTrigger[];
   triggers: INotificationTrigger[];
   isBlueprint?: boolean;
   type?: NotificationTemplateTypeEnum;
@@ -45,7 +45,7 @@ export enum TriggerTypeEnum {
   EVENT = 'event',
 }
 
-export interface INotificationChimeraTrigger {
+export interface INotificationBridgeTrigger {
   type: TriggerTypeEnum;
   identifier: string;
 }

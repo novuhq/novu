@@ -1,6 +1,7 @@
 import styled from '@emotion/styled';
 import { colors } from '@novu/design-system';
-import { api, useEnvController } from '@novu/shared-web';
+import { api } from '../../../../api';
+import { useEnvController } from '../../../../hooks/useEnvController';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -42,30 +43,30 @@ export const SmsPreview = ({
   const { navigateToStepEditor } = useNavigateToStepEditor();
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
-  const { chimera } = useEnvController({}, template?.chimera);
+  const { bridge } = useEnvController({}, template?.bridge);
   const path = useStepFormPath();
   const templateContent = watch(`${path}.template.content`);
   const { pathname } = useLocation();
   const isPreviewPath = pathname.endsWith('/preview');
   const stepId = watch(`${path}.uuid`);
-  const [chimeraContent, setChimeraContent] = useState('');
+  const [bridgeContent, setBridgeContent] = useState('');
 
   const {
     mutateAsync,
-    isLoading: isChimeraLoading,
+    isLoading: isBridgeLoading,
     error: previewError,
   } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
     onSuccess(data) {
-      setChimeraContent(data.outputs.body);
+      setBridgeContent(data.outputs.body);
     },
   });
 
   useEffect(() => {
-    if (chimera) {
+    if (bridge) {
       mutateAsync(inputVariables);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chimera, inputVariables]);
+  }, [bridge, inputVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: templateContent as string,
@@ -74,7 +75,7 @@ export const SmsPreview = ({
 
   const { isPreviewContentLoading, previewContent, templateError } = usePreviewSmsTemplate(
     selectedLocale,
-    showPreviewAsLoading || chimera
+    showPreviewAsLoading || bridge
   );
 
   return (
@@ -88,16 +89,16 @@ export const SmsPreview = ({
           dropdownPosition="top"
         />
 
-        {previewError && chimera ? (
+        {previewError && bridge ? (
           <div style={{ marginTop: 20, padding: 10 }}>
             <ErrorPrettyRender error={previewError} />
           </div>
         ) : (
           <SmsBubble
             onEditClick={navigateToStepEditor}
-            isLoading={chimera ? isChimeraLoading : isPreviewContentLoading || areLocalesLoading}
-            text={chimera ? chimeraContent : previewContent}
-            error={chimera ? undefined : templateError}
+            isLoading={bridge ? isBridgeLoading : isPreviewContentLoading || areLocalesLoading}
+            text={bridge ? bridgeContent : previewContent}
+            error={bridge ? undefined : templateError}
             withOverlay={isPreviewPath}
           />
         )}

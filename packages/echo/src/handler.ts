@@ -23,7 +23,7 @@ import {
   SignatureNotFoundError,
   SigningKeyNotFoundError,
 } from './errors';
-import { MaybePromise } from './types';
+import { Awaitable } from './types';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
@@ -39,11 +39,11 @@ interface IEchoRequestHandlerOptions<Input extends any[] = any[], Output = any> 
 type Handler<Input extends any[] = any[], Output = any> = (...args: Input) => HandlerResponse<Output>;
 
 type HandlerResponse<Output = any> = {
-  body: () => MaybePromise<any>;
-  headers: (key: string) => MaybePromise<string | null | undefined>;
-  method: () => MaybePromise<string>;
-  queryString?: (key: string, url: URL) => MaybePromise<string | null | undefined>;
-  url: () => MaybePromise<URL>;
+  body: () => Awaitable<any>;
+  headers: (key: string) => Awaitable<string | null | undefined>;
+  method: () => Awaitable<string>;
+  queryString?: (key: string, url: URL) => Awaitable<string | null | undefined>;
+  url: () => Awaitable<URL>;
   transformResponse: (res: IActionResponse<string>) => Output;
 };
 
@@ -88,6 +88,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_ORIGIN]: '*',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_METHODS]: 'GET, POST',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_HEADERS]: '*',
+      [HttpHeaderKeysEnum.ACCESS_CONTROL_MAX_AGE]: '604800',
       [HttpHeaderKeysEnum.FRAMEWORK]: this.frameworkName,
       [HttpHeaderKeysEnum.USER_AGENT]: sdkVersion,
       [HttpHeaderKeysEnum.SDK_VERSION]: sdkVersion,

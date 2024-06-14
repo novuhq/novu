@@ -6,7 +6,8 @@ import {
   IconRoomPreferences,
   IconWorkspacePremium,
 } from '@novu/design-system';
-import { ROUTES, useAuth } from '@novu/shared-web';
+import { useAuth } from '../../hooks/useAuth';
+import { ROUTES } from '../../constants/routes';
 import { useNavigate } from 'react-router-dom';
 import { FreeTrialSidebarWidget } from '../layout/components/FreeTrialSidebarWidget';
 import { NavMenu } from './NavMenu';

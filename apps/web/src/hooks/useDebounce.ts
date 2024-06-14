@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import debounce from 'lodash.debounce';
 
-import { useDataRef } from '@novu/shared-web';
+import { useDataRef } from './useDataRef';
 
 export const useDebounce = <Arguments = unknown | unknown[]>(callback: (args: Arguments) => void, ms = 0) => {
   const callbackRef = useDataRef(callback);

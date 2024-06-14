@@ -1,24 +1,16 @@
 import { expect } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
-import { initializeSession } from './utils.ts/browser';
+import { test } from './utils/baseTest';
+import { initializeSession } from './utils/browser';
 import { ApiKeysPage } from './page-models/apiKeysPage';
-import { SessionData } from './utils.ts/plugins';
-import { FeatureFlagsMock } from './utils.ts/featureFlagsMock';
+import { SessionData } from './utils/plugins';
 
-let featureFlagsMock: FeatureFlagsMock, session: SessionData;
+let session: SessionData;
 
 test.beforeEach(async ({ page }) => {
-  ({ featureFlagsMock, session } = await initializeSession(page));
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_BILLING_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: false,
-  });
+  ({ session } = await initializeSession(page));
 });
 
-test('should show/hide the API key, and display the application and environment identifierw', async ({ page }) => {
+test('should show/hide the API key, and display the application and environment identifier', async ({ page }) => {
   const apiKeysPage = await ApiKeysPage.goTo(page);
   const apiKeyContainer = apiKeysPage.getApiKeyContainer();
   const apiKey = session.environment.apiKeys[0].key;

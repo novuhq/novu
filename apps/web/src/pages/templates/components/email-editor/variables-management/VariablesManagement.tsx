@@ -27,7 +27,7 @@ import { VarItemTooltip } from './VarItemTooltip';
 import { When } from '../../../../../components/utils/When';
 import { useWorkflowVariables } from '../../../../../api/hooks';
 
-import { ROUTES } from '../../../../../constants/routes.enum';
+import { ROUTES } from '../../../../../constants/routes';
 import { UpgradePlanBanner } from '../../../../../components/layout/components/UpgradePlanBanner';
 
 interface IVariablesList {
@@ -74,14 +74,14 @@ export const VariablesManagement = ({
   control,
   path,
   isPopover = false,
-  chimera = false,
+  bridge = false,
 }: {
   openVariablesModal?: () => void;
   closeVariablesManagement?: () => void;
   control?: any;
   path: string;
   isPopover?: boolean;
-  chimera?: boolean;
+  bridge?: boolean;
 }) => {
   const variableArray = useWatch({
     name: path,
@@ -123,7 +123,7 @@ export const VariablesManagement = ({
 
   return (
     <VariablesContainer isPopover={isPopover}>
-      <When truthy={openVariablesModal !== undefined && !chimera}>
+      <When truthy={openVariablesModal !== undefined && !bridge}>
         <Group
           px={16}
           h={40}

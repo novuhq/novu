@@ -1,5 +1,5 @@
 import { APIResponse, Page } from '@playwright/test';
-import { JsonUtils } from '../utils.ts/jsonUtils';
+import { JsonUtils } from '../utils/jsonUtils';
 
 export class OrganizationRouteMocks {
   public static async augmentOrganizationCallServiceLevel(page: Page, apiServiceLevel: string) {
@@ -9,7 +9,7 @@ export class OrganizationRouteMocks {
       let bodyString = buffer.toString('utf8'); // Convert Buffer to string using utf8 encoding
       if (JsonUtils.isJsonString(bodyString)) {
         const jsonObject = JSON.parse(bodyString);
-        const orgsWithServiceLevelAltered = jsonObject['data'].map((org) => {
+        const orgsWithServiceLevelAltered = jsonObject.data.map((org) => {
           return {
             ...org,
             apiServiceLevel,

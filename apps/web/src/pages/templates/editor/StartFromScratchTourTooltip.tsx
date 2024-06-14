@@ -14,7 +14,7 @@ import {
   RunTestBell,
   WorkflowSettings,
 } from '@novu/design-system';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks';
 import { updateUserOnBoardingTour } from '../../../api/user';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { When } from '../../../components/utils/When';

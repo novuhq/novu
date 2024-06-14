@@ -1,4 +1,4 @@
-import { useSegment } from '@novu/shared-web';
+import { useSegment } from '../components/providers/SegmentProvider';
 import { useEffect } from 'react';
 
 type LocationField = keyof Pick<Location, 'href' | 'hash' | 'host' | 'hostname' | 'origin' | 'pathname'>;

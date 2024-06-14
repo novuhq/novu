@@ -8,7 +8,7 @@ import { DotsHorizontal, Mail, Trash, useTextStyles, colors, Dropdown, Tag } fro
 import { MemberRole } from './MemberRole';
 import { When } from '../../../components/utils/When';
 import { parseUrl } from '../../../utils/routeUtils';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 
 export function MembersTable({
   members,
