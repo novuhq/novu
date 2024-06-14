@@ -21,6 +21,7 @@ export type FromSchema<T extends Schema> = T extends JSONSchema
 export type ValidateFunction<T = unknown> = AjvValidateFunction<T> | ((inputs: T) => ParseReturnType<T>);
 
 export type ValidationError = {
+  path: string;
   message: string;
 };
 
@@ -48,7 +49,10 @@ class ZodValidator implements IValidator<ZodSchema> {
     } else {
       return {
         success: false,
-        errors: result.error.errors.map((err) => ({ message: err.message })),
+        errors: result.error.errors.map((err) => ({
+          path: err.path.join(),
+          message: err.message,
+        })),
       };
     }
   }
@@ -88,6 +92,7 @@ class JsonSchemaValidator implements IValidator<JSONSchema> {
       return {
         success: false,
         errors: (validateFn.errors as ErrorObject<string, Record<string, unknown>, unknown>[]).map((err) => ({
+          path: err.instancePath,
           message: err.message as string,
         })),
       };
