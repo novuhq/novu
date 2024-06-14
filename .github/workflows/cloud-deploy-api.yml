@@ -20,9 +20,9 @@ jobs:
       - id: set_env
         run: |
           if echo "${{ inputs.env }}" | grep -qwi 'prod'; then
-            echo "::set-output name=environment::Production";
+            echo "environment=Production" >> $GITHUB_ENV;
           else
-            echo "::set-output name=environment::Development";
+            echo "environment=Development" >> $GITHUB_ENV;
           fi
 
   build_image:
