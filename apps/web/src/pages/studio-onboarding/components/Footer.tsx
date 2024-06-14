@@ -1,12 +1,13 @@
 import { text } from '@novu/novui/recipes';
 import { HStack, styled, VStack } from '@novu/novui/jsx';
-import { Button, Tooltip } from '@novu/design-system';
+import { Tooltip } from '@novu/design-system';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
 import { useNavigate } from 'react-router-dom';
 import { css } from '@novu/novui/css';
 import { When } from '../../../components/utils/When';
 import { DocsButton } from '../../../components/docs/DocsButton';
 import { ROUTES } from '../../../constants/routes';
+import { Button } from '@novu/novui';
 
 const Text = styled('a', text);
 
@@ -73,7 +74,7 @@ export const Footer = ({
               </Button>
             </When>
             <Tooltip label={tooltip} disabled={!tooltip}>
-              <Button loading={loading} onClick={onClick}>
+              <Button disabled={loading} onClick={onClick}>
                 {buttonText}
               </Button>
             </Tooltip>
