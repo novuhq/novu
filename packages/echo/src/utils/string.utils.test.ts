@@ -1,6 +1,6 @@
 import { toConstantCase } from './string.utils';
 
-describe('convert to snake case', () => {
+describe('convert to constant case', () => {
   it('converts properties correctly', () => {
     const myTestObject = {
       aProperty: 'A_PROPERTY',
