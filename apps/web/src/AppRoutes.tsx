@@ -50,6 +50,7 @@ import { TranslationRoutes } from './pages/TranslationPages';
 import { useSettingsRoutes } from './SettingsRoutes';
 import { WorkflowsListPage } from './studio/components/workflows/WorkflowsListPage';
 import { WorkflowsDetailPage } from './studio/components/workflows/WorkflowsDetailPage';
+import { WorkflowsStepEditorPage } from './studio/components/workflows/WorkflowsStepEditorPage';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
@@ -144,6 +145,7 @@ export const AppRoutes = () => {
           <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
           <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
           <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
+          <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<WorkflowsStepEditorPage />} />
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />
