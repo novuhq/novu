@@ -122,7 +122,7 @@ jobs:
           LOCAL_TAG: ${{ inputs.local_tag }}
           IMAGE_TAG: ${{ github.sha }}
           ENV_TAG: ${{ inputs.env_tag }}
-          PROJECT_PATH: ${{ inputs.project_path }}
+          PROJECT_PATH: ${{ inputs.project_pathh }}
           GH_ACTOR: ${{ github.actor }}
           GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
           DOCKER_BUILD_ARGUMENTS: >
@@ -131,6 +131,7 @@ jobs:
             --platform=${{ needs.job-setup.outputs.matrix }} --provenance=false
             --output=type=image,name=ghcr.io/novuhq/${{ matrix.name }},push-by-digest=true,name-canonical=true
         run: |
+          echo -n $GH_PASSWORD | wc -c
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           cd $PROJECT_PATH && npm run docker:build
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
