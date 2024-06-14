@@ -25,7 +25,7 @@ import {
   WorkflowNotFoundError,
 } from './errors';
 import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
-import {
+import type {
   ActionStep,
   ClientConfig,
   CodeResult,
