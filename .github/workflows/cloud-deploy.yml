@@ -79,6 +79,8 @@ jobs:
       packages: write
       deployments: write
       id-token: write
+    with:
+      env: ${{ needs.pre-release.outputs.environment }}
 
   release-dev-inbound-mail:
     uses: ./.github/workflows/cloud-deploy-dev-inbound-mail.yml
