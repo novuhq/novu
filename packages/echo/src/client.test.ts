@@ -644,7 +644,7 @@ describe('Echo Client', () => {
       subject: 'Subject',
     });
 
-    const workflowExecuteFunc = async ({ step }) => {
+    const workflowExecuteFunc = async ({ step }: { step: Step }) => {
       await step.email('send-email', stepExecuteFunc);
     };
 
