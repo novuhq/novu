@@ -179,15 +179,31 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
     const { originHeader, anonymousHeader } = headers;
     const isProduction = process.env.NODE_ENV === 'production';
     const isValidOrigin =
-      originHeader.includes('https://web.novu.co') ||
+      (originHeader && originHeader.includes('https://web.novu.co')) ||
       originHeader.includes('https://eu.web.novu.co') ||
       originHeader.includes('https://dev.web.novu.co');
 
     /**
      * We want to enforce cors only for production and only for valid origins coming from our web interface.
      */
+    let corsValue = '*';
+    if (isProduction) {
+      /**
+       * To support both eu and us environments, in case of valid origin, pass it through.
+       */
+      if (isValidOrigin) {
+        corsValue = originHeader;
+      } else {
+        /**
+         * In production and a valid environment not found,
+         * Fallback to the default prod origin.
+         */
+        corsValue = 'https://web.novu.co';
+      }
+    }
+
     const corsOriginHeader = {
-      [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_ORIGIN]: isProduction && isValidOrigin ? originHeader : '*',
+      [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_ORIGIN]: corsValue,
     };
 
     return {
