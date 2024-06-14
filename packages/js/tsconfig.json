@@ -15,7 +15,6 @@
     "noUncheckedIndexedAccess": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
-    "types": [],
     "baseUrl": ".",
     "emitDecoratorMetadata": false,
     "outDir": "./dist/types",
