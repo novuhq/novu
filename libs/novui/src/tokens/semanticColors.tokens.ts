@@ -66,6 +66,12 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
         type: 'color',
       },
     },
+    icon: {
+      filled: {
+        value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.white}' },
+        type: 'color',
+      },
+    },
     secondary: {
       background: {
         value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B17}' },

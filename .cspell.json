@@ -634,6 +634,7 @@
     "prepush",
     "xcodebuild",
     "liquidjs",
+    "vstack"
     "nimma",
     "jpath",
     "Nimma",
