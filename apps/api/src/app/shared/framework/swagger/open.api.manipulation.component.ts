@@ -32,7 +32,7 @@ function liftDataProperty(scope) {
 
   scope.value.schema = data;
 }
-function removeEndpointsWithoutApiKey(openApiDocument: object): object {
+export function removeEndpointsWithoutApiKey<T>(openApiDocument: T): T {
   const parsedDocument = JSON.parse(JSON.stringify(openApiDocument));
 
   if (!parsedDocument.paths) {

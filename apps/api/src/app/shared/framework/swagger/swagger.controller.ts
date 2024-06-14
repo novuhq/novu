@@ -1,10 +1,10 @@
 /* eslint-disable max-len */
-import { DocumentBuilder, SwaggerDocumentOptions, SwaggerModule } from '@nestjs/swagger';
+import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
 import { injectDocumentComponents } from './injection';
-import { transformDocument } from './unwrap';
 import { API_KEY_SWAGGER_SECURITY_NAME } from '@novu/application-generic';
 import { SecuritySchemeObject } from '@nestjs/swagger/dist/interfaces/open-api-spec.interface';
+import { removeEndpointsWithoutApiKey, transformDocument } from './open.api.manipulation.component';
 
 export const API_KEY_SECURITY_DEFINITIONS: SecuritySchemeObject = {
   type: 'apiKey',
@@ -20,8 +20,8 @@ const options = new DocumentBuilder()
   .setExternalDoc('Novu Documentation', 'https://docs.novu.co')
   .setTermsOfService('https://novu.co/terms')
   .setLicense('MIT', 'https://opensource.org/license/mit')
-  .addServer('https://api.novu.co/v1')
-  .addServer('https://eu.api.novu.co/v1')
+  .addServer('https://api.novu.co')
+  .addServer('https://eu.api.novu.co')
   .addApiKey(API_KEY_SECURITY_DEFINITIONS, API_KEY_SWAGGER_SECURITY_NAME)
   .addTag(
     'Events',
@@ -111,18 +111,33 @@ if (process.env.NOVU_ENTERPRISE === 'true') {
     { url: 'https://docs.novu.co/content-creation-design/translations' }
   );
 }
-const swaggerDocumentOptions: SwaggerDocumentOptions = {
-  operationIdFactory: (controllerKey: string, methodKey: string) => `${controllerKey}_${methodKey}`,
-  deepScanRoutes: true,
-  ignoreGlobalPrefix: true,
-  include: [],
-  extraModels: [],
-};
-
 export const setupSwagger = (app: INestApplication) => {
-  const document1 = SwaggerModule.createDocument(app, options.build(), swaggerDocumentOptions);
-  // Add custom metadata to the OpenAPI document
-  document1['x-speakeasy-name-override'] = [
+  const document = injectDocumentComponents(
+    SwaggerModule.createDocument(app, options.build(), {
+      operationIdFactory: (controllerKey: string, methodKey: string) => `${controllerKey}_${methodKey}`,
+      deepScanRoutes: true,
+      ignoreGlobalPrefix: false,
+      include: [],
+      extraModels: [],
+    })
+  );
+
+  SwaggerModule.setup('api', app, {
+    ...document,
+    info: {
+      ...document.info,
+      title: `DEPRECATED: ${document.info.title}. Use /openapi.{json,yaml} instead.`,
+    },
+  });
+  SwaggerModule.setup('openapi', app, removeEndpointsWithoutApiKey(document), {
+    jsonDocumentUrl: 'openapi.json',
+    yamlDocumentUrl: 'openapi.yaml',
+    explorer: process.env.NODE_ENV !== 'production',
+  });
+  sdkSetup(app, document);
+};
+function sdkSetup(app: INestApplication, document: OpenAPIObject) {
+  document['x-speakeasy-name-override'] = [
     { operationId: '^.*get.*', methodNameOverride: 'retrieve' },
     { operationId: '^.*retrieve.*', methodNameOverride: 'retrieve' },
     { operationId: '^.*create.*', methodNameOverride: 'create' },
@@ -131,7 +146,7 @@ export const setupSwagger = (app: INestApplication) => {
     { operationId: '^.*delete.*', methodNameOverride: 'delete' },
     { operationId: '^.*remove.*', methodNameOverride: 'delete' },
   ];
-  document1['x-speakeasy-retries'] = {
+  document['x-speakeasy-retries'] = {
     strategy: 'backoff',
     backoff: {
       initialInterval: 500,
@@ -142,23 +157,10 @@ export const setupSwagger = (app: INestApplication) => {
     statusCodes: ['408', '409', '429', '5XX'],
     retryConnectionErrors: true,
   };
-  const document = injectDocumentComponents(document1);
 
-  SwaggerModule.setup('api', app, {
-    ...document,
-    info: {
-      ...document.info,
-      title: `DEPRECATED: ${document.info.title}. Use /openapi.{json,yaml} instead.`,
-    },
-  });
-  SwaggerModule.setup('openapi', app, document, {
-    jsonDocumentUrl: 'openapi.json',
-    yamlDocumentUrl: 'openapi.yaml',
-    explorer: process.env.NODE_ENV !== 'production',
-  });
   SwaggerModule.setup('openapi.sdk', app, transformDocument(document), {
     jsonDocumentUrl: 'openapi.sdk.json',
     yamlDocumentUrl: 'openapi.sdk.yaml',
     explorer: process.env.NODE_ENV !== 'production',
   });
-};
+}
