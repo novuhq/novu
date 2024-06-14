@@ -1,4 +1,4 @@
-export enum MarkMessagesAsEnum {
+export enum MessagesStatusEnum {
   READ = 'read',
   SEEN = 'seen',
   UNREAD = 'unread',

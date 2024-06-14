@@ -5,7 +5,7 @@ import type {
   IPaginatedResponse,
   ISessionDto,
   INotificationDto,
-  MarkMessagesAsEnum,
+  MessagesStatusEnum,
   PreferenceLevelEnum,
 } from '@novu/shared';
 import { HttpClient } from '../http-client';
@@ -102,7 +102,7 @@ export class ApiService {
     markAs,
   }: {
     messageId: string | string[];
-    markAs: `${MarkMessagesAsEnum}`;
+    markAs: `${MessagesStatusEnum}`;
   }): Promise<INotificationDto[]> {
     return await this.httpClient.post(`/widgets/messages/mark-as`, {
       messageId,

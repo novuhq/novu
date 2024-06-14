@@ -1,11 +1,14 @@
 import { ApiService } from '@novu/client';
 
-const PRODUCTION_BACKEND_URL = 'https://api.novu.co';
+import { PRODUCTION_BACKEND_URL } from './config';
 
 type ApiServiceOptions = {
   backendUrl?: string;
 };
 
+/**
+ * @deprecated Use the `InboxServiceSingleton` instead.
+ */
 export class ApiServiceSingleton {
   static #instance: ApiService;
 
