@@ -1,12 +1,13 @@
 import { Button } from '@novu/novui';
 import { IconOutlineEmail, IconPlayArrow } from '@novu/novui/icons';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../../constants/routes';
-import { WorkflowsPageTemplate, WorkflowsPanelLayout } from './layout';
+import { ROUTES } from '../../../../constants/routes';
+import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { WorkflowStepEditorContentPanel } from './WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorInputsPanel } from './WorkflowStepEditorInputsPanel';
 
 const title = 'Email step';
+
 export const WorkflowsStepEditorPage = () => {
   const navigate = useNavigate();
   const handleTestClick = () => {

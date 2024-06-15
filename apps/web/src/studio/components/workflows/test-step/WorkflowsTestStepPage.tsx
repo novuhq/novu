@@ -1,6 +1,6 @@
 import { Button } from '@novu/novui';
 import { IconOutlineCable, IconPlayArrow } from '@novu/novui/icons';
-import { WorkflowsPageTemplate, WorkflowsPanelLayout } from './layout';
+import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { WorkflowTestStepInputsPanel } from './WorkflowTestStepInputsPanel';
 import { WorkflowTestStepTriggerPanel } from './WorkflowTestStepTriggerPanel';
 

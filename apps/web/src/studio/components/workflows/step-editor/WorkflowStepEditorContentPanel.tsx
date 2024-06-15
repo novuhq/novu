@@ -2,8 +2,8 @@ import { Prism } from '@mantine/prism';
 import { Tabs } from '@novu/novui';
 import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
 import { FC, useMemo } from 'react';
-import { PreviewWeb } from '../../../components/workflow/preview/email/PreviewWeb';
-import { useActiveIntegrations } from '../../../hooks/index';
+import { PreviewWeb } from '../../../../components/workflow/preview/email/PreviewWeb';
+import { useActiveIntegrations } from '../../../../hooks/index';
 
 interface IWorkflowStepEditorContentPanelProps {
   // TODO: Placeholder for real props

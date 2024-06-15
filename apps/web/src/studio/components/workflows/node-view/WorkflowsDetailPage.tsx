@@ -10,8 +10,8 @@ import {
 } from '@novu/novui/icons';
 import { Flex, VStack } from '@novu/novui/jsx';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../../constants/routes';
-import { WorkflowsPageTemplate } from './layout/WorkflowsPageTemplate';
+import { ROUTES } from '../../../../constants/routes';
+import { WorkflowsPageTemplate } from '../layout/WorkflowsPageTemplate';
 import { StepNode } from './StepNode';
 import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
 

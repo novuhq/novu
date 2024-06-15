@@ -2,8 +2,8 @@ import { SearchInput } from '@novu/design-system';
 import { Button } from '@novu/novui';
 import { IconAddBox } from '@novu/novui/icons';
 import { Flex } from '@novu/novui/jsx';
-import { PageTemplate } from '../../layout';
-import { WorkflowsTable } from './table';
+import { PageTemplate } from '../../../layout/index';
+import { WorkflowsTable } from '../table/index';
 
 export const WorkflowsListPage = () => {
   return (

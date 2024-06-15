@@ -48,10 +48,12 @@ import { TenantsPage } from './pages/tenants/TenantsPage';
 import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { useSettingsRoutes } from './SettingsRoutes';
-import { WorkflowsListPage } from './studio/components/workflows/WorkflowsListPage';
-import { WorkflowsDetailPage } from './studio/components/workflows/WorkflowsDetailPage';
-import { WorkflowsStepEditorPage } from './studio/components/workflows/WorkflowsStepEditorPage';
-import { WorkflowsTestStepPage } from './studio/components/workflows/WorkflowsTestStepPage';
+import {
+  WorkflowsListPage,
+  WorkflowsDetailPage,
+  WorkflowsStepEditorPage,
+  WorkflowsTestStepPage,
+} from './studio/components/workflows';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
