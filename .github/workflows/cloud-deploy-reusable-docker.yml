@@ -35,27 +35,29 @@ on:
       env_tag:
         required: false
         type: string
+      enterprise:
+        required: false
+        type: boolean
     outputs:
       docker_image:
         description: 'The image that was built'
         value: ${{ jobs.reusable_docker.outputs.docker_image }}
-      docker_image_ee:
-        description: 'The enterprise image that was built'
-        value: ${{ jobs.reusable_docker.outputs.docker_image_ee }}
 
 jobs:
   job-setup:
     runs-on: ubuntu-latest
     outputs:
       platforms: ${{ steps.set-platforms.outputs.platforms }}
+      dockerName: ${{ steps.set-docker-name.outputs.dockerName }}
     steps:
-      - id: set-names
+      - id: set-docker-name
         run: |
-          if [[ "${{ github.event.inputs.environment }}" == "Production" ]]; then
-            echo "::set-output name=matrix::[\"${{ github.event.inputs.package_name }}-ee\", \"${{ github.event.inputs.package_name }}\"]"
+          if [[ "${{ github.event.inputs.enterprise }}" == "true" ]]; then
+            echo "::set-output name=dockerName::${{ github.event.inputs.package_name }}-ee"
           else
-            echo "::set-output name=matrix::[\"${{ github.event.inputs.package_name }}\"]"
+            echo "::set-output name=dockerName::${{ github.event.inputs.package_name }}"
           fi
+
       - id: set-platforms
         run: |
           if [[ "${{ github.event.inputs.environment }}" == "Production" ]]; then
@@ -83,10 +85,12 @@ jobs:
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Prepare
+        id: prepare
         shell: bash
         run: |
-          service=${{ matrix.name }}
-          echo "SERVICE_NAME=$(basename "${service//-/-}")" >> $GITHUB_ENV
+          service=${{ github.event.inputs.package_name }}
+          servicename=${service#*/} 
+          echo "::set-output name=SERVICE_NAME::$servicename"
 
       - uses: ./.github/actions/setup-project
         with:
@@ -106,7 +110,7 @@ jobs:
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
         with:
-          platforms: ${{ needs.job-setup.outputs.matrix }}
+          platforms: ${{ needs.job-setup.outputs.platforms }}
 
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -128,7 +132,7 @@ jobs:
           DOCKER_BUILD_ARGUMENTS: >
             --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-${{ inputs.env_tag }}
             --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ env.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
-            --platform=${{ needs.job-setup.outputs.matrix }} --provenance=false
+            --platform=${{ needs.job-setup.outputs.platforms }} --provenance=false
             --output=type=image,name=ghcr.io/novuhq/${{ matrix.name }},push-by-digest=true,name-canonical=true
         run: |
           echo -n $GH_PASSWORD | wc -c
