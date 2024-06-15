@@ -8,6 +8,15 @@ import { When } from '../../../components/utils/When';
 import { getApiKeys } from '../../../api/environment';
 import { Text } from '@novu/novui';
 import { Timeline } from '../../../components/Timeline/index';
+import { css } from '@novu/novui/css';
+
+const Icon = () => (
+  <IconCheck
+    className={css({
+      color: 'typography.text.main !important',
+    })}
+  />
+);
 
 export const SetupTimeline = ({
   error,
@@ -27,10 +36,10 @@ export const SetupTimeline = ({
   return (
     <Timeline>
       <MantineTimeline.Item
-        bullet={active >= 1 ? <IconCheck /> : 1}
+        bullet={active >= 1 ? <Icon /> : 1}
         lineVariant="dashed"
         title="Create Novu App"
-        active={active === 1}
+        active={active >= 1}
       >
         <CodeSnippet
           command={`npx create-novu app --api-key=${key}`}
@@ -40,10 +49,10 @@ export const SetupTimeline = ({
         />
       </MantineTimeline.Item>
       <MantineTimeline.Item
-        bullet={active >= 2 ? <IconCheck /> : 2}
+        bullet={active >= 2 ? <Icon /> : 2}
         lineVariant="dashed"
         title="Start your application"
-        active={active === 2}
+        active={active >= 2}
       >
         <CodeSnippet
           command={'cd my-app && npm run dev'}
@@ -53,10 +62,10 @@ export const SetupTimeline = ({
         />
       </MantineTimeline.Item>
       <MantineTimeline.Item
-        bullet={active >= 3 ? <IconCheck /> : 3}
+        bullet={active >= 3 ? <Icon /> : 3}
         lineVariant="dashed"
         title="Connect to the endpoint"
-        active={active === 3}
+        active={active >= 3}
       >
         <When truthy={isLoading}>
           <Text variant="main" color="typography.text.secondary">
