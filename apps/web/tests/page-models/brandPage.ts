@@ -29,7 +29,8 @@ export class BrandPage {
 
   public async choosesColorViaButton(colorCode: string) {
     await this.page.getByTestId('color-picker').click();
-    await this.page.locator(`button[aria-label="${colorCode}"]`).click();
+    const buttonColorLabelSelector = `button[aria-label="${colorCode}"]`;
+    await this.page.locator(buttonColorLabelSelector).click();
   }
 
   public async uploadLogoImage(imagePath: string) {

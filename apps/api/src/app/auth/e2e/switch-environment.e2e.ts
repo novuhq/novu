@@ -2,7 +2,7 @@ import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
 import { EnvironmentEntity } from '@novu/dal';
 import { UserSession } from '@novu/testing';
-import { IJwtPayload } from '@novu/shared';
+import { UserSessionData } from '@novu/shared';
 
 describe('Switch Environment - /auth/environments/:id/switch (POST)', async () => {
   let session: UserSession;
@@ -19,7 +19,7 @@ describe('Switch Environment - /auth/environments/:id/switch (POST)', async () =
     });
 
     it('should switch to second environment', async () => {
-      const content = jwt.decode(session.token.split(' ')[1]) as IJwtPayload;
+      const content = jwt.decode(session.token.split(' ')[1]) as UserSessionData;
 
       expect(content.environmentId).to.equal(firstEnvironment._id);
 
@@ -27,7 +27,7 @@ describe('Switch Environment - /auth/environments/:id/switch (POST)', async () =
         .post(`/v1/auth/environments/${secondEnvironment._id}/switch`)
         .expect(200);
 
-      const newJwt = jwt.decode(body.data.token) as IJwtPayload;
+      const newJwt = jwt.decode(body.data.token) as UserSessionData;
 
       expect(newJwt._id).to.equal(session.user._id);
       expect(newJwt.organizationId).to.equal(session.organization._id);

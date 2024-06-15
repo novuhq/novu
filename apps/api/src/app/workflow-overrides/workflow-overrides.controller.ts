@@ -11,14 +11,13 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { RootEnvironmentGuard } from '../auth/framework/root-environment-guard.service';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeController, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { Roles } from '../auth/framework/roles.decorator';
-import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
 import { DataBooleanDto } from '../shared/dtos/data-wrapper-dto';
 import { CreateWorkflowOverride } from './usecases/create-workflow-override/create-workflow-override.usecase';
 import { CreateWorkflowOverrideCommand } from './usecases/create-workflow-override/create-workflow-override.command';
@@ -43,12 +42,14 @@ import { GetWorkflowOverrideById } from './usecases/get-workflow-override-by-id/
 import { GetWorkflowOverrideByIdCommand } from './usecases/get-workflow-override-by-id/get-workflow-override-by-id.command';
 import { UpdateWorkflowOverrideByIdCommand } from './usecases/update-workflow-override-by-id/update-workflow-override-by-id.command';
 import { UpdateWorkflowOverrideById } from './usecases/update-workflow-override-by-id/update-workflow-override-by-id.usecase';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @ApiCommonResponses()
 @Controller('/workflow-overrides')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(UserAuthGuard)
+@UserAuthentication()
 @ApiTags('Workflows-Overrides')
+@ApiExcludeController()
 export class WorkflowOverridesController {
   constructor(
     private createWorkflowOverrideUsecase: CreateWorkflowOverride,
@@ -67,8 +68,8 @@ export class WorkflowOverridesController {
     summary: 'Create workflow override',
   })
   @ExternalApiAccessible()
-  createWorkflowOverride(
-    @UserSession() user: IJwtPayload,
+  create(
+    @UserSession() user: UserSessionData,
     @Body() body: CreateWorkflowOverrideRequestDto
   ): Promise<CreateWorkflowOverrideResponseDto> {
     return this.createWorkflowOverrideUsecase.execute(
@@ -92,7 +93,7 @@ export class WorkflowOverridesController {
   })
   @ExternalApiAccessible()
   updateWorkflowOverrideById(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: UpdateWorkflowOverrideRequestDto,
     @Param('overrideId') overrideId: string
   ): Promise<UpdateWorkflowOverrideResponseDto> {
@@ -116,7 +117,7 @@ export class WorkflowOverridesController {
   })
   @ExternalApiAccessible()
   updateWorkflowOverride(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: UpdateWorkflowOverrideRequestDto,
     @Param('workflowId') workflowId: string,
     @Param('tenantId') tenantId: string
@@ -142,7 +143,7 @@ export class WorkflowOverridesController {
   })
   @ExternalApiAccessible()
   getWorkflowOverrideById(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('overrideId') overrideId: string
   ): Promise<GetWorkflowOverrideResponseDto> {
     return this.getWorkflowOverrideByIdUsecase.execute(
@@ -163,7 +164,7 @@ export class WorkflowOverridesController {
   })
   @ExternalApiAccessible()
   getWorkflowOverride(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('workflowId') workflowId: string,
     @Param('tenantId') tenantId: string
   ): Promise<GetWorkflowOverrideResponseDto> {
@@ -188,7 +189,10 @@ export class WorkflowOverridesController {
     summary: 'Delete workflow override',
   })
   @ExternalApiAccessible()
-  deleteWorkflowOverride(@UserSession() user: IJwtPayload, @Param('overrideId') overrideId: string): Promise<boolean> {
+  deleteWorkflowOverride(
+    @UserSession() user: UserSessionData,
+    @Param('overrideId') overrideId: string
+  ): Promise<boolean> {
     return this.deleteWorkflowOverrideUsecase.execute(
       DeleteWorkflowOverrideCommand.create({
         organizationId: user.organizationId,
@@ -207,7 +211,7 @@ export class WorkflowOverridesController {
   })
   @ExternalApiAccessible()
   getWorkflowOverrides(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Query() query: GetWorkflowOverridesRequestDto
   ): Promise<GetWorkflowOverridesResponseDto> {
     return this.getWorkflowOverridesUsecase.execute(

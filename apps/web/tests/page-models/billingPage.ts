@@ -9,6 +9,7 @@ export class BillingPage {
 
   static async goTo(page: Page): Promise<BillingPage> {
     await page.goto('/settings/billing');
+
     return new BillingPage(page);
   }
 
@@ -72,7 +73,7 @@ export class BillingPage {
   }
 
   public async assertUpgradeButtonTextContains(expected: string) {
-    let upgradeTrialButton = await this.getUpgradeTrialButton().textContent();
+    const upgradeTrialButton = await this.getUpgradeTrialButton().textContent();
     expect(upgradeTrialButton).toContain(expected);
   }
 
