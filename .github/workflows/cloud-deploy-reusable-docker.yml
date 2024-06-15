@@ -81,7 +81,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: ${{ contains (matrix.name,'-ee') }}
+          submodules: ${{ github.event.inputs.enterprise }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Prepare
@@ -95,7 +95,7 @@ jobs:
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
-          submodules: ${{ contains (matrix.name,'-ee') }}
+          submodules: ${{ github.event.inputs.enterprise }}
 
       - uses: crazy-max/ghaction-setup-docker@v2
         with:
@@ -158,7 +158,7 @@ jobs:
           DOCKER_BUILD_ARGUMENTS: >
             --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }}
             --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
-            --platform=${{ needs.job-setup.outputs.matrix }}
+            --platform=${{ needs.job-setup.outputs.platforms }}
             --output=type=image,name=ghcr.io/novuhq/${{ needs.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
