@@ -18,7 +18,7 @@ describe('Novu Client', () => {
   let client: Client;
 
   beforeEach(async () => {
-    const newWorkflow = await workflow('setup-workflow', async ({ step }) => {
+    const newWorkflow = workflow('setup-workflow', async ({ step }) => {
       await step.email('send-email', async () => ({
         body: 'Test Body',
         subject: 'Subject',
@@ -43,7 +43,7 @@ describe('Novu Client', () => {
     test('should discover a complex workflow with all supported step types', async () => {
       const workflowId = 'complex-workflow';
 
-      const newWorkflow = await workflow(workflowId, async ({ step }) => {
+      const newWorkflow = workflow(workflowId, async ({ step }) => {
         await step.email('send-email', async () => ({
           body: 'Test Body',
           subject: 'Subject',
@@ -109,6 +109,9 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
+      // wait for discovery to finish
+      await new Promise((resolve) => setTimeout(resolve, 1));
+
       const discovery = client.discover();
       expect(discovery.workflows).toHaveLength(2);
 
@@ -173,7 +176,7 @@ describe('Novu Client', () => {
     test('should discover a slack provide with blocks', async () => {
       const workflowId = 'complex-workflow';
 
-      const newWorkflow = await workflow(workflowId, async ({ step }) => {
+      const newWorkflow = workflow(workflowId, async ({ step }) => {
         await step.chat(
           'send-chat',
           async () => ({
@@ -288,7 +291,7 @@ describe('Novu Client', () => {
         body: 'Test Body',
         subject: 'Subject',
       };
-      const newWorkflow = await workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => emailConfiguration);
         await step.delay('delay', async () => delayConfiguration);
       });
@@ -359,7 +362,7 @@ describe('Novu Client', () => {
   {{ element }}
 {% endfor %}`;
 
-      const newWorkflow = await workflow(
+      const newWorkflow = workflow(
         'test-workflow',
         async ({ step }) => {
           await step.email(
@@ -426,7 +429,7 @@ describe('Novu Client', () => {
     });
 
     it('should throw error on execute action without data', async () => {
-      const newWorkflow = await workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
 
@@ -446,7 +449,7 @@ describe('Novu Client', () => {
     });
 
     it('should preview workflow successfully when action is preview', async () => {
-      const newWorkflow = await workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
 
@@ -483,7 +486,7 @@ describe('Novu Client', () => {
     });
 
     it('should preview workflow successfully when action is preview and skipped', async () => {
-      const newWorkflow = await workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {
           skip: () => true,
         });
@@ -535,7 +538,7 @@ describe('Novu Client', () => {
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(WorkflowNotFoundError);
 
-      const newWorkflow = await workflow('test-workflow2', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow2', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
 
@@ -552,7 +555,7 @@ describe('Novu Client', () => {
     });
 
     it('should throw and error when step ID is not found', async () => {
-      const newWorkflow = await workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
 
@@ -572,7 +575,7 @@ describe('Novu Client', () => {
     });
 
     it('should throw an error when action is not provided', async () => {
-      const newWorkflow = await workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
 
@@ -605,7 +608,7 @@ describe('Novu Client', () => {
     beforeEach(async () => {
       getCodeClientInstance = new Client();
 
-      const newWorkflow = await workflow('setup-workflow', workflowExecuteFunc);
+      const newWorkflow = workflow('setup-workflow', workflowExecuteFunc);
 
       getCodeClientInstance.addWorkflows([newWorkflow]);
     });
@@ -615,7 +618,7 @@ describe('Novu Client', () => {
     });
 
     it('should throw an error when step ID is provided but not found in the workflow', async () => {
-      const newWorkflow = await workflow('test-workflow', workflowExecuteFunc);
+      const newWorkflow = workflow('test-workflow', workflowExecuteFunc);
 
       getCodeClientInstance.addWorkflows([newWorkflow]);
 
