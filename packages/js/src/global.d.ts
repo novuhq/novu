@@ -1,9 +1,9 @@
 import { Novu } from './novu';
-import { UI } from './ui';
+import { InboxUI } from './ui';
 
 declare global {
   interface Window {
     Novu: typeof Novu;
-    UI: typeof UI;
+    UI: typeof InboxUI;
   }
 }
