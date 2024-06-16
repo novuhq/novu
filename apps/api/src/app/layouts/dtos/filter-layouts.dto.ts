@@ -1,36 +1,43 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsOptional, IsString, Min } from 'class-validator';
-import { Transform } from 'class-transformer';
 
 import { LayoutDto } from './layout.dto';
-
-import { OrderDirectionEnum } from '../types';
+import { Transform } from 'class-transformer';
+import { OrderByEnum } from '@novu/shared';
 
 export class FilterLayoutsRequestDto {
   @Transform(({ value }) => Number(value))
   @IsOptional()
   @IsInt()
   @Min(0)
-  @ApiPropertyOptional({ type: Number })
+  @ApiPropertyOptional({ type: Number, description: 'Number of page for pagination', required: false })
   public page?: number;
 
   @Transform(({ value }) => Number(value))
   @IsOptional()
   @IsInt()
   @Min(0)
-  @ApiPropertyOptional({ type: Number })
+  @ApiPropertyOptional({ type: Number, description: 'Size of page for pagination', required: false })
   public pageSize?: number;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ type: String })
+  @ApiPropertyOptional({
+    type: String,
+    description: 'Sort field. Currently only supported `createdAt`',
+    required: false,
+  })
   public sortBy?: string;
 
   @Transform(({ value }) => Number(value))
   @IsOptional()
-  @IsInt()
-  @ApiPropertyOptional({ type: Number })
-  public orderBy?: OrderDirectionEnum;
+  @ApiPropertyOptional({
+    type: String,
+    enum: OrderByEnum,
+    description: 'Direction of the sorting query param',
+    required: false,
+  })
+  public orderBy?: number | OrderByEnum;
 }
 
 export class FilterLayoutsResponseDto {

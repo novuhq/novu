@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
 import { ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
-import { Type, applyDecorators } from '@nestjs/common';
-import { DataWrapperDto } from '../dtos/data-wrapper-dto';
+import { applyDecorators, Type } from '@nestjs/common';
 import { customResponseDecorators } from './swagger/responses.decorator';
 import { COMMON_RESPONSES } from './constants/responses.schema';
+import { DataWrapperDto } from '../dtos/data-wrapper-dto';
 
 export const ApiOkResponse = customResponseDecorators.ApiOkResponse;
 export const ApiCreatedResponse = customResponseDecorators.ApiCreatedResponse;

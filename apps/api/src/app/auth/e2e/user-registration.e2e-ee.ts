@@ -2,7 +2,7 @@ import { EnvironmentRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
-import { IJwtPayload } from '@novu/shared';
+import { UserSessionData } from '@novu/shared';
 
 describe('User registration in enterprise - /auth/register (POST)', async () => {
   let session: UserSession;
@@ -24,11 +24,11 @@ describe('User registration in enterprise - /auth/register (POST)', async () => 
 
     expect(body.data.token).to.be.ok;
 
-    const jwtContent = (await jwt.decode(body.data.token)) as IJwtPayload;
+    const jwtContent = (await jwt.decode(body.data.token)) as UserSessionData;
 
     expect(jwtContent.environmentId).to.be.ok;
     const environment = await environmentRepository.findOne({ _id: jwtContent.environmentId });
 
-    expect(environment.echo.url).to.be.ok;
+    expect(environment?.echo.url).to.be.ok;
   });
 });

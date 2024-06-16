@@ -1,6 +1,6 @@
 {
   "name": "@novu/echo",
-  "version": "0.24.3-alpha.3",
+  "version": "0.24.3-alpha.4",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -15,8 +15,8 @@
   },
   "scripts": {
     "preinstall": "npx only-allow pnpm",
-    "test": "jest",
-    "test:watch": "jest --watch",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --check --ignore-path .gitignore .",
@@ -83,22 +83,19 @@
     }
   },
   "devDependencies": {
-    "@jest/globals": "^29.7.0",
     "@sveltejs/kit": "^2.5.10",
     "@types/express": "^4.17.13",
-    "@types/jest": "^29.5.12",
     "@types/json-schema": "^7.0.15",
     "@types/node": "^20.11.20",
     "@vercel/node": "^2.15.9",
     "express": "^4.18.2",
     "h3": "^1.11.1",
-    "jest": "^29.7.0",
     "next": "^13.5.4",
     "prettier": "^3.2.5",
-    "ts-jest": "^29.1.2",
     "ts-node": "^10.9.2",
     "tsup": "^8.0.2",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.1"
   },
   "dependencies": {
     "ajv": "^8.12.0",
