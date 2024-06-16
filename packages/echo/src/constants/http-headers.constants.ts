@@ -7,6 +7,7 @@ export enum HttpHeaderKeysEnum {
   USER_AGENT = 'user-agent',
   CONTENT_TYPE = 'content-type',
   AUTHORIZATION = 'authorization',
+  ORIGIN = 'origin',
   ACCESS_CONTROL_ALLOW_ORIGIN = 'access-control-allow-origin',
   ACCESS_CONTROL_ALLOW_METHODS = 'access-control-allow-methods',
   ACCESS_CONTROL_ALLOW_HEADERS = 'access-control-allow-headers',
