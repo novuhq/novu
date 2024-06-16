@@ -122,7 +122,7 @@ jobs:
         if: ${{ inputs.env_tag == 'dev' || inputs.env_tag == 'stg' }}
         env:
           REGISTRY_OWNER: novuhq
-          DOCKER_NAME: ${{ needs.prepare.outputs.SERVICE_NAME }}
+          DOCKER_NAME: ${{ steps.prepare.outputs.SERVICE_NAME }}
           LOCAL_TAG: ${{ inputs.local_tag }}
           IMAGE_TAG: ${{ github.sha }}
           ENV_TAG: ${{ inputs.env_tag }}
@@ -148,7 +148,7 @@ jobs:
         if: ${{ inputs.env_tag == 'prod' }}
         env:
           REGISTRY_OWNER: novuhq
-          DOCKER_NAME: ${{ needs.prepare.outputs.SERVICE_NAME }}
+          DOCKER_NAME: ${{ steps.prepare.outputs.SERVICE_NAME }}
           LOCAL_TAG: ${{ inputs.local_tag }}
           IMAGE_TAG: ${{ github.sha }}
           ENV_TAG: ${{ inputs.env_tag }}
@@ -174,7 +174,7 @@ jobs:
         id: save-image-to-output
         env:
           REGISTRY_OWNER: novuhq
-          DOCKER_NAME: ${{ needs.prepare.outputs.SERVICE_NAME }}
+          DOCKER_NAME: ${{ steps.prepare.outputs.SERVICE_NAME }}
           IMAGE_TAG: ${{ github.sha }}
           OUTPUT_NAME: ${{ needs.job-setup.outputs.dockerName }}
         run: |
@@ -185,7 +185,7 @@ jobs:
         if: ${{ inputs.health_check == 'true' && (steps.build-image.outcome == 'success' || steps.build-prod-image.outcome == 'success') }}
         env:
           REGISTRY_OWNER: novuhq
-          DOCKER_NAME: ${{ needs.prepare.outputs.SERVICE_NAME }}
+          DOCKER_NAME: ${{ steps.prepare.outputs.SERVICE_NAME }}
           LOCAL_TAG: ${{ inputs.local_tag }}
           IMAGE_TAG: ${{ github.sha }}
           TEST_PORT: ${{ inputs.test_port }}
