@@ -1,6 +1,6 @@
 import { render } from 'solid-js/web';
 
-import App from './App';
+import Inbox from './Inbox';
 
 export class UI {
   #dispose: { (): void } | null = null;
@@ -26,7 +26,7 @@ export class UI {
     root.setAttribute('id', 'novu-ui');
     el.appendChild(root);
 
-    const dispose = render(() => <App name={name} options={options} />, root);
+    const dispose = render(() => <Inbox name={name} options={options} />, root);
 
     this.#dispose = dispose;
   }

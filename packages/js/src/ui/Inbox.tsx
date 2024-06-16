@@ -2,7 +2,7 @@ import { For, createSignal, onMount, type Component } from 'solid-js';
 import { Notification } from 'src/feeds';
 import { Novu } from 'src/novu';
 
-const App: Component<{
+const Inbox: Component<{
   name: string;
   options: {
     applicationIdentifier: string;
@@ -37,4 +37,4 @@ const App: Component<{
   );
 };
 
-export default App;
+export default Inbox;
