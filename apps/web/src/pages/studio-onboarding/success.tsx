@@ -2,7 +2,7 @@ import { Title, Text } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { VStack } from '@novu/novui/jsx';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getActivityList } from '../../api/activity';
 import { ExecutionDetailsAccordion } from '../../components/execution-detail/ExecutionDetailsAccordion';
@@ -15,7 +15,7 @@ export const StudioOnboardingSuccess = () => {
   const [searchParams] = useSearchParams();
   const segment = useSegment();
   const navigate = useNavigate();
-  const { data } = useQuery<{ data: any[]; hasMore: boolean; pageSize: number }>(
+  const { data, isLoading } = useQuery<{ data: any[]; hasMore: boolean; pageSize: number }>(
     ['activitiesList', 0, searchParams.get('transactionId')],
     () =>
       getActivityList(0, {
@@ -23,6 +23,7 @@ export const StudioOnboardingSuccess = () => {
       }),
     {
       refetchOnMount: true,
+      refetchInterval: 500,
     }
   );
 
@@ -35,7 +36,7 @@ export const StudioOnboardingSuccess = () => {
   }, [data]);
 
   const identifier = useMemo(() => {
-    if (item === null) {
+    if (!item) {
       return undefined;
     }
 
@@ -69,7 +70,7 @@ export const StudioOnboardingSuccess = () => {
             width: 'onboarding',
           })}
         >
-          <Title variant="page">Success, you sent an email to {email}</Title>
+          <Title variant="page">Success! You sent an email to {email}</Title>
           <Text
             variant="main"
             color="typography.text.secondary"
