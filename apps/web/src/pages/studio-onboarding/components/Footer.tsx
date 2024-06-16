@@ -8,6 +8,7 @@ import { When } from '../../../components/utils/When';
 import { DocsButton } from '../../../components/docs/DocsButton';
 import { Button } from '@novu/novui';
 import { useSegment } from '../../../components/providers/SegmentProvider';
+import { ROUTES } from '../../../constants/routes';
 
 const Text = styled('a', text);
 
@@ -77,7 +78,7 @@ export const Footer = ({
           </div>
           <HStack gap="100">
             <When truthy={canSkipSetup}>
-              {/*<Button
+              <Button
                 disabled={loading}
                 onClick={() => {
                   segment.track('Skip setup button clicked - [Onboarding - Signup]', {
@@ -88,7 +89,7 @@ export const Footer = ({
                 variant="transparent"
               >
                 Skip setup
-              </Button>*/}
+              </Button>
             </When>
             <Tooltip label={tooltip} disabled={!tooltip}>
               <Button loading={loading} onClick={onClick} disabled={disabled}>
