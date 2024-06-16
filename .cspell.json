@@ -734,6 +734,7 @@
     ".env.local",
     ".env.production",
     ".env.test",
-    ".example.env"
+    ".example.env",
+    "pnpm-lock.yaml"
   ]
 }
