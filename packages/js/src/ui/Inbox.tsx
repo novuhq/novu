@@ -7,8 +7,6 @@ const Inbox: Component<{
   name: string;
   options: NovuOptions;
 }> = (props) => {
-  // const novu = new Novu(props);
-
   const [feeds, setFeeds] = createSignal<Notification[]>([]);
 
   onMount(() => {
