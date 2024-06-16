@@ -42,7 +42,7 @@ export const SetupTimeline = ({
         active={active >= 1}
       >
         <CodeSnippet
-          command={`npx create-novu app --api-key=${key}`}
+          command={`npx create-novu-app --api-key=${key}`}
           onClick={() => {
             setActive((old) => (old > 1 ? old : 1));
           }}
