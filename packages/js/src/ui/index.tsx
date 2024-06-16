@@ -1,6 +1,6 @@
 import { render } from 'solid-js/web';
-
 import Inbox from './Inbox';
+import type { NovuOptions } from 'src/novu';
 
 export class UI {
   #dispose: { (): void } | null = null;
@@ -12,10 +12,7 @@ export class UI {
       options,
     }: {
       name?: string;
-      options: {
-        applicationIdentifier: string;
-        subscriberId: string;
-      };
+      options: NovuOptions;
     }
   ): void {
     if (this.#dispose !== null) {
