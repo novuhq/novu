@@ -159,6 +159,16 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       if (method === HttpMethodEnum.GET) {
         return await this.handleGetAction(action, getActionMap);
       }
+
+      if (method === HttpMethodEnum.OPTIONS) {
+        return this.createResponse(
+          HttpStatusEnum.OK,
+          {},
+          {
+            ...this.getStaticHeaders(),
+          }
+        );
+      }
     } catch (error) {
       return this.handleError(error);
     }
