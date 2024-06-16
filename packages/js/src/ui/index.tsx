@@ -4,6 +4,7 @@ import type { NovuOptions } from 'src/novu';
 
 export class UI {
   #dispose: { (): void } | null = null;
+  #rootElement: HTMLElement;
 
   mount(
     el: HTMLElement,
@@ -19,11 +20,11 @@ export class UI {
       return;
     }
 
-    const root = document.createElement('div');
-    root.setAttribute('id', 'novu-ui');
-    el.appendChild(root);
+    this.#rootElement = document.createElement('div');
+    this.#rootElement.setAttribute('id', 'novu-ui');
+    el.appendChild(this.#rootElement);
 
-    const dispose = render(() => <Inbox name={name} options={options} />, root);
+    const dispose = render(() => <Inbox name={name} options={options} />, this.#rootElement);
 
     this.#dispose = dispose;
   }
@@ -31,5 +32,6 @@ export class UI {
   unmount(): void {
     this.#dispose?.();
     this.#dispose = null;
+    this.#rootElement.remove();
   }
 }
