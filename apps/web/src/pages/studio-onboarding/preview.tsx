@@ -4,7 +4,7 @@ import { Tabs } from '@novu/design-system';
 import { IconCode, IconVisibility } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { createSearchParams, useNavigate } from 'react-router-dom';
 import { PreviewWeb } from '../../components/workflow/preview/email/PreviewWeb';
 import { useActiveIntegrations, useAuth } from '../../hooks/index';
 import { useTemplates } from '../../hooks/useTemplates';
@@ -85,7 +85,7 @@ export const StudioOnboardingPreview = () => {
       email: currentUser?.email,
     };
 
-    await triggerTestEvent({
+    const response = await triggerTestEvent({
       name: identifier,
       to,
       payload: {
@@ -93,7 +93,12 @@ export const StudioOnboardingPreview = () => {
       },
     });
 
-    navigate(ROUTES.STUDIO_ONBOARDING_SUCCESS);
+    navigate({
+      pathname: ROUTES.STUDIO_ONBOARDING_SUCCESS,
+      search: createSearchParams({
+        transactionId: response.transactionId,
+      }).toString(),
+    });
   };
 
   if (loading) {

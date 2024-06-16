@@ -76,7 +76,7 @@ export const Footer = ({
           </div>
           <HStack gap="100">
             <When truthy={canSkipSetup}>
-              <Button
+              {/*<Button
                 disabled={loading}
                 onClick={() => {
                   segment.track('Skip setup button clicked - [Onboarding - Signup]', {
@@ -84,10 +84,10 @@ export const Footer = ({
                   });
                   navigate(ROUTES.WORKFLOWS);
                 }}
-                variant="outline"
+                variant="transparent"
               >
                 Skip setup
-              </Button>
+              </Button>*/}
             </When>
             <Tooltip label={tooltip} disabled={!tooltip}>
               <Button loading={loading} onClick={onClick}>

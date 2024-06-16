@@ -3,7 +3,7 @@ import { css } from '@novu/novui/css';
 import { VStack } from '@novu/novui/jsx';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { getActivityList } from '../../api/activity';
 import { ExecutionDetailsAccordion } from '../../components/execution-detail/ExecutionDetailsAccordion';
 import { useSegment } from '../../components/providers/SegmentProvider';
@@ -12,10 +12,19 @@ import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 
 export const StudioOnboardingSuccess = () => {
+  const params = useParams();
+  const [searchParams] = useSearchParams();
   const segment = useSegment();
   const navigate = useNavigate();
-  const { data } = useQuery<{ data: any[]; hasMore: boolean; pageSize: number }>(['activitiesList', 0], () =>
-    getActivityList(0, undefined)
+  const { data } = useQuery<{ data: any[]; hasMore: boolean; pageSize: number }>(
+    ['activitiesList', 0, searchParams.get('transactionId')],
+    () =>
+      getActivityList(0, {
+        transactionId: searchParams.get('transactionId'),
+      }),
+    {
+      refetchOnMount: true,
+    }
   );
 
   const item = useMemo(() => {
