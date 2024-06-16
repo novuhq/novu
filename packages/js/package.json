@@ -33,9 +33,8 @@
   "private": true,
   "scripts": {
     "start": "pnpm run build -- --watch --sourcemap",
-    "build": "pnpm run build:ui && tsup && pnpm run build:umd && pnpm run post:build",
+    "build": "tsup && pnpm run build:umd && pnpm run post:build",
     "build:umd": "webpack --config webpack.config.cjs",
-    "build:ui": "tsup --config tsup.ui.config.ts",
     "post:build": "node scripts/size-limit.mjs",
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"
