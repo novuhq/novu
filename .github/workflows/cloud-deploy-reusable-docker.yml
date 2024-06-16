@@ -52,15 +52,15 @@ jobs:
     steps:
       - id: set-docker-name
         run: |
-          if [[ "${{ github.event.inputs.enterprise }}" == "true" ]]; then
-            echo "::set-output name=dockerName::${{ github.event.inputs.package_name }}-ee"
+          if [[ "${{ inputs.enterprise }}" == "true" ]]; then
+            echo "::set-output name=dockerName::${{ inputs.package_name }}-ee"
           else
-            echo "::set-output name=dockerName::${{ github.event.inputs.package_name }}"
+            echo "::set-output name=dockerName::${{ inputs.package_name }}"
           fi
 
       - id: set-platforms
         run: |
-          if [[ "${{ github.event.inputs.environment }}" == "Production" ]]; then
+          if [[ "${{ inputs.environment }}" == "Production" ]]; then
             echo "::set-output name=platforms::linux/amd64,linux/arm64"
           else
             echo "::set-output name=platforms::linux/amd64"
@@ -81,21 +81,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: ${{ github.event.inputs.enterprise }}
+          submodules: ${{ inputs.enterprise }}
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Prepare
         id: prepare
         shell: bash
         run: |
-          service=${{ github.event.inputs.package_name }}
+          service=${{ inputs.package_name }}
           servicename=${service#*/} 
           echo "::set-output name=SERVICE_NAME::$servicename"
 
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
-          submodules: ${{ github.event.inputs.enterprise }}
+          submodules: ${{ inputs.enterprise }}
 
       - uses: crazy-max/ghaction-setup-docker@v2
         with:
