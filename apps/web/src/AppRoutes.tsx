@@ -146,7 +146,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.STUDIO}>
           <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
           <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
-          <Route path={'/studio/flows/:templateId'} element={<WorkflowsDetailPage />} />
+          <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />

@@ -180,10 +180,12 @@ export const serve = (options: ServeHandlerOptions): any => {
     GET: { value: baseHandler.bind(null, 'GET') },
     POST: { value: baseHandler.bind(null, 'POST') },
     PUT: { value: baseHandler.bind(null, 'PUT') },
+    OPTIONS: { value: baseHandler.bind(null, 'OPTIONS') },
   }) as HandlerFunction & {
     GET: HandlerFunction;
     POST: HandlerFunction;
     PUT: HandlerFunction;
+    OPTIONS: HandlerFunction;
   };
 
   return handlerFunctions;

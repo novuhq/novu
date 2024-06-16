@@ -604,6 +604,9 @@
     "WaitList",
     "webfontloader",
     "webpush",
+    "rjsf",
+    "RJSF",
+    "norender",
     "Webpush",
     "websockets",
     "whatsapp",
@@ -633,6 +636,11 @@
     "zwnj",
     "prepush",
     "xcodebuild",
+    "vstack",
+    "nimma",
+    "jpath",
+    "Nimma",
+    "jpath",
     "vstack",
     "liquidjs"
   ],
@@ -727,6 +735,7 @@
     ".env.local",
     ".env.production",
     ".env.test",
-    ".example.env"
+    ".example.env",
+    "pnpm-lock.yaml"
   ]
 }

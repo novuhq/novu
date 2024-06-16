@@ -1,6 +1,6 @@
 import * as Configstore from 'configstore';
 import jwt_decode from 'jwt-decode';
-import { IJwtPayload } from '@novu/shared';
+import { UserSessionData } from '@novu/shared';
 
 export class ConfigService {
   private _config: Configstore;
@@ -32,7 +32,7 @@ export class ConfigService {
     return this._config.get('token');
   }
 
-  getDecodedToken(): IJwtPayload {
+  getDecodedToken(): UserSessionData {
     if (!this.getToken()) {
       return null;
     }

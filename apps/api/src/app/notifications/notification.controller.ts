@@ -1,6 +1,6 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { ChannelTypeEnum, IJwtPayload } from '@novu/shared';
+import { ChannelTypeEnum, UserSessionData } from '@novu/shared';
 
 import { GetActivityFeed } from './usecases/get-activity-feed/get-activity-feed.usecase';
 import { GetActivityFeedCommand } from './usecases/get-activity-feed/get-activity-feed.command';
@@ -16,12 +16,13 @@ import { GetActivityCommand } from './usecases/get-activity/get-activity.command
 
 import { UserSession } from '../shared/framework/user.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
-import { ApiCommonResponses, ApiResponse, ApiOkResponse } from '../shared/framework/response.decorator';
+import { ApiCommonResponses, ApiOkResponse, ApiResponse } from '../shared/framework/response.decorator';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/notifications')
-@ApiTags('Notification')
+@ApiTags('Notifications')
 export class NotificationsController {
   constructor(
     private getActivityFeedUsecase: GetActivityFeed,
@@ -37,10 +38,10 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Get notifications',
   })
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ExternalApiAccessible()
-  getNotifications(
-    @UserSession() user: IJwtPayload,
+  listNotifications(
+    @UserSession() user: UserSessionData,
     @Query() query: ActivitiesRequestDto
   ): Promise<ActivitiesResponseDto> {
     let channelsQuery: ChannelTypeEnum[] | null = null;
@@ -85,9 +86,10 @@ export class NotificationsController {
     summary: 'Get notification statistics',
   })
   @Get('/stats')
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ExternalApiAccessible()
-  getActivityStats(@UserSession() user: IJwtPayload): Promise<ActivityStatsResponseDto> {
+  @SdkGroupName('Notifications.Stats')
+  getActivityStats(@UserSession() user: UserSessionData): Promise<ActivityStatsResponseDto> {
     return this.getActivityStatsUsecase.execute(
       GetActivityStatsCommand.create({
         organizationId: user.organizationId,
@@ -97,7 +99,7 @@ export class NotificationsController {
   }
 
   @Get('/graph/stats')
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ExternalApiAccessible()
   @ApiResponse(ActivityGraphStatesResponse, 200, true)
   @ApiOperation({
@@ -108,8 +110,10 @@ export class NotificationsController {
     type: Number,
     required: false,
   })
+  @SdkGroupName('Notifications.Stats')
+  @SdkMethodName('graph')
   getActivityGraphStats(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Query('days') days = 32
   ): Promise<ActivityGraphStatesResponse[]> {
     return this.getActivityGraphStatsUsecase.execute(
@@ -127,10 +131,10 @@ export class NotificationsController {
   @ApiOperation({
     summary: 'Get notification',
   })
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @ExternalApiAccessible()
-  getActivity(
-    @UserSession() user: IJwtPayload,
+  getNotification(
+    @UserSession() user: UserSessionData,
     @Param('notificationId') notificationId: string
   ): Promise<ActivityNotificationResponseDto> {
     return this.getActivityUsecase.execute(
