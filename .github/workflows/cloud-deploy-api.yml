@@ -29,7 +29,7 @@ jobs:
     needs: set_environment
     uses: ./.github/workflows/cloud-deploy-reusable-docker.yml
     with:
-      environment: ${{ needs.set_environment.outputs.environment }}
+      environment: ${{ steps.set_environment.outputs.environment }}
       package_name: novu/api
       project_path: apps/api
       test_port: 1341
@@ -45,7 +45,7 @@ jobs:
     if: ${{ contains(inputs.env, 'dev') }}
     secrets: inherit
     with:
-      environment: ${{ needs.set_environment.outputs.environment }}
+      environment: ${{ steps.set_environment.outputs.environment }}
       service_name: api
       terraform_workspace: novu-dev
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
@@ -57,7 +57,7 @@ jobs:
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit
     with:
-      environment: ${{ needs.set_environment.outputs.environment }}
+      environment: ${{ steps.set_environment.outputs.environment }}
       service_name: api
       terraform_workspace: novu-prod-eu
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
