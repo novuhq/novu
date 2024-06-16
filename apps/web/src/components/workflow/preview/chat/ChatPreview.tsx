@@ -12,7 +12,8 @@ import { ChatInput } from './ChatInput';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { usePreviewChatTemplate } from '../../../../pages/templates/hooks/usePreviewChatTemplate';
 import { useEffect, useState } from 'react';
-import { api, useEnvController } from '@novu/shared-web';
+import { api } from '../../../../api';
+import { useEnvController } from '../../../../hooks/useEnvController';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { ErrorPrettyRender } from '../ErrorPrettyRender';
@@ -28,39 +29,39 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
 
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
-  const { chimera } = useEnvController({}, template?.chimera);
+  const { bridge } = useEnvController({}, template?.bridge);
   const path = useStepFormPath();
   const content = watch(`${path}.template.content`);
   const { pathname } = useLocation();
   const isPreviewPath = pathname.endsWith('/preview');
   const stepId = watch(`${path}.uuid`);
-  const [chimeraContent, setChimeraContent] = useState('');
+  const [bridgeContent, setBridgeContent] = useState('');
 
   const {
     mutateAsync,
-    isLoading: isChimeraLoading,
+    isLoading: isBridgeLoading,
     error: previewError,
   } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
     onSuccess(data) {
-      setChimeraContent(data.outputs.body);
+      setBridgeContent(data.outputs.body);
     },
   });
 
   useEffect(() => {
-    if (chimera) {
+    if (bridge) {
       mutateAsync(inputVariables);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chimera, inputVariables]);
+  }, [bridge, inputVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
-    disabled: showLoading || chimera,
+    disabled: showLoading || bridge,
   });
 
   const { isPreviewContentLoading, previewContent, templateError } = usePreviewChatTemplate({
     locale: selectedLocale,
-    disabled: showLoading || chimera,
+    disabled: showLoading || bridge,
   });
 
   if (previewError) {
@@ -73,7 +74,7 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
         <LocaleSelect
           value={selectedLocale}
           onLocaleChange={onLocaleChange}
-          isLoading={areLocalesLoading || isPreviewContentLoading || isChimeraLoading}
+          isLoading={areLocalesLoading || isPreviewContentLoading || isBridgeLoading}
           locales={locales || []}
         />
       </Flex>
@@ -88,9 +89,9 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
       />
       <ChatContent
         showOverlay={isPreviewPath}
-        isLoading={showLoading || isPreviewContentLoading || areLocalesLoading || isChimeraLoading}
-        content={previewContent || chimeraContent}
-        errorMsg={chimera ? undefined : templateError}
+        isLoading={showLoading || isPreviewContentLoading || areLocalesLoading || isBridgeLoading}
+        content={previewContent || bridgeContent}
+        errorMsg={bridge ? undefined : templateError}
       />
       <ChatInput />
     </ChatPreviewContainer>

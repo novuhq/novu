@@ -2,7 +2,7 @@ import { Group, Stack } from '@mantine/core';
 import { useEffect } from 'react';
 
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { Cards } from '@novu/design-system';
 import { QuickStartWrapper } from '../components/QuickStartWrapper';
 import { frameworkSetupTitle, OnBoardingAnalyticsEnum } from '../consts';

@@ -15,8 +15,7 @@ import { EditVariablesModal } from '../EditVariablesModal';
 import { VariableManagementButton } from '../VariableManagementButton';
 import { useEditTemplateContent } from '../../hooks/useEditTemplateContent';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
-import { colors, When } from '@novu/design-system';
-import { InputVariables } from '../InputVariables';
+import { When } from '@novu/design-system';
 import { InputVariablesForm } from '../InputVariablesForm';
 
 const templateFields = ['content'];
@@ -35,8 +34,7 @@ export function TemplateChatEditor() {
   const [inputVariables, setInputVariables] = useState();
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const { template } = useTemplateEditorForm();
-  const { chimera } = useEnvController({}, template?.chimera);
-  const [activeTab, setActiveTab] = useState<string>(PREVIEW);
+  const { bridge } = useEnvController({}, template?.bridge);
   const theme = useMantineTheme();
 
   return (
@@ -55,9 +53,9 @@ export function TemplateChatEditor() {
                   openEditVariablesModal={() => {
                     setEditVariablesModalOpen(true);
                   }}
-                  label={chimera ? 'Input variables' : undefined}
+                  label={bridge ? 'Input variables' : undefined}
                 />
-                <When truthy={!chimera}>
+                <When truthy={!bridge}>
                   <CustomCodeEditor
                     value={(field.value as string) || ''}
                     onChange={(value) => {
@@ -65,7 +63,7 @@ export function TemplateChatEditor() {
                     }}
                   />
                 </When>
-                <When truthy={chimera}>
+                <When truthy={bridge}>
                   <InputVariablesForm onChange={setInputVariables} />
                 </When>
               </Stack>

@@ -9,7 +9,7 @@ import WorkflowEditor from '../workflow/WorkflowEditor';
 import { useEnvController, usePrompt } from '../../../hooks';
 import { BlueprintModal } from '../components/BlueprintModal';
 import { TemplateEditorFormProvider, useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { TourProvider } from './TourProvider';
 import { NavigateValidatorModal } from '../components/NavigateValidatorModal';
 import { useTourStorage } from '../hooks/useTourStorage';
@@ -19,7 +19,7 @@ function BaseTemplateEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { template, isCreating, onSubmit, onInvalid } = useTemplateEditorForm();
-  const { environment, chimera } = useEnvController({}, template?.chimera);
+  const { environment, bridge } = useEnvController({}, template?.bridge);
   const methods = useFormContext<IForm>();
   const { handleSubmit } = methods;
   const tourStorage = useTourStorage();
@@ -31,7 +31,7 @@ function BaseTemplateEditorPage() {
   const isCreateTemplatePage = location.pathname === ROUTES.WORKFLOWS_CREATE;
 
   const [showNavigateValidatorModal, confirmNavigate, cancelNavigate] = usePrompt(
-    !methods.formState.isValid && !chimera && location.pathname !== ROUTES.WORKFLOWS_CREATE && !isTouring,
+    !methods.formState.isValid && !bridge && location.pathname !== ROUTES.WORKFLOWS_CREATE && !isTouring,
     (nextLocation) => {
       if (nextLocation.location.pathname.includes(basePath)) {
         nextLocation.retry();
@@ -68,7 +68,7 @@ function BaseTemplateEditorPage() {
 
   return (
     <>
-      {!chimera && <TourProvider />}
+      {!bridge && <TourProvider />}
 
       <PageContainer title={template?.name ?? 'Create Template'}>
         <form

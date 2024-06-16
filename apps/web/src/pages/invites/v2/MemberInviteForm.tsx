@@ -1,7 +1,7 @@
 import { Group } from '@mantine/core';
 import { Button, errorMessage, Invite, successMessage } from '@novu/design-system';
 import { IResponseError } from '@novu/shared';
-import { IS_DOCKER_HOSTED } from '@novu/shared-web';
+import { IS_DOCKER_HOSTED } from '../../../config';
 import { useMutation } from '@tanstack/react-query';
 import { Controller, useForm } from 'react-hook-form';
 

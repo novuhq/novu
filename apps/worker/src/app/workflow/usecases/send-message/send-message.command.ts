@@ -1,6 +1,6 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { NotificationStepEntity, JobEntity } from '@novu/dal';
-import { EnvironmentWithUserCommand, ExecuteOutput, IChimeraChannelResponse } from '@novu/application-generic';
+import { EnvironmentWithUserCommand, ExecuteOutput, IBridgeChannelResponse } from '@novu/application-generic';
 
 export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()
@@ -45,5 +45,5 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   job: JobEntity;
 
   @IsOptional()
-  chimeraData?: ExecuteOutput<IChimeraChannelResponse> | null;
+  bridgeData?: ExecuteOutput<IBridgeChannelResponse> | null;
 }

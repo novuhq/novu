@@ -5,35 +5,22 @@ import {
   MessageRepository,
   SubscriberEntity,
   NotificationTemplateRepository,
+  JobRepository,
   ExecutionDetailsRepository,
 } from '@novu/dal';
-import { ExecutionDetailsStatusEnum, MarkMessagesAsEnum, StepTypeEnum } from '@novu/shared';
+import { ExecutionDetailsStatusEnum, JobStatusEnum, MarkMessagesAsEnum, StepTypeEnum } from '@novu/shared';
 import { echoServer } from '../../../../e2e/echo.server';
+
+const eventTriggerPath = '/v1/events/trigger';
 
 describe('Echo Trigger ', async () => {
   let session: UserSession;
   const messageRepository = new MessageRepository();
   const workflowsRepository = new NotificationTemplateRepository();
-  const executionDetailsRepository = new ExecutionDetailsRepository();
-
+  const jobRepository = new JobRepository();
   let subscriber: SubscriberEntity;
   let subscriberService: SubscribersService;
-
-  const triggerEvent = async (workflowId: string, payload): Promise<void> => {
-    await axios.post(
-      `${session.serverUrl}/v1/events/trigger`,
-      {
-        name: workflowId,
-        to: [subscriber.subscriberId],
-        payload,
-      },
-      {
-        headers: {
-          authorization: `ApiKey ${session.apiKey}`,
-        },
-      }
-    );
-  };
+  const executionDetailsRepository = new ExecutionDetailsRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -86,8 +73,7 @@ describe('Echo Trigger ', async () => {
       throw new Error('Workflow not found');
     }
 
-    await triggerEvent(workflowId, { name: 'test_name' });
-
+    await triggerEvent(session, workflowId, subscriber, { name: 'test_name' });
     await session.awaitRunningJobs(workflow._id);
 
     const messagesAfter = await messageRepository.find({
@@ -98,6 +84,141 @@ describe('Echo Trigger ', async () => {
 
     expect(messagesAfter.length).to.be.eq(1);
     expect(messagesAfter[0].subject).to.include('This is an email subject TEST');
+  });
+
+  it('should skip step', async () => {
+    // should skip static value
+    const workflowIdSkipByStatic = 'skip-by-static-value-workflow';
+    await echoServer.echo.workflow(
+      workflowIdSkipByStatic,
+      async ({ step, payload }) => {
+        await step.email(
+          'send-email',
+          async (inputs) => {
+            return {
+              subject: 'This is an email subject ' + inputs.name,
+              body: 'Body result ' + payload.name,
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', default: 'TEST' },
+              },
+            } as const,
+            skip: () => true,
+          }
+        );
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await syncWorkflow(session);
+
+    const workflowByStatic = await workflowsRepository.findByTriggerIdentifier(
+      session.environment._id,
+      workflowIdSkipByStatic
+    );
+
+    expect(workflowByStatic).to.be.ok;
+    if (!workflowByStatic) throw new Error('Workflow not found');
+
+    await triggerEvent(session, workflowIdSkipByStatic, subscriber);
+    await session.awaitRunningJobs(workflowByStatic._id);
+
+    const executedMessageByStatic = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.EMAIL,
+    });
+
+    expect(executedMessageByStatic.length).to.be.eq(0);
+
+    const cancelledJobByStatic = await jobRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      type: StepTypeEnum.EMAIL,
+    });
+
+    expect(cancelledJobByStatic.length).to.be.eq(1);
+    expect(cancelledJobByStatic[0].status).to.be.eq(JobStatusEnum.CANCELED);
+
+    // should skip by variable default value
+    const workflowIdSkipByVariable = 'skip-by-variable-default-value';
+    await echoServer.echo.workflow(
+      workflowIdSkipByVariable,
+      async ({ step, payload }) => {
+        await step.email(
+          'send-email',
+          async (inputs) => {
+            return {
+              subject: 'This is an email subject ' + inputs.name,
+              body: 'Body result ' + payload.name,
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', default: 'TEST' },
+                shouldSkipVar: { type: 'boolean', default: true },
+              },
+            } as const,
+            skip: (inputs) => inputs.shouldSkipVar,
+          }
+        );
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await syncWorkflow(session);
+
+    const workflow = await workflowsRepository.findByTriggerIdentifier(
+      session.environment._id,
+      workflowIdSkipByVariable
+    );
+
+    expect(workflow).to.be.ok;
+    if (!workflow) throw new Error('Workflow not found');
+
+    await triggerEvent(session, workflowIdSkipByVariable, subscriber);
+    await session.awaitRunningJobs(workflow._id);
+
+    const executedMessage = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.EMAIL,
+    });
+
+    expect(executedMessage.length).to.be.eq(0);
+
+    const cancelledJobByVariable = await jobRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      type: StepTypeEnum.EMAIL,
+    });
+
+    expect(cancelledJobByVariable.length).to.be.eq(2);
+    expect(cancelledJobByVariable[1].status).to.be.eq(JobStatusEnum.CANCELED);
   });
 
   it('should have execution detail errors for invalid trigger payload', async () => {
@@ -133,7 +254,7 @@ describe('Echo Trigger ', async () => {
       throw new Error('Workflow not found');
     }
 
-    await triggerEvent(workflowId, {});
+    await triggerEvent(session, workflowId, subscriber, {});
 
     await session.awaitRunningJobs(workflow._id);
 
@@ -157,7 +278,7 @@ describe('Echo Trigger ', async () => {
 
     await executionDetailsRepository.delete({ _environmentId: session.environment._id });
 
-    await triggerEvent(workflowId, { name: 4 });
+    await triggerEvent(session, workflowId, subscriber, { name: 4 });
     await session.awaitRunningJobs(workflow._id);
 
     const executionDetailsInvalidType = await executionDetailsRepository.find({
@@ -219,7 +340,7 @@ describe('Echo Trigger ', async () => {
       throw new Error('Workflow not found');
     }
 
-    await triggerEvent(workflowId, {});
+    await triggerEvent(session, workflowId, subscriber, {});
 
     await session.awaitRunningJobs(workflow._id);
 
@@ -300,8 +421,8 @@ describe('Echo Trigger ', async () => {
       throw new Error('Workflow not found');
     }
 
-    await triggerEvent(workflowId, { name: 'John' });
-    await triggerEvent(workflowId, { name: 'Bela' });
+    await triggerEvent(session, workflowId, subscriber, { name: 'John' });
+    await triggerEvent(session, workflowId, subscriber, { name: 'Bela' });
 
     await session.awaitRunningJobs(workflow?._id, false, 0);
 
@@ -314,15 +435,193 @@ describe('Echo Trigger ', async () => {
     expect(messagesAfter.length).to.be.eq(1);
     expect(messagesAfter[0].content).to.include('2 people liked your post');
   });
+
+  it('should trigger the echo workflow with delay', async () => {
+    const workflowId = 'delay-workflow';
+    await echoServer.echo.workflow(
+      workflowId,
+      async ({ step }) => {
+        const delayResponse = await step.delay(
+          'delay-id',
+          async (inputs) => {
+            return {
+              type: 'regular',
+              amount: inputs.amount,
+              unit: inputs.unit,
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                amount: {
+                  type: 'number',
+                  default: 2,
+                },
+                unit: {
+                  type: 'string',
+                  enum: ['seconds', 'minutes', 'hours', 'days', 'weeks', 'months'],
+                  default: 'seconds',
+                },
+              },
+            },
+          }
+        );
+
+        await step.sms(
+          'send-sms',
+          async () => {
+            const duration = delayResponse.duration;
+
+            return {
+              body: `people waited for ${duration} seconds`,
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {},
+            },
+          }
+        );
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await discoverAndSyncEcho(session);
+
+    const workflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(workflow).to.be.ok;
+
+    if (!workflow) {
+      throw new Error('Workflow not found');
+    }
+
+    await triggerEvent(session, workflowId, subscriber);
+
+    await session.awaitRunningJobs(workflow?._id, true, 0);
+
+    const messagesAfter = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.SMS,
+    });
+
+    expect(messagesAfter.length).to.be.eq(1);
+    expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
+  });
+
+  it('should trigger the echo workflow with input variables', async () => {
+    const workflowId = 'input-variables-workflow';
+    await echoServer.echo.workflow(
+      workflowId,
+      async ({ step, payload }) => {
+        await step.email(
+          'send-email',
+          async (inputs) => {
+            return {
+              subject: 'prefix ' + inputs.name,
+              body: 'Body result',
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', default: 'Hello {{name}}' },
+              },
+            } as const,
+          }
+        );
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await discoverAndSyncEcho(session);
+
+    const workflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(workflow).to.be.ok;
+
+    if (!workflow) {
+      throw new Error('Workflow not found');
+    }
+
+    await triggerEvent(session, workflowId, subscriber, {});
+    await session.awaitRunningJobs(workflow._id);
+    await triggerEvent(session, workflowId, subscriber, { name: 'payload_name' });
+    await session.awaitRunningJobs(workflow._id);
+
+    const sentMessage = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.EMAIL,
+    });
+
+    expect(sentMessage.length).to.be.eq(2);
+    expect(sentMessage[1].subject).to.include('prefix Hello default_name');
+    expect(sentMessage[0].subject).to.include('prefix Hello payload_name');
+  });
 });
+
+async function syncWorkflow(session) {
+  const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
+
+  await session.testAgent.post(`/v1/echo/sync`).send({
+    bridgeUrl: echoServer.serverPath + '/echo',
+    workflows: resultDiscover.data.workflows,
+  });
+}
+
+async function triggerEvent(session, workflowId: string, subscriber, payload?: any) {
+  const defaultPayload = {
+    name: 'test_name',
+  };
+
+  await axios.post(
+    `${session.serverUrl}${eventTriggerPath}`,
+    {
+      name: workflowId,
+      to: {
+        subscriberId: subscriber.subscriberId,
+        email: 'test@subscriber.com',
+      },
+      payload: payload ?? defaultPayload,
+    },
+    {
+      headers: {
+        authorization: `ApiKey ${session.apiKey}`,
+      },
+    }
+  );
+}
 
 async function discoverAndSyncEcho(session: UserSession) {
   const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
 
-  await session.testAgent.post(`/v1/echo/sync`).send({
-    chimeraUrl: echoServer.serverPath + '/echo',
+  const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
+    bridgeUrl: echoServer.serverPath + '/echo',
     workflows: resultDiscover.data.workflows,
   });
+
+  return discoverResponse;
 }
 
 async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MarkMessagesAsEnum) {

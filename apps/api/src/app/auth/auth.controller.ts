@@ -4,7 +4,10 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Get,
+  Header,
   HttpCode,
+  HttpStatus,
+  Logger,
   NotFoundException,
   Param,
   Post,
@@ -13,13 +16,10 @@ import {
   Res,
   UseGuards,
   UseInterceptors,
-  Logger,
-  Header,
-  HttpStatus,
 } from '@nestjs/common';
-import { MemberRepository, OrganizationRepository, UserRepository, MemberEntity } from '@novu/dal';
+import { MemberEntity, MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
-import { IJwtPayload, PasswordResetFlowEnum } from '@novu/shared';
+import { PasswordResetFlowEnum, UserSessionData } from '@novu/shared';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
 import { UserRegister } from './usecases/register/user-register.usecase';
 import { UserRegisterCommand } from './usecases/register/user-register.command';
@@ -27,7 +27,6 @@ import { Login } from './usecases/login/login.usecase';
 import { LoginBodyDto } from './dtos/login.dto';
 import { LoginCommand } from './usecases/login/login.command';
 import { UserSession } from '../shared/framework/user.decorator';
-import { UserAuthGuard } from './framework/user.auth.guard';
 import { PasswordResetRequestCommand } from './usecases/password-reset-request/password-reset-request.command';
 import { PasswordResetRequest } from './usecases/password-reset-request/password-reset-request.usecase';
 import { PasswordResetCommand } from './usecases/password-reset/password-reset.command';
@@ -47,6 +46,7 @@ import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { UpdatePasswordBodyDto } from './dtos/update-password.dto';
 import { UpdatePassword } from './usecases/update-password/update-password.usecase';
 import { UpdatePasswordCommand } from './usecases/update-password/update-password.command';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @ApiCommonResponses()
 @Controller('/auth')
@@ -94,9 +94,9 @@ export class AuthController {
   }
 
   @Get('/refresh')
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @Header('Cache-Control', 'no-store')
-  refreshToken(@UserSession() user: IJwtPayload) {
+  refreshToken(@UserSession() user: UserSessionData) {
     if (!user || !user._id) throw new BadRequestException();
 
     return this.authService.refreshToken(user._id);
@@ -152,11 +152,11 @@ export class AuthController {
   }
 
   @Post('/organizations/:organizationId/switch')
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @HttpCode(200)
   @Header('Cache-Control', 'no-store')
   async organizationSwitch(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('organizationId') organizationId: string
   ): Promise<string> {
     const command = SwitchOrganizationCommand.create({
@@ -169,10 +169,10 @@ export class AuthController {
 
   @Post('/environments/:environmentId/switch')
   @Header('Cache-Control', 'no-store')
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @HttpCode(200)
   async projectSwitch(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('environmentId') environmentId: string
   ): Promise<{ token: string }> {
     const command = SwitchEnvironmentCommand.create({
@@ -188,9 +188,9 @@ export class AuthController {
 
   @Post('/update-password')
   @Header('Cache-Control', 'no-store')
-  @UseGuards(UserAuthGuard)
+  @UserAuthentication()
   @HttpCode(HttpStatus.NO_CONTENT)
-  async updatePassword(@UserSession() user: IJwtPayload, @Body() body: UpdatePasswordBodyDto) {
+  async updatePassword(@UserSession() user: UserSessionData, @Body() body: UpdatePasswordBodyDto) {
     return await this.updatePasswordUsecase.execute(
       UpdatePasswordCommand.create({
         userId: user._id,

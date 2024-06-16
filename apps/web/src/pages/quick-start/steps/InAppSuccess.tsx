@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { SandBoxSetupSuccess } from '../../../components/quick-start/in-app-onboarding/SandboxSetupSuccess';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { Button, colors } from '@novu/design-system';
 import { currentOnboardingStep } from '../components/route/store';
 import { FlowTypeEnum, OnBoardingAnalyticsEnum } from '../consts';

@@ -1,5 +1,5 @@
 import { Button, LoadingOverlay } from '@novu/design-system';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../../hooks/useAuth';
 import { useForm } from 'react-hook-form';
 import { useUpdateOrganizationBranding } from '../../../../api/hooks';
 import { css } from '@novu/novui/css';

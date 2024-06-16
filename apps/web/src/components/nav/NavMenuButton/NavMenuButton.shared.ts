@@ -1,5 +1,5 @@
 import { IIconProps } from '@novu/design-system';
-import { LocalizedMessage } from '@novu/shared-web';
+import { LocalizedMessage } from '../../../types/LocalizedMessage';
 import { ReactNode } from 'react';
 import { css } from '@novu/novui/css';
 import { CoreProps } from '@novu/novui';

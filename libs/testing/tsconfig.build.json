@@ -7,10 +7,8 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "esModuleInterop": false,
+    "sourceMap": true,
     "types": ["node"]
   },
-  "include": [
-    "src/**/*"
-  ]
+  "include": ["src/**/*"]
 }
-

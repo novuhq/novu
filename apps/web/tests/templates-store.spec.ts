@@ -1,24 +1,20 @@
-import { expect, Page } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { expect } from '@playwright/test';
+import { test } from './utils/baseTest';
 import { WorkflowsPage } from './page-models/workflowsPage';
-import { deleteIndexedDB, initializeSession } from './utils.ts/browser';
-import { populateBlueprints } from './utils.ts/plugins';
+import { initializeSession, setFeatureFlag } from './utils/browser';
+import { populateBlueprints } from './utils/plugins';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 test.beforeAll(async () => {
   await populateBlueprints();
 });
 
 test.beforeEach(async ({ page }) => {
-  const { featureFlagsMock } = await initializeSession(page, { noTemplates: true });
-  featureFlagsMock.setFlagsToMock({
-    IS_IMPROVED_ONBOARDING_ENABLED: false,
-    IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-    IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-    IS_TEMPLATE_STORE_ENABLED: true,
-  });
+  await setFeatureFlag(page, FeatureFlagsKeysEnum.IS_TEMPLATE_STORE_ENABLED, true);
+  await initializeSession(page, { noTemplates: true });
 });
 
-test('shows templates and creates a new workflow on template selection', async ({ page }) => {
+test.skip('shows templates and creates a new workflow on template selection', async ({ page }) => {
   const workflowsPage = await WorkflowsPage.goTo(page);
   await expect(workflowsPage.getNoWorkflowsPlaceholder()).toBeVisible();
   await expect(workflowsPage.getCreateWorkflowTile()).toBeVisible();

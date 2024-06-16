@@ -11,10 +11,11 @@ import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPa
 import { When } from '../../../utils/When';
 import { PreviewMobile } from './PreviewMobile';
 import { PreviewWeb } from './PreviewWeb';
+import { api } from '../../../../api';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePreviewEmailTemplate';
 import { useMutation } from '@tanstack/react-query';
-import { api, useEnvController } from '@novu/shared-web';
+import { useEnvController } from '../../../../hooks/useEnvController';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
 import { ErrorPrettyRender } from '../ErrorPrettyRender';
@@ -40,7 +41,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   const path = useStepFormPath();
   const error = useStepFormErrors();
   const { template } = useTemplateEditorForm();
-  const { chimera } = useEnvController({}, template?.chimera);
+  const { bridge } = useEnvController({}, template?.bridge);
 
   const stepId = watch(`${path}.uuid`);
 
@@ -51,8 +52,8 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   const processedVariables = useProcessVariables(variables);
   const content = contentType === 'editor' ? editorContent : htmlContent;
   const [payloadValue, setPayloadValue] = useState(processedVariables ?? '{}');
-  const [chimeraContent, setChimeraContent] = useState('');
-  const [chimeraSubject, setChimeraSubject] = useState('');
+  const [bridgeContent, setBridgeContent] = useState('');
+  const [bridgeSubject, setBridgeSubject] = useState('');
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content,
@@ -64,12 +65,12 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
 
   const {
     mutateAsync,
-    isLoading: isChimeraLoading,
+    isLoading: isBridgeLoading,
     error: previewError,
   } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
     onSuccess(data) {
-      setChimeraContent(data.outputs.body);
-      setChimeraSubject(data.outputs.subject);
+      setBridgeContent(data.outputs.body);
+      setBridgeSubject(data.outputs.subject);
     },
   });
 
@@ -83,17 +84,17 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   }, [integrations]);
 
   useEffect(() => {
-    if (chimera && !showVariables) {
+    if (bridge && !showVariables) {
       mutateAsync(JSON.parse(processedVariables));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processedVariables, chimera]);
+  }, [processedVariables, bridge]);
 
   useEffect(() => {
     setPayloadValue(processedVariables);
   }, [setPayloadValue, processedVariables]);
 
-  const isLoading = isPreviewContentLoading || areLocalesLoading || isChimeraLoading;
+  const isLoading = isPreviewContentLoading || areLocalesLoading || isBridgeLoading;
 
   return (
     <>
@@ -105,31 +106,31 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
           <When truthy={view === 'web' && !previewError}>
             <PreviewWeb
               loading={isLoading}
-              subject={chimeraSubject || subject}
-              content={chimeraContent || previewContent}
+              subject={bridgeSubject || subject}
+              content={bridgeContent || previewContent}
               integration={integration}
               error={error}
               showEditOverlay={false}
               onLocaleChange={onLocaleChange}
               locales={locales || []}
               selectedLocale={selectedLocale}
-              chimera={chimera}
+              bridge={bridge}
             />
           </When>
           <When truthy={view === 'mobile' && !previewError}>
             <PreviewMobile
               loading={isLoading}
-              subject={chimeraSubject || subject}
-              content={chimeraContent || previewContent}
+              subject={bridgeSubject || subject}
+              content={bridgeContent || previewContent}
               integration={integration}
               error={error}
               onLocaleChange={onLocaleChange}
               locales={locales || []}
               selectedLocale={selectedLocale}
-              chimera={chimera}
+              bridge={bridge}
             />
           </When>
-          <When truthy={!chimera}>
+          <When truthy={!bridge}>
             <JSONContainer>
               <JsonInput
                 data-test-id="preview-json-param"
@@ -155,7 +156,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
               </Button>
             </JSONContainer>
           </When>
-          <When truthy={chimera}>
+          <When truthy={bridge}>
             <div style={{ minWidth: 300, maxWidth: 300, marginLeft: 'auto' }}>
               <InputVariablesForm
                 onChange={(values) => {
@@ -168,15 +169,15 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
       ) : (
         <PreviewWeb
           loading={isLoading}
-          subject={chimeraSubject || subject}
-          content={chimeraContent || previewContent}
+          subject={bridgeSubject || subject}
+          content={bridgeContent || previewContent}
           integration={integration}
           error={error}
           showEditOverlay={!showVariables}
           onLocaleChange={onLocaleChange}
           locales={locales || []}
           selectedLocale={selectedLocale}
-          chimera={chimera}
+          bridge={bridge}
         />
       )}
     </>

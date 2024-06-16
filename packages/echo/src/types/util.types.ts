@@ -7,4 +7,4 @@ export type Either<A, B> = Partial<A> & Partial<B> & (A | B);
 /**
  * A type that represents a value that may be a promise or a regular value.
  */
-export type MaybePromise<T> = T | Promise<T>;
+export type Awaitable<T> = T | Promise<T>;

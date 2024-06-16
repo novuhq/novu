@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import { getAttByTestId } from '../utils.ts/browser';
+import { getAttByTestId } from '../utils/browser';
 import { SettingsMenuPage } from './settingsMenuPage';
 
 export enum Environment {

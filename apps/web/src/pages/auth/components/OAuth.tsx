@@ -10,12 +10,18 @@ import { buildGithubLink, buildGoogleLink, buildVercelGithubLink } from './gitHu
 import { useVercelParams } from '../../../hooks';
 import { PropsWithChildren } from 'react';
 
-export function OAuth({ invitationToken }: { invitationToken?: string | undefined }) {
+export function OAuth({
+  invitationToken,
+  isLoginPage = false,
+}: {
+  invitationToken?: string | undefined;
+  isLoginPage?: boolean;
+}) {
   const { isFromVercel, code, next, configurationId } = useVercelParams();
 
   const githubLink = isFromVercel
     ? buildVercelGithubLink({ code, next, configurationId })
-    : buildGithubLink({ invitationToken });
+    : buildGithubLink({ invitationToken, isLoginPage });
   const googleLink = buildGoogleLink({ invitationToken });
 
   return (

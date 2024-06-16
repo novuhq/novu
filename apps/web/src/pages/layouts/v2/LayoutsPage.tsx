@@ -5,9 +5,9 @@ import { colors } from '@novu/design-system';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageHeader from '../../../components/layout/components/PageHeader';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { useEnvController, useFeatureFlag } from '../../../hooks';
+import { useFeatureFlag, useEnvController } from '../../../hooks';
 
 const LAYOUT = 'Layouts';
 

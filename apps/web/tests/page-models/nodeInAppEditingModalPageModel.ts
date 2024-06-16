@@ -1,6 +1,6 @@
-import { expect, Page } from '@playwright/test';
-import { fillTextInAMonacoEditor } from '../utils.ts/browser';
-import { addConditions } from '../utils.ts/commands';
+import { expect } from '@playwright/test';
+import { fillTextInAMonacoEditor } from '../utils/browser';
+import { addConditions } from '../utils/commands';
 import { ConditionsPage } from './conditionsPage';
 import { EditorState } from './editorState';
 import { VariantPreviewModalPage } from './variantPreviewModalPage';
@@ -19,10 +19,8 @@ export class NodeInAppEditingModalPageModel extends WorkflowBaseSidePanelPage {
     await this.fillNotificationBody(inAppBodyVariant);
     await this.nodeSettingsUpdateButton().click();
     await this.closeSidePanel();
+
     return new VariantPreviewModalPage(this.page);
-  }
-  constructor(page: Page) {
-    super(page);
   }
 
   async fillNotificationBody(notificationBody: string) {
@@ -87,6 +85,7 @@ export class NodeInAppEditingModalPageModel extends WorkflowBaseSidePanelPage {
 
   async openAddConditionsSidebar() {
     await this.page.getByTestId('add-conditions-action').click();
+
     return new ConditionsPage(this.page);
   }
 

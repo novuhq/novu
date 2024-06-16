@@ -1,4 +1,4 @@
-import { Locator, Page } from '@playwright/test';
+import { Locator } from '@playwright/test';
 import { ConditionsPage } from './conditionsPage';
 import { WorkflowBaseSidePanelPage } from './workflowSettingsSidePanel';
 
@@ -9,10 +9,6 @@ export enum TimeUnit {
   DAYS = 'day (s)',
 }
 export class NodeDigestEditorPageModal extends WorkflowBaseSidePanelPage {
-  constructor(page: Page) {
-    super(page);
-  }
-
   timeAmount(): Locator {
     return this.page.getByTestId('time-amount');
   }
@@ -37,6 +33,7 @@ export class NodeDigestEditorPageModal extends WorkflowBaseSidePanelPage {
 
   async openAddConditionsSidebar() {
     await this.page.getByTestId('editor-sidebar-add-conditions').click();
+
     return new ConditionsPage(this.page);
   }
 

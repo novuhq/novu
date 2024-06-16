@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="EE-AUTH" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/enterprise/packages/auth/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="build:watch" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs />
+    <method v="2" />
+  </configuration>
+</component>

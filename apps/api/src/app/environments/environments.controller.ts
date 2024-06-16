@@ -1,15 +1,5 @@
-import {
-  Body,
-  ClassSerializerInterceptor,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Put,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
-import { IJwtPayload } from '@novu/shared';
+import { Body, ClassSerializerInterceptor, Controller, Get, Param, Post, Put, UseInterceptors } from '@nestjs/common';
+import { UserSessionData } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
 import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
@@ -19,7 +9,6 @@ import { GetApiKeys } from './usecases/get-api-keys/get-api-keys.usecase';
 import { GetEnvironment, GetEnvironmentCommand } from './usecases/get-environment';
 import { GetMyEnvironments } from './usecases/get-my-environments/get-my-environments.usecase';
 import { GetMyEnvironmentsCommand } from './usecases/get-my-environments/get-my-environments.command';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiKey } from '../shared/dtos/api-key';
 import { EnvironmentResponseDto } from './dtos/environment-response.dto';
@@ -29,11 +18,13 @@ import { UpdateEnvironmentCommand } from './usecases/update-environment/update-e
 import { UpdateEnvironment } from './usecases/update-environment/update-environment.usecase';
 import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.dto';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
+import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 
 @ApiCommonResponses()
 @Controller('/environments')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(UserAuthGuard)
+@UserAuthentication()
 @ApiTags('Environments')
 export class EnvironmentsController {
   constructor(
@@ -51,7 +42,7 @@ export class EnvironmentsController {
   })
   @ApiResponse(EnvironmentResponseDto)
   @ExternalApiAccessible()
-  async getCurrentEnvironment(@UserSession() user: IJwtPayload): Promise<EnvironmentResponseDto> {
+  async getCurrentEnvironment(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto> {
     return await this.getEnvironmentUsecase.execute(
       GetEnvironmentCommand.create({
         environmentId: user.environmentId,
@@ -68,7 +59,7 @@ export class EnvironmentsController {
   @ApiExcludeEndpoint()
   @ApiResponse(EnvironmentResponseDto, 201)
   async createEnvironment(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto
   ): Promise<EnvironmentResponseDto> {
     return await this.createEnvironmentUsecase.execute(
@@ -86,7 +77,7 @@ export class EnvironmentsController {
   })
   @ApiResponse(EnvironmentResponseDto, 200, true)
   @ExternalApiAccessible()
-  async getMyEnvironments(@UserSession() user: IJwtPayload): Promise<EnvironmentResponseDto[]> {
+  async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
         environmentId: user.environmentId,
@@ -103,7 +94,7 @@ export class EnvironmentsController {
   @ApiExcludeEndpoint()
   @ApiResponse(EnvironmentResponseDto)
   async updateMyEnvironment(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Param('environmentId') environmentId: string,
     @Body() payload: UpdateEnvironmentRequestDto
   ) {
@@ -116,6 +107,7 @@ export class EnvironmentsController {
         identifier: payload.identifier,
         _parentId: payload.parentId,
         dns: payload.dns,
+        bridge: payload.bridge,
       })
     );
   }
@@ -126,7 +118,8 @@ export class EnvironmentsController {
   })
   @ApiResponse(ApiKey, 200, true)
   @ExternalApiAccessible()
-  async getOrganizationApiKeys(@UserSession() user: IJwtPayload): Promise<ApiKey[]> {
+  @SdkGroupName('Environments.ApiKeys')
+  async listOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,
@@ -142,7 +135,9 @@ export class EnvironmentsController {
   })
   @ApiResponse(ApiKey, 201, true)
   @ExternalApiAccessible()
-  async regenerateOrganizationApiKeys(@UserSession() user: IJwtPayload): Promise<ApiKey[]> {
+  @SdkGroupName('Environments.ApiKeys')
+  @SdkMethodName('regenerate')
+  async regenerateOrganizationApiKeys(@UserSession() user: UserSessionData): Promise<ApiKey[]> {
     const command = GetApiKeysCommand.create({
       userId: user._id,
       organizationId: user.organizationId,

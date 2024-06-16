@@ -4,7 +4,7 @@ import { UTM_CAMPAIGN_QUERY_PARAM } from '@novu/shared';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 import useThemeChange from '../../hooks/useThemeChange';
 import { useSpotlightContext } from '../providers/SpotlightProvider';
 import useStyles from './Spotlight.styles';

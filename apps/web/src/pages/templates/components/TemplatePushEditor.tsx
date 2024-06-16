@@ -7,7 +7,7 @@ import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
 
-import { Flex, Grid, SegmentedControl, Stack, useMantineTheme } from '@mantine/core';
+import { Flex, Grid, Stack, useMantineTheme } from '@mantine/core';
 import { useState } from 'react';
 import { PushPreview } from '../../../components/workflow/preview';
 import { useEditTemplateContent } from '../hooks/useEditTemplateContent';
@@ -15,7 +15,6 @@ import { CustomCodeEditor } from './CustomCodeEditor';
 import { EditVariablesModal } from './EditVariablesModal';
 import { VariableManagementButton } from './VariableManagementButton';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
-import { InputVariables } from './InputVariables';
 import { InputVariablesForm } from './InputVariablesForm';
 
 const templateFields = ['content', 'title'];
@@ -35,7 +34,7 @@ export function TemplatePushEditor() {
     channelType: ChannelTypeEnum.PUSH,
   });
   const { template } = useTemplateEditorForm();
-  const { chimera } = useEnvController({}, template?.chimera);
+  const { bridge } = useEnvController({}, template?.bridge);
   const [activeTab, setActiveTab] = useState<string>(PREVIEW);
   const theme = useMantineTheme();
 
@@ -53,12 +52,12 @@ export function TemplatePushEditor() {
               control={control}
               render={({ field }) => (
                 <Stack spacing={8} data-test-id="push-title-container">
-                  <When truthy={!chimera}>
+                  <When truthy={!bridge}>
                     <VariableManagementButton
                       openEditVariablesModal={() => {
                         setEditVariablesModalOpen(true);
                       }}
-                      label={chimera ? 'Input variables' : 'Title'}
+                      label={bridge ? 'Input variables' : 'Title'}
                     />
 
                     <CustomCodeEditor
@@ -69,13 +68,13 @@ export function TemplatePushEditor() {
                       height="128px"
                     />
                   </When>
-                  <When truthy={chimera}>
+                  <When truthy={bridge}>
                     <InputVariablesForm onChange={setInputVariables} />
                   </When>
                 </Stack>
               )}
             />
-            <When truthy={!chimera}>
+            <When truthy={!bridge}>
               <Controller
                 name={`${stepFormPath}.template.content` as any}
                 defaultValue=""

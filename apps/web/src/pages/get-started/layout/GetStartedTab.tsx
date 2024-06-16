@@ -8,7 +8,7 @@ import Card from '../../../components/layout/components/Card';
 import { Timeline } from '../components/timeline/Timeline';
 import { AdditionInformationLink } from '../components/AdditionInformationLink';
 import { IOnboardingUseCaseViewContext, OnboardingUseCase } from '../consts/types';
-import { useSegment } from '@novu/shared-web';
+import { useSegment } from '../../../components/providers/SegmentProvider';
 
 export interface IGetStartedTabProps extends OnboardingUseCase, IOnboardingUseCaseViewContext {}
 

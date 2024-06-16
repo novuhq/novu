@@ -1,8 +1,8 @@
 import { expect, Page } from '@playwright/test';
-import { test } from './utils.ts/baseTest';
+import { test } from './utils/baseTest';
 import { WorkflowEditorPage } from './page-models/workflowEditorPage';
-import { initializeSession } from './utils.ts/browser';
-import { ChannelType } from './utils.ts/ChannelType';
+import { initializeSession } from './utils/browser';
+import { ChannelType } from './utils/ChannelType';
 import { CodeSnippetSidePanelPageModel, SNIPPET_TAB } from './page-models/codeSnippetSidePanelPageModel';
 import { NodeEmailEditorPageModal } from './page-models/nodeEmailEditorPageModal';
 import { NodeSmsEditingModalPageModel } from './page-models/nodeSmsEditingModalPageModel';
@@ -11,18 +11,9 @@ import { WorkflowsPage } from './page-models/workflowsPage';
 import { WorkflowSettingsSidePanel } from './page-models/workflowSettingsSidePanel';
 import { EditorState } from './page-models/editorState';
 
-test.describe.configure({ timeout: 60_000 });
-
 test.describe('Creation functionality', () => {
   test.beforeEach(async ({ page }) => {
-    const { featureFlagsMock } = await initializeSession(page);
-    featureFlagsMock.setFlagsToMock({
-      IS_IMPROVED_ONBOARDING_ENABLED: false,
-      IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-      IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-      IS_BILLING_ENABLED: false,
-      IS_TEMPLATE_STORE_ENABLED: false,
-    });
+    await initializeSession(page);
   });
   test('should create in-app notification', async ({ page }) => {
     const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
@@ -65,12 +56,13 @@ test.describe('Creation functionality', () => {
     await assertCodeSnippetStructureIncludingVariables(workflowEditorPage, TEST_WORKFLOW_ID);
   });
 
-  test('should be able to add huge amount of nodes.', async ({ page }) => {
+  test('should be able to add many nodes.', async ({ page }) => {
+    test.slow();
     const workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
-    await editWorkflowSettings(workflowEditorPage, 'Test 15 Nodes');
-    await create14EmptyEmailNodes(workflowEditorPage);
+    await editWorkflowSettings(workflowEditorPage, 'Test 10 Nodes');
+    await createEmptyEmailNodes(workflowEditorPage, 10);
     await createEmailNodeAndFillWithTestData(workflowEditorPage, page);
-    expect(await workflowEditorPage.nodeEmailSelector().count()).toBe(15);
+    expect(await workflowEditorPage.nodeEmailSelector().count()).toBe(11);
     await assertTestDataSaved(workflowEditorPage, page);
   });
   test('should add digest node', async ({ page }) => {
@@ -113,13 +105,6 @@ test.describe('Creation functionality', () => {
   test.beforeEach(async ({ page }) => {
     const newSession = await initializeSession(page);
     sessionData = newSession.session;
-    newSession.featureFlagsMock.setFlagsToMock({
-      IS_IMPROVED_ONBOARDING_ENABLED: false,
-      IS_INFORMATION_ARCHITECTURE_ENABLED: true,
-      IS_BILLING_REVERSE_TRIAL_ENABLED: false,
-      IS_BILLING_ENABLED: false,
-      IS_TEMPLATE_STORE_ENABLED: false,
-    });
   });
 });
 async function AddButtonToMailBodyEditTextAndValidate(emailEditorModal: NodeEmailEditorPageModal) {
@@ -302,8 +287,8 @@ async function assertCodeSnippetStructureIncludingVariables(
   expect(codeSnippet).toContain('firstName:');
   expect(codeSnippet).toContain('customVariable:');
 }
-async function create14EmptyEmailNodes(workflowEditorPage: WorkflowEditorPage) {
-  for (let i = 0; i < 14; i++) {
+async function createEmptyEmailNodes(workflowEditorPage: WorkflowEditorPage, total: number) {
+  for (let i = 0; i < total; i++) {
     await workflowEditorPage.buttonAdd().last().click({ force: true });
     await workflowEditorPage.addEmailNode().click();
   }

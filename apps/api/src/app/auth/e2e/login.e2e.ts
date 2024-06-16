@@ -2,7 +2,7 @@ import { UserSession } from '@novu/testing';
 import * as jwt from 'jsonwebtoken';
 import { subMinutes } from 'date-fns';
 import { expect } from 'chai';
-import { IJwtPayload } from '@novu/shared';
+import { UserSessionData } from '@novu/shared';
 import { UserRepository } from '@novu/dal';
 
 describe('User login - /auth/login (POST)', async () => {
@@ -35,7 +35,7 @@ describe('User login - /auth/login (POST)', async () => {
         password: userCredentials.password,
       });
 
-      const jwtContent = (await jwt.decode(body.data.token)) as IJwtPayload;
+      const jwtContent = (await jwt.decode(body.data.token)) as UserSessionData;
 
       expect(jwtContent.firstName).to.equal('test');
       expect(jwtContent.lastName).to.equal('user');
@@ -48,7 +48,7 @@ describe('User login - /auth/login (POST)', async () => {
         password: userCredentials.password,
       });
 
-      const jwtContent = (await jwt.decode(body.data.token)) as IJwtPayload;
+      const jwtContent = (await jwt.decode(body.data.token)) as UserSessionData;
 
       expect(jwtContent.firstName).to.equal('test');
       expect(jwtContent.lastName).to.equal('user');
@@ -90,7 +90,7 @@ describe('User login - /auth/login (POST)', async () => {
         password: userCredentials.password,
       });
 
-      const jwtContent = (await jwt.decode(body.data.token)) as IJwtPayload;
+      const jwtContent = (await jwt.decode(body.data.token)) as UserSessionData;
 
       expect(jwtContent.firstName).to.equal('test');
       expect(jwtContent.lastName).to.equal('user');

@@ -1,5 +1,5 @@
-import { IJwtPayload } from '@novu/shared';
-import { CYPRESS_USER_PASSWORD, UserSession } from '@novu/testing';
+import { UserSessionData } from '@novu/shared';
+import { TEST_USER_PASSWORD, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import * as jwt from 'jsonwebtoken';
 
@@ -18,7 +18,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
 
   it('should update password', async () => {
     const { statusCode } = await session.testAgent.post('/v1/auth/update-password').send({
-      currentPassword: CYPRESS_USER_PASSWORD,
+      currentPassword: TEST_USER_PASSWORD,
       newPassword: NEW_PASSWORD,
       confirmPassword: NEW_PASSWORD,
     });
@@ -30,7 +30,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
       password: NEW_PASSWORD,
     });
 
-    const jwtContent = (await jwt.decode(loginBody.data.token)) as IJwtPayload;
+    const jwtContent = (await jwt.decode(loginBody.data.token)) as UserSessionData;
 
     expect(jwtContent.firstName).to.equal(session.user.firstName);
     expect(jwtContent.lastName).to.equal(session.user.lastName);
@@ -50,7 +50,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
 
   it('should fail on mismatched passwords', async () => {
     const { body } = await session.testAgent.post('/v1/auth/update-password').send({
-      currentPassword: CYPRESS_USER_PASSWORD,
+      currentPassword: TEST_USER_PASSWORD,
       newPassword: NEW_PASSWORD,
       confirmPassword: '123123213',
     });
@@ -61,7 +61,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
 
   it('should fail on bad password', async () => {
     const { body: validLengthBody } = await session.testAgent.post('/v1/auth/update-password').send({
-      currentPassword: CYPRESS_USER_PASSWORD,
+      currentPassword: TEST_USER_PASSWORD,
       newPassword: '12345678',
       confirmPassword: '12345678',
     });
@@ -72,7 +72,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
 
   it('should fail on password missing upper case letter', async () => {
     const { body } = await session.testAgent.post('/v1/auth/update-password').send({
-      currentPassword: CYPRESS_USER_PASSWORD,
+      currentPassword: TEST_USER_PASSWORD,
       newPassword: 'abcde@12345',
       confirmPassword: 'abcde@12345',
     });
@@ -83,7 +83,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
 
   it('should fail on password missing lower case letter', async () => {
     const { body } = await session.testAgent.post('/v1/auth/update-password').send({
-      currentPassword: CYPRESS_USER_PASSWORD,
+      currentPassword: TEST_USER_PASSWORD,
       newPassword: 'ABCDE@12345',
       confirmPassword: 'ABCDE@12345',
     });
@@ -94,7 +94,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
 
   it('should fail on password missing special characters', async () => {
     const { body } = await session.testAgent.post('/v1/auth/update-password').send({
-      currentPassword: CYPRESS_USER_PASSWORD,
+      currentPassword: TEST_USER_PASSWORD,
       newPassword: 'ABCabc12345',
       confirmPassword: 'ABCabc12345',
     });
@@ -105,7 +105,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
 
   it('should fail on password missing numbers', async () => {
     const { body } = await session.testAgent.post('/v1/auth/update-password').send({
-      currentPassword: CYPRESS_USER_PASSWORD,
+      currentPassword: TEST_USER_PASSWORD,
       newPassword: 'ABCabc@ABCDE',
       confirmPassword: 'ABCabc@ABCDE',
     });
@@ -116,7 +116,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
 
   it('should fail if password length is less than 8 or more then 64', async () => {
     const { body: minimumLengthBody } = await session.testAgent.post('/v1/auth/update-password').send({
-      currentPassword: CYPRESS_USER_PASSWORD,
+      currentPassword: TEST_USER_PASSWORD,
       newPassword: '123',
       confirmPassword: '123',
     });
@@ -125,7 +125,7 @@ describe('User update password - /auth/update-password (POST)', async () => {
     expect(minimumLengthBody.message[0]).to.equal(PASSWORD_ERROR_MESSAGE);
 
     const { body: maxLengthBody } = await session.testAgent.post('/v1/auth/update-password').send({
-      currentPassword: CYPRESS_USER_PASSWORD,
+      currentPassword: TEST_USER_PASSWORD,
       newPassword: 'Ab1@'.repeat(20),
       confirmPassword: 'Ab1@'.repeat(20),
     });
