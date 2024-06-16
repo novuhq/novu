@@ -1,7 +1,7 @@
 import { render } from 'solid-js/web';
 import Inbox from './Inbox';
 import type { NovuOptions } from '../novu';
-
+import './index.css';
 export class InboxUI {
   #dispose: { (): void } | null = null;
   #rootElement: HTMLElement;
