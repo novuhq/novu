@@ -40,7 +40,6 @@ export const StudioOnboarding = () => {
   }, [environment?.echo?.url]);
 
   function retest() {
-    console.log('RETESTING');
     testEndpoint(url);
   }
 

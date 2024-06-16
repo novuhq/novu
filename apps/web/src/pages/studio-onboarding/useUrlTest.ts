@@ -18,7 +18,7 @@ export function useBridgeUrlTest() {
 
       return response.json();
     } catch (e) {
-      throw new Error('This is not the Novu endpoint URL');
+      throw new Error('Novu Bridge is not available');
     }
   });
 
