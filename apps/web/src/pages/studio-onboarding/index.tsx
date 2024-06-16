@@ -11,7 +11,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 
 export const StudioOnboarding = () => {
   const { environment } = useEnvController();
-  const [url, setUrl] = useState('http://localhost:9999/api/echo');
+  const [url, setUrl] = useState('http://localhost:4000/api/echo');
   const [error, setError] = useState<string>('');
   const { loading, setup } = useSetupBridge(url, setError);
   const segment = useSegment();
