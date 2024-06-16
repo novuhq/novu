@@ -1,7 +1,7 @@
 import { For, createSignal, onMount, type Component } from 'solid-js';
-import { Notification } from 'src/feeds';
-import { Novu } from 'src/novu';
-import type { NovuOptions } from 'src/novu';
+import { Notification } from '../feeds';
+import { Novu } from '../novu';
+import type { NovuOptions } from '../novu';
 
 const Inbox: Component<{
   name: string;
