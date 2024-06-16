@@ -17,7 +17,7 @@
     },
     "./ui": {
       "types": "./dist/ui/index.d.ts",
-      "require": "./dist/ui/index.cjs",
+      "require": "./dist/ui/index.js",
       "import": "./dist/ui/index.mjs",
       "default": "./dist/ui/index.mjs"
     }
