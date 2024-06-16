@@ -6,7 +6,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { css } from '@novu/novui/css';
 import { When } from '../../../components/utils/When';
 import { DocsButton } from '../../../components/docs/DocsButton';
-import { ROUTES } from '../../../constants/routes';
 import { Button } from '@novu/novui';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 
@@ -19,6 +18,7 @@ export const Footer = ({
   onClick,
   loading = false,
   tooltip = '',
+  disabled = false,
 }: {
   canSkipSetup?: boolean;
   showLearnMore?: boolean;
@@ -26,6 +26,7 @@ export const Footer = ({
   onClick?: () => void;
   loading?: boolean;
   tooltip?: string;
+  disabled?: boolean;
 }) => {
   const segment = useSegment();
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ export const Footer = ({
               </Button>*/}
             </When>
             <Tooltip label={tooltip} disabled={!tooltip}>
-              <Button loading={loading} onClick={onClick}>
+              <Button loading={loading} onClick={onClick} disabled={disabled}>
                 {buttonText}
               </Button>
             </Tooltip>

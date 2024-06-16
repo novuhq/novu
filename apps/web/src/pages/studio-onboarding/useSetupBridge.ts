@@ -3,60 +3,42 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../../api/index';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { ROUTES } from '../../constants/routes';
+import { useBridgeUrlTest } from './useUrlTest';
+import { useState } from 'react';
 
 export const useSetupBridge = (url: string, setError: (error: string) => void) => {
-  const navigate = useNavigate();
-  const segment = useSegment();
+  const [loading, setLoading] = useState(false);
 
-  const { mutate: sync, isLoading: isSyncing } = useMutation(
-    (data: { bridgeUrl: string }) => api.post('/v1/echo/sync', data),
+  const navigate = useNavigate();
+  const { runHealthCheck, isLoading, data } = useBridgeUrlTest();
+
+  const { mutateAsync: syncEndpoint, isLoading: isSyncing } = useMutation(
+    (params: { bridgeUrl: string }) => api.post('/v1/echo/sync', params),
     {
       onSuccess: () => {
         navigate(ROUTES.STUDIO_ONBOARDING_PREVIEW);
       },
     }
   );
-  const { isLoading, mutate } = useMutation(
-    async () => {
-      try {
-        new URL(url);
-      } catch (e) {
-        throw new Error('The provided URL is invalid');
-      }
 
-      try {
-        const response = await fetch(url + '?action=health-check');
+  async function mutate() {
+    setLoading(true);
 
-        return response.json();
-      } catch (e) {
-        throw new Error('This is not the Novu endpoint URL');
-      }
-    },
-    {
-      onSuccess: (data) => {
-        if (!data.discovered.workflows && !data.discovered.steps) {
-          segment.track('Wrong endpoint provided - [Onboarding - Signup]', {
-            endpoint: url,
-          });
-          setError('This is not the Novu endpoint URL');
+    await runHealthCheck(url);
+    await syncEndpoint({
+      bridgeUrl: url,
+    });
 
-          return;
-        }
-        sync({
-          bridgeUrl: url,
-        });
-      },
-      onError: (e) => {
-        segment.track('Wrong endpoint provided - [Onboarding - Signup]', {
-          endpoint: url,
-        });
-        setError((e as Error).message);
-      },
-    }
-  );
+    setLoading(false);
+  }
 
   return {
     setup: mutate,
-    loading: isLoading || isSyncing,
+    testEndpoint: runHealthCheck,
+    testResponse: {
+      isLoading: isLoading,
+      data,
+    },
+    loading: loading,
   };
 };

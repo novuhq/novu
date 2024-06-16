@@ -8,18 +8,29 @@ import { VStack } from '@novu/novui/jsx';
 import { SetupTimeline } from './components/SetupTimeline';
 import { useSetupBridge } from './useSetupBridge';
 import { useSegment } from '../../components/providers/SegmentProvider';
+import { useWindowEvent } from '@mantine/hooks';
 
 export const StudioOnboarding = () => {
   const { environment } = useEnvController();
   const [url, setUrl] = useState('http://localhost:4000/api/echo');
   const [error, setError] = useState<string>('');
-  const { loading, setup } = useSetupBridge(url, setError);
+  const { loading, setup, testEndpoint, testResponse } = useSetupBridge(url, setError);
   const segment = useSegment();
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => testEndpoint(url), 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [url, testEndpoint]);
 
   useEffect(() => {
     segment.track('Add endpoint step started - [Onboarding - Signup]');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useWindowEvent('focus', () => {
+    testEndpoint(url);
+  });
 
   useEffect(() => {
     if (!environment?.echo?.url) {
@@ -27,6 +38,11 @@ export const StudioOnboarding = () => {
     }
     setUrl(environment?.echo?.url);
   }, [environment?.echo?.url]);
+
+  function retest() {
+    console.log('RETESTING');
+    testEndpoint(url);
+  }
 
   return (
     <div
@@ -54,10 +70,11 @@ export const StudioOnboarding = () => {
             The first step adds an Novu endpoint, and creates your first workflow automatically. The workflow will be
             created with an email step with sample content.
           </Text>
-          <SetupTimeline error={error} url={url} setUrl={setUrl} isLoading={loading} />
+          <SetupTimeline error={error} url={url} setUrl={setUrl} testResponse={testResponse} retest={retest} />
         </div>
       </VStack>
       <Footer
+        disabled={testResponse.data?.status !== 'ok'}
         onClick={() => {
           setup();
         }}

@@ -3,7 +3,7 @@ import { css } from '@novu/novui/css';
 import { VStack } from '@novu/novui/jsx';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getActivityList } from '../../api/activity';
 import { ExecutionDetailsAccordion } from '../../components/execution-detail/ExecutionDetailsAccordion';
 import { useSegment } from '../../components/providers/SegmentProvider';
@@ -12,7 +12,6 @@ import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 
 export const StudioOnboardingSuccess = () => {
-  const params = useParams();
   const [searchParams] = useSearchParams();
   const segment = useSegment();
   const navigate = useNavigate();
@@ -48,7 +47,7 @@ export const StudioOnboardingSuccess = () => {
       return null;
     }
 
-    return item.subscriber.email;
+    return item?.subscriber?.email;
   }, [item]);
 
   useEffect(() => {
@@ -79,7 +78,8 @@ export const StudioOnboardingSuccess = () => {
               marginBottom: '150',
             })}
           >
-            Proceed to customize your Workflows or continue your onboarding by reviewing our documentation.
+            Check your inbox for the e-mail you've just sent. Proceed to customize your Workflows or continue your
+            onboarding by reviewing our documentation.
           </Text>
           <ExecutionDetailsAccordion identifier={identifier} steps={item?.jobs} subscriberVariables={{}} />
         </div>
