@@ -301,7 +301,9 @@ export class ParseEventRequest {
 
     if (process.env.NOVU_API_KEY) {
       if (!command.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]) {
-        const novu = new Novu(process.env.NOVU_API_KEY);
+        const novu = new Novu(process.env.NOVU_API_KEY, {
+          backendUrl: process.env.API_ROOT_URL,
+        });
 
         await novu.trigger(process.env.NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER, {
           to: {
