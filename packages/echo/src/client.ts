@@ -52,6 +52,13 @@ import { VERSION } from './version';
 import { Skip } from './types/skip.types';
 import { Liquid } from 'liquidjs';
 
+/**
+ * We want to respond with a consistent string value for preview
+ */
+JSONSchemaFaker.random.shuffle = function (a) {
+  return ['[placeholder]'];
+};
+
 JSONSchemaFaker.option({
   useDefaultValue: true,
   alwaysFakeOptionals: true,
@@ -626,11 +633,16 @@ export class Echo {
   }
 
   private createExecutionInputs(event: IEvent, workflow: DiscoverWorkflowOutput): Record<string, unknown> {
-    const executionData = event.data;
+    let payload = event.data;
+    if (event.action === 'preview') {
+      const mockResult = this.mock(workflow.data.schema);
 
-    this.validate(event.data, workflow.data.validate, workflow.data.schema, 'event', 'input', event.workflowId);
+      payload = Object.assign(mockResult, payload);
+    }
 
-    return executionData;
+    this.validate(payload, workflow.data.validate, workflow.data.schema, 'event', 'input', event.workflowId);
+
+    return payload;
   }
 
   private prettyPrintExecute(payload: IEvent, duration: number, error?: Error): void {
