@@ -502,6 +502,41 @@ describe('Echo Client', () => {
       await expect(echo.executeWorkflow(event)).rejects.toThrow(ExecutionEventInputInvalidError);
     });
 
+    it('should preview with mocked data during preview', async () => {
+      await echo.workflow(
+        'mock-workflow',
+        async ({ step, payload }) => {
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string
+          await step.email('send-email', async () => ({ body: 'Test: ' + payload.name, subject: 'Subject' }));
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+            },
+            required: ['name'],
+          },
+        }
+      );
+
+      const event: IEvent = {
+        action: 'preview',
+        workflowId: 'mock-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        inputs: {},
+      };
+
+      const executionResult = await echo.executeWorkflow(event);
+      expect(executionResult).toBeDefined();
+      expect(executionResult.outputs).toBeDefined();
+
+      expect((executionResult.outputs as any).body).toBe('Test: [placeholder]');
+    });
+
     it('should preview workflow successfully when action is preview', async () => {
       await echo.workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
