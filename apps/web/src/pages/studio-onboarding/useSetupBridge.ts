@@ -57,6 +57,6 @@ export const useSetupBridge = (url: string, setError: (error: string) => void) =
 
   return {
     setup: mutate,
-    loading: isLoading && isSyncing,
+    loading: isLoading || isSyncing,
   };
 };

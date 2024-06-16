@@ -77,6 +77,7 @@ export const Footer = ({
           <HStack gap="100">
             <When truthy={canSkipSetup}>
               <Button
+                disabled={loading}
                 onClick={() => {
                   segment.track('Skip setup button clicked - [Onboarding - Signup]', {
                     step: pathname,
