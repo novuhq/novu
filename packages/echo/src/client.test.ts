@@ -1,4 +1,4 @@
-import { expect } from '@jest/globals';
+import { expect, it, describe, beforeEach, afterEach, vi } from 'vitest';
 
 import { Echo } from './client';
 import { DEFAULT_NOVU_API_BASE_URL, HttpMethodEnum, NovuApiEndpointsEnum } from './constants';
@@ -27,7 +27,7 @@ describe('Echo Client', () => {
     });
   });
 
-  test('should discover 1 workflow', () => {
+  it('should discover 1 workflow', () => {
     const discovery = echo.discover();
     expect(discovery.workflows).toHaveLength(1);
   });
@@ -94,12 +94,12 @@ describe('Echo Client', () => {
   });
 
   describe('discover method', () => {
-    test('should discover setup workflow', () => {
+    it('should discover setup workflow', () => {
       const discovery = echo.discover();
       expect(discovery.workflows).toHaveLength(1);
     });
 
-    test('should discover a complex workflow with all supported step types', async () => {
+    it('should discover a complex workflow with all supported step types', async () => {
       const workflowId = 'complex-workflow';
 
       await echo.workflow(workflowId, async ({ step }) => {
@@ -175,28 +175,28 @@ describe('Echo Client', () => {
       expect(stepEmail).toBeDefined();
       if (stepEmail === undefined) throw new Error('stepEmail is undefined');
       expect(stepEmail.type).toBe('email');
-      expect(stepEmail.code).toContain(`body: 'Test Body'`);
-      expect(stepEmail.code).toContain(`subject: 'Subject'`);
+      expect(stepEmail.code).toContain(`body: "Test Body"`);
+      expect(stepEmail.code).toContain(`subject: "Subject"`);
 
       const stepInApp = workflow?.steps.find((stepX) => stepX.stepId === 'send-in-app');
       expect(stepInApp).toBeDefined();
       if (stepInApp === undefined) throw new Error('stepEmail is undefined');
       expect(stepInApp.type).toBe('in_app');
-      expect(stepInApp.code).toContain(`body: 'Test Body'`);
-      expect(stepInApp.code).toContain(`subject: 'Subject'`);
+      expect(stepInApp.code).toContain(`body: "Test Body"`);
+      expect(stepInApp.code).toContain(`subject: "Subject"`);
 
       const stepChat = workflow?.steps.find((stepX) => stepX.stepId === 'send-chat');
       expect(stepChat).toBeDefined();
       if (stepChat === undefined) throw new Error('stepEmail is undefined');
       expect(stepChat.type).toBe('chat');
-      expect(stepChat.code).toContain(`body: 'Test Body'`);
+      expect(stepChat.code).toContain(`body: "Test Body"`);
 
       const stepPush = workflow?.steps.find((stepX) => stepX.stepId === 'send-push');
       expect(stepPush).toBeDefined();
       if (stepPush === undefined) throw new Error('stepEmail is undefined');
       expect(stepPush.type).toBe('push');
-      expect(stepPush.code).toContain(`body: 'Test Body'`);
-      expect(stepPush.code).toContain(`subject: 'Title'`);
+      expect(stepPush.code).toContain(`body: "Test Body"`);
+      expect(stepPush.code).toContain(`subject: "Title"`);
 
       const stepCustom = workflow?.steps.find((stepX) => stepX.stepId === 'send-custom');
       expect(stepCustom).toBeDefined();
@@ -209,25 +209,25 @@ describe('Echo Client', () => {
       expect(stepSms).toBeDefined();
       if (stepSms === undefined) throw new Error('stepEmail is undefined');
       expect(stepSms.type).toBe('sms');
-      expect(stepSms.code).toContain(`body: 'Test Body'`);
-      expect(stepSms.code).toContain(`to: '+1234567890'`);
+      expect(stepSms.code).toContain(`body: "Test Body"`);
+      expect(stepSms.code).toContain(`to: "+1234567890"`);
 
       const stepDigest = workflow?.steps.find((stepX) => stepX.stepId === 'digest');
       expect(stepDigest).toBeDefined();
       if (stepDigest === undefined) throw new Error('stepEmail is undefined');
       expect(stepDigest.type).toBe('digest');
       expect(stepDigest.code).toContain(`amount: 1`);
-      expect(stepDigest.code).toContain(`unit: 'hours'`);
+      expect(stepDigest.code).toContain(`unit: "hours"`);
 
       const stepDelay = workflow?.steps.find((stepX) => stepX.stepId === 'delay');
       expect(stepDelay).toBeDefined();
       if (stepDelay === undefined) throw new Error('stepEmail is undefined');
       expect(stepDelay.type).toBe('delay');
       expect(stepDelay.code).toContain(`amount: 1`);
-      expect(stepDelay.code).toContain(`unit: 'hours'`);
+      expect(stepDelay.code).toContain(`unit: "hours"`);
     });
 
-    test('should discover a slack provide with blocks', async () => {
+    it('should discover a slack provide with blocks', async () => {
       const workflowId = 'complex-workflow';
 
       await echo.workflow(workflowId, async ({ step }) => {
@@ -265,9 +265,9 @@ describe('Echo Client', () => {
       expect(stepChat).toBeDefined();
       if (stepChat === undefined) throw new Error('stepEmail is undefined');
       expect(stepChat.type).toBe('chat');
-      expect(stepChat.code).toContain(`body: 'Test Body'`);
-      expect(stepChat.providers[0].code).toContain(`type: 'plain_text'`);
-      expect(stepChat.providers[0].code).toContain(`text: 'Pretty Header'`);
+      expect(stepChat.code).toContain(`body: "Test Body"`);
+      expect(stepChat.providers[0].code).toContain(`type: "plain_text"`);
+      expect(stepChat.providers[0].code).toContain(`text: "Pretty Header"`);
     });
   });
 
