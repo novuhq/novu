@@ -8,7 +8,7 @@ import { Socket } from './socket';
 
 const PRODUCTION_BACKEND_URL = 'https://api.novu.co';
 
-type NovuOptions = {
+export type NovuOptions = {
   applicationIdentifier: string;
   subscriberId: string;
   subscriberHash?: string;
