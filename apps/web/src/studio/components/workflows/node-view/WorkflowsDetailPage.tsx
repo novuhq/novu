@@ -30,6 +30,10 @@ export const WorkflowsDetailPage = () => {
 
   const handleSettingsClick = () => {};
   const handleTestClick = () => {};
+  const handleStepClick = () => {
+    // TODO: this is just a temporary step for connecting the prototype
+    navigate(ROUTES.STUDIO_FLOWS_STEP_EDITOR);
+  };
 
   return (
     <WorkflowsPageTemplate
