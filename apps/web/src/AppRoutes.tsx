@@ -93,7 +93,6 @@ export const AppRoutes = () => {
       <Route element={<PrivatePageLayout />}>
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
-        <Route path={ROUTES.WORKFLOWS_V2_EDIT} element={<TemplateDetailsPageV2 />} />
         <Route path={ROUTES.WORKFLOWS_V2_STEP_EDIT} element={<WorkflowsStepEditorPageV2 />} />
 
         <Route path={ROUTES.WORKFLOWS_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>

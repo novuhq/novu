@@ -1,7 +1,6 @@
 import { Button, IconButton } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconCable, IconPlayArrow, IconSettings } from '@novu/novui/icons';
-import { Flex, VStack } from '@novu/novui/jsx';
 import { useNavigate, useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
 import { useTemplateController } from '../components/useTemplateController';
@@ -9,6 +8,7 @@ import { parseUrl } from '../../../utils/routeUtils';
 import { ROUTES } from '../../../constants/routes';
 import { WorkflowFloatingMenu } from '../../../studio/components/workflows/node-view/WorkflowFloatingMenu';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
+import { WorkflowBackgroundWrapper } from '../../../studio/components/workflows/node-view/WorkflowBackgroundWrapper';
 
 export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
@@ -36,18 +36,7 @@ export const TemplateDetailsPageV2 = () => {
         </>
       }
     >
-      <Flex
-        // TODO fix this
-        h="[95%]"
-        justifyContent="center"
-        className={css({
-          // FIXME: popover token isn't correct. Also, ideally there should be a better way to use a token here
-          backgroundImage: '[radial-gradient(var(--nv-colors-workflow-background-dots) 1.5px, transparent 0)]',
-          backgroundSize: '[16px 16px]',
-          p: '375',
-          mx: '-150',
-        })}
-      >
+      <WorkflowBackgroundWrapper>
         <WorkflowNodes
           steps={
             workflow?.steps?.map((item) => {
@@ -66,7 +55,7 @@ export const TemplateDetailsPageV2 = () => {
             );
           }}
         />
-      </Flex>
+      </WorkflowBackgroundWrapper>
       <WorkflowFloatingMenu
         className={css({
           zIndex: 'docked',
