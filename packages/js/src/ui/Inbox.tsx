@@ -22,8 +22,8 @@ const Inbox: Component<{
 
   return (
     <div class="bg-red-400 p-3 m-4">
-      <div class="text-2xl font-bold">Inbox</div>
-      <header class={testClass}>Hello {props.name} </header>
+      <div class="text-2xl font-bold">Inbox [tailwind class]</div>
+      <header class={testClass}>[Emotion CSS] Hello {props.name} </header>
       <div class={container}>Vanilla Extract Class</div>
       <For each={feeds()}>
         {(feed) => (
@@ -40,7 +40,9 @@ const Inbox: Component<{
 export default Inbox;
 
 const testClass = css`
-  color: hotpink;
-  background-color: green;
+  color: blue;
+  background-color: gray;
   margin: 30px;
+  font-size: 20px;
+  padding: 12px;
 `;
