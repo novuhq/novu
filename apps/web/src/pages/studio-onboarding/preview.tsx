@@ -112,7 +112,7 @@ export const StudioOnboardingPreview = () => {
         height: '100dvh',
       })}
     >
-      <Header activeStepIndex={1} />
+      <Header activeStepIndex={2} />
       <Flex
         justifyContent="center"
         className={css({
@@ -173,7 +173,7 @@ export const StudioOnboardingPreview = () => {
             <meta name="viewport" content="width=device-width, initial-scale=1">
           </head>
           <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 20px;">
-            <div style="text-align: center; margin-bottom: 24px;">
+            <div style="text-align: center; margin-bottom: 24px; background-color:#fff;">
               <img width="200px" src="https://web.novu.co/static/images/logo.png" />
             </div>
             <h1 style="margin: 0; margin-bottom: 16px;">Notification workflows rooted in how YOU work</h1>

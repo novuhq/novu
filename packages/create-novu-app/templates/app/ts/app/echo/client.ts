@@ -18,7 +18,7 @@ echo.workflow("onboarding", async ({ step }) => {
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
           </head>
-          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 20px;">
+          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 20px; background-color:#fff;">
             <div style="text-align: center; margin-bottom: 24px;">
               <img width="200px" src="https://web.novu.co/static/images/logo.png" />
             </div>
