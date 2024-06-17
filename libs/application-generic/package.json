@@ -96,6 +96,7 @@
   },
   "optionalDependencies": {
     "@novu/ee-echo-worker": "workspace:*",
+    "@novu/ee-auth": "workspace:*",
     "@novu/ee-shared-services": "workspace:*",
     "@taskforcesh/bullmq-pro": "5.1.14"
   },

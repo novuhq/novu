@@ -18,15 +18,7 @@ import { EnvironmentsModule } from '../environments/environments.module';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
-
-function injectRepositories() {
-  const eeAuthPackage = require('@novu/ee-auth');
-  if (!eeAuthPackage?.injectRepositories) {
-    throw new Error('EE injectRepositories is not loaded');
-  }
-
-  return eeAuthPackage.injectRepositories();
-}
+import { injectRepositories } from '@novu/application-generic';
 
 const AUTH_STRATEGIES: Provider[] = [JwtStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
 

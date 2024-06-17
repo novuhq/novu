@@ -4,6 +4,7 @@ import {
   PlatformException,
   SwitchEnvironment,
   SwitchOrganization,
+  injectRepositories,
 } from '@novu/application-generic';
 import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
@@ -61,7 +62,6 @@ const eeUserAuthGuard = {
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
   const jwtClerkStrategy = eeAuthPackage?.JwtClerkStrategy;
-  const injectRepositories = eeAuthPackage?.injectRepositories;
 
   const AUTH_STRATEGIES: Provider[] = [jwtClerkStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
   const EE_AUTH_PROVIDERS: Provider[] = [eeAuthServiceProvider, AuthService, eeUserAuthGuard];

@@ -43,19 +43,11 @@ import {
   storageService,
   ExecutionLogRoute,
   CreateExecutionDetails,
+  injectRepositories,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
 import { JobTopicNameEnum } from '@novu/shared';
-
-function injectRepositories() {
-  const eeAuthPackage = require('@novu/ee-auth');
-  if (!eeAuthPackage?.injectRepositories) {
-    throw new Error('EE injectRepositories is not loaded');
-  }
-
-  return eeAuthPackage.injectRepositories();
-}
 
 const DAL_MODELS = [
   UserRepository,

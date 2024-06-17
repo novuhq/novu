@@ -51,6 +51,7 @@ import {
   UpdateSubscriber,
   UpdateSubscriberChannel,
   UpdateTenant,
+  injectRepositories,
 } from '@novu/application-generic';
 
 import * as packageJson from '../../../package.json';
@@ -58,15 +59,6 @@ import { CreateLog } from './logs';
 import { JobTopicNameEnum } from '@novu/shared';
 import { ActiveJobsMetricService } from '../workflow/services';
 import { UNIQUE_WORKER_DEPENDENCIES, workersToProcess } from '../../config/worker-init.config';
-
-function injectRepositories() {
-  const eeAuthPackage = require('@novu/ee-auth');
-  if (!eeAuthPackage?.injectRepositories) {
-    throw new Error('EE injectRepositories is not loaded');
-  }
-
-  return eeAuthPackage.injectRepositories();
-}
 
 const DAL_MODELS = [
   UserRepository,
