@@ -2,9 +2,9 @@ import { HttpStatusEnum } from '../constants';
 import { ErrorCodeEnum } from '../constants/error.constants';
 
 /**
- * Base error class for all Echo errors.
+ * Base error class.
  */
-export abstract class EchoError extends Error {
+export abstract class NovuError extends Error {
   /**
    * HTTP status code.
    */
@@ -21,26 +21,26 @@ export abstract class EchoError extends Error {
   public abstract readonly code: ErrorCodeEnum;
 }
 
-export abstract class NotFoundError extends EchoError {
+export abstract class NotFoundError extends NovuError {
   statusCode = HttpStatusEnum.NOT_FOUND;
 }
 
-export abstract class BadRequestError extends EchoError {
+export abstract class BadRequestError extends NovuError {
   statusCode = HttpStatusEnum.BAD_REQUEST;
 }
 
-export abstract class UnauthorizedError extends EchoError {
+export abstract class UnauthorizedError extends NovuError {
   statusCode = HttpStatusEnum.UNAUTHORIZED;
 }
 
-export abstract class InternalServerError extends EchoError {
+export abstract class InternalServerError extends NovuError {
   statusCode = HttpStatusEnum.INTERNAL_SERVER_ERROR;
 }
 
-export abstract class ConflictError extends EchoError {
+export abstract class ConflictError extends NovuError {
   statusCode = HttpStatusEnum.CONFLICT;
 }
 
-export abstract class ForbiddenError extends EchoError {
+export abstract class ForbiddenError extends NovuError {
   statusCode = HttpStatusEnum.FORBIDDEN;
 }

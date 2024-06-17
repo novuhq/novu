@@ -3,16 +3,9 @@ import addFormats from 'ajv-formats';
 import betterAjvErrors from 'better-ajv-errors';
 import { JSONSchema7 } from 'json-schema';
 import { JSONSchemaFaker } from 'json-schema-faker';
-import { FromSchema } from 'json-schema-to-ts';
 import ora from 'ora';
 
-import {
-  ChannelStepEnum,
-  DEFAULT_NOVU_API_BASE_URL,
-  HttpHeaderKeysEnum,
-  HttpMethodEnum,
-  NovuApiEndpointsEnum,
-} from './constants';
+import { DEFAULT_NOVU_API_BASE_URL, HttpHeaderKeysEnum, HttpMethodEnum, NovuApiEndpointsEnum } from './constants';
 import {
   ExecutionEventDataInvalidError,
   ExecutionEventInputInvalidError,
@@ -23,31 +16,25 @@ import {
   ExecutionStateResultInvalidError,
   ProviderExecutionFailedError,
   ProviderNotFoundError,
-  StepAlreadyExistsError,
   StepNotFoundError,
   WorkflowAlreadyExistsError,
   WorkflowNotFoundError,
 } from './errors';
-import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
 import {
   ActionStep,
-  ClientConfig,
+  ClientOptions,
   CodeResult,
-  CustomStep,
   DiscoverOutput,
   DiscoverProviderOutput,
   DiscoverStepOutput,
   DiscoverWorkflowOutput,
-  Execute,
   ExecuteOutput,
   HealthCheck,
   IEvent,
-  StepType,
   Validate,
-  WorkflowOptions,
 } from './types';
 import { Schema } from './types/schema.types';
-import { EMOJI, log } from './utils';
+import { EMOJI, log, toConstantCase } from './utils';
 import { VERSION } from './version';
 import { Skip } from './types/skip.types';
 import { Liquid } from 'liquidjs';
@@ -57,31 +44,70 @@ JSONSchemaFaker.option({
   alwaysFakeOptionals: true,
 });
 
-export class Echo {
+export class Client {
   private discoveredWorkflows: Array<DiscoverWorkflowOutput> = [];
 
   private ajv: Ajv;
 
   private templateEngine = new Liquid();
 
-  private readonly backendUrl?: string;
+  private readonly apiUrl: string;
 
   public apiKey?: string;
 
   public version: string = VERSION;
 
-  public devModeBypassAuthentication: boolean;
+  public strictAuthentication: boolean;
 
   public static NOVU_SIGNATURE_HEADER = HttpHeaderKeysEnum.SIGNATURE;
 
-  constructor(config?: ClientConfig) {
-    this.apiKey = config?.apiKey;
-    this.backendUrl = config?.backendUrl ?? DEFAULT_NOVU_API_BASE_URL;
-    this.devModeBypassAuthentication = config?.devModeBypassAuthentication || false;
+  constructor(options?: ClientOptions) {
+    const builtOpts = this.buildOptions(options);
+    this.apiKey = builtOpts.apiKey;
+    this.apiUrl = builtOpts.apiUrl;
+    this.strictAuthentication = builtOpts.strictAuthentication;
 
     const ajv = new Ajv({ useDefaults: true });
     addFormats(ajv);
     this.ajv = ajv;
+  }
+
+  private buildOptions(providedOptions?: ClientOptions) {
+    const builtConfiguration: { apiKey?: string; apiUrl: string; strictAuthentication: boolean } = {
+      apiKey: undefined,
+      apiUrl: DEFAULT_NOVU_API_BASE_URL,
+      strictAuthentication: true,
+    };
+
+    if (providedOptions?.apiKey !== undefined) {
+      builtConfiguration.apiKey = providedOptions.apiKey;
+    } else if (process.env.NOVU_API_KEY !== undefined) {
+      builtConfiguration.apiKey = process.env.NOVU_API_KEY;
+    }
+
+    if (providedOptions?.apiUrl !== undefined) {
+      builtConfiguration.apiUrl = providedOptions.apiUrl;
+    } else if (process.env.NOVU_API_URL !== undefined) {
+      builtConfiguration.apiUrl = process.env.NOVU_API_URL;
+    }
+
+    if (providedOptions?.strictAuthentication !== undefined) {
+      builtConfiguration.strictAuthentication = providedOptions.strictAuthentication;
+    } else if (process.env.NOVU_STRICT_AUTHENTICATION !== undefined) {
+      builtConfiguration.strictAuthentication = process.env.NOVU_STRICT_AUTHENTICATION === 'true';
+    }
+
+    return builtConfiguration;
+  }
+
+  public addWorkflows(workflows: Array<DiscoverWorkflowOutput>) {
+    for (const workflow of workflows) {
+      if (this.discoveredWorkflows.some((existing) => existing.workflowId === workflow.workflowId)) {
+        throw new WorkflowAlreadyExistsError(workflow.workflowId);
+      } else {
+        this.discoveredWorkflows.push(workflow);
+      }
+    }
   }
 
   public healthCheck(): HealthCheck {
@@ -96,205 +122,6 @@ export class Echo {
         steps: stepCount,
       },
     };
-  }
-
-  /**
-   * Define a new notification workflow.
-   */
-  public async workflow<
-    T_PayloadSchema extends Schema,
-    T_InputSchema extends Schema,
-    T_Payload = FromSchema<T_PayloadSchema>,
-    T_Input = FromSchema<T_InputSchema>
-  >(
-    workflowId: string,
-    execute: Execute<T_Payload, T_Input>,
-    workflowOptions?: WorkflowOptions<T_PayloadSchema, T_InputSchema>
-  ): Promise<void> {
-    // TODO: Transparently register the trigger step here
-    this.discoverWorkflow(workflowId, execute, workflowOptions);
-
-    await execute({
-      payload: {} as T_Payload,
-      subscriber: {},
-      environment: {},
-      input: {} as T_Input,
-      step: {
-        ...Object.entries(channelStepSchemas).reduce((acc, [channel, schemas]) => {
-          acc[channel] = this.discoverStepFactory(
-            workflowId,
-            channel as ChannelStepEnum,
-            schemas.output,
-            schemas.result
-          );
-
-          return acc;
-        }, {} as Record<ChannelStepEnum, ActionStep<any, any>>),
-        /*
-         * Temporary workaround for inApp, which has snake_case step type
-         * TODO: decouple step types from the channel step types
-         */
-        inApp: this.discoverStepFactory(
-          workflowId,
-          'in_app',
-          channelStepSchemas.in_app.output,
-          channelStepSchemas.in_app.result
-        ),
-        digest: this.discoverStepFactory(
-          workflowId,
-          'digest',
-          digestChannelSchemas.output,
-          digestChannelSchemas.result
-        ),
-        delay: this.discoverStepFactory(workflowId, 'delay', delayChannelSchemas.output, delayChannelSchemas.result),
-        custom: this.discoverCustomStepFactory(workflowId, 'custom'),
-      },
-    });
-
-    this.prettyPrintDiscovery(workflowId);
-  }
-
-  private prettyPrintDiscovery(workflowId: string): void {
-    const workflow = this.getWorkflow(workflowId);
-
-    // eslint-disable-next-line no-console
-    console.log(`\n${log.bold(log.underline('Discovered workflowId:'))} '${workflowId}'`);
-    workflow.steps.forEach((step, i) => {
-      const prefix = i === workflow.steps.length - 1 ? '└' : '├';
-      // eslint-disable-next-line no-console
-      console.log(`${prefix} ${EMOJI.STEP} Discovered stepId: '${step.stepId}'\tType: '${step.type}'`);
-      step.providers.forEach((provider, providerIndex) => {
-        const providerPrefix = providerIndex === step.providers.length - 1 ? '└' : '├';
-        // eslint-disable-next-line no-console
-        console.log(`  ${providerPrefix} ${EMOJI.PROVIDER} Discovered provider: '${provider.type}'`);
-      });
-    });
-  }
-
-  private discoverStepFactory<T, U>(
-    workflowId: string,
-    type: StepType,
-    outputSchema: Schema,
-    resultSchema: Schema
-  ): ActionStep<T, U> {
-    return async (stepId, resolve, options = {}) => {
-      const inputSchema = options?.inputSchema || emptySchema;
-
-      this.discoverStep(workflowId, stepId, {
-        stepId,
-        type,
-        inputs: {
-          schema: inputSchema,
-          validate: this.ajv.compile(inputSchema),
-        },
-        outputs: {
-          schema: outputSchema,
-          validate: this.ajv.compile(outputSchema),
-        },
-        results: {
-          schema: resultSchema,
-          validate: this.ajv.compile(resultSchema),
-        },
-        resolve,
-        code: resolve.toString(),
-        options,
-        providers: [],
-      });
-
-      if (Object.keys(options.providers || {}).length > 0) {
-        this.discoverProviders(workflowId, stepId, type, options.providers || {});
-      }
-
-      return undefined as any;
-    };
-  }
-
-  private discoverCustomStepFactory(workflowId: string, type: StepType): CustomStep {
-    return async (stepId, resolve, options = {}) => {
-      const inputSchema = options?.inputSchema || emptySchema;
-      const outputSchema = options?.outputSchema || emptySchema;
-
-      this.discoverStep(workflowId, stepId, {
-        stepId,
-        type,
-        inputs: {
-          schema: inputSchema,
-          validate: this.ajv.compile(inputSchema),
-        },
-        outputs: {
-          schema: outputSchema,
-          validate: this.ajv.compile(outputSchema),
-        },
-        results: {
-          schema: outputSchema,
-          validate: this.ajv.compile(outputSchema),
-        },
-        resolve,
-        code: resolve.toString(),
-        options,
-        providers: [],
-      });
-
-      return undefined as any;
-    };
-  }
-
-  private discoverProviders(
-    workflowId: string,
-    stepId: string,
-    channelType: string,
-    providers: Record<string, (payload: unknown) => unknown | Promise<unknown>>
-  ): void {
-    const step = this.getStep(workflowId, stepId);
-    const channelSchemas = providerSchemas[channelType];
-
-    Object.entries(providers).forEach(([type, resolve]) => {
-      const schemas = channelSchemas[type];
-      step.providers.push({
-        type,
-        code: resolve.toString(),
-        resolve,
-        outputs: {
-          schema: schemas.output,
-          validate: this.ajv.compile(schemas.output),
-        },
-      });
-    });
-  }
-
-  private discoverWorkflow(
-    workflowId: string,
-    execute: Execute<unknown, unknown>,
-    options: WorkflowOptions<unknown, unknown> = {}
-  ): void {
-    if (this.discoveredWorkflows.some((workflow) => workflow.workflowId === workflowId)) {
-      throw new WorkflowAlreadyExistsError(workflowId);
-    } else {
-      this.discoveredWorkflows.push({
-        workflowId,
-        options,
-        steps: [],
-        code: execute.toString(),
-        data: {
-          schema: options.payloadSchema || emptySchema,
-          validate: this.ajv.compile(options.payloadSchema || emptySchema),
-        },
-        inputs: {
-          schema: options.inputSchema || emptySchema,
-          validate: this.ajv.compile(options.inputSchema || emptySchema),
-        },
-        execute,
-      });
-    }
-  }
-
-  private discoverStep(workflowId: string, stepId: string, step: DiscoverStepOutput): void {
-    if (this.getWorkflow(workflowId).steps.some((workflowStep) => workflowStep.stepId === stepId)) {
-      throw new StepAlreadyExistsError(stepId);
-    } else {
-      const workflow = this.getWorkflow(workflowId);
-      workflow.steps.push(step);
-    }
   }
 
   private getWorkflow(workflowId: string): DiscoverWorkflowOutput {
@@ -342,25 +169,25 @@ export class Echo {
     return headers;
   }
 
-  public async diff(echoUrl: string, anonymous?: string): Promise<unknown> {
+  public async diff(bridgeUrl: string, anonymous?: string): Promise<unknown> {
     const workflows = this.discover()?.workflows || [];
 
-    const workflowsResponse = await fetch(this.backendUrl + NovuApiEndpointsEnum.DIFF, {
+    const workflowsResponse = await fetch(this.apiUrl + NovuApiEndpointsEnum.DIFF, {
       method: HttpMethodEnum.POST,
       headers: this.getHeaders(anonymous),
-      body: JSON.stringify({ workflows, bridgeUrl: echoUrl }),
+      body: JSON.stringify({ workflows, bridgeUrl }),
     });
 
     return workflowsResponse.json();
   }
 
-  public async sync(echoUrl: string, anonymous?: string, source?: string): Promise<unknown> {
+  public async sync(bridgeUrl: string, anonymous?: string, source?: string): Promise<unknown> {
     const { workflows } = this.discover();
 
-    const workflowsResponse = await fetch(`${this.backendUrl}${NovuApiEndpointsEnum.SYNC}?source=${source || 'sdk'}`, {
+    const workflowsResponse = await fetch(`${this.apiUrl}${NovuApiEndpointsEnum.SYNC}?source=${source || 'sdk'}`, {
       method: HttpMethodEnum.POST,
       headers: this.getHeaders(anonymous),
-      body: JSON.stringify({ workflows, bridgeUrl: echoUrl }),
+      body: JSON.stringify({ workflows, bridgeUrl }),
     });
 
     return workflowsResponse.json();
