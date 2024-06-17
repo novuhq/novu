@@ -1,4 +1,4 @@
-import { ActionIcon, ButtonVariant as ExternalButtonVariant } from '@mantine/core';
+import { ActionIcon, ButtonVariant as ExternalButtonVariant, ActionIconStylesNames } from '@mantine/core';
 import React from 'react';
 import { PolymorphicComponentPropWithRef, PolymorphicRef } from '../../types/props-helpers';
 import { JsxStyleProps } from 'styled-system/types';
@@ -46,7 +46,8 @@ export const IconButton: PolymorphicComponent = React.forwardRef(
       <ActionIcon
         ref={ref}
         component={as ?? 'button'}
-        className={cx(styles.root, css(cssProps), className)}
+        classNames={styles}
+        className={cx(css(cssProps), className)}
         variant={variantProps.variant as ExternalButtonVariant}
         loading={loading}
         {...otherProps}

@@ -12,6 +12,7 @@
     "alexjoverm",
     "alist",
     "aliyun",
+    "ALLCAPS",
     "amannn",
     "antd",
     "anthonybaxter",
@@ -604,10 +605,14 @@
     "WaitList",
     "webfontloader",
     "webpush",
+    "rjsf",
+    "RJSF",
+    "norender",
     "Webpush",
     "websockets",
     "whatsapp",
     "whatsappbusiness",
+    "xcodebuild",
     "xkeysib",
     "firestore",
     "firsttris",
@@ -633,12 +638,13 @@
     "zwnj",
     "prepush",
     "xcodebuild",
-    "liquidjs",
-    "vstack"
+    "vstack",
     "nimma",
     "jpath",
     "Nimma",
-    "jpath"
+    "jpath",
+    "vstack",
+    "liquidjs"
   ],
   "flagWords": [],
   "patterns": [
@@ -731,6 +737,7 @@
     ".env.local",
     ".env.production",
     ".env.test",
-    ".example.env"
+    ".example.env",
+    "pnpm-lock.yaml"
   ]
 }

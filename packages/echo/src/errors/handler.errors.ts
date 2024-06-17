@@ -1,8 +1,8 @@
 import { ErrorCodeEnum, HttpMethodEnum, HttpStatusEnum } from '../constants';
 import { enumToPrettyString } from '../utils';
-import { BadRequestError, EchoError } from './base.errors';
+import { BadRequestError, NovuError } from './base.errors';
 
-export class MethodNotAllowedError extends EchoError {
+export class MethodNotAllowedError extends NovuError {
   code = ErrorCodeEnum.METHOD_NOT_ALLOWED_ERROR;
 
   statusCode = HttpStatusEnum.METHOD_NOT_ALLOWED;
@@ -23,6 +23,6 @@ export class MissingApiKeyError extends BadRequestError {
   code = ErrorCodeEnum.MISSING_API_KEY_ERROR;
 
   constructor() {
-    super(`API Key is missing. Please add the API Key during Echo client initialization.`);
+    super(`API Key is missing. Please add the API Key during Client initialization.`);
   }
 }
