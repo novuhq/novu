@@ -34,7 +34,9 @@ export const WorkflowsDetailPage = () => {
   const navigate = useNavigate();
 
   const handleSettingsClick = () => {};
-  const handleTestClick = () => {};
+  const handleTestClick = () => {
+    // navigate(ROUTES.STUDIO_FLOWS_TEST);
+  };
 
   return (
     <WorkflowsPageTemplate

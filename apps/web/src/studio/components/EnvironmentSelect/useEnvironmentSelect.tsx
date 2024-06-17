@@ -42,16 +42,23 @@ export const useEnvironmentSelect = () => {
     await setEnvironment(value as EnvironmentEnum, { route: redirectRoute });
   };
 
+  let name = environment?.name;
+  let icon = environment?.name ? ENVIRONMENT_ICON_LOOKUP[environment.name] : null;
+  if (location?.pathname.includes('/studio')) {
+    name = 'Local';
+    icon = ENVIRONMENT_ICON_LOOKUP[name];
+  }
+
   return {
     loading: isLoading,
     data: Object.values(EnvironmentEnum).map((value) => ({
       label: value,
       value,
     })),
-    value: environment?.name,
+    value: name,
     onChange,
     readonly,
-    icon: environment?.name ? ENVIRONMENT_ICON_LOOKUP[environment.name] : null,
+    icon,
     isPopoverOpened,
     setIsPopoverOpened,
     handlePopoverLinkClick,

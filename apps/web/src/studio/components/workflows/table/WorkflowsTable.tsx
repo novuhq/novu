@@ -11,6 +11,7 @@ import { parseUrl } from '../../../../utils/routeUtils';
 
 interface IWorkflowsTableProps {
   temp?: string;
+  isLoading: boolean;
   workflows: any[];
 }
 
@@ -24,12 +25,14 @@ const WORKFLOW_COLUMNS = [
 ];
 
 // TODO: this should accept props to control behavior
-export const WorkflowsTable: FC<IWorkflowsTableProps> = ({ workflows }) => {
+export const WorkflowsTable: FC<IWorkflowsTableProps> = ({ workflows, isLoading }) => {
   const navigate = useNavigate();
 
   return (
     <div className={css({ display: 'flex', flex: '1' })}>
       <Table<WorkflowTableRow>
+        isLoading={isLoading}
+        loadingItems={5}
         columns={WORKFLOW_COLUMNS}
         data={workflows || []}
         className={css({ w: '[100%]' })}

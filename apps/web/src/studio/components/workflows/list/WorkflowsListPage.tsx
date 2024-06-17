@@ -20,7 +20,7 @@ export const WorkflowsListPage = () => {
         </Button>
         <SearchInput placeholder="Type name or identifier..." />
       </Flex>
-      <WorkflowsTable workflows={data?.workflows || []} />
+      <WorkflowsTable workflows={data?.workflows || []} isLoading={isLoading} />
     </PageTemplate>
   );
 };
