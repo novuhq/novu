@@ -22,6 +22,8 @@ export const JsonSchemaForm = ({
     CheckboxWidget: CheckboxWidget,
     SelectWidget: SelectWidget,
     TextWidget: InputWidget,
+    URLWidget: InputWidget,
+    EmailWidget: InputWidget,
   };
 
   const uiSchema = {
@@ -46,7 +48,9 @@ export const JsonSchemaForm = ({
         uiSchema={uiSchema}
         schema={schema}
         formData={formData}
-        widgets={widgets}
+        widgets={{
+          ...widgets,
+        }}
         validator={validator}
         onChange={onChange}
         liveValidate={true}

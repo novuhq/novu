@@ -18,13 +18,13 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
           icon: <IconOutlineTune />,
           value: 'payload',
           label: 'Payload',
-          content: <JsonSchemaForm schema={workflow?.payloadSchema} formData={{}} />,
+          content: <JsonSchemaForm schema={workflow?.options?.payloadSchema || {}} formData={{}} />,
         },
         {
           icon: <IconOutlineEditNote />,
           value: 'step-inputs',
           label: 'Step inputs',
-          content: <JsonSchemaForm schema={step?.inputSchema} formData={{}} />,
+          content: <JsonSchemaForm schema={step?.inputs?.schema || {}} formData={{}} />,
         },
       ]}
     />

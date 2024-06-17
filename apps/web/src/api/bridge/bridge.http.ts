@@ -49,11 +49,7 @@ function buildUrl(url: string) {
 }
 
 function getHeaders() {
-  const token = localStorage.getItem('auth_token');
-
-  return token
-    ? {
-        Authorization: `Bearer ${token}`,
-      }
-    : {};
+  return {
+    'Bypass-Tunnel-Reminder': true,
+  };
 }
