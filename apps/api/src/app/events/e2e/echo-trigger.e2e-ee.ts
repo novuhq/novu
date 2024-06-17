@@ -10,7 +10,7 @@ import {
 } from '@novu/dal';
 import { ExecutionDetailsStatusEnum, JobStatusEnum, MarkMessagesAsEnum, StepTypeEnum } from '@novu/shared';
 import { echoServer } from '../../../../e2e/echo.server';
-import { workflow } from '@novu/echo';
+import { workflow } from '@novu/framework';
 
 const eventTriggerPath = '/v1/events/trigger';
 
