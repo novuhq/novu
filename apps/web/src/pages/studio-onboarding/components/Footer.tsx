@@ -92,7 +92,7 @@ export const Footer = ({
               </Button>
             </When>
             <Tooltip label={tooltip} disabled={!tooltip}>
-              <Button variant={'filled'} loading={loading} onClick={onClick} disabled={disabled}>
+              <Button variant="filled" loading={loading} onClick={onClick} disabled={disabled}>
                 {buttonText}
               </Button>
             </Tooltip>

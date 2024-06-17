@@ -9,24 +9,24 @@
 
 # Code-First Notifications Workflow SDK
 
-[![Version](https://img.shields.io/npm/v/@novu/echo.svg)](https://www.npmjs.org/package/@novu/echo)
-[![Downloads](https://img.shields.io/npm/dm/@novu/echo.svg)](https://www.npmjs.com/package/@novu/echo)
+[![Version](https://img.shields.io/npm/v/@novu/framework.svg)](https://www.npmjs.org/package/@novu/framework)
+[![Downloads](https://img.shields.io/npm/dm/@novu/framework.svg)](https://www.npmjs.com/package/@novu/framework)
 
 Novu Framework allows you to write notification workflows in your codebase. Workflows are functions that execute business logic and use your preferred libraries for email, SMS, and chat generation. You can use Novu Framework with [React.Email](https://react.email/), [MJML](https://mjml.io/), or any other template generator.
 
-Learn more about the Code-First Notifications Workflow SDK in our [docs](https://docs.novu.co/echo/quickstart).
+Learn more about the Code-First Notifications Workflow SDK in our [docs](https://docs.novu.co/framework/quickstart).
 
 ## Installation
 
 ```bash
-npm install @novu/echo
+npm install @novu/framework
 ```
 
 ## Quickstart
 
 ```typescript
-import { workflow } from '@novu/echo';
-import { serve } from '@novu/echo/express';
+import { workflow } from '@novu/framework';
+import { serve } from '@novu/framework/express';
 
 const commentWorkflow = await workflow(
   'comment-on-post',

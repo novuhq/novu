@@ -1,6 +1,6 @@
 {
-  "name": "@novu/echo",
-  "version": "0.24.3-alpha.4",
+  "name": "@novu/framework",
+  "version": "0.24.3-alpha.5",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -13,6 +13,10 @@
     "type": "git",
     "url": "git+https://github.com/novuhq/novu.git"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "test": "vitest",
@@ -43,7 +47,7 @@
     "h3",
     "express"
   ],
-  "author": "Athena",
+  "author": "Novu",
   "license": "MIT",
   "exports": {
     ".": {
@@ -107,9 +111,5 @@
     "json-schema-to-ts": "^3.0.0",
     "liquidjs": "^10.13.1",
     "ora": "^5.4.1"
-  },
-  "files": [
-    "dist",
-    "README.md"
-  ]
+  }
 }

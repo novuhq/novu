@@ -1,14 +1,7 @@
-import { Echo } from "@novu/echo";
+import { workflow } from "@novu/framework";
 import { renderReactEmail } from "./emails/vercel";
 
-export const echo = new Echo({
-  /**
-   * Enable this flag only during local development
-   */
-  strictAuthentication: process.env.NODE_ENV !== "development",
-});
-
-echo.workflow(
+export const myWorkflow = workflow(
   "hello-world",
   async ({ step }) => {
     await step.email(
