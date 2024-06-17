@@ -36,6 +36,7 @@ jobs:
       health_check: true
       local_tag: novu-api
       env_tag: ${{ inputs.env }}
+      enterprise: true
     secrets: inherit
 
 
@@ -51,8 +52,6 @@ jobs:
       service_name: api
       terraform_workspace: novu-dev
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
-      enterprise: true
-
 
   deploy_prod_api_eu:
     needs:
@@ -66,7 +65,6 @@ jobs:
       service_name: api
       terraform_workspace: novu-prod-eu
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
-      enterprise: true
 
   deploy_prod_api_us:
     needs:
@@ -82,6 +80,4 @@ jobs:
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
       deploy_sentry_release: true
       sentry_project: api
-      enterprise: true
-
 
