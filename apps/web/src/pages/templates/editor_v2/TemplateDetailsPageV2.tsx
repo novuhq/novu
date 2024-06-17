@@ -1,30 +1,16 @@
 import { Button, IconButton } from '@novu/novui';
 import { css } from '@novu/novui/css';
-import {
-  IconCable,
-  IconOutlineBolt,
-  IconOutlineEmail,
-  IconOutlineNotifications,
-  IconPlayArrow,
-  IconSettings,
-  IconOutlineAutoAwesomeMotion,
-  IconOutlineAvTimer,
-  IconOutlineForum,
-  IconOutlineMobileFriendly,
-  IconOutlineSms,
-} from '@novu/novui/icons';
+import { IconCable, IconPlayArrow, IconSettings } from '@novu/novui/icons';
 import { Flex, VStack } from '@novu/novui/jsx';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
 import { useTemplateController } from '../components/useTemplateController';
 import { parseUrl } from '../../../utils/routeUtils';
-import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
 import { ROUTES } from '../../../constants/routes';
 import { WorkflowFloatingMenu } from '../../../studio/components/workflows/node-view/WorkflowFloatingMenu';
 import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 
-export const TemplateEditorPageV2 = () => {
+export const TemplateDetailsPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
 
   const { template: workflow } = useTemplateController(templateId);

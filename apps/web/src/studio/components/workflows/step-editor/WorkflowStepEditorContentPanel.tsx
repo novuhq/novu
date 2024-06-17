@@ -32,36 +32,36 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
     return integrations.find((item) => item.channel === 'email' && item.primary) || null;
   }, [integrations]);
 
-  return (
-    <Tabs
-      defaultValue="preview"
-      tabConfigs={[
-        {
-          icon: <IconVisibility />,
-          value: 'preview',
-          label: 'Preview',
-          content: (
-            <PreviewWeb
-              integration={integration}
-              content={preview?.outputs?.body}
-              subject={preview?.outputs?.subject}
-              onLocaleChange={() => {}}
-              locales={[]}
-              loading={loadingPreview}
-            />
-          ),
-        },
-        {
-          icon: <IconOutlineCode />,
-          value: 'code',
-          label: 'Code',
-          content: (
-            <Prism withLineNumbers={true} language="javascript">
-              {step?.code || ''}
-            </Prism>
-          ),
-        },
-      ]}
-    />
-  );
+  const tabs = [
+    {
+      icon: <IconVisibility />,
+      value: 'preview',
+      label: 'Preview',
+      content: (
+        <PreviewWeb
+          integration={integration}
+          content={preview?.outputs?.body}
+          subject={preview?.outputs?.subject}
+          onLocaleChange={() => {}}
+          locales={[]}
+          loading={loadingPreview}
+        />
+      ),
+    },
+  ];
+
+  if (step?.code) {
+    tabs.push({
+      icon: <IconOutlineCode />,
+      value: 'code',
+      label: 'Code',
+      content: (
+        <Prism withLineNumbers={true} language="javascript">
+          {step?.code || ''}
+        </Prism>
+      ),
+    });
+  }
+
+  return <Tabs defaultValue="preview" tabConfigs={tabs} />;
 };

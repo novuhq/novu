@@ -14,7 +14,7 @@ import { TourProvider } from './TourProvider';
 import { NavigateValidatorModal } from '../components/NavigateValidatorModal';
 import { useTourStorage } from '../hooks/useTourStorage';
 import { useBasePath } from '../hooks/useBasePath';
-import { TemplateEditorPageV2 } from '../editor_v2/TemplateEditorPage.v2';
+import { TemplateDetailsPageV2 } from '../editor_v2/TemplateDetailsPageV2';
 
 function BaseTemplateEditorPage() {
   const navigate = useNavigate();
@@ -104,6 +104,6 @@ export default function TemplateEditorPage() {
       </TemplateEditorFormProvider>
     );
   } else {
-    return <TemplateEditorPageV2 />;
+    return <TemplateDetailsPageV2 />;
   }
 }

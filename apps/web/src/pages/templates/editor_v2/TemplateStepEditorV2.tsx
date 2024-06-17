@@ -64,10 +64,6 @@ export const WorkflowsStepEditorPageV2 = () => {
     saveInputs(inputs as any);
   }
 
-  console.log({
-    inputVariables,
-  });
-
   return (
     <WorkflowsPageTemplate
       title={title}
@@ -87,6 +83,7 @@ export const WorkflowsStepEditorPageV2 = () => {
           }}
           step={{
             inputs: step?.template?.inputs,
+            code: step?.code,
           }}
           workflow={{
             options: {
