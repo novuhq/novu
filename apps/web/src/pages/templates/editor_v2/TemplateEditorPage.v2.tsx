@@ -15,23 +15,21 @@ import {
 } from '@novu/novui/icons';
 import { Flex, VStack } from '@novu/novui/jsx';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ROUTES } from '../../../../constants/routes';
-import { WorkflowsPageTemplate } from '../layout/WorkflowsPageTemplate';
-import { StepNode } from './StepNode';
-import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
 import { useQuery } from '@tanstack/react-query';
-import { bridgeApi } from '../../../../api/bridge/bridge.api';
-import { parseUrl } from '../../../../utils/routeUtils';
-import { WorkflowNodes } from './WorkflowNodes';
+import { WorkflowsPageTemplate } from '../../../studio/components/workflows/layout';
+import { useTemplateController } from '../components/useTemplateController';
+import { parseUrl } from '../../../utils/routeUtils';
+import { StepNode } from '../../../studio/components/workflows/node-view/StepNode';
+import { ROUTES } from '../../../constants/routes';
+import { WorkflowFloatingMenu } from '../../../studio/components/workflows/node-view/WorkflowFloatingMenu';
+import { WorkflowNodes } from '../../../studio/components/workflows/node-view/WorkflowNodes';
 
-export const WorkflowsDetailPage = () => {
+export const TemplateEditorPageV2 = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
 
-  const { data: workflow, isLoading } = useQuery(['workflow', templateId], async () => {
-    return bridgeApi.getWorkflow(templateId);
-  });
+  const { template: workflow } = useTemplateController(templateId);
 
-  const title = workflow?.workflowId;
+  const title = workflow?.name || '';
   const navigate = useNavigate();
 
   const handleSettingsClick = () => {};
@@ -65,12 +63,18 @@ export const WorkflowsDetailPage = () => {
         })}
       >
         <WorkflowNodes
-          steps={workflow?.steps || []}
+          steps={
+            workflow?.steps?.map((item) => {
+              return {
+                stepId: item.stepId,
+                type: item.template?.type,
+              };
+            }) || []
+          }
           onClick={(step) => {
-            // TODO: this is just a temporary step for connecting the prototype
             navigate(
-              parseUrl(ROUTES.STUDIO_FLOWS_STEP_EDITOR, {
-                templateId: workflow.workflowId,
+              parseUrl(ROUTES.WORKFLOWS_V2_STEP_EDIT, {
+                templateId: workflow?._id as string,
                 stepId: step.stepId,
               })
             );

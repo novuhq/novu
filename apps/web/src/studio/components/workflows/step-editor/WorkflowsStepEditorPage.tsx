@@ -14,8 +14,6 @@ export const WorkflowsStepEditorPage = () => {
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
 
-  console.log({ inputs, payload });
-
   const { data: workflow, isLoading } = useQuery(['workflow', templateId], async () => {
     return bridgeApi.getWorkflow(templateId);
   });

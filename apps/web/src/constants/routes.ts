@@ -12,6 +12,8 @@ export enum ROUTES {
   WORKFLOWS_DIGEST_PLAYGROUND = '/workflows/:templateId/digest-playground',
   WORKFLOWS_CREATE = '/workflows/create',
   WORKFLOWS_EDIT_TEMPLATEID = '/workflows/edit/:templateId',
+  WORKFLOWS_V2_EDIT = '/workflows-v2/edit/:templateId',
+  WORKFLOWS_V2_STEP_EDIT = '/workflows/edit/:templateId/step/:stepId',
   WORKFLOWS_VARIANT_PREVIEW = '/workflows/edit/:templateId/:channel/:stepUuid/variants/:variantUuid/preview',
   WORKFLOWS = '/workflows',
   TENANTS = '/tenants',
