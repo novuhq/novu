@@ -3,8 +3,6 @@ import { css } from '@novu/novui/css';
 import { navSelectStyles } from '../../../components/nav/NavSelect.styles';
 import { EnvironmentPopover } from '../../../components/nav/EnvironmentSelect/EnvironmentPopover';
 import { useEnvironmentSelect } from './useEnvironmentSelect';
-import { useFeatureFlag } from '../../../hooks';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export const EnvironmentSelectRenderer: React.FC<ReturnType<typeof useEnvironmentSelect>> = ({
   icon,
@@ -49,9 +47,7 @@ export const EnvironmentSelectRenderer: React.FC<ReturnType<typeof useEnvironmen
 };
 
 export const EnvironmentSelect = () => {
-  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
   const props = useEnvironmentSelect();
-  console.log({ props });
 
   return <EnvironmentSelectRenderer {...props} />;
 };
