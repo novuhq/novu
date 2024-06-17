@@ -210,7 +210,7 @@ export const installTemplate = async ({
       react: "^18",
       "react-dom": "^18",
       next: version,
-      "@novu/echo": "latest",
+      "@novu/framework": "latest",
     },
     devDependencies: {},
   };
