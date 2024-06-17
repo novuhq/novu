@@ -12,4 +12,11 @@ export const bridgeApi = {
 
     return workflows.find((workflow) => workflow.workflowId === workflowId);
   },
+
+  async getStepPreview(workflowId: string, stepId: string): Promise<any> {
+    return bridgeHttp.post('?action=preview&workflowId=' + workflowId + '&stepId=' + stepId, {
+      inputs: {},
+      data: {},
+    });
+  },
 };

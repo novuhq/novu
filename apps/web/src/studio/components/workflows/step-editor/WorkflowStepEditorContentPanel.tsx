@@ -4,6 +4,9 @@ import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
 import { FC, useMemo } from 'react';
 import { PreviewWeb } from '../../../../components/workflow/preview/email/PreviewWeb';
 import { useActiveIntegrations } from '../../../../hooks/index';
+import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { bridgeApi } from '../../../../api/bridge/bridge.api';
 
 interface IWorkflowStepEditorContentPanelProps {
   // TODO: Placeholder for real props
@@ -11,6 +14,17 @@ interface IWorkflowStepEditorContentPanelProps {
 }
 
 export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelProps> = ({}) => {
+  const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
+
+  const { data: workflow, isLoading } = useQuery(['workflow', templateId], async () => {
+    return bridgeApi.getWorkflow(templateId);
+  });
+
+  const { data: preview, isLoading: loadingPreview } = useQuery(['workflow-preview', templateId, stepId], async () => {
+    return bridgeApi.getStepPreview(templateId, stepId);
+  });
+  const step = workflow?.steps.find((item) => item.stepId === stepId);
+
   const { integrations = [] } = useActiveIntegrations();
   const integration = useMemo(() => {
     return integrations.find((item) => item.channel === 'email' && item.primary) || null;
@@ -27,11 +41,11 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
           content: (
             <PreviewWeb
               integration={integration}
-              content={'This is a placeholder for real content'}
-              subject={'This is a placeholder for a real subject'}
+              content={preview?.outputs?.body}
+              subject={preview?.outputs?.subject}
               onLocaleChange={() => {}}
               locales={[]}
-              loading={false}
+              loading={loadingPreview}
             />
           ),
         },

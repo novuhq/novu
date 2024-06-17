@@ -27,7 +27,7 @@ export const bridgeHttp = {
       .put(`${BRIDGE_ENDPOINT}${url}`, payload, {
         headers: getHeaders(),
       })
-      .then((response) => response.data?.data)
+      .then((response) => response.data)
       .catch((error) => {
         // eslint-disable-next-line promise/no-return-wrap
         return Promise.reject(error?.response?.data || error?.response || error);
@@ -36,7 +36,7 @@ export const bridgeHttp = {
   post(url: string, payload, params?: CustomDataType) {
     return axios
       .post(`${BRIDGE_ENDPOINT}${url}`, payload, { params, headers: getHeaders() })
-      .then((response) => response.data?.data)
+      .then((response) => response.data)
       .catch((error) => {
         // eslint-disable-next-line promise/no-return-wrap
         return Promise.reject(error?.response?.data || error?.response || error);
