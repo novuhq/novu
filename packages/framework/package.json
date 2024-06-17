@@ -43,7 +43,7 @@
     "h3",
     "express"
   ],
-  "author": "Athena",
+  "author": "Novu",
   "license": "MIT",
   "exports": {
     ".": {
