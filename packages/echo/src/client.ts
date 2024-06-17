@@ -169,30 +169,6 @@ export class Client {
     return headers;
   }
 
-  public async diff(bridgeUrl: string, anonymous?: string): Promise<unknown> {
-    const workflows = this.discover()?.workflows || [];
-
-    const workflowsResponse = await fetch(this.apiUrl + NovuApiEndpointsEnum.DIFF, {
-      method: HttpMethodEnum.POST,
-      headers: this.getHeaders(anonymous),
-      body: JSON.stringify({ workflows, bridgeUrl }),
-    });
-
-    return workflowsResponse.json();
-  }
-
-  public async sync(bridgeUrl: string, anonymous?: string, source?: string): Promise<unknown> {
-    const { workflows } = this.discover();
-
-    const workflowsResponse = await fetch(`${this.apiUrl}${NovuApiEndpointsEnum.SYNC}?source=${source || 'sdk'}`, {
-      method: HttpMethodEnum.POST,
-      headers: this.getHeaders(anonymous),
-      body: JSON.stringify({ workflows, bridgeUrl }),
-    });
-
-    return workflowsResponse.json();
-  }
-
   /**
    * Mocks data based on the given schema.
    * The `default` value in the schema is used as the base data.
