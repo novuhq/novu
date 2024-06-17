@@ -9,55 +9,42 @@ import {
   IconOutlineMobileFriendly,
   IconOutlineNotifications,
   IconOutlineSms,
+  IconSize,
+  IconType,
 } from '@novu/novui/icons';
+import { BridgeWorkflowStepType } from '../../../studio.types';
 
 export interface WorkflowNodesProps {
   steps: any[];
   onClick: (step: any) => void;
 }
 
+const WORKFLOW_NODE_STEP_ICON_DICTIONARY: Record<BridgeWorkflowStepType, IconType> = {
+  email: IconOutlineEmail,
+  in_app: IconOutlineNotifications,
+  sms: IconOutlineSms,
+  chat: IconOutlineForum,
+  push: IconOutlineMobileFriendly,
+  digest: IconOutlineAutoAwesomeMotion,
+  delay: IconOutlineAvTimer,
+  custom: IconOutlineBolt,
+};
+
+const STEP_TYPE_ICON_SIZE: IconSize = '32';
+
 export function WorkflowNodes({ steps, onClick }: WorkflowNodesProps) {
   return (
     <>
       <VStack gap="0">
-        <StepNode icon={<IconOutlineBolt size="32" />} title={'Workflow trigger'} />
+        <StepNode icon={<IconOutlineBolt size={STEP_TYPE_ICON_SIZE} />} title={'Workflow trigger'} />
         {steps?.map((step) => {
           const handleStepClick = () => {
             onClick(step);
           };
 
-          switch (step.type) {
-            case 'email':
-              return <StepNode icon={<IconOutlineEmail size="32" />} title={step.stepId} onClick={handleStepClick} />;
-            case 'in_app':
-              return (
-                <StepNode icon={<IconOutlineNotifications size="32" />} title={step.stepId} onClick={handleStepClick} />
-              );
-            case 'sms':
-              return <StepNode icon={<IconOutlineSms size="32" />} title={step.stepId} onClick={handleStepClick} />;
-            case 'chat':
-              return <StepNode icon={<IconOutlineForum size="32" />} title={step.stepId} onClick={handleStepClick} />;
-            case 'push':
-              return (
-                <StepNode
-                  icon={<IconOutlineMobileFriendly size="32" />}
-                  title={step.stepId}
-                  onClick={handleStepClick}
-                />
-              );
-            case 'digest':
-              return (
-                <StepNode
-                  icon={<IconOutlineAutoAwesomeMotion size="32" />}
-                  title={step.stepId}
-                  onClick={handleStepClick}
-                />
-              );
-            case 'delay':
-              return <StepNode icon={<IconOutlineAvTimer size="32" />} title={step.stepId} onClick={handleStepClick} />;
-            case 'custom':
-              return <StepNode icon={<IconOutlineBolt size="32" />} title={step.stepId} onClick={handleStepClick} />;
-          }
+          const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step.type];
+
+          return <StepNode icon={<Icon size={STEP_TYPE_ICON_SIZE} />} title={step.stepId} onClick={handleStepClick} />;
         })}
       </VStack>
     </>
