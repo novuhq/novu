@@ -2,6 +2,8 @@ import { For, createSignal, onMount, type Component } from 'solid-js';
 import { Notification } from '../feeds';
 import { Novu } from '../novu';
 import type { NovuOptions } from '../novu';
+import { css } from '@emotion/css';
+import { container } from './vanilla.css';
 
 const Inbox: Component<{
   name: string;
@@ -20,7 +22,8 @@ const Inbox: Component<{
 
   return (
     <div class="bg-slate-400 p-3">
-      <header>Hello {props.name} </header>
+      <header class={testClass}>Hello {props.name} </header>
+      <div class={container}>Vanilla Extract Class</div>
       <For each={feeds()}>
         {(feed) => (
           <div>
@@ -34,3 +37,8 @@ const Inbox: Component<{
 };
 
 export default Inbox;
+
+const testClass = css`
+  color: hotpink;
+  background-color: green;
+`;
