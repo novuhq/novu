@@ -3,6 +3,7 @@ import { defineConfig, Options } from 'tsup';
 import glob from 'tiny-glob';
 import * as preset from 'tsup-preset-solid';
 import { name, version } from './package.json';
+import { vanillaExtractPlugin } from '@vanilla-extract/esbuild-plugin';
 
 const isProd = process.env?.NODE_ENV === 'production';
 
@@ -39,6 +40,7 @@ const uiPresetOptions: preset.PresetOptions = {
   drop_console: true,
   // Set to `true` to generate a CommonJS build alongside ESM
   cjs: true,
+  esbuild_plugins: [vanillaExtractPlugin()],
 };
 
 export default defineConfig((config: Options) => {
