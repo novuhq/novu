@@ -45,6 +45,11 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(TriggerRequestCategoryEnum)
   requestCategory?: TriggerRequestCategoryEnum;
+
+  bridge?: {
+    workflow: any;
+    bridgeUrl: string;
+  };
 }
 
 export class TriggerEventMulticastCommand extends TriggerEventBaseCommand {

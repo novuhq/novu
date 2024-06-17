@@ -40,4 +40,6 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(TriggerRequestCategoryEnum)
   requestCategory?: TriggerRequestCategoryEnum;
+
+  bridge?: any;
 }

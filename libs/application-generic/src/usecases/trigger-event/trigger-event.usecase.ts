@@ -85,10 +85,12 @@ export class TriggerEvent {
         organizationId: mappedCommand.organizationId,
       });
 
-      const template = await this.getNotificationTemplateByTriggerIdentifier({
-        environmentId: mappedCommand.environmentId,
-        triggerIdentifier: mappedCommand.identifier,
-      });
+      const template =
+        mappedCommand.bridge?.workflow ??
+        (await this.getNotificationTemplateByTriggerIdentifier({
+          environmentId: mappedCommand.environmentId,
+          triggerIdentifier: mappedCommand.identifier,
+        }));
 
       /*
        * Makes no sense to execute anything if template doesn't exist

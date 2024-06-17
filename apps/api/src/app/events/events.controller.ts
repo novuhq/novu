@@ -68,6 +68,9 @@ export class EventsController {
     @UserSession() user: UserSessionData,
     @Body() body: TriggerEventRequestDto
   ): Promise<TriggerEventResponseDto> {
+    console.log('HII!!!!');
+    console.log({ body });
+
     const result = await this.parseEventRequest.execute(
       ParseEventRequestMulticastCommand.create({
         userId: user._id,
@@ -82,6 +85,7 @@ export class EventsController {
         transactionId: body.transactionId,
         addressingType: AddressingTypeEnum.MULTICAST,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
+        bridge: body.bridge,
       })
     );
 

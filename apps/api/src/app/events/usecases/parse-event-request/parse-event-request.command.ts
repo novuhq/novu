@@ -45,11 +45,15 @@ export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseComm
 
   @IsEnum(AddressingTypeEnum)
   addressingType: AddressingTypeEnum.MULTICAST;
+
+  bridge: any;
 }
 
 export class ParseEventRequestBroadcastCommand extends ParseEventRequestBaseCommand {
   @IsEnum(AddressingTypeEnum)
   addressingType: AddressingTypeEnum.BROADCAST;
+
+  bridge: any;
 }
 
 export type ParseEventRequestCommand = ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;

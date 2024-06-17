@@ -57,6 +57,7 @@ export class SubscriberJobBound {
     const {
       subscriber,
       templateId,
+      bridge,
       environmentId,
       organizationId,
       userId,
@@ -67,11 +68,28 @@ export class SubscriberJobBound {
       requestCategory,
     } = command;
 
-    const template = await this.getNotificationTemplate({
-      _id: templateId,
-      environmentId: environmentId,
-    });
+    let template =
+      command.bridge?.workflow ??
+      (await this.getNotificationTemplate({
+        _id: templateId,
+        environmentId: environmentId,
+      }));
 
+    if (command.bridge?.workflow) {
+      template = {
+        ...template,
+        type: 'ECHO',
+        steps: template.steps.map((step) => {
+          return {
+            ...step,
+            active: true,
+            template: {
+              type: step.type,
+            },
+          };
+        }),
+      };
+    }
     if (!template) {
       throw new ApiException(`Workflow id ${templateId} was not found`);
     }
@@ -136,6 +154,7 @@ export class SubscriberJobBound {
       transactionId: command.transactionId,
       userId,
       tenant,
+      bridge: command.bridge,
     };
 
     if (actor) {
@@ -151,6 +170,7 @@ export class SubscriberJobBound {
         environmentId: command.environmentId,
         jobs: notificationJobs,
         organizationId: command.organizationId,
+        bridge: command.bridge,
       })
     );
   }

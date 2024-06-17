@@ -65,16 +65,18 @@ export class ParseEventRequest {
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
 
-    const template = await this.getNotificationTemplateByTriggerIdentifier({
-      environmentId: command.environmentId,
-      triggerIdentifier: command.identifier,
-    });
+    const template =
+      command.bridge?.workflow ??
+      (await this.getNotificationTemplateByTriggerIdentifier({
+        environmentId: command.environmentId,
+        triggerIdentifier: command.identifier,
+      }));
 
     if (!template) {
       throw new UnprocessableEntityException('workflow_not_found');
     }
 
-    const reservedVariablesTypes = this.getReservedVariablesTypes(template);
+    const reservedVariablesTypes = command.bridge?.workflow ? [] : this.getReservedVariablesTypes(template);
     this.validateTriggerContext(command, reservedVariablesTypes);
 
     let tenant: TenantEntity | null = null;
@@ -102,7 +104,7 @@ export class ParseEventRequest {
       });
     }
 
-    const inactiveWorkflow = !workflowOverride && !template.active;
+    const inactiveWorkflow = command.bridge?.workflow ? false : !workflowOverride && !template.active;
     const inactiveWorkflowOverride = workflowOverride && !workflowOverride.active;
 
     if (inactiveWorkflowOverride || inactiveWorkflow) {
@@ -122,7 +124,7 @@ export class ParseEventRequest {
       };
     }
 
-    if (!template.steps?.some((step) => step.active)) {
+    if (!command.bridge?.workflow && !template.steps?.some((step) => step.active)) {
       return {
         acknowledged: true,
         status: TriggerEventStatusEnum.NO_WORKFLOW_ACTIVE_STEPS,
@@ -143,12 +145,14 @@ export class ParseEventRequest {
       command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
     }
 
-    const defaultPayload = this.verifyPayload.execute(
-      VerifyPayloadCommand.create({
-        payload: command.payload,
-        template,
-      })
-    );
+    const defaultPayload = !command.bridge?.workflow
+      ? this.verifyPayload.execute(
+          VerifyPayloadCommand.create({
+            payload: command.payload,
+            template,
+          })
+        )
+      : {};
 
     command.payload = merge({}, defaultPayload, command.payload);
 

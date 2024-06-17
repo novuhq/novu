@@ -61,6 +61,13 @@ export class TriggerEventRequestDto {
   @IsOptional()
   payload?: Record<string, unknown>;
 
+  @IsObject()
+  @IsOptional()
+  bridge: {
+    workflow: any;
+    url: string;
+  };
+
   @ApiPropertyOptional({
     description: 'This could be used to override provider specific configurations',
     example: {

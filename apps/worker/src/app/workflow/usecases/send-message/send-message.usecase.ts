@@ -212,6 +212,20 @@ export class SendMessage {
       return { filterResult: null, channelPreferenceResult: null };
     }
 
+    /**
+     * TODO: need to figure out inline workflow here
+     */
+    if ((command.job?.step as any)?.inlineWorkflow) {
+      return {
+        filterResult: {
+          passed: true,
+          conditions: [],
+          variables: {},
+        },
+        channelPreferenceResult: true,
+      };
+    }
+
     const [filterResult, channelPreferenceResult] = await Promise.all([
       this.filter(command, variables),
       this.filterPreferredChannels(command.job),
