@@ -134,7 +134,6 @@ jobs:
             --cache-from type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }}
             --cache-to type=registry,ref=ghcr.io/novuhq/cache:build-cache-${{ needs.prepare.outputs.SERVICE_NAME }}-${{ inputs.env_tag }},mode=max
             --platform=${{ needs.job-setup.outputs.platforms }}
-            --provenance=false
             --output=type=image,name=ghcr.io/novuhq/${{ needs.prepare.outputs.SERVICE_NAME }},push-by-digest=true,name-canonical=true
         run: |
           echo -n $GH_PASSWORD | wc -c
