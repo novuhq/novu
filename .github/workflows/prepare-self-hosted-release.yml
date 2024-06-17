@@ -1,0 +1,134 @@
+name: Prepare Self-hosted Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: write
+  packages: write
+  deployments: write
+  id-token: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      latest-version: ${{ steps.get_version.outputs.latest-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get Current Lerna Release version and comparing with the Git tag
+        id: get_version
+        shell: bash
+        run: |
+          LATEST_VERSION="v$(jq -r '.version' lerna.json)"
+          CURRENT_GIT_TAG="${{  github.ref_name }}"
+          if [ "$LATEST_VERSION" == "$CURRENT_GIT_TAG" ]
+          then
+            echo "latest-version=$(jq -r '.version' lerna.json)" >> $GITHUB_OUTPUT
+          else
+            echo "::error::The version in the file lerna.json does not match the git tag. The version in lerna.json is $LATEST_VERSION. The git version is $CURRENT_GIT_TAG"
+            exit 1
+          fi
+  build_docker:
+    runs-on: ubuntu-latest
+    needs: prepare
+    timeout-minutes: 90
+    environment: Production
+    strategy:
+      fail-fast: false
+      matrix:
+        name: ['novu/api','novu/worker','novu/inbound-mail','novu/web','novu/webhook','novu/widget','novu/ws','novu/embed','novu/inbound-mail-ee','novu/worker-ee','novu/api-ee','novu/web-ee','novu/widget-ee','novu/embed-ee','novu/ws-ee','novu/webhook-ee']
+    steps:
+      - name: Git Checkout with Submodules
+        uses: actions/checkout@v4
+        if: contains(matrix.name, '-ee')
+        with:
+          submodules: true
+          token: ${{ secrets.SUBMODULES_TOKEN }}
+
+      - name: Git Checkout without Submodules
+        if: "!contains(matrix.name, '-ee')"
+        uses: actions/checkout@v4
+
+      - name: Variables
+        shell: bash
+        run: |
+          echo "The release version is ${{ needs.prepare.outputs.latest-version }}"
+          service=${{ matrix.name }}
+          SERVICE_NAME=$(basename "${service//-/-}")
+          SERVICE_COMMON_NAME=$(echo "$SERVICE_NAME" | sed 's/-ee$//')
+          echo "SERVICE_NAME=$SERVICE_NAME" >> $GITHUB_ENV
+          echo "SERVICE_COMMON_NAME=$SERVICE_COMMON_NAME" >> $GITHUB_ENV
+          echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.8.1
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Link submodules
+        if: contains(matrix.name, '-ee')
+        run: pnpm symlink:submodules
+
+      - uses: ./.github/actions/free-space
+      - uses: ./.github/actions/setup-qemu
+
+      - name: Login To Registry
+        shell: bash
+        env:
+          GH_ACTOR: ${{ github.actor }}
+          GH_PASSWORD: ${{ secrets.GH_PACKAGES }}
+        run: |
+          echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
+      - name: Set Bull MQ Env variable for EE
+        if: contains(matrix.name, '-ee')
+        shell: bash
+        run: |
+          echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
+      - name: Build ${{ env.SERVICE_NAME }} Community Docker Image
+        shell: bash
+        env:
+          DOCKER_BUILD_ARGUMENTS: >
+            --cache-from type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/cache:build-cache-${{ env.SERVICE_NAME }}-community
+            --cache-to type=registry,ref=ghcr.io/${{ env.REGISTRY_OWNER }}/cache:build-cache-${{ env.SERVICE_NAME }}-community,mode=max
+            --platform=linux/amd64,linux/arm64 --provenance=false
+            --output=type=image,name=ghcr.io/${{ env.REGISTRY_OWNER }}/${{ env.SERVICE_NAME }},push-by-digest=true,name-canonical=true
+        run: |
+          if [ "${{ env.SERVICE_NAME }}" = "embed" ] || [ "${{ env.SERVICE_NAME }}" = "embed-ee" ]; then
+            cd libs/$SERVICE_COMMON_NAME
+          else
+            cd apps/$SERVICE_COMMON_NAME
+          fi
+          pnpm run docker:build
+          docker images
+      - name: Check for EE files
+        if: "!contains(matrix.name, '-ee')"
+        id: check-ee-files
+        run: |
+          patterns=(
+            './node_modules/@novu/ee-**/dist/index.js'
+            './node_modules/@taskforcesh/bullmq-pro'  # Add more patterns as needed
+          )
+          for pattern in "${patterns[@]}"; do
+            if docker run --rm novu-$SERVICE_COMMON_NAME sh -c "ls $pattern 2>/dev/null"; then
+              echo "::error::'$pattern' files were detected in ${{ matrix.name }}."
+              exit 1
+            fi
+          done
+          echo "No matching EE files found in the Docker image ${{ matrix.name }}"
+      - name: Tag and Push docker image
+        shell: bash
+        run: |
+          docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ needs.prepare.outputs.latest-version }}
+          docker tag novu-$SERVICE_COMMON_NAME ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
+          docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:${{ needs.prepare.outputs.latest-version }}
+          docker push ghcr.io/$REGISTRY_OWNER/${{ matrix.name }}:latest
