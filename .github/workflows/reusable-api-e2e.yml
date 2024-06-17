@@ -90,6 +90,7 @@ jobs:
         run: CI='' pnpm build:api --skip-nx-cache
 
       - name: Run E2E tests
+        if: ${{ !inputs.ee }}
         env:
           LAUNCH_DARKLY_SDK_KEY: ${{ secrets.LAUNCH_DARKLY_SDK_KEY }}
         run: |

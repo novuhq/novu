@@ -4,6 +4,8 @@ import { createColumnHelper, Table } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import format from 'date-fns/format';
 import { FC } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../../constants/routes';
 import { WorkflowTableRow } from './WorkflowsTable.types';
 import { GroupCell, NameCell, StatusCell } from './WorkflowsTableCellRenderers';
 
@@ -101,13 +103,18 @@ const WORKFLOW_COLUMNS = [
   }),
 ];
 
+// TODO: this should accept props to control behavior
 export const WorkflowsTable: FC<IWorkflowsTableProps> = () => {
+  const navigate = useNavigate();
+
   return (
     <div className={css({ display: 'flex', flex: '1' })}>
       <Table<typeof TEST_FLOW>
         columns={WORKFLOW_COLUMNS}
         data={[TEST_FLOW, { ...TEST_FLOW, active: true }]}
-        className={css({ w: '100%' })}
+        className={css({ w: '[100%]' })}
+        // TODO: this is just a temporary step for connecting the prototype
+        onRowClick={() => navigate(ROUTES.STUDIO_FLOWS_VIEW)}
       />
     </div>
   );

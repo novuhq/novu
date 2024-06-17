@@ -2,7 +2,7 @@ import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import * as jwt from 'jsonwebtoken';
 import { expect } from 'chai';
-import { IJwtPayload, MemberRoleEnum } from '@novu/shared';
+import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 
 describe('User registration - /auth/register (POST)', async () => {
   let session: UserSession;
@@ -51,7 +51,7 @@ describe('User registration - /auth/register (POST)', async () => {
 
     expect(body.data.token).to.be.ok;
 
-    const jwtContent = (await jwt.decode(body.data.token)) as IJwtPayload;
+    const jwtContent = (await jwt.decode(body.data.token)) as UserSessionData;
 
     expect(jwtContent.firstName).to.equal('test');
     expect(jwtContent.lastName).to.equal('user');
@@ -69,7 +69,7 @@ describe('User registration - /auth/register (POST)', async () => {
 
     expect(body.data.token).to.be.ok;
 
-    const jwtContent = (await jwt.decode(body.data.token)) as IJwtPayload;
+    const jwtContent = (await jwt.decode(body.data.token)) as UserSessionData;
 
     expect(jwtContent.firstName).to.equal('test');
     expect(jwtContent.lastName).to.equal('user');

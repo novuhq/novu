@@ -1,18 +1,18 @@
-import { ClassSerializerInterceptor, Controller, Get, Query, UseGuards, UseInterceptors } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { IJwtPayload } from '@novu/shared';
+import { ClassSerializerInterceptor, Controller, Get, Query, UseInterceptors } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { UserSessionData } from '@novu/shared';
 import { ExecutionDetailsResponseDto } from '@novu/application-generic';
 import { UserSession } from '../shared/framework/user.decorator';
-import { UserAuthGuard } from '../auth/framework/user.auth.guard';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { GetExecutionDetails, GetExecutionDetailsCommand } from './usecases/get-execution-details';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { ExecutionDetailsRequestDto } from './dtos/execution-details-request.dto';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @ApiCommonResponses()
 @Controller('/execution-details')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(UserAuthGuard)
+@UserAuthentication()
 @ApiTags('Execution Details')
 export class ExecutionDetailsController {
   constructor(private getExecutionDetails: GetExecutionDetails) {}
@@ -24,7 +24,7 @@ export class ExecutionDetailsController {
   @ApiResponse(ExecutionDetailsResponseDto, 200, true)
   @ExternalApiAccessible()
   async getExecutionDetailsForNotification(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Query() query: ExecutionDetailsRequestDto
   ): Promise<ExecutionDetailsResponseDto[]> {
     return this.getExecutionDetails.execute(

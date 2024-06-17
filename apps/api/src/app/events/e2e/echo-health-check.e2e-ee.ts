@@ -3,6 +3,7 @@ import { expect } from 'chai';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { SubscriberEntity } from '@novu/dal';
 import { echoServer } from '../../../../e2e/echo.server';
+import { workflow } from '@novu/framework';
 
 describe('Echo Health Check', async () => {
   let session: UserSession;
@@ -10,7 +11,7 @@ describe('Echo Health Check', async () => {
   let subscriberService: SubscribersService;
 
   before(async () => {
-    await echoServer.echo.workflow('health-check', async ({ step }) => {
+    const healthCheckWorkflow = workflow('health-check', async ({ step }) => {
       await step.email('send-email', async (inputs) => {
         return {
           subject: 'This is an email subject',
@@ -18,6 +19,11 @@ describe('Echo Health Check', async () => {
         };
       });
     });
+    await echoServer.start({ workflows: [healthCheckWorkflow] });
+  });
+
+  after(async () => {
+    await echoServer.stop();
   });
 
   beforeEach(async () => {

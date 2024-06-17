@@ -1,18 +1,21 @@
-import { Body, Controller, Logger, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { SkipThrottle } from '@nestjs/throttler';
-import { AnalyticsService, UserAuthGuard, UserSession } from '@novu/application-generic';
-import { IJwtPayload } from '@novu/shared';
+import { AnalyticsService, UserSession } from '@novu/application-generic';
+import { UserSessionData } from '@novu/shared';
+import { ApiExcludeController } from '@nestjs/swagger';
+import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 
 @Controller({
   path: 'telemetry',
 })
 @SkipThrottle()
+@ApiExcludeController()
 export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
 
   @Post('/measure')
-  @UseGuards(UserAuthGuard)
-  async trackEvent(@Body('event') event, @Body('data') data = {}, @UserSession() user: IJwtPayload): Promise<any> {
+  @UserAuthentication()
+  async trackEvent(@Body('event') event, @Body('data') data = {}, @UserSession() user: UserSessionData): Promise<any> {
     this.analyticsService.track(event, user._id, {
       ...(data || {}),
       _organization: user?.organizationId,

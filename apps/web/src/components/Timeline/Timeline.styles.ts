@@ -1,4 +1,4 @@
-import { css } from '@novu/novui/css';
+import { css, cx } from '@novu/novui/css';
 
 export const TIMELINE_STYLES = {
   item: css({
@@ -20,17 +20,27 @@ export const TIMELINE_STYLES = {
     color: 'typography.text.main !important',
     lineHeight: '1.5rem !important',
   }),
-  itemBullet: css({
-    '&[data-with-child]': {
-      textStyle: 'text.strong',
-      border: 'none',
-      backgroundColor: {
-        base: 'surface.panel !important',
-        // TODO: fix when legacy colors are removed
-        _dark: 'legacy.B30 !important',
+  itemBullet: cx(
+    css({
+      '&[data-active]': {
+        backgroundColor: {
+          base: 'typography.text.feedback.success !important',
+          _dark: 'typography.text.feedback.success !important',
+        },
       },
-    },
-  }),
+    }),
+    css({
+      '&[data-with-child]': {
+        textStyle: 'text.strong',
+        border: 'none',
+        backgroundColor: {
+          base: 'surface.panel !important',
+          // TODO: fix when legacy colors are removed
+          _dark: 'legacy.B30 !important',
+        },
+      },
+    })
+  ),
   itemBody: css({
     lineHeight: '1.25rem',
     color: 'typography.text.secondary',

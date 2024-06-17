@@ -38,7 +38,55 @@ export default defineConfig({
    * theme-oriented that is unique to `web`, include it below
    */
   theme: {
-    extend: {},
+    extend: {
+      tokens: {
+        sizes: {
+          onboarding: { value: '880px' },
+        },
+      },
+      semanticTokens: {
+        colors: {
+          workflow: {
+            node: {
+              surface: {
+                value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B17}' },
+                type: 'color',
+              },
+              connector: {
+                value: { base: '{colors.legacy.B40}', _dark: '{colors.legacy.B40}' },
+                type: 'color',
+              },
+            },
+            background: {
+              dots: {
+                value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.B20}' },
+                type: 'color',
+              },
+            },
+          },
+        },
+        spacing: {
+          workflow: {
+            nodes: {
+              gap: {
+                value: '{spacing.250}',
+                type: 'spacing',
+              },
+            },
+          },
+        },
+        sizes: {
+          workflow: {
+            nodes: {
+              gap: {
+                value: '{spacing.250}',
+                type: 'sizes',
+              },
+            },
+          },
+        },
+      },
+    },
   },
 
   outExtension: 'js',

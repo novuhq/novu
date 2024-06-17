@@ -1,9 +1,15 @@
-import { css } from '../../styled-system/css';
-import {} from '../../styled-system/types';
+import { defineStyles } from '@pandacss/dev';
 
 /** Must override `bgGradient` property to chose the direction */
-export const colorPaletteGradient = css.raw({
+export const colorPaletteGradientHorizontal = defineStyles({
   bgGradient: `to-l !important`,
+  gradientFrom: 'colorPalette.start !important',
+  gradientTo: 'colorPalette.end !important',
+});
+
+/** Must override `bgGradient` property to chose the direction */
+export const colorPaletteGradientVertical = defineStyles({
+  bgGradient: `to-b !important`,
   gradientFrom: 'colorPalette.start !important',
   gradientTo: 'colorPalette.end !important',
 });

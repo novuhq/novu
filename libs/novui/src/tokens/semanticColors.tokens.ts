@@ -66,6 +66,12 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
         type: 'color',
       },
     },
+    icon: {
+      filled: {
+        value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.white}' },
+        type: 'color',
+      },
+    },
     secondary: {
       background: {
         value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B17}' },
@@ -97,6 +103,12 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
         value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
         type: 'color',
       },
+    },
+  },
+  tabs: {
+    border: {
+      value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+      type: 'color',
     },
   },
   badge: {

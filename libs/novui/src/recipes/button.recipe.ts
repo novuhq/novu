@@ -1,6 +1,6 @@
 import { ButtonStylesNames } from '@mantine/core';
 import { defineSlotRecipe } from '@pandacss/dev';
-import { colorPaletteGradient } from '../ingredients';
+import { colorPaletteGradientHorizontal } from '../ingredients';
 
 const SLOTS: ButtonStylesNames[] = ['root', 'inner', 'label', 'loader', 'section'];
 
@@ -31,7 +31,7 @@ export const BUTTON_RECIPE = defineSlotRecipe({
   variants: {
     variant: {
       filled: {
-        root: { ...colorPaletteGradient, border: '[none !important]' },
+        root: { ...colorPaletteGradientHorizontal, border: '[none !important]' },
         label: {
           color: 'button.text.filled',
         },

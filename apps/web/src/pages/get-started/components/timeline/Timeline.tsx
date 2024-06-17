@@ -1,4 +1,3 @@
-import React from 'react';
 import { Timeline as MantineTimeline } from '@mantine/core';
 
 import useStyles from './Timeline.styles';

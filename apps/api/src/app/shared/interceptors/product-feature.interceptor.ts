@@ -4,16 +4,15 @@ import {
   HttpException,
   Injectable,
   NestInterceptor,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { OrganizationRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
-  IJwtPayload,
   productFeatureEnabledForServiceLevel,
   ProductFeatureKeyEnum,
+  UserSessionData,
 } from '@novu/shared';
 import { Observable } from 'rxjs';
 import { ProductFeature } from '../decorators/product-feature.decorator';
@@ -59,7 +58,7 @@ export class ProductFeatureInterceptor implements NestInterceptor {
     }
   }
 
-  private getReqUser(context: ExecutionContext): IJwtPayload {
+  private getReqUser(context: ExecutionContext): UserSessionData {
     const req = context.switchToHttp().getRequest();
 
     return req.user;
