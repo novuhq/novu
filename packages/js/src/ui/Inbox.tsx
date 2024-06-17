@@ -21,7 +21,8 @@ const Inbox: Component<{
   });
 
   return (
-    <div class="bg-slate-400 p-3">
+    <div class="bg-red-400 p-3 m-4">
+      <div class="text-2xl font-bold">Inbox</div>
       <header class={testClass}>Hello {props.name} </header>
       <div class={container}>Vanilla Extract Class</div>
       <For each={feeds()}>
@@ -41,4 +42,5 @@ export default Inbox;
 const testClass = css`
   color: hotpink;
   background-color: green;
+  margin: 30px;
 `;

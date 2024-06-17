@@ -20,7 +20,8 @@
       "require": "./dist/ui/index.js",
       "import": "./dist/ui/index.mjs",
       "default": "./dist/ui/index.mjs"
-    }
+    }, 
+    "./ui/index.css": "./dist/ui/index.css"
   },
   "files": [
     "dist/cjs",
