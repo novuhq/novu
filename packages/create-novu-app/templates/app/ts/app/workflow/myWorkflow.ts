@@ -1,14 +1,7 @@
 /* eslint-disable max-len */
-import { Client } from "@novu/echo";
+import { workflow } from "@novu/framework";
 
-export const echo = new Client({
-  /**
-   * Enable this flag only during local development
-   */
-  strictAuthentication: process.env.NODE_ENV !== "development",
-});
-
-echo.workflow("onboarding", async ({ step }) => {
+export const myWorkflow = workflow("onboarding", async ({ step }) => {
   await step.email("send-email", async () => {
     return {
       subject: "Welcome to Novu! Ready to code?",
@@ -26,7 +19,7 @@ echo.workflow("onboarding", async ({ step }) => {
             <p style="margin: 0; margin-bottom: 8px;">Hi!</p>
             <p style="margin: 0; margin-bottom: 8px;">Good to have you here! We continuously work on giving you the flexibility to
               build any notification setup you need - through code, right from your IDE - and to give your managers an easy way to adjust the notification content. Check
-              out our <a href="https://docs.novu.co/echo/quickstart">docs</a> to learn more.</p>
+              out our <a href="https://docs.novu.co/framework/quickstart">docs</a> to learn more.</p>
             <p style="margin: 0; margin-bottom: 8px;">Questions or problems? Our <a href="https://discord.com/channels/895029566685462578/1019663407915483176">Discord support channel</a> is here for you.</p>
             <p style="margin: 0; margin-bottom: 8px;">Feedback? Head over to our <a href="https://roadmap.novu.co/roadmap">public roadmap</a> to submit it, or simply poke us on Discord or via email. We’re here to make your life easier!</p>
             <p style="margin: 0;">Cheers,<br />Novu Team</p>
