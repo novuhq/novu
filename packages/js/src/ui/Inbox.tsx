@@ -19,7 +19,7 @@ const Inbox: Component<{
   });
 
   return (
-    <div>
+    <div class="bg-slate-400 p-3">
       <header>Hello {props.name} </header>
       <For each={feeds()}>
         {(feed) => (
