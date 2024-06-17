@@ -8,8 +8,11 @@ export const InputWidget = (props: WidgetProps) => {
   return (
     <Input
       description={props.schema.description}
-      onChange={(event) => onChange(event.target.value)}
-      value={value}
+      onChange={(event) => {
+        event.preventDefault();
+        onChange(event.target.value);
+      }}
+      value={value || ''}
       required={required}
       label={label}
       type={inputProps.type}
