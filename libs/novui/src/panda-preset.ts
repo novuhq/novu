@@ -95,7 +95,7 @@ export const novuPandaPreset = definePreset({
       {
         properties: {
           // Must generate color modes statically to ensure they're available
-          colorPalette: ['mode.local', 'model.cloud'],
+          colorPalette: ['mode.local', 'mode.cloud'],
         },
       },
     ],
