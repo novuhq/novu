@@ -7,6 +7,11 @@ import {
   IconOutlineNotifications,
   IconPlayArrow,
   IconSettings,
+  IconOutlineAutoAwesomeMotion,
+  IconOutlineAvTimer,
+  IconOutlineForum,
+  IconOutlineMobileFriendly,
+  IconOutlineSms,
 } from '@novu/novui/icons';
 import { Flex, VStack } from '@novu/novui/jsx';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -71,13 +76,7 @@ export const WorkflowsDetailPage = () => {
 
             switch (step.type) {
               case 'email':
-                return (
-                  <StepNode
-                    icon={<IconOutlineEmail size="32" />}
-                    title={step.stepId}
-                    onClick={() => handleStepClick()}
-                  />
-                );
+                return <StepNode icon={<IconOutlineEmail size="32" />} title={step.stepId} onClick={handleStepClick} />;
               case 'in_app':
                 return (
                   <StepNode
@@ -87,13 +86,29 @@ export const WorkflowsDetailPage = () => {
                   />
                 );
               case 'sms':
-                return <StepNode icon={<IconOutlineBolt size="32" />} title={step.stepId} onClick={handleStepClick} />;
+                return <StepNode icon={<IconOutlineSms size="32" />} title={step.stepId} onClick={handleStepClick} />;
+              case 'chat':
+                return <StepNode icon={<IconOutlineForum size="32" />} title={step.stepId} onClick={handleStepClick} />;
               case 'push':
-                return <StepNode icon={<IconOutlineBolt size="32" />} title={step.stepId} onClick={handleStepClick} />;
+                return (
+                  <StepNode
+                    icon={<IconOutlineMobileFriendly size="32" />}
+                    title={step.stepId}
+                    onClick={handleStepClick}
+                  />
+                );
               case 'digest':
-                return <StepNode icon={<IconOutlineBolt size="32" />} title={step.stepId} onClick={handleStepClick} />;
+                return (
+                  <StepNode
+                    icon={<IconOutlineAutoAwesomeMotion size="32" />}
+                    title={step.stepId}
+                    onClick={handleStepClick}
+                  />
+                );
               case 'delay':
-                return <StepNode icon={<IconOutlineBolt size="32" />} title={step.stepId} onClick={handleStepClick} />;
+                return (
+                  <StepNode icon={<IconOutlineAvTimer size="32" />} title={step.stepId} onClick={handleStepClick} />
+                );
               case 'custom':
                 return <StepNode icon={<IconOutlineBolt size="32" />} title={step.stepId} onClick={handleStepClick} />;
             }
