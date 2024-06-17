@@ -141,6 +141,7 @@ jobs:
           cd $PROJECT_PATH && npm run docker:build
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
+          echo "pushing to ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker push ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
 

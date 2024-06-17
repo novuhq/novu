@@ -40,6 +40,7 @@ jobs:
       deployments: write
     steps:
       - run: echo "Deploying ${{ inputs.service_name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
+
       - name: Checkout cloud infra
         uses: actions/checkout@v4
         with:
@@ -82,7 +83,7 @@ jobs:
           --query taskDefinition > task-definition.json
 
       - name: Render Amazon ECS task definition
-        id: render-web-container
+        id: render-task-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
@@ -92,7 +93,7 @@ jobs:
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          task-definition: ${{ steps.render-task-container.outputs.task-definition }}
           service: ${{ env.ecs_service }}
           cluster: ${{ env.ecs_cluster }}
           wait-for-service-stability: true
