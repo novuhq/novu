@@ -28,8 +28,7 @@ export const rawButtonBaseStyles = css.raw({
   py: '100',
   px: '125',
   background: 'transparent',
-  // TODO: design system values when available
-  borderRadius: '7px',
+  borderRadius: '100',
   color: 'typography.text.secondary !important',
   '& svg': {
     fill: 'typography.text.secondary',
@@ -42,7 +41,6 @@ export const rawButtonBaseStyles = css.raw({
   '& _active, &.active': {
     position: 'relative',
     background: 'surface.page !important',
-    // TODO: design system values when available
     boxShadow: 'medium',
     backgroundClip: 'padding-box',
     color: 'typography.text.main !important',

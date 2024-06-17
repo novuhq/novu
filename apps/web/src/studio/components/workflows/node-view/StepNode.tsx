@@ -1,19 +1,20 @@
-import { Title } from '@novu/novui';
+import { Title, type LocalizedMessage } from '@novu/novui';
 import { css, cx } from '@novu/novui/css';
 import { hstack } from '@novu/novui/patterns';
-import { FC } from 'react';
-import { LocalizedMessage } from '../../../types/LocalizedMessage';
+import { FC, MouseEventHandler } from 'react';
 interface IStepNodeProps {
   icon: React.ReactNode;
   title: LocalizedMessage;
+  onClick?: MouseEventHandler<HTMLButtonElement>;
 }
 
-export const StepNode: FC<IStepNodeProps> = ({ icon, title }) => {
+export const StepNode: FC<IStepNodeProps> = ({ icon, title, onClick }) => {
   return (
     <button
       className={cx(
         css({
           w: '[240px]',
+          cursor: 'pointer',
           '&:not(:last-of-type):after': {
             content: '""',
             position: 'relative',
@@ -25,6 +26,7 @@ export const StepNode: FC<IStepNodeProps> = ({ icon, title }) => {
           },
         })
       )}
+      onClick={onClick}
     >
       <span
         className={hstack({
