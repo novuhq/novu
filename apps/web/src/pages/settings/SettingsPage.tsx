@@ -4,11 +4,10 @@ import PageContainer from '../../components/layout/components/PageContainer';
 import { ApiKeysCard } from './tabs';
 import { Outlet } from 'react-router-dom';
 import { useMemo } from 'react';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
-import { useAuth, useFeatureFlag } from '../../hooks';
-import { When, colors, useTabsStyles } from '@novu/design-system';
+import { useAuth } from '../../hooks';
+import { colors, useTabsStyles } from '@novu/design-system';
 
 const SettingsPageWrapper = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -28,7 +27,6 @@ export function SettingsPage() {
   const { classes } = useTabsStyles(false);
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   const value = useMemo(() => {
     return pathname === ROUTES.SETTINGS ? '/' : pathname.replace(ROUTES.SETTINGS, '');
@@ -67,10 +65,8 @@ export function SettingsPage() {
           <Tabs.Tab value="/">API Keys</Tabs.Tab>
           <Tabs.Tab value="/email">Email Settings</Tabs.Tab>
           <Tabs.Tab value="/billing">Billing</Tabs.Tab>
-          <When truthy={isInformationArchitectureEnabled}>
-            <Tabs.Tab value="/brand">Branding</Tabs.Tab>
-            <Tabs.Tab value="/team">Team Members</Tabs.Tab>
-          </When>
+          <Tabs.Tab value="/brand">Branding</Tabs.Tab>
+          <Tabs.Tab value="/team">Team Members</Tabs.Tab>
           <Tabs.Tab value="/permissions">Permissions</Tabs.Tab>
           <Tabs.Tab value="/sso">SSO</Tabs.Tab>
           <Tabs.Tab value="/data-integrations">Data Integrations</Tabs.Tab>

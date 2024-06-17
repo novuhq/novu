@@ -2,6 +2,7 @@ import { ROUTES } from '../../constants/routes';
 
 export const PATHS: { [key in ROUTES]?: string } = {
   [ROUTES.ACTIVITIES]: 'activity-feed/introduction',
+  // TODO: Where is this endpoint after IA?
   [`${ROUTES.BRAND}/layouts`]: 'content-creation-design/layouts',
   [ROUTES.LAYOUT]: 'content-creation-design/layouts',
   [ROUTES.CHANGES]: 'platform/environments',

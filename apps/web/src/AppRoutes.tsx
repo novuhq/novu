@@ -11,8 +11,7 @@ import LoginPage from './pages/auth/LoginPage';
 import { PasswordResetPage } from './pages/auth/PasswordResetPage';
 import QuestionnairePage from './pages/auth/QuestionnairePage';
 import SignUpPage from './pages/auth/SignUpPage';
-import { BrandPage } from './pages/brand/BrandPage';
-import { BrandingForm, LayoutsListPage } from './pages/brand/tabs';
+import { BrandingPage } from './pages/brand/BrandingPage';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { GetStartedPage } from './pages/get-started/GetStartedPage';
 import HomePage from './pages/HomePage';
@@ -21,7 +20,6 @@ import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
 import { UpdateProviderPage } from './pages/integrations/UpdateProviderPage';
 import { MembersInvitePage } from './pages/invites/MembersInvitePage';
-import { LayoutsPage } from './pages/layouts/v2/LayoutsPage';
 import { LinkVercelProjectPage } from './pages/partner-integrations/LinkVercelProjectPage';
 import { DigestPreview } from './pages/quick-start/steps/DigestPreview';
 import { FrameworkSetup } from './pages/quick-start/steps/FrameworkSetup';
@@ -29,7 +27,6 @@ import { GetStarted } from './pages/quick-start/steps/GetStarted';
 import { InAppSuccess } from './pages/quick-start/steps/InAppSuccess';
 import { NotificationCenter } from './pages/quick-start/steps/NotificationCenter';
 import { Setup } from './pages/quick-start/steps/Setup';
-import { ApiKeysPage, WebhookPage } from './pages/settings/index';
 import SubscribersList from './pages/subscribers/SubscribersListPage';
 import { ChannelPreview } from './pages/templates/components/ChannelPreview';
 import { ChannelStepEditor } from './pages/templates/components/ChannelStepEditor';
@@ -47,10 +44,12 @@ import { CreateTenantPage } from './pages/tenants/CreateTenantPage';
 import { TenantsPage } from './pages/tenants/TenantsPage';
 import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
-import { useSettingsRoutes } from './SettingsRoutes';
 import { StudioOnboarding } from './pages/studio-onboarding/index';
 import { StudioOnboardingPreview } from './pages/studio-onboarding/preview';
 import { StudioOnboardingSuccess } from './pages/studio-onboarding/success';
+import { AccessSecurityPage, BillingPage, TeamPage, UserProfilePage } from './pages/settings';
+import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
+import { OrganizationPage } from './pages/settings/organization';
 import {
   WorkflowsListPage,
   WorkflowsDetailPage,
@@ -60,7 +59,6 @@ import {
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
-  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   return (
     <Routes>
@@ -120,7 +118,22 @@ export const AppRoutes = () => {
         <Route path={ROUTES.QUICK_START_SETUP_FRAMEWORK} element={<Setup />} />
         <Route path={ROUTES.QUICK_START_SETUP_SUCCESS} element={<InAppSuccess />} />
         <Route path={ROUTES.ACTIVITIES} element={<ActivitiesPage />} />
-        {useSettingsRoutes()}
+        <Route path={ROUTES.SETTINGS} element={<SettingsPage />}>
+          <Route path="" element={<Navigate to={ROUTES.PROFILE} replace />} />
+          {/* TODO: Remove after the next deployment on 2024-06-18 */}
+          <Route path={ROUTES.BRAND_SETTINGS_DEPRECATED} element={<Navigate to={ROUTES.BRAND_SETTINGS} replace />} />
+          <Route path={ROUTES.BRAND_SETTINGS} element={<BrandingPage />} />
+          <Route path={ROUTES.ORGANIZATION} element={<OrganizationPage />} />
+          <Route path={ROUTES.TEAM_SETTINGS} element={<TeamPage />} />
+          <Route path={`${ROUTES.BILLING}/*`} element={<BillingPage />} />
+          <Route path={ROUTES.SECURITY} element={<AccessSecurityPage />} />
+          <Route path={`${ROUTES.SETTINGS}`} element={<Navigate to={ROUTES.PROFILE} replace />} />
+          <Route path="permissions" element={<Navigate to={ROUTES.SECURITY} replace />} />
+          <Route path="sso" element={<Navigate to={ROUTES.SETTINGS} replace />} />
+          <Route path="data-integrations" element={<Navigate to={ROUTES.SETTINGS} replace />} />
+          <Route path={ROUTES.PROFILE} element={<UserProfilePage />} />
+          <Route path={`${ROUTES.SETTINGS}/*`} element={<Navigate to={ROUTES.SETTINGS} replace />} />
+        </Route>
         <Route path={ROUTES.INTEGRATIONS} element={<IntegrationsListPage />}>
           <Route path="create" element={<SelectProviderPage />} />
           <Route path="create/:channel/:providerId" element={<CreateProviderPage />} />
@@ -129,24 +142,6 @@ export const AppRoutes = () => {
         <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
         <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
         <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
-        {!isInformationArchitectureEnabled ? (
-          <Route path={ROUTES.BRAND} element={<BrandPage />}>
-            <Route path="" element={<BrandingForm />} />
-            <Route path="layouts" element={<LayoutsListPage />} />
-          </Route>
-        ) : (
-          <>
-            <Route path={ROUTES.LAYOUT} element={<LayoutsPage />}>
-              <Route path="" element={<LayoutsListPage />} />
-            </Route>
-            {/* routes previously under settings */}
-            <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
-            <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
-          </>
-        )}
-        {isInformationArchitectureEnabled && (
-          <Route path={ROUTES.BRAND} element={<Navigate to={ROUTES.BRAND_SETTINGS} replace />} />
-        )}
         <Route path={ROUTES.STUDIO}>
           <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
           <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
