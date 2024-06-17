@@ -2,7 +2,7 @@ import { bridgeHttp } from './bridge.http';
 
 export const bridgeApi = {
   /**
-   * TODO: Use framework shared typs
+   * TODO: Use framework shared types
    */
   async discover(): Promise<{ workflows: any[] }> {
     return bridgeHttp.get('', {
