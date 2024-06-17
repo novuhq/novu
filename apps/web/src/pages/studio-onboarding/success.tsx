@@ -1,12 +1,15 @@
+import { Skeleton } from '@mantine/core';
+import { Mail } from '@novu/design-system';
 import { Title, Text } from '@novu/novui';
 import { css } from '@novu/novui/css';
-import { VStack } from '@novu/novui/jsx';
+import { HStack, VStack } from '@novu/novui/jsx';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getActivityList } from '../../api/activity';
 import { ExecutionDetailsAccordion } from '../../components/execution-detail/ExecutionDetailsAccordion';
 import { useSegment } from '../../components/providers/SegmentProvider';
+import { When } from '../../components/utils/When';
 import { ROUTES } from '../../constants/routes';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
@@ -51,6 +54,14 @@ export const StudioOnboardingSuccess = () => {
     return item?.subscriber?.email;
   }, [item]);
 
+  const stepId = useMemo(() => {
+    if (!item?.jobs) {
+      return undefined;
+    }
+
+    return item.jobs[0]?.id;
+  }, [item?.jobs]);
+
   useEffect(() => {
     segment.track('Test workflow step completed - [Onboarding - Signup]');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -82,7 +93,51 @@ export const StudioOnboardingSuccess = () => {
             Check your inbox for the e-mail you've just sent. Proceed to customize your Workflows or continue your
             onboarding by reviewing our documentation.
           </Text>
-          <ExecutionDetailsAccordion identifier={identifier} steps={item?.jobs} subscriberVariables={{}} />
+          <When truthy={!isLoading}>
+            <ExecutionDetailsAccordion
+              identifier={identifier}
+              defaultOpen={stepId}
+              steps={item?.jobs}
+              subscriberVariables={{}}
+            />
+          </When>
+          <When truthy={isLoading}>
+            <div
+              className={css({
+                border: 'solid',
+                borderColor: 'typography.text.secondary',
+                borderRadius: '50',
+                padding: '100',
+                background: 'surface.page',
+              })}
+            >
+              <HStack
+                gap="150"
+                className={css({
+                  padding: '50',
+                })}
+              >
+                <Mail
+                  className={css({
+                    width: '200',
+                    height: '200',
+                    color: 'typography.text.secondary',
+                  })}
+                />
+                <VStack
+                  className={css({
+                    flex: 1,
+                    alignItems: 'start',
+                  })}
+                  gap="25"
+                >
+                  <Skeleton height={16} width="10%" radius="sm" />
+                  <Skeleton height={12} width="25%" radius="sm" />
+                  <Skeleton height={12} width="15%" radius="sm" />
+                </VStack>
+              </HStack>
+            </div>
+          </When>
         </div>
       </VStack>
       <Footer

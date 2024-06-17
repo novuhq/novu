@@ -12,7 +12,7 @@ import { useWindowEvent } from '@mantine/hooks';
 
 export const StudioOnboarding = () => {
   const { environment } = useEnvController();
-  const [url, setUrl] = useState('http://localhost:4000/api/echo');
+  const [url, setUrl] = useState('');
   const [error, setError] = useState<string>('');
   const { loading, setup, testEndpoint, testResponse } = useSetupBridge(url, setError);
   const segment = useSegment();
