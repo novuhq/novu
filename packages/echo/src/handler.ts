@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 
-import { Echo } from './client';
+import { Client } from './client';
 import {
   ErrorCodeEnum,
   GetActionEnum,
@@ -12,7 +12,7 @@ import {
   SIGNATURE_TIMESTAMP_TOLERANCE,
 } from './constants';
 import {
-  EchoError,
+  NovuError,
   InvalidActionError,
   MethodNotAllowedError,
   MissingApiKeyError,
@@ -23,16 +23,18 @@ import {
   SignatureNotFoundError,
   SigningKeyNotFoundError,
 } from './errors';
-import { Awaitable } from './types';
+import { Awaitable, DiscoverWorkflowOutput } from './types';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
-  client: Echo;
+  client?: Client;
+  workflows: Array<DiscoverWorkflowOutput>;
 }
 
-interface IEchoRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
+interface INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
   frameworkName: string;
-  client: Echo;
+  client?: Client;
+  workflows: Array<DiscoverWorkflowOutput>;
   handler: Handler<Input, Output>;
 }
 
@@ -53,20 +55,21 @@ interface IActionResponse<TBody extends string = string> {
   body: TBody;
 }
 
-export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
+export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   public readonly frameworkName: string;
 
   public readonly handler: Handler;
 
-  public readonly client: Echo;
+  public readonly client: Client;
 
   private readonly hmacEnabled: boolean;
 
-  constructor(options: IEchoRequestHandlerOptions<Input, Output>) {
+  constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
-    this.client = options.client;
+    this.client = options.client ? options.client : new Client();
+    this.client.addWorkflows(options.workflows);
     this.frameworkName = options.frameworkName;
-    this.hmacEnabled = !options.client.devModeBypassAuthentication;
+    this.hmacEnabled = this.client.strictAuthentication;
   }
 
   public createHandler(): (...args: Input) => Promise<Output> {
@@ -81,7 +84,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
   }
 
   private getStaticHeaders(): Partial<Record<HttpHeaderKeysEnum, string>> {
-    const sdkVersion = `novu-echo:v${this.client.version}`;
+    const sdkVersion = `novu-framework:v${this.client.version}`;
 
     return {
       [HttpHeaderKeysEnum.CONTENT_TYPE]: 'application/json',
@@ -110,7 +113,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
     };
   }
 
-  private createError<TBody extends string = string>(error: EchoError): IActionResponse<TBody> {
+  private createError<TBody extends string = string>(error: NovuError): IActionResponse<TBody> {
     return {
       status: error.statusCode,
       body: JSON.stringify({
@@ -211,7 +214,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
           throw new MissingApiKeyError();
         }
 
-        const result = await this.client.sync(body.echoUrl, anonymousHeader, source);
+        const result = await this.client.sync(body.bridgeUrl, anonymousHeader, source);
 
         return this.createResponse(HttpStatusEnum.OK, result);
       },
@@ -220,7 +223,7 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
           throw new MissingApiKeyError();
         }
 
-        const result = await this.client.diff(body.echoUrl, anonymousHeader);
+        const result = await this.client.diff(body.bridgeUrl, anonymousHeader);
 
         return this.createResponse(HttpStatusEnum.OK, result);
       },
@@ -273,8 +276,8 @@ export class EchoRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private isClientError(error: unknown): error is EchoError {
-    return Object.values(ErrorCodeEnum).includes((error as EchoError).code);
+  private isClientError(error: unknown): error is NovuError {
+    return Object.values(ErrorCodeEnum).includes((error as NovuError).code);
   }
 
   private handleError(error: unknown): IActionResponse {
