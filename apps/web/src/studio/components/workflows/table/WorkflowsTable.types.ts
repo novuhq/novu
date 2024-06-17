@@ -1,3 +1,10 @@
-import { INotificationTemplateExtended } from '../../../../hooks/useTemplates';
+interface IBridgeWorkflow {
+  workflowId: string;
+  code: string;
+  steps: {
+    stepId: string;
+    type: string;
+  }[];
+}
 
-export type WorkflowTableRow = INotificationTemplateExtended;
+export type WorkflowTableRow = IBridgeWorkflow;

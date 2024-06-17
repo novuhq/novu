@@ -135,6 +135,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     const anonymousHeader = (await actions.headers(HttpHeaderKeysEnum.ANONYMOUS)) || '';
     const source = url.searchParams.get(HttpQueryKeysEnum.SOURCE) || '';
 
+    console.log({ url, method, action });
+
     let body: Record<string, unknown> = {};
     try {
       if (method === HttpMethodEnum.POST) {
@@ -145,9 +147,11 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
 
     try {
+      console.log('VALIDATING HMAC!');
       if (action !== GetActionEnum.HEALTH_CHECK) {
         this.validateHmac(body, signatureHeader);
       }
+      console.log('VALIDATED HMAC!');
 
       const postActionMap = this.getPostActionMap(body, workflowId, stepId, action, anonymousHeader, source);
       const getActionMap = this.getGetActionMap(workflowId, stepId);
@@ -159,6 +163,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       if (method === HttpMethodEnum.GET) {
         return await this.handleGetAction(action, getActionMap);
       }
+
+      console.log('RETURNING OPTIONS CALL');
 
       if (method === HttpMethodEnum.OPTIONS) {
         return this.createResponse(
