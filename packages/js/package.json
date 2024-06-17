@@ -41,6 +41,7 @@
   "devDependencies": {
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.12",
+    "@vanilla-extract/esbuild-plugin": "^2.3.7",
     "autoprefixer": "^9.8.6",
     "bytes-iec": "^3.1.1",
     "chalk": "^5.3.0",
@@ -64,7 +65,9 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
+    "@emotion/css": "^11.10.5",
     "@novu/client": "workspace:*",
+    "@vanilla-extract/css": "^1.15.3",
     "mitt": "^3.0.1",
     "socket.io-client": "4.7.2",
     "solid-js": "^1.8.11"
