@@ -1,7 +1,7 @@
 import { type NextApiRequest, type NextApiResponse } from 'next';
 import { type NextRequest } from 'next/server';
 
-import { EchoRequestHandler, ServeHandlerOptions } from './handler';
+import { NovuRequestHandler, ServeHandlerOptions } from './handler';
 import { Either } from './types';
 import { type SupportedFrameworkName } from './types';
 import { getResponse } from './utils';
@@ -9,23 +9,23 @@ import { getResponse } from './utils';
 export const frameworkName: SupportedFrameworkName = 'next';
 
 /**
- * In Next.js, serve and register any declared workflows with Echo, making
+ * In Next.js, serve and register any declared workflows with Novu, making
  * them available to be triggered by events.
  *
  * Supports Next.js 12+, both serverless and edge.
  *
  * @example Next.js <=12 or the pages router can export the handler directly
  * ```ts
- * export default serve({ client: echo });
+ * export default serve({ workflows: [yourWorkflow] });
  * ```
  *
  * @example Next.js >=13 with the `app` dir must export individual methods
  * ```ts
- * export const { GET, POST, PUT } = serve({ client: echo });
+ * export const { GET, POST, PUT } = serve({ workflows: [yourWorkflow] });
  * ```
  */
 export const serve = (options: ServeHandlerOptions): any => {
-  const echoHandler = new EchoRequestHandler({
+  const novuHandler = new NovuRequestHandler({
     frameworkName,
     ...options,
     handler: (
@@ -171,7 +171,7 @@ export const serve = (options: ServeHandlerOptions): any => {
    *
    * See {@link https://nextjs.org/docs/app/building-your-application/routing/route-handlers}
    */
-  const baseHandler = echoHandler.createHandler();
+  const baseHandler = novuHandler.createHandler();
 
   const defaultHandler = baseHandler.bind(null, undefined);
   type HandlerFunction = typeof defaultHandler;

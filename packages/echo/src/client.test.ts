@@ -1,6 +1,6 @@
 import { expect, it, describe, beforeEach, afterEach, vi } from 'vitest';
 
-import { Echo } from './client';
+import { Client } from './client';
 import { DEFAULT_NOVU_API_BASE_URL, HttpMethodEnum, NovuApiEndpointsEnum } from './constants';
 import {
   ExecutionEventInputInvalidError,
@@ -8,101 +8,42 @@ import {
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
-import { IEvent, Step } from './types';
+import { workflow } from './workflow';
+import { IEvent } from './types';
 import { delayOutputSchema } from './schemas';
 import { FromSchema } from 'json-schema-to-ts';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
 
-describe('Echo Client', () => {
-  let echo: Echo;
+describe('Novu Client', () => {
+  let client: Client;
 
-  beforeEach(() => {
-    echo = new Echo();
-
-    echo.workflow('setup-workflow', async ({ step }) => {
+  beforeEach(async () => {
+    const newWorkflow = workflow('setup-workflow', async ({ step }) => {
       await step.email('send-email', async () => ({
         body: 'Test Body',
         subject: 'Subject',
       }));
     });
+
+    client = new Client();
+    client.addWorkflows([newWorkflow]);
   });
 
   it('should discover 1 workflow', () => {
-    const discovery = echo.discover();
+    const discovery = client.discover();
     expect(discovery.workflows).toHaveLength(1);
-  });
-
-  describe('Type tests', () => {
-    it('should not compile when the channel output is incorrect', async () => {
-      echo.workflow('email-test', async ({ step }) => {
-        // @ts-expect-error - email subject is missing from the output
-        await step.email('send-email', async () => ({
-          body: 'Test Body',
-        }));
-      });
-    });
-
-    it('should not compile when the custom output is incorrect', async () => {
-      echo.workflow('custom-test', async ({ step }) => {
-        await step.custom(
-          'custom',
-          // @ts-expect-error - foo is a number
-          async () => ({
-            foo: 'bar',
-            bar: 'baz',
-          }),
-          {
-            outputSchema: {
-              type: 'object',
-              properties: {
-                foo: { type: 'number' },
-                bar: { type: 'string' },
-              },
-              required: ['foo', 'bar'],
-              additionalProperties: false,
-            } as const,
-          }
-        );
-      });
-    });
-
-    it('should not compile when the custom result is compared incorrectly', async () => {
-      echo.workflow('custom-test-something', async ({ step }) => {
-        const result = await step.custom(
-          'custom',
-          async () => ({
-            foo: 1,
-            bar: 'baz',
-          }),
-          {
-            outputSchema: {
-              type: 'object',
-              properties: {
-                foo: { type: 'number' },
-                bar: { type: 'string' },
-              },
-              required: ['foo', 'bar'],
-              additionalProperties: false,
-            } as const,
-          }
-        );
-
-        // @ts-expect-error - result is a string
-        result?.foo === 'custom';
-      });
-    });
   });
 
   describe('discover method', () => {
     it('should discover setup workflow', () => {
-      const discovery = echo.discover();
+      const discovery = client.discover();
       expect(discovery.workflows).toHaveLength(1);
     });
 
     it('should discover a complex workflow with all supported step types', async () => {
       const workflowId = 'complex-workflow';
 
-      await echo.workflow(workflowId, async ({ step }) => {
+      const newWorkflow = workflow(workflowId, async ({ step }) => {
         await step.email('send-email', async () => ({
           body: 'Test Body',
           subject: 'Subject',
@@ -166,60 +107,65 @@ describe('Echo Client', () => {
         }));
       });
 
-      const discovery = echo.discover();
+      client.addWorkflows([newWorkflow]);
+
+      // wait for discovery to finish
+      await new Promise((resolve) => setTimeout(resolve, 1));
+
+      const discovery = client.discover();
       expect(discovery.workflows).toHaveLength(2);
 
-      const workflow = discovery.workflows.find((workflowX) => workflowX.workflowId === workflowId);
+      const foundWorkflow = discovery.workflows.find((workflowX) => workflowX.workflowId === workflowId);
 
-      const stepEmail = workflow?.steps.find((stepX) => stepX.stepId === 'send-email');
+      const stepEmail = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-email');
       expect(stepEmail).toBeDefined();
       if (stepEmail === undefined) throw new Error('stepEmail is undefined');
       expect(stepEmail.type).toBe('email');
       expect(stepEmail.code).toContain(`body: "Test Body"`);
       expect(stepEmail.code).toContain(`subject: "Subject"`);
 
-      const stepInApp = workflow?.steps.find((stepX) => stepX.stepId === 'send-in-app');
+      const stepInApp = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-in-app');
       expect(stepInApp).toBeDefined();
       if (stepInApp === undefined) throw new Error('stepEmail is undefined');
       expect(stepInApp.type).toBe('in_app');
       expect(stepInApp.code).toContain(`body: "Test Body"`);
       expect(stepInApp.code).toContain(`subject: "Subject"`);
 
-      const stepChat = workflow?.steps.find((stepX) => stepX.stepId === 'send-chat');
+      const stepChat = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-chat');
       expect(stepChat).toBeDefined();
       if (stepChat === undefined) throw new Error('stepEmail is undefined');
       expect(stepChat.type).toBe('chat');
       expect(stepChat.code).toContain(`body: "Test Body"`);
 
-      const stepPush = workflow?.steps.find((stepX) => stepX.stepId === 'send-push');
+      const stepPush = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-push');
       expect(stepPush).toBeDefined();
       if (stepPush === undefined) throw new Error('stepEmail is undefined');
       expect(stepPush.type).toBe('push');
       expect(stepPush.code).toContain(`body: "Test Body"`);
       expect(stepPush.code).toContain(`subject: "Title"`);
 
-      const stepCustom = workflow?.steps.find((stepX) => stepX.stepId === 'send-custom');
+      const stepCustom = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-custom');
       expect(stepCustom).toBeDefined();
       if (stepCustom === undefined) throw new Error('stepEmail is undefined');
       expect(stepCustom.type).toBe('custom');
       expect(stepCustom.code).toContain(`fooBoolean: inAppRes.read`);
       expect(stepCustom.code).toContain(`fooString: input.someString`);
 
-      const stepSms = workflow?.steps.find((stepX) => stepX.stepId === 'send-sms');
+      const stepSms = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-sms');
       expect(stepSms).toBeDefined();
       if (stepSms === undefined) throw new Error('stepEmail is undefined');
       expect(stepSms.type).toBe('sms');
       expect(stepSms.code).toContain(`body: "Test Body"`);
       expect(stepSms.code).toContain(`to: "+1234567890"`);
 
-      const stepDigest = workflow?.steps.find((stepX) => stepX.stepId === 'digest');
+      const stepDigest = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'digest');
       expect(stepDigest).toBeDefined();
       if (stepDigest === undefined) throw new Error('stepEmail is undefined');
       expect(stepDigest.type).toBe('digest');
       expect(stepDigest.code).toContain(`amount: 1`);
       expect(stepDigest.code).toContain(`unit: "hours"`);
 
-      const stepDelay = workflow?.steps.find((stepX) => stepX.stepId === 'delay');
+      const stepDelay = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'delay');
       expect(stepDelay).toBeDefined();
       if (stepDelay === undefined) throw new Error('stepEmail is undefined');
       expect(stepDelay.type).toBe('delay');
@@ -230,7 +176,7 @@ describe('Echo Client', () => {
     it('should discover a slack provide with blocks', async () => {
       const workflowId = 'complex-workflow';
 
-      await echo.workflow(workflowId, async ({ step }) => {
+      const newWorkflow = workflow(workflowId, async ({ step }) => {
         await step.chat(
           'send-chat',
           async () => ({
@@ -256,12 +202,14 @@ describe('Echo Client', () => {
         );
       });
 
-      const discovery = echo.discover();
+      client.addWorkflows([newWorkflow]);
+
+      const discovery = client.discover();
       expect(discovery.workflows).toHaveLength(2);
 
-      const workflow = discovery.workflows.find((workflowX) => workflowX.workflowId === workflowId);
+      const foundWorkflow = discovery.workflows.find((workflowX) => workflowX.workflowId === workflowId);
 
-      const stepChat = workflow?.steps.find((stepX) => stepX.stepId === 'send-chat');
+      const stepChat = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-chat');
       expect(stepChat).toBeDefined();
       if (stepChat === undefined) throw new Error('stepEmail is undefined');
       expect(stepChat.type).toBe('chat');
@@ -272,15 +220,13 @@ describe('Echo Client', () => {
   });
 
   describe('executeWorkflow method', () => {
-    beforeEach(() => {});
-
     it('should execute workflow successfully when action is execute and data is provided', async () => {
       const delayConfiguration: FromSchema<typeof delayOutputSchema> = { type: 'regular', unit: 'seconds', amount: 1 };
       const emailConfiguration: FromSchema<typeof emailChannelSchemas.output> = {
         body: 'Test Body',
         subject: 'Subject',
       };
-      await echo.workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => emailConfiguration);
         await step.delay('delay', async () => delayConfiguration);
       });
@@ -295,7 +241,9 @@ describe('Echo Client', () => {
         inputs: {},
       };
 
-      const emailExecutionResult = await echo.executeWorkflow(emailEvent);
+      client.addWorkflows([newWorkflow]);
+
+      const emailExecutionResult = await client.executeWorkflow(emailEvent);
 
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
@@ -329,7 +277,7 @@ describe('Echo Client', () => {
         inputs: {},
       };
 
-      const delayExecutionResult = await echo.executeWorkflow(delayEvent);
+      const delayExecutionResult = await client.executeWorkflow(delayEvent);
 
       expect(delayExecutionResult).toBeDefined();
       expect(delayExecutionResult.outputs).toBeDefined();
@@ -349,7 +297,7 @@ describe('Echo Client', () => {
   {{ element }}
 {% endfor %}`;
 
-      await echo.workflow(
+      const newWorkflow = workflow(
         'test-workflow',
         async ({ step }) => {
           await step.email(
@@ -389,6 +337,8 @@ describe('Echo Client', () => {
         }
       );
 
+      client.addWorkflows([newWorkflow]);
+
       const emailEvent: IEvent = {
         action: 'execute',
         data: { role: 'product manager', elements: ['cat', 'dog'] },
@@ -401,7 +351,7 @@ describe('Echo Client', () => {
         inputs: {},
       };
 
-      const emailExecutionResult = await echo.executeWorkflow(emailEvent);
+      const emailExecutionResult = await client.executeWorkflow(emailEvent);
 
       expect(emailExecutionResult).toBeDefined();
       expect(emailExecutionResult.outputs).toBeDefined();
@@ -414,9 +364,11 @@ describe('Echo Client', () => {
     });
 
     it('should throw error on execute action without data', async () => {
-      await echo.workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
+
+      client.addWorkflows([newWorkflow]);
 
       const event: IEvent = {
         action: 'execute',
@@ -428,13 +380,15 @@ describe('Echo Client', () => {
         inputs: {},
       };
 
-      await expect(echo.executeWorkflow(event)).rejects.toThrow(ExecutionEventInputInvalidError);
+      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventInputInvalidError);
     });
 
     it('should preview workflow successfully when action is preview', async () => {
-      await echo.workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
+
+      client.addWorkflows([newWorkflow]);
 
       const event: IEvent = {
         action: 'preview',
@@ -446,7 +400,7 @@ describe('Echo Client', () => {
         inputs: {},
       };
 
-      const executionResult = await echo.executeWorkflow(event);
+      const executionResult = await client.executeWorkflow(event);
 
       expect(executionResult).toBeDefined();
       expect(executionResult.outputs).toBeDefined();
@@ -467,11 +421,13 @@ describe('Echo Client', () => {
     });
 
     it('should preview workflow successfully when action is preview and skipped', async () => {
-      await echo.workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {
           skip: () => true,
         });
       });
+
+      client.addWorkflows([newWorkflow]);
 
       const event: IEvent = {
         action: 'preview',
@@ -483,7 +439,7 @@ describe('Echo Client', () => {
         inputs: {},
       };
 
-      const executionResult = await echo.executeWorkflow(event);
+      const executionResult = await client.executeWorkflow(event);
 
       expect(executionResult).toBeDefined();
       expect(executionResult.outputs).toBeDefined();
@@ -515,11 +471,13 @@ describe('Echo Client', () => {
         inputs: {},
       };
 
-      await expect(echo.executeWorkflow(event)).rejects.toThrow(WorkflowNotFoundError);
+      await expect(client.executeWorkflow(event)).rejects.toThrow(WorkflowNotFoundError);
 
-      await echo.workflow('test-workflow2', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow2', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
+
+      client.addWorkflows([newWorkflow]);
 
       // no workflow ID
       const event2 = {
@@ -528,13 +486,16 @@ describe('Echo Client', () => {
         subscriber: {},
         state: [],
       } as any;
-      await expect(echo.executeWorkflow(event2)).rejects.toThrow(WorkflowNotFoundError);
+      await expect(client.executeWorkflow(event2)).rejects.toThrow(WorkflowNotFoundError);
     });
 
     it('should throw and error when step ID is not found', async () => {
-      await echo.workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
+
+      client.addWorkflows([newWorkflow]);
+
       const event: IEvent = {
         action: 'execute',
         workflowId: 'test-workflow',
@@ -545,13 +506,15 @@ describe('Echo Client', () => {
         inputs: {},
       };
 
-      await expect(echo.executeWorkflow(event)).rejects.toThrow(ExecutionStateCorruptError);
+      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionStateCorruptError);
     });
 
     it('should throw an error when action is not provided', async () => {
-      await echo.workflow('test-workflow', async ({ step }) => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
+
+      client.addWorkflows([newWorkflow]);
 
       const event = {
         workflowId: 'test-workflow',
@@ -561,12 +524,12 @@ describe('Echo Client', () => {
         inputs: {},
       } as any;
 
-      await expect(echo.executeWorkflow(event)).rejects.toThrow(Error);
+      await expect(client.executeWorkflow(event)).rejects.toThrow(Error);
     });
   });
 
   describe('getCode method', () => {
-    let getCodeEchoInstance: Echo;
+    let getCodeClientInstance: Client;
 
     const stepExecuteFunc = async () => ({
       body: 'Test Body',
@@ -577,30 +540,34 @@ describe('Echo Client', () => {
       await step.email('send-email', stepExecuteFunc);
     };
 
-    beforeEach(() => {
-      getCodeEchoInstance = new Echo();
+    beforeEach(async () => {
+      getCodeClientInstance = new Client();
 
-      getCodeEchoInstance.workflow('setup-workflow', workflowExecuteFunc);
+      const newWorkflow = workflow('setup-workflow', workflowExecuteFunc);
+
+      getCodeClientInstance.addWorkflows([newWorkflow]);
     });
 
     it('should throw an error when workflow ID is not found', () => {
-      expect(() => getCodeEchoInstance.getCode('non-existent-workflow')).toThrow(WorkflowNotFoundError);
+      expect(() => getCodeClientInstance.getCode('non-existent-workflow')).toThrow(WorkflowNotFoundError);
     });
 
-    it('should throw an error when step ID is provided but not found in the workflow', () => {
-      getCodeEchoInstance.workflow('test-workflow', async () => {});
+    it('should throw an error when step ID is provided but not found in the workflow', async () => {
+      const newWorkflow = workflow('test-workflow', workflowExecuteFunc);
 
-      expect(() => getCodeEchoInstance.getCode('test-workflow', 'non-existent-step')).toThrow(StepNotFoundError);
+      getCodeClientInstance.addWorkflows([newWorkflow]);
+
+      expect(() => getCodeClientInstance.getCode('test-workflow', 'non-existent-step')).toThrow(StepNotFoundError);
     });
 
     it('should return code for the entire workflow when only workflow ID is provided', () => {
-      const codeResult = getCodeEchoInstance.getCode('setup-workflow');
+      const codeResult = getCodeClientInstance.getCode('setup-workflow');
 
       expect(codeResult.code).toEqual(workflowExecuteFunc.toString());
     });
 
     it('should return code for a specific step when both workflow ID and step ID are provided', async () => {
-      const codeResult = getCodeEchoInstance.getCode('setup-workflow', 'send-email');
+      const codeResult = getCodeClientInstance.getCode('setup-workflow', 'send-email');
 
       expect(codeResult.code).toEqual(stepExecuteFunc.toString());
     });

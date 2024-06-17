@@ -1,11 +1,11 @@
 /* eslint-disable max-len */
-import { Echo } from "@novu/echo";
+import { Client } from "@novu/echo";
 
-export const echo = new Echo({
+export const echo = new Client({
   /**
    * Enable this flag only during local development
    */
-  devModeBypassAuthentication: process.env.NODE_ENV === "development",
+  strictAuthentication: process.env.NODE_ENV !== "development",
 });
 
 echo.workflow("onboarding", async ({ step }) => {

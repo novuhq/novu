@@ -1,14 +1,14 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { getHeader, getQuery, H3Event, readBody, send, setHeaders } from 'h3';
 
-import { EchoRequestHandler, ServeHandlerOptions } from './handler';
+import { NovuRequestHandler, ServeHandlerOptions } from './handler';
 import { type SupportedFrameworkName } from './types';
 
 export const frameworkName: SupportedFrameworkName = 'nuxt';
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export const serve = (options: ServeHandlerOptions) => {
-  const handler = new EchoRequestHandler({
+  const handler = new NovuRequestHandler({
     frameworkName,
     ...options,
     handler: (event: H3Event) => ({

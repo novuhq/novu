@@ -1,9 +1,9 @@
 export enum HttpHeaderKeysEnum {
   SIGNATURE = 'x-novu-signature',
   ANONYMOUS = 'x-novu-anonymous',
-  EXECUTION_DURATION = 'x-echo-execution-duration',
-  SDK_VERSION = 'x-echo-sdk',
-  FRAMEWORK = 'x-echo-framework',
+  EXECUTION_DURATION = 'x-novu-execution-duration',
+  SDK_VERSION = 'x-novu-sdk',
+  FRAMEWORK = 'x-novu-framework',
   USER_AGENT = 'user-agent',
   CONTENT_TYPE = 'content-type',
   AUTHORIZATION = 'authorization',

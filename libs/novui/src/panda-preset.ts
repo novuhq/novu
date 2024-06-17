@@ -25,6 +25,7 @@ import { SEMANTIC_RADIUS_TOKENS } from './tokens/semanticRadius.tokens';
 import { LEGACY_OPACITY_TOKENS, OPACITY_TOKENS } from './tokens/opacity.tokens';
 import { SEMANTIC_OPACITY_TOKENS } from './tokens/semanticOpacity.tokens';
 import { BUTTON_RECIPE } from './recipes/button.recipe';
+import { TABS_RECIPE } from './recipes/tabs.recipe';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -85,7 +86,18 @@ export const novuPandaPreset = definePreset({
         text: TEXT_RECIPE,
         title: TITLE_RECIPE,
         button: BUTTON_RECIPE,
+        tabs: TABS_RECIPE,
       },
     },
+  },
+  staticCss: {
+    css: [
+      {
+        properties: {
+          // Must generate color modes statically to ensure they're available
+          colorPalette: ['mode.local', 'mode.cloud'],
+        },
+      },
+    ],
   },
 });
