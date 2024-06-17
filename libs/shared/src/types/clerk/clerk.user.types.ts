@@ -86,7 +86,6 @@ type PasswordHasher =
   | 'scrypt_werkzeug'
   | 'sha256';
 
-type PaginatedResourceResponse<T> = {
-  data: T;
-  totalCount: number;
-};
+export type GetUserOrganizationMembershipListParams = ClerkPaginationRequest<{
+  userId: string;
+}>;

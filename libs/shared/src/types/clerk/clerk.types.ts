@@ -1,17 +1,20 @@
-import { OrganizationMembership } from './clerk.organization-membership.types';
+import { CreateOrganizationMembershipParams, OrganizationMembership } from './clerk.organization-membership.types';
 import {
   GetOrganizationMembershipListParams,
   Organization,
   UpdateOrganizationParams,
   UpdateMetadataParams,
 } from './clerk.organization.types';
-import { UpdateUserParams, User, UserListParams } from './clerk.user.types';
+import { UpdateUserParams, User, UserListParams, GetUserOrganizationMembershipListParams } from './clerk.user.types';
 
 export interface IUserAPI {
   updateUser(userId: string, params?: UpdateUserParams): Promise<User>;
   getUser(userId: string): Promise<User>;
   getUserList(params?: UserListParams): Promise<PaginatedResourceResponse<User[]>>;
   deleteUser(userId: string): Promise<User>;
+  getOrganizationMembershipList(
+    params: GetUserOrganizationMembershipListParams
+  ): Promise<PaginatedResourceResponse<OrganizationMembership[]>>;
 }
 
 export interface IOrganizationAPI {
@@ -22,6 +25,7 @@ export interface IOrganizationAPI {
   updateOrganization(organizationId: string, params?: UpdateOrganizationParams): Promise<Organization>;
   updateOrganizationMetadata(organizationId: string, params: UpdateMetadataParams): Promise<Organization>;
   deleteOrganization(organizationId: string): Promise<Organization>;
+  createOrganizationMembership(params: CreateOrganizationMembershipParams): Promise<OrganizationMembership>;
 }
 
 type PaginatedResourceResponse<T> = {
