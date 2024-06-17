@@ -1,5 +1,5 @@
 import { RequestEvent } from '@sveltejs/kit';
-import { EchoRequestHandler, ServeHandlerOptions } from './handler';
+import { NovuRequestHandler, ServeHandlerOptions } from './handler';
 import { type SupportedFrameworkName } from './types';
 
 export const frameworkName: SupportedFrameworkName = 'sveltekit';
@@ -11,7 +11,7 @@ export const serve = (
   POST: (event: RequestEvent) => Promise<Response>;
   PUT: (event: RequestEvent) => Promise<Response>;
 } => {
-  const handler = new EchoRequestHandler({
+  const handler = new NovuRequestHandler({
     frameworkName,
     ...options,
     handler: (reqMethod: 'GET' | 'POST' | 'PUT' | undefined, event: RequestEvent) => {
