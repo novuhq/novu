@@ -179,7 +179,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
           OUTPUT_NAME: ${{ needs.job-setup.outputs.dockerName }}
         run: |
-          echo "::set-output name=$OUTPUT_NAME::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
+          echo "::set-output name=docker_image::ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
 
       - name: Health check test
         id: health-check
