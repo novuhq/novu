@@ -1,43 +1,16 @@
-import { expect } from '@jest/globals';
+import { expect, it, describe, beforeEach } from 'vitest';
 import { Echo } from './client';
-jest.retryTimes(0);
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { z } from 'zod';
 
-const zodSchema = z.object({
-  showButton: z.boolean().default(true),
-  username: z.string().default('alanturing'),
-  userImage: z.string().url().default('https://react-email-demo-bdj5iju9r-resend.vercel.app/static/vercel-user.png'),
-  invitedByUsername: z.string().default('Alan'),
-  invitedByEmail: z.string().email().default('alan.turing@example.com'),
-  teamName: z.string().default('Team Awesome'),
-  teamImage: z.string().default('https://react-email-demo-bdj5iju9r-resend.vercel.app/static/vercel-team.png'),
-  inviteLink: z.string().url().default('https://vercel.com/teams/invite/foo'),
-  inviteFromIp: z.string().default('204.13.186.218'),
-  inviteFromLocation: z.string().default('São Paulo, Brazil'),
-});
-
-describe('client.validation', () => {
-  it('test', () => {
-    /*
-     * const zodSchema = z.object({
-     *   subject: z.string(),
-     *   body: z.string(),
-     *   px: z.custom<`${number}px`>((val) => {
-     *     return typeof val === 'string' ? /^\d+px$/.test(val) : false;
-     *   }),
-     * });
-     */
-
-    const jsonSchema = zodToJsonSchema(zodSchema);
+describe('validation', () => {
+  let echo: Echo;
+  beforeEach(() => {
+    echo = new Echo();
   });
 
-  it('should support Zod on inputs', () => {
-    const echo = new Echo();
-
-    echo.workflow(
-      'zod-validation',
-      async ({ step, input, payload }) => {
+  describe('zod', () => {
+    it('should transform a zod schema to a json schema during discovery', async () => {
+      echo.workflow('zod-validation', async ({ step, input, payload }) => {
         await step.email(
           'zod-validation',
           async (inputs) => ({
@@ -45,57 +18,71 @@ describe('client.validation', () => {
             body: 'Test body',
           }),
           {
-            inputSchema: zodSchema,
-            providers: {
-              sendgrid: async (inputs) => ({
-                ipPoolName: 'test',
-              }),
-            },
+            inputSchema: z.object({
+              foo: z.string(),
+              baz: z.number(),
+            }),
           }
         );
-      },
-      {
-        inputSchema: zodSchema,
-      }
-    );
-  });
+      });
 
-  it.only('should throw an error if the input is invalid', () => {
-    const echo = new Echo();
+      const discoverResult = echo.discover();
 
-    echo.workflow('zod-validation', async ({ step, input, payload }) => {
-      await step.email(
+      expect(discoverResult.workflows[0].steps[0].inputs.schema).to.deep.include({
+        additionalProperties: false,
+        properties: {
+          baz: {
+            type: 'number',
+          },
+          foo: {
+            type: 'string',
+          },
+        },
+        required: ['foo', 'baz'],
+        type: 'object',
+      });
+    });
+
+    it('should throw an error if the input is invalid', async () => {
+      await echo.workflow(
         'zod-validation',
-        async (inputs) => ({
-          subject: 'Test subject',
-          body: 'Test body',
-        }),
+        async ({ step, input, payload }) => {
+          await step.email('test-email', async (inputs) => ({
+            subject: 'Test subject',
+            body: 'Test body',
+          }));
+        },
         {
           inputSchema: z.object({
             foo: z.string(),
             baz: z.string(),
           }),
-          providers: {
-            sendgrid: async (inputs) => ({
-              ipPoolName: 'test',
-            }),
-          },
         }
       );
-    });
 
-    expect(() =>
-      echo.executeWorkflow({
-        action: 'execute',
-        workflowId: 'zod-validation',
-        inputs: {
-          baz: 'qux',
+      await expect(
+        echo.executeWorkflow({
+          action: 'execute',
+          workflowId: 'zod-validation',
+          inputs: {},
+          data: {},
+          stepId: 'test-email',
+          state: [],
+          subscriber: {},
+        })
+      ).resolves.to.deep.include({
+        metadata: {
+          error: false,
+          status: 'success',
+          duration: expect.any(Number),
         },
-        data: {},
-        stepId: 'zod-validation',
-        state: [],
-        subscriber: {},
-      })
-    ).toThrow();
+        options: undefined,
+        outputs: {
+          body: 'Test body',
+          subject: 'Test subject',
+        },
+        providers: {},
+      });
+    });
   });
 });

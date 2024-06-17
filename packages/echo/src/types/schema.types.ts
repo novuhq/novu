@@ -35,13 +35,14 @@ export type ValidateResult<T> =
       data: T;
     };
 
-interface IValidator<T_Schema extends Schema> {
+// eslint-disable-next-line @typescript-eslint/naming-convention
+interface Validator<T_Schema extends Schema> {
   validate: <T_Data>(data: T_Data, schema: T_Schema) => Promise<ValidateResult<T_Data>>;
   isSchema: (schema: Schema) => schema is T_Schema;
   transformToJsonSchema: (schema: T_Schema) => JSONSchema;
 }
 
-class ZodValidator implements IValidator<ZodSchema> {
+class ZodValidator implements Validator<ZodSchema> {
   async validate<T>(data: T, schema: ZodSchema): Promise<ValidateResult<T>> {
     const result = schema.safeParse(data);
     if (result.success) {
@@ -67,7 +68,7 @@ class ZodValidator implements IValidator<ZodSchema> {
   }
 }
 
-class JsonSchemaValidator implements IValidator<JSONSchema> {
+class JsonSchemaValidator implements Validator<JSONSchema> {
   private readonly ajv: Ajv;
   private readonly compiledSchemas: Map<JSONSchema, AjvValidateFunction>;
 
