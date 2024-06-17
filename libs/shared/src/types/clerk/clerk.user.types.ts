@@ -53,7 +53,7 @@ type UserCountParams = {
   externalId?: string[];
 };
 
-type UserPublicMetadata = {
+export type UserPublicMetadata = {
   profilePicture?: string | null;
   showOnBoarding?: boolean;
   showOnBoardingTour?: number;
