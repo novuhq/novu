@@ -43,7 +43,7 @@
     "@nestjs/throttler": "^5.0.1",
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
-    "@novu/echo": "workspace:*",
+    "@novu/framework": "workspace:*",
     "@novu/node": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
