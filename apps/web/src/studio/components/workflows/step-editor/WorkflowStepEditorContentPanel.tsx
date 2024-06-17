@@ -11,18 +11,20 @@ import { bridgeApi } from '../../../../api/bridge/bridge.api';
 interface IWorkflowStepEditorContentPanelProps {
   // TODO: Placeholder for real props
   placeholder?: never;
+  preview: any;
+  loadingPreview: boolean;
 }
 
-export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelProps> = ({}) => {
+export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelProps> = ({
+  preview,
+  loadingPreview,
+}) => {
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
 
   const { data: workflow, isLoading } = useQuery(['workflow', templateId], async () => {
     return bridgeApi.getWorkflow(templateId);
   });
 
-  const { data: preview, isLoading: loadingPreview } = useQuery(['workflow-preview', templateId, stepId], async () => {
-    return bridgeApi.getStepPreview(templateId, stepId);
-  });
   const step = workflow?.steps.find((item) => item.stepId === stepId);
 
   const { integrations = [] } = useActiveIntegrations();
@@ -55,25 +57,7 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
           label: 'Code',
           content: (
             <Prism withLineNumbers={true} language="javascript">
-              {`
-{
-  subject: "Welcome to Novu! Ready to code?",
-  body: \`<html xmlns="http://www.w3.org/1999/xhtml">
-    <head>
-      <title>Notification workflows rooted in how YOU work</title>
-      <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-    <body style="font-family: -apple-system, BlinkMacSystemFont">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <img width="200px" src="https://web.novu.co/static/images/logo.png" />
-      </div>
-      <h1 style="margin: 0; margin-bottom: 16px;">Notification workflows rooted in how YOU work</h1>
-      <p style="margin: 0; margin-bottom: 8px;">Hi!</p>
-      <p style="margin: 0;">Cheers,<br />Novu Team</p>
-    </body>
-  </html>\`,
-}`}
+              {step?.code || ''}
             </Prism>
           ),
         },

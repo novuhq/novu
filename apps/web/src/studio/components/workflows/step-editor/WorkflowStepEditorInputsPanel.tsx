@@ -7,9 +7,14 @@ interface IWorkflowStepEditorInputsPanelProps {
   placeholder?: never;
   step: any;
   workflow: any;
+  onChange: (type: 'step' | 'payload', data: any) => void;
 }
 
-export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelProps> = ({ step, workflow }) => {
+export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelProps> = ({
+  step,
+  workflow,
+  onChange,
+}) => {
   return (
     <Tabs
       defaultValue="payload"
@@ -18,13 +23,25 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
           icon: <IconOutlineTune />,
           value: 'payload',
           label: 'Payload',
-          content: <JsonSchemaForm schema={workflow?.options?.payloadSchema || {}} formData={{}} />,
+          content: (
+            <JsonSchemaForm
+              onChange={(data) => onChange('payload', data)}
+              schema={workflow?.options?.payloadSchema || {}}
+              formData={{}}
+            />
+          ),
         },
         {
           icon: <IconOutlineEditNote />,
           value: 'step-inputs',
           label: 'Step inputs',
-          content: <JsonSchemaForm schema={step?.inputs?.schema || {}} formData={{}} />,
+          content: (
+            <JsonSchemaForm
+              onChange={(data) => onChange('step', data)}
+              schema={step?.inputs?.schema || {}}
+              formData={{}}
+            />
+          ),
         },
       ]}
     />
