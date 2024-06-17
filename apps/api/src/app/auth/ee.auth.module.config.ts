@@ -19,7 +19,6 @@ import {
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { injectRepositories } from './inject-repositories';
 
 const eeAuthServiceProvider = {
   provide: 'AUTH_SERVICE',
@@ -62,6 +61,7 @@ const eeUserAuthGuard = {
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
   const jwtClerkStrategy = eeAuthPackage?.JwtClerkStrategy;
+  const injectRepositories = eeAuthPackage?.injectRepositories;
 
   const AUTH_STRATEGIES: Provider[] = [jwtClerkStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
   const EE_AUTH_PROVIDERS: Provider[] = [eeAuthServiceProvider, AuthService, eeUserAuthGuard];

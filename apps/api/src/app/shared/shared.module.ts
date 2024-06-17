@@ -47,7 +47,15 @@ import {
 
 import * as packageJson from '../../../package.json';
 import { JobTopicNameEnum } from '@novu/shared';
-import { injectRepositories } from '../auth/inject-repositories';
+
+function injectRepositories() {
+  const eeAuthPackage = require('@novu/ee-auth');
+  if (!eeAuthPackage?.injectRepositories) {
+    throw new Error('EE injectRepositories is not loaded');
+  }
+
+  return eeAuthPackage.injectRepositories();
+}
 
 const DAL_MODELS = [
   UserRepository,
