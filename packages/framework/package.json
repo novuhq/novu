@@ -13,6 +13,10 @@
     "type": "git",
     "url": "git+https://github.com/novuhq/novu.git"
   },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
     "preinstall": "npx only-allow pnpm",
     "test": "vitest",
@@ -107,9 +111,5 @@
     "json-schema-to-ts": "^3.0.0",
     "liquidjs": "^10.13.1",
     "ora": "^5.4.1"
-  },
-  "files": [
-    "dist",
-    "README.md"
-  ]
+  }
 }

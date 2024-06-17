@@ -3,7 +3,7 @@ import { expect } from 'chai';
 import { UserSession, SubscribersService } from '@novu/testing';
 import { SubscriberEntity } from '@novu/dal';
 import { echoServer } from '../../../../e2e/echo.server';
-import { workflow } from '@novu/echo';
+import { workflow } from '@novu/framework';
 
 describe('Echo Health Check', async () => {
   let session: UserSession;
