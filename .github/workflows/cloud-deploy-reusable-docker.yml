@@ -123,7 +123,7 @@ jobs:
         if: ${{ inputs.env_tag == 'dev' || inputs.env_tag == 'stg' }}
         env:
           REGISTRY_OWNER: novuhq
-          DOCKER_NAME: ${{ steps.prepare.outputs.SERVICE_NAME }}
+          DOCKER_NAME: ${{ needs.job-setup.outputs.dockerName }}
           LOCAL_TAG: ${{ inputs.local_tag }}
           IMAGE_TAG: ${{ github.sha }}
           ENV_TAG: ${{ inputs.env_tag }}
@@ -150,7 +150,7 @@ jobs:
         if: ${{ inputs.env_tag == 'prod' }}
         env:
           REGISTRY_OWNER: novuhq
-          DOCKER_NAME: ${{ steps.prepare.outputs.SERVICE_NAME }}
+          DOCKER_NAME: ${{ needs.job-setup.outputs.dockerName }}
           LOCAL_TAG: ${{ inputs.local_tag }}
           IMAGE_TAG: ${{ github.sha }}
           ENV_TAG: ${{ inputs.env_tag }}
