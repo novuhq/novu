@@ -14,6 +14,7 @@ export interface ButtonCoreProps
     React.ButtonHTMLAttributes<HTMLButtonElement>,
     Pick<ButtonProps, 'size' | 'loading'> {
   Icon?: IconType;
+  loading?: boolean;
 }
 
 type IconButtonDefaultElement = 'button';

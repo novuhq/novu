@@ -215,24 +215,6 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
           [HttpHeaderKeysEnum.EXECUTION_DURATION]: result.metadata.duration.toString(),
         });
       },
-      [PostActionEnum.SYNC]: async () => {
-        if (!this.client.apiKey) {
-          throw new MissingApiKeyError();
-        }
-
-        const result = await this.client.sync(body.bridgeUrl, anonymousHeader, source);
-
-        return this.createResponse(HttpStatusEnum.OK, result);
-      },
-      [PostActionEnum.DIFF]: async () => {
-        if (!this.client.apiKey) {
-          throw new MissingApiKeyError();
-        }
-
-        const result = await this.client.diff(body.bridgeUrl, anonymousHeader);
-
-        return this.createResponse(HttpStatusEnum.OK, result);
-      },
     };
   }
 

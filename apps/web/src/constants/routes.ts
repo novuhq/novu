@@ -46,11 +46,13 @@ export enum ROUTES {
   ORGANIZATION = '/settings/organization',
   SECURITY = '/settings/security',
   BILLING = '/settings/billing',
-
   /** Novu V2 routes */
   STUDIO = '/studio',
   STUDIO_FLOWS = '/studio/flows',
   STUDIO_FLOWS_VIEW = '/studio/flows/:templateId',
+  STUDIO_ONBOARDING = '/studio/onboarding',
+  STUDIO_ONBOARDING_PREVIEW = '/studio/onboarding/preview',
+  STUDIO_ONBOARDING_SUCCESS = '/studio/onboarding/success',
   STUDIO_FLOWS_STEP_EDITOR = '/studio/flows/:templateId/step/:stepId',
   STUDIO_FLOWS_TEST_STEP = '/studio/flows/:templateId/step/:stepId/test',
 }
