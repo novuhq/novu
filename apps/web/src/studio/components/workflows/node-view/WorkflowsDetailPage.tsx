@@ -21,7 +21,7 @@ import { parseUrl } from '../../../../utils/routeUtils';
 export const WorkflowsDetailPage = () => {
   const { templateId = '' } = useParams<{ templateId: string }>();
 
-  const { data: workflow, isLoading } = useQuery(['workflow'], async () => {
+  const { data: workflow, isLoading } = useQuery(['workflow', templateId], async () => {
     return bridgeApi.getWorkflow(templateId);
   });
 
@@ -30,10 +30,6 @@ export const WorkflowsDetailPage = () => {
 
   const handleSettingsClick = () => {};
   const handleTestClick = () => {};
-  const handleStepClick = () => {
-    // TODO: this is just a temporary step for connecting the prototype
-    navigate(ROUTES.STUDIO_FLOWS_STEP_EDITOR);
-  };
 
   return (
     <WorkflowsPageTemplate

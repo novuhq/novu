@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { CustomDataType } from '@novu/shared';
 
-const BRIDGE_ENDPOINT = 'https://cuddly-mugs-mix.loca.lt/api/echo';
+const BRIDGE_ENDPOINT = 'https://few-dots-guess.loca.lt/api/echo';
 
 interface IOptions {
   absoluteUrl: boolean;
