@@ -40,7 +40,9 @@ jobs:
 
 
   deploy_dev_api:
-    needs: build_image
+    needs:
+      - build_image
+      - set_environment
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ contains(inputs.env, 'dev') }}
     secrets: inherit
@@ -52,7 +54,9 @@ jobs:
 
 
   deploy_prod_api_eu:
-    needs: build_image
+    needs:
+      - build_image
+      - set_environment
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit
@@ -63,7 +67,9 @@ jobs:
       docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
 
   deploy_prod_api_us:
-    needs: build_image
+    needs:
+      - build_image
+      - set_environment
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit
