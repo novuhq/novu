@@ -22,9 +22,11 @@ dotenv.config();
     throw new Error("TUNNEL_HOST environment variable value is required");
   }
 
-  // This function is also present in @novu/application-generic and is used
-  // to generate the subdomain per api key in the buildBridgeSubdomain() function.
-  // It should be kept in sync with the implementation in the library
+  /*
+   * This function is also present in @novu/application-generic and is used
+   * to generate the subdomain per api key in the buildBridgeSubdomain() function.
+   * It should be kept in sync with the implementation in the library
+   */
   const subdomain = createHash("md5").update(process.env.API_KEY).digest("hex");
 
   const port = parseInt(process.env.PORT);

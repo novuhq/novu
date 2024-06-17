@@ -48,6 +48,9 @@ import { TenantsPage } from './pages/tenants/TenantsPage';
 import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { useSettingsRoutes } from './SettingsRoutes';
+import { StudioOnboarding } from './pages/studio-onboarding/index';
+import { StudioOnboardingPreview } from './pages/studio-onboarding/preview';
+import { StudioOnboardingSuccess } from './pages/studio-onboarding/success';
 import {
   WorkflowsListPage,
   WorkflowsDetailPage,
@@ -155,6 +158,9 @@ export const AppRoutes = () => {
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
+      <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />
+      <Route path={ROUTES.STUDIO_ONBOARDING_PREVIEW} element={<StudioOnboardingPreview />} />
+      <Route path={ROUTES.STUDIO_ONBOARDING_SUCCESS} element={<StudioOnboardingSuccess />} />
     </Routes>
   );
 };
