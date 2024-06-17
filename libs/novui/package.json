@@ -15,6 +15,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./icons": {
+      "source": "./src/icons/index.ts",
+      "types": "./dist/icons/index.d.ts",
+      "require": "./dist/icons/index.js",
+      "import": "./dist/icons/index.js"
+    },
     "./css": {
       "types": "./styled-system/css/index.d.ts",
       "require": "./styled-system/css/index.js",
@@ -45,13 +51,15 @@
       "require": "./styled-system/jsx/index.js",
       "import": "./styled-system/jsx/index.js"
     },
-    "./styles.css": "./styled-system/styles.css"
+    "./styles.css": "./styled-system/styles.css",
+    "./components.css": "./node_modules/@mantine/core/styles.css"
   },
   "scripts": {
     "prepare:lib": "pnpm prepare:panda && pnpm prepare:audit",
     "prepare:panda": "pnpm panda codegen",
     "prepare:audit": "pnpm audit-components",
-    "prebuild": "rimraf dist styled-system && pnpm prepare:lib",
+    "clean": "rimraf dist styled-system",
+    "prebuild": "pnpm prepare:panda",
     "lint": "eslint --ext .ts,.tsx src",
     "build": "cross-env node_modules/.bin/tsc",
     "build:watch": "pnpm panda --watch & cross-env node_modules/.bin/tsc -w --preserveWatchOutput",
@@ -64,10 +72,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@pandabox/prettier-plugin": "^0.1.2",
-    "@pandacss/dev": "^0.38.0",
-    "@pandacss/eslint-plugin": "^0.1.2",
-    "@pandacss/studio": "^0.38.0",
+    "@pandabox/prettier-plugin": "^0.1.3",
+    "@pandacss/dev": "^0.40.1",
+    "@pandacss/eslint-plugin": "^0.1.5",
+    "@pandacss/studio": "^0.40.1",
     "@storybook/addon-actions": "8.1.0",
     "@storybook/addon-controls": "^8.1.0",
     "@storybook/addon-docs": "^8.1.0",
@@ -80,13 +88,16 @@
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^14.5.2",
     "@types/node": "^18.11.12",
-    "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.1",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.0.3",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-storybook": "^0.6.13",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "postcss": "^8.4.38",
+    "postcss-preset-mantine": "^1.15.0",
+    "postcss-simple-vars": "^7.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-scanner": "^1.1.0",
     "rimraf": "^3.0.2",
     "storybook": "^8.1.0",
@@ -115,5 +126,14 @@
         ]
       }
     }
+  },
+  "dependencies": {
+    "@mantine/core": "^7.10.0",
+    "@mantine/hooks": "^7.10.0",
+    "@tanstack/react-table": "^8.17.3",
+    "react-icons": "^5.0.1",
+    "@rjsf/core": "^5.17.1",
+    "@rjsf/utils": "^5.17.1",
+    "@rjsf/validator-ajv8": "^5.17.1"
   }
 }

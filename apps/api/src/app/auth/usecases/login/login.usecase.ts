@@ -6,7 +6,7 @@ import { AnalyticsService, AuthService, createHash } from '@novu/application-gen
 
 import { LoginCommand } from './login.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
-import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
+import { normalizeEmail } from '@novu/shared';
 
 @Injectable()
 export class Login {

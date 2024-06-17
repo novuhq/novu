@@ -1,6 +1,6 @@
 import { cx } from '@emotion/css';
 import { Drawer, Loader, Stack } from '@mantine/core';
-import { useKeyDown } from '@novu/shared-web';
+import { useKeyDown } from '../hooks/useKeyDown';
 import { ActionButton } from '../button/ActionButton';
 import { colors } from '../config';
 import { ArrowLeft } from '../icons';
@@ -38,8 +38,9 @@ export const SidebarFormless = ({
   'data-test-id': dataTestId,
   onClose,
   onBack,
+  navigationWidth,
 }: ISidebarBaseProps) => {
-  const { classes: drawerClasses } = useDrawerStyles({ isExpanded });
+  const { classes: drawerClasses } = useDrawerStyles({ isExpanded, navigationWidth });
   const onCloseCallback = () => {
     onClose();
   };

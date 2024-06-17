@@ -44,7 +44,7 @@
     "@nestjs/throttler": "^5.0.1",
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
-    "@novu/echo": "workspace:*",
+    "@novu/framework": "workspace:*",
     "@novu/node": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
@@ -59,6 +59,7 @@
     "bcrypt": "^5.0.0",
     "body-parser": "^1.20.0",
     "bull": "^4.2.1",
+    "nimma": "^0.6.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "compression": "^1.7.4",
@@ -94,6 +95,7 @@
     "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@faker-js/faker": "^6.0.0",
     "@nestjs/cli": "^10.1.16",
     "@nestjs/schematics": "^10.0.2",
     "@nestjs/testing": "^10.2.2",

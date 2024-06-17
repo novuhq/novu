@@ -5,7 +5,7 @@ import { Novu } from '@novu/node';
 import { UserRepository, UserEntity, IUserResetTokenCount } from '@novu/dal';
 import { buildUserKey, InvalidateCacheService } from '@novu/application-generic';
 
-import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
+import { normalizeEmail } from '@novu/shared';
 import { PasswordResetRequestCommand } from './password-reset-request.command';
 import { PasswordResetFlowEnum } from '@novu/shared';
 

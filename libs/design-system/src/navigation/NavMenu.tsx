@@ -58,21 +58,23 @@ const NavLink = ({ rightSide, link, testId, icon, label, tooltipLabel }: IMenuIt
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Group spacing={10}>
-        <div className={classes.linkIcon}>{icon}</div>
-        <div className={classes.linkLabel}>{label}</div>
-      </Group>
-      {!onHoverEnabled && rightSide}
+      <>
+        <Group spacing={10}>
+          <div className={classes.linkIcon}>{icon}</div>
+          <div className={classes.linkLabel}>{label}</div>
+        </Group>
+        {!onHoverEnabled && rightSide}
 
-      {onHoverEnabled && (
-        <RightSide
-          child={rightSide}
-          isHover={isHovered}
-          tooltipLabel={tooltipLabel}
-          popoverOpened={popoverOpened}
-          setPopoverOpened={setPopoverOpened}
-        />
-      )}
+        {onHoverEnabled && (
+          <RightSide
+            child={rightSide}
+            isHover={isHovered}
+            tooltipLabel={tooltipLabel}
+            popoverOpened={popoverOpened}
+            setPopoverOpened={setPopoverOpened}
+          />
+        )}
+      </>
     </ReactNavLink>
   );
 };

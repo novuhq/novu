@@ -15,7 +15,7 @@ import {
   UseRowSelectInstanceProps,
   UseRowSelectState,
 } from 'react-table';
-import { useDataRef } from '@novu/shared-web';
+import { useDataRef } from '../hooks/useDataRef';
 
 import useStyles from './Table.styles';
 import { colors } from '../config';
@@ -183,11 +183,19 @@ export function Table<T extends object>({
       <MantineTable className={classes.root} {...defaultDesign} {...getTableProps()} {...props}>
         <thead>
           {headerGroups.map((headerGroup, i) => {
+            const { key: trKey, ...trRest } = headerGroup.getHeaderGroupProps();
+
             return (
-              <tr {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map((column) => (
-                  <th {...column.getHeaderProps()}>{column.render('Header')}</th>
-                ))}
+              <tr key={trKey} {...trRest}>
+                {headerGroup.headers.map((column) => {
+                  const { key: thKey, ...thRest } = column.getHeaderProps();
+
+                  return (
+                    <th key={thKey} {...thRest}>
+                      {column.render('Header')}
+                    </th>
+                  );
+                })}
               </tr>
             );
           })}
@@ -196,30 +204,35 @@ export function Table<T extends object>({
           {rows.map((row) => {
             prepareRow(row);
 
+            const { key: trKey, ...trRest } = row.getRowProps();
+
             return (
               <tr
+                key={trKey}
                 onClick={(e) => {
                   e.stopPropagation();
                   if (!loading && onRowClick) {
                     onRowClick(row);
                   }
                 }}
-                {...row.getRowProps()}
+                {...trRest}
                 className={classes.tableRow}
                 data-disabled={loading || !onRowClick}
               >
-                {row.cells.map((cell, i) => (
-                  <td
-                    {...cell.getCellProps({
-                      style: {
-                        maxWidth: cell.column.maxWidth,
-                        width: cell.column.width,
-                      },
-                    })}
-                  >
-                    {cell.render('Cell', { isLoading: loading })}
-                  </td>
-                ))}
+                {row.cells.map((cell, i) => {
+                  const { key: tdKey, ...tdRest } = cell.getCellProps({
+                    style: {
+                      maxWidth: cell.column.maxWidth,
+                      width: cell.column.width,
+                    },
+                  });
+
+                  return (
+                    <td key={tdKey} {...tdRest}>
+                      {cell.render('Cell', { isLoading: loading })}
+                    </td>
+                  );
+                })}
               </tr>
             );
           })}

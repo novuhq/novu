@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { ROUTES } from '../../constants/routes.enum';
+import { ROUTES } from '../../constants/routes';
 import { UpdateTenantSidebar } from './components/UpdateTenantSidebar';
 
 export function UpdateTenantPage() {

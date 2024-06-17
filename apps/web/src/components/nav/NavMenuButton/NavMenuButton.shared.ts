@@ -1,9 +1,8 @@
 import { IIconProps } from '@novu/design-system';
-import { LocalizedMessage } from '@novu/shared-web';
+import { LocalizedMessage } from '../../../types/LocalizedMessage';
 import { ReactNode } from 'react';
 import { css } from '@novu/novui/css';
-import { styled } from '@novu/novui/jsx';
-import { text } from '@novu/novui/recipes';
+import { CoreProps } from '@novu/novui';
 
 export type RightSideTrigger = 'hover';
 
@@ -12,7 +11,7 @@ export interface INavMenuButtonRightSideConfig {
   tooltip?: LocalizedMessage;
   triggerOn?: RightSideTrigger;
 }
-export interface INavMenuButtonProps {
+export interface INavMenuButtonProps extends CoreProps {
   icon: React.ReactElement<IIconProps>;
   label: LocalizedMessage;
   rightSide?: INavMenuButtonRightSideConfig;
@@ -29,8 +28,7 @@ export const rawButtonBaseStyles = css.raw({
   py: '100',
   px: '125',
   background: 'transparent',
-  // TODO: design system values when available
-  borderRadius: '7px',
+  borderRadius: '100',
   color: 'typography.text.secondary !important',
   '& svg': {
     fill: 'typography.text.secondary',
@@ -43,7 +41,6 @@ export const rawButtonBaseStyles = css.raw({
   '& _active, &.active': {
     position: 'relative',
     background: 'surface.page !important',
-    // TODO: design system values when available
     boxShadow: 'medium',
     backgroundClip: 'padding-box',
     color: 'typography.text.main !important',

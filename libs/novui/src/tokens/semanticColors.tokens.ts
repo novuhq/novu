@@ -31,6 +31,10 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
         type: 'color',
       },
       // not actually legacy, but makes the merging of the two easier for now.
+      disabled: {
+        value: { base: '{colors.mauve.30.light}', _dark: '{colors.mauve.30.dark}' },
+        type: 'color',
+      },
       feedback: {
         alert: {
           value: { base: '{colors.red.20.light}', _dark: '{colors.red.20.dark}' },
@@ -53,8 +57,105 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
   },
   button: {
     text: {
+      filled: {
+        value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.white}' },
+        type: 'color',
+      },
       outline: {
         value: { base: '{colors.legacy.gradientMiddle}', _dark: '{colors.legacy.white}' },
+        type: 'color',
+      },
+    },
+    icon: {
+      filled: {
+        value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.white}' },
+        type: 'color',
+      },
+    },
+    secondary: {
+      background: {
+        value: { base: '{colors.legacy.white}', _dark: '{colors.legacy.B17}' },
+        type: 'color',
+      },
+    },
+  },
+  table: {
+    header: {
+      border: {
+        value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+        type: 'color',
+      },
+    },
+    row: {
+      border: {
+        value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
+        type: 'color',
+      },
+      surface: {
+        hover: {
+          value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
+          type: 'color',
+        },
+      },
+    },
+    bottom: {
+      border: {
+        value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+        type: 'color',
+      },
+    },
+  },
+  tabs: {
+    border: {
+      value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+      type: 'color',
+    },
+  },
+  badge: {
+    border: {
+      value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B30}' },
+      type: 'color',
+    },
+  },
+  icon: {
+    main: {
+      value: { base: '{colors.legacy.B60}', _dark: '{colors.legacy.B60}' },
+      type: 'color',
+    },
+    secondary: {
+      value: { base: '{colors.legacy.B70}', _dark: '{colors.legacy.B40}' },
+      type: 'color',
+    },
+  },
+  status: {
+    active: {
+      value: { base: '{colors.legacy.success}', _dark: '{colors.legacy.success}' },
+      type: 'color',
+    },
+    inactive: {
+      value: { base: '{colors.legacy.B40}', _dark: '{colors.legacy.B40}' },
+      type: 'color',
+    },
+  },
+  // color palette semantic testing
+  mode: {
+    cloud: {
+      start: {
+        value: { base: '{colors.legacy.gradientStart}', _dark: '{colors.legacy.gradientStart}' },
+        type: 'color',
+      },
+      end: {
+        value: { base: '{colors.legacy.gradientEnd}', _dark: '{colors.legacy.gradientEnd}' },
+        type: 'color',
+      },
+    },
+    local: {
+      start: {
+        value: { base: '{colors.green.30.light}', _dark: '{colors.green.30.dark}' },
+        type: 'color',
+      },
+      end: {
+        value: { base: '{colors.green.50.light}', _dark: '{colors.green.50.dark}' },
         type: 'color',
       },
     },
@@ -168,6 +269,12 @@ export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
     },
     popover: {
       value: { base: '{colors.mauve.120.light}', _dark: '{colors.mauve.120.dark}' },
+      type: 'color',
+    },
+  },
+  icon: {
+    main: {
+      value: { base: '{colors.mauve.20.light}', _dark: '{colors.mauve.20.dark}' },
       type: 'color',
     },
   },

@@ -21,6 +21,11 @@ import {
 import { Z_INDEX_TOKENS } from './tokens/zIndex.tokens';
 import { SEMANTIC_SIZES_TOKENS } from './tokens/semanticSizes.tokens';
 import { SEMANTIC_SPACING_TOKENS } from './tokens/semanticSpacing.tokens';
+import { SEMANTIC_RADIUS_TOKENS } from './tokens/semanticRadius.tokens';
+import { LEGACY_OPACITY_TOKENS, OPACITY_TOKENS } from './tokens/opacity.tokens';
+import { SEMANTIC_OPACITY_TOKENS } from './tokens/semanticOpacity.tokens';
+import { BUTTON_RECIPE } from './recipes/button.recipe';
+import { TABS_RECIPE } from './recipes/tabs.recipe';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -55,6 +60,10 @@ export const novuPandaPreset = definePreset({
       borderWidths: BORDER_WIDTH_TOKENS,
       borders: BORDER_TOKENS,
       zIndex: Z_INDEX_TOKENS,
+      opacity: {
+        ...OPACITY_TOKENS,
+        ...LEGACY_OPACITY_TOKENS,
+      },
     },
     semanticTokens: {
       sizes: SEMANTIC_SIZES_TOKENS,
@@ -63,18 +72,32 @@ export const novuPandaPreset = definePreset({
         ...COLOR_SEMANTIC_TOKENS,
         ...LEGACY_COLOR_SEMANTIC_TOKENS,
       },
+      radii: SEMANTIC_RADIUS_TOKENS,
       shadows: LEGACY_SHADOW_TOKENS,
       gradients: {
         ...GRADIENT_TOKENS,
         ...LEGACY_GRADIENT_TOKENS,
       },
+      opacity: SEMANTIC_OPACITY_TOKENS,
     },
     textStyles: TEXT_STYLES,
     extend: {
       recipes: {
         text: TEXT_RECIPE,
         title: TITLE_RECIPE,
+        button: BUTTON_RECIPE,
+        tabs: TABS_RECIPE,
       },
     },
+  },
+  staticCss: {
+    css: [
+      {
+        properties: {
+          // Must generate color modes statically to ensure they're available
+          colorPalette: ['mode.local', 'mode.cloud'],
+        },
+      },
+    ],
   },
 });

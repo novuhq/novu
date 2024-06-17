@@ -11,7 +11,7 @@ import {
 import { EnvironmentRepository } from '@novu/dal';
 
 import { UpdateProfileEmailCommand } from './update-profile-email.command';
-import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
+import { normalizeEmail } from '@novu/shared';
 import type { UserResponseDto } from '../../dtos/user-response.dto';
 import { BaseUserProfileUsecase } from '../base-user-profile.usecase';
 

@@ -10,4 +10,4 @@ export default {
 
 const Template: StoryFn<typeof Test> = ({ ...args }) => <Test {...args}>Example Text</Test>;
 
-export const all = () => <Test />;
+export const all = () => <Test onClick={() => alert('Test!')} />;

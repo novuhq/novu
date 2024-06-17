@@ -1,5 +1,6 @@
 import { createStyles, Group } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
+import { cx } from '@novu/novui/css';
 import { useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import Frame from 'react-frame-component';
@@ -93,7 +94,8 @@ export const PreviewWeb = ({
   onLocaleChange,
   selectedLocale,
   locales,
-  chimera = false,
+  className,
+  bridge = false,
 }: {
   integration: any;
   subject?: string;
@@ -104,7 +106,8 @@ export const PreviewWeb = ({
   onLocaleChange: (locale: string) => void;
   selectedLocale?: string;
   locales: any[];
-  chimera?: boolean;
+  className?: string;
+  bridge?: boolean;
 }) => {
   const [isEditOverlayVisible, setIsEditOverlayVisible] = useState(false);
 
@@ -135,7 +138,7 @@ export const PreviewWeb = ({
             <div className={classes.barAction}></div>
           </Group>
         </div>
-        <div className={classes.contentContainer}>
+        <div className={cx(classes.contentContainer, className)}>
           <div className={classes.header}>
             <Group
               sx={{
@@ -150,7 +153,7 @@ export const PreviewWeb = ({
               <When truthy={!loading}>
                 <PreviewUserIcon />
                 <div>
-                  {!chimera && error && error.template?.subject && error.template?.subject?.message ? (
+                  {!bridge && error && error.template?.subject && error.template?.subject?.message ? (
                     <Text color={colors.error}>{error.template.subject.message}</Text>
                   ) : (
                     <>

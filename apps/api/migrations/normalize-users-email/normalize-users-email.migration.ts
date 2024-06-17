@@ -5,7 +5,7 @@ import { UserRepository, SubscriberRepository, MemberRepository } from '@novu/da
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from '../../src/app.module';
-import { normalizeEmail } from '../../src/app/shared/helpers/email-normalization.service';
+import { normalizeEmail } from '@novu/shared';
 
 export async function run() {
   console.log('Migration Normalize Users Email\n');

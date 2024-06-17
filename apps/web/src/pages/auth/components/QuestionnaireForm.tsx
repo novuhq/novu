@@ -4,8 +4,8 @@ import { Controller, useForm } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { Group, Input as MantineInput } from '@mantine/core';
 
+import type { ICreateOrganizationDto, IResponseError, ProductUseCases } from '@novu/shared';
 import { JobTitleEnum, jobTitleToLabelMapper, ProductUseCasesEnum } from '@novu/shared';
-import type { ProductUseCases, IResponseError, ICreateOrganizationDto, IJwtPayload } from '@novu/shared';
 import {
   Button,
   Digest,
@@ -19,9 +19,9 @@ import {
 } from '@novu/design-system';
 
 import { api } from '../../../api/api.client';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { DynamicCheckBox } from './dynamic-checkbox/DynamicCheckBox';
 import styled from '@emotion/styled/macro';
 import { useDomainParser } from './useDomainHook';
@@ -60,7 +60,7 @@ export function QuestionnaireForm() {
     const createDto: ICreateOrganizationDto = { ...rest, name: organizationName };
     const organization = await createOrganizationMutation(createDto);
     const organizationResponseToken = await api.post(`/v1/auth/organizations/${organization._id}/switch`, {});
-    login(organizationResponseToken);
+    await login(organizationResponseToken);
   }
 
   const onCreateOrganization = async (data: IOrganizationCreateForm) => {

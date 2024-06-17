@@ -102,9 +102,12 @@ export function createNestLoggingModuleOptions(
     ? { target: 'pino-pretty' }
     : undefined;
 
+  console.log(loggingLevelSet);
+
   // eslint-disable-next-line no-console
   console.log(
-    'Selected Log Transport ' + (!transport ? 'None' : 'pino-pretty')
+    'Selected Log Transport ' + (!transport ? 'None' : 'pino-pretty'),
+    loggingLevelSet
   );
 
   return {

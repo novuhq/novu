@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
 import styled from '@emotion/styled';
@@ -6,15 +6,17 @@ import styled from '@emotion/styled';
 import { HeaderNav } from './HeaderNav';
 import { SideNav } from './SideNav';
 import { IntercomProvider } from 'react-use-intercom';
-import { INTERCOM_APP_ID } from '../../../config/index';
+import { INTERCOM_APP_ID } from '../../../config';
 import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
-import { useFeatureFlag } from '@novu/shared-web';
+import { useEnvController, useFeatureFlag } from '../../../hooks';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { HeaderNav as HeaderNavNew } from './v2/HeaderNav';
 import { MainNav } from '../../nav/MainNav';
 import { FreeTrialBanner } from './FreeTrialBanner';
+import { css } from '@novu/novui/css';
+import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
 
 const AppShell = styled.div`
   display: flex;
@@ -32,6 +34,18 @@ const ContentShell = styled.div`
 
 export function PrivatePageLayout() {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
+  const { environment } = useEnvController();
+
+  /**
+   * TODO: this is a temporary work-around to let us work the different color palettes while testing locally.
+   * Eventually, we will want to only include 'LOCAL' in the conditional.
+   */
+  const isLocalEnv = useMemo(
+    () =>
+      [EnvironmentEnum.DEVELOPMENT, EnvironmentEnum.LOCAL].includes(environment?.name as EnvironmentEnum) &&
+      window.location.pathname.includes('/studio'),
+    [environment]
+  );
 
   const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
@@ -60,7 +74,7 @@ export function PrivatePageLayout() {
             )}
           >
             <SpotLight>
-              <AppShell>
+              <AppShell className={css({ '& *': { colorPalette: isLocalEnv ? 'mode.local' : 'mode.cloud' } })}>
                 {isInformationArchitectureEnabled ? <MainNav /> : <SideNav />}
                 <ContentShell>
                   <FreeTrialBanner />

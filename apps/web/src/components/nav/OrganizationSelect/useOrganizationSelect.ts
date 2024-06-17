@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as capitalize from 'lodash.capitalize';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import type { IResponseError, IOrganizationEntity } from '@novu/shared';
 import { successMessage } from '@novu/design-system';
 
@@ -44,7 +44,7 @@ export const useOrganizationSelect = () => {
 
       setLoadingSwitch(true);
       const token = await changeOrganization(organizationId);
-      login(token);
+      await login(token);
       await queryClient.refetchQueries();
       setLoadingSwitch(false);
     },
@@ -59,7 +59,7 @@ export const useOrganizationSelect = () => {
     });
   }
 
-  const value = currentOrganization?._id;
+  const value = currentOrganization?._id || '';
 
   const organizationItems = useMemo(() => {
     return (organizations || [])

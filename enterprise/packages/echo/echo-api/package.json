@@ -12,12 +12,14 @@
     "test-ee": "cross-env TS_NODE_COMPILER_OPTIONS='{\"strictNullChecks\": false}' TZ=UTC NODE_ENV=test E2E_RUNNER=true mocha --timeout 10000 --require ts-node/register --exit --file tests/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
+    "@nestjs/swagger": "^7.3.1",
     "@novu/application-generic": "workspace:*",
     "@novu/dal": "workspace:*",
     "@novu/ee-dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
     "@novu/testing": "workspace:*",
+    "@novu/ee-echo-worker": "workspace:*",
     "axios": "^1.6.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",

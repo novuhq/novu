@@ -3,7 +3,8 @@ import { QuestionnaireForm } from './components/QuestionnaireForm';
 import { useVercelIntegration } from '../../hooks';
 import SetupLoader from './components/SetupLoader';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useFeatureFlag, HUBSPOT_PORTAL_ID } from '@novu/shared-web';
+import { useFeatureFlag } from '../../hooks';
+import { HUBSPOT_PORTAL_ID } from '../../config';
 import { HubspotSignupForm } from './components/HubspotSignupForm';
 
 export default function QuestionnairePage() {
@@ -17,10 +18,7 @@ export default function QuestionnairePage() {
   }
 
   return (
-    <AuthLayout
-      title="Customize your experience"
-      description={!isHubspotEnabled ? 'Your answers can decrease the time to get started' : ''}
-    >
+    <AuthLayout title="Tell us more about you">
       {isHubspotEnabled ? <HubspotSignupForm /> : <QuestionnaireForm />}
     </AuthLayout>
   );

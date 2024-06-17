@@ -26,11 +26,11 @@ export class UserEntity implements IUserEntity {
 
   resetTokenCount?: IUserResetTokenCount;
 
-  firstName?: string | null;
+  firstName: string;
 
   lastName?: string | null;
 
-  email?: string | null;
+  email: string;
 
   profilePicture?: string | null;
 

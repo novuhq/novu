@@ -5,7 +5,7 @@ import { SignUpOriginEnum } from '@novu/shared';
 import { AnalyticsService, AuthService, createHash } from '@novu/application-generic';
 
 import { UserRegisterCommand } from './user-register.command';
-import { normalizeEmail } from '../../../shared/helpers/email-normalization.service';
+import { normalizeEmail } from '@novu/shared';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { CreateOrganization } from '../../../organization/usecases/create-organization/create-organization.usecase';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';

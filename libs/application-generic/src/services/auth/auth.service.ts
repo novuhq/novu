@@ -3,8 +3,8 @@ import { SubscriberEntity, UserEntity, MemberEntity } from '@novu/dal';
 import {
   AuthProviderEnum,
   SignUpOriginEnum,
-  IJwtClaims,
   ISubscriberJwt,
+  UserSessionData,
 } from '@novu/shared';
 import { IAuthService } from './auth.service.interface';
 
@@ -50,7 +50,7 @@ export class AuthService implements IAuthService {
     );
   }
 
-  validateApiKey(apiKey: string): Promise<IJwtClaims> {
+  validateApiKey(apiKey: string): Promise<UserSessionData> {
     return this.authService.validateApiKey(apiKey);
   }
 
@@ -76,7 +76,7 @@ export class AuthService implements IAuthService {
     );
   }
 
-  validateUser(payload: IJwtClaims): Promise<UserEntity> {
+  validateUser(payload: UserSessionData): Promise<UserEntity> {
     return this.authService.validateUser(payload);
   }
 
@@ -84,7 +84,7 @@ export class AuthService implements IAuthService {
     return this.authService.validateSubscriber(payload);
   }
 
-  isRootEnvironment(payload: IJwtClaims): Promise<boolean> {
+  isRootEnvironment(payload: UserSessionData): Promise<boolean> {
     return this.authService.isRootEnvironment(payload);
   }
 }

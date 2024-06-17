@@ -11,7 +11,7 @@ export interface IJwtClaims {
 }
 
 // @deprecated Use IJwtClaims instead
-export type IJwtPayload = IJwtClaims;
+export type UserSessionData = IJwtClaims;
 
 export enum ApiAuthSchemeEnum {
   BEARER = 'Bearer',

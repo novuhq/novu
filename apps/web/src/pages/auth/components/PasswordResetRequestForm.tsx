@@ -8,7 +8,7 @@ import type { IResponseError } from '@novu/shared';
 
 import { api } from '../../../api/api.client';
 import { useVercelParams } from '../../../hooks';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 
 type Props = {
   onSent: () => void;
@@ -34,8 +34,7 @@ export function PasswordResetRequestForm({ onSent }: Props) {
     };
 
     try {
-      const response = await mutateAsync(itemData);
-
+      await mutateAsync(itemData);
       onSent();
     } catch (e: any) {
       if (e.statusCode !== 400) {
@@ -54,7 +53,7 @@ export function PasswordResetRequestForm({ onSent }: Props) {
     <>
       <form noValidate name="reset-form" onSubmit={handleSubmit(onForgotPassword)}>
         <Input
-          error={errors.email?.message}
+          error={errors.email?.message as string}
           {...register('email', {
             required: 'Please provide an email',
             pattern: { value: /^\S+@\S+\.\S+$/, message: 'Please provide a valid email' },

@@ -22,4 +22,7 @@ export class UpdateEnvironmentCommand extends OrganizationCommand {
 
   @IsOptional()
   dns?: { inboundParseDomain?: string };
+
+  @IsOptional()
+  bridge?: { url?: string };
 }

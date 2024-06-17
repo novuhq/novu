@@ -36,9 +36,7 @@
     "@emotion/styled": "^11.6.0",
     "@mantine/hooks": "^5.7.1",
     "@mantine/notifications": "^5.7.1",
-    "@novu/client": "workspace:*",
     "@novu/shared": "workspace:*",
-    "@novu/shared-web": "workspace:*",
     "@segment/analytics-next": "1.59.0",
     "@sentry/react": "^7.40.0",
     "@tanstack/react-query": "^4.20.4",
@@ -62,14 +60,14 @@
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^14.5.2",
     "@types/node": "^18.11.12",
-    "@types/react": "^17.0.0",
-    "@types/react-dom": "^17.0.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.0.3",
     "acorn": "^8.7.1",
     "eslint-plugin-storybook": "^0.6.13",
     "jsdom": "^24.0.0",
-    "react": "^17.0.1",
-    "react-dom": "^17.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-router-dom": "6.2.2",
     "rimraf": "^3.0.2",
     "storybook": "^7.4.2",
@@ -83,8 +81,8 @@
   },
   "peerDependencies": {
     "@mantine/core": "^5.7.1",
-    "react": "^16.8.0 || ^17.0.0",
-    "react-dom": "^16.8.0 || ^17.0.0"
+    "react": ">=16.8.0",
+    "react-dom": ">=16.8.0"
   },
   "nx": {
     "targets": {

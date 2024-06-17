@@ -1,8 +1,8 @@
 import { Injectable, ExecutionContext, Inject } from '@nestjs/common';
 import { IAuthGuard, IAuthModuleOptions } from '@nestjs/passport';
-import { IJwtClaims } from '@novu/shared';
 import { Observable } from 'rxjs';
 import { Instrument } from '../../instrumentation';
+import { UserSessionData } from '@novu/shared';
 
 @Injectable()
 export class UserAuthGuard {
@@ -19,9 +19,9 @@ export class UserAuthGuard {
     return this.authGuard.getAuthenticateOptions(context);
   }
 
-  handleRequest<TUser = IJwtClaims>(
+  handleRequest<TUser = UserSessionData>(
     err: any,
-    user: IJwtClaims | false,
+    user: UserSessionData | false,
     info: any,
     context: ExecutionContext,
     status?: any

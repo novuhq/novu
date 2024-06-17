@@ -2,7 +2,7 @@ import { HeaderAPIKeyStrategy } from 'passport-headerapikey';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
 import { AuthService } from '@novu/application-generic';
-import { ApiAuthSchemeEnum, IJwtPayload } from '@novu/shared';
+import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
 import { HttpRequestHeaderKeysEnum } from '../../../shared/framework/types';
 
 @Injectable()
@@ -11,9 +11,9 @@ export class ApiKeyStrategy extends PassportStrategy(HeaderAPIKeyStrategy) {
     super(
       { header: HttpRequestHeaderKeysEnum.AUTHORIZATION, prefix: `${ApiAuthSchemeEnum.API_KEY} ` },
       true,
-      (apikey: string, verified: (err: Error | null, user?: IJwtPayload | false) => void) => {
+      (apikey: string, verified: (err: Error | null, user?: UserSessionData | false) => void) => {
         this.authService
-          .validateApiKey(apikey)
+          .getUserByApiKey(apikey)
           .then((user) => {
             if (!user) {
               return verified(null, false);

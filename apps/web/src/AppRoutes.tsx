@@ -3,7 +3,7 @@ import { PrivatePageLayout } from './components/layout/components/PrivatePageLay
 import { PublicPageLayout } from './components/layout/components/PublicPageLayout';
 import { EnsureOnboardingComplete } from './components/layout/components/EnsureOnboardingComplete';
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { ROUTES } from './constants/routes.enum';
+import { ROUTES } from './constants/routes';
 import { useFeatureFlag } from './hooks';
 import { ActivitiesPage } from './pages/activities/ActivitiesPage';
 import InvitationPage from './pages/auth/InvitationPage';
@@ -48,6 +48,15 @@ import { TenantsPage } from './pages/tenants/TenantsPage';
 import { UpdateTenantPage } from './pages/tenants/UpdateTenantPage';
 import { TranslationRoutes } from './pages/TranslationPages';
 import { useSettingsRoutes } from './SettingsRoutes';
+import { StudioOnboarding } from './pages/studio-onboarding/index';
+import { StudioOnboardingPreview } from './pages/studio-onboarding/preview';
+import { StudioOnboardingSuccess } from './pages/studio-onboarding/success';
+import {
+  WorkflowsListPage,
+  WorkflowsDetailPage,
+  WorkflowsStepEditorPage,
+  WorkflowsTestStepPage,
+} from './studio/components/workflows';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
@@ -138,10 +147,20 @@ export const AppRoutes = () => {
         {isInformationArchitectureEnabled && (
           <Route path={ROUTES.BRAND} element={<Navigate to={ROUTES.BRAND_SETTINGS} replace />} />
         )}
+        <Route path={ROUTES.STUDIO}>
+          <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
+          <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
+          <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
+          <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<WorkflowsStepEditorPage />} />
+          <Route path={ROUTES.STUDIO_FLOWS_TEST_STEP} element={<WorkflowsTestStepPage />} />
+        </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
+      <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />
+      <Route path={ROUTES.STUDIO_ONBOARDING_PREVIEW} element={<StudioOnboardingPreview />} />
+      <Route path={ROUTES.STUDIO_ONBOARDING_SUCCESS} element={<StudioOnboardingSuccess />} />
     </Routes>
   );
 };

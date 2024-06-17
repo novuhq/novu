@@ -2,7 +2,6 @@ import { useMutation, UseMutationOptions } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { errorMessage } from '@novu/design-system';
 import type { IEmailBlock, IResponseError } from '@novu/shared';
-import { IS_DOCKER_HOSTED } from '@novu/shared-web';
 
 import { previewSms } from '../content-templates';
 

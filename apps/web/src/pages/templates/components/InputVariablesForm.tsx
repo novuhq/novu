@@ -1,8 +1,9 @@
-import { IS_DOCKER_HOSTED } from '@novu/shared-web';
+import { IS_DOCKER_HOSTED } from '../../../config';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
+import { InputVariablesForm as Component } from '../../../ee/editor';
 
 export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => void }) => {
   const stepFormPath = useStepFormPath();
@@ -26,21 +27,5 @@ export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => voi
     return null;
   }
 
-  try {
-    const module = require('@novu/ee-echo-web');
-    const InputVariablesComponent = module.InputVariablesForm;
-
-    return (
-      <>
-        <InputVariablesComponent
-          payloadSchema={workflowPayloadSchema}
-          schema={inputs}
-          formData={formData}
-          onChange={onChange}
-        />
-      </>
-    );
-  } catch (e) {
-    throw e;
-  }
+  return <Component payloadSchema={workflowPayloadSchema} schema={inputs} formData={formData} onChange={onChange} />;
 };

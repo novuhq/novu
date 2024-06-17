@@ -26,6 +26,11 @@ module.exports = {
           {
             name: '@novu/dal',
           },
+          {
+            name: '@playwright/test',
+            importNames: ['test'],
+            message: `please use import { test } from './utils/baseTest' instead.`,
+          },
           // TODO: re-enable this once we have de-coupled web's build from linting
           /*
           {
@@ -50,12 +55,8 @@ module.exports = {
     'react-hooks/exhaustive-deps': 'warn',
     'import/extensions': 'off',
   },
-  env: {
-    'cypress/globals': true,
-  },
-  ignorePatterns: ['craco.config.js', 'cypress/*', '**/styled-system/**/*', 'tests/*'],
-  extends: ['plugin:cypress/recommended', '../../.eslintrc.js'],
-  plugins: ['cypress', 'react-hooks'],
+  ignorePatterns: ['craco.config.js', '**/styled-system/**/*'],
+  plugins: ['react-hooks'],
   parserOptions: {
     project: './tsconfig.json',
     ecmaVersion: 2020,

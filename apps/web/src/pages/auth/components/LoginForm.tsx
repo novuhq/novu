@@ -5,13 +5,13 @@ import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Center } from '@mantine/core';
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
-import { useAuth } from '@novu/shared-web';
+import { useAuth } from '../../../hooks/useAuth';
 import type { IResponseError } from '@novu/shared';
 import { useVercelIntegration, useVercelParams } from '../../../hooks';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { api } from '../../../api/api.client';
 import { useAcceptInvite } from './useAcceptInvite';
-import { ROUTES } from '../../../constants/routes.enum';
+import { ROUTES } from '../../../constants/routes';
 import { OAuth } from './OAuth';
 import { parseServerErrorMessage } from '../../../utils/errors';
 
@@ -21,23 +21,27 @@ type LoginFormProps = {
 };
 
 export interface LocationState {
-  redirectTo: {
-    pathname: string;
+  redirectTo?: {
+    pathname?: string;
   };
 }
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const segment = useSegment();
-  const { login, currentUser } = useAuth();
+  const { login, currentUser, organizations } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel, params: vercelParams } = useVercelParams();
   const [params] = useSearchParams();
   const tokenInQuery = params.get('token');
   const source = params.get('source');
   const sourceWidget = params.get('source_widget');
+  const invitationTokenFromGithub = params.get('invitationToken') as string;
+  const isRedirectedFromLoginPage = params.get('isLoginPage') as string;
+
   const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();
   const location = useLocation();
+  const state = location.state as LocationState;
   const { isLoading, mutateAsync, isError, error } = useMutation<
     { token: string },
     IResponseError,
@@ -47,29 +51,59 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     }
   >((data) => api.post('/v1/auth/login', data));
 
-  useEffect(() => {
-    if (tokenInQuery) {
-      debugger;
-      login(tokenInQuery);
+  const handleLoginInUseEffect = async () => {
+    // if currentUser is true, it means user exists, then while accepting invitation, InvitationPage will handle accept this case
+    if (currentUser) {
+      return;
+    }
+
+    // if token from OAuth or CLI is not present
+    if (!tokenInQuery) {
+      return;
+    }
+
+    // handle github login after invitation
+    if (invitationTokenFromGithub) {
+      await login(tokenInQuery);
+      const updatedToken = await acceptInvite(invitationTokenFromGithub);
+
+      if (updatedToken) {
+        await login(updatedToken, isRedirectedFromLoginPage === 'true' ? ROUTES.WORKFLOWS : ROUTES.AUTH_APPLICATION);
+
+        return;
+      }
+    }
+
+    if (organizations) {
+      navigate(ROUTES.WORKFLOWS);
+    } else {
+      await login(tokenInQuery, ROUTES.AUTH_APPLICATION);
     }
 
     if (isFromVercel) {
+      await login(tokenInQuery);
       startVercelSetup();
 
       return;
     }
 
-    if (tokenInQuery && source === 'cli') {
+    if (source === 'cli') {
       segment.track('Dashboard Visit', {
         widget: sourceWidget || 'unknown',
         source: 'cli',
       });
-      navigate(ROUTES.GET_STARTED);
+      await login(tokenInQuery, ROUTES.GET_STARTED);
+
+      return;
     }
 
-    navigate(ROUTES.GET_STARTED);
+    await login(tokenInQuery, ROUTES.WORKFLOWS);
+  };
+
+  useEffect(() => {
+    handleLoginInUseEffect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]);
+  }, [login]);
 
   const signupLink = isFromVercel ? `${ROUTES.AUTH_SIGNUP}?${params.toString()}` : ROUTES.AUTH_SIGNUP;
   const resetPasswordLink = isFromVercel
@@ -101,11 +135,11 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
       if (invitationToken) {
         const updatedToken = await acceptInvite(invitationToken);
         if (updatedToken) {
-          login(updatedToken);
+          await login(updatedToken);
         }
       }
 
-      navigate(ROUTES.WORKFLOWS);
+      navigate(state?.redirectTo?.pathname || ROUTES.WORKFLOWS);
     } catch (e: any) {
       if (e.statusCode !== 400) {
         Sentry.captureException(e);
@@ -123,7 +157,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
 
   return (
     <>
-      <OAuth />
+      <OAuth invitationToken={invitationToken} isLoginPage={true} />
       <form noValidate onSubmit={handleSubmit(onLogin)}>
         <Input
           error={emailClientError || emailServerError}
