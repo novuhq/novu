@@ -25,9 +25,12 @@ export const useSetupBridge = (url: string, setError: (error: string) => void) =
     setLoading(true);
 
     await runHealthCheck(url);
+
     await syncEndpoint({
       bridgeUrl: url,
     });
+
+    localStorage.setItem('nv-bridge-url', url);
 
     setLoading(false);
   }

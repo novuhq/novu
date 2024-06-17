@@ -1,12 +1,6 @@
 import axios from 'axios';
 import { CustomDataType } from '@novu/shared';
 
-const BRIDGE_ENDPOINT = 'https://few-dots-guess.loca.lt/api/echo';
-
-interface IOptions {
-  absoluteUrl: boolean;
-}
-
 export const bridgeHttp = {
   get(url: string, params = {}) {
     return axios
@@ -24,7 +18,7 @@ export const bridgeHttp = {
   },
   put(url: string, payload) {
     return axios
-      .put(`${BRIDGE_ENDPOINT}${url}`, payload, {
+      .put(`${buildUrl(url)}`, payload, {
         headers: getHeaders(),
       })
       .then((response) => response.data)
@@ -35,7 +29,7 @@ export const bridgeHttp = {
   },
   post(url: string, payload, params?: CustomDataType) {
     return axios
-      .post(`${BRIDGE_ENDPOINT}${url}`, payload, { params, headers: getHeaders() })
+      .post(buildUrl(url), payload, { params, headers: getHeaders() })
       .then((response) => response.data)
       .catch((error) => {
         // eslint-disable-next-line promise/no-return-wrap
@@ -45,7 +39,12 @@ export const bridgeHttp = {
 };
 
 function buildUrl(url: string) {
-  return BRIDGE_ENDPOINT;
+  const BRIDGE_ENDPOINT = localStorage.getItem('nv-bridge-url');
+  if (!BRIDGE_ENDPOINT) {
+    throw new Error('Bridge URL is not set');
+  }
+
+  return BRIDGE_ENDPOINT + url;
 }
 
 function getHeaders() {
