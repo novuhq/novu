@@ -1,4 +1,4 @@
-import { expect } from '@jest/globals';
+import { expect, it, describe, beforeEach, afterEach, vi } from 'vitest';
 
 import { Client } from './client';
 import { DEFAULT_NOVU_API_BASE_URL, HttpMethodEnum, NovuApiEndpointsEnum } from './constants';
@@ -29,18 +29,18 @@ describe('Novu Client', () => {
     client.addWorkflows([newWorkflow]);
   });
 
-  test('should discover 1 workflow', () => {
+  it('should discover 1 workflow', () => {
     const discovery = client.discover();
     expect(discovery.workflows).toHaveLength(1);
   });
 
   describe('discover method', () => {
-    test('should discover setup workflow', () => {
+    it('should discover setup workflow', () => {
       const discovery = client.discover();
       expect(discovery.workflows).toHaveLength(1);
     });
 
-    test('should discover a complex workflow with all supported step types', async () => {
+    it('should discover a complex workflow with all supported step types', async () => {
       const workflowId = 'complex-workflow';
 
       const newWorkflow = workflow(workflowId, async ({ step }) => {
@@ -121,28 +121,28 @@ describe('Novu Client', () => {
       expect(stepEmail).toBeDefined();
       if (stepEmail === undefined) throw new Error('stepEmail is undefined');
       expect(stepEmail.type).toBe('email');
-      expect(stepEmail.code).toContain(`body: 'Test Body'`);
-      expect(stepEmail.code).toContain(`subject: 'Subject'`);
+      expect(stepEmail.code).toContain(`body: "Test Body"`);
+      expect(stepEmail.code).toContain(`subject: "Subject"`);
 
       const stepInApp = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-in-app');
       expect(stepInApp).toBeDefined();
       if (stepInApp === undefined) throw new Error('stepEmail is undefined');
       expect(stepInApp.type).toBe('in_app');
-      expect(stepInApp.code).toContain(`body: 'Test Body'`);
-      expect(stepInApp.code).toContain(`subject: 'Subject'`);
+      expect(stepInApp.code).toContain(`body: "Test Body"`);
+      expect(stepInApp.code).toContain(`subject: "Subject"`);
 
       const stepChat = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-chat');
       expect(stepChat).toBeDefined();
       if (stepChat === undefined) throw new Error('stepEmail is undefined');
       expect(stepChat.type).toBe('chat');
-      expect(stepChat.code).toContain(`body: 'Test Body'`);
+      expect(stepChat.code).toContain(`body: "Test Body"`);
 
       const stepPush = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-push');
       expect(stepPush).toBeDefined();
       if (stepPush === undefined) throw new Error('stepEmail is undefined');
       expect(stepPush.type).toBe('push');
-      expect(stepPush.code).toContain(`body: 'Test Body'`);
-      expect(stepPush.code).toContain(`subject: 'Title'`);
+      expect(stepPush.code).toContain(`body: "Test Body"`);
+      expect(stepPush.code).toContain(`subject: "Title"`);
 
       const stepCustom = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-custom');
       expect(stepCustom).toBeDefined();
@@ -155,25 +155,25 @@ describe('Novu Client', () => {
       expect(stepSms).toBeDefined();
       if (stepSms === undefined) throw new Error('stepEmail is undefined');
       expect(stepSms.type).toBe('sms');
-      expect(stepSms.code).toContain(`body: 'Test Body'`);
-      expect(stepSms.code).toContain(`to: '+1234567890'`);
+      expect(stepSms.code).toContain(`body: "Test Body"`);
+      expect(stepSms.code).toContain(`to: "+1234567890"`);
 
       const stepDigest = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'digest');
       expect(stepDigest).toBeDefined();
       if (stepDigest === undefined) throw new Error('stepEmail is undefined');
       expect(stepDigest.type).toBe('digest');
       expect(stepDigest.code).toContain(`amount: 1`);
-      expect(stepDigest.code).toContain(`unit: 'hours'`);
+      expect(stepDigest.code).toContain(`unit: "hours"`);
 
       const stepDelay = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'delay');
       expect(stepDelay).toBeDefined();
       if (stepDelay === undefined) throw new Error('stepEmail is undefined');
       expect(stepDelay.type).toBe('delay');
       expect(stepDelay.code).toContain(`amount: 1`);
-      expect(stepDelay.code).toContain(`unit: 'hours'`);
+      expect(stepDelay.code).toContain(`unit: "hours"`);
     });
 
-    test('should discover a slack provide with blocks', async () => {
+    it('should discover a slack provide with blocks', async () => {
       const workflowId = 'complex-workflow';
 
       const newWorkflow = workflow(workflowId, async ({ step }) => {
@@ -213,9 +213,9 @@ describe('Novu Client', () => {
       expect(stepChat).toBeDefined();
       if (stepChat === undefined) throw new Error('stepEmail is undefined');
       expect(stepChat.type).toBe('chat');
-      expect(stepChat.code).toContain(`body: 'Test Body'`);
-      expect(stepChat.providers[0].code).toContain(`type: 'plain_text'`);
-      expect(stepChat.providers[0].code).toContain(`text: 'Pretty Header'`);
+      expect(stepChat.code).toContain(`body: "Test Body"`);
+      expect(stepChat.providers[0].code).toContain(`type: "plain_text"`);
+      expect(stepChat.providers[0].code).toContain(`text: "Pretty Header"`);
     });
   });
 
@@ -227,7 +227,7 @@ describe('Novu Client', () => {
     };
 
     beforeEach(() => {
-      global.fetch = jest.fn(
+      global.fetch = vi.fn(
         () =>
           Promise.resolve({
             json: () => Promise.resolve(DIFF_MOCK_RESPONSE),
@@ -242,7 +242,7 @@ describe('Novu Client', () => {
     it('should call fetch with the correct payload on diff execution', async () => {
       const clientUrl = 'https://example.com';
 
-      const syncRestCallSpy = jest.spyOn(global, 'fetch');
+      const syncRestCallSpy = vi.spyOn(global, 'fetch');
       const diffResponse = await client.diff(clientUrl);
 
       expect(syncRestCallSpy).toBeCalledTimes(1);
@@ -263,14 +263,14 @@ describe('Novu Client', () => {
 
       const createdWorkflows = [{ name: 'workflow', description: 'description', data: {} }];
 
-      global.fetch = jest.fn(
+      global.fetch = vi.fn(
         () =>
           Promise.resolve({
             json: () => Promise.resolve(createdWorkflows),
           }) as any
       );
 
-      const syncRestCallSpy = jest.spyOn(global, 'fetch');
+      const syncRestCallSpy = vi.spyOn(global, 'fetch');
       const syncResponse = await client.sync(clientUrl);
 
       expect(syncResponse).toBe(createdWorkflows);

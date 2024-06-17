@@ -1,3 +1,4 @@
+import { expect, it, describe } from 'vitest';
 import { toConstantCase } from './string.utils';
 
 describe('convert to constant case', () => {

@@ -1,3 +1,4 @@
+import { it, describe } from 'vitest';
 import { workflow } from './workflow';
 
 describe('workflow function', () => {
