@@ -34,7 +34,7 @@ bun next-dev
 
 ## Your first workflow
 
-Your first email workflow can be edited in `./app/workflow/myWorkflow.ts`. You can adjust your workflow to your liking.
+Your first email workflow can be edited in `./app/novu/workflows.ts`. You can adjust your workflow to your liking.
 
 ## Learn More
 
