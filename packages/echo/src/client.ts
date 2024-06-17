@@ -55,7 +55,7 @@ import { Liquid } from 'liquidjs';
 /**
  * We want to respond with a consistent string value for preview
  */
-JSONSchemaFaker.random.shuffle = function (a) {
+JSONSchemaFaker.random.shuffle = function () {
   return ['[placeholder]'];
 };
 
