@@ -32,6 +32,6 @@ export class InboxUI {
   unmount(): void {
     this.#dispose?.();
     this.#dispose = null;
-    this.#rootElement.remove();
+    this.#rootElement?.remove();
   }
 }
