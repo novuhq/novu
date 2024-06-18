@@ -1,6 +1,6 @@
 import { CheckboxStylesNames } from '@mantine/core';
 import { defineSlotRecipe } from '@pandacss/dev';
-import { token } from 'styled-system/tokens';
+import { colorPaletteGradientHorizontal } from 'src/ingredients';
 import { INPUT_RECIPE } from './input.recipe';
 
 // full enumeration of the component library's slots
@@ -25,18 +25,22 @@ export const CHECKBOX_RECIPE = defineSlotRecipe({
     root: {
       _hoverNotDisabled: {
         opacity: 'hover',
+        '& input, & label': {
+          cursor: 'pointer !important',
+        },
       },
     },
     icon: {
       color: 'button.icon.filled !important',
     },
     input: {
-      // backgroundColor: 'transparent',
       border: 'solid',
+      borderColor: 'input.border !important',
       borderRadius: '50 !important',
+      background: 'transparent !important',
 
       _checked: {
-        bg: token('gradients.horizontal'),
+        ...colorPaletteGradientHorizontal,
         color: 'typography.text.main',
         border: 'transparent !important',
       },

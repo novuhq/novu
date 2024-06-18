@@ -9,8 +9,7 @@ import { CoreProps, CorePropsWithChildren } from '../../types';
 import { PolymorphicComponentPropWithRef, PolymorphicRef } from '../../types/props-helpers';
 
 export interface ButtonCoreProps
-  extends Partial<ButtonVariant>,
-    CorePropsWithChildren,
+  extends CorePropsWithChildren,
     React.ButtonHTMLAttributes<HTMLButtonElement>,
     Pick<ButtonProps, 'size' | 'loading'> {
   Icon?: IconType;
@@ -21,7 +20,7 @@ type IconButtonDefaultElement = 'button';
 
 export type IButtonProps<C extends React.ElementType = IconButtonDefaultElement> = PolymorphicComponentPropWithRef<
   C,
-  JsxStyleProps & ButtonVariant & CoreProps & ButtonCoreProps
+  JsxStyleProps & Partial<ButtonVariant> & CoreProps & ButtonCoreProps
 >;
 
 const DEFAULT_VARIANT: ButtonVariant['variant'] = 'filled';

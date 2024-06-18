@@ -52,6 +52,10 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
           value: { base: '{colors.green.20.light}', _dark: '{colors.green.20.dark}' },
           type: 'color',
         },
+        required: {
+          value: { base: '{colors.red.20.light}', _dark: '{colors.red.20.dark}' },
+          type: 'color',
+        },
       },
     },
   },

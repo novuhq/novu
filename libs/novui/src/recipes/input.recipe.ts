@@ -82,7 +82,6 @@ export const INPUT_RECIPE = defineSlotRecipe({
       fontSize: '75 !important',
       paddingTop: '50 !important',
     },
-    wrapper: {},
     section: {
       paddingRight: '75',
       '[data-error] &': {
@@ -95,5 +94,9 @@ export const INPUT_RECIPE = defineSlotRecipe({
       color: 'typography.text.tertiary !important',
       fontSize: '88 !important',
     },
+    required: {
+      color: 'typography.text.feedback.required !important',
+    },
+    wrapper: {},
   },
 });
