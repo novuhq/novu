@@ -18,7 +18,7 @@ import {
   inputStyles,
 } from '@novu/design-system';
 
-import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
+import { useEnvironment } from '../../../../hooks';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { createIntegration } from '../../../../api/integration';
 import { defaultIntegrationConditionsProps, IntegrationsStoreModalAnalytics } from '../../constants';

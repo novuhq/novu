@@ -13,7 +13,7 @@ import {
   When,
   withCellLoading,
 } from '@novu/design-system';
-import { useAuth, useEnvController } from '../../../hooks';
+import { useAuth, useEnvironment } from '../../../hooks';
 import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { FlagMap } from '../icons/flags';
@@ -92,7 +92,7 @@ const UpdateCell = ({ row: { original }, isLoading }: IExtendedCellProps<ITransl
   const { handleFileSelect, setLocale, groupIdentifier, setIsTranslationExists } = useEditTranslationFileContext();
 
   const [showDeleteTranslationModal, setShowDeleteTranslationModal] = useState(false);
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   const handleEdit = () => {
     setLocale(isoLanguage);

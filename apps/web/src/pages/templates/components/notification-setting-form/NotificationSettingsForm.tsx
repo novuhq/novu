@@ -6,7 +6,7 @@ import type { IResponseError, INotificationTrigger } from '@novu/shared';
 
 import { api } from '../../../../api/api.client';
 import { Input, Select, Switch, Tooltip, Check, Copy, When } from '@novu/design-system';
-import { useEnvController, useNotificationGroup } from '../../../../hooks';
+import { useEnvironment, useNotificationGroup } from '../../../../hooks';
 import type { IForm } from '../formTypes';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 import { useParams } from 'react-router-dom';
@@ -22,7 +22,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
   } = useFormContext<IForm>();
 
   const { template } = useTemplateEditorForm();
-  const { readonly, bridge } = useEnvController({}, template?.bridge);
+  const { readonly, bridge } = useEnvironment({}, template?.bridge);
   const { templateId = '' } = useParams<{ templateId: string }>();
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(

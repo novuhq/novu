@@ -1,5 +1,5 @@
 import { api } from '../../../../api';
-import { useEnvController } from '../../../../hooks/useEnvController';
+import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -20,7 +20,7 @@ export default function Content({
   inputVariables?: any;
 }) {
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
+  const { bridge } = useEnvironment({}, template?.bridge);
 
   const { watch, formState } = useFormContext<IForm>();
   const path = useStepFormPath();

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Button, Sidebar, Title, errorMessage } from '@novu/design-system';
 import { api } from '../../../api';
-import { useAuth, useEnvController } from '../../../hooks';
+import { useAuth, useEnvironment } from '../../../hooks';
 import { Group } from '@mantine/core';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -86,7 +86,7 @@ export const EditGroupSidebar = ({
     });
   };
 
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   if (!group) {
     return null;

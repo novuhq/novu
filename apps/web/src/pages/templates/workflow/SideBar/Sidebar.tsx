@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Stack, useMantineColorScheme } from '@mantine/core';
 import { useOutletContext } from 'react-router-dom';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { TOP_ROW_HEIGHT } from '../WorkflowEditor';
 import { AddStepMenu } from './AddStepMenu';
 
@@ -12,7 +12,7 @@ export const Sidebar = () => {
     event.dataTransfer.effectAllowed = 'move';
   };
   const { setDragging }: any = useOutletContext();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   if (readonly) {
     return null;

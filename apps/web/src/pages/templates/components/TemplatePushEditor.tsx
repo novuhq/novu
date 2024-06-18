@@ -2,7 +2,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { colors, Text, When } from '@novu/design-system';
-import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
+import { useEnvironment, useHasActiveIntegrations, useVariablesManager } from '../../../hooks';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { StepSettings } from '../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from './LackIntegrationAlert';
@@ -34,7 +34,7 @@ export function TemplatePushEditor() {
     channelType: ChannelTypeEnum.PUSH,
   });
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
+  const { bridge } = useEnvironment({}, template?.bridge);
   const [activeTab, setActiveTab] = useState<string>(PREVIEW);
   const theme = useMantineTheme();
 

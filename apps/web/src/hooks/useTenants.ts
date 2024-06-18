@@ -4,7 +4,7 @@ import { IPaginatedResponseDto, ITenantEntity } from '@novu/shared';
 
 import { QueryKeys } from '../api/query.keys';
 import { getTenants } from '../api/tenants';
-import { useEnvController } from './useEnvController';
+import { useEnvironment } from './useEnvironment';
 
 export function useTenants({
   options,
@@ -15,7 +15,7 @@ export function useTenants({
   page?: number;
   limit?: number;
 }) {
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
   const { data, isLoading, ...rest } = useQuery<IPaginatedResponseDto<ITenantEntity>, any>(
     [QueryKeys.tenantsList, environment?._id, page, limit],
 

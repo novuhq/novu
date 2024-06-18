@@ -2,7 +2,7 @@ import { css } from '@novu/novui/css';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { useEffect, useState } from 'react';
-import { useEnvController } from '../../hooks/useEnvController';
+import { useEnvironment } from '../../hooks/useEnvironment';
 import { Title, Text } from '@novu/novui';
 import { VStack } from '@novu/novui/jsx';
 import { SetupTimeline } from './components/SetupTimeline';
@@ -11,7 +11,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { useWindowEvent } from '@mantine/hooks';
 
 export const StudioOnboarding = () => {
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
   const [url, setUrl] = useState('');
   const [error, setError] = useState<string>('');
   const { loading, setup, testEndpoint, testResponse } = useSetupBridge(url, setError);
