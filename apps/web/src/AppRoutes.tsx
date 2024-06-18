@@ -15,6 +15,7 @@ import { BrandingPage } from './pages/brand/BrandingPage';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { GetStartedPage } from './pages/get-started/GetStartedPage';
 import HomePage from './pages/HomePage';
+import { ApiKeysPage } from './pages/settings/index';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
 import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
@@ -151,6 +152,7 @@ export const AppRoutes = () => {
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />
+        <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
       <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />
