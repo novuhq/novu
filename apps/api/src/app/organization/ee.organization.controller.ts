@@ -13,7 +13,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { OrganizationEntity } from '@novu/dal';
-import { IJwtPayload, MemberRoleEnum, SyncExternalOrganizationDto } from '@novu/shared';
+import { UserSessionData, MemberRoleEnum, SyncExternalOrganizationDto } from '@novu/shared';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -62,7 +62,7 @@ export class EEOrganizationController {
     summary: 'Sync external Clerk organization with internal db.',
   })
   async syncExternalOrganization(
-    @UserSession() user: IJwtPayload,
+    @UserSession() user: UserSessionData,
     @Body() body: SyncExternalOrganizationDto
   ): Promise<OrganizationEntity> {
     Logger.verbose('Syncing external Clerk organization', user.organizationId);
@@ -84,7 +84,7 @@ export class EEOrganizationController {
   @ApiOperation({
     summary: 'Fetch all organizations',
   })
-  async getOrganizations(@UserSession() user: IJwtPayload): Promise<IGetOrganizationsDto> {
+  async getOrganizations(@UserSession() user: UserSessionData): Promise<IGetOrganizationsDto> {
     const command = GetOrganizationsCommand.create({
       userId: user._id,
     });
@@ -98,7 +98,7 @@ export class EEOrganizationController {
   @ApiOperation({
     summary: 'Fetch current organization details',
   })
-  async getMyOrganization(@UserSession() user: IJwtPayload): Promise<IGetMyOrganizationDto> {
+  async getMyOrganization(@UserSession() user: UserSessionData): Promise<IGetMyOrganizationDto> {
     const command = GetMyOrganizationCommand.create({
       userId: user._id,
       id: user.organizationId,
@@ -113,7 +113,7 @@ export class EEOrganizationController {
   @ApiOperation({
     summary: 'Fetch all members of current organizations',
   })
-  async getMember(@UserSession() user: IJwtPayload) {
+  async getMember(@UserSession() user: UserSessionData) {
     return await this.getMembers.execute(
       GetMembersCommand.create({
         user,
@@ -129,7 +129,7 @@ export class EEOrganizationController {
   @ApiOperation({
     summary: 'Update organization branding details',
   })
-  async updateBrandingDetails(@UserSession() user: IJwtPayload, @Body() body: UpdateBrandingDetailsDto) {
+  async updateBrandingDetails(@UserSession() user: UserSessionData, @Body() body: UpdateBrandingDetailsDto) {
     return await this.updateBrandingDetailsUsecase.execute(
       UpdateBrandingDetailsCommand.create({
         logo: body.logo,
@@ -150,7 +150,7 @@ export class EEOrganizationController {
   @ApiOperation({
     summary: 'Rename organization name',
   })
-  async renameOrganization(@UserSession() user: IJwtPayload, @Body() body: RenameOrganizationDto) {
+  async renameOrganization(@UserSession() user: UserSessionData, @Body() body: RenameOrganizationDto) {
     return await this.renameOrganizationUsecase.execute(
       RenameOrganizationCommand.create({
         name: body.name,

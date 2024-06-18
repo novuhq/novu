@@ -3,7 +3,7 @@ import {
   AuthProviderEnum,
   SignUpOriginEnum,
   ISubscriberJwt,
-  IJwtClaims,
+  UserSessionData,
 } from '@novu/shared';
 
 export interface IAuthService {
@@ -26,7 +26,7 @@ export interface IAuthService {
     userId: string,
     organizationId: string
   ): Promise<boolean>;
-  validateApiKey(apiKey: string): Promise<IJwtClaims>;
+  getUserByApiKey(apiKey: string): Promise<UserSessionData>;
   getSubscriberWidgetToken(subscriber: SubscriberEntity): Promise<string>;
   generateUserToken(user: UserEntity): Promise<string>;
   getSignedToken(
@@ -36,7 +36,7 @@ export interface IAuthService {
     environmentId?: string
   ): Promise<string>;
 
-  validateUser(payload: IJwtClaims): Promise<UserEntity>;
+  validateUser(payload: UserSessionData): Promise<UserEntity>;
   validateSubscriber(payload: ISubscriberJwt): Promise<SubscriberEntity | null>;
-  isRootEnvironment(payload: IJwtClaims): Promise<boolean>;
+  isRootEnvironment(payload: UserSessionData): Promise<boolean>;
 }

@@ -50,8 +50,8 @@ export class AuthService implements IAuthService {
     );
   }
 
-  validateApiKey(apiKey: string): Promise<UserSessionData> {
-    return this.authService.validateApiKey(apiKey);
+  getUserByApiKey(apiKey: string): Promise<UserSessionData> {
+    return this.authService.getUserByApiKey(apiKey);
   }
 
   getSubscriberWidgetToken(subscriber: SubscriberEntity): Promise<string> {

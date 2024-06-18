@@ -21,7 +21,7 @@ import {
 } from '@novu/dal';
 import {
   AuthProviderEnum,
-  IJwtPayload,
+  UserSessionData,
   ISubscriberJwt,
   MemberRoleEnum,
   SignUpOriginEnum,
@@ -45,7 +45,7 @@ import {
   buildUserKey,
   CachedEntity,
 } from '../cache';
-import { normalizeEmail } from '../../utils/email-normalization';
+import { normalizeEmail } from '@novu/shared';
 import { IAuthService } from './auth.service.interface';
 
 @Injectable()
@@ -194,7 +194,7 @@ export class CommunityAuthService implements IAuthService {
   }
 
   @Instrument()
-  public async validateApiKey(apiKey: string): Promise<IJwtPayload> {
+  public async getUserByApiKey(apiKey: string): Promise<UserSessionData> {
     const { environment, user, error } = await this.getApiKeyUser({
       apiKey,
     });
@@ -309,7 +309,7 @@ export class CommunityAuthService implements IAuthService {
   }
 
   @Instrument()
-  public async validateUser(payload: IJwtPayload): Promise<UserEntity> {
+  public async validateUser(payload: UserSessionData): Promise<UserEntity> {
     // We run these in parallel to speed up the query time
     const userPromise = this.getUser({ _id: payload._id });
     const isMemberPromise = payload.organizationId
@@ -336,7 +336,7 @@ export class CommunityAuthService implements IAuthService {
     });
   }
 
-  public async isRootEnvironment(payload: IJwtPayload): Promise<boolean> {
+  public async isRootEnvironment(payload: UserSessionData): Promise<boolean> {
     const environment = await this.environmentRepository.findOne({
       _id: payload.environmentId,
     });
