@@ -162,7 +162,7 @@ export const StudioOnboardingPreview = () => {
                   icon: <IconCode />,
                   value: 'Code',
                   content: (
-                    <Prism withLineNumbers={true} language="javascript">
+                    <Prism withLineNumbers language="javascript">
                       {`
 {
     subject: "Welcome to Novu! Ready to code?",

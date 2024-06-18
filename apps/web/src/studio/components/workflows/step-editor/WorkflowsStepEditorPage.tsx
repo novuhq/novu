@@ -58,7 +58,7 @@ export const WorkflowsStepEditorPage = () => {
       }
     >
       <WorkflowsPanelLayout>
-        <WorkflowStepEditorContentPanel preview={preview} loadingPreview={loadingPreview} />
+        <WorkflowStepEditorContentPanel preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorInputsPanel step={step} workflow={workflow} onChange={onInputsChange} />
       </WorkflowsPanelLayout>
     </WorkflowsPageTemplate>

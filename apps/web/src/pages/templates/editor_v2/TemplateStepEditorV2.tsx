@@ -47,7 +47,7 @@ export const WorkflowsStepEditorPageV2 = () => {
     if (!workflow) return;
 
     renderStepPreview({ inputs, payload });
-  }, [inputs, payload, renderStepPreview]);
+  }, [inputs, payload, renderStepPreview, workflow]);
 
   function onInputsChange(type: string, form: any) {
     switch (type) {
@@ -75,7 +75,7 @@ export const WorkflowsStepEditorPageV2 = () => {
       }
     >
       <WorkflowsPanelLayout>
-        <WorkflowStepEditorContentPanel preview={preview} loadingPreview={loadingPreview} />
+        <WorkflowStepEditorContentPanel preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorInputsPanel
           isLoadingSave={isSavingInputs}
           onSave={() => {

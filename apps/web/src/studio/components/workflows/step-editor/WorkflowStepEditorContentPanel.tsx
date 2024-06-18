@@ -9,15 +9,13 @@ import { useQuery } from '@tanstack/react-query';
 import { bridgeApi } from '../../../../api/bridge/bridge.api';
 
 interface IWorkflowStepEditorContentPanelProps {
-  // TODO: Placeholder for real props
-  placeholder?: never;
   preview: any;
-  loadingPreview: boolean;
+  isLoadingPreview: boolean;
 }
 
 export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelProps> = ({
   preview,
-  loadingPreview,
+  isLoadingPreview,
 }) => {
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
 
@@ -44,7 +42,7 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
           subject={preview?.outputs?.subject}
           onLocaleChange={() => {}}
           locales={[]}
-          loading={loadingPreview}
+          loading={isLoadingPreview}
         />
       ),
     },
@@ -56,7 +54,7 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
       value: 'code',
       label: 'Code',
       content: (
-        <Prism withLineNumbers={true} language="javascript">
+        <Prism withLineNumbers language="javascript">
           {step?.code || ''}
         </Prism>
       ),

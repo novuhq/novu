@@ -3,8 +3,6 @@ import { IconOutlineEditNote, IconOutlineTune } from '@novu/novui/icons';
 import { FC } from 'react';
 
 interface IWorkflowStepEditorInputsPanelProps {
-  // TODO: Placeholder for real props
-  placeholder?: never;
   step: any;
   workflow: any;
   onChange: (type: 'step' | 'payload', data: any) => void;
