@@ -29,26 +29,15 @@ interface IWorkflowStepEditorContentPanelProps {
   preview: any;
   isLoadingPreview: boolean;
   error?: any;
+  step: any;
 }
 
 export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelProps> = ({
   preview,
   isLoadingPreview,
   error,
+  step,
 }) => {
-  const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
-
-  const { data: workflow, isLoading } = useQuery(['workflow', templateId], async () => {
-    return bridgeApi.getWorkflow(templateId);
-  });
-
-  const step = workflow?.steps.find((item) => item.stepId === stepId);
-
-  const { integrations = [] } = useActiveIntegrations();
-  const integration = useMemo(() => {
-    return integrations.find((item) => item.channel === 'email' && item.primary) || null;
-  }, [integrations]);
-
   const tabs = [
     {
       icon: <IconVisibility />,
@@ -56,7 +45,12 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
       label: 'Preview',
       content: (
         <Center>
-          <PreviewStep channel={step?.type} preview={preview} loadingPreview={isLoadingPreview} error={error} />
+          <PreviewStep
+            channel={step.template?.type || step.type}
+            preview={preview}
+            loadingPreview={isLoadingPreview}
+            error={error}
+          />
         </Center>
       ),
     },

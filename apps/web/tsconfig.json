@@ -15,8 +15,7 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "noImplicitAny": false,
-    "memoryLimit": 8192
+    "noImplicitAny": false
   },
   "include": ["src", "styled-system"],
   "exclude": ["node_modules"]

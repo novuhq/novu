@@ -1,10 +1,10 @@
 import styled from '@emotion/styled';
 import { Divider, Flex, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
-import { FieldError, FieldErrorsImpl, Merge, useFormContext } from 'react-hook-form';
+import { useFormContext } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 
-import { IForm, IFormStep } from '../../../../pages/templates/components/formTypes';
+import { IForm } from '../../../../pages/templates/components/formTypes';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { LocaleSelect } from '../common';
 import { ChatContent } from './ChatContent';
