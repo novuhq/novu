@@ -9,10 +9,6 @@ export default {
   title: 'Components/Button',
   component: Button,
   argTypes: {
-    colorPalette: {
-      options: ['mode.cloud', 'mode.local'],
-      control: { type: 'select' },
-    },
     size: {
       options: ['sm', 'md', 'lg'],
       control: { type: 'select' },
