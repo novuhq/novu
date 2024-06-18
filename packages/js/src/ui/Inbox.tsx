@@ -3,7 +3,7 @@ import { Notification } from '../feeds';
 import { Novu } from '../novu';
 import type { NovuOptions } from '../novu';
 import { AppearanceContextType, AppearanceProvider } from './context';
-import { getStyle } from './helpers';
+import { useStyle } from './helpers';
 
 const Inbox: Component<{
   name: string;
@@ -33,7 +33,7 @@ export default Inbox;
 const InternalInbox: Component<{
   feeds: Notification[];
 }> = (props) => {
-  const style = getStyle();
+  const style = useStyle();
 
   return (
     <div class={style('novu', 'root')}>
