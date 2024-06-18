@@ -72,7 +72,7 @@ export const INPUT_RECIPE = defineSlotRecipe({
       },
     },
     label: {
-      color: 'typography.text.main',
+      color: 'typography.text.main !important',
       fontWeight: 'strong !important',
       fontSize: '88 !important',
     },

@@ -4,6 +4,7 @@ export * from './title';
 export * from './button';
 export * from './Test';
 export * from './input';
+export * from './checkbox';
 export * from './select';
 export * from './tabs';
 export * from './table';

@@ -1,5 +1,5 @@
 import { TextInput as ExternalTextInput, type InputProps as ExternalTextInputProps } from '@mantine/core';
-import { ChangeEventHandler, forwardRef, ReactNode } from 'react';
+import { ChangeEventHandler, forwardRef } from 'react';
 import { CoreProps, LocalizedMessage, LocalizedString } from '../../types';
 import { css, cx } from '../../../styled-system/css';
 import { splitCssProps } from '../../../styled-system/jsx';
