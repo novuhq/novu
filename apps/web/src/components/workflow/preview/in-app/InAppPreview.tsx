@@ -4,7 +4,10 @@ import { Button, colors, inputStyles, When } from '@novu/design-system';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { IForm } from '../../../../pages/templates/components/formTypes';
-import { usePreviewInAppTemplate } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
+import {
+  ParsedPreviewStateType,
+  usePreviewInAppTemplate,
+} from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import Content from './Content';
@@ -68,25 +71,17 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   return (
     <Grid gutter={24}>
       <Grid.Col span={showVariables ? 8 : 12}>
-        <ContainerStyled removePadding={showVariables}>
-          <Header
-            selectedLocale={selectedLocale}
-            locales={locales}
-            areLocalesLoading={areLocalesLoading || isBridgeLoading}
-            onLocaleChange={onLocaleChange}
-          />
-          {previewError && bridge ? (
-            <ErrorPrettyRender error={previewError} />
-          ) : (
-            <Content
-              isPreviewLoading={isPreviewLoading || isBridgeLoading}
-              parsedPreviewState={bridge ? bridgeContent : parsedPreviewState}
-              templateError={bridge ? '' : templateError}
-              showOverlay={!showVariables}
-              enableAvatar={enableAvatar}
-            />
-          )}
-        </ContainerStyled>
+        <InAppPreviewComponent
+          content={bridge ? bridgeContent : parsedPreviewState}
+          onLocaleChange={onLocaleChange}
+          locales={locales}
+          previewError={previewError}
+          error={bridge ? '' : templateError}
+          enableAvatar={enableAvatar}
+          selectedLocale={selectedLocale}
+          showEditOverlay={!showVariables}
+          loading={areLocalesLoading || isBridgeLoading || isPreviewLoading}
+        />
       </Grid.Col>
 
       <When truthy={showVariables}>
@@ -148,3 +143,47 @@ const ContainerStyled = styled.div<{ removePadding: boolean }>`
 
   ${({ removePadding }) => removePadding && `padding: 0;`}
 `;
+
+export const InAppPreviewComponent = ({
+  content,
+  loading = false,
+  error,
+  previewError,
+  showEditOverlay = false,
+  onLocaleChange,
+  selectedLocale,
+  locales = [],
+  enableAvatar = false,
+}: {
+  content: ParsedPreviewStateType;
+  loading?: boolean;
+  error?: string;
+  previewError?: any;
+  showEditOverlay?: boolean;
+  onLocaleChange: (locale: string) => void;
+  selectedLocale?: string;
+  locales: any[];
+  enableAvatar?: boolean;
+}) => {
+  if (previewError) {
+    return <ErrorPrettyRender error={previewError} />;
+  }
+
+  return (
+    <ContainerStyled removePadding={!showEditOverlay}>
+      <Header
+        selectedLocale={selectedLocale}
+        locales={locales}
+        areLocalesLoading={loading}
+        onLocaleChange={onLocaleChange}
+      />
+      <Content
+        isPreviewLoading={loading}
+        parsedPreviewState={content}
+        templateError={error || ''}
+        showOverlay={showEditOverlay}
+        enableAvatar={enableAvatar}
+      />
+    </ContainerStyled>
+  );
+};

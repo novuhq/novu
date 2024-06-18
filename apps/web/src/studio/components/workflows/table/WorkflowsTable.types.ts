@@ -1,10 +1,3 @@
-interface IBridgeWorkflow {
-  workflowId: string;
-  code: string;
-  steps: {
-    stepId: string;
-    type: string;
-  }[];
-}
+import { type IBridgeWorkflow } from '../../../studio.types';
 
 export type WorkflowTableRow = IBridgeWorkflow;

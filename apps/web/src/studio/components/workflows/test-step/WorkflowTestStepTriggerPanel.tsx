@@ -5,10 +5,8 @@ import { Tabs, Title } from '@novu/novui';
 import { HStack } from '@novu/novui/jsx';
 import { FC } from 'react';
 
-interface IWorkflowTestStepTriggerPanelProps {
-  // TODO: Placeholder for real props
-  placeholder?: never;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface IWorkflowTestStepTriggerPanelProps {}
 
 // TODO: placeholder for real code
 const CODE = (

@@ -4,10 +4,8 @@ import { IconOutlineSend, IconOutlineTune } from '@novu/novui/icons';
 import { Box, HStack, Stack } from '@novu/novui/jsx';
 import { FC } from 'react';
 
-interface IWorkflowTestStepInputsPanelProps {
-  // TODO: Placeholder for real props
-  placeholder?: never;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface IWorkflowTestStepInputsPanelProps {}
 
 export const WorkflowTestStepInputsPanel: FC<IWorkflowTestStepInputsPanelProps> = ({}) => {
   return (

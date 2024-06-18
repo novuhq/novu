@@ -12,6 +12,7 @@ export enum ROUTES {
   WORKFLOWS_DIGEST_PLAYGROUND = '/workflows/:templateId/digest-playground',
   WORKFLOWS_CREATE = '/workflows/create',
   WORKFLOWS_EDIT_TEMPLATEID = '/workflows/edit/:templateId',
+  WORKFLOWS_V2_STEP_EDIT = '/workflows/edit/:templateId/step/:stepId',
   WORKFLOWS_VARIANT_PREVIEW = '/workflows/edit/:templateId/:channel/:stepUuid/variants/:variantUuid/preview',
   WORKFLOWS = '/workflows',
   TENANTS = '/tenants',
@@ -42,7 +43,9 @@ export enum ROUTES {
   SETTINGS = '/settings',
   PROFILE = '/settings/profile',
   TEAM_SETTINGS = '/settings/team',
-  BRAND_SETTINGS = '/settings/brand',
+  /* Deprecated */
+  BRAND_SETTINGS_DEPRECATED = '/settings/brand',
+  BRAND_SETTINGS = '/settings/branding',
   ORGANIZATION = '/settings/organization',
   SECURITY = '/settings/security',
   BILLING = '/settings/billing',

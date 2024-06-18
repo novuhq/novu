@@ -14,8 +14,6 @@ export const WorkflowsStepEditorPage = () => {
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
 
-  console.log({ inputs, payload });
-
   const { data: workflow, isLoading } = useQuery(['workflow', templateId], async () => {
     return bridgeApi.getWorkflow(templateId);
   });
@@ -24,6 +22,7 @@ export const WorkflowsStepEditorPage = () => {
     data: preview,
     isLoading: loadingPreview,
     refetch,
+    error,
   } = useQuery(['workflow-preview', templateId, stepId, inputs, payload], async () => {
     return bridgeApi.getStepPreview(templateId, stepId, payload, inputs);
   });
@@ -60,7 +59,7 @@ export const WorkflowsStepEditorPage = () => {
       }
     >
       <WorkflowsPanelLayout>
-        <WorkflowStepEditorContentPanel preview={preview} loadingPreview={loadingPreview} />
+        <WorkflowStepEditorContentPanel error={error} preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorInputsPanel step={step} workflow={workflow} onChange={onInputsChange} />
       </WorkflowsPanelLayout>
     </WorkflowsPageTemplate>

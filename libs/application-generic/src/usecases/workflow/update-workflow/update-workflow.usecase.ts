@@ -364,6 +364,7 @@ export class UpdateWorkflow {
         senderName: message.template.senderName,
         actor: message.template.actor,
         parentChangeId,
+        code: message?.template.code,
         inputs: message?.template.inputs,
         output: message?.template.output,
         workflowType: command.type,

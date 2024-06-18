@@ -108,15 +108,6 @@ const program = new Commander.Command(packageJson.name)
   Explicitly tell the CLI to bootstrap the application using Bun
 `
   )
-  .option(
-    '-e, --example [name]|[github-url]',
-    `
-
-  An example to bootstrap the app with. You can use an example name
-  from the official Echo repo or a GitHub URL. The URL can use
-  any branch and/or subdirectory
-`
-  )
   .allowUnknownOption()
   .parse(process.argv);
 
@@ -171,7 +162,7 @@ async function run(): Promise<void> {
       '\nPlease specify the project directory:\n' +
         `  ${cyan(program.name())} ${green('<project-directory>')}\n` +
         'For example:\n' +
-        `  ${cyan(program.name())} ${green('my-echo-app')}\n\n` +
+        `  ${cyan(program.name())} ${green('my-novu-app')}\n\n` +
         `Run ${cyan(`${program.name()} --help`)} to see all options.`
     );
     process.exit(1);
@@ -327,15 +318,15 @@ async function notifyUpdate(): Promise<void> {
     if (res?.latest) {
       const updateMessage =
         packageManager === 'yarn'
-          ? 'yarn global add create-echo-app'
+          ? 'yarn global add create-novu-app'
           : packageManager === 'pnpm'
-          ? 'pnpm add -g create-echo-app'
+          ? 'pnpm add -g create-novu-app'
           : packageManager === 'bun'
-          ? 'bun add -g create-echo-app'
-          : 'npm i -g create-echo-app';
+          ? 'bun add -g create-novu-app'
+          : 'npm i -g create-novu-app';
 
       console.log(
-        yellow(bold('A new version of `create-echo-app` is available!')) +
+        yellow(bold('A new version of `create-novu-app` is available!')) +
           '\n' +
           'You can update by running: ' +
           cyan(updateMessage) +

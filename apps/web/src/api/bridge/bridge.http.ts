@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { CustomDataType } from '@novu/shared';
+import { getTunnelUrl } from './utils';
 
 export const bridgeHttp = {
   get(url: string, params = {}) {
@@ -39,7 +40,7 @@ export const bridgeHttp = {
 };
 
 function buildUrl(url: string) {
-  const BRIDGE_ENDPOINT = localStorage.getItem('nv-bridge-url');
+  const BRIDGE_ENDPOINT = getTunnelUrl();
   if (!BRIDGE_ENDPOINT) {
     throw new Error('Bridge URL is not set');
   }

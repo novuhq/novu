@@ -1,10 +1,10 @@
 import styled from '@emotion/styled';
 import { Divider, Flex, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
-import { useFormContext } from 'react-hook-form';
+import { FieldError, FieldErrorsImpl, Merge, useFormContext } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 
-import { IForm } from '../../../../pages/templates/components/formTypes';
+import { IForm, IFormStep } from '../../../../pages/templates/components/formTypes';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { LocaleSelect } from '../common';
 import { ChatContent } from './ChatContent';
@@ -69,12 +69,51 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
   }
 
   return (
+    <ChatPreviewComponent
+      content={previewContent || bridgeContent}
+      onLocaleChange={onLocaleChange}
+      locales={locales || []}
+      selectedLocale={selectedLocale}
+      showEditOverlay={isPreviewPath}
+      error={bridge ? undefined : templateError}
+      loading={showLoading || areLocalesLoading || isPreviewContentLoading || isBridgeLoading}
+    />
+  );
+}
+
+export const ChatPreviewComponent = ({
+  content,
+  loading = false,
+  error,
+  previewError,
+  showEditOverlay = false,
+  onLocaleChange,
+  selectedLocale,
+  locales,
+}: {
+  content: string;
+  loading?: boolean;
+  error?: string;
+  previewError?: any;
+  showEditOverlay?: boolean;
+  onLocaleChange: (locale: string) => void;
+  selectedLocale?: string;
+  locales: any[];
+}) => {
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+
+  if (previewError) {
+    return <ErrorPrettyRender error={previewError} />;
+  }
+
+  return (
     <ChatPreviewContainer>
       <Flex>
         <LocaleSelect
           value={selectedLocale}
           onLocaleChange={onLocaleChange}
-          isLoading={areLocalesLoading || isPreviewContentLoading || isBridgeLoading}
+          isLoading={loading}
           locales={locales || []}
         />
       </Flex>
@@ -87,13 +126,8 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
         }
         labelPosition="center"
       />
-      <ChatContent
-        showOverlay={isPreviewPath}
-        isLoading={showLoading || isPreviewContentLoading || areLocalesLoading || isBridgeLoading}
-        content={previewContent || bridgeContent}
-        errorMsg={bridge ? undefined : templateError}
-      />
+      <ChatContent showOverlay={showEditOverlay} isLoading={loading} content={content} errorMsg={error} />
       <ChatInput />
     </ChatPreviewContainer>
   );
-}
+};

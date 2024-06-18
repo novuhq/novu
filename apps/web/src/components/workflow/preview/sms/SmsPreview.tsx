@@ -3,7 +3,7 @@ import { colors } from '@novu/design-system';
 import { api } from '../../../../api';
 import { useEnvController } from '../../../../hooks/useEnvController';
 import { useMutation } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { MouseEventHandler, useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 import { IForm } from '../../../../pages/templates/components/formTypes';
@@ -79,29 +79,66 @@ export const SmsPreview = ({
   );
 
   return (
+    <SmsPreviewComponent
+      content={bridge ? bridgeContent : previewContent}
+      onLocaleChange={onLocaleChange}
+      locales={locales}
+      showEditOverlay={isPreviewPath}
+      selectedLocale={selectedLocale}
+      loading={isPreviewContentLoading || areLocalesLoading || isBridgeLoading}
+      onEditClick={navigateToStepEditor}
+      error={bridge ? undefined : templateError}
+      previewError={previewError}
+    />
+  );
+};
+
+export const SmsPreviewComponent = ({
+  content,
+  loading = false,
+  error,
+  showEditOverlay = false,
+  onLocaleChange,
+  previewError,
+  selectedLocale,
+  locales,
+  onEditClick,
+}: {
+  content: string;
+  loading?: boolean;
+  error?: string;
+  previewError?: any;
+  showEditOverlay?: boolean;
+  onLocaleChange: (locale: string) => void;
+  selectedLocale?: string;
+  locales: any[];
+  onEditClick?: MouseEventHandler<HTMLButtonElement>;
+}) => {
+  if (previewError) {
+    return (
+      <div style={{ marginTop: 20, padding: 10 }}>
+        <ErrorPrettyRender error={previewError} />
+      </div>
+    );
+  }
+
+  return (
     <MobileSimulator withBackground={false}>
       <BodyContainer>
         <LocaleSelectStyled
-          isLoading={areLocalesLoading}
+          isLoading={loading}
           locales={locales}
           value={selectedLocale}
           onLocaleChange={onLocaleChange}
           dropdownPosition="top"
         />
-
-        {previewError && bridge ? (
-          <div style={{ marginTop: 20, padding: 10 }}>
-            <ErrorPrettyRender error={previewError} />
-          </div>
-        ) : (
-          <SmsBubble
-            onEditClick={navigateToStepEditor}
-            isLoading={bridge ? isBridgeLoading : isPreviewContentLoading || areLocalesLoading}
-            text={bridge ? bridgeContent : previewContent}
-            error={bridge ? undefined : templateError}
-            withOverlay={isPreviewPath}
-          />
-        )}
+        <SmsBubble
+          onEditClick={onEditClick}
+          isLoading={loading}
+          text={content}
+          error={error}
+          withOverlay={showEditOverlay}
+        />
       </BodyContainer>
     </MobileSimulator>
   );
