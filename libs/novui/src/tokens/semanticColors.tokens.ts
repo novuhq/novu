@@ -167,6 +167,20 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       },
     },
   },
+  select: {
+    option: {
+      surface: {
+        hover: {
+          value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+          type: 'color',
+        },
+        selected: {
+          value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.B40}' },
+          type: 'color',
+        },
+      },
+    },
+  },
   // color palette semantic testing
   mode: {
     cloud: {

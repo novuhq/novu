@@ -37,14 +37,15 @@ export const SELECT_RECIPE = defineSlotRecipe({
     },
     option: {
       padding: '50 !important',
+      marginY: '25',
       borderRadius: '50 !important',
       color: 'typography.text.main',
-      _selected: {
-        bg: 'surface.panel !important',
-        fontWeight: 'strong',
-      },
       _hover: {
-        bg: 'surface.panel !important',
+        bg: 'select.option.surface.hover !important',
+      },
+      _selected: {
+        fontWeight: 'strong',
+        bg: 'select.option.surface.selected !important',
       },
     },
   },
