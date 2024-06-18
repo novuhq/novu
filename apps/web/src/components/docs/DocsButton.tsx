@@ -47,7 +47,22 @@ const popoverTextRecipe = cva<{ colorScheme: Record<ColorScheme, SystemStyleObje
   },
 });
 
-export const DocsButton = () => {
+const DefaultButton = ({ onClick }: { onClick: () => void }) => (
+  <ActionButton
+    className={css({
+      height: '150 !important',
+      minHeight: '150  !important',
+    })}
+    Icon={() => <IconOutlineMenuBook />}
+    onClick={onClick}
+  />
+);
+
+export const DocsButton = ({
+  TriggerButton = DefaultButton,
+}: {
+  TriggerButton?: React.FC<{ onClick: () => void }>;
+}) => {
   const { colorScheme } = useColorScheme();
   const [opened, setOpened] = useState<boolean>(false);
   const segment = useSegment();
@@ -110,14 +125,7 @@ export const DocsButton = () => {
             withArrow
           >
             <Popover.Target>
-              <ActionButton
-                className={css({
-                  height: '150 !important',
-                  minHeight: '150  !important',
-                })}
-                Icon={() => <IconOutlineMenuBook />}
-                onClick={() => toggle()}
-              />
+              <TriggerButton onClick={() => toggle()} />
             </Popover.Target>
             <Popover.Dropdown className={popoverDropdownRecipe({ colorScheme })}>
               <Flex gap="125" justify="space-between">
