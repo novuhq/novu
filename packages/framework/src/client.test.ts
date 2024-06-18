@@ -384,7 +384,7 @@ describe('Novu Client', () => {
     });
 
     it('should preview with mocked data during preview', async () => {
-      await echo.workflow(
+      await workflow(
         'mock-workflow',
         async ({ step, payload }) => {
           // eslint-disable-next-line @typescript-eslint/no-base-to-string
@@ -411,7 +411,7 @@ describe('Novu Client', () => {
         inputs: {},
       };
 
-      const executionResult = await echo.executeWorkflow(event);
+      const executionResult = await client.executeWorkflow(event);
       expect(executionResult).toBeDefined();
       expect(executionResult.outputs).toBeDefined();
 
