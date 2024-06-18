@@ -30,7 +30,7 @@ export const INPUT_RECIPE = defineSlotRecipe({
     },
     input: {
       background: 'input.surface !important',
-      borderColor: 'input.border.default !important',
+      borderColor: 'input.border !important',
       borderRadius: 'input !important',
       lineHeight: '125 !important',
 

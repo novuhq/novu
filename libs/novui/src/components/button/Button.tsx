@@ -45,7 +45,7 @@ export const Button: PolymorphicComponent = React.forwardRef(
         ref={ref}
         component={as ?? 'button'}
         size={size}
-        leftSection={Icon ? <Icon title="button-icon" size={variant === 'transparent' ? '32' : '16'} /> : undefined}
+        leftSection={Icon ? <Icon title="button-icon" size={variant === 'transparent' ? '20' : '16'} /> : undefined}
         classNames={styles}
         className={cx(css(cssProps), className)}
         variant={
