@@ -32,7 +32,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   const {
     data: preview,
     isLoading: loadingPreview,
-    mutateAsync: previewStep,
+    mutateAsync: renderStepPreview,
   } = useMutation<any, any, any>((data) => api.post('/v1/echo/preview/' + workflow?.name + '/' + stepId, data));
 
   const title = step?.stepId;
@@ -46,7 +46,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   useEffect(() => {
     if (!workflow) return;
 
-    previewStep({ inputs, payload });
+    renderStepPreview({ inputs, payload });
   }, [inputs, payload]);
 
   function onInputsChange(type: string, form: any) {

@@ -42,6 +42,9 @@ export const useEnvironmentSelect = () => {
     const urlParts = location.pathname.replace('/', '').split('/');
     const redirectRoute: string | undefined = checkIfEnvBasedRoute() ? undefined : urlParts[0];
 
+    /**
+     * TODO: Review this logic to see if we want to handle this differently
+     */
     if (value === 'Local') {
       await setEnvironment(BaseEnvironmentEnum.DEVELOPMENT, { route: '/studio' });
     } else {
