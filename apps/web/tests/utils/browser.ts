@@ -8,14 +8,12 @@ const modifier = isMac ? 'Meta' : 'Control';
 
 export async function initializeSession(page: Page, settings: ISessionOptions = {}) {
   selectors.setTestIdAttribute('data-test-id');
+
   const session = await getSession(settings);
-  await page.goto('/');
-  await page.evaluate((sess) => {
-    if (sess.token) {
-      localStorage.setItem('auth_token', sess.token);
-    } else {
-      localStorage.setItem('auth_token', '');
-    }
+
+  await page.addInitScript((sess) => {
+    localStorage.setItem('auth_token', sess.token);
+    localStorage.setItem('novu_last_environment_id', sess.environment._id);
   }, session);
   await page.goto('/');
 
@@ -53,9 +51,6 @@ export async function isDarkTheme(page: Page) {
   });
 
   return backgroundColor.toLowerCase() !== '#EDF0F2' && backgroundColor.toLowerCase() !== 'rgb(237, 240, 242)';
-}
-export function isLoginPage(page: Page) {
-  expect(page.url()).toContain('/auth/login');
 }
 
 export async function getAttByTestId(page: Page, testId: string, att: string) {

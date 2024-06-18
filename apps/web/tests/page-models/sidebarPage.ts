@@ -23,17 +23,13 @@ export class SidebarPage {
   }
 
   public async toggleToProduction() {
-    const responsePromise = this.page.waitForResponse('**/auth/environments/**/switch');
     await this.getEnvironmentSwitch().click();
     await this.page.getByRole('option', { name: Environment.Production }).click();
-    await responsePromise;
   }
 
   public async toggleToDevelopment() {
-    const responsePromise = this.page.waitForResponse('**/auth/environments/**/switch');
     await this.getEnvironmentSwitch().click();
     await this.page.getByRole('option', { name: Environment.Development }).click();
-    await responsePromise;
   }
 
   public async getSupportLink() {

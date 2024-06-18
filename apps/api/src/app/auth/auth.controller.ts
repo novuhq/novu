@@ -17,7 +17,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { MemberEntity, MemberRepository, OrganizationRepository, UserRepository } from '@novu/dal';
+import { MemberEntity, MemberRepository, UserRepository } from '@novu/dal';
 import { AuthGuard } from '@nestjs/passport';
 import { PasswordResetFlowEnum, UserSessionData } from '@novu/shared';
 import { UserRegistrationBodyDto } from './dtos/user-registration.dto';
@@ -156,16 +156,18 @@ export class AuthController {
   @Header('Cache-Control', 'no-store')
   async organizationSwitch(
     @UserSession() user: UserSessionData,
-    @Param('organizationId') organizationId: string
-  ): Promise<string> {
+    @Param('organizationId') organizationId: string,
+    @Req() request: Request
+  ) {
     const command = SwitchOrganizationCommand.create({
       userId: user._id,
       newOrganizationId: organizationId,
     });
 
-    return await this.switchOrganizationUsecase.execute(command);
+    return this.switchOrganizationUsecase.execute(command);
   }
 
+  // @deprecated - Will be removed after full deployment of Api and Dashboard.
   @Post('/environments/:environmentId/switch')
   @Header('Cache-Control', 'no-store')
   @UserAuthentication()
@@ -203,11 +205,7 @@ export class AuthController {
   }
 
   @Get('/test/token/:userId')
-  async authenticateTest(
-    @Param('userId') userId: string,
-    @Query('organizationId') organizationId: string,
-    @Query('environmentId') environmentId: string
-  ) {
+  async authenticateTest(@Param('userId') userId: string, @Query('organizationId') organizationId: string) {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
 
     const user = await this.userRepository.findById(userId);
@@ -215,6 +213,6 @@ export class AuthController {
 
     const member = organizationId ? await this.memberRepository.findMemberByUserId(organizationId, user._id) : null;
 
-    return await this.authService.getSignedToken(user, organizationId, member as MemberEntity, environmentId);
+    return await this.authService.getSignedToken(user, organizationId, member as MemberEntity);
   }
 }

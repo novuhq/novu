@@ -1,50 +1,135 @@
-import { Select } from '@novu/design-system';
+import { useEffect, useMemo, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import capitalize from 'lodash.capitalize';
+import type { IResponseError, IOrganizationEntity } from '@novu/shared';
+import { Select, Tooltip, When, successMessage } from '@novu/design-system';
 import { css } from '@novu/novui/css';
-import { useOrganizationSelect } from './useOrganizationSelect';
+import { COMPANY_LOGO_PATH } from '../../../constants/assets';
+import { arrowStyles, navSelectStyles, tooltipStyles } from '../NavSelect.styles';
+import { useAuth as useAuth } from '../../providers/AuthProvider';
+import { addOrganization } from '../../../api/organization';
+import { useSpotlightContext } from '../../providers/SpotlightProvider';
 
-interface IOrganizationSelectRendererProps {
-  loadingAddOrganization: boolean;
-  loadingSwitch: boolean;
-  addOrganizationItem: (newOrganization: string) => undefined;
-  value: string;
-  switchOrgCallback: (organizationId: string | string[] | null) => Promise<void>;
-  setSearch: React.Dispatch<React.SetStateAction<string>>;
-  data: {
-    label: string;
-    value: string;
-  }[];
-}
+export function OrganizationSelect() {
+  const [canShowTooltip, setCanShowTooltip] = useState<boolean>(false);
 
-export const OrganizationSelectRenderer: React.FC<IOrganizationSelectRendererProps> = ({
-  loadingAddOrganization,
-  loadingSwitch,
-  addOrganizationItem,
-  value,
-  switchOrgCallback,
-  setSearch,
-  data,
-}) => {
-  return (
-    <Select
-      className={css({ mt: '100', '& input': { bg: 'transparent' } })}
-      data-test-id="organization-switch"
-      loading={loadingAddOrganization || loadingSwitch}
-      creatable
-      searchable
-      getCreateLabel={(newOrganization) => <div>+ Add "{newOrganization}"</div>}
-      onCreate={addOrganizationItem}
-      value={value}
-      onChange={switchOrgCallback}
-      allowDeselect={false}
-      onSearchChange={setSearch}
-      data={data}
-    />
+  const [search, setSearch] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const { addItem, removeItems } = useSpotlightContext();
+
+  const { currentOrganization, organizations, switchOrganization } = useAuth();
+
+  const { mutateAsync: createOrganization } = useMutation<IOrganizationEntity, IResponseError, string>(
+    (name) => addOrganization(name),
+    {
+      onSuccess: () => {
+        successMessage('Your trial has started! 🎉');
+      },
+    }
   );
-};
 
-/**
- * @deprecated
- */
-export default function OrganizationSelect() {
-  return <OrganizationSelectRenderer {...useOrganizationSelect()} />;
+  function onCreate(newOrganization: string) {
+    (async () => {
+      if (!newOrganization) {
+        return;
+      }
+
+      setIsLoading(true);
+      const response = await createOrganization(newOrganization);
+      await switchOrganization(response._id);
+      setIsLoading(false);
+    })();
+
+    /*
+     * Necessary hack for Mantine V5 `<Select/>` that doesn't support async `onCreate`
+     * See https://v5.mantine.dev/core/select/#creatable
+     */
+    return '';
+  }
+
+  function onChange(organizatonId: string | string[] | null) {
+    (async () => {
+      if (!organizatonId) {
+        return;
+      }
+
+      if (Array.isArray(organizatonId)) {
+        organizatonId = organizatonId[0];
+      }
+
+      setIsLoading(true);
+      await switchOrganization(organizatonId);
+      setIsLoading(false);
+    })();
+  }
+
+  const value = currentOrganization?._id || '';
+
+  const data = useMemo(() => {
+    return (organizations || []).map((item) => ({
+      label: capitalize(item.name),
+      value: item._id,
+    }));
+  }, [organizations]);
+
+  useEffect(() => {
+    removeItems(['change-org-' + value]);
+    addItem(
+      (organizations || [])
+        .filter((item) => item._id !== value)
+        .map((item) => ({
+          id: 'change-org-' + item._id,
+          title: 'Change org to ' + capitalize(item.name),
+          onTrigger: () => switchOrganization(item._id),
+        }))
+    );
+  }, [organizations, switchOrganization, addItem, removeItems, value]);
+
+  return (
+    <Tooltip
+      label="Type a name to add organization"
+      sx={{ visibility: canShowTooltip && !isLoading ? 'visible' : 'hidden' }}
+      position="left"
+      classNames={{
+        tooltip: tooltipStyles,
+        arrow: arrowStyles,
+      }}
+      withinPortal
+    >
+      <Select
+        data-test-id="organization-switch"
+        className={navSelectStyles}
+        creatable
+        searchable
+        loading={isLoading}
+        getCreateLabel={(newOrganization) => <div>+ Add "{newOrganization}"</div>}
+        value={value}
+        onCreate={onCreate}
+        onChange={onChange}
+        allowDeselect={false}
+        onSearchChange={setSearch}
+        onDropdownOpen={() => {
+          setCanShowTooltip(true);
+        }}
+        onDropdownClose={() => {
+          setCanShowTooltip(false);
+        }}
+        data={data}
+        icon={
+          <When truthy={!isLoading}>
+            <img
+              // TODO: use actual organization photo
+              src={COMPANY_LOGO_PATH}
+              className={css({
+                w: '200',
+                h: '200',
+                // TODO: use design system values when available
+                borderRadius: '8px',
+              })}
+            />
+          </When>
+        }
+      />
+    </Tooltip>
+  );
 }

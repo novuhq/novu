@@ -1,8 +1,11 @@
 import { type PropsWithChildren, useLayoutEffect } from 'react';
-import { useAuth } from './hooks/useAuth';
+import { useAuth, useEnvironment } from './hooks';
 
 export function ApplicationReadyGuard({ children }: PropsWithChildren<{}>) {
-  const { isLoading, inPublicRoute } = useAuth();
+  const { isLoading: isLoadingAuth, inPublicRoute } = useAuth();
+  const { isLoading: isLoadingEnvironment } = useEnvironment();
+
+  const isLoading = isLoadingAuth || isLoadingEnvironment;
 
   // Clean up the skeleton loader when the app is ready
   useLayoutEffect(() => {

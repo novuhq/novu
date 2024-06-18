@@ -18,6 +18,7 @@
     "start:test": "http-server build -p 4200 --proxy http://127.0.0.1:4200?",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
     "test:e2e:install": "playwright install --with-deps",
     "test:e2e:codegen": "playwright codegen",
     "test:e2e:show-report": "npx playwright show-report",

@@ -241,7 +241,9 @@ export class UserSession {
     );
 
     this.token = `Bearer ${response.body.data}`;
-    this.testAgent = superAgentDefaults(request(this.requestEndpoint)).set('Authorization', this.token);
+    this.testAgent = superAgentDefaults(request(this.requestEndpoint))
+      .set('Authorization', this.token)
+      .set('Novu-Environment-Id', this.environment._id);
   }
 
   private async fetchJwtEE() {
@@ -388,11 +390,9 @@ export class UserSession {
 
   async switchToProdEnvironment() {
     const prodEnvironment = await this.environmentService.getProductionEnvironment(this.organization._id);
-    if (prodEnvironment) {
-      await this.switchEnvironment(prodEnvironment._id);
-    }
   }
 
+  // TODO: Replace with a getDevId
   async switchToDevEnvironment() {
     const devEnvironment = await this.environmentService.getDevelopmentEnvironment(this.organization._id);
     if (devEnvironment) {
@@ -429,11 +429,13 @@ export class UserSession {
   }
 
   async triggerEvent(triggerName: string, to: TriggerRecipientsPayload, payload = {}) {
-    return await this.testAgent.post('/v1/events/trigger').send({
+    await this.testAgent.post('/v1/events/trigger').send({
       name: triggerName,
       to: to,
       payload,
     });
+
+    return;
   }
 
   public async awaitRunningJobs(

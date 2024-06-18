@@ -20,7 +20,7 @@ export default function Content({
   controlVariables?: any;
 }) {
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvironment({}, template?.bridge);
+  const { bridge } = useEnvironment({ bridge: template?.bridge });
 
   const { watch, formState } = useFormContext<IForm>();
   const path = useStepFormPath();

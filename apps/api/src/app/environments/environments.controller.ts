@@ -1,5 +1,5 @@
 import { Body, ClassSerializerInterceptor, Controller, Get, Param, Post, Put, UseInterceptors } from '@nestjs/common';
-import { UserSessionData } from '@novu/shared';
+import { ApiAuthSchemeEnum, UserSessionData } from '@novu/shared';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CreateEnvironment } from './usecases/create-environment/create-environment.usecase';
 import { CreateEnvironmentCommand } from './usecases/create-environment/create-environment.command';
@@ -20,6 +20,7 @@ import { UpdateEnvironmentRequestDto } from './dtos/update-environment-request.d
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserAuthentication } from '../shared/framework/swagger/api.key.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
+import Api from 'twilio/lib/rest/Api';
 
 @ApiCommonResponses()
 @Controller('/environments')
@@ -80,11 +81,9 @@ export class EnvironmentsController {
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
-        environmentId: user.environmentId,
-        userId: user._id,
         organizationId: user.organizationId,
-        // TODO: This is a temporary patch to include API keys when Novu API is accessed via a user JWT token
-        includeApiKeys: user?.iss === 'novu_api' || user?.iss === process.env.CLERK_ISSUER_URL,
+        environmentId: user.environmentId,
+        includeAllApiKeys: user.scheme === ApiAuthSchemeEnum.BEARER,
       })
     );
   }

@@ -17,7 +17,7 @@ const CONTROLS = 'Controls';
 
 export function InAppContentCard({ openVariablesModal }: { openVariablesModal: () => void }) {
   const { template } = useTemplateEditorForm();
-  const { readonly, bridge } = useEnvironment({}, template?.bridge);
+  const { readonly, bridge } = useEnvironment({ bridge: template?.bridge });
   const theme = useMantineTheme();
 
   const [activeTab, setActiveTab] = useState<string>(bridge ? PREVIEW : EDITOR);

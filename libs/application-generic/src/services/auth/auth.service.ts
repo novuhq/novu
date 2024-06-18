@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { SubscriberEntity, UserEntity, MemberEntity } from '@novu/dal';
+import { MemberEntity, SubscriberEntity, UserEntity } from '@novu/dal';
 import {
   AuthProviderEnum,
   SignUpOriginEnum,
@@ -65,15 +65,9 @@ export class AuthService implements IAuthService {
   getSignedToken(
     user: UserEntity,
     organizationId?: string,
-    member?: MemberEntity,
-    environmentId?: string
+    member?: MemberEntity
   ): Promise<string> {
-    return this.authService.getSignedToken(
-      user,
-      organizationId,
-      member,
-      environmentId
-    );
+    return this.authService.getSignedToken(user, organizationId, member);
   }
 
   validateUser(payload: UserSessionData): Promise<UserEntity> {

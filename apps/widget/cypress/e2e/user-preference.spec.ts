@@ -33,6 +33,7 @@ describe('User Preferences', function () {
           count: 1,
           organizationId: session?.organization?._id,
           templateId: session?.templates[0]?._id,
+          environmentId: this.session.environment._id,
         });
 
         cy.wait(1000);
@@ -55,6 +56,7 @@ describe('User Preferences', function () {
       token: this.session?.token,
       subscriberId: this.session?.subscriber?.subscriberId,
       count: 1,
+      environmentId: this.session.environment._id,
     });
 
     cy.wait('@getNotifications');
@@ -78,6 +80,7 @@ describe('User Preferences', function () {
       token: this.session?.token,
       subscriberId: this.session?.subscriber?.subscriberId,
       count: 1,
+      environmentId: this.session.environment._id,
     });
 
     cy.getByTestId('go-back-btn').click();

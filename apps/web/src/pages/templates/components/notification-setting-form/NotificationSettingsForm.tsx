@@ -22,7 +22,7 @@ export const NotificationSettingsForm = ({ trigger }: { trigger?: INotificationT
   } = useFormContext<IForm>();
 
   const { template } = useTemplateEditorForm();
-  const { readonly, bridge } = useEnvironment({}, template?.bridge);
+  const { readonly, bridge } = useEnvironment({ bridge: template?.bridge });
   const { templateId = '' } = useParams<{ templateId: string }>();
 
   const { isTemplateActive, changeActiveStatus, isStatusChangeLoading } = useStatusChangeControllerHook(
