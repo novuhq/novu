@@ -1,10 +1,10 @@
 import { Loader, Select as ExternalSelect } from '@mantine/core';
 import { forwardRef } from 'react';
 import { IconArrowDropDown } from 'src/icons';
-import { token } from '../../../styled-system/tokens';
 import { css, cx } from '../../../styled-system/css';
 import { splitCssProps } from '../../../styled-system/jsx';
-import { input, select } from '../../../styled-system/recipes';
+import { select } from '../../../styled-system/recipes';
+import { token } from '../../../styled-system/tokens';
 import { JsxStyleProps } from '../../../styled-system/types';
 import { CoreProps } from '../../types';
 import { PolymorphicRef } from '../../types/props-helpers';
@@ -16,8 +16,6 @@ export const Select = forwardRef((props: ISelectProps, ref?: PolymorphicRef<'inp
   const [variantProps, selectProps] = select.splitVariantProps(props);
   const [cssProps, localProps] = splitCssProps(selectProps);
   const { onChange, className, icon, loading, ...otherProps } = localProps;
-
-  const inputClassNames = input(variantProps);
   const selectClassNames = select(variantProps);
 
   const rightSection = loading ? (
@@ -33,10 +31,7 @@ export const Select = forwardRef((props: ISelectProps, ref?: PolymorphicRef<'inp
       autoComplete="off"
       rightSection={rightSection}
       rightSectionWidth="auto"
-      classNames={{
-        ...inputClassNames,
-        ...selectClassNames,
-      }}
+      classNames={selectClassNames}
       className={cx(css(cssProps), className)}
       {...otherProps}
     />
