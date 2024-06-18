@@ -9,10 +9,6 @@ on:
         description: 'Deployment environment - choose between dev and prod'
         required: true
         type: string
-      bullmq_secret:
-        description: 'Bullmq secret api token'
-        required: false
-        type: string
 
 jobs:
 
@@ -29,19 +25,9 @@ jobs:
             echo "::set-output name=environment::Development"
           fi
 
-  get_env_secret:
-    needs: set_environment
-    runs-on: ubuntu-latest
-    environment: ${{ needs.set_environment.outputs.environment }}
-    outputs:
-      bullmq_token: ${{ steps.set_env.outputs.bullmq_token }}
-    steps:
-      - id: set_bullmq_token
-        run: |
-          echo "::set-output name=bullmq_token::${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}"
-
   build_image:
-    needs: get_env_secret
+    needs: set_environment
+    secrets: inherit
     uses: ./.github/workflows/cloud-deploy-reusable-docker.yml
     with:
       environment: ${{ needs.set_environment.outputs.environment }}
@@ -53,14 +39,13 @@ jobs:
       env_tag: ${{ inputs.env }}
       enterprise: true
       bullmq_secret: ${{ inputs.bullmq_secret }}
-    secrets: inherit
+
 
 
   deploy_dev_api:
     needs:
       - build_image
       - set_environment
-      - get_env_secret
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ contains(inputs.env, 'dev') }}
     secrets: inherit
@@ -74,7 +59,6 @@ jobs:
     needs:
       - build_image
       - set_environment
-      - get_env_secret
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit
@@ -88,7 +72,6 @@ jobs:
     needs:
       - build_image
       - set_environment
-      - get_env_secret
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit
