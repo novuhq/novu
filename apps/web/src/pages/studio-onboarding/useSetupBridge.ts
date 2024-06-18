@@ -5,6 +5,7 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { ROUTES } from '../../constants/routes';
 import { useBridgeUrlTest } from './useUrlTest';
 import { useState } from 'react';
+import { setTunnelUrl } from '../../api/bridge/utils';
 
 export const useSetupBridge = (url: string, setError: (error: string) => void) => {
   const [loading, setLoading] = useState(false);
@@ -25,9 +26,12 @@ export const useSetupBridge = (url: string, setError: (error: string) => void) =
     setLoading(true);
 
     await runHealthCheck(url);
+
     await syncEndpoint({
       bridgeUrl: url,
     });
+
+    setTunnelUrl(url);
 
     setLoading(false);
   }

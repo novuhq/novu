@@ -1,3 +1,3 @@
-import { INotificationTemplateExtended } from '../../../../hooks/useTemplates';
+import { type IBridgeWorkflow } from '../../../studio.types';
 
-export type WorkflowTableRow = INotificationTemplateExtended;
+export type WorkflowTableRow = IBridgeWorkflow;

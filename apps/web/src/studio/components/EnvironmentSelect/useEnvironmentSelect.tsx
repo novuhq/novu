@@ -38,9 +38,21 @@ export const useEnvironmentSelect = () => {
      * environments -- unless the path itself is based on a specific environment (e.g. API Keys)
      */
     const urlParts = location.pathname.replace('/', '').split('/');
-    const redirectRoute: string | undefined = checkIfEnvBasedRoute() ? undefined : urlParts[0];
+    let redirectRoute: string | undefined = checkIfEnvBasedRoute() ? undefined : urlParts[0];
+
+    if (isStudioRoute(location.pathname)) {
+      redirectRoute = 'workflows';
+    }
+
     await setEnvironment(value as EnvironmentEnum, { route: redirectRoute });
   };
+
+  let name = environment?.name;
+  let icon = environment?.name ? ENVIRONMENT_ICON_LOOKUP[environment.name] : null;
+  if (isStudioRoute(location.pathname)) {
+    name = 'Local';
+    icon = ENVIRONMENT_ICON_LOOKUP[name];
+  }
 
   return {
     loading: isLoading,
@@ -48,16 +60,19 @@ export const useEnvironmentSelect = () => {
       label: value,
       value,
     })),
-    value: environment?.name,
+    value: name,
     onChange,
     readonly,
-    icon: environment?.name ? ENVIRONMENT_ICON_LOOKUP[environment.name] : null,
+    icon,
     isPopoverOpened,
     setIsPopoverOpened,
     handlePopoverLinkClick,
   };
 };
 
+function isStudioRoute(path: string) {
+  return path.includes('/studio');
+}
 /** Determine if the current pathname is dependent on the current env */
 function checkIfEnvBasedRoute() {
   return [ROUTES.API_KEYS, ROUTES.WEBHOOK].some((route) => matchPath(route, window.location.pathname));

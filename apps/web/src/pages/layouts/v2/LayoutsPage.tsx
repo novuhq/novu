@@ -2,19 +2,17 @@ import { Center, Container, Loader } from '@mantine/core';
 import { Outlet } from 'react-router-dom';
 
 import { colors } from '@novu/design-system';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { useAuth } from '../../../hooks/useAuth';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { useFeatureFlag, useEnvController } from '../../../hooks';
+import { useEnvController } from '../../../hooks';
 
 const LAYOUT = 'Layouts';
 
 export function LayoutsPage() {
   const { currentOrganization, currentUser } = useAuth();
   const { environment } = useEnvController();
-  const isInformationArchitectureEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INFORMATION_ARCHITECTURE_ENABLED);
 
   const segment = useSegment();
 
@@ -26,10 +24,6 @@ export function LayoutsPage() {
       ...data,
     });
   };
-
-  if (!isInformationArchitectureEnabled) {
-    return null;
-  }
 
   if (!currentOrganization) {
     return (

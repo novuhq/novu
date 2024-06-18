@@ -67,7 +67,7 @@ function PopoverWrapper() {
       onActionClick={handlerOnActionClick}
     >
       {({ unseenCount }) => {
-        return <NotificationCenterBell colorScheme={colorScheme} unseenCount={unseenCount} />;
+        return <NotificationCenterBell unseenCount={unseenCount} />;
       }}
     </PopoverNotificationCenter>
   );
