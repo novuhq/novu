@@ -9,7 +9,4 @@ export class MergeOrCreateDigestCommand extends BaseCommand {
 
   @IsOptional()
   filtered?: boolean;
-
-  @IsOptional()
-  bridgeData?: IBridgeDigestResponse;
 }

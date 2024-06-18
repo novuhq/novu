@@ -88,6 +88,10 @@ export const validateDigest = (job: JobEntity): void => {
   }
 
   if (job.digest.type === DigestTypeEnum.TIMED) {
+    if (job.digest.timed?.cronExpression) {
+      return;
+    }
+
     validateAmountAndUnit(job.digest);
 
     switch (job.digest.unit) {

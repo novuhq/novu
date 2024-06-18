@@ -1,7 +1,7 @@
 import { PlatformException } from './exceptions';
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, DigestTypeEnum } from '@novu/shared';
 
 export const requireInject = (inject: RequireInject, moduleRef?: ModuleRef) => {
   if (inject === RequireInjectEnum.RESONATE) {
@@ -48,15 +48,33 @@ enum RequireInjectEnum {
 export interface IBridgeDigestResponse {
   amount: number;
   unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
-  type: 'regular';
-  backoff: boolean;
   digestKey: string;
+  cron?: string;
+  lookBackWindow?: {
+    amount: number;
+    unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
+  };
+}
+
+export function getDigestType(
+  bridgeResponse: IBridgeDigestResponse
+): DigestTypeEnum {
+  if (bridgeResponse.cron) {
+    return DigestTypeEnum.TIMED;
+  } else if (
+    bridgeResponse.lookBackWindow?.amount &&
+    bridgeResponse.lookBackWindow?.unit
+  ) {
+    return DigestTypeEnum.BACKOFF;
+  }
+
+  return DigestTypeEnum.REGULAR;
 }
 
 export interface IBridgeDelayResponse {
+  type: 'regular';
   amount: number;
   unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
-  type: 'regular';
 }
 
 export interface IBridgeInAppResponse {

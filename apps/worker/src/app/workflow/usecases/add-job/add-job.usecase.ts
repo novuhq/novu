@@ -1,10 +1,15 @@
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { parseExpression as parseCronExpression } from 'cron-parser';
+import { differenceInMilliseconds } from 'date-fns';
+
 import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
 import {
+  castUnitToDigestUnitEnum,
   DigestCreationResultEnum,
   DigestTypeEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
+  IWorkflowStepMetadata,
   StepTypeEnum,
 } from '@novu/shared';
 
@@ -32,6 +37,7 @@ import {
   ExecuteOutput,
   NormalizeVariablesCommand,
   NormalizeVariables,
+  getDigestType,
 } from '@novu/application-generic';
 
 export enum BackoffStrategiesEnum {
@@ -170,7 +176,7 @@ export class AddJob {
     filterVariables: IFilterVariables,
     delayAmount: number | undefined
   ) {
-    command.bridgeResponse = await this.fetchResonateData(command, filterVariables);
+    await this.fetchResonateData(command, filterVariables);
     delayAmount = await this.addDelayJob.execute(command);
 
     Logger.debug(`Delay step Amount is: ${delayAmount}`, LOG_CONTEXT);
@@ -181,11 +187,30 @@ export class AddJob {
   private async fetchResonateData(command: AddJobCommand, filterVariables: IFilterVariables) {
     const response = await this.resonateUsecase.execute<
       AddJobCommand & { variables: IFilterVariables },
-      ExecuteOutput<IBridgeDigestResponse>
+      ExecuteOutput<IBridgeDigestResponse> | null
     >({
       ...command,
       variables: filterVariables,
     });
+
+    if (!response) {
+      return null;
+    }
+
+    const digestType = getDigestType(response.outputs);
+
+    const jobDigest = {
+      type: digestType,
+      amount: response?.outputs?.amount,
+      digestKey: response?.outputs?.digestKey,
+      unit: response.outputs.unit ? castUnitToDigestUnitEnum(response?.outputs?.unit) : undefined,
+      timed: { cronExpression: response?.outputs?.cron },
+      backoff: digestType === DigestTypeEnum.BACKOFF,
+      backoffAmount: response.outputs.lookBackWindow?.amount,
+      backoffUnit: response.outputs.lookBackWindow?.unit
+        ? castUnitToDigestUnitEnum(response.outputs.lookBackWindow.unit)
+        : undefined,
+    };
 
     await this.jobRepository.updateOne(
       {
@@ -194,13 +219,20 @@ export class AddJob {
       },
       {
         $set: {
-          'digest.amount': response?.outputs?.amount,
-          'digest.unit': response?.outputs?.unit,
-          'digest.type': response?.outputs?.type,
-          // TODO: Add other types for scheduled etc..
+          'digest.type': jobDigest.type,
+          'digest.digestKey': jobDigest.digestKey,
+          'digest.amount': jobDigest.amount,
+          'digest.unit': jobDigest.unit,
+          'digest.timed.cronExpression': jobDigest.timed.cronExpression,
+          'digest.backoff': jobDigest.backoff,
+          'digest.backoffAmount': jobDigest.backoffAmount,
+          'digest.backoffUnit': jobDigest.backoffUnit,
         },
       }
     );
+
+    // Update the job digest directly to avoid an extra database call
+    command.job.digest = { ...command.job.digest, ...jobDigest } as IWorkflowStepMetadata;
 
     return response;
   }
@@ -214,14 +246,17 @@ export class AddJob {
   ) {
     const resonateResponse = await this.fetchResonateData(command, filterVariables);
 
+    const bridgeAmount = this.mapBridgeTimedDigestAmount(resonateResponse);
+
     validateDigest(job);
 
-    digestAmount = this.computeJobWaitDurationService.calculateDelay({
-      stepMetadata: job.digest,
-      payload: job.payload,
-      overrides: job.overrides,
-      bridgeResponse: this.fallbackToRegularDigest(resonateResponse?.outputs),
-    });
+    digestAmount =
+      bridgeAmount ??
+      this.computeJobWaitDurationService.calculateDelay({
+        stepMetadata: job.digest,
+        payload: job.payload,
+        overrides: job.overrides,
+      });
 
     Logger.debug(`Digest step amount is: ${digestAmount}`, LOG_CONTEXT);
 
@@ -229,7 +264,6 @@ export class AddJob {
       MergeOrCreateDigestCommand.create({
         job,
         filtered,
-        bridgeData: resonateResponse?.outputs,
       })
     );
 
@@ -242,6 +276,24 @@ export class AddJob {
     }
 
     return { digestAmount, digestCreationResult };
+  }
+
+  private mapBridgeTimedDigestAmount(resonateResponse: ExecuteOutput<IBridgeDigestResponse> | null) {
+    let bridgeAmount: number | undefined = undefined;
+
+    if (!resonateResponse?.outputs?.cron) {
+      return undefined;
+    }
+
+    if (getDigestType(resonateResponse.outputs) !== DigestTypeEnum.TIMED) {
+      return undefined;
+    }
+
+    const bridgeAmountExpression = parseCronExpression(resonateResponse?.outputs?.cron);
+    const bridgeAmountDate = bridgeAmountExpression.next();
+    bridgeAmount = differenceInMilliseconds(bridgeAmountDate.toDate(), new Date());
+
+    return bridgeAmount;
   }
 
   private handleDigestMerged() {

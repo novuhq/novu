@@ -1,3 +1,5 @@
+import { CronExpressionEnum } from '../../types';
+
 export enum DigestUnitEnum {
   SECONDS = 'seconds',
   MINUTES = 'minutes',
@@ -5,6 +7,25 @@ export enum DigestUnitEnum {
   DAYS = 'days',
   WEEKS = 'weeks',
   MONTHS = 'months',
+}
+
+export function castUnitToDigestUnitEnum(unit: string): DigestUnitEnum | undefined {
+  switch (unit) {
+    case 'seconds':
+      return DigestUnitEnum.SECONDS;
+    case 'minutes':
+      return DigestUnitEnum.MINUTES;
+    case 'hours':
+      return DigestUnitEnum.HOURS;
+    case 'days':
+      return DigestUnitEnum.DAYS;
+    case 'weeks':
+      return DigestUnitEnum.WEEKS;
+    case 'months':
+      return DigestUnitEnum.MONTHS;
+    default:
+      return undefined;
+  }
 }
 
 export enum DaysEnum {
@@ -79,6 +100,7 @@ export interface ITimedConfig {
   ordinal?: OrdinalEnum;
   ordinalValue?: OrdinalValueEnum;
   monthlyType?: MonthlyTypeEnum;
+  cronExpression?: CronExpressionEnum | string;
 }
 
 export interface IDigestTimedMetadata extends IDigestBaseMetadata {

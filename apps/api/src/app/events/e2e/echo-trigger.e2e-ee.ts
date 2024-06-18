@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { expect } from 'chai';
+
 import { UserSession, SubscribersService } from '@novu/testing';
 import {
   MessageRepository,
@@ -9,6 +10,7 @@ import {
   ExecutionDetailsRepository,
 } from '@novu/dal';
 import { ExecutionDetailsStatusEnum, JobStatusEnum, MarkMessagesAsEnum, StepTypeEnum } from '@novu/shared';
+
 import { echoServer } from '../../../../e2e/echo.server';
 
 const eventTriggerPath = '/v1/events/trigger';
@@ -222,7 +224,7 @@ describe('Echo Trigger ', async () => {
   });
 
   it('should have execution detail errors for invalid trigger payload', async () => {
-    const workflowId = 'missing-payload-var';
+    const workflowId = 'missing-payload-name';
     await echoServer.echo.workflow(
       workflowId,
       async ({ step, payload }) => {
@@ -361,8 +363,8 @@ describe('Echo Trigger ', async () => {
     expect(messagesAfterEmail[0].subject).to.include('Read');
   });
 
-  it('should trigger the echo workflow with digest', async () => {
-    const workflowId = 'digest-workflow';
+  it('should trigger regular digest', async () => {
+    const workflowId = 'workflow-regular-digest';
     await echoServer.echo.workflow(
       workflowId,
       async ({ step }) => {
@@ -436,7 +438,169 @@ describe('Echo Trigger ', async () => {
     expect(messagesAfter[0].content).to.include('2 people liked your post');
   });
 
-  it('should trigger the echo workflow with delay', async () => {
+  it('should trigger regular digest with look back option', async () => {
+    const workflowId = 'workflow-look-back-digest';
+    await echoServer.echo.workflow(
+      workflowId,
+      async ({ step }) => {
+        const digestResponse = await step.digest(
+          'digest',
+          async (inputs) => {
+            return {
+              amount: inputs.amount,
+              unit: inputs.unit,
+              lookBackWindow: {
+                amount: inputs.lookBackWindowAmount,
+                unit: inputs.lookBackWindowUnit,
+              },
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                amount: {
+                  type: 'number',
+                  default: 2,
+                },
+                unit: {
+                  type: 'string',
+                  enum: ['seconds', 'minutes', 'hours', 'days', 'weeks', 'months'],
+                  default: 'seconds',
+                },
+                lookBackWindowAmount: {
+                  type: 'number',
+                  default: 1,
+                },
+                lookBackWindowUnit: {
+                  type: 'string',
+                  default: 'seconds',
+                },
+              },
+            },
+          }
+        );
+
+        await step.sms('send-sms', async () => {
+          const events = digestResponse.events.length;
+
+          return {
+            body: `${events} people liked your post`,
+          };
+        });
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            execution_metadata: { type: 'string' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await discoverAndSyncEcho(session);
+
+    const workflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(workflow).to.be.ok;
+
+    if (!workflow) {
+      throw new Error('Workflow not found');
+    }
+
+    await triggerEvent(session, workflowId, subscriber, { execution_metadata: 'msg-num-1' });
+    await session.awaitRunningJobs(workflow?._id, false, 0);
+
+    await triggerEvent(session, workflowId, subscriber, { execution_metadata: 'msg-num-2' });
+    await triggerEvent(session, workflowId, subscriber, { execution_metadata: 'msg-num-3' });
+    await session.awaitRunningJobs(workflow?._id, false, 0);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.SMS,
+    });
+
+    expect(messages.length).to.be.eq(2);
+    const lookBackMessage = messages[1];
+    expect(lookBackMessage.content).to.include('1 people liked your post');
+    const digestedMessage = messages[0];
+    expect(digestedMessage.content).to.include('2 people liked your post');
+  });
+
+  it('should trigger timed digest (test basic digest flow type)', async () => {
+    const workflowId = 'workflow-timed-digest';
+    const CRON_EVERY_5_SECONDS = '*/2 * * * * *';
+    await echoServer.echo.workflow(
+      workflowId,
+      async ({ step }) => {
+        const digestResponse = await step.digest(
+          'digest',
+          async (inputs) => {
+            return {
+              cron: inputs.cron,
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                cron: {
+                  type: 'string',
+                  default: CRON_EVERY_5_SECONDS,
+                },
+              },
+            },
+          }
+        );
+
+        await step.sms('send-sms', async () => {
+          const events = digestResponse.events.length;
+
+          return {
+            body: `${events} people liked your post`,
+          };
+        });
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await discoverAndSyncEcho(session);
+
+    const workflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(workflow).to.be.ok;
+
+    if (!workflow) {
+      throw new Error('Workflow not found');
+    }
+
+    await triggerEvent(session, workflowId, subscriber, { name: 'Bela-1' });
+    await triggerEvent(session, workflowId, subscriber, { name: 'Bela-2' });
+    await session.awaitRunningJobs(workflow?._id, false, 0);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.SMS,
+    });
+
+    expect(messages.length).to.be.eq(1);
+    const digestedMessage = messages[0];
+    expect(digestedMessage.content).to.include('2 people liked your post');
+  });
+
+  it('should trigger delay', async () => {
     const workflowId = 'delay-workflow';
     await echoServer.echo.workflow(
       workflowId,
@@ -520,7 +684,7 @@ describe('Echo Trigger ', async () => {
     expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
   });
 
-  it('should trigger the echo workflow with input variables', async () => {
+  it('should trigger with input variables', async () => {
     const workflowId = 'input-variables-workflow';
     await echoServer.echo.workflow(
       workflowId,

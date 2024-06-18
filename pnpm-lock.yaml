@@ -524,7 +524,7 @@ importers:
         version: 10.1.16(@swc/core@1.3.107)
       '@nestjs/schematics':
         specifier: ^10.0.2
-        version: 10.0.2(chokidar@3.5.3)(typescript@4.9.5)
+        version: 10.0.2(chokidar@3.6.0)(typescript@4.9.5)
       '@nestjs/testing':
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2))
@@ -1477,6 +1477,9 @@ importers:
       class-validator:
         specifier: ^0.14.0
         version: 0.14.0
+      cron-parser:
+        specifier: ^4.9.0
+        version: 4.9.0
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -1553,7 +1556,7 @@ importers:
         version: 10.1.16(@swc/core@1.3.107)
       '@nestjs/schematics':
         specifier: ^10.0.2
-        version: 10.0.2(chokidar@3.6.0)(typescript@4.9.5)
+        version: 10.0.2(chokidar@3.5.3)(typescript@4.9.5)
       '@nestjs/testing':
         specifier: ^10.2.2
         version: 10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2)(@nestjs/websockets@10.2.2)(encoding@0.1.13)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/platform-express@10.2.2(@nestjs/common@10.2.2(class-transformer@0.5.1)(class-validator@0.14.0)(reflect-metadata@0.1.13)(rxjs@7.8.1))(@nestjs/core@10.2.2))
@@ -3260,7 +3263,7 @@ importers:
         version: link:../../libs/shared
       '@novu/studio':
         specifier: ^0.0.1-alpha.87
-        version: 0.0.1-alpha.90(fe7j6aun3zofsv6bp43tnzybva)
+        version: 0.0.1-alpha.90(@ant-design/icons@4.8.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@babel/core@7.24.4)(@chakra-ui/icons@2.1.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/react@1.8.9(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(@emotion/is-prop-valid@1.2.0)(@opentelemetry/api@1.7.0)(@types/react@17.0.62)(antd@4.24.8(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(babel-plugin-macros@3.1.0)(chakra-react-select@4.7.6(@chakra-ui/form-control@2.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/icon@3.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/layout@2.3.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/media-query@3.3.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/menu@2.2.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/spinner@2.1.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(dayjs@1.11.10)(encoding@0.1.13)(immer@9.0.21)(sass@1.64.1)(webpack@5.88.2(@swc/core@1.3.107))
       '@segment/analytics-node':
         specifier: ^1.1.4
         version: 1.1.4(encoding@0.1.13)
@@ -3953,7 +3956,7 @@ importers:
     devDependencies:
       '@angular-devkit/build-angular':
         specifier: ^16.2.5
-        version: 16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107)(@types/node@20.14.2)(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(jest-environment-jsdom@29.5.0)(jest@29.7.0(@types/node@20.14.2)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.23.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(typescript@4.9.5)
+        version: 16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107)(@types/node@20.14.2)(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)))(jest-environment-jsdom@29.5.0)(jest@29.7.0(@types/node@20.14.2)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.23.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(typescript@4.9.5)
       '@angular/cli':
         specifier: ^16.2.5
         version: 16.2.8(chokidar@3.5.3)
@@ -18127,6 +18130,10 @@ packages:
     resolution: {integrity: sha512-jbokKWGcyU4gl6jAfX97E1gDpY12DJ1cLJZmoDzaAln/shZ+S3KBFBuA2Q6WeUN4gJf/8klnV1EfvhA2lK5IRQ==}
     engines: {node: '>=12.0.0'}
 
+  cron-parser@4.9.0:
+    resolution: {integrity: sha512-p0SaNjrHOnQeR8/VnfGbmg9te2kfyYSQ7Sc/j/6DtPL3JQvKxmjO9TSjNFpujqV3vEYYBvNNvXSxzyksBWAx1Q==}
+    engines: {node: '>=12.0.0'}
+
   cross-env@5.2.1:
     resolution: {integrity: sha512-1yHhtcfAd1r4nwQgknowuUNfIT9E8dOMMspC36g45dN+iD1blloi7xp8X/xAIDnjHWyt1uQ8PHk2fkNaym7soQ==}
     engines: {node: '>=4.0'}
@@ -31503,11 +31510,11 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@angular-devkit/build-angular@16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107)(@types/node@20.14.2)(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(jest-environment-jsdom@29.5.0)(jest@29.7.0(@types/node@20.14.2)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.23.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(typescript@4.9.5)':
+  '@angular-devkit/build-angular@16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(@swc/core@1.3.107)(@types/node@20.14.2)(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)))(jest-environment-jsdom@29.5.0)(jest@29.7.0(@types/node@20.14.2)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(karma@6.4.1)(lightningcss@1.23.0)(ng-packagr@16.2.3(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(tslib@2.5.0)(typescript@4.9.5))(sugarss@4.0.1(postcss@8.4.38))(tailwindcss@3.3.1(postcss@8.4.38)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5)))(typescript@4.9.5)':
     dependencies:
       '@ampproject/remapping': 2.2.1
       '@angular-devkit/architect': 0.1602.8(chokidar@3.5.3)
-      '@angular-devkit/build-webpack': 0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      '@angular-devkit/build-webpack': 0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)))(webpack@5.88.2(@swc/core@1.3.107))
       '@angular-devkit/core': 16.2.8(chokidar@3.5.3)
       '@angular/compiler-cli': 16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5)
       '@babel/core': 7.22.9
@@ -31521,17 +31528,17 @@ snapshots:
       '@babel/runtime': 7.22.6
       '@babel/template': 7.22.5
       '@discoveryjs/json-ext': 0.5.7
-      '@ngtools/webpack': 16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(typescript@4.9.5)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      '@ngtools/webpack': 16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(typescript@4.9.5)(webpack@5.88.2(@swc/core@1.3.107))
       '@vitejs/plugin-basic-ssl': 1.0.1(vite@4.4.7(@types/node@20.14.2)(less@4.1.3)(lightningcss@1.23.0)(sass@1.64.1)(sugarss@4.0.1(postcss@8.4.38))(terser@5.19.2))
       ansi-colors: 4.1.3
       autoprefixer: 10.4.14(postcss@8.4.31)
-      babel-loader: 9.1.3(@babel/core@7.22.9)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      babel-loader: 9.1.3(@babel/core@7.22.9)(webpack@5.88.2(@swc/core@1.3.107))
       babel-plugin-istanbul: 6.1.1
       browserslist: 4.21.10
       chokidar: 3.5.3
-      copy-webpack-plugin: 11.0.0(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      copy-webpack-plugin: 11.0.0(webpack@5.88.2(@swc/core@1.3.107))
       critters: 0.0.20
-      css-loader: 6.8.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      css-loader: 6.8.1(webpack@5.88.2(@swc/core@1.3.107))
       esbuild-wasm: 0.18.17
       fast-glob: 3.3.1
       guess-parser: 0.4.22(typescript@4.9.5)
@@ -31540,11 +31547,11 @@ snapshots:
       jsonc-parser: 3.2.0
       karma-source-map-support: 1.4.0
       less: 4.1.3
-      less-loader: 11.1.0(less@4.1.3)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
-      license-webpack-plugin: 4.0.2(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      less-loader: 11.1.0(less@4.1.3)(webpack@5.88.2(@swc/core@1.3.107))
+      license-webpack-plugin: 4.0.2(webpack@5.88.2(@swc/core@1.3.107))
       loader-utils: 3.2.1
       magic-string: 0.30.1
-      mini-css-extract-plugin: 2.7.6(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      mini-css-extract-plugin: 2.7.6(webpack@5.88.2(@swc/core@1.3.107))
       mrmime: 1.0.1
       open: 8.4.2
       ora: 5.4.1
@@ -31552,13 +31559,13 @@ snapshots:
       picomatch: 2.3.1
       piscina: 4.0.0
       postcss: 8.4.31
-      postcss-loader: 7.3.3(postcss@8.4.31)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      postcss-loader: 7.3.3(postcss@8.4.31)(webpack@5.88.2(@swc/core@1.3.107))
       resolve-url-loader: 5.0.0
       rxjs: 7.8.1
       sass: 1.64.1
-      sass-loader: 13.3.2(sass@1.64.1)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      sass-loader: 13.3.2(sass@1.64.1)(webpack@5.88.2(@swc/core@1.3.107))
       semver: 7.5.4
-      source-map-loader: 4.0.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      source-map-loader: 4.0.1(webpack@5.88.2(@swc/core@1.3.107))
       source-map-support: 0.5.21
       terser: 5.19.2
       text-table: 0.2.0
@@ -31567,10 +31574,10 @@ snapshots:
       typescript: 4.9.5
       vite: 4.4.7(@types/node@20.14.2)(less@4.1.3)(lightningcss@1.23.0)(sass@1.64.1)(sugarss@4.0.1(postcss@8.4.38))(terser@5.19.2)
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
-      webpack-dev-middleware: 6.1.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
-      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      webpack-dev-middleware: 6.1.1(webpack@5.88.2(@swc/core@1.3.107))
+      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107))
       webpack-merge: 5.9.0
-      webpack-subresource-integrity: 5.1.0(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      webpack-subresource-integrity: 5.1.0(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)))(webpack@5.88.2(@swc/core@1.3.107))
     optionalDependencies:
       esbuild: 0.18.17
       jest: 29.7.0(@types/node@20.14.2)(babel-plugin-macros@3.1.0)(ts-node@10.9.1(@swc/core@1.3.107)(@types/node@16.11.7)(typescript@4.9.5))
@@ -31596,12 +31603,12 @@ snapshots:
       - utf-8-validate
       - webpack-cli
 
-  '@angular-devkit/build-webpack@0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))':
+  '@angular-devkit/build-webpack@0.1602.8(chokidar@3.5.3)(webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)))(webpack@5.88.2(@swc/core@1.3.107))':
     dependencies:
       '@angular-devkit/architect': 0.1602.8(chokidar@3.5.3)
       rxjs: 7.8.1
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
-      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      webpack-dev-server: 4.15.1(webpack@5.88.2(@swc/core@1.3.107))
     transitivePeerDependencies:
       - chokidar
 
@@ -41305,7 +41312,7 @@ snapshots:
       tsconfig-paths: 4.2.0
       tsconfig-paths-webpack-plugin: 4.1.0
       typescript: 5.1.6
-      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
+      webpack: 5.88.2(@swc/core@1.3.107)
       webpack-node-externals: 3.0.0
     optionalDependencies:
       '@swc/core': 1.3.107(@swc/helpers@0.5.2)
@@ -41638,7 +41645,7 @@ snapshots:
   '@next/swc-win32-x64-msvc@14.1.0':
     optional: true
 
-  '@ngtools/webpack@16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(typescript@4.9.5)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))':
+  '@ngtools/webpack@16.2.8(@angular/compiler-cli@16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5))(typescript@4.9.5)(webpack@5.88.2(@swc/core@1.3.107))':
     dependencies:
       '@angular/compiler-cli': 16.2.11(@angular/compiler@16.2.11(@angular/core@16.2.11(rxjs@7.8.1)(zone.js@0.13.3)))(typescript@4.9.5)
       typescript: 4.9.5
@@ -41678,8 +41685,8 @@ snapshots:
       vue: 3.2.47
       vue-resize: 2.0.0-alpha.1(vue@3.2.47)
 
-  '@novu/studio@0.0.1-alpha.90(fe7j6aun3zofsv6bp43tnzybva)':
-    dependencies:
+  ? '@novu/studio@0.0.1-alpha.90(@ant-design/icons@4.8.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@babel/core@7.24.4)(@chakra-ui/icons@2.1.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/react@1.8.9(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(@emotion/is-prop-valid@1.2.0)(@opentelemetry/api@1.7.0)(@types/react@17.0.62)(antd@4.24.8(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(babel-plugin-macros@3.1.0)(chakra-react-select@4.7.6(@chakra-ui/form-control@2.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/icon@3.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/layout@2.3.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/media-query@3.3.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/menu@2.2.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/spinner@2.1.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(dayjs@1.11.10)(encoding@0.1.13)(immer@9.0.21)(sass@1.64.1)(webpack@5.88.2(@swc/core@1.3.107))'
+  : dependencies:
       '@mantine/code-highlight': 7.6.2(@mantine/core@7.6.2(@mantine/hooks@7.6.2(react@18.2.0))(@types/react@17.0.62)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@mantine/hooks@7.6.2(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@mantine/core': 7.6.2(@mantine/hooks@7.6.2(react@18.2.0))(@types/react@17.0.62)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@mantine/hooks': 7.6.2(react@18.2.0)
@@ -41689,7 +41696,7 @@ snapshots:
       '@microlink/react-json-view': 1.23.0(@types/react@17.0.62)(encoding@0.1.13)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@next/bundle-analyzer': 14.2.3
       '@rjsf/antd': 5.18.3(@ant-design/icons@4.8.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@rjsf/core@5.17.1(@rjsf/utils@5.17.1(react@18.2.0))(react@18.2.0))(@rjsf/utils@5.17.1(react@18.2.0))(antd@4.24.8(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(dayjs@1.11.10)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
-      '@rjsf/chakra-ui': 5.17.1(l2tcgzxxdbhlpil4iohtcrd2ju)
+      '@rjsf/chakra-ui': 5.17.1(@chakra-ui/icons@2.1.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/react@1.8.9(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(@rjsf/core@5.17.1(@rjsf/utils@5.17.1(react@18.2.0))(react@18.2.0))(@rjsf/utils@5.17.1(react@18.2.0))(@types/react@17.0.62)(chakra-react-select@4.7.6(@chakra-ui/form-control@2.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/icon@3.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/layout@2.3.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/media-query@3.3.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/menu@2.2.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/spinner@2.1.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@rjsf/core': 5.17.1(@rjsf/utils@5.17.1(react@18.2.0))(react@18.2.0)
       '@rjsf/utils': 5.17.1(react@18.2.0)
       '@rjsf/validator-ajv8': 5.17.1(@rjsf/utils@5.17.1(react@18.2.0))
@@ -45048,14 +45055,14 @@ snapshots:
     transitivePeerDependencies:
       - react-dom
 
-  '@rjsf/chakra-ui@5.17.1(l2tcgzxxdbhlpil4iohtcrd2ju)':
-    dependencies:
+  ? '@rjsf/chakra-ui@5.17.1(@chakra-ui/icons@2.1.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/react@1.8.9(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(@rjsf/core@5.17.1(@rjsf/utils@5.17.1(react@18.2.0))(react@18.2.0))(@rjsf/utils@5.17.1(react@18.2.0))(@types/react@17.0.62)(chakra-react-select@4.7.6(@chakra-ui/form-control@2.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/icon@3.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/layout@2.3.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/media-query@3.3.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/menu@2.2.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/spinner@2.1.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)'
+  : dependencies:
       '@chakra-ui/icons': 2.1.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@chakra-ui/react': 1.8.9(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       '@chakra-ui/system': 2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0)
       '@rjsf/core': 5.17.1(@rjsf/utils@5.17.1(react@18.2.0))(react@18.2.0)
       '@rjsf/utils': 5.17.1(react@18.2.0)
-      chakra-react-select: 4.7.6(srrelquo2op6lcdtdecobgquaq)
+      chakra-react-select: 4.7.6(@chakra-ui/form-control@2.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/icon@3.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/layout@2.3.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/media-query@3.3.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/menu@2.2.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/spinner@2.1.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       framer-motion: 11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
       react: 18.2.0
       react-select: 5.8.0(@types/react@17.0.62)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -45597,7 +45604,7 @@ snapshots:
       rollup: 2.78.0
       stacktrace-parser: 0.1.10
     optionalDependencies:
-      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
+      webpack: 5.88.2(@swc/core@1.3.107)
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -53166,7 +53173,7 @@ snapshots:
       schema-utils: 4.0.0
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))
 
-  babel-loader@9.1.3(@babel/core@7.22.9)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  babel-loader@9.1.3(@babel/core@7.22.9)(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       '@babel/core': 7.22.9
       find-cache-dir: 4.0.0
@@ -54032,8 +54039,8 @@ snapshots:
       pathval: 1.1.1
       type-detect: 4.0.8
 
-  chakra-react-select@4.7.6(srrelquo2op6lcdtdecobgquaq):
-    dependencies:
+  ? chakra-react-select@4.7.6(@chakra-ui/form-control@2.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/icon@3.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/layout@2.3.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/media-query@3.3.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/menu@2.2.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(framer-motion@11.1.9(@emotion/is-prop-valid@1.2.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/spinner@2.1.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0))(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+  : dependencies:
       '@chakra-ui/form-control': 2.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@chakra-ui/icon': 3.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0)
       '@chakra-ui/layout': 2.3.1(@chakra-ui/system@2.6.2(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@emotion/styled@11.10.6(@emotion/react@11.11.4(@types/react@17.0.62)(react@18.2.0))(@types/react@17.0.62)(react@18.2.0))(react@18.2.0))(react@18.2.0)
@@ -54782,7 +54789,7 @@ snapshots:
     dependencies:
       toggle-selection: 1.0.6
 
-  copy-webpack-plugin@11.0.0(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  copy-webpack-plugin@11.0.0(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       fast-glob: 3.3.1
       glob-parent: 6.0.2
@@ -55054,6 +55061,10 @@ snapshots:
       pretty-bytes: 5.6.0
 
   cron-parser@4.8.1:
+    dependencies:
+      luxon: 3.3.0
+
+  cron-parser@4.9.0:
     dependencies:
       luxon: 3.3.0
 
@@ -55382,7 +55393,7 @@ snapshots:
       semver: 7.6.2
       webpack: 5.78.0(@swc/core@1.3.107)
 
-  css-loader@6.8.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  css-loader@6.8.1(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       icss-utils: 5.1.0(postcss@8.4.38)
       postcss: 8.4.38
@@ -56838,7 +56849,7 @@ snapshots:
       lodash: 4.17.21
       resolve: 2.0.0-next.4
       semver: 5.7.2
-      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
+      webpack: 5.88.2(@swc/core@1.3.107)
     transitivePeerDependencies:
       - supports-color
 
@@ -58017,7 +58028,7 @@ snapshots:
     dependencies:
       loader-utils: 2.0.4
       schema-utils: 3.3.0
-      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
+      webpack: 5.88.2(@swc/core@1.3.107)
     optional: true
 
   file-selector@0.6.0:
@@ -58348,7 +58359,7 @@ snapshots:
       semver: 7.5.4
       tapable: 2.2.1
       typescript: 5.1.6
-      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
+      webpack: 5.88.2(@swc/core@1.3.107)
 
   form-data@2.3.3:
     dependencies:
@@ -59568,7 +59579,7 @@ snapshots:
       tapable: 2.2.1
       webpack: 5.78.0(@swc/core@1.3.107)
 
-  html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       '@types/html-minifier-terser': 6.1.0
       html-minifier-terser: 6.1.0
@@ -63172,7 +63183,7 @@ snapshots:
       - encoding
       - supports-color
 
-  less-loader@11.1.0(less@4.1.3)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  less-loader@11.1.0(less@4.1.3)(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       klona: 2.0.6
       less: 4.1.3
@@ -63246,7 +63257,7 @@ snapshots:
 
   libphonenumber-js@1.10.26: {}
 
-  license-webpack-plugin@4.0.2(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  license-webpack-plugin@4.0.2(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       webpack-sources: 3.2.3
     optionalDependencies:
@@ -64883,7 +64894,7 @@ snapshots:
       schema-utils: 4.0.0
       webpack: 5.78.0(@swc/core@1.3.107)
 
-  mini-css-extract-plugin@2.7.6(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  mini-css-extract-plugin@2.7.6(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       schema-utils: 4.0.0
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
@@ -67395,7 +67406,7 @@ snapshots:
       semver: 7.6.2
       webpack: 5.78.0(@swc/core@1.3.107)
 
-  postcss-loader@7.3.3(postcss@8.4.31)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  postcss-loader@7.3.3(postcss@8.4.31)(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       cosmiconfig: 8.2.0
       jiti: 1.21.0
@@ -70594,7 +70605,7 @@ snapshots:
     optionalDependencies:
       sass: 1.64.1
 
-  sass-loader@13.3.2(sass@1.64.1)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  sass-loader@13.3.2(sass@1.64.1)(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       neo-async: 2.6.2
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
@@ -71137,7 +71148,7 @@ snapshots:
       source-map-js: 1.0.2
       webpack: 5.78.0(@swc/core@1.3.107)
 
-  source-map-loader@4.0.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  source-map-loader@4.0.1(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       abab: 2.0.6
       iconv-lite: 0.6.3
@@ -72202,7 +72213,7 @@ snapshots:
     optionalDependencies:
       '@swc/core': 1.3.107(@swc/helpers@0.5.2)
 
-  terser-webpack-plugin@5.3.9(@swc/core@1.3.107)(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  terser-webpack-plugin@5.3.9(@swc/core@1.3.107)(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.18
       jest-worker: 27.5.1
@@ -72244,6 +72255,17 @@ snapshots:
       serialize-javascript: 6.0.1
       terser: 5.16.9
       webpack: 5.82.1(@swc/core@1.3.107)(webpack-cli@5.1.4)
+    optionalDependencies:
+      '@swc/core': 1.3.107(@swc/helpers@0.5.2)
+
+  terser-webpack-plugin@5.3.9(@swc/core@1.3.107)(webpack@5.88.2(@swc/core@1.3.107)):
+    dependencies:
+      '@jridgewell/trace-mapping': 0.3.18
+      jest-worker: 27.5.1
+      schema-utils: 3.1.2
+      serialize-javascript: 6.0.1
+      terser: 5.16.9
+      webpack: 5.88.2(@swc/core@1.3.107)
     optionalDependencies:
       '@swc/core': 1.3.107(@swc/helpers@0.5.2)
 
@@ -72770,7 +72792,7 @@ snapshots:
       micromatch: 4.0.5
       semver: 7.5.2
       typescript: 4.9.5
-      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
+      webpack: 5.88.2(@swc/core@1.3.107)
 
   ts-morph@12.0.0:
     dependencies:
@@ -73667,7 +73689,7 @@ snapshots:
       loader-utils: 2.0.4
       mime-types: 2.1.35
       schema-utils: 3.3.0
-      webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
+      webpack: 5.88.2(@swc/core@1.3.107)
     optionalDependencies:
       file-loader: 6.2.0(webpack@5.88.2(@swc/core@1.3.107))
 
@@ -74471,7 +74493,7 @@ snapshots:
       schema-utils: 4.0.0
       webpack: 5.78.0(@swc/core@1.3.107)
 
-  webpack-dev-middleware@5.3.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  webpack-dev-middleware@5.3.3(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       colorette: 2.0.19
       memfs: 3.5.0
@@ -74510,7 +74532,7 @@ snapshots:
     optionalDependencies:
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))
 
-  webpack-dev-middleware@6.1.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  webpack-dev-middleware@6.1.1(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       colorette: 2.0.19
       memfs: 3.5.0
@@ -74596,7 +74618,7 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  webpack-dev-server@4.15.1(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       '@types/bonjour': 3.5.10
       '@types/connect-history-api-fallback': 1.3.5
@@ -74626,7 +74648,7 @@ snapshots:
       serve-index: 1.9.1
       sockjs: 0.3.24
       spdy: 4.0.2
-      webpack-dev-middleware: 5.3.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      webpack-dev-middleware: 5.3.3(webpack@5.88.2(@swc/core@1.3.107))
       ws: 8.13.0
     optionalDependencies:
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
@@ -74678,12 +74700,12 @@ snapshots:
 
   webpack-sources@3.2.3: {}
 
-  webpack-subresource-integrity@5.1.0(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)))(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)):
+  webpack-subresource-integrity@5.1.0(html-webpack-plugin@5.5.3(webpack@5.88.2(@swc/core@1.3.107)))(webpack@5.88.2(@swc/core@1.3.107)):
     dependencies:
       typed-assert: 1.0.9
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
     optionalDependencies:
-      html-webpack-plugin: 5.5.3(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      html-webpack-plugin: 5.5.3(webpack@5.88.2(@swc/core@1.3.107))
 
   webpack-virtual-modules@0.5.0: {}
 
@@ -74879,6 +74901,37 @@ snapshots:
       - esbuild
       - uglify-js
 
+  webpack@5.88.2(@swc/core@1.3.107):
+    dependencies:
+      '@types/eslint-scope': 3.7.4
+      '@types/estree': 1.0.5
+      '@webassemblyjs/ast': 1.11.5
+      '@webassemblyjs/wasm-edit': 1.11.5
+      '@webassemblyjs/wasm-parser': 1.11.5
+      acorn: 8.11.3
+      acorn-import-assertions: 1.9.0(acorn@8.11.3)
+      browserslist: 4.23.0
+      chrome-trace-event: 1.0.3
+      enhanced-resolve: 5.15.0
+      es-module-lexer: 1.2.1
+      eslint-scope: 5.1.1
+      events: 3.3.0
+      glob-to-regexp: 0.4.1
+      graceful-fs: 4.2.11
+      json-parse-even-better-errors: 2.3.1
+      loader-runner: 4.3.0
+      mime-types: 2.1.35
+      neo-async: 2.6.2
+      schema-utils: 3.3.0
+      tapable: 2.2.1
+      terser-webpack-plugin: 5.3.9(@swc/core@1.3.107)(webpack@5.88.2(@swc/core@1.3.107))
+      watchpack: 2.4.0
+      webpack-sources: 3.2.3
+    transitivePeerDependencies:
+      - '@swc/core'
+      - esbuild
+      - uglify-js
+
   webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17):
     dependencies:
       '@types/eslint-scope': 3.7.4
@@ -74902,7 +74955,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 3.3.0
       tapable: 2.2.1
-      terser-webpack-plugin: 5.3.9(@swc/core@1.3.107)(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107)(esbuild@0.18.17))
+      terser-webpack-plugin: 5.3.9(@swc/core@1.3.107)(esbuild@0.18.17)(webpack@5.88.2(@swc/core@1.3.107))
       watchpack: 2.4.0
       webpack-sources: 3.2.3
     transitivePeerDependencies:
