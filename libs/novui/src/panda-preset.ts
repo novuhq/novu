@@ -3,8 +3,6 @@ import { BORDER_TOKENS, BORDER_WIDTH_TOKENS } from './tokens/borders.tokens';
 import { COLOR_PALETTE_TOKENS, LEGACY_COLOR_TOKENS } from './tokens/colors.tokens';
 import { GRADIENT_TOKENS, LEGACY_GRADIENT_TOKENS } from './tokens/gradients.tokens';
 import { LEGACY_RADIUS_TOKENS, RADIUS_TOKENS } from './tokens/radius.tokens';
-import { TEXT_RECIPE } from './recipes/text.recipe';
-import { TITLE_RECIPE } from './recipes/title.recipe';
 import { COLOR_SEMANTIC_TOKENS, LEGACY_COLOR_SEMANTIC_TOKENS } from './tokens/semanticColors.tokens';
 import { LEGACY_SHADOW_TOKENS } from './tokens/shadow.tokens';
 import { SIZES_TOKENS } from './tokens/sizes.tokens';
@@ -24,8 +22,7 @@ import { SEMANTIC_SPACING_TOKENS } from './tokens/semanticSpacing.tokens';
 import { SEMANTIC_RADIUS_TOKENS } from './tokens/semanticRadius.tokens';
 import { LEGACY_OPACITY_TOKENS, OPACITY_TOKENS } from './tokens/opacity.tokens';
 import { SEMANTIC_OPACITY_TOKENS } from './tokens/semanticOpacity.tokens';
-import { BUTTON_RECIPE } from './recipes/button.recipe';
-import { TABS_RECIPE } from './recipes/tabs.recipe';
+import { INPUT_RECIPE, TEXT_RECIPE, TITLE_RECIPE, BUTTON_RECIPE, TABS_RECIPE } from './recipes';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -87,7 +84,14 @@ export const novuPandaPreset = definePreset({
         title: TITLE_RECIPE,
         button: BUTTON_RECIPE,
         tabs: TABS_RECIPE,
+        input: INPUT_RECIPE,
       },
+    },
+  },
+  conditions: {
+    extend: {
+      // Mantine uses *-error.
+      error: '&:is(:error, [data-error=true], [aria-error=true])',
     },
   },
   staticCss: {
