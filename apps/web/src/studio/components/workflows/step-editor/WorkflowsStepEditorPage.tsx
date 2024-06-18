@@ -8,6 +8,7 @@ import { WorkflowStepEditorInputsPanel } from './WorkflowStepEditorInputsPanel';
 import { useQuery } from '@tanstack/react-query';
 import { bridgeApi } from '../../../../api/bridge/bridge.api';
 import { useState } from 'react';
+import { parseUrl } from '../../../../utils/routeUtils';
 
 export const WorkflowsStepEditorPage = () => {
   const [inputs, setStepInputs] = useState({});
@@ -30,8 +31,12 @@ export const WorkflowsStepEditorPage = () => {
 
   const navigate = useNavigate();
   const handleTestClick = () => {
-    // TODO: this is just a temporary step for connecting the prototype
-    navigate(ROUTES.STUDIO_FLOWS_TEST_STEP);
+    navigate(
+      parseUrl(ROUTES.STUDIO_FLOWS_TEST_STEP, {
+        templateId: workflow.workflowId,
+        stepId: step.stepId,
+      })
+    );
   };
 
   function onInputsChange(type: string, form: any) {
