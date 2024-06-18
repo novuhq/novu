@@ -32,9 +32,5 @@ function getEEMemberRepository() {
   const enterpriseMemberRepository = enterpriseModule?.EEMemberRepository;
   const clerkClientMock = enterpriseModule?.ClerkClientMock;
 
-  return new enterpriseMemberRepository(
-    new CommunityOrganizationRepository(),
-    new CommunityUserRepository(),
-    new clerkClientMock()
-  );
+  return new enterpriseMemberRepository(new CommunityOrganizationRepository(), new clerkClientMock());
 }

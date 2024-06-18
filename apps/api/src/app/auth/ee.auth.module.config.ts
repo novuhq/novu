@@ -25,7 +25,6 @@ const eeAuthServiceProvider = {
   provide: 'AUTH_SERVICE',
   useFactory: (
     userRepository: UserRepository,
-    memberRepository: MemberRepository,
     environmentRepository: EnvironmentRepository,
     subscriberRepository: SubscriberRepository,
     jwtService: JwtService
@@ -35,15 +34,9 @@ const eeAuthServiceProvider = {
       throw new PlatformException('EEAuthService is not loaded');
     }
 
-    return new eeAuthPackage.EEAuthService(
-      userRepository,
-      memberRepository,
-      environmentRepository,
-      subscriberRepository,
-      jwtService
-    );
+    return new eeAuthPackage.EEAuthService(userRepository, environmentRepository, subscriberRepository, jwtService);
   },
-  inject: [UserRepository, MemberRepository, EnvironmentRepository, SubscriberRepository, JwtService],
+  inject: [UserRepository, EnvironmentRepository, SubscriberRepository, JwtService],
 };
 
 const eeUserAuthGuard = {

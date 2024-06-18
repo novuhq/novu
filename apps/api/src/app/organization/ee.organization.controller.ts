@@ -2,10 +2,8 @@ import {
   Body,
   ClassSerializerInterceptor,
   Controller,
-  Delete,
   Get,
   Logger,
-  Param,
   Patch,
   Post,
   Put,
@@ -22,9 +20,6 @@ import { GetMembersCommand } from './usecases/membership/get-members/get-members
 import { GetMembers } from './usecases/membership/get-members/get-members.usecase';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
 import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
-import { GetOrganizationsCommand } from './usecases/get-organizations/get-organizations.command';
-import { GetOrganizations } from './usecases/get-organizations/get-organizations.usecase';
-import { IGetOrganizationsDto } from './dtos/get-organizations.dto';
 import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
 import { GetMyOrganizationCommand } from './usecases/get-my-organization/get-my-organization.command';
 import { IGetMyOrganizationDto } from './dtos/get-my-organization.dto';
@@ -49,7 +44,6 @@ export class EEOrganizationController {
     private syncExternalOrganizationUsecase: SyncExternalOrganization,
     private getMembers: GetMembers,
     private updateBrandingDetailsUsecase: UpdateBrandingDetails,
-    private getOrganizationsUsecase: GetOrganizations,
     private getMyOrganizationUsecase: GetMyOrganization,
     private renameOrganizationUsecase: RenameOrganization
   ) {}
@@ -76,20 +70,6 @@ export class EEOrganizationController {
         productUseCases: body.productUseCases,
       })
     );
-  }
-
-  @Get('/')
-  @ExternalApiAccessible()
-  @ApiResponse(OrganizationResponseDto, 200, true)
-  @ApiOperation({
-    summary: 'Fetch all organizations',
-  })
-  async getOrganizations(@UserSession() user: UserSessionData): Promise<IGetOrganizationsDto> {
-    const command = GetOrganizationsCommand.create({
-      userId: user._id,
-    });
-
-    return await this.getOrganizationsUsecase.execute(command);
   }
 
   @Get('/me')

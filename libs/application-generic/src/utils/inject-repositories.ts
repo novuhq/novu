@@ -56,10 +56,7 @@ export function injectRepositories() {
 
   const eeMemberRepositoryProvider = {
     provide: 'MEMBER_REPOSITORY',
-    useFactory: (
-      organizationRepository: CommunityOrganizationRepository,
-      userRepository: CommunityUserRepository
-    ) => {
+    useFactory: (organizationRepository: CommunityOrganizationRepository) => {
       const eeAuthPackage = require('@novu/ee-auth');
       if (!eeAuthPackage?.EEMemberRepository) {
         throw new PlatformException('EEMemberRepository is not loaded');
@@ -67,11 +64,10 @@ export function injectRepositories() {
 
       return new eeAuthPackage.EEMemberRepository(
         organizationRepository,
-        userRepository,
         injectClerkClientMock()
       );
     },
-    inject: [CommunityOrganizationRepository, CommunityUserRepository],
+    inject: [CommunityOrganizationRepository],
   };
 
   const eeOrganizationRepositoryProvider = {
