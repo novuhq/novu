@@ -15,6 +15,7 @@ import {
 import { BridgeWorkflowStepType } from '../../../studio.types';
 
 export interface WorkflowNodesProps {
+  // TODO: add proper types
   steps: any[];
   onClick: (step: any) => void;
 }
