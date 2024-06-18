@@ -625,8 +625,10 @@ export class Client {
     const spinner = ora({ indent: 1 }).start(`Previewing stepId: \`${step.stepId}\``);
     try {
       if (payload.stepId === step.stepId) {
-        const input = this.createStepInputs(step, payload);
-        const previewOutput = await step.resolve(input);
+        const templateInputs = this.createStepInputs(step, payload);
+        const inputs = await this.compileInputs(templateInputs, payload);
+
+        const previewOutput = await step.resolve(inputs);
         this.validate(
           previewOutput,
           step.outputs.validate,
