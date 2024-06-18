@@ -1,4 +1,4 @@
-import { expect, it, describe } from 'vitest';
+import { expect, it, describe, beforeEach } from 'vitest';
 import { Client } from './client';
 import { z } from 'zod';
 import { workflow } from './workflow';
@@ -11,7 +11,7 @@ describe('validation', () => {
   describe('zod', () => {
     it('should transform a zod schema to a json schema during discovery', async () => {
       client.addWorkflows([
-        workflow('zod-validation', async ({ step, input, payload }) => {
+        workflow('zod-validation', async ({ step }) => {
           await step.email(
             'zod-validation',
             async (inputs) => ({
@@ -29,8 +29,9 @@ describe('validation', () => {
       ]);
 
       const discoverResult = client.discover();
+      const stepInputSchema = discoverResult.workflows[0].steps[0].inputs.schema;
 
-      expect(discoverResult.workflows[0].steps[0].inputs.schema).to.deep.include({
+      expect(stepInputSchema).to.deep.include({
         additionalProperties: false,
         properties: {
           baz: {
@@ -49,7 +50,7 @@ describe('validation', () => {
       client.addWorkflows([
         workflow(
           'zod-validation',
-          async ({ step, input, payload }) => {
+          async ({ step }) => {
             await step.email('test-email', async (inputs) => ({
               subject: 'Test subject',
               body: 'Test body',
@@ -68,25 +69,15 @@ describe('validation', () => {
         client.executeWorkflow({
           action: 'execute',
           workflowId: 'zod-validation',
-          inputs: {},
+          inputs: {
+            foo: 341,
+          },
           data: {},
           stepId: 'test-email',
           state: [],
           subscriber: {},
         })
-      ).resolves.to.deep.include({
-        metadata: {
-          error: false,
-          status: 'success',
-          duration: expect.any(Number),
-        },
-        options: undefined,
-        outputs: {
-          body: 'Test body',
-          subject: 'Test subject',
-        },
-        providers: {},
-      });
+      ).rejects.toThrowError();
     });
   });
 });

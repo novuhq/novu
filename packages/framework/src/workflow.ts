@@ -13,6 +13,7 @@ import {
   StepType,
   WorkflowOptions,
 } from './types';
+import { transformSchema } from './types/schema.types';
 import { EMOJI, log } from './utils';
 
 /**
@@ -32,20 +33,20 @@ export function workflow<
   const ajv = new Ajv({ useDefaults: true });
   addFormats(ajv);
 
-  const newWorkflow = {
+  const newWorkflow: DiscoverWorkflowOutput = {
     workflowId,
     options,
     steps: [],
     code: execute.toString(),
     data: {
-      schema: options.payloadSchema || emptySchema,
-      validate: ajv.compile(options.payloadSchema || emptySchema),
+      schema: transformSchema(options.payloadSchema || emptySchema),
+      unknownSchema: options.payloadSchema || emptySchema,
     },
     inputs: {
-      schema: options.inputSchema || emptySchema,
-      validate: ajv.compile(options.inputSchema || emptySchema),
+      schema: transformSchema(options.inputSchema || emptySchema),
+      unknownSchema: options.inputSchema || emptySchema,
     },
-    execute,
+    execute: execute as Execute<unknown, unknown>,
   };
 
   execute({
@@ -54,17 +55,15 @@ export function workflow<
     environment: {},
     input: {} as T_Input,
     step: {
-      ...Object.entries(channelStepSchemas).reduce((acc, [channel, schemas]) => {
-        acc[channel] = discoverStepFactory(
-          newWorkflow,
-          channel as ChannelStepEnum,
-          ajv,
-          schemas.output,
-          schemas.result
-        );
-
-        return acc;
-      }, {} as Record<ChannelStepEnum, ActionStep<any, any>>),
+      push: discoverStepFactory(newWorkflow, 'push', channelStepSchemas.push.output, channelStepSchemas.push.result),
+      chat: discoverStepFactory(newWorkflow, 'chat', channelStepSchemas.chat.output, channelStepSchemas.chat.result),
+      email: discoverStepFactory(
+        newWorkflow,
+        'email',
+        channelStepSchemas.email.output,
+        channelStepSchemas.email.result
+      ),
+      sms: discoverStepFactory(newWorkflow, 'sms', channelStepSchemas.sms.output, channelStepSchemas.sms.result),
       /*
        * Temporary workaround for inApp, which has snake_case step type
        * TODO: decouple step types from the channel step types
@@ -72,13 +71,12 @@ export function workflow<
       inApp: discoverStepFactory(
         newWorkflow,
         'in_app',
-        ajv,
         channelStepSchemas.in_app.output,
         channelStepSchemas.in_app.result
       ),
-      digest: discoverStepFactory(newWorkflow, 'digest', ajv, digestChannelSchemas.output, digestChannelSchemas.result),
-      delay: discoverStepFactory(newWorkflow, 'delay', ajv, delayChannelSchemas.output, delayChannelSchemas.result),
-      custom: discoverCustomStepFactory(newWorkflow, 'custom', ajv),
+      digest: discoverStepFactory(newWorkflow, 'digest', digestChannelSchemas.output, digestChannelSchemas.result),
+      delay: discoverStepFactory(newWorkflow, 'delay', delayChannelSchemas.output, delayChannelSchemas.result),
+      custom: discoverCustomStepFactory(newWorkflow, 'custom'),
     },
   });
 
@@ -90,7 +88,6 @@ export function workflow<
 function discoverStepFactory<T, U>(
   targetWorkflow: DiscoverWorkflowOutput,
   type: StepType,
-  ajv: Ajv,
   outputSchema: Schema,
   resultSchema: Schema
 ): ActionStep<T, U> {
@@ -101,16 +98,16 @@ function discoverStepFactory<T, U>(
       stepId,
       type,
       inputs: {
-        schema: inputSchema,
-        validate: ajv.compile(inputSchema),
+        schema: transformSchema(inputSchema),
+        unknownSchema: inputSchema,
       },
       outputs: {
-        schema: outputSchema,
-        validate: ajv.compile(outputSchema),
+        schema: transformSchema(outputSchema),
+        unknownSchema: outputSchema,
       },
       results: {
-        schema: resultSchema,
-        validate: ajv.compile(resultSchema),
+        schema: transformSchema(resultSchema),
+        unknownSchema: resultSchema,
       },
       resolve,
       code: resolve.toString(),
@@ -120,8 +117,11 @@ function discoverStepFactory<T, U>(
 
     discoverStep(targetWorkflow, stepId, step);
 
-    if (Object.keys(options.providers || {}).length > 0) {
-      discoverProviders(step, ajv, type, options.providers || {});
+    if (
+      Object.values(ChannelStepEnum).includes(type as ChannelStepEnum) &&
+      Object.keys(options.providers || {}).length > 0
+    ) {
+      discoverProviders(step, type as ChannelStepEnum, options.providers || {});
     }
 
     return undefined as any;
@@ -135,10 +135,10 @@ function discoverStep(targetWorkflow: DiscoverWorkflowOutput, stepId: string, st
     targetWorkflow.steps.push(step);
   }
 }
+
 function discoverProviders(
   step: DiscoverStepOutput,
-  ajv: Ajv,
-  channelType: string,
+  channelType: ChannelStepEnum,
   providers: Record<string, (payload: unknown) => unknown | Promise<unknown>>
 ): void {
   const channelSchemas = providerSchemas[channelType];
@@ -150,14 +150,14 @@ function discoverProviders(
       code: resolve.toString(),
       resolve,
       outputs: {
-        schema: schemas.output,
-        validate: ajv.compile(schemas.output),
+        schema: transformSchema(schemas.output),
+        unknownSchema: schemas.output,
       },
     });
   });
 }
 
-function discoverCustomStepFactory(targetWorkflow: DiscoverWorkflowOutput, type: StepType, ajv: Ajv): CustomStep {
+function discoverCustomStepFactory(targetWorkflow: DiscoverWorkflowOutput, type: StepType): CustomStep {
   return async (stepId, resolve, options = {}) => {
     const inputSchema = options?.inputSchema || emptySchema;
     const outputSchema = options?.outputSchema || emptySchema;
@@ -166,16 +166,16 @@ function discoverCustomStepFactory(targetWorkflow: DiscoverWorkflowOutput, type:
       stepId,
       type,
       inputs: {
-        schema: inputSchema,
-        validate: ajv.compile(inputSchema),
+        schema: transformSchema(inputSchema),
+        unknownSchema: inputSchema,
       },
       outputs: {
-        schema: outputSchema,
-        validate: ajv.compile(outputSchema),
+        schema: transformSchema(outputSchema),
+        unknownSchema: outputSchema,
       },
       results: {
-        schema: outputSchema,
-        validate: ajv.compile(outputSchema),
+        schema: transformSchema(outputSchema),
+        unknownSchema: outputSchema,
       },
       resolve,
       code: resolve.toString(),

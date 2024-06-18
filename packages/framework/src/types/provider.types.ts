@@ -1,4 +1,3 @@
-import { ChannelStepEnum } from '../constants';
 import { providerSchemas } from '../schemas';
 import { FromSchema } from './schema.types';
 

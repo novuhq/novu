@@ -2,7 +2,7 @@
 import { JSONSchemaFaker } from 'json-schema-faker';
 import ora from 'ora';
 
-import { DEFAULT_NOVU_API_BASE_URL, HttpHeaderKeysEnum, HttpMethodEnum, NovuApiEndpointsEnum } from './constants';
+import { DEFAULT_NOVU_API_BASE_URL, HttpHeaderKeysEnum } from './constants';
 import {
   ExecutionEventDataInvalidError,
   ExecutionEventInputInvalidError,
