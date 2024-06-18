@@ -219,6 +219,66 @@ describe('Novu Client', () => {
     });
   });
 
+  describe('previewWorkflow method', () => {
+    it('should compile default input variables for preview', async () => {
+      const newWorkflow = workflow(
+        'test-workflow',
+        async ({ step }) => {
+          await step.email(
+            'send-email',
+            async (inputs) => {
+              return {
+                subject: 'body static prefix' + ' ' + inputs.name,
+                body: inputs.name,
+              };
+            },
+            {
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', default: '{{name}}' },
+                },
+                required: [],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+            },
+            required: [],
+            additionalProperties: false,
+          } as const,
+        }
+      );
+
+      client.addWorkflows([newWorkflow]);
+
+      const emailEvent: IEvent = {
+        action: 'preview',
+        data: { name: 'John' },
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {
+          lastName: "Smith's",
+        },
+        state: [],
+        inputs: {},
+      };
+
+      const emailExecutionResult = await client.executeWorkflow(emailEvent);
+
+      expect(emailExecutionResult).toBeDefined();
+      expect(emailExecutionResult.outputs).toBeDefined();
+      if (!emailExecutionResult.outputs) throw new Error('executionResult.outputs is undefined');
+      const subject = (emailExecutionResult.outputs as any).subject as string;
+      expect(subject).toBe('body static prefix John');
+    });
+  });
   describe('executeWorkflow method', () => {
     it('should execute workflow successfully when action is execute and data is provided', async () => {
       const delayConfiguration: FromSchema<typeof delayOutputSchema> = { type: 'regular', unit: 'seconds', amount: 1 };
