@@ -13,10 +13,11 @@ on:
 
 jobs:
   pre-release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-lates
     outputs:
       environment: ${{ steps.setenv.outputs.envValue }}
       name: ${{ steps.setenvname.outputs.envName }}
+      bullmq_token: ${{ steps.settoken.outputs.token }}
     steps:
       - uses: actions/checkout@v4
       - name: Set environment name
@@ -27,7 +28,6 @@ jobs:
           else
             echo "::set-output name=envName::Dev"
           fi
-          
 
       - name: Check branch and set environment
         id: setenv
@@ -37,8 +37,11 @@ jobs:
           else
              echo "::set-output name=envValue::dev"
           fi
-         
-          
+
+      - name: Set Bullmq Token
+        id: settoken
+        run: |
+            echo "::set-output name=token::${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}"
 
       - name: Check output values
         run: |
@@ -69,7 +72,7 @@ jobs:
       id-token: write
     with:
       env: ${{ needs.pre-release.outputs.environment }}
-      bullmq_token: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
+      bullmq_token: ${{ needs.pre-release.outputs.bullmq_token }}
 
 
   release-embed:
