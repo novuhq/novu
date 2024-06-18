@@ -40,7 +40,7 @@ on:
         type: boolean
       bullmq_secret:
         description: 'Bullmq secret api token'
-        required: true
+        required: false
         type: string
     outputs:
       docker_image:
