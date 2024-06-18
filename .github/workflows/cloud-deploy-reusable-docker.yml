@@ -127,6 +127,7 @@ jobs:
         id: build-image
         if: ${{ inputs.env_tag == 'dev' || inputs.env_tag == 'stg' }}
         env:
+          BULL_MQ_PRO_NPM_TOKEN: ${{ env.BULL_MQ_PRO_NPM_TOKEN }}
           REGISTRY_OWNER: novuhq
           DOCKER_NAME: ${{ needs.job-setup.outputs.dockerName }}
           LOCAL_TAG: ${{ inputs.local_tag }}
