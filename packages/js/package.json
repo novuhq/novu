@@ -81,6 +81,7 @@
     "clsx": "^2.1.1",
     "mitt": "^3.0.1",
     "socket.io-client": "4.7.2",
-    "solid-js": "^1.8.11"
+    "solid-js": "^1.8.11",
+    "tailwind-merge": "^2.3.0"
   }
 }
