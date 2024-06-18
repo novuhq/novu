@@ -28,6 +28,7 @@ jobs:
   build_image:
     needs: set_environment
     uses: ./.github/workflows/cloud-deploy-reusable-docker.yml
+    environment: ${{ needs.set_environment.outputs.environment }}
     with:
       environment: ${{ needs.set_environment.outputs.environment }}
       package_name: novu/api
