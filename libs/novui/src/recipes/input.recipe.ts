@@ -20,11 +20,11 @@ export const INPUT_RECIPE = defineSlotRecipe({
   base: {
     root: {
       // add gap between label and description when both are present
-      '& .nv-input__label + .nv-input__description': {
+      '& > label + p': {
         marginTop: '25 !important',
       },
       // add gap between description or label and the input
-      '& .nv-input__description + .nv-input__wrapper, & .nv-input__label + .nv-input__wrapper': {
+      '& > p + div, & > label + div': {
         marginTop: 'margins.layout.Input.titleBottom !important',
       },
     },

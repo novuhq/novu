@@ -22,7 +22,7 @@ import { SEMANTIC_SPACING_TOKENS } from './tokens/semanticSpacing.tokens';
 import { SEMANTIC_RADIUS_TOKENS } from './tokens/semanticRadius.tokens';
 import { LEGACY_OPACITY_TOKENS, OPACITY_TOKENS } from './tokens/opacity.tokens';
 import { SEMANTIC_OPACITY_TOKENS } from './tokens/semanticOpacity.tokens';
-import { INPUT_RECIPE, TEXT_RECIPE, TITLE_RECIPE, BUTTON_RECIPE, TABS_RECIPE } from './recipes';
+import { INPUT_RECIPE, TEXT_RECIPE, TITLE_RECIPE, BUTTON_RECIPE, TABS_RECIPE, SELECT_RECIPE } from './recipes';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -85,6 +85,7 @@ export const novuPandaPreset = definePreset({
         button: BUTTON_RECIPE,
         tabs: TABS_RECIPE,
         input: INPUT_RECIPE,
+        select: SELECT_RECIPE,
       },
     },
   },
