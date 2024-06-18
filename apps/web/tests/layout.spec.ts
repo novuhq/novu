@@ -9,6 +9,7 @@ test.beforeEach(async ({ page }) => {
 test('should display layouts list', async ({ page }) => {
   const subscribersPage = await LayoutsPage.goTo(page);
   await subscribersPage.assertIsVisible();
-  await subscribersPage.assertLayoutsTableHeaders(['Name', 'Description', 'Created At', 'Last Updated']);
+  // The last empty string is for the action column and doesn't have a header
+  await subscribersPage.assertLayoutsTableHeaders(['Name', 'Description', 'Created At', 'Last Updated', '']);
   await subscribersPage.assertLayoutsTableRowCount(1);
 });
