@@ -1,6 +1,7 @@
 import { InputStylesNames, InputWrapperStylesNames } from '@mantine/core';
 import { defineSlotRecipe } from '@pandacss/dev';
 
+// full enumeration of the component library's slots
 const SLOTS: (InputStylesNames | InputWrapperStylesNames)[] = [
   'root',
   'input',
@@ -17,45 +18,53 @@ export const INPUT_RECIPE = defineSlotRecipe({
   jsx: ['Input'],
   slots: SLOTS,
   base: {
+    root: {
+      // add gap between label and description when both are present
+      '& .nv-input__label + .nv-input__description': {
+        marginTop: '25 !important',
+      },
+      // add gap between description or label and the input
+      '& .nv-input__description + .nv-input__wrapper, & .nv-input__label + .nv-input__wrapper': {
+        marginTop: 'margins.layout.Input.titleBottom !important',
+      },
+    },
     input: {
       background: 'input.surface !important',
-      // borderColor: 'input.border.default !important',
+      borderColor: 'input.border.default !important',
       borderRadius: 'input !important',
       lineHeight: '125 !important',
-      color: 'typography.text.main !important',
-      '& svg': {
+
+      '&, & svg': {
         color: 'typography.text.main !important',
       },
 
-      marginTop: 'margins.layout.Input.titleBottom',
       paddingX: '75 !important',
       paddingTop: '100 !important',
       paddingBottom: '100 !important',
       height: 'auto !important',
 
       _disabled: {
-        bg: 'input.surface.disabled !important',
+        '&, &:hover': {
+          bg: 'input.surface.disabled !important',
+        },
         borderColor: 'input.border.disabled !important',
       },
-      '&:hover:not(:disabled)': {
-        opacity: 'hover',
-      },
 
-      _invalid: {
-        border: 'solid !important',
-        borderColor: 'input.border.error !important',
-      },
-
-      '&:focus,&:focus-within': {
-        outline: 'solid !important',
-        outlineColor: 'input.border.active !important',
-        _invalid: {
+      _error: {
+        '&, &:focus, &:focus-within': {
+          border: 'solid !important',
           borderColor: 'input.border.error !important',
-          outlineColor: 'input.border.active !important',
         },
       },
+
+      '&:focus, &:focus-within': {
+        outline: 'none !important',
+        border: 'solid !important',
+        borderColor: 'input.border.active !important',
+      },
+
       _placeholder: {
-        color: 'typography.text.secondary',
+        color: 'typography.text.secondary !important',
       },
 
       _hover: {
@@ -74,7 +83,14 @@ export const INPUT_RECIPE = defineSlotRecipe({
       paddingTop: '50 !important',
     },
     wrapper: {},
-    section: { paddingRight: '75' },
+    section: {
+      paddingRight: '75',
+      '[data-error] &': {
+        '&, & svg': {
+          color: 'input.border.error !important',
+        },
+      },
+    },
     description: {
       color: 'typography.text.tertiary !important',
       fontSize: '88 !important',

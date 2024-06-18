@@ -37,6 +37,9 @@ Everything.args = {
   error: 'Not Good!',
 };
 
+export const Nothing = Template.bind({});
+Nothing.args = {};
+
 export const WithDescription = Template.bind({});
 WithDescription.args = {
   label: 'Notification Name',

@@ -88,6 +88,12 @@ export const novuPandaPreset = definePreset({
       },
     },
   },
+  conditions: {
+    extend: {
+      // Mantine uses *-error.
+      error: '&:is(:error, [data-error=true], [aria-error=true])',
+    },
+  },
   staticCss: {
     css: [
       {

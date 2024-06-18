@@ -148,7 +148,7 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
         type: 'color',
       },
       disabled: {
-        value: { base: '{colors.legacy.B30}', _dark: '{colors.legacy.BGLight}' },
+        value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.B30}' },
         type: 'color',
       },
       error: {

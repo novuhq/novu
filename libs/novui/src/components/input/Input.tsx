@@ -13,7 +13,7 @@ const DEFAULT_TEXT_INPUT_TYPE: TextInputType = 'text';
 export interface IInputProps extends JsxStyleProps, CoreProps, Pick<ExternalTextInputProps, 'leftSection'> {
   label?: LocalizedMessage;
   description?: LocalizedMessage;
-  placeholder: LocalizedString;
+  placeholder?: LocalizedString;
   error?: LocalizedMessage;
   type?: TextInputType;
 
@@ -37,7 +37,6 @@ export const Input = forwardRef(
       <ExternalTextInput
         ref={ref}
         onChange={(event) => onChange?.(event)}
-        // variant="default"
         autoComplete="off"
         classNames={styles}
         className={cx(css(cssProps), className)}
