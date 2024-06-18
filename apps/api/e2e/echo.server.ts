@@ -39,4 +39,4 @@ export class EchoServer {
   }
 }
 
-const echoServer = new EchoServer();
+export const echoServer = new EchoServer();
