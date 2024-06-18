@@ -67,7 +67,7 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
   const { MoveDownButton, MoveUpButton, RemoveButton } = registry.templates.ButtonTemplates;
 
   return (
-    <Grid key={index}>
+    <Grid>
       <Grid.Col span={'auto'}>
         <div className={css({ pl: '125' })}>{children}</div>
       </Grid.Col>

@@ -57,6 +57,8 @@ import {
   WorkflowsStepEditorPage,
   WorkflowsTestStepPage,
 } from './studio/components/workflows';
+import { TemplateDetailsPageV2 } from './pages/templates/editor_v2/TemplateDetailsPageV2';
+import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
@@ -90,6 +92,8 @@ export const AppRoutes = () => {
       <Route element={<PrivatePageLayout />}>
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
+        <Route path={ROUTES.WORKFLOWS_V2_STEP_EDIT} element={<WorkflowsStepEditorPageV2 />} />
+
         <Route path={ROUTES.WORKFLOWS_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
           <Route path="" element={<Sidebar />} />
           <Route path="settings" element={<TemplateSettings />} />

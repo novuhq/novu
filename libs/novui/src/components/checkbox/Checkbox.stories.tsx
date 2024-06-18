@@ -8,4 +8,4 @@ export default {
   argTypes: {},
 } as Meta<typeof Checkbox>;
 
-export const all = ({ ...args }) => <Checkbox label={'Checked'} checked {...args} />;
+export const all = ({ ...args }) => <Checkbox label={'Checked'} {...args} />;
