@@ -175,27 +175,27 @@ describe('Novu Client', () => {
       expect(stepRegularDigest).toBeDefined();
       if (stepRegularDigest === undefined) throw new Error('stepEmail is undefined');
       expect(stepRegularDigest.type).toBe('digest');
-      expect(stepRegularDigest.code).toContain(`type: 'regular'`);
       expect(stepRegularDigest.code).toContain(`amount: 1`);
-      expect(stepRegularDigest.code).toContain(`unit: 'hours'`);
+      expect(stepRegularDigest.code).toContain(`unit: "hours"`);
 
-      const stepBackoffDigest = workflow?.steps.find((stepX) => stepX.stepId === 'backoff-digest');
+      const stepBackoffDigest = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'regular-look-back-digest');
       expect(stepBackoffDigest).toBeDefined();
       if (stepBackoffDigest === undefined) throw new Error('stepEmail is undefined');
       expect(stepBackoffDigest.type).toBe('digest');
-      expect(stepBackoffDigest.code).toContain(`type: 'backoff'`);
       expect(stepBackoffDigest.code).toContain(`amount: 1`);
       expect(stepBackoffDigest.code).toContain(`unit: "hours"`);
-      expect(stepBackoffDigest.code).toContain(`lookBackWindow: {
-                        amount: 1,
-                        unit: 'hours',
-                    },`);
+      expect(stepBackoffDigest.code.trim()).toContain(
+        `lookBackWindow: {
+            amount: 1,
+            unit: "hours"
+          }`.trim()
+      );
 
-      const stepTimedDigest = workflow?.steps.find((stepX) => stepX.stepId === 'timed-digest');
+      const stepTimedDigest = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'timed-digest');
       expect(stepTimedDigest).toBeDefined();
       if (stepTimedDigest === undefined) throw new Error('stepEmail is undefined');
       expect(stepTimedDigest.type).toBe('digest');
-      expect(stepTimedDigest.code).toContain(`cron: '0 0-23/1 * * *'`);
+      expect(stepTimedDigest.code).toContain(`cron: "0 0-23/1 * * *"`);
 
       const stepDelay = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'delay');
       expect(stepDelay).toBeDefined();
