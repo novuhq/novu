@@ -422,13 +422,13 @@ export class SubscribersController {
   @SdkMethodName('retrieveByLevel')
   async getSubscriberPreferenceByLevel(
     @UserSession() user: UserSessionData,
-    @Param() { level, subscriberId }: GetSubscriberPreferencesByLevelParams
+    @Param() { parameter, subscriberId }: GetSubscriberPreferencesByLevelParams
   ): Promise<GetSubscriberPreferencesResponseDto[]> {
     const command = GetPreferencesByLevelCommand.create({
       organizationId: user.organizationId,
       subscriberId: subscriberId,
       environmentId: user.environmentId,
-      level: level,
+      level: parameter,
     });
 
     return await this.getPreferenceUsecase.execute(command);
