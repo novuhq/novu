@@ -70,6 +70,7 @@ export class CreateMessageTemplate {
         inputs: command.inputs,
         output: command.output,
         actor: command.actor,
+        code: command.code,
       });
 
     if (item?._id) {

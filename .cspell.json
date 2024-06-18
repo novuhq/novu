@@ -12,6 +12,7 @@
     "alexjoverm",
     "alist",
     "aliyun",
+    "ALLCAPS",
     "amannn",
     "antd",
     "anthonybaxter",
@@ -611,6 +612,7 @@
     "websockets",
     "whatsapp",
     "whatsappbusiness",
+    "xcodebuild",
     "xkeysib",
     "firestore",
     "firsttris",
@@ -636,12 +638,13 @@
     "zwnj",
     "prepush",
     "xcodebuild",
-    "liquidjs",
     "vstack",
     "nimma",
     "jpath",
     "Nimma",
-    "jpath"
+    "jpath",
+    "vstack",
+    "liquidjs"
   ],
   "flagWords": [],
   "patterns": [

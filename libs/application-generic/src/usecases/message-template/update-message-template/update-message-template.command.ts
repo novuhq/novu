@@ -83,6 +83,9 @@ export class UpdateMessageTemplateCommand extends EnvironmentWithUserCommand {
     schema: JSONSchema7;
   };
 
+  @IsOptional()
+  code?: string;
+
   @IsEnum(WorkflowTypeEnum)
   @IsDefined()
   workflowType: WorkflowTypeEnum;

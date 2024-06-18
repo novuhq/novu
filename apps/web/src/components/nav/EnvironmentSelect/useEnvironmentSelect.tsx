@@ -5,6 +5,8 @@ import { BaseEnvironmentEnum } from '../../../constants/BaseEnvironmentEnum';
 import { useState } from 'react';
 import { type ISelectProps } from '@novu/design-system';
 import { matchPath, useLocation, useMatch, useNavigate } from 'react-router-dom';
+import { useFeatureFlag } from '../../../hooks';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const ENVIRONMENT_ICON_LOOKUP: Record<BaseEnvironmentEnum, React.ReactElement<IIconProps>> = {
   [BaseEnvironmentEnum.DEVELOPMENT]: <IconConstruction />,
@@ -12,6 +14,7 @@ const ENVIRONMENT_ICON_LOOKUP: Record<BaseEnvironmentEnum, React.ReactElement<II
 };
 
 export const useEnvironmentSelect = () => {
+  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
   const [isPopoverOpened, setIsPopoverOpened] = useState<boolean>(false);
   const location = useLocation();
 
@@ -38,15 +41,32 @@ export const useEnvironmentSelect = () => {
      */
     const urlParts = location.pathname.replace('/', '').split('/');
     const redirectRoute: string | undefined = checkIfEnvBasedRoute() ? undefined : urlParts[0];
-    await setEnvironment(value as BaseEnvironmentEnum, { route: redirectRoute });
+
+    /**
+     * TODO: Review this logic to see if we want to handle this differently
+     */
+    if (value === 'Local') {
+      await setEnvironment(BaseEnvironmentEnum.DEVELOPMENT, { route: '/studio' });
+    } else {
+      await setEnvironment(value as BaseEnvironmentEnum, { route: redirectRoute });
+    }
   };
+
+  const data = Object.values(BaseEnvironmentEnum).map((value) => ({
+    label: value,
+    value,
+  }));
+
+  if (isV2ExperienceEnabled) {
+    data.push({
+      label: 'Local' as BaseEnvironmentEnum,
+      value: 'Local' as BaseEnvironmentEnum,
+    });
+  }
 
   return {
     loading: isLoading,
-    data: Object.values(BaseEnvironmentEnum).map((value) => ({
-      label: value,
-      value,
-    })),
+    data: data,
     value: environment?.name,
     onChange,
     readonly,

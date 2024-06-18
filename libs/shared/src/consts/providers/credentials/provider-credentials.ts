@@ -1137,3 +1137,27 @@ export const whatsAppBusinessConfig: IConfigCredentials[] = [
     required: true,
   },
 ];
+
+export const mobishastraConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    description: 'Username provided by Mobishatra',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    description: ' provided by Mobishastra',
+    required: true,
+  },
+  ...smsConfigBase,
+];
