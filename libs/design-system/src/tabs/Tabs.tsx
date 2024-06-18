@@ -1,4 +1,4 @@
-import { LoadingOverlay, Tabs as MantineTabs, TabsValue } from '@mantine/core';
+import { LoadingOverlay, Tabs as MantineTabs, TabsValue, Group } from '@mantine/core';
 import React, { ReactNode } from 'react';
 import { useTabsStyles } from './Tabs.styles';
 import { colors } from '../config';
@@ -59,8 +59,10 @@ export const Tabs = React.forwardRef<HTMLDivElement, ITabsProp>(
           <MantineTabs.List>
             {menuTabs.map((menuTab, i) =>
               withIcon ? (
-                <MantineTabs.Tab value={menuTab.value} icon={menuTab.icon} key={i}>
-                  {menuTab.value}
+                <MantineTabs.Tab mb={0} value={menuTab.value} key={i}>
+                  <Group spacing={8}>
+                    {menuTab.icon} <span>{menuTab.value}</span>
+                  </Group>
                 </MantineTabs.Tab>
               ) : (
                 <MantineTabs.Tab value={menuTab.value} key={i}>
