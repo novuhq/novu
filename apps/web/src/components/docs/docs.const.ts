@@ -2,7 +2,6 @@ import { ROUTES } from '../../constants/routes';
 
 export const PATHS: { [key in ROUTES]?: string } = {
   [ROUTES.ACTIVITIES]: 'activity-feed/introduction',
-  [`${ROUTES.BRAND}/layouts`]: 'content-creation-design/layouts',
   [ROUTES.LAYOUT]: 'content-creation-design/layouts',
   [ROUTES.CHANGES]: 'platform/environments',
   [ROUTES.INTEGRATIONS]: 'channels-and-providers/integration-store',

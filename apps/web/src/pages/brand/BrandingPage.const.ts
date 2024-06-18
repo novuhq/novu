@@ -1,5 +1,5 @@
 import { MimeTypesEnum } from '@novu/shared';
-import { OrgColorType, UpdateOrgBrandingPayloadType } from '../../../../api/organization';
+import { OrgColorType, UpdateOrgBrandingPayloadType } from '../../api/organization';
 
 export const DEFAULT_BRANDING_COLOR: OrgColorType = '#f47373';
 export const DEFAULT_FONT_COLOR: OrgColorType = DEFAULT_BRANDING_COLOR;

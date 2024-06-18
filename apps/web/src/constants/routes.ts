@@ -42,7 +42,9 @@ export enum ROUTES {
   SETTINGS = '/settings',
   PROFILE = '/settings/profile',
   TEAM_SETTINGS = '/settings/team',
-  BRAND_SETTINGS = '/settings/brand',
+  /* Deprecated */
+  BRAND_SETTINGS_DEPRECATED = '/settings/brand',
+  BRAND_SETTINGS = '/settings/branding',
   ORGANIZATION = '/settings/organization',
   SECURITY = '/settings/security',
   BILLING = '/settings/billing',
