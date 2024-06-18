@@ -6,7 +6,7 @@ import { text } from '@novu/novui/recipes';
 import { ColorToken } from '@novu/novui/tokens';
 import { WorkflowTableRow } from './WorkflowsTable.types';
 
-/*export const GroupCell: CellRendererComponent<WorkflowTableRow, string> = (props) => {
+export const GroupCell: CellRendererComponent<WorkflowTableRow, string> = (props) => {
   return (
     <Center
       className={css({
@@ -23,7 +23,7 @@ import { WorkflowTableRow } from './WorkflowsTable.types';
       {props.getValue()}
     </Center>
   );
-};*/
+};
 
 const Text = styled('p', text);
 
@@ -42,7 +42,6 @@ export const NameCell: CellRendererComponent<WorkflowTableRow, string> = ({ getV
     </HStack>
   );
 };
-/*
 
 export const StatusCell: CellRendererComponent<WorkflowTableRow, boolean> = ({ getValue }) => {
   const isActive = getValue();
@@ -62,4 +61,3 @@ export const StatusCell: CellRendererComponent<WorkflowTableRow, boolean> = ({ g
     </HStack>
   );
 };
-*/

@@ -47,7 +47,7 @@ export const WorkflowsStepEditorPageV2 = () => {
     if (!workflow) return;
 
     renderStepPreview({ inputs, payload });
-  }, [inputs, payload]);
+  }, [inputs, payload, renderStepPreview]);
 
   function onInputsChange(type: string, form: any) {
     switch (type) {
