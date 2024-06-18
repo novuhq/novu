@@ -331,21 +331,6 @@ export class AddJob {
     return (filtered ? 0 : digestAmount ?? delayAmount) ?? 0;
   }
 
-  /*
-   *  Fallback to regular digest type.
-   *  This is a temporary solution until other digest types are implemented.
-   */
-  private fallbackToRegularDigest(outputs: IBridgeDigestResponse | undefined): IBridgeDigestResponse | undefined {
-    let resonateResponseOutput: IBridgeDigestResponse | undefined = undefined;
-
-    if (outputs) {
-      const { type, ...resonateResponseOutputsOmitType } = outputs;
-      resonateResponseOutput = { type: DigestTypeEnum.REGULAR, ...resonateResponseOutputsOmitType };
-    }
-
-    return resonateResponseOutput;
-  }
-
   public async queueJob(job: JobEntity, delay: number) {
     Logger.verbose(`Adding Job ${job._id} to Queue`, LOG_CONTEXT);
     const stepContainsWebhookFilter = this.stepContainsFilter(job, 'webhook');
