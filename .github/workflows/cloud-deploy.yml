@@ -42,6 +42,7 @@ jobs:
         id: settoken
         run: |
             echo "::set-output name=token::${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}"
+            echo "token  ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}"
 
       - name: Check output values
         run: |
