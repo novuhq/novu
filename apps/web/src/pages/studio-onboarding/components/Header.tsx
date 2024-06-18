@@ -1,10 +1,13 @@
 import { css } from '@novu/novui/css';
-import { COMPANY_LOGO_PATH, COMPANY_LOGO_TEXT_PATH } from '../../../constants/assets';
+import { COMPANY_LOGO_PATH, COMPANY_LOGO_TEXT_PATH, COMPANY_LOGO_TEXT_PATH_DARK_TEXT } from '../../../constants/assets';
 import { Stepper } from '@mantine/core';
 import { IconCheck } from '@novu/novui/icons';
 import { HStack, VStack } from '@novu/novui/jsx';
+import { useColorScheme } from '@novu/design-system';
 
 export const Header = ({ activeStepIndex = 0 }: { activeStepIndex?: number }) => {
+  const { colorScheme } = useColorScheme();
+
   return (
     <div
       className={css({
@@ -16,7 +19,7 @@ export const Header = ({ activeStepIndex = 0 }: { activeStepIndex?: number }) =>
     >
       <div className={css({ padding: '100', width: '100%', height: '375' })}>
         <img
-          src={COMPANY_LOGO_TEXT_PATH}
+          src={colorScheme === 'dark' ? COMPANY_LOGO_TEXT_PATH : COMPANY_LOGO_TEXT_PATH_DARK_TEXT}
           className={css({
             h: '200',
           })}
@@ -35,7 +38,7 @@ export const Header = ({ activeStepIndex = 0 }: { activeStepIndex?: number }) =>
                 marginRight: '50 !important',
                 backgroundColor: 'transparent !important',
                 borderBottom: 'dashed',
-                borderColor: 'table.header.border',
+                borderColor: { base: 'typography.text.main', _dark: 'table.header.border' },
               }),
               stepIcon: css({
                 border: 'none !important',
@@ -62,7 +65,7 @@ export const Header = ({ activeStepIndex = 0 }: { activeStepIndex?: number }) =>
               return (
                 <IconCheck
                   className={css({
-                    color: 'typography.text.main !important',
+                    color: { _dark: 'typography.text.main !important', base: 'table.header.border' },
                   })}
                 />
               );

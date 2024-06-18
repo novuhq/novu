@@ -116,7 +116,10 @@ export const StudioOnboardingPreview = () => {
       <Flex
         justifyContent="center"
         className={css({
-          backgroundImage: '[radial-gradient(#292933 1.5px, transparent 0)]',
+          backgroundImage: {
+            _dark: '[radial-gradient(#292933 1.5px, transparent 0)]',
+            base: '[radial-gradient(#fff 1.5px, transparent 0)]',
+          },
           backgroundSize: '[16px 16px]',
           height: '100%',
         })}
