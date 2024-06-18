@@ -457,7 +457,7 @@ describe('Echo Trigger ', async () => {
 
   it('should trigger regular digest with look back option', async () => {
     const workflowId = 'workflow-look-back-digest';
-    await echoServer.echo.workflow(
+    await workflow(
       workflowId,
       async ({ step }) => {
         const digestResponse = await step.digest(
@@ -520,19 +520,19 @@ describe('Echo Trigger ', async () => {
 
     await discoverAndSyncEcho(session);
 
-    const workflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
-    expect(workflow).to.be.ok;
+    const fetchedWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(fetchedWorkflow).to.be.ok;
 
-    if (!workflow) {
+    if (!fetchedWorkflow) {
       throw new Error('Workflow not found');
     }
 
     await triggerEvent(session, workflowId, subscriber, { execution_metadata: 'msg-num-1' });
-    await session.awaitRunningJobs(workflow?._id, false, 0);
+    await session.awaitRunningJobs(fetchedWorkflow?._id, false, 0);
 
     await triggerEvent(session, workflowId, subscriber, { execution_metadata: 'msg-num-2' });
     await triggerEvent(session, workflowId, subscriber, { execution_metadata: 'msg-num-3' });
-    await session.awaitRunningJobs(workflow?._id, false, 0);
+    await session.awaitRunningJobs(fetchedWorkflow?._id, false, 0);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
@@ -550,7 +550,7 @@ describe('Echo Trigger ', async () => {
   it('should trigger timed digest (test basic digest flow type)', async () => {
     const workflowId = 'workflow-timed-digest';
     const CRON_EVERY_5_SECONDS = '*/2 * * * * *';
-    await echoServer.echo.workflow(
+    await workflow(
       workflowId,
       async ({ step }) => {
         const digestResponse = await step.digest(
@@ -595,16 +595,16 @@ describe('Echo Trigger ', async () => {
 
     await discoverAndSyncEcho(session);
 
-    const workflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
-    expect(workflow).to.be.ok;
+    const fetchedWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(fetchedWorkflow).to.be.ok;
 
-    if (!workflow) {
+    if (!fetchedWorkflow) {
       throw new Error('Workflow not found');
     }
 
     await triggerEvent(session, workflowId, subscriber, { name: 'Bela-1' });
     await triggerEvent(session, workflowId, subscriber, { name: 'Bela-2' });
-    await session.awaitRunningJobs(workflow?._id, false, 0);
+    await session.awaitRunningJobs(fetchedWorkflow?._id, false, 0);
 
     const messages = await messageRepository.find({
       _environmentId: session.environment._id,
