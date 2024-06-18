@@ -113,6 +113,11 @@ jobs:
         with:
           platforms: ${{ needs.job-setup.outputs.platforms }}
 
+      - name: Set Bull MQ Env variable for EE
+        shell: bash
+        run: |
+          echo "BULL_MQ_PRO_NPM_TOKEN=${{ inputs.bullmq_secret }}" >> $GITHUB_ENV
+
       - name: Set Up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
