@@ -37,6 +37,7 @@ jobs:
       local_tag: novu-api
       env_tag: ${{ inputs.env }}
       enterprise: true
+      bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
     secrets: inherit
 
 
