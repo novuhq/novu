@@ -61,9 +61,9 @@ const eeUserAuthGuard = {
 
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
-  const jwtClerkStrategy = eeAuthPackage?.JwtClerkStrategy;
+  const clerkStrategy = eeAuthPackage?.ClerkStrategy;
 
-  const AUTH_STRATEGIES: Provider[] = [jwtClerkStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
+  const AUTH_STRATEGIES: Provider[] = [clerkStrategy, ApiKeyStrategy, JwtSubscriberStrategy];
   const EE_AUTH_PROVIDERS: Provider[] = [eeAuthServiceProvider, AuthService, eeUserAuthGuard];
 
   return {
