@@ -69,6 +69,7 @@ jobs:
       id-token: write
     with:
       env: ${{ needs.pre-release.outputs.environment }}
+      bullmq_token: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
 
 
   release-embed:
