@@ -1,4 +1,4 @@
-name: Deploy PROD API
+name: Deploy API
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -25,8 +25,19 @@ jobs:
             echo "::set-output name=environment::Development"
           fi
 
-  build_image:
+  get_env_secret:
     needs: set_environment
+    runs-on: ubuntu-latest
+    environment: ${{ needs.set_environment.outputs.environment }}
+    outputs:
+      bullmq_token: ${{ steps.set_env.outputs.bullmq_token }}
+    steps:
+      - id: set_bullmq_token
+        run: |
+          echo "::set-output name=bullmq_token::${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}"
+
+  build_image:
+    needs: get_env_secret
     uses: ./.github/workflows/cloud-deploy-reusable-docker.yml
     with:
       environment: ${{ needs.set_environment.outputs.environment }}
@@ -37,7 +48,7 @@ jobs:
       local_tag: novu-api
       env_tag: ${{ inputs.env }}
       enterprise: true
-      bullmq_secret: ${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
+      bullmq_secret: ${{ needs.get_env_secret.outputs.bullmq_token }}
     secrets: inherit
 
 
@@ -45,6 +56,7 @@ jobs:
     needs:
       - build_image
       - set_environment
+      - get_env_secret
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ contains(inputs.env, 'dev') }}
     secrets: inherit
@@ -58,6 +70,7 @@ jobs:
     needs:
       - build_image
       - set_environment
+      - get_env_secret
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit
@@ -71,6 +84,7 @@ jobs:
     needs:
       - build_image
       - set_environment
+      - get_env_secret
     uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit

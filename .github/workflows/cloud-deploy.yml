@@ -70,6 +70,7 @@ jobs:
     with:
       env: ${{ needs.pre-release.outputs.environment }}
 
+
   release-embed:
     uses: ./.github/workflows/cloud-deploy-embed.yml
     needs: [pre-release]
