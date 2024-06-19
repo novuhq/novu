@@ -36,6 +36,7 @@ import {
   getDigestType,
   isTimedDigestOutput,
   isLookBackDigestOutput,
+  isRegularDigestOutput,
 } from '@novu/application-generic';
 
 import { AddDelayJob } from './add-delay-job.usecase';
@@ -263,6 +264,30 @@ export class AddJob {
             'digest.backoff': job.backoff,
             'digest.backoffAmount': job.backoffAmount,
             'digest.backoffUnit': job.backoffUnit,
+          },
+        }
+      );
+    }
+
+    if (isRegularDigestOutput(outputs)) {
+      job = {
+        type: digestType,
+        amount: outputs?.amount,
+        digestKey: outputs?.digestKey,
+        unit: outputs.unit ? castUnitToDigestUnitEnum(outputs?.unit) : undefined,
+      } as IDigestRegularMetadata;
+
+      await this.jobRepository.updateOne(
+        {
+          _id: command.job._id,
+          _environmentId: command.environmentId,
+        },
+        {
+          $set: {
+            'digest.type': job.type,
+            'digest.digestKey': job.digestKey,
+            'digest.amount': job.amount,
+            'digest.unit': job.unit,
           },
         }
       );

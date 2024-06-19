@@ -76,8 +76,8 @@ export const isLookBackDigestOutput = (
   outputs: DigestOutput
 ): outputs is digestRegularOutput => {
   return (
-    (outputs as digestRegularOutput).lookBackWindow.amount != null &&
-    (outputs as digestRegularOutput).lookBackWindow.unit != null
+    (outputs as digestRegularOutput)?.lookBackWindow?.amount != null &&
+    (outputs as digestRegularOutput)?.lookBackWindow?.unit != null
   );
 };
 

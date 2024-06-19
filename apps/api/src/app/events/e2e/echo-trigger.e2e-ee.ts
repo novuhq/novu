@@ -411,13 +411,19 @@ describe('Echo Trigger ', async () => {
           }
         );
 
-        await step.sms('send-sms', async () => {
-          const events = digestResponse.events.length;
+        await step.sms(
+          'send-sms',
+          async () => {
+            const events = digestResponse.events.length;
 
-          return {
-            body: `${events} people liked your post`,
-          };
-        });
+            return {
+              body: `${events} people liked your post`,
+            };
+          },
+          {
+            inputSchema: { type: 'object', properties: {} },
+          }
+        );
       },
       {
         payloadSchema: {
@@ -801,11 +807,8 @@ async function triggerEvent(session, workflowId: string, subscriber, payload?: a
 }
 
 async function discoverAndSyncEcho(session: UserSession, frameworkClient: EchoServer) {
-  const resultDiscover = await axios.get(frameworkClient.serverPath + '/echo?action=discover');
-
   const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
-    bridgeUrl: frameworkClient.serverPath + '/echo',
-    workflows: resultDiscover.data.workflows,
+    bridgeUrl: frameworkClient.serverPath,
   });
 
   return discoverResponse;
