@@ -1,5 +1,5 @@
 import { createMemo, createSignal, onMount } from 'solid-js';
-import { CSSProperties, Elements, useAppearance } from '../context';
+import { Elements, useAppearance } from '../context';
 import { cn } from './utils';
 
 export const useStyle = () => {
