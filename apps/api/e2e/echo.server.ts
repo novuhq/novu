@@ -32,7 +32,11 @@ export class EchoServer {
 
   async stop() {
     if (this.app) {
-      this.app.close();
+      await new Promise<void>((resolve) => {
+        this.app.close(() => {
+          resolve();
+        });
+      });
     }
   }
 }
