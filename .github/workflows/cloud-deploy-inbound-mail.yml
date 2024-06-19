@@ -1,4 +1,4 @@
-name: Deploy API
+name: Deploy INBOUND MAIL
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -31,52 +31,53 @@ jobs:
     uses: ./.github/workflows/cloud-deploy-reusable-docker.yml
     with:
       environment: ${{ needs.set_environment.outputs.environment }}
-      package_name: novu/api
-      project_path: apps/api
-      test_port: 1341
+      package_name: novu/inbound-mail
+      project_path: apps/inbound-mail
+      test_port: 1342
       health_check: true
-      local_tag: novu-api
+      local_tag: novu-inbound-mail
       env_tag: ${{ inputs.env }}
       enterprise: true
 
-  deploy_dev_api:
+
+  deploy_dev_inbound_mail:
     needs:
       - build_image
       - set_environment
-    uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
     if: ${{ contains(inputs.env, 'dev') }}
     secrets: inherit
     with:
       environment: ${{ needs.set_environment.outputs.environment }}
-      service_name: api
+      service_name: inbound_mail
       terraform_workspace: novu-dev
-      docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
+      docker_image: ghcr.io/novuhq/novu/inbound-mail-ee:${{ github.sha }}
 
-  deploy_prod_api_eu:
+
+  deploy_prod_inbound_mail_eu:
     needs:
       - build_image
       - set_environment
-    uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit
     with:
       environment: ${{ needs.set_environment.outputs.environment }}
-      service_name: api
+      service_name: inbound_mail
       terraform_workspace: novu-prod-eu
-      docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
+      docker_image: ghcr.io/novuhq/novu/inbound-mail-ee:${{ github.sha }}
 
-  deploy_prod_api_us:
+  deploy_prod_inbound_mail_us:
     needs:
       - build_image
       - set_environment
-    uses: ./.github/workflows/cloud-deploy-reusable-app-service-deploy.yml
+    uses: ./.github/workflows/reusable-app-service-deploy.yml
     if: ${{ !contains(inputs.env, 'dev') }}
     secrets: inherit
     with:
       environment: ${{ needs.set_environment.outputs.environment }}
-      service_name: api
+      service_name: inbound_mail
       terraform_workspace: novu-prod
-      docker_image: ghcr.io/novuhq/novu/api-ee:${{ github.sha }}
+      docker_image: ghcr.io/novuhq/novu/inbound-mail-ee:${{ github.sha }}
       deploy_sentry_release: true
-      sentry_project: api
-
+      sentry_project: inbound-mail
