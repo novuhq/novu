@@ -76,11 +76,21 @@ const schema: RJSFSchema = {
     },
     strings: {
       type: 'array',
-      title: 'Simple Array',
-      description: 'This is a simple array of strings',
+      title: 'Simple String Array',
+      description: 'This is a simple string array',
       items: {
         type: 'string',
-        default: '11',
+        default: 'a string indeed',
+      },
+      minItems: 1,
+    },
+    booleans: {
+      type: 'array',
+      title: 'Simple Boolean Array',
+      description: 'This is a simple array',
+      items: {
+        type: 'boolean',
+        default: true,
       },
       minItems: 1,
     },
