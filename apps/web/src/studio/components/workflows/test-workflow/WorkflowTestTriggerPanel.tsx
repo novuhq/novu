@@ -5,7 +5,7 @@ import { Tabs, Title } from '@novu/novui';
 import { HStack } from '@novu/novui/jsx';
 import { FC } from 'react';
 
-interface IWorkflowTestStepTriggerPanelProps {
+interface IWorkflowTestTriggerPanelProps {
   // TODO: Placeholder for real props
   placeholder?: never;
 }
@@ -28,7 +28,7 @@ to: {
   </Prism>
 );
 
-export const WorkflowTestStepTriggerPanel: FC<IWorkflowTestStepTriggerPanelProps> = ({}) => {
+export const WorkflowTestTriggerPanel: FC<IWorkflowTestTriggerPanelProps> = ({}) => {
   return (
     <Box>
       <HStack gap="50" mb="margins.layout.page.section.titleBottom">
