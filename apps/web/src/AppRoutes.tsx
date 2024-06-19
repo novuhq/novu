@@ -56,7 +56,7 @@ import {
   WorkflowsListPage,
   WorkflowsDetailPage,
   WorkflowsStepEditorPage,
-  WorkflowsTestStepPage,
+  WorkflowsTestPage,
 } from './studio/components/workflows';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
 
@@ -72,24 +72,16 @@ export const AppRoutes = () => {
         <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
         <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
         <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
+      </Route>
+      <Route element={<PrivatePageLayout />}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
-          element={
-            <EnsureOnboardingComplete>
-              <LinkVercelProjectPage type="create" />
-            </EnsureOnboardingComplete>
-          }
+          element={<LinkVercelProjectPage type="create" />}
         />
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
-          element={
-            <EnsureOnboardingComplete>
-              <LinkVercelProjectPage type="edit" />
-            </EnsureOnboardingComplete>
-          }
+          element={<LinkVercelProjectPage type="edit" />}
         />
-      </Route>
-      <Route element={<PrivatePageLayout />}>
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
         <Route path={ROUTES.WORKFLOWS_V2_STEP_EDIT} element={<WorkflowsStepEditorPageV2 />} />
@@ -152,7 +144,7 @@ export const AppRoutes = () => {
           <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
           <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
           <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<WorkflowsStepEditorPage />} />
-          <Route path={ROUTES.STUDIO_FLOWS_TEST_STEP} element={<WorkflowsTestStepPage />} />
+          <Route path={ROUTES.STUDIO_FLOWS_TEST} element={<WorkflowsTestPage />} />
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />

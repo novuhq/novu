@@ -3,7 +3,6 @@ import { Modal, useMantineTheme } from '@mantine/core';
 import styled from '@emotion/styled';
 import type { Row } from 'react-table';
 import { ChannelTypeEnum } from '@novu/shared';
-
 import {
   Button,
   colors,
@@ -17,9 +16,8 @@ import {
 } from '@novu/design-system';
 import { IntegrationChannel } from '../IntegrationChannel';
 import { IntegrationEnvironmentPill } from '../IntegrationEnvironmentPill';
-import { useFetchEnvironments } from '../../../../hooks/useFetchEnvironments';
 import { CHANNEL_TYPE_TO_STRING } from '../../../../utils/channels';
-import { useIntegrations } from '../../../../hooks';
+import { useEnvironment, useIntegrations } from '../../../../hooks';
 import { IntegrationEntity, ITableIntegration } from '../../types';
 import { mapToTableIntegration } from '../../utils';
 import { IntegrationStatusCell } from '../IntegrationStatusCell';
@@ -129,7 +127,7 @@ export const SelectPrimaryIntegrationModal = ({
   const [{ selectedIntegrationId, isActive, selectedRowId, isPopoverOpened }, setSelectedState] =
     useState(initialState);
 
-  const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
+  const { environments, isLoading: areEnvironmentsLoading } = useEnvironment();
   const environmentName = environments?.find((el) => el._id === environmentId)?.name ?? '';
 
   const onCloseCallback = useCallback(() => {

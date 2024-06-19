@@ -19,7 +19,7 @@ import { deleteLayoutById } from '../../api/layouts';
 import { QueryKeys } from '../../api/query.keys';
 import { When } from '../../components/utils/When';
 
-import { useAuth, useEnvController, useLayouts } from '../../hooks';
+import { useAuth, useEnvironment, useLayouts } from '../../hooks';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { DeleteConfirmModal } from '../templates/components/DeleteConfirmModal';
@@ -33,7 +33,7 @@ const enum ActivePageEnum {
 
 export function LayoutList() {
   const { currentOrganization, currentUser } = useAuth();
-  const { environment, readonly } = useEnvController();
+  const { environment, readonly } = useEnvironment();
   const segment = useSegment();
   const theme = useMantineTheme();
   const queryClient = useQueryClient();

@@ -52,6 +52,10 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
           value: { base: '{colors.green.20.light}', _dark: '{colors.green.20.dark}' },
           type: 'color',
         },
+        required: {
+          value: { base: '{colors.red.20.light}', _dark: '{colors.red.20.dark}' },
+          type: 'color',
+        },
       },
     },
   },
@@ -164,6 +168,20 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       disabled: {
         value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
         type: 'color',
+      },
+    },
+  },
+  select: {
+    option: {
+      surface: {
+        hover: {
+          value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B30}' },
+          type: 'color',
+        },
+        selected: {
+          value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.B40}' },
+          type: 'color',
+        },
       },
     },
   },

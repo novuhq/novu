@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { Accordion, Group, Indicator, Stack, createStyles } from '@mantine/core';
 import { Text, Tooltip, colors } from '@novu/design-system';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import React, { useState } from 'react';
 import { useFieldArray, useWatch } from 'react-hook-form';
 
@@ -56,7 +56,7 @@ export function UploadTranslationFilesAccordion({
   const [isValidJsonFile, setIsValidJsonFile] = useState(true);
   const [accordionValue, setAccordionValue] = useState<string | null>(null);
 
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const handleAccordionChange = (value: string | null) => {
     setAccordionValue((prev) => (prev === value ? null : value));
   };

@@ -20,17 +20,17 @@ export const INPUT_RECIPE = defineSlotRecipe({
   base: {
     root: {
       // add gap between label and description when both are present
-      '& .nv-input__label + .nv-input__description': {
+      '& > label + p': {
         marginTop: '25 !important',
       },
       // add gap between description or label and the input
-      '& .nv-input__description + .nv-input__wrapper, & .nv-input__label + .nv-input__wrapper': {
+      '& > p + div, & > label + div': {
         marginTop: 'margins.layout.Input.titleBottom !important',
       },
     },
     input: {
       background: 'input.surface !important',
-      borderColor: 'input.border.default !important',
+      borderColor: 'input.border !important',
       borderRadius: 'input !important',
       lineHeight: '125 !important',
 
@@ -72,7 +72,7 @@ export const INPUT_RECIPE = defineSlotRecipe({
       },
     },
     label: {
-      color: 'typography.text.main',
+      color: 'typography.text.main !important',
       fontWeight: 'strong !important',
       fontSize: '88 !important',
     },
@@ -82,7 +82,6 @@ export const INPUT_RECIPE = defineSlotRecipe({
       fontSize: '75 !important',
       paddingTop: '50 !important',
     },
-    wrapper: {},
     section: {
       paddingRight: '75',
       '[data-error] &': {
@@ -95,5 +94,9 @@ export const INPUT_RECIPE = defineSlotRecipe({
       color: 'typography.text.tertiary !important',
       fontSize: '88 !important',
     },
+    required: {
+      color: 'typography.text.feedback.required !important',
+    },
+    wrapper: {},
   },
 });

@@ -7,6 +7,7 @@ import {
   IDigestRegularMetadata,
   JobStatusEnum,
   DigestCreationResultEnum,
+  IDigestTimedMetadata,
 } from '@novu/shared';
 import {
   ApiException,
@@ -44,8 +45,8 @@ export class MergeOrCreateDigest {
   public async execute(command: MergeOrCreateDigestCommand): Promise<MergeOrCreateDigestResultType> {
     const { job } = command;
 
-    const digestMeta = command.bridgeData ?? (job.digest as IDigestBaseMetadata | undefined);
-    const digestKey = command.bridgeData?.digestKey ?? digestMeta?.digestKey;
+    const digestMeta = job.digest as IDigestBaseMetadata;
+    const digestKey = digestMeta?.digestKey;
     const digestValue = getNestedValue(job.payload, digestKey);
 
     const digestAction = command.filtered
@@ -77,8 +78,14 @@ export class MergeOrCreateDigest {
     digestMeta: IDigestBaseMetadata | undefined,
     job: JobEntity
   ): Promise<DigestCreationResultEnum> {
+    if ((digestMeta as unknown as IDigestTimedMetadata)?.timed?.cronExpression) {
+      return DigestCreationResultEnum.CREATED;
+    }
+
     const regularDigestMeta = digestMeta as IDigestRegularMetadata | undefined;
     if (!regularDigestMeta?.amount || !regularDigestMeta?.unit) {
+      const err = new Error();
+      const stack = err.stack;
       throw new ApiException(`Somehow ${job._id} had wrong digest settings and escaped validation`);
     }
 

@@ -1,7 +1,18 @@
 import { PlatformException } from './exceptions';
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, DigestTypeEnum } from '@novu/shared';
+import {
+  ChatOutput,
+  DelayOutput,
+  DigestOutput,
+  digestRegularOutput,
+  digestTimedOutput,
+  EmailOutput,
+  InAppOutput,
+  PushOutput,
+  SmsOutput,
+} from '@novu/framework';
 
 export const requireInject = (inject: RequireInject, moduleRef?: ModuleRef) => {
   if (inject === RequireInjectEnum.RESONATE) {
@@ -45,52 +56,45 @@ enum RequireInjectEnum {
   RESONATE = 'resonate',
 }
 
-export interface IBridgeDigestResponse {
-  amount: number;
-  unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
-  type: 'regular';
-  backoff: boolean;
-  digestKey: string;
+export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
+  if (isTimedDigestOutput(outputs)) {
+    return DigestTypeEnum.TIMED;
+  } else if (isLookBackDigestOutput(outputs)) {
+    return DigestTypeEnum.BACKOFF;
+  }
+
+  return DigestTypeEnum.REGULAR;
 }
 
-export interface IBridgeDelayResponse {
-  amount: number;
-  unit: 'seconds' | 'minutes' | 'hours' | 'days' | 'weeks' | 'months';
-  type: 'regular';
-}
+export const isTimedDigestOutput = (
+  outputs: DigestOutput | undefined
+): outputs is digestTimedOutput => {
+  return (outputs as digestTimedOutput)?.cron != null;
+};
 
-export interface IBridgeInAppResponse {
-  body: string;
-}
+export const isLookBackDigestOutput = (
+  outputs: DigestOutput
+): outputs is digestRegularOutput => {
+  return (
+    (outputs as digestRegularOutput)?.lookBackWindow?.amount != null &&
+    (outputs as digestRegularOutput)?.lookBackWindow?.unit != null
+  );
+};
 
-export interface IBridgeChatResponse {
-  body: string;
-}
-
-export interface IBridgeEmailResponse {
-  subject: string;
-  body: string;
-}
-
-export interface IBridgePushResponse {
-  subject: string;
-  body: string;
-}
-
-export interface IBridgeSmsResponse {
-  body: string;
-}
+export const isRegularDigestOutput = (
+  outputs: DigestOutput
+): outputs is digestRegularOutput => {
+  return !isTimedDigestOutput(outputs) && !isLookBackDigestOutput(outputs);
+};
 
 export type IBridgeChannelResponse =
-  | IBridgeInAppResponse
-  | IBridgeChatResponse
-  | IBridgeEmailResponse
-  | IBridgePushResponse
-  | IBridgeSmsResponse;
+  | InAppOutput
+  | ChatOutput
+  | EmailOutput
+  | PushOutput
+  | SmsOutput;
 
-export type IBridgeActionResponse =
-  | IBridgeDelayResponse
-  | IBridgeDigestResponse;
+export type IBridgeActionResponse = DelayOutput | DigestOutput;
 
 export type IBridgeStepResponse =
   | IBridgeChannelResponse
@@ -136,8 +140,10 @@ export interface IBlock {
   };
 }
 
+// todo extract option type from framework
 export type IProvidersOverride = Record<ChatProviderIdEnum, IProviderOverride>;
 
+// todo extract option type from framework
 interface IExecutionOptions {
   skip?: boolean;
 }

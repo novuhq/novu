@@ -11,7 +11,7 @@ import { RegularInfo } from './digest/icons/RegularInfo';
 import { TimedDigestMetadata } from './TimedDigestMetadata';
 import { RegularDigestMetadata } from './RegularDigestMetadata';
 import { StepSettings } from './SideBar/StepSettings';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 
@@ -21,7 +21,7 @@ const GroupStyled = styled(Group)`
 
 export const DigestMetadata = () => {
   const { template } = useTemplateEditorForm();
-  const { readonly } = useEnvController({}, template?.bridge);
+  const { readonly } = useEnvironment({}, template?.bridge);
   const stepFormPath = useStepFormPath();
   const { control, watch } = useFormContext();
 

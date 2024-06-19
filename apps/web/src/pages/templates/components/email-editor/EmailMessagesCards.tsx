@@ -16,7 +16,7 @@ import {
   useGetPrimaryIntegration,
   useIntegrationLimit,
   useVariablesManager,
-  useEnvController,
+  useEnvironment,
 } from '../../../../hooks';
 import { EditVariablesModal } from '../EditVariablesModal';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
@@ -37,7 +37,7 @@ const templateFields = ['content', 'htmlContent', 'subject', 'preheader', 'sende
 export function EmailMessagesCards() {
   const { currentOrganization } = useAuth();
   const { template } = useTemplateEditorForm();
-  const { environment, bridge } = useEnvController({}, template?.bridge);
+  const { environment, bridge } = useEnvironment({}, template?.bridge);
   const [view, setView] = useState<ViewEnum>(bridge ? ViewEnum.PREVIEW : ViewEnum.EDIT);
   const [preview, setPreview] = useState<'mobile' | 'web'>('web');
   const theme = useMantineTheme();

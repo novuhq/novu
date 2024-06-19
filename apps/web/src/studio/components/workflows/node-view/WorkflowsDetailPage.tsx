@@ -37,7 +37,7 @@ export const WorkflowsDetailPage = () => {
 
   const handleSettingsClick = () => {};
   const handleTestClick = () => {
-    // navigate(ROUTES.STUDIO_FLOWS_TEST);
+    navigate(parseUrl(ROUTES.STUDIO_FLOWS_TEST, { templateId }));
   };
 
   return (

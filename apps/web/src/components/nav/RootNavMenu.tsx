@@ -16,7 +16,7 @@ import {
 import { ChangesCountBadge } from '../layout/components/ChangesCountBadge';
 import { ROUTES } from '../../constants/routes';
 import { useSegment } from '../../components/providers/SegmentProvider';
-import { useEnvController } from '../../hooks/useEnvController';
+import { useEnvironment } from '../../hooks/useEnvironment';
 import { BaseEnvironmentEnum } from '../../constants/BaseEnvironmentEnum';
 import { useUserOnboardingStatus } from '../../api/hooks/useUserOnboardingStatus';
 import { EnvironmentSelect } from './EnvironmentSelect';
@@ -34,7 +34,7 @@ const getEnvPageRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(ro
 export const RootNavMenu: React.FC = () => {
   const segment = useSegment();
   const { updateOnboardingStatus, showOnboarding, isLoading: isLoadingOnboardingStatus } = useUserOnboardingStatus();
-  const { readonly: isEnvReadonly, environment } = useEnvController();
+  const { readonly: isEnvReadonly, environment } = useEnvironment();
 
   const handleHideOnboardingClick: React.MouseEventHandler = async () => {
     segment.track('Click Hide Get Started Page - [Get Started]');

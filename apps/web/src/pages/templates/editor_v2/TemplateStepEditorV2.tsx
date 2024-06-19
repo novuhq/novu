@@ -1,15 +1,13 @@
-import { Button } from '@novu/novui';
-import { IconPlayArrow } from '@novu/novui/icons';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { ROUTES } from '../../../constants/routes';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../../../studio/components/workflows/layout';
 import { WorkflowStepEditorContentPanel } from '../../../studio/components/workflows/step-editor/WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorInputsPanel } from '../../../studio/components/workflows/step-editor/WorkflowStepEditorInputsPanel';
 import { useTemplateController } from '../components/useTemplateController';
 import { api } from '../../../api';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
+import { WorkflowTestStepButton } from '../../../studio/components/workflows/step-editor/WorkflowTestStepButton';
 
 export const WorkflowsStepEditorPageV2 = () => {
   const [inputs, setStepInputs] = useState({});
@@ -37,12 +35,6 @@ export const WorkflowsStepEditorPageV2 = () => {
   } = useMutation<any, any, any>((data) => api.post('/v1/echo/preview/' + workflow?.name + '/' + stepId, data));
 
   const title = step?.stepId;
-
-  const navigate = useNavigate();
-  const handleTestClick = () => {
-    // TODO: this is just a temporary step for connecting the prototype
-    navigate(ROUTES.STUDIO_FLOWS_TEST_STEP);
-  };
 
   useEffect(() => {
     if (!workflow) return;
@@ -72,9 +64,13 @@ export const WorkflowsStepEditorPageV2 = () => {
       title={title}
       icon={<Icon size="32" />}
       actions={
-        <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
-          Test workflow
-        </Button>
+        <WorkflowTestStepButton
+          stepId={stepId}
+          payload={payload}
+          inputs={inputs}
+          workflowId={(workflow as any)?.rawData?.workflowId}
+          stepType={step?.template?.type}
+        />
       }
     >
       <WorkflowsPanelLayout>

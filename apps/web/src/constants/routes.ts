@@ -57,7 +57,7 @@ export enum ROUTES {
   STUDIO_ONBOARDING_PREVIEW = '/studio/onboarding/preview',
   STUDIO_ONBOARDING_SUCCESS = '/studio/onboarding/success',
   STUDIO_FLOWS_STEP_EDITOR = '/studio/flows/:templateId/step/:stepId',
-  STUDIO_FLOWS_TEST_STEP = '/studio/flows/:templateId/step/:stepId/test',
+  STUDIO_FLOWS_TEST = '/studio/flows/:templateId/test',
 }
 
-export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth', '/partner-integrations']);
+export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth']);

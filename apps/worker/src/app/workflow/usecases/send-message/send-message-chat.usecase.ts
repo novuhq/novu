@@ -16,7 +16,6 @@ import {
   ChatProviderIdEnum,
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
-  PushProviderIdEnum,
 } from '@novu/shared';
 import {
   InstrumentUsecase,

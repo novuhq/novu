@@ -8,7 +8,7 @@ import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPa
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { useProcessVariables } from '../../../../hooks';
 import { api } from '../../../../api';
-import { useEnvController } from '../../../../hooks/useEnvController';
+import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
@@ -19,7 +19,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   const [payloadValue, setPayloadValue] = useState('{}');
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
+  const { bridge } = useEnvironment({}, template?.bridge);
   const path = useStepFormPath();
 
   const content = watch(`${path}.template.content`);

@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 import { ActionIcon, FileButton, Group, Stack } from '@mantine/core';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { Button, colors, Sidebar, Text, Title, Tooltip, Trash, When } from '@novu/design-system';
 
 import { useFetchLocales, useFetchTranslation } from '../../hooks';
@@ -38,7 +38,7 @@ export function SingleTranslationFileEditSidebar({
 
   const { mode } = useParams();
   const navigate = useNavigate();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   const { translations, fileName, createdAt, updatedAt } = useFetchTranslation(identifier, locale);
   const { getLocale } = useFetchLocales();

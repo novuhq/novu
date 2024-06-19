@@ -20,7 +20,7 @@ export const TemplateDetailsPageV2 = () => {
 
   const handleSettingsClick = () => {};
   const handleTestClick = () => {
-    // navigate(ROUTES.STUDIO_FLOWS_TEST);
+    navigate(parseUrl(ROUTES.STUDIO_FLOWS_TEST, { templateId: (workflow as any)?.rawData?.workflowId }));
   };
 
   return (
