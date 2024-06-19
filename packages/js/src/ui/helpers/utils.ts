@@ -25,6 +25,26 @@ function generateUniqueRandomString(set: Set<string>, length: number): string {
   return randomString;
 }
 
+function generateRandomString(length: number): string {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+
+  return result.toLowerCase();
+}
+
+function generateUniqueRandomString(set: Set<string>, length: number): string {
+  let randomString: string;
+  do {
+    randomString = generateRandomString(length);
+  } while (set.has(randomString));
+
+  return randomString;
+}
+
 export function cssObjectToString(styles: CSSProperties): string {
   return Object.entries(styles)
     .map(([key, value]) => {
