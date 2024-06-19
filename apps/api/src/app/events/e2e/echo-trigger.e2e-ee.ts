@@ -11,13 +11,14 @@ import {
 } from '@novu/dal';
 import { ExecutionDetailsStatusEnum, JobStatusEnum, MarkMessagesAsEnum, StepTypeEnum } from '@novu/shared';
 
-import { echoServer } from '../../../../e2e/echo.server';
+import { EchoServer } from '../../../../e2e/echo.server';
 import { workflow } from '@novu/framework';
 
 const eventTriggerPath = '/v1/events/trigger';
 
 describe('Echo Trigger ', async () => {
   let session: UserSession;
+  let frameworkClient: EchoServer;
   const messageRepository = new MessageRepository();
   const workflowsRepository = new NotificationTemplateRepository();
   const jobRepository = new JobRepository();
@@ -30,10 +31,11 @@ describe('Echo Trigger ', async () => {
     await session.initialize();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
+    frameworkClient = new EchoServer();
   });
 
   afterEach(async () => {
-    await echoServer.stop();
+    await frameworkClient.stop();
   });
 
   it('should trigger the echo workflow', async () => {
@@ -71,9 +73,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -131,9 +133,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await syncWorkflow(session);
+    await syncWorkflow(session, frameworkClient);
 
     const workflowByStatic = await workflowsRepository.findByTriggerIdentifier(
       session.environment._id,
@@ -201,9 +203,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await syncWorkflow(session);
+    await syncWorkflow(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(
       session.environment._id,
@@ -258,9 +260,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -346,9 +348,9 @@ describe('Echo Trigger ', async () => {
       });
     });
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -429,9 +431,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -518,7 +520,7 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const fetchedWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(fetchedWorkflow).to.be.ok;
@@ -593,7 +595,7 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const fetchedWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(fetchedWorkflow).to.be.ok;
@@ -678,9 +680,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -738,9 +740,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -766,11 +768,11 @@ describe('Echo Trigger ', async () => {
   });
 });
 
-async function syncWorkflow(session) {
-  const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
+async function syncWorkflow(session, frameworkClient: EchoServer) {
+  const resultDiscover = await axios.get(frameworkClient.serverPath + '/echo?action=discover');
 
   await session.testAgent.post(`/v1/echo/sync`).send({
-    bridgeUrl: echoServer.serverPath + '/echo',
+    bridgeUrl: frameworkClient.serverPath + '/echo',
     workflows: resultDiscover.data.workflows,
   });
 }
@@ -798,11 +800,11 @@ async function triggerEvent(session, workflowId: string, subscriber, payload?: a
   );
 }
 
-async function discoverAndSyncEcho(session: UserSession) {
-  const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
+async function discoverAndSyncEcho(session: UserSession, frameworkClient: EchoServer) {
+  const resultDiscover = await axios.get(frameworkClient.serverPath + '/echo?action=discover');
 
   const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
-    bridgeUrl: echoServer.serverPath + '/echo',
+    bridgeUrl: frameworkClient.serverPath + '/echo',
     workflows: resultDiscover.data.workflows,
   });
 

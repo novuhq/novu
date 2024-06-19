@@ -2,18 +2,18 @@ import {
   DigestTypeEnum,
   DigestUnitEnum,
   IDigestRegularMetadata,
-  IAmountAndUnit,
   StepTypeEnum,
   DaysEnum,
   MonthlyTypeEnum,
   ITimedConfig,
   OrdinalEnum,
   OrdinalValueEnum,
+  IDigestBaseMetadata,
 } from '@novu/shared';
 import { JobEntity } from '@novu/dal';
 import { ApiException, isRegularDigest } from '@novu/application-generic';
 
-const validateAmountAndUnit = (digest: IAmountAndUnit) => {
+const validateAmountAndUnit = (digest: IDigestBaseMetadata) => {
   if (!digest?.amount) {
     throw new ApiException('Invalid digest amount');
   }

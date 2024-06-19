@@ -8,7 +8,7 @@ export type ServerStartOptions = {
   workflows: Array<DiscoverWorkflowOutput>;
 };
 
-class EchoServer {
+export class EchoServer {
   private server: express.Express;
   private app: http.Server;
   private port = 9999;
@@ -31,8 +31,8 @@ class EchoServer {
   }
 
   async stop() {
-    await this.app.close();
+    if (this.app) {
+      this.app.close();
+    }
   }
 }
-
-export const echoServer = new EchoServer();

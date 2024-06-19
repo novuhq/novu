@@ -81,7 +81,12 @@ export interface IAmountAndUnit {
   unit: DigestUnitEnum;
 }
 
-export interface IDigestBaseMetadata extends IAmountAndUnit {
+export interface IAmountAndUnitDigest {
+  amount?: number;
+  unit?: DigestUnitEnum;
+}
+
+export interface IDigestBaseMetadata extends IAmountAndUnitDigest {
   digestKey?: string;
 }
 

@@ -20,6 +20,8 @@ export const digestRegularOutputSchema = {
           enum: ['seconds', 'minutes', 'hours', 'days', 'weeks', 'months'],
         },
       },
+      required: ['amount', 'unit'],
+      additionalProperties: false,
     },
   },
   required: ['amount', 'unit'],
