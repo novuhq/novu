@@ -285,7 +285,7 @@ describe('Echo Trigger ', async () => {
     const executionDetailsRequired = await executionDetailsRepository.find({
       _environmentId: session.environment._id,
       _notificationTemplateId: foundWorkflow._id,
-      status: ExecutionDetailsStatusEnum.FAILED,
+      status: ExecutionDetailsStatusEnum.WARNING,
     });
 
     let raw = JSON.parse(executionDetailsRequired[0]?.raw ?? '');
@@ -301,7 +301,7 @@ describe('Echo Trigger ', async () => {
     const executionDetailsInvalidType = await executionDetailsRepository.find({
       _environmentId: session.environment._id,
       _notificationTemplateId: foundWorkflow._id,
-      status: ExecutionDetailsStatusEnum.FAILED,
+      status: ExecutionDetailsStatusEnum.WARNING,
     });
     raw = JSON.parse(executionDetailsInvalidType[0]?.raw ?? '');
     error = raw.raw.data[0].message;
