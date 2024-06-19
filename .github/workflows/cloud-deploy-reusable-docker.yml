@@ -141,7 +141,7 @@ jobs:
           echo $GH_PASSWORD | docker login ghcr.io -u $GH_ACTOR --password-stdin
           BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}
           echo -n $BULL_MQ_PRO_NPM_TOKEN | wc -c
-          cd $PROJECT_PATH && pnpm --silent --workspace-root pnpm-context -- ${{ inputs.project_path }}/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --no-cache --load -t ${{inputs.local_tag}} --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=${{ inputs.project_path }} - $DOCKER_BUILD_ARGUMENTS",
+          cd $PROJECT_PATH && pnpm --silent --workspace-root pnpm-context -- ${{ inputs.project_path }}/Dockerfile | BULL_MQ_PRO_NPM_TOKEN=${BULL_MQ_PRO_NPM_TOKEN} docker buildx build --no-cache --load -t ${{inputs.local_tag}} --secret id=BULL_MQ_PRO_NPM_TOKEN --build-arg PACKAGE_PATH=${{ inputs.project_path }} - $DOCKER_BUILD_ARGUMENTS
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG
           docker tag $LOCAL_TAG ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$ENV_TAG
           echo "pushing to ghcr.io/$REGISTRY_OWNER/$DOCKER_NAME:$IMAGE_TAG"
