@@ -1,7 +1,7 @@
 import { Container, Group, UnstyledButton } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { colors, PageContainer, Text, Title, When, IRow } from '@novu/design-system';
-import { useAuth, useEnvController } from '../../../hooks';
+import { useAuth, useEnvironment } from '../../../hooks';
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { FlagIcon } from '../components/shared';
@@ -40,7 +40,7 @@ export const TranslationGroupsPage = () => {
     navigate(ROUTES.TRANSLATION_GROUP_EDIT.replace(':identifier', row.original.identifier));
   };
 
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
 
   return (
     <PageContainer>

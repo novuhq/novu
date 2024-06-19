@@ -3,7 +3,7 @@ import { ChannelTypeEnum } from '@novu/shared';
 
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import {
-  useEnvController,
+  useEnvironment,
   useHasActiveIntegrations,
   useGetPrimaryIntegration,
   useVariablesManager,
@@ -28,7 +28,7 @@ const INPUTS = 'Inputs';
 export function TemplateSMSEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const { template } = useTemplateEditorForm();
-  const { environment, bridge } = useEnvController({}, template?.bridge);
+  const { environment, bridge } = useEnvironment({}, template?.bridge);
   const stepFormPath = useStepFormPath();
   const { control } = useFormContext();
   const variablesArray = useVariablesManager(templateFields);

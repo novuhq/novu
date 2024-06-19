@@ -9,6 +9,7 @@ import {
   IconOutlineMobileFriendly,
   IconOutlineNotifications,
   IconOutlineSms,
+  IconOutlineBolt,
   IconType,
 } from '@novu/novui/icons';
 import { VStack } from '@novu/novui/jsx';
@@ -62,6 +63,11 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
           Icon={IconOutlineForum}
           tooltipLabel="Guide of how to add a Chat step for embedding in code"
           onClick={handleClick('Chat')}
+        />
+        <WorkflowFloatingMenuButton
+          Icon={IconOutlineBolt}
+          tooltipLabel="Guide of how to add a Custom step for embedding in code"
+          onClick={handleClick('Custom')}
         />
       </WorkflowFloatingMenuSection>
     </menu>

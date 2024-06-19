@@ -20,7 +20,7 @@ export interface WorkflowNodesProps {
   onClick: (step: any) => void;
 }
 
-const WORKFLOW_NODE_STEP_ICON_DICTIONARY: Record<BridgeWorkflowStepType, IconType> = {
+export const WORKFLOW_NODE_STEP_ICON_DICTIONARY: Record<BridgeWorkflowStepType, IconType> = {
   email: IconOutlineEmail,
   in_app: IconOutlineNotifications,
   sms: IconOutlineSms,
