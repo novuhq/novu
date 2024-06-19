@@ -49,7 +49,7 @@ export const WorkflowsStepEditorPage = () => {
     refetch();
   }
 
-  const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step.type];
+  const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.type];
 
   return (
     <WorkflowsPageTemplate

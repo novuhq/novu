@@ -1,29 +1,18 @@
+import { FC, useMemo } from 'react';
 import { Prism } from '@mantine/prism';
 import { Tabs } from '@novu/novui';
 import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
-import { FC, useMemo } from 'react';
-import { PreviewWeb } from '../../../../components/workflow/preview/email/PreviewWeb';
-import { useActiveIntegrations } from '../../../../hooks/index';
-import { useParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { bridgeApi } from '../../../../api/bridge/bridge.api';
-import {
-  ChatPreview,
-  ChatPreviewComponent,
-  EmailPreview,
-  InAppPreview,
-  InAppPreviewComponent,
-  PushPreview,
-  SmsPreview,
-  SmsPreviewComponent,
-} from '../../../../components/workflow/preview';
-import { PreviewComponent } from '../../../../pages/templates/components/ChannelPreview';
-import { ChatContent } from '../../../../components/workflow/preview/chat/ChatContent';
-import { StepTypeEnum } from '@novu/shared';
-import { TemplateCustomEditor } from '../../../../pages/templates/components/custom-editor/TemplateCustomEditor';
-import { PushPreviewComponent } from '../../../../components/workflow/preview/push/Content';
-import { MobileSimulator } from '../../../../components/workflow/preview/common';
 import { Center } from '@novu/novui/jsx';
+import { StepTypeEnum } from '@novu/shared';
+import { PreviewWeb } from '../../../../components/workflow/preview/email/PreviewWeb';
+import { useActiveIntegrations } from '../../../../hooks';
+import {
+  ChatBasePreview,
+  PushBasePreview,
+  InAppBasePreview,
+  SmsBasePreview,
+} from '../../../../components/workflow/preview';
+import { MobileSimulator } from '../../../../components/workflow/preview/common';
 
 interface IWorkflowStepEditorContentPanelProps {
   preview: any;
@@ -46,7 +35,7 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
       content: (
         <Center>
           <PreviewStep
-            channel={step.template?.type || step.type}
+            channel={step?.template?.type || step?.type}
             preview={preview}
             loadingPreview={isLoadingPreview}
             error={error}
@@ -62,7 +51,7 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
       value: 'code',
       label: 'Code',
       content: (
-        <Prism withLineNumbers language="javascript">
+        <Prism styles={prismStyles} withLineNumbers language="javascript">
           {step?.code || ''}
         </Prism>
       ),
@@ -87,6 +76,8 @@ export const PreviewStep = ({
     return integrations.find((item) => item.channel === 'email' && item.primary) || null;
   }, [integrations]);
 
+  const props = { locales: [], loading: loadingPreview, onLocaleChange: () => {}, previewError: error };
+
   switch (channel) {
     case StepTypeEnum.EMAIL:
       return (
@@ -94,63 +85,49 @@ export const PreviewStep = ({
           integration={integration}
           content={preview?.outputs?.body}
           subject={preview?.outputs?.subject}
-          onLocaleChange={() => {}}
-          locales={[]}
-          loading={loadingPreview}
+          {...props}
         />
       );
 
     case StepTypeEnum.SMS:
-      return (
-        <SmsPreviewComponent
-          locales={[]}
-          onLocaleChange={() => {}}
-          content={preview?.outputs?.body}
-          loading={loadingPreview}
-          previewError={error}
-        />
-      );
+      return <SmsBasePreview content={preview?.outputs?.body} {...props} />;
 
     case StepTypeEnum.IN_APP:
-      return (
-        <InAppPreviewComponent
-          locales={[]}
-          onLocaleChange={() => {}}
-          content={{ content: preview?.outputs?.body, ctaButtons: [] }}
-          loading={loadingPreview}
-          previewError={error}
-        />
-      );
+      return <InAppBasePreview content={{ content: preview?.outputs?.body, ctaButtons: [] }} {...props} />;
 
     case StepTypeEnum.CHAT:
-      return (
-        <ChatPreviewComponent
-          locales={[]}
-          onLocaleChange={() => {}}
-          content={preview?.outputs?.body}
-          loading={loadingPreview}
-          previewError={error}
-        />
-      );
+      return <ChatBasePreview content={preview?.outputs?.body} {...props} />;
 
     case StepTypeEnum.PUSH:
       return (
         <MobileSimulator withBackground>
-          <PushPreviewComponent
-            locales={[]}
-            onLocaleChange={() => {}}
-            loading={loadingPreview}
-            previewError={error}
-            title={preview?.outputs?.subject}
-            content={preview?.outputs?.body}
-          />
+          <PushBasePreview title={preview?.outputs?.subject} content={preview?.outputs?.body} {...props} />
         </MobileSimulator>
       );
 
+    case StepTypeEnum.DIGEST:
+    case StepTypeEnum.DELAY:
     case StepTypeEnum.CUSTOM:
-      return <TemplateCustomEditor />;
+      return (
+        <Prism styles={prismStyles} withLineNumbers language="javascript">
+          {`${JSON.stringify(preview?.outputs, null, 2)}`}
+        </Prism>
+      );
 
     default:
       return <>Unknown Step</>;
   }
 };
+const prismStyles = (theme) => ({
+  root: {
+    width: '100%',
+  },
+  scrollArea: {
+    border: ` 1px solid ${theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[5]}`,
+    borderRadius: '7px',
+  },
+  code: {
+    fontWeight: 400,
+    backgroundColor: 'transparent !important',
+  },
+});

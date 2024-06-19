@@ -1,24 +1,18 @@
-import styled from '@emotion/styled';
 import { Grid, JsonInput, useMantineTheme } from '@mantine/core';
 import { Button, colors, inputStyles, When } from '@novu/design-system';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { IForm } from '../../../../pages/templates/components/formTypes';
-import {
-  ParsedPreviewStateType,
-  usePreviewInAppTemplate,
-} from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
+import { usePreviewInAppTemplate } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
-import Content from './Content';
-import { Header } from './Header';
 import { useProcessVariables } from '../../../../hooks';
 import { api } from '../../../../api';
 import { useEnvController } from '../../../../hooks/useEnvController';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
-import { ErrorPrettyRender } from '../ErrorPrettyRender';
+import { InAppBasePreview } from './InAppBasePreview';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {
   const theme = useMantineTheme();
@@ -71,7 +65,7 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
   return (
     <Grid gutter={24}>
       <Grid.Col span={showVariables ? 8 : 12}>
-        <InAppPreviewComponent
+        <InAppBasePreview
           content={bridge ? bridgeContent : parsedPreviewState}
           onLocaleChange={onLocaleChange}
           locales={locales}
@@ -133,57 +127,3 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
     </Grid>
   );
 }
-
-const ContainerStyled = styled.div<{ removePadding: boolean }>`
-  width: 27.5rem;
-  display: flex;
-  margin: 1rem auto;
-  flex-direction: column;
-  gap: 1rem;
-
-  ${({ removePadding }) => removePadding && `padding: 0;`}
-`;
-
-export const InAppPreviewComponent = ({
-  content,
-  loading = false,
-  error,
-  previewError,
-  showEditOverlay = false,
-  onLocaleChange,
-  selectedLocale,
-  locales = [],
-  enableAvatar = false,
-}: {
-  content: ParsedPreviewStateType;
-  loading?: boolean;
-  error?: string;
-  previewError?: any;
-  showEditOverlay?: boolean;
-  onLocaleChange: (locale: string) => void;
-  selectedLocale?: string;
-  locales: any[];
-  enableAvatar?: boolean;
-}) => {
-  if (previewError) {
-    return <ErrorPrettyRender error={previewError} />;
-  }
-
-  return (
-    <ContainerStyled removePadding={!showEditOverlay}>
-      <Header
-        selectedLocale={selectedLocale}
-        locales={locales}
-        areLocalesLoading={loading}
-        onLocaleChange={onLocaleChange}
-      />
-      <Content
-        isPreviewLoading={loading}
-        parsedPreviewState={content}
-        templateError={error || ''}
-        showOverlay={showEditOverlay}
-        enableAvatar={enableAvatar}
-      />
-    </ContainerStyled>
-  );
-};

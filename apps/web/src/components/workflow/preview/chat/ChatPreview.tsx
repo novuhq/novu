@@ -1,14 +1,8 @@
-import styled from '@emotion/styled';
-import { Divider, Flex, useMantineColorScheme } from '@mantine/core';
-import { colors, Text } from '@novu/design-system';
 import { useFormContext } from 'react-hook-form';
 import { useLocation } from 'react-router-dom';
 
 import { IForm } from '../../../../pages/templates/components/formTypes';
 import { useStepFormPath } from '../../../../pages/templates/hooks/useStepFormPath';
-import { LocaleSelect } from '../common';
-import { ChatContent } from './ChatContent';
-import { ChatInput } from './ChatInput';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { usePreviewChatTemplate } from '../../../../pages/templates/hooks/usePreviewChatTemplate';
 import { useEffect, useState } from 'react';
@@ -16,17 +10,9 @@ import { api } from '../../../../api';
 import { useEnvController } from '../../../../hooks/useEnvController';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
-import { ErrorPrettyRender } from '../ErrorPrettyRender';
-
-const ChatPreviewContainer = styled.div`
-  width: 100%;
-  max-width: 37.5em;
-`;
+import { ChatBasePreview } from './ChatBasePreview';
 
 export function ChatPreview({ showLoading = false, inputVariables }: { showLoading?: boolean; inputVariables?: any }) {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
-
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
   const { bridge } = useEnvController({}, template?.bridge);
@@ -64,12 +50,8 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
     disabled: showLoading || bridge,
   });
 
-  if (previewError) {
-    return <ErrorPrettyRender error={previewError} />;
-  }
-
   return (
-    <ChatPreviewComponent
+    <ChatBasePreview
       content={previewContent || bridgeContent}
       onLocaleChange={onLocaleChange}
       locales={locales || []}
@@ -80,54 +62,3 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
     />
   );
 }
-
-export const ChatPreviewComponent = ({
-  content,
-  loading = false,
-  error,
-  previewError,
-  showEditOverlay = false,
-  onLocaleChange,
-  selectedLocale,
-  locales,
-}: {
-  content: string;
-  loading?: boolean;
-  error?: string;
-  previewError?: any;
-  showEditOverlay?: boolean;
-  onLocaleChange: (locale: string) => void;
-  selectedLocale?: string;
-  locales: any[];
-}) => {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
-
-  if (previewError) {
-    return <ErrorPrettyRender error={previewError} />;
-  }
-
-  return (
-    <ChatPreviewContainer>
-      <Flex>
-        <LocaleSelect
-          value={selectedLocale}
-          onLocaleChange={onLocaleChange}
-          isLoading={loading}
-          locales={locales || []}
-        />
-      </Flex>
-      <Divider
-        color={isDark ? colors.B30 : colors.BGLight}
-        label={
-          <Text color={isDark ? colors.B30 : colors.BGLight} weight="bold">
-            Today
-          </Text>
-        }
-        labelPosition="center"
-      />
-      <ChatContent showOverlay={showEditOverlay} isLoading={loading} content={content} errorMsg={error} />
-      <ChatInput />
-    </ChatPreviewContainer>
-  );
-};
