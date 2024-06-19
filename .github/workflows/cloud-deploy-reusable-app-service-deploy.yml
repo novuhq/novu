@@ -29,7 +29,8 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  deploy_service:
+
+  infrastructure_data:
     runs-on: ubuntu-latest
     timeout-minutes: 80
     environment: ${{ inputs.environment }}
@@ -38,6 +39,10 @@ jobs:
     permissions:
       contents: read
       deployments: write
+    outputs:
+      services_to_deploy: ${{ steps.terraform.outputs.queue_workers_services }}
+      ecs_cluster: ${{ steps.terraform.outputs.ecs_cluster }}
+      aws_region: ${{ steps.terraform.outputs.aws_region }}
     steps:
       - run: echo "Deploying ${{ inputs.service_name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
 
@@ -52,6 +57,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_version: 1.5.5
           terraform_wrapper: false
 
       - name: Terraform Init
@@ -61,45 +67,68 @@ jobs:
       - name: Terraform get output
         working-directory: cloud-infra/terraform/novu/aws
         id: terraform
-        env:
-          SERVICE_NAME: ${{ inputs.service_name }}
         run: |
-          echo "ecs_container_name=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_container_name | jq -r .)" >> $GITHUB_ENV
-          echo "ecs_service=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_service | jq -r .)" >> $GITHUB_ENV
-          echo "ecs_cluster=$(terraform output -json ${{ env.SERVICE_NAME }}_ecs_cluster | jq -r .)" >> $GITHUB_ENV
-          echo "task_name=$(terraform output -json ${{ env.SERVICE_NAME }}_task_name | jq -r .)" >> $GITHUB_ENV
-          echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_ENV
+          echo "queue_workers_services=$(terraform output -json queue_workers_services)" >> $GITHUB_OUTPUT
+          echo "ecs_cluster=$(terraform output -json worker_ecs_cluster | jq -r .)" >> $GITHUB_OUTPUT
+          echo "aws_region=$(terraform output -json aws_region | jq -r .)" >> $GITHUB_OUTPUT
+  
+
+  deploy_service:
+    needs:
+      - infrastructure_data
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    environment: ${{ inputs.environment }}
+    env:
+      TF_WORKSPACE: ${{ inputs.terraform_workspace }}
+    permissions:
+      contents: read
+      deployments: write
+    strategy:
+      matrix:
+        worker: ${{fromJson(needs.infrastructure_data.outputs.services_to_deploy)}}
+    steps:
+      - run: echo "Deploying ${{ inputs.service_name }} to ${{ inputs.terraform_workspace }} And Docker Tag ${{ inputs.docker_image }}"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.aws_region }}
+          aws-region: ${{ needs.infrastructure_data.outputs.aws_region }}
+
 
       - name: Download task definition
         run: |
-          aws ecs describe-task-definition --task-definition ${{ env.task_name }} \
+          aws ecs describe-task-definition --task-definition ${{ matrix.worker.task_name }} \
           --query taskDefinition > task-definition.json
 
       - name: Render Amazon ECS task definition
-        id: render-task-container
+        id: render-web-container
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: task-definition.json
-          container-name: ${{ env.ecs_container_name }}
+          container-name: ${{ matrix.worker.container_name }}
           image: ${{ inputs.docker_image }}
 
       - name: Deploy to Amazon ECS service
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
-          task-definition: ${{ steps.render-task-container.outputs.task-definition }}
-          service: ${{ env.ecs_service }}
-          cluster: ${{ env.ecs_cluster }}
+          task-definition: ${{ steps.render-web-container.outputs.task-definition }}
+          service: ${{ matrix.worker.service }}
+          cluster: ${{ needs.infrastructure_data.outputs.ecs_cluster }}
           wait-for-service-stability: true
 
+  post-deploy:
+    needs:
+      - infrastructure-data
+      - deploy-service
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: read
+    steps:
       - uses: actions/checkout@v4
-        if: ${{ inputs.deploy_sentry_release }}
 
       - name: get-npm-version
         if: ${{ inputs.deploy_sentry_release }}
@@ -142,3 +171,4 @@ jobs:
           guid: ${{ inputs.New_Relic_GUID }}
           version: "v${{ steps.package-version.outputs.current-version }}"
           user: "${{ github.actor }}"
+
