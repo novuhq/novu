@@ -40,7 +40,7 @@ describe('test use of novus node package - Events', () => {
   test('should generate bridge URL correctly', async () => {
     mockedAxios.post.mockResolvedValue({});
     process.env.NEXT_PUBLIC_VERCEL_URL = 'example.com';
-    const expectedUrl = `https://${process.env.NEXT_PUBLIC_VERCEL_URL}/api/echo`;
+    const expectedUrl = `https://${process.env.NEXT_PUBLIC_VERCEL_URL}/api/novu`;
 
     await novu.events.trigger('test-template', {
       to: 'test-user',
