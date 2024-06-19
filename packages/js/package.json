@@ -39,10 +39,22 @@
     "lint": "eslint --ext .ts,.tsx src",
     "test": "jest"
   },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
   "devDependencies": {
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.12",
-    "autoprefixer": "^9.8.6",
+    "autoprefixer": "^10.4.0",
     "bytes-iec": "^3.1.1",
     "chalk": "^5.3.0",
     "compression-webpack-plugin": "^10.0.0",
