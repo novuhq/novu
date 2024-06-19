@@ -6,7 +6,7 @@ import { HStack } from '@novu/novui/jsx';
 import { FC } from 'react';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IWorkflowTestStepTriggerPanelProps {}
+interface IWorkflowTestTriggerPanelProps {}
 
 // TODO: placeholder for real code
 const CODE = (
@@ -26,7 +26,7 @@ to: {
   </Prism>
 );
 
-export const WorkflowTestStepTriggerPanel: FC<IWorkflowTestStepTriggerPanelProps> = ({}) => {
+export const WorkflowTestTriggerPanel: FC<IWorkflowTestTriggerPanelProps> = ({}) => {
   return (
     <Box>
       <HStack gap="50" mb="margins.layout.page.section.titleBottom">

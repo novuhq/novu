@@ -1,7 +1,4 @@
-import { Button } from '@novu/novui';
-import { IconPlayArrow } from '@novu/novui/icons';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ROUTES } from '../../../../constants/routes';
+import { useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { WorkflowStepEditorContentPanel } from './WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorInputsPanel } from './WorkflowStepEditorInputsPanel';
@@ -9,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { bridgeApi } from '../../../../api/bridge/bridge.api';
 import { useState } from 'react';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../node-view/WorkflowNodes';
+import { WorkflowTestStepButton } from './WorkflowTestStepButton';
 
 export const WorkflowsStepEditorPage = () => {
   const [inputs, setStepInputs] = useState({});
@@ -30,12 +28,6 @@ export const WorkflowsStepEditorPage = () => {
   const step = workflow?.steps.find((item) => item.stepId === stepId);
   const title = step?.stepId;
 
-  const navigate = useNavigate();
-  const handleTestClick = () => {
-    // TODO: this is just a temporary step for connecting the prototype
-    navigate(ROUTES.STUDIO_FLOWS_TEST_STEP);
-  };
-
   function onInputsChange(type: string, form: any) {
     switch (type) {
       case 'step':
@@ -56,9 +48,13 @@ export const WorkflowsStepEditorPage = () => {
       title={title}
       icon={<Icon size="32" />}
       actions={
-        <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
-          Test workflow
-        </Button>
+        <WorkflowTestStepButton
+          stepId={stepId}
+          payload={payload}
+          inputs={inputs}
+          workflowId={workflow?.workflowId}
+          stepType={step?.type}
+        />
       }
     >
       <WorkflowsPanelLayout>
