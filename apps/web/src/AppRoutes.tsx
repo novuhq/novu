@@ -56,7 +56,7 @@ import {
   WorkflowsListPage,
   WorkflowsDetailPage,
   WorkflowsStepEditorPage,
-  WorkflowsTestStepPage,
+  WorkflowsTestPage,
 } from './studio/components/workflows';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
 
@@ -152,7 +152,7 @@ export const AppRoutes = () => {
           <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
           <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
           <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<WorkflowsStepEditorPage />} />
-          <Route path={ROUTES.STUDIO_FLOWS_TEST_STEP} element={<WorkflowsTestStepPage />} />
+          <Route path={ROUTES.STUDIO_FLOWS_TEST} element={<WorkflowsTestPage />} />
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />

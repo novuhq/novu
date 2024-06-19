@@ -10,6 +10,7 @@ import { WorkflowStepEditorInputsPanel } from '../../../studio/components/workfl
 import { useTemplateController } from '../components/useTemplateController';
 import { api } from '../../../api';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
+import { parseUrl } from '../../../utils/routeUtils';
 
 export const WorkflowsStepEditorPageV2 = () => {
   const [inputs, setStepInputs] = useState({});
@@ -41,7 +42,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   const navigate = useNavigate();
   const handleTestClick = () => {
     // TODO: this is just a temporary step for connecting the prototype
-    navigate(ROUTES.STUDIO_FLOWS_TEST_STEP);
+    navigate(parseUrl(ROUTES.STUDIO_FLOWS_TEST, { templateId }));
   };
 
   useEffect(() => {
