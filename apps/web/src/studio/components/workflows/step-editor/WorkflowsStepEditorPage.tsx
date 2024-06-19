@@ -52,7 +52,7 @@ export const WorkflowsStepEditorPage = () => {
           stepId={stepId}
           payload={payload}
           inputs={inputs}
-          workflowId={workflow.workflowid}
+          workflowId={workflow?.workflowId}
           stepType={step?.type}
         />
       }
