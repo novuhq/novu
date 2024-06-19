@@ -38,9 +38,6 @@ jobs:
       local_tag: novu-api
       env_tag: ${{ inputs.env }}
       enterprise: true
-      bullmq_secret: ${{ inputs.bullmq_secret }}
-
-
 
   deploy_dev_api:
     needs:
