@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { FormEvent, FormEventHandler } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import { JsonSchemaForm } from './JsonSchemaForm';
 import { RJSFSchema } from '@rjsf/utils';
+import { HStack } from '../../styled-system/jsx';
+import { IconOutlineSave } from '../icons';
+import { Title, Button } from '../components';
 
 export default {
   title: 'Components/JsonSchemaForm',
@@ -9,7 +12,28 @@ export default {
   argTypes: {},
 } as Meta<typeof JsonSchemaForm>;
 
-const Template: StoryFn<typeof JsonSchemaForm> = ({ ...args }) => <JsonSchemaForm {...args} />;
+const Template: StoryFn<typeof JsonSchemaForm> = ({ ...args }) => {
+  const onSubmit: FormEventHandler<HTMLFormElement> = (event) => {
+    event.preventDefault();
+
+    console.log(event.target);
+
+    const data = new FormData(event.target as HTMLFormElement);
+    console.log({ data });
+  };
+
+  return (
+    <form onSubmit={onSubmit}>
+      <HStack justifyContent="space-between">
+        <Title variant="subsection">Step inputs</Title>
+        <Button type="submit" Icon={IconOutlineSave}>
+          Save
+        </Button>
+      </HStack>
+      <JsonSchemaForm {...args} />
+    </form>
+  );
+};
 export const ExampleForm = Template.bind({});
 
 const schema: RJSFSchema = {
@@ -87,5 +111,5 @@ const schema: RJSFSchema = {
 
 ExampleForm.args = {
   schema: schema,
-  formData: {},
+  formData: { money: 43 },
 };

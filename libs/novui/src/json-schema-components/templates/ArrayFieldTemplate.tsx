@@ -8,10 +8,9 @@ import {
 } from '@rjsf/utils';
 import { Grid } from '@mantine/core';
 import { css } from '../../../styled-system/css';
-import { Box, Flex, styled } from '../../../styled-system/jsx';
-import { title } from '../../../styled-system/recipes';
-
-const Title = styled('h2', title);
+import { Box, Flex, HStack } from '../../../styled-system/jsx';
+import { Text } from '../../components';
+import { formBorderClassName } from '../shared';
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const { canAdd, disabled, idSchema, uiSchema, items, onAddClick, readonly, registry, required, title, schema } =
@@ -45,9 +44,9 @@ export function ArrayFieldTitleTemplate(props: ArrayFieldTitleProps) {
   const { title } = props;
 
   return (
-    <Title py={'75'} variant={'subsection'}>
+    <Text py={'50'} fontWeight="strong">
       {title}
-    </Title>
+    </Text>
   );
 }
 
@@ -69,10 +68,10 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
   return (
     <Grid>
       <Grid.Col span={'auto'}>
-        <div className={css({ pl: '125' })}>{children}</div>
+        <div className={formBorderClassName}>{children}</div>
       </Grid.Col>
       <Grid.Col span={'content'}>
-        <Flex>
+        <HStack gap="25" py="25">
           {(hasMoveUp || hasMoveDown) && (
             <MoveUpButton
               disabled={disabled || readonly || !hasMoveUp}
@@ -90,7 +89,7 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
           {hasRemove && (
             <RemoveButton disabled={disabled || readonly} onClick={onDropIndexClick(index)} registry={registry} />
           )}
-        </Flex>
+        </HStack>
       </Grid.Col>
     </Grid>
   );
