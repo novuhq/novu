@@ -12,6 +12,7 @@ import {
   JobTopicNameEnum,
   StepTypeEnum,
   TriggerRecipientsPayload,
+  ClerkJwtPayload,
 } from '@novu/shared';
 import {
   UserEntity,
@@ -243,13 +244,19 @@ export class UserSession {
   }
 
   private async fetchJwtEE() {
+    await this.updateEETokenClaims({
+      externalId: this.user ? this.user._id : '',
+      externalOrgId: this.organization ? this.organization._id : '',
+      environmentId: this.environment ? this.environment._id : '',
+    });
+  }
+
+  async updateEETokenClaims(claims: Partial<ClerkJwtPayload>) {
     const decoded = await this.decodeClerkJWT(process.env.CLERK_LONG_LIVED_TOKEN as string);
 
     const newToken = {
       ...decoded,
-      environmentId: this.environment ? this.environment._id : '',
-      externalOrgId: this.organization ? this.organization._id : '',
-      externalId: this.user ? this.user._id : '',
+      ...claims,
     };
 
     const reencoded = jwt.sign(newToken, process.env.CLERK_PRIVATE_KEY as string, {

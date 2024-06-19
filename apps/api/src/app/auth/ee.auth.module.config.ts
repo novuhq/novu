@@ -8,7 +8,15 @@ import {
 } from '@novu/application-generic';
 import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
-import { ModuleMetadata, Provider } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  MiddlewareConsumer,
+  ModuleMetadata,
+  NestMiddleware,
+  Provider,
+  RequestMethod,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import {
   EnvironmentRepository,
@@ -20,6 +28,7 @@ import {
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { JwtModule, JwtService } from '@nestjs/jwt';
+import { NextFunction } from 'express';
 
 const eeAuthServiceProvider = {
   provide: 'AUTH_SERVICE',
@@ -95,4 +104,21 @@ export function getEEModuleConfig(): ModuleMetadata {
       'ORGANIZATION_REPOSITORY',
     ],
   };
+}
+
+export function configure(consumer: MiddlewareConsumer) {
+  consumer.apply(DomainRestrictionMiddleware).forRoutes({ path: '/users/', method: RequestMethod.ALL });
+}
+
+class DomainRestrictionMiddleware implements NestMiddleware {
+  use(req: Request, res: Response, next: NextFunction) {
+    const allowedDomains = [process.env.FRONT_BASE_URL];
+    const origin = (req.headers as any)?.origin || '';
+
+    if (origin && allowedDomains.includes(origin)) {
+      next();
+    } else {
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
+    }
+  }
 }

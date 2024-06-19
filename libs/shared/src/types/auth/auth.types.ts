@@ -1,3 +1,5 @@
+import { JwtPayload } from '@clerk/types';
+
 export interface IJwtClaims {
   _id: string;
   firstName?: string;
@@ -9,6 +11,18 @@ export interface IJwtClaims {
   roles: string[];
   exp: number;
 }
+
+// JWT payload + custom claims
+export type ClerkJwtPayload = JwtPayload & {
+  _id: string;
+  email: string;
+  lastName: string;
+  firstName: string;
+  environmentId: string; // TODO
+  profilePicture: string;
+  externalId?: string;
+  externalOrgId?: string;
+};
 
 // @deprecated Use IJwtClaims instead
 export type UserSessionData = IJwtClaims;
