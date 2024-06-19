@@ -13,14 +13,14 @@ export type ToSubscriber = {
   [key: string]: any;
 };
 
-interface IWorkflowTestStepInputsPanelProps {
+interface IWorkflowTestInputsPanelProps {
   payloadSchema: Record<string, any>;
   stepTypes: ChannelTypeEnum[];
   to: ToSubscriber;
   onChange: (payload?: Record<string, any>, to?: ToSubscriber) => void;
 }
 
-export const WorkflowTestStepInputsPanel: FC<IWorkflowTestStepInputsPanelProps> = ({
+export const WorkflowTestInputsPanel: FC<IWorkflowTestInputsPanelProps> = ({
   payloadSchema,
   onChange,
   to,
@@ -33,12 +33,14 @@ export const WorkflowTestStepInputsPanel: FC<IWorkflowTestStepInputsPanelProps> 
     },
   });
 
-  const values = watch();
-
   useEffect(() => {
-    onChange(undefined, values);
+    const { unsubscribe } = watch((values) => {
+      onChange(undefined, values as ToSubscriber);
+    });
+
+    return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [values]);
+  }, [watch]);
 
   return (
     <Stack gap="margins.layout.page.vertical">
@@ -83,9 +85,7 @@ export const WorkflowTestStepInputsPanel: FC<IWorkflowTestStepInputsPanelProps> 
         <Stack gap="margins.layout.Input.input-input">
           <JsonSchemaForm
             onChange={(data) => {
-              if (onChange) {
-                onChange(data, undefined);
-              }
+              onChange(data.formData, undefined);
             }}
             schema={payloadSchema || {}}
             formData={{}}

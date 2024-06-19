@@ -1,16 +1,18 @@
 import { Button } from '@novu/novui';
 import { IconOutlineEmail, IconPlayArrow } from '@novu/novui/icons';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ROUTES } from '../../../../constants/routes';
+import { useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { WorkflowStepEditorContentPanel } from './WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorInputsPanel } from './WorkflowStepEditorInputsPanel';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { bridgeApi } from '../../../../api/bridge/bridge.api';
 import { useState } from 'react';
-import { parseUrl } from '../../../../utils/routeUtils';
+import { errorMessage, successMessage } from '@novu/design-system';
+import { testSendEmailMessage } from '../../../../api/notification-templates';
+import { useAuth } from '../../../../hooks/useAuth';
 
 export const WorkflowsStepEditorPage = () => {
+  const { currentUser } = useAuth();
   const [inputs, setStepInputs] = useState({});
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
@@ -29,14 +31,25 @@ export const WorkflowsStepEditorPage = () => {
   const step = workflow?.steps.find((item) => item.stepId === stepId);
   const title = step?.stepId;
 
-  const navigate = useNavigate();
-  const handleTestClick = () => {
-    navigate(
-      parseUrl(ROUTES.STUDIO_FLOWS_TEST_STEP, {
-        templateId: workflow.workflowId,
-        stepId: step.stepId,
-      })
-    );
+  const { mutateAsync: testSendEmailEvent, isLoading: isTestingEmail } = useMutation(testSendEmailMessage);
+
+  const handleTestClick = async () => {
+    try {
+      await testSendEmailEvent({
+        stepId,
+        workflowId: workflow.workflowid,
+        contentType: 'customHtml',
+        subject: '',
+        payload,
+        inputs,
+        to: currentUser?.email || '',
+        bridge: true,
+        content: '',
+      });
+      successMessage('Test sent successfully!');
+    } catch (e: any) {
+      errorMessage(e.message || 'Un-expected error occurred');
+    }
   };
 
   function onInputsChange(type: string, form: any) {
@@ -57,8 +70,8 @@ export const WorkflowsStepEditorPage = () => {
       title={title}
       icon={<IconOutlineEmail size="32" />}
       actions={
-        <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
-          Test workflow
+        <Button loading={isTestingEmail} Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
+          Test step
         </Button>
       }
     >

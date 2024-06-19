@@ -1,18 +1,19 @@
+import { useDisclosure } from '@mantine/hooks';
 import { Button } from '@novu/novui';
 import { IconOutlineCable, IconPlayArrow } from '@novu/novui/icons';
-import { Stack } from '@novu/novui/jsx';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { bridgeApi } from '../../../../api/bridge/bridge.api';
 import { testTrigger } from '../../../../api/notification-templates';
 import { When } from '../../../../components/utils/When';
 import { useAuth } from '../../../../hooks/useAuth';
+import { ExecutionDetailsModalWrapper } from '../../../../pages/templates/components/ExecutionDetailsModalWrapper';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
-import { ToSubscriber, WorkflowTestStepInputsPanel } from './WorkflowTestStepInputsPanel';
-import { WorkflowTestStepTriggerPanel } from './WorkflowTestStepTriggerPanel';
+import { ToSubscriber, WorkflowTestInputsPanel } from './WorkflowTestInputsPanel';
+import { WorkflowTestTriggerPanel } from './WorkflowTestTriggerPanel';
 
-export const WorkflowsTestStepPage = () => {
+export const WorkflowsTestPage = () => {
   const { currentUser, isLoading: isAuthLoading } = useAuth();
   const { templateId = '' } = useParams<{ templateId: string }>();
   const [payload, setPayload] = useState<Record<string, any>>({});
@@ -34,6 +35,8 @@ export const WorkflowsTestStepPage = () => {
   }, [workflow]);
 
   const { mutateAsync: triggerTestEvent, isLoading: isTestLoading } = useMutation(testTrigger);
+  const [transactionId, setTransactionId] = useState<string>('');
+  const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
 
   const handleTestClick = async () => {
     const response = await triggerTestEvent({
@@ -44,6 +47,18 @@ export const WorkflowsTestStepPage = () => {
         __source: 'studio-test-workflow',
       },
     });
+
+    setTransactionId(response.transactionId || '');
+    openExecutionModal();
+  };
+
+  const onChange = (payloadValues, toValues) => {
+    if (toValues) {
+      setTo(toValues);
+    }
+    if (payloadValues) {
+      setPayload(payloadValues);
+    }
   };
 
   if (isAuthLoading || isWorkflowLoading || isTestLoading || !currentUser) {
@@ -52,7 +67,7 @@ export const WorkflowsTestStepPage = () => {
 
   return (
     <WorkflowsPageTemplate
-      title="Test workflow steps"
+      title="Test workflow"
       description="Test trigger as if you sent it from your API"
       icon={<IconOutlineCable size="32" />}
       actions={
@@ -62,17 +77,10 @@ export const WorkflowsTestStepPage = () => {
       }
     >
       <WorkflowsPanelLayout>
-        <WorkflowTestStepTriggerPanel />
+        <WorkflowTestTriggerPanel />
         <When truthy={!isAuthLoading && !isWorkflowLoading}>
-          <WorkflowTestStepInputsPanel
-            onChange={(payloadValues, toValues) => {
-              if (toValues) {
-                setTo(toValues);
-              }
-              if (payloadValues) {
-                setPayload(payloadValues);
-              }
-            }}
+          <WorkflowTestInputsPanel
+            onChange={onChange}
             payloadSchema={workflow?.data?.schema}
             to={{
               subscriberId: currentUser._id,
@@ -82,6 +90,11 @@ export const WorkflowsTestStepPage = () => {
           />
         </When>
       </WorkflowsPanelLayout>
+      <ExecutionDetailsModalWrapper
+        transactionId={transactionId}
+        isOpen={executionModalOpened}
+        onClose={closeExecutionModal}
+      />
     </WorkflowsPageTemplate>
   );
 };
