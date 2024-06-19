@@ -1,6 +1,9 @@
+import { Loader } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Button } from '@novu/novui';
+import { css } from '@novu/novui/css';
 import { IconOutlineCable, IconPlayArrow } from '@novu/novui/icons';
+import { Center } from '@novu/novui/jsx';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -61,8 +64,16 @@ export const WorkflowsTestPage = () => {
     }
   };
 
-  if (isAuthLoading || isWorkflowLoading || isTestLoading) {
-    return null;
+  if (isAuthLoading || isWorkflowLoading) {
+    return (
+      <Center
+        className={css({
+          marginTop: '375',
+        })}
+      >
+        <Loader color="indigo" size={32} />
+      </Center>
+    );
   }
 
   return (
@@ -71,7 +82,7 @@ export const WorkflowsTestPage = () => {
       description="Trigger a test run for this workflow"
       icon={<IconOutlineCable size="32" />}
       actions={
-        <Button Icon={IconPlayArrow} variant="filled" onClick={handleTestClick}>
+        <Button loading={isTestLoading} Icon={IconPlayArrow} variant="filled" onClick={handleTestClick}>
           Run a test
         </Button>
       }
