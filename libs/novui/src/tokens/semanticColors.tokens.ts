@@ -137,6 +137,36 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
   },
+  input: {
+    border: {
+      DEFAULT: {
+        value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B30}' },
+        type: 'color',
+      },
+      active: {
+        value: { base: '{colors.legacy.B60}', _dark: '{colors.legacy.B60}' },
+        type: 'color',
+      },
+      disabled: {
+        value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.B30}' },
+        type: 'color',
+      },
+      error: {
+        value: { base: '{colors.legacy.error}', _dark: '{colors.legacy.error}' },
+        type: 'color',
+      },
+    },
+    surface: {
+      DEFAULT: {
+        value: { base: '{colors.transparent}', _dark: '{colors.transparent}' },
+        type: 'color',
+      },
+      disabled: {
+        value: { base: '{colors.legacy.B98}', _dark: '{colors.legacy.B20}' },
+        type: 'color',
+      },
+    },
+  },
   // color palette semantic testing
   mode: {
     cloud: {
