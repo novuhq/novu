@@ -16,11 +16,7 @@ export default {
 const Template: StoryFn<typeof JsonSchemaForm> = ({ colorPalette, ...args }) => {
   const onSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
-
-    console.log(event.target);
-
-    const data = new FormData(event.target as HTMLFormElement);
-    console.log({ data });
+    alert('Saving! (but not actually...)');
   };
 
   return (
