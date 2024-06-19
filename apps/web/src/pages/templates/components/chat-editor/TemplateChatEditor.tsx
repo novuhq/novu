@@ -3,7 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { Grid, SegmentedControl, Stack, useMantineTheme } from '@mantine/core';
 import { useState } from 'react';
 
-import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
+import { useEnvironment, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import type { IForm } from '../formTypes';
@@ -34,7 +34,7 @@ export function TemplateChatEditor() {
   const [inputVariables, setInputVariables] = useState();
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
+  const { bridge } = useEnvironment({}, template?.bridge);
   const theme = useMantineTheme();
 
   return (

@@ -13,28 +13,20 @@ import {
 import { ApiException } from '../../utils/exceptions';
 import { isRegularDigest } from '../../utils/digest';
 import { TimedDigestDelayService } from './timed-digest-delay.service';
-import {
-  IBridgeDelayResponse,
-  IBridgeDigestResponse,
-} from '../../utils/require-inject';
 
 export class ComputeJobWaitDurationService {
   calculateDelay({
     stepMetadata,
     payload,
     overrides,
-    bridgeResponse,
   }: {
     stepMetadata?: IWorkflowStepMetadata;
     payload: any;
     overrides: any;
-    bridgeResponse?: IBridgeDigestResponse | IBridgeDelayResponse;
   }): number {
     if (!stepMetadata) throw new ApiException(`Step metadata not found`);
 
-    const digestType =
-      (bridgeResponse?.type as DigestTypeEnum | DelayTypeEnum) ??
-      stepMetadata.type;
+    const digestType = stepMetadata.type;
 
     if (digestType === DelayTypeEnum.SCHEDULED) {
       const delayPath = (stepMetadata as IDelayScheduledMetadata).delayPath;
@@ -51,21 +43,18 @@ export class ComputeJobWaitDurationService {
 
       return delay;
     } else if (isRegularDigest(digestType)) {
-      const userUnit = castToDigestUnitEnum(bridgeResponse?.unit);
-      const userAmount = bridgeResponse?.amount;
-
       if (this.isValidDelayOverride(overrides)) {
         return this.toMilliseconds(
-          userAmount ?? (overrides.delay.amount as number),
-          userUnit ?? (overrides.delay.unit as DigestUnitEnum)
+          overrides.delay.amount as number,
+          overrides.delay.unit as DigestUnitEnum
         );
       }
 
       const regularDigestMeta = stepMetadata as IDigestRegularMetadata;
 
       return this.toMilliseconds(
-        userAmount ?? regularDigestMeta.amount,
-        userUnit ?? regularDigestMeta.unit
+        regularDigestMeta.amount,
+        regularDigestMeta.unit
       );
     } else if (digestType === DigestTypeEnum.TIMED) {
       const timedDigestMeta = stepMetadata as IDigestTimedMetadata;
@@ -115,24 +104,5 @@ export class ComputeJobWaitDurationService {
     );
 
     return isDelayAmountANumber && includesValidDelayUnit;
-  }
-}
-
-function castToDigestUnitEnum(unit: string): DigestUnitEnum | undefined {
-  switch (unit) {
-    case 'seconds':
-      return DigestUnitEnum.SECONDS;
-    case 'minutes':
-      return DigestUnitEnum.MINUTES;
-    case 'hours':
-      return DigestUnitEnum.HOURS;
-    case 'days':
-      return DigestUnitEnum.DAYS;
-    case 'weeks':
-      return DigestUnitEnum.WEEKS;
-    case 'months':
-      return DigestUnitEnum.MONTHS;
-    default:
-      return undefined;
   }
 }

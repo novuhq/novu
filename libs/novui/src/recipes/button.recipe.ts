@@ -10,8 +10,6 @@ export const BUTTON_RECIPE = defineSlotRecipe({
   slots: SLOTS,
   base: {
     root: {
-      // default color palette
-      colorPalette: 'mode.cloud',
       _disabled: {
         opacity: 'disabled',
       },
@@ -71,8 +69,12 @@ export const BUTTON_RECIPE = defineSlotRecipe({
           color: 'colorPalette.start',
         },
         section: {
+          ...colorPaletteGradientHorizontal,
+          borderRadius: '50 !important',
+          padding: '[2px !important]',
+          marginRight: '50 !important',
           '& svg': {
-            fill: 'colorPalette.start',
+            fill: 'button.icon.filled !important',
           },
         },
       },

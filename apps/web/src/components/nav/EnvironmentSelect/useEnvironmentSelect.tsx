@@ -1,5 +1,5 @@
 import { type IIconProps, IconConstruction, IconRocketLaunch } from '@novu/design-system';
-import { useEnvController } from '../../../hooks/useEnvController';
+import { useEnvironment } from '../../../hooks/useEnvironment';
 import { ROUTES } from '../../../constants/routes';
 import { BaseEnvironmentEnum } from '../../../constants/BaseEnvironmentEnum';
 import { useState } from 'react';
@@ -18,7 +18,7 @@ export const useEnvironmentSelect = () => {
   const [isPopoverOpened, setIsPopoverOpened] = useState<boolean>(false);
   const location = useLocation();
 
-  const { setEnvironment, isLoading, environment, readonly } = useEnvController({
+  const { setEnvironment, isLoading, environment, readonly } = useEnvironment({
     onSuccess: (newEnvironment) => {
       setIsPopoverOpened(!!newEnvironment?._parentId);
     },

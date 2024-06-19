@@ -95,9 +95,22 @@ describe('Novu Client', () => {
           to: '+1234567890',
         }));
 
-        await step.digest('digest', async () => ({
+        await step.digest('regular-digest', async () => ({
           amount: 1,
           unit: 'hours',
+        }));
+
+        await step.digest('regular-look-back-digest', async () => ({
+          amount: 1,
+          unit: 'hours',
+          lookBackWindow: {
+            amount: 1,
+            unit: 'hours',
+          },
+        }));
+
+        await step.digest('timed-digest', async () => ({
+          cron: '0 0-23/1 * * *', //EVERY_HOUR
         }));
 
         await step.delay('delay', async () => ({
@@ -158,12 +171,31 @@ describe('Novu Client', () => {
       expect(stepSms.code).toContain(`body: "Test Body"`);
       expect(stepSms.code).toContain(`to: "+1234567890"`);
 
-      const stepDigest = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'digest');
-      expect(stepDigest).toBeDefined();
-      if (stepDigest === undefined) throw new Error('stepEmail is undefined');
-      expect(stepDigest.type).toBe('digest');
-      expect(stepDigest.code).toContain(`amount: 1`);
-      expect(stepDigest.code).toContain(`unit: "hours"`);
+      const stepRegularDigest = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'regular-digest');
+      expect(stepRegularDigest).toBeDefined();
+      if (stepRegularDigest === undefined) throw new Error('stepEmail is undefined');
+      expect(stepRegularDigest.type).toBe('digest');
+      expect(stepRegularDigest.code).toContain(`amount: 1`);
+      expect(stepRegularDigest.code).toContain(`unit: "hours"`);
+
+      const stepBackoffDigest = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'regular-look-back-digest');
+      expect(stepBackoffDigest).toBeDefined();
+      if (stepBackoffDigest === undefined) throw new Error('stepEmail is undefined');
+      expect(stepBackoffDigest.type).toBe('digest');
+      expect(stepBackoffDigest.code).toContain(`amount: 1`);
+      expect(stepBackoffDigest.code).toContain(`unit: "hours"`);
+      expect(stepBackoffDigest.code.trim()).toContain(
+        `lookBackWindow: {
+            amount: 1,
+            unit: "hours"
+          }`.trim()
+      );
+
+      const stepTimedDigest = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'timed-digest');
+      expect(stepTimedDigest).toBeDefined();
+      if (stepTimedDigest === undefined) throw new Error('stepEmail is undefined');
+      expect(stepTimedDigest.type).toBe('digest');
+      expect(stepTimedDigest.code).toContain(`cron: "0 0-23/1 * * *"`);
 
       const stepDelay = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'delay');
       expect(stepDelay).toBeDefined();

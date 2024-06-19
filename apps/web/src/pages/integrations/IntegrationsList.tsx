@@ -7,9 +7,8 @@ import { ChannelTypeEnum } from '@novu/shared';
 import PageContainer from '../../components/layout/components/PageContainer';
 import PageHeader from '../../components/layout/components/PageHeader';
 import { Table, Text, withCellLoading, IExtendedColumn } from '@novu/design-system';
-import { useIntegrations } from '../../hooks';
+import { useEnvironment, useIntegrations } from '../../hooks';
 import { IntegrationsListToolbar } from './components/IntegrationsListToolbar';
-import { useFetchEnvironments } from '../../hooks/useFetchEnvironments';
 import { IntegrationNameCell } from './components/IntegrationNameCell';
 import type { ITableIntegration } from './types';
 import { IntegrationChannelCell } from './components/IntegrationChannelCell';
@@ -77,7 +76,7 @@ export const IntegrationsList = ({
   onRowClickCallback: (row: Row<ITableIntegration>) => void;
   onChannelClick: (channel: ChannelTypeEnum) => void;
 }) => {
-  const { environments, isLoading: areEnvironmentsLoading } = useFetchEnvironments();
+  const { environments, isLoading: areEnvironmentsLoading } = useEnvironment();
   const { integrations, loading: areIntegrationsLoading } = useIntegrations();
   const isLoading = areEnvironmentsLoading || areIntegrationsLoading;
   const hasIntegrations = integrations && integrations?.length > 0;

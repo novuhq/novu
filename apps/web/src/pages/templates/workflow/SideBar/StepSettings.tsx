@@ -7,7 +7,7 @@ import { ShouldStopOnFailSwitch } from '../ShouldStopOnFailSwitch';
 import { ReplyCallback, ReplyCallbackSwitch } from '../ReplyCallback';
 import { When } from '../../../../components/utils/When';
 import { UpdateButton } from '../../components/UpdateButton';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { useTemplateEditorForm } from '../../components/TemplateEditorFormProvider';
 
 export function StepSettings() {
@@ -15,7 +15,7 @@ export function StepSettings() {
     channel: StepTypeEnum;
   }>();
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
+  const { bridge } = useEnvironment({}, template?.bridge);
 
   return (
     <>

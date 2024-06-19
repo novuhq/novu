@@ -1,12 +1,20 @@
 import { FromSchema } from 'json-schema-to-ts';
 
-import { ChannelStepEnum } from '../constants';
-import { delayOutputSchema, delayResultSchema, digestOutputSchema, digestResultSchema } from '../schemas';
+import { ActionStepEnum, ChannelStepEnum } from '../constants';
+import {
+  delayOutputSchema,
+  delayResultSchema,
+  digestOutputSchema,
+  digestRegularOutputSchema,
+  digestResultSchema,
+  digestTimedOutputSchema,
+} from '../schemas';
 import { channelStepSchemas } from '../schemas/steps/channels';
 import { Providers } from './provider.types';
 import { Schema } from './schema.types';
 import { Skip } from './skip.types';
 import { Awaitable } from './util.types';
+import { actionStepSchemas } from '../schemas/steps/actions';
 
 // @TODO: remove the credentials, providers, and preferences from the ActionStepOptions (fix the client typings)
 export type ActionStepOptions = {
@@ -175,6 +183,15 @@ export type ChatResult = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.
 
 export type InAppOutput = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.IN_APP]['output']>;
 export type InAppResult = FromSchema<(typeof channelStepSchemas)[ChannelStepEnum.IN_APP]['result']>;
+
+export type DelayOutput = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.DELAY]['output']>;
+export type DelayResult = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.DELAY]['result']>;
+
+export type digestRegularOutput = FromSchema<typeof digestRegularOutputSchema>;
+export type digestTimedOutput = FromSchema<typeof digestTimedOutputSchema>;
+
+export type DigestOutput = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.DIGEST]['output']>;
+export type DigestResult = FromSchema<(typeof actionStepSchemas)[ActionStepEnum.DIGEST]['result']>;
 
 /**
  * The step type.
