@@ -123,3 +123,35 @@ ExampleForm.args = {
   schema: schema,
   formData: { money: 43 },
 };
+
+const MATCH_DESIGNS_SCHEMA: RJSFSchema = {
+  type: 'object',
+  title: 'Email content',
+  properties: {
+    TeamImage: {
+      title: 'TeamImage',
+      required: undefined,
+      type: 'string',
+      default: 'https://react-email-demo-bdj5iju9r-resend.vercel',
+    },
+    Text: {
+      type: 'array',
+      title: 'Text',
+      minItems: 2,
+      items: {
+        title: 'InvitedByUsername',
+        type: 'string',
+      },
+    },
+    ShowFootage: {
+      type: 'boolean',
+      title: 'ShowFootage',
+      default: true,
+    },
+  },
+};
+
+export const MatchDesigns = Template.bind({});
+MatchDesigns.args = {
+  schema: MATCH_DESIGNS_SCHEMA,
+};

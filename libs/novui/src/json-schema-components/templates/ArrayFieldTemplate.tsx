@@ -9,7 +9,7 @@ import {
 import { css, cx } from '../../../styled-system/css';
 import { Box, Flex, HStack, Grid, GridItem } from '../../../styled-system/jsx';
 import { Text } from '../../components';
-import { formBorderClassName, FormGroupTitle } from '../shared';
+import { formItemClassName, FormGroupTitle } from '../shared';
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
   const { canAdd, disabled, idSchema, uiSchema, items, onAddClick, readonly, registry, required, title, schema } =
@@ -59,9 +59,15 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
   const { MoveDownButton, MoveUpButton, RemoveButton } = registry.templates.ButtonTemplates;
 
   return (
-    // align the buttons with the input itself rather than centered with the input and its label
-    <HStack gap="50" className={css({ '&:has(input[type="text"]) [role="toolbar"]': { paddingTop: '175' } })}>
-      <div className={cx(formBorderClassName, css({ width: '[100%]' }))}>{children}</div>
+    <HStack
+      gap="50"
+      // align the buttons with the input itself rather than centered with the input and its label
+      className={cx(
+        formItemClassName,
+        css({ '&:has(input[type="text"]) [role="toolbar"]': { paddingTop: '250', alignSelf: 'flex-start' } })
+      )}
+    >
+      <div className={css({ width: 'full' })}>{children}</div>
       <HStack role="toolbar" gap="25" py="25">
         {(hasMoveUp || hasMoveDown) && (
           <MoveUpButton

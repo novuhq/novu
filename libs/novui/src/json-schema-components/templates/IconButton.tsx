@@ -1,4 +1,5 @@
 import { IconButtonProps } from '@rjsf/utils';
+import { css } from '../../../styled-system/css';
 import { Button, IconButton } from '../../components';
 import { IconAdd, IconArrowDownward, IconArrowUpward, IconOutlineDeleteOutline } from '../../icons/icon-registry';
 
@@ -13,7 +14,7 @@ export function MoveUpButton(props: Props) {
 }
 export function AddButton(props: Props) {
   return (
-    <Button {...props} variant={'transparent'} Icon={IconAdd} ml="[1px]">
+    <Button {...props} variant={'transparent'} Icon={IconAdd} className={css({ marginLeft: '[1px]', my: '50' })}>
       Add item
     </Button>
   );
