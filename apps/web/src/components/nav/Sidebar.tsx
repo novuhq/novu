@@ -21,6 +21,14 @@ const className = css({
 export const Sidebar = () => {
   const { pathname } = useLocation();
 
+  if (
+    pathname.startsWith(
+      ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS || ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT
+    )
+  ) {
+    return null;
+  }
+
   let Variant = RootNavMenu;
 
   if (pathname.startsWith(ROUTES.SETTINGS)) {

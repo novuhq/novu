@@ -60,4 +60,4 @@ export enum ROUTES {
   STUDIO_FLOWS_TEST = '/studio/flows/:templateId/test',
 }
 
-export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth', '/partner-integrations']);
+export const PUBLIC_ROUTES_PREFIXES = new Set<string>(['/auth']);
