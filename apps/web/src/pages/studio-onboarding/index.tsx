@@ -28,10 +28,6 @@ export const StudioOnboarding = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useWindowEvent('focus', () => {
-    testEndpoint(url);
-  });
-
   useEffect(() => {
     if (!environment?.echo?.url) {
       return;
@@ -73,9 +69,13 @@ export const StudioOnboarding = () => {
         </div>
       </VStack>
       <Footer
-        disabled={testResponse.data?.status !== 'ok'}
+        disabled={loading}
         onClick={() => {
-          setup();
+          if (testResponse.data?.status === 'ok') {
+            setup();
+          } else {
+            retest();
+          }
         }}
         loading={loading}
       />

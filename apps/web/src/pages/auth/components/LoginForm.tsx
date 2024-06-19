@@ -130,7 +130,13 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
     try {
       const response = await mutateAsync(itemData);
       const token = (response as any).token;
-      login(token);
+      await login(token);
+
+      if (isFromVercel) {
+        startVercelSetup();
+
+        return;
+      }
 
       if (invitationToken) {
         const updatedToken = await acceptInvite(invitationToken);
