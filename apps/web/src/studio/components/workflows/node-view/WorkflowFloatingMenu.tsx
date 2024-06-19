@@ -14,63 +14,74 @@ import {
 } from '@novu/novui/icons';
 import { VStack } from '@novu/novui/jsx';
 import { vstack } from '@novu/novui/patterns';
-import { FC, PropsWithChildren } from 'react';
+import { FC, PropsWithChildren, useState } from 'react';
+import { DocsModal } from '../../../../components/docs/DocsModal';
 
 type IWorkflowFloatingMenuProps = CoreProps;
 
 export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className }) => {
-  // TODO: this is just a temporary hack. Behavior should be passed through props
-  const handleClick = (stepType: string) => () => {
-    alert('This should open docs for ' + stepType);
+  const [docsOpen, setDocsOpen] = useState<boolean>(false);
+  const [path, setPath] = useState<string>('');
+
+  const toggle = () => {
+    setDocsOpen((prevOpen) => !prevOpen);
+  };
+
+  const handleClick = (pathToSet: string) => () => {
+    setPath('echo/steps/' + pathToSet);
+    toggle();
   };
 
   return (
-    <menu className={cx(vstack({ display: 'flex !important', gap: '150', p: '25' }), className)}>
-      <WorkflowFloatingMenuSection title="Actions">
-        <WorkflowFloatingMenuButton
-          Icon={IconOutlineAutoAwesomeMotion}
-          tooltipLabel="Guide of how to add a Digest step for embedding in code"
-          onClick={handleClick('Digest')}
-        />
-        <WorkflowFloatingMenuButton
-          Icon={IconOutlineAvTimer}
-          tooltipLabel="Guide of how to add a Delay step for embedding in code"
-          onClick={handleClick('Delay')}
-        />
-      </WorkflowFloatingMenuSection>
-      <WorkflowFloatingMenuSection title="Channels">
-        <WorkflowFloatingMenuButton
-          Icon={IconOutlineNotifications}
-          tooltipLabel="Guide of how to add an In-app step for embedding in code"
-          onClick={handleClick('In-app')}
-        />
-        <WorkflowFloatingMenuButton
-          Icon={IconOutlineEmail}
-          tooltipLabel="Guide of how to add an Email step for embedding in code"
-          onClick={handleClick('Email')}
-        />
-        <WorkflowFloatingMenuButton
-          Icon={IconOutlineSms}
-          tooltipLabel="Guide of how to add an SMS step for embedding in code"
-          onClick={handleClick('SMS')}
-        />
-        <WorkflowFloatingMenuButton
-          Icon={IconOutlineMobileFriendly}
-          tooltipLabel="Guide of how to add a Push step for embedding in code"
-          onClick={handleClick('Push')}
-        />
-        <WorkflowFloatingMenuButton
-          Icon={IconOutlineForum}
-          tooltipLabel="Guide of how to add a Chat step for embedding in code"
-          onClick={handleClick('Chat')}
-        />
-        <WorkflowFloatingMenuButton
-          Icon={IconOutlineBolt}
-          tooltipLabel="Guide of how to add a Custom step for embedding in code"
-          onClick={handleClick('Custom')}
-        />
-      </WorkflowFloatingMenuSection>
-    </menu>
+    <>
+      <menu className={cx(vstack({ display: 'flex !important', gap: '150', p: '25' }), className)}>
+        <WorkflowFloatingMenuSection title="Actions">
+          <WorkflowFloatingMenuButton
+            Icon={IconOutlineAutoAwesomeMotion}
+            tooltipLabel="Guide of how to add a Digest step for embedding in code"
+            onClick={handleClick('digest')}
+          />
+          <WorkflowFloatingMenuButton
+            Icon={IconOutlineAvTimer}
+            tooltipLabel="Guide of how to add a Delay step for embedding in code"
+            onClick={handleClick('delay')}
+          />
+        </WorkflowFloatingMenuSection>
+        <WorkflowFloatingMenuSection title="Channels">
+          <WorkflowFloatingMenuButton
+            Icon={IconOutlineNotifications}
+            tooltipLabel="Guide of how to add an In-app step for embedding in code"
+            onClick={handleClick('in-app')}
+          />
+          <WorkflowFloatingMenuButton
+            Icon={IconOutlineEmail}
+            tooltipLabel="Guide of how to add an Email step for embedding in code"
+            onClick={handleClick('email')}
+          />
+          <WorkflowFloatingMenuButton
+            Icon={IconOutlineSms}
+            tooltipLabel="Guide of how to add an SMS step for embedding in code"
+            onClick={handleClick('sms')}
+          />
+          <WorkflowFloatingMenuButton
+            Icon={IconOutlineMobileFriendly}
+            tooltipLabel="Guide of how to add a Push step for embedding in code"
+            onClick={handleClick('push')}
+          />
+          <WorkflowFloatingMenuButton
+            Icon={IconOutlineForum}
+            tooltipLabel="Guide of how to add a Chat step for embedding in code"
+            onClick={handleClick('chat')}
+          />
+          <WorkflowFloatingMenuButton
+            Icon={IconOutlineBolt}
+            tooltipLabel="Guide of how to add a Custom step for embedding in code"
+            onClick={handleClick('custom')}
+          />
+        </WorkflowFloatingMenuSection>
+      </menu>
+      <DocsModal open={docsOpen} toggle={toggle} path={path} />
+    </>
   );
 };
 
