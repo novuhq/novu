@@ -51,13 +51,13 @@ import { StudioOnboardingSuccess } from './pages/studio-onboarding/success';
 import { AccessSecurityPage, BillingPage, TeamPage, UserProfilePage } from './pages/settings';
 import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { OrganizationPage } from './pages/settings/organization';
+import { LayoutsPage } from './pages/layouts/LayoutsPage';
 import {
   WorkflowsListPage,
   WorkflowsDetailPage,
   WorkflowsStepEditorPage,
   WorkflowsTestStepPage,
 } from './studio/components/workflows';
-import { TemplateDetailsPageV2 } from './pages/templates/editor_v2/TemplateDetailsPageV2';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
 
 export const AppRoutes = () => {
@@ -156,6 +156,7 @@ export const AppRoutes = () => {
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />
+        <Route path={ROUTES.LAYOUT} element={<LayoutsPage />} />
         <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
