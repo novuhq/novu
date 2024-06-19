@@ -47,9 +47,9 @@ export function JsonSchemaForm<TFormData = any>(props: JsonSchemaFormProps<TForm
           '& .control-label, & .field-description': {
             display: 'none',
           },
-          // spacing between each field in the form
-          '& .form-group.field': {
-            paddingY: '50',
+          // hide raw text errors
+          '& .panel.panel-danger.errors': {
+            display: 'none',
           },
         }),
         css(cssProps),
