@@ -72,24 +72,16 @@ export const AppRoutes = () => {
         <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
         <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
         <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
+      </Route>
+      <Route element={<PrivatePageLayout />}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
-          element={
-            <EnsureOnboardingComplete>
-              <LinkVercelProjectPage type="create" />
-            </EnsureOnboardingComplete>
-          }
+          element={<LinkVercelProjectPage type="create" />}
         />
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
-          element={
-            <EnsureOnboardingComplete>
-              <LinkVercelProjectPage type="edit" />
-            </EnsureOnboardingComplete>
-          }
+          element={<LinkVercelProjectPage type="edit" />}
         />
-      </Route>
-      <Route element={<PrivatePageLayout />}>
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
         <Route path={ROUTES.WORKFLOWS_V2_STEP_EDIT} element={<WorkflowsStepEditorPageV2 />} />
