@@ -7,22 +7,23 @@ import { checkbox } from '../../../styled-system/recipes';
 import { JsxStyleProps } from '../../../styled-system/types';
 import { CoreProps, LocalizedMessage, LocalizedString } from '../../types';
 
-export interface ICheckboxProps extends JsxStyleProps, CoreProps {
-  label?: LocalizedMessage;
-  description?: LocalizedMessage;
-  placeholder?: LocalizedString;
-  error?: LocalizedMessage;
+export type CheckboxProps = JsxStyleProps &
+  CoreProps & {
+    label?: LocalizedMessage;
+    description?: LocalizedMessage;
+    placeholder?: LocalizedString;
+    error?: LocalizedMessage;
 
-  required?: boolean;
-  readOnly?: boolean;
-  disabled?: boolean;
+    required?: boolean;
+    readOnly?: boolean;
+    disabled?: boolean;
 
-  checked?: boolean;
-  defaultChecked?: boolean;
-  onChange?: ChangeEventHandler<HTMLInputElement>;
-}
+    checked?: boolean;
+    defaultChecked?: boolean;
+    onChange?: ChangeEventHandler<HTMLInputElement>;
+  };
 
-export const Checkbox = forwardRef(({ ...props }: ICheckboxProps, ref?: PolymorphicRef<'input'>) => {
+export const Checkbox = forwardRef(({ ...props }: CheckboxProps, ref?: PolymorphicRef<'input'>) => {
   const [variantProps, inputProps] = checkbox.splitVariantProps({ ...props });
   const [cssProps, localProps] = splitCssProps(inputProps);
   const { onChange, className, ...otherProps } = localProps;

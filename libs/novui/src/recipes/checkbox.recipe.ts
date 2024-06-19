@@ -1,6 +1,6 @@
 import { CheckboxStylesNames } from '@mantine/core';
 import { defineSlotRecipe } from '@pandacss/dev';
-import { colorPaletteGradientHorizontal } from 'src/ingredients';
+import { colorPaletteGradientHorizontal } from '../ingredients';
 import { INPUT_RECIPE } from './input.recipe';
 
 // full enumeration of the component library's slots

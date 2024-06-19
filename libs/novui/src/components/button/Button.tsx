@@ -1,4 +1,8 @@
-import { Button as ExternalButton, ButtonProps, ButtonVariant as ExternalButtonVariant } from '@mantine/core';
+import {
+  Button as ExternalButton,
+  ButtonProps as ExternalButtonProps,
+  ButtonVariant as ExternalButtonVariant,
+} from '@mantine/core';
 import React from 'react';
 import { css, cx } from '../../../styled-system/css';
 import { splitCssProps } from '../../../styled-system/jsx';
@@ -11,14 +15,14 @@ import { PolymorphicComponentPropWithRef, PolymorphicRef } from '../../types/pro
 export interface ButtonCoreProps
   extends CorePropsWithChildren,
     React.ButtonHTMLAttributes<HTMLButtonElement>,
-    Pick<ButtonProps, 'size' | 'loading'> {
+    Pick<ExternalButtonProps, 'size' | 'loading'> {
   Icon?: IconType;
   loading?: boolean;
 }
 
 type IconButtonDefaultElement = 'button';
 
-export type IButtonProps<C extends React.ElementType = IconButtonDefaultElement> = PolymorphicComponentPropWithRef<
+export type ButtonProps<C extends React.ElementType = IconButtonDefaultElement> = PolymorphicComponentPropWithRef<
   C,
   JsxStyleProps & Partial<ButtonVariant> & CoreProps & ButtonCoreProps
 >;
@@ -26,12 +30,12 @@ export type IButtonProps<C extends React.ElementType = IconButtonDefaultElement>
 const DEFAULT_VARIANT: ButtonVariant['variant'] = 'filled';
 
 type PolymorphicComponent = <C extends React.ElementType = IconButtonDefaultElement>(
-  props: IButtonProps<C>
+  props: ButtonProps<C>
 ) => JSX.Element | null;
 
 export const Button: PolymorphicComponent = React.forwardRef(
   <C extends React.ElementType = IconButtonDefaultElement>(
-    { variant = DEFAULT_VARIANT, ...props }: IButtonProps<C>,
+    { variant = DEFAULT_VARIANT, ...props }: ButtonProps<C>,
     ref?: PolymorphicRef<C>
   ) => {
     const [variantProps, buttonProps] = button.splitVariantProps({ ...props, variant });
