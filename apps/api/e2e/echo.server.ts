@@ -31,12 +31,12 @@ export class EchoServer {
   }
 
   async stop() {
-    await new Promise<void>((resolve) => {
-      this.app.close(() => {
-        resolve();
+    if (this.app) {
+      await new Promise<void>((resolve) => {
+        this.app.close(() => {
+          resolve();
+        });
       });
-    });
+    }
   }
 }
-
-export const echoServer = new EchoServer();

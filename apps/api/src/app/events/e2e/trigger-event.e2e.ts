@@ -1425,7 +1425,7 @@ describe(`Trigger event - ${eventTriggerPath} (POST)`, function () {
         _templateId: template._id,
         _environmentId: session.environment._id,
       });
-      expect(jobs.length).to.equal(2);
+      expect(jobs.length).to.equal(3);
 
       const notifications = await notificationRepository.findBySubscriberId(session.environment._id, subscriber._id);
 
