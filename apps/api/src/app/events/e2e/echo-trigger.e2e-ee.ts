@@ -465,7 +465,7 @@ describe('Echo Trigger ', async () => {
 
   it('should trigger regular digest with look back option', async () => {
     const workflowId = 'workflow-look-back-digest';
-    await workflow(
+    const workflowTemplate = workflow(
       workflowId,
       async ({ step }) => {
         const digestResponse = await step.digest(
@@ -526,6 +526,8 @@ describe('Echo Trigger ', async () => {
       }
     );
 
+    await frameworkClient.start({ workflows: [workflowTemplate] });
+
     await discoverAndSyncEcho(session, frameworkClient);
 
     const fetchedWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
@@ -558,7 +560,7 @@ describe('Echo Trigger ', async () => {
   it('should trigger timed digest (test basic digest flow type)', async () => {
     const workflowId = 'workflow-timed-digest';
     const CRON_EVERY_5_SECONDS = '*/2 * * * * *';
-    await workflow(
+    const workflowTemplate = workflow(
       workflowId,
       async ({ step }) => {
         const digestResponse = await step.digest(
@@ -600,6 +602,8 @@ describe('Echo Trigger ', async () => {
         } as const,
       }
     );
+
+    await frameworkClient.start({ workflows: [workflowTemplate] });
 
     await discoverAndSyncEcho(session, frameworkClient);
 
