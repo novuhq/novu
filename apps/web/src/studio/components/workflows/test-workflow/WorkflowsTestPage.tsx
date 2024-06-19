@@ -61,14 +61,14 @@ export const WorkflowsTestPage = () => {
     }
   };
 
-  if (isAuthLoading || isWorkflowLoading || isTestLoading || !currentUser) {
+  if (isAuthLoading || isWorkflowLoading || isTestLoading) {
     return null;
   }
 
   return (
     <WorkflowsPageTemplate
       title="Test workflow"
-      description="Test trigger as if you sent it from your API"
+      description="Trigger a test run for this workflow"
       icon={<IconOutlineCable size="32" />}
       actions={
         <Button Icon={IconPlayArrow} variant="filled" onClick={handleTestClick}>
@@ -83,8 +83,8 @@ export const WorkflowsTestPage = () => {
             onChange={onChange}
             payloadSchema={workflow?.data?.schema}
             to={{
-              subscriberId: currentUser._id,
-              email: currentUser.email as string,
+              subscriberId: currentUser?._id as string,
+              email: currentUser?.email as string,
             }}
             stepTypes={stepTypes}
           />

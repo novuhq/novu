@@ -35,9 +35,9 @@ export const WorkflowTestStepButton = ({
         bridge: true,
         content: '',
       });
-      successMessage('Test sent successfully!');
+      successMessage('Test run has started!');
     } catch (e: any) {
-      errorMessage(e.message || 'Un-expected error occurred');
+      errorMessage(e.message || 'Unexpected error occurred');
     }
   };
 

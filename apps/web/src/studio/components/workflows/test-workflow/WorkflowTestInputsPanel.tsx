@@ -52,27 +52,17 @@ export const WorkflowTestInputsPanel: FC<IWorkflowTestInputsPanelProps> = ({
         <Stack gap="margins.layout.Input.input-input">
           <Controller
             control={control}
-            name={`subscriberId`}
-            render={({ field }) => {
-              return <Input {...field} label="Subscriber ID" />;
-            }}
+            name="subscriberId"
+            render={({ field }) => <Input {...field} label="Subscriber ID" />}
           />
           <When truthy={stepTypes.includes(ChannelTypeEnum.EMAIL)}>
-            <Controller
-              control={control}
-              name={`email`}
-              render={({ field }) => {
-                return <Input {...field} label="Email" />;
-              }}
-            />
+            <Controller control={control} name="email" render={({ field }) => <Input {...field} label="Email" />} />
           </When>
           <When truthy={stepTypes.includes(ChannelTypeEnum.SMS)}>
             <Controller
               control={control}
-              name={`phone`}
-              render={({ field }) => {
-                return <Input {...field} label="Phone number" />;
-              }}
+              name="phone"
+              render={({ field }) => <Input {...field} label="Phone number" />}
             />
           </When>
         </Stack>
