@@ -1,14 +1,30 @@
 import { ParentProps, createContext, createEffect, createSignal, onMount, useContext } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { NOVU_CSS_IN_JS_STYLESHEET_ID } from '../config';
-import { createClassFromCssString, cssObjectToString } from '../helpers';
-import type {
-  AppearanceContextType,
-  Variables,
-  CSSProperties,
-  ElementStyles,
-  Elements,
-} from './appearance-context.types';
+import { NOVU_CSS_IN_JS_STYLESHEET_ID, defaultVariables } from '../config';
+import { parseElements, parseVariables } from '../helpers';
+
+export type CSSProperties = {
+  [key: string]: string | number;
+};
+
+export type ElementStyles = string | CSSProperties;
+
+export type Elements = {
+  button?: ElementStyles;
+  root?: ElementStyles;
+};
+
+export type Variables = {
+  colors: {
+    primary: string;
+  };
+};
+
+export type AppearanceContextType = {
+  variables?: Variables;
+  elements?: Elements;
+  descriptorToCssInJsClass: Record<string, string>;
+};
 
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
 
@@ -19,6 +35,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     descriptorToCssInJsClass: Record<string, string>;
   }>({ descriptorToCssInJsClass: {} });
   const [styleElement, setStyleElement] = createSignal<HTMLStyleElement | null>(null);
+  const [rules, setRules] = createSignal<string[]>([]);
 
   //place style element on HEAD. Placing in body is available for HTML 5.2 onward.
   onMount(() => {
@@ -37,34 +54,8 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       return;
     }
 
-    //handle color variables
-    for (const key in props.variables?.colors) {
-      const colors = props.variables?.colors;
-
-      if (colors && colors.hasOwnProperty(key)) {
-        const value = colors[key as keyof Variables['colors']];
-
-        const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
-        const cssVariableRule = `:root { --novu-colors-${key}: oklch(from ${value} l c h); }`;
-        styleEl.sheet?.insertRule(cssVariableRule, styleEl.sheet.cssRules.length);
-        //alpha shades
-        for (let i = 0; i < shades.length; i++) {
-          const shade = shades[i];
-          const cssVariableAlphaRule = `:root { --novu-colors-${key}-alpha-${shade}: oklch(from ${value} l c h / ${
-            shade / 1000
-          }); }`;
-          styleEl.sheet?.insertRule(cssVariableAlphaRule, styleEl.sheet.cssRules.length);
-        }
-        //solid shades
-        for (let i = 0; i < shades.length; i++) {
-          const shade = shades[i];
-          const cssVariableSolidRule = `:root { --novu-colors-${key}-${shade}: oklch(from ${value} calc(l - ${
-            (shade - 500) / 1000
-          }) c h); }`;
-          styleEl.sheet?.insertRule(cssVariableSolidRule, styleEl.sheet.cssRules.length);
-        }
-      }
-    }
+    const variableRules = parseVariables({ ...defaultVariables, ...(props.variables || ({} as Variables)) });
+    setRules((oldRules) => [...oldRules, ...variableRules]);
   });
 
   //handle elements
@@ -75,21 +66,26 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       return;
     }
 
-    for (const key in props.elements) {
-      const elements = props.elements;
-      if (elements.hasOwnProperty(key)) {
-        const value = elements[key as keyof Elements];
-        if (typeof value === 'object') {
-          // means it is css in js object
-          const cssString = cssObjectToString(value);
-          const classname = createClassFromCssString(styleEl, cssString);
-          setStore('descriptorToCssInJsClass', (obj) => ({
-            ...obj,
-            [key]: classname,
-          }));
-        }
-      }
+    const elementsStyleData = parseElements(props.elements || {});
+    setStore('descriptorToCssInJsClass', (obj) => ({
+      ...obj,
+      ...elementsStyleData.reduce<Record<string, string>>((acc, item) => {
+        acc[item.key] = item.className;
+
+        return acc;
+      }, {}),
+    }));
+    setRules((oldRules) => [...oldRules, ...elementsStyleData.map((el) => el.rule)]);
+  });
+
+  //add rules to style element
+  createEffect(() => {
+    const styleEl = styleElement();
+    if (!styleEl) {
+      return;
     }
+
+    styleEl.innerHTML = rules().join(' ');
   });
 
   return (
