@@ -11,6 +11,7 @@ export class EEOrganizationService {
     const syncExternalOrg = {
       externalId: orgId,
       jobTitle: JobTitleEnum.ENGINEER,
+      apiServiceLevel: ApiServiceLevelEnum.FREE,
       domain: 'example.com',
       productUseCases: {
         in_app: true,

@@ -1,10 +1,8 @@
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 
-describe('Rename Organization - /organizations (PATCH) @skip-in-ee', function () {
+describe('Rename Organization - /organizations (PATCH)', function () {
   let session: UserSession;
-  const organizationRepository = new CommunityOrganizationRepository();
 
   beforeEach(async () => {
     session = new UserSession();
@@ -18,7 +16,8 @@ describe('Rename Organization - /organizations (PATCH) @skip-in-ee', function ()
 
     await session.testAgent.patch('/v1/organizations').send(payload);
 
-    const organization = await organizationRepository.findById(session.organization._id);
+    const { body } = await session.testAgent.get('/v1/organizations/me').expect(200);
+    const organization = body.data;
 
     expect(organization?.name).to.equal(payload.name);
   });
