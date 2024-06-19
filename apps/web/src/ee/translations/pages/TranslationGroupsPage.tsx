@@ -12,6 +12,8 @@ import { TranslationGroupEmptyList } from '../components/TranslationGroup/Transl
 import { TranslationGroupListToolbar } from '../components/TranslationGroup/TranslationGroupListToolbar';
 import { TranslationGroupsList } from '../components/TranslationGroup/TranslationGroupsList';
 import { ROUTES } from '../routes';
+import { DocsButton } from '../../../components/docs/DocsButton';
+import { Flex } from '@novu/novui/jsx';
 
 export const TranslationGroupsPage = () => {
   const [page, setPage] = useState(0);
@@ -45,9 +47,12 @@ export const TranslationGroupsPage = () => {
   return (
     <PageContainer>
       <Group position="apart" mx={24} mt={24} mb={16} align="center">
-        <Title size={2} data-test-id="translation-title">
-          Translations
-        </Title>
+        <Flex align="center" gap="75">
+          <Title size={2} data-test-id="translation-title">
+            Translations
+          </Title>
+          <DocsButton />
+        </Flex>
 
         <When truthy={currentOrganization && hasTranslationGroups}>
           <Group spacing={12} align="center">
