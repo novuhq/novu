@@ -21,7 +21,7 @@ import {
   shadows,
   Tooltip,
 } from '@novu/design-system';
-import { useEnvController, useLayoutsEditor, usePrompt } from '../../hooks';
+import { useEnvironment, useLayoutsEditor, usePrompt } from '../../hooks';
 import { errorMessage, successMessage } from '../../utils/notifications';
 import { QueryKeys } from '../../api/query.keys';
 import { VariablesManagement } from '../templates/components/email-editor/variables-management/VariablesManagement';
@@ -54,7 +54,7 @@ export function LayoutEditor({
   editMode?: boolean;
   goBack: () => void;
 }) {
-  const { readonly, environment } = useEnvController();
+  const { readonly, environment } = useEnvironment();
   const identifierClipboard = useClipboard({ timeout: 1000 });
   const theme = useMantineTheme();
   const queryClient = useQueryClient();
