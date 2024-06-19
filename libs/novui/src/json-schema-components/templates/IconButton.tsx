@@ -14,6 +14,7 @@ export function MoveUpButton(props: Props) {
 }
 export function AddButton(props: Props) {
   return (
+    // marginLeft is used to nudge the button to make it align nicely with vertical borders
     <Button {...props} variant={'transparent'} Icon={IconAdd} className={css({ marginLeft: '[1px]', my: '50' })}>
       Add item
     </Button>
