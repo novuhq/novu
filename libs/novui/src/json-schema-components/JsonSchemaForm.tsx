@@ -1,8 +1,8 @@
 import Form, { FormProps } from '@rjsf/core';
 import { RegistryWidgetsType, UiSchema } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
-import { splitCssProps } from 'styled-system/jsx';
-import { JsxStyleProps } from 'styled-system/types';
+import { splitCssProps } from '../../styled-system/jsx';
+import { JsxStyleProps } from '../../styled-system/types';
 import { css, cx } from '../../styled-system/css';
 import { CoreProps } from '../types';
 import { ArrayFieldItemTemplate, ArrayFieldTemplate, ArrayFieldTitleTemplate } from './templates/ArrayFieldTemplate';
