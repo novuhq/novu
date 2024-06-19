@@ -4,12 +4,12 @@ import { IEnvironment } from '@novu/shared';
 
 import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
 
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from './useAuth';
 import { QueryKeys } from '../api/query.keys';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../constants/routes';
-import { api } from '../api';
-import { IS_DOCKER_HOSTED } from '../config';
+import { api } from '../api/index';
+import { IS_DOCKER_HOSTED } from '../config/index';
 import { BaseEnvironmentEnum } from '../constants/BaseEnvironmentEnum';
 
 interface ISetEnvironmentOptions {
@@ -19,30 +19,22 @@ interface ISetEnvironmentOptions {
 
 export type EnvironmentName = BaseEnvironmentEnum | IEnvironment['name'];
 
-export type EnvironmentContext = {
-  readonly: boolean;
-  isLoading: boolean;
-  environment: IEnvironment | undefined;
-  setEnvironment: (environment: EnvironmentName, options?: ISetEnvironmentOptions) => void;
-  refetchEnvironment: () => void;
-  // @deprecated
-  chimera: boolean;
-  bridge: boolean;
-};
-
-export const useEnvController = (
-  options: UseQueryOptions<IEnvironment, any, IEnvironment> = {},
-  bridge = false
-): EnvironmentContext => {
+export const useEnvironment = (options: UseQueryOptions<IEnvironment, any, IEnvironment> = {}, bridge = false) => {
   const navigate = useNavigate();
 
   const queryClient = useQueryClient();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
   const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
     [QueryKeys.myEnvironments],
-    getMyEnvironments
+    getMyEnvironments,
+    {
+      refetchOnWindowFocus: false,
+      refetchOnMount: false,
+    }
   );
+
   const {
     data: environment,
     isLoading: isLoadingCurrentEnvironment,
@@ -83,9 +75,11 @@ export const useEnvController = (
   );
 
   return {
+    environments,
     refetchEnvironment,
     environment,
     readonly: environment?._parentId !== undefined || (!IS_DOCKER_HOSTED && bridge),
+    // @deprecated
     chimera: !IS_DOCKER_HOSTED && bridge,
     bridge: !IS_DOCKER_HOSTED && bridge,
     setEnvironment: setEnvironmentCallback,

@@ -7,7 +7,7 @@ import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplat
 import { usePreviewChatTemplate } from '../../../../pages/templates/hooks/usePreviewChatTemplate';
 import { useEffect, useState } from 'react';
 import { api } from '../../../../api';
-import { useEnvController } from '../../../../hooks/useEnvController';
+import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { ChatBasePreview } from './ChatBasePreview';
@@ -15,7 +15,7 @@ import { ChatBasePreview } from './ChatBasePreview';
 export function ChatPreview({ showLoading = false, inputVariables }: { showLoading?: boolean; inputVariables?: any }) {
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
+  const { bridge } = useEnvironment({}, template?.bridge);
   const path = useStepFormPath();
   const content = watch(`${path}.template.content`);
   const { pathname } = useLocation();

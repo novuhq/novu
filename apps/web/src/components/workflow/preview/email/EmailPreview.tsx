@@ -15,7 +15,7 @@ import { api } from '../../../../api';
 import { useTemplateLocales } from '../../../../pages/templates/hooks/useTemplateLocales';
 import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePreviewEmailTemplate';
 import { useMutation } from '@tanstack/react-query';
-import { useEnvController } from '../../../../hooks/useEnvController';
+import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
 import { ErrorPrettyRender } from '../ErrorPrettyRender';
@@ -41,7 +41,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
   const path = useStepFormPath();
   const error = useStepFormErrors();
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
+  const { bridge } = useEnvironment({}, template?.bridge);
 
   const stepId = watch(`${path}.uuid`);
 

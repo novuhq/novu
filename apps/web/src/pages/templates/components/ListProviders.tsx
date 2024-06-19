@@ -5,7 +5,7 @@ import { ChannelTypeEnum, NOVU_SMS_EMAIL_PROVIDERS } from '@novu/shared';
 import { Button, colors, Tooltip } from '@novu/design-system';
 
 import { When } from '../../../components/utils/When';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { IntegrationEnvironmentPill } from '../../integrations/components/IntegrationEnvironmentPill';
 import { IntegrationStatus } from '../../integrations/components/IntegrationStatus';
 import type { IIntegratedProvider } from '../../integrations/types';
@@ -70,7 +70,7 @@ export const ListProviders = ({
   setProvider: (provider: IIntegratedProvider) => void;
 }) => {
   const { colorScheme } = useMantineColorScheme();
-  const { environment: currentEnvironment } = useEnvController();
+  const { environment: currentEnvironment } = useEnvironment();
   const containsNovuProvider = useMemo(
     () =>
       NOVU_SMS_EMAIL_PROVIDERS.some(

@@ -1,5 +1,5 @@
 import { api } from '../../../../api';
-import { useEnvController } from '../../../../hooks/useEnvController';
+import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
@@ -22,7 +22,7 @@ export const SmsPreview = ({
   const { navigateToStepEditor } = useNavigateToStepEditor();
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
-  const { bridge } = useEnvController({}, template?.bridge);
+  const { bridge } = useEnvironment({}, template?.bridge);
   const path = useStepFormPath();
   const templateContent = watch(`${path}.template.content`);
   const { pathname } = useLocation();

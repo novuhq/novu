@@ -20,7 +20,7 @@ import {
 import type { IResponseError } from '@novu/shared';
 
 import Card from '../../../components/layout/components/Card';
-import { useEffectOnce, useEnvController } from '../../../hooks';
+import { useEffectOnce, useEnvironment } from '../../../hooks';
 import { updateDnsSettings } from '../../../api/environment';
 import { validateMxRecord } from '../../../api/inbound-parse';
 import { MAIL_SERVER_DOMAIN } from '../../../config';
@@ -29,7 +29,7 @@ export const EmailSettings = () => {
   const mailServerDomain = `10 ${MAIL_SERVER_DOMAIN}`;
 
   const clipboardEnvironmentIdentifier = useClipboard({ timeout: 1000 });
-  const { readonly, environment, refetchEnvironment } = useEnvController();
+  const { readonly, environment, refetchEnvironment } = useEnvironment();
 
   const { mutateAsync: updateDnsSettingsMutation, isLoading: isUpdateDnsSettingsLoading } = useMutation<
     { dns: { mxRecordConfigured: boolean; inboundParseDomain: string } },

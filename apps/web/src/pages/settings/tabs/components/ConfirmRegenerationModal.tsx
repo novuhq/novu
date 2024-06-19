@@ -1,6 +1,6 @@
 import { Group, Modal, useMantineTheme } from '@mantine/core';
 import { Button, colors, shadows, Title, Text } from '@novu/design-system';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 
 export function ConfirmRegenerationModal({
   isOpen,
@@ -12,7 +12,7 @@ export function ConfirmRegenerationModal({
   confirmAction: () => void;
 }) {
   const theme = useMantineTheme();
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
 
   return (
     <>
