@@ -1,10 +1,11 @@
-import React, { FormEvent, FormEventHandler } from 'react';
+import React, { FormEventHandler } from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import { JsonSchemaForm } from './JsonSchemaForm';
 import { RJSFSchema } from '@rjsf/utils';
 import { HStack } from '../../styled-system/jsx';
 import { IconOutlineSave } from '../icons';
 import { Title, Button } from '../components';
+import { css } from '../../styled-system/css';
 
 export default {
   title: 'Components/JsonSchemaForm',
@@ -12,7 +13,7 @@ export default {
   argTypes: {},
 } as Meta<typeof JsonSchemaForm>;
 
-const Template: StoryFn<typeof JsonSchemaForm> = ({ ...args }) => {
+const Template: StoryFn<typeof JsonSchemaForm> = ({ colorPalette, ...args }) => {
   const onSubmit: FormEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
 
@@ -23,7 +24,7 @@ const Template: StoryFn<typeof JsonSchemaForm> = ({ ...args }) => {
   };
 
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={onSubmit} className={css({ colorPalette })}>
       <HStack justifyContent="space-between">
         <Title variant="subsection">Step inputs</Title>
         <Button type="submit" Icon={IconOutlineSave}>
