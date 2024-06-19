@@ -16,8 +16,6 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../auth/framework/roles.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
 import { UserAuthGuard } from '../auth/framework/user.auth.guard';
-import { GetMembersCommand } from './usecases/membership/get-members/get-members.command';
-import { GetMembers } from './usecases/membership/get-members/get-members.usecase';
 import { UpdateBrandingDetailsCommand } from './usecases/update-branding-details/update-branding-details.command';
 import { UpdateBrandingDetails } from './usecases/update-branding-details/update-branding-details.usecase';
 import { GetMyOrganization } from './usecases/get-my-organization/get-my-organization.usecase';
@@ -30,7 +28,6 @@ import { UpdateBrandingDetailsDto } from './dtos/update-branding-details.dto';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { OrganizationBrandingResponseDto, OrganizationResponseDto } from './dtos/organization-response.dto';
-import { MemberResponseDto } from './dtos/member-response.dto';
 import { SyncExternalOrganizationCommand } from './usecases/create-organization/sync-external-organization/sync-external-organization.command';
 import { SyncExternalOrganization } from './usecases/create-organization/sync-external-organization/sync-external-organization.usecase';
 
@@ -42,15 +39,12 @@ import { SyncExternalOrganization } from './usecases/create-organization/sync-ex
 export class EEOrganizationController {
   constructor(
     private syncExternalOrganizationUsecase: SyncExternalOrganization,
-    private getMembers: GetMembers,
     private updateBrandingDetailsUsecase: UpdateBrandingDetails,
     private getMyOrganizationUsecase: GetMyOrganization,
     private renameOrganizationUsecase: RenameOrganization
   ) {}
 
-  //TODO this should not be public
   @Post('/')
-  @ExternalApiAccessible()
   @ApiResponse(OrganizationResponseDto, 201)
   @ApiOperation({
     summary: 'Sync external Clerk organization with internal db.',
@@ -85,22 +79,6 @@ export class EEOrganizationController {
     });
 
     return await this.getMyOrganizationUsecase.execute(command);
-  }
-
-  @Get('/members')
-  @ExternalApiAccessible()
-  @ApiResponse(MemberResponseDto, 200, true)
-  @ApiOperation({
-    summary: 'Fetch all members of current organizations',
-  })
-  async getMember(@UserSession() user: UserSessionData) {
-    return await this.getMembers.execute(
-      GetMembersCommand.create({
-        user,
-        userId: user._id,
-        organizationId: user.organizationId,
-      })
-    );
   }
 
   @Put('/branding')

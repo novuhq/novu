@@ -107,7 +107,13 @@ export function getEEModuleConfig(): ModuleMetadata {
 }
 
 export function configure(consumer: MiddlewareConsumer) {
-  consumer.apply(DomainRestrictionMiddleware).forRoutes({ path: '/users/', method: RequestMethod.ALL });
+  consumer.apply(DomainRestrictionMiddleware).forRoutes(
+    { path: '/users/', method: RequestMethod.POST },
+    {
+      path: '/organizations/',
+      method: RequestMethod.POST,
+    }
+  );
 }
 
 class DomainRestrictionMiddleware implements NestMiddleware {

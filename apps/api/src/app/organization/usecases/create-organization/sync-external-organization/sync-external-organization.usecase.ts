@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, Logger, Scope } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
-import { JobTitleEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, JobTitleEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateEnvironmentCommand } from '../../../../environments/usecases/create-environment/create-environment.command';
@@ -35,13 +35,10 @@ export class SyncExternalOrganization {
     const organization = await this.organizationRepository.create({
       externalId: command.externalId,
       jobTitle: command.jobTitle,
+      apiServiceLevel: ApiServiceLevelEnum.FREE,
       domain: command.domain,
       productUseCases: command.productUseCases,
     });
-
-    if (!organization) {
-      throw new BadRequestException('Organization does not exist in Clerk');
-    }
 
     if (command.jobTitle) {
       await this.updateJobTitle(user._id, command.jobTitle);

@@ -18,6 +18,10 @@ export type UpdateOrganizationParams = {
 
 export type UpdateMetadataParams = OrganizationMetadataParams;
 
+type OrganizationPublicMetadata = {
+  externalOrgId?: string;
+};
+
 type OrganizationMetadataParams = {
   publicMetadata?: OrganizationPublicMetadata;
   privateMetadata?: OrganizationPrivateMetadata;

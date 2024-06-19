@@ -61,7 +61,7 @@ export type UserPublicMetadata = {
   jobTitle?: string;
 };
 
-type UserMetadataParams = {
+export type UserMetadataParams = {
   publicMetadata?: UserPublicMetadata;
   privateMetadata?: UserPrivateMetadata;
   unsafeMetadata?: UserUnsafeMetadata;

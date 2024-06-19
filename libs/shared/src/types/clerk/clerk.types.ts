@@ -5,10 +5,17 @@ import {
   UpdateOrganizationParams,
   UpdateMetadataParams,
 } from './clerk.organization.types';
-import { UpdateUserParams, User, UserListParams, GetUserOrganizationMembershipListParams } from './clerk.user.types';
+import {
+  UpdateUserParams,
+  User,
+  UserListParams,
+  GetUserOrganizationMembershipListParams,
+  UserMetadataParams,
+} from './clerk.user.types';
 
 export interface IUserAPI {
   updateUser(userId: string, params?: UpdateUserParams): Promise<User>;
+  updateUserMetadata(userId: string, params: UserMetadataParams): Promise<User>;
   getUser(userId: string): Promise<User>;
   getUserList(params?: UserListParams): Promise<PaginatedResourceResponse<User[]>>;
   deleteUser(userId: string): Promise<User>;
