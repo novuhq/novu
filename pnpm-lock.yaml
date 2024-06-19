@@ -5449,6 +5449,10 @@ packages:
     resolution: {integrity: sha512-EStJpq4OuY8xYfhGVXngigBJRWxftKX9ksiGDnmlY3o7B/V7KIAc9X4oiK87uPJSc/vs5L869bem5fhZa8caZw==}
     engines: {node: '>=6.9.0'}
 
+  '@babel/highlight@7.24.7':
+    resolution: {integrity: sha512-EStJpq4OuY8xYfhGVXngigBJRWxftKX9ksiGDnmlY3o7B/V7KIAc9X4oiK87uPJSc/vs5L869bem5fhZa8caZw==}
+    engines: {node: '>=6.9.0'}
+
   '@babel/parser@7.22.16':
     resolution: {integrity: sha512-+gPfKv8UWeKKeJTUxe59+OobVcrYHETCsORl61EmSkmgymguYk/X5bp7GuUIXaFsc6y++v8ZxPsLSSuujqDphA==}
     engines: {node: '>=6.0.0'}
@@ -15470,6 +15474,11 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
+  acorn@8.12.0:
+    resolution: {integrity: sha512-RTvkC4w+KNXrM39/lWCUaG0IbRkWdCv7W/IOW9oU6SawyxulvkQy5HQPVTKxEjczcUvapcrw3cFx/60VN/NRNw==}
+    engines: {node: '>=0.4.0'}
+    hasBin: true
+
   acorn@8.8.2:
     resolution: {integrity: sha512-xjIYgE8HBrkpd/sJqOGNspf8uHG+NOHGOw6a/Urj8taM2EXfdNAH2oFcPeIFfsv3+kz/mJrS5VuMqbNLjCa2vw==}
     engines: {node: '>=0.4.0'}
@@ -19767,9 +19776,6 @@ packages:
   fp-ts@2.13.1:
     resolution: {integrity: sha512-0eu5ULPS2c/jsa1lGFneEFFEdTbembJv8e4QKXeVJ3lm/5hyve06dlKZrpxmMwJt6rYen7sxmHHK2CLaXvWuWQ==}
 
-  fraction.js@4.2.0:
-    resolution: {integrity: sha512-MhLuK+2gUcnZe8ZHlaaINnQLl0xRIGRfcGk2yl8xoQAfHrSsL3rYu6FCmBdkdbhc9EPlwyGHewaRsvwRMJtAlA==}
-
   fraction.js@4.3.7:
     resolution: {integrity: sha512-ZsDfxO51wGAXREY55a7la9LScWpwv9RxIrYABrlvOFBlH/ShPnrtsXeuUIfXKKOVicNxQ+o8JTbJvjS4M89yew==}
 
@@ -23473,6 +23479,10 @@ packages:
     resolution: {integrity: sha512-ScVIgqHcXRMyfflqHmEW0bm8z8rb5McHyOY3ewX9JBgZaR77G7nxq9L/mtV96/QbAAwtbCAHVVLzD1kkyfFQEw==}
     engines: {node: '>=8'}
 
+  minipass@4.2.8:
+    resolution: {integrity: sha512-fNzuVyifolSLFL4NzpF+wEF4qrgqaaKX0haXPQEdQ7NKAN+WecoKMHV09YcuL/DHxrUsYQOK3MiuDf7Ip2OXfQ==}
+    engines: {node: '>=8'}
+
   minipass@5.0.0:
     resolution: {integrity: sha512-3FnjYuehv9k6ovOEbyOswadCDPX1piCfhV8ncmYtHOjuPwylVWsghTLo7rabjC3Rx5xD4HDx8Wm1xnMF7S5qFQ==}
     engines: {node: '>=8'}
@@ -24518,6 +24528,9 @@ packages:
   package-hash@4.0.0:
     resolution: {integrity: sha512-whdkPIooSu/bASggZ96BWVvZTRMOFxnyUG5PnTSGKoJE2gd5mbVNmR2Nj20QFzxYYgAXpoqC+AiXzl+UMRh7zQ==}
     engines: {node: '>=8'}
+
+  package-json-from-dist@1.0.0:
+    resolution: {integrity: sha512-dATvCeZN/8wQsGywez1mzHtTlP22H8OEfPrVMLNr4/eGa+ijtLn/6M5f0dY8UKNrC2O9UCU6SSoG3qRKnt7STw==}
 
   pacote@13.6.2:
     resolution: {integrity: sha512-Gu8fU3GsvOPkak2CkbojR7vjs3k3P9cA6uazKTHdsdV0gpCEQq2opelnEv30KRQWgVzP5Vd/5umjcedma3MKtg==}
@@ -31331,7 +31344,7 @@ snapshots:
       '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/client-sts': 3.575.0
       '@aws-sdk/core': 3.575.0
-      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0))(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
       '@aws-sdk/middleware-logger': 3.575.0
       '@aws-sdk/middleware-recursion-detection': 3.575.0
@@ -33312,6 +33325,11 @@ snapshots:
       '@babel/highlight': 7.24.7
       picocolors: 1.0.0
 
+  '@babel/code-frame@7.24.7':
+    dependencies:
+      '@babel/highlight': 7.24.7
+      picocolors: 1.0.0
+
   '@babel/compat-data@7.23.2': {}
 
   '@babel/compat-data@7.24.4': {}
@@ -33879,6 +33897,13 @@ snapshots:
       '@babel/helper-validator-identifier': 7.24.7
       chalk: 2.4.2
       js-tokens: 4.0.0
+
+  '@babel/highlight@7.24.7':
+    dependencies:
+      '@babel/helper-validator-identifier': 7.24.7
+      chalk: 2.4.2
+      js-tokens: 4.0.0
+      picocolors: 1.0.0
 
   '@babel/highlight@7.24.7':
     dependencies:
@@ -37987,7 +38012,7 @@ snapshots:
       '@babel/runtime': 7.23.2
       '@emotion/babel-plugin': 11.10.6
       '@emotion/is-prop-valid': 1.2.0
-      '@emotion/react': 11.10.6(@types/react@18.3.3)(react@18.3.1)
+      '@emotion/react': 11.11.4(@types/react@18.3.3)(react@18.3.1)
       '@emotion/serialize': 1.1.1
       '@emotion/use-insertion-effect-with-fallbacks': 1.0.0(react@18.3.1)
       '@emotion/utils': 1.2.0
@@ -40156,6 +40181,20 @@ snapshots:
       - '@emotion/react'
       - '@types/react'
 
+  '@mantine/core@5.10.5(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.3.1))(@mantine/hooks@5.10.5(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@floating-ui/react': 0.19.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@mantine/hooks': 5.10.5(react@18.3.1)
+      '@mantine/styles': 5.10.5(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@mantine/utils': 5.10.5(react@18.3.1)
+      '@radix-ui/react-scroll-area': 1.0.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      react-textarea-autosize: 8.3.4(@types/react@18.3.3)(react@18.3.1)
+    transitivePeerDependencies:
+      - '@emotion/react'
+      - '@types/react'
+
   '@mantine/core@7.10.1(@mantine/hooks@7.10.1(react@18.3.1))(@types/react@18.3.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@floating-ui/react': 0.26.13(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -40240,6 +40279,14 @@ snapshots:
   '@mantine/styles@5.10.5(@emotion/react@11.10.6(@types/react@18.3.3)(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@emotion/react': 11.10.6(@types/react@18.3.3)(react@18.3.1)
+      clsx: 1.1.1
+      csstype: 3.0.9
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+
+  '@mantine/styles@5.10.5(@emotion/react@11.11.4(@types/react@18.3.3)(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@emotion/react': 11.11.4(@types/react@18.3.3)(react@18.3.1)
       clsx: 1.1.1
       csstype: 3.0.9
       react: 18.3.1
@@ -41034,6 +41081,12 @@ snapshots:
     transitivePeerDependencies:
       - nx
 
+  '@nrwl/devkit@17.3.2(nx@17.3.2(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.2)))':
+    dependencies:
+      '@nx/devkit': 17.3.2(nx@17.3.2(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.2)))
+    transitivePeerDependencies:
+      - nx
+
   '@nrwl/eslint-plugin-nx@16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107)(typescript@4.9.5))(@swc/core@1.3.107)(@types/node@16.11.7)(@typescript-eslint/parser@5.58.0(eslint@8.38.0)(typescript@4.9.5))(eslint-config-prettier@8.8.0(eslint@8.38.0))(eslint@8.38.0)(nx@16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107)(typescript@4.9.5))(@swc/core@1.3.107))(typescript@4.9.5)(verdaccio@5.31.0(encoding@0.1.13))':
     dependencies:
       '@nx/eslint-plugin': 16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107)(typescript@4.9.5))(@swc/core@1.3.107)(@types/node@16.11.7)(@typescript-eslint/parser@5.58.0(eslint@8.38.0)(typescript@4.9.5))(eslint-config-prettier@8.8.0(eslint@8.38.0))(eslint@8.38.0)(nx@16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107)(typescript@4.9.5))(@swc/core@1.3.107))(typescript@4.9.5)(verdaccio@5.31.0(encoding@0.1.13))
@@ -41335,7 +41388,7 @@ snapshots:
 
   '@nx/devkit@17.3.2(nx@17.3.2(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.2)))':
     dependencies:
-      '@nrwl/devkit': 17.3.2(nx@16.10.0(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.2)))
+      '@nrwl/devkit': 17.3.2(nx@17.3.2(@swc-node/register@1.8.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(@swc/types@0.1.6)(typescript@5.4.5))(@swc/core@1.3.107(@swc/helpers@0.5.2)))
       ejs: 3.1.9
       enquirer: 2.3.6
       ignore: 5.2.4
@@ -51048,6 +51101,8 @@ snapshots:
 
   acorn@8.11.3: {}
 
+  acorn@8.12.0: {}
+
   acorn@8.8.2: {}
 
   add-px-to-style@1.0.0: {}
@@ -51795,8 +51850,8 @@ snapshots:
   autoprefixer@10.4.14(postcss@8.4.31):
     dependencies:
       browserslist: 4.23.0
-      caniuse-lite: 1.0.30001589
-      fraction.js: 4.2.0
+      caniuse-lite: 1.0.30001634
+      fraction.js: 4.3.7
       normalize-range: 0.1.2
       picocolors: 1.0.0
       postcss: 8.4.31
@@ -52574,7 +52629,7 @@ snapshots:
 
   browserslist@4.21.10:
     dependencies:
-      caniuse-lite: 1.0.30001589
+      caniuse-lite: 1.0.30001634
       electron-to-chromium: 1.4.508
       node-releases: 2.0.13
       update-browserslist-db: 1.0.11(browserslist@4.21.10)
@@ -52754,7 +52809,7 @@ snapshots:
       fs-minipass: 3.0.1
       glob: 9.3.5
       lru-cache: 7.18.3
-      minipass: 4.2.7
+      minipass: 4.2.8
       minipass-collect: 1.0.2
       minipass-flush: 1.0.5
       minipass-pipeline: 1.2.4
@@ -52879,7 +52934,7 @@ snapshots:
   caniuse-api@3.0.0:
     dependencies:
       browserslist: 4.23.0
-      caniuse-lite: 1.0.30001589
+      caniuse-lite: 1.0.30001634
       lodash.memoize: 4.1.2
       lodash.uniq: 4.5.0
 
@@ -53250,7 +53305,7 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.4.15
       '@types/estree': 1.0.5
-      acorn: 8.11.3
+      acorn: 8.12.0
       estree-walker: 3.0.3
       periscopic: 3.1.0
 
@@ -53646,7 +53701,7 @@ snapshots:
       globby: 13.1.3
       normalize-path: 3.0.0
       schema-utils: 4.0.0
-      serialize-javascript: 6.0.1
+      serialize-javascript: 6.0.2
       webpack: 5.88.2(@swc/core@1.3.107)(esbuild@0.18.17)
 
   core-js-compat@3.32.2:
@@ -54244,7 +54299,7 @@ snapshots:
       jest-worker: 27.5.1
       postcss: 8.4.38
       schema-utils: 4.0.0
-      serialize-javascript: 6.0.1
+      serialize-javascript: 6.0.2
       source-map: 0.6.1
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)
     optionalDependencies:
@@ -54256,7 +54311,7 @@ snapshots:
       jest-worker: 27.5.1
       postcss: 8.4.38
       schema-utils: 4.0.0
-      serialize-javascript: 6.0.1
+      serialize-javascript: 6.0.2
       source-map: 0.6.1
       webpack: 5.78.0(@swc/core@1.3.107)
 
@@ -57199,8 +57254,6 @@ snapshots:
 
   fp-ts@2.13.1: {}
 
-  fraction.js@4.2.0: {}
-
   fraction.js@4.3.7: {}
 
   fragment-cache@0.2.1:
@@ -57267,7 +57320,7 @@ snapshots:
 
   fs-minipass@3.0.1:
     dependencies:
-      minipass: 4.2.7
+      minipass: 4.2.8
 
   fs-monkey@1.0.3: {}
 
@@ -62341,7 +62394,7 @@ snapshots:
       https-proxy-agent: 5.0.1
       is-lambda: 1.0.1
       lru-cache: 7.18.3
-      minipass: 4.2.7
+      minipass: 4.2.8
       minipass-fetch: 3.0.1
       minipass-flush: 1.0.5
       minipass-pipeline: 1.2.4
@@ -63493,7 +63546,7 @@ snapshots:
 
   minipass-fetch@3.0.1:
     dependencies:
-      minipass: 4.2.7
+      minipass: 4.2.8
       minipass-sized: 1.0.3
       minizlib: 2.1.2
     optionalDependencies:
@@ -63521,6 +63574,8 @@ snapshots:
       yallist: 4.0.0
 
   minipass@4.2.7: {}
+
+  minipass@4.2.8: {}
 
   minipass@5.0.0: {}
 
@@ -63994,7 +64049,7 @@ snapshots:
       '@rollup/plugin-node-resolve': 15.0.2(rollup@3.28.1)
       ajv: 8.12.0
       ansi-colors: 4.1.3
-      autoprefixer: 10.4.14(postcss@8.4.38)
+      autoprefixer: 10.4.19(postcss@8.4.38)
       browserslist: 4.21.10
       cacache: 18.0.0
       chokidar: 3.5.3
@@ -64366,7 +64421,7 @@ snapshots:
   npm-registry-fetch@14.0.3:
     dependencies:
       make-fetch-happen: 11.0.3
-      minipass: 4.2.7
+      minipass: 4.2.8
       minipass-fetch: 3.0.1
       minipass-json-stream: 1.0.1
       minizlib: 2.1.2
@@ -65096,6 +65151,8 @@ snapshots:
       lodash.flattendeep: 4.4.0
       release-zalgo: 1.0.0
 
+  package-json-from-dist@1.0.0: {}
+
   pacote@13.6.2:
     dependencies:
       '@npmcli/git': 3.0.2
@@ -65363,6 +65420,11 @@ snapshots:
   path-name@1.0.0: {}
 
   path-parse@1.0.7: {}
+
+  path-scurry@1.11.1:
+    dependencies:
+      lru-cache: 10.2.2
+      minipass: 7.1.2
 
   path-scurry@1.11.1:
     dependencies:
@@ -66384,7 +66446,7 @@ snapshots:
       '@csstools/postcss-text-decoration-shorthand': 1.0.0(postcss@8.4.38)
       '@csstools/postcss-trigonometric-functions': 1.0.2(postcss@8.4.38)
       '@csstools/postcss-unset-value': 1.0.2(postcss@8.4.38)
-      autoprefixer: 10.4.14(postcss@8.4.38)
+      autoprefixer: 10.4.19(postcss@8.4.38)
       browserslist: 4.23.0
       css-blank-pseudo: 3.0.3(postcss@8.4.38)
       css-has-pseudo: 3.0.4(postcss@8.4.38)
@@ -69586,7 +69648,7 @@ snapshots:
 
   ssri@10.0.2:
     dependencies:
-      minipass: 4.2.7
+      minipass: 4.2.8
 
   ssri@9.0.1:
     dependencies:
@@ -70132,7 +70194,7 @@ snapshots:
       '@jridgewell/sourcemap-codec': 1.4.15
       '@jridgewell/trace-mapping': 0.3.25
       '@types/estree': 1.0.5
-      acorn: 8.11.3
+      acorn: 8.12.0
       aria-query: 5.3.0
       axobject-query: 4.0.0
       code-red: 1.0.4
@@ -70465,7 +70527,7 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.19
       jest-worker: 27.5.1
       schema-utils: 3.3.0
-      serialize-javascript: 6.0.1
+      serialize-javascript: 6.0.2
       terser: 5.22.0
       webpack: 5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20)
     optionalDependencies:
@@ -70477,7 +70539,7 @@ snapshots:
       '@jridgewell/trace-mapping': 0.3.19
       jest-worker: 27.5.1
       schema-utils: 3.3.0
-      serialize-javascript: 6.0.1
+      serialize-javascript: 6.0.2
       terser: 5.22.0
       webpack: 5.78.0(@swc/core@1.3.107)
     optionalDependencies:
@@ -71389,6 +71451,26 @@ snapshots:
       diff: 4.0.2
       make-error: 1.3.6
       typescript: 5.4.5
+      v8-compile-cache-lib: 3.0.1
+      yn: 3.1.1
+    optionalDependencies:
+      '@swc/core': 1.3.107(@swc/helpers@0.5.2)
+
+  ts-node@10.9.2(@swc/core@1.3.107)(@types/node@20.14.5)(typescript@4.9.5):
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      '@tsconfig/node10': 1.0.9
+      '@tsconfig/node12': 1.0.11
+      '@tsconfig/node14': 1.0.3
+      '@tsconfig/node16': 1.0.3
+      '@types/node': 20.14.5
+      acorn: 8.11.3
+      acorn-walk: 8.3.2
+      arg: 4.1.3
+      create-require: 1.1.1
+      diff: 4.0.2
+      make-error: 1.3.6
+      typescript: 4.9.5
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
     optionalDependencies:
