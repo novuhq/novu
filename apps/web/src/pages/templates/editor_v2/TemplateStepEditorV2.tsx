@@ -1,5 +1,3 @@
-import { Button } from '@novu/novui';
-import { IconPlayArrow } from '@novu/novui/icons';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
@@ -9,13 +7,9 @@ import { WorkflowStepEditorInputsPanel } from '../../../studio/components/workfl
 import { useTemplateController } from '../components/useTemplateController';
 import { api } from '../../../api';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
-import { testSendEmailMessage } from '../../../api/notification-templates';
-import { useAuth } from '../../../hooks/useAuth';
-import { errorMessage, successMessage } from '../../../utils/notifications';
-import { ChannelTypeEnum } from '@novu/shared';
+import { WorkflowTestStepButton } from '../../../studio/components/workflows/step-editor/WorkflowTestStepButton';
 
 export const WorkflowsStepEditorPageV2 = () => {
-  const { currentUser } = useAuth();
   const [inputs, setStepInputs] = useState({});
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
@@ -41,28 +35,6 @@ export const WorkflowsStepEditorPageV2 = () => {
   } = useMutation<any, any, any>((data) => api.post('/v1/echo/preview/' + workflow?.name + '/' + stepId, data));
 
   const title = step?.stepId;
-  const stepType: ChannelTypeEnum | undefined = step?.template?.type;
-
-  const handleTestClick = async () => {
-    try {
-      await testSendEmailEvent({
-        stepId,
-        workflowId: (workflow as any)?.rawData?.workflowId,
-        contentType: 'customHtml',
-        subject: '',
-        payload,
-        inputs,
-        to: currentUser?.email || '',
-        bridge: true,
-        content: '',
-      });
-      successMessage('Test sent successfully!');
-    } catch (e: any) {
-      errorMessage(e.message || 'Un-expected error occurred');
-    }
-  };
-
-  const { mutateAsync: testSendEmailEvent, isLoading: isTestingEmail } = useMutation(testSendEmailMessage);
 
   useEffect(() => {
     if (!workflow) return;
@@ -92,11 +64,13 @@ export const WorkflowsStepEditorPageV2 = () => {
       title={title}
       icon={<Icon size="32" />}
       actions={
-        stepType === ChannelTypeEnum.EMAIL ? (
-          <Button loading={isTestingEmail} Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
-            Test step
-          </Button>
-        ) : null
+        <WorkflowTestStepButton
+          stepId={stepId}
+          payload={payload}
+          inputs={inputs}
+          workflowId={(workflow as any)?.rawData?.workflowId}
+          stepType={step?.template?.type}
+        />
       }
     >
       <WorkflowsPanelLayout>

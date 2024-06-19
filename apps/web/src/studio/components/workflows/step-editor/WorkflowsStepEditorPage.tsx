@@ -1,20 +1,14 @@
-import { Button } from '@novu/novui';
-import { IconPlayArrow } from '@novu/novui/icons';
 import { useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { WorkflowStepEditorContentPanel } from './WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorInputsPanel } from './WorkflowStepEditorInputsPanel';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { bridgeApi } from '../../../../api/bridge/bridge.api';
 import { useState } from 'react';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../node-view/WorkflowNodes';
-import { errorMessage, successMessage } from '@novu/design-system';
-import { testSendEmailMessage } from '../../../../api/notification-templates';
-import { useAuth } from '../../../../hooks/useAuth';
-import { ChannelTypeEnum } from '@novu/shared';
+import { WorkflowTestStepButton } from './WorkflowTestStepButton';
 
 export const WorkflowsStepEditorPage = () => {
-  const { currentUser } = useAuth();
   const [inputs, setStepInputs] = useState({});
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
@@ -33,28 +27,6 @@ export const WorkflowsStepEditorPage = () => {
   });
   const step = workflow?.steps.find((item) => item.stepId === stepId);
   const title = step?.stepId;
-  const stepType: ChannelTypeEnum | undefined = step?.type;
-
-  const { mutateAsync: testSendEmailEvent, isLoading: isTestingEmail } = useMutation(testSendEmailMessage);
-
-  const handleTestClick = async () => {
-    try {
-      await testSendEmailEvent({
-        stepId,
-        workflowId: workflow.workflowid,
-        contentType: 'customHtml',
-        subject: '',
-        payload,
-        inputs,
-        to: currentUser?.email || '',
-        bridge: true,
-        content: '',
-      });
-      successMessage('Test sent successfully!');
-    } catch (e: any) {
-      errorMessage(e.message || 'Un-expected error occurred');
-    }
-  };
 
   function onInputsChange(type: string, form: any) {
     switch (type) {
@@ -76,11 +48,13 @@ export const WorkflowsStepEditorPage = () => {
       title={title}
       icon={<Icon size="32" />}
       actions={
-        stepType === ChannelTypeEnum.EMAIL ? (
-          <Button loading={isTestingEmail} Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
-            Test step
-          </Button>
-        ) : null
+        <WorkflowTestStepButton
+          stepId={stepId}
+          payload={payload}
+          inputs={inputs}
+          workflowId={workflow.workflowid}
+          stepType={step?.type}
+        />
       }
     >
       <WorkflowsPanelLayout>
