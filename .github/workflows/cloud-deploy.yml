@@ -104,6 +104,8 @@ jobs:
       packages: write
       deployments: write
       id-token: write
+    with:
+      env: ${{ needs.pre-release.outputs.environment }}
 
   release-services:
     needs: [ pre-release ]
@@ -129,7 +131,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Deploy ${{ matrix.service }}
+      - name: Deploy ${{ matrix.service.name }}
         uses: ./.github/workflows/cloud-deploy-services.yml
         with:
           env: ${{ needs.pre-release.outputs.environment }}
