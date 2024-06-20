@@ -1,7 +1,7 @@
 import { errorMessage } from '@novu/design-system';
 import { useQuery } from '@tanstack/react-query';
 import { ConnectionStatus } from '../../components/layout/components/v2/ConnectionStatusIndicator';
-import { useBridgeUrl } from './useBridgeUrl';
+import { useBridgeURL } from './useBridgeURL';
 
 export type BridgeStatus = {
   status: ConnectionStatus;
@@ -11,7 +11,7 @@ export type BridgeStatus = {
 const BRIDGE_STATUS_REFRESH_INTERVAL_MS = 5 * 1000;
 
 export const useBridgeConnectionStatus = () => {
-  const { bridgeUrl, isLoading: isLoadingEnvironment } = useBridgeUrl();
+  const { bridgeUrl, isLoading: isLoadingEnvironment } = useBridgeURL();
 
   const { data, isLoading, refetch } = useQuery<BridgeStatus>({
     queryKey: ['bridge-status', bridgeUrl],

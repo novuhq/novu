@@ -4,9 +4,8 @@ import { IconPlayArrow } from '@novu/novui/icons';
 import { testSendEmailMessage } from '../../../../api/notification-templates';
 import { ChannelTypeEnum } from '@novu/shared';
 import { Button } from '@novu/novui';
-import { useAuth } from '../../../../hooks/useAuth';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
-import { useIsStudio } from '../../../hooks/useIsStudio';
+import { useStudioState } from '../../../StudioStateProvider';
 
 export const WorkflowTestStepButton = ({
   stepId,
@@ -22,14 +21,13 @@ export const WorkflowTestStepButton = ({
   stepType: ChannelTypeEnum;
 }) => {
   const segment = useSegment();
-  const isStudio = useIsStudio();
-  const { currentUser } = useAuth();
+  const { local, testUser } = useStudioState();
   const { mutateAsync: testSendEmailEvent, isLoading: isTestingEmail } = useMutation(testSendEmailMessage);
 
   const handleTestClick = async () => {
     segment.track('Step test ran - [Workflows Step Page]', {
       step: ChannelTypeEnum.EMAIL,
-      env: isStudio ? 'local' : 'cloud',
+      env: local ? 'local' : 'cloud',
     });
     try {
       await testSendEmailEvent({
@@ -40,7 +38,7 @@ export const WorkflowTestStepButton = ({
         payload,
         inputs: controls,
         controls,
-        to: currentUser?.email || '',
+        to: testUser?.emailAddress || '',
         bridge: true,
         content: '',
       });
