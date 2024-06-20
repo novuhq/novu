@@ -79,10 +79,9 @@ jobs:
     with:
       env: ${{ needs.pre-release.outputs.environment }}
 
-  release-dev-inbound-mail:
-    uses: ./.github/workflows/cloud-deploy-dev-inbound-mail.yml
+  release-inbound-mail:
+    uses: ./.github/workflows/cloud-deploy-inbound-mail.yml
     needs: [ pre-release ]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     secrets: inherit
     permissions:
       contents: read
@@ -114,10 +113,9 @@ jobs:
       deployments: write
       id-token: write
 
-  release-dev-webhook:
-    uses: ./.github/workflows/cloud-deploy-dev-webhook.yml
+  release-webhook:
+    uses: ./.github/workflows/cloud-deploy-webhook.yml
     needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     secrets: inherit
     permissions:
       contents: read
@@ -126,9 +124,8 @@ jobs:
       id-token: write
 
   release-dev-widget:
-    uses: ./.github/workflows/cloud-deploy-dev-widget.yml
+    uses: ./.github/workflows/cloud-deploy-widget.yml
     needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     secrets: inherit
     permissions:
       contents: read
@@ -137,9 +134,8 @@ jobs:
       id-token: write
 
   release-dev-worker:
-    uses: ./.github/workflows/cloud-deploy-dev-worker.yml
+    uses: ./.github/workflows/cloud-deploy-worker.yml
     needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     secrets: inherit
     permissions:
       contents: read
@@ -148,9 +144,8 @@ jobs:
       id-token: write
 
   release-dev-ws:
-    uses: ./.github/workflows/cloud-deploy-dev-ws.yml
+    uses: ./.github/workflows/cloud-deploy-ws.yml
     needs: [pre-release]
-    if: github.ref == 'refs/heads/next' || github.event.inputs.environment == 'dev'
     secrets: inherit
     permissions:
       contents: read
