@@ -30,7 +30,8 @@ export class ComputeJobWaitDurationService {
     overrides: any;
     bridgeResponse?: IBridgeDigestResponse | IBridgeDelayResponse;
   }): number {
-    if (!stepMetadata) throw new ApiException(`Step metadata not found`);
+    if (!stepMetadata && !bridgeResponse)
+      throw new ApiException(`Step metadata not found`);
 
     const digestType =
       (bridgeResponse?.type as DigestTypeEnum | DelayTypeEnum) ??

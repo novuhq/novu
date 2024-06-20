@@ -228,6 +228,10 @@ export class TriggerEvent {
   private async queryDiscoverWorkflow(
     command: TriggerEventMulticastCommand | TriggerEventBroadcastCommand
   ): Promise<DiscoverWorkflowOutput | null> {
+    if (!command.bridge.url) {
+      return null;
+    }
+
     const environment = await this.environmentRepository.findOne({
       _id: command.environmentId,
     });

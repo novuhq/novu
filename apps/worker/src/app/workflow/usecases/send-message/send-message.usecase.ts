@@ -210,7 +210,7 @@ export class SendMessage {
   ): Promise<{ filterResult: IConditionsFilterResponse | null; channelPreferenceResult: boolean | null }> {
     const skipHalt = this.shouldSkipHalt(bridgeSkip, command.job?.step?.bridgeUrl);
     if (skipHalt) {
-      return { filterResult: null, channelPreferenceResult: null };
+      return { filterResult: { passed: true, conditions: [], variables: {} }, channelPreferenceResult: true };
     }
 
     const [filterResult, channelPreferenceResult] = await Promise.all([

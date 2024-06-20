@@ -17,29 +17,36 @@ import { echoServer } from '../../../../e2e/echo.server';
 
 const eventTriggerPath = '/v1/events/trigger';
 
-describe('Bridge Trigger ', async () => {
-  let session: UserSession;
-  const messageRepository = new MessageRepository();
-  const workflowsRepository = new NotificationTemplateRepository();
-  const jobRepository = new JobRepository();
-  let subscriber: SubscriberEntity;
-  let subscriberService: SubscribersService;
-  const executionDetailsRepository = new ExecutionDetailsRepository();
+type Context = { name: string; isStateful: boolean };
+const contexts: Context[] = [
+  { name: 'stateful', isStateful: true },
+  { name: 'stateless', isStateful: false },
+];
 
-  beforeEach(async () => {
-    session = new UserSession();
-    await session.initialize();
-    subscriberService = new SubscribersService(session.organization._id, session.environment._id);
-    subscriber = await subscriberService.createSubscriber();
-  });
+contexts.forEach((context: Context) => {
+  describe('Bridge Trigger', async () => {
+    let session: UserSession;
+    const messageRepository = new MessageRepository();
+    const workflowsRepository = new NotificationTemplateRepository();
+    const jobRepository = new JobRepository();
+    let subscriber: SubscriberEntity;
+    let subscriberService: SubscribersService;
+    const executionDetailsRepository = new ExecutionDetailsRepository();
+    const bridge = context.isStateful ? undefined : { url: echoServer.serverPath + '/echo' };
 
-  afterEach(async () => {
-    await echoServer.stop();
-  });
+    beforeEach(async () => {
+      session = new UserSession();
+      await session.initialize();
+      subscriberService = new SubscribersService(session.organization._id, session.environment._id);
+      subscriber = await subscriberService.createSubscriber();
+    });
 
-  describe('Stateful Trigger', async () => {
-    it('should trigger the echo workflow with sync', async () => {
-      const workflowId = 'hello-world';
+    afterEach(async () => {
+      await echoServer.stop();
+    });
+
+    it(`should trigger the echo workflow with sync [${context.name}]`, async () => {
+      const workflowId = `hello-world-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
@@ -75,30 +82,32 @@ describe('Bridge Trigger ', async () => {
 
       await echoServer.start({ workflows: [newWorkflow] });
 
-      await discoverAndSyncEcho(session);
+      if (context.isStateful) {
+        await discoverAndSyncEcho(session);
 
-      const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
-      expect(foundWorkflow).to.be.ok;
+        const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+        expect(foundWorkflow).to.be.ok;
 
-      if (!foundWorkflow) {
-        throw new Error('Workflow not found');
+        if (!foundWorkflow) {
+          throw new Error('Workflow not found');
+        }
       }
 
-      await triggerEvent(session, workflowId, subscriber, { name: 'test_name' });
-      await session.awaitRunningJobs(foundWorkflow._id);
+      await triggerEvent(session, workflowId, subscriber, { name: 'test_name' }, bridge);
+      await session.awaitRunningJobs();
 
-      const messagesAfter = await messageRepository.find({
+      const messages = await messageRepository.find({
         _environmentId: session.environment._id,
         _subscriberId: subscriber._id,
         channel: StepTypeEnum.EMAIL,
       });
 
-      expect(messagesAfter.length).to.be.eq(1);
-      expect(messagesAfter[0].subject).to.include('This is an email subject TEST');
+      expect(messages.length).to.be.eq(1);
+      expect(messages[0].subject).to.include('This is an email subject TEST');
     });
 
-    it('should skip by static value', async () => {
-      const workflowIdSkipByStatic = 'skip-by-static-value-workflow';
+    it(`should skip by static value [${context.name}]`, async () => {
+      const workflowIdSkipByStatic = `skip-by-static-value-workflow-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowIdSkipByStatic,
         async ({ step, payload }) => {
@@ -135,18 +144,12 @@ describe('Bridge Trigger ', async () => {
 
       await echoServer.start({ workflows: [newWorkflow] });
 
-      await syncWorkflow(session);
+      if (context.isStateful) {
+        await syncWorkflow(session, workflowsRepository, workflowIdSkipByStatic);
+      }
 
-      const workflowByStatic = await workflowsRepository.findByTriggerIdentifier(
-        session.environment._id,
-        workflowIdSkipByStatic
-      );
-
-      expect(workflowByStatic).to.be.ok;
-      if (!workflowByStatic) throw new Error('Workflow not found');
-
-      await triggerEvent(session, workflowIdSkipByStatic, subscriber);
-      await session.awaitRunningJobs(workflowByStatic._id);
+      await triggerEvent(session, workflowIdSkipByStatic, subscriber, null, bridge);
+      await session.awaitRunningJobs();
 
       const executedMessageByStatic = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -166,8 +169,8 @@ describe('Bridge Trigger ', async () => {
       expect(cancelledJobByStatic[0].status).to.be.eq(JobStatusEnum.CANCELED);
     });
 
-    it('should skip by variable default value', async () => {
-      const workflowIdSkipByVariable = 'skip-by-variable-default-value';
+    it(`should skip by variable default value [${context.name}]`, async () => {
+      const workflowIdSkipByVariable = `skip-by-variable-default-value-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowIdSkipByVariable,
         async ({ step, payload }) => {
@@ -205,18 +208,12 @@ describe('Bridge Trigger ', async () => {
 
       await echoServer.start({ workflows: [newWorkflow] });
 
-      await syncWorkflow(session);
+      if (context.isStateful) {
+        await syncWorkflow(session, workflowsRepository, workflowIdSkipByVariable);
+      }
 
-      const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(
-        session.environment._id,
-        workflowIdSkipByVariable
-      );
-
-      expect(foundWorkflow).to.be.ok;
-      if (!foundWorkflow) throw new Error('Workflow not found');
-
-      await triggerEvent(session, workflowIdSkipByVariable, subscriber);
-      await session.awaitRunningJobs(foundWorkflow._id);
+      await triggerEvent(session, workflowIdSkipByVariable, subscriber, null, bridge);
+      await session.awaitRunningJobs();
 
       const executedMessage = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -236,8 +233,8 @@ describe('Bridge Trigger ', async () => {
       expect(cancelledJobByVariable[0].status).to.be.eq(JobStatusEnum.CANCELED);
     });
 
-    it('should have execution detail errors for invalid trigger payload', async () => {
-      const workflowId = 'missing-payload-var';
+    it(`should have execution detail errors for invalid trigger payload [${context.name}]`, async () => {
+      const workflowId = `missing-payload-name-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
@@ -262,18 +259,13 @@ describe('Bridge Trigger ', async () => {
 
       await echoServer.start({ workflows: [newWorkflow] });
 
-      await discoverAndSyncEcho(session);
-
-      const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
-      expect(foundWorkflow).to.be.ok;
-
-      if (!foundWorkflow) {
-        throw new Error('Workflow not found');
+      if (context.isStateful) {
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId);
       }
 
-      await triggerEvent(session, workflowId, subscriber, {});
+      await triggerEvent(session, workflowId, subscriber, {}, bridge);
 
-      await session.awaitRunningJobs(foundWorkflow._id);
+      await session.awaitRunningJobs(undefined);
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -284,7 +276,7 @@ describe('Bridge Trigger ', async () => {
       expect(messagesAfter.length).to.be.eq(0);
       const executionDetailsRequired = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
-        _notificationTemplateId: foundWorkflow._id,
+        // _notificationTemplateId: foundWorkflow._id,
         status: ExecutionDetailsStatusEnum.FAILED,
       });
 
@@ -296,11 +288,11 @@ describe('Bridge Trigger ', async () => {
       await executionDetailsRepository.delete({ _environmentId: session.environment._id });
 
       await triggerEvent(session, workflowId, subscriber, { name: 4 });
-      await session.awaitRunningJobs(foundWorkflow._id);
+      await session.awaitRunningJobs();
 
       const executionDetailsInvalidType = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
-        _notificationTemplateId: foundWorkflow._id,
+        // _notificationTemplateId: foundWorkflow._id,
         status: ExecutionDetailsStatusEnum.FAILED,
       });
       raw = JSON.parse(executionDetailsInvalidType[0]?.raw ?? '');
@@ -309,8 +301,8 @@ describe('Bridge Trigger ', async () => {
       expect(error).to.include('must be string');
     });
 
-    it('should use custom step', async () => {
-      const workflowId = 'with-custom-step';
+    it(`should use custom step [${context.name}]`, async () => {
+      const workflowId = `with-custom-step-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(workflowId, async ({ step }) => {
         const resInApp = await step.inApp('send-in-app', async () => {
           return {
@@ -350,18 +342,13 @@ describe('Bridge Trigger ', async () => {
 
       await echoServer.start({ workflows: [newWorkflow] });
 
-      await discoverAndSyncEcho(session);
-
-      const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
-      expect(foundWorkflow).to.be.ok;
-
-      if (!foundWorkflow) {
-        throw new Error('Workflow not found');
+      if (context.isStateful) {
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId);
       }
 
-      await triggerEvent(session, workflowId, subscriber, {});
+      await triggerEvent(session, workflowId, subscriber, {}, bridge);
 
-      await session.awaitRunningJobs(foundWorkflow._id);
+      await session.awaitRunningJobs();
 
       const messagesAfterInApp = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -380,8 +367,8 @@ describe('Bridge Trigger ', async () => {
       expect(messagesAfterEmail[0].subject).to.include('Read');
     });
 
-    it('should trigger the echo workflow with digest', async () => {
-      const workflowId = 'digest-workflow';
+    it(`should trigger the echo workflow with digest [${context.name}]`, async () => {
+      const workflowId = `digest-workflow-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step }) => {
@@ -433,32 +420,27 @@ describe('Bridge Trigger ', async () => {
 
       await echoServer.start({ workflows: [newWorkflow] });
 
-      await discoverAndSyncEcho(session);
-
-      const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
-      expect(foundWorkflow).to.be.ok;
-
-      if (!foundWorkflow) {
-        throw new Error('Workflow not found');
+      if (context.isStateful) {
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId);
       }
 
-      await triggerEvent(session, workflowId, subscriber, { name: 'John' });
-      await triggerEvent(session, workflowId, subscriber, { name: 'Bela' });
+      await triggerEvent(session, workflowId, subscriber, { name: 'John' }, bridge);
+      await triggerEvent(session, workflowId, subscriber, { name: 'Bela' }, bridge);
 
-      await session.awaitRunningJobs(foundWorkflow?._id, false, 0);
+      await session.awaitRunningJobs();
 
-      const messagesAfter = await messageRepository.find({
+      const messages = await messageRepository.find({
         _environmentId: session.environment._id,
         _subscriberId: subscriber._id,
         channel: StepTypeEnum.SMS,
       });
 
-      expect(messagesAfter.length).to.be.eq(1);
-      expect(messagesAfter[0].content).to.include('2 people liked your post');
+      expect(messages.length).to.be.eq(1);
+      expect(messages[0].content).to.include('2 people liked your post');
     });
 
-    it('should trigger the echo workflow with delay', async () => {
-      const workflowId = 'delay-workflow';
+    it(`should trigger the echo workflow with delay [${context.name}]`, async () => {
+      const workflowId = `delay-workflow-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step }) => {
@@ -520,18 +502,13 @@ describe('Bridge Trigger ', async () => {
 
       await echoServer.start({ workflows: [newWorkflow] });
 
-      await discoverAndSyncEcho(session);
-
-      const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
-      expect(foundWorkflow).to.be.ok;
-
-      if (!foundWorkflow) {
-        throw new Error('Workflow not found');
+      if (context.isStateful) {
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId);
       }
 
-      await triggerEvent(session, workflowId, subscriber);
+      await triggerEvent(session, workflowId, subscriber, null, bridge);
 
-      await session.awaitRunningJobs(foundWorkflow?._id, true, 0);
+      await session.awaitRunningJobs();
 
       const messagesAfter = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -543,8 +520,8 @@ describe('Bridge Trigger ', async () => {
       expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
     });
 
-    it('should trigger the echo workflow with input variables', async () => {
-      const workflowId = 'input-variables-workflow';
+    it(`should trigger the echo workflow with input variables [${context.name}]`, async () => {
+      const workflowId = `input-variables-workflow-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
@@ -580,19 +557,14 @@ describe('Bridge Trigger ', async () => {
 
       await echoServer.start({ workflows: [newWorkflow] });
 
-      await discoverAndSyncEcho(session);
-
-      const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
-      expect(foundWorkflow).to.be.ok;
-
-      if (!foundWorkflow) {
-        throw new Error('Workflow not found');
+      if (context.isStateful) {
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId);
       }
 
-      await triggerEvent(session, workflowId, subscriber, {});
-      await session.awaitRunningJobs(foundWorkflow._id);
-      await triggerEvent(session, workflowId, subscriber, { name: 'payload_name' });
-      await session.awaitRunningJobs(foundWorkflow._id);
+      await triggerEvent(session, workflowId, subscriber, {}, bridge);
+      await session.awaitRunningJobs();
+      await triggerEvent(session, workflowId, subscriber, { name: 'payload_name' }, bridge);
+      await session.awaitRunningJobs();
 
       const sentMessage = await messageRepository.find({
         _environmentId: session.environment._id,
@@ -605,71 +577,24 @@ describe('Bridge Trigger ', async () => {
       expect(sentMessage[0].subject).to.include('prefix Hello payload_name');
     });
   });
-
-  describe('Stateless Trigger', async () => {
-    it('should trigger the echo workflow without sync', async () => {
-      const bridgeUrl = echoServer.serverPath + '/echo';
-      const workflowId = `non-stored-workflow-${uuidv4()}`;
-      const newWorkflow = workflow(
-        workflowId,
-        async ({ step, payload }) => {
-          await step.email(
-            'send-email',
-            async (inputs) => {
-              return {
-                subject: 'This is an email subject ' + inputs.name,
-                body: 'Body result ' + payload.name,
-              };
-            },
-            {
-              inputSchema: {
-                type: 'object',
-                properties: {
-                  name: { type: 'string', default: 'TEST' },
-                },
-              } as const,
-            }
-          );
-        },
-        {
-          payloadSchema: {
-            type: 'object',
-            properties: {
-              name: { type: 'string', default: 'default_name' },
-            },
-            required: [],
-            additionalProperties: false,
-          } as const,
-        }
-      );
-
-      await echoServer.start({ workflows: [newWorkflow] });
-
-      const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
-      expect(foundWorkflow).to.not.be.ok;
-
-      await triggerEvent(session, workflowId, subscriber, { name: 'test_name' }, { url: bridgeUrl });
-      await session.awaitRunningJobs();
-
-      const messages = await messageRepository.find({
-        _environmentId: session.environment._id,
-        _subscriberId: subscriber._id,
-        channel: StepTypeEnum.EMAIL,
-      });
-
-      expect(messages.length).to.be.eq(1);
-      expect(messages[0].subject).to.include('This is an email subject TEST');
-    });
-  });
 });
 
-async function syncWorkflow(session) {
+async function syncWorkflow(
+  session: UserSession,
+  workflowsRepository: NotificationTemplateRepository,
+  workflowIdentifier: string
+) {
   const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
 
   await session.testAgent.post(`/v1/echo/sync`).send({
     bridgeUrl: echoServer.serverPath + '/echo',
     workflows: resultDiscover.data.workflows,
   });
+
+  const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowIdentifier);
+
+  expect(foundWorkflow).to.be.ok;
+  if (!foundWorkflow) throw new Error('Workflow not found');
 }
 
 async function triggerEvent(session, workflowId: string, subscriber, payload?: any, bridge?: { url: string }) {
@@ -696,13 +621,28 @@ async function triggerEvent(session, workflowId: string, subscriber, payload?: a
   );
 }
 
-async function discoverAndSyncEcho(session: UserSession) {
+async function discoverAndSyncEcho(
+  session: UserSession,
+  workflowsRepository?: NotificationTemplateRepository,
+  workflowIdentifier?: string
+) {
   const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
 
   const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
     bridgeUrl: echoServer.serverPath + '/echo',
     workflows: resultDiscover.data.workflows,
   });
+
+  if (!workflowsRepository || !workflowIdentifier) {
+    return;
+  }
+
+  const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowIdentifier);
+  expect(foundWorkflow).to.be.ok;
+
+  if (!foundWorkflow) {
+    throw new Error('Workflow not found');
+  }
 
   return discoverResponse;
 }

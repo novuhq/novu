@@ -180,9 +180,10 @@ export class AddJob {
 
   private async fetchResonateData(command: AddJobCommand, filterVariables: IFilterVariables) {
     const response = await this.resonateUsecase.execute<
-      AddJobCommand & { variables: IFilterVariables },
+      AddJobCommand & { variables: IFilterVariables; identifier: string },
       ExecuteOutput<IBridgeDigestResponse>
     >({
+      identifier: command.job.identifier,
       ...command,
       variables: filterVariables,
     });
