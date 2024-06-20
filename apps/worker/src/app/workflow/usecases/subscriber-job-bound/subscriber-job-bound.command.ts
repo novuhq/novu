@@ -3,6 +3,7 @@ import { IsDefined, IsString, IsOptional, ValidateNested, IsMongoId, IsEnum } fr
 import { ISubscribersDefine, ITenantDefine, SubscriberSourceEnum, TriggerRequestCategoryEnum } from '@novu/shared';
 import { SubscriberEntity } from '@novu/dal';
 import { EnvironmentWithUserCommand } from '@novu/application-generic';
+import { DiscoverWorkflowOutput } from '@novu/framework';
 
 export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsString()
@@ -41,5 +42,5 @@ export class SubscriberJobBoundCommand extends EnvironmentWithUserCommand {
   @IsEnum(TriggerRequestCategoryEnum)
   requestCategory?: TriggerRequestCategoryEnum;
 
-  bridge?: any;
+  bridge?: { url: string; workflow: DiscoverWorkflowOutput };
 }

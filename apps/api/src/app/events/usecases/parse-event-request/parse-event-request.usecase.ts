@@ -10,7 +10,6 @@ import {
   Instrument,
   InstrumentUsecase,
   IWorkflowDataDto,
-  IWorkflowJobDto,
   StorageHelperService,
   WorkflowQueueService,
   AnalyticsService,
@@ -38,7 +37,11 @@ import {
 } from '@novu/dal';
 import { Novu } from '@novu/node';
 
-import { ParseEventRequestCommand } from './parse-event-request.command';
+import {
+  ParseEventRequestBroadcastCommand,
+  ParseEventRequestCommand,
+  ParseEventRequestMulticastCommand,
+} from './parse-event-request.command';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { VerifyPayload, VerifyPayloadCommand } from '../verify-payload';
 
@@ -65,18 +68,20 @@ export class ParseEventRequest {
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
 
-    const template =
-      command.bridge?.workflow ??
-      (await this.getNotificationTemplateByTriggerIdentifier({
-        environmentId: command.environmentId,
-        triggerIdentifier: command.identifier,
-      }));
+    if (this.isStatelessWorkflowAllowed(command.bridge)) {
+      return await this.dispatchEvent(command, transactionId);
+    }
+
+    const template = await this.getNotificationTemplateByTriggerIdentifier({
+      environmentId: command.environmentId,
+      triggerIdentifier: command.identifier,
+    });
 
     if (!template) {
       throw new UnprocessableEntityException('workflow_not_found');
     }
 
-    const reservedVariablesTypes = command.bridge?.workflow ? [] : this.getReservedVariablesTypes(template);
+    const reservedVariablesTypes = this.getReservedVariablesTypes(template);
     this.validateTriggerContext(command, reservedVariablesTypes);
 
     let tenant: TenantEntity | null = null;
@@ -104,7 +109,7 @@ export class ParseEventRequest {
       });
     }
 
-    const inactiveWorkflow = command.bridge?.workflow ? false : !workflowOverride && !template.active;
+    const inactiveWorkflow = !workflowOverride && !template.active;
     const inactiveWorkflowOverride = workflowOverride && !workflowOverride.active;
 
     if (inactiveWorkflowOverride || inactiveWorkflow) {
@@ -124,7 +129,7 @@ export class ParseEventRequest {
       };
     }
 
-    if (!command.bridge?.workflow && !template.steps?.some((step) => step.active)) {
+    if (!template.steps?.some((step) => step.active)) {
       return {
         acknowledged: true,
         status: TriggerEventStatusEnum.NO_WORKFLOW_ACTIVE_STEPS,
@@ -145,28 +150,28 @@ export class ParseEventRequest {
       command.payload.attachments = command.payload.attachments.map(({ file, ...attachment }) => attachment);
     }
 
-    const defaultPayload = !command.bridge?.workflow
-      ? this.verifyPayload.execute(
-          VerifyPayloadCommand.create({
-            payload: command.payload,
-            template,
-          })
-        )
-      : {};
-
+    const defaultPayload = this.verifyPayload.execute(
+      VerifyPayloadCommand.create({
+        payload: command.payload,
+        template,
+      })
+    );
     command.payload = merge({}, defaultPayload, command.payload);
 
+    await this.sendInAppNudgeForTeamMemberInvite(command);
+
+    return await this.dispatchEvent(command, transactionId);
+  }
+
+  private async dispatchEvent(
+    command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand,
+    transactionId
+  ) {
     const jobData: IWorkflowDataDto = {
       ...command,
       actor: command.actor,
       transactionId,
     };
-
-    try {
-      await this.sendInAppNudgeForTeamMemberInvite(command);
-    } catch (error) {
-      Logger.error(error, 'Invite nudge failed', LOG_CONTEXT);
-    }
 
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });
 
@@ -175,6 +180,12 @@ export class ParseEventRequest {
       status: TriggerEventStatusEnum.PROCESSED,
       transactionId,
     };
+  }
+
+  private isStatelessWorkflowAllowed(bridge: { url: string } | undefined): boolean {
+    const allowedEnvironment = process.env.NODE_ENV !== 'production';
+
+    return !!bridge?.url && allowedEnvironment;
   }
 
   @Instrument()
@@ -256,73 +267,77 @@ export class ParseEventRequest {
 
   @Instrument()
   private async sendInAppNudgeForTeamMemberInvite(command: ParseEventRequestCommand): Promise<void> {
-    const isEnabled = await this.getFeatureFlag.execute(
-      GetFeatureFlagCommand.create({
-        key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
-        organizationId: command.organizationId,
-        userId: 'system',
-        environmentId: 'system',
-      })
-    );
+    try {
+      const isEnabled = await this.getFeatureFlag.execute(
+        GetFeatureFlagCommand.create({
+          key: FeatureFlagsKeysEnum.IS_TEAM_MEMBER_INVITE_NUDGE_ENABLED,
+          organizationId: command.organizationId,
+          userId: 'system',
+          environmentId: 'system',
+        })
+      );
 
-    if (!isEnabled) return;
+      if (!isEnabled) return;
 
-    // check if this is first trigger
-    const notificationCount = await this.getNotificationCount(command);
+      // check if this is first trigger
+      const notificationCount = await this.getNotificationCount(command);
 
-    if (notificationCount > 0) return;
+      if (notificationCount > 0) return;
 
-    /*
-     * After the first trigger, we invalidate the cache to ensure the next event trigger
-     * will update the cache with a count of 1.
-     */
-    this.invalidateCacheService.invalidateByKey({
-      key: buildHasNotificationKey({
-        _organizationId: command.organizationId,
-      }),
-    });
+      /*
+       * After the first trigger, we invalidate the cache to ensure the next event trigger
+       * will update the cache with a count of 1.
+       */
+      this.invalidateCacheService.invalidateByKey({
+        key: buildHasNotificationKey({
+          _organizationId: command.organizationId,
+        }),
+      });
 
-    // check if user is using personal email
-    const user = await this.userRepository.findOne({
-      _id: command.userId,
-    });
+      // check if user is using personal email
+      const user = await this.userRepository.findOne({
+        _id: command.userId,
+      });
 
-    if (!user) throw new ApiException('User not found');
+      if (!user) throw new ApiException('User not found');
 
-    if (this.isBlockedEmail(user.email)) return;
+      if (this.isBlockedEmail(user.email)) return;
 
-    // check if organization has more than 1 member
-    const membersCount = await this.memberRepository.count(
-      {
-        _organizationId: command.organizationId,
-      },
-      2
-    );
+      // check if organization has more than 1 member
+      const membersCount = await this.memberRepository.count(
+        {
+          _organizationId: command.organizationId,
+        },
+        2
+      );
 
-    if (membersCount > 1) return;
+      if (membersCount > 1) return;
 
-    Logger.log('No notification found', LOG_CONTEXT);
+      Logger.log('No notification found', LOG_CONTEXT);
 
-    if (process.env.NOVU_API_KEY) {
-      if (!command.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]) {
-        const novu = new Novu(process.env.NOVU_API_KEY);
+      if (process.env.NOVU_API_KEY) {
+        if (!command.payload[INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]) {
+          const novu = new Novu(process.env.NOVU_API_KEY);
 
-        await novu.trigger(process.env.NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER, {
-          to: {
-            subscriberId: command.userId,
-            email: user?.email as string,
-          },
-          payload: {
-            [INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]: true,
-            webhookUrl: `${process.env.API_ROOT_URL}/v1/invites/webhook`,
-            organizationId: command.organizationId,
-          },
-        });
+          await novu.trigger(process.env.NOVU_INVITE_TEAM_MEMBER_NUDGE_TRIGGER_IDENTIFIER, {
+            to: {
+              subscriberId: command.userId,
+              email: user?.email as string,
+            },
+            payload: {
+              [INVITE_TEAM_MEMBER_NUDGE_PAYLOAD_KEY]: true,
+              webhookUrl: `${process.env.API_ROOT_URL}/v1/invites/webhook`,
+              organizationId: command.organizationId,
+            },
+          });
 
-        this.analyticsService.track('Invite Nudge Sent', command.userId, {
-          _organization: command.organizationId,
-        });
+          this.analyticsService.track('Invite Nudge Sent', command.userId, {
+            _organization: command.organizationId,
+          });
+        }
       }
+    } catch (error) {
+      Logger.error(error, 'Invite nudge failed', LOG_CONTEXT);
     }
   }
 

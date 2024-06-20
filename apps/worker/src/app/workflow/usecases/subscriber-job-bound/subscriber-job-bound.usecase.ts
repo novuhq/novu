@@ -39,9 +39,7 @@ export class SubscriberJobBound {
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
-    private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService
   ) {}
@@ -57,7 +55,6 @@ export class SubscriberJobBound {
     const {
       subscriber,
       templateId,
-      bridge,
       environmentId,
       organizationId,
       userId,
@@ -68,28 +65,13 @@ export class SubscriberJobBound {
       requestCategory,
     } = command;
 
-    let template =
-      command.bridge?.workflow ??
+    const template =
+      this.mapBridgeWorkflow(command) ??
       (await this.getNotificationTemplate({
         _id: templateId,
         environmentId: environmentId,
       }));
 
-    if (command.bridge?.workflow) {
-      template = {
-        ...template,
-        type: 'ECHO',
-        steps: template.steps.map((step) => {
-          return {
-            ...step,
-            active: true,
-            template: {
-              type: step.type,
-            },
-          };
-        }),
-      };
-    }
     if (!template) {
       throw new ApiException(`Workflow id ${templateId} was not found`);
     }
@@ -173,6 +155,32 @@ export class SubscriberJobBound {
         bridge: command.bridge,
       })
     );
+  }
+
+  private mapBridgeWorkflow(command: SubscriberJobBoundCommand): NotificationTemplateEntity | null {
+    const bridgeWorkflow = command.bridge?.workflow;
+
+    if (!bridgeWorkflow) {
+      return null;
+    }
+
+    /*
+     * Cast used to convert data type for further processing.
+     * todo Needs review for potential data corruption.
+     */
+    return {
+      ...bridgeWorkflow,
+      type: 'ECHO',
+      steps: bridgeWorkflow.steps.map((step) => {
+        return {
+          ...step,
+          active: true,
+          template: {
+            type: step.type,
+          },
+        };
+      }),
+    } as unknown as NotificationTemplateEntity;
   }
 
   @Instrument()

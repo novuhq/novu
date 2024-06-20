@@ -64,7 +64,6 @@ export class TriggerEventRequestDto {
   @IsObject()
   @IsOptional()
   bridge: {
-    workflow: any;
     url: string;
   };
 

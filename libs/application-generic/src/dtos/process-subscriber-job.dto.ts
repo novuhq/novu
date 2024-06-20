@@ -5,6 +5,7 @@ import {
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
 import { SubscriberEntity } from '@novu/dal';
+import { DiscoverWorkflowOutput } from '@novu/framework';
 
 import {
   IBulkJobParams,
@@ -25,7 +26,7 @@ export interface IProcessSubscriberDataDto {
   templateId: string;
   _subscriberSource: SubscriberSourceEnum;
   requestCategory?: TriggerRequestCategoryEnum;
-  bridge?: any;
+  bridge?: { url: string; workflow: DiscoverWorkflowOutput };
 }
 
 export interface IProcessSubscriberJobDto extends IJobParams {

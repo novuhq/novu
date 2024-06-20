@@ -91,7 +91,7 @@ export class CreateNotificationJobs {
         step: {
           ...step,
           ...(command.bridge?.workflow
-            ? { inlineWorkflow: true, bridgeUrl: command.bridge?.url }
+            ? { bridgeUrl: command.bridge?.url }
             : {}),
         },
         transactionId: command.transactionId,

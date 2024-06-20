@@ -1,12 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { ModuleRef } from '@nestjs/core';
 
 import {
+  EnvironmentRepository,
   IntegrationRepository,
   JobEntity,
   JobRepository,
   NotificationTemplateRepository,
   SubscriberEntity,
+  NotificationTemplateEntity,
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
@@ -17,8 +20,14 @@ import {
   TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
+import { DiscoverOutput, DiscoverWorkflowOutput } from '@novu/framework';
+import { GetActionEnum, IPayload, PostActionEnum } from '@novu/ee-echo-worker';
 
-import { TriggerEventCommand } from './trigger-event.command';
+import {
+  TriggerEventBroadcastCommand,
+  TriggerEventCommand,
+  TriggerEventMulticastCommand,
+} from './trigger-event.command';
 import {
   ProcessSubscriber,
   ProcessSubscriberCommand,
@@ -37,21 +46,41 @@ import {
   TriggerMulticast,
   TriggerMulticastCommand,
 } from '../trigger-multicast';
+import { IUseCaseInterface, requireInject } from '../../utils/require-inject';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
 
+export interface IDoBridgeRequestCommand {
+  bridgeUrl: string;
+  payload?: IPayload;
+  apiKey: string;
+  searchParams?: Record<string, any>;
+  afterResponse?: any;
+  action: PostActionEnum | GetActionEnum;
+  retriesLimit?: number;
+}
+
 @Injectable()
 export class TriggerEvent {
+  private doBridgeRequest: IUseCaseInterface<
+    IDoBridgeRequestCommand,
+    DiscoverOutput | null
+  >;
+
   constructor(
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
     private jobRepository: JobRepository,
+    private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private triggerBroadcast: TriggerBroadcast,
-    private triggerMulticast: TriggerMulticast
-  ) {}
+    private triggerMulticast: TriggerMulticast,
+    protected moduleRef: ModuleRef
+  ) {
+    this.doBridgeRequest = requireInject('do_bridge_request', this.moduleRef);
+  }
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
@@ -85,18 +114,20 @@ export class TriggerEvent {
         organizationId: mappedCommand.organizationId,
       });
 
-      const template =
-        mappedCommand.bridge?.workflow ??
-        (await this.getNotificationTemplateByTriggerIdentifier({
-          environmentId: mappedCommand.environmentId,
-          triggerIdentifier: mappedCommand.identifier,
-        }));
+      const discoverWorkflow = await this.queryDiscoverWorkflow(command);
+
+      //todo: check how we want to handle nullable discoverWorkflow if bridge url is available (exception?)
+
+      const template = await this.getNotificationTemplateByTriggerIdentifier({
+        environmentId: mappedCommand.environmentId,
+        triggerIdentifier: mappedCommand.identifier,
+      });
 
       /*
        * Makes no sense to execute anything if template doesn't exist
        * TODO: Send a 404?
        */
-      if (!template) {
+      if (!template && !discoverWorkflow) {
         throw new ApiException('Notification template could not be found');
       }
 
@@ -140,8 +171,11 @@ export class TriggerEvent {
           await this.triggerMulticast.execute(
             TriggerMulticastCommand.create({
               ...mappedCommand,
+              bridge: { url: command.bridge.url, workflow: discoverWorkflow },
               actor: actorProcessed,
-              template,
+              template:
+                template ||
+                (discoverWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -150,8 +184,11 @@ export class TriggerEvent {
           await this.triggerBroadcast.execute(
             TriggerBroadcastCommand.create({
               ...mappedCommand,
+              bridge: { url: command.bridge.url, workflow: discoverWorkflow },
               actor: actorProcessed,
-              template,
+              template:
+                template ||
+                (discoverWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -161,8 +198,11 @@ export class TriggerEvent {
             TriggerMulticastCommand.create({
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
+              bridge: { url: command.bridge.url, workflow: discoverWorkflow },
               actor: actorProcessed,
-              template,
+              template:
+                template ||
+                (discoverWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -183,6 +223,28 @@ export class TriggerEvent {
 
       throw e;
     }
+  }
+
+  private async queryDiscoverWorkflow(
+    command: TriggerEventMulticastCommand | TriggerEventBroadcastCommand
+  ): Promise<DiscoverWorkflowOutput | null> {
+    const environment = await this.environmentRepository.findOne({
+      _id: command.environmentId,
+    });
+
+    const discover = await this.doBridgeRequest.execute({
+      bridgeUrl: command.bridge.url,
+      apiKey: environment.apiKeys[0].key,
+      action: GetActionEnum.DISCOVER,
+    });
+
+    if (!discover) {
+      return null;
+    }
+
+    return discover?.workflows?.find(
+      (findWorkflow) => findWorkflow.workflowId === command.identifier
+    );
   }
 
   @CachedEntity({

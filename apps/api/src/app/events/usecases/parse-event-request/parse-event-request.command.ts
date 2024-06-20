@@ -1,4 +1,4 @@
-import { IsDefined, IsString, IsOptional, ValidateNested, ValidateIf, IsEnum } from 'class-validator';
+import { IsDefined, IsString, IsOptional, ValidateNested, ValidateIf, IsEnum, IsObject } from 'class-validator';
 import {
   AddressingTypeEnum,
   TriggerRecipients,
@@ -46,14 +46,22 @@ export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseComm
   @IsEnum(AddressingTypeEnum)
   addressingType: AddressingTypeEnum.MULTICAST;
 
-  bridge: any;
+  @IsObject()
+  @IsOptional()
+  bridge?: {
+    url: string;
+  };
 }
 
 export class ParseEventRequestBroadcastCommand extends ParseEventRequestBaseCommand {
   @IsEnum(AddressingTypeEnum)
   addressingType: AddressingTypeEnum.BROADCAST;
 
-  bridge: any;
+  @IsObject()
+  @IsOptional()
+  bridge?: {
+    url: string;
+  };
 }
 
 export type ParseEventRequestCommand = ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;

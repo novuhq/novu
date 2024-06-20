@@ -150,6 +150,7 @@ export class TriggerBroadcast {
           templateId: command.template._id,
           _subscriberSource: SubscriberSourceEnum.BROADCAST,
           requestCategory: command.requestCategory,
+          bridge: command.bridge,
         },
         groupId: command.organizationId,
       };
