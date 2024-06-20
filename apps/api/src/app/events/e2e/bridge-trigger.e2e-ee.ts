@@ -606,7 +606,7 @@ describe('Bridge Trigger ', async () => {
     });
   });
 
-  describe.only('Stateless Trigger', async () => {
+  describe('Stateless Trigger', async () => {
     it('should trigger the echo workflow without sync', async () => {
       const bridgeUrl = echoServer.serverPath + '/echo';
       const workflowId = `non-stored-workflow-${uuidv4()}`;
