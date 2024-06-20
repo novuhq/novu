@@ -11,6 +11,7 @@ export const PATHS: { [key in ROUTES]?: string } = {
   [ROUTES.TRANSLATIONS]: 'content-creation-design/translations',
   [ROUTES.STUDIO_ONBOARDING]: 'echo/quickstart',
   [ROUTES.STUDIO_ONBOARDING_PREVIEW]: 'echo/concepts/workflows',
+  [ROUTES.STUDIO_FLOWS]: 'echo/concepts/workflows',
 };
 
 export const DOCS_URL = 'https://docs.novu.co';
