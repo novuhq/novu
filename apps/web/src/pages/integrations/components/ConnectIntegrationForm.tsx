@@ -14,7 +14,7 @@ import type { IIntegratedProvider } from '../types';
 import { createIntegration, getWebhookSupportStatus, updateIntegration } from '../../../api/integration';
 import { IntegrationInput } from './IntegrationInput';
 import { IS_DOCKER_HOSTED, WEBHOOK_URL } from '../../../config';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { CONTEXT_PATH } from '../../../config';
 import { ShareableUrl } from './Modal/ConnectIntegrationForm';
 
@@ -93,7 +93,7 @@ export function ConnectIntegrationForm({
 
   const { colorScheme } = useMantineColorScheme();
   const [isActive, setIsActive] = useState<boolean>(!!provider?.active);
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
   const { currentOrganization } = useAuth();
   const webhookUrlClipboard = useClipboard({ timeout: 1000 });
   const [checkIntegrationState, dispatch] = useReducer(checkIntegrationReducer, checkIntegrationInitialState);

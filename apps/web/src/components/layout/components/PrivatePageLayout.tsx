@@ -8,7 +8,7 @@ import { INTERCOM_APP_ID } from '../../../config';
 import { EnsureOnboardingComplete } from './EnsureOnboardingComplete';
 import { SpotLight } from '../../utils/Spotlight';
 import { SpotLightProvider } from '../../providers/SpotlightProvider';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 // TODO: Move sidebar under layout folder as it belongs here
 import { Sidebar } from '../../nav/Sidebar';
 import { HeaderNav } from './v2/HeaderNav';
@@ -32,7 +32,7 @@ const ContentShell = styled.div`
 
 export function PrivatePageLayout() {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
 
   /**
    * TODO: this is a temporary work-around to let us work the different color palettes while testing locally.

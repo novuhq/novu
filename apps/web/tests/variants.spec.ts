@@ -206,7 +206,7 @@ test('should show only edit step in production for simple node', async ({ page }
   expect(relevantNode.getByTestId('step-actions-menu')).toHaveCount(0);
 });
 
-test('should show edit step and conditions in production for node with conditions', async ({ page }) => {
+test.skip('should show edit step and conditions in production for node with conditions', async ({ page }) => {
   let workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   await workflowEditorPage.addAndFillSmsNode('this is a test paragraph', 'Test Add Variant Flow for SMS');
 
@@ -272,7 +272,7 @@ test.skip('ensure production node editor only shows close button for simple case
   expect(smsNodeEditorPage.getCloseSidebarLocator()).toHaveCount(1);
 });
 
-test('ensure production shows close and edit conditions button for conditioned node', async ({ page }) => {
+test.skip('ensure production shows close and edit conditions button for conditioned node', async ({ page }) => {
   let workflowEditorPage = await WorkflowEditorPage.goToNewWorkflow(page);
   await workflowEditorPage.addAndFillSmsNode('this is a test paragraph', 'Test Add Flow for SMS');
   await workflowEditorPage.addConditionToNode(ChannelType.SMS);

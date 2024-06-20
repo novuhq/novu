@@ -36,7 +36,7 @@ import { QueryKeys } from '../../../../api/query.keys';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { IntegrationsStoreModalAnalytics } from '../../constants';
 import { When } from '../../../../components/utils/When';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 
 enum ACTION_TYPE_ENUM {
   HANDLE_SHOW_SWITCH = 'handle_show_switch',
@@ -508,7 +508,7 @@ export function ShareableUrl({
   provider: ProvidersIdEnum | undefined;
   hmacEnabled: boolean;
 }) {
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
 
   const oauthUrlClipboard = useClipboard({ timeout: 1000 });
   const display = provider === ChatProviderIdEnum.Slack;

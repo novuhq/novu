@@ -671,11 +671,8 @@ async function discoverAndSyncEcho(
   workflowsRepository?: NotificationTemplateRepository,
   workflowIdentifier?: string
 ) {
-  const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
-
   const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
     bridgeUrl: echoServer.serverPath + '/echo',
-    workflows: resultDiscover.data.workflows,
   });
 
   if (!workflowsRepository || !workflowIdentifier) {

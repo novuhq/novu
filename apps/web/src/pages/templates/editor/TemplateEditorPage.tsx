@@ -6,7 +6,7 @@ import { useFormContext } from 'react-hook-form';
 import PageContainer from '../../../components/layout/components/PageContainer';
 import type { IForm } from '../components/formTypes';
 import WorkflowEditor from '../workflow/WorkflowEditor';
-import { useEnvController, usePrompt } from '../../../hooks';
+import { useEnvironment, usePrompt } from '../../../hooks';
 import { BlueprintModal } from '../components/BlueprintModal';
 import { TemplateEditorFormProvider, useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 import { ROUTES } from '../../../constants/routes';
@@ -20,7 +20,7 @@ function BaseTemplateEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { template, isCreating, onSubmit, onInvalid } = useTemplateEditorForm();
-  const { environment, bridge } = useEnvController({}, template?.bridge);
+  const { environment, bridge } = useEnvironment({}, template?.bridge);
   const methods = useFormContext<IForm>();
   const { handleSubmit } = methods;
   const tourStorage = useTourStorage();

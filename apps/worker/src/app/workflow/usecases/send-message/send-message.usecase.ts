@@ -102,7 +102,7 @@ export class SendMessage {
     const stepType = command.step?.template?.type;
 
     let resonateResponse: ExecuteOutput<IBridgeChannelResponse> | null = null;
-    if (!['digest', 'delay'].includes(stepType as any)) {
+    if (![StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.TRIGGER].includes(stepType as any)) {
       resonateResponse = await this.resonateUsecase.execute<
         SendMessageCommand & { variables: IFilterVariables },
         ExecuteOutput<IBridgeChannelResponse> | null

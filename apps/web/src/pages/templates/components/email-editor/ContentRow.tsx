@@ -14,7 +14,7 @@ import {
   IconOutlineAlignHorizontalCenter,
   IconOutlineAlignHorizontalRight,
 } from '@novu/design-system';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 
 export function ContentRow({
@@ -31,7 +31,7 @@ export function ContentRow({
   blockIndex: number;
 }) {
   const methods = useFormContext();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const theme = useMantineTheme();
   const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
   const parentRef = useRef<HTMLDivElement>(null);

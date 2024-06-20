@@ -143,7 +143,7 @@ export const StudioOnboardingSuccess = () => {
       <Footer
         onClick={() => {
           segment.track('Workflows page accessed - [Onboarding - Signup]');
-          navigate(ROUTES.WORKFLOWS);
+          navigate(ROUTES.STUDIO_FLOWS);
         }}
         canSkipSetup={false}
         buttonText="Explore workflows"

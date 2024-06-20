@@ -1,6 +1,6 @@
 import { ButtonStylesNames } from '@mantine/core';
 import { defineSlotRecipe } from '@pandacss/dev';
-import { colorPaletteGradientHorizontal } from '../ingredients';
+import { colorPaletteGradientHorizontal, colorPaletteGradientText } from '../ingredients';
 
 const SLOTS: ButtonStylesNames[] = ['root', 'inner', 'label', 'loader', 'section'];
 
@@ -10,8 +10,6 @@ export const BUTTON_RECIPE = defineSlotRecipe({
   slots: SLOTS,
   base: {
     root: {
-      // default color palette
-      colorPalette: 'mode.cloud',
       _disabled: {
         opacity: 'disabled',
       },
@@ -68,11 +66,15 @@ export const BUTTON_RECIPE = defineSlotRecipe({
           px: '0 !important',
         },
         label: {
-          color: 'colorPalette.start',
+          ...colorPaletteGradientText,
         },
         section: {
+          ...colorPaletteGradientHorizontal,
+          borderRadius: '50 !important',
+          padding: '[2px !important]',
+          marginRight: '50 !important',
           '& svg': {
-            fill: 'colorPalette.start',
+            fill: 'button.icon.filled !important',
           },
         },
       },

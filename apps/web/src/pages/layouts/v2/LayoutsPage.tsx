@@ -6,13 +6,13 @@ import PageContainer from '../../../components/layout/components/PageContainer';
 import PageHeader from '../../../components/layout/components/PageHeader';
 import { useAuth } from '../../../hooks/useAuth';
 import { useSegment } from '../../../components/providers/SegmentProvider';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 
 const LAYOUT = 'Layouts';
 
 export function LayoutsPage() {
   const { currentOrganization, currentUser } = useAuth();
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
 
   const segment = useSegment();
 

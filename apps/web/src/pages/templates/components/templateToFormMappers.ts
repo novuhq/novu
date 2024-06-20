@@ -87,7 +87,7 @@ const mapToDigestFormStep = (item: INotificationTemplateStep | IStepVariant): IF
         digestKey: metadata.digestKey,
         regular: {
           amount: `${metadata.amount}`,
-          unit: metadata.unit,
+          unit: metadata.unit as DigestUnitEnum,
           backoff: metadata.backoff,
           backoffAmount: `${metadata.backoffAmount}`,
           backoffUnit: metadata.backoffUnit,
@@ -105,7 +105,7 @@ const mapToDigestFormStep = (item: INotificationTemplateStep | IStepVariant): IF
         type: metadata.type,
         digestKey: metadata.digestKey,
         timed: {
-          unit: metadata.unit,
+          unit: metadata.unit as DigestUnitEnum,
           ...(metadata.unit === DigestUnitEnum.MINUTES && { minutes: { amount: `${metadata.amount}` } }),
           ...(metadata.unit === DigestUnitEnum.HOURS && { hours: { amount: `${metadata.amount}` } }),
           ...(metadata.unit === DigestUnitEnum.DAYS && {
