@@ -1,7 +1,6 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PrivatePageLayout } from './components/layout/components/PrivatePageLayout';
 import { PublicPageLayout } from './components/layout/components/PublicPageLayout';
-import { EnsureOnboardingComplete } from './components/layout/components/EnsureOnboardingComplete';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
 import { useFeatureFlag } from './hooks';
@@ -15,7 +14,7 @@ import { BrandingPage } from './pages/brand/BrandingPage';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { GetStartedPage } from './pages/get-started/GetStartedPage';
 import HomePage from './pages/HomePage';
-import { ApiKeysPage } from './pages/settings/index';
+import { ApiKeysPage, WebhookPage } from './pages/settings/index';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
 import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
@@ -150,6 +149,7 @@ export const AppRoutes = () => {
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.LAYOUT} element={<LayoutsPage />} />
         <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
+        <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
       <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />
