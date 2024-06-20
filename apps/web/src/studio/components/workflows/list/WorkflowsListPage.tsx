@@ -1,7 +1,7 @@
 import { SearchInput } from '@novu/design-system';
 import { Button } from '@novu/novui';
-import { IconAddBox } from '@novu/novui/icons';
-import { Flex } from '@novu/novui/jsx';
+import { IconOutlineAdd } from '@novu/novui/icons';
+import { HStack } from '@novu/novui/jsx';
 import { PageTemplate } from '../../../layout/index';
 import { WorkflowsTable } from '../table/index';
 import { useQuery } from '@tanstack/react-query';
@@ -15,16 +15,16 @@ export const WorkflowsListPage = () => {
 
   return (
     <PageTemplate title="Workflows">
-      <Flex justify={'space-between'}>
+      <HStack justify={'space-between'}>
         <DocsButton
           TriggerButton={({ onClick }) => (
-            <Button onClick={onClick} Icon={IconAddBox} size={'sm'} variant="transparent">
+            <Button onClick={onClick} Icon={IconOutlineAdd} variant="transparent" py="50">
               Add workflow
             </Button>
           )}
         />
         <SearchInput placeholder="Type name or identifier..." />
-      </Flex>
+      </HStack>
       <WorkflowsTable workflows={data?.workflows || []} isLoading={isLoading} />
     </PageTemplate>
   );
