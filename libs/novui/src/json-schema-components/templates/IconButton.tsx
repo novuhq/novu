@@ -1,48 +1,26 @@
-import React from 'react';
 import { IconButtonProps } from '@rjsf/utils';
-import { ActionIcon } from '@mantine/core';
-import {
-  IconArrowDownward,
-  IconArrowUpward,
-  IconLocalHospital,
-  IconOutlineDeleteOutline,
-} from '../../icons/icon-registry';
+import { css } from '../../../styled-system/css';
+import { Button, IconButton } from '../../components';
+import { IconAdd, IconArrowDownward, IconArrowUpward, IconOutlineDeleteOutline } from '../../icons/icon-registry';
 
-export function RemoveButton(props: IconButtonProps) {
-  const { icon, iconType, ...btnProps } = props;
+type Props = Omit<IconButtonProps, 'color' | 'translate' | 'iconType' | 'icon'>;
 
+export function RemoveButton(props: Props) {
+  return <IconButton {...props} variant={'transparent'} Icon={IconOutlineDeleteOutline} />;
+}
+
+export function MoveUpButton(props: Props) {
+  return <IconButton {...props} variant={'transparent'} Icon={IconArrowUpward} />;
+}
+export function AddButton(props: Props) {
   return (
-    <ActionIcon {...btnProps} variant={'transparent'}>
-      <IconOutlineDeleteOutline title={'Remove'} />
-    </ActionIcon>
+    // marginLeft is used to nudge the button to make it align nicely with vertical borders
+    <Button {...props} variant={'transparent'} Icon={IconAdd} className={css({ marginLeft: '[1px]', my: '50' })}>
+      Add item
+    </Button>
   );
 }
 
-export function MoveUpButton(props: IconButtonProps) {
-  const { icon, iconType, ...btnProps } = props;
-
-  return (
-    <ActionIcon {...btnProps} variant={'transparent'}>
-      <IconArrowUpward title={'Move up'} />
-    </ActionIcon>
-  );
-}
-export function AddButton(props: IconButtonProps) {
-  const { icon, iconType, ...btnProps } = props;
-
-  return (
-    <ActionIcon {...btnProps} variant={'transparent'}>
-      <IconLocalHospital title={'Add item'} />
-    </ActionIcon>
-  );
-}
-
-export function MoveDownButton(props: IconButtonProps) {
-  const { icon, iconType, ...btnProps } = props;
-
-  return (
-    <ActionIcon {...btnProps} variant={'transparent'}>
-      <IconArrowDownward title={'Move down'} />
-    </ActionIcon>
-  );
+export function MoveDownButton(props: Props) {
+  return <IconButton {...props} variant={'transparent'} Icon={IconArrowDownward} />;
 }
