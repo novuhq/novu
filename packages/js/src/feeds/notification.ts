@@ -1,4 +1,4 @@
-import { ApiService } from '@novu/client';
+import type { ApiService } from '@novu/client';
 
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
 import { Avatar, NotificationActionStatus, NotificationButton, Cta, NotificationStatus, TODO } from '../types';
@@ -122,6 +122,6 @@ export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   }
 
   off<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
-    this.#emitter.on(eventName, listener);
+    this.#emitter.off(eventName, listener);
   }
 }

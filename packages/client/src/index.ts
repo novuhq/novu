@@ -1,4 +1,4 @@
-import {
+import type {
   IPreferenceChannels,
   NotificationTemplateCustomData,
 } from '@novu/shared';
