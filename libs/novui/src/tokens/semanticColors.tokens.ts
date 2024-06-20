@@ -189,21 +189,21 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
   mode: {
     cloud: {
       start: {
-        value: { base: '{colors.legacy.gradientStart}', _dark: '{colors.legacy.gradientStart}' },
+        value: { base: '{colors.legacy.gradientEnd}', _dark: '{colors.legacy.gradientEnd}' },
         type: 'color',
       },
       end: {
-        value: { base: '{colors.legacy.gradientEnd}', _dark: '{colors.legacy.gradientEnd}' },
+        value: { base: '{colors.legacy.gradientStart}', _dark: '{colors.legacy.gradientStart}' },
         type: 'color',
       },
     },
     local: {
       start: {
-        value: { base: '{colors.green.30.light}', _dark: '{colors.green.30.dark}' },
+        value: { base: '{colors.green.30.light}', _dark: '{colors.green.50.dark}' },
         type: 'color',
       },
       end: {
-        value: { base: '{colors.green.50.light}', _dark: '{colors.green.50.dark}' },
+        value: { base: '{colors.green.50.light}', _dark: '{colors.green.30.dark}' },
         type: 'color',
       },
     },
