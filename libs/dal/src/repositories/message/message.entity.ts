@@ -39,6 +39,8 @@ export class MessageEntity {
 
   updatedAt: string;
 
+  archivedAt?: string;
+
   content: string | IEmailBlock[];
 
   transactionId: string;
@@ -50,6 +52,8 @@ export class MessageEntity {
   seen: boolean;
 
   read: boolean;
+
+  archived: boolean;
 
   deleted: boolean;
 
@@ -93,10 +97,12 @@ export class MessageEntity {
   actor?: IActor;
 
   _actorId?: string;
+
+  tags?: string[];
 }
 
 export type MessageDBModel = ChangePropsValueType<
-  Omit<MessageEntity, 'createdAt'>,
+  MessageEntity,
   | '_templateId'
   | '_environmentId'
   | '_messageTemplateId'
@@ -106,6 +112,4 @@ export type MessageDBModel = ChangePropsValueType<
   | '_subscriberId'
   | '_feedId'
   | '_actorId'
-> & {
-  createdAt?: Date;
-};
+>;
