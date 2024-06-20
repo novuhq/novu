@@ -13,6 +13,7 @@ import {
   SmsBasePreview,
 } from '../../../../components/workflow/preview';
 import { MobileSimulator } from '../../../../components/workflow/preview/common';
+import { css } from '@novu/novui/css';
 
 interface IWorkflowStepEditorContentPanelProps {
   preview: any;
@@ -85,6 +86,15 @@ export const PreviewStep = ({
           integration={integration}
           content={preview?.outputs?.body}
           subject={preview?.outputs?.subject}
+          classNames={{
+            browser: css({ display: 'flex', flexDirection: 'column', gap: '0', flex: '1' }),
+            content: css({ display: 'flex' }),
+            frame: css({ flex: '1', height: 'auto !important' }),
+            contentContainer: css({
+              minHeight: '72vh',
+              flex: '1',
+            }),
+          }}
           {...props}
         />
       );

@@ -155,9 +155,11 @@ export const StudioOnboardingPreview = () => {
                       onLocaleChange={() => {}}
                       locales={[]}
                       loading={previewLoading}
-                      className={css({
-                        height: 'calc(50vh - 28px) !important',
-                      })}
+                      classNames={{
+                        contentContainer: css({
+                          height: 'calc(50vh - 28px) !important',
+                        }),
+                      }}
                     />
                   ),
                 },
