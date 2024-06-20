@@ -1,6 +1,8 @@
 import { defineConfig, Options } from 'tsup';
-import { name, version } from './package.json';
 import { compress } from 'esbuild-plugin-compress';
+import glob from 'tiny-glob';
+
+import { name, version } from './package.json';
 
 const isProd = process.env?.NODE_ENV === 'production';
 
@@ -12,16 +14,30 @@ const baseConfig: Options = {
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
 };
 
+const baseModuleConfig: Options = {
+  ...baseConfig,
+  splitting: true,
+  treeshake: true,
+  bundle: false,
+  define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
+  entry: await glob('./src/**/!(*.d|*.test).ts'),
+  outExtension: ({ format }) => {
+    return {
+      js: format === 'cjs' ? '.cjs' : '.js',
+    };
+  },
+};
+
 export default defineConfig([
   {
-    ...baseConfig,
-    entry: ['src/index.ts'],
-    format: ['esm', 'cjs'],
-    outExtension: ({ format }) => {
-      return {
-        js: format === 'cjs' ? '.cjs' : '.js',
-      };
-    },
+    ...baseModuleConfig,
+    format: 'esm',
+    outDir: 'dist/esm',
+  },
+  {
+    ...baseModuleConfig,
+    format: 'cjs',
+    outDir: 'dist/cjs',
   },
   {
     ...baseConfig,

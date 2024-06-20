@@ -1,13 +1,3 @@
-import { ApiService } from '@novu/client';
+import { BaseModule } from '../base-module';
 
-import { NovuEventEmitter } from '../event-emitter';
-
-export class Preferences {
-  #emitter: NovuEventEmitter;
-  #apiService: ApiService;
-
-  constructor(emitter: NovuEventEmitter, apiService: ApiService) {
-    this.#emitter = emitter;
-    this.#apiService = apiService;
-  }
-}
+export class Preferences extends BaseModule {}

@@ -5,6 +5,8 @@
     "target": "ESNext",
     "module": "ESNext",
     "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
     "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types"],
     "sourceMap": true,
