@@ -24,8 +24,9 @@ export class ComputeJobWaitDurationService {
     payload: any;
     overrides: any;
   }): number {
-    if (!stepMetadata && !bridgeResponse)
+    if (!stepMetadata) {
       throw new ApiException(`Step metadata not found`);
+    }
 
     const digestType = stepMetadata.type;
 
