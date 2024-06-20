@@ -10,7 +10,13 @@ import {
   JobRepository,
   ExecutionDetailsRepository,
 } from '@novu/dal';
-import { ExecutionDetailsStatusEnum, JobStatusEnum, MarkMessagesAsEnum, StepTypeEnum } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ExecutionDetailsStatusEnum,
+  JobStatusEnum,
+  MarkMessagesAsEnum,
+  StepTypeEnum,
+} from '@novu/shared';
 import { workflow } from '@novu/framework';
 
 import { echoServer } from '../../../../e2e/echo.server';
@@ -67,6 +73,40 @@ contexts.forEach((context: Context) => {
               } as const,
             }
           );
+
+          await step.inApp(
+            'send-in-app',
+            async (inputs) => {
+              return {
+                body: 'in-app result ' + payload.name,
+              };
+            },
+            {
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', default: 'TEST' },
+                },
+              } as const,
+            }
+          );
+
+          await step.sms(
+            'send-sms',
+            async (inputs) => {
+              return {
+                body: 'sms result ' + payload.name,
+              };
+            },
+            {
+              inputSchema: {
+                type: 'object',
+                properties: {
+                  name: { type: 'string', default: 'TEST' },
+                },
+              } as const,
+            }
+          );
         },
         {
           payloadSchema: {
@@ -99,11 +139,16 @@ contexts.forEach((context: Context) => {
       const messages = await messageRepository.find({
         _environmentId: session.environment._id,
         _subscriberId: subscriber._id,
-        channel: StepTypeEnum.EMAIL,
+        channel: { $in: [StepTypeEnum.EMAIL, StepTypeEnum.IN_APP, StepTypeEnum.SMS] },
       });
 
-      expect(messages.length).to.be.eq(1);
-      expect(messages[0].subject).to.include('This is an email subject TEST');
+      expect(messages.length).to.be.eq(3);
+      const emailMessage = messages.find((message) => message.channel === ChannelTypeEnum.EMAIL);
+      expect(emailMessage?.subject).to.include('This is an email subject TEST');
+      const inAppMessage = messages.find((message) => message.channel === ChannelTypeEnum.IN_APP);
+      expect(inAppMessage?.content).to.include('in-app result test_name');
+      const smsMessage = messages.find((message) => message.channel === ChannelTypeEnum.SMS);
+      expect(smsMessage?.content).to.include('sms result test_name');
     });
 
     it(`should skip by static value [${context.name}]`, async () => {
