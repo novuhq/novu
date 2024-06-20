@@ -42,21 +42,26 @@ export const BUTTON_RECIPE = defineSlotRecipe({
       outline: {
         root: {
           border: 'solid !important',
-          borderColor: 'colorPalette.start !important',
+          borderColor: 'colorPalette.middle !important',
           bg: 'button.secondary.background',
 
           boxShadow: 'medium',
           _disabled: {
             bg: '[transparent !important]',
           },
+          _loading: {},
         },
         label: {
-          color: 'typography.text.main !important',
+          ...colorPaletteGradientText,
         },
         section: {
           '& svg': {
-            color: 'typography.text.main !important',
+            color: 'colorPalette.middle !important',
           },
+        },
+        loader: {
+          color: 'colorPalette.start',
+          borderColor: 'legacy.white !important',
         },
       },
       transparent: {
