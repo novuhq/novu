@@ -4,7 +4,7 @@ import { Feeds } from './feeds';
 import { Session } from './session';
 import { Preferences } from './preferences';
 import { ApiServiceSingleton } from './utils/api-service-singleton';
-import { Socket } from './socket';
+import { Socket } from './ws';
 
 const PRODUCTION_BACKEND_URL = 'https://api.novu.co';
 
