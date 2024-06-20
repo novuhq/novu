@@ -1,16 +1,42 @@
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import { IUserEntity } from '@novu/shared';
+import * as mixpanel from 'mixpanel-browser';
 import { api } from '../api';
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
   private _segmentEnabled: boolean;
+  public _mixpanelEnabled: boolean;
 
   constructor() {
     this._segmentEnabled = !!process.env.REACT_APP_SEGMENT_KEY;
+    this._mixpanelEnabled = !!process.env.REACT_APP_MIXPANEL_KEY;
+
+    if (this._mixpanelEnabled) {
+      mixpanel.init(process.env.REACT_APP_MIXPANEL_KEY as string);
+    }
 
     if (this._segmentEnabled) {
       this._segment = AnalyticsBrowser.load({ writeKey: process.env.REACT_APP_SEGMENT_KEY as string });
+      if (!this._mixpanelEnabled) {
+        return;
+      }
+      this._segment.addSourceMiddleware(({ payload, next }) => {
+        if (payload.type() === 'track' || payload.type() === 'page') {
+          const segmentDeviceId = payload.obj.anonymousId;
+          mixpanel.register({ $device_id: segmentDeviceId });
+          const sessionReplayProperties = mixpanel.get_session_recording_properties();
+          payload.obj.properties = {
+            ...payload.obj.properties,
+            ...sessionReplayProperties,
+          };
+        }
+        const userId = payload.obj.userId;
+        if (payload.type() === 'identify' && userId) {
+          mixpanel.identify(userId);
+        }
+        next(payload);
+      });
     }
   }
 

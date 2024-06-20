@@ -58,6 +58,7 @@ import {
   WorkflowsTestPage,
 } from './studio/components/workflows';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
+import * as mixpanel from 'mixpanel-browser';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);

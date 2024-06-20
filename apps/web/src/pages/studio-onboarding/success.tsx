@@ -6,6 +6,7 @@ import { HStack, VStack } from '@novu/novui/jsx';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import * as mixpanel from 'mixpanel-browser';
 import { getActivityList } from '../../api/activity';
 import { ExecutionDetailsAccordion } from '../../components/execution-detail/ExecutionDetailsAccordion';
 import { useSegment } from '../../components/providers/SegmentProvider';
@@ -143,6 +144,8 @@ export const StudioOnboardingSuccess = () => {
       <Footer
         onClick={() => {
           segment.track('Workflows page accessed - [Onboarding - Signup]');
+          mixpanel.stop_session_recording();
+          mixpanel.start_session_recording();
           navigate(ROUTES.STUDIO_FLOWS);
         }}
         canSkipSetup={false}
