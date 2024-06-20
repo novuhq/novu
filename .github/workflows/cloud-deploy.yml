@@ -105,7 +105,7 @@ jobs:
       deployments: write
       id-token: write
 
-  release:
+  release-services:
     needs: [ pre-release ]
     runs-on: ubuntu-latest
     permissions:
@@ -140,15 +140,11 @@ jobs:
   post-release:
     if: ${{ always() }}
     needs: [
-      release-api,
+      release-services,
       release-embed,
-      release-inbound-mail,
       release-web,
-      release-web-components,
-      release-webhook,
       release-widget,
-      release-worker,
-      release-ws
+      release-web-components,
     ]
     runs-on: ubuntu-latest
     steps:
