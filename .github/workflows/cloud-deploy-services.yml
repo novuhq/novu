@@ -35,6 +35,8 @@ jobs:
     outputs:
       environment: ${{ steps.set_env.outputs.environment }}
     steps:
+      - uses: actions/checkout@v4
+
       - id: set_env
         run: |
           if echo "${{ inputs.env }}" | grep -qwi 'prod'; then
