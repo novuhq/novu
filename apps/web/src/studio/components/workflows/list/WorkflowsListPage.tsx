@@ -6,31 +6,26 @@ import { PageTemplate } from '../../../layout/index';
 import { WorkflowsTable } from '../table/index';
 import { useQuery } from '@tanstack/react-query';
 import { bridgeApi } from '../../../../api/bridge/bridge.api';
-import { useEffect } from 'react';
-import { useDocsModal } from '../../../../components/docs/useDocsModal';
+import { DocsButton } from '../../../../components/docs/DocsButton';
 
 export const WorkflowsListPage = () => {
   const { data, isLoading } = useQuery(['bridge-workflows'], async () => {
     return bridgeApi.discover();
   });
 
-  const { Component: DocsModal, setPath, toggle } = useDocsModal();
-
-  useEffect(() => {
-    setPath('echo/concepts/workflows');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <PageTemplate title="Workflows">
       <Flex justify={'space-between'}>
-        <Button onClick={toggle} Icon={IconAddBox} size={'sm'} variant="transparent">
-          Add workflow
-        </Button>
+        <DocsButton
+          TriggerButton={({ onClick }) => (
+            <Button onClick={onClick} Icon={IconAddBox} size={'sm'} variant="transparent">
+              Add workflow
+            </Button>
+          )}
+        />
         <SearchInput placeholder="Type name or identifier..." />
       </Flex>
       <WorkflowsTable workflows={data?.workflows || []} isLoading={isLoading} />
-      <DocsModal />
     </PageTemplate>
   );
 };
