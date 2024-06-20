@@ -127,8 +127,10 @@ jobs:
           - name: 'ws'
             test_port: '1345'
     steps:
+      - uses: actions/checkout@v4
+
       - name: Deploy ${{ matrix.service }}
-        uses: ./.github/workflows/cloud-deploy.yml
+        uses: ./.github/workflows/cloud-deploy-services.yml
         with:
           env: ${{ needs.pre-release.outputs.environment }}
           service: ${{ matrix.service.name }}
