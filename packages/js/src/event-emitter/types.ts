@@ -10,6 +10,8 @@ import type {
   RemoveAllNotificationsArgs,
   RemoveNotificationsArgs,
 } from '../feeds';
+import { Preference } from '../preferences/preference';
+import { FetchPreferencesArgs, UpdatePreferencesArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
 import type { PaginatedResponse, Session } from '../types';
 
@@ -90,6 +92,8 @@ type NotificationRemoveEvents = BaseEvents<
   Notification,
   Notification
 >;
+type PreferencesFetchEvents = BaseEvents<'preferences.fetch', FetchPreferencesArgs, Preference[]>;
+type PreferencesUpdateEvents = BaseEvents<'preferences.update', UpdatePreferencesArgs, Preference>;
 
 /**
  * Events that are emitted by Novu Event Emitter.
@@ -113,7 +117,9 @@ export type Events = SessionInitializeEvents &
   FeedRemoveAllNotificationsEvents &
   NotificationMarkAsEvents &
   NotificationMarkActionAsEvents &
-  NotificationRemoveEvents;
+  NotificationRemoveEvents &
+  PreferencesFetchEvents &
+  PreferencesUpdateEvents;
 
 export type EventNames = keyof Events;
 

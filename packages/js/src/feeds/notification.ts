@@ -1,73 +1,42 @@
 import { ApiService } from '@novu/client';
 
 import { EventHandler, EventNames, Events, NovuEventEmitter } from '../event-emitter';
-import {
-  Actor,
-  NotificationActionStatus,
-  NotificationButton,
-  Cta,
-  NotificationStatus,
-  Subscriber,
-  TODO,
-} from '../types';
+import { Avatar, NotificationActionStatus, NotificationButton, Cta, NotificationStatus, TODO } from '../types';
 import { ApiServiceSingleton } from '../utils/api-service-singleton';
 import { markActionAs, markNotificationAs, remove } from './helpers';
 
 type NotificationLike = Pick<
   Notification,
-  | '_id'
-  | '_feedId'
-  | 'createdAt'
-  | 'updatedAt'
-  | 'actor'
-  | 'subscriber'
-  | 'transactionId'
-  | 'content'
-  | 'read'
-  | 'seen'
-  | 'deleted'
-  | 'cta'
-  | 'payload'
-  | 'overrides'
+  'id' | 'feedIdentifier' | 'createdAt' | 'avatar' | 'body' | 'read' | 'seen' | 'deleted' | 'cta'
 >;
 
 export class Notification implements Pick<NovuEventEmitter, 'on' | 'off'> {
   #emitter: NovuEventEmitter;
   #apiService: ApiService;
 
-  _id: string;
-  _feedId?: string | null;
-  createdAt: string;
-  updatedAt: string;
-  actor?: Actor;
-  subscriber?: Subscriber;
-  transactionId: string;
-  content: string;
-  read: boolean;
-  seen: boolean;
-  deleted: boolean;
-  cta: Cta;
-  payload: Record<string, unknown>;
-  overrides: Record<string, unknown>;
+  readonly id: string;
+  readonly feedIdentifier?: string | null;
+  readonly createdAt: string;
+  readonly avatar?: Avatar;
+  readonly body: string;
+  readonly read: boolean;
+  readonly seen: boolean;
+  readonly deleted: boolean;
+  readonly cta: Cta;
 
   constructor(notification: NotificationLike) {
     this.#emitter = NovuEventEmitter.getInstance();
     this.#apiService = ApiServiceSingleton.getInstance();
 
-    this._id = notification._id;
-    this._feedId = notification._feedId;
+    this.id = notification.id;
+    this.feedIdentifier = notification.feedIdentifier;
     this.createdAt = notification.createdAt;
-    this.updatedAt = notification.updatedAt;
-    this.actor = notification.actor;
-    this.subscriber = notification.subscriber;
-    this.transactionId = notification.transactionId;
-    this.content = notification.content;
+    this.avatar = notification.avatar;
+    this.body = notification.body;
     this.read = notification.read;
     this.seen = notification.seen;
     this.deleted = notification.deleted;
     this.cta = notification.cta;
-    this.payload = notification.payload;
-    this.overrides = notification.overrides;
   }
 
   markAsRead(): Promise<Notification> {

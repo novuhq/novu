@@ -5,6 +5,8 @@ import { Session } from './session';
 import { Preferences } from './preferences';
 import { ApiServiceSingleton } from './utils/api-service-singleton';
 
+const PRODUCTION_BACKEND_URL = 'https://api.novu.co';
+
 type NovuOptions = {
   applicationIdentifier: string;
   subscriberId: string;
@@ -20,7 +22,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
   public readonly preferences: Preferences;
 
   constructor(options: NovuOptions) {
-    ApiServiceSingleton.getInstance({ backendUrl: options.backendUrl });
+    ApiServiceSingleton.getInstance({ backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL });
     this.#emitter = NovuEventEmitter.getInstance({ recreate: true });
     this.#session = new Session({
       applicationIdentifier: options.applicationIdentifier,

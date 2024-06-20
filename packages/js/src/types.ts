@@ -15,7 +15,7 @@ export enum NotificationActionStatus {
   DONE = 'done',
 }
 
-export enum ActorType {
+export enum AvatarType {
   NONE = 'none',
   USER = 'user',
   SYSTEM_ICON = 'system_icon',
@@ -24,6 +24,25 @@ export enum ActorType {
 
 export enum CtaType {
   REDIRECT = 'redirect',
+}
+
+export enum PreferenceLevel {
+  GLOBAL = 'global',
+  TEMPLATE = 'template',
+}
+
+export enum ChannelType {
+  IN_APP = 'in_app',
+  EMAIL = 'email',
+  SMS = 'sms',
+  CHAT = 'chat',
+  PUSH = 'push',
+}
+
+export enum PreferenceOverrideSource {
+  SUBSCRIBER = 'subscriber',
+  TEMPLATE = 'template',
+  WORKFLOW_OVERRIDE = 'workflowOverride',
 }
 
 export type Session = {
@@ -40,8 +59,8 @@ export type Session = {
   };
 };
 
-export type Actor = {
-  type: ActorType;
+export type Avatar = {
+  type: AvatarType;
   data: string | null;
 };
 
@@ -97,6 +116,23 @@ export type Cta = {
     url?: string;
   };
   action?: MessageAction;
+};
+
+export type Workflow = {
+  id: string;
+  name: string;
+  critical: boolean;
+  identifier: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: Record<string, any>;
+};
+
+export type ChannelPreference = {
+  email?: boolean;
+  sms?: boolean;
+  in_app?: boolean;
+  chat?: boolean;
+  push?: boolean;
 };
 
 export type PaginatedResponse<T = unknown> = {
