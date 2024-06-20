@@ -18,7 +18,7 @@ type IconButtonDefaultElement = 'button';
 
 export type IconButtonProps<C extends React.ElementType = IconButtonDefaultElement> = PolymorphicComponentPropWithRef<
   C,
-  JsxStyleProps & ButtonVariant & CoreProps & IIconButtonProps
+  JsxStyleProps & Partial<ButtonVariant> & CoreProps & IIconButtonProps
 >;
 
 const DEFAULT_VARIANT: ButtonVariant['variant'] = 'transparent';
