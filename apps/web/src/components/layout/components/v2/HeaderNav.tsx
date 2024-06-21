@@ -40,7 +40,7 @@ export function HeaderNav() {
       <HStack flexWrap={'nowrap'} justifyContent="flex-end" gap={'100'}>
         {/* TODO: Use a more robust / realistic way to conditionally show this button */}
         {isStudio && (
-          <Button size="sm" Icon={IconOutlineCloudUpload}>
+          <Button size="xs" Icon={IconOutlineCloudUpload}>
             Sync
           </Button>
         )}

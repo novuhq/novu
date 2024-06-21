@@ -49,7 +49,7 @@ const BUTTON_SIZE_TO_EXTERNAL_BUTTON_SIZE: Record<ButtonVariant['size'], Externa
   lg: 'lg',
 };
 
-// Note: for right now, these are equivalent, but we haven't agreed on our size tokens (caps, one letter, etc)
+// Note: for right now, these are identical, but we may adjust them later
 const BUTTON_VARIANT_TO_EXTERNAL_BUTTON_VARIANT: Record<ButtonVariant['variant'], ExternalButtonVariant> = {
   filled: 'filled',
   outline: 'outline',
