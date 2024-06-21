@@ -25,5 +25,7 @@ export class TriggerEventToAllCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   tenant?: TriggerTenantContext | null;
 
-  bridge?: any;
+  @IsOptional()
+  @IsString()
+  bridgeUrl?: string;
 }

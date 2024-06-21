@@ -32,7 +32,7 @@ export class ProcessBulkTrigger {
             transactionId: event.transactionId,
             addressingType: AddressingTypeEnum.MULTICAST,
             requestCategory: TriggerRequestCategoryEnum.BULK,
-            bridge: event.bridge,
+            bridgeUrl: event.bridgeUrl,
           })
         )) as unknown as TriggerEventResponseDto;
       } catch (e) {

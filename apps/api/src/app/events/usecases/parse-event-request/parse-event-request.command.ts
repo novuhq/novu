@@ -37,6 +37,10 @@ export class ParseEventRequestBaseCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(TriggerRequestCategoryEnum)
   requestCategory?: TriggerRequestCategoryEnum;
+
+  @IsString()
+  @IsOptional()
+  bridgeUrl?: string;
 }
 
 export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseCommand {
@@ -45,23 +49,11 @@ export class ParseEventRequestMulticastCommand extends ParseEventRequestBaseComm
 
   @IsEnum(AddressingTypeEnum)
   addressingType: AddressingTypeEnum.MULTICAST;
-
-  @IsObject()
-  @IsOptional()
-  bridge?: {
-    url: string;
-  };
 }
 
 export class ParseEventRequestBroadcastCommand extends ParseEventRequestBaseCommand {
   @IsEnum(AddressingTypeEnum)
   addressingType: AddressingTypeEnum.BROADCAST;
-
-  @IsObject()
-  @IsOptional()
-  bridge?: {
-    url: string;
-  };
 }
 
 export type ParseEventRequestCommand = ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand;

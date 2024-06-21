@@ -34,6 +34,7 @@ import {
   NotificationRepository,
   UserRepository,
   MemberRepository,
+  EnvironmentRepository,
 } from '@novu/dal';
 import { Novu } from '@novu/node';
 
@@ -52,6 +53,7 @@ export class ParseEventRequest {
   constructor(
     private notificationTemplateRepository: NotificationTemplateRepository,
     private notificationRepository: NotificationRepository,
+    private environmentRepository: EnvironmentRepository,
     private userRepository: UserRepository,
     private memberRepository: MemberRepository,
     private verifyPayload: VerifyPayload,
@@ -68,7 +70,7 @@ export class ParseEventRequest {
   public async execute(command: ParseEventRequestCommand) {
     const transactionId = command.transactionId || uuidv4();
 
-    if (this.isStatelessWorkflowAllowed(command.bridge)) {
+    if (await this.isStatelessWorkflowAllowed(command.environmentId, command.bridgeUrl)) {
       return await this.dispatchEvent(command, transactionId);
     }
 
@@ -182,10 +184,12 @@ export class ParseEventRequest {
     };
   }
 
-  private isStatelessWorkflowAllowed(bridge: { url: string } | undefined): boolean {
-    const allowedEnvironment = process.env.NODE_ENV !== 'production';
+  private async isStatelessWorkflowAllowed(environmentId: string, bridgeUrl: string | undefined): Promise<boolean> {
+    if (!bridgeUrl) {
+      return false;
+    }
 
-    return !!bridge?.url && allowedEnvironment;
+    return (await this.environmentRepository.findOne({ _environmentId: environmentId }))?.name !== 'Production';
   }
 
   @Instrument()
