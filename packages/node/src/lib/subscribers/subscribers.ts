@@ -4,7 +4,7 @@ import {
   IChannelCredentials,
   ISubscribersDefine,
 } from '@novu/shared';
-import { MarkMessagesAsEnum, PreferenceLevelEnum } from '@novu/shared';
+import { MessagesStatusEnum, PreferenceLevelEnum } from '@novu/shared';
 import {
   IGetSubscriberNotificationFeedParams,
   IMarkFields,
@@ -200,7 +200,7 @@ export class Subscribers extends WithHttp implements ISubscribers {
 
   async markAllMessagesAs(
     subscriberId: string,
-    markAs: MarkMessagesAsEnum,
+    markAs: MessagesStatusEnum,
     feedIdentifier?: string | string[]
   ): Promise<AxiosResponse<{ data: number }>> {
     return await this.http.post(

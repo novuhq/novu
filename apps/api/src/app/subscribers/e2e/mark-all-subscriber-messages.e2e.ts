@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import axios from 'axios';
-import { ChannelTypeEnum, MarkMessagesAsEnum } from '@novu/shared';
+import { ChannelTypeEnum, MessagesStatusEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { NotificationTemplateEntity, MessageRepository, SubscriberRepository } from '@novu/dal';
 
@@ -25,7 +25,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
   it("should throw not found when subscriberId doesn't exist", async function () {
     const fakeSubscriberId = 'fake-subscriber-id';
     try {
-      await markAllSubscriberMessagesAs(session, fakeSubscriberId, MarkMessagesAsEnum.READ);
+      await markAllSubscriberMessagesAs(session, fakeSubscriberId, MessagesStatusEnum.READ);
       throw new Error('Should not reach this point');
     } catch (error) {
       expect(error.response.status).to.equal(404);
@@ -52,7 +52,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(
       session,
       subscriberId,
-      MarkMessagesAsEnum.READ
+      MessagesStatusEnum.READ
     );
     expect(messagesMarkedAsReadResponse.data).to.equal(5);
 
@@ -100,7 +100,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(
       session,
       subscriberId,
-      MarkMessagesAsEnum.READ
+      MessagesStatusEnum.READ
     );
     expect(messagesMarkedAsReadResponse.data).to.equal(0);
 
@@ -147,7 +147,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(
       session,
       subscriberId,
-      MarkMessagesAsEnum.UNREAD
+      MessagesStatusEnum.UNREAD
     );
     expect(messagesMarkedAsReadResponse.data).to.equal(5);
 
@@ -182,7 +182,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(
       session,
       subscriberId,
-      MarkMessagesAsEnum.SEEN
+      MessagesStatusEnum.SEEN
     );
     expect(messagesMarkedAsReadResponse.data).to.equal(5);
 
@@ -230,7 +230,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
     const messagesMarkedAsReadResponse = await markAllSubscriberMessagesAs(
       session,
       subscriberId,
-      MarkMessagesAsEnum.UNSEEN
+      MessagesStatusEnum.UNSEEN
     );
     expect(messagesMarkedAsReadResponse.data).to.equal(5);
 
@@ -250,7 +250,7 @@ describe('Mark All Subscriber Messages - /subscribers/:subscriberId/messages/mar
   });
 });
 
-async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MarkMessagesAsEnum) {
+async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MessagesStatusEnum) {
   const response = await axiosInstance.post(
     `${session.serverUrl}/v1/subscribers/${subscriberId}/messages/mark-all`,
     {
