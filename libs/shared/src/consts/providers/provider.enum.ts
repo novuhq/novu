@@ -104,6 +104,7 @@ export enum SmsProviderIdEnum {
   BrevoSms = 'brevo-sms',
   EazySms = 'eazy-sms',
   Mobishastra = 'mobishastra',
+  VeriMor = 'verimor',
 }
 
 export enum ChatProviderIdEnum {

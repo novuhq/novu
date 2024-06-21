@@ -76,6 +76,7 @@ const providers: Record<ChannelTypeEnum, ProvidersIdEnum[]> = {
       SmsProviderIdEnum.BrevoSms,
       SmsProviderIdEnum.ISendSms,
       SmsProviderIdEnum.EazySms,
+      SmsProviderIdEnum.VeriMor,
     ].sort(),
   ],
 };

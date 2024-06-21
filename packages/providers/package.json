@@ -70,6 +70,7 @@
     "sms77-client": "^2.14.0",
     "telnyx": "^1.23.0",
     "twilio": "^4.19.3",
+    "verimor-node-sdk": "^0.1.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

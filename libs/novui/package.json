@@ -131,7 +131,7 @@
     "@mantine/core": "^7.10.0",
     "@mantine/hooks": "^7.10.0",
     "@tanstack/react-table": "^8.17.3",
-    "react-icons": "^5.0.1",
+    "react-icons": "5.0.1",
     "@rjsf/core": "^5.17.1",
     "@rjsf/utils": "^5.17.1",
     "@rjsf/validator-ajv8": "^5.17.1"

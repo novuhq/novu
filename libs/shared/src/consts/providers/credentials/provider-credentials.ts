@@ -1161,3 +1161,19 @@ export const mobishastraConfig: IConfigCredentials[] = [
   },
   ...smsConfigBase,
 ];
+
+export const verimorConfig: IConfigCredentials[] = [
+  {
+    key: CredentialsKeyEnum.User,
+    displayName: 'Username',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.Password,
+    displayName: 'Password',
+    type: 'string',
+    required: true,
+  },
+  ...smsConfigBase,
+];
