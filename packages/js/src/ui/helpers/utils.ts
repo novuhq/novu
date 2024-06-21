@@ -7,14 +7,14 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 function generateRandomString(length: number): string {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   const charactersLength = characters.length;
   for (let i = 0; i < length; i++) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
 
-  return result.toLowerCase();
+  return result;
 }
 
 function generateUniqueRandomString(set: Set<string>, length: number): string {
@@ -46,20 +46,11 @@ export function createClassAndRuleFromCssString(classNameSet: Set<string>, style
 }
 
 const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
-export function generatesShadesFromColor(color: string, key: string) {
+export function generatesSolidShadesFromColor(color: string, key: string) {
   const rules = [];
-  //alpha shades
   for (let i = 0; i < shades.length; i++) {
     const shade = shades[i];
-    const cssVariableAlphaRule = `:root { --novu-colors-${key}-alpha-${shade}: oklch(from ${color} l c h / ${
-      shade / 1000
-    }); }`;
-    rules.push(cssVariableAlphaRule);
-  }
-  //solid shades
-  for (let i = 0; i < shades.length; i++) {
-    const shade = shades[i];
-    const cssVariableSolidRule = `:root { --novu-colors-${key}-${shade}: oklch(from ${color} calc(l - ${
+    const cssVariableSolidRule = `:root { --nv-${key}-${shade}: oklch(from ${color} calc(l - ${
       (shade - 500) / 1000
     }) c h); }`;
     rules.push(cssVariableSolidRule);
@@ -68,19 +59,31 @@ export function generatesShadesFromColor(color: string, key: string) {
   return rules;
 }
 
-export const parseVariables = (variables: Variables) => {
-  //handle color variables
-  const variableRules = [];
-  for (const key in variables?.colors) {
-    const colors = variables?.colors;
-
-    if (colors && colors.hasOwnProperty(key)) {
-      const value = colors[key as keyof Variables['colors']];
-      variableRules.push(...generatesShadesFromColor(value, key));
-    }
+export function generatesAlphaShadesFromColor(color: string, key: string) {
+  const rules = [];
+  for (let i = 0; i < shades.length; i++) {
+    const shade = shades[i];
+    const cssVariableAlphaRule = `:root { --nv-${key}-${shade}: oklch(from ${color} l c h / ${shade / 1000}); }`;
+    rules.push(cssVariableAlphaRule);
   }
 
-  return variableRules;
+  return rules;
+}
+
+export const parseVariables = (variables: Required<Variables>) => {
+  //handle color variables
+  return [
+    ...generatesAlphaShadesFromColor(variables.colorBackground, 'color-background-alpha'),
+    ...generatesAlphaShadesFromColor(variables.colorForeground, 'color-foreground-alpha'),
+    ...generatesSolidShadesFromColor(variables.colorPrimary, 'color-primary'),
+    ...generatesAlphaShadesFromColor(variables.colorPrimary, 'color-primary-alpha'),
+    ...generatesAlphaShadesFromColor(variables.colorPrimaryForeground, 'color-primary-foreground-alpha'),
+    ...generatesSolidShadesFromColor(variables.colorSecondary, 'color-secondary'),
+    ...generatesAlphaShadesFromColor(variables.colorSecondary, 'color-secondary-alpha'),
+    ...generatesAlphaShadesFromColor(variables.colorSecondaryForeground, 'color-secondary-foreground-alpha'),
+    ...generatesAlphaShadesFromColor(variables.colorSecondaryForeground, 'color-secondary-foreground-alpha'),
+    ...generatesAlphaShadesFromColor(variables.colorNeutral, 'color-neutral-alpha'),
+  ];
 };
 
 export const parseElements = (elements: Elements) => {
