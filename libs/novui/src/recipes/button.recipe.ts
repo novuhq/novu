@@ -10,6 +10,7 @@ export const BUTTON_RECIPE = defineSlotRecipe({
   slots: SLOTS,
   base: {
     root: {
+      height: 'max-content !important',
       _disabled: {
         opacity: 'disabled',
       },
@@ -22,11 +23,72 @@ export const BUTTON_RECIPE = defineSlotRecipe({
     label: {
       color: 'typography.text.main',
       width: '[fit-content]',
-      lineClamp: 1,
+      lineClamp: '1',
+      lineHeight: 'md',
+    },
+    section: {
+      marginRight: '25',
     },
   },
-  defaultVariants: { variant: 'filled' },
+  defaultVariants: { size: 'md', variant: 'filled' },
   variants: {
+    size: {
+      xs: {
+        root: {
+          '&:not([data-variant="transparent"])': {
+            px: '50 !important',
+          },
+          py: '25 !important',
+          fontSize: 'button.small',
+        },
+        label: {
+          lineHeight: 'sm',
+        },
+      },
+      sm: {
+        root: {
+          '&:not([data-variant="transparent"])': {
+            px: '75 !important',
+          },
+          py: '25 !important',
+        },
+
+        label: {
+          fontSize: 'button.small !important',
+          lineHeight: 'md',
+        },
+      },
+      md: {
+        root: {
+          '&:not([data-variant="transparent"])': {
+            px: '100 !important',
+          },
+          py: '50 !important',
+          borderRadius: '100 !important',
+        },
+        label: {
+          fontSize: 'button',
+        },
+        section: {
+          marginRight: '50 !important',
+        },
+      },
+      lg: {
+        root: {
+          '&:not([data-variant="transparent"])': {
+            px: '150 !important',
+          },
+          py: '75 !important',
+          borderRadius: '150 !important',
+        },
+        label: {
+          fontSize: 'button',
+        },
+        section: {
+          marginRight: '75 !important',
+        },
+      },
+    },
     variant: {
       filled: {
         root: { ...colorPaletteGradientHorizontal, border: '[none !important]' },
@@ -76,6 +138,7 @@ export const BUTTON_RECIPE = defineSlotRecipe({
         section: {
           ...colorPaletteGradientHorizontal,
           borderRadius: '50 !important',
+          // required to create adequate space around an icon
           padding: '[2px !important]',
           marginRight: '50 !important',
           '& svg': {
