@@ -8,7 +8,7 @@ import { ChannelTypeEnum, InAppProviderIdEnum } from '@novu/shared';
 import { Session } from './session.usecase';
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SessionCommand } from './session.command';
-import { SessionResponseDto } from '../../dtos/session-response.dto';
+import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import * as encryption from '../../utils/encryption';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
@@ -141,10 +141,10 @@ describe('Session', () => {
     notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
 
-    const response: SessionResponseDto = await session.execute(command);
+    const response: SubscriberSessionResponseDto = await session.execute(command);
 
     expect(response.token).to.equal(token);
-    expect(response.unreadCount).to.equal(notificationCount.count);
+    expect(response.totalUnreadCount).to.equal(notificationCount.count);
     expect(
       analyticsService.mixpanelTrack.calledOnceWith(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
         _organization: environment._organizationId,

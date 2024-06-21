@@ -32,7 +32,6 @@ describe('NotificationsCount', () => {
         environmentId: 'environmentId',
         subscriberId: 'subscriber-id',
         status: [MessagesStatusEnum.UNREAD],
-        feedId: [],
       };
 
       try {
@@ -70,7 +69,6 @@ describe('NotificationsCount', () => {
           subscriber._id,
           ChannelTypeEnum.IN_APP,
           {
-            feedId: undefined,
             read: false,
           },
           { limit: 100 }
@@ -100,7 +98,6 @@ describe('NotificationsCount', () => {
           ChannelTypeEnum.IN_APP,
           {
             read: true,
-            feedId: undefined,
           },
           { limit: 100 }
         )
@@ -120,7 +117,6 @@ describe('NotificationsCount', () => {
           ChannelTypeEnum.IN_APP,
           {
             read: false,
-            feedId: undefined,
           },
           { limit: 100 }
         )
@@ -140,7 +136,6 @@ describe('NotificationsCount', () => {
           ChannelTypeEnum.IN_APP,
           {
             read: undefined,
-            feedId: undefined,
           },
           { limit: 100 }
         )
@@ -160,7 +155,6 @@ describe('NotificationsCount', () => {
           ChannelTypeEnum.IN_APP,
           {
             seen: true,
-            feedId: undefined,
           },
           { limit: 100 }
         )
@@ -180,7 +174,6 @@ describe('NotificationsCount', () => {
           ChannelTypeEnum.IN_APP,
           {
             seen: false,
-            feedId: undefined,
           },
           { limit: 100 }
         )
@@ -200,19 +193,16 @@ describe('NotificationsCount', () => {
           ChannelTypeEnum.IN_APP,
           {
             seen: undefined,
-            feedId: undefined,
           },
           { limit: 100 }
         )
       ).to.be.true;
 
-      const feedId = ['feed-id'];
       await notificationsCount.execute({
         organizationId: 'organizationId',
         environmentId,
         subscriberId: 'subscriber-id',
         status: [MessagesStatusEnum.READ, MessagesStatusEnum.SEEN],
-        feedId,
       });
 
       expect(
@@ -223,7 +213,6 @@ describe('NotificationsCount', () => {
           {
             read: true,
             seen: true,
-            feedId,
           },
           { limit: 100 }
         )

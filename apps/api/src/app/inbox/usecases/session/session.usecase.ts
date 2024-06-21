@@ -13,7 +13,7 @@ import {
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { SessionCommand } from './session.command';
-import { SessionResponseDto } from '../../dtos/session-response.dto';
+import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import { validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
@@ -31,7 +31,7 @@ export class Session {
   ) {}
 
   @LogDecorator()
-  async execute(command: SessionCommand): Promise<SessionResponseDto> {
+  async execute(command: SessionCommand): Promise<SubscriberSessionResponseDto> {
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(command.applicationIdentifier);
 
     if (!environment) {
@@ -75,7 +75,7 @@ export class Session {
       _subscriber: subscriber._id,
     });
 
-    const { count: unreadCount } = await this.notificationsCount.execute(
+    const { count: totalUnreadCount } = await this.notificationsCount.execute(
       NotificationsCountCommand.create({
         organizationId: environment._organizationId,
         environmentId: environment._id,
@@ -88,7 +88,7 @@ export class Session {
 
     return {
       token,
-      unreadCount,
+      totalUnreadCount,
     };
   }
 }

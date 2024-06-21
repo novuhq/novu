@@ -1,3 +1,4 @@
+/* cspell:disable */
 import { Novu } from './src';
 
 const test = async () => {

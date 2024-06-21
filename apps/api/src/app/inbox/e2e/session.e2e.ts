@@ -62,7 +62,7 @@ describe('Session - /inbox/session (POST)', async () => {
 
     expect(status).to.equal(201);
     expect(body.data.token).to.be.ok;
-    expect(body.data.unreadCount).to.equal(0);
+    expect(body.data.totalUnreadCount).to.equal(0);
   });
 
   it('should initialize session with HMAC', async function () {
@@ -77,7 +77,7 @@ describe('Session - /inbox/session (POST)', async () => {
 
     expect(status).to.equal(201);
     expect(body.data.token).to.be.ok;
-    expect(body.data.unreadCount).to.equal(0);
+    expect(body.data.totalUnreadCount).to.equal(0);
   });
 
   it('should throw an error when invalid applicationIdentifier provided', async function () {

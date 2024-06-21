@@ -1,6 +1,6 @@
 import { IsDefined, IsOptional, IsString } from 'class-validator';
 
-export class SessionRequestDto {
+export class SubscriberSessionRequestDto {
   @IsString()
   @IsDefined()
   readonly applicationIdentifier: string;
