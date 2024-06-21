@@ -21,7 +21,6 @@ import {
   TriggerTenantContext,
 } from '@novu/shared';
 import { DiscoverOutput, DiscoverWorkflowOutput } from '@novu/framework';
-import { GetActionEnum, IPayload, PostActionEnum } from '@novu/ee-echo-worker';
 
 import {
   TriggerEventBroadcastCommand,
@@ -52,11 +51,11 @@ const LOG_CONTEXT = 'TriggerEventUseCase';
 
 export interface IDoBridgeRequestCommand {
   bridgeUrl: string;
-  payload?: IPayload;
+  payload?: any;
   apiKey: string;
   searchParams?: Record<string, any>;
   afterResponse?: any;
-  action: PostActionEnum | GetActionEnum;
+  action: 'execute' | 'preview' | 'discover' | 'health-check' | 'code';
   retriesLimit?: number;
 }
 
@@ -239,7 +238,7 @@ export class TriggerEvent {
     const discover = await this.doBridgeRequest.execute({
       bridgeUrl: command.bridge.url,
       apiKey: environment.apiKeys[0].key,
-      action: GetActionEnum.DISCOVER,
+      action: 'discover',
     });
 
     if (!discover) {
