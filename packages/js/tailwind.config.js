@@ -24,18 +24,18 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          ...generateSolidColorShades('nv-color-primary'),
-          ...generateAlphaColorShades('nv-color-primary-alpha'),
+          ...generateColorShades('nv-color-primary'),
+          ...generateColorShades('nv-color-primary-alpha'),
         },
-        primaryForeground: generateAlphaColorShades('nv-color-primary-foreground-alpha'),
+        primaryForeground: generateColorShades('nv-color-primary-foreground-alpha'),
         secondary: {
-          ...generateSolidColorShades('nv-color-secondary'),
-          ...generateAlphaColorShades('nv-color-secondary-alpha'),
+          ...generateColorShades('nv-color-secondary'),
+          ...generateColorShades('nv-color-secondary-alpha'),
         },
-        secondaryForeground: generateAlphaColorShades('nv-color-secondary-foreground-alpha'),
-        background: generateAlphaColorShades('nv-color-background-alpha'),
-        foreground: generateAlphaColorShades('nv-color-foreground-alpha'),
-        neutral: generateAlphaColorShades('nv-color-neutral-alpha'),
+        secondaryForeground: generateColorShades('nv-color-secondary-foreground-alpha'),
+        background: generateColorShades('nv-color-background-alpha'),
+        foreground: generateColorShades('nv-color-foreground-alpha'),
+        neutral: generateColorShades('nv-color-neutral-alpha'),
       },
     },
   },
