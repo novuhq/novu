@@ -10,8 +10,10 @@ import type {
   RemoveAllNotificationsArgs,
   RemoveNotificationsArgs,
 } from '../feeds';
+import { Preference } from '../preferences/preference';
+import { FetchPreferencesArgs, UpdatePreferencesArgs } from '../preferences/types';
 import type { InitializeSessionArgs } from '../session';
-import type { PaginatedResponse, Session } from '../types';
+import { PaginatedResponse, Session, WebSocketEvent } from '../types';
 
 type NovuPendingEvent<A, O = undefined> = {
   args: A;
@@ -90,6 +92,19 @@ type NotificationRemoveEvents = BaseEvents<
   Notification,
   Notification
 >;
+type PreferencesFetchEvents = BaseEvents<'preferences.fetch', FetchPreferencesArgs, Preference[]>;
+type PreferencesUpdateEvents = BaseEvents<'preferences.update', UpdatePreferencesArgs, Preference>;
+type SocketConnectEvents = BaseEvents<'socket.connect', { socketUrl: string }, undefined>;
+export type NotificationReceivedEvent = `notifications.${WebSocketEvent.RECEIVED}`;
+export type NotificationUnseenEvent = `notifications.${WebSocketEvent.UNSEEN}`;
+export type NotificationUnreadEvent = `notifications.${WebSocketEvent.UNREAD}`;
+type SocketEvents = {
+  [key in NotificationReceivedEvent]: { result: Notification };
+} & {
+  [key in NotificationUnseenEvent]: { result: number };
+} & {
+  [key in NotificationUnreadEvent]: { result: number };
+};
 
 /**
  * Events that are emitted by Novu Event Emitter.
@@ -113,8 +128,13 @@ export type Events = SessionInitializeEvents &
   FeedRemoveAllNotificationsEvents &
   NotificationMarkAsEvents &
   NotificationMarkActionAsEvents &
-  NotificationRemoveEvents;
+  NotificationRemoveEvents &
+  PreferencesFetchEvents &
+  PreferencesUpdateEvents &
+  SocketConnectEvents &
+  SocketEvents;
 
 export type EventNames = keyof Events;
+export type SocketEventNames = keyof SocketEvents;
 
 export type EventHandler<T = unknown> = (event: T) => void;

@@ -25,7 +25,7 @@ export class NovuEventEmitter {
   }
 
   off<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
-    this.#mittEmitter.on(eventName, listener);
+    this.#mittEmitter.off(eventName, listener);
   }
 
   emit<Key extends EventNames>(type: Key, event?: Events[Key]): void {

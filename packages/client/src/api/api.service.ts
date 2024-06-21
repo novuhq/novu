@@ -1,4 +1,4 @@
-import {
+import type {
   ButtonTypeEnum,
   MessageActionStatusEnum,
   CustomDataType,
@@ -6,6 +6,7 @@ import {
   ISessionDto,
   INotificationDto,
   MarkMessagesAsEnum,
+  PreferenceLevelEnum,
 } from '@novu/shared';
 import { HttpClient } from '../http-client';
 import {
@@ -206,12 +207,26 @@ export class ApiService {
     return this.httpClient.get('/widgets/organization');
   }
 
+  /**
+   * @deprecated use getPreferences instead
+   */
   async getUserPreference(): Promise<IUserPreferenceSettings[]> {
     return this.httpClient.get('/widgets/preferences');
   }
 
+  /**
+   * @deprecated use getPreferences instead
+   */
   async getUserGlobalPreference(): Promise<IUserGlobalPreferenceSettings[]> {
     return this.httpClient.get('/widgets/preferences/global');
+  }
+
+  async getPreferences({
+    level,
+  }: {
+    level?: `${PreferenceLevelEnum}`;
+  }): Promise<Array<IUserPreferenceSettings | IUserGlobalPreferenceSettings>> {
+    return this.httpClient.get(`/widgets/preferences/${level}`);
   }
 
   async updateSubscriberPreference(

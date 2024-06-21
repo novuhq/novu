@@ -1,8 +1,5 @@
-import type { ApiService } from '@novu/client';
-
-import { NovuEventEmitter } from './event-emitter';
-import { Session } from './types';
-import { ApiServiceSingleton } from './utils/api-service-singleton';
+import { ApiService } from '@novu/client';
+import { NovuEventEmitter } from '../event-emitter';
 
 interface CallQueueItem {
   fn: () => Promise<unknown>;
@@ -17,18 +14,16 @@ export class BaseModule {
   #callsQueue: CallQueueItem[] = [];
   #sessionError: unknown;
 
-  constructor() {
-    this._emitter = NovuEventEmitter.getInstance();
-    this._apiService = ApiServiceSingleton.getInstance();
-    this._emitter.on('session.initialize.success', ({ result }) => {
-      this.onSessionSuccess(result);
+  constructor(emitter: NovuEventEmitter, apiService: ApiService) {
+    this._emitter = emitter;
+    this._apiService = apiService;
+    this._emitter.on('session.initialize.success', () => {
       this.#callsQueue.forEach(async ({ fn, resolve }) => {
         resolve(await fn());
       });
       this.#callsQueue = [];
     });
     this._emitter.on('session.initialize.error', ({ error }) => {
-      this.onSessionError(error);
       this.#sessionError = error;
       this.#callsQueue.forEach(({ reject }) => {
         reject(error);
@@ -36,10 +31,6 @@ export class BaseModule {
       this.#callsQueue = [];
     });
   }
-
-  protected onSessionSuccess(_: Session): void {}
-
-  protected onSessionError(_: unknown): void {}
 
   async callWithSession<T>(fn: () => Promise<T>): Promise<T> {
     if (this._apiService.isAuthenticated) {
