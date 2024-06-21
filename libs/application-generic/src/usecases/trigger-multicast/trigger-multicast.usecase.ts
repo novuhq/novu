@@ -266,7 +266,10 @@ export const mapSubscribersToJobs = (
         templateId: command.template._id,
         _subscriberSource: _subscriberSource,
         requestCategory: command.requestCategory,
-        bridge: command.bridge,
+        bridge: {
+          url: command.bridgeUrl,
+          workflow: command.bridgeWorkflow,
+        },
       },
       groupId: command.organizationId,
     };

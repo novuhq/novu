@@ -94,7 +94,7 @@ export class ParseEventRequest {
         throw new UnprocessableEntityException('workflow_not_found');
       }
 
-      return await this.dispatchEvent(command, transactionId);
+      return await this.dispatchEvent(command, transactionId, discoveredWorkflow);
     }
 
     const template = await this.getNotificationTemplateByTriggerIdentifier({
@@ -211,12 +211,14 @@ export class ParseEventRequest {
 
   private async dispatchEvent(
     command: ParseEventRequestMulticastCommand | ParseEventRequestBroadcastCommand,
-    transactionId
+    transactionId,
+    discoveredWorkflow?: DiscoverWorkflowOutput | null
   ) {
     const jobData: IWorkflowDataDto = {
       ...command,
       actor: command.actor,
       transactionId,
+      bridgeWorkflow: discoveredWorkflow ?? undefined,
     };
 
     await this.workflowQueueService.add({ name: transactionId, data: jobData, groupId: command.organizationId });

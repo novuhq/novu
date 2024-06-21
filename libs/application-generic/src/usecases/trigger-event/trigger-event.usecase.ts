@@ -61,25 +61,16 @@ export interface IDoBridgeRequestCommand {
 
 @Injectable()
 export class TriggerEvent {
-  private doBridgeRequest: IUseCaseInterface<
-    IDoBridgeRequestCommand,
-    DiscoverOutput | null
-  >;
-
   constructor(
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
     private jobRepository: JobRepository,
-    private environmentRepository: EnvironmentRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
     private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private triggerBroadcast: TriggerBroadcast,
-    private triggerMulticast: TriggerMulticast,
-    protected moduleRef: ModuleRef
-  ) {
-    this.doBridgeRequest = requireInject('do_bridge_request', this.moduleRef);
-  }
+    private triggerMulticast: TriggerMulticast
+  ) {}
 
   @InstrumentUsecase()
   async execute(command: TriggerEventCommand) {
@@ -113,10 +104,6 @@ export class TriggerEvent {
         organizationId: mappedCommand.organizationId,
       });
 
-      const discoverWorkflow = await this.queryDiscoverWorkflow(command);
-
-      //todo: check how we want to handle nullable discoverWorkflow if bridge url is available (exception?)
-
       const template = await this.getNotificationTemplateByTriggerIdentifier({
         environmentId: mappedCommand.environmentId,
         triggerIdentifier: mappedCommand.identifier,
@@ -126,7 +113,7 @@ export class TriggerEvent {
        * Makes no sense to execute anything if template doesn't exist
        * TODO: Send a 404?
        */
-      if (!template && !discoverWorkflow) {
+      if (!template && !command.bridgeWorkflow) {
         throw new ApiException('Notification template could not be found');
       }
 
@@ -170,11 +157,12 @@ export class TriggerEvent {
           await this.triggerMulticast.execute(
             TriggerMulticastCommand.create({
               ...mappedCommand,
-              bridge: { url: command.bridge.url, workflow: discoverWorkflow },
+              bridgeUrl: command.bridgeUrl,
+              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
               template:
                 template ||
-                (discoverWorkflow as unknown as NotificationTemplateEntity),
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -183,11 +171,12 @@ export class TriggerEvent {
           await this.triggerBroadcast.execute(
             TriggerBroadcastCommand.create({
               ...mappedCommand,
-              bridge: { url: command.bridge.url, workflow: discoverWorkflow },
+              bridgeUrl: command.bridgeUrl,
+              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
               template:
                 template ||
-                (discoverWorkflow as unknown as NotificationTemplateEntity),
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -197,11 +186,12 @@ export class TriggerEvent {
             TriggerMulticastCommand.create({
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
-              bridge: { url: command.bridge.url, workflow: discoverWorkflow },
+              bridgeUrl: command.bridgeUrl,
+              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
               template:
                 template ||
-                (discoverWorkflow as unknown as NotificationTemplateEntity),
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -222,32 +212,6 @@ export class TriggerEvent {
 
       throw e;
     }
-  }
-
-  private async queryDiscoverWorkflow(
-    command: TriggerEventMulticastCommand | TriggerEventBroadcastCommand
-  ): Promise<DiscoverWorkflowOutput | null> {
-    if (!command.bridge.url) {
-      return null;
-    }
-
-    const environment = await this.environmentRepository.findOne({
-      _id: command.environmentId,
-    });
-
-    const discover = await this.doBridgeRequest.execute({
-      bridgeUrl: command.bridge.url,
-      apiKey: environment.apiKeys[0].key,
-      action: 'discover',
-    });
-
-    if (!discover) {
-      return null;
-    }
-
-    return discover?.workflows?.find(
-      (findWorkflow) => findWorkflow.workflowId === command.identifier
-    );
   }
 
   @CachedEntity({
