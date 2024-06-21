@@ -21,13 +21,11 @@ export default function App() {
             appearance: {
               elements: {
                 button: {
-                  backgroundColor: 'var(--novu-colors-primary-900)',
-                }, // can also do var(--novu-colors-primary-alpha-100)
+                  backgroundColor: 'var(--nv-color-primary-500)',
+                },
               },
               variables: {
-                colors: {
-                  primary: '#ebb523', //orange
-                },
+                colorPrimary: '#ebb523', //orange
               },
             },
           });
