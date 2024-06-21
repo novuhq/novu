@@ -10,17 +10,21 @@ export const useStyle = () => {
     setIsServer(false);
   });
 
-  const styleFuncMemo = createMemo(() => (className: string, descriptor?: keyof Elements) => {
+  const styleFuncMemo = createMemo(() => (className: string, descriptor?: keyof Elements | keyof Elements[]) => {
     const appearanceClassname =
       descriptor && typeof appearance.elements?.[descriptor] === 'string'
         ? (appearance.elements?.[descriptor] as string) || ''
         : '';
 
+    const descriptors = (Array.isArray(descriptor) ? descriptor : [descriptor]).map((des) => `nv-${des}`);
+    const cssInJsClasses =
+      !!descriptors.length && !isServer() ? descriptors.map((des) => appearance.descriptorToCssInJsClass[des]) : [];
+
     return cn(
-      descriptor ? `nv-${descriptor}` : '', // this is the targetable classname for customers
+      ...descriptors,
       className, // default styles
       appearanceClassname, // overrides via appearance prop classes
-      descriptor && !isServer() ? appearance.descriptorToCssInJsClass[descriptor] : ''
+      ...cssInJsClasses
     );
   });
 
