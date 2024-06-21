@@ -15,9 +15,15 @@ export type Elements = {
 };
 
 export type Variables = {
-  colors: {
-    primary: string;
-  };
+  colorBackground?: string;
+  colorForeground?: string;
+  colorPrimary?: string;
+  colorPrimaryForeground?: string;
+  colorSecondary?: string;
+  colorSecondaryForeground?: string;
+  colorNeutral?: string;
+  fontSize?: string;
+  borderRadius?: string;
 };
 
 export type AppearanceContextType = {
