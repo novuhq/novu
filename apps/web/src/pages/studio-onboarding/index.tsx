@@ -44,6 +44,7 @@ export const StudioOnboarding = () => {
       className={css({
         width: '100dvw',
         height: '100dvh',
+        colorPalette: 'mode.cloud',
       })}
     >
       <Header />

@@ -5,6 +5,7 @@ import { ROUTES } from '../../../constants/routes';
 import { useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { EnvironmentEnum } from '../../constants/EnvironmentEnum';
+import { isStudioRoute } from '../../utils/isStudioRoute';
 
 const ENVIRONMENT_ICON_LOOKUP: Record<EnvironmentEnum, React.ReactElement<IIconProps>> = {
   [EnvironmentEnum.LOCAL]: <IconComputer />,
@@ -70,9 +71,6 @@ export const useEnvironmentSelect = () => {
   };
 };
 
-function isStudioRoute(path: string) {
-  return path.includes('/studio');
-}
 /** Determine if the current pathname is dependent on the current env */
 function checkIfEnvBasedRoute() {
   return [ROUTES.API_KEYS, ROUTES.WEBHOOK].some((route) => matchPath(route, window.location.pathname));
