@@ -1,88 +1,111 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { IEnvironment } from '@novu/shared';
+import { getEnvironments } from '../api/environment';
 
-import { getCurrentEnvironment, getMyEnvironments } from '../api/environment';
-
-import { useAuth } from './useAuth';
 import { QueryKeys } from '../api/query.keys';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../constants/routes';
-import { api } from '../api/index';
 import { IS_DOCKER_HOSTED } from '../config/index';
 import { BaseEnvironmentEnum } from '../constants/BaseEnvironmentEnum';
 
-interface ISetEnvironmentOptions {
-  /** using null will prevent a reroute */
-  route?: ROUTES | string | null;
+export type EnvironmentName = BaseEnvironmentEnum | IEnvironment['name'];
+
+const LOCAL_STORAGE_LAST_ENVIRONMENT_ID = 'novu_last_environment_id';
+
+function saveEnvironmentId(environmentId: string) {
+  localStorage.setItem(LOCAL_STORAGE_LAST_ENVIRONMENT_ID, environmentId);
 }
 
-export type EnvironmentName = BaseEnvironmentEnum | IEnvironment['name'];
+function getEnvironmentId(): string {
+  return localStorage.getItem(LOCAL_STORAGE_LAST_ENVIRONMENT_ID) || '';
+}
 
 export const useEnvironment = (options: UseQueryOptions<IEnvironment, any, IEnvironment> = {}, bridge = false) => {
   const navigate = useNavigate();
-
   const queryClient = useQueryClient();
-  const { login } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-
-  const { data: environments, isLoading: isLoadingMyEnvironments } = useQuery<IEnvironment[]>(
-    [QueryKeys.myEnvironments],
-    getMyEnvironments,
-    {
-      refetchOnWindowFocus: false,
-      refetchOnMount: false,
-    }
-  );
-
+  const [currentEnvId, setCurrentEnvId] = useState<string>(getEnvironmentId());
   const {
-    data: environment,
-    isLoading: isLoadingCurrentEnvironment,
-    refetch: refetchEnvironment,
-  } = useQuery<IEnvironment>([QueryKeys.currentEnvironment], getCurrentEnvironment, {
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    ...options,
+    data: environments,
+    isLoading,
+    refetch: refetchEnvironments,
+  } = useQuery<IEnvironment[]>([QueryKeys.myEnvironments], getEnvironments, {
+    enabled: false,
+    staleTime: Infinity,
   });
-  const isAllLoading = isLoading || isLoadingMyEnvironments || isLoadingCurrentEnvironment;
 
-  const setEnvironmentCallback = useCallback(
-    async (environmentName: string, { route }: ISetEnvironmentOptions = { route: ROUTES.HOME }) => {
-      if (isAllLoading) {
-        return;
-      }
+  const switchEnvironment = useCallback(
+    async (environmentId: string, redirectUrl?: string) => {
+      saveEnvironmentId(environmentId);
+      setCurrentEnvId(environmentId);
 
-      const targetEnvironment = environments?.find((_environment) => _environment.name === environmentName);
-      if (!targetEnvironment) {
-        return;
-      }
-
-      setIsLoading(true);
-      // TODO: Do we need to get the token from this endpoint?
-      const tokenResponse = await api.post(`/v1/auth/environments/${targetEnvironment?._id}/switch`, {});
-      setIsLoading(false);
-      if (!tokenResponse.token) {
-        return;
-      }
-      await login(tokenResponse.token);
-
+      /*
+       * TODO: Replace this revalidation by ensuring all query Keys in react-query contain the environmentId
+       * This call creates an avalance of HTTP requests and also causes flakiness in the e2e suite.
+       */
       await queryClient.invalidateQueries();
-      if (route) {
-        await navigate(route);
+
+      if (redirectUrl) {
+        await navigate(redirectUrl);
       }
     },
-    [isAllLoading, environments, navigate, queryClient, login]
+    [navigate, queryClient, setCurrentEnvId]
   );
 
+  const switchToProductionEnvironment = useCallback(
+    async (redirectUrl?: string) => {
+      const envId = environments?.find((env) => env.name === BaseEnvironmentEnum.PRODUCTION)?._id;
+
+      if (envId) {
+        await switchEnvironment(envId, redirectUrl);
+      } else {
+        throw new Error('Production environment not found');
+      }
+    },
+    [environments, switchEnvironment]
+  );
+
+  const switchToDevelopmentEnvironment = useCallback(
+    async (redirectUrl?: string) => {
+      const envId = environments?.find((env) => env.name === BaseEnvironmentEnum.DEVELOPMENT)?._id;
+
+      if (envId) {
+        await switchEnvironment(envId, redirectUrl);
+      } else {
+        throw new Error('Development environment not found');
+      }
+    },
+    [environments, switchEnvironment]
+  );
+
+  const environment = useMemo(() => {
+    let e: IEnvironment | undefined;
+
+    if (!environments) {
+      return e;
+    }
+
+    // Find the environment based on the current user's last environment
+    e = environments.find((env) => env._id === currentEnvId);
+
+    // Or pick the development environment
+    if (!e) {
+      e = environments.find((env) => env.name === BaseEnvironmentEnum.DEVELOPMENT);
+    }
+
+    return e;
+  }, [environments, currentEnvId]);
+
   return {
-    environments,
-    refetchEnvironment,
     environment,
+    environments,
+    refetchEnvironments,
+    switchEnvironment,
+    switchToDevelopmentEnvironment,
+    switchToProductionEnvironment,
     readonly: environment?._parentId !== undefined || (!IS_DOCKER_HOSTED && bridge),
-    // @deprecated
+    // @deprecated use bridge instead
     chimera: !IS_DOCKER_HOSTED && bridge,
     bridge: !IS_DOCKER_HOSTED && bridge,
-    setEnvironment: setEnvironmentCallback,
-    isLoading: isLoadingMyEnvironments || isLoadingCurrentEnvironment || isLoading,
+    isLoading,
   };
 };

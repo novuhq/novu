@@ -30,9 +30,12 @@ export class EnvironmentRepository extends BaseRepository<EnvironmentDBModel, En
   }
 
   async findOrganizationEnvironments(organizationId: string) {
-    return this.find({
-      _organizationId: organizationId,
-    });
+    return this.find(
+      {
+        _organizationId: organizationId,
+      },
+      { apiKeys: 0 }
+    );
   }
 
   async addApiKey(environmentId: string, key: EncryptedSecret, userId: string) {

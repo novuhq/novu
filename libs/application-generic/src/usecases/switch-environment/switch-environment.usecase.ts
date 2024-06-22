@@ -40,11 +40,10 @@ export class SwitchEnvironment {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new NotFoundException('User is not found');
 
-    const token = await this.authService.getSignedToken(
+    const token = await this.authService.getUserJWT(
       user,
       command.organizationId,
-      member,
-      command.newEnvironmentId
+      member
     );
 
     return token;

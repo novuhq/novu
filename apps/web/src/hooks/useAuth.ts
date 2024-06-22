@@ -14,11 +14,6 @@ import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
 const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
 const UNAUTHENTICATED_STATUS_CODE = 401;
 
-export interface IUserWithContext extends IUserEntity {
-  organizationId?: string;
-  environmentId?: string;
-}
-
 function getUser() {
   return api.get('/v1/users/me');
 }
@@ -108,7 +103,7 @@ export function useAuth() {
     navigate(ROUTES.AUTH_LOGIN);
   }, [navigate, queryClient, segment]);
 
-  const { organizationId, environmentId } = getTokenClaims() || {};
+  const { organizationId } = getTokenClaims() || {};
 
   const currentOrganization = useMemo(() => {
     if (organizationId && organizations && organizations?.length > 0) {
@@ -162,7 +157,6 @@ export function useAuth() {
     currentOrganization,
     login,
     logout,
-    environmentId,
     organizationId,
   };
 }

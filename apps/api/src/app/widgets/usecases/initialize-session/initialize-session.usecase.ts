@@ -72,7 +72,7 @@ export class InitializeSession {
     });
 
     return {
-      token: await this.authService.getSubscriberWidgetToken(subscriber),
+      token: await this.authService.getSubscriberJWT(subscriber),
       profile: {
         _id: subscriber._id,
         firstName: subscriber.firstName,

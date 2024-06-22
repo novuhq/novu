@@ -5,13 +5,11 @@ export interface IJwtClaims {
   email?: string;
   profilePicture?: string;
   organizationId: string;
-  environmentId: string;
   roles: string[];
   exp: number;
 }
 
-// @deprecated Use IJwtClaims instead
-export type UserSessionData = IJwtClaims;
+export type UserSessionData = IJwtClaims & { environmentId: string };
 
 export enum ApiAuthSchemeEnum {
   BEARER = 'Bearer',

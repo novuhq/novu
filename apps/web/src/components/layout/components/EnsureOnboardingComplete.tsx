@@ -6,9 +6,14 @@ import { useBlueprint } from '../../../hooks/index';
 export function EnsureOnboardingComplete({ children }: any) {
   useBlueprint();
   const location = useLocation();
-  const { currentOrganization, environmentId } = useAuth();
+  const { currentUser, currentOrganization } = useAuth();
 
-  if ((!currentOrganization || !environmentId) && location.pathname !== ROUTES.AUTH_APPLICATION) {
+  if (!currentUser) {
+    return <Navigate to={ROUTES.AUTH_LOGIN} replace />;
+  }
+
+  // TODO: Ensure orgs and envs are created at the same time
+  if (!currentOrganization && location.pathname !== ROUTES.AUTH_APPLICATION) {
     return <Navigate to={ROUTES.AUTH_APPLICATION} replace />;
   }
 

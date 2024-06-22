@@ -36,6 +36,7 @@ export class EnvironmentsController {
     private getMyEnvironmentsUsecase: GetMyEnvironments
   ) {}
 
+  // TODO: To be removed.
   @Get('/me')
   @ApiOperation({
     summary: 'Get current environment',
@@ -80,7 +81,6 @@ export class EnvironmentsController {
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
-        environmentId: user.environmentId,
         userId: user._id,
         organizationId: user.organizationId,
       })

@@ -135,7 +135,13 @@ if (process.env.SENTRY_DSN) {
          * Filter exceptions to type HttpException. Ignore those that
          * have status code of less than 500
          */
-        { type: HttpException, filter: (exception: HttpException) => exception.getStatus() < 500 },
+        {
+          type: HttpException,
+          filter: (exception: HttpException) => {
+            // TODO: Introduce a convention for the cause field to force Sentry reports on exceptions
+            return exception.getStatus() < 500 && exception.cause !== 'missing_environment_id';
+          },
+        },
       ],
       user: ['_id', 'firstName', 'organizationId', 'environmentId', 'roles', 'domain'],
     }),

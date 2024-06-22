@@ -167,6 +167,7 @@ export class AuthController {
     return await this.switchOrganizationUsecase.execute(command);
   }
 
+  // *DEPRECATED*
   @Post('/environments/:environmentId/switch')
   @Header('Cache-Control', 'no-store')
   @UserAuthentication()
@@ -204,11 +205,7 @@ export class AuthController {
   }
 
   @Get('/test/token/:userId')
-  async authenticateTest(
-    @Param('userId') userId: string,
-    @Query('organizationId') organizationId: string,
-    @Query('environmentId') environmentId: string
-  ) {
+  async authenticateTest(@Param('userId') userId: string, @Query('organizationId') organizationId: string) {
     if (process.env.NODE_ENV !== 'test') throw new NotFoundException();
 
     const user = await this.userRepository.findById(userId);
@@ -216,6 +213,6 @@ export class AuthController {
 
     const member = organizationId ? await this.memberRepository.findMemberByUserId(organizationId, user._id) : null;
 
-    return await this.authService.getSignedToken(user, organizationId, member as MemberEntity, environmentId);
+    return await this.authService.getUserJWT(user, organizationId, member as MemberEntity);
   }
 }

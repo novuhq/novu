@@ -178,7 +178,7 @@ export class AuthService {
     const user = await this.getUser({ _id: userId });
     if (!user) throw new UnauthorizedException('User not found');
 
-    return this.getSignedToken(user);
+    return this.getUserJWT(user);
   }
 
   @Instrument()
@@ -213,9 +213,7 @@ export class AuthService {
     };
   }
 
-  public async getSubscriberWidgetToken(
-    subscriber: SubscriberEntity
-  ): Promise<string> {
+  public async getSubscriberJWT(subscriber: SubscriberEntity): Promise<string> {
     return this.jwtService.sign(
       {
         _id: subscriber._id,
@@ -241,32 +239,6 @@ export class AuthService {
     if (userActiveOrganizations && userActiveOrganizations.length) {
       const organizationToSwitch = userActiveOrganizations[0];
 
-      const userActiveProjects =
-        await this.environmentRepository.findOrganizationEnvironments(
-          organizationToSwitch._id
-        );
-      let environmentToSwitch = userActiveProjects[0];
-
-      const reduceEnvsToOnlyDevelopment = (prev, current) =>
-        current.name === 'Development' ? current : prev;
-
-      if (userActiveProjects.length > 1) {
-        environmentToSwitch = userActiveProjects.reduce(
-          reduceEnvsToOnlyDevelopment,
-          environmentToSwitch
-        );
-      }
-
-      if (environmentToSwitch) {
-        return await this.switchEnvironmentUsecase.execute(
-          SwitchEnvironmentCommand.create({
-            newEnvironmentId: environmentToSwitch._id,
-            organizationId: organizationToSwitch._id,
-            userId: user._id,
-          })
-        );
-      }
-
       return await this.switchOrganizationUsecase.execute(
         SwitchOrganizationCommand.create({
           newOrganizationId: organizationToSwitch._id,
@@ -275,14 +247,13 @@ export class AuthService {
       );
     }
 
-    return this.getSignedToken(user);
+    return this.getUserJWT(user);
   }
 
-  public async getSignedToken(
+  public async getUserJWT(
     user: UserEntity,
     organizationId?: string,
-    member?: MemberEntity,
-    environmentId?: string
+    member?: MemberEntity
   ): Promise<string> {
     const roles: MemberRoleEnum[] = [];
     if (member && member.roles) {
@@ -298,7 +269,6 @@ export class AuthService {
         profilePicture: user.profilePicture,
         organizationId: organizationId || null,
         roles,
-        environmentId: environmentId || null,
       },
       {
         expiresIn: '30 days',

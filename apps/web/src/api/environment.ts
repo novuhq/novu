@@ -1,10 +1,6 @@
 import { api } from '.';
 
-export function getCurrentEnvironment() {
-  return api.get('/v1/environments/me');
-}
-
-export function getMyEnvironments() {
+export function getEnvironments() {
   return api.get('/v1/environments');
 }
 

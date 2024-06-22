@@ -50,11 +50,10 @@ export class SwitchOrganization {
       _parentId: { $exists: false },
     });
 
-    const token = await this.authService.getSignedToken(
+    const token = await this.authService.getUserJWT(
       user,
       command.newOrganizationId,
-      member,
-      environment?._id
+      member
     );
 
     return token;

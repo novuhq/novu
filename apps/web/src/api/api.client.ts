@@ -84,10 +84,12 @@ function buildUrl(url: string, absoluteUrl: boolean) {
 
 function getHeaders() {
   const token = localStorage.getItem('auth_token');
+  const lastEnvironmentId = localStorage.getItem('novu_last_environment_id');
 
   return token
     ? {
         Authorization: `Bearer ${token}`,
+        'Novu-Environment-Id': lastEnvironmentId || '',
       }
     : {};
 }

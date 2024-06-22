@@ -18,17 +18,10 @@ export class GetMyEnvironments {
     const environments = await this.environmentRepository.findOrganizationEnvironments(command.organizationId);
 
     if (!environments?.length)
-      throw new NotFoundException(`Environments for organization ${command.organizationId} not found`);
+      throw new NotFoundException(`No environments were found for organization ${command.organizationId}`);
 
-    return environments.map((environment) => {
-      if (environment._id === command.environmentId) {
-        return this.decryptApiKeys(environment);
-      }
-
-      environment.apiKeys = [];
-
-      return environment;
-    });
+    // TODO: Figure out why removing apiKeys attribute from Mongoose didn't work
+    return environments.map(({ apiKeys, ...rest }) => rest);
   }
 
   private decryptApiKeys(environment: EnvironmentEntity): EnvironmentResponseDto {

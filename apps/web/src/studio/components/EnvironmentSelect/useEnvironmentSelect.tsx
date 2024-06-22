@@ -17,7 +17,8 @@ export const useEnvironmentSelect = () => {
   const [isPopoverOpened, setIsPopoverOpened] = useState<boolean>(false);
   const location = useLocation();
 
-  const { setEnvironment, isLoading, environment, readonly } = useEnvironment({
+  const { environment, isLoading, readonly, switchEnvironment, switchToDevelopmentEnvironment } = useEnvironment({
+    // TODO: This won't work for now. It needs to be refactored.
     onSuccess: (newEnvironment) => {
       setIsPopoverOpened(!!newEnvironment?._parentId);
     },
@@ -26,7 +27,7 @@ export const useEnvironmentSelect = () => {
   async function handlePopoverLinkClick(e) {
     e.preventDefault();
 
-    await setEnvironment(EnvironmentEnum.DEVELOPMENT, { route: ROUTES.CHANGES });
+    await switchToDevelopmentEnvironment(ROUTES.CHANGES);
   }
 
   const onChange: ISelectProps['onChange'] = async (value) => {
@@ -45,7 +46,8 @@ export const useEnvironmentSelect = () => {
       redirectRoute = 'workflows';
     }
 
-    await setEnvironment(value as EnvironmentEnum, { route: redirectRoute });
+    // TODO: value should be the ID, current it's the name.
+    await switchEnvironment(value as EnvironmentEnum, redirectRoute);
   };
 
   let name = environment?.name;
