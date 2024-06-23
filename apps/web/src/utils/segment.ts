@@ -57,6 +57,17 @@ export class SegmentService {
       return;
     }
 
+    if (this._mixpanelEnabled) {
+      const segmentDeviceId = localStorage.getItem('ajs_anonymous_id');
+      mixpanel.register({ $device_id: segmentDeviceId });
+      const sessionReplayProperties = mixpanel.get_session_recording_properties();
+
+      data = {
+        ...(data || {}),
+        ...sessionReplayProperties,
+      };
+    }
+
     await api.post('/v1/telemetry/measure', {
       event: event + ' - [WEB]',
       data,
