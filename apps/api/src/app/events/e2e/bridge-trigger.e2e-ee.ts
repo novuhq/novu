@@ -657,7 +657,7 @@ async function triggerEvent(session, workflowId: string, subscriber, payload?: a
         email: 'test@subscriber.com',
       },
       payload: payload ?? defaultPayload,
-      bridge: bridge ?? {},
+      bridgeUrl: bridge?.url ?? undefined,
     },
     {
       headers: {
@@ -678,7 +678,7 @@ async function discoverAndSyncEcho(
   });
 
   if (!workflowsRepository || !workflowIdentifier) {
-    return;
+    return discoverResponse;
   }
 
   const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowIdentifier);

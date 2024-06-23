@@ -90,7 +90,7 @@ export class ParseEventRequest {
     if (statelessWorkflowAllowed && environment) {
       const discoveredWorkflow = await this.queryDiscoverWorkflow(command, environment);
 
-      if (discoveredWorkflow) {
+      if (!discoveredWorkflow) {
         throw new UnprocessableEntityException('workflow_not_found');
       }
 
@@ -238,7 +238,7 @@ export class ParseEventRequest {
       return { environment: null, statelessWorkflowAllowed: false };
     }
 
-    const environment = await this.environmentRepository.findOne({ _environmentId: environmentId });
+    const environment = await this.environmentRepository.findOne({ _id: environmentId });
 
     if (!environment) {
       throw new UnprocessableEntityException('Environment not found');
