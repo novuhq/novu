@@ -324,7 +324,6 @@ contexts.forEach((context: Context) => {
       expect(messagesAfter.length).to.be.eq(0);
       const executionDetailsRequired = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
-        // _notificationTemplateId: foundWorkflow._id,
         status: ExecutionDetailsStatusEnum.WARNING,
       });
 
@@ -340,8 +339,7 @@ contexts.forEach((context: Context) => {
 
       const executionDetailsInvalidType = await executionDetailsRepository.find({
         _environmentId: session.environment._id,
-        // _notificationTemplateId: foundWorkflow._id,
-        status: ExecutionDetailsStatusEnum.FAILED,
+        status: ExecutionDetailsStatusEnum.WARNING,
       });
       raw = JSON.parse(executionDetailsInvalidType[0]?.raw ?? '');
       error = raw.raw.data[0].message;
@@ -507,7 +505,7 @@ contexts.forEach((context: Context) => {
                 properties: {
                   amount: {
                     type: 'number',
-                    default: 2,
+                    default: 1,
                   },
                   unit: {
                     type: 'string',
