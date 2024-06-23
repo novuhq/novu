@@ -57,7 +57,7 @@ export abstract class SendMessageBase extends SendMessageType {
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,
-        userId: selectIntegrationCommand.userId,
+        userId: selectIntegrationCommand.userId as string,
       });
     }
 

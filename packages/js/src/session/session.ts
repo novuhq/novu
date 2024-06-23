@@ -1,38 +1,40 @@
-import { ApiService } from '@novu/client';
+import type { ApiService } from '@novu/client';
 
+import { ApiServiceSingleton } from '../utils/api-service-singleton';
+import { InboxServiceSingleton } from '../utils/inbox-service-singleton';
 import { NovuEventEmitter } from '../event-emitter';
-
-export interface SessionOptions {
-  applicationIdentifier: string;
-  subscriberId: string;
-  subscriberHash?: string;
-}
+import { InitializeSessionArgs } from './types';
+import type { InboxService } from '../api';
 
 export class Session {
   #emitter: NovuEventEmitter;
   #apiService: ApiService;
-  #options: SessionOptions;
+  #inboxService: InboxService;
+  #options: InitializeSessionArgs;
 
-  constructor(emitter: NovuEventEmitter, apiService: ApiService, options: SessionOptions) {
-    this.#emitter = emitter;
-    this.#apiService = apiService;
+  constructor(options: InitializeSessionArgs) {
+    this.#emitter = NovuEventEmitter.getInstance();
+    this.#apiService = ApiServiceSingleton.getInstance();
+    this.#inboxService = InboxServiceSingleton.getInstance();
     this.#options = options;
   }
 
   public async initialize(): Promise<void> {
     try {
-      this.#emitter.emit('session.initialize.pending');
+      const { applicationIdentifier, subscriberId, subscriberHash } = this.#options;
+      this.#emitter.emit('session.initialize.pending', { args: this.#options });
 
-      const { token, profile } = await this.#apiService.initializeSession(
-        this.#options.applicationIdentifier,
-        this.#options.subscriberId,
-        this.#options.subscriberHash
-      );
-      this.#apiService.setAuthorizationToken(token);
+      const response = await this.#inboxService.initializeSession({
+        applicationIdentifier,
+        subscriberId,
+        subscriberHash,
+      });
+      // TODO: remove when we will completely switch to the new InboxService
+      this.#apiService.setAuthorizationToken(response.token);
 
-      this.#emitter.emit('session.initialize.success', { token, profile });
+      this.#emitter.emit('session.initialize.success', { args: this.#options, result: response });
     } catch (error) {
-      this.#emitter.emit('session.initialize.error', { error });
+      this.#emitter.emit('session.initialize.error', { args: this.#options, error });
     }
   }
 }
