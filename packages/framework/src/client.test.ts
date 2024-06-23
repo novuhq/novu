@@ -476,7 +476,7 @@ describe('Novu Client', () => {
     });
 
     it('should preview with mocked data during preview', async () => {
-      await workflow(
+      const workflowMock = workflow(
         'mock-workflow',
         async ({ step, payload }) => {
           // eslint-disable-next-line @typescript-eslint/no-base-to-string
@@ -492,6 +492,8 @@ describe('Novu Client', () => {
           },
         }
       );
+
+      client.addWorkflows([workflowMock]);
 
       const event: IEvent = {
         action: 'preview',
