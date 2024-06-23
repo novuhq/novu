@@ -5,10 +5,13 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import type { IJwtClaims, IOrganizationEntity, IUserEntity } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import * as mixpanel from 'mixpanel-browser';
 
 import { useSegment } from '../components/providers/SegmentProvider';
 import { api } from '../api';
 import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
+import { useFeatureFlag } from './useFeatureFlag';
 
 // TODO: Add a novu prefix to the local storage key
 const LOCAL_STORAGE_AUTH_TOKEN_KEY = 'auth_token';
@@ -56,6 +59,18 @@ export function useAuth() {
   );
   const inPrivateRoute = !inPublicRoute;
   const hasToken = !!getToken();
+
+  const isMixpanelRecordingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MIXPANEL_RECORDING_ENABLED);
+  useEffect(() => {
+    if (!segment._mixpanelEnabled) {
+      return;
+    }
+
+    if (getToken() && isMixpanelRecordingEnabled && inPrivateRoute) {
+      mixpanel.start_session_recording();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMixpanelRecordingEnabled, inPrivateRoute]);
 
   useEffect(() => {
     if (!getToken() && inPrivateRoute) {

@@ -13,7 +13,9 @@ export class SegmentService {
     this._mixpanelEnabled = !!process.env.REACT_APP_MIXPANEL_KEY;
 
     if (this._mixpanelEnabled) {
-      mixpanel.init(process.env.REACT_APP_MIXPANEL_KEY as string);
+      mixpanel.init(process.env.REACT_APP_MIXPANEL_KEY as string, {
+        record_sessions_percent: 100,
+      });
     }
 
     if (this._segmentEnabled) {
@@ -22,19 +24,21 @@ export class SegmentService {
         return;
       }
       this._segment.addSourceMiddleware(({ payload, next }) => {
-        if (payload.type() === 'track' || payload.type() === 'page') {
-          const segmentDeviceId = payload.obj.anonymousId;
-          mixpanel.register({ $device_id: segmentDeviceId });
-          const sessionReplayProperties = mixpanel.get_session_recording_properties();
-          payload.obj.properties = {
-            ...payload.obj.properties,
-            ...sessionReplayProperties,
-          };
-        }
-        const userId = payload.obj.userId;
-        if (payload.type() === 'identify' && userId) {
-          mixpanel.identify(userId);
-        }
+        try {
+          if (payload.type() === 'track' || payload.type() === 'page') {
+            const segmentDeviceId = payload.obj.anonymousId;
+            mixpanel.register({ $device_id: segmentDeviceId });
+            const sessionReplayProperties = mixpanel.get_session_recording_properties();
+            payload.obj.properties = {
+              ...payload.obj.properties,
+              ...sessionReplayProperties,
+            };
+          }
+          const userId = payload.obj.userId;
+          if (payload.type() === 'identify' && userId) {
+            mixpanel.identify(userId);
+          }
+        } catch (e) {}
         next(payload);
       });
     }

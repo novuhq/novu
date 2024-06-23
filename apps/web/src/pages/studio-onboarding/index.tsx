@@ -8,7 +8,6 @@ import { VStack } from '@novu/novui/jsx';
 import { SetupTimeline } from './components/SetupTimeline';
 import { useSetupBridge } from './useSetupBridge';
 import { useSegment } from '../../components/providers/SegmentProvider';
-import * as mixpanel from 'mixpanel-browser';
 
 export const StudioOnboarding = () => {
   const [url, setUrl] = useState('');
@@ -23,7 +22,6 @@ export const StudioOnboarding = () => {
   }, [url, testEndpoint]);
 
   useEffect(() => {
-    mixpanel.start_session_recording();
     segment.track('Add endpoint step started - [Onboarding - Signup]');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

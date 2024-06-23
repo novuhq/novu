@@ -144,8 +144,6 @@ export const StudioOnboardingSuccess = () => {
       <Footer
         onClick={() => {
           segment.track('Workflows page accessed - [Onboarding - Signup]');
-          mixpanel.stop_session_recording();
-          mixpanel.start_session_recording();
           navigate(ROUTES.STUDIO_FLOWS);
         }}
         canSkipSetup={false}
