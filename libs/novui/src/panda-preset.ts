@@ -16,6 +16,7 @@ import {
   LETTER_SPACING_TOKENS,
   LINE_HEIGHT_TOKENS,
 } from './tokens/typography.tokens';
+import { SEMANTIC_FONT_SIZE_TOKENS, SEMANTIC_LINE_HEIGHT_TOKENS } from './tokens/semanticTypography.tokens';
 import { Z_INDEX_TOKENS } from './tokens/zIndex.tokens';
 import { SEMANTIC_SIZES_TOKENS } from './tokens/semanticSizes.tokens';
 import { SEMANTIC_SPACING_TOKENS } from './tokens/semanticSpacing.tokens';
@@ -77,6 +78,8 @@ export const novuPandaPreset = definePreset({
         ...COLOR_SEMANTIC_TOKENS,
         ...LEGACY_COLOR_SEMANTIC_TOKENS,
       },
+      fontSizes: SEMANTIC_FONT_SIZE_TOKENS,
+      lineHeights: SEMANTIC_LINE_HEIGHT_TOKENS,
       radii: SEMANTIC_RADIUS_TOKENS,
       shadows: LEGACY_SHADOW_TOKENS,
       gradients: {

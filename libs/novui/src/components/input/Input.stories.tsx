@@ -2,6 +2,8 @@ import React from 'react';
 import { StoryFn, Meta } from '@storybook/react';
 import { Input } from './Input';
 import { IconContentCopy } from '../../icons';
+import { Button } from '../button';
+import { stack } from '../../../styled-system/patterns/stack';
 
 export default {
   title: 'Components/Input',
@@ -26,6 +28,7 @@ export const PrimaryUse = Template.bind({});
 PrimaryUse.args = {
   label: 'Notification Name',
   placeholder: 'Notification name goes here...',
+  required: true,
 };
 
 export const Everything = Template.bind({});
@@ -59,4 +62,19 @@ Error.args = {
   label: 'Your Email',
   value: 'NotGood@email.com',
   error: 'Not Good!',
+};
+
+const FormTemplate: StoryFn<typeof Input> = ({ ...args }) => {
+  return (
+    <form noValidate onSubmit={(event) => event.preventDefault()} className={stack()}>
+      <Input {...args} />
+      <Button type="submit">Submit</Button>
+    </form>
+  );
+};
+
+export const InForm = FormTemplate.bind({});
+InForm.args = {
+  label: 'Your Email',
+  required: true,
 };
