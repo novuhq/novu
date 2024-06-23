@@ -9,8 +9,7 @@ import {
   JobRepository,
   ExecutionDetailsRepository,
 } from '@novu/dal';
-import { ExecutionDetailsStatusEnum, JobStatusEnum, MarkMessagesAsEnum, StepTypeEnum } from '@novu/shared';
-
+import { ExecutionDetailsStatusEnum, JobStatusEnum, MessagesStatusEnum, StepTypeEnum } from '@novu/shared';
 import { EchoServer } from '../../../../e2e/echo.server';
 import { workflow } from '@novu/framework';
 
@@ -321,7 +320,7 @@ describe('Echo Trigger ', async () => {
       const resCustom = await step.custom(
         'custom',
         async () => {
-          await markAllSubscriberMessagesAs(session, subscriber.subscriberId, MarkMessagesAsEnum.READ);
+          await markAllSubscriberMessagesAs(session, subscriber.subscriberId, MessagesStatusEnum.READ);
 
           return { readString: 'Read', unReadString: 'Unread' };
         },
@@ -818,7 +817,7 @@ async function discoverAndSyncEcho(session: UserSession, frameworkClient: EchoSe
   return discoverResponse;
 }
 
-async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MarkMessagesAsEnum) {
+async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MessagesStatusEnum) {
   const response = await axios.post(
     `${session.serverUrl}/v1/subscribers/${subscriberId}/messages/mark-all`,
     {

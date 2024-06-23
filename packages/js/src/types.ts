@@ -53,52 +53,12 @@ export enum WebSocketEvent {
 
 export type Session = {
   token: string;
-  profile: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    subscriberId: string;
-    organizationId: string;
-    environmentId: string;
-    aud: 'widget_user';
-  };
+  unreadCount: number;
 };
 
 export type Avatar = {
   type: AvatarType;
   data: string | null;
-};
-
-export type ChannelCredentials = {
-  webhookUrl?: string;
-  deviceTokens?: string[];
-};
-
-export type SubscriberChannel = {
-  providerId: string;
-  integrationIdentifier?: string;
-  credentials: ChannelCredentials;
-};
-
-export type Subscriber = {
-  _id?: string;
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  phone?: string;
-  avatar?: string;
-  locale?: string;
-  subscriberId: string;
-  channels?: SubscriberChannel[];
-  isOnline?: boolean;
-  lastOnlineAt?: string;
-  _organizationId: string;
-  _environmentId: string;
-  deleted: boolean;
-  createdAt: string;
-  updatedAt: string;
-  __v?: number;
 };
 
 export type MessageButton = {

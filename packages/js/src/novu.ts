@@ -5,8 +5,8 @@ import { Session } from './session';
 import { Preferences } from './preferences';
 import { ApiServiceSingleton } from './utils/api-service-singleton';
 import { Socket } from './ws';
-
-const PRODUCTION_BACKEND_URL = 'https://api.novu.co';
+import { PRODUCTION_BACKEND_URL } from './utils/config';
+import { InboxServiceSingleton } from './utils/inbox-service-singleton';
 
 export type NovuOptions = {
   applicationIdentifier: string;
@@ -26,6 +26,7 @@ export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
 
   constructor(options: NovuOptions) {
     ApiServiceSingleton.getInstance({ backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL });
+    InboxServiceSingleton.getInstance({ backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL });
     this.#emitter = NovuEventEmitter.getInstance({ recreate: true });
     this.#session = new Session({
       applicationIdentifier: options.applicationIdentifier,
