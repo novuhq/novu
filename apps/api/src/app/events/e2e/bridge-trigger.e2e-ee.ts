@@ -334,7 +334,7 @@ contexts.forEach((context: Context) => {
 
       await executionDetailsRepository.delete({ _environmentId: session.environment._id });
 
-      await triggerEvent(session, workflowId, subscriber, { name: 4 });
+      await triggerEvent(session, workflowId, subscriber, { name: 4 }, bridge);
       await session.awaitRunningJobs();
 
       const executionDetailsInvalidType = await executionDetailsRepository.find({
