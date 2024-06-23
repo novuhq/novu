@@ -13,8 +13,8 @@ import {
   StepType,
   WorkflowOptions,
 } from './types';
-import { transformSchema } from './types/schema.types';
 import { EMOJI, log } from './utils';
+import { transformSchema } from './validators';
 
 /**
  * Define a new notification workflow.
@@ -56,7 +56,11 @@ export function workflow<
     input: {} as T_Input,
     step: {
       push: discoverStepFactory(newWorkflow, 'push', channelStepSchemas.push.output, channelStepSchemas.push.result),
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       chat: discoverStepFactory(newWorkflow, 'chat', channelStepSchemas.chat.output, channelStepSchemas.chat.result),
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       email: discoverStepFactory(
         newWorkflow,
         'email',

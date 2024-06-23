@@ -29,11 +29,13 @@ import type {
   HealthCheck,
   IEvent,
 } from './types';
-import { Schema, transformSchema, validateData, ValidationError } from './types/schema.types';
+import { Schema } from './types/schema.types';
+import { transformSchema, validateData } from './validators';
 import { EMOJI, log } from './utils';
 import { VERSION } from './version';
 import { Skip } from './types/skip.types';
 import { Liquid } from 'liquidjs';
+import { ValidationError } from './types/validator.types';
 
 JSONSchemaFaker.option({
   useDefaultValue: true,
@@ -271,7 +273,7 @@ export class Client {
     return async (stepId, stepResolve, options) => {
       const step = this.getStep(event.workflowId, stepId);
       const eventClone = clone<IEvent>(event);
-      const inputs = this.createStepInputs(step, eventClone);
+      const inputs = await this.createStepInputs(step, eventClone);
       const isPreview = event.action === 'preview';
 
       if (!isPreview && (await this.shouldSkip(options?.skip, inputs))) {
@@ -365,7 +367,7 @@ export class Client {
         });
       }
 
-      const executionData = this.createExecutionInputs(event, workflow);
+      const executionData = await this.createExecutionInputs(event, workflow);
       await Promise.race([
         earlyExitPromise,
         workflow.execute({
@@ -420,12 +422,19 @@ export class Client {
     };
   }
 
-  private createExecutionInputs(event: IEvent, workflow: DiscoverWorkflowOutput): Record<string, unknown> {
-    const executionData = event.data;
+  private async createExecutionInputs(
+    event: IEvent,
+    workflow: DiscoverWorkflowOutput
+  ): Promise<Record<string, unknown>> {
+    const validatedResult = await this.validate(
+      event.data,
+      workflow.data.unknownSchema,
+      'event',
+      'input',
+      event.workflowId
+    );
 
-    this.validate(event.data, workflow.data.unknownSchema, 'event', 'input', event.workflowId);
-
-    return executionData;
+    return validatedResult;
   }
 
   private prettyPrintExecute(payload: IEvent, duration: number, error?: Error): void {
@@ -477,11 +486,11 @@ export class Client {
     const spinner = ora({ indent: 2 }).start(`Executing provider: \`${provider.type}\``);
     try {
       if (payload.stepId === step.stepId) {
-        const input = this.createStepInputs(step, payload);
+        const input = await this.createStepInputs(step, payload);
         const result = await provider.resolve({
           inputs: input,
         });
-        await this.validate(
+        const validatedResult = await this.validate(
           result,
           provider.outputs.unknownSchema,
           'step',
@@ -492,7 +501,7 @@ export class Client {
         );
         spinner.succeed(`Executed provider: \`${provider.type}\``);
 
-        return result;
+        return validatedResult;
       } else {
         // No-op. We don't execute providers for hydrated steps
         spinner.stopAndPersist({
@@ -518,17 +527,24 @@ export class Client {
     if (event.stepId === step.stepId) {
       const spinner = ora({ indent: 1 }).start(`Executing stepId: \`${step.stepId}\``);
       try {
-        const templateInputs = this.createStepInputs(step, event);
+        const templateInputs = await this.createStepInputs(step, event);
         const inputs = await this.compileInputs(templateInputs, event);
         const result = await step.resolve(inputs);
-        this.validate(result, step.outputs.unknownSchema, 'step', 'output', event.workflowId, step.stepId);
+        const validatedResult = await this.validate(
+          result,
+          step.outputs.unknownSchema,
+          'step',
+          'output',
+          event.workflowId,
+          step.stepId
+        );
 
         const providers = await this.executeProviders(event, step);
 
         spinner.succeed(`Executed stepId: \`${step.stepId}\``);
 
         return {
-          outputs: result,
+          outputs: validatedResult,
           providers,
         };
       } catch (error) {
@@ -545,14 +561,21 @@ export class Client {
         const result = event.state.find((state) => state.stepId === step.stepId);
 
         if (result) {
-          this.validate(result.outputs, step.results.unknownSchema, 'step', 'result', event.workflowId, step.stepId);
+          const validatedResult = await this.validate(
+            result.outputs,
+            step.results.unknownSchema,
+            'step',
+            'result',
+            event.workflowId,
+            step.stepId
+          );
           spinner.stopAndPersist({
             symbol: EMOJI.HYDRATED,
             text: `Hydrated stepId: \`${step.stepId}\``,
           });
 
           return {
-            outputs: result.outputs,
+            outputs: validatedResult,
             providers: await this.executeProviders(event, step),
           };
         } else {
@@ -586,12 +609,19 @@ export class Client {
    * @param event The event that triggered the step
    * @returns The input for the step
    */
-  private createStepInputs(step: DiscoverStepOutput, event: IEvent): Record<string, unknown> {
+  private async createStepInputs(step: DiscoverStepOutput, event: IEvent): Promise<Record<string, unknown>> {
     const stepInputs = event.inputs;
 
-    this.validate(stepInputs, step.inputs.unknownSchema, 'step', 'input', event.workflowId, step.stepId);
+    const validatedResult = await this.validate(
+      stepInputs,
+      step.inputs.unknownSchema,
+      'step',
+      'input',
+      event.workflowId,
+      step.stepId
+    );
 
-    return stepInputs;
+    return validatedResult;
   }
 
   private async previewStep(
@@ -601,9 +631,16 @@ export class Client {
     const spinner = ora({ indent: 1 }).start(`Previewing stepId: \`${step.stepId}\``);
     try {
       if (payload.stepId === step.stepId) {
-        const input = this.createStepInputs(step, payload);
+        const input = await this.createStepInputs(step, payload);
         const previewOutput = await step.resolve(input);
-        this.validate(previewOutput, step.outputs.unknownSchema, 'step', 'output', payload.workflowId, step.stepId);
+        const validatedResult = await this.validate(
+          previewOutput,
+          step.outputs.unknownSchema,
+          'step',
+          'output',
+          payload.workflowId,
+          step.stepId
+        );
 
         spinner.stopAndPersist({
           symbol: EMOJI.MOCK,
@@ -611,7 +648,7 @@ export class Client {
         });
 
         return {
-          outputs: previewOutput,
+          outputs: validatedResult,
           providers: await this.executeProviders(payload, step),
         };
       } else {

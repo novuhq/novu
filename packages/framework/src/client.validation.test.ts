@@ -77,7 +77,9 @@ describe('validation', () => {
           state: [],
           subscriber: {},
         })
-      ).rejects.toThrowError();
+      ).rejects.toThrowErrorMatchingInlineSnapshot(
+        `[Error: Workflow with id: \`zod-validation\` has an invalid state. Step with id: \`test-email\` has invalid input. Please provide the correct step input.]`
+      );
     });
   });
 });

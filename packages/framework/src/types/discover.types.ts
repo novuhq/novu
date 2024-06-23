@@ -1,14 +1,15 @@
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
-import { JsonSchema, Schema, ValidateFunction } from './schema.types';
+import { JsonSchema, Schema } from './schema.types';
 import { ActionStepOptions } from './step.types';
 import { Execute, WorkflowOptions } from './workflow.types';
+import { Awaitable } from './util.types';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 
 export type DiscoverProviderOutput = {
   type: string;
   code: string;
-  resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
+  resolve: (stepInputs: unknown) => Awaitable<unknown>;
   outputs: {
     schema: JsonSchema;
     unknownSchema: Schema;
@@ -31,7 +32,7 @@ export type DiscoverStepOutput = {
     unknownSchema: Schema;
   };
   code: string;
-  resolve: (stepInputs: unknown) => unknown | Promise<unknown>;
+  resolve: (stepInputs: unknown) => Awaitable<unknown>;
   providers: Array<DiscoverProviderOutput>;
   options: ActionStepOptions;
 };
