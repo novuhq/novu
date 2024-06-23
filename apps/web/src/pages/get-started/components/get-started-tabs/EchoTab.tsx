@@ -20,7 +20,7 @@ declare global {
   }
 }
 
-const link = 'https://docs.novu.co/echo/quickstart';
+const link = 'https://docs.novu.co/framework/quickstart';
 
 const COMMAND = 'npx novu-labs@latest echo';
 
