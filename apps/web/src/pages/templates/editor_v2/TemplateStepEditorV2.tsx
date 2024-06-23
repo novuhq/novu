@@ -32,6 +32,7 @@ export const WorkflowsStepEditorPageV2 = () => {
     data: preview,
     isLoading: loadingPreview,
     mutateAsync: renderStepPreview,
+    error,
   } = useMutation<any, any, any>((data) => api.post('/v1/echo/preview/' + workflow?.name + '/' + stepId, data));
 
   const title = step?.stepId;
@@ -74,7 +75,7 @@ export const WorkflowsStepEditorPageV2 = () => {
       }
     >
       <WorkflowsPanelLayout>
-        <WorkflowStepEditorContentPanel step={step} preview={preview} isLoadingPreview={loadingPreview} />
+        <WorkflowStepEditorContentPanel error={error} step={step} preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorInputsPanel
           isLoadingSave={isSavingInputs}
           onSave={() => {
