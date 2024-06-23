@@ -25,7 +25,7 @@ export class ZodValidator implements Validator<ZodSchema> {
   }
 
   transformToJsonSchema(schema: ZodSchema): JSONSchema {
-    // @ts-expect-error - JSONSchema7 is incorrectly typed
+    // @ts-expect-error - JSONSchema7 is incompatible with Zod's JSONSchema typings
     return zodToJsonSchema(schema);
   }
 }
