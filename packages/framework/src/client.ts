@@ -187,13 +187,13 @@ export class Client {
     if (!result.success) {
       switch (component) {
         case 'event':
-          this.validateEvent(payloadType, workflowId, result.errors);
+          this.throwInvalidEvent(payloadType, workflowId, result.errors);
 
         case 'step':
-          this.validateStep(stepId, payloadType, workflowId, result.errors);
+          this.throwInvalidStep(stepId, payloadType, workflowId, result.errors);
 
         case 'provider':
-          this.validateProvider(stepId, providerId, payloadType, workflowId, result.errors);
+          this.throwInvalidProvider(stepId, providerId, payloadType, workflowId, result.errors);
 
         default:
           throw new Error(`Invalid component: '${component}'`);
@@ -203,7 +203,7 @@ export class Client {
     }
   }
 
-  private validateProvider(
+  private throwInvalidProvider(
     stepId: string | undefined,
     providerId: string | undefined,
     payloadType: 'input' | 'output' | 'result' | 'data',
@@ -227,7 +227,7 @@ export class Client {
     }
   }
 
-  private validateStep(
+  private throwInvalidStep(
     stepId: string | undefined,
     payloadType: 'input' | 'output' | 'result' | 'data',
     workflowId: string,
@@ -252,7 +252,7 @@ export class Client {
     }
   }
 
-  private validateEvent(
+  private throwInvalidEvent(
     payloadType: 'input' | 'output' | 'result' | 'data',
     workflowId: string,
     errors: Array<ValidationError>
