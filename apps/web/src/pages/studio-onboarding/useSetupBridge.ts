@@ -13,27 +13,15 @@ export const useSetupBridge = (url: string, setError: (error: string) => void) =
   const navigate = useNavigate();
   const { runHealthCheck, isLoading, data } = useBridgeUrlTest();
 
-  const { mutateAsync: syncEndpoint, isLoading: isSyncing } = useMutation(
-    (params: { bridgeUrl: string }) => api.post('/v1/echo/sync', params),
-    {
-      onSuccess: () => {
-        navigate(ROUTES.STUDIO_ONBOARDING_PREVIEW);
-      },
-    }
-  );
-
   async function mutate() {
     setLoading(true);
 
     await runHealthCheck(url);
 
-    await syncEndpoint({
-      bridgeUrl: url,
-    });
-
     setTunnelUrl(url);
-
     setLoading(false);
+
+    navigate(ROUTES.STUDIO_ONBOARDING_PREVIEW);
   }
 
   return {
