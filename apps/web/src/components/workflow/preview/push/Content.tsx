@@ -70,7 +70,6 @@ export default function Content({
       showEditOverlay={showOverlay}
       bridge={bridge}
       error={templateError}
-      previewError={previewError}
       loading={isPreviewLoading || isBridgeLoading || showLoading || areLocalesLoading}
     />
   );

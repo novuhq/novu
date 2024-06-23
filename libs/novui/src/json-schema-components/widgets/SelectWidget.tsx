@@ -1,4 +1,4 @@
-import { WidgetProps } from '@rjsf/utils';
+import { enumOptionsIndexForValue, WidgetProps } from '@rjsf/utils';
 import { Select } from '../../components/select/Select';
 
 export const SelectWidget = (props: WidgetProps) => {
@@ -9,18 +9,19 @@ export const SelectWidget = (props: WidgetProps) => {
       value: String(option.value),
     };
   });
+  const selectedIndex = enumOptionsIndexForValue(value, options.enumOptions, false);
 
   return (
     <Select
       description={schema.description}
       onChange={onChange}
-      value={value}
+      value={typeof value === 'undefined' ? '' : (selectedIndex as string)}
       required={required}
       label={label}
       data={data}
       disabled={disabled}
       readOnly={readonly}
-      error={rawErrors}
+      error={rawErrors?.length > 0 && rawErrors}
     />
   );
 };

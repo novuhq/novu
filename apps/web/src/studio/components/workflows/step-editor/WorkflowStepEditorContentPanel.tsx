@@ -2,7 +2,7 @@ import { FC, useMemo } from 'react';
 import { Prism } from '@mantine/prism';
 import { Tabs } from '@novu/novui';
 import { IconOutlineCode, IconVisibility } from '@novu/novui/icons';
-import { Center } from '@novu/novui/jsx';
+import { VStack } from '@novu/novui/jsx';
 import { StepTypeEnum } from '@novu/shared';
 import { PreviewWeb } from '../../../../components/workflow/preview/email/PreviewWeb';
 import { useActiveIntegrations } from '../../../../hooks';
@@ -14,6 +14,7 @@ import {
 } from '../../../../components/workflow/preview';
 import { MobileSimulator } from '../../../../components/workflow/preview/common';
 import { css } from '@novu/novui/css';
+import { ErrorPrettyRender } from '../../../../components/workflow/preview/ErrorPrettyRender';
 
 interface IWorkflowStepEditorContentPanelProps {
   preview: any;
@@ -34,14 +35,15 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
       value: 'preview',
       label: 'Preview',
       content: (
-        <Center>
+        <VStack className={css({ width: '100%' })}>
+          {error && <ErrorPrettyRender error={error} />}
           <PreviewStep
             channel={step?.template?.type || step?.type}
             preview={preview}
-            loadingPreview={isLoadingPreview}
+            loadingPreview={error || isLoadingPreview}
             error={error}
           />
-        </Center>
+        </VStack>
       ),
     },
   ];
@@ -86,6 +88,7 @@ export const PreviewStep = ({
           integration={integration}
           content={preview?.outputs?.body}
           subject={preview?.outputs?.subject}
+          error={error}
           classNames={{
             browser: css({ display: 'flex', flexDirection: 'column', gap: '0', flex: '1' }),
             content: css({ display: 'flex' }),
