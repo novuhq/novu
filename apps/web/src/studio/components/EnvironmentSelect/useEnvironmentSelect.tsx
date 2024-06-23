@@ -1,10 +1,11 @@
 import { type ISelectProps } from '@novu/design-system';
 import { IconComputer, IconConstruction, IconRocketLaunch, type IIconProps } from '@novu/novui/icons';
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { ROUTES } from '../../../constants/routes';
 import { useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { EnvironmentEnum } from '../../constants/EnvironmentEnum';
+import { isStudioRoute } from '../../utils/isStudioRoute';
 
 const ENVIRONMENT_ICON_LOOKUP: Record<EnvironmentEnum, React.ReactElement<IIconProps>> = {
   [EnvironmentEnum.LOCAL]: <IconComputer />,
@@ -16,7 +17,7 @@ export const useEnvironmentSelect = () => {
   const [isPopoverOpened, setIsPopoverOpened] = useState<boolean>(false);
   const location = useLocation();
 
-  const { setEnvironment, isLoading, environment, readonly } = useEnvController({
+  const { setEnvironment, isLoading, environment, readonly } = useEnvironment({
     onSuccess: (newEnvironment) => {
       setIsPopoverOpened(!!newEnvironment?._parentId);
     },
@@ -70,9 +71,6 @@ export const useEnvironmentSelect = () => {
   };
 };
 
-function isStudioRoute(path: string) {
-  return path.includes('/studio');
-}
 /** Determine if the current pathname is dependent on the current env */
 function checkIfEnvBasedRoute() {
   return [ROUTES.API_KEYS, ROUTES.WEBHOOK].some((route) => matchPath(route, window.location.pathname));

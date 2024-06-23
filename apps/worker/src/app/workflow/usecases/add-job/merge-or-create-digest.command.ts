@@ -1,7 +1,7 @@
 import { IsDefined, IsOptional } from 'class-validator';
 
 import { JobEntity } from '@novu/dal';
-import { BaseCommand, IBridgeDigestResponse } from '@novu/application-generic';
+import { BaseCommand } from '@novu/application-generic';
 
 export class MergeOrCreateDigestCommand extends BaseCommand {
   @IsDefined()
@@ -9,7 +9,4 @@ export class MergeOrCreateDigestCommand extends BaseCommand {
 
   @IsOptional()
   filtered?: boolean;
-
-  @IsOptional()
-  bridgeData?: IBridgeDigestResponse;
 }

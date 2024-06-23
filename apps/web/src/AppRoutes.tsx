@@ -1,7 +1,6 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { PrivatePageLayout } from './components/layout/components/PrivatePageLayout';
 import { PublicPageLayout } from './components/layout/components/PublicPageLayout';
-import { EnsureOnboardingComplete } from './components/layout/components/EnsureOnboardingComplete';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { ROUTES } from './constants/routes';
 import { useFeatureFlag } from './hooks';
@@ -15,7 +14,7 @@ import { BrandingPage } from './pages/brand/BrandingPage';
 import { PromoteChangesPage } from './pages/changes/PromoteChangesPage';
 import { GetStartedPage } from './pages/get-started/GetStartedPage';
 import HomePage from './pages/HomePage';
-import { ApiKeysPage } from './pages/settings/index';
+import { ApiKeysPage, WebhookPage } from './pages/settings/index';
 import { SelectProviderPage } from './pages/integrations/components/SelectProviderPage';
 import { CreateProviderPage } from './pages/integrations/CreateProviderPage';
 import { IntegrationsListPage } from './pages/integrations/IntegrationsListPage';
@@ -51,13 +50,13 @@ import { StudioOnboardingSuccess } from './pages/studio-onboarding/success';
 import { AccessSecurityPage, BillingPage, TeamPage, UserProfilePage } from './pages/settings';
 import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { OrganizationPage } from './pages/settings/organization';
+import { LayoutsPage } from './pages/layouts/LayoutsPage';
 import {
   WorkflowsListPage,
   WorkflowsDetailPage,
   WorkflowsStepEditorPage,
-  WorkflowsTestStepPage,
+  WorkflowsTestPage,
 } from './studio/components/workflows';
-import { TemplateDetailsPageV2 } from './pages/templates/editor_v2/TemplateDetailsPageV2';
 import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateStepEditorV2';
 
 export const AppRoutes = () => {
@@ -72,24 +71,16 @@ export const AppRoutes = () => {
         <Route path={ROUTES.AUTH_RESET_TOKEN} element={<PasswordResetPage />} />
         <Route path={ROUTES.AUTH_INVITATION_TOKEN} element={<InvitationPage />} />
         <Route path={ROUTES.AUTH_APPLICATION} element={<QuestionnairePage />} />
+      </Route>
+      <Route element={<PrivatePageLayout />}>
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS}
-          element={
-            <EnsureOnboardingComplete>
-              <LinkVercelProjectPage type="create" />
-            </EnsureOnboardingComplete>
-          }
+          element={<LinkVercelProjectPage type="create" />}
         />
         <Route
           path={ROUTES.PARTNER_INTEGRATIONS_VERCEL_LINK_PROJECTS_EDIT}
-          element={
-            <EnsureOnboardingComplete>
-              <LinkVercelProjectPage type="edit" />
-            </EnsureOnboardingComplete>
-          }
+          element={<LinkVercelProjectPage type="edit" />}
         />
-      </Route>
-      <Route element={<PrivatePageLayout />}>
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
         <Route path={ROUTES.WORKFLOWS_V2_STEP_EDIT} element={<WorkflowsStepEditorPageV2 />} />
@@ -152,11 +143,13 @@ export const AppRoutes = () => {
           <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
           <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
           <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<WorkflowsStepEditorPage />} />
-          <Route path={ROUTES.STUDIO_FLOWS_TEST_STEP} element={<WorkflowsTestStepPage />} />
+          <Route path={ROUTES.STUDIO_FLOWS_TEST} element={<WorkflowsTestPage />} />
         </Route>
 
         <Route path="/translations/*" element={<TranslationRoutes />} />
+        <Route path={ROUTES.LAYOUT} element={<LayoutsPage />} />
         <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
+        <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
       <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />

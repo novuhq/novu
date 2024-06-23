@@ -26,6 +26,10 @@ export const LEGACY_COLOR_TOKENS = defineTokens.colors({
     warning: { value: '#FF8000', description: '@deprecated', type: 'color' },
     error: { value: '#E54545', description: '@deprecated', type: 'color' },
   },
+  transparent: {
+    value: 'transparent',
+    type: 'color',
+  },
 });
 
 export const COLOR_PALETTE_TOKENS = defineTokens.colors({
@@ -278,5 +282,9 @@ export const COLOR_PALETTE_TOKENS = defineTokens.colors({
       light: { value: '#fffcfcff' },
       dark: { value: '#1f1315' },
     },
+  },
+  transparent: {
+    value: 'transparent',
+    type: 'color',
   },
 });

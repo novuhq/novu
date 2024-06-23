@@ -1,20 +1,23 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "lib": ["ESNext"],
+    "strict": true,
     "target": "ESNext",
     "module": "ESNext",
-    "strict": true,
-    "skipLibCheck": true,
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "baseUrl": ".",
+    "emitDecoratorMetadata": false,
+    "outDir": "./dist/types",
+    "noImplicitAny": true,
+    "strictNullChecks": true,
     "typeRoots": ["./node_modules/@types"],
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
-    "removeComments": false,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".."
+    "removeComments": false
   },
   "include": ["src/**/*", "src/**/*.d.ts"],
-  "exclude": ["src/**/*.test.*", "src/*.test.*", "node_modules", "**/node_modules/*"]
+  "exclude": ["src/**/*.test.ts", "src/*.test.ts", "node_modules", "**/node_modules/*"]
 }

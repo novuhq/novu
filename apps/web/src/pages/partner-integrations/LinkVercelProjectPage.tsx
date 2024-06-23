@@ -8,7 +8,7 @@ import { Container, Text, Title } from '@novu/design-system';
 export function LinkVercelProjectPage({ type }: { type: 'edit' | 'create' }) {
   return (
     <PartnerIntegrationLayout>
-      <Container mt={30} size="lg" p={10}>
+      <Container mt={30} size="md" p={24}>
         <Stack spacing="xl">
           <Stack spacing="xs">
             <Title>Link Vercel Projects to Novu</Title>

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { MarkMessagesAsEnum } from '@novu/shared';
+import { MessagesStatusEnum } from '@novu/shared';
 
 export class MarkAllMessageAsRequestDto {
   @ApiPropertyOptional({
@@ -17,8 +17,8 @@ export class MarkAllMessageAsRequestDto {
   feedIdentifier?: string | string[];
 
   @ApiProperty({
-    enum: MarkMessagesAsEnum,
+    enum: MessagesStatusEnum,
     description: 'Mark all subscriber messages as read, unread, seen or unseen',
   })
-  markAs: MarkMessagesAsEnum;
+  markAs: MessagesStatusEnum;
 }

@@ -22,7 +22,7 @@ import {
 
 import {
   useTemplates,
-  useEnvController,
+  useEnvironment,
   useNotificationGroup,
   INotificationTemplateExtended,
   useDebouncedSearch,
@@ -163,7 +163,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
 
 function WorkflowListPage() {
   const segment = useSegment();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const { loading: areNotificationGroupLoading } = useNotificationGroup();
   const {
     templates,

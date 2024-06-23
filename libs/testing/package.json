@@ -46,7 +46,6 @@
   },
   "devDependencies": {
     "@types/async": "^3.2.1",
-    "@types/bluebird": "^3.5.30",
     "@types/node": "^14.6.0",
     "@typescript-eslint/parser": "^4.14.2",
     "apollo-boost": "0.4.9",

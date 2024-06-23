@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { expect } from 'chai';
+
 import { UserSession, SubscribersService } from '@novu/testing';
 import {
   MessageRepository,
@@ -8,14 +9,15 @@ import {
   JobRepository,
   ExecutionDetailsRepository,
 } from '@novu/dal';
-import { ExecutionDetailsStatusEnum, JobStatusEnum, MarkMessagesAsEnum, StepTypeEnum } from '@novu/shared';
-import { echoServer } from '../../../../e2e/echo.server';
+import { ExecutionDetailsStatusEnum, JobStatusEnum, MessagesStatusEnum, StepTypeEnum } from '@novu/shared';
+import { EchoServer } from '../../../../e2e/echo.server';
 import { workflow } from '@novu/framework';
 
 const eventTriggerPath = '/v1/events/trigger';
 
 describe('Echo Trigger ', async () => {
   let session: UserSession;
+  let frameworkClient: EchoServer;
   const messageRepository = new MessageRepository();
   const workflowsRepository = new NotificationTemplateRepository();
   const jobRepository = new JobRepository();
@@ -28,10 +30,11 @@ describe('Echo Trigger ', async () => {
     await session.initialize();
     subscriberService = new SubscribersService(session.organization._id, session.environment._id);
     subscriber = await subscriberService.createSubscriber();
+    frameworkClient = new EchoServer();
   });
 
   afterEach(async () => {
-    await echoServer.stop();
+    await frameworkClient.stop();
   });
 
   it('should trigger the echo workflow', async () => {
@@ -69,9 +72,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -129,9 +132,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await syncWorkflow(session);
+    await syncWorkflow(session, frameworkClient);
 
     const workflowByStatic = await workflowsRepository.findByTriggerIdentifier(
       session.environment._id,
@@ -199,9 +202,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await syncWorkflow(session);
+    await syncWorkflow(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(
       session.environment._id,
@@ -233,7 +236,7 @@ describe('Echo Trigger ', async () => {
   });
 
   it('should have execution detail errors for invalid trigger payload', async () => {
-    const workflowId = 'missing-payload-var';
+    const workflowId = 'missing-payload-name';
     const newWorkflow = workflow(
       workflowId,
       async ({ step, payload }) => {
@@ -256,9 +259,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -281,7 +284,7 @@ describe('Echo Trigger ', async () => {
     const executionDetailsRequired = await executionDetailsRepository.find({
       _environmentId: session.environment._id,
       _notificationTemplateId: foundWorkflow._id,
-      status: ExecutionDetailsStatusEnum.FAILED,
+      status: ExecutionDetailsStatusEnum.WARNING,
     });
 
     let raw = JSON.parse(executionDetailsRequired[0]?.raw ?? '');
@@ -297,7 +300,7 @@ describe('Echo Trigger ', async () => {
     const executionDetailsInvalidType = await executionDetailsRepository.find({
       _environmentId: session.environment._id,
       _notificationTemplateId: foundWorkflow._id,
-      status: ExecutionDetailsStatusEnum.FAILED,
+      status: ExecutionDetailsStatusEnum.WARNING,
     });
     raw = JSON.parse(executionDetailsInvalidType[0]?.raw ?? '');
     error = raw.raw.data[0].message;
@@ -317,7 +320,7 @@ describe('Echo Trigger ', async () => {
       const resCustom = await step.custom(
         'custom',
         async () => {
-          await markAllSubscriberMessagesAs(session, subscriber.subscriberId, MarkMessagesAsEnum.READ);
+          await markAllSubscriberMessagesAs(session, subscriber.subscriberId, MessagesStatusEnum.READ);
 
           return { readString: 'Read', unReadString: 'Unread' };
         },
@@ -344,9 +347,9 @@ describe('Echo Trigger ', async () => {
       });
     });
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -376,8 +379,8 @@ describe('Echo Trigger ', async () => {
     expect(messagesAfterEmail[0].subject).to.include('Read');
   });
 
-  it('should trigger the echo workflow with digest', async () => {
-    const workflowId = 'digest-workflow';
+  it('should trigger regular digest', async () => {
+    const workflowId = 'workflow-regular-digest';
     const newWorkflow = workflow(
       workflowId,
       async ({ step }) => {
@@ -407,13 +410,19 @@ describe('Echo Trigger ', async () => {
           }
         );
 
-        await step.sms('send-sms', async () => {
-          const events = digestResponse.events.length;
+        await step.sms(
+          'send-sms',
+          async () => {
+            const events = digestResponse.events.length;
 
-          return {
-            body: `${events} people liked your post`,
-          };
-        });
+            return {
+              body: `${events} people liked your post`,
+            };
+          },
+          {
+            inputSchema: { type: 'object', properties: {} },
+          }
+        );
       },
       {
         payloadSchema: {
@@ -427,9 +436,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -453,7 +462,173 @@ describe('Echo Trigger ', async () => {
     expect(messagesAfter[0].content).to.include('2 people liked your post');
   });
 
-  it('should trigger the echo workflow with delay', async () => {
+  it('should trigger regular digest with look back option', async () => {
+    const workflowId = 'workflow-look-back-digest';
+    const workflowTemplate = workflow(
+      workflowId,
+      async ({ step }) => {
+        const digestResponse = await step.digest(
+          'digest',
+          async (inputs) => {
+            return {
+              amount: inputs.amount,
+              unit: inputs.unit,
+              lookBackWindow: {
+                amount: inputs.lookBackWindowAmount,
+                unit: inputs.lookBackWindowUnit,
+              },
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                amount: {
+                  type: 'number',
+                  default: 2,
+                },
+                unit: {
+                  type: 'string',
+                  enum: ['seconds', 'minutes', 'hours', 'days', 'weeks', 'months'],
+                  default: 'seconds',
+                },
+                lookBackWindowAmount: {
+                  type: 'number',
+                  default: 1,
+                },
+                lookBackWindowUnit: {
+                  type: 'string',
+                  default: 'seconds',
+                },
+              },
+            },
+          }
+        );
+
+        await step.sms('send-sms', async () => {
+          const events = digestResponse.events.length;
+
+          return {
+            body: `${events} people liked your post`,
+          };
+        });
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            execution_metadata: { type: 'string' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await frameworkClient.start({ workflows: [workflowTemplate] });
+
+    await discoverAndSyncEcho(session, frameworkClient);
+
+    const fetchedWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(fetchedWorkflow).to.be.ok;
+
+    if (!fetchedWorkflow) {
+      throw new Error('Workflow not found');
+    }
+
+    await triggerEvent(session, workflowId, subscriber, { execution_metadata: 'msg-num-1' });
+    await session.awaitRunningJobs(fetchedWorkflow?._id, false, 0);
+
+    await triggerEvent(session, workflowId, subscriber, { execution_metadata: 'msg-num-2' });
+    await triggerEvent(session, workflowId, subscriber, { execution_metadata: 'msg-num-3' });
+    await session.awaitRunningJobs(fetchedWorkflow?._id, false, 0);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.SMS,
+    });
+
+    expect(messages.length).to.be.eq(2);
+    const lookBackMessage = messages[1];
+    expect(lookBackMessage.content).to.include('1 people liked your post');
+    const digestedMessage = messages[0];
+    expect(digestedMessage.content).to.include('2 people liked your post');
+  });
+
+  it('should trigger timed digest (test basic digest flow type)', async () => {
+    const workflowId = 'workflow-timed-digest';
+    const CRON_EVERY_5_SECONDS = '*/2 * * * * *';
+    const workflowTemplate = workflow(
+      workflowId,
+      async ({ step }) => {
+        const digestResponse = await step.digest(
+          'digest',
+          async (inputs) => {
+            return {
+              cron: inputs.cron,
+            };
+          },
+          {
+            inputSchema: {
+              type: 'object',
+              properties: {
+                cron: {
+                  type: 'string',
+                  default: CRON_EVERY_5_SECONDS,
+                },
+              },
+            },
+          }
+        );
+
+        await step.sms('send-sms', async () => {
+          const events = digestResponse.events.length;
+
+          return {
+            body: `${events} people liked your post`,
+          };
+        });
+      },
+      {
+        payloadSchema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: 'default_name' },
+          },
+          required: [],
+          additionalProperties: false,
+        } as const,
+      }
+    );
+
+    await frameworkClient.start({ workflows: [workflowTemplate] });
+
+    await discoverAndSyncEcho(session, frameworkClient);
+
+    const fetchedWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
+    expect(fetchedWorkflow).to.be.ok;
+
+    if (!fetchedWorkflow) {
+      throw new Error('Workflow not found');
+    }
+
+    await triggerEvent(session, workflowId, subscriber, { name: 'Bela-1' });
+    await triggerEvent(session, workflowId, subscriber, { name: 'Bela-2' });
+    await session.awaitRunningJobs(fetchedWorkflow?._id, false, 0);
+
+    const messages = await messageRepository.find({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber._id,
+      channel: StepTypeEnum.SMS,
+    });
+
+    expect(messages.length).to.be.eq(1);
+    const digestedMessage = messages[0];
+    expect(digestedMessage.content).to.include('2 people liked your post');
+  });
+
+  it('should trigger delay', async () => {
     const workflowId = 'delay-workflow';
     const newWorkflow = workflow(
       workflowId,
@@ -514,9 +689,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -539,7 +714,7 @@ describe('Echo Trigger ', async () => {
     expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
   });
 
-  it('should trigger the echo workflow with input variables', async () => {
+  it('should trigger with input variables', async () => {
     const workflowId = 'input-variables-workflow';
     const newWorkflow = workflow(
       workflowId,
@@ -574,9 +749,9 @@ describe('Echo Trigger ', async () => {
       }
     );
 
-    await echoServer.start({ workflows: [newWorkflow] });
+    await frameworkClient.start({ workflows: [newWorkflow] });
 
-    await discoverAndSyncEcho(session);
+    await discoverAndSyncEcho(session, frameworkClient);
 
     const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
     expect(foundWorkflow).to.be.ok;
@@ -602,11 +777,11 @@ describe('Echo Trigger ', async () => {
   });
 });
 
-async function syncWorkflow(session) {
-  const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
+async function syncWorkflow(session, frameworkClient: EchoServer) {
+  const resultDiscover = await axios.get(frameworkClient.serverPath + '/echo?action=discover');
 
   await session.testAgent.post(`/v1/echo/sync`).send({
-    bridgeUrl: echoServer.serverPath + '/echo',
+    bridgeUrl: frameworkClient.serverPath + '/echo',
     workflows: resultDiscover.data.workflows,
   });
 }
@@ -634,18 +809,15 @@ async function triggerEvent(session, workflowId: string, subscriber, payload?: a
   );
 }
 
-async function discoverAndSyncEcho(session: UserSession) {
-  const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
-
+async function discoverAndSyncEcho(session: UserSession, frameworkClient: EchoServer) {
   const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
-    bridgeUrl: echoServer.serverPath + '/echo',
-    workflows: resultDiscover.data.workflows,
+    bridgeUrl: frameworkClient.serverPath,
   });
 
   return discoverResponse;
 }
 
-async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MarkMessagesAsEnum) {
+async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MessagesStatusEnum) {
   const response = await axios.post(
     `${session.serverUrl}/v1/subscribers/${subscriberId}/messages/mark-all`,
     {
