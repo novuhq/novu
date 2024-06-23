@@ -12,11 +12,11 @@ export const InputWidget = (props: WidgetProps) => {
         event.preventDefault();
         onChange(event.target.value);
       }}
-      value={value || ''}
+      value={value || value === 0 ? value : ''}
       required={required}
       label={label}
       type={inputProps.type as TextInputType}
-      error={rawErrors}
+      error={rawErrors?.length > 0 && rawErrors}
       readOnly={readonly}
       disabled={disabled}
     />
