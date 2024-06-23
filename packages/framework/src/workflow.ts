@@ -68,10 +68,6 @@ export function workflow<
         channelStepSchemas.email.result
       ),
       sms: discoverStepFactory(newWorkflow, 'sms', channelStepSchemas.sms.output, channelStepSchemas.sms.result),
-      /*
-       * Temporary workaround for inApp, which has snake_case step type
-       * TODO: decouple step types from the channel step types
-       */
       inApp: discoverStepFactory(
         newWorkflow,
         'in_app',
