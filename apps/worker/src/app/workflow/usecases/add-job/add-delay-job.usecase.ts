@@ -39,7 +39,7 @@ export class AddDelayJob {
 
     try {
       delay = this.computeJobWaitDurationService.calculateDelay({
-        stepMetadata: data.step.metadata,
+        stepMetadata: data.step.bridgeUrl ? data.digest : data.step.metadata,
         payload: data.payload,
         overrides: data.overrides,
       });

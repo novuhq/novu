@@ -26,7 +26,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   notificationId: string;
 
-  @IsDefined()
+  @IsOptional()
   _templateId: string;
 
   @IsDefined()

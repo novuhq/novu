@@ -14,6 +14,7 @@ import {
   TriggerRequestCategoryEnum,
   TriggerTenantContext,
 } from '@novu/shared';
+import { DiscoverWorkflowOutput } from '@novu/framework';
 
 import { EnvironmentWithUserCommand } from '../../commands';
 
@@ -45,6 +46,13 @@ export class TriggerEventBaseCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(TriggerRequestCategoryEnum)
   requestCategory?: TriggerRequestCategoryEnum;
+
+  @IsOptional()
+  @IsString()
+  bridgeUrl?: string;
+
+  @IsOptional()
+  bridgeWorkflow?: DiscoverWorkflowOutput;
 }
 
 export class TriggerEventMulticastCommand extends TriggerEventBaseCommand {
