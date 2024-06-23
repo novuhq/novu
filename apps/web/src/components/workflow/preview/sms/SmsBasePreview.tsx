@@ -3,7 +3,6 @@ import { colors } from '@novu/design-system';
 import { MouseEventHandler } from 'react';
 import { LocaleSelect, MobileSimulator } from '../common';
 import { SmsBubble } from './SmsBubble';
-import { ErrorPrettyRender } from '../ErrorPrettyRender';
 
 const BodyContainer = styled.div`
   display: flex;
@@ -28,7 +27,6 @@ export const SmsBasePreview = ({
   error,
   showEditOverlay = false,
   onLocaleChange,
-  previewError,
   selectedLocale,
   locales,
   onEditClick,
@@ -36,21 +34,12 @@ export const SmsBasePreview = ({
   content: string;
   loading?: boolean;
   error?: string;
-  previewError?: any;
   showEditOverlay?: boolean;
   onLocaleChange: (locale: string) => void;
   selectedLocale?: string;
   locales: any[];
   onEditClick?: MouseEventHandler<HTMLButtonElement>;
 }) => {
-  if (previewError) {
-    return (
-      <div style={{ marginTop: 20, padding: 10 }}>
-        <ErrorPrettyRender error={previewError} />
-      </div>
-    );
-  }
-
   return (
     <MobileSimulator withBackground={false}>
       <BodyContainer>

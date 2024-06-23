@@ -69,7 +69,6 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
           content={bridge ? bridgeContent : parsedPreviewState}
           onLocaleChange={onLocaleChange}
           locales={locales}
-          previewError={previewError}
           error={bridge ? '' : templateError}
           enableAvatar={enableAvatar}
           selectedLocale={selectedLocale}

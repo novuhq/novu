@@ -67,7 +67,6 @@ export const SmsPreview = ({
       loading={isPreviewContentLoading || areLocalesLoading || isBridgeLoading}
       onEditClick={navigateToStepEditor}
       error={bridge ? undefined : templateError}
-      previewError={previewError}
     />
   );
 };
