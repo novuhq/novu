@@ -60,8 +60,17 @@ export class ComputeJobWaitDurationService {
         regularDigestMeta.amount,
         regularDigestMeta.unit
       );
+    } else if (digestType === DigestTypeEnum.TIMED) {
+      const timedDigestMeta = stepMetadata as IDigestTimedMetadata;
+
+      return TimedDigestDelayService.calculate({
+        unit: timedDigestMeta.unit,
+        amount: timedDigestMeta.amount,
+        timeConfig: {
+          ...timedDigestMeta.timed,
+        },
+      });
     } else if (
-      isRegularDelay(digestType as DelayTypeEnum) &&
       (stepMetadata as IDelayRegularMetadata)?.unit &&
       (stepMetadata as IDelayRegularMetadata)?.amount
     ) {
@@ -78,16 +87,6 @@ export class ComputeJobWaitDurationService {
         regularDigestMeta.amount,
         regularDigestMeta.unit
       );
-    } else if (digestType === DigestTypeEnum.TIMED) {
-      const timedDigestMeta = stepMetadata as IDigestTimedMetadata;
-
-      return TimedDigestDelayService.calculate({
-        unit: timedDigestMeta.unit,
-        amount: timedDigestMeta.amount,
-        timeConfig: {
-          ...timedDigestMeta.timed,
-        },
-      });
     }
 
     return 0;
