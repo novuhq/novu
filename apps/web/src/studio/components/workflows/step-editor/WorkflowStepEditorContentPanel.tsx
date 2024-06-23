@@ -41,7 +41,6 @@ export const WorkflowStepEditorContentPanel: FC<IWorkflowStepEditorContentPanelP
             channel={step?.template?.type || step?.type}
             preview={preview}
             loadingPreview={error || isLoadingPreview}
-            error={error}
           />
         </VStack>
       ),
@@ -67,19 +66,17 @@ export const PreviewStep = ({
   channel,
   preview,
   loadingPreview,
-  error,
 }: {
   channel: StepTypeEnum;
   preview: any;
   loadingPreview: boolean;
-  error?: any;
 }) => {
   const { integrations = [] } = useActiveIntegrations();
   const integration = useMemo(() => {
     return integrations.find((item) => item.channel === 'email' && item.primary) || null;
   }, [integrations]);
 
-  const props = { locales: [], loading: loadingPreview, onLocaleChange: () => {}, previewError: error };
+  const props = { locales: [], loading: loadingPreview, onLocaleChange: () => {} };
 
   switch (channel) {
     case StepTypeEnum.EMAIL:
@@ -88,7 +85,6 @@ export const PreviewStep = ({
           integration={integration}
           content={preview?.outputs?.body}
           subject={preview?.outputs?.subject}
-          error={error}
           classNames={{
             browser: css({ display: 'flex', flexDirection: 'column', gap: '0', flex: '1' }),
             content: css({ display: 'flex' }),
