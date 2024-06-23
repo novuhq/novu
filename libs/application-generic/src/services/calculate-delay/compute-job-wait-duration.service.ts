@@ -31,7 +31,6 @@ export class ComputeJobWaitDurationService {
 
     const digestType = stepMetadata.type;
 
-    console.log({ digestType });
     if (digestType === DelayTypeEnum.SCHEDULED) {
       const delayPath = (stepMetadata as IDelayScheduledMetadata).delayPath;
       if (!delayPath) throw new ApiException(`Delay path not found`);
