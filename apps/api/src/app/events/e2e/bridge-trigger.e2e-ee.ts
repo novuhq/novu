@@ -14,12 +14,12 @@ import {
   ChannelTypeEnum,
   ExecutionDetailsStatusEnum,
   JobStatusEnum,
-  MarkMessagesAsEnum,
+  MessagesStatusEnum,
   StepTypeEnum,
 } from '@novu/shared';
 import { workflow } from '@novu/framework';
 
-import { echoServer } from '../../../../e2e/echo.server';
+import { EchoServer } from '../../../../e2e/echo.server';
 
 const eventTriggerPath = '/v1/events/trigger';
 
@@ -32,15 +32,18 @@ const contexts: Context[] = [
 contexts.forEach((context: Context) => {
   describe('Bridge Trigger', async () => {
     let session: UserSession;
+    let echoServer: EchoServer;
     const messageRepository = new MessageRepository();
     const workflowsRepository = new NotificationTemplateRepository();
     const jobRepository = new JobRepository();
     let subscriber: SubscriberEntity;
     let subscriberService: SubscribersService;
     const executionDetailsRepository = new ExecutionDetailsRepository();
-    const bridge = context.isStateful ? undefined : { url: echoServer.serverPath + '/echo' };
+    let bridge;
 
     beforeEach(async () => {
+      echoServer = new EchoServer();
+      bridge = context.isStateful ? undefined : { url: echoServer.serverPath + '/echo' };
       session = new UserSession();
       await session.initialize();
       subscriberService = new SubscribersService(session.organization._id, session.environment._id);
@@ -123,7 +126,7 @@ contexts.forEach((context: Context) => {
       await echoServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session);
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
 
         const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowId);
         expect(foundWorkflow).to.be.ok;
@@ -190,7 +193,7 @@ contexts.forEach((context: Context) => {
       await echoServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await syncWorkflow(session, workflowsRepository, workflowIdSkipByStatic);
+        await syncWorkflow(session, workflowsRepository, workflowIdSkipByStatic, echoServer);
       }
 
       await triggerEvent(session, workflowIdSkipByStatic, subscriber, null, bridge);
@@ -254,7 +257,7 @@ contexts.forEach((context: Context) => {
       await echoServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await syncWorkflow(session, workflowsRepository, workflowIdSkipByVariable);
+        await syncWorkflow(session, workflowsRepository, workflowIdSkipByVariable, echoServer);
       }
 
       await triggerEvent(session, workflowIdSkipByVariable, subscriber, null, bridge);
@@ -305,7 +308,7 @@ contexts.forEach((context: Context) => {
       await echoServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId);
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, {}, bridge);
@@ -358,7 +361,7 @@ contexts.forEach((context: Context) => {
         const resCustom = await step.custom(
           'custom',
           async () => {
-            await markAllSubscriberMessagesAs(session, subscriber.subscriberId, MarkMessagesAsEnum.READ);
+            await markAllSubscriberMessagesAs(session, subscriber.subscriberId, MessagesStatusEnum.READ);
 
             return { readString: 'Read', unReadString: 'Unread' };
           },
@@ -388,7 +391,7 @@ contexts.forEach((context: Context) => {
       await echoServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId);
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, {}, bridge);
@@ -466,7 +469,7 @@ contexts.forEach((context: Context) => {
       await echoServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId);
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, { name: 'John' }, bridge);
@@ -548,7 +551,7 @@ contexts.forEach((context: Context) => {
       await echoServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId);
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, null, bridge);
@@ -603,7 +606,7 @@ contexts.forEach((context: Context) => {
       await echoServer.start({ workflows: [newWorkflow] });
 
       if (context.isStateful) {
-        await discoverAndSyncEcho(session, workflowsRepository, workflowId);
+        await discoverAndSyncEcho(session, workflowsRepository, workflowId, echoServer);
       }
 
       await triggerEvent(session, workflowId, subscriber, {}, bridge);
@@ -627,13 +630,11 @@ contexts.forEach((context: Context) => {
 async function syncWorkflow(
   session: UserSession,
   workflowsRepository: NotificationTemplateRepository,
-  workflowIdentifier: string
+  workflowIdentifier: string,
+  echoServer: EchoServer
 ) {
-  const resultDiscover = await axios.get(echoServer.serverPath + '/echo?action=discover');
-
   await session.testAgent.post(`/v1/echo/sync`).send({
     bridgeUrl: echoServer.serverPath + '/echo',
-    workflows: resultDiscover.data.workflows,
   });
 
   const foundWorkflow = await workflowsRepository.findByTriggerIdentifier(session.environment._id, workflowIdentifier);
@@ -669,10 +670,11 @@ async function triggerEvent(session, workflowId: string, subscriber, payload?: a
 async function discoverAndSyncEcho(
   session: UserSession,
   workflowsRepository?: NotificationTemplateRepository,
-  workflowIdentifier?: string
+  workflowIdentifier?: string,
+  echoServer?: EchoServer
 ) {
   const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
-    bridgeUrl: echoServer.serverPath + '/echo',
+    bridgeUrl: echoServer?.serverPath + '/echo',
   });
 
   if (!workflowsRepository || !workflowIdentifier) {
@@ -689,7 +691,7 @@ async function discoverAndSyncEcho(
   return discoverResponse;
 }
 
-async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MarkMessagesAsEnum) {
+async function markAllSubscriberMessagesAs(session: UserSession, subscriberId: string, markAs: MessagesStatusEnum) {
   const response = await axios.post(
     `${session.serverUrl}/v1/subscribers/${subscriberId}/messages/mark-all`,
     {
