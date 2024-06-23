@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { SegmentService } from '../../utils/segment';
 
 type Props = {

@@ -6,7 +6,6 @@ import { HStack, VStack } from '@novu/novui/jsx';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import * as mixpanel from 'mixpanel-browser';
 import { getActivityList } from '../../api/activity';
 import { ExecutionDetailsAccordion } from '../../components/execution-detail/ExecutionDetailsAccordion';
 import { useSegment } from '../../components/providers/SegmentProvider';
