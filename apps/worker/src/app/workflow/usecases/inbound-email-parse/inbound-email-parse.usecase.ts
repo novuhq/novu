@@ -10,6 +10,7 @@ import {
 } from '@novu/dal';
 import axios from 'axios';
 import { CompileTemplate, CompileTemplateCommand, createHash } from '@novu/application-generic';
+import { StepTypeEnum } from '@novu/shared';
 
 const LOG_CONTEXT = 'InboundEmailParse';
 
@@ -24,7 +25,7 @@ export class InboundEmailParse {
   async execute(command: InboundEmailParseCommand) {
     const { domain, transactionId, environmentId } = this.splitTo(command.to[0].address);
 
-    Logger.debug({ domain, transactionId, environmentId }, `Received new email to parse`, LOG_CONTEXT);
+    Logger.log({ domain, transactionId, environmentId }, `Received new email to parse`, LOG_CONTEXT);
 
     const { template, notification, subscriber, environment, job, message } = await this.getEntities(
       transactionId,
@@ -92,7 +93,7 @@ export class InboundEmailParse {
   }
 
   private async getEntities(transactionId: string, environmentId: string) {
-    const partial: Partial<JobEntity> = { transactionId, _environmentId: environmentId };
+    const partial: Partial<JobEntity> = { transactionId, _environmentId: environmentId, type: StepTypeEnum.EMAIL };
 
     const { template, notification, subscriber, environment, ...job } = await this.jobRepository.findOnePopulate({
       query: partial as JobEntity,
