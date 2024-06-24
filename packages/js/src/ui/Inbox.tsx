@@ -37,7 +37,7 @@ const InternalInbox: Component<{
 
   return (
     <div class={style('novu', 'root')}>
-      <div class="nt-bg-primary-500 nt-p-3 nt-m-4">
+      <div class="nt-bg-primary-500 dark:nt-bg-black nt-p-3 nt-m-4">
         <div class="nt-text-2xl nt-font-bold">Inbox</div>
         <button class={style('nt-bg-red-500', 'button')}>test</button>
         <For each={props.feeds}>
