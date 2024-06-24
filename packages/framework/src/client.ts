@@ -487,7 +487,7 @@ export class Client {
   private previewProvider(payload: IEvent, step: DiscoverStepOutput, provider: DiscoverProviderOutput): unknown {
     // eslint-disable-next-line no-console
     console.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
-    const mockOutput = this.mock(provider.outputs.unknownSchema);
+    const mockOutput = this.mock(provider.outputs.schema);
 
     return mockOutput;
   }
@@ -668,8 +668,7 @@ export class Client {
           providers: await this.executeProviders(payload, step),
         };
       } else {
-        // TODO: add capability to mock parts of the step results during preview
-        const mockResult = this.mock(step.results.unknownSchema);
+        const mockResult = this.mock(step.results.schema);
 
         spinner.stopAndPersist({
           symbol: EMOJI.MOCK,
