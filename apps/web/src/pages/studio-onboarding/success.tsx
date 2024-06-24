@@ -13,6 +13,7 @@ import { When } from '../../components/utils/When';
 import { ROUTES } from '../../constants/routes';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
+import { Wrapper } from './components/Wrapper';
 
 export const StudioOnboardingSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -68,13 +69,7 @@ export const StudioOnboardingSuccess = () => {
   }, []);
 
   return (
-    <div
-      className={css({
-        width: '100dvw',
-        height: '100dvh',
-        colorPalette: 'mode.cloud',
-      })}
-    >
+    <Wrapper>
       <Header activeStepIndex={3} />
       <VStack alignContent="center">
         <div
@@ -150,6 +145,6 @@ export const StudioOnboardingSuccess = () => {
         buttonText="Explore workflows"
         showLearnMore={false}
       />
-    </div>
+    </Wrapper>
   );
 };

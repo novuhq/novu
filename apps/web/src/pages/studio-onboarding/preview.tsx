@@ -17,6 +17,7 @@ import { Flex, VStack } from '@novu/novui/jsx';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { getTunnelUrl } from '../../api/bridge/utils';
 import { bridgeApi } from '../../api/bridge/bridge.api';
+import { Wrapper } from './components/Wrapper';
 
 export const StudioOnboardingPreview = () => {
   const { currentUser } = useAuth();
@@ -79,14 +80,7 @@ export const StudioOnboardingPreview = () => {
   };
 
   return (
-    <div
-      className={css({
-        width: '100dvw',
-        height: '100dvh',
-        overflow: 'auto',
-        colorPalette: 'mode.cloud',
-      })}
-    >
+    <Wrapper className={css({ overflow: 'auto' })}>
       <Header activeStepIndex={2} />
       <Flex
         justifyContent="center"
@@ -296,6 +290,6 @@ export const StudioOnboardingPreview = () => {
         disabled={isLoading || isLoadingList || !template}
         tooltip={`We'll send you a notification to ${currentUser?.email}`}
       />
-    </div>
+    </Wrapper>
   );
 };
