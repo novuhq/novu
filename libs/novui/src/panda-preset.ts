@@ -31,6 +31,7 @@ import {
   TABS_RECIPE,
   SELECT_RECIPE,
   CHECKBOX_RECIPE,
+  MODAL_RECIPE,
 } from './recipes';
 
 /**
@@ -98,6 +99,7 @@ export const novuPandaPreset = definePreset({
         input: INPUT_RECIPE,
         select: SELECT_RECIPE,
         checkbox: CHECKBOX_RECIPE,
+        modal: MODAL_RECIPE,
       },
     },
   },
