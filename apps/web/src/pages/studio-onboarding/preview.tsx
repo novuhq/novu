@@ -38,23 +38,17 @@ export const StudioOnboardingPreview = () => {
     return bridgeResponse.workflows[0];
   }, [bridgeResponse]);
 
-  const { mutateAsync, isLoading: previewLoading } = useMutation(
-    (data) => api.post('/v1/echo/preview/' + template?.workflowId + '/' + template?.steps[0]?.stepId, data),
+  const { data: preview, isLoading: previewLoading } = useQuery(
+    ['workflow-preview', template?.workflowId, template?.steps[0]?.stepId],
+    async () => {
+      return bridgeApi.getStepPreview(template?.workflowId, template?.steps[0]?.stepId, {}, {});
+    },
     {
-      onSuccess(data) {
-        setContent(data.outputs.body);
-        setSubject(data.outputs.subject);
-      },
+      enabled: !!(template && template?.workflowId && template?.steps[0]?.stepId),
+      refetchOnWindowFocus: 'always',
+      refetchInterval: 1000,
     }
   );
-
-  useEffect(() => {
-    if (!template) {
-      return;
-    }
-
-    mutateAsync();
-  }, [template, mutateAsync]);
 
   useEffect(() => {
     segment.track('Create workflow step started - [Onboarding - Signup]');
@@ -129,8 +123,8 @@ export const StudioOnboardingPreview = () => {
                   value: 'Preview',
                   content: (
                     <PreviewWeb
-                      content={content}
-                      subject={subject}
+                      content={preview?.outputs?.body}
+                      subject={preview?.outputs?.subject}
                       onLocaleChange={() => {}}
                       locales={[]}
                       bridge={true}

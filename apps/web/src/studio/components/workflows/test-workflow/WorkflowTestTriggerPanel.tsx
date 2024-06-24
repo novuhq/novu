@@ -17,10 +17,10 @@ import { Novu } from “@novu/node”;
 const novu = new Novu(“<APIkey•••••••••••>”);
 
 novu.trigger(“digest-workflow-example”, {
-to: {
-“subscriberId”:“63eba45f8c05635c0ab0hjdkhfkHFKdjhfsdjkhf
-“email”:“nikolay@novu.co”
-}
+  to: {
+    “subscriberId”:“63eba45f8c05635c0ab0hjdkhfkHFKdjhfsdjkhf
+    “email”:“nikolay@novu.co”
+  }
 });
 `}
   </Prism>
