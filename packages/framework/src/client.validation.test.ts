@@ -2,7 +2,7 @@ import { expect, it, describe, beforeEach } from 'vitest';
 import { Client } from './client';
 import { z } from 'zod';
 import { workflow } from './workflow';
-import { ExecutionEventDataInvalidError, ExecutionStateInputInvalidError } from './errors';
+import { ExecutionStateInputInvalidError } from './errors';
 
 describe('validation', () => {
   let client: Client;

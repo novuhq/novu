@@ -9,7 +9,12 @@ export class JsonSchemaValidator implements Validator<JSONSchema> {
   private readonly compiledSchemas: Map<JSONSchema, AjvValidateFunction>;
 
   constructor() {
-    this.ajv = new Ajv({ useDefaults: true });
+    this.ajv = new Ajv({
+      // https://ajv.js.org/options.html#usedefaults
+      useDefaults: true,
+      // https://ajv.js.org/options.html#removeadditional
+      removeAdditional: 'all',
+    });
     addFormats(this.ajv);
     this.compiledSchemas = new Map();
   }
