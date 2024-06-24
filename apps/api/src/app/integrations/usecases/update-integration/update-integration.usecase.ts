@@ -128,8 +128,8 @@ export class UpdateIntegration {
 
     const isInvalidationDisabled = await this.getFeatureFlag.execute(
       GetFeatureFlagCommand.create({
-        userId: command.userId,
-        environmentId: command.environmentId as string,
+        userId: 'system',
+        environmentId: 'system',
         organizationId: command.organizationId,
         key: FeatureFlagsKeysEnum.IS_INTEGRATION_INVALIDATION_DISABLED,
       })
