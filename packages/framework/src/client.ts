@@ -383,14 +383,18 @@ export class Client {
           input: {},
           subscriber: event.subscriber,
           step: {
-            // @ts-ignore
+            // eslint-disable-next-line multiline-comment-style
+            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
             email: this.executeStepFactory(event, setResult),
             sms: this.executeStepFactory(event, setResult),
             inApp: this.executeStepFactory(event, setResult),
             digest: this.executeStepFactory(event, setResult),
             delay: this.executeStepFactory(event, setResult),
             push: this.executeStepFactory(event, setResult),
-            // @ts-ignore
+            // eslint-disable-next-line multiline-comment-style
+            // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+            // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
             chat: this.executeStepFactory(event, setResult),
             custom: this.executeStepFactory(event, setResult),
           },
