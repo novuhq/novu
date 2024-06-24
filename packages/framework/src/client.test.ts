@@ -11,6 +11,7 @@ import { workflow } from './workflow';
 import { IEvent, Step } from './types';
 import { delayOutputSchema } from './schemas';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
+import { FromSchema } from './types/schema.types';
 
 describe('Novu Client', () => {
   let client: Client;
