@@ -5,8 +5,8 @@ import * as get from 'lodash.get';
 
 import { INotificationTrigger, INotificationTriggerVariable, TemplateVariableTypeEnum } from '@novu/shared';
 
-import { API_ROOT } from '../../../config';
 import { colors, Tabs } from '@novu/design-system';
+import { createCurlSnippet, createNodeSnippet } from '../../../utils/codeSnippets';
 
 const NODE_JS = 'Node.js';
 const CURL = 'Curl';
@@ -49,25 +49,10 @@ export const getNodeTriggerSnippet = (
   to: Record<string, unknown>,
   payload: Record<string, unknown>,
   overrides?: Record<string, unknown>,
-  snippet?: Record<string, unknown>
+  snippet?: Record<string, unknown>,
+  apiKey = '<API_KEY>'
 ) => {
-  const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
-
-const novu = new Novu('<API_KEY>');
-
-novu.trigger('${identifier}', ${JSON.stringify(
-    {
-      to,
-      payload,
-      overrides,
-      ...snippet,
-    },
-    null,
-    2
-  )
-    .replace(/"([^"]+)":/g, '$1:')
-    .replace(/"/g, "'")});
-`;
+  const triggerCodeSnippet = createNodeSnippet(identifier, to, payload, overrides, snippet, apiKey);
 
   return (
     <Prism mt={5} styles={prismStyles} data-test-id="trigger-code-snippet" language="javascript">
@@ -81,23 +66,10 @@ export const getCurlTriggerSnippet = (
   to: Record<string, any>,
   payload: Record<string, any>,
   overrides?: Record<string, any>,
-  snippet?: Record<string, unknown>
+  snippet?: Record<string, unknown>,
+  apiKey = '<REPLACE_WITH_API_KEY>'
 ) => {
-  const curlSnippet = `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
---header 'Authorization: ApiKey <REPLACE_WITH_API_KEY>' \\
---header 'Content-Type: application/json' \\
---data-raw '${JSON.stringify(
-    {
-      name: identifier,
-      to,
-      payload,
-      overrides,
-      ...snippet,
-    },
-    null,
-    2
-  )}'
-  `;
+  const curlSnippet = createCurlSnippet(identifier, to, payload, overrides, snippet, apiKey);
 
   return (
     <Prism mt={5} styles={prismStyles} language="bash" key="2" data-test-id="trigger-curl-snippet">

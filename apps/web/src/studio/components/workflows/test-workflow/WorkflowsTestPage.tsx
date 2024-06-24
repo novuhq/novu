@@ -19,6 +19,7 @@ import { getTunnelUrl } from '../../../../api/bridge/utils';
 import { showNotification } from '@mantine/notifications';
 import { ROUTES } from '../../../../constants/routes';
 import { useTemplateFetcher } from '../../../../api/hooks/index';
+import { getApiKeys } from '../../../../api/environment';
 
 export const WorkflowsTestPage = () => {
   const { currentUser, isLoading: isAuthLoading } = useAuth();
@@ -30,6 +31,9 @@ export const WorkflowsTestPage = () => {
   });
   const { pathname } = useLocation();
   const isLocal = useMemo(() => pathname.startsWith(ROUTES.STUDIO), [pathname]);
+
+  const { data: apiKeys = [] } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
+  const key = useMemo(() => apiKeys[0]?.key, [apiKeys]);
 
   const { template, isLoading: isTemplateLoading } = useTemplateFetcher({
     templateId: isLocal ? undefined : templateId,
@@ -78,11 +82,15 @@ export const WorkflowsTestPage = () => {
   const { mutateAsync: triggerTestEvent, isLoading: isTestLoading } = useMutation(testTrigger);
   const [transactionId, setTransactionId] = useState<string>('');
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
+  const name = useMemo(
+    () => (isLocal ? workflow.workflowId : template?.triggers[0].identifier),
+    [isLocal, template?.triggers, workflow?.workflowId]
+  );
 
   const handleTestClick = async () => {
     try {
       const response = await triggerTestEvent({
-        name: isLocal ? workflow.workflowId : template?.triggers[0].identifier,
+        name,
         to,
         payload: {
           ...payload,
@@ -134,7 +142,7 @@ export const WorkflowsTestPage = () => {
       }
     >
       <WorkflowsPanelLayout>
-        <WorkflowTestTriggerPanel />
+        <WorkflowTestTriggerPanel identifier={name} to={to} payload={payload} apiKey={key} />
         <When truthy={!isAuthLoading && !isLoading}>
           <WorkflowTestInputsPanel
             onChange={onChange}
