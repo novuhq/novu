@@ -29,7 +29,7 @@ export const serve = (options: ServeHandlerOptions): any => {
     frameworkName,
     ...options,
     handler: (
-      requestMethod: 'GET' | 'POST' | 'PUT' | undefined,
+      requestMethod: 'GET' | 'POST' | 'PUT' | 'OPTIONS' | undefined,
       incomingRequest: NextRequest,
       response: NextApiResponse
     ) => {

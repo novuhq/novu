@@ -1,7 +1,6 @@
-import { expect, it, describe, beforeEach, afterEach, vi } from 'vitest';
+import { expect, it, describe, beforeEach } from 'vitest';
 
 import { Client } from './client';
-import { DEFAULT_NOVU_API_BASE_URL, HttpMethodEnum, NovuApiEndpointsEnum } from './constants';
 import {
   ExecutionEventInputInvalidError,
   ExecutionStateCorruptError,
@@ -9,10 +8,10 @@ import {
   WorkflowNotFoundError,
 } from './errors';
 import { workflow } from './workflow';
-import { IEvent } from './types';
+import { IEvent, Step } from './types';
 import { delayOutputSchema } from './schemas';
-import { FromSchema } from 'json-schema-to-ts';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
+import { FromSchema } from './types/schema.types';
 
 describe('Novu Client', () => {
   let client: Client;
@@ -489,7 +488,7 @@ describe('Novu Client', () => {
               name: { type: 'string' },
             },
             required: ['name'],
-          },
+          } as const,
         }
       );
 
@@ -665,7 +664,7 @@ describe('Novu Client', () => {
       subject: 'Subject',
     });
 
-    const workflowExecuteFunc = async ({ step }) => {
+    const workflowExecuteFunc = async ({ step }: { step: Step }) => {
       await step.email('send-email', stepExecuteFunc);
     };
 
