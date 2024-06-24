@@ -10,7 +10,6 @@ import {
 import { workflow } from './workflow';
 import { IEvent, Step } from './types';
 import { delayOutputSchema } from './schemas';
-import { FromSchema } from 'json-schema-to-ts';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
 
 describe('Novu Client', () => {

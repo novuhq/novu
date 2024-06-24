@@ -1,6 +1,5 @@
 import Ajv, { Schema } from 'ajv';
 import addFormats from 'ajv-formats';
-import { FromSchema } from 'json-schema-to-ts';
 import { ChannelStepEnum } from './constants';
 import { StepAlreadyExistsError } from './errors';
 import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
@@ -13,6 +12,7 @@ import {
   StepType,
   WorkflowOptions,
 } from './types';
+import { FromSchema } from './types/schema.types';
 import { EMOJI, log } from './utils';
 import { transformSchema } from './validators';
 
