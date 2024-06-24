@@ -3,6 +3,7 @@ import { defineConfig, Options } from 'tsup';
 import glob from 'tiny-glob';
 import * as preset from 'tsup-preset-solid';
 import { name, version } from './package.json';
+import cssModulesPlugin from 'esbuild-css-modules-plugin';
 
 const isProd = process.env?.NODE_ENV === 'production';
 
@@ -25,6 +26,12 @@ const baseModuleConfig: Options = {
       js: format === 'cjs' ? '.cjs' : '.mjs',
     };
   },
+  esbuildPlugins: [
+    cssModulesPlugin({
+      force: true,
+      inject: true,
+    }),
+  ],
 };
 
 const uiPresetOptions: preset.PresetOptions = {
@@ -39,6 +46,15 @@ const uiPresetOptions: preset.PresetOptions = {
   drop_console: true,
   // Set to `true` to generate a CommonJS build alongside ESM
   cjs: true,
+  /*
+   * this results in type error
+   * esbuild_plugins: [
+   *   cssModulesPlugin({
+   *     force: true,
+   *     inject: true,
+   *   }),
+   * ],
+   */
 };
 
 export default defineConfig((config: Options) => {
