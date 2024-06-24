@@ -14,7 +14,7 @@ const segmentEventAction = {
 
 const handleEchoClick = (event: React.MouseEvent<HTMLButtonElement | HTMLDivElement>) => {
   event.preventDefault();
-  window.open('https://docs.novu.co/echo/introduction', '_blank');
+  window.open('https://docs.novu.co/framework/introduction', '_blank');
 };
 
 const NewBadge = (props) => {
