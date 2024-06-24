@@ -1,5 +1,3 @@
-import Ajv, { Schema } from 'ajv';
-import addFormats from 'ajv-formats';
 import { ChannelStepEnum } from './constants';
 import { StepAlreadyExistsError } from './errors';
 import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
@@ -13,7 +11,7 @@ import {
   StepType,
   WorkflowOptions,
 } from './types';
-import { FromSchema } from './types/schema.types';
+import { FromSchema, Schema } from './types/schema.types';
 import { EMOJI, log } from './utils';
 import { transformSchema } from './validators';
 
@@ -31,8 +29,6 @@ export function workflow<
   workflowOptions?: WorkflowOptions<T_PayloadSchema, T_InputSchema>
 ): DiscoverWorkflowOutput {
   const options = workflowOptions ? workflowOptions : {};
-  const ajv = new Ajv({ useDefaults: true });
-  addFormats(ajv);
 
   const newWorkflow: DiscoverWorkflowOutput = {
     workflowId,

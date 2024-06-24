@@ -53,8 +53,6 @@ export class Client {
 
   private templateEngine = new Liquid();
 
-  private readonly apiUrl: string;
-
   public apiKey?: string;
 
   public version: string = VERSION;
@@ -66,7 +64,6 @@ export class Client {
   constructor(options?: ClientOptions) {
     const builtOpts = this.buildOptions(options);
     this.apiKey = builtOpts.apiKey;
-    this.apiUrl = builtOpts.apiUrl;
     this.strictAuthentication = builtOpts.strictAuthentication;
   }
 
