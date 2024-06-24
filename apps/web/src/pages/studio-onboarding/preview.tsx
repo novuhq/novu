@@ -84,6 +84,7 @@ export const StudioOnboardingPreview = () => {
         width: '100dvw',
         height: '100dvh',
         overflow: 'auto',
+        colorPalette: 'mode.cloud',
       })}
     >
       <Header activeStepIndex={2} />

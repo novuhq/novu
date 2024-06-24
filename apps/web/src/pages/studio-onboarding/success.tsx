@@ -72,6 +72,7 @@ export const StudioOnboardingSuccess = () => {
       className={css({
         width: '100dvw',
         height: '100dvh',
+        colorPalette: 'mode.cloud',
       })}
     >
       <Header activeStepIndex={3} />
