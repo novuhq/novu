@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { JSONSchemaFaker } from 'json-schema-faker';
 import ora from 'ora';
 
