@@ -1,7 +1,6 @@
-import { JSONSchema } from 'json-schema-to-ts';
 import { ValidateFunction as AjvValidateFunction } from 'ajv';
 import { ParseReturnType } from 'zod';
-import { Schema } from './schema.types';
+import { Schema, JsonSchema } from './schema.types';
 
 export type ValidateFunction<T = unknown> = AjvValidateFunction<T> | ((inputs: T) => ParseReturnType<T>);
 
@@ -24,5 +23,5 @@ export type ValidateResult<T> =
 export interface Validator<T_Schema extends Schema> {
   validate: <T_Data>(data: T_Data, schema: T_Schema) => Promise<ValidateResult<T_Data>>;
   isSchema: (schema: Schema) => schema is T_Schema;
-  transformToJsonSchema: (schema: T_Schema) => JSONSchema;
+  transformToJsonSchema: (schema: T_Schema) => JsonSchema;
 }

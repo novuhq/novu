@@ -1,5 +1,4 @@
-import { JSONSchema } from 'json-schema-to-ts';
-import { Schema } from '../types/schema.types';
+import { JsonSchema, Schema } from '../types/schema.types';
 import { ValidateResult } from '../types/validator.types';
 import { JsonSchemaValidator } from './json-schema.validator';
 import { ZodValidator } from './zod.validator';
@@ -16,7 +15,7 @@ export const validateData = async <T>(schema: Schema, data: T): Promise<Validate
   throw new Error('Invalid schema');
 };
 
-export const transformSchema = (schema: Schema): JSONSchema => {
+export const transformSchema = (schema: Schema): JsonSchema => {
   for (const validator of validators) {
     if (validator.isSchema(schema)) {
       return validator.transformToJsonSchema(schema as any);

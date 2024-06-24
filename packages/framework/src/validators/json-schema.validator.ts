@@ -1,12 +1,11 @@
-import { JSONSchema } from 'json-schema-to-ts';
 import Ajv, { ErrorObject, ValidateFunction as AjvValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 import { ValidateResult, Validator } from '../types/validator.types';
-import { Schema } from '../types/schema.types';
+import { JsonSchema, Schema } from '../types/schema.types';
 
-export class JsonSchemaValidator implements Validator<JSONSchema> {
+export class JsonSchemaValidator implements Validator<JsonSchema> {
   private readonly ajv: Ajv;
-  private readonly compiledSchemas: Map<JSONSchema, AjvValidateFunction>;
+  private readonly compiledSchemas: Map<JsonSchema, AjvValidateFunction>;
 
   constructor() {
     this.ajv = new Ajv({
@@ -19,17 +18,17 @@ export class JsonSchemaValidator implements Validator<JSONSchema> {
     this.compiledSchemas = new Map();
   }
 
-  isSchema(schema: Schema): schema is JSONSchema {
+  isSchema(schema: Schema): schema is JsonSchema {
     if (typeof schema === 'boolean') return false;
 
     return (
-      (schema as Exclude<JSONSchema, boolean>).type === 'object' ||
-      !!(schema as Exclude<JSONSchema, boolean>).anyOf ||
-      !!(schema as Exclude<JSONSchema, boolean>).oneOf
+      (schema as Exclude<JsonSchema, boolean>).type === 'object' ||
+      !!(schema as Exclude<JsonSchema, boolean>).anyOf ||
+      !!(schema as Exclude<JsonSchema, boolean>).oneOf
     );
   }
 
-  async validate<T>(data: T, schema: JSONSchema): Promise<ValidateResult<T>> {
+  async validate<T>(data: T, schema: JsonSchema): Promise<ValidateResult<T>> {
     let validateFn = this.compiledSchemas.get(schema);
 
     if (!validateFn) {
@@ -51,7 +50,7 @@ export class JsonSchemaValidator implements Validator<JSONSchema> {
     }
   }
 
-  transformToJsonSchema(schema: JSONSchema): JSONSchema {
+  transformToJsonSchema(schema: JsonSchema): JsonSchema {
     return schema;
   }
 }

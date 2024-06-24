@@ -10,8 +10,10 @@ export default defineConfig({
   treeshake: true,
   dts: true,
   format: ['cjs'],
-  minify: true,
-  minifyWhitespace: true,
-  minifyIdentifiers: true,
-  minifySyntax: true,
+  minify: false,
+  /*
+   * minifyWhitespace: true,
+   * minifyIdentifiers: true,
+   * minifySyntax: true,
+   */
 });

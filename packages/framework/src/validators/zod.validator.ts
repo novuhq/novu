@@ -1,7 +1,6 @@
-import { JSONSchema } from 'json-schema-to-ts';
 import { ZodSchema } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
-import { Schema } from '../types/schema.types';
+import { JsonSchema, Schema } from '../types/schema.types';
 import { ValidateResult, Validator } from '../types/validator.types';
 
 export class ZodValidator implements Validator<ZodSchema> {
@@ -24,7 +23,7 @@ export class ZodValidator implements Validator<ZodSchema> {
     }
   }
 
-  transformToJsonSchema(schema: ZodSchema): JSONSchema {
+  transformToJsonSchema(schema: ZodSchema): JsonSchema {
     // @ts-expect-error - JSONSchema7 is incompatible with Zod's JSONSchema typings
     return zodToJsonSchema(schema);
   }
