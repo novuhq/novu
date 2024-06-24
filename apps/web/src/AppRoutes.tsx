@@ -138,6 +138,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
         <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
         <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
+        <Route path={ROUTES.WORKFLOWS_V2_TEST} element={<WorkflowsTestPage />} />
         <Route path={ROUTES.STUDIO}>
           <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
           <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />

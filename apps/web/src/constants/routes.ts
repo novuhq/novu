@@ -13,6 +13,7 @@ export enum ROUTES {
   WORKFLOWS_CREATE = '/workflows/create',
   WORKFLOWS_EDIT_TEMPLATEID = '/workflows/edit/:templateId',
   WORKFLOWS_V2_STEP_EDIT = '/workflows/edit/:templateId/step/:stepId',
+  WORKFLOWS_V2_TEST = '/workflows/edit/:templateId/test',
   WORKFLOWS_VARIANT_PREVIEW = '/workflows/edit/:templateId/:channel/:stepUuid/variants/:variantUuid/preview',
   WORKFLOWS = '/workflows',
   TENANTS = '/tenants',
