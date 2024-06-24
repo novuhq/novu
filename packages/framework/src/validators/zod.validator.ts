@@ -1,5 +1,4 @@
 import { ZodSchema } from 'zod';
-import { zodToJsonSchema } from 'zod-to-json-schema';
 import { JsonSchema, Schema } from '../types/schema.types';
 import { ValidateResult, Validator } from '../types/validator.types';
 
@@ -24,7 +23,19 @@ export class ZodValidator implements Validator<ZodSchema> {
   }
 
   transformToJsonSchema(schema: ZodSchema): JsonSchema {
-    // @ts-expect-error - JSONSchema7 is incompatible with Zod's JSONSchema typings
-    return zodToJsonSchema(schema);
+    try {
+      const module = require('zod-to-json-schema');
+
+      return module.zodToJsonSchema(schema);
+    } catch (error) {
+      if ((error as Error)?.message?.includes('Cannot find module')) {
+        // eslint-disable-next-line no-console
+        console.error(
+          'Tried to use a zod schema in @novu/framework without `zod-to-json-schema` installed. ' +
+            'Please install it by running `npm install zod-to-json-schema`.'
+        );
+      }
+      throw error;
+    }
   }
 }
