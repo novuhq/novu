@@ -1,7 +1,7 @@
 import { CodeProps as ExternalCodeProps, Code as ExternalCode } from '@mantine/core';
 
-export interface CodeProps extends ExternalCodeProps {}
+export type CodeBlockProps = ExternalCodeProps;
 
-export const Code = (props: CodeProps) => {
+export const CodeBlock = (props: CodeBlockProps) => {
   return <ExternalCode {...props} />;
 };
