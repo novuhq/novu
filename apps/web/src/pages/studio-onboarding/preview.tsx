@@ -6,7 +6,7 @@ import { css } from '@novu/novui/css';
 import { useEffect, useMemo, useState } from 'react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 import { PreviewWeb } from '../../components/workflow/preview/email/PreviewWeb';
-import { useActiveIntegrations, useAuth } from '../../hooks/index';
+import { useAuth } from '../../hooks/index';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { testTrigger } from '../../api/notification-templates';
