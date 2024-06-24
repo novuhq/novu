@@ -4344,8 +4344,6 @@ import {
   MdOutlineToggleOff as IconOutlineToggleOff,
 } from 'react-icons/md';
 
-import { HiPencil as IconPencil } from 'react-icons/hi2';
-
 export {
   Icon123,
   Icon3DRotation,
@@ -4612,7 +4610,6 @@ export {
   IconPanToolAlt,
   IconPanTool,
   IconPayment,
-  IconPencil,
   IconPendingActions,
   IconPending,
   IconPercent,
