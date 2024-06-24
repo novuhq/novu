@@ -8,3 +8,5 @@ export * from './step.types';
 export * from './subscriber.types';
 export * from './util.types';
 export * from './workflow.types';
+export * from './schema.types';
+export * from './cron.types';
