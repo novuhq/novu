@@ -1,6 +1,6 @@
 export * from './button';
 export * from './checkbox';
-export * from './code';
+export * from './code-block';
 export * from './input';
 export * from './NovuiProvider';
 export * from './select';

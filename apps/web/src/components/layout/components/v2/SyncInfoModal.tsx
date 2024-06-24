@@ -1,5 +1,5 @@
 import { Modal, Title } from '@novu/design-system';
-import { Tabs, Text, Button, Code } from '@novu/novui';
+import { Tabs, Text, Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { Prism } from '@mantine/prism';
 
