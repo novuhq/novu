@@ -58,7 +58,7 @@ describe('GetNotifications', () => {
       organizationId: 'org-1',
       subscriberId: 'not-found',
       limit: 10,
-      after: 0,
+      offset: 0,
     };
 
     getSubscriberMock.execute.resolves(undefined);
@@ -77,7 +77,7 @@ describe('GetNotifications', () => {
       organizationId: 'org-1',
       subscriberId: mockSubscriber.subscriberId,
       limit: 10,
-      after: 0,
+      offset: 0,
     };
 
     getSubscriberMock.execute.resolves(mockSubscriber);
@@ -94,7 +94,7 @@ describe('GetNotifications', () => {
       organizationId: 'org-1',
       subscriberId: mockSubscriber.subscriberId,
       limit: 10,
-      after: 0,
+      offset: 0,
     };
 
     getSubscriberMock.execute.resolves(mockSubscriber);

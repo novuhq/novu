@@ -47,6 +47,7 @@ export class GetNotifications {
       },
       {
         limit: command.limit,
+        offset: command.offset,
         after: command.after,
       }
     );

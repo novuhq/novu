@@ -1,8 +1,7 @@
-import { IsArray, IsBoolean, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import { IsArray, IsBoolean, IsDefined, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 import { CursorPaginationParams } from '../../../shared/types';
-import { IsMongoIdOrNumber } from '../../../shared/validators/mongo-id-or-number';
 
 export class GetNotificationsCommand extends EnvironmentWithSubscriber implements CursorPaginationParams {
   @IsInt()
@@ -11,8 +10,13 @@ export class GetNotificationsCommand extends EnvironmentWithSubscriber implement
   readonly limit: number;
 
   @IsOptional()
-  @IsMongoIdOrNumber()
-  readonly after: string | number;
+  @IsMongoId()
+  readonly after?: string;
+
+  @IsDefined()
+  @IsInt()
+  @Min(0)
+  readonly offset: number;
 
   @IsOptional()
   @IsArray()

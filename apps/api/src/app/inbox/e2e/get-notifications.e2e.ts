@@ -54,18 +54,26 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
 
   const getNotifications = async ({
     limit = 10,
-    after = 0,
+    offset = 0,
+    after,
     tags,
     read,
     archived,
   }: {
     limit?: number;
-    after?: string | number;
+    after?: string;
+    offset?: number;
     tags?: string[];
     read?: boolean;
     archived?: boolean;
   } = {}) => {
-    let query = `limit=${limit}&after=${after}`;
+    let query = `limit=${limit}`;
+    if (after) {
+      query += `&after=${after}`;
+    }
+    if (offset) {
+      query += `&offset=${offset}`;
+    }
     if (tags) {
       query += tags.map((tag) => `&tags[]s=${tag}`).join('');
     }
@@ -104,6 +112,20 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
     return newObj;
   };
 
+  it('should validate that the offset is greater or equals to zero', async function () {
+    const { body, status } = await getNotifications({ limit: 1, offset: -1 });
+
+    expect(status).to.equal(400);
+    expect(body.message[0]).to.equal('offset must not be less than 0');
+  });
+
+  it('should validate the after to mongo id', async function () {
+    const { body, status } = await getNotifications({ limit: 1, after: 'after' });
+
+    expect(status).to.equal(400);
+    expect(body.message[0]).to.equal('The after cursor must be a valid MongoDB ObjectId');
+  });
+
   it('should include fields from message entity', async function () {
     await triggerEvent(template);
 
@@ -113,7 +135,7 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
         subscriberId: subscriber?._id ?? '',
         channel: ChannelTypeEnum.IN_APP,
       },
-      { limit: 1, after: 0 }
+      { limit: 1, offset: 0 }
     );
     const [messageEntity] = messages;
     if (!messageEntity) {
@@ -129,7 +151,7 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
     expect(body.data[0]).to.deep.equal(removeUndefinedDeep(mapToDto(messageEntity)));
   });
 
-  it('should paginate notifications', async function () {
+  it('should paginate notifications by offset', async function () {
     const limit = 2;
     await triggerEvent(template, 4);
 
@@ -143,7 +165,7 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
     );
     expect(body.hasMore).to.be.true;
 
-    const { body: nextPageBody, status: nextPageStatus } = await getNotifications({ limit, after: 2 });
+    const { body: nextPageBody, status: nextPageStatus } = await getNotifications({ limit, offset: 2 });
 
     expect(nextPageStatus).to.equal(200);
     expect(nextPageBody.data).to.be.ok;

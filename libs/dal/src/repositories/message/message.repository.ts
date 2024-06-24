@@ -119,7 +119,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       read?: boolean;
       archived?: boolean;
     },
-    options: { limit: number; after: number | string }
+    options: { limit: number; offset: number; after?: string }
   ) {
     const query: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -150,6 +150,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     return await this.cursorPagination({
       query,
       limit: options.limit,
+      offset: options.offset,
       after: options.after,
       sort: { createdAt: -1, _id: -1 },
       paginateField: 'createdAt',

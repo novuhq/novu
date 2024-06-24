@@ -44,6 +44,7 @@ export class InboxController {
         subscriberId: subscriberSession.subscriberId,
         environmentId: subscriberSession._environmentId,
         limit: query.limit,
+        offset: query.offset,
         after: query.after,
         tags: query.tags,
         read: query.read,

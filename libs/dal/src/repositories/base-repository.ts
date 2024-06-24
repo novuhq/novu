@@ -158,6 +158,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   async cursorPagination({
     query,
     limit,
+    offset,
     after,
     sort,
     paginateField,
@@ -165,19 +166,20 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
   }: {
     query?: FilterQuery<T_DBModel> & T_Enforcement;
     limit: number;
-    after: number | string;
+    offset: number;
+    after?: string;
     sort?: any;
     paginateField?: string;
     enhanceQuery?: (query: QueryWithHelpers<Array<T_DBModel>, T_DBModel>) => any;
   }): Promise<{ data: T_MappedEntity[]; hasMore: boolean }> {
-    const isAfterNumber = typeof after === 'number';
+    const isAfterDefined = typeof after !== 'undefined';
     const sortKeys = Object.keys(sort ?? {});
     const isSortDesc = sortKeys.length > 0 && sort[sortKeys[0]] === -1;
 
     let findQueryBuilder = this.MongooseModel.find({
       ...query,
     });
-    if (!isAfterNumber) {
+    if (isAfterDefined) {
       const orStatements = await this.createCursorBasedOrStatement({
         isSortDesc,
         paginateField,
@@ -192,8 +194,8 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     }
 
     findQueryBuilder.sort(sort).limit(limit + 1);
-    if (isAfterNumber) {
-      findQueryBuilder.skip(after as number);
+    if (!isAfterDefined) {
+      findQueryBuilder.skip(offset);
     }
 
     if (enhanceQuery) {
