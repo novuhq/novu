@@ -1,7 +1,7 @@
 import { JSONSchemaFaker } from 'json-schema-faker';
 import ora from 'ora';
 
-import { DEFAULT_NOVU_API_BASE_URL, HttpHeaderKeysEnum } from './constants';
+import { HttpHeaderKeysEnum } from './constants';
 import {
   ExecutionEventDataInvalidError,
   ExecutionEventInputInvalidError,
@@ -68,9 +68,8 @@ export class Client {
   }
 
   private buildOptions(providedOptions?: ClientOptions) {
-    const builtConfiguration: { apiKey?: string; apiUrl: string; strictAuthentication: boolean } = {
+    const builtConfiguration: { apiKey?: string; strictAuthentication: boolean } = {
       apiKey: undefined,
-      apiUrl: DEFAULT_NOVU_API_BASE_URL,
       strictAuthentication: true,
     };
 
@@ -78,12 +77,6 @@ export class Client {
       builtConfiguration.apiKey = providedOptions.apiKey;
     } else if (process.env.NOVU_API_KEY !== undefined) {
       builtConfiguration.apiKey = process.env.NOVU_API_KEY;
-    }
-
-    if (providedOptions?.apiUrl !== undefined) {
-      builtConfiguration.apiUrl = providedOptions.apiUrl;
-    } else if (process.env.NOVU_API_URL !== undefined) {
-      builtConfiguration.apiUrl = process.env.NOVU_API_URL;
     }
 
     if (providedOptions?.strictAuthentication !== undefined) {
