@@ -51,7 +51,7 @@ export function workflow<
       schema: transformSchema(options.inputSchema || emptySchema),
       unknownSchema: options.inputSchema || emptySchema,
     },
-    execute: execute as Execute<unknown, unknown>,
+    execute: execute as Execute<any, any>,
   };
 
   execute({
