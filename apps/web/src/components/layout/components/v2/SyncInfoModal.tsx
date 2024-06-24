@@ -1,6 +1,7 @@
-import { Modal, Title, colors } from '@novu/design-system';
-import { Button, Code } from '@novu/novui';
-import { Tabs, Text } from '@novu/novui';
+import { Modal, Title } from '@novu/design-system';
+import { Tabs, Text, Button, Code } from '@novu/novui';
+import { css } from '@novu/novui/css';
+import { Prism } from '@mantine/prism';
 
 import { IconOutlineCloudUpload, IconPencil, IconLink } from '@novu/novui/icons';
 import { useState } from 'react';
@@ -8,7 +9,7 @@ import { useLocation } from 'react-router-dom';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useApiKeysPage } from '../../../../pages/settings/ApiKeysPage/useApiKeysPage';
 import { getBridgeUrl } from './utils';
-// TODO: make code copy paste
+
 export function SyncInfoModal() {
   const [showSyncInfoModal, setShowSyncInfoModal] = useState(false);
 
@@ -43,22 +44,41 @@ export function SyncInfoModal() {
   const otherCICodeContent = `npx novu-labs@latest sync \\
   --echo-url ${bridgeUrl} \\
   --api-key ${apiKey}`;
+
+  const codeBlockCss = css({ padding: '16px 4px 0px 4px' });
+
+  const githubCodeBlock = (
+    <Prism className={codeBlockCss} withLineNumbers language="yaml">
+      {githubYamlContent}
+    </Prism>
+  );
+  const otherCICodeBlock = (
+    <Prism className={codeBlockCss} withLineNumbers language="bash">
+      {otherCICodeContent}
+    </Prism>
+  );
   const tabs = [
-    { value: 'github', label: 'GitHub Actions', content: <Code block>{githubYamlContent}</Code> },
-    { value: 'other', label: 'Other CI', content: <Code block>{otherCICodeContent}</Code> },
+    { value: 'github', label: 'GitHub Actions', content: githubCodeBlock },
+    { value: 'other', label: 'Other CI', content: otherCICodeBlock },
   ];
+
+  const title = () => {
+    return (
+      <>
+        <Title size={2}>Sync changes to the Environment</Title>
+        <Text variant="secondary" className={css({ marginBottom: '16px' })}>
+          Run the following command to publish changes to the desired environment:
+        </Text>
+      </>
+    );
+  };
 
   return (
     <>
       <Button size="xs" Icon={IconOutlineCloudUpload} onClick={toggleSyncInfoModalShow}>
         Sync
       </Button>
-      <Modal
-        opened={showSyncInfoModal}
-        title={<Title size={2}>Sync changes to the Environment</Title>}
-        onClose={toggleSyncInfoModalShow}
-      >
-        <Text color={colors.B15}>Run the following command to publish changes to the desired environment:</Text>
+      <Modal opened={showSyncInfoModal} title={title()} onClose={toggleSyncInfoModalShow}>
         <Tabs tabConfigs={tabs} defaultValue={'github'} />
       </Modal>
     </>
