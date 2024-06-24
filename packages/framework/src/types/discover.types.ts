@@ -1,6 +1,6 @@
 import { ActionStepEnum, ChannelStepEnum } from '../constants';
 import { JsonSchema, Schema } from './schema.types';
-import { ActionStepOptions } from './step.types';
+import { StepOptions } from './step.types';
 import { Execute, WorkflowOptions } from './workflow.types';
 import { Awaitable } from './util.types';
 
@@ -9,7 +9,7 @@ export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 export type DiscoverProviderOutput = {
   type: string;
   code: string;
-  resolve: (stepInputs: unknown) => Awaitable<unknown>;
+  resolve: (inputs: unknown) => Awaitable<unknown>;
   outputs: {
     schema: JsonSchema;
     unknownSchema: Schema;
@@ -32,9 +32,9 @@ export type DiscoverStepOutput = {
     unknownSchema: Schema;
   };
   code: string;
-  resolve: (stepInputs: unknown) => Awaitable<unknown>;
+  resolve: (inputs: any) => Awaitable<any>;
   providers: Array<DiscoverProviderOutput>;
-  options: ActionStepOptions;
+  options: StepOptions;
 };
 
 export type DiscoverWorkflowOutput = {

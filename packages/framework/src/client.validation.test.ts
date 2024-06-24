@@ -254,6 +254,17 @@ describe('validation', () => {
             }),
             {
               inputSchema: jsonSchema,
+              skip: (inputs) => true,
+            }
+          );
+          await step.digest(
+            'json-schema-validation',
+            async (inputs) => ({
+              amount: 1,
+              unit: 'seconds',
+            }),
+            {
+              inputSchema: jsonSchema,
             }
           );
         }),

@@ -5,6 +5,7 @@ import { StepAlreadyExistsError } from './errors';
 import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
 import {
   ActionStep,
+  Awaitable,
   CustomStep,
   DiscoverStepOutput,
   DiscoverWorkflowOutput,
@@ -141,7 +142,7 @@ function discoverStep(targetWorkflow: DiscoverWorkflowOutput, stepId: string, st
 function discoverProviders(
   step: DiscoverStepOutput,
   channelType: ChannelStepEnum,
-  providers: Record<string, (payload: unknown) => unknown | Promise<unknown>>
+  providers: Record<string, (payload: unknown) => Awaitable<unknown>>
 ): void {
   const channelSchemas = providerSchemas[channelType];
 
@@ -182,9 +183,6 @@ function discoverCustomStepFactory(targetWorkflow: DiscoverWorkflowOutput, type:
         schema: transformSchema(outputSchema),
         unknownSchema: outputSchema,
       },
-      // eslint-disable-next-line multiline-comment-style
-      // TODO: fix the unknown <-> generic typing mismatch
-      // @ts-expect-error - Type '(inputs: unknown) => unknown' is not assignable to '(inputs: T_Inputs) => Awaitable<T_Outputs>'.
       resolve,
       code: resolve.toString(),
       options,

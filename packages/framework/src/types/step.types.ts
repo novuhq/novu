@@ -15,12 +15,10 @@ import { Awaitable } from './util.types';
 import { actionStepSchemas } from '../schemas/steps/actions';
 
 // @TODO: remove the credentials, providers, and preferences from the ActionStepOptions (fix the client typings)
-export type ActionStepOptions = {
-  skip?: Skip<unknown>;
+export type StepOptions = {
+  skip?: Skip<any>;
   inputSchema?: Schema;
-  credentials?: (input: unknown) => Promise<Record<string, unknown>>;
-  providers?: Record<string, (payload: unknown) => unknown | Promise<unknown>>;
-  preferences?: (input: unknown) => Promise<Record<string, unknown>>;
+  providers?: Record<string, (payload: any) => Awaitable<any>>;
 };
 
 export enum JobStatusEnum {
@@ -52,10 +50,24 @@ type StepContext = {
 
 type StepOutput<T_Result> = Promise<T_Result & StepContext>;
 
-export type ActionStep<T_Outputs, T_Result> = (
+export type ActionStep<T_Outputs, T_Result> = <
+  /**
+   * The schema for the inputs of the step.
+   */
+  T_InputSchema extends Schema,
+  /**
+   * The inputs for the step.
+   */
+  T_Inputs = FromSchema<T_InputSchema>
+>(
   name: string,
-  resolve: (inputs: any) => Awaitable<T_Outputs>,
-  options?: ActionStepOptions
+  resolve: (inputs: T_Inputs) => Awaitable<T_Outputs>,
+  options?: {
+    skip?: Skip<T_Inputs>;
+    inputSchema?: T_InputSchema;
+    // TODO: Remove the providers from the action step options
+    providers?: Record<string, (payload: unknown) => Awaitable<unknown>>;
+  }
 ) => StepOutput<T_Result>;
 
 export type CustomStep = <

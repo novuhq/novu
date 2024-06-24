@@ -318,10 +318,7 @@ export class Client {
     };
   }
 
-  private async shouldSkip(
-    skip: Skip<Record<string, unknown>> | undefined,
-    inputs: Record<string, unknown>
-  ): Promise<boolean> {
+  private async shouldSkip(skip: Skip<any> | undefined, inputs: any): Promise<boolean> {
     if (!skip) {
       return false;
     }
