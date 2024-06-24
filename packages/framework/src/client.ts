@@ -154,19 +154,6 @@ export class Client {
     };
   }
 
-  private getHeaders(anonymous?: string): Record<string, string> {
-    const headers: Record<string, string> = {
-      [HttpHeaderKeysEnum.CONTENT_TYPE]: 'application/json',
-      [HttpHeaderKeysEnum.AUTHORIZATION]: `ApiKey ${this.apiKey}`,
-    };
-
-    if (anonymous) {
-      headers[HttpHeaderKeysEnum.ANONYMOUS] = anonymous;
-    }
-
-    return headers;
-  }
-
   /**
    * Mocks data based on the given schema.
    * The `default` value in the schema is used as the base data.
