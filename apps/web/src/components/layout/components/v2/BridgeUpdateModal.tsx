@@ -1,8 +1,8 @@
-import { colors, Modal, Title, Tooltip } from '@novu/design-system';
+import { Modal, successMessage, Title, Tooltip } from '@novu/design-system';
 import { Button, Input, Text } from '@novu/novui';
+import { css } from '@novu/novui/css';
 import { Flex, HStack } from '@novu/novui/jsx';
 import { DocsButton } from '../../../docs/DocsButton';
-import { IconRefresh } from '@novu/novui/icons';
 import { useMemo, useState } from 'react';
 import { validateBridgeUrl } from '../../../../api/bridge';
 import { IEnvironment } from '@novu/shared';
@@ -19,14 +19,13 @@ export function BridgeUpdateModal() {
   const [urlError, setUrlError] = useState('');
   const [showBridgeUpdateModal, setShowBridgeUpdateModal] = useState(false);
 
-  const { environment, isLoading: isLoadingEnvironment, refetchEnvironment } = useEnvironment();
+  const { environment, isLoading: isLoadingEnvironment } = useEnvironment();
   const location = useLocation();
   useMemo(() => {
     setInputUrl(getBridgeUrl(environment, location.pathname) ?? '');
   }, [environment, location.pathname]);
 
-  const toggleBridgeUpdateModalShow = async () => {
-    await refetchEnvironment();
+  const toggleBridgeUpdateModalShow = () => {
     setShowBridgeUpdateModal((previous) => !previous);
   };
 
@@ -65,6 +64,8 @@ export function BridgeUpdateModal() {
         throw new Error(`Tested URL isn't valid`);
       }
       await storeInProperLocation(inputUrl);
+      successMessage('You have successfuly updated your Novu endpoint configuration');
+      toggleBridgeUpdateModalShow();
     } catch {
       setUrlError('The provided URL is not valid and/or is not the Novu Endpoint URL');
     }
@@ -85,34 +86,31 @@ export function BridgeUpdateModal() {
   return (
     <>
       <Tooltip label={updateButtonLabel}>
-        <Button size="xs" Icon={IconPencil} onClick={toggleBridgeUpdateModalShow}>
+        <Button size="xs" variant="transparent" Icon={IconPencil} onClick={toggleBridgeUpdateModalShow}>
           Update novu endpoint
         </Button>
       </Tooltip>
       <Modal
         opened={showBridgeUpdateModal}
-        title={<Title size={2}>Update novu endpoint URL</Title>}
+        title={<Title size={2}>Update endpoint URL</Title>}
         onClose={toggleBridgeUpdateModalShow}
       >
-        <Text color={colors.B60}>
-          NOTE: This action will change the source code of your workflow definitions. You will no longer see workflows
-          from the current endpoint.
-        </Text>
+        {/* TODO: is there a better way to add empty space for the error message (so the modal doesn't resize) */}
         <Input
-          label={'Novu Endpoint URL'}
-          description={'Specify the full URL including the protocol and novu endpoint path'}
+          label={'Endpoint URL'}
           onChange={onBridgeUrlChange}
           value={inputUrl}
           disabled={isLoading}
           error={urlError}
+          className={css({ marginBottom: '16px' })}
         />
         <HStack justify={'space-between'}>
           <Flex align="center">
             {/* TODO: how do I set the path of the docs? */}
             <DocsButton />
-            <Text>Learn more about Novu endpoint URL</Text>
+            <Text variant="secondary">Learn more in the docs</Text>
           </Flex>
-          <Button variant={'outline'} Icon={IconRefresh} loading={isLoading} onClick={onUpdateClick}>
+          <Button size={'md'} loading={isLoading} onClick={onUpdateClick}>
             Update
           </Button>
         </HStack>
