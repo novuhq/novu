@@ -37,6 +37,8 @@ export class NotificationEntity {
   createdAt?: string;
   updatedAt?: string;
   expireAt?: string;
+
+  bridge?: any;
 }
 
 export type NotificationDBModel = ChangePropsValueType<

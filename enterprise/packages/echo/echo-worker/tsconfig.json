@@ -7,7 +7,9 @@
     "target": "es6",
     "esModuleInterop": true,
     "rootDir": "src",
+    "sourceMap": true,
     "strict": true,
+    "sourceMap": true,
     "types": ["node", "mocha", "chai", "sinon"],
     "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]

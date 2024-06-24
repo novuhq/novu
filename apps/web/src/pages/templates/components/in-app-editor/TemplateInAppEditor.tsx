@@ -4,7 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { ChannelTypeEnum } from '@novu/shared';
 import { Input } from '@novu/design-system';
-import { useEnvController, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
+import { useEnvironment, useHasActiveIntegrations, useVariablesManager } from '../../../../hooks';
 import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import { LackIntegrationAlert } from '../LackIntegrationAlert';
 import { EditVariablesModal } from '../EditVariablesModal';
@@ -30,7 +30,7 @@ const getVariableContents = (template: ITemplates) => {
 
 export function TemplateInAppEditor() {
   const { template } = useTemplateEditorForm();
-  const { readonly, bridge } = useEnvController({}, template?.bridge);
+  const { readonly, bridge } = useEnvironment({}, template?.bridge);
   const { control, watch } = useFormContext<IForm>();
   const [modalOpen, setModalOpen] = useState(false);
   const stepFormPath = useStepFormPath();

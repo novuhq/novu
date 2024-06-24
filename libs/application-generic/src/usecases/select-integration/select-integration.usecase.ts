@@ -42,7 +42,7 @@ export class SelectIntegration {
     let integration: IntegrationEntity | null =
       await this.getPrimaryIntegration(command);
 
-    if (!command.identifier && command.filterData.tenant) {
+    if (!command.identifier && command.filterData.tenant && command.userId) {
       const query = this.getIntegrationQuery(command);
 
       const integrations = await this.integrationRepository.find(query);

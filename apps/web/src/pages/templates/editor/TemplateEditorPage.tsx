@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useNavigate, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useFormContext } from 'react-hook-form';
 
 import PageContainer from '../../../components/layout/components/PageContainer';
 import type { IForm } from '../components/formTypes';
 import WorkflowEditor from '../workflow/WorkflowEditor';
-import { useEnvController, usePrompt } from '../../../hooks';
+import { useEnvironment, usePrompt } from '../../../hooks';
 import { BlueprintModal } from '../components/BlueprintModal';
 import { TemplateEditorFormProvider, useTemplateEditorForm } from '../components/TemplateEditorFormProvider';
 import { ROUTES } from '../../../constants/routes';
@@ -14,12 +14,13 @@ import { TourProvider } from './TourProvider';
 import { NavigateValidatorModal } from '../components/NavigateValidatorModal';
 import { useTourStorage } from '../hooks/useTourStorage';
 import { useBasePath } from '../hooks/useBasePath';
+import { TemplateDetailsPageV2 } from '../editor_v2/TemplateDetailsPageV2';
 
 function BaseTemplateEditorPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { template, isCreating, onSubmit, onInvalid } = useTemplateEditorForm();
-  const { environment, bridge } = useEnvController({}, template?.bridge);
+  const { environment, bridge } = useEnvironment({}, template?.bridge);
   const methods = useFormContext<IForm>();
   const { handleSubmit } = methods;
   const tourStorage = useTourStorage();
@@ -93,9 +94,16 @@ function BaseTemplateEditorPage() {
 }
 
 export default function TemplateEditorPage() {
-  return (
-    <TemplateEditorFormProvider>
-      <BaseTemplateEditorPage />
-    </TemplateEditorFormProvider>
-  );
+  const [searchParams] = useSearchParams();
+  const type = searchParams.get('type');
+
+  if (!type || type !== 'ECHO') {
+    return (
+      <TemplateEditorFormProvider>
+        <BaseTemplateEditorPage />
+      </TemplateEditorFormProvider>
+    );
+  } else {
+    return <TemplateDetailsPageV2 />;
+  }
 }

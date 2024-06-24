@@ -18,7 +18,7 @@ export {
   FilterPartTypeEnum,
   StepTypeEnum,
   TriggerRecipientsTypeEnum,
-  MarkMessagesAsEnum,
+  MessagesStatusEnum,
 } from '@novu/shared';
 
 export * from './lib/novu';

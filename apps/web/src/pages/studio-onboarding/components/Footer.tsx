@@ -86,13 +86,13 @@ export const Footer = ({
                   });
                   navigate(ROUTES.WORKFLOWS);
                 }}
-                variant="transparent"
+                variant="outline"
               >
                 Skip setup
               </Button>
             </When>
             <Tooltip label={tooltip} disabled={!tooltip}>
-              <Button variant="filled" loading={loading} onClick={onClick} disabled={disabled}>
+              <Button loading={loading} onClick={onClick} disabled={disabled}>
                 {buttonText}
               </Button>
             </Tooltip>

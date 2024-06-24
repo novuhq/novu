@@ -8,6 +8,4 @@ export class AddJobCommand extends EnvironmentWithUserCommand {
 
   @IsDefined()
   job: JobEntity;
-
-  bridgeResponse?: any;
 }

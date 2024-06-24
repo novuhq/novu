@@ -1,5 +1,5 @@
 import { getInputProps, WidgetProps } from '@rjsf/utils';
-import { Input } from '../../components/input/Input';
+import { Input, TextInputType } from '../../components/input/Input';
 
 export const InputWidget = (props: WidgetProps) => {
   const { type, value, label, schema, onChange, options, required, readonly, rawErrors, disabled } = props;
@@ -8,12 +8,15 @@ export const InputWidget = (props: WidgetProps) => {
   return (
     <Input
       description={props.schema.description}
-      onChange={(event) => onChange(event.target.value)}
-      value={value}
+      onChange={(event) => {
+        event.preventDefault();
+        onChange(event.target.value);
+      }}
+      value={value || value === 0 ? value : ''}
       required={required}
       label={label}
-      type={inputProps.type}
-      error={rawErrors}
+      type={inputProps.type as TextInputType}
+      error={rawErrors?.length > 0 && rawErrors}
       readOnly={readonly}
       disabled={disabled}
     />
