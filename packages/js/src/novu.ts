@@ -1,46 +1,52 @@
-import { ApiService } from '@novu/client';
-
 import { NovuEventEmitter } from './event-emitter';
 import type { EventHandler, EventNames, Events } from './event-emitter';
 import { Feeds } from './feeds';
 import { Session } from './session';
 import { Preferences } from './preferences';
+import { ApiServiceSingleton } from './utils/api-service-singleton';
+import { Socket } from './ws';
+import { PRODUCTION_BACKEND_URL } from './utils/config';
+import { InboxServiceSingleton } from './utils/inbox-service-singleton';
 
-const PRODUCTION_BACKEND_URL = 'https://api.novu.co';
-
-interface NovuOptions {
+export type NovuOptions = {
   applicationIdentifier: string;
   subscriberId: string;
   subscriberHash?: string;
   backendUrl?: string;
-}
+  socketUrl?: string;
+};
 
 export class Novu implements Pick<NovuEventEmitter, 'on' | 'off'> {
   #emitter: NovuEventEmitter;
   #session: Session;
-  #apiService: ApiService;
+  #socket: Socket;
 
   public readonly feeds: Feeds;
   public readonly preferences: Preferences;
 
   constructor(options: NovuOptions) {
-    this.#apiService = new ApiService(options.backendUrl ?? PRODUCTION_BACKEND_URL);
-    this.#emitter = new NovuEventEmitter();
-    this.#session = new Session(this.#emitter, this.#apiService, {
+    ApiServiceSingleton.getInstance({ backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL });
+    InboxServiceSingleton.getInstance({ backendUrl: options.backendUrl ?? PRODUCTION_BACKEND_URL });
+    this.#emitter = NovuEventEmitter.getInstance({ recreate: true });
+    this.#session = new Session({
       applicationIdentifier: options.applicationIdentifier,
       subscriberId: options.subscriberId,
       subscriberHash: options.subscriberHash,
     });
     this.#session.initialize();
-    this.feeds = new Feeds(this.#emitter, this.#apiService);
-    this.preferences = new Preferences(this.#emitter, this.#apiService);
+    this.feeds = new Feeds();
+    this.preferences = new Preferences();
+    this.#socket = new Socket({ socketUrl: options.socketUrl });
   }
 
   on<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
+    if (this.#socket.isSocketEvent(eventName)) {
+      this.#socket.initialize();
+    }
     this.#emitter.on(eventName, listener);
   }
 
   off<Key extends EventNames>(eventName: Key, listener: EventHandler<Events[Key]>): void {
-    this.#emitter.on(eventName, listener);
+    this.#emitter.off(eventName, listener);
   }
 }

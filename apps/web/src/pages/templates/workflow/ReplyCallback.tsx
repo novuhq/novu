@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { Grid } from '@mantine/core';
 import { Input, Switch, Text, CircleArrowRight } from '@novu/design-system';
 
-import { useEnvController } from '../../../hooks';
+import { useEnvironment } from '../../../hooks';
 import { When } from '../../../components/utils/When';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 
 export const ReplyCallback = () => {
   const path = useStepFormPath();
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
   const { watch } = useFormContext();
   const replyCallbackActive = watch(`${path}.replyCallback.active`);
 
@@ -36,7 +36,7 @@ export const ReplyCallback = () => {
 export const ReplyCallbackUrlInput = () => {
   const { control } = useFormContext();
   const path = useStepFormPath();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const { watch } = useFormContext();
   const replyCallbackActive = watch(`${path}.replyCallback.active`);
 
@@ -69,7 +69,7 @@ export const ReplyCallbackUrlInput = () => {
 
 export const ReplyCallbackSwitch = () => {
   const { control } = useFormContext();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const path = useStepFormPath();
 
   return (

@@ -5,6 +5,7 @@ import {
   TriggerRequestCategoryEnum,
   TriggerTenantContext,
 } from '@novu/shared';
+import { DiscoverWorkflowOutput } from '@novu/framework';
 import {
   IBulkJobParams,
   IJobParams,
@@ -32,6 +33,8 @@ export type IWorkflowDataDto = {
   actor?: TriggerRecipientSubscriber | null;
   tenant?: TriggerTenantContext | null;
   requestCategory?: TriggerRequestCategoryEnum;
+  bridgeUrl?: string;
+  bridgeWorkflow?: DiscoverWorkflowOutput;
 } & Addressing;
 
 export interface IWorkflowJobDto extends IJobParams {

@@ -14,7 +14,11 @@ export function useBridgeUrlTest() {
     }
 
     try {
-      const response = await fetch(url + '?action=health-check');
+      const response = await fetch(url + '?action=health-check', {
+        headers: {
+          'Bypass-Tunnel-Reminder': 'true',
+        },
+      });
 
       return response.json();
     } catch (e) {

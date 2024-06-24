@@ -2,7 +2,6 @@ import { ROUTES } from '../../constants/routes';
 
 export const PATHS: { [key in ROUTES]?: string } = {
   [ROUTES.ACTIVITIES]: 'activity-feed/introduction',
-  [`${ROUTES.BRAND}/layouts`]: 'content-creation-design/layouts',
   [ROUTES.LAYOUT]: 'content-creation-design/layouts',
   [ROUTES.CHANGES]: 'platform/environments',
   [ROUTES.INTEGRATIONS]: 'channels-and-providers/integration-store',
@@ -10,8 +9,9 @@ export const PATHS: { [key in ROUTES]?: string } = {
   [ROUTES.WORKFLOWS]: 'workflows/notification-workflows',
   [ROUTES.TENANTS]: 'tenants/introduction',
   [ROUTES.TRANSLATIONS]: 'content-creation-design/translations',
-  [ROUTES.STUDIO_ONBOARDING]: 'echo/quickstart',
-  [ROUTES.STUDIO_ONBOARDING_PREVIEW]: 'echo/concepts/workflows',
+  [ROUTES.STUDIO_ONBOARDING]: 'framework/quickstart',
+  [ROUTES.STUDIO_ONBOARDING_PREVIEW]: 'framework/concepts/workflows',
+  [ROUTES.STUDIO_FLOWS]: 'framework/concepts/workflows',
 };
 
 export const DOCS_URL = 'https://docs.novu.co';

@@ -1,6 +1,6 @@
 import { ChangeEventHandler, useState } from 'react';
 import { ActionIcon, useMantineTheme, Group } from '@mantine/core';
-import { Link, useNavigate } from 'react-router-dom';
+import { createSearchParams, Link, useNavigate } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { format } from 'date-fns';
 import {
@@ -22,7 +22,7 @@ import {
 
 import {
   useTemplates,
-  useEnvController,
+  useEnvironment,
   useNotificationGroup,
   INotificationTemplateExtended,
   useDebouncedSearch,
@@ -163,7 +163,7 @@ const columns: IExtendedColumn<INotificationTemplateExtended>[] = [
 
 function WorkflowListPage() {
   const segment = useSegment();
-  const { readonly } = useEnvController();
+  const { readonly } = useEnvironment();
   const { loading: areNotificationGroupLoading } = useNotificationGroup();
   const {
     templates,
@@ -216,7 +216,12 @@ function WorkflowListPage() {
   };
 
   function onRowClick(row) {
-    navigate(parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: row.values._id }));
+    navigate({
+      pathname: parseUrl(ROUTES.WORKFLOWS_EDIT_TEMPLATEID, { templateId: row.values._id }),
+      search: createSearchParams({
+        type: row.original.type,
+      }).toString(),
+    });
   }
 
   const debouncedSearchChange = useDebouncedSearch(setSearchQueryParam);

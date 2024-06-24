@@ -82,6 +82,7 @@ export class EventsController {
         transactionId: body.transactionId,
         addressingType: AddressingTypeEnum.MULTICAST,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
+        bridgeUrl: body.bridgeUrl,
       })
     );
 

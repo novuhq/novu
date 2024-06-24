@@ -3,7 +3,7 @@ import { colors, When } from '@novu/design-system';
 import { useState } from 'react';
 
 import { InAppPreview } from '../../../../components/workflow/preview';
-import { useEnvController } from '../../../../hooks';
+import { useEnvironment } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
 import { InputVariablesForm } from '../InputVariablesForm';
@@ -17,7 +17,7 @@ const INPUTS = 'Inputs';
 
 export function InAppContentCard({ openVariablesModal }: { openVariablesModal: () => void }) {
   const { template } = useTemplateEditorForm();
-  const { readonly, bridge } = useEnvController({}, template?.bridge);
+  const { readonly, bridge } = useEnvironment({}, template?.bridge);
   const theme = useMantineTheme();
 
   const [activeTab, setActiveTab] = useState<string>(bridge ? PREVIEW : EDITOR);

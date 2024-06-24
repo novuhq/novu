@@ -8,7 +8,7 @@ export * from './useDataRef';
 export * from './useDebounce';
 export * from './useDebouncedSearch';
 export * from './useEffectOnce';
-export * from './useEnvController';
+export * from './useEnvironment';
 export * from './useEnvironmentChanges';
 export * from './useFeatureFlag';
 export * from './useHover';

@@ -18,6 +18,7 @@
     "@novu/ee-dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
+    "@novu/framework": "workspace:*",
     "@novu/testing": "workspace:*",
     "@novu/ee-echo-worker": "workspace:*",
     "axios": "^1.6.2",

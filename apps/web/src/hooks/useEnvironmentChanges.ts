@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { useEnvController } from './useEnvController';
+import { useEnvironment } from './useEnvironment';
 
 import { getPromotedChanges, getUnpromotedChanges } from '../api/changes';
 import { QueryKeys } from '../api/query.keys';
 
 export function usePromotedChanges(page = 0, limit = 10) {
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
   const {
     data,
     isLoading: isLoadingHistory,
@@ -29,7 +29,7 @@ export function usePromotedChanges(page = 0, limit = 10) {
 }
 
 export function useUnPromotedChanges(page = 0, limit = 10) {
-  const { environment } = useEnvController();
+  const { environment } = useEnvironment();
   const {
     data,
     isLoading: isLoadingChanges,

@@ -8,12 +8,7 @@ import { IconButton } from './IconButton';
 export default {
   title: 'Components/IconButton',
   component: IconButton,
-  argTypes: {
-    colorPalette: {
-      options: ['mode.cloud', 'mode.local'],
-      control: { type: 'select' },
-    },
-  },
+  argTypes: {},
 } as Meta<typeof IconButton>;
 
 const Template: StoryFn<typeof IconButton> = ({ ...args }) => {

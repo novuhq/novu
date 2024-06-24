@@ -81,6 +81,7 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
     },
     inputs: { schema: Schema.Types.Mixed },
     output: { schema: Schema.Types.Mixed },
+    code: Schema.Types.String,
   },
   schemaOptions
 );

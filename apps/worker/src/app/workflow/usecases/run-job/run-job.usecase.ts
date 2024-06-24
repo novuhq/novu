@@ -52,7 +52,6 @@ export class RunJob {
 
     if (activeDigestFollower) {
       job = this.assignNewDigestExecutor(activeDigestFollower);
-
       this.assignLogger(job);
     }
 

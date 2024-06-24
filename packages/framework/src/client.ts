@@ -37,6 +37,13 @@ import { Skip } from './types/skip.types';
 import { Liquid } from 'liquidjs';
 import { ValidationError } from './types/validator.types';
 
+/**
+ * We want to respond with a consistent string value for preview
+ */
+JSONSchemaFaker.random.shuffle = function () {
+  return ['[placeholder]'];
+};
+
 JSONSchemaFaker.option({
   useDefaultValue: true,
   alwaysFakeOptionals: true,
@@ -426,8 +433,15 @@ export class Client {
     event: IEvent,
     workflow: DiscoverWorkflowOutput
   ): Promise<Record<string, unknown>> {
+    let payload = event.data;
+    if (event.action === 'preview') {
+      const mockResult = this.mock(workflow.data.schema);
+
+      payload = Object.assign(mockResult, payload);
+    }
+
     const validatedResult = await this.validate(
-      event.data,
+      payload,
       workflow.data.unknownSchema,
       'event',
       'input',
@@ -631,8 +645,10 @@ export class Client {
     const spinner = ora({ indent: 1 }).start(`Previewing stepId: \`${step.stepId}\``);
     try {
       if (payload.stepId === step.stepId) {
-        const input = await this.createStepInputs(step, payload);
-        const previewOutput = await step.resolve(input);
+        const templateInputs = await this.createStepInputs(step, payload);
+        const inputs = await this.compileInputs(templateInputs, payload);
+
+        const previewOutput = await step.resolve(inputs);
         const validatedResult = await this.validate(
           previewOutput,
           step.outputs.unknownSchema,

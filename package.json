@@ -193,11 +193,6 @@
       "eslint",
       "stop-only --file"
     ],
-    "providers/**/*.{ts,json}": [
-      "prettier --ignore-path ./.prettierignore --write",
-      "eslint",
-      "stop-only --file"
-    ],
     "libs/**/*.{ts,js,json}": [
       "prettier --ignore-path ./.prettierignore --write",
       "eslint",

@@ -83,6 +83,9 @@ export class CreateMessageTemplateCommand extends EnvironmentWithUserCommand {
   };
 
   @IsOptional()
+  code?: string;
+
+  @IsOptional()
   stepId?: string;
 
   @IsEnum(WorkflowTypeEnum)

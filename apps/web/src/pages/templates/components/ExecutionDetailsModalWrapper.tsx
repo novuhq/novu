@@ -17,23 +17,19 @@ export const ExecutionDetailsModalWrapper = ({ transactionId, isOpen, onClose }:
   const {
     data: notification,
     isFetching,
+    isLoading,
     refetch,
   } = useQuery<{ data: any[] }>(['activitiesList', transactionId], () => getActivityList(0, { transactionId }), {
-    enabled: transactionId.length > 0,
+    enabled: !!transactionId && isOpen,
+    refetchInterval: 1000,
   });
-
-  useEffect(() => {
-    if (!isFetching && !notification?.data.length) {
-      refetch();
-    }
-  }, [isFetching, notification, refetch]);
 
   if (!isOpen || !transactionId) return null;
 
   return (
     <>
       <LoadingOverlay
-        visible={isFetching}
+        visible={isLoading}
         overlayColor={theme.colorScheme === 'dark' ? colors.B30 : colors.B98}
         loaderProps={{
           color: colors.error,
