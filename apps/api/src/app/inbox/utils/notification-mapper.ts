@@ -62,6 +62,10 @@ const mapSingleItem = ({
   };
 };
 
+/**
+ * Currently the message entity has a generic interface for the messages from the different channels,
+ * so we need to map it to a Notification DTO that is specific message interface for the in-app channel.
+ */
 export function mapToDto(notification: MessageEntity): InboxNotification;
 export function mapToDto(notification: MessageEntity[]): InboxNotification[];
 export function mapToDto(notification: MessageEntity | MessageEntity[]): InboxNotification | InboxNotification[] {

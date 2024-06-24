@@ -127,7 +127,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     }
 
     let cursorOrStatements: FilterQuery<T_DBModel>[] = [];
-    let enchancedCursorOrStatements: FilterQuery<T_DBModel>[] = [];
+    let enhancedCursorOrStatements: FilterQuery<T_DBModel>[] = [];
     if (paginateField && afterItem[paginateField]) {
       const paginatedFieldValue = afterItem[paginateField];
       cursorOrStatements = [
@@ -142,17 +142,17 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
         ...item,
         ...cursorOrStatements[1],
       }));
-      enchancedCursorOrStatements = [...firstStatement, ...secondStatement];
+      enhancedCursorOrStatements = [...firstStatement, ...secondStatement];
     } else {
       cursorOrStatements = [{ _id: isSortDesc ? { $lt: after } : { $gt: after } }];
       const firstStatement = (queryOrStatements ?? []).map((item) => ({
         ...item,
         ...cursorOrStatements[0],
       }));
-      enchancedCursorOrStatements = [...firstStatement];
+      enhancedCursorOrStatements = [...firstStatement];
     }
 
-    return enchancedCursorOrStatements.length > 0 ? enchancedCursorOrStatements : cursorOrStatements;
+    return enhancedCursorOrStatements.length > 0 ? enhancedCursorOrStatements : cursorOrStatements;
   }
 
   async cursorPagination({

@@ -17,7 +17,7 @@ const mockMessages: any = [
     _id: '_id',
     content: '',
     read: false,
-    archieved: false,
+    archived: false,
     createdAt: new Date(),
     lastReadAt: new Date(),
     channel: ChannelTypeEnum.IN_APP,

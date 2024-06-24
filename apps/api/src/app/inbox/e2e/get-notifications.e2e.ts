@@ -82,12 +82,12 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
   };
 
   const triggerEvent = async (templateToTrigger: NotificationTemplateEntity, times = 1) => {
-    const promisses: Array<Promise<unknown>> = [];
+    const promises: Array<Promise<unknown>> = [];
     for (let i = 0; i < times; i++) {
-      promisses.push(session.triggerEvent(templateToTrigger.triggers[0].identifier, session.subscriberId));
+      promises.push(session.triggerEvent(templateToTrigger.triggers[0].identifier, session.subscriberId));
     }
 
-    await Promise.all(promisses);
+    await Promise.all(promises);
     await session.awaitRunningJobs(templateToTrigger._id);
   };
 
