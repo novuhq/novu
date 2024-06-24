@@ -1,3 +1,7 @@
+function defaultColor(baseName) {
+  return `var(--${baseName})`;
+}
+
 function generateColorShades(baseName) {
   return {
     50: `var(--${baseName}-50)`,
@@ -23,19 +27,18 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: {
-          ...generateColorShades('nv-color-primary'),
-          ...generateColorShades('nv-color-primary-alpha'),
-        },
-        primaryForeground: generateColorShades('nv-color-primary-foreground-alpha'),
-        secondary: {
-          ...generateColorShades('nv-color-secondary'),
-          ...generateColorShades('nv-color-secondary-alpha'),
-        },
-        secondaryForeground: generateColorShades('nv-color-secondary-foreground-alpha'),
-        background: generateColorShades('nv-color-background-alpha'),
-        foreground: generateColorShades('nv-color-foreground-alpha'),
-        neutral: generateColorShades('nv-color-neutral-alpha'),
+        primary: { DEFAULT: defaultColor('nv-color-primary'), ...generateColorShades('nv-color-primary') },
+        'primary-alpha': generateColorShades('nv-color-primary-alpha'),
+        'primary-foreground': defaultColor('nv-color-primary-foreground'),
+        'primary-foreground-alpha': generateColorShades('nv-color-primary-foreground-alpha'),
+        secondary: { DEFAULT: defaultColor('nv-color-secondary'), ...generateColorShades('nv-color-secondary') },
+        'secondary-alpha': generateColorShades('nv-color-secondary-alpha'),
+        'secondary-foreground-alpha': generateColorShades('nv-color-secondary-foreground-alpha'),
+        background: defaultColor('nv-color-background'),
+        'background-alpha': generateColorShades('nv-color-background-alpha'),
+        foreground: defaultColor('nv-color-foreground'),
+        'foreground-alpha': generateColorShades('nv-color-foreground-alpha'),
+        'neutral-alpha': generateColorShades('nv-color-neutral-alpha'),
       },
     },
   },

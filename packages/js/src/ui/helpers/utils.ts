@@ -46,6 +46,12 @@ export function createClassAndRuleFromCssString(classNameSet: Set<string>, style
 }
 
 const shades = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900];
+export function generateDefaultColor(color: string, key: string) {
+  const cssVariableDefaultRule = `:root { --nv-${key}: oklch(from ${color} l c h); }`;
+
+  return cssVariableDefaultRule;
+}
+
 export function generatesSolidShadesFromColor(color: string, key: string) {
   const rules = [];
   for (let i = 0; i < shades.length; i++) {
@@ -71,8 +77,13 @@ export function generatesAlphaShadesFromColor(color: string, key: string) {
 }
 
 export const parseVariables = (variables: Required<Variables>) => {
-  //handle color variables
   return [
+    generateDefaultColor(variables.colorBackground, 'color-background'),
+    generateDefaultColor(variables.colorForeground, 'color-foreground'),
+    generateDefaultColor(variables.colorPrimary, 'color-primary'),
+    generateDefaultColor(variables.colorPrimaryForeground, 'color-primary-foreground'),
+    generateDefaultColor(variables.colorSecondary, 'color-secondary'),
+    generateDefaultColor(variables.colorSecondaryForeground, 'color-secondary-foreground'),
     ...generatesAlphaShadesFromColor(variables.colorBackground, 'color-background-alpha'),
     ...generatesAlphaShadesFromColor(variables.colorForeground, 'color-foreground-alpha'),
     ...generatesSolidShadesFromColor(variables.colorPrimary, 'color-primary'),
@@ -80,7 +91,6 @@ export const parseVariables = (variables: Required<Variables>) => {
     ...generatesAlphaShadesFromColor(variables.colorPrimaryForeground, 'color-primary-foreground-alpha'),
     ...generatesSolidShadesFromColor(variables.colorSecondary, 'color-secondary'),
     ...generatesAlphaShadesFromColor(variables.colorSecondary, 'color-secondary-alpha'),
-    ...generatesAlphaShadesFromColor(variables.colorSecondaryForeground, 'color-secondary-foreground-alpha'),
     ...generatesAlphaShadesFromColor(variables.colorSecondaryForeground, 'color-secondary-foreground-alpha'),
     ...generatesAlphaShadesFromColor(variables.colorNeutral, 'color-neutral-alpha'),
   ];

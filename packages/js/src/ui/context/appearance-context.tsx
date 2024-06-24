@@ -95,16 +95,14 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
   });
 
   return (
-    <>
-      <AppearanceContext.Provider
-        value={{
-          elements: props.elements || {},
-          descriptorToCssInJsClass: store.descriptorToCssInJsClass,
-        }}
-      >
-        {props.children}
-      </AppearanceContext.Provider>
-    </>
+    <AppearanceContext.Provider
+      value={{
+        elements: props.elements || {},
+        descriptorToCssInJsClass: store.descriptorToCssInJsClass,
+      }}
+    >
+      {props.children}
+    </AppearanceContext.Provider>
   );
 };
 
