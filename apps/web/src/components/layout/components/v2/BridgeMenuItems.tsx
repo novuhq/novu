@@ -1,10 +1,10 @@
-import { BridgeUpdateModal } from './BridgeUpdateModal';
+import { BridgeUpdateModalTrigger } from './BridgeUpdateModalTrigger';
 import { SyncInfoModalTrigger } from './SyncInfoModalTrigger';
 
 export function BridgeMenuItems() {
   return (
     <>
-      <BridgeUpdateModal />
+      <BridgeUpdateModalTrigger />
       <SyncInfoModalTrigger />
     </>
   );
