@@ -45,7 +45,6 @@ on:
         required: true
         type: string
 
-
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   reusable_web_deploy:
@@ -87,6 +86,7 @@ jobs:
           echo REACT_APP_HUBSPOT_EMBED=${{ inputs.react_app_hubspot_embed }} >> .env
           echo REACT_APP_STRIPE_CLIENT_KEY=${{ secrets.STRIPE_CLIENT_KEY }} >> .env
           echo REACT_APP_NOVU_GTM_ID=${{ secrets.REACT_APP_NOVU_GTM_ID }} >> .env
+          echo REACT_APP_MIXPANEL_KEY=${{ secrets.MIXPANEL_TOKEN }} >> .env
       - name: Envsetup
         working-directory: apps/web
         run: npm run envsetup
