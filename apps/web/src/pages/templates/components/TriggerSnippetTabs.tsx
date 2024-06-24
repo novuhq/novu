@@ -44,16 +44,17 @@ export function TriggerSnippetTabs({ trigger }: { trigger: INotificationTrigger 
   return <Tabs defaultValue={NODE_JS} data-test-id="trigger-code-snippet" menuTabs={prismTabs} />;
 }
 
-export const getNodeTriggerSnippet = (
+export const createNodeSnippet = (
   identifier: string,
   to: Record<string, unknown>,
   payload: Record<string, unknown>,
   overrides?: Record<string, unknown>,
-  snippet?: Record<string, unknown>
+  snippet?: Record<string, unknown>,
+  apiKey = '<API_KEY>'
 ) => {
-  const triggerCodeSnippet = `import { Novu } from '@novu/node'; 
+  return `import { Novu } from '@novu/node'; 
 
-const novu = new Novu('<API_KEY>');
+const novu = new Novu('${apiKey}');
 
 novu.trigger('${identifier}', ${JSON.stringify(
     {
@@ -68,6 +69,17 @@ novu.trigger('${identifier}', ${JSON.stringify(
     .replace(/"([^"]+)":/g, '$1:')
     .replace(/"/g, "'")});
 `;
+};
+
+export const getNodeTriggerSnippet = (
+  identifier: string,
+  to: Record<string, unknown>,
+  payload: Record<string, unknown>,
+  overrides?: Record<string, unknown>,
+  snippet?: Record<string, unknown>,
+  apiKey = '<API_KEY>'
+) => {
+  const triggerCodeSnippet = createNodeSnippet(identifier, to, payload, overrides, snippet, apiKey);
 
   return (
     <Prism mt={5} styles={prismStyles} data-test-id="trigger-code-snippet" language="javascript">
@@ -76,15 +88,16 @@ novu.trigger('${identifier}', ${JSON.stringify(
   );
 };
 
-export const getCurlTriggerSnippet = (
+export const createCurlSnippet = (
   identifier: string,
-  to: Record<string, any>,
-  payload: Record<string, any>,
-  overrides?: Record<string, any>,
-  snippet?: Record<string, unknown>
+  to: Record<string, unknown>,
+  payload: Record<string, unknown>,
+  overrides?: Record<string, unknown>,
+  snippet?: Record<string, unknown>,
+  apiKey = '<REPLACE_WITH_API_KEY>'
 ) => {
-  const curlSnippet = `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
---header 'Authorization: ApiKey <REPLACE_WITH_API_KEY>' \\
+  return `curl --location --request POST '${API_ROOT}/v1/events/trigger' \\
+--header 'Authorization: ApiKey ${apiKey}' \\
 --header 'Content-Type: application/json' \\
 --data-raw '${JSON.stringify(
     {
@@ -98,6 +111,17 @@ export const getCurlTriggerSnippet = (
     2
   )}'
   `;
+};
+
+export const getCurlTriggerSnippet = (
+  identifier: string,
+  to: Record<string, any>,
+  payload: Record<string, any>,
+  overrides?: Record<string, any>,
+  snippet?: Record<string, unknown>,
+  apiKey = '<REPLACE_WITH_API_KEY>'
+) => {
+  const curlSnippet = createCurlSnippet(identifier, to, payload, overrides, snippet, apiKey);
 
   return (
     <Prism mt={5} styles={prismStyles} language="bash" key="2" data-test-id="trigger-curl-snippet">
