@@ -21,6 +21,7 @@ function generateColorShades(baseName) {
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}'],
   prefix: 'nt-',
+  darkMode: ['class', ['[class*="dark"]', '[data-mode="dark"]', '[data-theme="dark"]']],
   corePlugins: {
     preflight: false,
   },
