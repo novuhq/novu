@@ -62,6 +62,7 @@ export class CreateNotificationJobs {
       payload: command.payload,
       expireAt: this.calculateExpireAt(command),
       channels,
+      bridge: command.bridge,
     });
 
     if (!notification) {
@@ -90,7 +91,12 @@ export class CreateNotificationJobs {
         payload: command.payload,
         overrides: command.overrides,
         tenant: command.tenant,
-        step,
+        step: {
+          ...step,
+          ...(command.bridge?.workflow
+            ? { bridgeUrl: command.bridge?.url }
+            : {}),
+        },
         transactionId: command.transactionId,
         _notificationId: notification._id,
         _environmentId: command.environmentId,

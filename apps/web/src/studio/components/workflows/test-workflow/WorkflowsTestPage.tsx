@@ -5,7 +5,7 @@ import { css } from '@novu/novui/css';
 import { IconOutlineCable, IconPlayArrow } from '@novu/novui/icons';
 import { Center } from '@novu/novui/jsx';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { bridgeApi } from '../../../../api/bridge/bridge.api';
 import { testTrigger } from '../../../../api/notification-templates';
@@ -15,6 +15,8 @@ import { ExecutionDetailsModalWrapper } from '../../../../pages/templates/compon
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { ToSubscriber, WorkflowTestInputsPanel } from './WorkflowTestInputsPanel';
 import { WorkflowTestTriggerPanel } from './WorkflowTestTriggerPanel';
+import { getTunnelUrl } from '../../../../api/bridge/utils';
+import { showNotification } from '@mantine/notifications';
 
 export const WorkflowsTestPage = () => {
   const { currentUser, isLoading: isAuthLoading } = useAuth();
@@ -29,6 +31,15 @@ export const WorkflowsTestPage = () => {
     return bridgeApi.getWorkflow(templateId);
   });
 
+  useEffect(() => {
+    if (currentUser) {
+      setTo({
+        subscriberId: currentUser._id as string,
+        email: currentUser.email as string,
+      });
+    }
+  }, [currentUser]);
+
   const stepTypes = useMemo(() => {
     if (!workflow) {
       return [];
@@ -42,17 +53,25 @@ export const WorkflowsTestPage = () => {
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
 
   const handleTestClick = async () => {
-    const response = await triggerTestEvent({
-      name: workflow.workflowId,
-      to,
-      payload: {
-        ...payload,
-        __source: 'studio-test-workflow',
-      },
-    });
+    try {
+      const response = await triggerTestEvent({
+        name: workflow.workflowId,
+        to,
+        payload: {
+          ...payload,
+          __source: 'studio-test-workflow',
+        },
+        bridgeUrl: getTunnelUrl(),
+      });
 
-    setTransactionId(response.transactionId || '');
-    openExecutionModal();
+      setTransactionId(response.transactionId || '');
+      openExecutionModal();
+    } catch (e) {
+      showNotification({
+        message: (e as Error).message,
+        color: 'red',
+      });
+    }
   };
 
   const onChange = (payloadValues, toValues) => {

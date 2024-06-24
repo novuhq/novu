@@ -97,7 +97,7 @@ export const PreviewWeb = ({
   bridge = false,
   classNames = {},
 }: {
-  integration: any;
+  integration?: any;
   subject?: string;
   content: string;
   loading?: boolean;
@@ -206,7 +206,7 @@ export const PreviewWeb = ({
                     className={cx(classes.frame, classNames.frame)}
                     data-test-id="preview-content"
                   />
-                  {/*    
+                  {/*
               Issue with rendering email without html
               <Frame className={classes.frame} data-test-id="preview-content" initialContent={content}>
                     <></>

@@ -8,10 +8,8 @@ import { VStack } from '@novu/novui/jsx';
 import { SetupTimeline } from './components/SetupTimeline';
 import { useSetupBridge } from './useSetupBridge';
 import { useSegment } from '../../components/providers/SegmentProvider';
-import { useWindowEvent } from '@mantine/hooks';
 
 export const StudioOnboarding = () => {
-  const { environment } = useEnvironment();
   const [url, setUrl] = useState('');
   const [error, setError] = useState<string>('');
   const { loading, setup, testEndpoint, testResponse } = useSetupBridge(url, setError);
@@ -28,15 +26,12 @@ export const StudioOnboarding = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    if (!environment?.echo?.url) {
-      return;
-    }
-    setUrl(environment?.echo?.url);
-  }, [environment?.echo?.url]);
+  async function retest(continueSetup = false) {
+    const result = await testEndpoint(url);
 
-  function retest() {
-    testEndpoint(url);
+    if (continueSetup && result.data?.status === 'ok') {
+      await setup();
+    }
   }
 
   return (
@@ -63,19 +58,19 @@ export const StudioOnboarding = () => {
               marginTop: '50',
             })}
           >
-            The first step adds an Novu endpoint, and creates your first workflow automatically. The workflow will be
-            created with an email step with sample content.
+            To start sending your first workflows, you first need to connect Novu to your Bridge Endpoint. This setup
+            will create a sample Next.js project and pre-configured the @novu/framework client for you.
           </Text>
           <SetupTimeline error={error} url={url} setUrl={setUrl} testResponse={testResponse} retest={retest} />
         </div>
       </VStack>
       <Footer
-        disabled={loading}
-        onClick={() => {
+        disabled={loading || !url}
+        onClick={async () => {
           if (testResponse.data?.status === 'ok') {
             setup();
           } else {
-            retest();
+            retest(true);
           }
         }}
         loading={loading}

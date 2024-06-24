@@ -55,19 +55,7 @@ export const WorkflowsStepEditorPage = () => {
   }
 
   return (
-    <WorkflowsPageTemplate
-      title={title}
-      icon={<Icon size="32" />}
-      actions={
-        <WorkflowTestStepButton
-          stepId={stepId}
-          payload={payload}
-          inputs={inputs}
-          workflowId={workflow?.workflowId}
-          stepType={step?.type}
-        />
-      }
-    >
+    <WorkflowsPageTemplate title={title} icon={<Icon size="32" />}>
       <WorkflowsPanelLayout>
         <WorkflowStepEditorContentPanel step={step} error={error} preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorInputsPanel step={step} workflow={workflow} onChange={onInputsChange} />

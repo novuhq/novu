@@ -1,12 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
+import { ModuleRef } from '@nestjs/core';
 
 import {
+  EnvironmentRepository,
   IntegrationRepository,
   JobEntity,
   JobRepository,
   NotificationTemplateRepository,
   SubscriberEntity,
+  NotificationTemplateEntity,
 } from '@novu/dal';
 import {
   AddressingTypeEnum,
@@ -17,8 +20,13 @@ import {
   TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
+import { DiscoverOutput, DiscoverWorkflowOutput } from '@novu/framework';
 
-import { TriggerEventCommand } from './trigger-event.command';
+import {
+  TriggerEventBroadcastCommand,
+  TriggerEventCommand,
+  TriggerEventMulticastCommand,
+} from './trigger-event.command';
 import {
   ProcessSubscriber,
   ProcessSubscriberCommand,
@@ -37,8 +45,19 @@ import {
   TriggerMulticast,
   TriggerMulticastCommand,
 } from '../trigger-multicast';
+import { IUseCaseInterface, requireInject } from '../../utils/require-inject';
 
 const LOG_CONTEXT = 'TriggerEventUseCase';
+
+export interface IDoBridgeRequestCommand {
+  bridgeUrl: string;
+  payload?: any;
+  apiKey: string;
+  searchParams?: Record<string, any>;
+  afterResponse?: any;
+  action: 'execute' | 'preview' | 'discover' | 'health-check' | 'code';
+  retriesLimit?: number;
+}
 
 @Injectable()
 export class TriggerEvent {
@@ -94,7 +113,7 @@ export class TriggerEvent {
        * Makes no sense to execute anything if template doesn't exist
        * TODO: Send a 404?
        */
-      if (!template) {
+      if (!template && !command.bridgeWorkflow) {
         throw new ApiException('Notification template could not be found');
       }
 
@@ -138,8 +157,12 @@ export class TriggerEvent {
           await this.triggerMulticast.execute(
             TriggerMulticastCommand.create({
               ...mappedCommand,
+              bridgeUrl: command.bridgeUrl,
+              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
-              template,
+              template:
+                template ||
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -148,8 +171,12 @@ export class TriggerEvent {
           await this.triggerBroadcast.execute(
             TriggerBroadcastCommand.create({
               ...mappedCommand,
+              bridgeUrl: command.bridgeUrl,
+              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
-              template,
+              template:
+                template ||
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;
@@ -159,8 +186,12 @@ export class TriggerEvent {
             TriggerMulticastCommand.create({
               addressingType: AddressingTypeEnum.MULTICAST,
               ...(mappedCommand as TriggerMulticastCommand),
+              bridgeUrl: command.bridgeUrl,
+              bridgeWorkflow: command.bridgeWorkflow,
               actor: actorProcessed,
-              template,
+              template:
+                template ||
+                (command.bridgeWorkflow as unknown as NotificationTemplateEntity),
             })
           );
           break;

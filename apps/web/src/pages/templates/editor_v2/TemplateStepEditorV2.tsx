@@ -61,19 +61,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.template?.type];
 
   return (
-    <WorkflowsPageTemplate
-      title={title}
-      icon={<Icon size="32" />}
-      actions={
-        <WorkflowTestStepButton
-          stepId={stepId}
-          payload={payload}
-          inputs={inputs}
-          workflowId={(workflow as any)?.rawData?.workflowId}
-          stepType={step?.template?.type}
-        />
-      }
-    >
+    <WorkflowsPageTemplate title={title} icon={<Icon size="32" />}>
       <WorkflowsPanelLayout>
         <WorkflowStepEditorContentPanel error={error} step={step} preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorInputsPanel
