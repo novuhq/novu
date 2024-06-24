@@ -144,6 +144,9 @@ function discoverProviders(
   const channelSchemas = providerSchemas[channelType];
 
   Object.entries(providers).forEach(([type, resolve]) => {
+    // eslint-disable-next-line multiline-comment-style
+    // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+    // @ts-expect-error - Element implicitly has an 'any' type because expression of type 'string' can't be used to index type
     const schemas = channelSchemas[type];
     step.providers.push({
       type,
@@ -177,6 +180,9 @@ function discoverCustomStepFactory(targetWorkflow: DiscoverWorkflowOutput, type:
         schema: transformSchema(outputSchema),
         unknownSchema: outputSchema,
       },
+      // eslint-disable-next-line multiline-comment-style
+      // TODO: fix the unknown <-> generic typing mismatch
+      // @ts-expect-error - Type '(inputs: unknown) => unknown' is not assignable to '(inputs: T_Inputs) => Awaitable<T_Outputs>'.
       resolve,
       code: resolve.toString(),
       options,
