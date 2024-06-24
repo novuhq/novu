@@ -22,7 +22,11 @@ export class JsonSchemaValidator implements Validator<JSONSchema> {
   isSchema(schema: Schema): schema is JSONSchema {
     if (typeof schema === 'boolean') return false;
 
-    return (schema as Exclude<JSONSchema, boolean>).type === 'object';
+    return (
+      (schema as Exclude<JSONSchema, boolean>).type === 'object' ||
+      !!(schema as Exclude<JSONSchema, boolean>).anyOf ||
+      !!(schema as Exclude<JSONSchema, boolean>).oneOf
+    );
   }
 
   async validate<T>(data: T, schema: JSONSchema): Promise<ValidateResult<T>> {

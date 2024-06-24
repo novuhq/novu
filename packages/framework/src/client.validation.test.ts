@@ -34,6 +34,26 @@ describe('validation', () => {
           },
           {
             inputSchema: zodSchema,
+            skip: (inputs) => {
+              // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+              inputs.foo = 123;
+              // @ts-expect-error - Type 'string' is not assignable to type 'number'.
+              inputs.baz = '123';
+
+              return true;
+            },
+            providers: {
+              sendgrid: async ({ inputs }) => {
+                // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+                inputs.foo = 123;
+                // @ts-expect-error - Type 'string' is not assignable to type 'number'.
+                inputs.baz = '123';
+
+                return {
+                  ipPoolName: 'test',
+                };
+              },
+            },
           }
         );
       });
@@ -194,6 +214,26 @@ describe('validation', () => {
           },
           {
             inputSchema: jsonSchema,
+            skip: (inputs) => {
+              // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+              inputs.foo = 123;
+              // @ts-expect-error - Type 'string' is not assignable to type 'number'.
+              inputs.baz = '123';
+
+              return true;
+            },
+            providers: {
+              sendgrid: async ({ inputs }) => {
+                // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+                inputs.foo = 123;
+                // @ts-expect-error - Type 'string' is not assignable to type 'number'.
+                inputs.baz = '123';
+
+                return {
+                  ipPoolName: 'test',
+                };
+              },
+            },
           }
         );
       });
@@ -251,17 +291,6 @@ describe('validation', () => {
             async (inputs) => ({
               subject: 'Test subject',
               body: 'Test body',
-            }),
-            {
-              inputSchema: jsonSchema,
-              skip: (inputs) => true,
-            }
-          );
-          await step.digest(
-            'json-schema-validation',
-            async (inputs) => ({
-              amount: 1,
-              unit: 'seconds',
             }),
             {
               inputSchema: jsonSchema,
