@@ -56,11 +56,13 @@ export function workflow<
     input: {} as T_Input,
     step: {
       push: discoverStepFactory(newWorkflow, 'push', channelStepSchemas.push.output, channelStepSchemas.push.result),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      // eslint-disable-next-line multiline-comment-style
+      // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+      // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
       chat: discoverStepFactory(newWorkflow, 'chat', channelStepSchemas.chat.output, channelStepSchemas.chat.result),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
+      // eslint-disable-next-line multiline-comment-style
+      // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+      // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
       email: discoverStepFactory(
         newWorkflow,
         'email',
