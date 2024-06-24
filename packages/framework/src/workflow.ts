@@ -32,7 +32,15 @@ export function workflow<
 
   const newWorkflow: DiscoverWorkflowOutput = {
     workflowId,
-    options,
+    options: {
+      ...options,
+      /*
+       * TODO: Transformation added for backwards compatibility, remove this additional transform after we
+       * start using `data.schema` and `inputs.schema` in UI.
+       */
+      inputSchema: transformSchema(options.inputSchema || emptySchema),
+      payloadSchema: transformSchema(options.payloadSchema || emptySchema),
+    },
     steps: [],
     code: execute.toString(),
     data: {
