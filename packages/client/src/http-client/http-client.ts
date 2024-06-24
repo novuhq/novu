@@ -1,5 +1,5 @@
 import { ApiOptions } from '..';
-import { CustomDataType } from '@novu/shared';
+import type { CustomDataType } from '@novu/shared';
 
 const DEFAULT_API_VERSION = 'v1';
 const DEFAULT_BACKEND_URL = 'https://api.novu.co';

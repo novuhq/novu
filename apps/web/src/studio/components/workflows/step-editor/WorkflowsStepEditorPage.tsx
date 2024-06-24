@@ -41,22 +41,21 @@ export const WorkflowsStepEditorPage = () => {
     refetch();
   }
 
-  const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.type];
+  function Icon({ size }) {
+    const IconElement = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.type];
+    if (!IconElement) {
+      return null;
+    }
+
+    return (
+      <>
+        <IconElement size={size} />
+      </>
+    );
+  }
 
   return (
-    <WorkflowsPageTemplate
-      title={title}
-      icon={<Icon size="32" />}
-      actions={
-        <WorkflowTestStepButton
-          stepId={stepId}
-          payload={payload}
-          inputs={inputs}
-          workflowId={workflow?.workflowId}
-          stepType={step?.type}
-        />
-      }
-    >
+    <WorkflowsPageTemplate title={title} icon={<Icon size="32" />}>
       <WorkflowsPanelLayout>
         <WorkflowStepEditorContentPanel step={step} error={error} preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorInputsPanel step={step} workflow={workflow} onChange={onInputsChange} />

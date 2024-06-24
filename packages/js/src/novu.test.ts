@@ -16,7 +16,6 @@ jest.mock('@novu/client', () => ({
   ApiService: jest.fn().mockImplementation(() => {
     const apiService = {
       isAuthenticated: false,
-      initializeSession,
       setAuthorizationToken: jest.fn(() => {
         apiService.isAuthenticated = true;
       }),
@@ -24,6 +23,17 @@ jest.mock('@novu/client', () => ({
     };
 
     return apiService;
+  }),
+}));
+
+jest.mock('./api/inbox-service', () => ({
+  ...jest.requireActual('./api/inbox-service'),
+  InboxService: jest.fn().mockImplementation(() => {
+    const inboxService = {
+      initializeSession,
+    };
+
+    return inboxService;
   }),
 }));
 

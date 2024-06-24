@@ -6,7 +6,6 @@ import {
   TopicSubscribersRepository,
 } from '@novu/dal';
 import {
-  FeatureFlagsKeysEnum,
   ISubscribersDefine,
   ITopic,
   SubscriberSourceEnum,
@@ -21,7 +20,6 @@ import { ApiException } from '../../utils/exceptions';
 import { SubscriberProcessQueueService } from '../../services/queues/subscriber-process-queue.service';
 import { TriggerMulticastCommand } from './trigger-multicast.command';
 import { IProcessSubscriberBulkJobDto } from '../../dtos';
-import { GetFeatureFlag, GetFeatureFlagCommand } from '../get-feature-flag';
 
 const LOG_CONTEXT = 'TriggerMulticastUseCase';
 const QUEUE_CHUNK_SIZE = Number(process.env.MULTICAST_QUEUE_CHUNK_SIZE) || 100;
@@ -41,8 +39,7 @@ export class TriggerMulticast {
   constructor(
     private subscriberProcessQueueService: SubscriberProcessQueueService,
     private topicSubscribersRepository: TopicSubscribersRepository,
-    private topicRepository: TopicRepository,
-    private getFeatureFlag: GetFeatureFlag
+    private topicRepository: TopicRepository
   ) {}
 
   @InstrumentUsecase()
@@ -269,6 +266,10 @@ export const mapSubscribersToJobs = (
         templateId: command.template._id,
         _subscriberSource: _subscriberSource,
         requestCategory: command.requestCategory,
+        bridge: {
+          url: command.bridgeUrl,
+          workflow: command.bridgeWorkflow,
+        },
       },
       groupId: command.organizationId,
     };

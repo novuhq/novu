@@ -39,9 +39,7 @@ export class SubscriberJobBound {
     private createNotificationJobs: CreateNotificationJobs,
     private processSubscriber: ProcessSubscriber,
     private integrationRepository: IntegrationRepository,
-    private jobRepository: JobRepository,
     private notificationTemplateRepository: NotificationTemplateRepository,
-    private processTenant: ProcessTenant,
     private logger: PinoLogger,
     private analyticsService: AnalyticsService
   ) {}
@@ -67,10 +65,12 @@ export class SubscriberJobBound {
       requestCategory,
     } = command;
 
-    const template = await this.getNotificationTemplate({
-      _id: templateId,
-      environmentId: environmentId,
-    });
+    const template =
+      this.mapBridgeWorkflow(command) ??
+      (await this.getNotificationTemplate({
+        _id: templateId,
+        environmentId: environmentId,
+      }));
 
     if (!template) {
       throw new ApiException(`Workflow id ${templateId} was not found`);
@@ -136,6 +136,7 @@ export class SubscriberJobBound {
       transactionId: command.transactionId,
       userId,
       tenant,
+      bridge: command.bridge,
     };
 
     if (actor) {
@@ -151,8 +152,35 @@ export class SubscriberJobBound {
         environmentId: command.environmentId,
         jobs: notificationJobs,
         organizationId: command.organizationId,
+        bridge: command.bridge,
       })
     );
+  }
+
+  private mapBridgeWorkflow(command: SubscriberJobBoundCommand): NotificationTemplateEntity | null {
+    const bridgeWorkflow = command.bridge?.workflow;
+
+    if (!bridgeWorkflow) {
+      return null;
+    }
+
+    /*
+     * Cast used to convert data type for further processing.
+     * todo Needs review for potential data corruption.
+     */
+    return {
+      ...bridgeWorkflow,
+      type: 'ECHO',
+      steps: bridgeWorkflow.steps.map((step) => {
+        return {
+          ...step,
+          active: true,
+          template: {
+            type: step.type,
+          },
+        };
+      }),
+    } as unknown as NotificationTemplateEntity;
   }
 
   @Instrument()

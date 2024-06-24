@@ -93,6 +93,7 @@ export interface IStepVariant {
   inputs?: {
     schema: JSONSchema7;
   };
+  bridgeUrl?: string;
 }
 
 export interface INotificationTemplateStep extends IStepVariant {

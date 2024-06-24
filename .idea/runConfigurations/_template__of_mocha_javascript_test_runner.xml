@@ -7,8 +7,8 @@
     <envs>
       <env name="E2E_RUNNER" value="true" />
       <env name="NODE_ENV" value="test" />
+      <env name="NOVU_ENTERPRISE" value="true" />
       <env name="TS_NODE_COMPILER_OPTIONS" value="{&quot;strictNullChecks&quot;: false}" />
-      <env name="NOVU_ENTERPRISE" value="true      " />
     </envs>
     <ui />
     <extra-mocha-options>--require ts-node/register --exit --file e2e/setup.ts</extra-mocha-options>

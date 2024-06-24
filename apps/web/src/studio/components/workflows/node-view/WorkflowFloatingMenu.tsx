@@ -23,7 +23,7 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
   const { Component: DocsModal, setPath, toggle } = useDocsModal();
 
   const handleClick = (pathToSet: string) => () => {
-    setPath('echo/steps/' + pathToSet);
+    setPath('framework/steps/' + pathToSet);
     toggle();
   };
 
