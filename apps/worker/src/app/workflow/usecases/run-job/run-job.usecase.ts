@@ -43,10 +43,12 @@ export class RunJob {
     let job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
-    const template = await this.getNotificationTemplate({
-      _id: job._templateId,
-      environmentId: job._environmentId,
-    });
+    const template = job.step?.bridgeUrl
+      ? { tags: [] }
+      : await this.getNotificationTemplate({
+          _id: job._templateId,
+          environmentId: job._environmentId,
+        });
     if (!template) {
       throw new PlatformException(`Notification template ${job._templateId} is not found`);
     }
