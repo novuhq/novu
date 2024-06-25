@@ -1,10 +1,12 @@
 const nr = require('newrelic');
 
 import { Injectable, Logger } from '@nestjs/common';
-import { JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { JobEntity, JobRepository, JobStatusEnum, NotificationTemplateRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/node';
 import {
+  buildNotificationTemplateKey,
+  CachedEntity,
   getJobDigest,
   Instrument,
   InstrumentUsecase,
@@ -26,6 +28,7 @@ export class RunJob {
     private sendMessage: SendMessage,
     private queueNextJob: QueueNextJob,
     private storageHelperService: StorageHelperService,
+    private notificationTemplateRepository: NotificationTemplateRepository,
     private logger?: PinoLogger
   ) {}
 
@@ -39,6 +42,14 @@ export class RunJob {
 
     let job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
+
+    const template = await this.getNotificationTemplate({
+      _id: job._templateId,
+      environmentId: job._environmentId,
+    });
+    if (!template) {
+      throw new PlatformException(`Notification template ${job._templateId} is not found`);
+    }
 
     this.assignLogger(job);
 
@@ -88,6 +99,7 @@ export class RunJob {
           jobId: job._id,
           events: job.digest?.events,
           job,
+          tags: template.tags,
         })
       );
 
@@ -120,6 +132,17 @@ export class RunJob {
         await this.storageHelperService.deleteAttachments(job.payload?.attachments);
       }
     }
+  }
+
+  @CachedEntity({
+    builder: (command: { _id: string; environmentId: string }) =>
+      buildNotificationTemplateKey({
+        _environmentId: command.environmentId,
+        _id: command._id,
+      }),
+  })
+  private async getNotificationTemplate({ _id, environmentId }: { _id: string; environmentId: string }) {
+    return await this.notificationTemplateRepository.findById(_id, environmentId);
   }
 
   private assignLogger(job) {

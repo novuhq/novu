@@ -96,10 +96,70 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       sort: '-createdAt',
     })
       .read('secondaryPreferred')
+      .populate('template', '_id tags')
       .populate('subscriber', '_id firstName lastName avatar subscriberId')
       .populate('actorSubscriber', '_id firstName lastName avatar subscriberId');
 
     return this.mapEntities(messages);
+  }
+
+  async paginate(
+    {
+      environmentId,
+      channel,
+      subscriberId,
+      tags,
+      read,
+      archived,
+    }: {
+      environmentId: string;
+      subscriberId: string;
+      channel: ChannelTypeEnum;
+      tags?: string[];
+      read?: boolean;
+      archived?: boolean;
+    },
+    options: { limit: number; offset: number; after?: string }
+  ) {
+    const query: MessageQuery & EnforceEnvId = {
+      _environmentId: environmentId,
+      _subscriberId: subscriberId,
+      channel,
+    };
+
+    if (tags && tags?.length > 0) {
+      query.tags = { $in: tags };
+    }
+
+    if (typeof read === 'boolean') {
+      query.read = read;
+    } else {
+      query.read = { $in: [true, false] };
+    }
+
+    if (typeof archived === 'boolean') {
+      if (!archived) {
+        query.$or = [{ archived: { $exists: false } }, { archived: false }];
+      } else {
+        query.archived = true;
+      }
+    } else {
+      query.$or = [{ archived: { $exists: false } }, { archived: { $in: [true, false] } }];
+    }
+
+    return await this.cursorPagination({
+      query,
+      limit: options.limit,
+      offset: options.offset,
+      after: options.after,
+      sort: { createdAt: -1, _id: -1 },
+      paginateField: 'createdAt',
+      enhanceQuery: (queryBuilder) =>
+        queryBuilder
+          .read('secondaryPreferred')
+          .populate('subscriber', '_id firstName lastName avatar subscriberId')
+          .populate('actorSubscriber', '_id firstName lastName avatar subscriberId'),
+    });
   }
 
   async getCount(
