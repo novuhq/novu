@@ -6,7 +6,7 @@ import { splitCssProps } from '../../../styled-system/jsx';
 import { input, InputVariant } from '../../../styled-system/recipes';
 import { JsxStyleProps } from '../../../styled-system/types';
 import { PolymorphicRef } from '../../types/props-helpers';
-import { IconErrorOutline } from 'src/icons';
+import { IconErrorOutline } from '../../icons';
 
 export type TextInputType = 'text' | 'password' | 'email' | 'search' | 'tel';
 const DEFAULT_TEXT_INPUT_TYPE: TextInputType = 'text';
@@ -15,7 +15,7 @@ export interface IInputProps
   extends JsxStyleProps,
     CoreProps,
     Pick<ExternalTextInputProps, 'rightSection'>,
-    InputVariant {
+    Partial<InputVariant> {
   label?: LocalizedMessage;
   description?: LocalizedMessage;
   placeholder?: LocalizedString;
