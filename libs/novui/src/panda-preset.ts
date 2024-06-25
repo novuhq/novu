@@ -32,6 +32,7 @@ import {
   SELECT_RECIPE,
   CHECKBOX_RECIPE,
 } from './recipes';
+import { CODE_BLOCK_RECIPE } from './recipes/code-block.recipe';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
@@ -98,6 +99,7 @@ export const novuPandaPreset = definePreset({
         input: INPUT_RECIPE,
         select: SELECT_RECIPE,
         checkbox: CHECKBOX_RECIPE,
+        codeBlock: CODE_BLOCK_RECIPE,
       },
     },
   },
