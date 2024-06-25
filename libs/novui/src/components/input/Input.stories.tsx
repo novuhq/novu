@@ -31,7 +31,7 @@ export default {
   },
 } as Meta<typeof Input>;
 
-const Template: StoryFn<typeof Input> = ({ ...args }) => <Input {...args} variant="preventLayoutShift" />;
+const Template: StoryFn<typeof Input> = ({ ...args }) => <Input {...args} />;
 
 export const PrimaryUse = Template.bind({});
 PrimaryUse.args = {
