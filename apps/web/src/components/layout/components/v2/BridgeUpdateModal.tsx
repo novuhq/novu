@@ -7,8 +7,9 @@ import { validateBridgeUrl } from '../../../../api/bridge';
 import { setTunnelUrl } from '../../../../api/bridge/utils';
 import { updateBridgeUrl } from '../../../../api/environment';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
+import { isStudioRoute } from '../../../../studio/utils/isStudioRoute';
 import { DocsButton } from '../../../docs/DocsButton';
-import { getBridgeUrl, isLocalEnv } from './utils';
+import { getBridgeUrl } from './utils';
 
 export type BridgeUpdateModalProps = {
   isOpen: boolean;
@@ -52,7 +53,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
   };
 
   const storeInProperLocation = async (bridgeUrl: string) => {
-    if (isLocalEnv(location.pathname)) {
+    if (isStudioRoute(location.pathname)) {
       setTunnelUrl(bridgeUrl);
     } else {
       await updateBridgeUrl({ url: inputUrl }, environment?._id ?? '');
