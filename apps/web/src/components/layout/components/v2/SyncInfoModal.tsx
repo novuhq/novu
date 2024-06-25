@@ -3,7 +3,6 @@ import { Prism } from '@mantine/prism';
 // TODO: replace with Novui Modal when available
 import { Modal } from '@novu/design-system';
 import { Tabs, Text, Title } from '@novu/novui';
-import { Box } from '@novu/novui/jsx';
 import { FC } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
@@ -48,14 +47,14 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
     <Modal
       opened={isOpen}
       title={
-        <Box mb="100">
+        <>
           <Title variant="section">Sync changes to the Environment</Title>
           <Text variant="secondary">Run the following command to publish changes to the desired environment:</Text>
-        </Box>
+        </>
       }
       onClose={toggleOpen}
     >
-      <Tabs tabConfigs={tabs} defaultValue={'github'} />
+      <Tabs tabConfigs={tabs} defaultValue={'github'} colorPalette="mode.local" />
     </Modal>
   );
 };
