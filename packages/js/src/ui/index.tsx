@@ -1,8 +1,8 @@
 import { render } from 'solid-js/web';
 import type { NovuOptions } from '../novu';
-import { AppearanceContextType } from './context';
-import Inbox from './Inbox';
+import { Appearance } from './context';
 import './index.css';
+import { Inbox } from './Inbox';
 
 export class InboxUI {
   #dispose: { (): void } | null = null;
@@ -17,7 +17,7 @@ export class InboxUI {
     }: {
       name?: string;
       options: NovuOptions;
-      appearance?: Pick<AppearanceContextType, 'elements' | 'variables'>;
+      appearance?: Appearance;
     }
   ): void {
     if (this.#dispose !== null) {

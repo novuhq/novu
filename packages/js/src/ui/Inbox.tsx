@@ -1,15 +1,17 @@
-import { For, createSignal, onMount, type Component } from 'solid-js';
+import { For, createSignal, onMount } from 'solid-js';
 import { Notification } from '../feeds';
 import { Novu } from '../novu';
 import type { NovuOptions } from '../novu';
-import { AppearanceContextType, AppearanceProvider } from './context';
+import { Appearance, AppearanceProvider } from './context';
 import { useStyle } from './helpers';
 
-const Inbox: Component<{
+type InboxProps = {
   name: string;
   options: NovuOptions;
-  appearance?: Pick<AppearanceContextType, 'elements' | 'variables'>;
-}> = (props) => {
+  appearance?: Appearance;
+};
+
+export const Inbox = (props: InboxProps) => {
   const [feeds, setFeeds] = createSignal<Notification[]>([]);
 
   onMount(() => {
@@ -28,11 +30,11 @@ const Inbox: Component<{
   );
 };
 
-export default Inbox;
-
-const InternalInbox: Component<{
+type InternalInboxProps = {
   feeds: Notification[];
-}> = (props) => {
+};
+
+const InternalInbox = (props: InternalInboxProps) => {
   const style = useStyle();
 
   return (

@@ -34,7 +34,9 @@ export type AppearanceContextType = {
 
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
 
-type AppearanceProviderProps = ParentProps & Pick<AppearanceContextType, 'elements' | 'variables'>;
+export type Appearance = Pick<AppearanceContextType, 'elements' | 'variables'>;
+
+type AppearanceProviderProps = ParentProps & Appearance;
 
 export const AppearanceProvider = (props: AppearanceProviderProps) => {
   const [store, setStore] = createStore<{

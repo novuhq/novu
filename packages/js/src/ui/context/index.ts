@@ -1,1 +1,1 @@
-export * from './appearance-context';
+export * from './AppearanceContext';
