@@ -140,14 +140,14 @@ export const StudioOnboardingPreview = () => {
                       {`workflow("welcome-onboarding-email", async ({ step, payload }) => {
     await step.email(
       "send-email",
-      async (inputs) => {
+      async (controls) => {
         return {
           subject: "A Successful Test on Novu!",
           body: renderEmail(inputs, payload),
         };
       },
       {
-        inputSchema: {
+        controlSchema: {
           type: "object",
           properties: {
             components: {

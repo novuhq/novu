@@ -2,7 +2,7 @@ import { expect, it, describe, beforeEach } from 'vitest';
 
 import { Client } from './client';
 import {
-  ExecutionEventInputInvalidError,
+  ExecutionEventControlsInvalidError,
   ExecutionStateCorruptError,
   StepNotFoundError,
   WorkflowNotFoundError,
@@ -64,12 +64,12 @@ describe('Novu Client', () => {
 
         await step.custom(
           'send-custom',
-          async (input) => ({
+          async (controls) => ({
             fooBoolean: inAppRes.read,
-            fooString: input.someString,
+            fooString: controls.someString,
           }),
           {
-            inputSchema: {
+            controlSchema: {
               type: 'object',
               properties: {
                 someString: { type: 'string' },
@@ -161,7 +161,7 @@ describe('Novu Client', () => {
       if (stepCustom === undefined) throw new Error('stepEmail is undefined');
       expect(stepCustom.type).toBe('custom');
       expect(stepCustom.code).toContain(`fooBoolean: inAppRes.read`);
-      expect(stepCustom.code).toContain(`fooString: input.someString`);
+      expect(stepCustom.code).toContain(`fooString: controls.someString`);
 
       const stepSms = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-sms');
       expect(stepSms).toBeDefined();
@@ -215,18 +215,18 @@ describe('Novu Client', () => {
           }),
           {
             providers: {
-              slack: async ({ inputs }) => {
-                const blocks = [
-                  {
-                    type: 'header' as any,
-                    text: {
-                      type: 'plain_text',
-                      text: 'Pretty Header',
+              slack: async ({ controls }) => {
+                return {
+                  blocks: [
+                    {
+                      type: 'header',
+                      text: {
+                        type: 'plain_text',
+                        text: 'Pretty Header',
+                      },
                     },
-                  },
-                ];
-
-                return { blocks };
+                  ],
+                };
               },
             },
           }
@@ -251,20 +251,20 @@ describe('Novu Client', () => {
   });
 
   describe('previewWorkflow method', () => {
-    it('should compile default input variables for preview', async () => {
+    it('should compile default control variables for preview', async () => {
       const newWorkflow = workflow(
         'test-workflow',
         async ({ step }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + inputs.name,
-                body: inputs.name,
+                subject: 'body static prefix' + ' ' + controls.name,
+                body: controls.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: '{{name}}' },
@@ -299,6 +299,7 @@ describe('Novu Client', () => {
         },
         state: [],
         inputs: {},
+        controls: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -330,6 +331,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         inputs: {},
+        controls: {},
       };
 
       client.addWorkflows([newWorkflow]);
@@ -366,6 +368,7 @@ describe('Novu Client', () => {
           },
         ],
         inputs: {},
+        controls: {},
       };
 
       const delayExecutionResult = await client.executeWorkflow(delayEvent);
@@ -382,7 +385,7 @@ describe('Novu Client', () => {
       expect(type).toBe(delayConfiguration.type);
     });
 
-    it('should compile default input variable', async () => {
+    it('should compile default control variable', async () => {
       const bodyTemplate = `
 {% for element in elements %}
   {{ element }}
@@ -393,14 +396,14 @@ describe('Novu Client', () => {
         async ({ step }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + inputs.name + ' ' + inputs.lastName + ' ' + inputs.role,
-                body: inputs.body,
+                subject: 'body static prefix' + ' ' + controls.name + ' ' + controls.lastName + ' ' + controls.role,
+                body: controls.body,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: '{{name}}' },
@@ -440,6 +443,7 @@ describe('Novu Client', () => {
         },
         state: [],
         inputs: {},
+        controls: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -469,9 +473,10 @@ describe('Novu Client', () => {
         state: [],
         data: undefined as any,
         inputs: {},
+        controls: {},
       };
 
-      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventInputInvalidError);
+      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventControlsInvalidError);
     });
 
     it('should preview with mocked data during preview', async () => {
@@ -502,6 +507,7 @@ describe('Novu Client', () => {
         state: [],
         data: {},
         inputs: {},
+        controls: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -526,6 +532,7 @@ describe('Novu Client', () => {
         state: [],
         data: {},
         inputs: {},
+        controls: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -565,6 +572,7 @@ describe('Novu Client', () => {
         state: [],
         data: {},
         inputs: {},
+        controls: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -597,6 +605,7 @@ describe('Novu Client', () => {
         state: [],
         data: {},
         inputs: {},
+        controls: {},
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(WorkflowNotFoundError);
@@ -632,6 +641,7 @@ describe('Novu Client', () => {
         state: [],
         data: {},
         inputs: {},
+        controls: {},
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionStateCorruptError);
@@ -650,6 +660,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         inputs: {},
+        controls: {},
       } as any;
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(Error);
