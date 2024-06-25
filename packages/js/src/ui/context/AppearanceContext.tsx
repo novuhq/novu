@@ -43,7 +43,8 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
     descriptorToCssInJsClass: Record<string, string>;
   }>({ descriptorToCssInJsClass: {} });
   const [styleElement, setStyleElement] = createSignal<HTMLStyleElement | null>(null);
-  const [rules, setRules] = createSignal<string[]>([]);
+  const [elementRules, setElementRules] = createSignal<string[]>([]);
+  const [variableRules, setVariableRules] = createSignal<string[]>([]);
 
   //place style element on HEAD. Placing in body is available for HTML 5.2 onward.
   onMount(() => {
@@ -62,8 +63,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       return;
     }
 
-    const variableRules = parseVariables({ ...defaultVariables, ...(props.variables || ({} as Variables)) });
-    setRules((oldRules) => [...oldRules, ...variableRules]);
+    setVariableRules(parseVariables({ ...defaultVariables, ...(props.variables || ({} as Variables)) }));
   });
 
   //handle elements
@@ -83,7 +83,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
         return acc;
       }, {}),
     }));
-    setRules((oldRules) => [...oldRules, ...elementsStyleData.map((el) => el.rule)]);
+    setElementRules(elementsStyleData.map((el) => el.rule));
   });
 
   //add rules to style element
@@ -93,7 +93,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       return;
     }
 
-    styleEl.innerHTML = rules().join(' ');
+    styleEl.innerHTML = [...variableRules(), ...elementRules()].join(' ');
   });
 
   return (
