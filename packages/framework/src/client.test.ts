@@ -1,4 +1,4 @@
-import { expect, it, describe, beforeEach, vi } from 'vitest';
+import { expect, it, describe, beforeEach } from 'vitest';
 
 import { Client } from './client';
 import {
