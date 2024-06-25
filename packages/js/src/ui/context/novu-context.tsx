@@ -9,7 +9,7 @@ type NovuProviderProps = {
 const NovuContext = createContext<Novu | undefined>(undefined);
 
 export function NovuProvider(props: NovuProviderProps) {
-  const novu = new Novu(props.options);
+  const novu = new Novu({ ...props.options, backendUrl: 'http://localhost:3000', socketUrl: 'ws://localhost:3002' });
 
   return <NovuContext.Provider value={novu}>{props.children}</NovuContext.Provider>;
 }
