@@ -644,7 +644,10 @@
     "Nimma",
     "jpath",
     "vstack",
-    "liquidjs"
+    "liquidjs",
+    "tailwindcss",
+    "focusable",
+    "textareas"
   ],
   "flagWords": [],
   "patterns": [
