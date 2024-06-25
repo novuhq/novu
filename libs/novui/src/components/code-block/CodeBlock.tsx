@@ -25,6 +25,13 @@ type PolymorphicComponent = <C extends React.ElementType = CodeBlockElement>(
   props: CodeBlockProps<C>
 ) => JSX.Element | null;
 
+/**
+ * @deprecated This is not actually deprecated but needs more work to be styled properly and align with our use cases.
+ *
+ * Issues:
+ * - switching between color modes and maintaining readable code
+ * - no line numbers are built-in to Highlight JS
+ **/
 export const CodeBlock: PolymorphicComponent = React.forwardRef(
   <C extends React.ElementType = CodeBlockElement>(props: CodeBlockProps<C>, ref?: PolymorphicRef<C>) => {
     const [variantProps, codeBlockProps] = codeBlock.splitVariantProps(props);
