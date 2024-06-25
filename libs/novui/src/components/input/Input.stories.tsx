@@ -19,10 +19,19 @@ export default {
         disable: true,
       },
     },
+    error: {
+      type: 'string',
+    },
+    variant: {
+      options: ['preventLayoutShift', undefined],
+      control: {
+        type: 'select',
+      },
+    },
   },
 } as Meta<typeof Input>;
 
-const Template: StoryFn<typeof Input> = ({ ...args }) => <Input {...args} />;
+const Template: StoryFn<typeof Input> = ({ ...args }) => <Input {...args} variant="preventLayoutShift" />;
 
 export const PrimaryUse = Template.bind({});
 PrimaryUse.args = {
@@ -66,7 +75,10 @@ Error.args = {
 
 const FormTemplate: StoryFn<typeof Input> = ({ ...args }) => {
   return (
-    <form noValidate onSubmit={(event) => event.preventDefault()} className={stack()}>
+    <form noValidate onSubmit={(event) => event.preventDefault()}>
+      <Input {...args} />
+      <Input {...args} />
+      <Input {...args} placeholder="This won't have an error" error={undefined} />
       <Input {...args} />
       <Button type="submit">Submit</Button>
     </form>
