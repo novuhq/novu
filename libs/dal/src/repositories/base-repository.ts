@@ -6,7 +6,16 @@ import {
   DEFAULT_MESSAGE_IN_APP_RETENTION_DAYS,
   DEFAULT_NOTIFICATION_RETENTION_DAYS,
 } from '@novu/shared';
-import { Model, Types, ProjectionType, FilterQuery, UpdateQuery, QueryOptions } from 'mongoose';
+import {
+  Model,
+  Types,
+  ProjectionType,
+  FilterQuery,
+  UpdateQuery,
+  QueryOptions,
+  Query,
+  QueryWithHelpers,
+} from 'mongoose';
 import { DalException } from '../shared';
 
 export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
@@ -99,6 +108,111 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
       .cursor()) {
       yield this.mapEntity(doc);
     }
+  }
+
+  private async createCursorBasedOrStatement({
+    isSortDesc,
+    paginateField,
+    after,
+    queryOrStatements,
+  }: {
+    isSortDesc: boolean;
+    paginateField?: string;
+    after: string;
+    queryOrStatements?: object[];
+  }): Promise<FilterQuery<T_DBModel>[]> {
+    const afterItem = await this.MongooseModel.findOne({ _id: after });
+    if (!afterItem) {
+      throw new DalException('Invalid after id');
+    }
+
+    let cursorOrStatements: FilterQuery<T_DBModel>[] = [];
+    let enhancedCursorOrStatements: FilterQuery<T_DBModel>[] = [];
+    if (paginateField && afterItem[paginateField]) {
+      const paginatedFieldValue = afterItem[paginateField];
+      cursorOrStatements = [
+        { [paginateField]: isSortDesc ? { $lt: paginatedFieldValue } : { $gt: paginatedFieldValue } } as any,
+        { [paginateField]: { $eq: paginatedFieldValue }, _id: isSortDesc ? { $lt: after } : { $gt: after } },
+      ];
+      const firstStatement = (queryOrStatements ?? []).map((item) => ({
+        ...item,
+        ...cursorOrStatements[0],
+      }));
+      const secondStatement = (queryOrStatements ?? []).map((item) => ({
+        ...item,
+        ...cursorOrStatements[1],
+      }));
+      enhancedCursorOrStatements = [...firstStatement, ...secondStatement];
+    } else {
+      cursorOrStatements = [{ _id: isSortDesc ? { $lt: after } : { $gt: after } }];
+      const firstStatement = (queryOrStatements ?? []).map((item) => ({
+        ...item,
+        ...cursorOrStatements[0],
+      }));
+      enhancedCursorOrStatements = [...firstStatement];
+    }
+
+    return enhancedCursorOrStatements.length > 0 ? enhancedCursorOrStatements : cursorOrStatements;
+  }
+
+  async cursorPagination({
+    query,
+    limit,
+    offset,
+    after,
+    sort,
+    paginateField,
+    enhanceQuery,
+  }: {
+    query?: FilterQuery<T_DBModel> & T_Enforcement;
+    limit: number;
+    offset: number;
+    after?: string;
+    sort?: any;
+    paginateField?: string;
+    enhanceQuery?: (query: QueryWithHelpers<Array<T_DBModel>, T_DBModel>) => any;
+  }): Promise<{ data: T_MappedEntity[]; hasMore: boolean }> {
+    const isAfterDefined = typeof after !== 'undefined';
+    const sortKeys = Object.keys(sort ?? {});
+    const isSortDesc = sortKeys.length > 0 && sort[sortKeys[0]] === -1;
+
+    let findQueryBuilder = this.MongooseModel.find({
+      ...query,
+    });
+    if (isAfterDefined) {
+      const orStatements = await this.createCursorBasedOrStatement({
+        isSortDesc,
+        paginateField,
+        after,
+        queryOrStatements: query?.$or,
+      });
+
+      findQueryBuilder = this.MongooseModel.find({
+        ...query,
+        $or: orStatements,
+      });
+    }
+
+    findQueryBuilder.sort(sort).limit(limit + 1);
+    if (!isAfterDefined) {
+      findQueryBuilder.skip(offset);
+    }
+
+    if (enhanceQuery) {
+      findQueryBuilder = enhanceQuery(findQueryBuilder);
+    }
+
+    const messages = await findQueryBuilder.exec();
+
+    const hasMore = messages.length > limit;
+    if (hasMore) {
+      messages.pop();
+    }
+
+    return {
+      data: this.mapEntities(messages),
+      hasMore,
+    };
   }
 
   private calcExpireDate(modelName: string, data: FilterQuery<T_DBModel> & T_Enforcement) {
