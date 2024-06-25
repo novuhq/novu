@@ -63,13 +63,13 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
 
   return (
     <Modal opened={isOpen} title={<Title variant="section">Update endpoint URL</Title>} onClose={toggleOpen}>
-      {/* TODO: is there a better way to add empty space for the error message (so the modal doesn't resize) */}
-      <Stack gap="100">
+      <Stack gap="100" colorPalette={'mode.local'}>
         <Input
           label={'Endpoint URL'}
           onChange={onBridgeUrlChange}
           value={inputUrl}
           disabled={isLoading}
+          variant="preventLayoutShift"
           error={urlError}
         />
         <HStack justify={'space-between'}>
