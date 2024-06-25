@@ -1,6 +1,5 @@
 import { For, createSignal, onMount } from 'solid-js';
 import { Notification } from '../feeds';
-import { Novu } from '../novu';
 import type { NovuOptions } from '../novu';
 import { Appearance, AppearanceProvider } from './context';
 import { useStyle } from './helpers';
@@ -16,15 +15,6 @@ type InboxProps = {
 
 export const Inbox = (props: InboxProps) => {
   const [feeds, setFeeds] = createSignal<Notification[]>([]);
-
-  onMount(() => {
-    const novu = new Novu(props.options);
-
-    // eslint-disable-next-line promise/always-return
-    novu.feeds.fetch().then((data) => {
-      setFeeds(data.data);
-    });
-  });
 
   return (
     <LocalizationProvider localization={props.localization}>
