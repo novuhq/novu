@@ -36,33 +36,8 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
   return (
     <>
       <Tabs
-        defaultValue="payload"
+        defaultValue="step-inputs"
         tabConfigs={[
-          {
-            icon: <IconOutlineTune />,
-            value: 'payload',
-            label: 'Payload',
-            content: (
-              <Container className={formContainerClassName}>
-                <When truthy={havePayloadProperties}>
-                  <JsonSchemaForm
-                    onChange={(data) => onChange('payload', data)}
-                    schema={workflow?.options?.payloadSchema || {}}
-                    formData={{}}
-                  />
-                </When>
-                <When truthy={!havePayloadProperties}>
-                  <InputsEmptyPanel
-                    content="Payload ensures correct formatting and data validity."
-                    onDocsClick={() => {
-                      setPath('framework/concepts/payload');
-                      toggle();
-                    }}
-                  />
-                </When>
-              </Container>
-            ),
-          },
           {
             icon: <IconOutlineEditNote />,
             value: 'step-inputs',
@@ -97,6 +72,31 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
                     content="Modifiable controls defined by the code schema."
                     onDocsClick={() => {
                       setPath('framework/concepts/inputs');
+                      toggle();
+                    }}
+                  />
+                </When>
+              </Container>
+            ),
+          },
+          {
+            icon: <IconOutlineTune />,
+            value: 'payload',
+            label: 'Payload',
+            content: (
+              <Container className={formContainerClassName}>
+                <When truthy={havePayloadProperties}>
+                  <JsonSchemaForm
+                    onChange={(data) => onChange('payload', data)}
+                    schema={workflow?.options?.payloadSchema || {}}
+                    formData={{}}
+                  />
+                </When>
+                <When truthy={!havePayloadProperties}>
+                  <InputsEmptyPanel
+                    content="Payload ensures correct formatting and data validity."
+                    onDocsClick={() => {
+                      setPath('framework/concepts/payload');
                       toggle();
                     }}
                   />
