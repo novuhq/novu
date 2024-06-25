@@ -8,12 +8,12 @@ import { CoreProps } from '../types';
 import { ArrayFieldItemTemplate, ArrayFieldTemplate, ArrayFieldTitleTemplate } from './templates/ArrayFieldTemplate';
 import { AddButton, MoveDownButton, MoveUpButton, RemoveButton } from './templates/IconButton';
 import { ObjectFieldTemplate } from './templates/ObjectFieldTemplate';
-import { CheckboxWidget, InputWidget, SelectWidget } from './widgets';
+import { CheckboxWidget, InputWidget, SelectWidget, TextareaWidget } from './widgets';
 
 const WIDGETS: RegistryWidgetsType = {
   CheckboxWidget: CheckboxWidget,
   SelectWidget: SelectWidget,
-  TextWidget: InputWidget,
+  TextWidget: TextareaWidget,
   URLWidget: InputWidget,
   EmailWidget: InputWidget,
 };

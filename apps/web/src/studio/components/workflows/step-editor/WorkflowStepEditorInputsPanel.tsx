@@ -1,6 +1,8 @@
-import { Button, JsonSchemaForm, Tabs } from '@novu/novui';
-import { IconOutlineEditNote, IconOutlineTune } from '@novu/novui/icons';
 import { FC } from 'react';
+import { Button, JsonSchemaForm, Tabs } from '@novu/novui';
+import { IconOutlineEditNote, IconOutlineSave, IconOutlineTune } from '@novu/novui/icons';
+import { css } from '@novu/novui/css';
+import { Container } from '@novu/novui/jsx';
 
 interface IWorkflowStepEditorInputsPanelProps {
   step: any;
@@ -28,11 +30,13 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
           value: 'payload',
           label: 'Payload',
           content: (
-            <JsonSchemaForm
-              onChange={(data) => onChange('payload', data)}
-              schema={workflow?.options?.payloadSchema || {}}
-              formData={{}}
-            />
+            <Container className={formContainerClassName}>
+              <JsonSchemaForm
+                onChange={(data) => onChange('payload', data)}
+                schema={workflow?.options?.payloadSchema || {}}
+                formData={{}}
+              />
+            </Container>
           ),
         },
         {
@@ -40,13 +44,14 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
           value: 'step-inputs',
           label: 'Step inputs',
           content: (
-            <>
+            <Container className={formContainerClassName}>
               {onSave && (
                 <div style={{ display: 'flex', justifyContent: 'end' }}>
                   <Button
                     loading={isLoadingSave}
                     variant={'filled'}
-                    size={'xs'}
+                    size={'sm'}
+                    Icon={IconOutlineSave}
                     onClick={() => {
                       onSave();
                     }}
@@ -55,16 +60,21 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
                   </Button>
                 </div>
               )}
-
               <JsonSchemaForm
                 onChange={(data) => onChange('step', data)}
                 schema={step?.inputs?.schema || {}}
                 formData={defaultInputs || {}}
               />
-            </>
+            </Container>
           ),
         },
       ]}
     />
   );
 };
+
+export const formContainerClassName = css({
+  h: '80vh',
+  overflowY: 'auto !important',
+  scrollbar: 'hidden',
+});
