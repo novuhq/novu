@@ -1,12 +1,14 @@
-import { BadRequestException, Injectable, NotFoundException, Inject, Logger, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import {
   AnalyticsService,
-  encryptCredentials,
   buildIntegrationKey,
+  encryptCredentials,
+  GetFeatureFlag,
+  GetFeatureFlagCommand,
   InvalidateCacheService,
 } from '@novu/application-generic';
-import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
+import { CHANNELS_WITH_PRIMARY, FeatureFlagsKeysEnum } from '@novu/shared';
 
 import { UpdateIntegrationCommand } from './update-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
@@ -19,7 +21,8 @@ export class UpdateIntegration {
   constructor(
     private invalidateCache: InvalidateCacheService,
     private integrationRepository: IntegrationRepository,
-    private analyticsService: AnalyticsService
+    private analyticsService: AnalyticsService,
+    private getFeatureFlag: GetFeatureFlag
   ) {}
 
   private async calculatePriorityAndPrimaryForActive({
@@ -123,11 +126,22 @@ export class UpdateIntegration {
       active: command.active,
     });
 
-    await this.invalidateCache.invalidateQuery({
-      key: buildIntegrationKey().invalidate({
-        _organizationId: command.organizationId,
-      }),
-    });
+    const isInvalidationDisabled = await this.getFeatureFlag.execute(
+      GetFeatureFlagCommand.create({
+        userId: 'system',
+        environmentId: 'system',
+        organizationId: command.organizationId,
+        key: FeatureFlagsKeysEnum.IS_INTEGRATION_INVALIDATION_DISABLED,
+      })
+    );
+
+    if (!isInvalidationDisabled) {
+      await this.invalidateCache.invalidateQuery({
+        key: buildIntegrationKey().invalidate({
+          _organizationId: command.organizationId,
+        }),
+      });
+    }
 
     const environmentId = command.environmentId ?? existingIntegration._environmentId;
 

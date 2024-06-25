@@ -1,6 +1,5 @@
-import { FromSchema } from 'json-schema-to-ts';
-
 import { providerSchemas } from '../schemas';
+import { FromSchema } from './schema.types';
 
 export type Providers<T_StepType extends keyof typeof providerSchemas, T_Input, T_Output> = {
   [K in keyof (typeof providerSchemas)[T_StepType]]: (step: {
@@ -12,7 +11,8 @@ export type Providers<T_StepType extends keyof typeof providerSchemas, T_Input, 
      * The outputs of the step.
      */
     outputs: T_Output;
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore - FromSchema (json-schema-to-ts) is incorrectly typed
+    // eslint-disable-next-line multiline-comment-style
+    // TODO: fix the typing for `type` to use the keyof providerSchema[channelType]
+    // @ts-expect-error - Types of parameters 'options' and 'options' are incompatible.
   }) => Promise<FromSchema<(typeof providerSchemas)[T_StepType][K]['output']>>;
 };

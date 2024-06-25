@@ -7,11 +7,6 @@ export type ClientOptions = {
    */
   apiKey?: string;
   /**
-   * Specify a custom Novu API URL.
-   * Defaults to 'https://api.novu.co'
-   */
-  apiUrl?: string;
-  /**
    * Explicitly use HMAC signature verification.
    * Setting this to `false` will enable Novu to communicate with your Bridge API
    * without requiring a valid HMAC signature.
