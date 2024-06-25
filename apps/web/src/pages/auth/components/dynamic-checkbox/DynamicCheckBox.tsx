@@ -54,7 +54,9 @@ export function DynamicCheckBox({ Icon, type, ...props }: IDynamicCheckBoxProps)
 }
 
 const UnselectedIcon = styled.svg<{ ishovered: boolean; ischecked: boolean }>`
-  position: absolute;
+  position: relative;
+  display: flex;
+  margin-bottom: -20px;
   height: 20px;
   width: 20px;
   opacity: ${({ ishovered, ischecked }) => (ishovered || ischecked ? 0 : 1)};
