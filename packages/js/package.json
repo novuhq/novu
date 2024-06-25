@@ -59,6 +59,7 @@
     "chalk": "^5.3.0",
     "compression-webpack-plugin": "^10.0.0",
     "esbuild-plugin-compress": "^1.0.1",
+    "esbuild-plugin-inline-import": "^1.0.4",
     "jest": "^29.3.1",
     "postcss": "^8.4.38",
     "postcss-prefix-selector": "^1.16.1",

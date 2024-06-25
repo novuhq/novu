@@ -3,6 +3,7 @@ import { defineConfig, Options } from 'tsup';
 import glob from 'tiny-glob';
 import * as preset from 'tsup-preset-solid';
 import { name, version } from './package.json';
+import inlineImportPlugin from 'esbuild-plugin-inline-import';
 
 const isProd = process.env?.NODE_ENV === 'production';
 
@@ -12,6 +13,7 @@ const baseConfig: Options = {
   clean: true,
   dts: true,
   define: { PACKAGE_NAME: `"${name}"`, PACKAGE_VERSION: `"${version}"`, __DEV__: `${!isProd}` },
+  external: ['css:./index.css'],
 };
 
 const baseModuleConfig: Options = {
@@ -39,6 +41,16 @@ const uiPresetOptions: preset.PresetOptions = {
   drop_console: true,
   // Set to `true` to generate a CommonJS build alongside ESM
   cjs: true,
+  esbuild_plugins: [
+    inlineImportPlugin({
+      filter: /^css:/,
+      transform: (contents) => {
+        console.log(contents);
+
+        return 'test';
+      },
+    }),
+  ],
 };
 
 export default defineConfig((config: Options) => {
