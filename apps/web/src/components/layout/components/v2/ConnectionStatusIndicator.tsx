@@ -1,8 +1,8 @@
 import { LocalizedMessage, Text } from '@novu/novui';
-import { cva, type RecipeVariant } from '@novu/novui/css';
-import { HStack } from '@novu/novui/jsx';
+import { cva, cx, type RecipeVariant } from '@novu/novui/css';
+import { hstack } from '@novu/novui/patterns';
 import { SystemStyleObject } from '@novu/novui/types';
-import { FC } from 'react';
+import { type ForwardedRef, forwardRef } from 'react';
 
 export type ConnectionStatus = 'connected' | 'disconnected';
 
@@ -35,13 +35,16 @@ const statusRecipe = cva<{
   },
 });
 
-export type ConnectionStatusIndicatorProps = RecipeVariant<typeof statusRecipe>;
+export type ConnectionStatusIndicatorProps = RecipeVariant<typeof statusRecipe> &
+  React.ButtonHTMLAttributes<HTMLButtonElement>;
 
-export const ConnectionStatusIndicator: FC<ConnectionStatusIndicatorProps> = ({ status }) => {
-  return (
-    <HStack gap="50">
-      <div className={statusRecipe({ status })} />
-      <Text color="typography.text.secondary">{CONNECTION_STATUS_LABEL_LOOKUP[status]}</Text>
-    </HStack>
-  );
-};
+export const ConnectionStatusIndicator = forwardRef(
+  ({ status, className, ...buttonProps }: ConnectionStatusIndicatorProps, ref: ForwardedRef<HTMLButtonElement>) => {
+    return (
+      <button {...buttonProps} className={cx(hstack({ gap: '50', cursor: 'pointer' }), className)} ref={ref}>
+        <div className={statusRecipe({ status })} />
+        <Text color="typography.text.secondary">{CONNECTION_STATUS_LABEL_LOOKUP[status]}</Text>
+      </button>
+    );
+  }
+);
