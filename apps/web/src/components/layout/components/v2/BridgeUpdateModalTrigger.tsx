@@ -1,26 +1,27 @@
 import { Tooltip } from '@novu/design-system';
 import { Button, Text } from '@novu/novui';
+import { css } from '@novu/novui/css';
 import { IconEdit, IconLink } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
 import { FC, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
+import { useHover } from '../../../../hooks/useHover';
 import { BridgeUpdateModal } from './BridgeUpdateModal';
 import { ConnectionStatus, ConnectionStatusIndicator } from './ConnectionStatusIndicator';
 import { getBridgeUrl } from './utils';
-
-// FIXME: figure out what this status actually represents
-type BridgeConnectionStatus = ConnectionStatus | 'todo';
 
 /**
  * FIXME: Implement this helper -- determine what are the inputs to determine the status.
  * Gets the bridge connection status based on environment state and connection info.
  */
-const selectBridgeStatus = (): BridgeConnectionStatus => {
-  return 'todo';
+const selectBridgeStatus = (): ConnectionStatus => {
+  return 'disconnected';
 };
 
 export const BridgeUpdateModalTrigger: FC = () => {
+  const hoverProps = useHover();
+
   const location = useLocation();
   const { environment, isLoading: isLoadingEnvironment } = useEnvironment();
   const [showBridgeUpdateModal, setShowBridgeUpdateModal] = useState<boolean>(false);
@@ -47,6 +48,7 @@ export const BridgeUpdateModalTrigger: FC = () => {
         status={bridgeStatus}
         bridgeUrl={bridgeUrl}
         onClick={toggleBridgeUpdateModalShow}
+        {...hoverProps}
       />
       <BridgeUpdateModal isOpen={showBridgeUpdateModal} toggleOpen={toggleBridgeUpdateModalShow} />
     </>
@@ -55,20 +57,28 @@ export const BridgeUpdateModalTrigger: FC = () => {
 
 function BridgeUpdateModalTriggerControl({
   status,
-  onClick,
   bridgeUrl,
+  isHovered,
+  ...buttonProps
 }: {
-  status: BridgeConnectionStatus;
-  onClick: () => void;
+  status: ConnectionStatus;
   bridgeUrl?: string | null;
-}) {
+  onClick: () => void;
+} & ReturnType<typeof useHover>) {
+  const trigger = isHovered ? (
+    <button {...buttonProps} className={css({ '&, & svg': { color: 'typography.text.main !important' } })}>
+      <HStack gap="25">
+        <IconEdit className={css({ color: 'icon.main' })} size="16" />
+        <Text>Edit endpoint</Text>
+      </HStack>
+    </button>
+  ) : (
+    <ConnectionStatusIndicator status={status} {...buttonProps} />
+  );
+
   switch (status) {
-    case 'disconnected':
-      return (
-        <Tooltip label="Currently disconnected">
-          <ConnectionStatusIndicator status={'disconnected'} onClick={onClick} />
-        </Tooltip>
-      );
+    case 'loading':
+      return <Tooltip label="Trying to connect to Bridge URL">{trigger}</Tooltip>;
     case 'connected':
       return (
         <Tooltip
@@ -79,18 +89,11 @@ function BridgeUpdateModalTriggerControl({
             </HStack>
           }
         >
-          <ConnectionStatusIndicator status={'connected'} onClick={onClick} />
+          {trigger}
         </Tooltip>
       );
-    case 'todo':
+    case 'disconnected':
     default:
-      return (
-        // FIXME: what should we show in this tooltip?
-        <Tooltip label={<Text>No Novu endpoint defined!</Text>}>
-          <Button size="xs" variant="outline" Icon={IconEdit} onClick={onClick}>
-            Update novu endpoint
-          </Button>
-        </Tooltip>
-      );
+      return <Tooltip label="No connection to Bridge URL">{trigger}</Tooltip>;
   }
 }

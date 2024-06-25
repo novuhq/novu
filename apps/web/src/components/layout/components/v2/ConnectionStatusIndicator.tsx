@@ -4,11 +4,12 @@ import { hstack } from '@novu/novui/patterns';
 import { SystemStyleObject } from '@novu/novui/types';
 import { type ForwardedRef, forwardRef } from 'react';
 
-export type ConnectionStatus = 'connected' | 'disconnected';
+export type ConnectionStatus = 'connected' | 'disconnected' | 'loading';
 
 const CONNECTION_STATUS_LABEL_LOOKUP: Record<ConnectionStatus, LocalizedMessage> = {
   connected: 'Connected',
   disconnected: 'Disconnected',
+  loading: 'Loading...',
 };
 
 const statusRecipe = cva<{
@@ -30,6 +31,10 @@ const statusRecipe = cva<{
       disconnected: {
         bg: 'typography.text.feedback.alert',
         outlineColor: 'typography.text.feedback.alert/20',
+      },
+      loading: {
+        bg: 'typography.text.feedback.info',
+        outlineColor: 'typography.text.feedback.info/20',
       },
     },
   },
