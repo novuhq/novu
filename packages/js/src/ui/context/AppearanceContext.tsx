@@ -12,6 +12,7 @@ export type ElementStyles = string | CSSProperties;
 export type Elements = {
   button?: ElementStyles;
   root?: ElementStyles;
+  bell?: ElementStyles;
 };
 
 export type Variables = {
