@@ -17,10 +17,8 @@ export const CODE_BLOCK_RECIPE = defineSlotRecipe({
       color: 'codeBlock.text !important',
     },
     pre: {},
-    /*
-     * copy: {
-     *   // ...BUTTON_RECIPE.variants.transparent,
-     * },
-     */
+    copy: {
+      ...BUTTON_RECIPE.variants.transparent,
+    },
   },
 });
