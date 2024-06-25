@@ -479,6 +479,45 @@ describe('Novu Client', () => {
       await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventControlsInvalidError);
     });
 
+    it('should pass the step controls and outputs to the provider execution', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          controlSchema: {
+            type: 'object',
+            properties: {
+              foo: { type: 'string' },
+            },
+            required: ['foo'],
+            additionalProperties: false,
+          } as const,
+          providers: {
+            sendgrid: async ({ controls, outputs }) => ({
+              ipPoolName: `${controls.foo} ${outputs.subject}`,
+            }),
+          },
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: IEvent = {
+        action: 'execute',
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        inputs: {},
+        controls: {
+          foo: 'foo',
+        },
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+
+      expect(executionResult.providers).toEqual({ sendgrid: { ipPoolName: 'foo Subject' } });
+    });
+
     it('should preview with mocked data during preview', async () => {
       const workflowMock = workflow(
         'mock-workflow',

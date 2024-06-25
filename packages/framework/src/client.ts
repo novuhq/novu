@@ -446,14 +446,18 @@ export class Client {
     console.log(`  └ ${EMOJI.DURATION} duration: '${duration.toFixed(2)}ms'\n`);
   }
 
-  private async executeProviders(payload: IEvent, step: DiscoverStepOutput): Promise<Record<string, unknown>> {
+  private async executeProviders(
+    payload: IEvent,
+    step: DiscoverStepOutput,
+    outputs: Record<string, unknown>
+  ): Promise<Record<string, unknown>> {
     return step.providers.reduce(async (acc, provider) => {
       const result = await acc;
       const previewProviderHandler = this.previewProvider.bind(this);
       const executeProviderHandler = this.executeProvider.bind(this);
       const handler = payload.action === 'preview' ? previewProviderHandler : executeProviderHandler;
 
-      const providerResult = await handler(payload, step, provider);
+      const providerResult = await handler(payload, step, provider, outputs);
 
       return {
         ...result,
@@ -462,7 +466,12 @@ export class Client {
     }, Promise.resolve({} as Record<string, unknown>));
   }
 
-  private previewProvider(payload: IEvent, step: DiscoverStepOutput, provider: DiscoverProviderOutput): unknown {
+  private previewProvider(
+    payload: IEvent,
+    step: DiscoverStepOutput,
+    provider: DiscoverProviderOutput,
+    outputs: Record<string, unknown>
+  ): unknown {
     // eslint-disable-next-line no-console
     console.log(`  ${EMOJI.MOCK} Mocked provider: \`${provider.type}\``);
     const mockOutput = this.mock(provider.outputs.schema);
@@ -473,7 +482,8 @@ export class Client {
   private async executeProvider(
     payload: IEvent,
     step: DiscoverStepOutput,
-    provider: DiscoverProviderOutput
+    provider: DiscoverProviderOutput,
+    outputs: Record<string, unknown>
   ): Promise<unknown> {
     const spinner = ora({ indent: 2 }).start(`Executing provider: \`${provider.type}\``);
     try {
@@ -481,8 +491,7 @@ export class Client {
         const controls = await this.createStepControls(step, payload);
         const result = await provider.resolve({
           controls,
-          // TODO: wire up these outputs from the step result
-          outputs: {},
+          outputs,
         });
         const validatedResult = await this.validate(
           result,
@@ -524,7 +533,7 @@ export class Client {
         const templateControls = await this.createStepControls(step, event);
         const controls = await this.compileControls(templateControls, event);
         const output = await step.resolve(controls);
-        const validatedResult = await this.validate(
+        const validatedOutput = await this.validate(
           output,
           step.outputs.unknownSchema,
           'step',
@@ -533,12 +542,12 @@ export class Client {
           step.stepId
         );
 
-        const providers = await this.executeProviders(event, step);
+        const providers = await this.executeProviders(event, step, validatedOutput);
 
         spinner.succeed(`Executed stepId: \`${step.stepId}\``);
 
         return {
-          outputs: validatedResult,
+          outputs: validatedOutput,
           providers,
         };
       } catch (error) {
@@ -570,7 +579,7 @@ export class Client {
 
           return {
             outputs: validatedOutput,
-            providers: await this.executeProviders(event, step),
+            providers: await this.executeProviders(event, step, validatedOutput),
           };
         } else {
           throw new ExecutionStateCorruptError(event.workflowId, step.stepId);
@@ -629,7 +638,7 @@ export class Client {
         const controls = await this.compileControls(templateControls, payload);
 
         const previewOutput = await step.resolve(controls);
-        const validatedResult = await this.validate(
+        const validatedOutput = await this.validate(
           previewOutput,
           step.outputs.unknownSchema,
           'step',
@@ -644,8 +653,8 @@ export class Client {
         });
 
         return {
-          outputs: validatedResult,
-          providers: await this.executeProviders(payload, step),
+          outputs: validatedOutput,
+          providers: await this.executeProviders(payload, step, validatedOutput),
         };
       } else {
         const mockResult = this.mock(step.results.schema);
@@ -657,7 +666,7 @@ export class Client {
 
         return {
           outputs: mockResult,
-          providers: await this.executeProviders(payload, step),
+          providers: await this.executeProviders(payload, step, mockResult),
         };
       }
     } catch (error) {

@@ -13,6 +13,12 @@ export type ExecuteInput<T_Payload, T_Control> = {
   subscriber: Subscriber;
   /** The environment the workflow is running in. */
   environment: Record<string, unknown>;
+  /**
+   * The controls for the event. Provided via the UI.
+   *
+   * @deprecated Use `controls` instead
+   */
+  input: T_Control;
   /** The controls for the event. Provided via the UI. */
   controls: T_Control;
 };

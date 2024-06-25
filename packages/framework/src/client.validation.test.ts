@@ -43,11 +43,16 @@ describe('validation', () => {
               return true;
             },
             providers: {
-              sendgrid: async ({ controls }) => {
+              sendgrid: async ({ controls, outputs }) => {
                 // @ts-expect-error - Type 'number' is not assignable to type 'string'.
                 controls.foo = 123;
                 // @ts-expect-error - Type 'string' is not assignable to type 'number'.
                 controls.baz = '123';
+
+                // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+                outputs.body = 123;
+                // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+                outputs.subject = 123;
 
                 return {
                   ipPoolName: 'test',
@@ -76,10 +81,7 @@ describe('validation', () => {
           });
         },
         {
-          payloadSchema: z.object({
-            foo: z.string(),
-            baz: z.number(),
-          }),
+          payloadSchema: zodSchema,
         }
       );
     });
@@ -101,10 +103,7 @@ describe('validation', () => {
           });
         },
         {
-          controlSchema: z.object({
-            foo: z.string(),
-            baz: z.number(),
-          }),
+          controlSchema: zodSchema,
         }
       );
     });
@@ -226,11 +225,16 @@ describe('validation', () => {
               return true;
             },
             providers: {
-              sendgrid: async ({ controls }) => {
+              sendgrid: async ({ controls, outputs }) => {
                 // @ts-expect-error - Type 'number' is not assignable to type 'string'.
                 controls.foo = 123;
                 // @ts-expect-error - Type 'string' is not assignable to type 'number'.
                 controls.baz = '123';
+
+                // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+                outputs.body = 123;
+                // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+                outputs.subject = 123;
 
                 return {
                   ipPoolName: 'test',
