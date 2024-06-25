@@ -1,51 +1,78 @@
 import { Tooltip } from '@novu/design-system';
-import { Button, Text } from '@novu/novui';
+import { Text } from '@novu/novui';
 import { css } from '@novu/novui/css';
-import { IconEdit, IconLink } from '@novu/novui/icons';
+import { IconEdit, IconLink, IconLinkOff } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
+import { useQuery } from '@tanstack/react-query';
 import { FC, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useHover } from '../../../../hooks/useHover';
+import { useBridgeUrl } from '../../../../studio/utils/useBridgeUrl';
 import { BridgeUpdateModal } from './BridgeUpdateModal';
 import { ConnectionStatus, ConnectionStatusIndicator } from './ConnectionStatusIndicator';
-import { getBridgeUrl } from './utils';
 
-/**
- * FIXME: Implement this helper -- determine what are the inputs to determine the status.
- * Gets the bridge connection status based on environment state and connection info.
- */
-const selectBridgeStatus = (): ConnectionStatus => {
-  return 'disconnected';
+type BridgeStatus = {
+  status: ConnectionStatus;
+  bridgeUrl?: string;
+};
+
+const BRIDGE_STATUS_REFRESH_INTERVAL_MS = 5 * 1000;
+
+const useBridgeStatus = () => {
+  const { bridgeUrl, isLoading: isLoadingEnvironment } = useBridgeUrl();
+
+  const { data, isLoading, refetch } = useQuery<BridgeStatus>({
+    queryKey: ['bridge-status', bridgeUrl],
+    refetchInterval: BRIDGE_STATUS_REFRESH_INTERVAL_MS,
+    enabled: Boolean(isLoadingEnvironment),
+    queryFn: async () => {
+      if (!bridgeUrl) {
+        return { status: 'disconnected' as ConnectionStatus };
+      }
+
+      try {
+        new URL(bridgeUrl);
+      } catch (e) {
+        throw new Error('The provided URL is invalid');
+      }
+
+      try {
+        const response = await fetch(bridgeUrl + '?action=health-check', {
+          headers: {
+            'Bypass-Tunnel-Reminder': 'true',
+          },
+        });
+
+        const resp = await response.json();
+
+        return { status: (resp.status === 'ok' ? 'connected' : 'disconnected') as ConnectionStatus, bridgeUrl };
+      } catch (e: any) {
+        return { status: 'disconnected' as ConnectionStatus, bridgeUrl };
+      }
+    },
+  });
+
+  return {
+    data: data ?? { status: 'loading', bridgeUrl },
+    isLoading: isLoading || isLoadingEnvironment,
+    refetch,
+  };
 };
 
 export const BridgeUpdateModalTrigger: FC = () => {
   const hoverProps = useHover();
-
-  const location = useLocation();
-  const { environment, isLoading: isLoadingEnvironment } = useEnvironment();
   const [showBridgeUpdateModal, setShowBridgeUpdateModal] = useState<boolean>(false);
+  const {
+    data: { status, bridgeUrl },
+  } = useBridgeStatus();
 
   const toggleBridgeUpdateModalShow = () => {
     setShowBridgeUpdateModal((previous) => !previous);
   };
 
-  if (isLoadingEnvironment) {
-    // FIXME: what should be shown here?
-    return (
-      <Tooltip label={<Text>Getting endpoint information...</Text>}>
-        <Text>Loading...</Text>
-      </Tooltip>
-    );
-  }
-
-  const bridgeStatus = selectBridgeStatus();
-  const bridgeUrl = getBridgeUrl(environment, location.pathname);
-
   return (
     <>
       <BridgeUpdateModalTriggerControl
-        status={bridgeStatus}
+        status={status}
         bridgeUrl={bridgeUrl}
         onClick={toggleBridgeUpdateModalShow}
         {...hoverProps}
@@ -61,10 +88,9 @@ function BridgeUpdateModalTriggerControl({
   isHovered,
   ...buttonProps
 }: {
-  status: ConnectionStatus;
-  bridgeUrl?: string | null;
   onClick: () => void;
-} & ReturnType<typeof useHover>) {
+} & BridgeStatus &
+  ReturnType<typeof useHover>) {
   const trigger = isHovered ? (
     <button {...buttonProps} className={css({ '&, & svg': { color: 'typography.text.main !important' } })}>
       <HStack gap="25">
@@ -85,7 +111,7 @@ function BridgeUpdateModalTriggerControl({
           label={
             <HStack>
               <IconLink />
-              <Text>{`Connected to ${bridgeUrl}`}</Text>
+              <Text maxWidth={'[27rem]'} textWrap="wrap">{`Connected to ${bridgeUrl}`}</Text>
             </HStack>
           }
         >
@@ -94,6 +120,19 @@ function BridgeUpdateModalTriggerControl({
       );
     case 'disconnected':
     default:
-      return <Tooltip label="No connection to Bridge URL">{trigger}</Tooltip>;
+      return (
+        <Tooltip
+          label={
+            <HStack>
+              <IconLinkOff />
+              <Text maxWidth={'[27rem]'} textWrap="wrap">
+                {bridgeUrl ? `Unable to connect to ${bridgeUrl}` : `No Bridge URL configured`}
+              </Text>
+            </HStack>
+          }
+        >
+          {trigger}
+        </Tooltip>
+      );
   }
 }
