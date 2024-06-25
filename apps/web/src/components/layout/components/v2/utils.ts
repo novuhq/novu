@@ -1,15 +1,7 @@
 import { IEnvironment } from '@novu/shared';
 import { getTunnelUrl } from '../../../../api/bridge/utils';
-
-export const isLocalEnv = (pathname: string) => pathname.includes('/studio');
+import { isStudioRoute } from '../../../../studio/utils/isStudioRoute';
 
 export const getBridgeUrl = (env: IEnvironment | undefined, pathname: string) => {
-  let bridgeUrl: string | null | undefined;
-  if (isLocalEnv(pathname)) {
-    bridgeUrl = getTunnelUrl();
-  } else {
-    bridgeUrl = env?.echo?.url;
-  }
-
-  return bridgeUrl;
+  return isStudioRoute(pathname) ? getTunnelUrl() : env?.echo?.url;
 };
