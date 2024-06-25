@@ -43,16 +43,6 @@ export class RunJob {
     let job = await this.jobRepository.findOne({ _id: command.jobId, _environmentId: command.environmentId });
     if (!job) throw new PlatformException(`Job with id ${command.jobId} not found`);
 
-    const template = job.step?.bridgeUrl
-      ? { tags: [] }
-      : await this.getNotificationTemplate({
-          _id: job._templateId,
-          environmentId: job._environmentId,
-        });
-    if (!template) {
-      throw new PlatformException(`Notification template ${job._templateId} is not found`);
-    }
-
     this.assignLogger(job);
 
     const { canceled, activeDigestFollower } = await this.delayedEventIsCanceled(job);
@@ -83,6 +73,11 @@ export class RunJob {
 
       await this.storageHelperService.getAttachments(job.payload?.attachments);
 
+      const template = await this.getNotificationTemplate({
+        _id: job._templateId,
+        environmentId: job._environmentId,
+      });
+
       const sendMessageResult = await this.sendMessage.execute(
         SendMessageCommand.create({
           identifier: job.identifier,
@@ -101,7 +96,7 @@ export class RunJob {
           jobId: job._id,
           events: job.digest?.events,
           job,
-          tags: template.tags,
+          tags: template?.tags || [],
         })
       );
 
