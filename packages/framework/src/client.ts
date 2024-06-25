@@ -81,8 +81,8 @@ export class Client {
 
     if (providedOptions?.strictAuthentication !== undefined) {
       builtConfiguration.strictAuthentication = providedOptions.strictAuthentication;
-    } else if (process.env.NOVU_STRICT_AUTHENTICATION !== undefined) {
-      builtConfiguration.strictAuthentication = process.env.NOVU_STRICT_AUTHENTICATION === 'true';
+    } else if (process.env.NODE_ENV === 'development') {
+      builtConfiguration.strictAuthentication = false;
     }
 
     return builtConfiguration;
