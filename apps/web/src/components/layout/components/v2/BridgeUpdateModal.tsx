@@ -1,15 +1,16 @@
 import { Modal, successMessage } from '@novu/design-system';
-import { Button, Input, Text, Title } from '@novu/novui';
-import { Flex, HStack, Stack } from '@novu/novui/jsx';
+import { Button, Input, Title, Text } from '@novu/novui';
+import { IconOutlineMenuBook } from '@novu/novui/icons';
+import { HStack, Box } from '@novu/novui/jsx';
 import { FC, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { validateBridgeUrl } from '../../../../api/bridge';
-import { setTunnelUrl } from '../../../../api/bridge/utils';
 import { updateBridgeUrl } from '../../../../api/environment';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { isStudioRoute } from '../../../../studio/utils/isStudioRoute';
 import { DocsButton } from '../../../docs/DocsButton';
-import { getBridgeUrl } from './utils';
+import { useBridgeUrl } from '../../../../studio/utils/useBridgeUrl';
+import { hstack } from '@novu/novui/patterns';
 
 export type BridgeUpdateModalProps = {
   isOpen: boolean;
@@ -17,15 +18,17 @@ export type BridgeUpdateModalProps = {
 };
 
 export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOpen }) => {
-  const [inputUrl, setInputUrl] = useState('');
+  const [inputUrl, setInputUrl] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [urlError, setUrlError] = useState('');
+  const [urlError, setUrlError] = useState<string>('');
+
+  const { bridgeUrl, setBridgeUrl } = useBridgeUrl();
 
   const { environment, isLoading: isLoadingEnvironment } = useEnvironment();
   const location = useLocation();
   useMemo(() => {
-    setInputUrl(getBridgeUrl(environment, location.pathname) ?? '');
-  }, [environment, location.pathname]);
+    setInputUrl(bridgeUrl ?? '');
+  }, [bridgeUrl]);
 
   const onBridgeUrlChange = (event) => {
     event.preventDefault();
@@ -52,11 +55,11 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
     setIsUpdating(false);
   };
 
-  const storeInProperLocation = async (bridgeUrl: string) => {
+  const storeInProperLocation = async (newUrl: string) => {
     if (isStudioRoute(location.pathname)) {
-      setTunnelUrl(bridgeUrl);
+      setBridgeUrl(newUrl);
     } else {
-      await updateBridgeUrl({ url: inputUrl }, environment?._id ?? '');
+      await updateBridgeUrl({ url: newUrl }, environment?._id ?? '');
     }
   };
 
@@ -64,7 +67,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
 
   return (
     <Modal opened={isOpen} title={<Title variant="section">Update endpoint URL</Title>} onClose={toggleOpen}>
-      <Stack gap="100" colorPalette={'mode.local'}>
+      <Box colorPalette={'mode.local'}>
         <Input
           label={'Endpoint URL'}
           onChange={onBridgeUrlChange}
@@ -74,16 +77,19 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
           error={urlError}
         />
         <HStack justify={'space-between'}>
-          <Flex align="center">
-            {/* TODO: how do I set the path of the docs? */}
-            <DocsButton />
-            <Text variant="secondary">Learn more in the docs</Text>
-          </Flex>
+          <DocsButton
+            TriggerButton={({ onClick }) => (
+              <button onClick={onClick} className={hstack({ gap: 'margins.icons.Icon20-txt', cursor: 'pointer' })}>
+                <IconOutlineMenuBook />
+                <Text variant="secondary">Learn more in the docs</Text>
+              </button>
+            )}
+          />
           <Button size={'md'} loading={isLoading} onClick={onUpdateClick}>
             Update
           </Button>
         </HStack>
-      </Stack>
+      </Box>
     </Modal>
   );
 };
