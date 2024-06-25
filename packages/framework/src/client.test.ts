@@ -28,9 +28,43 @@ describe('Novu Client', () => {
     client.addWorkflows([newWorkflow]);
   });
 
-  it('should discover 1 workflow', () => {
-    const discovery = client.discover();
-    expect(discovery.workflows).toHaveLength(1);
+  describe('client constructor', () => {
+    it('should set apiKey to process.env.NOVU_API_KEY by default', () => {
+      const originalApiKey = process.env.NOVU_API_KEY;
+      const testApiKey = 'test-env-api-key';
+      process.env = { ...process.env, NOVU_API_KEY: testApiKey };
+      const newClient = new Client();
+      expect(newClient.apiKey).toBe(process.env.NOVU_API_KEY);
+      process.env = { ...process.env, NOVU_API_KEY: originalApiKey };
+    });
+
+    it('should set apiKey to provided apiKey', () => {
+      const testApiKey = 'test-provided-api-key';
+      const newClient = new Client({ apiKey: testApiKey });
+      expect(newClient.apiKey).toBe(testApiKey);
+    });
+
+    it('should set strictAuthentication to false when NODE_ENV is development', () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env = { ...process.env, NODE_ENV: 'development' };
+      const newClient = new Client();
+      expect(newClient.strictAuthentication).toBe(false);
+      process.env = { ...process.env, NODE_ENV: originalEnv };
+    });
+
+    it('should set strictAuthentication to true when NODE_ENV is production', () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env = { ...process.env, NODE_ENV: 'production' };
+      const newClient = new Client();
+      expect(newClient.strictAuthentication).toBe(true);
+      process.env = { ...process.env, NODE_ENV: originalEnv };
+    });
+
+    it('should set strictAuthentication to provided strictAuthentication', () => {
+      const testStrictAuthentication = false;
+      const newClient = new Client({ strictAuthentication: testStrictAuthentication });
+      expect(newClient.strictAuthentication).toBe(testStrictAuthentication);
+    });
   });
 
   describe('discover method', () => {
