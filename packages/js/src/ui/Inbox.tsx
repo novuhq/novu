@@ -1,7 +1,8 @@
 import { For, createSignal, onMount } from 'solid-js';
 import { Notification } from '../feeds';
 import type { NovuOptions } from '../novu';
-import { Appearance, AppearanceProvider } from './context';
+import { Bell } from './components';
+import { Appearance, AppearanceProvider, NovuProvider } from './context';
 import { useStyle } from './helpers';
 import { Localization, LocalizationProvider, useLocalization } from './context/LocalizationContext';
 
