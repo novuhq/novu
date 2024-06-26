@@ -24,6 +24,9 @@ export const BridgeUpdateModalTrigger: FC = () => {
   );
 };
 
+// TODO: agree on token for max tooltip width
+const tooltipTextClassName = css({ textWrap: 'wrap', wordBreak: 'break-all', maxWidth: '[27rem]' });
+
 function BridgeUpdateModalTriggerControl({ onClick }: { onClick: () => void }) {
   const { isHovered, ...hoverProps } = useHover();
   const {
@@ -54,7 +57,7 @@ function BridgeUpdateModalTriggerControl({ onClick }: { onClick: () => void }) {
           label={
             <HStack>
               <IconLink />
-              <Text maxWidth={'[27rem]'} textWrap="wrap">{`Connected to ${bridgeUrl}`}</Text>
+              <Text className={tooltipTextClassName}>{`Connected to ${bridgeUrl}`}</Text>
             </HStack>
           }
         >
@@ -65,10 +68,11 @@ function BridgeUpdateModalTriggerControl({ onClick }: { onClick: () => void }) {
     default:
       return (
         <Tooltip
+          classNames={{ tooltip: css({}) }}
           label={
             <HStack>
               <IconLinkOff />
-              <Text maxWidth={'[27rem]'} textWrap="wrap">
+              <Text className={tooltipTextClassName}>
                 {bridgeUrl ? `Unable to connect to ${bridgeUrl}` : `No Bridge URL configured`}
               </Text>
             </HStack>
