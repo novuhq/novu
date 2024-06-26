@@ -11,6 +11,7 @@ import { isStudioRoute } from '../../../../studio/utils/isStudioRoute';
 import { DocsButton } from '../../../docs/DocsButton';
 import { useBridgeUrl } from '../../../../studio/hooks/useBridgeUrl';
 import { hstack } from '@novu/novui/patterns';
+import { useSegment } from '../../../providers/SegmentProvider';
 
 export type BridgeUpdateModalProps = {
   isOpen: boolean;
@@ -21,7 +22,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
   const [inputUrl, setInputUrl] = useState<string>('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [urlError, setUrlError] = useState<string>('');
-
+  const segment = useSegment();
   const { bridgeUrl, setBridgeUrl } = useBridgeUrl();
 
   const { environment, isLoading: isLoadingEnvironment } = useEnvironment();
@@ -46,6 +47,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
         throw new Error(`Tested URL isn't valid`);
       }
       await storeInProperLocation(inputUrl);
+      segment.track('Update endpoint clicked - [Bridge Modal]');
       successMessage('You have successfuly updated your Novu endpoint configuration');
       toggleOpen();
     } catch {
