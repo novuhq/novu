@@ -1,6 +1,6 @@
-import { ParentProps, createContext, createEffect, createSignal, onMount, useContext } from 'solid-js';
+import { ParentProps, createContext, createEffect, createSignal, onCleanup, onMount, useContext } from 'solid-js';
 import { createStore } from 'solid-js/store';
-import { NOVU_CSS_IN_JS_STYLESHEET_ID, defaultVariables } from '../config';
+import { defaultVariables } from '../config';
 import { parseElements, parseVariables } from '../helpers';
 
 export type CSSProperties = {
@@ -26,17 +26,18 @@ export type Variables = {
   borderRadius?: string;
 };
 
-export type AppearanceContextType = {
+type AppearanceContextType = {
   variables?: Variables;
   elements?: Elements;
   descriptorToCssInJsClass: Record<string, string>;
+  id: string;
 };
 
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
 
 export type Appearance = Pick<AppearanceContextType, 'elements' | 'variables'>;
 
-type AppearanceProviderProps = ParentProps & Appearance;
+type AppearanceProviderProps = ParentProps & Appearance & { id: string };
 
 export const AppearanceProvider = (props: AppearanceProviderProps) => {
   const [store, setStore] = createStore<{
@@ -48,11 +49,26 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
 
   //place style element on HEAD. Placing in body is available for HTML 5.2 onward.
   onMount(() => {
+    const el = document.getElementById(props.id);
+    if (el) {
+      setStyleElement(el as HTMLStyleElement);
+
+      return;
+    }
+
     const styleEl = document.createElement('style');
-    styleEl.id = NOVU_CSS_IN_JS_STYLESHEET_ID;
+    styleEl.id = props.id;
+    console.log(props.id);
     document.head.appendChild(styleEl);
 
     setStyleElement(styleEl);
+  });
+
+  onCleanup(() => {
+    const el = document.getElementById(props.id);
+    if (el) {
+      el.remove();
+    }
   });
 
   //handle variables
@@ -63,7 +79,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       return;
     }
 
-    setVariableRules(parseVariables({ ...defaultVariables, ...(props.variables || ({} as Variables)) }));
+    setVariableRules(parseVariables({ ...defaultVariables, ...(props.variables || ({} as Variables)) }, props.id));
   });
 
   //handle elements
@@ -101,6 +117,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       value={{
         elements: props.elements || {},
         descriptorToCssInJsClass: store.descriptorToCssInJsClass,
+        id: props.id,
       }}
     >
       {props.children}
