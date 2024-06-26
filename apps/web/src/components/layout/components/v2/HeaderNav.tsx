@@ -1,5 +1,5 @@
 import { ActionIcon, Header } from '@mantine/core';
-import { IconHelpOutline, IconOutlineCloudUpload } from '@novu/novui/icons';
+import { IconHelpOutline } from '@novu/novui/icons';
 import { Tooltip } from '@novu/design-system';
 import { IS_DOCKER_HOSTED } from '../../../../config';
 import { useBootIntercom, useFeatureFlag } from '../../../../hooks';
@@ -13,6 +13,7 @@ import { NotificationCenterWidget } from '../NotificationCenterWidget';
 import { HeaderMenuItems } from './HeaderMenuItems';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { BridgeMenuItems } from './BridgeMenuItems';
+
 export function HeaderNav() {
   const { currentUser } = useAuth();
   const isSelfHosted = IS_DOCKER_HOSTED;

@@ -1,4 +1,5 @@
 import { Modal, successMessage } from '@novu/design-system';
+import { css } from '@novu/novui/css';
 import { Button, Input, Title, Text } from '@novu/novui';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
 import { HStack, Box } from '@novu/novui/jsx';
@@ -8,8 +9,8 @@ import { validateBridgeUrl } from '../../../../api/bridge';
 import { updateBridgeUrl } from '../../../../api/environment';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { isStudioRoute } from '../../../../studio/utils/isStudioRoute';
+import { useBridgeURL } from '../../../../studio/hooks/useBridgeURL';
 import { DocsButton } from '../../../docs/DocsButton';
-import { useBridgeUrl } from '../../../../studio/hooks/useBridgeUrl';
 import { hstack } from '@novu/novui/patterns';
 import { useSegment } from '../../../providers/SegmentProvider';
 
@@ -23,7 +24,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
   const [isUpdating, setIsUpdating] = useState(false);
   const [urlError, setUrlError] = useState<string>('');
   const segment = useSegment();
-  const { bridgeUrl, setBridgeUrl } = useBridgeUrl();
+  const { bridgeUrl, setBridgeUrl } = useBridgeURL();
 
   const { environment, isLoading: isLoadingEnvironment } = useEnvironment();
   const location = useLocation();
@@ -77,6 +78,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
           disabled={isLoading}
           variant="preventLayoutShift"
           error={urlError}
+          className={css({ marginBottom: '16px' })}
         />
         <HStack justify={'space-between'}>
           <DocsButton

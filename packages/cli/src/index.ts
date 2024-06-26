@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { initCommand, tunnelCommand } from './commands';
+import { initCommand, devCommand, DevCommandOptions } from './commands';
 
 const program = new Command();
 
@@ -15,17 +15,20 @@ program
   });
 
 program
-  .command('tunnel')
-  .description('Start localtunnel and a well known discovery server to help with local development')
-  .option('-p, --novu-port', 'localhost port where the novu endpoint is avilable, default is 4000', '4000')
+  .command('dev')
+  .description('Start a Novu Dev Studio and a localtunnel')
+  .option('-p, --port <value>', 'Set the local port for the Novu endpoint, defaults to 4000', '4000')
+  .option('-o, --origin <value>', 'Set the origin for the Novu endpoint')
+  .option('-sp, --studio-port <value>', 'Set the local port for the Novu Local Studio server, defaults to 2022', '2022')
   .option(
-    '-h, --tunnel-host',
-    'host domain providing the tunnel, default is "https://localtunnel.me"',
-    'https://localtunnel.me'
+    '-so, --studio-remote-origin <value>',
+    'Set the remote origin for Novu Studio, used for staging environment and local development, defaults to https://web.novu.co',
+    'https://web.novu.co'
   )
-  .option('-s, --subdomain', 'Request a specific subdomain, default is a random value', '')
-  .action((options) => {
-    tunnelCommand(options.novuPort, options.tunnelHost, options.subdomain);
-  });
-
-program.parse();
+  .option(
+    '-r, --region <value>',
+    'Studio Origin SPA, used for staging environment and local development, defaults to us',
+    'us'
+  )
+  .action((options: DevCommandOptions) => devCommand(options))
+  .parse(process.argv);
