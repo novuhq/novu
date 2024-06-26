@@ -1,13 +1,13 @@
+import { FC, useMemo, useState } from 'react';
 import { Tooltip } from '@novu/design-system';
 import { Text } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconEdit, IconLink, IconLinkOff } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
-import { FC, useState } from 'react';
 import { useHover } from '../../../../hooks/useHover';
-import { useBridgeConnectionStatus } from '../../../../studio/hooks';
+import { useHealthCheck } from '../../../../studio/hooks';
 import { BridgeUpdateModal } from './BridgeUpdateModal';
-import { ConnectionStatusIndicator } from './ConnectionStatusIndicator';
+import { ConnectionStatusIndicator, type ConnectionStatus } from './ConnectionStatusIndicator';
 
 export const BridgeUpdateModalTrigger: FC = () => {
   const [showBridgeUpdateModal, setShowBridgeUpdateModal] = useState<boolean>(false);
@@ -29,9 +29,19 @@ const tooltipTextClassName = css({ textWrap: 'wrap', wordBreak: 'break-all', max
 
 function BridgeUpdateModalTriggerControl({ onClick }: { onClick: () => void }) {
   const { isHovered, ...hoverProps } = useHover();
-  const {
-    data: { status, bridgeUrl },
-  } = useBridgeConnectionStatus();
+  const { data, isFetching, error, bridgeURL } = useHealthCheck();
+
+  const status = useMemo<ConnectionStatus>(() => {
+    if (isFetching) {
+      return 'loading';
+    }
+
+    if (bridgeURL && !error && data?.status === 'ok') {
+      return 'connected';
+    }
+
+    return 'disconnected';
+  }, [bridgeURL, isFetching, data, error]);
 
   const trigger = isHovered ? (
     <button
@@ -57,7 +67,7 @@ function BridgeUpdateModalTriggerControl({ onClick }: { onClick: () => void }) {
           label={
             <HStack>
               <IconLink />
-              <Text className={tooltipTextClassName}>{`Connected to ${bridgeUrl}`}</Text>
+              <Text className={tooltipTextClassName}>{`Connected to ${bridgeURL}`}</Text>
             </HStack>
           }
         >
@@ -73,7 +83,7 @@ function BridgeUpdateModalTriggerControl({ onClick }: { onClick: () => void }) {
             <HStack>
               <IconLinkOff />
               <Text className={tooltipTextClassName}>
-                {bridgeUrl ? `Unable to connect to ${bridgeUrl}` : `No Bridge URL configured`}
+                {bridgeURL ? `Unable to connect to ${bridgeURL}` : `No Bridge URL configured`}
               </Text>
             </HStack>
           }
