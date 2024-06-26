@@ -15,6 +15,28 @@ export const SEMANTIC_SIZES_TOKENS = defineSemanticTokens.sizes({
       },
     },
   },
+  modal: {
+    width: {
+      DEFAULT: {
+        value: '800px',
+        type: 'sizes',
+      },
+      max: {
+        value: '800px',
+        type: 'sizes',
+      },
+    },
+    height: {
+      DEFAULT: {
+        value: '90%',
+        type: 'sizes',
+      },
+      max: {
+        value: '90%',
+        type: 'sizes',
+      },
+    },
+  },
   icon: {
     '16': {
       value: '{sizes.100}',

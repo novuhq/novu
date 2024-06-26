@@ -1,9 +1,9 @@
 import { defineSemanticTokens } from '@pandacss/dev';
 
 /**
- * Represents the size of an element.
+ * Represents the size of an radius.
  *
- * Used for properties like width and height.
+ * Used for properties like radius.
  */
 export const SEMANTIC_RADIUS_TOKENS = defineSemanticTokens.radii({
   xs: {

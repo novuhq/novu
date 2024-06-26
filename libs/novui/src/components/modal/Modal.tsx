@@ -7,8 +7,6 @@ import { css, cx } from '../../../styled-system/css';
 interface IModalProps extends ExternalModalProps, CoreProps {
   opened: boolean;
   onClose: () => void;
-  size: 'lg' | 'xl' | 'md';
-  centered: boolean;
 }
 
 export const Modal = ({ children, ...props }: IModalProps) => {

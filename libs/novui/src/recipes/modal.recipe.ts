@@ -10,16 +10,18 @@ export const MODAL_RECIPE = defineSlotRecipe({
   base: {
     root: {
       colorPalette: 'mode.cloud',
-      width: '90%',
       borderRadius: '75',
       position: 'relative',
-      padding: '8',
+      padding: '50',
       color: 'typography.text.main',
+      width: 'modal.width !important',
+    },
+    inner: {
+      width: '100%',
     },
     header: {
-      padding: '25',
-      borderBottom: 'solid',
-      borderColor: 'colorPalette.border',
+      background: 'modal.background !important',
+      padding: '100 !important',
     },
     title: {
       fontSize: '100',
@@ -27,20 +29,22 @@ export const MODAL_RECIPE = defineSlotRecipe({
       marginBottom: '25',
     },
     content: {
-      padding: '0 25',
-      width: '90%',
-    },
-    inner: {
-      padding: '0 25',
-      width: '90%',
+      background: 'modal.background !important',
+      boxShadow: 'medium !important',
     },
     overlay: {
-      background: 'blue',
+      background: 'surface.page !important',
+      opacity: '40 !important',
+    },
+    body: {
+      padding: '100 !important',
     },
     close: {
       position: 'absolute',
       top: '25',
       right: '25',
+      background: 'transparent !important',
+      color: 'icon.main !important',
     },
   },
 });

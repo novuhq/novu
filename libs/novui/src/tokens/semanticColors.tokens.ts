@@ -328,6 +328,12 @@ export const COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
   },
+  modal: {
+    background: {
+      value: { base: '{colors.mauve.100.light}', _dark: '{colors.mauve.100.dark}' },
+      type: 'color',
+    },
+  },
   icon: {
     main: {
       value: { base: '{colors.mauve.20.light}', _dark: '{colors.mauve.20.dark}' },
