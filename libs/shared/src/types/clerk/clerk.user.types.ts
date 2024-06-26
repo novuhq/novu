@@ -1,5 +1,7 @@
 import { User as ClerkUser } from '@clerk/clerk-sdk-node';
 import { ClerkPaginationRequest } from '@clerk/types';
+import { IServicesHashes } from '../../entities/user';
+import { JobTitleEnum } from '../organization';
 
 export type User = ClerkUser & UserMetadataParams;
 
@@ -57,8 +59,8 @@ export type UserPublicMetadata = {
   profilePicture?: string | null;
   showOnBoarding?: boolean;
   showOnBoardingTour?: number;
-  servicesHashes?: { intercom?: string };
-  jobTitle?: string;
+  servicesHashes?: IServicesHashes;
+  jobTitle?: JobTitleEnum;
 };
 
 export type UserMetadataParams = {
