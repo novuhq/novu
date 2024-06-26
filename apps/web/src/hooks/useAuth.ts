@@ -143,6 +143,7 @@ export function useAuth() {
         kind: 'organization',
         key: currentOrganization._id,
         name: currentOrganization.name,
+        createdAt: currentOrganization.createdAt,
       });
     } else {
       ldClient.identify({
