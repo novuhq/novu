@@ -21,32 +21,34 @@ export type BridgeUpdateModalProps = {
 };
 
 export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOpen }) => {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [urlError, setUrlError] = useState<string>('');
   const segment = useSegment();
-  const { bridgeURL, setBridgeURL } = useStudioState();
+  const { local, bridgeURL, setBridgeURL } = useStudioState();
+  const [urlError, setUrlError] = useState<string>('');
+  const [url, setUrl] = useState(bridgeURL);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { environment, isLoading: isLoadingEnvironment } = useEnvironment();
-  const location = useLocation();
 
   const onBridgeUrlChange = (event) => {
     event.preventDefault();
     setUrlError('');
-    setBridgeURL(event.target.value);
+    setUrl(event.target.value);
   };
 
   const onUpdateClick = async () => {
     setUrlError('');
     setIsUpdating(true);
     try {
-      validateURL(bridgeURL);
+      if (url) {
+        validateURL(url);
 
-      const result = await validateBridgeUrl({ bridgeUrl: bridgeURL });
-      if (!result.isValid) {
-        throw new Error('The provided URL is not the Novu Endpoint URL');
+        const result = await validateBridgeUrl({ bridgeUrl: url });
+        if (!result.isValid) {
+          throw new Error('The provided URL is not the Novu Endpoint URL');
+        }
       }
 
-      await storeInProperLocation(bridgeURL);
+      await storeInProperLocation(url);
       segment.track('Update endpoint clicked - [Bridge Modal]');
       successMessage('You have successfuly updated your Novu Endpoint configuration');
       toggleOpen();
@@ -59,9 +61,8 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
   };
 
   const storeInProperLocation = async (newUrl: string) => {
-    if (isStudioRoute(location.pathname)) {
-      setBridgeURL(newUrl);
-    } else {
+    setBridgeURL(newUrl);
+    if (!local) {
       await updateBridgeUrl({ url: newUrl }, environment?._id ?? '');
     }
   };
@@ -74,7 +75,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
         <Input
           label={'Novu Endpoint URL'}
           onChange={onBridgeUrlChange}
-          value={bridgeURL}
+          value={url}
           disabled={isLoading}
           variant="preventLayoutShift"
           error={urlError}

@@ -24,13 +24,8 @@ export class UpdateEnvironment {
       updatePayload[`dns.inboundParseDomain`] = command.dns.inboundParseDomain;
     }
 
-    if (
-      (await this.shouldUpdateBridgeConfiguration(command)) &&
-      command.bridge &&
-      command.bridge.url &&
-      command.bridge.url !== ''
-    ) {
-      updatePayload['echo.url'] = command.bridge.url;
+    if ((await this.shouldUpdateBridgeConfiguration(command)) && command.bridge) {
+      updatePayload['echo.url'] = command.bridge?.url || '';
     }
 
     return await this.environmentRepository.update(

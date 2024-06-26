@@ -14,6 +14,11 @@ export type TriggerParams = {
   payload: Record<string, unknown>;
 };
 
+export type BridgeStatus = {
+  status: 'ok';
+  bridgeUrl?: string;
+};
+
 export function buildBridgeHTTPClient(baseURL: string) {
   const httpClient = axios.create({
     baseURL,
@@ -54,6 +59,12 @@ export function buildBridgeHTTPClient(baseURL: string) {
     async discover(): Promise<{ workflows: any[] }> {
       return get('', {
         action: 'discover',
+      });
+    },
+
+    async healthCheck(): Promise<BridgeStatus> {
+      return get('', {
+        action: 'health-check',
       });
     },
 
