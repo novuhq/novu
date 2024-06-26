@@ -13,7 +13,7 @@ export async function sync(echoUrl: string, novuApiKey: string, backendUrl: stri
 }
 
 export async function executeSync(backendUrl: string, echoUrl: string, novuApiKey: string) {
-  const url = backendUrl + '/v1/echo/sync?source=cli';
+  const url = backendUrl + '/v1/bridge/sync?source=cli';
 
   return await axios.post(
     url,

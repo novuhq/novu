@@ -11,9 +11,8 @@ import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { testTrigger } from '../../api/notification-templates';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { api } from '../../api/index';
 import { ROUTES } from '../../constants/routes';
-import { Flex, VStack } from '@novu/novui/jsx';
+import { VStack } from '@novu/novui/jsx';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { getTunnelUrl } from '../../api/bridge/utils';
 import { bridgeApi } from '../../api/bridge/bridge.api';
@@ -22,8 +21,6 @@ import { Wrapper } from './components/Wrapper';
 export const StudioOnboardingPreview = () => {
   const { currentUser } = useAuth();
   const [tab, setTab] = useState<string>('Preview');
-  const [content, setContent] = useState<string>('');
-  const [subject, setSubject] = useState<string>('');
   const segment = useSegment();
   const navigate = useNavigate();
   const { mutateAsync: triggerTestEvent, isLoading } = useMutation(testTrigger);
@@ -81,18 +78,17 @@ export const StudioOnboardingPreview = () => {
 
   return (
     <Wrapper className={css({ overflow: 'auto' })}>
-      <Header activeStepIndex={2} />
-      <Flex
-        justifyContent="center"
+      <div
         className={css({
           backgroundImage: {
             _dark: '[radial-gradient(#292933 1.5px, transparent 0)]',
             base: '[radial-gradient(#fff 1.5px, transparent 0)]',
           },
           backgroundSize: '[16px 16px]',
-          height: '100%',
+          minHeight: 'calc(100dvh - 4rem)',
         })}
       >
+        <Header activeStepIndex={2} />
         <VStack
           alignContent="center"
           className={css({
@@ -143,7 +139,7 @@ export const StudioOnboardingPreview = () => {
       async (controls) => {
         return {
           subject: "A Successful Test on Novu!",
-          body: renderEmail(inputs, payload),
+          body: renderEmail(controls, payload),
         };
       },
       {
@@ -280,7 +276,7 @@ export const StudioOnboardingPreview = () => {
             />
           </div>
         </VStack>
-      </Flex>
+      </div>
       <Footer
         buttonText="Test workflow"
         onClick={() => {

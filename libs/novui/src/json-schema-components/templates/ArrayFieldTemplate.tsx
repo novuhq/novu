@@ -7,8 +7,7 @@ import {
   ArrayFieldTemplateItemType,
 } from '@rjsf/utils';
 import { css, cx } from '../../../styled-system/css';
-import { Box, Flex, HStack, Grid, GridItem } from '../../../styled-system/jsx';
-import { Text } from '../../components';
+import { Box, HStack } from '../../../styled-system/jsx';
 import { formItemClassName, FormGroupTitle } from '../shared';
 
 export function ArrayFieldTemplate(props: ArrayFieldTemplateProps) {
@@ -64,7 +63,12 @@ export function ArrayFieldItemTemplate(props: ArrayFieldTemplateItemType) {
       // align the buttons with the input itself rather than centered with the input and its label
       className={cx(
         formItemClassName,
-        css({ '&:has(input[type="text"]) [role="toolbar"]': { paddingTop: '250', alignSelf: 'flex-start' } })
+        css({
+          '&:has(input[type="text"],input[type="checkbox"],textarea[type="text"]) [role="toolbar"]': {
+            paddingTop: '0',
+            alignSelf: 'flex-start',
+          },
+        })
       )}
     >
       <div className={css({ width: 'full' })}>{children}</div>

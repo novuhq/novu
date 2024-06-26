@@ -32,7 +32,14 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object } = {}
+    query: {
+      feedId?: string[];
+      tags?: string[];
+      seen?: boolean;
+      read?: boolean;
+      archived?: boolean;
+      payload?: object;
+    } = {}
   ): Promise<MessageQuery & EnforceEnvId> {
     let requestQuery: MessageQuery & EnforceEnvId = {
       _environmentId: environmentId,
@@ -69,6 +76,20 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       requestQuery.read = query.read;
     } else {
       requestQuery.read = { $in: [true, false] };
+    }
+
+    if (query.tags && query.tags?.length > 0) {
+      requestQuery.tags = { $in: query.tags };
+    }
+
+    if (typeof query.archived === 'boolean') {
+      if (!query.archived) {
+        requestQuery.$or = [{ archived: { $exists: false } }, { archived: false }];
+      } else {
+        requestQuery.archived = true;
+      }
+    } else {
+      requestQuery.$or = [{ archived: { $exists: false } }, { archived: { $in: [true, false] } }];
     }
 
     if (query.payload) {
@@ -166,13 +187,22 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     environmentId: string,
     subscriberId: string,
     channel: ChannelTypeEnum,
-    query: { feedId?: string[]; seen?: boolean; read?: boolean; payload?: object } = {},
+    query: {
+      feedId?: string[];
+      tags?: string[];
+      seen?: boolean;
+      read?: boolean;
+      archived?: boolean;
+      payload?: object;
+    } = {},
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 }
   ) {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, {
       feedId: query.feedId,
       seen: query.seen,
+      tags: query.tags,
       read: query.read,
+      archived: query.archived,
       payload: query.payload,
     });
 

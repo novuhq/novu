@@ -3,7 +3,7 @@ import Form from '@rjsf/core';
 import React, { useEffect, useState } from 'react';
 import { Stack } from '@mantine/core';
 
-export const InputVariables = ({ schema = {}, onChange = (values) => {}, defaults = {} }) => {
+export const ControlVariables = ({ schema = {}, onChange = (values) => {}, defaults = {} }) => {
   const [values, setValues] = useState(defaults);
 
   useEffect(() => {

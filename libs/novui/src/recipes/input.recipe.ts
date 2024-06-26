@@ -1,5 +1,6 @@
 import { InputStylesNames, InputWrapperStylesNames } from '@mantine/core';
 import { defineSlotRecipe } from '@pandacss/dev';
+// import { token } from '../../styled-system/tokens';
 
 // full enumeration of the component library's slots
 const SLOTS: (InputStylesNames | InputWrapperStylesNames)[] = [
@@ -80,7 +81,8 @@ export const INPUT_RECIPE = defineSlotRecipe({
       // TODO: figure out about the typography error token
       color: 'input.border.error !important',
       fontSize: '75 !important',
-      paddingTop: '50 !important',
+      lineHeight: '100 !important',
+      paddingTop: 'margins.layout.Input.error.top !important',
     },
     section: {
       paddingRight: '75',
@@ -97,6 +99,34 @@ export const INPUT_RECIPE = defineSlotRecipe({
     required: {
       color: 'typography.text.feedback.required !important',
     },
-    wrapper: {},
+    wrapper: {
+      // prevent Mantine from injecting 2px margin that causes layout shift
+      marginBottom: '0 !important',
+    },
   },
+  variants: {
+    variant: {
+      // TODO: determine if we want this built-in! Prevents layout shift with error states
+      preventLayoutShift: {
+        root: {
+          /*
+           * Disable this temporarily until the import issue with panda is resolved
+           *
+           * paddingBottom: `[calc(${token('lineHeights.100')} + ${token(
+           *   'spacing.margins.layout.Input.error.bottom'
+           * )} + ${token('spacing.margins.layout.Input.error.top')}) !important]`,
+           */
+
+          _error: {
+            // remove the bottom padding when occupied by an error message
+            paddingBottom: '0 !important',
+          },
+        },
+        error: {
+          paddingBottom: 'margins.layout.Input.error.bottom !important',
+        },
+      },
+    },
+  },
+  defaultVariants: { variant: undefined },
 });

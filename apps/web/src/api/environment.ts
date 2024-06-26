@@ -19,3 +19,7 @@ export function regenerateApiKeys() {
 export function updateDnsSettings(payload: { inboundParseDomain: string | undefined }, environmentId: string) {
   return api.put(`/v1/environments/${environmentId}`, { dns: payload });
 }
+
+export function updateBridgeUrl(payload: { url: string | undefined }, environmentId: string) {
+  return api.put(`/v1/environments/${environmentId}`, { bridge: payload });
+}

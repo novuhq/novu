@@ -13,15 +13,17 @@ import { When } from '../../../../components/utils/When';
 import { useAuth } from '../../../../hooks/useAuth';
 import { ExecutionDetailsModalWrapper } from '../../../../pages/templates/components/ExecutionDetailsModalWrapper';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
-import { ToSubscriber, WorkflowTestInputsPanel } from './WorkflowTestInputsPanel';
+import { ToSubscriber, WorkflowTestControlsPanel } from './WorkflowTestControlsPanel';
 import { WorkflowTestTriggerPanel } from './WorkflowTestTriggerPanel';
 import { getTunnelUrl } from '../../../../api/bridge/utils';
 import { showNotification } from '@mantine/notifications';
-import { ROUTES } from '../../../../constants/routes';
 import { useTemplateFetcher } from '../../../../api/hooks/index';
 import { getApiKeys } from '../../../../api/environment';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { useIsStudio } from '../../../hooks/useIsStudio';
 
 export const WorkflowsTestPage = () => {
+  const segment = useSegment();
   const { currentUser, isLoading: isAuthLoading } = useAuth();
   const { templateId = '' } = useParams<{ templateId: string }>();
   const [payload, setPayload] = useState<Record<string, any>>({});
@@ -29,8 +31,7 @@ export const WorkflowsTestPage = () => {
     subscriberId: '',
     email: '',
   });
-  const { pathname } = useLocation();
-  const isLocal = useMemo(() => pathname.startsWith(ROUTES.STUDIO), [pathname]);
+  const isLocal = useIsStudio();
 
   const { data: apiKeys = [] } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const key = useMemo(() => apiKeys[0]?.key, [apiKeys]);
@@ -88,6 +89,10 @@ export const WorkflowsTestPage = () => {
   );
 
   const handleTestClick = async () => {
+    segment.track('Workflow test ran - [Workflows Test Page]', {
+      env: isLocal ? 'local' : 'cloud',
+    });
+
     try {
       const response = await triggerTestEvent({
         name,
@@ -144,7 +149,7 @@ export const WorkflowsTestPage = () => {
       <WorkflowsPanelLayout>
         <WorkflowTestTriggerPanel identifier={name} to={to} payload={payload} apiKey={key} />
         <When truthy={!isAuthLoading && !isLoading}>
-          <WorkflowTestInputsPanel
+          <WorkflowTestControlsPanel
             onChange={onChange}
             payloadSchema={workflow?.data?.schema || (template as any)?.rawData?.data.schema}
             to={{

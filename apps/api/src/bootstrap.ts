@@ -29,6 +29,8 @@ const extendedBodySizeRoutes = [
   '/v1/layouts',
   '/v1/echo/sync',
   '/v1/echo/diff',
+  '/v1/bridge/sync',
+  '/v1/bridge/diff',
 ];
 
 if (process.env.SENTRY_DSN) {
