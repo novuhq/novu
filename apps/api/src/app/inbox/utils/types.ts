@@ -17,6 +17,7 @@ type Action = {
   type: ButtonTypeEnum;
   label: string;
   url?: string;
+  isCompleted: boolean;
 };
 
 export type InboxNotification = {
