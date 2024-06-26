@@ -1,6 +1,8 @@
 import { render } from 'solid-js/web';
-import Inbox from './Inbox';
 import type { NovuOptions } from '../novu';
+import { Appearance } from './context';
+import './index.css';
+import { Inbox } from './Inbox';
 
 export class InboxUI {
   #dispose: { (): void } | null = null;
@@ -11,9 +13,11 @@ export class InboxUI {
     {
       name = 'novu',
       options,
+      appearance,
     }: {
       name?: string;
       options: NovuOptions;
+      appearance?: Appearance;
     }
   ): void {
     if (this.#dispose !== null) {
@@ -24,7 +28,7 @@ export class InboxUI {
     this.#rootElement.setAttribute('id', 'novu-ui');
     el.appendChild(this.#rootElement);
 
-    const dispose = render(() => <Inbox name={name} options={options} />, this.#rootElement);
+    const dispose = render(() => <Inbox name={name} options={options} appearance={appearance} />, this.#rootElement);
 
     this.#dispose = dispose;
   }
@@ -32,6 +36,6 @@ export class InboxUI {
   unmount(): void {
     this.#dispose?.();
     this.#dispose = null;
-    this.#rootElement.remove();
+    this.#rootElement?.remove();
   }
 }

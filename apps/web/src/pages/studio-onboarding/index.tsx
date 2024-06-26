@@ -8,6 +8,7 @@ import { VStack } from '@novu/novui/jsx';
 import { SetupTimeline } from './components/SetupTimeline';
 import { useSetupBridge } from './useSetupBridge';
 import { useSegment } from '../../components/providers/SegmentProvider';
+import { Wrapper } from './components/Wrapper';
 
 export const StudioOnboarding = () => {
   const [url, setUrl] = useState('');
@@ -35,13 +36,7 @@ export const StudioOnboarding = () => {
   }
 
   return (
-    <div
-      className={css({
-        width: '100dvw',
-        height: '100dvh',
-        colorPalette: 'mode.cloud',
-      })}
-    >
+    <Wrapper>
       <Header />
       <VStack alignContent="center">
         <div
@@ -75,6 +70,6 @@ export const StudioOnboarding = () => {
         }}
         loading={loading}
       />
-    </div>
+    </Wrapper>
   );
 };

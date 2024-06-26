@@ -6,7 +6,7 @@ import { css } from '@novu/novui/css';
 import { useEffect, useMemo, useState } from 'react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 import { PreviewWeb } from '../../components/workflow/preview/email/PreviewWeb';
-import { useActiveIntegrations, useAuth } from '../../hooks/index';
+import { useAuth } from '../../hooks/index';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { testTrigger } from '../../api/notification-templates';
@@ -17,6 +17,7 @@ import { Flex, VStack } from '@novu/novui/jsx';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { getTunnelUrl } from '../../api/bridge/utils';
 import { bridgeApi } from '../../api/bridge/bridge.api';
+import { Wrapper } from './components/Wrapper';
 
 export const StudioOnboardingPreview = () => {
   const { currentUser } = useAuth();
@@ -38,23 +39,17 @@ export const StudioOnboardingPreview = () => {
     return bridgeResponse.workflows[0];
   }, [bridgeResponse]);
 
-  const { mutateAsync, isLoading: previewLoading } = useMutation(
-    (data) => api.post('/v1/echo/preview/' + template?.workflowId + '/' + template?.steps[0]?.stepId, data),
+  const { data: preview, isLoading: previewLoading } = useQuery(
+    ['workflow-preview', template?.workflowId, template?.steps[0]?.stepId],
+    async () => {
+      return bridgeApi.getStepPreview(template?.workflowId, template?.steps[0]?.stepId, {}, {});
+    },
     {
-      onSuccess(data) {
-        setContent(data.outputs.body);
-        setSubject(data.outputs.subject);
-      },
+      enabled: !!(template && template?.workflowId && template?.steps[0]?.stepId),
+      refetchOnWindowFocus: 'always',
+      refetchInterval: 1000,
     }
   );
-
-  useEffect(() => {
-    if (!template) {
-      return;
-    }
-
-    mutateAsync();
-  }, [template, mutateAsync]);
 
   useEffect(() => {
     segment.track('Create workflow step started - [Onboarding - Signup]');
@@ -85,13 +80,7 @@ export const StudioOnboardingPreview = () => {
   };
 
   return (
-    <div
-      className={css({
-        width: '100dvw',
-        height: '100dvh',
-        overflow: 'auto',
-      })}
-    >
+    <Wrapper className={css({ overflow: 'auto' })}>
       <Header activeStepIndex={2} />
       <Flex
         justifyContent="center"
@@ -129,8 +118,8 @@ export const StudioOnboardingPreview = () => {
                   value: 'Preview',
                   content: (
                     <PreviewWeb
-                      content={content}
-                      subject={subject}
+                      content={preview?.outputs?.body}
+                      subject={preview?.outputs?.subject}
                       onLocaleChange={() => {}}
                       locales={[]}
                       bridge={true}
@@ -301,6 +290,6 @@ export const StudioOnboardingPreview = () => {
         disabled={isLoading || isLoadingList || !template}
         tooltip={`We'll send you a notification to ${currentUser?.email}`}
       />
-    </div>
+    </Wrapper>
   );
 };

@@ -249,6 +249,7 @@ export class SendMessageChat extends SendMessageBase {
       content: this.storeContent() ? content : null,
       providerId: subscriberChannel.providerId,
       _jobId: command.jobId,
+      tags: command.tags,
     });
 
     await this.sendSelectedIntegrationExecution(command.job, integration);

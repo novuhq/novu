@@ -190,6 +190,7 @@ export class SendMessageInApp extends SendMessageBase {
             actor,
             _actorId: command.job?._actorId,
           }),
+        tags: command.tags,
       });
     }
 

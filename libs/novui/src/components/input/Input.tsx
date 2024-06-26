@@ -8,7 +8,7 @@ import { JsxStyleProps } from '../../../styled-system/types';
 import { PolymorphicRef } from '../../types/props-helpers';
 
 export type TextInputType = 'text' | 'password' | 'email' | 'search' | 'tel';
-const DEFAULT_TEXT_INPUT_TYPE: TextInputType = 'text';
+export const DEFAULT_TEXT_INPUT_TYPE: TextInputType = 'text';
 
 export interface IInputProps extends JsxStyleProps, CoreProps, Pick<ExternalTextInputProps, 'leftSection'> {
   label?: LocalizedMessage;

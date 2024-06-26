@@ -68,5 +68,6 @@ const commentWorkflow = await workflow(
   }
 );
 
+// Use your favorite framework to serve your workflows
 serve({ workflows: [commentWorkflow] });
 ```

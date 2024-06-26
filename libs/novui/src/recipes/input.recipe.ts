@@ -15,7 +15,7 @@ const SLOTS: (InputStylesNames | InputWrapperStylesNames)[] = [
 
 export const INPUT_RECIPE = defineSlotRecipe({
   className: 'input',
-  jsx: ['Input'],
+  jsx: ['Input', 'Textarea'],
   slots: SLOTS,
   base: {
     root: {

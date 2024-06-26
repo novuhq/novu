@@ -440,7 +440,7 @@ contexts.forEach((context: Context) => {
                     default: 'seconds',
                   },
                 },
-              },
+              } as const,
             }
           );
 
@@ -513,7 +513,7 @@ contexts.forEach((context: Context) => {
                     default: 'seconds',
                   },
                 },
-              },
+              } as const,
             }
           );
 

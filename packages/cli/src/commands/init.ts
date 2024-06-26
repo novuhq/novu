@@ -22,25 +22,12 @@ import {
   SERVER_HOST,
   REDIRECT_ROUTE,
   API_OAUTH_URL,
-  WIDGET_DEMO_ROUTE,
-  API_TRIGGER_URL,
   CLIENT_LOGIN_URL,
   getServerPort,
   GITHUB_DOCKER_URL,
-  EMBED_PATH,
 } from '../constants';
-import {
-  storeHeader,
-  createOrganization,
-  switchOrganization,
-  createEnvironment,
-  getEnvironmentMe,
-  switchEnvironment,
-  getNotificationGroup,
-  createNotificationTemplates,
-  getEnvironmentApiKeys,
-} from '../api';
-import { AnalyticService, ConfigService, AnalyticsEventEnum, ANALYTICS_SOURCE } from '../services';
+import { storeHeader, createOrganization, switchOrganization, getEnvironmentMe } from '../api';
+import { AnalyticService, ConfigService, AnalyticsEventEnum } from '../services';
 import { signup, updateEmail } from '../api/auth';
 import * as chalk from 'chalk';
 import { privateEmailDomains } from '../constants/domains';
@@ -54,7 +41,7 @@ const analytics = new AnalyticService();
 
 export async function initCommand() {
   try {
-    await showWelcomeScreen();
+    showWelcomeScreen();
 
     const config = new ConfigService();
     if (process.env.NODE_ENV === 'dev') {
@@ -250,26 +237,6 @@ async function createOrganizationHandler(config: ConfigService, answers: Answers
 
   storeToken(config, newUserJwt);
 }
-
-async function createEnvironmentHandler(config: ConfigService, answers: Answers): Promise<string> {
-  if (config.isEnvironmentIdExist()) {
-    const existingEnvironment = await getEnvironmentMe();
-    const keys = await getEnvironmentApiKeys();
-
-    config.setValue('apiKey', keys[0]?.key);
-
-    return existingEnvironment.identifier;
-  }
-
-  const createEnvironmentResponse = await createEnvironment(answers.environmentName);
-  const newUserJwt = await switchEnvironment(createEnvironmentResponse._id);
-
-  config.setValue('apiKey', createEnvironmentResponse.apiKeys[0].key);
-  storeToken(config, newUserJwt);
-
-  return createEnvironmentResponse.identifier;
-}
-
 /*
  * Stores token in config and axios default headers
  */

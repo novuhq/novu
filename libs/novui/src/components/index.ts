@@ -8,3 +8,4 @@ export * from './select';
 export * from './tabs';
 export * from './table';
 export * from './modal';
+export * from './textarea';

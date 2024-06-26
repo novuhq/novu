@@ -69,7 +69,7 @@ export const SetupTimeline = ({
         active={active >= 2}
       >
         <CodeSnippet
-          command={'cd my-app && npm run dev'}
+          command={'cd my-novu-app && npm run dev'}
           onClick={() => {
             setActive((old) => (old > 2 ? old : 2));
           }}
