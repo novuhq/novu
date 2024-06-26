@@ -6,7 +6,7 @@ import { InAppPreview } from '../../../../components/workflow/preview';
 import { useEnvironment } from '../../../../hooks';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { VariablesManagement } from '../email-editor/variables-management/VariablesManagement';
-import { InputVariablesForm } from '../InputVariablesForm';
+import { InputVariablesForm } from '../ControlVariablesForm';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 import { AvatarFeedFields } from './AvatarFeedFields';
 import { InAppEditorBlock } from './InAppEditorBlock';

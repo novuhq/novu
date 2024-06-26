@@ -1,9 +1,9 @@
-import { IS_DOCKER_HOSTED } from '../../../config';
+import { IS_DOCKER_HOSTED } from '../../../config/index';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
-import { InputVariablesForm as Component } from '../../../ee/editor';
+import { ControlVariablesForm as Component } from '../../../ee/editor/index';
 
 export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => void }) => {
   const stepFormPath = useStepFormPath();

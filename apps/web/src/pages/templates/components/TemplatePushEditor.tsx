@@ -15,7 +15,7 @@ import { CustomCodeEditor } from './CustomCodeEditor';
 import { EditVariablesModal } from './EditVariablesModal';
 import { VariableManagementButton } from './VariableManagementButton';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
-import { InputVariablesForm } from './InputVariablesForm';
+import { InputVariablesForm } from './ControlVariablesForm';
 
 const templateFields = ['content', 'title'];
 

@@ -17,7 +17,7 @@ import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePr
 import { useMutation } from '@tanstack/react-query';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
-import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
+import { InputVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
 import { ErrorPrettyRender } from '../ErrorPrettyRender';
 
 const PreviewContainer = styled.div`

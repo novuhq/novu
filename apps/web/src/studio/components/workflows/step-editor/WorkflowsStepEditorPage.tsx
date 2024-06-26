@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { WorkflowStepEditorContentPanel } from './WorkflowStepEditorContentPanel';
-import { WorkflowStepEditorInputsPanel } from './WorkflowStepEditorInputsPanel';
+import { WorkflowStepEditorControlsPanel } from './WorkflowStepEditorControlsPanel';
 import { useQuery } from '@tanstack/react-query';
 import { bridgeApi } from '../../../../api/bridge/bridge.api';
 import { useState } from 'react';
@@ -57,7 +57,7 @@ export const WorkflowsStepEditorPage = () => {
     <WorkflowsPageTemplate title={title} icon={<Icon size="32" />}>
       <WorkflowsPanelLayout>
         <WorkflowStepEditorContentPanel step={step} error={error} preview={preview} isLoadingPreview={loadingPreview} />
-        <WorkflowStepEditorInputsPanel step={step} workflow={workflow} onChange={onControlsChange} />
+        <WorkflowStepEditorControlsPanel step={step} workflow={workflow} onChange={onControlsChange} />
       </WorkflowsPanelLayout>
     </WorkflowsPageTemplate>
   );

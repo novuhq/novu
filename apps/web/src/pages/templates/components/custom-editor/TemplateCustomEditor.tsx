@@ -3,7 +3,7 @@ import { StepSettings } from '../../workflow/SideBar/StepSettings';
 import { useStepFormPath } from '../../hooks/useStepFormPath';
 import { useState } from 'react';
 import { Grid, Stack } from '@mantine/core';
-import { InputVariablesForm } from '../InputVariablesForm';
+import { InputVariablesForm } from '../ControlVariablesForm';
 
 export function TemplateCustomEditor() {
   const stepFormPath = useStepFormPath();

@@ -1,12 +1,12 @@
-import { api } from '../../../api';
+import { api } from '../../../api/index';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React, { useEffect } from 'react';
-import { InputVariables } from './InputVariables';
+import { ControlVariables } from './ControlVariables';
 import { useDebouncedState, useDisclosure } from '@mantine/hooks';
 import { Accordion, Code, Group } from '@mantine/core';
 import { Button, Text } from '@novu/design-system';
 
-export const InputVariablesForm = ({ schema, payloadSchema, formData, onChange }) => {
+export const ControlVariablesForm = ({ schema, payloadSchema, formData, onChange }) => {
   const [value, setValue] = useDebouncedState<any>({}, 500);
   const [payloadSchemaData, setPayloadSchemaData] = useDebouncedState<any>({}, 500);
 
@@ -39,7 +39,7 @@ export const InputVariablesForm = ({ schema, payloadSchema, formData, onChange }
             <RenderToolTipHeader title="Workflow Payload" tooltip={<WorkflowSchemaExample />} />
           </Accordion.Control>
           <Accordion.Panel>
-            <InputVariables
+            <ControlVariables
               schema={payloadSchema}
               onChange={(data) => {
                 setPayloadSchemaData(data);
@@ -53,7 +53,7 @@ export const InputVariablesForm = ({ schema, payloadSchema, formData, onChange }
             <RenderToolTipHeader title="Step Controls" tooltip={<WorkflowSchemaExample />} />
           </Accordion.Control>
           <Accordion.Panel>
-            <InputVariables
+            <ControlVariables
               schema={schema}
               onChange={(data) => {
                 setValue(data);
@@ -111,7 +111,7 @@ function WorkflowSchemaExample() {
   );
 }
 
-function InputStepExample() {
+function ControlStepExample() {
   const controlsCodeSnippet = `controlSchema: {
   type: "object", 
   properties: {

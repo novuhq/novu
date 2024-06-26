@@ -19,7 +19,7 @@ import { SmsPreview } from '../../../../components/workflow/preview';
 import { EditVariablesModal } from '../EditVariablesModal';
 import { useTemplateEditorForm } from '../TemplateEditorFormProvider';
 import { When } from '@novu/design-system';
-import { InputVariablesForm } from '../InputVariablesForm';
+import { InputVariablesForm } from '../ControlVariablesForm';
 
 const templateFields = ['content'];
 const PREVIEW = 'Preview';

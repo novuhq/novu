@@ -11,7 +11,7 @@ import { api } from '../../../../api';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
-import { InputVariablesForm } from '../../../../pages/templates/components/InputVariablesForm';
+import { InputVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
 import { InAppBasePreview } from './InAppBasePreview';
 
 export function InAppPreview({ showVariables = true }: { showVariables?: boolean }) {

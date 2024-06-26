@@ -3,11 +3,11 @@ import { IconOutlineEditNote, IconOutlineTune, IconOutlineSave } from '@novu/nov
 import { FC, useMemo } from 'react';
 import { useDocsModal } from '../../../../components/docs/useDocsModal';
 import { When } from '../../../../components/utils/When';
-import { InputsEmptyPanel } from './InputsEmptyPanel';
+import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { css } from '@novu/novui/css';
 import { Container } from '@novu/novui/jsx';
 
-interface IWorkflowStepEditorInputsPanelProps {
+interface IWorkflowStepEditorControlsPanelProps {
   step: any;
   workflow: any;
   onChange: (type: 'step' | 'payload', data: any) => void;
@@ -16,7 +16,7 @@ interface IWorkflowStepEditorInputsPanelProps {
   isLoadingSave?: boolean;
 }
 
-export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelProps> = ({
+export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPanelProps> = ({
   step,
   workflow,
   onChange,
@@ -68,7 +68,7 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
                   />
                 </When>
                 <When truthy={!haveInputProperties}>
-                  <InputsEmptyPanel
+                  <ControlsEmptyPanel
                     content="Modifiable controls defined by the code schema."
                     onDocsClick={() => {
                       setPath('framework/concepts/controls');
@@ -93,7 +93,7 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
                   />
                 </When>
                 <When truthy={!havePayloadProperties}>
-                  <InputsEmptyPanel
+                  <ControlsEmptyPanel
                     content="Payload ensures correct formatting and data validity."
                     onDocsClick={() => {
                       setPath('framework/concepts/payload');
