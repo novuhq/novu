@@ -12,7 +12,13 @@ import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { ChatBasePreview } from './ChatBasePreview';
 
-export function ChatPreview({ showLoading = false, inputVariables }: { showLoading?: boolean; inputVariables?: any }) {
+export function ChatPreview({
+  showLoading = false,
+  controlVariables,
+}: {
+  showLoading?: boolean;
+  controlVariables?: any;
+}) {
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
   const { bridge } = useEnvironment({}, template?.bridge);
@@ -27,18 +33,21 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
     mutateAsync,
     isLoading: isBridgeLoading,
     error: previewError,
-  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
-    onSuccess(data) {
-      setBridgeContent(data.outputs.body);
-    },
-  });
+  } = useMutation(
+    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setBridgeContent(data.outputs.body);
+      },
+    }
+  );
 
   useEffect(() => {
     if (bridge) {
-      mutateAsync(inputVariables);
+      mutateAsync(controlVariables);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bridge, inputVariables]);
+  }, [bridge, controlVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,

@@ -96,7 +96,8 @@ export class SendTestEmail {
         const data = await service.execute({
           workflowId: command.workflowId,
           stepId: command.stepId,
-          inputs: command.inputs,
+          inputs: command.controls || command.inputs,
+          controls: command.controls || command.inputs,
           data: command.payload,
           environmentId: command.environmentId,
           organizationId: command.organizationId,

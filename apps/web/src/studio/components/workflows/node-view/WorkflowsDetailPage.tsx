@@ -49,7 +49,6 @@ export const WorkflowsDetailPage = () => {
           <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
             Test workflow
           </Button>
-          <IconButton Icon={IconSettings} onClick={handleSettingsClick} />
         </>
       }
     >

@@ -13,7 +13,7 @@ import { When } from '../../../../components/utils/When';
 import { useAuth } from '../../../../hooks/useAuth';
 import { ExecutionDetailsModalWrapper } from '../../../../pages/templates/components/ExecutionDetailsModalWrapper';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
-import { ToSubscriber, WorkflowTestInputsPanel } from './WorkflowTestInputsPanel';
+import { ToSubscriber, WorkflowTestControlsPanel } from './WorkflowTestControlsPanel';
 import { WorkflowTestTriggerPanel } from './WorkflowTestTriggerPanel';
 import { getTunnelUrl } from '../../../../api/bridge/utils';
 import { showNotification } from '@mantine/notifications';
@@ -149,7 +149,7 @@ export const WorkflowsTestPage = () => {
       <WorkflowsPanelLayout>
         <WorkflowTestTriggerPanel identifier={name} to={to} payload={payload} apiKey={key} />
         <When truthy={!isAuthLoading && !isLoading}>
-          <WorkflowTestInputsPanel
+          <WorkflowTestControlsPanel
             onChange={onChange}
             payloadSchema={workflow?.data?.schema || (template as any)?.rawData?.data.schema}
             to={{

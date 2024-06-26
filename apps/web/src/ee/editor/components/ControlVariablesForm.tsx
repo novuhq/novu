@@ -1,26 +1,27 @@
-import { api } from '../../../api';
+import { api } from '../../../api/index';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import React, { useEffect } from 'react';
-import { InputVariables } from './InputVariables';
+import { ControlVariables } from './ControlVariables';
 import { useDebouncedState, useDisclosure } from '@mantine/hooks';
 import { Accordion, Code, Group } from '@mantine/core';
 import { Button, Text } from '@novu/design-system';
 
-export const InputVariablesForm = ({ schema, payloadSchema, formData, onChange }) => {
+export const ControlVariablesForm = ({ schema, payloadSchema, formData, onChange }) => {
   const [value, setValue] = useDebouncedState<any>({}, 500);
   const [payloadSchemaData, setPayloadSchemaData] = useDebouncedState<any>({}, 500);
 
-  const { isLoading, data: inputVariables } = useQuery(['inputs', formData.workflowId, formData._stepId], () =>
-    api.get(`/v1/echo/inputs/${formData.workflowId}/${formData.stepId}`)
+  const { isLoading, data: controlVariables } = useQuery(['controls', formData.workflowId, formData._stepId], () =>
+    api.get(`/v1/bridge/controls/${formData.workflowId}/${formData.stepId}`)
   );
 
-  const { mutateAsync: saveInputs, isLoading: isSavingInputs } = useMutation((data) =>
-    api.put('/v1/echo/inputs/' + formData?.workflowId + '/' + formData.stepId, { variables: data })
+  const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
+    api.put('/v1/bridge/controls/' + formData?.workflowId + '/' + formData.stepId, { variables: data })
   );
 
   useEffect(() => {
     onChange({
       inputs: value,
+      controls: value,
       payload: payloadSchemaData,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,7 +39,7 @@ export const InputVariablesForm = ({ schema, payloadSchema, formData, onChange }
             <RenderToolTipHeader title="Workflow Payload" tooltip={<WorkflowSchemaExample />} />
           </Accordion.Control>
           <Accordion.Panel>
-            <InputVariables
+            <ControlVariables
               schema={payloadSchema}
               onChange={(data) => {
                 setPayloadSchemaData(data);
@@ -49,25 +50,25 @@ export const InputVariablesForm = ({ schema, payloadSchema, formData, onChange }
         </Accordion.Item>
         <Accordion.Item value="step">
           <Accordion.Control>
-            <RenderToolTipHeader title="Step Inputs" tooltip={<WorkflowSchemaExample />} />
+            <RenderToolTipHeader title="Step Controls" tooltip={<WorkflowSchemaExample />} />
           </Accordion.Control>
           <Accordion.Panel>
-            <InputVariables
+            <ControlVariables
               schema={schema}
               onChange={(data) => {
                 setValue(data);
               }}
-              defaults={inputVariables?.inputs || {}}
+              defaults={controlVariables?.controls || controlVariables?.inputs || {}}
             />
             <Button
-              loading={isSavingInputs}
+              loading={isSavingControls}
               fullWidth
               onClick={() => {
-                saveInputs(value);
+                saveControls(value);
               }}
               variant="outline"
             >
-              Save Inputs
+              Save Controls
             </Button>
           </Accordion.Panel>
         </Accordion.Item>
@@ -87,7 +88,7 @@ function RenderToolTipHeader({ tooltip, title }) {
 }
 
 function WorkflowSchemaExample() {
-  const inputsCodeSnippet = `payloadSchema: {
+  const controlsCodeSnippet = `payloadSchema: {
   type: "object", 
   properties: {
      showButton: { 
@@ -99,19 +100,19 @@ function WorkflowSchemaExample() {
 
   return (
     <>
-      <Text size="xs">Step Inputs are used to control the behaviour of a step from the Web UI.</Text>
+      <Text size="xs">Step Controls are used to control the behaviour of a step from the Web UI.</Text>
       <Text size="xs">
         <br /> They can be used for things like: Content, Hiding and showing elements, control the order of elements or
         change parameters like digest length and type. <br /> <br />
       </Text>
-      <Text size="xs">Inputs are defined using JSON Schema:</Text>
-      <Code block>{inputsCodeSnippet}</Code>
+      <Text size="xs">Controls are defined using JSON Schema:</Text>
+      <Code block>{controlsCodeSnippet}</Code>
     </>
   );
 }
 
-function InputStepExample() {
-  const inputsCodeSnippet = `inputs: {
+function ControlStepExample() {
+  const controlsCodeSnippet = `controlSchema: {
   type: "object", 
   properties: {
      showButton: { 
@@ -123,13 +124,13 @@ function InputStepExample() {
 
   return (
     <>
-      <Text size="xs">Step Inputs are used to control the behaviour of a step from the Web UI.</Text>
+      <Text size="xs">Step Controls are used to control the behaviour of a step from the Web UI.</Text>
       <Text size="xs">
         <br /> They can be used for things like: Content, Hiding and showing elements, control the order of elements or
         change parameters like digest length and type. <br /> <br />
       </Text>
-      <Text size="xs">Inputs are defined using JSON Schema:</Text>
-      <Code block>{inputsCodeSnippet}</Code>
+      <Text size="xs">Controls are defined using JSON Schema:</Text>
+      <Code block>{controlsCodeSnippet}</Code>
     </>
   );
 }

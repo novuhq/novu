@@ -68,7 +68,7 @@ export function TestSendEmail({
 
   const processedVariables = useProcessVariables(template.variables);
   const [payloadValue, setPayloadValue] = useState('{}');
-  const [stepInputs, setStepInputs] = useState('{}');
+  const [stepControls, setStepControls] = useState('{}');
 
   useEffect(() => {
     setPayloadValue(processedVariables);
@@ -76,7 +76,7 @@ export function TestSendEmail({
 
   const onTestEmail = async () => {
     const payload = JSON.parse(payloadValue);
-    const inputs = JSON.parse(stepInputs);
+    const controls = JSON.parse(stepControls);
 
     try {
       await testSendEmailEvent({
@@ -86,7 +86,8 @@ export function TestSendEmail({
         subject: '',
         ...template,
         payload,
-        inputs,
+        inputs: controls,
+        controls,
         to: sendTo,
         bridge,
         content: bridge
@@ -160,14 +161,14 @@ export function TestSendEmail({
 
         {bridge ? (
           <JsonInput
-            data-test-id="test-email-json-inputs"
+            data-test-id="test-email-json-controls"
             formatOnBlur
             mt={20}
             autosize
             styles={inputStyles}
-            label="Step Inputs"
-            value={stepInputs}
-            onChange={setStepInputs}
+            label="Step Controls"
+            value={stepControls}
+            onChange={setStepControls}
             minRows={12}
             validationError="Invalid JSON"
             rightSectionWidth={50}

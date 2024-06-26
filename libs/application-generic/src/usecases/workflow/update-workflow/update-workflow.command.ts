@@ -73,7 +73,9 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   data?: NotificationTemplateCustomData;
 
   @IsOptional()
-  inputs?: IStepInput;
+  inputs?: IStepControl;
+  @IsOptional()
+  controls?: IStepControl;
 
   @IsOptional()
   rawData?: any;
@@ -86,6 +88,6 @@ export class UpdateWorkflowCommand extends EnvironmentWithUserCommand {
   type: WorkflowTypeEnum;
 }
 
-export interface IStepInput {
+export interface IStepControl {
   schema: JSONSchema7;
 }

@@ -26,10 +26,11 @@ export const bridgeApi = {
     workflowId: string,
     stepId: string,
     payload: Record<string, unknown>,
-    inputs: Record<string, unknown>
+    controls: Record<string, unknown>
   ): Promise<any> {
     return bridgeHttp.post('?action=preview&workflowId=' + workflowId + '&stepId=' + stepId, {
-      inputs: inputs || {},
+      inputs: controls || {},
+      controls: controls || {},
       data: payload || {},
     });
   },
