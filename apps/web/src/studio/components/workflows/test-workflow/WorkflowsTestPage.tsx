@@ -23,7 +23,7 @@ import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { useIsStudio } from '../../../hooks/useIsStudio';
 
 export const WorkflowsTestPage = () => {
-  const segement = useSegment();
+  const segment = useSegment();
   const { currentUser, isLoading: isAuthLoading } = useAuth();
   const { templateId = '' } = useParams<{ templateId: string }>();
   const [payload, setPayload] = useState<Record<string, any>>({});
@@ -89,7 +89,7 @@ export const WorkflowsTestPage = () => {
   );
 
   const handleTestClick = async () => {
-    segement.track('Workflow test ran', {
+    segment.track('Workflow test ran', {
       env: isLocal ? 'local' : 'cloud',
     });
 

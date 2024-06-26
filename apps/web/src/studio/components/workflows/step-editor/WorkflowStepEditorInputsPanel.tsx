@@ -25,7 +25,7 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
   defaultInputs,
   isLoadingSave,
 }) => {
-  const segement = useSegment();
+  const segment = useSegment();
   const { Component, toggle, setPath } = useDocsModal();
   const havePayloadProperties = useMemo(() => {
     return Object.keys(workflow?.options?.payloadSchema?.properties || {}).length > 0;
@@ -55,7 +55,7 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
                         size={'sm'}
                         Icon={IconOutlineSave}
                         onClick={() => {
-                          segement.track('Step controls saved', {
+                          segment.track('Step controls saved', {
                             step: step?.type,
                           });
                           onSave();

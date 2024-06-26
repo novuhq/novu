@@ -13,7 +13,7 @@ export const WorkflowsListPage = () => {
   const { data, isLoading } = useQuery(['bridge-workflows'], async () => {
     return bridgeApi.discover();
   });
-  const segement = useSegment();
+  const segment = useSegment();
 
   return (
     <PageTemplate title="Workflows">
@@ -22,7 +22,7 @@ export const WorkflowsListPage = () => {
           TriggerButton={({ onClick }) => (
             <Button
               onClick={() => {
-                segement.track('Add new workflow clicked - [Workflows page]');
+                segment.track('Add new workflow clicked - [Workflows page]');
                 onClick();
               }}
               Icon={IconOutlineAdd}
