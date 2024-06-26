@@ -36,7 +36,6 @@ export class DevServer {
     });
 
     this.server.listen(port, SERVER_HOST, () => {
-      console.log('Dev server   ✅: Started on port', port);
       console.log('Studio       ✅: Available on', `http://${SERVER_HOST}:${port}${STUDIO_PATH}`);
     });
   }

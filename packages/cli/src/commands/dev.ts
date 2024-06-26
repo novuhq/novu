@@ -1,5 +1,6 @@
 import { DevServer } from '../dev-server';
 import { NtfrTunnel } from '@novu/ntfr-client';
+import { showWelcomeScreen } from './init.consts';
 
 process.on('SIGINT', function () {
   console.log('Caught interrupt signal');
@@ -16,6 +17,8 @@ export type DevCommandOptions = {
 };
 
 export async function devCommand(options: DevCommandOptions) {
+  showWelcomeScreen();
+
   const parsedOptions = parseOptions(options);
 
   const tunnelOrigin = await generateTunnel(parsedOptions.origin);
