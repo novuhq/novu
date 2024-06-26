@@ -32,8 +32,8 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
   }, [workflow?.options?.payloadSchema]);
 
   const haveControlProperties = useMemo(() => {
-    return Object.keys(step?.controls?.schema?.properties || {}).length > 0;
-  }, [step?.controls?.schema]);
+    return Object.keys(step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {}).length > 0;
+  }, [step?.controls?.schema, step?.inputs?.schema]);
 
   return (
     <>
