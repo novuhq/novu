@@ -1,6 +1,7 @@
 export type HealthCheck = {
   status: 'ok' | 'error';
-  version: string;
+  sdkVersion: string;
+  frameworkVersion: string;
   discovered: {
     workflows: number;
     steps: number;
