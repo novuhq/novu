@@ -1,22 +1,26 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Query, UseGuards, Param } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import type { SubscriberEntity } from '@novu/dal';
 
-import { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
-import { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
+import type { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
+import type { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
 import { SessionCommand } from './usecases/session/session.command';
-import { Session } from './usecases/session/session.usecase';
+import type { Session } from './usecases/session/session.usecase';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { SubscriberSession } from '../shared/framework/user.decorator';
-import { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto';
-import { GetNotifications } from './usecases/get-notifications/get-notifications.usecase';
+import type { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto';
+import type { GetNotifications } from './usecases/get-notifications/get-notifications.usecase';
 import { GetNotificationsCommand } from './usecases/get-notifications/get-notifications.command';
-import { GetNotificationsResponseDto } from './dtos/get-notifications-response.dto';
-import { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-request.dto';
-import { GetNotificationsCountResponseDto } from './dtos/get-notifications-count-response.dto';
-import { NotificationsCount } from './usecases/notifications-count/notifications-count.usecase';
+import type { GetNotificationsResponseDto } from './dtos/get-notifications-response.dto';
+import type { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-request.dto';
+import type { GetNotificationsCountResponseDto } from './dtos/get-notifications-count-response.dto';
+import type { NotificationsCount } from './usecases/notifications-count/notifications-count.usecase';
 import { NotificationsCountCommand } from './usecases/notifications-count/notifications-count.command';
+import type { UpdateNotificationRequestDto } from './dtos/update-notification-request.dto';
+import type { InboxNotification } from './utils/types';
+import { UpdateNotificationCommand } from './usecases/update-notification/update-notification.command';
+import type { UpdateNotification } from './usecases/update-notification/update-notification.usecase';
 
 @ApiCommonResponses()
 @Controller('/inbox')
@@ -25,7 +29,8 @@ export class InboxController {
   constructor(
     private initializeSessionUsecase: Session,
     private getNotificationsUsecase: GetNotifications,
-    private notificationsCount: NotificationsCount
+    private notificationsCount: NotificationsCount,
+    private updateNotificationUsecase: UpdateNotification
   ) {}
 
   @Post('/session')
@@ -80,5 +85,23 @@ export class InboxController {
     );
 
     return res;
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id')
+  async updateNotification(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string,
+    @Body() body: UpdateNotificationRequestDto
+  ): Promise<InboxNotification> {
+    return await this.updateNotificationUsecase.execute(
+      UpdateNotificationCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
+        ...body,
+      })
+    );
   }
 }
