@@ -6,7 +6,7 @@ import { text } from '@novu/novui/recipes';
 import { ReactNode } from 'react';
 const LinkText = styled('a', text);
 
-export const InputsEmptyPanel = ({
+export const ControlsEmptyPanel = ({
   content,
   onDocsClick,
 }: {

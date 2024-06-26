@@ -11,13 +11,13 @@ import { useIsStudio } from '../../../hooks/useIsStudio';
 export const WorkflowTestStepButton = ({
   stepId,
   payload,
-  inputs,
+  controls,
   workflowId,
   stepType,
 }: {
   stepId: string;
   payload: Record<string, any>;
-  inputs: Record<string, any>;
+  controls: Record<string, any>;
   workflowId: string;
   stepType: ChannelTypeEnum;
 }) => {
@@ -38,7 +38,8 @@ export const WorkflowTestStepButton = ({
         contentType: 'customHtml',
         subject: '',
         payload,
-        inputs,
+        inputs: controls,
+        controls,
         to: currentUser?.email || '',
         bridge: true,
         content: '',

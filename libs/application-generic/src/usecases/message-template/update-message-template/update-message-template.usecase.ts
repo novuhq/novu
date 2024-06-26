@@ -107,7 +107,10 @@ export class UpdateMessageTemplate {
     }
 
     if (command.inputs) {
-      updatePayload.inputs = command.inputs;
+      updatePayload.inputs = command.controls || command.inputs;
+    }
+    if (command.controls) {
+      updatePayload.controls = command.controls || command.inputs;
     }
 
     if (command.output) {

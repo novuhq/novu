@@ -13,11 +13,11 @@ import { PushBasePreview } from './PushBasePreview';
 export default function Content({
   showLoading = false,
   showOverlay = true,
-  inputVariables,
+  controlVariables,
 }: {
   showLoading?: boolean;
   showOverlay?: boolean;
-  inputVariables?: any;
+  controlVariables?: any;
 }) {
   const { template } = useTemplateEditorForm();
   const { bridge } = useEnvironment({}, template?.bridge);
@@ -35,12 +35,15 @@ export default function Content({
     mutateAsync,
     isLoading: isBridgeLoading,
     error: previewError,
-  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
-    onSuccess(data) {
-      setBridgeContent(data.outputs.body);
-      setBridgeSubject(data.outputs.subject);
-    },
-  });
+  } = useMutation(
+    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setBridgeContent(data.outputs.body);
+        setBridgeSubject(data.outputs.subject);
+      },
+    }
+  );
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,
@@ -55,10 +58,10 @@ export default function Content({
 
   useEffect(() => {
     if (bridge) {
-      mutateAsync(inputVariables);
+      mutateAsync(controlVariables);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bridge, inputVariables]);
+  }, [bridge, controlVariables]);
 
   return (
     <PushBasePreview

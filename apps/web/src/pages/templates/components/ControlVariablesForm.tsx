@@ -1,15 +1,16 @@
-import { IS_DOCKER_HOSTED } from '../../../config';
+import { IS_DOCKER_HOSTED } from '../../../config/index';
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useStepFormPath } from '../hooks/useStepFormPath';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
-import { InputVariablesForm as Component } from '../../../ee/editor';
+import { ControlVariablesForm as Component } from '../../../ee/editor/index';
 
-export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => void }) => {
+export const ControlVariablesForm = ({ onChange }: { onChange?: (data: any) => void }) => {
   const stepFormPath = useStepFormPath();
   const { watch } = useFormContext();
   const { template } = useTemplateEditorForm();
-  const inputs = watch(`${stepFormPath}.template.inputs.schema`) || {};
+  const controls =
+    watch(`${stepFormPath}.template.controls.schema`) || watch(`${stepFormPath}.template.inputs.schema`) || {};
   const workflowPayloadSchema = watch(`payloadSchema`) || {};
 
   const stepId = watch(`${stepFormPath}.stepId`);
@@ -27,5 +28,5 @@ export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => voi
     return null;
   }
 
-  return <Component payloadSchema={workflowPayloadSchema} schema={inputs} formData={formData} onChange={onChange} />;
+  return <Component payloadSchema={workflowPayloadSchema} schema={controls} formData={formData} onChange={onChange} />;
 };
