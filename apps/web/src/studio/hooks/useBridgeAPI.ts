@@ -1,11 +1,15 @@
 import { useMemo } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { buildBridgeHTTPClient, type StepPreviewParams, type TriggerParams } from '../../bridgeApi/bridgeApi.client';
-import { useBridgeURL } from './useBridgeURL';
+import {
+  buildBridgeHTTPClient,
+  type StepPreviewParams,
+  type TriggerParams,
+  type BridgeStatus,
+} from '../../bridgeApi/bridgeApi.client';
 import { useStudioState } from '../StudioStateProvider';
 
 function useBridgeAPI() {
-  const bridgeURL = useBridgeURL();
+  const { bridgeURL } = useStudioState();
 
   return useMemo(() => buildBridgeHTTPClient(bridgeURL), [bridgeURL]);
 }
@@ -20,6 +24,36 @@ export const useDiscover = (options?: any) => {
     },
     options
   );
+};
+
+const BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS = 5 * 1000;
+
+export const useHealthCheck = (options?: any) => {
+  const api = useBridgeAPI();
+  const { bridgeURL } = useStudioState();
+
+  const res = useQuery<BridgeStatus>(
+    ['bridge-health-check', bridgeURL],
+    async () => {
+      try {
+        return await api.healthCheck();
+      } catch (error) {
+        throw error;
+      }
+    },
+    {
+      enabled: !!bridgeURL,
+      networkMode: 'always',
+      refetchOnWindowFocus: true,
+      refetchInterval: BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS,
+      ...options,
+    }
+  );
+
+  return {
+    ...res,
+    bridgeURL,
+  };
 };
 
 export const useWorkflow = (templateId: string, options?: any) => {

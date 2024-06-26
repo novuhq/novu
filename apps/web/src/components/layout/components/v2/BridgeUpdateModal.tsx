@@ -9,10 +9,11 @@ import { validateBridgeUrl } from '../../../../api/bridge';
 import { updateBridgeUrl } from '../../../../api/environment';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { isStudioRoute } from '../../../../studio/utils/isStudioRoute';
-import { useBridgeURL } from '../../../../studio/hooks/useBridgeURL';
+import { useStudioState } from '../../../../studio/hooks';
 import { DocsButton } from '../../../docs/DocsButton';
 import { hstack } from '@novu/novui/patterns';
 import { useSegment } from '../../../providers/SegmentProvider';
+import { validateURL } from '../../../../utils/url';
 
 export type BridgeUpdateModalProps = {
   isOpen: boolean;
@@ -20,48 +21,48 @@ export type BridgeUpdateModalProps = {
 };
 
 export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOpen }) => {
-  const [inputUrl, setInputUrl] = useState<string>('');
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [urlError, setUrlError] = useState<string>('');
   const segment = useSegment();
-  const { bridgeUrl, setBridgeUrl } = useBridgeURL();
+  const { local, bridgeURL, setBridgeURL } = useStudioState();
+  const [urlError, setUrlError] = useState<string>('');
+  const [url, setUrl] = useState(bridgeURL);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const { environment, isLoading: isLoadingEnvironment } = useEnvironment();
-  const location = useLocation();
-  useMemo(() => {
-    setInputUrl(bridgeUrl ?? '');
-  }, [bridgeUrl]);
 
   const onBridgeUrlChange = (event) => {
     event.preventDefault();
     setUrlError('');
-    setInputUrl(event.target.value);
+    setUrl(event.target.value);
   };
 
   const onUpdateClick = async () => {
     setUrlError('');
     setIsUpdating(true);
     try {
-      new URL(inputUrl ?? '');
-      const result = await validateBridgeUrl({ bridgeUrl: inputUrl });
-      if (!result.isValid) {
-        throw new Error(`Tested URL isn't valid`);
+      if (url) {
+        validateURL(url);
+
+        const result = await validateBridgeUrl({ bridgeUrl: url });
+        if (!result.isValid) {
+          throw new Error('The provided URL is not the Novu Endpoint URL');
+        }
       }
-      await storeInProperLocation(inputUrl);
+
+      await storeInProperLocation(url);
       segment.track('Update endpoint clicked - [Bridge Modal]');
-      successMessage('You have successfuly updated your Novu endpoint configuration');
+      successMessage('You have successfuly updated your Novu Endpoint configuration');
       toggleOpen();
-    } catch {
-      setUrlError('The provided URL is not valid and/or is not the Novu Endpoint URL');
+    } catch (error) {
+      const err = error as Error;
+      setUrlError(err.message || 'Unknown error');
     }
 
     setIsUpdating(false);
   };
 
   const storeInProperLocation = async (newUrl: string) => {
-    if (isStudioRoute(location.pathname)) {
-      setBridgeUrl(newUrl);
-    } else {
+    setBridgeURL(newUrl);
+    if (!local) {
       await updateBridgeUrl({ url: newUrl }, environment?._id ?? '');
     }
   };
@@ -69,12 +70,12 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
   const isLoading = isLoadingEnvironment || isUpdating;
 
   return (
-    <Modal opened={isOpen} title={<Title variant="section">Update endpoint URL</Title>} onClose={toggleOpen}>
+    <Modal opened={isOpen} title={<Title variant="section">Update Novu Endpoint URL</Title>} onClose={toggleOpen}>
       <Box colorPalette={'mode.local'}>
         <Input
-          label={'Endpoint URL'}
+          label={'Novu Endpoint URL'}
           onChange={onBridgeUrlChange}
-          value={inputUrl}
+          value={url}
           disabled={isLoading}
           variant="preventLayoutShift"
           error={urlError}
