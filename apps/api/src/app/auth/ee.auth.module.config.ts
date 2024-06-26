@@ -7,15 +7,7 @@ import {
 } from '@novu/application-generic';
 import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
-import {
-  HttpException,
-  HttpStatus,
-  MiddlewareConsumer,
-  ModuleMetadata,
-  NestMiddleware,
-  Provider,
-  RequestMethod,
-} from '@nestjs/common';
+import { ModuleMetadata } from '@nestjs/common';
 import {
   EnvironmentRepository,
   MemberRepository,
@@ -25,7 +17,7 @@ import {
 } from '@novu/dal';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
-import { NextFunction } from 'express';
+import { OrganizationModule } from '../organization/organization.module';
 
 export function getEEModuleConfig(): ModuleMetadata {
   const eeAuthPackage = require('@novu/ee-auth');
@@ -36,7 +28,7 @@ export function getEEModuleConfig(): ModuleMetadata {
   }
 
   return {
-    imports: [...eeAuthModule.imports],
+    imports: [...eeAuthModule.imports, OrganizationModule],
     controllers: [...eeAuthModule.controllers],
     providers: [
       ...eeAuthModule.providers,
@@ -66,27 +58,4 @@ export function getEEModuleConfig(): ModuleMetadata {
       'ORGANIZATION_REPOSITORY',
     ],
   };
-}
-
-export function configure(consumer: MiddlewareConsumer) {
-  consumer.apply(DomainRestrictionMiddleware).forRoutes(
-    { path: '/users/', method: RequestMethod.POST },
-    {
-      path: '/organizations/',
-      method: RequestMethod.POST,
-    }
-  );
-}
-
-class DomainRestrictionMiddleware implements NestMiddleware {
-  use(req: Request, res: Response, next: NextFunction) {
-    const allowedDomains = [process.env.FRONT_BASE_URL];
-    const origin = (req.headers as any)?.origin || '';
-
-    if (origin && allowedDomains.includes(origin)) {
-      next();
-    } else {
-      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
-    }
-  }
 }

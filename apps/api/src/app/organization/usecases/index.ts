@@ -10,9 +10,15 @@ import { GetMyOrganization } from './get-my-organization/get-my-organization.use
 import { RenameOrganization } from './rename-organization/rename-organization.usecase';
 import { SyncExternalOrganization } from './create-organization/sync-external-organization/sync-external-organization.usecase';
 
+// TODO: move ee.organization.controller.ts to EE package
 function getEnterpriseUsecases() {
   if (process.env.NOVU_ENTERPRISE === 'true') {
-    return [SyncExternalOrganization];
+    return [
+      {
+        provide: 'SyncOrganizationUsecase',
+        useClass: SyncExternalOrganization,
+      },
+    ];
   }
 
   return [];
