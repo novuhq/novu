@@ -23,7 +23,7 @@ export class ExecutionEventDataInvalidError extends BadRequestError {
 }
 
 export class ExecutionEventControlsInvalidError extends BadRequestError {
-  code = ErrorCodeEnum.EXECUTION_EVENT_INPUT_INVALID_ERROR;
+  code = ErrorCodeEnum.EXECUTION_EVENT_CONTROL_INVALID_ERROR;
 
   constructor(workflowId: string, data: any) {
     super(`Workflow with id: \`${workflowId}\` has invalid \`controls\`. Please provide the correct event controls.`);
@@ -32,7 +32,7 @@ export class ExecutionEventControlsInvalidError extends BadRequestError {
 }
 
 export class ExecutionStateControlsInvalidError extends BadRequestError {
-  code = ErrorCodeEnum.EXECUTION_STATE_INPUT_INVALID_ERROR;
+  code = ErrorCodeEnum.EXECUTION_STATE_CONTROL_INVALID_ERROR;
 
   constructor(workflowId: string, stepId: string, data: any) {
     super(
