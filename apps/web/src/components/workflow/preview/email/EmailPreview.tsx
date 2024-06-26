@@ -59,7 +59,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
     content,
   });
 
-  const { mutateAsync: saveControls, isLoading: isSavingInputs } = useMutation((data) =>
+  const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
     api.put('/v1/bridge/controls/' + formState?.defaultValues?.identifier + '/' + stepId, { variables: data })
   );
 
