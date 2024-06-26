@@ -65,7 +65,7 @@ const InComponentTemplate: StoryFn<typeof LoadingOverlay> = ({ ...args }) => (
     </form>
     <div className={stack({ mt: '150' })}>
       <Title>Here is some stuff outside the component!</Title>
-      <Text>It should not be overlayed</Text>
+      <Text>It should not be overlaid</Text>
       <Input label="Input" />
     </div>
   </>
