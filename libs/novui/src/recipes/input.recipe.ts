@@ -1,6 +1,6 @@
 import { InputStylesNames, InputWrapperStylesNames } from '@mantine/core';
 import { defineSlotRecipe } from '@pandacss/dev';
-import { token } from '../../styled-system/tokens';
+// import { token } from '../../styled-system/tokens';
 
 // full enumeration of the component library's slots
 const SLOTS: (InputStylesNames | InputWrapperStylesNames)[] = [
@@ -109,9 +109,13 @@ export const INPUT_RECIPE = defineSlotRecipe({
       // TODO: determine if we want this built-in! Prevents layout shift with error states
       preventLayoutShift: {
         root: {
-          paddingBottom: `[calc(${token('lineHeights.100')} + ${token(
-            'spacing.margins.layout.Input.error.bottom'
-          )} + ${token('spacing.margins.layout.Input.error.top')}) !important]`,
+          /*
+           * Disable this temporarily until the import issue with panda is resolved
+           *
+           * paddingBottom: `[calc(${token('lineHeights.100')} + ${token(
+           *   'spacing.margins.layout.Input.error.bottom'
+           * )} + ${token('spacing.margins.layout.Input.error.top')}) !important]`,
+           */
 
           _error: {
             // remove the bottom padding when occupied by an error message

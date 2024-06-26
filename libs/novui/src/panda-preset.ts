@@ -31,8 +31,8 @@ import {
   TABS_RECIPE,
   SELECT_RECIPE,
   CHECKBOX_RECIPE,
+  CODE_BLOCK_RECIPE,
 } from './recipes';
-import { CODE_BLOCK_RECIPE } from './recipes/code-block.recipe';
 
 /**
  * This defines all Novu tokens into a single preset to be used in our various apps (and design-system).
