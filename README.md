@@ -95,12 +95,12 @@ For API documentation and reference, please visit [Echo API Reference](https://d
 ```ts
 
 client.workflow('comment-on-post', async ({step, subscriber}) => {
-  const inAppResponse = await step.inApp('in-app-step', async (inputs) => {
+  const inAppResponse = await step.inApp('in-app-step', async (controls) => {
     return {
-      body: renderReactComponent(inputs)
+      body: renderReactComponent(controls)
     };
   }, {
-    inputSchema: {
+    controlSchema: {
       // ...JSON Schema or ZOD/Ajv/Class Validators definition
     }
   });
@@ -115,11 +115,11 @@ client.workflow('comment-on-post', async ({step, subscriber}) => {
     }
   }, {
     // Step-level inputs defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
-    inputSchema: {
+    controlSchema: {
       // ...JSON Schema
     },
     providers: {
-      sendgrid: async (inputs) => {
+      sendgrid: async (controls) => {
         // Echo runs as part of your application, so you have access to your database or resources
 
         return {

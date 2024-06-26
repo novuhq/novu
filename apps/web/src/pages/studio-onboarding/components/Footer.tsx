@@ -84,7 +84,7 @@ export const Footer = ({
                   segment.track('Skip setup button clicked - [Onboarding - Signup]', {
                     step: pathname,
                   });
-                  navigate(ROUTES.WORKFLOWS);
+                  navigate(ROUTES.STUDIO_FLOWS);
                 }}
                 variant="outline"
               >

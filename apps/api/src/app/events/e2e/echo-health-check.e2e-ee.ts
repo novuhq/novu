@@ -13,7 +13,7 @@ describe('Echo Health Check', async () => {
 
   before(async () => {
     const healthCheckWorkflow = workflow('health-check', async ({ step }) => {
-      await step.email('send-email', async (inputs) => {
+      await step.email('send-email', async (controls) => {
         return {
           subject: 'This is an email subject',
           body: 'Body result',

@@ -5,6 +5,7 @@ export interface IEvent {
   workflowId: string;
   stepId: string;
   inputs: Record<string, unknown>;
+  controls: Record<string, unknown>;
   state: IState[];
   action: 'execute' | 'preview';
   subscriber: Subscriber;
