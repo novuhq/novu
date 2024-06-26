@@ -12,15 +12,12 @@ import { useAuth } from '../../../../hooks/useAuth';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { NotificationCenterWidget } from '../NotificationCenterWidget';
 import { HeaderMenuItems } from './HeaderMenuItems';
-import { useLocation } from 'react-router-dom';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 export function HeaderNav() {
   const { currentUser } = useAuth();
   const isSelfHosted = IS_DOCKER_HOSTED;
-  const location = useLocation();
-
-  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
+  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   useBootIntercom();
   const { themeIcon, themeLabel, toggleColorScheme } = useThemeChange();

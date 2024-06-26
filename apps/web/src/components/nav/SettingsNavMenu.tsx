@@ -13,6 +13,9 @@ import { FreeTrialSidebarWidget } from '../layout/components/FreeTrialSidebarWid
 import { NavMenu } from './NavMenu';
 import { NavMenuLinkButton } from './NavMenuButton/NavMenuLinkButton';
 import { NavMenuSection } from './NavMenuSection';
+import { useFeatureFlag } from '../../hooks/useFeatureFlag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { When } from '../utils/When';
 
 // TODO: Parentheses were not part of designs, but I believe it's much clearer this way
 const getScopedTitle = (label: string, scope?: string) => `${label} ${`(${scope})` ?? ''}`;
@@ -20,6 +23,7 @@ const getScopedTitle = (label: string, scope?: string) => `${label} ${`(${scope}
 export const SettingsNavMenu: React.FC = () => {
   const navigate = useNavigate();
   const { currentOrganization } = useAuth();
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   const onBackButtonClick = () => {
     navigate(ROUTES.HOME);
@@ -58,13 +62,15 @@ export const SettingsNavMenu: React.FC = () => {
           link={ROUTES.TEAM_SETTINGS}
           testId="side-nav-settings-team-link"
         ></NavMenuLinkButton>
-        <NavMenuLinkButton
-          label="Branding"
-          isVisible
-          icon={<IconWorkspacePremium />}
-          link={ROUTES.BRAND_SETTINGS}
-          testId="side-nav-settings-branding-link"
-        ></NavMenuLinkButton>
+        <When truthy={!isV2Enabled}>
+          <NavMenuLinkButton
+            label="Branding"
+            isVisible
+            icon={<IconWorkspacePremium />}
+            link={ROUTES.BRAND_SETTINGS}
+            testId="side-nav-settings-branding-link"
+          ></NavMenuLinkButton>
+        </When>
         <NavMenuLinkButton
           label="Billing"
           isVisible
