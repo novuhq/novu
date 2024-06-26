@@ -1,6 +1,6 @@
 import { LoadingOverlayStylesNames } from '@mantine/core';
 import { defineSlotRecipe } from '@pandacss/dev';
-import { colorPaletteGradientHorizontal } from 'src/ingredients';
+import { colorPaletteGradientHorizontal } from '../ingredients';
 
 const SLOTS: LoadingOverlayStylesNames[] = ['root', 'overlay', 'loader'];
 
