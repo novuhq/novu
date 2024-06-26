@@ -17,7 +17,7 @@ import { usePreviewEmailTemplate } from '../../../../pages/templates/hooks/usePr
 import { useMutation } from '@tanstack/react-query';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
-import { InputVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
+import { ControlVariablesForm } from '../../../../pages/templates/components/ControlVariablesForm';
 import { ErrorPrettyRender } from '../ErrorPrettyRender';
 
 const PreviewContainer = styled.div`
@@ -161,7 +161,7 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
           </When>
           <When truthy={bridge}>
             <div style={{ minWidth: 300, maxWidth: 300, marginLeft: 'auto' }}>
-              <InputVariablesForm
+              <ControlVariablesForm
                 onChange={(values) => {
                   mutateAsync(values);
                 }}

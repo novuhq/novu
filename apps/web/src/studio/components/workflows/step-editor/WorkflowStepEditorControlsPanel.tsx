@@ -29,7 +29,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
     return Object.keys(workflow?.options?.payloadSchema?.properties || {}).length > 0;
   }, [workflow?.options?.payloadSchema]);
 
-  const haveInputProperties = useMemo(() => {
+  const haveControlProperties = useMemo(() => {
     return Object.keys(step?.controls?.schema?.properties || {}).length > 0;
   }, [step?.controls?.schema]);
 
@@ -44,7 +44,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
             label: 'Step controls',
             content: (
               <Container className={formContainerClassName}>
-                <When truthy={haveInputProperties}>
+                <When truthy={haveControlProperties}>
                   {onSave && (
                     <div style={{ display: 'flex', justifyContent: 'end' }}>
                       <Button
@@ -67,7 +67,7 @@ export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPane
                     formData={defaultControls || {}}
                   />
                 </When>
-                <When truthy={!haveInputProperties}>
+                <When truthy={!haveControlProperties}>
                   <ControlsEmptyPanel
                     content="Modifiable controls defined by the code schema."
                     onDocsClick={() => {

@@ -14,10 +14,10 @@ import { SmsBasePreview } from './SmsBasePreview';
 
 export const SmsPreview = ({
   showPreviewAsLoading = false,
-  inputVariables,
+  controlVariables,
 }: {
   showPreviewAsLoading?: boolean;
-  inputVariables?: any;
+  controlVariables?: any;
 }) => {
   const { navigateToStepEditor } = useNavigateToStepEditor();
   const { watch, formState } = useFormContext<IForm>();
@@ -41,10 +41,10 @@ export const SmsPreview = ({
 
   useEffect(() => {
     if (bridge) {
-      mutateAsync(inputVariables);
+      mutateAsync(controlVariables);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bridge, inputVariables]);
+  }, [bridge, controlVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: templateContent as string,

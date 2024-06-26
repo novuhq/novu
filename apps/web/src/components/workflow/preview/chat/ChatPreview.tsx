@@ -12,7 +12,13 @@ import { useMutation } from '@tanstack/react-query';
 import { useTemplateEditorForm } from '../../../../pages/templates/components/TemplateEditorFormProvider';
 import { ChatBasePreview } from './ChatBasePreview';
 
-export function ChatPreview({ showLoading = false, inputVariables }: { showLoading?: boolean; inputVariables?: any }) {
+export function ChatPreview({
+  showLoading = false,
+  controlVariables,
+}: {
+  showLoading?: boolean;
+  controlVariables?: any;
+}) {
   const { watch, formState } = useFormContext<IForm>();
   const { template } = useTemplateEditorForm();
   const { bridge } = useEnvironment({}, template?.bridge);
@@ -38,10 +44,10 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
 
   useEffect(() => {
     if (bridge) {
-      mutateAsync(inputVariables);
+      mutateAsync(controlVariables);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bridge, inputVariables]);
+  }, [bridge, controlVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,

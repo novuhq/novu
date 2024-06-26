@@ -5,7 +5,7 @@ import { useStepFormPath } from '../hooks/useStepFormPath';
 import { useTemplateEditorForm } from './TemplateEditorFormProvider';
 import { ControlVariablesForm as Component } from '../../../ee/editor/index';
 
-export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => void }) => {
+export const ControlVariablesForm = ({ onChange }: { onChange?: (data: any) => void }) => {
   const stepFormPath = useStepFormPath();
   const { watch } = useFormContext();
   const { template } = useTemplateEditorForm();
