@@ -2,6 +2,7 @@ import * as Sentry from '@sentry/react';
 import { Outlet } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { css } from '@novu/novui/css';
+import { LocalStudioHeader } from './LocalStudioHeader';
 
 const AppShell = styled.div`
   display: flex;
@@ -37,6 +38,7 @@ export function LocalStudioPageLayout() {
     >
       <AppShell className={css({ '& *': { colorPalette: 'mode.local' } })}>
         <ContentShell>
+          <LocalStudioHeader />
           <Outlet />
         </ContentShell>
       </AppShell>

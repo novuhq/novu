@@ -104,7 +104,7 @@ export function LocalStudioAuthenticator() {
     };
 
     /*
-     * Construct the final redirect URL poining to the Local Studio server and add
+     * Construct the final redirect URL pointing to the Local Studio server and add
      * the iframe src URL as a search param.
      */
     const finalRedirectURL = new URL(redirectURL);
