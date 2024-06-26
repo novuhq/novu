@@ -37,7 +37,7 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const sourceWidget = params.get('source_widget');
   // TODO: Deprecate the legacy cameCased format in search param
   const invitationTokenFromGithub = params.get('invitationToken') || params.get('invitation_token') || '';
-  const isRedirectedFromLoginPage = params.get('isLoginPage') || '';
+  const isRedirectedFromLoginPage = params.get('isLoginPage') || params.get('is_login_page') || '';
   // TODO: Use redirectUrl if available and redirect post login to the URL. This should be used during the Local studio authentication flow
   const redirectUrl = params.get('redirect_url') || '';
 

@@ -42,9 +42,11 @@ export const StudioStateProvider = ({ children }: { children: React.ReactNode })
     }
   }, [environment, state?.local, currentUser]);
 
-  if (!currentUser || !environment) {
-    return null;
-  }
+  /*
+   * if (!currentUser || !environment) {
+   *   return null;
+   * }
+   */
 
   return <StudioStateContext.Provider value={state}>{children}</StudioStateContext.Provider>;
 };
