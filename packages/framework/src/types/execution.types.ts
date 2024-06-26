@@ -1,4 +1,5 @@
 import { Subscriber } from './subscriber.types';
+import { ITenantDefine, ITriggerPayload, TriggerRecipientsPayload, TriggerRecipientSubscriber } from '@novu/shared';
 
 export interface IEvent {
   data: Record<string, unknown>;
@@ -9,6 +10,17 @@ export interface IEvent {
   state: IState[];
   action: 'execute' | 'preview';
   subscriber: Subscriber;
+}
+
+export interface ITriggerEvent {
+  workflowId: string;
+  to: TriggerRecipientsPayload;
+  actor?: TriggerRecipientSubscriber;
+  bridgeUrl?: string;
+  payload: ITriggerPayload;
+  tenant?: ITenantDefine;
+  transactionId?: string;
+  overrides?: Record<string, unknown>;
 }
 
 interface IState {

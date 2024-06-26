@@ -1,4 +1,5 @@
 import { createHmac } from 'node:crypto';
+import axios, { AxiosInstance } from 'axios';
 
 import { Client } from './client';
 import {
@@ -12,10 +13,9 @@ import {
   SIGNATURE_TIMESTAMP_TOLERANCE,
 } from './constants';
 import {
-  NovuError,
   InvalidActionError,
   MethodNotAllowedError,
-  MissingApiKeyError,
+  NovuError,
   PlatformError,
   SignatureExpiredError,
   SignatureInvalidError,
@@ -23,7 +23,7 @@ import {
   SignatureNotFoundError,
   SigningKeyNotFoundError,
 } from './errors';
-import { Awaitable, DiscoverWorkflowOutput } from './types';
+import { Awaitable, DiscoverWorkflowOutput, ITriggerEvent } from './types';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
@@ -57,19 +57,27 @@ interface IActionResponse<TBody extends string = string> {
 
 export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   public readonly frameworkName: string;
-
   public readonly handler: Handler;
-
   public readonly client: Client;
-
   private readonly hmacEnabled: boolean;
+  private readonly http: AxiosInstance;
 
   constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
     this.client = options.client ? options.client : new Client();
     this.client.addWorkflows(options.workflows);
+    this.http = this.initHttpClient();
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.strictAuthentication;
+  }
+
+  private initHttpClient() {
+    return axios.create({
+      baseURL: 'https://api.novu.co/v1',
+      headers: {
+        Authorization: `ApiKey ${this.client.apiKey}`,
+      },
+    });
   }
 
   public createHandler(): (...args: Input) => Promise<Output> {
@@ -185,6 +193,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     source: string
   ): Record<PostActionEnum, () => Promise<IActionResponse>> {
     return {
+      [PostActionEnum.TRIGGER]: this.triggerAction({ workflowId, ...body }),
       [PostActionEnum.EXECUTE]: async () => {
         const result = await this.client.executeWorkflow({
           ...body,
@@ -209,6 +218,29 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
           [HttpHeaderKeysEnum.EXECUTION_DURATION]: result.metadata.duration.toString(),
         });
       },
+    };
+  }
+
+  private triggerAction(triggerEvent: ITriggerEvent) {
+    return async () => {
+      if (!triggerEvent.bridgeUrl && process.env.NEXT_PUBLIC_VERCEL_URL) {
+        triggerEvent.bridgeUrl = `https://${process.env.NEXT_PUBLIC_VERCEL_URL}/api/novu`;
+      }
+
+      const requestPayload = {
+        name: triggerEvent.workflowId,
+        to: triggerEvent.to,
+        payload: triggerEvent?.payload || {},
+        transactionId: triggerEvent.transactionId,
+        overrides: triggerEvent.overrides || {},
+        ...(triggerEvent.actor && { actor: triggerEvent.actor }),
+        ...(triggerEvent.tenant && { tenant: triggerEvent.tenant }),
+        ...(triggerEvent.bridgeUrl && { bridgeUrl: triggerEvent.bridgeUrl }),
+      };
+
+      const result = (await this.http.post(`/events/trigger`, requestPayload)).data;
+
+      return this.createResponse(HttpStatusEnum.OK, result);
     };
   }
 
@@ -270,6 +302,9 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       }
 
       return this.createError(error);
+    }
+    if ((error as any).response.status === HttpStatusEnum.BAD_REQUEST) {
+      return this.createError((error as { response: NovuError }).response);
     } else {
       // eslint-disable-next-line no-console
       console.error(error);
