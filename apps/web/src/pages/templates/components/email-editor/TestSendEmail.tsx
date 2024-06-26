@@ -166,7 +166,7 @@ export function TestSendEmail({
             mt={20}
             autosize
             styles={inputStyles}
-            label="Step Inputs"
+            label="Step Controls"
             value={stepControls}
             onChange={setStepControls}
             minRows={12}
