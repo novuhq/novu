@@ -17,7 +17,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 export function HeaderNav() {
   const { currentUser } = useAuth();
   const isSelfHosted = IS_DOCKER_HOSTED;
-  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
+  const isV2ExperienceEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_EXPERIENCE_ENABLED);
 
   useBootIntercom();
   const { themeIcon, themeLabel, toggleColorScheme } = useThemeChange();
