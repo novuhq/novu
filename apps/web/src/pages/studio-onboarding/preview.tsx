@@ -6,27 +6,24 @@ import { css } from '@novu/novui/css';
 import { useEffect, useMemo, useState } from 'react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 import { PreviewWeb } from '../../components/workflow/preview/email/PreviewWeb';
-import { useAuth } from '../../hooks/index';
+import { useWorkflowTrigger } from '../../studio/hooks/useBridgeAPI';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
-import { testTrigger } from '../../api/notification-templates';
-import { useMutation, useQuery } from '@tanstack/react-query';
 import { ROUTES } from '../../constants/routes';
 import { VStack } from '@novu/novui/jsx';
 import { useSegment } from '../../components/providers/SegmentProvider';
-import { getTunnelUrl } from '../../api/bridge/utils';
-import { bridgeApi } from '../../api/bridge/bridge.api';
 import { Wrapper } from './components/Wrapper';
+// TODO: This indicates that all onboarding pages for studio should move under the "Studio" folder
+import { useDiscover, useWorkflowPreview } from '../../studio/hooks/useBridgeAPI';
+import { useStudioState } from '../../studio/StudioStateProvider';
 
 export const StudioOnboardingPreview = () => {
-  const { currentUser } = useAuth();
+  const { testUser } = useStudioState();
   const [tab, setTab] = useState<string>('Preview');
   const segment = useSegment();
   const navigate = useNavigate();
-  const { mutateAsync: triggerTestEvent, isLoading } = useMutation(testTrigger);
-  const { data: bridgeResponse, isLoading: isLoadingList } = useQuery(['bridge-workflows'], async () => {
-    return bridgeApi.discover();
-  });
+  const { data: bridgeResponse, isLoading: isLoadingList } = useDiscover();
+  const { trigger, isLoading } = useWorkflowTrigger();
 
   const template = useMemo(() => {
     if (!bridgeResponse?.workflows?.length) {
@@ -36,10 +33,12 @@ export const StudioOnboardingPreview = () => {
     return bridgeResponse.workflows[0];
   }, [bridgeResponse]);
 
-  const { data: preview, isLoading: previewLoading } = useQuery(
-    ['workflow-preview', template?.workflowId, template?.steps[0]?.stepId],
-    async () => {
-      return bridgeApi.getStepPreview(template?.workflowId, template?.steps[0]?.stepId, {}, {});
+  const { data: preview, isLoading: previewLoading } = useWorkflowPreview(
+    {
+      workflowId: template?.workflowId,
+      stepId: template?.steps[0]?.stepId,
+      payload: {},
+      controls: {},
     },
     {
       enabled: !!(template && template?.workflowId && template?.steps[0]?.stepId),
@@ -55,18 +54,12 @@ export const StudioOnboardingPreview = () => {
 
   const onTrigger = async () => {
     const to = {
-      subscriberId: currentUser?._id,
-      email: currentUser?.email,
+      subscriberId: testUser.id,
+      email: testUser.emailAddress,
     };
 
-    const response = await triggerTestEvent({
-      name: template?.workflowId,
-      to,
-      payload: {
-        __source: 'onboarding-test-workflow',
-      },
-      bridgeUrl: getTunnelUrl(),
-    });
+    const payload = { __source: 'studio-onboarding-test-workflow' };
+    const response = await trigger({ workflowId: template?.workflowId, to, payload });
 
     navigate({
       pathname: ROUTES.STUDIO_ONBOARDING_SUCCESS,
@@ -284,7 +277,7 @@ export const StudioOnboardingPreview = () => {
         }}
         loading={isLoading}
         disabled={isLoading || isLoadingList || !template}
-        tooltip={`We'll send you a notification to ${currentUser?.email}`}
+        tooltip={`We'll send you a notification to ${testUser.emailAddress}`}
       />
     </Wrapper>
   );

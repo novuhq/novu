@@ -2,8 +2,7 @@ import { useParams } from 'react-router-dom';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
 import { WorkflowStepEditorContentPanel } from './WorkflowStepEditorContentPanel';
 import { WorkflowStepEditorControlsPanel } from './WorkflowStepEditorControlsPanel';
-import { useQuery } from '@tanstack/react-query';
-import { bridgeApi } from '../../../../api/bridge/bridge.api';
+import { useWorkflow, useWorkflowPreview } from '../../../hooks/useBridgeAPI';
 import { useState } from 'react';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../node-view/WorkflowNodes';
 
@@ -12,22 +11,14 @@ export const WorkflowsStepEditorPage = () => {
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
 
-  const { data: workflow, isLoading } = useQuery(
-    ['workflow', templateId],
-    async () => {
-      return bridgeApi.getWorkflow(templateId);
-    },
-    { refetchOnWindowFocus: 'always' }
-  );
-
+  const { data: workflow } = useWorkflow(templateId, { refetchOnWindowFocus: 'always' });
   const {
     data: preview,
     isLoading: loadingPreview,
     refetch,
     error,
-  } = useQuery(['workflow-preview', templateId, stepId, controls, payload], async () => {
-    return bridgeApi.getStepPreview(templateId, stepId, payload, controls);
-  });
+  } = useWorkflowPreview({ workflowId: templateId, stepId, controls, payload });
+
   const step = workflow?.steps.find((item) => item.stepId === stepId);
   const title = step?.stepId;
 
