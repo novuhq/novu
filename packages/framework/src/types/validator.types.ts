@@ -2,7 +2,7 @@ import { ValidateFunction as AjvValidateFunction } from 'ajv';
 import { ParseReturnType } from 'zod';
 import { Schema, JsonSchema } from './schema.types';
 
-export type ValidateFunction<T = unknown> = AjvValidateFunction<T> | ((inputs: T) => ParseReturnType<T>);
+export type ValidateFunction<T = unknown> = AjvValidateFunction<T> | ((data: T) => ParseReturnType<T>);
 
 export type ValidationError = {
   path: string;

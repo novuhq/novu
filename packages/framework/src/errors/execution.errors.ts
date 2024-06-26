@@ -22,21 +22,21 @@ export class ExecutionEventDataInvalidError extends BadRequestError {
   }
 }
 
-export class ExecutionEventInputInvalidError extends BadRequestError {
-  code = ErrorCodeEnum.EXECUTION_EVENT_INPUT_INVALID_ERROR;
+export class ExecutionEventControlsInvalidError extends BadRequestError {
+  code = ErrorCodeEnum.EXECUTION_EVENT_CONTROL_INVALID_ERROR;
 
   constructor(workflowId: string, data: any) {
-    super(`Workflow with id: \`${workflowId}\` has invalid \`inputs\`. Please provide the correct event inputs.`);
+    super(`Workflow with id: \`${workflowId}\` has invalid \`controls\`. Please provide the correct event controls.`);
     this.data = data;
   }
 }
 
-export class ExecutionStateInputInvalidError extends BadRequestError {
-  code = ErrorCodeEnum.EXECUTION_STATE_INPUT_INVALID_ERROR;
+export class ExecutionStateControlsInvalidError extends BadRequestError {
+  code = ErrorCodeEnum.EXECUTION_STATE_CONTROL_INVALID_ERROR;
 
   constructor(workflowId: string, stepId: string, data: any) {
     super(
-      `Workflow with id: \`${workflowId}\` has an invalid state. Step with id: \`${stepId}\` has invalid input. Please provide the correct step input.`
+      `Workflow with id: \`${workflowId}\` has an invalid state. Step with id: \`${stepId}\` has invalid \`controls\`. Please provide the correct step controls.`
     );
     this.data = data;
   }
