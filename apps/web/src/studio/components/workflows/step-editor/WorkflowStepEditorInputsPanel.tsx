@@ -6,6 +6,7 @@ import { When } from '../../../../components/utils/When';
 import { InputsEmptyPanel } from './InputsEmptyPanel';
 import { css } from '@novu/novui/css';
 import { Container } from '@novu/novui/jsx';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
 
 interface IWorkflowStepEditorInputsPanelProps {
   step: any;
@@ -24,6 +25,7 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
   defaultInputs,
   isLoadingSave,
 }) => {
+  const segment = useSegment();
   const { Component, toggle, setPath } = useDocsModal();
   const havePayloadProperties = useMemo(() => {
     return Object.keys(workflow?.options?.payloadSchema?.properties || {}).length > 0;
@@ -53,6 +55,9 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
                         size={'sm'}
                         Icon={IconOutlineSave}
                         onClick={() => {
+                          segment.track('Step controls saved - [Workflows Step Page]', {
+                            step: step?.type,
+                          });
                           onSave();
                         }}
                       >
