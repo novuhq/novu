@@ -23,7 +23,7 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { Awaitable, DiscoverWorkflowOutput } from './types';
-import { FRAMEWORK_VERSION, VERSION } from './version';
+import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
@@ -92,8 +92,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_METHODS]: 'GET, POST',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_HEADERS]: '*',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_MAX_AGE]: '604800',
-      [HttpHeaderKeysEnum.FRAMEWORK_VERSION]: FRAMEWORK_VERSION,
-      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SDK]: VERSION,
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_VERSION]: FRAMEWORK_VERSION,
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SDK]: SDK_VERSION,
       [HttpHeaderKeysEnum.NOVU_FRAMEWORK_API]: this.frameworkName,
       [HttpHeaderKeysEnum.USER_AGENT]: sdkVersion,
     };
@@ -128,12 +128,12 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     const workflowId = url.searchParams.get(HttpQueryKeysEnum.WORKFLOW_ID) || '';
     const stepId = url.searchParams.get(HttpQueryKeysEnum.STEP_ID) || '';
     const signatureHeader =
-      (await actions.headers(HttpHeaderKeysEnum.SIGNATURE)) ||
-      (await actions.headers(HttpHeaderKeysEnum.SIGNATURE_DEPRECATED)) ||
+      (await actions.headers(HttpHeaderKeysEnum.NOVU_SIGNATURE)) ||
+      (await actions.headers(HttpHeaderKeysEnum.NOVU_SIGNATURE_DEPRECATED)) ||
       '';
     const anonymousHeader =
-      (await actions.headers(HttpHeaderKeysEnum.ANONYMOUS)) ||
-      (await actions.headers(HttpHeaderKeysEnum.ANONYMOUS_DEPRECATED)) ||
+      (await actions.headers(HttpHeaderKeysEnum.NOVU_ANONYMOUS)) ||
+      (await actions.headers(HttpHeaderKeysEnum.NOVU_ANONYMOUS_DEPRECATED)) ||
       '';
     const source = url.searchParams.get(HttpQueryKeysEnum.SOURCE) || '';
 

@@ -12,7 +12,7 @@ import { IEvent, Step } from './types';
 import { delayOutputSchema } from './schemas';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
 import { FromSchema } from './types/schema.types';
-import { FRAMEWORK_VERSION, VERSION } from './version';
+import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 
 describe('Novu Client', () => {
   let client: Client;
@@ -796,7 +796,7 @@ describe('Novu Client', () => {
           workflows: 1,
         },
         frameworkVersion: FRAMEWORK_VERSION,
-        sdkVersion: VERSION,
+        sdkVersion: SDK_VERSION,
         status: 'ok',
       });
     });

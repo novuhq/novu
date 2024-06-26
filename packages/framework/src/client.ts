@@ -31,7 +31,7 @@ import type {
 import { Schema } from './types/schema.types';
 import { transformSchema, validateData } from './validators';
 import { EMOJI, log } from './utils';
-import { FRAMEWORK_VERSION, VERSION } from './version';
+import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 import { Skip } from './types/skip.types';
 import { Liquid } from 'liquidjs';
 import { ValidationError } from './types/validator.types';
@@ -55,7 +55,7 @@ export class Client {
 
   public apiKey?: string;
 
-  public version: string = VERSION;
+  public version: string = SDK_VERSION;
 
   public strictAuthentication: boolean;
 
@@ -102,7 +102,7 @@ export class Client {
 
     return {
       status: 'ok',
-      sdkVersion: VERSION,
+      sdkVersion: SDK_VERSION,
       frameworkVersion: FRAMEWORK_VERSION,
       discovered: {
         workflows: workflowCount,
