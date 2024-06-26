@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import { useBridgeUrlTest } from './useUrlTest';
 import { useState } from 'react';
-import { useBridgeUrl } from '../../studio/utils/useBridgeUrl';
+import { useBridgeUrl } from '../../studio/hooks/useBridgeUrl';
 
 export const useSetupBridge = (url: string, setError: (error: string) => void) => {
   const [loading, setLoading] = useState<boolean>(false);
