@@ -4,7 +4,7 @@ import { Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconOutlineCable, IconPlayArrow } from '@novu/novui/icons';
 import { Center } from '@novu/novui/jsx';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useWorkflow, useWorkflowTrigger } from '../../../hooks/useBridgeAPI';
@@ -18,6 +18,7 @@ import { useTemplateFetcher } from '../../../../api/hooks/index';
 import { getApiKeys } from '../../../../api/environment';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
 import { useStudioState } from '../../../StudioStateProvider';
+import { testTrigger } from '../../../../api/notification-templates';
 
 export const WorkflowsTestPage = () => {
   const segment = useSegment();
@@ -34,7 +35,7 @@ export const WorkflowsTestPage = () => {
   const { template, isLoading: isTemplateLoading } = useTemplateFetcher({
     templateId: local ? undefined : templateId,
   });
-
+  const { mutateAsync: triggerCloudTestEvent, isLoading: isCloudTestLoading } = useMutation(testTrigger);
   const { data: workflow, isLoading: isWorkflowLoading } = useWorkflow(templateId, { enabled: local });
   const { trigger, isLoading: isTestLoading } = useWorkflowTrigger();
 
@@ -70,7 +71,7 @@ export const WorkflowsTestPage = () => {
 
   const [transactionId, setTransactionId] = useState<string>('');
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
-  const name = useMemo(
+  const workflowId = useMemo(
     () => (local ? workflow.workflowId : template?.triggers[0].identifier),
     [local, template?.triggers, workflow?.workflowId]
   );
@@ -82,7 +83,24 @@ export const WorkflowsTestPage = () => {
 
     try {
       payload.__source = 'studio-test-workflow';
-      const response = await trigger({ workflowId: workflow.workflowId, to, payload });
+
+      let response;
+      if (local) {
+        response = await trigger({
+          workflowId: workflowId,
+          to,
+          payload,
+        });
+      } else {
+        response = await triggerCloudTestEvent({
+          name: workflowId,
+          to,
+          payload: {
+            ...payload,
+          },
+        });
+      }
+
       setTransactionId(response.transactionId || '');
       openExecutionModal();
     } catch (e) {
@@ -102,7 +120,7 @@ export const WorkflowsTestPage = () => {
     }
   };
 
-  if (isWorkflowLoading) {
+  if (local ? isWorkflowLoading : isTemplateLoading) {
     return (
       <Center
         className={css({
@@ -126,7 +144,7 @@ export const WorkflowsTestPage = () => {
       }
     >
       <WorkflowsPanelLayout>
-        <WorkflowTestTriggerPanel identifier={name} to={to} payload={payload} apiKey={key} />
+        <WorkflowTestTriggerPanel identifier={workflowId} to={to} payload={payload} apiKey={key} />
         <When truthy={!isLoading}>
           <WorkflowTestControlsPanel
             onChange={onChange}

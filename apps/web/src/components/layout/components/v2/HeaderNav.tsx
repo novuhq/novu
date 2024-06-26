@@ -13,6 +13,7 @@ import { NotificationCenterWidget } from '../NotificationCenterWidget';
 import { HeaderMenuItems } from './HeaderMenuItems';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { BridgeMenuItems } from './BridgeMenuItems';
+
 export function HeaderNav() {
   const { currentUser } = useAuth();
   const isSelfHosted = IS_DOCKER_HOSTED;

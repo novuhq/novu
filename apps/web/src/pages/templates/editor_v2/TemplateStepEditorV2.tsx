@@ -61,7 +61,18 @@ export const WorkflowsStepEditorPageV2 = () => {
     saveControls(controls as any);
   }
 
-  const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.template?.type];
+  function Icon({ size }) {
+    const IconElement = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.type];
+    if (!IconElement) {
+      return null;
+    }
+
+    return (
+      <>
+        <IconElement size={size} />
+      </>
+    );
+  }
 
   return (
     <WorkflowsPageTemplate title={title} icon={<Icon size="32" />}>

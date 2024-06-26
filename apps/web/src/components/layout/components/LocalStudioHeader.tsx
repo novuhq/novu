@@ -3,7 +3,7 @@ import { Text } from '@novu/novui';
 import { IconOutlineArrowBack } from '@novu/novui/icons';
 import { hstack } from '@novu/novui/patterns';
 import { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { HEADER_NAV_HEIGHT } from '../constants';
 
 export const LocalStudioHeader: FC = () => {
