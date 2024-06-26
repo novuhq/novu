@@ -31,7 +31,7 @@ import type {
 import { Schema } from './types/schema.types';
 import { transformSchema, validateData } from './validators';
 import { EMOJI, log } from './utils';
-import { VERSION } from './version';
+import { FRAMEWORK_VERSION, VERSION } from './version';
 import { Skip } from './types/skip.types';
 import { Liquid } from 'liquidjs';
 import { ValidationError } from './types/validator.types';
@@ -58,8 +58,6 @@ export class Client {
   public version: string = VERSION;
 
   public strictAuthentication: boolean;
-
-  public static NOVU_SIGNATURE_HEADER = HttpHeaderKeysEnum.SIGNATURE;
 
   constructor(options?: ClientOptions) {
     const builtOpts = this.buildOptions(options);
@@ -104,7 +102,8 @@ export class Client {
 
     return {
       status: 'ok',
-      version: VERSION,
+      sdkVersion: VERSION,
+      frameworkVersion: FRAMEWORK_VERSION,
       discovered: {
         workflows: workflowCount,
         steps: stepCount,
