@@ -11,12 +11,6 @@ export const TABS_RECIPE = defineSlotRecipe({
     root: {
       // default color palette
       colorPalette: 'mode.cloud',
-      _disabled: {
-        opacity: 'disabled',
-      },
-      '&:hover:not(:disabled)': {
-        opacity: 'hover',
-      },
     },
     list: {
       color: 'typography.text.main',
@@ -36,6 +30,10 @@ export const TABS_RECIPE = defineSlotRecipe({
         color: 'typography.text.secondary !important',
       },
 
+      _disabled: {
+        opacity: 'disabled',
+      },
+
       _active: {
         color: 'typography.text.main !important',
         '& svg': {
@@ -45,7 +43,7 @@ export const TABS_RECIPE = defineSlotRecipe({
         borderColor: 'colorPalette.start !important',
       },
 
-      _hover: {
+      '&:hover:not(:disabled)': {
         background: 'none !important',
         color: 'typography.text.main !important',
         '& svg': {

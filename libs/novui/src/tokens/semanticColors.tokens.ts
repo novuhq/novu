@@ -185,6 +185,16 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       },
     },
   },
+  codeBlock: {
+    surface: {
+      value: { base: '{colors.legacy.B80}', _dark: '{colors.legacy.B20}' },
+      type: 'color',
+    },
+    text: {
+      value: { base: '{colors.legacy.B40}', _dark: '{colors.legacy.white}' },
+      type: 'color',
+    },
+  },
   // color palette semantic testing
   mode: {
     cloud: {
