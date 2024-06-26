@@ -34,7 +34,6 @@ export async function createApp({
   srcDir,
   importAlias,
   apiKey,
-  tunnelHost,
 }: {
   appPath: string;
   packageManager: PackageManager;
@@ -46,7 +45,6 @@ export async function createApp({
   srcDir: boolean;
   importAlias: string;
   apiKey: string;
-  tunnelHost: string;
 }): Promise<void> {
   let repoInfo: RepoInfo | undefined;
   const mode: TemplateMode = typescript ? 'ts' : 'js';
@@ -198,7 +196,6 @@ export async function createApp({
       srcDir,
       importAlias,
       apiKey,
-      tunnelHost,
     });
   }
 

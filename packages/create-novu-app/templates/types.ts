@@ -26,5 +26,4 @@ export interface InstallTemplateArgs {
   srcDir: boolean;
   importAlias: string;
   apiKey: string;
-  tunnelHost: string;
 }
