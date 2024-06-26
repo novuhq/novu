@@ -12,9 +12,13 @@ export const WorkflowsStepEditorPage = () => {
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
 
-  const { data: workflow, isLoading } = useQuery(['workflow', templateId], async () => {
-    return bridgeApi.getWorkflow(templateId);
-  });
+  const { data: workflow, isLoading } = useQuery(
+    ['workflow', templateId],
+    async () => {
+      return bridgeApi.getWorkflow(templateId);
+    },
+    { refetchOnWindowFocus: 'always' }
+  );
 
   const {
     data: preview,

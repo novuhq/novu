@@ -28,6 +28,9 @@ import { RootNavMenuFooter } from './RootNavMenuFooter';
 import { VisibilityButton } from './VisibilityButton';
 import { FreeTrialSidebarWidget } from '../layout/components/FreeTrialSidebarWidget';
 import { parseUrl } from '../../utils/routeUtils';
+import { useFeatureFlag } from '../../hooks/useFeatureFlag';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { When } from '../utils/When';
 
 const getEnvPageRoute = (route: ROUTES, env: BaseEnvironmentEnum) => parseUrl(route, { env });
 
@@ -35,6 +38,7 @@ export const RootNavMenu: React.FC = () => {
   const segment = useSegment();
   const { updateOnboardingStatus, showOnboarding, isLoading: isLoadingOnboardingStatus } = useUserOnboardingStatus();
   const { readonly: isEnvReadonly, environment } = useEnvironment();
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
 
   const handleHideOnboardingClick: React.MouseEventHandler = async () => {
     segment.track('Click Hide Get Started Page - [Get Started]');
@@ -105,19 +109,21 @@ export const RootNavMenu: React.FC = () => {
           link={ROUTES.TENANTS}
           testId="side-nav-tenants-link"
         />
-        <NavMenuLinkButton
-          label="Layouts"
-          icon={<IconViewQuilt />}
-          link={ROUTES.LAYOUT}
-          testId="side-nav-layouts-link"
-        />
-        <NavMenuLinkButton
-          label="Translations"
-          isVisible={true}
-          icon={<IconTranslate width={20} height={20} />}
-          link={ROUTES.TRANSLATIONS}
-          testId="side-nav-translations-link"
-        />
+        <When truthy={!isV2Enabled}>
+          <NavMenuLinkButton
+            label="Layouts"
+            icon={<IconViewQuilt />}
+            link={ROUTES.LAYOUT}
+            testId="side-nav-layouts-link"
+          />
+          <NavMenuLinkButton
+            label="Translations"
+            isVisible={true}
+            icon={<IconTranslate width={20} height={20} />}
+            link={ROUTES.TRANSLATIONS}
+            testId="side-nav-translations-link"
+          />
+        </When>
         <NavMenuLinkButton
           label="API keys"
           isVisible
