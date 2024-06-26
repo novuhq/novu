@@ -13,6 +13,7 @@ describe('Events - Test email - /v1/events/test/email (POST)', function () {
     contentType: 'customHtml',
     payload: {},
     inputs: {},
+    controls: {},
     subject: 'subject',
     preheader: 'preheader',
     content: '<html><head></head><body>Hello world!</body></html>',
