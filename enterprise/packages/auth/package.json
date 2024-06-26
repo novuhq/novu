@@ -17,7 +17,8 @@
     "@novu/shared": "workspace:*",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
-    "jwks-rsa": "^3.1.0"
+    "jwks-rsa": "^3.1.0",
+    "svix": "^1.24.0"
   },
   "devDependencies": {
     "@clerk/types": "^4.5.1",
