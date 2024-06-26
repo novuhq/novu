@@ -59,20 +59,23 @@ export const EmailPreview = ({ showVariables = true, view }: { view: string; sho
     content,
   });
 
-  const { mutateAsync: saveInputs, isLoading: isSavingInputs } = useMutation((data) =>
-    api.put('/v1/echo/inputs/' + formState?.defaultValues?.identifier + '/' + stepId, { variables: data })
+  const { mutateAsync: saveControls, isLoading: isSavingInputs } = useMutation((data) =>
+    api.put('/v1/bridge/controls/' + formState?.defaultValues?.identifier + '/' + stepId, { variables: data })
   );
 
   const {
     mutateAsync,
     isLoading: isBridgeLoading,
     error: previewError,
-  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
-    onSuccess(data) {
-      setBridgeContent(data.outputs.body);
-      setBridgeSubject(data.outputs.subject);
-    },
-  });
+  } = useMutation(
+    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setBridgeContent(data.outputs.body);
+        setBridgeSubject(data.outputs.subject);
+      },
+    }
+  );
 
   const { getEmailPreview, previewContent, subject, isPreviewContentLoading } = usePreviewEmailTemplate({
     locale: selectedLocale,

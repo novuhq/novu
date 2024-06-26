@@ -30,15 +30,14 @@ export const SmsPreview = ({
   const stepId = watch(`${path}.uuid`);
   const [bridgeContent, setBridgeContent] = useState('');
 
-  const {
-    mutateAsync,
-    isLoading: isBridgeLoading,
-    error: previewError,
-  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
-    onSuccess(data) {
-      setBridgeContent(data.outputs.body);
-    },
-  });
+  const { mutateAsync, isLoading: isBridgeLoading } = useMutation(
+    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setBridgeContent(data.outputs.body);
+      },
+    }
+  );
 
   useEffect(() => {
     if (bridge) {

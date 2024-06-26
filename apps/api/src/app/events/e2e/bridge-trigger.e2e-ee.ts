@@ -631,7 +631,7 @@ async function syncWorkflow(
   workflowIdentifier: string,
   echoServer: EchoServer
 ) {
-  await session.testAgent.post(`/v1/echo/sync`).send({
+  await session.testAgent.post(`/v1/bridge/sync`).send({
     bridgeUrl: echoServer.serverPath + '/echo',
   });
 
@@ -671,7 +671,7 @@ async function discoverAndSyncEcho(
   workflowIdentifier?: string,
   echoServer?: EchoServer
 ) {
-  const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
+  const discoverResponse = await session.testAgent.post(`/v1/bridge/sync`).send({
     bridgeUrl: echoServer?.serverPath + '/echo',
   });
 

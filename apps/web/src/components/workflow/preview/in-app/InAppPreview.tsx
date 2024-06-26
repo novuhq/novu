@@ -34,14 +34,17 @@ export function InAppPreview({ showVariables = true }: { showVariables?: boolean
     mutateAsync,
     isLoading: isBridgeLoading,
     error: previewError,
-  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
-    onSuccess(data) {
-      setBridgeContent({
-        content: data.outputs.body,
-        ctaButtons: [],
-      });
-    },
-  });
+  } = useMutation(
+    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setBridgeContent({
+          content: data.outputs.body,
+          ctaButtons: [],
+        });
+      },
+    }
+  );
 
   useEffect(() => {
     if (bridge) {

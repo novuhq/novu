@@ -76,6 +76,10 @@ export class CreateWorkflowCommand extends EnvironmentWithUserCommand {
   inputs?: {
     schema: JSONSchema7;
   };
+  @IsOptional()
+  controls?: {
+    schema: JSONSchema7;
+  };
 
   @IsOptional()
   rawData?: Record<string, unknown>;
@@ -145,6 +149,10 @@ export class NotificationStepVariantCommand {
 
   @IsOptional()
   inputs?: {
+    schema: JSONSchema7;
+  };
+  @IsOptional()
+  controls?: {
     schema: JSONSchema7;
   };
 

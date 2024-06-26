@@ -35,12 +35,15 @@ export default function Content({
     mutateAsync,
     isLoading: isBridgeLoading,
     error: previewError,
-  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
-    onSuccess(data) {
-      setBridgeContent(data.outputs.body);
-      setBridgeSubject(data.outputs.subject);
-    },
-  });
+  } = useMutation(
+    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setBridgeContent(data.outputs.body);
+        setBridgeSubject(data.outputs.subject);
+      },
+    }
+  );
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: content as string,

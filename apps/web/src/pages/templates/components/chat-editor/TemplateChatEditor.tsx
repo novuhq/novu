@@ -20,9 +20,6 @@ import { InputVariablesForm } from '../InputVariablesForm';
 
 const templateFields = ['content'];
 
-const PREVIEW = 'Preview';
-const INPUTS = 'Inputs';
-
 export function TemplateChatEditor() {
   const { isPreviewLoading, handleContentChange } = useEditTemplateContent();
   const stepFormPath = useStepFormPath();
@@ -35,7 +32,6 @@ export function TemplateChatEditor() {
   const [editVariablesModalOpened, setEditVariablesModalOpen] = useState(false);
   const { template } = useTemplateEditorForm();
   const { bridge } = useEnvironment({}, template?.bridge);
-  const theme = useMantineTheme();
 
   return (
     <>

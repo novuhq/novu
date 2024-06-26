@@ -6,10 +6,9 @@ import { useQuery } from '@tanstack/react-query';
 import { bridgeApi } from '../../../../api/bridge/bridge.api';
 import { useState } from 'react';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../node-view/WorkflowNodes';
-import { WorkflowTestStepButton } from './WorkflowTestStepButton';
 
 export const WorkflowsStepEditorPage = () => {
-  const [inputs, setStepInputs] = useState({});
+  const [controls, setStepControls] = useState({});
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
 
@@ -22,16 +21,16 @@ export const WorkflowsStepEditorPage = () => {
     isLoading: loadingPreview,
     refetch,
     error,
-  } = useQuery(['workflow-preview', templateId, stepId, inputs, payload], async () => {
-    return bridgeApi.getStepPreview(templateId, stepId, payload, inputs);
+  } = useQuery(['workflow-preview', templateId, stepId, controls, payload], async () => {
+    return bridgeApi.getStepPreview(templateId, stepId, payload, controls);
   });
   const step = workflow?.steps.find((item) => item.stepId === stepId);
   const title = step?.stepId;
 
-  function onInputsChange(type: string, form: any) {
+  function onControlsChange(type: string, form: any) {
     switch (type) {
       case 'step':
-        setStepInputs(form.formData);
+        setStepControls(form.formData);
         break;
       case 'payload':
         setPayload(form.formData);
@@ -58,7 +57,7 @@ export const WorkflowsStepEditorPage = () => {
     <WorkflowsPageTemplate title={title} icon={<Icon size="32" />}>
       <WorkflowsPanelLayout>
         <WorkflowStepEditorContentPanel step={step} error={error} preview={preview} isLoadingPreview={loadingPreview} />
-        <WorkflowStepEditorInputsPanel step={step} workflow={workflow} onChange={onInputsChange} />
+        <WorkflowStepEditorInputsPanel step={step} workflow={workflow} onChange={onControlsChange} />
       </WorkflowsPanelLayout>
     </WorkflowsPageTemplate>
   );

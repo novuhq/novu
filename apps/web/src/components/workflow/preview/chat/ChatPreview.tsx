@@ -27,11 +27,14 @@ export function ChatPreview({ showLoading = false, inputVariables }: { showLoadi
     mutateAsync,
     isLoading: isBridgeLoading,
     error: previewError,
-  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
-    onSuccess(data) {
-      setBridgeContent(data.outputs.body);
-    },
-  });
+  } = useMutation(
+    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setBridgeContent(data.outputs.body);
+      },
+    }
+  );
 
   useEffect(() => {
     if (bridge) {

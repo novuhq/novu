@@ -143,7 +143,7 @@ export const StudioOnboardingPreview = () => {
       async (controls) => {
         return {
           subject: "A Successful Test on Novu!",
-          body: renderEmail(inputs, payload),
+          body: renderEmail(controls, payload),
         };
       },
       {

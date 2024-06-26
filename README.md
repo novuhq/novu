@@ -114,7 +114,7 @@ client.workflow('comment-on-post', async ({step, subscriber}) => {
       body: renderReactEmail(<ReactEmailComponent events={digestedEvents} />);
     }
   }, {
-    // Step-level inputs defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
+    // Step-level controls defined in code and controlled in the novu Cloud UI by a Non-Technical Team member
     controlSchema: {
       // ...JSON Schema
     },

@@ -7,25 +7,24 @@ import { WorkflowStepEditorInputsPanel } from '../../../studio/components/workfl
 import { useTemplateController } from '../components/useTemplateController';
 import { api } from '../../../api';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../studio/components/workflows/node-view/WorkflowNodes';
-import { WorkflowTestStepButton } from '../../../studio/components/workflows/step-editor/WorkflowTestStepButton';
 
 export const WorkflowsStepEditorPageV2 = () => {
-  const [inputs, setStepInputs] = useState({});
+  const [controls, setStepControls] = useState({});
   const [payload, setPayload] = useState({});
   const { templateId = '', stepId = '' } = useParams<{ templateId: string; stepId: string }>();
   const { template: workflow } = useTemplateController(templateId);
   const step = (workflow?.steps as any)?.find((item) => item.stepId === stepId);
 
-  const { isLoading, data: inputVariables } = useQuery(
-    ['inputs', workflow?.name, stepId],
-    () => api.get(`/v1/echo/inputs/${workflow?.name}/${stepId}`),
+  const { isLoading, data: controlVariables } = useQuery(
+    ['controls', workflow?.name, stepId],
+    () => api.get(`/v1/bridge/controls/${workflow?.name}/${stepId}`),
     {
       enabled: !!workflow,
     }
   );
 
-  const { mutateAsync: saveInputs, isLoading: isSavingInputs } = useMutation((data) =>
-    api.put('/v1/echo/inputs/' + workflow?.name + '/' + stepId, { variables: data })
+  const { mutateAsync: saveControls, isLoading: isSavingControls } = useMutation((data) =>
+    api.put('/v1/bridge/controls/' + workflow?.name + '/' + stepId, { variables: data })
   );
 
   const {
@@ -33,20 +32,24 @@ export const WorkflowsStepEditorPageV2 = () => {
     isLoading: loadingPreview,
     mutateAsync: renderStepPreview,
     error,
-  } = useMutation<any, any, any>((data) => api.post('/v1/echo/preview/' + workflow?.name + '/' + stepId, data));
+  } = useMutation<any, any, any>((data) => api.post('/v1/bridge/preview/' + workflow?.name + '/' + stepId, data));
 
   const title = step?.stepId;
 
   useEffect(() => {
     if (!workflow) return;
 
-    renderStepPreview({ inputs, payload });
-  }, [inputs, payload, renderStepPreview, workflow]);
+    renderStepPreview({
+      inputs: controls,
+      controls,
+      payload,
+    });
+  }, [controls, payload, renderStepPreview, workflow]);
 
-  function onInputsChange(type: string, form: any) {
+  function onControlsChange(type: string, form: any) {
     switch (type) {
       case 'step':
-        setStepInputs(form.formData);
+        setStepControls(form.formData);
         break;
       case 'payload':
         setPayload(form.formData);
@@ -54,8 +57,8 @@ export const WorkflowsStepEditorPageV2 = () => {
     }
   }
 
-  function onInputsSave() {
-    saveInputs(inputs as any);
+  function onControlsSave() {
+    saveControls(controls as any);
   }
 
   const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step?.template?.type];
@@ -65,12 +68,12 @@ export const WorkflowsStepEditorPageV2 = () => {
       <WorkflowsPanelLayout>
         <WorkflowStepEditorContentPanel error={error} step={step} preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorInputsPanel
-          isLoadingSave={isSavingInputs}
+          isLoadingSave={isSavingControls}
           onSave={() => {
-            onInputsSave();
+            onControlsSave();
           }}
           step={{
-            inputs: step?.template?.inputs,
+            controls: step?.template?.controls || step?.template?.inputs,
             code: step?.code,
           }}
           workflow={{
@@ -78,8 +81,8 @@ export const WorkflowsStepEditorPageV2 = () => {
               payloadSchema: workflow?.payloadSchema,
             },
           }}
-          defaultInputs={inputVariables?.inputs || {}}
-          onChange={onInputsChange}
+          defaultControls={controlVariables?.controls || controlVariables?.inputs || {}}
+          onChange={onControlsChange}
         />
       </WorkflowsPanelLayout>
     </WorkflowsPageTemplate>

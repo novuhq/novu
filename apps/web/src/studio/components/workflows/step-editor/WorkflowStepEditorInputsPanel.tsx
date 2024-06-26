@@ -12,7 +12,7 @@ interface IWorkflowStepEditorInputsPanelProps {
   workflow: any;
   onChange: (type: 'step' | 'payload', data: any) => void;
   onSave?: () => void;
-  defaultInputs?: Record<string, unknown>;
+  defaultControls?: Record<string, unknown>;
   isLoadingSave?: boolean;
 }
 
@@ -21,7 +21,7 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
   workflow,
   onChange,
   onSave,
-  defaultInputs,
+  defaultControls,
   isLoadingSave,
 }) => {
   const { Component, toggle, setPath } = useDocsModal();
@@ -30,18 +30,18 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
   }, [workflow?.options?.payloadSchema]);
 
   const haveInputProperties = useMemo(() => {
-    return Object.keys(step?.inputs?.schema?.properties || {}).length > 0;
-  }, [step?.inputs?.schema]);
+    return Object.keys(step?.controls?.schema?.properties || {}).length > 0;
+  }, [step?.controls?.schema]);
 
   return (
     <>
       <Tabs
-        defaultValue="step-inputs"
+        defaultValue="step-controls"
         tabConfigs={[
           {
             icon: <IconOutlineEditNote />,
-            value: 'step-inputs',
-            label: 'Step inputs',
+            value: 'step-controls',
+            label: 'Step controls',
             content: (
               <Container className={formContainerClassName}>
                 <When truthy={haveInputProperties}>
@@ -63,15 +63,15 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
 
                   <JsonSchemaForm
                     onChange={(data) => onChange('step', data)}
-                    schema={step?.inputs?.schema || {}}
-                    formData={defaultInputs || {}}
+                    schema={step?.controls?.schema || step?.inputs?.schema || {}}
+                    formData={defaultControls || {}}
                   />
                 </When>
                 <When truthy={!haveInputProperties}>
                   <InputsEmptyPanel
                     content="Modifiable controls defined by the code schema."
                     onDocsClick={() => {
-                      setPath('framework/concepts/inputs');
+                      setPath('framework/concepts/controls');
                       toggle();
                     }}
                   />

@@ -9,7 +9,8 @@ export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => voi
   const stepFormPath = useStepFormPath();
   const { watch } = useFormContext();
   const { template } = useTemplateEditorForm();
-  const inputs = watch(`${stepFormPath}.template.inputs.schema`) || {};
+  const controls =
+    watch(`${stepFormPath}.template.controls.schema`) || watch(`${stepFormPath}.template.inputs.schema`) || {};
   const workflowPayloadSchema = watch(`payloadSchema`) || {};
 
   const stepId = watch(`${stepFormPath}.stepId`);
@@ -27,5 +28,5 @@ export const InputVariablesForm = ({ onChange }: { onChange?: (data: any) => voi
     return null;
   }
 
-  return <Component payloadSchema={workflowPayloadSchema} schema={inputs} formData={formData} onChange={onChange} />;
+  return <Component payloadSchema={workflowPayloadSchema} schema={controls} formData={formData} onChange={onChange} />;
 };
