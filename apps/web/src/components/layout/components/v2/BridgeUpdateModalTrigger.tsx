@@ -31,7 +31,6 @@ function BridgeUpdateModalTriggerControl({ onClick }: { onClick: () => void }) {
   const { isHovered, ...hoverProps } = useHover();
   const { data, isFetching, error, bridgeURL } = useHealthCheck();
 
-  console.log('data', data, isFetching, bridgeURL);
   const status = useMemo<ConnectionStatus>(() => {
     if (isFetching) {
       return 'loading';
