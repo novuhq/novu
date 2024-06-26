@@ -27,7 +27,7 @@ export const WorkflowTestStepButton = ({
   const { mutateAsync: testSendEmailEvent, isLoading: isTestingEmail } = useMutation(testSendEmailMessage);
 
   const handleTestClick = async () => {
-    segment.track('Step test ran', {
+    segment.track('Step test ran - [Workflows Step Page]', {
       step: ChannelTypeEnum.EMAIL,
       env: isStudio ? 'local' : 'cloud',
     });

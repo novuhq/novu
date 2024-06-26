@@ -55,7 +55,7 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
                         size={'sm'}
                         Icon={IconOutlineSave}
                         onClick={() => {
-                          segment.track('Step controls saved', {
+                          segment.track('Step controls saved - [Workflows Step Page]', {
                             step: step?.type,
                           });
                           onSave();

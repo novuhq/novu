@@ -89,7 +89,7 @@ export const WorkflowsTestPage = () => {
   );
 
   const handleTestClick = async () => {
-    segment.track('Workflow test ran', {
+    segment.track('Workflow test ran - [Workflows Test Page]', {
       env: isLocal ? 'local' : 'cloud',
     });
 
