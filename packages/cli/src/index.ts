@@ -18,6 +18,7 @@ program
   .command('dev')
   .description('Start a Novu Dev Studio and a localtunnel')
   .option('-p, --port <value>', 'Set the local port for the Novu endpoint, defaults to 4000', '4000')
+  .option('--path <value>', 'Set the Novu Endpoint mounted path, defaults to 4000', '/api/novu')
   .option('-o, --origin <value>', 'Set the origin for the Novu endpoint')
   .option('-sp, --studio-port <value>', 'Set the local port for the Novu Local Studio server, defaults to 2022', '2022')
   .option(

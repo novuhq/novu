@@ -35,8 +35,10 @@ export class DevServer {
       }
     });
 
-    this.server.listen(port, SERVER_HOST, () => {
-      console.log('Studio       ✅: Available on', `http://${SERVER_HOST}:${port}${STUDIO_PATH}`);
+    await new Promise<void>((resolve) => {
+      this.server.listen(port, SERVER_HOST, () => {
+        resolve();
+      });
     });
   }
 
@@ -44,6 +46,10 @@ export class DevServer {
     const response = this.server.address() as AddressInfo;
 
     return `http://${SERVER_HOST}:${response.port}`;
+  }
+
+  public getStudioAddress() {
+    return `${this.getAddress()}${STUDIO_PATH}`;
   }
 
   public close(): void {
