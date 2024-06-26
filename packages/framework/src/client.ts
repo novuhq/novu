@@ -3,7 +3,7 @@ import ora from 'ora';
 
 import { HttpHeaderKeysEnum } from './constants';
 import {
-  ExecutionEventDataInvalidError,
+  ExecutionEventPayloadInvalidError,
   ExecutionEventControlsInvalidError,
   ExecutionProviderOutputInvalidError,
   ExecutionStateCorruptError,
@@ -160,7 +160,7 @@ export class Client {
     data: T,
     schema: Schema,
     component: 'event' | 'step' | 'provider',
-    payloadType: 'controls' | 'output' | 'result' | 'data',
+    payloadType: 'controls' | 'output' | 'result' | 'payload',
     workflowId: string,
     stepId?: string,
     providerId?: string
@@ -189,7 +189,7 @@ export class Client {
   private throwInvalidProvider(
     stepId: string | undefined,
     providerId: string | undefined,
-    payloadType: 'controls' | 'output' | 'result' | 'data',
+    payloadType: 'controls' | 'output' | 'result' | 'payload',
     workflowId: string,
     errors: Array<ValidationError>
   ) {
@@ -212,7 +212,7 @@ export class Client {
 
   private throwInvalidStep(
     stepId: string | undefined,
-    payloadType: 'controls' | 'output' | 'result' | 'data',
+    payloadType: 'controls' | 'output' | 'result' | 'payload',
     workflowId: string,
     errors: Array<ValidationError>
   ) {
@@ -236,7 +236,7 @@ export class Client {
   }
 
   private throwInvalidEvent(
-    payloadType: 'controls' | 'output' | 'result' | 'data',
+    payloadType: 'controls' | 'output' | 'result' | 'payload',
     workflowId: string,
     errors: Array<ValidationError>
   ) {
@@ -244,8 +244,8 @@ export class Client {
       case 'controls':
         throw new ExecutionEventControlsInvalidError(workflowId, errors);
 
-      case 'data':
-        throw new ExecutionEventDataInvalidError(workflowId, errors);
+      case 'payload':
+        throw new ExecutionEventPayloadInvalidError(workflowId, errors);
 
       default:
         throw new Error(`Invalid payload type: '${payloadType}'`);
@@ -340,10 +340,10 @@ export class Client {
     try {
       if (
         event.action === 'execute' && // TODO: move this validation to the handler layer
-        !event.data
+        (!event.payload || !event.data)
       ) {
         throw new ExecutionEventControlsInvalidError(event.workflowId, {
-          message: 'Event `data` is required',
+          message: 'Event `payload` is required',
         });
       }
 
@@ -411,16 +411,16 @@ export class Client {
     event: IEvent,
     workflow: DiscoverWorkflowOutput
   ): Promise<Record<string, unknown>> {
-    let payload = event.data;
+    let payload = event.payload || event.data;
     if (event.action === 'preview') {
-      const mockResult = this.mock(workflow.data.schema);
+      const mockResult = this.mock(workflow.payload.schema);
 
       payload = Object.assign(mockResult, payload);
     }
 
     const validatedResult = await this.validate(
       payload,
-      workflow.data.unknownSchema,
+      workflow.payload.unknownSchema,
       'event',
       'controls',
       event.workflowId
@@ -598,7 +598,7 @@ export class Client {
     const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
 
     const compiledString = await this.templateEngine.render(templateString, {
-      ...event.data,
+      ...(event.payload || event.data),
       subscriber: event.subscriber,
     });
 

@@ -1,9 +1,12 @@
 import { Subscriber } from './subscriber.types';
 
 export interface IEvent {
+  /** @deprecated */
   data: Record<string, unknown>;
+  payload: Record<string, unknown>;
   workflowId: string;
   stepId: string;
+  /** @deprecated */
   inputs: Record<string, unknown>;
   controls: Record<string, unknown>;
   state: IState[];

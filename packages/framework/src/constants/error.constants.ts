@@ -13,7 +13,7 @@ export enum ErrorCodeEnum {
   STEP_ALREADY_EXISTS_ERROR = 'StepAlreadyExistsError',
   STEP_EXECUTION_FAILED_ERROR = 'StepExecutionFailedError',
   EXECUTION_STATE_CORRUPT_ERROR = 'ExecutionStateCorruptError',
-  EXECUTION_EVENT_DATA_INVALID_ERROR = 'ExecutionEventDataInvalidError',
+  EXECUTION_EVENT_PAYLOAD_INVALID_ERROR = 'ExecutionEventPayloadInvalidError',
   EXECUTION_EVENT_CONTROL_INVALID_ERROR = 'ExecutionEventControlInvalidError',
   EXECUTION_STATE_CONTROL_INVALID_ERROR = 'ExecutionStateControlInvalidError',
   METHOD_NOT_ALLOWED_ERROR = 'MethodNotAllowedError',

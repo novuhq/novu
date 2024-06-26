@@ -326,6 +326,7 @@ describe('Novu Client', () => {
       const emailEvent: IEvent = {
         action: 'preview',
         data: { name: 'John' },
+        payload: { name: 'John' },
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {
@@ -346,7 +347,7 @@ describe('Novu Client', () => {
     });
   });
   describe('executeWorkflow method', () => {
-    it('should execute workflow successfully when action is execute and data is provided', async () => {
+    it('should execute workflow successfully when action is execute and payload is provided', async () => {
       const delayConfiguration: FromSchema<typeof delayOutputSchema> = { type: 'regular', unit: 'seconds', amount: 1 };
       const emailConfiguration: FromSchema<typeof emailChannelSchemas.output> = {
         body: 'Test Body',
@@ -360,6 +361,7 @@ describe('Novu Client', () => {
       const emailEvent: IEvent = {
         action: 'execute',
         data: {},
+        payload: {},
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
@@ -388,6 +390,7 @@ describe('Novu Client', () => {
       const delayEvent: IEvent = {
         action: 'execute',
         data: {},
+        payload: {},
         workflowId: 'test-workflow',
         stepId: 'delay',
         subscriber: {},
@@ -470,6 +473,7 @@ describe('Novu Client', () => {
       const emailEvent: IEvent = {
         action: 'execute',
         data: { role: 'product manager', elements: ['cat', 'dog'] },
+        payload: { role: 'product manager', elements: ['cat', 'dog'] },
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {
@@ -492,7 +496,7 @@ describe('Novu Client', () => {
       expect(body).toContain('dog');
     });
 
-    it('should throw error on execute action without data', async () => {
+    it('should throw error on execute action without payload', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
@@ -506,6 +510,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         data: undefined as any,
+        payload: undefined as any,
         inputs: {},
         controls: {},
       };
@@ -541,6 +546,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {
           foo: 'foo',
@@ -552,7 +558,7 @@ describe('Novu Client', () => {
       expect(executionResult.providers).toEqual({ sendgrid: { ipPoolName: 'foo Subject' } });
     });
 
-    it('should preview with mocked data during preview', async () => {
+    it('should preview with mocked payload during preview', async () => {
       const workflowMock = workflow(
         'mock-workflow',
         async ({ step, payload }) => {
@@ -579,6 +585,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {},
       };
@@ -604,6 +611,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {},
       };
@@ -644,6 +652,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {},
       };
@@ -677,6 +686,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {},
       };
@@ -713,6 +723,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {},
       };
