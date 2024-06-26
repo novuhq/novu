@@ -8,7 +8,11 @@ export const useBridgeUrl = () => {
   const { pathname } = useLocation();
   const { environment, isLoading } = useEnvironment();
 
-  const [bridgeUrl, setBridgeUrl] = useLocalStorage({ key: TUNNEL_URL_LOCAL_STORAGE_KEY });
+  const [bridgeUrl] = useLocalStorage({ key: TUNNEL_URL_LOCAL_STORAGE_KEY });
+
+  function setBridgeUrl(url: string) {
+    localStorage.setItem(TUNNEL_URL_LOCAL_STORAGE_KEY, url);
+  }
 
   return {
     bridgeUrl: isStudioRoute(pathname) ? bridgeUrl : environment?.echo?.url ?? '',
