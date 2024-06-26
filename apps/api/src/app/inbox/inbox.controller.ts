@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Patch, Query, UseGuards, Param } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
 import type { SubscriberEntity } from '@novu/dal';
@@ -13,12 +13,20 @@ import { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto
 import { GetNotifications } from './usecases/get-notifications/get-notifications.usecase';
 import { GetNotificationsCommand } from './usecases/get-notifications/get-notifications.command';
 import { GetNotificationsResponseDto } from './dtos/get-notifications-response.dto';
+import type { UpdateNotificationRequestDto } from './dtos/update-notification-request.dto';
+import type { InboxNotification } from './utils/types';
+import { UpdateNotificationCommand } from './usecases/update-notification/update-notification.command';
+import { UpdateNotification } from './usecases/update-notification/update-notification.usecase';
 
 @ApiCommonResponses()
 @Controller('/inbox')
 @ApiExcludeController()
 export class InboxController {
-  constructor(private initializeSessionUsecase: Session, private getNotificationsUsecase: GetNotifications) {}
+  constructor(
+    private initializeSessionUsecase: Session,
+    private getNotificationsUsecase: GetNotifications,
+    private updateNotificationUsecase: UpdateNotification
+  ) {}
 
   @Post('/session')
   async sessionInitialize(@Body() body: SubscriberSessionRequestDto): Promise<SubscriberSessionResponseDto> {
@@ -49,6 +57,24 @@ export class InboxController {
         tags: query.tags,
         read: query.read,
         archived: query.archived,
+      })
+    );
+  }
+
+  @UseGuards(AuthGuard('subscriberJwt'))
+  @Patch('/notifications/:id')
+  async updateNotification(
+    @SubscriberSession() subscriberSession: SubscriberEntity,
+    @Param('id') notificationId: string,
+    @Body() body: UpdateNotificationRequestDto
+  ): Promise<InboxNotification> {
+    return await this.updateNotificationUsecase.execute(
+      UpdateNotificationCommand.create({
+        organizationId: subscriberSession._organizationId,
+        subscriberId: subscriberSession.subscriberId,
+        environmentId: subscriberSession._environmentId,
+        notificationId,
+        ...body,
       })
     );
   }
