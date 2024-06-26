@@ -48,7 +48,7 @@ export const BridgeUpdateModal: FC<BridgeUpdateModalProps> = ({ isOpen, toggleOp
         throw new Error(`Tested URL isn't valid`);
       }
       await storeInProperLocation(inputUrl);
-      segment.track('Update endpoint clicked');
+      segment.track('Update endpoint clicked - [Bridge Modal]');
       successMessage('You have successfuly updated your Novu endpoint configuration');
       toggleOpen();
     } catch {
