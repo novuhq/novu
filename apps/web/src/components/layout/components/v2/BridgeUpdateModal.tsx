@@ -9,7 +9,7 @@ import { updateBridgeUrl } from '../../../../api/environment';
 import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { isStudioRoute } from '../../../../studio/utils/isStudioRoute';
 import { DocsButton } from '../../../docs/DocsButton';
-import { useBridgeUrl } from '../../../../studio/utils/useBridgeUrl';
+import { useBridgeUrl } from '../../../../studio/hooks/useBridgeUrl';
 import { hstack } from '@novu/novui/patterns';
 
 export type BridgeUpdateModalProps = {
