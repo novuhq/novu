@@ -4,6 +4,7 @@ import { Appearance } from './context';
 import './index.css';
 import { Inbox } from './Inbox';
 import { generateRandomString } from './helpers';
+import { Localization } from './context/LocalizationContext';
 
 export class InboxUI {
   #dispose: { (): void } | null = null;
@@ -20,10 +21,12 @@ export class InboxUI {
       name = 'novu',
       options,
       appearance,
+      localization,
     }: {
       name?: string;
       options: NovuOptions;
       appearance?: Appearance;
+      localization?: Localization;
     }
   ): void {
     if (this.#dispose !== null) {
@@ -36,7 +39,7 @@ export class InboxUI {
     el.appendChild(this.#rootElement);
 
     const dispose = render(
-      () => <Inbox name={name} id={this.#id} options={options} appearance={appearance} />,
+      () => <Inbox id={this.#id} name={name} options={options} appearance={appearance} localization={localization} />,
       this.#rootElement
     );
 
