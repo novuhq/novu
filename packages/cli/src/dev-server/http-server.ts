@@ -9,7 +9,7 @@ export const STUDIO_PATH = '/studio';
 import { DevCommandOptions } from '../commands';
 
 export type DevServerOptions = { tunnelOrigin: string } & Partial<
-  Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'studioRemoteOrigin'>
+  Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'studioRemoteOrigin' | 'endpointRoute'>
 >;
 
 export class DevServer {
@@ -86,7 +86,9 @@ export class DevServer {
             const url = new URL('/local-studio/auth', NOVU_CLOUD_STUDIO_ORIGIN);
             url.searchParams.set('redirect_url', window.location.href);
             url.searchParams.set('application_origin', '${origin}');
-            url.searchParams.set('tunnel_origin', '${tunnelOrigin}');
+            url.searchParams.set('tunnel_origin', '${this.options.tunnelOrigin}');
+            url.searchParams.set('tunnel_route', '${this.options.endpointRoute}');
+
             window.location.href = url.href;
           }
 
