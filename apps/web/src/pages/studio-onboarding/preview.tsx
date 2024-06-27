@@ -64,7 +64,7 @@ export const StudioOnboardingPreview = () => {
     navigate({
       pathname: ROUTES.STUDIO_ONBOARDING_SUCCESS,
       search: createSearchParams({
-        transactionId: response.transactionId,
+        transactionId: response.data.transactionId,
       }).toString(),
     });
   };
