@@ -94,21 +94,28 @@ export const GetStartedPageV2 = () => {
               gap="50"
             >
               <Title variant="subsection">Run this in your terminal to get started</Title>
-              <CodeSnippet
-                command="npx novu dev"
-                className={css({
-                  width: '100%',
-                  '& input': {
-                    background: {
-                      base: 'surface.panel !important',
-                      _dark: 'surface.popover !important',
-                    },
-                  },
-                })}
-                onClick={() => {
+              <div
+                style={{ width: '100%' }}
+                onDoubleClick={() => {
                   segment.track('Command copied - [Get Started - V2]');
                 }}
-              />
+              >
+                <CodeSnippet
+                  command="npx novu dev"
+                  className={css({
+                    width: '100%',
+                    '& input': {
+                      background: {
+                        base: 'surface.panel !important',
+                        _dark: 'surface.popover !important',
+                      },
+                    },
+                  })}
+                  onClick={() => {
+                    segment.track('Command copied - [Get Started - V2]');
+                  }}
+                />
+              </div>
             </VStack>
           </HStack>
           <Title

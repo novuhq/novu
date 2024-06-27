@@ -91,7 +91,7 @@ export const useWorkflowTrigger = () => {
 
   const bridgeUrl = state.local ? state.tunnelBridgeURL : state.storedBridgeURL;
 
-  async function trigger(params: TriggerParams) {
+  async function trigger(params: TriggerParams): Promise<{ data: { transactionId: string } }> {
     return mutateAsync({ ...params, bridgeUrl });
   }
 
