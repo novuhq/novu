@@ -141,7 +141,6 @@ export const StudioOnboardingSuccess = () => {
           segment.track('Workflows page accessed - [Onboarding - Signup]');
           navigate(ROUTES.STUDIO_FLOWS);
         }}
-        canSkipSetup={false}
         buttonText="Explore workflows"
         showLearnMore={false}
       />
