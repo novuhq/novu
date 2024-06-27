@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { css } from '@novu/novui/css';
 import { LocalStudioHeader } from './LocalStudioHeader';
+import { LocalStudioSidebar } from './LocalStudioSidebar';
 
 const AppShell = styled.div`
   display: flex;
@@ -37,6 +38,7 @@ export function LocalStudioPageLayout() {
       )}
     >
       <AppShell className={css({ '& *': { colorPalette: 'mode.local' } })}>
+        <LocalStudioSidebar />
         <ContentShell>
           <LocalStudioHeader />
           <Outlet />
