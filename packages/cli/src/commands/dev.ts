@@ -1,6 +1,9 @@
 import { DevServer } from '../dev-server';
 import { NtfrTunnel } from '@novu/ntfr-client';
 import { showWelcomeScreen } from './init.consts';
+import * as ora from 'ora';
+import * as open from 'open';
+import * as chalk from 'chalk';
 
 process.on('SIGINT', function () {
   console.log('Caught interrupt signal');
@@ -14,14 +17,18 @@ export type DevCommandOptions = {
   region: 'us' | 'eu';
   studioPort: string;
   studioRemoteOrigin: string;
+  route: string;
 };
 
 export async function devCommand(options: DevCommandOptions) {
   showWelcomeScreen();
 
   const parsedOptions = parseOptions(options);
-
+  const devSpinner = ora('Creating a development local tunnel').start();
   const tunnelOrigin = await generateTunnel(parsedOptions.origin);
+  const NOVU_ENDPOINT_PATH = options.route;
+
+  devSpinner.succeed(`Local tunnel started: ${tunnelOrigin}`);
 
   const opts = {
     ...parsedOptions,
@@ -30,7 +37,63 @@ export async function devCommand(options: DevCommandOptions) {
 
   const httpServer = new DevServer(opts);
 
+  const studioSpinner = ora('Starting local studio server').start();
   await httpServer.listen();
+
+  studioSpinner.succeed(`Novu Studio started: ${httpServer.getStudioAddress()}`);
+  if (process.env.NODE_ENV !== 'dev') {
+    await open(httpServer.getStudioAddress());
+  }
+
+  await endpointHealthChecker(parsedOptions, NOVU_ENDPOINT_PATH);
+}
+
+async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointRoute: string) {
+  const fullEndpoint = `${parsedOptions.origin}${endpointRoute}`;
+  let healthy = false;
+  const endpointText = `Looking for the Novu Endpoint at ${fullEndpoint}. Ensure your application is configured and running locally.`;
+  const endpointSpinner = ora(endpointText).start();
+
+  let counter = 0;
+  while (!healthy) {
+    try {
+      const response = await fetch(`${fullEndpoint}?action=health-check`, {
+        method: 'GET',
+        headers: {
+          accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      const healthResponse = await response.json();
+      healthy = healthResponse.status === 'ok';
+
+      if (healthy) {
+        endpointSpinner.succeed(`Endpoint properly configured: ${fullEndpoint}`);
+      } else {
+        await wait(1000);
+      }
+    } catch (e) {
+      await wait(1000);
+    } finally {
+      counter++;
+
+      if (counter === 10) {
+        endpointSpinner.text = `Looking for the Novu Endpoint at ${
+          parsedOptions.origin
+        }${endpointRoute}. Ensure your application is configured and running locally.
+        
+Don't have a configured application yet? Use our starter ${chalk.bold('npx create-novu-app@latest')}
+Have it running on a different path or port? Use the ${chalk.bold('--path')} or ${chalk.bold(
+          '--port'
+        )} to modify the default values.
+          `;
+      }
+    }
+  }
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function parseOptions(options: DevCommandOptions) {
@@ -94,8 +157,6 @@ async function generateTunnel(localOrigin: string) {
   );
 
   await ntfrTunnel.connect();
-
-  console.log(`Local tunnel ✅: ${parsedUrl.origin} -> ${localOrigin}`);
 
   return parsedUrl.origin;
 }

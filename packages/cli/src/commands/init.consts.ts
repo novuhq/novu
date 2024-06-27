@@ -198,6 +198,6 @@ export function showWelcomeScreen() {
   /* eslint-disable no-console */
   console.log(chalk.bold(items.join('\n')));
   console.log(chalk.bold(`                      Welcome to NOVU!`));
-  console.log(chalk.bold(textGradient(`         The open-source notification infrastructure\n`)));
+  console.log(chalk.bold(textGradient(`         The open-source notification framework\n`)));
   /* eslint-enable  no-console */
 }
