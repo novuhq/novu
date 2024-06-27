@@ -4,23 +4,15 @@ import { css } from '@novu/novui/css';
 import { IconHelpOutline } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
 import { FC } from 'react';
-import { matchPath, useLocation, useParams } from 'react-router-dom';
-import { ROUTES } from '../../../../constants/routes';
 import { discordInviteUrl } from '../../../../pages/quick-start/consts';
-import { useStudioNavigate } from '../../../../studio/hooks/useStudioNavigate';
+import { useStudioWorkflowsNavigation } from '../../../../studio/hooks';
 import { DocsButton } from '../../../docs/DocsButton';
 import { HEADER_NAV_HEIGHT } from '../../constants';
 import { BridgeMenuItems } from '../v2/BridgeMenuItems';
 import { BackButton } from './BackButton';
 
-const HOME_ROUTE: ROUTES = ROUTES.STUDIO_FLOWS_VIEW;
-
 export const LocalStudioHeader: FC = () => {
-  const { pathname } = useLocation();
-  const navigate = useStudioNavigate();
-  const { templateId = '' } = useParams();
-
-  const shouldHideBackButton = matchPath(HOME_ROUTE, pathname);
+  const { goBack, shouldHideBackButton } = useStudioWorkflowsNavigation();
 
   return (
     <Header
@@ -34,10 +26,7 @@ export const LocalStudioHeader: FC = () => {
       })}
     >
       <HStack justifyContent="space-between" width="full" display="flex">
-        <HStack gap="100">
-          {/** TODO temporary back-button. To be refined later */}
-          {!shouldHideBackButton && <BackButton onClick={() => navigate(HOME_ROUTE, { templateId })} />}
-        </HStack>
+        <HStack gap="100">{!shouldHideBackButton && <BackButton onClick={goBack} />}</HStack>
         <HStack gap="100">
           <BridgeMenuItems />
           <DocsButton />

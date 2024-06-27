@@ -4,7 +4,7 @@ import styled from '@emotion/styled';
 import { css } from '@novu/novui/css';
 import { LocalStudioHeader } from './LocalStudioHeader/LocalStudioHeader';
 import { LocalStudioSidebar } from './LocalStudioSidebar';
-import { isStudioOnboardingRoute } from '../../../studio/utils/isStudioRoute';
+import { isStudioOnboardingRoute } from '../../../studio/utils/routing';
 
 const AppShell = styled.div`
   display: flex;

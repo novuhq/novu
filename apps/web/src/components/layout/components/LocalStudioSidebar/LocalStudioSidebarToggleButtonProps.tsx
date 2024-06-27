@@ -1,11 +1,14 @@
+import { css } from '@novu/novui/css';
 import { IconBolt } from '@novu/novui/icons';
 import { FC } from 'react';
 import { WORKFLOW_NODE_STEP_ICON_DICTIONARY } from '../../../../studio/components/workflows/node-view/WorkflowNodes';
-import { IBridgeWorkflow, IBridgeWorkflowStep } from '../../../../studio/types';
-import { NavMenuToggleButton, NavMenuLinkButton } from '../../../nav/NavMenuButton';
-import { ROUTES } from '../../../../constants/routes';
-import { parseUrl } from '../../../../utils/routeUtils';
-import { css } from '@novu/novui/css';
+import { IBridgeWorkflow } from '../../../../studio/types';
+import {
+  getStudioWorkflowLink,
+  getStudioWorkflowStepLink,
+  getStudioWorkflowTestLink,
+} from '../../../../studio/utils/routing';
+import { NavMenuLinkButton, NavMenuToggleButton } from '../../../nav/NavMenuButton';
 
 type LocalStudioSidebarToggleButtonProps = {
   workflow: IBridgeWorkflow;
@@ -17,22 +20,21 @@ export const LocalStudioSidebarToggleButton: FC<LocalStudioSidebarToggleButtonPr
   const { workflowId, steps } = workflow;
 
   return (
-    <NavMenuToggleButton label={workflowId} icon={null} link={getLinkFromWorkflow(workflowId)}>
+    <NavMenuToggleButton label={workflowId} icon={null} link={getStudioWorkflowLink(workflowId)}>
       <NavMenuLinkButton
         label={'Trigger'}
-        link={getTriggerLink(workflowId)}
+        link={getStudioWorkflowTestLink(workflowId)}
         icon={<IconBolt size="20" />}
         className={linkButtonClassName}
       />
-      {steps.map((step) => {
-        const { stepId, type } = step;
+      {steps.map(({ stepId, type }) => {
         const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[type];
 
         return (
           <NavMenuLinkButton
             key={`${workflowId}-${stepId}`}
             label={stepId}
-            link={getLinkFromWorkflowStep(workflowId, step)}
+            link={getStudioWorkflowStepLink(workflowId, stepId)}
             icon={<Icon size="20" title="studio-workflow-step-icon" />}
             className={linkButtonClassName}
           />
@@ -41,17 +43,3 @@ export const LocalStudioSidebarToggleButton: FC<LocalStudioSidebarToggleButtonPr
     </NavMenuToggleButton>
   );
 };
-
-function getTriggerLink(workflowId: string) {
-  return parseUrl(ROUTES.STUDIO_FLOWS_TEST, { templateId: workflowId });
-}
-function getLinkFromWorkflow(workflowId: string) {
-  return parseUrl(ROUTES.STUDIO_FLOWS_VIEW, { templateId: workflowId });
-}
-
-function getLinkFromWorkflowStep(workflowId: string, step: IBridgeWorkflowStep) {
-  return parseUrl(ROUTES.STUDIO_FLOWS_STEP_EDITOR, {
-    templateId: workflowId,
-    stepId: step.stepId,
-  });
-}
