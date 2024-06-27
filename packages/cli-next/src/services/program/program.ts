@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import chalk from 'chalk';
 import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -49,6 +50,7 @@ export const buildProgram = () => {
     .requiredOption('--api-key <apiKey>', 'The Novu api key to use')
     .description('Sync your Echo state with Novu Cloud')
     .action(async (options) => {
+      printSyncDeprecationWarning();
       analytics.track({
         identity: {
           anonymousId: anonymousId,
@@ -62,3 +64,17 @@ export const buildProgram = () => {
 
   return program;
 };
+
+function printSyncDeprecationWarning() {
+  console.warn('');
+  console.warn(
+    chalk.yellowBright(chalk.bold('############################ DEPRECATION WARNING #############################'))
+  );
+  console.warn(
+    chalk.yellowBright(chalk.bold('# The "novu-labs sync" command is deprecated, please use "novu sync" instead #'))
+  );
+  console.warn(
+    chalk.yellowBright(chalk.bold('##############################################################################'))
+  );
+  console.warn('');
+}

@@ -11,6 +11,8 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "precommit": "lint-staged",
     "start": "pnpm start:dev",
+    "test": "jest",    
+    "test:watch": "jest --watch",
     "start:dev": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon init",
     "start:dev:mode": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon dev --studio-remote-origin http://localhost:4200",
     "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nodemon init",
@@ -25,10 +27,13 @@
   "devDependencies": {
     "@types/configstore": "^5.0.1",
     "@types/inquirer": "^8.2.0",
+    "@types/jest": "^29.5.12",
     "@types/mocha": "10.0.2",
     "@types/ws": "^8.5.3",
+    "jest": "^29.7.0",
     "ncp": "^2.0.0",
     "nodemon": "^3.0.1",
+    "ts-jest": "^29.1.5",
     "typescript": "4.9.5"
   },
   "dependencies": {

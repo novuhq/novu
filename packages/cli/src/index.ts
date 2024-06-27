@@ -2,7 +2,18 @@
 
 import { Command } from 'commander';
 import { initCommand, devCommand, DevCommandOptions } from './commands';
+import { sync } from './commands/sync';
 
+import { v4 as uuidv4 } from 'uuid';
+import { AnalyticService, ConfigService } from './services';
+
+const analytics = new AnalyticService();
+const config = new ConfigService();
+if (process.env.NODE_ENV === 'development') {
+  config.clearStore();
+}
+const anonymousIdLocalState = config.getValue('anonymousId');
+const anonymousId = anonymousIdLocalState || uuidv4();
 const program = new Command();
 
 program.name('novu').description('A CLI tool to interact with the novu API');
@@ -12,6 +23,27 @@ program
   .description('Initialize a new project and create an account')
   .action(() => {
     initCommand();
+  });
+
+program
+  .command('sync')
+  .option(
+    '-n, --novu-cloud-api-url <novuCloudApiUrl>',
+    'The Novu Cloud API url, defaults to https://api.novu.co',
+    'https://api.novu.co'
+  )
+  .requiredOption('--novu-endpoint-url <novuEndpointUrl>', 'The novu endpoint URL')
+  .requiredOption('--api-key <apiKey>', 'The Novu api key')
+  .description('Sync your workflow state with Novu Cloud')
+  .action(async (options) => {
+    analytics.track({
+      identity: {
+        anonymousId: anonymousId,
+      },
+      data: {},
+      event: 'Sync Novu Endpoint State',
+    });
+    await sync(options.novuEndpointUrl, options.apiKey, options.novuCloudApiUrl);
   });
 
 program
@@ -31,5 +63,6 @@ program
     'Studio Origin SPA, used for staging environment and local development, defaults to us',
     'us'
   )
-  .action((options: DevCommandOptions) => devCommand(options))
-  .parse(process.argv);
+  .action((options: DevCommandOptions) => devCommand(options));
+
+program.parse(process.argv);
