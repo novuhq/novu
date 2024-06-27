@@ -176,7 +176,7 @@ describe('Create Organization - /organizations (POST)', async () => {
       );
 
       expect(integrations.length).to.eq(4);
-      expect(novuSmsIntegration?.length).to.eq(4);
+      expect(novuSmsIntegration?.length).to.eq(2);
       expect(novuSmsIntegration.filter((el) => el._environmentId === productionEnv?._id).length).to.eq(1);
       expect(novuSmsIntegration.filter((el) => el._environmentId === developmentEnv?._id).length).to.eq(1);
       process.env.NOVU_EMAIL_INTEGRATION_API_KEY = oldNovuEmailIntegrationApiKey;
@@ -199,7 +199,7 @@ describe('Create Organization - /organizations (POST)', async () => {
       );
 
       expect(integrations.length).to.eq(4);
-      expect(novuEmailIntegrations?.length).to.eq(4);
+      expect(novuEmailIntegrations?.length).to.eq(2);
       expect(novuEmailIntegrations.filter((el) => el._environmentId === productionEnv?._id).length).to.eq(1);
       expect(novuEmailIntegrations.filter((el) => el._environmentId === developmentEnv?._id).length).to.eq(1);
       process.env.NOVU_SMS_INTEGRATION_ACCOUNT_SID = oldNovuSmsIntegrationAccountSid;

@@ -90,18 +90,26 @@ export class CreateNovuIntegrations {
   }
 
   private async createInAppIntegration(command: CreateNovuIntegrationsCommand) {
-    await this.createIntegration.execute(
-      CreateIntegrationCommand.create({
-        providerId: InAppProviderIdEnum.Novu,
-        channel: ChannelTypeEnum.IN_APP,
-        name: 'Novu In-App',
-        active: true,
-        check: false,
-        userId: command.userId,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      })
-    );
+    const inAppIntegrationCount = await this.integrationRepository.count({
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+    if (inAppIntegrationCount === 0) {
+      await this.createIntegration.execute(
+        CreateIntegrationCommand.create({
+          providerId: InAppProviderIdEnum.Novu,
+          channel: ChannelTypeEnum.IN_APP,
+          name: 'Novu In-App',
+          active: true,
+          check: false,
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
+      );
+    }
   }
 
   async execute(command: CreateNovuIntegrationsCommand): Promise<void> {
