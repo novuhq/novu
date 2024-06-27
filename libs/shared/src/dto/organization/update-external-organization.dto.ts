@@ -1,8 +1,8 @@
-import { IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsDefined, IsString, IsOptional, IsEnum } from 'class-validator';
 import { JobTitleEnum } from '../../types';
 import { ProductUseCases } from './create-organization.dto';
 
-export class SyncExternalOrganizationDto {
+export class UpdateExternalOrganizationDto {
   @IsOptional()
   @IsEnum(JobTitleEnum)
   jobTitle?: JobTitleEnum;

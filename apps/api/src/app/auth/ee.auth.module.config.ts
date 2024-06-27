@@ -7,14 +7,7 @@ import {
 } from '@novu/application-generic';
 import { RolesGuard } from './framework/roles.guard';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
-import { ModuleMetadata } from '@nestjs/common';
-import {
-  EnvironmentRepository,
-  MemberRepository,
-  OrganizationRepository,
-  UserRepository,
-  SubscriberRepository,
-} from '@novu/dal';
+import { MiddlewareConsumer, ModuleMetadata } from '@nestjs/common';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 import { OrganizationModule } from '../organization/organization.module';
@@ -52,4 +45,11 @@ export function getEEModuleConfig(): ModuleMetadata {
       'ORGANIZATION_REPOSITORY',
     ],
   };
+}
+
+export function configure(consumer: MiddlewareConsumer) {
+  const eeAuthPackage = require('@novu/ee-auth');
+  if (eeAuthPackage?.configure) {
+    eeAuthPackage.configure(consumer);
+  }
 }

@@ -13,6 +13,7 @@ import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases
 import { ModuleRef } from '@nestjs/core';
 import { SyncExternalOrganizationCommand } from './sync-external-organization.command';
 
+// TODO: eventually move to @novu/ee-auth
 @Injectable({
   scope: Scope.REQUEST,
 })
