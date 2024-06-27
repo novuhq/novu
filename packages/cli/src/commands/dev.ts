@@ -11,12 +11,26 @@ process.on('SIGINT', function () {
   process.exit();
 });
 
+export enum WebRegionEnum {
+  US = 'us',
+  EU = 'eu',
+  STAGING = 'staging',
+}
+
+export enum WebUrlEnum {
+  US = 'https://web.novu.co',
+  EU = 'https://eu.web.novu.co',
+  STAGING = 'https://dev.web.novu.co',
+}
+
+const TUNNEL_URL = 'https://ntfr.dev/api/tunnels';
+
 export type DevCommandOptions = {
   port: string;
   origin: string;
-  region: 'us' | 'eu';
-  studioPort: string;
-  studioRemoteOrigin: string;
+  region: `${WebRegionEnum}`;
+  webPort: string;
+  webUrl: string;
   route: string;
 };
 
@@ -28,7 +42,7 @@ export async function devCommand(options: DevCommandOptions) {
   const tunnelOrigin = await generateTunnel(parsedOptions.origin);
   const NOVU_ENDPOINT_PATH = options.route;
 
-  devSpinner.succeed(`Local tunnel started: ${tunnelOrigin}`);
+  devSpinner.succeed(`Local Tunnel started:\t${tunnelOrigin}`);
 
   const opts = {
     ...parsedOptions,
@@ -40,7 +54,7 @@ export async function devCommand(options: DevCommandOptions) {
   const studioSpinner = ora('Starting local studio server').start();
   await httpServer.listen();
 
-  studioSpinner.succeed(`Novu Studio started: ${httpServer.getStudioAddress()}`);
+  studioSpinner.succeed(`Novu Studio started:\t${httpServer.getStudioAddress()}`);
   if (process.env.NODE_ENV !== 'dev') {
     await open(httpServer.getStudioAddress());
   }
@@ -51,7 +65,9 @@ export async function devCommand(options: DevCommandOptions) {
 async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointRoute: string) {
   const fullEndpoint = `${parsedOptions.origin}${endpointRoute}`;
   let healthy = false;
-  const endpointText = `Looking for the Novu Endpoint at ${fullEndpoint}. Ensure your application is configured and running locally.`;
+  const endpointText = `Bridge Endpoint scan:\t${fullEndpoint}
+  
+  Ensure your application is configured and running locally.`;
   const endpointSpinner = ora(endpointText).start();
 
   let counter = 0;
@@ -68,7 +84,7 @@ async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointR
       healthy = healthResponse.status === 'ok';
 
       if (healthy) {
-        endpointSpinner.succeed(`Endpoint properly configured: ${fullEndpoint}`);
+        endpointSpinner.succeed(`Bridge Endpoint up:\t${fullEndpoint}`);
       } else {
         await wait(1000);
       }
@@ -78,14 +94,12 @@ async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointR
       counter++;
 
       if (counter === 10) {
-        endpointSpinner.text = `Looking for the Novu Endpoint at ${
-          parsedOptions.origin
-        }${endpointRoute}. Ensure your application is configured and running locally.
-        
-Don't have a configured application yet? Use our starter ${chalk.bold('npx create-novu-app@latest')}
-Have it running on a different path or port? Use the ${chalk.bold('--route')} or ${chalk.bold(
-          '--port'
-        )} to modify the default values.
+        endpointSpinner.text = `Bridge Endpoint:\t${fullEndpoint}
+
+  Ensure your application is configured and running locally.
+
+  Starting out? Use our starter ${chalk.bold('npx create-novu-app@latest')}
+  Running on a different route or port? Use ${chalk.bold('--route')} or ${chalk.bold('--port')}
           `;
       }
     }
@@ -102,7 +116,7 @@ function parseOptions(options: DevCommandOptions) {
   return {
     ...options,
     origin: origin || defaultOrigin(port),
-    studioRemoteOrigin: options.studioRemoteOrigin || defaultStudioRemoteOrigin(region),
+    webUrl: options.webUrl || getDefaultWebUrl(region),
   };
 }
 
@@ -110,15 +124,15 @@ function defaultOrigin(port: string) {
   return `http://localhost:${port}`;
 }
 
-function defaultStudioRemoteOrigin(region: string) {
+function getDefaultWebUrl(region: string) {
   switch (region) {
-    case 'eu':
-      return 'https://eu.web.novu.co';
-    case 'staging':
-      return 'https://dev.web.novu.co';
-    case 'us':
+    case WebRegionEnum.EU:
+      return WebUrlEnum.EU;
+    case WebRegionEnum.STAGING:
+      return WebUrlEnum.STAGING;
+    case WebRegionEnum.US:
     default:
-      return 'https://web.novu.co';
+      return WebUrlEnum.US;
   }
 }
 
@@ -128,7 +142,6 @@ type LocalTunnelResponse = {
 };
 
 async function generateTunnel(localOrigin: string) {
-  const TUNNEL_URL = 'https://ntfr.dev/api/tunnels';
   const response = await fetch(TUNNEL_URL, {
     method: 'POST',
     headers: {

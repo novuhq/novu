@@ -5,7 +5,7 @@ import { initCommand, devCommand, DevCommandOptions } from './commands';
 
 const program = new Command();
 
-program.name('novu').description('A CLI tool to interact with the novu API');
+program.name('novu').description('A CLI tool to interact with the Novu Platform');
 
 program
   .command('init')
@@ -17,19 +17,11 @@ program
 program
   .command('dev')
   .description('Start a Novu Dev Studio and a localtunnel')
-  .option('-p, --port <value>', 'Set the local port for the Novu endpoint, defaults to 4000', '4000')
-  .option('-r, --route <value>', 'Set the Novu Endpoint mounted route, defaults to /api/novu', '/api/novu')
-  .option('-o, --origin <value>', 'Set the origin for the Novu endpoint')
-  .option('-sp, --studio-port <value>', 'Set the local port for the Novu Local Studio server, defaults to 2022', '2022')
-  .option(
-    '-so, --studio-remote-origin <value>',
-    'Set the remote origin for Novu Studio, used for staging environment and local development, defaults to https://web.novu.co',
-    'https://web.novu.co'
-  )
-  .option(
-    '--region <value>',
-    'Studio Origin SPA, used for staging environment and local development, defaults to us',
-    'us'
-  )
+  .option('-p, --port <value>', 'The port for the local Bridge endpoint', '4000')
+  .option('-r, --route <value>', 'The Bridge endpoint route', '/api/novu')
+  .option('-o, --origin <value>', 'The origin for the Bridge endpoint')
+  .option('-r, --region <value>', 'Novu Cloud region, for staging and local development', 'us')
+  .option('-wu, --web-url <value>', 'The url for Novu Web, for staging and local development', 'https://web.novu.co')
+  .option('-wp, --web-port <value>', 'The port for the Novu Studio server', '2022')
   .action((options: DevCommandOptions) => devCommand(options))
   .parse(process.argv);
