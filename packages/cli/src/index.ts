@@ -27,13 +27,12 @@ program
 
 program
   .command('sync')
-  .option(
-    '-n, --novu-cloud-api-url <novuCloudApiUrl>',
-    'The Novu Cloud API url, defaults to https://api.novu.co',
-    'https://api.novu.co'
+  .option('-a, --api-url <apiUrl>', 'The Novu Cloud API url, defaults to https://api.novu.co', 'https://api.novu.co')
+  .requiredOption(
+    '-b, --bridge-url <bridgeUrl>',
+    'The novu endpoint URL hosted in the bridge application, by convention ends in /api/novu'
   )
-  .requiredOption('--novu-endpoint-url <novuEndpointUrl>', 'The novu endpoint URL')
-  .requiredOption('--api-key <apiKey>', 'The Novu api key')
+  .requiredOption('-s, --secret-key <secretKey>', 'The Novu secret key')
   .description('Sync your workflow state with Novu Cloud')
   .action(async (options) => {
     analytics.track({
@@ -43,7 +42,7 @@ program
       data: {},
       event: 'Sync Novu Endpoint State',
     });
-    await sync(options.novuEndpointUrl, options.apiKey, options.novuCloudApiUrl);
+    await sync(options.bridgeUrl, options.secretKey, options.apiUrl);
   });
 
 program

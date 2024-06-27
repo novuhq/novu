@@ -1,8 +1,22 @@
 import axios from 'axios';
 import { createHmac } from 'crypto';
 
-export async function sync(bridgeUrl: string, novuApiKey: string, novuCloudApiUrl: string) {
-  const syncResult = await executeSync(novuCloudApiUrl, bridgeUrl, novuApiKey);
+export async function sync(bridgeUrl: string, secretKey: string, apiUrl: string) {
+  console.warn('[THE STUFF]', bridgeUrl, secretKey, apiUrl);
+  if (!bridgeUrl) {
+    throw new Error('A bridge URL is required for the sync command, please supply it when running the command');
+  }
+
+  if (!secretKey) {
+    throw new Error('A secret key is required for the sync command, please supply it when running the command');
+  }
+
+  if (!apiUrl) {
+    throw new Error(
+      'An API url is required for the sync command, please omit the configuration option entirely or supply a valid API url when running the command'
+    );
+  }
+  const syncResult = await executeSync(apiUrl, bridgeUrl, secretKey);
 
   if (syncResult.status >= 400) {
     console.error(new Error(JSON.stringify(syncResult.data)));
@@ -12,8 +26,8 @@ export async function sync(bridgeUrl: string, novuApiKey: string, novuCloudApiUr
   return syncResult.data;
 }
 
-export async function executeSync(novuCloudApiUrl: string, bridgeUrl: string, novuApiKey: string) {
-  const url = novuCloudApiUrl + '/v1/bridge/sync?source=cli';
+export async function executeSync(apiUrl: string, bridgeUrl: string, secretKey: string) {
+  const url = apiUrl + '/v1/bridge/sync?source=cli';
 
   return await axios.post(
     url,
@@ -23,20 +37,20 @@ export async function executeSync(novuCloudApiUrl: string, bridgeUrl: string, no
     {
       headers: {
         'Content-Type': 'application/json',
-        Authorization: 'ApiKey ' + novuApiKey,
+        Authorization: 'ApiKey ' + secretKey,
       } as any,
     }
   );
 }
 
-export function buildSignature(novuApiKey: string) {
+export function buildSignature(secretKey: string) {
   const timestamp = Date.now();
 
-  return `t=${timestamp},v1=${buildHmac(novuApiKey, timestamp)}`;
+  return `t=${timestamp},v1=${buildHmac(secretKey, timestamp)}`;
 }
 
-export function buildHmac(novuApiKey: string, timestamp: number) {
-  return createHmac('sha256', novuApiKey)
+export function buildHmac(secretKey: string, timestamp: number) {
+  return createHmac('sha256', secretKey)
     .update(timestamp + '.' + JSON.stringify({}))
     .digest('hex');
 }
