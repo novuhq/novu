@@ -11,16 +11,21 @@ import { ROUTES } from '../../constants/routes';
 import { useNavigate } from 'react-router-dom';
 import { useHealthCheck } from '../../studio/hooks/useBridgeAPI';
 import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
+import { useStudioState } from '../../studio/StudioStateProvider';
+import { capitalizeFirstLetter } from '../../utils/string';
 
 export const StudioOnboarding = () => {
   const segment = useSegment();
   const navigate = useNavigate();
+  const { testUser } = useStudioState();
   const { data, isLoading } = useHealthCheck();
 
   useEffect(() => {
     segment.track('Add endpoint step started - [Onboarding - Signup]');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const welcomeMessage = `Welcome ${capitalizeFirstLetter(testUser?.firstName || '')}`.trim() + `. Let's get started!`;
 
   return (
     <Wrapper>
@@ -31,7 +36,7 @@ export const StudioOnboarding = () => {
             width: 'onboarding',
           })}
         >
-          <Title variant="page">Create an Novu endpoint</Title>
+          <Title variant="page">{welcomeMessage}</Title>
           <Text
             variant="main"
             color="typography.text.secondary"
@@ -40,8 +45,8 @@ export const StudioOnboarding = () => {
               marginTop: '50',
             })}
           >
-            To start sending your first workflows, you first need to connect Novu to your Bridge Endpoint. This setup
-            will create a sample Next.js project and pre-configured the @novu/framework client for you.
+            Send your first email notification, by connecting to your Novu Bridge Endpoint. This setup will create a
+            sample Next.js project with a pre-configured <code>@novu/framework</code>.
           </Text>
           <SetupTimeline testResponse={{ data: data as BridgeStatus, isLoading }} />
         </div>

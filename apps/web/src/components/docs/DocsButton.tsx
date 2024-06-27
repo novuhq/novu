@@ -47,8 +47,10 @@ const DefaultButton = ({ onClick }: { onClick: () => void }) => (
 
 export const DocsButton = ({
   TriggerButton = DefaultButton,
+  tooltip,
 }: {
   TriggerButton?: React.FC<{ onClick: () => void }>;
+  tooltip?: string;
 }) => {
   const [opened, setOpened] = useState<boolean>(false);
   const segment = useSegment();
@@ -100,7 +102,7 @@ export const DocsButton = ({
 
   return (
     <>
-      <Tooltip disabled={opened} position="bottom" label="Inline documentation">
+      <Tooltip disabled={opened} position="bottom" label={tooltip ?? 'Inline documentation'}>
         <div>
           <Popover
             closeOnClickOutside={false}

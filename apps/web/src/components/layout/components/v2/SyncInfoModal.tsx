@@ -30,7 +30,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
     },
     {
       value: 'other',
-      label: 'Other CI',
+      label: 'CLI',
       content: (
         <Prism withLineNumbers language="bash">
           {getOtherCodeContent({ apiKey, bridgeUrl })}
