@@ -1,20 +1,22 @@
 import { useMutation } from '@tanstack/react-query';
+import { useStudioState } from '../../studio/StudioStateProvider';
 
 export function useBridgeUrlTest() {
+  const { bridgeURL } = useStudioState();
+
   const {
     isLoading,
     mutateAsync: runHealthCheck,
-
     data,
-  } = useMutation(async (url: string) => {
+  } = useMutation(async () => {
     try {
-      new URL(url);
+      new URL(bridgeURL);
     } catch (e) {
       throw new Error('The provided URL is invalid');
     }
 
     try {
-      const response = await fetch(url + '?action=health-check', {
+      const response = await fetch(bridgeURL + '?action=health-check', {
         headers: {
           'Bypass-Tunnel-Reminder': 'true',
         },
