@@ -1,6 +1,6 @@
 {
   "name": "novu",
-  "version": "0.24.2",
+  "version": "0.24.3-alpha.1",
   "description": "On-Boarding Cli",
   "main": "index.js",
   "scripts": {
