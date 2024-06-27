@@ -23,7 +23,7 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
-import { Awaitable, DiscoverWorkflowOutput, ITriggerEvent } from './types';
+import { Awaitable, DiscoverWorkflowOutput, TriggerEvent } from './types';
 import { initApiClient } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -207,7 +207,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     };
   }
 
-  public triggerAction(triggerEvent: ITriggerEvent) {
+  public triggerAction(triggerEvent: TriggerEvent) {
     return async () => {
       const requestPayload = {
         name: triggerEvent.workflowId,

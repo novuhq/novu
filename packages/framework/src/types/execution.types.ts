@@ -15,7 +15,7 @@ export type Event = {
   subscriber: Subscriber;
 };
 
-export interface ITriggerEvent {
+export type TriggerEvent = {
   workflowId: string;
   to: TriggerRecipientsPayload;
   actor?: TriggerRecipientSubscriber;
@@ -24,7 +24,7 @@ export interface ITriggerEvent {
   tenant?: ITenantDefine;
   transactionId?: string;
   overrides?: Record<string, unknown>;
-}
+};
 
 export type State = {
   stepId: string;
