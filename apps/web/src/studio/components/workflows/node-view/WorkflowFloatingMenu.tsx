@@ -14,21 +14,16 @@ import {
 } from '@novu/novui/icons';
 import { VStack } from '@novu/novui/jsx';
 import { vstack } from '@novu/novui/patterns';
-import { FC, PropsWithChildren, useState } from 'react';
-import { DocsModal } from '../../../../components/docs/DocsModal';
+import { FC, PropsWithChildren } from 'react';
+import { useDocsModal } from '../../../../components/docs/useDocsModal';
 
 type IWorkflowFloatingMenuProps = CoreProps;
 
 export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className }) => {
-  const [docsOpen, setDocsOpen] = useState<boolean>(false);
-  const [path, setPath] = useState<string>('');
-
-  const toggle = () => {
-    setDocsOpen((prevOpen) => !prevOpen);
-  };
+  const { Component: DocsModal, setPath, toggle } = useDocsModal();
 
   const handleClick = (pathToSet: string) => () => {
-    setPath('echo/steps/' + pathToSet);
+    setPath('framework/steps/' + pathToSet);
     toggle();
   };
 
@@ -80,7 +75,7 @@ export const WorkflowFloatingMenu: FC<IWorkflowFloatingMenuProps> = ({ className
           />
         </WorkflowFloatingMenuSection>
       </menu>
-      <DocsModal open={docsOpen} toggle={toggle} path={path} />
+      <DocsModal />
     </>
   );
 };

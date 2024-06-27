@@ -4,29 +4,22 @@ import { IconOutlineBolt } from '@novu/novui/icons';
 import { Tabs, Title } from '@novu/novui';
 import { HStack } from '@novu/novui/jsx';
 import { FC } from 'react';
+import {
+  createNodeSnippet,
+  createCurlSnippet,
+  createPhpSnippet,
+  createGoSnippet,
+  createPythonSnippet,
+} from '../../../../utils/codeSnippets';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-interface IWorkflowTestTriggerPanelProps {}
-
-// TODO: placeholder for real code
-const CODE = (
-  <Prism withLineNumbers={true} language="javascript" h="100%">
-    {`
-import { Novu } from “@novu/node”; 
-
-const novu = new Novu(“<APIkey•••••••••••>”);
-
-novu.trigger(“digest-workflow-example”, {
-to: {
-“subscriberId”:“63eba45f8c05635c0ab0hjdkhfkHFKdjhfsdjkhf
-“email”:“nikolay@novu.co”
+interface IWorkflowTestTriggerPanelProps {
+  identifier: string;
+  to: Record<string, unknown>;
+  payload: Record<string, unknown>;
+  apiKey: string;
 }
-});
-`}
-  </Prism>
-);
 
-export const WorkflowTestTriggerPanel: FC<IWorkflowTestTriggerPanelProps> = ({}) => {
+export const WorkflowTestTriggerPanel: FC<IWorkflowTestTriggerPanelProps> = ({ identifier, to, payload, apiKey }) => {
   return (
     <Box>
       <HStack gap="50" mb="margins.layout.page.section.titleBottom">
@@ -40,27 +33,47 @@ export const WorkflowTestTriggerPanel: FC<IWorkflowTestTriggerPanelProps> = ({})
           {
             value: 'node',
             label: 'Node.js',
-            content: CODE,
+            content: (
+              <Prism withLineNumbers={true} language="javascript" h="100%">
+                {createNodeSnippet(identifier, to, payload, undefined, undefined, apiKey) as any}
+              </Prism>
+            ),
           },
           {
             value: 'curl',
             label: 'Curl',
-            content: CODE,
+            content: (
+              <Prism withLineNumbers={true} language="bash" h="100%">
+                {createCurlSnippet(identifier, to, payload, undefined, undefined, apiKey) as any}
+              </Prism>
+            ),
           },
           {
             value: 'php',
             label: 'PHP',
-            content: CODE,
+            content: (
+              <Prism withLineNumbers={true} language="markdown" h="100%">
+                {createPhpSnippet(identifier, to, payload, apiKey) as any}
+              </Prism>
+            ),
           },
           {
             value: 'golang',
             label: 'GOlang',
-            content: CODE,
+            content: (
+              <Prism withLineNumbers={true} language="go" h="100%">
+                {createGoSnippet(identifier, to, payload, apiKey) as any}
+              </Prism>
+            ),
           },
           {
             value: 'python',
             label: 'Python',
-            content: CODE,
+            content: (
+              <Prism withLineNumbers={true} language="python" h="100%">
+                {createPythonSnippet(identifier, to, payload, apiKey) as any}
+              </Prism>
+            ),
           },
         ]}
       />

@@ -42,10 +42,10 @@ const commentWorkflow = await workflow(
 
     await step.email(
       'weekly-comments',
-      async (inputs) => {
+      async (controls) => {
         return {
           subject: `Weekly post comments (${weeklyDigest.events.length + 1})`,
-          body: renderReactEmail(inputs, weeklyDigest.events),
+          body: renderReactEmail(controls, weeklyDigest.events),
         };
       },
       { skip: () => inAppResponse.seen }
@@ -68,5 +68,6 @@ const commentWorkflow = await workflow(
   }
 );
 
+// Use your favorite framework to serve your workflows
 serve({ workflows: [commentWorkflow] });
 ```

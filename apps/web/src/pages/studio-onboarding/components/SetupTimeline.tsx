@@ -39,7 +39,7 @@ export const SetupTimeline = ({
       <>
         {testResponse?.isLoading ? <Loader size={16} color={'indigo'} /> : null}
         {testResponse?.data?.status === 'ok' ? <IconCheck color="green" /> : null}
-        {!testResponse?.isLoading && testResponse?.data?.status !== 'ok' ? <IconCancel color="#f45c5c" /> : null}
+        {url && !testResponse?.isLoading && testResponse?.data?.status !== 'ok' ? <IconCancel color="#f45c5c" /> : null}
       </>
     );
   }
@@ -49,9 +49,12 @@ export const SetupTimeline = ({
       <MantineTimeline.Item
         bullet={active >= 1 ? <Icon /> : 1}
         lineVariant="dashed"
-        title="Create Novu App"
+        title="Create Novu Example App"
         active={active >= 1}
       >
+        <Text variant="main" color="typography.text.secondary">
+          This will create a new Next.js sample app with React-Email
+        </Text>
         <CodeSnippet
           command={`npx create-novu-app --api-key=${key}`}
           onClick={() => {
@@ -66,7 +69,20 @@ export const SetupTimeline = ({
         active={active >= 2}
       >
         <CodeSnippet
-          command={'cd my-app && npm run dev'}
+          command={'cd my-novu-app && npm run dev'}
+          onClick={() => {
+            setActive((old) => (old > 2 ? old : 2));
+          }}
+        />
+      </MantineTimeline.Item>
+      <MantineTimeline.Item
+        bullet={active >= 2 ? <Icon /> : 2}
+        lineVariant="dashed"
+        title="Start a localtunnel to your application"
+        active={active >= 2}
+      >
+        <CodeSnippet
+          command={'npx localtunnel --port=4000'}
           onClick={() => {
             setActive((old) => (old > 2 ? old : 2));
           }}
@@ -84,12 +100,13 @@ export const SetupTimeline = ({
         <Input
           rightSection={<CheckStatusIcon />}
           type="url"
+          placeholder={'For Example: https://cold-dryers-leave.loca.lt/api/novu'}
           onChange={(e) => {
             setUrl(e.target.value);
           }}
           value={url}
           error={
-            error || (!testResponse.isLoading && testResponse.data?.status !== 'ok') ? (
+            (url && error) || (url && !testResponse.isLoading && testResponse.data?.status !== 'ok') ? (
               <>
                 Could not locate a valid Novu Endpoint.{' '}
                 <a style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={() => retest()}>

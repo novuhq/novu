@@ -82,6 +82,7 @@ export class EventsController {
         transactionId: body.transactionId,
         addressingType: AddressingTypeEnum.MULTICAST,
         requestCategory: TriggerRequestCategoryEnum.SINGLE,
+        bridgeUrl: body.bridgeUrl,
       })
     );
 
@@ -166,7 +167,8 @@ export class EventsController {
         workflowId: body.workflowId,
         stepId: body.stepId,
         bridge: body.bridge,
-        inputs: body.inputs,
+        inputs: body.controls || body.inputs,
+        controls: body.controls || body.inputs,
       })
     );
   }

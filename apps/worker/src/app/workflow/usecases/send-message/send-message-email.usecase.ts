@@ -188,6 +188,7 @@ export class SendMessageEmail extends SendMessageBase {
       overrides,
       templateIdentifier: command.identifier,
       _jobId: command.jobId,
+      tags: command.tags,
     });
 
     let replyToAddress: string | undefined;

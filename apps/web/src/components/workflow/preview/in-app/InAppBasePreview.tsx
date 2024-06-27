@@ -1,6 +1,5 @@
 import styled from '@emotion/styled';
 import { ParsedPreviewStateType } from '../../../../pages/templates/hooks/usePreviewInAppTemplate';
-import { ErrorPrettyRender } from '../ErrorPrettyRender';
 import { Header } from './Header';
 import Content from './Content';
 
@@ -17,7 +16,6 @@ export const InAppBasePreview = ({
   content,
   loading = false,
   error,
-  previewError,
   showEditOverlay = false,
   onLocaleChange,
   selectedLocale,
@@ -27,17 +25,12 @@ export const InAppBasePreview = ({
   content: ParsedPreviewStateType;
   loading?: boolean;
   error?: string;
-  previewError?: any;
   showEditOverlay?: boolean;
   onLocaleChange: (locale: string) => void;
   selectedLocale?: string;
   locales: any[];
   enableAvatar?: boolean;
 }) => {
-  if (previewError) {
-    return <ErrorPrettyRender error={previewError} />;
-  }
-
   return (
     <ContainerStyled removePadding={!showEditOverlay}>
       <Header

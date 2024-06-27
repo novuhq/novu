@@ -9,6 +9,8 @@ import {
   ExecutionDetailsSourceEnum,
   ExecutionDetailsStatusEnum,
   IMessageTemplate,
+  ITenantDefine,
+  ProvidersIdEnum,
   SmsProviderIdEnum,
 } from '@novu/shared';
 
@@ -42,10 +44,19 @@ export abstract class SendMessageBase extends SendMessageType {
     super(messageRepository, createLogUsecase, executionLogRoute);
   }
 
-  protected async getIntegration(
-    selectIntegrationCommand: SelectIntegrationCommand
-  ): Promise<IntegrationEntity | undefined> {
-    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(selectIntegrationCommand));
+  protected async getIntegration(params: {
+    id?: string;
+    providerId?: ProvidersIdEnum;
+    identifier?: string;
+    organizationId: string;
+    environmentId: string;
+    channelType: ChannelTypeEnum;
+    userId: string;
+    filterData: {
+      tenant: ITenantDefine | undefined;
+    };
+  }): Promise<IntegrationEntity | undefined> {
+    const integration = await this.selectIntegration.execute(SelectIntegrationCommand.create(params));
 
     if (!integration) {
       return;
@@ -57,7 +68,7 @@ export abstract class SendMessageBase extends SendMessageType {
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,
-        userId: selectIntegrationCommand.userId,
+        userId: params.userId,
       });
     }
 

@@ -26,7 +26,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
   @IsDefined()
   notificationId: string;
 
-  @IsDefined()
+  @IsOptional()
   _templateId: string;
 
   @IsDefined()
@@ -46,4 +46,7 @@ export class SendMessageCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   bridgeData?: ExecuteOutput<IBridgeChannelResponse> | null;
+
+  @IsDefined()
+  tags: string[];
 }

@@ -2,7 +2,6 @@ import { Flex, Group, Skeleton, Stack, useMantineColorScheme } from '@mantine/co
 import styled from '@emotion/styled';
 import { colors, Text } from '@novu/design-system';
 import { useHover } from '../../../../hooks';
-import { ErrorPrettyRender } from '../ErrorPrettyRender';
 import {
   ContentAndOVerlayWrapperStyled,
   ContentHeaderStyled,
@@ -52,7 +51,6 @@ export const PushBasePreview = ({
   title,
   loading = false,
   error,
-  previewError,
   showEditOverlay = false,
   bridge = false,
   onLocaleChange,
@@ -64,7 +62,6 @@ export const PushBasePreview = ({
   loading?: boolean;
   bridge?: boolean;
   error?: string;
-  previewError?: any;
   showEditOverlay?: boolean;
   onLocaleChange: (locale: string) => void;
   selectedLocale?: string;
@@ -73,14 +70,6 @@ export const PushBasePreview = ({
   const { isHovered, onMouseEnter, onMouseLeave } = useHover();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
-
-  if (previewError) {
-    return (
-      <div style={{ marginTop: 20, padding: 10 }}>
-        <ErrorPrettyRender error={previewError} />
-      </div>
-    );
-  }
 
   return (
     <ContentWrapperStyled>

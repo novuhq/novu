@@ -1,7 +1,6 @@
 import styled from '@emotion/styled';
 import { Divider, Flex, useMantineColorScheme } from '@mantine/core';
 import { colors, Text } from '@novu/design-system';
-import { ErrorPrettyRender } from '../ErrorPrettyRender';
 import { LocaleSelect } from '../common';
 import { ChatContent } from './ChatContent';
 import { ChatInput } from './ChatInput';
@@ -15,7 +14,6 @@ export const ChatBasePreview = ({
   content,
   loading = false,
   error,
-  previewError,
   showEditOverlay = false,
   onLocaleChange,
   selectedLocale,
@@ -24,7 +22,6 @@ export const ChatBasePreview = ({
   content: string;
   loading?: boolean;
   error?: string;
-  previewError?: any;
   showEditOverlay?: boolean;
   onLocaleChange: (locale: string) => void;
   selectedLocale?: string;
@@ -32,10 +29,6 @@ export const ChatBasePreview = ({
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
-
-  if (previewError) {
-    return <ErrorPrettyRender error={previewError} />;
-  }
 
   return (
     <ChatPreviewContainer>

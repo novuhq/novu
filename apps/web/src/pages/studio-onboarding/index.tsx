@@ -8,10 +8,9 @@ import { VStack } from '@novu/novui/jsx';
 import { SetupTimeline } from './components/SetupTimeline';
 import { useSetupBridge } from './useSetupBridge';
 import { useSegment } from '../../components/providers/SegmentProvider';
-import { useWindowEvent } from '@mantine/hooks';
+import { Wrapper } from './components/Wrapper';
 
 export const StudioOnboarding = () => {
-  const { environment } = useEnvironment();
   const [url, setUrl] = useState('');
   const [error, setError] = useState<string>('');
   const { loading, setup, testEndpoint, testResponse } = useSetupBridge(url, setError);
@@ -28,28 +27,16 @@ export const StudioOnboarding = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useWindowEvent('focus', () => {
-    testEndpoint(url);
-  });
+  async function retest(continueSetup = false) {
+    const result = await testEndpoint(url);
 
-  useEffect(() => {
-    if (!environment?.echo?.url) {
-      return;
+    if (continueSetup && result.data?.status === 'ok') {
+      await setup();
     }
-    setUrl(environment?.echo?.url);
-  }, [environment?.echo?.url]);
-
-  function retest() {
-    testEndpoint(url);
   }
 
   return (
-    <div
-      className={css({
-        width: '100dvw',
-        height: '100dvh',
-      })}
-    >
+    <Wrapper>
       <Header />
       <VStack alignContent="center">
         <div
@@ -66,19 +53,23 @@ export const StudioOnboarding = () => {
               marginTop: '50',
             })}
           >
-            The first step adds an Novu endpoint, and creates your first workflow automatically. The workflow will be
-            created with an email step with sample content.
+            To start sending your first workflows, you first need to connect Novu to your Bridge Endpoint. This setup
+            will create a sample Next.js project and pre-configured the @novu/framework client for you.
           </Text>
           <SetupTimeline error={error} url={url} setUrl={setUrl} testResponse={testResponse} retest={retest} />
         </div>
       </VStack>
       <Footer
-        disabled={testResponse.data?.status !== 'ok'}
-        onClick={() => {
-          setup();
+        disabled={loading || !url}
+        onClick={async () => {
+          if (testResponse.data?.status === 'ok') {
+            setup();
+          } else {
+            retest(true);
+          }
         }}
         loading={loading}
       />
-    </div>
+    </Wrapper>
   );
 };

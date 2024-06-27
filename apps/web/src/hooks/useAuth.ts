@@ -5,7 +5,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as Sentry from '@sentry/react';
 import type { IJwtClaims, IOrganizationEntity, IUserEntity } from '@novu/shared';
-
 import { useSegment } from '../components/providers/SegmentProvider';
 import { api } from '../api';
 import { ROUTES, PUBLIC_ROUTES_PREFIXES } from '../constants/routes';
@@ -35,11 +34,11 @@ function saveToken(token: string | null) {
   }
 }
 
-function getToken(): string {
+export function getToken(): string {
   return localStorage.getItem(LOCAL_STORAGE_AUTH_TOKEN_KEY) || '';
 }
 
-function getTokenClaims(): IJwtClaims | null {
+export function getTokenClaims(): IJwtClaims | null {
   const token = getToken();
 
   return token ? jwtDecode<IJwtClaims>(token) : null;
@@ -108,6 +107,11 @@ export function useAuth() {
     navigate(ROUTES.AUTH_LOGIN);
   }, [navigate, queryClient, segment]);
 
+  const redirectToLogin = useCallback(
+    (redirectUrl?: string) => navigate(`${ROUTES.AUTH_LOGIN}?redirect_url=${redirectUrl}`),
+    [navigate]
+  );
+
   const { organizationId, environmentId } = getTokenClaims() || {};
 
   const currentOrganization = useMemo(() => {
@@ -144,6 +148,7 @@ export function useAuth() {
         kind: 'organization',
         key: currentOrganization._id,
         name: currentOrganization.name,
+        createdAt: currentOrganization.createdAt,
       });
     } else {
       ldClient.identify({
@@ -156,6 +161,8 @@ export function useAuth() {
   return {
     inPublicRoute,
     inPrivateRoute,
+    isUserLoading,
+    isOrganizationLoading,
     isLoading: inPrivateRoute && (isUserLoading || isOrganizationLoading),
     currentUser: user,
     organizations,
@@ -164,5 +171,6 @@ export function useAuth() {
     logout,
     environmentId,
     organizationId,
+    redirectToLogin,
   };
 }

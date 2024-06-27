@@ -13,6 +13,7 @@ import { When } from '../../components/utils/When';
 import { ROUTES } from '../../constants/routes';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
+import { Wrapper } from './components/Wrapper';
 
 export const StudioOnboardingSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -68,12 +69,7 @@ export const StudioOnboardingSuccess = () => {
   }, []);
 
   return (
-    <div
-      className={css({
-        width: '100dvw',
-        height: '100dvh',
-      })}
-    >
+    <Wrapper>
       <Header activeStepIndex={3} />
       <VStack alignContent="center">
         <div
@@ -143,12 +139,12 @@ export const StudioOnboardingSuccess = () => {
       <Footer
         onClick={() => {
           segment.track('Workflows page accessed - [Onboarding - Signup]');
-          navigate(ROUTES.WORKFLOWS);
+          navigate(ROUTES.STUDIO_FLOWS);
         }}
         canSkipSetup={false}
         buttonText="Explore workflows"
         showLearnMore={false}
       />
-    </div>
+    </Wrapper>
   );
 };

@@ -29,12 +29,11 @@ const tableStyles: Partial<Record<TableStylesNames, string>> = {
     },
     '& thead tr th': {
       fontWeight: 'regular',
-      // height: '17px',
       textAlign: 'left',
       color: 'typography.text.tertiary',
       borderBottom: 'none',
       borderSpacing: '0',
-      pb: '100',
+      py: '75',
     },
     '& tbody tr td': {
       // TODO: replace with token value

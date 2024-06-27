@@ -1,18 +1,18 @@
-import { expect, it, describe, beforeEach, afterEach, vi } from 'vitest';
+import { expect, it, describe, beforeEach } from 'vitest';
 
 import { Client } from './client';
-import { DEFAULT_NOVU_API_BASE_URL, HttpMethodEnum, NovuApiEndpointsEnum } from './constants';
 import {
-  ExecutionEventInputInvalidError,
+  ExecutionEventControlsInvalidError,
   ExecutionStateCorruptError,
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
 import { workflow } from './workflow';
-import { IEvent } from './types';
+import { IEvent, Step } from './types';
 import { delayOutputSchema } from './schemas';
-import { FromSchema } from 'json-schema-to-ts';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
+import { FromSchema } from './types/schema.types';
+import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 
 describe('Novu Client', () => {
   let client: Client;
@@ -29,9 +29,43 @@ describe('Novu Client', () => {
     client.addWorkflows([newWorkflow]);
   });
 
-  it('should discover 1 workflow', () => {
-    const discovery = client.discover();
-    expect(discovery.workflows).toHaveLength(1);
+  describe('client constructor', () => {
+    it('should set apiKey to process.env.NOVU_API_KEY by default', () => {
+      const originalApiKey = process.env.NOVU_API_KEY;
+      const testApiKey = 'test-env-api-key';
+      process.env = { ...process.env, NOVU_API_KEY: testApiKey };
+      const newClient = new Client();
+      expect(newClient.apiKey).toBe(process.env.NOVU_API_KEY);
+      process.env = { ...process.env, NOVU_API_KEY: originalApiKey };
+    });
+
+    it('should set apiKey to provided apiKey', () => {
+      const testApiKey = 'test-provided-api-key';
+      const newClient = new Client({ apiKey: testApiKey });
+      expect(newClient.apiKey).toBe(testApiKey);
+    });
+
+    it('should set strictAuthentication to false when NODE_ENV is development', () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env = { ...process.env, NODE_ENV: 'development' };
+      const newClient = new Client();
+      expect(newClient.strictAuthentication).toBe(false);
+      process.env = { ...process.env, NODE_ENV: originalEnv };
+    });
+
+    it('should set strictAuthentication to true when NODE_ENV is production', () => {
+      const originalEnv = process.env.NODE_ENV;
+      process.env = { ...process.env, NODE_ENV: 'production' };
+      const newClient = new Client();
+      expect(newClient.strictAuthentication).toBe(true);
+      process.env = { ...process.env, NODE_ENV: originalEnv };
+    });
+
+    it('should set strictAuthentication to provided strictAuthentication', () => {
+      const testStrictAuthentication = false;
+      const newClient = new Client({ strictAuthentication: testStrictAuthentication });
+      expect(newClient.strictAuthentication).toBe(testStrictAuthentication);
+    });
   });
 
   describe('discover method', () => {
@@ -65,12 +99,12 @@ describe('Novu Client', () => {
 
         await step.custom(
           'send-custom',
-          async (input) => ({
+          async (controls) => ({
             fooBoolean: inAppRes.read,
-            fooString: input.someString,
+            fooString: controls.someString,
           }),
           {
-            inputSchema: {
+            controlSchema: {
               type: 'object',
               properties: {
                 someString: { type: 'string' },
@@ -162,7 +196,7 @@ describe('Novu Client', () => {
       if (stepCustom === undefined) throw new Error('stepEmail is undefined');
       expect(stepCustom.type).toBe('custom');
       expect(stepCustom.code).toContain(`fooBoolean: inAppRes.read`);
-      expect(stepCustom.code).toContain(`fooString: input.someString`);
+      expect(stepCustom.code).toContain(`fooString: controls.someString`);
 
       const stepSms = foundWorkflow?.steps.find((stepX) => stepX.stepId === 'send-sms');
       expect(stepSms).toBeDefined();
@@ -216,18 +250,18 @@ describe('Novu Client', () => {
           }),
           {
             providers: {
-              slack: async ({ inputs }) => {
-                const blocks = [
-                  {
-                    type: 'header' as any,
-                    text: {
-                      type: 'plain_text',
-                      text: 'Pretty Header',
+              slack: async ({ controls }) => {
+                return {
+                  blocks: [
+                    {
+                      type: 'header',
+                      text: {
+                        type: 'plain_text',
+                        text: 'Pretty Header',
+                      },
                     },
-                  },
-                ];
-
-                return { blocks };
+                  ],
+                };
               },
             },
           }
@@ -252,20 +286,20 @@ describe('Novu Client', () => {
   });
 
   describe('previewWorkflow method', () => {
-    it('should compile default input variables for preview', async () => {
+    it('should compile default control variables for preview', async () => {
       const newWorkflow = workflow(
         'test-workflow',
         async ({ step }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + inputs.name,
-                body: inputs.name,
+                subject: 'body static prefix' + ' ' + controls.name,
+                body: controls.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: '{{name}}' },
@@ -300,6 +334,7 @@ describe('Novu Client', () => {
         },
         state: [],
         inputs: {},
+        controls: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -331,6 +366,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         inputs: {},
+        controls: {},
       };
 
       client.addWorkflows([newWorkflow]);
@@ -367,6 +403,7 @@ describe('Novu Client', () => {
           },
         ],
         inputs: {},
+        controls: {},
       };
 
       const delayExecutionResult = await client.executeWorkflow(delayEvent);
@@ -383,7 +420,7 @@ describe('Novu Client', () => {
       expect(type).toBe(delayConfiguration.type);
     });
 
-    it('should compile default input variable', async () => {
+    it('should compile default control variable', async () => {
       const bodyTemplate = `
 {% for element in elements %}
   {{ element }}
@@ -394,14 +431,14 @@ describe('Novu Client', () => {
         async ({ step }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'body static prefix' + ' ' + inputs.name + ' ' + inputs.lastName + ' ' + inputs.role,
-                body: inputs.body,
+                subject: 'body static prefix' + ' ' + controls.name + ' ' + controls.lastName + ' ' + controls.role,
+                body: controls.body,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: '{{name}}' },
@@ -441,6 +478,7 @@ describe('Novu Client', () => {
         },
         state: [],
         inputs: {},
+        controls: {},
       };
 
       const emailExecutionResult = await client.executeWorkflow(emailEvent);
@@ -470,9 +508,87 @@ describe('Novu Client', () => {
         state: [],
         data: undefined as any,
         inputs: {},
+        controls: {},
       };
 
-      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventInputInvalidError);
+      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventControlsInvalidError);
+    });
+
+    it('should pass the step controls and outputs to the provider execution', async () => {
+      const newWorkflow = workflow('test-workflow', async ({ step }) => {
+        await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }), {
+          controlSchema: {
+            type: 'object',
+            properties: {
+              foo: { type: 'string' },
+            },
+            required: ['foo'],
+            additionalProperties: false,
+          } as const,
+          providers: {
+            sendgrid: async ({ controls, outputs }) => ({
+              ipPoolName: `${controls.foo} ${outputs.subject}`,
+            }),
+          },
+        });
+      });
+
+      client.addWorkflows([newWorkflow]);
+
+      const event: IEvent = {
+        action: 'execute',
+        workflowId: 'test-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        inputs: {},
+        controls: {
+          foo: 'foo',
+        },
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+
+      expect(executionResult.providers).toEqual({ sendgrid: { ipPoolName: 'foo Subject' } });
+    });
+
+    it('should preview with mocked data during preview', async () => {
+      const workflowMock = workflow(
+        'mock-workflow',
+        async ({ step, payload }) => {
+          // eslint-disable-next-line @typescript-eslint/no-base-to-string
+          await step.email('send-email', async () => ({ body: 'Test: ' + payload.name, subject: 'Subject' }));
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+            },
+            required: ['name'],
+          } as const,
+        }
+      );
+
+      client.addWorkflows([workflowMock]);
+
+      const event: IEvent = {
+        action: 'preview',
+        workflowId: 'mock-workflow',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [],
+        data: {},
+        inputs: {},
+        controls: {},
+      };
+
+      const executionResult = await client.executeWorkflow(event);
+      expect(executionResult).toBeDefined();
+      expect(executionResult.outputs).toBeDefined();
+
+      expect((executionResult.outputs as any).body).toBe('Test: [placeholder]');
     });
 
     it('should preview workflow successfully when action is preview', async () => {
@@ -490,6 +606,7 @@ describe('Novu Client', () => {
         state: [],
         data: {},
         inputs: {},
+        controls: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -529,6 +646,7 @@ describe('Novu Client', () => {
         state: [],
         data: {},
         inputs: {},
+        controls: {},
       };
 
       const executionResult = await client.executeWorkflow(event);
@@ -561,6 +679,7 @@ describe('Novu Client', () => {
         state: [],
         data: {},
         inputs: {},
+        controls: {},
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(WorkflowNotFoundError);
@@ -596,6 +715,7 @@ describe('Novu Client', () => {
         state: [],
         data: {},
         inputs: {},
+        controls: {},
       };
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionStateCorruptError);
@@ -614,6 +734,7 @@ describe('Novu Client', () => {
         subscriber: {},
         state: [],
         inputs: {},
+        controls: {},
       } as any;
 
       await expect(client.executeWorkflow(event)).rejects.toThrow(Error);
@@ -628,7 +749,7 @@ describe('Novu Client', () => {
       subject: 'Subject',
     });
 
-    const workflowExecuteFunc = async ({ step }) => {
+    const workflowExecuteFunc = async ({ step }: { step: Step }) => {
       await step.email('send-email', stepExecuteFunc);
     };
 
@@ -662,6 +783,22 @@ describe('Novu Client', () => {
       const codeResult = getCodeClientInstance.getCode('setup-workflow', 'send-email');
 
       expect(codeResult.code).toEqual(stepExecuteFunc.toString());
+    });
+  });
+
+  describe('healthCheck method', () => {
+    it('should return expected data from healthCheck method', () => {
+      const toCheck = client.healthCheck();
+
+      expect(toCheck).toEqual({
+        discovered: {
+          steps: 1,
+          workflows: 1,
+        },
+        frameworkVersion: FRAMEWORK_VERSION,
+        sdkVersion: SDK_VERSION,
+        status: 'ok',
+      });
     });
   });
 });

@@ -361,6 +361,7 @@
     "npmjs",
     "npmrc",
     "nrwl",
+    "ntfr",
     "ntoa",
     "ntvs",
     "nunito",
@@ -644,7 +645,10 @@
     "Nimma",
     "jpath",
     "vstack",
-    "liquidjs"
+    "liquidjs",
+    "tailwindcss",
+    "focusable",
+    "textareas"
   ],
   "flagWords": [],
   "patterns": [

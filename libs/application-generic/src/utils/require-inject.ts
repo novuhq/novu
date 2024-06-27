@@ -17,6 +17,8 @@ import {
 export const requireInject = (inject: RequireInject, moduleRef?: ModuleRef) => {
   if (inject === RequireInjectEnum.RESONATE) {
     return initiateResonateProvider(moduleRef);
+  } else if (inject === RequireInjectEnum.DO_BRIDGE_REQUEST) {
+    return initiateDoBridgeRequestProvider(moduleRef);
   }
 };
 
@@ -50,10 +52,41 @@ const initiateResonateProvider = (moduleRef: ModuleRef) => {
   }
 };
 
+const initiateDoBridgeRequestProvider = (moduleRef: ModuleRef) => {
+  try {
+    if (
+      process.env.NOVU_ENTERPRISE === 'true' ||
+      process.env.CI_EE_TEST === 'true'
+    ) {
+      if (!require('@novu/ee-echo-worker')?.DoBridgeRequest) {
+        throw new PlatformException('Resonate provider is not loaded');
+      }
+
+      return moduleRef.get(require('@novu/ee-echo-worker')?.DoBridgeRequest, {
+        strict: false,
+      });
+    } else {
+      return {
+        execute: () => {
+          return null;
+        },
+      };
+    }
+  } catch (e) {
+    Logger.error(
+      e,
+      `Unexpected error while importing enterprise modules`,
+      'DoBridgeRequest'
+    );
+    throw e;
+  }
+};
+
 type RequireInject = `${RequireInjectEnum}`;
 
 enum RequireInjectEnum {
   RESONATE = 'resonate',
+  DO_BRIDGE_REQUEST = 'do_bridge_request',
 }
 
 export function getDigestType(outputs: DigestOutput): DigestTypeEnum {
@@ -100,12 +133,12 @@ export type IBridgeStepResponse =
   | IBridgeChannelResponse
   | IBridgeActionResponse;
 
-export interface IUseCaseInterface<TInput, TResponse> {
-  execute: (arg0: TInput) => TResponse;
+export interface IUseCaseInterface<TControl, TResponse> {
+  execute: (arg0: TControl) => Promise<TResponse>;
 }
 
 export interface IUseCaseInterfaceInline {
-  execute: <TInput, TResponse>(arg0: TInput) => Promise<TResponse>;
+  execute: <TControl, TResponse>(arg0: TControl) => Promise<TResponse>;
 }
 
 export type ExecuteOutputMetadata = {

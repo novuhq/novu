@@ -16,9 +16,9 @@ export function EchoStatus() {
     version: string;
     discovered: { workflows: number };
   }>(
-    ['/v1/echo/status'],
+    ['/v1/bridge/status'],
     () => {
-      return api.get('/v1/echo/status');
+      return api.get('/v1/bridge/status');
     },
     {
       enabled: echoEnabled,

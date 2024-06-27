@@ -125,6 +125,8 @@ export class StepVariantEntity implements IStepVariant {
   metadata?: IWorkflowStepMetadata;
 
   shouldStopOnFail?: boolean;
+
+  bridgeUrl?: string;
 }
 
 export class NotificationStepEntity extends StepVariantEntity implements INotificationTemplateStep {

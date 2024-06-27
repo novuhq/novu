@@ -20,7 +20,7 @@ export const TemplateDetailsPageV2 = () => {
 
   const handleSettingsClick = () => {};
   const handleTestClick = () => {
-    navigate(parseUrl(ROUTES.STUDIO_FLOWS_TEST, { templateId: (workflow as any)?.rawData?.workflowId }));
+    navigate(parseUrl(ROUTES.WORKFLOWS_V2_TEST, { templateId }));
   };
 
   return (
@@ -32,7 +32,6 @@ export const TemplateDetailsPageV2 = () => {
           <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
             Test workflow
           </Button>
-          <IconButton Icon={IconSettings} onClick={handleSettingsClick} />
         </>
       }
     >
