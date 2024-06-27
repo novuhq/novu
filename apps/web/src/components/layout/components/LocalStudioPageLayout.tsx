@@ -1,9 +1,10 @@
 import * as Sentry from '@sentry/react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import styled from '@emotion/styled';
 import { css } from '@novu/novui/css';
-import { LocalStudioHeader } from './LocalStudioHeader';
+import { LocalStudioHeader } from './LocalStudioHeader/LocalStudioHeader';
 import { LocalStudioSidebar } from './LocalStudioSidebar';
+import { isStudioOnboardingRoute } from '../../../studio/utils/isStudioRoute';
 
 const AppShell = styled.div`
   display: flex;
@@ -20,6 +21,8 @@ const ContentShell = styled.div`
 `;
 
 export function LocalStudioPageLayout() {
+  const { pathname } = useLocation();
+
   return (
     <Sentry.ErrorBoundary
       fallback={({ error, eventId }) => (
@@ -40,7 +43,7 @@ export function LocalStudioPageLayout() {
       <AppShell className={css({ '& *': { colorPalette: 'mode.local' } })}>
         <LocalStudioSidebar />
         <ContentShell>
-          <LocalStudioHeader />
+          {!isStudioOnboardingRoute(pathname) && <LocalStudioHeader />}
           <Outlet />
         </ContentShell>
       </AppShell>
