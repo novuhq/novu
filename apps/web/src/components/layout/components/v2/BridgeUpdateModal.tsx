@@ -3,7 +3,7 @@ import { css } from '@novu/novui/css';
 import { Button, Input, Title, Text } from '@novu/novui';
 import { IconOutlineMenuBook } from '@novu/novui/icons';
 import { HStack, Box } from '@novu/novui/jsx';
-import { FC, useMemo, useState } from 'react';
+import { FC, useState } from 'react';
 import { validateBridgeUrl } from '../../../../api/bridge';
 import { updateBridgeUrl } from '../../../../api/environment';
 import { useEnvironment } from '../../../../hooks/useEnvironment';

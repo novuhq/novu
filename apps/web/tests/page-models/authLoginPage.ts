@@ -22,12 +22,22 @@ export class AuthLoginPage {
   public async assertNavigationPath(path: string) {
     await this.page.waitForURL(path);
   }
-  static async goTo(page: Page, token?: string): Promise<AuthLoginPage> {
-    if (token) {
-      await page.goto(`auth/login?token=${token}`);
-    } else {
-      await page.goto(`auth/login`);
+
+  static async goTo(
+    page: Page,
+    { token, redirectURL }: { token?: string; redirectURL?: string } = {}
+  ): Promise<AuthLoginPage> {
+    const searchParams = new URLSearchParams();
+
+    if (redirectURL) {
+      searchParams.append('redirect_url', redirectURL);
     }
+
+    if (token) {
+      searchParams.append('token', token);
+    }
+
+    await page.goto(`/auth/login?${searchParams.toString()}`);
 
     return new AuthLoginPage(page);
   }

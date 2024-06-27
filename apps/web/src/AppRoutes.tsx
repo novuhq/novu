@@ -64,6 +64,7 @@ import { useSegment } from './components/providers/SegmentProvider';
 import * as mixpanel from 'mixpanel-browser';
 import { useEffect } from 'react';
 import { GetStartedPageV2 } from './studio/components/GetStartedPageV2';
+import { novuOnboardedCookie } from './utils/cookies';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
@@ -171,7 +172,10 @@ export const AppRoutes = () => {
       <Route path={ROUTES.LOCAL_STUDIO_AUTH} element={<LocalStudioAuthenticator />} />
 
       <Route path={ROUTES.STUDIO} element={<StudioPageLayout />}>
-        <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
+        <Route
+          path=""
+          element={<Navigate to={novuOnboardedCookie.get() ? ROUTES.STUDIO_FLOWS : ROUTES.STUDIO_ONBOARDING} replace />}
+        />
         <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
         <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
         <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<WorkflowsStepEditorPage />} />
