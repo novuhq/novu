@@ -13,11 +13,11 @@ export class ExecutionStateCorruptError extends BadRequestError {
   }
 }
 
-export class ExecutionEventDataInvalidError extends BadRequestError {
-  code = ErrorCodeEnum.EXECUTION_EVENT_DATA_INVALID_ERROR;
+export class ExecutionEventPayloadInvalidError extends BadRequestError {
+  code = ErrorCodeEnum.EXECUTION_EVENT_PAYLOAD_INVALID_ERROR;
 
   constructor(workflowId: string, data: any) {
-    super(`Workflow with id: \`${workflowId}\` has invalid \`data\`. Please provide the correct event data.`);
+    super(`Workflow with id: \`${workflowId}\` has invalid \`payload\`. Please provide the correct event payload.`);
     this.data = data;
   }
 }

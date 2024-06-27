@@ -2,13 +2,13 @@ import { expect, it, describe, beforeEach } from 'vitest';
 
 import { Client } from './client';
 import {
-  ExecutionEventControlsInvalidError,
+  ExecutionEventPayloadInvalidError,
   ExecutionStateCorruptError,
   StepNotFoundError,
   WorkflowNotFoundError,
 } from './errors';
 import { workflow } from './workflow';
-import { IEvent, Step } from './types';
+import { Event, Step } from './types';
 import { delayOutputSchema } from './schemas';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
 import { FromSchema } from './types/schema.types';
@@ -324,9 +324,10 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const emailEvent: IEvent = {
+      const emailEvent: Event = {
         action: 'preview',
         data: { name: 'John' },
+        payload: { name: 'John' },
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {
@@ -348,7 +349,7 @@ describe('Novu Client', () => {
   });
 
   describe('executeWorkflow method', () => {
-    it('should execute workflow successfully when action is execute and data is provided', async () => {
+    it('should execute workflow successfully when action is execute and payload is provided', async () => {
       const delayConfiguration: FromSchema<typeof delayOutputSchema> = { type: 'regular', unit: 'seconds', amount: 1 };
       const emailConfiguration: FromSchema<typeof emailChannelSchemas.output> = {
         body: 'Test Body',
@@ -359,9 +360,10 @@ describe('Novu Client', () => {
         await step.delay('delay', async () => delayConfiguration);
       });
 
-      const emailEvent: IEvent = {
+      const emailEvent: Event = {
         action: 'execute',
         data: {},
+        payload: {},
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
@@ -387,9 +389,10 @@ describe('Novu Client', () => {
       expect(metadata.error).toBe(false);
       expect(metadata.duration).toEqual(expect.any(Number));
 
-      const delayEvent: IEvent = {
+      const delayEvent: Event = {
         action: 'execute',
         data: {},
+        payload: {},
         workflowId: 'test-workflow',
         stepId: 'delay',
         subscriber: {},
@@ -469,9 +472,10 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const emailEvent: IEvent = {
+      const emailEvent: Event = {
         action: 'execute',
         data: { role: 'product manager', elements: ['cat', 'dog'] },
+        payload: { role: 'product manager', elements: ['cat', 'dog'] },
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {
@@ -494,25 +498,26 @@ describe('Novu Client', () => {
       expect(body).toContain('dog');
     });
 
-    it('should throw error on execute action without data', async () => {
+    it('should throw error on execute action without payload', async () => {
       const newWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.email('send-email', async () => ({ body: 'Test Body', subject: 'Subject' }));
       });
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'execute',
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: undefined as any,
+        payload: undefined as any,
         inputs: {},
         controls: {},
       };
 
-      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventControlsInvalidError);
+      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventPayloadInvalidError);
     });
 
     it('should pass the step controls and outputs to the provider execution', async () => {
@@ -536,13 +541,14 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'execute',
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {
           foo: 'foo',
@@ -554,7 +560,7 @@ describe('Novu Client', () => {
       expect(executionResult.providers).toEqual({ sendgrid: { ipPoolName: 'foo Subject' } });
     });
 
-    it('should preview with mocked data during preview', async () => {
+    it('should preview with mocked payload during preview', async () => {
       const workflowMock = workflow(
         'mock-workflow',
         async ({ step, payload }) => {
@@ -574,13 +580,14 @@ describe('Novu Client', () => {
 
       client.addWorkflows([workflowMock]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'preview',
         workflowId: 'mock-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {},
       };
@@ -599,13 +606,14 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'preview',
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {},
       };
@@ -639,13 +647,14 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'preview',
         workflowId: 'test-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {},
       };
@@ -672,13 +681,14 @@ describe('Novu Client', () => {
 
     it('should throw an error when workflow ID is invalid', async () => {
       // non-existing workflow ID
-      const event: IEvent = {
+      const event: Event = {
         action: 'execute',
         workflowId: 'non-existent-workflow',
         stepId: 'send-email',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {},
       };
@@ -708,13 +718,14 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'execute',
         workflowId: 'test-workflow',
         stepId: 'non-existing-step',
         subscriber: {},
         state: [],
         data: {},
+        payload: {},
         inputs: {},
         controls: {},
       };
