@@ -16,7 +16,7 @@ export const Inbox = (props: InboxProps) => {
   return (
     <NovuProvider options={props.options}>
       <LocalizationProvider localization={props.localization}>
-        <AppearanceProvider id={props.id} elements={props.appearance?.elements} variables={props.appearance?.variables}>
+        <AppearanceProvider id={props.id} appearance={props.appearance}>
           <InternalInbox />
         </AppearanceProvider>
       </LocalizationProvider>
