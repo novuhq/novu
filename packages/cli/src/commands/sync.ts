@@ -2,7 +2,6 @@ import axios from 'axios';
 import { createHmac } from 'crypto';
 
 export async function sync(bridgeUrl: string, secretKey: string, apiUrl: string) {
-  console.warn('[THE STUFF]', bridgeUrl, secretKey, apiUrl);
   if (!bridgeUrl) {
     throw new Error('A bridge URL is required for the sync command, please supply it when running the command');
   }
