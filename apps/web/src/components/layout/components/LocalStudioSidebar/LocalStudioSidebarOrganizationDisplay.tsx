@@ -1,21 +1,32 @@
 import { LocalizedMessage, Text } from '@novu/novui';
 import { Flex, Stack } from '@novu/novui/jsx';
-import { FC, ReactNode } from 'react';
+import { FC } from 'react';
+import { COMPANY_LOGO_PATH } from '../../../../constants/assets';
+import { css } from '@novu/novui/css';
 
 type LocalStudioSidebarOrganizationDisplayProps = {
-  icon: ReactNode;
   title: LocalizedMessage;
   subtitle: LocalizedMessage;
 };
 
 export const LocalStudioSidebarOrganizationDisplay: FC<LocalStudioSidebarOrganizationDisplayProps> = ({
-  icon,
   title,
   subtitle,
 }) => {
   return (
     <Flex gap="50" py="75" px="100">
-      {icon}
+      {/** TODO:  use grey logo */}
+      <img
+        // TODO: use actual organization photo
+        src={COMPANY_LOGO_PATH}
+        className={css({
+          w: '125',
+          h: '125',
+
+          // TODO: use design system values when available
+          borderRadius: '8px',
+        })}
+      />
       <Stack gap="25">
         <Text variant="strong">{title}</Text>
         <Text variant={'secondary'}>{subtitle}</Text>

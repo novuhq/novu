@@ -72,7 +72,7 @@ export const WorkflowsTestPage = () => {
   const [transactionId, setTransactionId] = useState<string>('');
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
   const workflowId = useMemo(
-    () => (local ? workflow.workflowId : template?.triggers[0].identifier),
+    () => (local ? workflow?.workflowId : template?.triggers[0].identifier),
     [local, template?.triggers, workflow?.workflowId]
   );
 

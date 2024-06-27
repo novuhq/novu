@@ -1,14 +1,18 @@
-import { IconAdd, IconGroup } from '@novu/novui/icons';
-import { Flex, HStack, Stack } from '@novu/novui/jsx';
+import { IconAdd } from '@novu/novui/icons';
+import { Flex, Stack } from '@novu/novui/jsx';
 import { Skeleton } from '@mantine/core';
 import { FC } from 'react';
 import { IBridgeWorkflow } from '../../../../studio/types';
 import { NavMenu } from '../../../nav/NavMenu';
-import { NavMenuLinkButton } from '../../../nav/NavMenuButton/NavMenuLinkButton';
 import { NavMenuSection } from '../../../nav/NavMenuSection';
 import { LocalStudioSidebarOrganizationDisplay } from './LocalStudioSidebarOrganizationDisplay';
 import { LocalStudioSidebarToggleButton } from './LocalStudioSidebarToggleButtonProps';
 import { token } from '@novu/novui/tokens';
+import { DocsButton } from '../../../docs/DocsButton';
+import { hstack } from '@novu/novui/patterns';
+import { css, cx } from '@novu/novui/css';
+import { rawButtonBaseStyles } from '../../../nav/NavMenuButton/NavMenuButton.shared';
+import { useStudioState } from '../../../../studio/StudioStateProvider';
 
 type LocalStudioSidebarContentProps = {
   workflows: IBridgeWorkflow[];
@@ -16,22 +20,34 @@ type LocalStudioSidebarContentProps = {
 };
 
 export const LocalStudioSidebarContent: FC<LocalStudioSidebarContentProps> = ({ workflows, isLoading }) => {
+  const { organizationName } = useStudioState();
+
   if (isLoading) {
     return <SidebarContentLoading />;
   }
 
   return (
     <NavMenu variant="root">
-      <LocalStudioSidebarOrganizationDisplay
-        // TODO: placeholder props below
-        title="Organization one"
-        subtitle="Local environment"
-        icon={<IconGroup />}
-      />
+      <LocalStudioSidebarOrganizationDisplay title={organizationName || 'Your organization '} subtitle="Local studio" />
       <NavMenuSection>
-        {/** TODO: handle click */}
-        <NavMenuLinkButton label="Add a workflow" icon={<IconAdd />} link={'#'} />
-        {workflows.map((workflow) => (
+        {/** TODO: handle click - link to doc page */}
+        <DocsButton
+          tooltip={'Open a guide'}
+          TriggerButton={({ onClick }) => (
+            <button
+              onClick={onClick}
+              className={cx(
+                hstack({ cursor: 'pointer' }),
+                css({ justifyContent: 'flex-start' }),
+                css(rawButtonBaseStyles)
+              )}
+            >
+              <IconAdd />
+              <span>Add a workflow</span>
+            </button>
+          )}
+        />
+        {workflows?.map((workflow) => (
           <LocalStudioSidebarToggleButton key={workflow.workflowId} workflow={workflow} />
         ))}
       </NavMenuSection>
