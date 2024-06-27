@@ -46,7 +46,7 @@ export const StudioOnboarding = () => {
             })}
           >
             Send your first email notification, by connecting to your Novu Bridge Endpoint. This setup will create a
-            sample Next.js project and with a pre-configured @novu/framework.
+            sample Next.js project with a pre-configured <code>@novu/framework</code>.
           </Text>
           <SetupTimeline testResponse={{ data: data as BridgeStatus, isLoading }} />
         </div>

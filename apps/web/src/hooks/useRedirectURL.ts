@@ -6,6 +6,8 @@ const novuRedirectURLCookie = createCookieHandler('nv_redirect_url');
 
 const REDIRECT_URL_SEARCH_PARAM = 'redirect_url';
 
+const REDIRECT_COOKIE_EXPIRY_DAYS = 7;
+
 export function useRedirectURL() {
   const setRedirectURL = useCallback(() => {
     const redirectURLFromParams = new URL(window.location.href).searchParams.get(REDIRECT_URL_SEARCH_PARAM) || '';
@@ -15,7 +17,7 @@ export function useRedirectURL() {
       // Protect against XSS attacks via the javascript: pseudo protocol.
       assertProtocol(redirectURLFromParams);
       // Expires in 7 days.
-      novuRedirectURLCookie.set(redirectURLFromParams, { expires: 7 });
+      novuRedirectURLCookie.set(redirectURLFromParams, { expires: REDIRECT_COOKIE_EXPIRY_DAYS });
 
       // Clean the URL so that the redirect URL doesn't get used again.
       const url = new URL(window.location.href);

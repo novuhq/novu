@@ -115,9 +115,7 @@ export function useAuth() {
     }
 
     // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
-    window.location.href = finalURL.href;
-
-    return;
+    window.location.replace(finalURL.href);
   }, []);
 
   const redirectToLogin = useCallback(

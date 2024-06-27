@@ -16,7 +16,7 @@ export function EnsureOnboardingComplete({ children }: any) {
   const redirectURL = getRedirectURL();
   if (redirectURL) {
     // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
-    window.location.href = redirectURL;
+    window.location.replace(redirectURL);
 
     return null;
   }

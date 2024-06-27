@@ -30,6 +30,7 @@ export function LocalStudioAuthenticator() {
   const { currentUser, isLoading, redirectToLogin, redirectToSignUp } = useAuth();
   const location = useLocation();
 
+  // TODO: Refactor this to a smaller size function
   useEffect(() => {
     const parsedSearchParams = new URLSearchParams(location.search);
 
