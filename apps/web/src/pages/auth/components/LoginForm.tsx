@@ -5,9 +5,8 @@ import { useForm } from 'react-hook-form';
 import * as Sentry from '@sentry/react';
 import { Center } from '@mantine/core';
 import { PasswordInput, Button, colors, Input, Text } from '@novu/design-system';
-import { useAuth } from '../../../hooks/useAuth';
 import type { IResponseError } from '@novu/shared';
-import { useVercelIntegration, useVercelParams } from '../../../hooks';
+import { useAuth, useRedirectURL, useVercelIntegration, useVercelParams } from '../../../hooks';
 import { useSegment } from '../../../components/providers/SegmentProvider';
 import { api } from '../../../api/api.client';
 import { useAcceptInvite } from './useAcceptInvite';
@@ -28,6 +27,11 @@ export interface LocationState {
 
 export function LoginForm({ email, invitationToken }: LoginFormProps) {
   const segment = useSegment();
+
+  const { setRedirectURL } = useRedirectURL();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => setRedirectURL(), []);
+
   const { login, currentUser, organizations } = useAuth();
   const { startVercelSetup } = useVercelIntegration();
   const { isFromVercel, params: vercelParams } = useVercelParams();
@@ -38,8 +42,6 @@ export function LoginForm({ email, invitationToken }: LoginFormProps) {
   // TODO: Deprecate the legacy cameCased format in search param
   const invitationTokenFromGithub = params.get('invitationToken') || params.get('invitation_token') || '';
   const isRedirectedFromLoginPage = params.get('isLoginPage') || params.get('is_login_page') || '';
-  // TODO: Use redirectUrl if available and redirect post login to the URL. This should be used during the Local studio authentication flow
-  const redirectUrl = params.get('redirect_url') || '';
 
   const { isLoading: isLoadingAcceptInvite, acceptInvite } = useAcceptInvite();
   const navigate = useNavigate();

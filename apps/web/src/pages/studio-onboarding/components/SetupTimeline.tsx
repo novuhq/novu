@@ -7,6 +7,8 @@ import { getApiKeys } from '../../../api/environment';
 import { Text } from '@novu/novui';
 import { Timeline } from '../../../components/Timeline/index';
 import { css } from '@novu/novui/css';
+import { BridgeStatus } from '../../../bridgeApi/bridgeApi.client';
+import { useColorScheme } from '@novu/design-system';
 
 const Icon = () => (
   <IconCheck
@@ -16,10 +18,11 @@ const Icon = () => (
   />
 );
 
-export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boolean; data: { status: string } } }) => {
+export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boolean; data: BridgeStatus } }) => {
   const { data: apiKeys = [] } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
   const key = useMemo(() => apiKeys[0]?.key, [apiKeys]);
   const [active, setActive] = useState(0);
+  const { colorScheme } = useColorScheme();
 
   useEffect(() => {
     if (testResponse?.isLoading || testResponse?.data?.status !== 'ok') {
@@ -31,7 +34,11 @@ export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boo
   function CheckStatusIcon() {
     return (
       <>
-        {testResponse?.isLoading || testResponse?.data?.status !== 'ok' ? <Loader size={16} color="white" /> : <Icon />}
+        {testResponse?.isLoading || testResponse?.data?.status !== 'ok' ? (
+          <Loader size={16} color={colorScheme === 'dark' ? 'white' : 'dark'} />
+        ) : (
+          <Icon />
+        )}
       </>
     );
   }
@@ -70,11 +77,11 @@ export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boo
       <MantineTimeline.Item
         bullet={<CheckStatusIcon />}
         lineVariant="dashed"
-        title="Connect to the endpoint"
+        title="Connect to the Novu Bridge Endpoint"
         active={active >= 3}
       >
         <Text variant="main" color="typography.text.secondary">
-          {active < 3 ? 'Waiting for you to start the application' : 'Succefully connected to the Novu Endpoint'}
+          {active < 3 ? 'Waiting for you to start the application' : 'Succefully connected to the Novu Bridge Endpoint'}
         </Text>
       </MantineTimeline.Item>
     </Timeline>
