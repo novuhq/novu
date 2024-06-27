@@ -3,6 +3,7 @@ import { css, cx } from '@novu/novui/css';
 import { IIconProps } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
 import { FC, ReactNode } from 'react';
+import { truncatedFlexTextCss } from '../../../studio/utils/shared.styles';
 import { LocalizedMessage } from '../../../types/LocalizedMessage';
 
 export type RightSideTrigger = 'hover';
@@ -20,21 +21,6 @@ export interface INavMenuButtonProps extends CoreProps {
   testId?: string;
 }
 
-export const ellipsisTextCss = css.raw({
-  overflow: 'hidden',
-  whiteSpace: 'nowrap',
-
-  '& > *': {
-    minWidth: '0',
-
-    '& p, & h1, & h2, & h3': {
-      overflow: 'hidden',
-      whiteSpace: 'nowrap',
-      textOverflow: 'ellipsis',
-    },
-  },
-});
-
 export const rawButtonBaseStyles = css.raw({
   display: 'flex',
   alignItems: 'center',
@@ -48,13 +34,14 @@ export const rawButtonBaseStyles = css.raw({
   color: 'typography.text.secondary !important',
   '& svg': {
     fill: 'typography.text.secondary',
-    minWidth: 'icon.20',
   },
   fontWeight: 'strong',
   fontFamily: 'system',
   cursor: 'pointer',
 
-  ...ellipsisTextCss,
+  '& > *': {
+    ...truncatedFlexTextCss,
+  },
 
   // &.active is necessary to work with the react-router-dom className they generate
   '& _active, &.active': {
@@ -84,7 +71,7 @@ type NavMenuButtonInnerProps = {
 
 export const NavMenuButtonInner: FC<NavMenuButtonInnerProps> = ({ icon, children, className }) => {
   return (
-    <HStack gap="75" className={cx(css(ellipsisTextCss), className)}>
+    <HStack gap="75" className={cx(css(truncatedFlexTextCss), className)}>
       {icon}
       <p>{children}</p>
     </HStack>

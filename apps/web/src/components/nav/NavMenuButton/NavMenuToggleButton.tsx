@@ -4,7 +4,7 @@ import { HStack, Stack } from '@novu/novui/jsx';
 import { FC, PropsWithChildren, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useHover } from '../../../hooks/useHover';
-import { ellipsisTextCss, INavMenuButtonProps, NavMenuButtonInner, rawButtonBaseStyles } from './NavMenuButton.shared';
+import { INavMenuButtonProps, NavMenuButtonInner, rawButtonBaseStyles } from './NavMenuButton.shared';
 
 type INavMenuToggleButtonProps = { link: string } & Omit<INavMenuButtonProps, 'rightSide'>;
 

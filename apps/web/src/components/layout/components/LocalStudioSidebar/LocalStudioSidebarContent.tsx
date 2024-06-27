@@ -29,7 +29,6 @@ export const LocalStudioSidebarContent: FC<LocalStudioSidebarContentProps> = ({ 
     <NavMenu variant="root">
       <LocalStudioSidebarOrganizationDisplay title={organizationName || 'Your organization '} subtitle="Local studio" />
       <NavMenuSection>
-        {/** TODO: handle click - link to doc page */}
         <DocsButton
           tooltip={'Open a guide'}
           TriggerButton={({ onClick }) => (
