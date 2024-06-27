@@ -1,13 +1,13 @@
-import { FC, useMemo, useState } from 'react';
+import { FC, useState } from 'react';
 import { Tooltip } from '@novu/design-system';
 import { Text } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconEdit, IconLink, IconLinkOff } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
 import { useHover } from '../../../../hooks/useHover';
-import { useHealthCheck } from '../../../../studio/hooks';
 import { BridgeUpdateModal } from './BridgeUpdateModal';
-import { ConnectionStatusIndicator, type ConnectionStatus } from './ConnectionStatusIndicator';
+import { ConnectionStatusIndicator } from './ConnectionStatusIndicator';
+import { useBridgeConnectionStatus } from '../../../../studio/hooks';
 
 export const BridgeUpdateModalTrigger: FC = () => {
   const [showBridgeUpdateModal, setShowBridgeUpdateModal] = useState<boolean>(false);
@@ -29,19 +29,7 @@ const tooltipTextClassName = css({ textWrap: 'wrap', wordBreak: 'break-all', max
 
 function BridgeUpdateModalTriggerControl({ onClick }: { onClick: () => void }) {
   const { isHovered, ...hoverProps } = useHover();
-  const { data, isFetching, error, bridgeURL } = useHealthCheck();
-
-  const status = useMemo<ConnectionStatus>(() => {
-    if (isFetching) {
-      return 'loading';
-    }
-
-    if (bridgeURL && !error && data?.status === 'ok') {
-      return 'connected';
-    }
-
-    return 'disconnected';
-  }, [bridgeURL, isFetching, data, error]);
+  const { status, bridgeURL } = useBridgeConnectionStatus();
 
   const trigger = isHovered ? (
     <button

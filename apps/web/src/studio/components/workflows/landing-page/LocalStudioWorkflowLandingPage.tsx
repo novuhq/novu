@@ -1,24 +1,51 @@
+import { css } from '@novu/novui/css';
 import { ROUTES } from '../../../../constants/routes';
-import { useDiscover, useStudioNavigate } from '../../../hooks';
+import {
+  useBridgeConnectionStatus,
+  useDiscover,
+  useStudioNavigate,
+  useStudioWorkflowsNavigation,
+} from '../../../hooks';
 import { WorkflowsDetailPage } from '../node-view/WorkflowsDetailPage';
-import { WorkflowPlaceholderPage } from './WorkflowPanelEmptyState';
+import { WorkflowPlaceholderPageContent } from './WorkflowPlaceholderPageContent';
+import { PageContainer } from '../../../layout';
 
 export const LocalStudioWorkflowLandingPage = () => {
   const { data, isLoading } = useDiscover();
-  const navigate = useStudioNavigate();
+  const { goToWorkflow } = useStudioWorkflowsNavigation();
+  const { status } = useBridgeConnectionStatus();
+
   const hasWorkflows = data?.workflows && data?.workflows?.length > 0;
 
   if (isLoading) {
     return <WorkflowsDetailPage.LoadingDisplay />;
   }
 
-  if (!hasWorkflows) {
-    return <WorkflowPlaceholderPage />;
+  if (status === 'disconnected') {
+    return (
+      <PageContainer className={css({ alignContent: 'center' })}>
+        <WorkflowPlaceholderPageContent docsButtonLabel="See our troubleshooting guide">
+          Local environment disconnected from endpoint URL.
+          <br />
+          Likely due to browser internet loss, but other causes possible.
+        </WorkflowPlaceholderPageContent>
+      </PageContainer>
+    );
   }
 
   if (hasWorkflows) {
-    navigate(ROUTES.STUDIO_FLOWS_VIEW, { templateId: data?.workflows[0].workflowId });
+    goToWorkflow(data?.workflows[0].workflowId);
+
+    return null;
   }
 
-  return <></>;
+  return (
+    <PageContainer className={css({ alignContent: 'center' })}>
+      <WorkflowPlaceholderPageContent docsButtonLabel="Learn more in the docs">
+        A workflow holds the entire flow of steps that are sent to the subscriber.
+        <br />
+        Get started by adding your first workflow in your local environment.
+      </WorkflowPlaceholderPageContent>{' '}
+    </PageContainer>
+  );
 };
