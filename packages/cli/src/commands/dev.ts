@@ -6,7 +6,6 @@ import * as open from 'open';
 import * as chalk from 'chalk';
 
 process.on('SIGINT', function () {
-  console.log('Caught interrupt signal');
   // TODO: Close the NTFR Tunnel
   process.exit();
 });
@@ -22,6 +21,8 @@ export enum WebUrlEnum {
   EU = 'https://eu.web.novu.co',
   STAGING = 'https://dev.web.novu.co',
 }
+
+export const LOCALHOST = 'localhost';
 
 const TUNNEL_URL = 'https://ntfr.dev/api/tunnels';
 
@@ -52,16 +53,7 @@ export async function devCommand(options: DevCommandOptions) {
   const httpServer = new DevServer(opts);
 
   const studioSpinner = ora('Starting local studio server').start();
-  try {
-    await httpServer.listen();
-  } catch (error) {
-    if (error.code === 'EADDRINUSE') {
-      studioSpinner.text = 'Port in use, trying another port...';
-      await httpServer.listen(0);
-    } else {
-      throw error;
-    }
-  }
+  await httpServer.listen();
 
   studioSpinner.succeed(`Novu Studio started:\t${httpServer.getStudioAddress()}`);
   if (process.env.NODE_ENV !== 'dev') {
@@ -130,7 +122,7 @@ function parseOptions(options: DevCommandOptions) {
 }
 
 function getDefaultOrigin(port: string) {
-  return `http://localhost:${port}`;
+  return `http://${LOCALHOST}:${port}`;
 }
 
 function getDefaultWebUrl(region: string) {
