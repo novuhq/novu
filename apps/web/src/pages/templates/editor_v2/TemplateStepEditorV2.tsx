@@ -15,7 +15,7 @@ export const WorkflowsStepEditorPageV2 = () => {
   const { template: workflow } = useTemplateController(templateId);
   const step = (workflow?.steps as any)?.find((item) => item.stepId === stepId);
 
-  const { isLoading, data: controlVariables } = useQuery(
+  const { data: controlVariables } = useQuery(
     ['controls', workflow?.name, stepId],
     () => api.get(`/v1/bridge/controls/${workflow?.name}/${stepId}`),
     {
@@ -80,18 +80,9 @@ export const WorkflowsStepEditorPageV2 = () => {
         <WorkflowStepEditorContentPanel error={error} step={step} preview={preview} isLoadingPreview={loadingPreview} />
         <WorkflowStepEditorControlsPanel
           isLoadingSave={isSavingControls}
-          onSave={() => {
-            onControlsSave();
-          }}
-          step={{
-            controls: step?.template?.controls || step?.template?.inputs,
-            code: step?.code,
-          }}
-          workflow={{
-            options: {
-              payloadSchema: workflow?.payloadSchema,
-            },
-          }}
+          onSave={onControlsSave}
+          step={step}
+          workflow={workflow}
           defaultControls={controlVariables?.controls || controlVariables?.inputs || {}}
           onChange={onControlsChange}
         />
