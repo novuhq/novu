@@ -49,7 +49,6 @@ export const LocalStudioHeader: FC = () => {
               Back
             </Text>
           </button>
-          <button onClick={() => navigate(ROUTES.STUDIO_ONBOARDING)}>onboarding</button>
         </HStack>
         <HStack gap="100">
           <BridgeMenuItems />
