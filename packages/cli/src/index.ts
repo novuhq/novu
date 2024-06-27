@@ -33,7 +33,7 @@ program
     'The novu endpoint URL hosted in the bridge application, by convention ends in /api/novu'
   )
   .requiredOption('-s, --secret-key <secretKey>', 'The Novu secret key')
-  .description('Sync your workflow state with Novu Cloud')
+  .description('Sync your state with Novu Cloud')
   .action(async (options) => {
     analytics.track({
       identity: {
