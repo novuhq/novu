@@ -1,7 +1,6 @@
 import { JSONSchemaFaker } from 'json-schema-faker';
 import ora from 'ora';
 
-import { HttpHeaderKeysEnum } from './constants';
 import {
   ExecutionEventPayloadInvalidError,
   ExecutionEventControlsInvalidError,
@@ -26,7 +25,7 @@ import type {
   DiscoverWorkflowOutput,
   ExecuteOutput,
   HealthCheck,
-  IEvent as event,
+  Event,
 } from './types';
 import { Schema } from './types/schema.types';
 import { transformSchema, validateData } from './validators';
@@ -251,10 +250,10 @@ export class Client {
     }
   }
 
-  private executeStepFactory<T, U>(event: event, setResult: (result: any) => void): ActionStep<T, U> {
+  private executeStepFactory<T, U>(event: Event, setResult: (result: any) => void): ActionStep<T, U> {
     return async (stepId, stepResolve, options) => {
       const step = this.getStep(event.workflowId, stepId);
-      const eventClone = clone<event>(event);
+      const eventClone = clone<Event>(event);
       const controls = await this.createStepControls(step, eventClone);
       const isPreview = event.action === 'preview';
 
@@ -302,7 +301,7 @@ export class Client {
     return skip(controls);
   }
 
-  public async executeWorkflow(event: event): Promise<ExecuteOutput> {
+  public async executeWorkflow(event: Event): Promise<ExecuteOutput> {
     const actionMessages = {
       execute: 'Executing',
       preview: 'Previewing',
@@ -408,7 +407,7 @@ export class Client {
   }
 
   private async createExecutionPayload(
-    event: event,
+    event: Event,
     workflow: DiscoverWorkflowOutput
   ): Promise<Record<string, unknown>> {
     let payload = event.payload || event.data;
@@ -429,7 +428,7 @@ export class Client {
     return validatedPayload;
   }
 
-  private prettyPrintExecute(event: event, duration: number, error?: Error): void {
+  private prettyPrintExecute(event: Event, duration: number, error?: Error): void {
     const successPrefix = error ? EMOJI.ERROR : EMOJI.SUCCESS;
     const actionMessage =
       event.action === 'execute' ? 'Executed' : event.action === 'preview' ? 'Previewed' : 'Invalid action';
@@ -447,7 +446,7 @@ export class Client {
   }
 
   private async executeProviders(
-    payload: event,
+    event: Event,
     step: DiscoverStepOutput,
     outputs: Record<string, unknown>
   ): Promise<Record<string, unknown>> {
@@ -455,9 +454,9 @@ export class Client {
       const result = await acc;
       const previewProviderHandler = this.previewProvider.bind(this);
       const executeProviderHandler = this.executeProvider.bind(this);
-      const handler = payload.action === 'preview' ? previewProviderHandler : executeProviderHandler;
+      const handler = event.action === 'preview' ? previewProviderHandler : executeProviderHandler;
 
-      const providerResult = await handler(payload, step, provider, outputs);
+      const providerResult = await handler(event, step, provider, outputs);
 
       return {
         ...result,
@@ -467,7 +466,7 @@ export class Client {
   }
 
   private previewProvider(
-    event: event,
+    event: Event,
     step: DiscoverStepOutput,
     provider: DiscoverProviderOutput,
     outputs: Record<string, unknown>
@@ -480,15 +479,15 @@ export class Client {
   }
 
   private async executeProvider(
-    payload: event,
+    event: Event,
     step: DiscoverStepOutput,
     provider: DiscoverProviderOutput,
     outputs: Record<string, unknown>
   ): Promise<unknown> {
     const spinner = ora({ indent: 2 }).start(`Executing provider: \`${provider.type}\``);
     try {
-      if (payload.stepId === step.stepId) {
-        const controls = await this.createStepControls(step, payload);
+      if (event.stepId === step.stepId) {
+        const controls = await this.createStepControls(step, event);
         const result = await provider.resolve({
           controls,
           outputs,
@@ -498,7 +497,7 @@ export class Client {
           provider.outputs.unknownSchema,
           'step',
           'output',
-          payload.workflowId,
+          event.workflowId,
           step.stepId,
           provider.type
         );
@@ -524,7 +523,7 @@ export class Client {
   }
 
   private async executeStep(
-    event: event,
+    event: Event,
     step: DiscoverStepOutput
   ): Promise<Pick<ExecuteOutput, 'outputs' | 'providers'>> {
     if (event.stepId === step.stepId) {
@@ -594,7 +593,7 @@ export class Client {
     }
   }
 
-  private async compileControls(templateControls: Record<string, unknown>, event: event) {
+  private async compileControls(templateControls: Record<string, unknown>, event: Event) {
     const templateString = this.templateEngine.parse(JSON.stringify(templateControls));
 
     const compiledString = await this.templateEngine.render(templateString, {
@@ -612,7 +611,7 @@ export class Client {
    * @param event The event that triggered the step
    * @returns The controls for the step
    */
-  private async createStepControls(step: DiscoverStepOutput, event: event): Promise<Record<string, unknown>> {
+  private async createStepControls(step: DiscoverStepOutput, event: Event): Promise<Record<string, unknown>> {
     const stepControls = event.controls || event.inputs;
 
     const validatedControls = await this.validate(
@@ -628,7 +627,7 @@ export class Client {
   }
 
   private async previewStep(
-    event: event,
+    event: Event,
     step: DiscoverStepOutput
   ): Promise<Pick<ExecuteOutput, 'outputs' | 'providers'>> {
     const spinner = ora({ indent: 1 }).start(`Previewing stepId: \`${step.stepId}\``);

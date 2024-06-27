@@ -1,6 +1,6 @@
 import { Subscriber } from './subscriber.types';
 
-export interface IEvent {
+export type Event = {
   /** @deprecated */
   data: Record<string, unknown>;
   payload: Record<string, unknown>;
@@ -9,16 +9,16 @@ export interface IEvent {
   /** @deprecated */
   inputs: Record<string, unknown>;
   controls: Record<string, unknown>;
-  state: IState[];
+  state: State[];
   action: 'execute' | 'preview';
   subscriber: Subscriber;
-}
+};
 
-interface IState {
+export type State = {
   stepId: string;
   outputs: any;
   state: { status: string; error?: string };
-}
+};
 
 export type ExecuteOutputMetadata = {
   status: string;

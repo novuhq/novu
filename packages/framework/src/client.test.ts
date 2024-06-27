@@ -8,7 +8,7 @@ import {
   WorkflowNotFoundError,
 } from './errors';
 import { workflow } from './workflow';
-import { IEvent, Step } from './types';
+import { Event, Step } from './types';
 import { delayOutputSchema } from './schemas';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
 import { FromSchema } from './types/schema.types';
@@ -324,7 +324,7 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const emailEvent: IEvent = {
+      const emailEvent: Event = {
         action: 'preview',
         data: { name: 'John' },
         payload: { name: 'John' },
@@ -359,7 +359,7 @@ describe('Novu Client', () => {
         await step.delay('delay', async () => delayConfiguration);
       });
 
-      const emailEvent: IEvent = {
+      const emailEvent: Event = {
         action: 'execute',
         data: {},
         payload: {},
@@ -388,7 +388,7 @@ describe('Novu Client', () => {
       expect(metadata.error).toBe(false);
       expect(metadata.duration).toEqual(expect.any(Number));
 
-      const delayEvent: IEvent = {
+      const delayEvent: Event = {
         action: 'execute',
         data: {},
         payload: {},
@@ -471,7 +471,7 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const emailEvent: IEvent = {
+      const emailEvent: Event = {
         action: 'execute',
         data: { role: 'product manager', elements: ['cat', 'dog'] },
         payload: { role: 'product manager', elements: ['cat', 'dog'] },
@@ -504,7 +504,7 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'execute',
         workflowId: 'test-workflow',
         stepId: 'send-email',
@@ -540,7 +540,7 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'execute',
         workflowId: 'test-workflow',
         stepId: 'send-email',
@@ -579,7 +579,7 @@ describe('Novu Client', () => {
 
       client.addWorkflows([workflowMock]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'preview',
         workflowId: 'mock-workflow',
         stepId: 'send-email',
@@ -605,7 +605,7 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'preview',
         workflowId: 'test-workflow',
         stepId: 'send-email',
@@ -646,7 +646,7 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'preview',
         workflowId: 'test-workflow',
         stepId: 'send-email',
@@ -680,7 +680,7 @@ describe('Novu Client', () => {
 
     it('should throw an error when workflow ID is invalid', async () => {
       // non-existing workflow ID
-      const event: IEvent = {
+      const event: Event = {
         action: 'execute',
         workflowId: 'non-existent-workflow',
         stepId: 'send-email',
@@ -717,7 +717,7 @@ describe('Novu Client', () => {
 
       client.addWorkflows([newWorkflow]);
 
-      const event: IEvent = {
+      const event: Event = {
         action: 'execute',
         workflowId: 'test-workflow',
         stepId: 'non-existing-step',
