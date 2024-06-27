@@ -16,7 +16,7 @@ program
 
 program
   .command('dev')
-  .description('Start a Novu Dev Studio and a localtunnel')
+  .description('Start Novu Dev Studio and a localtunnel')
   .option('-p, --port <value>', 'The port for the local Bridge endpoint', '4000')
   .option('-r, --route <value>', 'The Bridge endpoint route', '/api/novu')
   .option('-o, --origin <value>', 'The origin for the Bridge endpoint')
