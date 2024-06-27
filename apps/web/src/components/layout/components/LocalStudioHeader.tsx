@@ -5,14 +5,20 @@ import { IconHelpOutline, IconOutlineArrowBack } from '@novu/novui/icons';
 import { HStack } from '@novu/novui/jsx';
 import { hstack } from '@novu/novui/patterns';
 import { FC } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { discordInviteUrl } from '../../../pages/quick-start/consts';
 import { DocsButton } from '../../docs/DocsButton';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../constants/routes';
 import { HEADER_NAV_HEIGHT } from '../constants';
 import { BridgeMenuItems } from './v2/BridgeMenuItems';
 
 export const LocalStudioHeader: FC = () => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+
+  if (pathname.startsWith(ROUTES.STUDIO_ONBOARDING)) {
+    return null;
+  }
 
   return (
     <Header
