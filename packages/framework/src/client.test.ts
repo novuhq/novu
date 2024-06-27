@@ -2,7 +2,7 @@ import { expect, it, describe, beforeEach } from 'vitest';
 
 import { Client } from './client';
 import {
-  ExecutionEventControlsInvalidError,
+  ExecutionEventPayloadInvalidError,
   ExecutionStateCorruptError,
   StepNotFoundError,
   WorkflowNotFoundError,
@@ -516,7 +516,7 @@ describe('Novu Client', () => {
         controls: {},
       };
 
-      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventControlsInvalidError);
+      await expect(client.executeWorkflow(event)).rejects.toThrow(ExecutionEventPayloadInvalidError);
     });
 
     it('should pass the step controls and outputs to the provider execution', async () => {
