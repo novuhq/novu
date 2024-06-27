@@ -4,6 +4,7 @@ import { showWelcomeScreen } from './init.consts';
 import * as ora from 'ora';
 import * as open from 'open';
 import * as chalk from 'chalk';
+import { SERVER_HOST } from '../constants';
 
 process.on('SIGINT', function () {
   // TODO: Close the NTFR Tunnel
@@ -21,8 +22,6 @@ export enum WebUrlEnum {
   EU = 'https://eu.web.novu.co',
   STAGING = 'https://dev.web.novu.co',
 }
-
-export const LOCALHOST = 'localhost';
 
 const TUNNEL_URL = 'https://ntfr.dev/api/tunnels';
 
@@ -122,7 +121,7 @@ function parseOptions(options: DevCommandOptions) {
 }
 
 function getDefaultOrigin(port: string) {
-  return `http://${LOCALHOST}:${port}`;
+  return `http://${SERVER_HOST}:${port}`;
 }
 
 function getDefaultWebUrl(region: string) {
