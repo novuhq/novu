@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, Logger, Scope } from '@nestjs/common';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
-import { ApiServiceLevelEnum, JobTitleEnum } from '@novu/shared';
 import { AnalyticsService } from '@novu/application-generic';
 
 import { CreateEnvironmentCommand } from '../../../../environments/usecases/create-environment/create-environment.command';
@@ -34,15 +33,7 @@ export class SyncExternalOrganization {
 
     const organization = await this.organizationRepository.create({
       externalId: command.externalId,
-      jobTitle: command.jobTitle,
-      apiServiceLevel: ApiServiceLevelEnum.FREE,
-      domain: command.domain,
-      productUseCases: command.productUseCases,
     });
-
-    if (command.jobTitle) {
-      await this.updateJobTitle(user._id, command.jobTitle);
-    }
 
     const devEnv = await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
@@ -95,19 +86,6 @@ export class SyncExternalOrganization {
     }
 
     return organizationAfterChanges as OrganizationEntity;
-  }
-
-  private async updateJobTitle(userId: string, jobTitle: JobTitleEnum) {
-    await this.userRepository.update(
-      {
-        _id: userId,
-      },
-      {
-        jobTitle: jobTitle,
-      }
-    );
-
-    this.analyticsService.setValue(userId, 'jobTitle', jobTitle);
   }
 
   private async startFreeTrial(userId: string, organizationId: string) {
