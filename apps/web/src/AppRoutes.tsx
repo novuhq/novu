@@ -63,10 +63,12 @@ import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateS
 import { useSegment } from './components/providers/SegmentProvider';
 import * as mixpanel from 'mixpanel-browser';
 import { useEffect } from 'react';
+import { GetStartedPageV2 } from './studio/components/GetStartedPageV2';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
   const isMixpanelRecordingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MIXPANEL_RECORDING_ENABLED);
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
   const segment = useSegment();
   const { inPrivateRoute } = useAuth();
 
@@ -122,7 +124,9 @@ export const AppRoutes = () => {
           <Route path="create" element={<CreateTenantPage />} />
           <Route path=":identifier" element={<UpdateTenantPage />} />
         </Route>
-        {isImprovedOnboardingEnabled ? (
+        {isV2Enabled ? (
+          <Route path={ROUTES.GET_STARTED} element={<GetStartedPageV2 />} />
+        ) : isImprovedOnboardingEnabled ? (
           <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />} />
         ) : (
           <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
