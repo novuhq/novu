@@ -347,6 +347,7 @@ describe('Novu Client', () => {
       expect(subject).toBe('body static prefix John');
     });
   });
+
   describe('executeWorkflow method', () => {
     it('should execute workflow successfully when action is execute and payload is provided', async () => {
       const delayConfiguration: FromSchema<typeof delayOutputSchema> = { type: 'regular', unit: 'seconds', amount: 1 };
