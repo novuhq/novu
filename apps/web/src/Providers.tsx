@@ -1,5 +1,6 @@
 import { ThemeProvider } from '@novu/design-system';
 import { SegmentProvider } from './components/providers/SegmentProvider';
+import { StudioStateProvider } from './studio/StudioStateProvider';
 import { CONTEXT_PATH } from './config';
 import * as Sentry from '@sentry/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -32,7 +33,9 @@ const Providers: React.FC<PropsWithChildren<{}>> = ({ children }) => {
         <SegmentProvider>
           <QueryClientProvider client={queryClient}>
             <BrowserRouter basename={CONTEXT_PATH}>
-              <HelmetProvider>{children}</HelmetProvider>
+              <HelmetProvider>
+                <StudioStateProvider>{children}</StudioStateProvider>
+              </HelmetProvider>
             </BrowserRouter>
           </QueryClientProvider>
         </SegmentProvider>

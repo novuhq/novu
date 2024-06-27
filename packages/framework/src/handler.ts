@@ -15,7 +15,6 @@ import {
   NovuError,
   InvalidActionError,
   MethodNotAllowedError,
-  MissingApiKeyError,
   PlatformError,
   SignatureExpiredError,
   SignatureInvalidError,
@@ -24,6 +23,7 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { Awaitable, DiscoverWorkflowOutput } from './types';
+import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
@@ -58,7 +58,7 @@ interface IActionResponse<TBody extends string = string> {
 export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   public readonly frameworkName: string;
 
-  public readonly handler: Handler;
+  public readonly handler: Handler<Input, Output>;
 
   public readonly client: Client;
 
@@ -92,23 +92,19 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_METHODS]: 'GET, POST',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_ALLOW_HEADERS]: '*',
       [HttpHeaderKeysEnum.ACCESS_CONTROL_MAX_AGE]: '604800',
-      [HttpHeaderKeysEnum.FRAMEWORK]: this.frameworkName,
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_VERSION]: FRAMEWORK_VERSION,
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_SDK]: SDK_VERSION,
+      [HttpHeaderKeysEnum.NOVU_FRAMEWORK_API]: this.frameworkName,
       [HttpHeaderKeysEnum.USER_AGENT]: sdkVersion,
-      [HttpHeaderKeysEnum.SDK_VERSION]: sdkVersion,
     };
   }
 
-  private createResponse<TBody extends string = string>(
-    status: number,
-    body: any,
-    headers: Record<string, string> = {}
-  ): IActionResponse<TBody> {
+  private createResponse<TBody extends string = string>(status: number, body: any): IActionResponse<TBody> {
     return {
       status,
       body: JSON.stringify(body) as TBody,
       headers: {
         ...this.getStaticHeaders(),
-        ...headers,
       },
     };
   }
@@ -131,8 +127,14 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     const action = url.searchParams.get(HttpQueryKeysEnum.ACTION) || '';
     const workflowId = url.searchParams.get(HttpQueryKeysEnum.WORKFLOW_ID) || '';
     const stepId = url.searchParams.get(HttpQueryKeysEnum.STEP_ID) || '';
-    const signatureHeader = (await actions.headers(HttpHeaderKeysEnum.SIGNATURE)) || '';
-    const anonymousHeader = (await actions.headers(HttpHeaderKeysEnum.ANONYMOUS)) || '';
+    const signatureHeader =
+      (await actions.headers(HttpHeaderKeysEnum.NOVU_SIGNATURE)) ||
+      (await actions.headers(HttpHeaderKeysEnum.NOVU_SIGNATURE_DEPRECATED)) ||
+      '';
+    const anonymousHeader =
+      (await actions.headers(HttpHeaderKeysEnum.NOVU_ANONYMOUS)) ||
+      (await actions.headers(HttpHeaderKeysEnum.NOVU_ANONYMOUS_DEPRECATED)) ||
+      '';
     const source = url.searchParams.get(HttpQueryKeysEnum.SOURCE) || '';
 
     let body: Record<string, unknown> = {};
@@ -161,13 +163,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       }
 
       if (method === HttpMethodEnum.OPTIONS) {
-        return this.createResponse(
-          HttpStatusEnum.OK,
-          {},
-          {
-            ...this.getStaticHeaders(),
-          }
-        );
+        return this.createResponse(HttpStatusEnum.OK, {});
       }
     } catch (error) {
       return this.handleError(error);
@@ -193,9 +189,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
           action,
         });
 
-        return this.createResponse(HttpStatusEnum.OK, result, {
-          [HttpHeaderKeysEnum.EXECUTION_DURATION]: result.metadata.duration.toString(),
-        });
+        return this.createResponse(HttpStatusEnum.OK, result);
       },
       [PostActionEnum.PREVIEW]: async () => {
         const result = await this.client.executeWorkflow({
@@ -205,9 +199,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
           action,
         });
 
-        return this.createResponse(HttpStatusEnum.OK, result, {
-          [HttpHeaderKeysEnum.EXECUTION_DURATION]: result.metadata.duration.toString(),
-        });
+        return this.createResponse(HttpStatusEnum.OK, result);
       },
     };
   }

@@ -4,23 +4,19 @@ import { Prism } from '@mantine/prism';
 import { Modal } from '@novu/design-system';
 import { Tabs, Text, Title } from '@novu/novui';
 import { FC } from 'react';
-import { useLocation } from 'react-router-dom';
-import { useEnvironment } from '../../../../hooks/useEnvironment';
 import { useApiKeysPage } from '../../../../pages/settings/ApiKeysPage/useApiKeysPage';
-import { getBridgeUrl } from './utils';
+import { useBridgeURL } from '../../../../studio/hooks/useBridgeURL';
 
 export type SyncInfoModalProps = {
   isOpen: boolean;
   toggleOpen: () => void;
 };
 
+const novuEndpointPlaceholder = '<YOUR_NOVU_ENDPOINT_URL>';
+
 export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) => {
   const { apiKey } = useApiKeysPage();
-  const { environment, isLoading } = useEnvironment();
-  const location = useLocation();
-  const bridgeUrl = isLoading
-    ? `<YOUR_NOVU_ENDPOINT_URL>`
-    : getBridgeUrl(environment, location.pathname) ?? `<YOUR_NOVU_ENDPOINT_URL>`;
+  const bridgeUrl = useBridgeURL();
 
   const tabs = [
     {
@@ -76,11 +72,11 @@ jobs:
         uses: novuhq/actions-novu-sync@v0.0.4
         with:
           novu-api-key: ${apiKey}
-          bridge-url: ${bridgeUrl}`;
+          bridge-url: ${bridgeUrl || novuEndpointPlaceholder}`;
 }
 
 function getOtherCodeContent({ apiKey, bridgeUrl }: { apiKey: string; bridgeUrl: string }) {
   return `npx novu-labs@latest sync \\
-  --echo-url ${bridgeUrl} \\
+  --echo-url ${bridgeUrl || novuEndpointPlaceholder} \\
   --api-key ${apiKey}`;
 }

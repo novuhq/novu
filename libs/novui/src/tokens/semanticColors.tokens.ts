@@ -195,6 +195,12 @@ export const LEGACY_COLOR_SEMANTIC_TOKENS = defineSemanticTokens.colors({
       type: 'color',
     },
   },
+  loader: {
+    overlay: {
+      value: { base: '{colors.legacy.BGLight}', _dark: '{colors.legacy.BGDark}' },
+      type: 'color',
+    },
+  },
   // color palette semantic testing
   mode: {
     cloud: {

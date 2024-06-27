@@ -19,3 +19,23 @@ export interface IBridgeWorkflow {
   code: string;
   steps: IBridgeWorkflowStep[];
 }
+
+type BaseStudioState = {
+  testUser: {
+    id: string;
+    emailAddress: string;
+  };
+};
+
+type CloudStudioState = BaseStudioState & {
+  local: false;
+  storedBridgeURL: string;
+};
+
+type LocalStudioState = BaseStudioState & {
+  local: true;
+  localBridgeURL: string;
+  tunnelBridgeURL: string;
+};
+
+export type StudioState = LocalStudioState | CloudStudioState;

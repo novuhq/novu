@@ -32,7 +32,6 @@ export const TemplateDetailsPageV2 = () => {
           <Button Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
             Test workflow
           </Button>
-          <IconButton Icon={IconSettings} onClick={handleSettingsClick} />
         </>
       }
     >

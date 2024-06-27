@@ -12,6 +12,7 @@ import { IEvent, Step } from './types';
 import { delayOutputSchema } from './schemas';
 import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
 import { FromSchema } from './types/schema.types';
+import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 
 describe('Novu Client', () => {
   let client: Client;
@@ -793,6 +794,22 @@ describe('Novu Client', () => {
       const codeResult = getCodeClientInstance.getCode('setup-workflow', 'send-email');
 
       expect(codeResult.code).toEqual(stepExecuteFunc.toString());
+    });
+  });
+
+  describe('healthCheck method', () => {
+    it('should return expected data from healthCheck method', () => {
+      const toCheck = client.healthCheck();
+
+      expect(toCheck).toEqual({
+        discovered: {
+          steps: 1,
+          workflows: 1,
+        },
+        frameworkVersion: FRAMEWORK_VERSION,
+        sdkVersion: SDK_VERSION,
+        status: 'ok',
+      });
     });
   });
 });

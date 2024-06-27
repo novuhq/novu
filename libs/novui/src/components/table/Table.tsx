@@ -62,13 +62,9 @@ export function Table<TRow extends object>({
       <thead>
         {table.getHeaderGroups().map((headerGroup, i) => {
           return (
-            <tr key={headerGroup.id} {...headerGroup}>
+            <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
-                return (
-                  <th key={header.id} {...header}>
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                );
+                return <th key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</th>;
               })}
             </tr>
           );
@@ -85,16 +81,11 @@ export function Table<TRow extends object>({
                   onRowClick(row);
                 }
               }}
-              {...row}
               className={classes.tr}
               data-disabled={isLoading || !onRowClick}
             >
               {row.getVisibleCells().map((cell) => {
-                return (
-                  <td key={cell.id} {...cell}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                );
+                return <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>;
               })}
             </tr>
           );

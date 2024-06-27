@@ -12,7 +12,7 @@ import {
   IconSize,
   IconType,
 } from '@novu/novui/icons';
-import { BridgeWorkflowStepType } from '../../../studio.types';
+import { BridgeWorkflowStepType } from '../../../types';
 
 export interface WorkflowNodesProps {
   // TODO: add proper types
@@ -38,14 +38,21 @@ export function WorkflowNodes({ steps, onClick }: WorkflowNodesProps) {
     <>
       <VStack gap="0">
         <StepNode icon={<IconOutlineBolt size={STEP_TYPE_ICON_SIZE} />} title={'Workflow trigger'} />
-        {steps?.map((step) => {
+        {steps?.map((step, index) => {
           const handleStepClick = () => {
             onClick(step);
           };
 
           const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step.type];
 
-          return <StepNode icon={<Icon size={STEP_TYPE_ICON_SIZE} />} title={step.stepId} onClick={handleStepClick} />;
+          return (
+            <StepNode
+              key={step.stepId}
+              icon={<Icon size={STEP_TYPE_ICON_SIZE} />}
+              title={step.stepId}
+              onClick={handleStepClick}
+            />
+          );
         })}
       </VStack>
     </>
