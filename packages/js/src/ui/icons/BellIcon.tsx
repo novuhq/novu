@@ -1,6 +1,17 @@
+import { useStyle } from '../helpers';
+
 export function BellIcon() {
+  const style = useStyle();
+
   return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 20 20">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="20"
+      height="20"
+      fill="none"
+      viewBox="0 0 20 20"
+      class={style('', 'bell')}
+    >
       <path
         fill="currentColor"
         // eslint-disable-next-line max-len

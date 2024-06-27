@@ -1,9 +1,8 @@
-import { Notification } from '../feeds';
 import type { NovuOptions } from '../novu';
-import { Bell } from './components';
+import { BellContainer } from './components';
 import { Appearance, AppearanceProvider, NovuProvider } from './context';
-import { useStyle } from './helpers';
 import { Localization, LocalizationProvider, useLocalization } from './context/LocalizationContext';
+import { useStyle } from './helpers';
 
 type InboxProps = {
   id: string;
@@ -25,18 +24,14 @@ export const Inbox = (props: InboxProps) => {
   );
 };
 
-type InternalInboxProps = {
-  feeds: Notification[];
-};
-
 const InternalInbox = () => {
   const style = useStyle();
   const { t } = useLocalization();
 
   return (
     <div class={style('novu', 'root')}>
-      <div class="nt-text-2xl nt-font-bold">Inbox</div>
-      <Bell />
+      <div class="nt-text-2xl nt-font-bold">{t('inbox.title')}</div>
+      <BellContainer />
     </div>
   );
 };

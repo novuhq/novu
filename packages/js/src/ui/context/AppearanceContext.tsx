@@ -13,6 +13,7 @@ export type Elements = {
   button?: ElementStyles;
   root?: ElementStyles;
   bell?: ElementStyles;
+  bellContainer?: ElementStyles;
 };
 
 export type Variables = {
