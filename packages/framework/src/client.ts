@@ -340,7 +340,8 @@ export class Client {
     try {
       if (
         event.action === 'execute' && // TODO: move this validation to the handler layer
-        (!event.payload || !event.data)
+        !event.payload &&
+        !event.data
       ) {
         throw new ExecutionEventControlsInvalidError(event.workflowId, {
           message: 'Event `payload` is required',
