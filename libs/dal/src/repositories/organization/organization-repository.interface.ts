@@ -26,6 +26,13 @@ export interface IOrganizationRepository extends IOrganizationRepositoryMongo {
     matched: number;
     modified: number;
   }>;
+  updateDefaultLocale(
+    organizationId: string,
+    defaultLocale: string
+  ): Promise<{
+    matched: number;
+    modified: number;
+  }>;
   findPartnerConfigurationDetails(
     organizationId: string,
     userId: string,

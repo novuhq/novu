@@ -26,6 +26,10 @@ export class OrganizationRepository implements IOrganizationRepository {
     return this.organizationRepository.updateServiceLevel(organizationId, apiServiceLevel);
   }
 
+  updateDefaultLocale(organizationId: string, defaultLocale: string): Promise<{ matched: number; modified: number }> {
+    return this.organizationRepository.updateDefaultLocale(organizationId, defaultLocale);
+  }
+
   findPartnerConfigurationDetails(organizationId: string, userId: string, configurationId: string) {
     return this.organizationRepository.findPartnerConfigurationDetails(organizationId, userId, configurationId);
   }

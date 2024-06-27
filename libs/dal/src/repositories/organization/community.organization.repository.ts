@@ -75,6 +75,13 @@ export class CommunityOrganizationRepository
     );
   }
 
+  async updateDefaultLocale(
+    organizationId: string,
+    defaultLocale: string
+  ): Promise<{ matched: number; modified: number }> {
+    throw new Error('Method not implemented.');
+  }
+
   async findPartnerConfigurationDetails(organizationId: string, userId: string, configurationId: string) {
     const organizationIds = await this.getUsersMembersOrganizationIds(userId);
 

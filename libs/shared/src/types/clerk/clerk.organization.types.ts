@@ -1,5 +1,7 @@
 import { Organization as ClerkOrganization } from '@clerk/clerk-sdk-node';
 import { ClerkPaginationRequest } from '@clerk/types';
+import { ProductUseCases } from '../../dto';
+import { ApiServiceLevelEnum } from '../organization';
 
 export type Organization = ClerkOrganization & OrganizationMetadataParams;
 
@@ -20,6 +22,10 @@ export type UpdateMetadataParams = OrganizationMetadataParams;
 
 type OrganizationPublicMetadata = {
   externalOrgId?: string;
+  apiServiceLevel?: ApiServiceLevelEnum;
+  domain?: string;
+  productUseCases?: ProductUseCases;
+  defaultLocale?: string;
 };
 
 type OrganizationMetadataParams = {
