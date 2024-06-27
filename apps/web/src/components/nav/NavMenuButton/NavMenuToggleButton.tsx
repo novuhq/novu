@@ -1,10 +1,10 @@
-import { FC, PropsWithChildren, useState } from 'react';
 import { css, cx } from '@novu/novui/css';
-import { Flex, HStack, Stack } from '@novu/novui/jsx';
-import { INavMenuButtonProps, rawButtonBaseStyles } from './NavMenuButton.shared';
 import { IconKeyboardArrowDown, IconKeyboardArrowUp } from '@novu/novui/icons';
+import { HStack, Stack } from '@novu/novui/jsx';
+import { FC, PropsWithChildren, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { useHover } from '../../../hooks/useHover';
+import { ellipsisTextCss, INavMenuButtonProps, NavMenuButtonInner, rawButtonBaseStyles } from './NavMenuButton.shared';
 
 type INavMenuToggleButtonProps = { link: string } & Omit<INavMenuButtonProps, 'rightSide'>;
 
@@ -41,10 +41,7 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
 
           return (
             <HStack justifyContent={'space-between'} w="inherit">
-              <HStack gap="75">
-                {icon}
-                <span>{label}</span>
-              </HStack>
+              <NavMenuButtonInner icon={icon}>{label}</NavMenuButtonInner>
               {isOpen ? <IconKeyboardArrowUp /> : isHovered ? <IconKeyboardArrowDown /> : null}
             </HStack>
           );
