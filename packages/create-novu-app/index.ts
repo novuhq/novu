@@ -19,8 +19,6 @@ let projectPath = '';
 
 const handleSigTerm = () => process.exit(0);
 
-const defaultTunnelHost = 'https://localtunnel.me';
-
 process.on('SIGINT', handleSigTerm);
 process.on('SIGTERM', handleSigTerm);
 
@@ -48,15 +46,7 @@ const program = new Commander.Command(packageJson.name)
     `
 
   Your Novu Development environment apiKey. Note that your novu app won't
-  work with a non development environment apiKey.
-`
-  )
-  .option(
-    '-t, --tunnel-host',
-    `
-
-  Set's the tunnel host url that will be used to request local tunnels,
-  defaults to ${defaultTunnelHost}
+  work outside of local mode without an apiKey.
 `
   )
   .option(
@@ -184,9 +174,8 @@ async function run(): Promise<void> {
     process.exit(1);
   }
 
-  if (program.apiKey === true || !program.apiKey) {
-    console.error('Please provide a valid apiKey value.');
-    process.exit(1);
+  if (!program.apiKey) {
+    program.apiKey = '';
   }
 
   /**
@@ -275,7 +264,6 @@ async function run(): Promise<void> {
       srcDir: program.srcDir,
       importAlias: program.importAlias,
       apiKey: program.apiKey,
-      tunnelHost: program.tunnelHost ? program.tunnelHost : defaultTunnelHost,
     });
   } catch (reason) {
     if (!(reason instanceof DownloadError)) {
@@ -304,7 +292,6 @@ async function run(): Promise<void> {
       srcDir: program.srcDir,
       importAlias: program.importAlias,
       apiKey: program.apiKey,
-      tunnelHost: program.tunnelHost ? program.tunnelHost : defaultTunnelHost,
     });
   }
   conf.set('preferences', preferences);

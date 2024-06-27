@@ -9,7 +9,7 @@ export const STUDIO_PATH = '/studio';
 import { DevCommandOptions } from '../commands';
 
 export type DevServerOptions = { tunnelOrigin: string } & Partial<
-  Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'studioRemoteOrigin'>
+  Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'studioRemoteOrigin' | 'route'>
 >;
 
 export class DevServer {
@@ -35,9 +35,10 @@ export class DevServer {
       }
     });
 
-    this.server.listen(port, SERVER_HOST, () => {
-      console.log('Dev server   ✅: Started on port', port);
-      console.log('Studio       ✅: Available on', `http://${SERVER_HOST}:${port}${STUDIO_PATH}`);
+    await new Promise<void>((resolve) => {
+      this.server.listen(port, SERVER_HOST, () => {
+        resolve();
+      });
     });
   }
 
@@ -45,6 +46,10 @@ export class DevServer {
     const response = this.server.address() as AddressInfo;
 
     return `http://${SERVER_HOST}:${response.port}`;
+  }
+
+  public getStudioAddress() {
+    return `${this.getAddress()}${STUDIO_PATH}`;
   }
 
   public close(): void {
@@ -81,7 +86,9 @@ export class DevServer {
             const url = new URL('/local-studio/auth', NOVU_CLOUD_STUDIO_ORIGIN);
             url.searchParams.set('redirect_url', window.location.href);
             url.searchParams.set('application_origin', '${origin}');
-            url.searchParams.set('tunnel_origin', '${tunnelOrigin}');
+            url.searchParams.set('tunnel_origin', '${this.options.tunnelOrigin}');
+            url.searchParams.set('tunnel_route', '${this.options.route}');
+
             window.location.href = url.href;
           }
 
