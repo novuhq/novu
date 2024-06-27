@@ -8,6 +8,7 @@ import { useSegment } from '../../../components/providers/SegmentProvider';
 import { ROUTES } from '../../../constants/routes';
 import { CodeSnippet } from '../../../pages/get-started/components/CodeSnippet';
 import { PageContainer } from '../../layout/PageContainer';
+import { Deploy } from './deploy';
 import { Terminal } from './terminal';
 import { Workflow } from './workflow';
 
@@ -62,7 +63,8 @@ export const GetStartedPageV2 = () => {
             2. Create a workflow
           </Title>
         </VStack>
-        <VStack gap="100" className={css({ width: '17rem', paddingLeft: '100', paddingRight: '100' })}>
+        <VStack gap="0" className={css({ width: '17rem', paddingLeft: '100', paddingRight: '100' })}>
+          <Deploy />
           <Title
             variant="subsection"
             className={css({
