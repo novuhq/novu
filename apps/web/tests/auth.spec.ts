@@ -47,7 +47,7 @@ test('should show password reset link sent message on any email input', async ({
 
 test('should redirect to the dashboard page when a token exists in query', async ({ page }) => {
   const { session } = await initializeSession(page);
-  const authLoginPage = await AuthLoginPage.goTo(page, session.token);
+  const authLoginPage = await AuthLoginPage.goTo(page, { token: session.token });
   await authLoginPage.assertNavigationPath('/workflows**');
 });
 
@@ -95,4 +95,11 @@ test('should logout user when auth token is expired', async ({ page }) => {
   await authLoginPage.passAuthTokenExpirationTime();
   await page.goto('/subscribers');
   await page.waitForURL('/auth/login');
+});
+
+test('redirect_url is respected post authentication', async ({ page }) => {
+  const authLoginPage = await AuthLoginPage.goTo(page, { redirectURL: 'https://novu.co' });
+  await authLoginPage.fillLoginForm({ email: testUser.email, password: testPassword() });
+  await authLoginPage.clickSignInButton();
+  await authLoginPage.assertNavigationPath('https://novu.co');
 });

@@ -77,11 +77,11 @@ export const SetupTimeline = ({ testResponse }: { testResponse: { isLoading: boo
       <MantineTimeline.Item
         bullet={<CheckStatusIcon />}
         lineVariant="dashed"
-        title="Connect to the endpoint"
+        title="Connect to the Novu Bridge Endpoint"
         active={active >= 3}
       >
         <Text variant="main" color="typography.text.secondary">
-          {active < 3 ? 'Waiting for you to start the application' : 'Succefully connected to the Novu Endpoint'}
+          {active < 3 ? 'Waiting for you to start the application' : 'Succefully connected to the Novu Bridge Endpoint'}
         </Text>
       </MantineTimeline.Item>
     </Timeline>

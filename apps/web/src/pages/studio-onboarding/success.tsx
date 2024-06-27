@@ -14,6 +14,9 @@ import { ROUTES } from '../../constants/routes';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
 import { Wrapper } from './components/Wrapper';
+import { novuOnboardedCookie } from '../../utils/cookies';
+
+const ONBOARDING_COOKIE_EXPIRY_DAYS = 10 * 365;
 
 export const StudioOnboardingSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -65,6 +68,14 @@ export const StudioOnboardingSuccess = () => {
 
   useEffect(() => {
     segment.track('Test workflow step completed - [Onboarding - Signup]');
+
+    // Never expires! Well it does, in 10 years but you will change device or browser by then :)
+    novuOnboardedCookie.set('1', {
+      expires: ONBOARDING_COOKIE_EXPIRY_DAYS,
+      sameSite: 'none',
+      secure: window.location.protocol === 'https',
+    });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

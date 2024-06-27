@@ -28,6 +28,12 @@ export class DevServer {
           this.serveWellKnownPath(req, res);
         } else if (req.url.startsWith(STUDIO_PATH)) {
           this.serveStudio(req, res);
+        } else {
+          res
+            .writeHead(301, {
+              Location: STUDIO_PATH,
+            })
+            .end();
         }
       } catch (e) {
         // eslint-disable-next-line no-console
