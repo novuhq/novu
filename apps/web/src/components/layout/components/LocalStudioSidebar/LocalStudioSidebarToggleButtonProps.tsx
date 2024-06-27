@@ -5,17 +5,25 @@ import { IBridgeWorkflow, IBridgeWorkflowStep } from '../../../../studio/types';
 import { NavMenuToggleButton, NavMenuLinkButton } from '../../../nav/NavMenuButton';
 import { ROUTES } from '../../../../constants/routes';
 import { parseUrl } from '../../../../utils/routeUtils';
+import { css } from '@novu/novui/css';
 
 type LocalStudioSidebarToggleButtonProps = {
   workflow: IBridgeWorkflow;
 };
+
+const linkButtonClassName = css({ padding: '75', _before: { display: 'none' } });
 
 export const LocalStudioSidebarToggleButton: FC<LocalStudioSidebarToggleButtonProps> = ({ workflow }) => {
   const { workflowId, steps } = workflow;
 
   return (
     <NavMenuToggleButton label={workflowId} icon={null} link={getLinkFromWorkflow(workflowId)}>
-      <NavMenuLinkButton label={'Trigger'} link={getTriggerLink(workflowId)} icon={<IconBolt size="20" />} />
+      <NavMenuLinkButton
+        label={'Trigger'}
+        link={getTriggerLink(workflowId)}
+        icon={<IconBolt size="20" />}
+        className={linkButtonClassName}
+      />
       {steps.map((step) => {
         const { stepId, type } = step;
         const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[type];
@@ -26,6 +34,7 @@ export const LocalStudioSidebarToggleButton: FC<LocalStudioSidebarToggleButtonPr
             label={stepId}
             link={getLinkFromWorkflowStep(workflowId, step)}
             icon={<Icon size="20" title="studio-workflow-step-icon" />}
+            className={linkButtonClassName}
           />
         );
       })}

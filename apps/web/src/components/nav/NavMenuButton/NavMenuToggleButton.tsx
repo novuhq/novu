@@ -1,6 +1,6 @@
 import { FC, PropsWithChildren, useState } from 'react';
 import { css, cx } from '@novu/novui/css';
-import { Flex, HStack } from '@novu/novui/jsx';
+import { Flex, HStack, Stack } from '@novu/novui/jsx';
 import { INavMenuButtonProps, rawButtonBaseStyles } from './NavMenuButton.shared';
 import { IconKeyboardArrowDown, IconKeyboardArrowUp } from '@novu/novui/icons';
 import { NavLink } from 'react-router-dom';
@@ -50,9 +50,9 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
           );
         }}
       </NavLink>
-      <Flex direction={'column'} pl="150">
+      <Stack pl="100" gap="25">
         {!isOpen ? null : children}
-      </Flex>
+      </Stack>
     </>
   );
 };
