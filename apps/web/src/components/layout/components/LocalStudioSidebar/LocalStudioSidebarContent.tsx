@@ -29,7 +29,8 @@ export const LocalStudioSidebarContent: FC<LocalStudioSidebarContentProps> = ({ 
         icon={<IconGroup />}
       />
       <NavMenuSection>
-        <NavMenuLinkButton label="Add a workflow" icon={<IconAdd />} link={'/'} />
+        {/** TODO: handle click */}
+        <NavMenuLinkButton label="Add a workflow" icon={<IconAdd />} link={'#'} />
         {workflows.map((workflow) => (
           <LocalStudioSidebarToggleButton key={workflow.workflowId} workflow={workflow} />
         ))}
