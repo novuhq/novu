@@ -20,8 +20,8 @@ program
   .option('-p, --port <value>', 'The port for the local Bridge endpoint', '4000')
   .option('-r, --route <value>', 'The Bridge endpoint route', '/api/novu')
   .option('-o, --origin <value>', 'The origin for the Bridge endpoint')
-  .option('-r, --region <value>', 'Novu Cloud region, for staging and local development', 'us')
-  .option('-w, --web-url <value>', 'The url for Novu Web, for staging and local development', 'https://web.novu.co')
+  .option('-r, --region <value>', 'The Novu Cloud region, for staging and local development', 'us')
+  .option('-w, --web-url <value>', 'The Novu Cloud Web URL, for staging and local development', 'https://web.novu.co')
   .option('-sp, --studio-port <value>', 'The port for the Novu Studio server', '2022')
   .action((options: DevCommandOptions) => devCommand(options))
   .parse(process.argv);
