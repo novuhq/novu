@@ -27,6 +27,7 @@ type BaseStudioState = {
     lastName?: string;
     emailAddress: string;
   };
+  organizationName?: string;
 };
 
 type CloudStudioState = BaseStudioState & {

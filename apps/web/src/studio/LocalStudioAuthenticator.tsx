@@ -27,7 +27,7 @@ function buildStudioURL(state: StudioState, defaultPath?: string | null) {
 }
 
 export function LocalStudioAuthenticator() {
-  const { currentUser, isLoading, redirectToLogin, redirectToSignUp } = useAuth();
+  const { currentUser, isLoading, redirectToLogin, redirectToSignUp, currentOrganization } = useAuth();
   const location = useLocation();
 
   // TODO: Refactor this to a smaller size function
@@ -110,6 +110,7 @@ export function LocalStudioAuthenticator() {
       },
       localBridgeURL,
       tunnelBridgeURL,
+      organizationName: currentOrganization?.name || '',
     };
 
     /*
