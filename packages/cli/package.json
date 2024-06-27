@@ -38,6 +38,7 @@
     "ws": "^8.11.0",
     "chalk": "4.1.2",
     "@novu/ntfr-client": "^0.0.3",
+    "chalk-animation": "^1.6.0",
     "commander": "^9.0.0",
     "configstore": "^5.0.0",
     "dotenv": "^8.2.0",

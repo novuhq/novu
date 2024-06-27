@@ -2,6 +2,7 @@ import { ListQuestionOptions } from 'inquirer';
 import * as chalk from 'chalk';
 import * as gradient from 'gradient-string';
 import { passwordConstraints } from '@novu/shared';
+import * as chalkAnimation from 'chalk-animation';
 
 export const introQuestions: ListQuestionOptions[] = [
   {
@@ -174,7 +175,7 @@ export const termAndPrivacyQuestions: ListQuestionOptions[] = [
   },
 ];
 
-export function showWelcomeScreen() {
+export async function showWelcomeScreen() {
   const textGradient = gradient('#0099F7', '#ff3432');
   const logoGradient = gradient('#DD2476', '#FF512F');
   const logo = `
@@ -193,11 +194,27 @@ export function showWelcomeScreen() {
                    @@@@@@@@@@@@@                  
                           `;
 
-  const items = logo.split('\n').map((row) => logoGradient(row));
+  const items = logo.split('\n').map((row) => {
+    return logoGradient(row);
+  });
 
   /* eslint-disable no-console */
-  console.log(chalk.bold(items.join('\n')));
-  console.log(chalk.bold(`                      Welcome to NOVU!`));
-  console.log(chalk.bold(textGradient(`         The open-source notification framework\n`)));
+
+  const logoAscii = items.slice(0, 3).join('\n');
+
+  const animation = chalkAnimation.radar(logoAscii);
+
+  await new Promise<void>((resolve) => {
+    setTimeout(() => {
+      animation.replace('----');
+      animation.stop();
+      console.log(chalk.bold(items.join('\n')));
+      console.log(chalk.bold(`                      Welcome to NOVU!`));
+      console.log(chalk.bold(textGradient(`         The open-source notification framework\n`)));
+
+      resolve();
+    }, 3000);
+  });
+
   /* eslint-enable  no-console */
 }
