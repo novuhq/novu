@@ -6,21 +6,21 @@ import type { SubscriberEntity } from '@novu/dal';
 import type { SubscriberSessionRequestDto } from './dtos/subscriber-session-request.dto';
 import type { SubscriberSessionResponseDto } from './dtos/subscriber-session-response.dto';
 import { SessionCommand } from './usecases/session/session.command';
-import type { Session } from './usecases/session/session.usecase';
+import { Session } from './usecases/session/session.usecase';
 import { ApiCommonResponses } from '../shared/framework/response.decorator';
 import { SubscriberSession } from '../shared/framework/user.decorator';
 import type { GetNotificationsRequestDto } from './dtos/get-notifications-request.dto';
-import type { GetNotifications } from './usecases/get-notifications/get-notifications.usecase';
+import { GetNotifications } from './usecases/get-notifications/get-notifications.usecase';
 import { GetNotificationsCommand } from './usecases/get-notifications/get-notifications.command';
 import type { GetNotificationsResponseDto } from './dtos/get-notifications-response.dto';
 import type { GetNotificationsCountRequestDto } from './dtos/get-notifications-count-request.dto';
 import type { GetNotificationsCountResponseDto } from './dtos/get-notifications-count-response.dto';
-import type { NotificationsCount } from './usecases/notifications-count/notifications-count.usecase';
+import { NotificationsCount } from './usecases/notifications-count/notifications-count.usecase';
 import { NotificationsCountCommand } from './usecases/notifications-count/notifications-count.command';
 import type { UpdateNotificationRequestDto } from './dtos/update-notification-request.dto';
 import type { InboxNotification } from './utils/types';
 import { UpdateNotificationCommand } from './usecases/update-notification/update-notification.command';
-import type { UpdateNotification } from './usecases/update-notification/update-notification.usecase';
+import { UpdateNotification } from './usecases/update-notification/update-notification.usecase';
 
 @ApiCommonResponses()
 @Controller('/inbox')

@@ -1,13 +1,14 @@
 import * as sinon from 'sinon';
 import { expect } from 'chai';
 import { NotFoundException } from '@nestjs/common';
-import { ButtonTypeEnum, ChannelCTATypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { ButtonTypeEnum, ChannelCTATypeEnum, MessageActionStatusEnum, WebSocketEventEnum } from '@novu/shared';
 import { ChannelTypeEnum, MessageRepository } from '@novu/dal';
 import {
   AnalyticsService,
   buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
 
 import { UpdateNotification } from './update-notification.usecase';
@@ -58,18 +59,21 @@ const mockMessageWithButtons: any = {
 describe('UpdateNotification', () => {
   let updateNotification: UpdateNotification;
   let invalidateCacheMock: sinon.SinonStubbedInstance<InvalidateCacheService>;
+  let webSocketsQueueServiceMock: sinon.SinonStubbedInstance<WebSocketsQueueService>;
   let getSubscriberMock: sinon.SinonStubbedInstance<GetSubscriber>;
   let analyticsServiceMock: sinon.SinonStubbedInstance<AnalyticsService>;
   let messageRepositoryMock: sinon.SinonStubbedInstance<MessageRepository>;
 
   beforeEach(() => {
     invalidateCacheMock = sinon.createStubInstance(InvalidateCacheService);
+    webSocketsQueueServiceMock = sinon.createStubInstance(WebSocketsQueueService);
     getSubscriberMock = sinon.createStubInstance(GetSubscriber);
     analyticsServiceMock = sinon.createStubInstance(AnalyticsService);
     messageRepositoryMock = sinon.createStubInstance(MessageRepository);
 
     updateNotification = new UpdateNotification(
       invalidateCacheMock as any,
+      webSocketsQueueServiceMock as any,
       getSubscriberMock as any,
       analyticsServiceMock as any,
       messageRepositoryMock as any
@@ -364,6 +368,34 @@ describe('UpdateNotification', () => {
         archived: command.archived,
         primaryActionCompleted: command.primaryActionCompleted,
         secondaryActionCompleted: command.secondaryActionCompleted,
+      },
+    ]);
+  });
+
+  it('should send the websocket unread event', async () => {
+    const command: UpdateNotificationCommand = {
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      subscriberId: 'not-found',
+      notificationId: mockMessage._id,
+      read: true,
+    };
+
+    getSubscriberMock.execute.resolves(mockSubscriber);
+    messageRepositoryMock.findOne.resolves(mockMessage);
+
+    await updateNotification.execute(command);
+
+    expect(webSocketsQueueServiceMock.add.calledOnce).to.be.true;
+    expect(webSocketsQueueServiceMock.add.firstCall.args).to.deep.equal([
+      {
+        name: 'sendMessage',
+        data: {
+          event: WebSocketEventEnum.UNREAD,
+          userId: mockSubscriber._id,
+          _environmentId: mockSubscriber._environmentId,
+        },
+        groupId: mockSubscriber._organizationId,
       },
     ]);
   });

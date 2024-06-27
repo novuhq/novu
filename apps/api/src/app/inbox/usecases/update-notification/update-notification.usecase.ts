@@ -4,9 +4,10 @@ import {
   buildFeedKey,
   buildMessageCountKey,
   InvalidateCacheService,
+  WebSocketsQueueService,
 } from '@novu/application-generic';
 import { MessageEntity, MessageRepository } from '@novu/dal';
-import { ButtonTypeEnum, MessageActionStatusEnum } from '@novu/shared';
+import { ButtonTypeEnum, MessageActionStatusEnum, WebSocketEventEnum } from '@novu/shared';
 
 import { ApiException } from '../../../shared/exceptions/api.exception';
 import { GetSubscriber } from '../../../subscribers/usecases/get-subscriber';
@@ -19,6 +20,7 @@ import type { UpdateNotificationCommand } from './update-notification.command';
 export class UpdateNotification {
   constructor(
     private invalidateCache: InvalidateCacheService,
+    private webSocketsQueueService: WebSocketsQueueService,
     private getSubscriber: GetSubscriber,
     private analyticsService: AnalyticsService,
     private messageRepository: MessageRepository
@@ -43,6 +45,8 @@ export class UpdateNotification {
       throw new NotFoundException(`Notification with id: ${command.notificationId} is not found.`);
     }
 
+    const isUpdatingRead = command.read !== undefined;
+    const isUpdatingArchived = command.archived !== undefined;
     const isUpdatingPrimaryCta = command.primaryActionCompleted !== undefined;
     const isUpdatingSecondaryCta = command.secondaryActionCompleted !== undefined;
     const primaryCta = message.cta.action?.buttons?.find((button) => button.type === ButtonTypeEnum.PRIMARY);
@@ -54,8 +58,8 @@ export class UpdateNotification {
     }
 
     const updatePayload: Partial<MessageEntity> = {
-      ...(command.read !== undefined && { read: command.read }),
-      ...(command.archived !== undefined && { archived: command.archived }),
+      ...(isUpdatingRead && { read: command.read }),
+      ...(isUpdatingArchived && { archived: command.archived }),
     };
 
     if (isUpdatingPrimaryCta) {
@@ -106,6 +110,18 @@ export class UpdateNotification {
       primaryActionCompleted: command.primaryActionCompleted,
       secondaryActionCompleted: command.secondaryActionCompleted,
     });
+
+    if (isUpdatingRead) {
+      this.webSocketsQueueService.add({
+        name: 'sendMessage',
+        data: {
+          event: WebSocketEventEnum.UNREAD,
+          userId: subscriber._id,
+          _environmentId: subscriber._environmentId,
+        },
+        groupId: subscriber._organizationId,
+      });
+    }
 
     return mapToDto(
       (await this.messageRepository.findOne({
