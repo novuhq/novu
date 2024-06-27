@@ -9,18 +9,13 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { Wrapper } from './components/Wrapper';
 import { ROUTES } from '../../constants/routes';
 import { useNavigate } from 'react-router-dom';
-import { useBridgeUrlTest } from './useUrlTest';
+import { useHealthCheck } from '../../studio/hooks/useBridgeAPI';
+import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
 
 export const StudioOnboarding = () => {
   const segment = useSegment();
   const navigate = useNavigate();
-  const { runHealthCheck, isLoading, data } = useBridgeUrlTest();
-
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => runHealthCheck(), 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [runHealthCheck]);
+  const { data, isLoading } = useHealthCheck();
 
   useEffect(() => {
     segment.track('Add endpoint step started - [Onboarding - Signup]');
@@ -48,7 +43,7 @@ export const StudioOnboarding = () => {
             To start sending your first workflows, you first need to connect Novu to your Bridge Endpoint. This setup
             will create a sample Next.js project and pre-configured the @novu/framework client for you.
           </Text>
-          <SetupTimeline testResponse={{ data, isLoading }} />
+          <SetupTimeline testResponse={{ data: data as BridgeStatus, isLoading }} />
         </div>
       </VStack>
       <Footer
