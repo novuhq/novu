@@ -17,7 +17,7 @@ export type DevCommandOptions = {
   region: 'us' | 'eu';
   studioPort: string;
   studioRemoteOrigin: string;
-  endpointRoute: string;
+  route: string;
 };
 
 export async function devCommand(options: DevCommandOptions) {
@@ -26,7 +26,7 @@ export async function devCommand(options: DevCommandOptions) {
   const parsedOptions = parseOptions(options);
   const devSpinner = ora('Creating a development local tunnel').start();
   const tunnelOrigin = await generateTunnel(parsedOptions.origin);
-  const NOVU_ENDPOINT_PATH = options.endpointRoute;
+  const NOVU_ENDPOINT_PATH = options.route;
 
   devSpinner.succeed(`Local tunnel started: ${tunnelOrigin}`);
 

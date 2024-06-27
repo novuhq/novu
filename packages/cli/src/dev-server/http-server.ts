@@ -9,7 +9,7 @@ export const STUDIO_PATH = '/studio';
 import { DevCommandOptions } from '../commands';
 
 export type DevServerOptions = { tunnelOrigin: string } & Partial<
-  Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'studioRemoteOrigin' | 'endpointRoute'>
+  Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'studioRemoteOrigin' | 'route'>
 >;
 
 export class DevServer {
@@ -87,7 +87,7 @@ export class DevServer {
             url.searchParams.set('redirect_url', window.location.href);
             url.searchParams.set('application_origin', '${origin}');
             url.searchParams.set('tunnel_origin', '${this.options.tunnelOrigin}');
-            url.searchParams.set('tunnel_route', '${this.options.endpointRoute}');
+            url.searchParams.set('tunnel_route', '${this.options.route}');
 
             window.location.href = url.href;
           }
