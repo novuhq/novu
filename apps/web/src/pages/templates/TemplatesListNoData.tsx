@@ -8,8 +8,9 @@ import { CardTile, colors, Popover } from '@novu/design-system';
 import { useSegment } from '../../components/providers/SegmentProvider';
 import { IBlueprintTemplate } from '../../api/types';
 import { TemplateCreationSourceEnum } from './shared';
-import { useHoverOverItem } from '../../hooks';
+import { useFeatureFlag, useHoverOverItem } from '../../hooks';
 import { EchoProjectCardTile } from './components/EchoProjectWaitList';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 
 const NoDataHolder = styled.div`
   display: flex;
@@ -70,6 +71,11 @@ export const TemplatesListNoData = ({
 }) => {
   const segment = useSegment();
   const { item: templateId, onMouseEnter, onMouseLeave } = useHoverOverItem<string>();
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
+
+  if (isV2Enabled) {
+    return null;
+  }
 
   return (
     <NoDataHolder data-test-id="no-workflow-templates-placeholder">
