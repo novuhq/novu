@@ -1,25 +1,34 @@
-const axios = require('axios');
+import { expect, it, describe, afterEach, vi, MockedFunction } from 'vitest';
+import axios from 'axios';
 
 import { sync, buildSignature } from './sync';
 
-jest.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+vi.mock('axios', () => {
+  return {
+    default: {
+      post: vi.fn(),
+      get: vi.fn(),
+    },
+  };
+});
 
 describe('sync command', () => {
   describe('sync function', () => {
     afterEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
     });
 
-    test('happy case of execute sync functions', async () => {
+    it('happy case of execute sync functions', async () => {
       const novuEndpointUrl = 'https://bridge.novu.co';
       const novuApiKey = 'your-api-key';
       const backendUrl = 'https://api.novu.co';
       const syncData = { someData: 'from sync' };
 
-      const syncRestCallSpy = jest.spyOn(mockedAxios, 'post');
+      const syncRestCallSpy = vi.spyOn(axios, 'post');
 
-      mockedAxios.post.mockResolvedValueOnce({ data: syncData });
+      (axios.post as MockedFunction<typeof axios.post>).mockResolvedValueOnce({
+        data: syncData,
+      });
 
       const response = await sync(novuEndpointUrl, novuApiKey, backendUrl);
 
@@ -32,12 +41,12 @@ describe('sync command', () => {
       expect(response).toEqual(syncData);
     });
 
-    test('syncState - network error on sync', async () => {
+    it('syncState - network error on sync', async () => {
       const novuEndpointUrl = 'https://bridge.novu.co';
       const novuApiKey = 'your-api-key';
       const backendUrl = 'https://api.novu.co';
 
-      mockedAxios.post.mockRejectedValueOnce(new Error('Network error'));
+      (axios.post as MockedFunction<typeof axios.post>).mockRejectedValueOnce(new Error('Network error'));
 
       try {
         await sync(novuEndpointUrl, novuApiKey, backendUrl);
@@ -46,13 +55,13 @@ describe('sync command', () => {
       }
     });
 
-    test('syncState - unexpected error', async () => {
+    it('syncState - unexpected error', async () => {
       const novuEndpointUrl = 'https://bridge.novu.co';
       const novuApiKey = 'your-api-key';
       const backendUrl = 'https://api.novu.co';
 
-      mockedAxios.get.mockResolvedValueOnce({ data: {} });
-      mockedAxios.post.mockImplementationOnce(() => {
+      (axios.get as MockedFunction<typeof axios.get>).mockResolvedValueOnce({ data: {} });
+      (axios.post as MockedFunction<typeof axios.post>).mockImplementationOnce(() => {
         throw new Error('Unexpected error');
       });
 
@@ -65,14 +74,14 @@ describe('sync command', () => {
   });
 
   describe('buildSignature function', () => {
-    test('buildSignature - generates valid signature format', () => {
+    it('buildSignature - generates valid signature format', () => {
       const novuApiKey = 'your-api-key';
       const signature = buildSignature(novuApiKey);
 
       expect(signature).toMatch(/^t=\d+,v1=[0-9a-f]{64}$/); // Matches format: t=<timestamp>,v1=<hex hash>
     });
 
-    test('buildSignature - generates different signatures for different timestamps', async () => {
+    it('buildSignature - generates different signatures for different timestamps', async () => {
       const novuApiKey = 'your-api-key';
       const signature1 = buildSignature(novuApiKey);
 
