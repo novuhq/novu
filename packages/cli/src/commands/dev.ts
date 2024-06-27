@@ -29,7 +29,7 @@ export type DevCommandOptions = {
   port: string;
   origin: string;
   region: `${WebRegionEnum}`;
-  webPort: string;
+  studioPort: string;
   webUrl: string;
   route: string;
 };
@@ -94,7 +94,7 @@ async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointR
       counter++;
 
       if (counter === 10) {
-        endpointSpinner.text = `Bridge Endpoint:\t${fullEndpoint}
+        endpointSpinner.text = `Bridge Endpoint scan:\t${fullEndpoint}
 
   Ensure your application is configured and running locally.
 
