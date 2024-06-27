@@ -83,7 +83,7 @@ async function endpointHealthChecker(parsedOptions: DevCommandOptions, endpointR
         }${endpointRoute}. Ensure your application is configured and running locally.
         
 Don't have a configured application yet? Use our starter ${chalk.bold('npx create-novu-app@latest')}
-Have it running on a different path or port? Use the ${chalk.bold('--path')} or ${chalk.bold(
+Have it running on a different path or port? Use the ${chalk.bold('--route')} or ${chalk.bold(
           '--port'
         )} to modify the default values.
           `;
