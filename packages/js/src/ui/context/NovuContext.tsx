@@ -1,4 +1,4 @@
-import { createContext, JSX, useContext } from 'solid-js';
+import { createContext, createMemo, JSX, useContext } from 'solid-js';
 import { Novu, NovuOptions } from '../../novu';
 
 type NovuProviderProps = {
@@ -9,9 +9,9 @@ type NovuProviderProps = {
 const NovuContext = createContext<Novu | undefined>(undefined);
 
 export function NovuProvider(props: NovuProviderProps) {
-  const novu = new Novu(props.options);
+  const novu = createMemo(() => new Novu(props.options));
 
-  return <NovuContext.Provider value={novu}>{props.children}</NovuContext.Provider>;
+  return <NovuContext.Provider value={novu()}>{props.children}</NovuContext.Provider>;
 }
 
 export function useNovu() {
