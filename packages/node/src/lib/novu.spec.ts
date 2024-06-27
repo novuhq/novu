@@ -2,7 +2,7 @@ import { Novu } from './novu';
 import axios from 'axios';
 
 const mockConfig = {
-  apiKey: '1234',
+  secretKey: '1234',
 };
 
 jest.mock('axios');
@@ -15,7 +15,7 @@ describe('test initialization of novu node package', () => {
   beforeEach(() => {
     process.env = {
       ...originalEnv,
-      NOVU_API_KEY: 'cafebabe',
+      NOVU_SECRET_KEY: 'cafebabe',
     };
   });
 
@@ -23,12 +23,12 @@ describe('test initialization of novu node package', () => {
     process.env = originalEnv;
   });
 
-  test('should use the NOVU_API_KEY when defined', async () => {
-    expect(new Novu().apiKey).toBe('cafebabe');
+  test('should use the NOVU_SECRET_KEY when defined', async () => {
+    expect(new Novu().secretKey).toBe('cafebabe');
   });
 
-  test('should use the NOVU_API_KEY when defined', async () => {
-    expect(new Novu('whatever').apiKey).toBe('whatever');
+  test('should use the NOVU_SECRET_KEY when defined', async () => {
+    expect(new Novu('whatever').secretKey).toBe('whatever');
   });
 });
 
@@ -38,7 +38,7 @@ describe('test use of novu node package', () => {
 
   beforeEach(() => {
     mockedAxios.create.mockReturnThis();
-    novu = new Novu(mockConfig.apiKey);
+    novu = new Novu(mockConfig.secretKey);
   });
 
   test('should trigger correctly', async () => {

@@ -42,11 +42,11 @@ const program = new Commander.Command(packageJson.name)
     projectPath = name;
   })
   .option(
-    '-k, --api-key [apiKey]',
+    '-k, --secret-key [secretKey]',
     `
 
-  Your Novu Development environment apiKey. Note that your novu app won't
-  work outside of local mode without an apiKey.
+  Your Novu development environment secret key. Note that your novu app won't
+  work outside of local mode without it.
 `
   )
   .option(
