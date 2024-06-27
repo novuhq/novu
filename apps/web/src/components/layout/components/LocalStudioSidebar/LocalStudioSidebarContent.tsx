@@ -34,16 +34,17 @@ export const LocalStudioSidebarContent: FC<LocalStudioSidebarContentProps> = ({ 
         <DocsButton
           tooltip={'Open a guide'}
           TriggerButton={({ onClick }) => (
-            <button
-              onClick={onClick}
-              className={cx(
-                hstack({ cursor: 'pointer' }),
-                css({ justifyContent: 'flex-start' }),
-                css(rawButtonBaseStyles)
-              )}
-            >
-              <IconAdd />
-              <span>Add a workflow</span>
+            <button onClick={onClick}>
+              <div
+                className={cx(
+                  hstack({ cursor: 'pointer' }),
+                  css({ justifyContent: 'flex-start' }),
+                  css(rawButtonBaseStyles)
+                )}
+              >
+                <IconAdd />
+                <span>Add a workflow</span>
+              </div>
             </button>
           )}
         />
