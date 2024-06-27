@@ -200,20 +200,17 @@ export async function showWelcomeScreen() {
 
   /* eslint-disable no-console */
 
-  const logoAscii = items.slice(0, 3).join('\n');
-
-  const animation = chalkAnimation.radar(logoAscii);
+  const animation = chalkAnimation.pulse(logo, 0.2);
 
   await new Promise<void>((resolve) => {
     setTimeout(() => {
-      animation.replace('----');
-      animation.stop();
+      animation.replace('HELLO');
       console.log(chalk.bold(items.join('\n')));
       console.log(chalk.bold(`                      Welcome to NOVU!`));
       console.log(chalk.bold(textGradient(`         The open-source notification framework\n`)));
 
       resolve();
-    }, 3000);
+    }, 800);
   });
 
   /* eslint-enable  no-console */
