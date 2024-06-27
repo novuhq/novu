@@ -15,7 +15,7 @@ function computeBridgeURL(state: StudioState) {
 
 export const StudioStateProvider = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const { currentUser } = useAuth();
+  const { currentUser, currentOrganization } = useAuth();
   const { environment } = useEnvironment();
   const [state, setState] = useState<StudioState>(() => {
     const stateParam = new URLSearchParams(location.search).get('state');
@@ -32,6 +32,7 @@ export const StudioStateProvider = ({ children }: { children: React.ReactNode })
         id: currentUser?._id || '',
         emailAddress: currentUser?.email || '',
       },
+      organizationName: currentOrganization?.name || '',
     };
   });
 
@@ -46,9 +47,10 @@ export const StudioStateProvider = ({ children }: { children: React.ReactNode })
           id: currentUser?._id || '',
           emailAddress: currentUser?.email || '',
         },
+        organizationName: currentOrganization?.name || '',
       });
     }
-  }, [environment, state?.local, currentUser]);
+  }, [environment, state?.local, currentUser, currentOrganization]);
 
   useEffect(() => {
     setBridgeURL(computeBridgeURL(state));

@@ -25,6 +25,7 @@ type BaseStudioState = {
     id: string;
     emailAddress: string;
   };
+  organizationName?: string;
 };
 
 type CloudStudioState = BaseStudioState & {

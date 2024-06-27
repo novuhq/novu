@@ -7,10 +7,17 @@ import { WorkflowsTable } from '../table/index';
 import { useDiscover } from '../../../hooks/useBridgeAPI';
 import { DocsButton } from '../../../../components/docs/DocsButton';
 import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { useStudioNavigate } from '../../../hooks';
+import { ROUTES } from '../../../../constants/routes';
 
 export const WorkflowsListPage = () => {
   const { data, isLoading } = useDiscover();
   const segment = useSegment();
+  const navigate = useStudioNavigate();
+
+  if (data?.workflows) {
+    navigate(ROUTES.STUDIO_FLOWS_VIEW, { templateId: data?.workflows[0].workflowId });
+  }
 
   return (
     <PageTemplate title="Workflows">

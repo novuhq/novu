@@ -41,7 +41,7 @@ function assertProtocol(url: URL | string | null) {
 }
 
 export function LocalStudioAuthenticator() {
-  const { currentUser, isUserLoading, redirectToLogin } = useAuth();
+  const { currentUser, isUserLoading, redirectToLogin, currentOrganization } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -103,6 +103,7 @@ export function LocalStudioAuthenticator() {
       },
       localBridgeURL,
       tunnelBridgeURL,
+      organizationName: currentOrganization?.name || '',
     };
 
     /*
