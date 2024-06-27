@@ -4,6 +4,7 @@ import { Flex, HStack } from '@novu/novui/jsx';
 import { INavMenuButtonProps, rawButtonBaseStyles } from './NavMenuButton.shared';
 import { IconKeyboardArrowDown, IconKeyboardArrowUp } from '@novu/novui/icons';
 import { NavLink } from 'react-router-dom';
+import { useHover } from '../../../hooks/useHover';
 
 type INavMenuToggleButtonProps = { link: string } & Omit<INavMenuButtonProps, 'rightSide'>;
 
@@ -16,7 +17,7 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
   link,
 }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const { isHovered, ...hoverProps } = useHover();
 
   const handleClick = () => {
     setIsOpen((prevIsOpen) => !prevIsOpen);
@@ -33,8 +34,7 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
           css({ lineHeight: '125', '& _active, &.active': { background: 'transparent !important' } }),
           className
         )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        {...hoverProps}
       >
         {({ isActive }) => {
           setIsOpen(isActive);

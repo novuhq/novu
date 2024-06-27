@@ -8,6 +8,7 @@ import { Flex, styled } from '@novu/novui/jsx';
 import { text, title } from '@novu/novui/recipes';
 import { PATHS } from './docs.const';
 import { DocsModal } from './DocsModal';
+import { ITooltipProps } from '@novu/design-system/dist/types/tooltip/Tooltip';
 
 const Title = styled('h3', title);
 const Text = styled('p', text);
@@ -50,7 +51,7 @@ export const DocsButton = ({
   tooltip,
 }: {
   TriggerButton?: React.FC<{ onClick: () => void }>;
-  tooltip?: string;
+  tooltip?: ITooltipProps['label'];
 }) => {
   const [opened, setOpened] = useState<boolean>(false);
   const segment = useSegment();
