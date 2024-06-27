@@ -1,11 +1,12 @@
+import { Skeleton } from '@mantine/core';
 import { Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconCable, IconPlayArrow } from '@novu/novui/icons';
-import { useParams } from 'react-router-dom';
-import { ROUTES } from '../../../../constants/routes';
+import { Stack } from '@novu/novui/jsx';
+import { token } from '@novu/novui/tokens';
 import { useWorkflow } from '../../../hooks/useBridgeAPI';
-import { useStudioNavigate } from '../../../hooks/useStudioNavigate';
 import { useStudioWorkflowsNavigation } from '../../../hooks/useStudioWorkflowsNavigation';
+import { PageContainer } from '../../../layout/PageContainer';
 import { WorkflowsPageTemplate } from '../layout/WorkflowsPageTemplate';
 import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 import { WorkflowFloatingMenu } from './WorkflowFloatingMenu';
@@ -13,7 +14,11 @@ import { WorkflowNodes } from './WorkflowNodes';
 
 export const WorkflowsDetailPage = () => {
   const { currentWorkflowId, goToStep, goToTest } = useStudioWorkflowsNavigation();
-  const { data: workflow } = useWorkflow(currentWorkflowId);
+  const { data: workflow, isLoading } = useWorkflow(currentWorkflowId);
+
+  if (isLoading) {
+    return <WorkflowsContentLoading />;
+  }
 
   const title = workflow?.workflowId;
 
@@ -50,3 +55,16 @@ export const WorkflowsDetailPage = () => {
     </WorkflowsPageTemplate>
   );
 };
+
+WorkflowsDetailPage.LoadingDisplay = WorkflowsContentLoading;
+
+function WorkflowsContentLoading() {
+  return (
+    <PageContainer>
+      <Stack pl={'75'} py={'150'}>
+        <Skeleton height={token('lineHeights.100')} width={'20%'} radius="md" />
+      </Stack>
+      <WorkflowNodes.LoadingDisplay />
+    </PageContainer>
+  );
+}

@@ -13,6 +13,7 @@ import {
   IconType,
 } from '@novu/novui/icons';
 import { BridgeWorkflowStepType } from '../../../types';
+import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 
 export interface WorkflowNodesProps {
   // TODO: add proper types
@@ -63,3 +64,15 @@ export function WorkflowNodes({ steps, onStepClick, onTriggerClick }: WorkflowNo
     </>
   );
 }
+
+WorkflowNodes.LoadingDisplay = () => {
+  return (
+    <WorkflowBackgroundWrapper>
+      <VStack gap="0" p="75">
+        <StepNode.LoadingDisplay />
+        <StepNode.LoadingDisplay />
+        <StepNode.LoadingDisplay />
+      </VStack>
+    </WorkflowBackgroundWrapper>
+  );
+};
