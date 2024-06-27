@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuth, useEnvironment } from '../hooks';
+import { useAuth } from '../hooks/useAuth';
+import { useEnvironment } from '../hooks/useEnvironment';
 import type { StudioState } from './types';
 import { decodeBase64 } from './utils/base64';
 
