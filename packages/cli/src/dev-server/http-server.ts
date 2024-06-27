@@ -18,8 +18,8 @@ export class DevServer {
 
   constructor(private options: DevServerOptions) {}
 
-  public async listen(): Promise<void> {
-    const port = await getPort({ port: Number(this.options.webPort) });
+  public async listen(overridePort?: number): Promise<void> {
+    const port = await getPort({ port: overridePort || Number(this.options.webPort) });
 
     this.server = http.createServer();
     this.server.on('request', async (req, res) => {
@@ -41,10 +41,15 @@ export class DevServer {
       }
     });
 
-    await new Promise<void>((resolve) => {
-      this.server.listen(port, SERVER_HOST, () => {
-        resolve();
-      });
+    await new Promise<void>((resolve, reject) => {
+      this.server
+        .listen(port, SERVER_HOST, () => {})
+        .on('listening', () => {
+          resolve();
+        })
+        .on('error', (err) => {
+          reject(err);
+        });
     });
   }
 

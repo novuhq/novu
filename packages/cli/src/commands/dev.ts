@@ -39,7 +39,7 @@ export async function devCommand(options: DevCommandOptions) {
 
   const parsedOptions = parseOptions(options);
   const devSpinner = ora('Creating a development local tunnel').start();
-  const tunnelOrigin = await generateTunnel(parsedOptions.origin);
+  const tunnelOrigin = await createTunnel(parsedOptions.origin);
   const NOVU_ENDPOINT_PATH = options.route;
 
   devSpinner.succeed(`Local Tunnel started:\t${tunnelOrigin}`);
@@ -52,7 +52,16 @@ export async function devCommand(options: DevCommandOptions) {
   const httpServer = new DevServer(opts);
 
   const studioSpinner = ora('Starting local studio server').start();
-  await httpServer.listen();
+  try {
+    await httpServer.listen();
+  } catch (error) {
+    if (error.code === 'EADDRINUSE') {
+      studioSpinner.text = 'Port in use, trying another port...';
+      await httpServer.listen(0);
+    } else {
+      throw error;
+    }
+  }
 
   studioSpinner.succeed(`Novu Studio started:\t${httpServer.getStudioAddress()}`);
   if (process.env.NODE_ENV !== 'dev') {
@@ -115,12 +124,12 @@ function parseOptions(options: DevCommandOptions) {
 
   return {
     ...options,
-    origin: origin || defaultOrigin(port),
+    origin: origin || getDefaultOrigin(port),
     webUrl: options.webUrl || getDefaultWebUrl(region),
   };
 }
 
-function defaultOrigin(port: string) {
+function getDefaultOrigin(port: string) {
   return `http://localhost:${port}`;
 }
 
@@ -141,7 +150,7 @@ type LocalTunnelResponse = {
   url: string;
 };
 
-async function generateTunnel(localOrigin: string) {
+async function createTunnel(localOrigin: string) {
   const response = await fetch(TUNNEL_URL, {
     method: 'POST',
     headers: {
