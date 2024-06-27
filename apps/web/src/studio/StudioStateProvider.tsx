@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import type { IUserEntity } from '@novu/shared';
 import { useAuth } from '../hooks/useAuth';
 import { useEnvironment } from '../hooks/useEnvironment';
 import type { StudioState } from './types';
@@ -11,6 +12,15 @@ const StudioStateContext = React.createContext<(StudioState & BridgeURLGetterSet
 
 function computeBridgeURL(state: StudioState) {
   return state.local ? state.localBridgeURL || state.tunnelBridgeURL : state.storedBridgeURL;
+}
+
+function convertToTestUser(currentUser?: IUserEntity) {
+  return {
+    id: currentUser?._id || '',
+    emailAddress: currentUser?.email || '',
+    firstName: currentUser?.firstName || '',
+    lastName: currentUser?.lastName || '',
+  };
 }
 
 export const StudioStateProvider = ({ children }: { children: React.ReactNode }) => {
@@ -28,10 +38,7 @@ export const StudioStateProvider = ({ children }: { children: React.ReactNode })
     return {
       local: false,
       storedBridgeURL: environment?.echo?.url || '',
-      testUser: {
-        id: currentUser?._id || '',
-        emailAddress: currentUser?.email || '',
-      },
+      testUser: convertToTestUser(currentUser),
     };
   });
 
@@ -42,10 +49,7 @@ export const StudioStateProvider = ({ children }: { children: React.ReactNode })
       setState({
         local: false,
         storedBridgeURL: environment?.echo?.url || '',
-        testUser: {
-          id: currentUser?._id || '',
-          emailAddress: currentUser?.email || '',
-        },
+        testUser: convertToTestUser(currentUser),
       });
     }
   }, [environment, state?.local, currentUser]);

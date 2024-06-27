@@ -23,6 +23,8 @@ export interface IBridgeWorkflow {
 type BaseStudioState = {
   testUser: {
     id: string;
+    firstName?: string;
+    lastName?: string;
     emailAddress: string;
   };
 };
