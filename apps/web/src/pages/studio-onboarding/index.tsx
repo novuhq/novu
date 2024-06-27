@@ -9,7 +9,8 @@ import { useSegment } from '../../components/providers/SegmentProvider';
 import { Wrapper } from './components/Wrapper';
 import { ROUTES } from '../../constants/routes';
 import { useNavigate } from 'react-router-dom';
-import { useBridgeUrlTest } from './useUrlTest';
+import { useHealthCheck } from '../../studio/hooks/useBridgeAPI';
+import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
 import { useStudioState } from '../../studio/StudioStateProvider';
 import { capitalizeFirstLetter } from '../../utils/string';
 
@@ -17,13 +18,7 @@ export const StudioOnboarding = () => {
   const segment = useSegment();
   const navigate = useNavigate();
   const { testUser } = useStudioState();
-  const { runHealthCheck, isLoading, data } = useBridgeUrlTest();
-
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(() => runHealthCheck(), 500);
-
-    return () => clearTimeout(delayDebounceFn);
-  }, [runHealthCheck]);
+  const { data, isLoading } = useHealthCheck();
 
   useEffect(() => {
     segment.track('Add endpoint step started - [Onboarding - Signup]');
@@ -53,7 +48,7 @@ export const StudioOnboarding = () => {
             Send your first email notification, by connecting to your Novu Bridge Endpoint. This setup will create a
             sample Next.js project and with a pre-configured @novu/framework.
           </Text>
-          <SetupTimeline testResponse={{ data, isLoading }} />
+          <SetupTimeline testResponse={{ data: data as BridgeStatus, isLoading }} />
         </div>
       </VStack>
       <Footer
