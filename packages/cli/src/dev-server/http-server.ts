@@ -39,9 +39,7 @@ export class DevServer {
         console.error(e);
       }
     });
-    // console.error(port);
 
-    // const port1 = await getPort({ port: Number(this.options.webPort) });
     await new Promise<void>((resolve) => {
       this.server.listen(port, SERVER_HOST, () => {
         resolve();
