@@ -113,7 +113,6 @@
     "json-schema-faker": "^0.5.6",
     "json-schema-to-ts": "^3.0.0",
     "liquidjs": "^10.13.1",
-    "axios": "^1.6.2",
     "ora": "^5.4.1"
   }
 }

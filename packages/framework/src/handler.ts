@@ -1,5 +1,4 @@
 import { createHmac } from 'node:crypto';
-import axios, { AxiosInstance } from 'axios';
 
 import { Client } from './client';
 import {
@@ -24,6 +23,7 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { Awaitable, DiscoverWorkflowOutput, ITriggerEvent } from './types';
+import { initApiClient } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
@@ -60,24 +60,15 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   public readonly handler: Handler;
   public readonly client: Client;
   private readonly hmacEnabled: boolean;
-  private readonly http: AxiosInstance;
+  private readonly http;
 
   constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
     this.client = options.client ? options.client : new Client();
     this.client.addWorkflows(options.workflows);
-    this.http = this.initHttpClient();
+    this.http = initApiClient(this.client.apiKey as string);
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.strictAuthentication;
-  }
-
-  private initHttpClient() {
-    return axios.create({
-      baseURL: 'https://api.novu.co/v1',
-      headers: {
-        Authorization: `ApiKey ${this.client.apiKey}`,
-      },
-    });
   }
 
   public createHandler(): (...args: Input) => Promise<Output> {
@@ -221,12 +212,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     };
   }
 
-  private triggerAction(triggerEvent: ITriggerEvent) {
+  public triggerAction(triggerEvent: ITriggerEvent) {
     return async () => {
-      if (!triggerEvent.bridgeUrl && process.env.NEXT_PUBLIC_VERCEL_URL) {
-        triggerEvent.bridgeUrl = `https://${process.env.NEXT_PUBLIC_VERCEL_URL}/api/novu`;
-      }
-
       const requestPayload = {
         name: triggerEvent.workflowId,
         to: triggerEvent.to,
@@ -238,7 +225,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         ...(triggerEvent.bridgeUrl && { bridgeUrl: triggerEvent.bridgeUrl }),
       };
 
-      const result = (await this.http.post(`/events/trigger`, requestPayload)).data;
+      const result = await this.http.post('/events/trigger', requestPayload);
 
       return this.createResponse(HttpStatusEnum.OK, result);
     };
@@ -302,8 +289,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       }
 
       return this.createError(error);
-    }
-    if ((error as any).response.status === HttpStatusEnum.BAD_REQUEST) {
+    } else if ((error as any).response.status === HttpStatusEnum.BAD_REQUEST) {
       return this.createError((error as { response: NovuError }).response);
     } else {
       // eslint-disable-next-line no-console
