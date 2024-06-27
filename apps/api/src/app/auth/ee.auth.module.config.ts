@@ -32,13 +32,7 @@ export function getEEModuleConfig(): ModuleMetadata {
     controllers: [...eeAuthModule.controllers],
     providers: [
       ...eeAuthModule.providers,
-      // original repositories need to be here for the DI to work
       ...injectRepositories(),
-      UserRepository,
-      MemberRepository,
-      OrganizationRepository,
-      EnvironmentRepository,
-      SubscriberRepository,
       // reused services
       ApiKeyStrategy,
       JwtSubscriberStrategy,
