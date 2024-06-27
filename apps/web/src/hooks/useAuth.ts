@@ -44,6 +44,14 @@ export function getTokenClaims(): IJwtClaims | null {
   return token ? jwtDecode<IJwtClaims>(token) : null;
 }
 
+function inIframe() {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
+}
+
 export function useAuth() {
   const ldClient = useLDClient();
   const segment = useSegment();
@@ -57,7 +65,7 @@ export function useAuth() {
   const hasToken = !!getToken();
 
   useEffect(() => {
-    if (!getToken() && inPrivateRoute) {
+    if (!getToken() && inPrivateRoute && !inIframe()) {
       navigate(ROUTES.AUTH_LOGIN, { state: { redirectTo: location } });
     }
   }, [navigate, inPrivateRoute, location]);

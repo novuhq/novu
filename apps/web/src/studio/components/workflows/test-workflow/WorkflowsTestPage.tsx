@@ -86,11 +86,13 @@ export const WorkflowsTestPage = () => {
 
       let response;
       if (local) {
-        response = await trigger({
+        const bridgeResponse = await trigger({
           workflowId: workflowId,
           to,
           payload,
         });
+
+        response = bridgeResponse.data;
       } else {
         response = await triggerCloudTestEvent({
           name: workflowId,

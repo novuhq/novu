@@ -70,7 +70,11 @@ export const StudioOnboardingSuccess = () => {
     segment.track('Test workflow step completed - [Onboarding - Signup]');
 
     // Never expires! Well it does, in 10 years but you will change device or browser by then :)
-    novuOnboardedCookie.set('1', { expires: ONBOARDING_COOKIE_EXPIRY_DAYS });
+    novuOnboardedCookie.set('1', {
+      expires: ONBOARDING_COOKIE_EXPIRY_DAYS,
+      sameSite: 'none',
+      secure: window.location.protocol === 'https',
+    });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

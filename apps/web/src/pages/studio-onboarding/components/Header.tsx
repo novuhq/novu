@@ -74,8 +74,8 @@ export const Header = ({ activeStepIndex = 0 }: { activeStepIndex?: number }) =>
             active={activeStepIndex}
           >
             <Stepper.Step label="Add the endpoint"></Stepper.Step>
-            <Stepper.Step label="Create workflow"></Stepper.Step>
-            <Stepper.Step label="Test workflow"></Stepper.Step>
+            <Stepper.Step label="Test the workflow"></Stepper.Step>
+            <Stepper.Step label="Check your Inbox"></Stepper.Step>
           </Stepper>
         </div>
       </VStack>
