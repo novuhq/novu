@@ -9,16 +9,14 @@ import { encodeBase64 } from './utils/base64';
 import { StudioState } from './types';
 import { useLocation } from 'react-router-dom';
 
-const BRIDGE_ENDPOINT_PATH = '/api/novu';
-
 const ALLOWED_PROTOCOLS = ['http:', 'https:'];
 
-function buildBridgeURL(origin: string | null) {
+function buildBridgeURL(origin: string | null, tunnelPath: string) {
   if (!origin) {
     return '';
   }
 
-  return new URL(BRIDGE_ENDPOINT_PATH, origin).href;
+  return new URL(tunnelPath, origin).href;
 }
 
 function buildStudioURL(state: StudioState) {
@@ -76,14 +74,18 @@ export function LocalStudioAuthenticator() {
 
     // Get the optional tunnel origin parameter
     const tunnelOrigin = parsedSearchParams.get('tunnel_origin');
+    const tunnelPath = parsedSearchParams.get('tunnel_route');
+    if (!tunnelPath) {
+      throw new Error('Tunnel Path is not defined');
+    }
 
     // Protect against XSS attacks via the javascript: pseudo protocol
     assertProtocol(tunnelOrigin);
 
     // Build the state that will be passed to the Local Studio iframe
 
-    const localBridgeURL = buildBridgeURL(parsedApplicationOrigin.origin);
-    const tunnelBridgeURL = buildBridgeURL(tunnelOrigin);
+    const localBridgeURL = buildBridgeURL(parsedApplicationOrigin.origin, tunnelPath);
+    const tunnelBridgeURL = buildBridgeURL(tunnelOrigin, tunnelPath);
 
     if (!currentUser) {
       if (!isUserLoading) {
