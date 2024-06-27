@@ -21,7 +21,7 @@ test('should allow a visitor to sign-up and login', async ({ page }) => {
   await signUpPage.assertNavigationPath('/auth/application');
   await signUpPage.fillUseCaseData();
   await signUpPage.clickGetStartedButton();
-  await signUpPage.assertNavigationPath('/get-started**');
+  await signUpPage.assertNavigationPath('/studio/**');
 });
 
 test('should show account already exists when signing up with already registered mail', async ({ page }) => {

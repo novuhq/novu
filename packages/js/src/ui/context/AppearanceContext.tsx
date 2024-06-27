@@ -58,7 +58,6 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
 
     const styleEl = document.createElement('style');
     styleEl.id = props.id;
-    console.log(props.id);
     document.head.appendChild(styleEl);
 
     setStyleElement(styleEl);

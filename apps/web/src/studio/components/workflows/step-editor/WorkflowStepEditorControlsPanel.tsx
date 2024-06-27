@@ -3,48 +3,50 @@ import { IconOutlineEditNote, IconOutlineTune, IconOutlineSave } from '@novu/nov
 import { FC, useMemo } from 'react';
 import { useDocsModal } from '../../../../components/docs/useDocsModal';
 import { When } from '../../../../components/utils/When';
-import { InputsEmptyPanel } from './InputsEmptyPanel';
+import { ControlsEmptyPanel } from './ControlsEmptyPanel';
 import { css } from '@novu/novui/css';
 import { Container } from '@novu/novui/jsx';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
 
-interface IWorkflowStepEditorInputsPanelProps {
+interface IWorkflowStepEditorControlsPanelProps {
   step: any;
   workflow: any;
   onChange: (type: 'step' | 'payload', data: any) => void;
   onSave?: () => void;
-  defaultInputs?: Record<string, unknown>;
+  defaultControls?: Record<string, unknown>;
   isLoadingSave?: boolean;
 }
 
-export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelProps> = ({
+export const WorkflowStepEditorControlsPanel: FC<IWorkflowStepEditorControlsPanelProps> = ({
   step,
   workflow,
   onChange,
   onSave,
-  defaultInputs,
+  defaultControls,
   isLoadingSave,
 }) => {
+  const segment = useSegment();
   const { Component, toggle, setPath } = useDocsModal();
   const havePayloadProperties = useMemo(() => {
     return Object.keys(workflow?.options?.payloadSchema?.properties || {}).length > 0;
   }, [workflow?.options?.payloadSchema]);
 
-  const haveInputProperties = useMemo(() => {
-    return Object.keys(step?.inputs?.schema?.properties || {}).length > 0;
-  }, [step?.inputs?.schema]);
+  const haveControlProperties = useMemo(() => {
+    return Object.keys(step?.controls?.schema?.properties || step?.inputs?.schema?.properties || {}).length > 0;
+  }, [step?.controls?.schema, step?.inputs?.schema]);
 
   return (
     <>
       <Tabs
-        defaultValue="step-inputs"
+        defaultValue="step-controls"
         tabConfigs={[
           {
             icon: <IconOutlineEditNote />,
-            value: 'step-inputs',
-            label: 'Step inputs',
+            value: 'step-controls',
+            label: 'Step controls',
             content: (
               <Container className={formContainerClassName}>
-                <When truthy={haveInputProperties}>
+                <When truthy={haveControlProperties}>
                   {onSave && (
                     <div style={{ display: 'flex', justifyContent: 'end' }}>
                       <Button
@@ -53,6 +55,9 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
                         size={'sm'}
                         Icon={IconOutlineSave}
                         onClick={() => {
+                          segment.track('Step controls saved - [Workflows Step Page]', {
+                            step: step?.type,
+                          });
                           onSave();
                         }}
                       >
@@ -63,15 +68,15 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
 
                   <JsonSchemaForm
                     onChange={(data) => onChange('step', data)}
-                    schema={step?.inputs?.schema || {}}
-                    formData={defaultInputs || {}}
+                    schema={step?.controls?.schema || step?.inputs?.schema || {}}
+                    formData={defaultControls || {}}
                   />
                 </When>
-                <When truthy={!haveInputProperties}>
-                  <InputsEmptyPanel
+                <When truthy={!haveControlProperties}>
+                  <ControlsEmptyPanel
                     content="Modifiable controls defined by the code schema."
                     onDocsClick={() => {
-                      setPath('framework/concepts/inputs');
+                      setPath('framework/concepts/controls');
                       toggle();
                     }}
                   />
@@ -93,7 +98,7 @@ export const WorkflowStepEditorInputsPanel: FC<IWorkflowStepEditorInputsPanelPro
                   />
                 </When>
                 <When truthy={!havePayloadProperties}>
-                  <InputsEmptyPanel
+                  <ControlsEmptyPanel
                     content="Payload ensures correct formatting and data validity."
                     onDocsClick={() => {
                       setPath('framework/concepts/payload');

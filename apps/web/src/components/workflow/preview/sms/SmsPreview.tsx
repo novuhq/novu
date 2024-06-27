@@ -14,10 +14,10 @@ import { SmsBasePreview } from './SmsBasePreview';
 
 export const SmsPreview = ({
   showPreviewAsLoading = false,
-  inputVariables,
+  controlVariables,
 }: {
   showPreviewAsLoading?: boolean;
-  inputVariables?: any;
+  controlVariables?: any;
 }) => {
   const { navigateToStepEditor } = useNavigateToStepEditor();
   const { watch, formState } = useFormContext<IForm>();
@@ -30,22 +30,21 @@ export const SmsPreview = ({
   const stepId = watch(`${path}.uuid`);
   const [bridgeContent, setBridgeContent] = useState('');
 
-  const {
-    mutateAsync,
-    isLoading: isBridgeLoading,
-    error: previewError,
-  } = useMutation((data) => api.post('/v1/echo/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data), {
-    onSuccess(data) {
-      setBridgeContent(data.outputs.body);
-    },
-  });
+  const { mutateAsync, isLoading: isBridgeLoading } = useMutation(
+    (data) => api.post('/v1/bridge/preview/' + formState?.defaultValues?.identifier + '/' + stepId, data),
+    {
+      onSuccess(data) {
+        setBridgeContent(data.outputs.body);
+      },
+    }
+  );
 
   useEffect(() => {
     if (bridge) {
-      mutateAsync(inputVariables);
+      mutateAsync(controlVariables);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bridge, inputVariables]);
+  }, [bridge, controlVariables]);
 
   const { selectedLocale, locales, areLocalesLoading, onLocaleChange } = useTemplateLocales({
     content: templateContent as string,

@@ -13,14 +13,14 @@ export type ToSubscriber = {
   [key: string]: any;
 };
 
-interface IWorkflowTestInputsPanelProps {
+interface IWorkflowTestControlsPanelProps {
   payloadSchema: Record<string, any>;
   stepTypes: ChannelTypeEnum[];
   to: ToSubscriber;
   onChange: (payload?: Record<string, any>, to?: ToSubscriber) => void;
 }
 
-export const WorkflowTestInputsPanel: FC<IWorkflowTestInputsPanelProps> = ({
+export const WorkflowTestControlsPanel: FC<IWorkflowTestControlsPanelProps> = ({
   payloadSchema,
   onChange,
   to,

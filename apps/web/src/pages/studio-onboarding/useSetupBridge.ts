@@ -1,14 +1,12 @@
-import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../api/index';
-import { useSegment } from '../../components/providers/SegmentProvider';
 import { ROUTES } from '../../constants/routes';
 import { useBridgeUrlTest } from './useUrlTest';
 import { useState } from 'react';
-import { setTunnelUrl } from '../../api/bridge/utils';
+import { useBridgeURL } from '../../studio/hooks/useBridgeURL';
 
 export const useSetupBridge = (url: string, setError: (error: string) => void) => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const { setBridgeUrl } = useBridgeURL();
 
   const navigate = useNavigate();
   const { runHealthCheck, isLoading, data } = useBridgeUrlTest();
@@ -18,7 +16,7 @@ export const useSetupBridge = (url: string, setError: (error: string) => void) =
 
     await runHealthCheck(url);
 
-    setTunnelUrl(url);
+    setBridgeUrl(url);
     setLoading(false);
 
     navigate(ROUTES.STUDIO_ONBOARDING_PREVIEW);
