@@ -1,12 +1,13 @@
 import { JSONSchemaFaker } from 'json-schema-faker';
+import { Liquid } from 'liquidjs';
 import ora from 'ora';
 
 import {
-  ExecutionEventPayloadInvalidError,
   ExecutionEventControlsInvalidError,
+  ExecutionEventPayloadInvalidError,
   ExecutionProviderOutputInvalidError,
-  ExecutionStateCorruptError,
   ExecutionStateControlsInvalidError,
+  ExecutionStateCorruptError,
   ExecutionStateOutputInvalidError,
   ExecutionStateResultInvalidError,
   ProviderExecutionFailedError,
@@ -23,17 +24,16 @@ import type {
   DiscoverProviderOutput,
   DiscoverStepOutput,
   DiscoverWorkflowOutput,
+  Event,
   ExecuteOutput,
   HealthCheck,
-  Event,
+  Schema,
+  Skip,
+  ValidationError,
 } from './types';
-import { Schema } from './types/schema.types';
-import { transformSchema, validateData } from './validators';
 import { EMOJI, log } from './utils';
+import { transformSchema, validateData } from './validators';
 import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
-import { Skip } from './types/skip.types';
-import { Liquid } from 'liquidjs';
-import { ValidationError } from './types/validator.types';
 
 /**
  * We want to respond with a consistent string value for preview
