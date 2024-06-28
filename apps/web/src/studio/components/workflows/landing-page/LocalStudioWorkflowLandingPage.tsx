@@ -1,6 +1,6 @@
 import { useBridgeConnectionStatus, useDiscover, useStudioWorkflowsNavigation } from '../../../hooks';
 import { WorkflowsDetailPage } from '../node-view/WorkflowsDetailPage';
-import { WorkflowPlaceholderPage } from './WorkflowPlaceholderPageContent';
+import { WorkflowPlaceholderPage } from './WorkflowPlaceholderPage';
 
 export const LocalStudioWorkflowLandingPage = () => {
   const { data, isLoading } = useDiscover();
@@ -16,7 +16,7 @@ export const LocalStudioWorkflowLandingPage = () => {
   if (status === 'disconnected') {
     return (
       <WorkflowPlaceholderPage title={'Studio Disconnected'} docsButtonLabel="See our troubleshooting guide">
-        Local environment disconnected from endpoint URL.
+        Local environment disconnected from Novu Bridge URL.
         <br />
         Likely due to browser internet loss, but other causes possible.
       </WorkflowPlaceholderPage>
