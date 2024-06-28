@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Command, Option } from 'commander';
+import { Command } from 'commander';
 import { initCommand, devCommand, DevCommandOptions } from './commands';
 import { sync } from './commands/sync';
 

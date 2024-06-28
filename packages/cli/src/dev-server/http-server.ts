@@ -9,7 +9,7 @@ export const STUDIO_PATH = '/studio';
 import { DevCommandOptions } from '../commands';
 
 export type DevServerOptions = { tunnelOrigin: string } & Partial<
-  Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'webUrl' | 'route'>
+  Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'dashboardUrl' | 'route'>
 >;
 
 export class DevServer {
@@ -74,7 +74,7 @@ export class DevServer {
       </head>
       <body style="padding: 0; margin: 0;">
         <script>
-          const NOVU_CLOUD_STUDIO_ORIGIN = '${this.options.webUrl}';
+          const NOVU_CLOUD_STUDIO_ORIGIN = '${this.options.dashboardUrl}';
 
           function injectIframe(src) {
             const iframe = window.document.createElement('iframe');

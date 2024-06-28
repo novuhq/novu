@@ -11,26 +11,26 @@ process.on('SIGINT', function () {
   process.exit();
 });
 
-export enum WebRegionEnum {
+export enum CloudRegionEnum {
   US = 'us',
   EU = 'eu',
   STAGING = 'staging',
 }
 
-export enum WebUrlEnum {
+export enum DashboardUrlEnum {
   US = 'https://dashboard.novu.co',
   EU = 'https://eu.dashboard.novu.co',
   STAGING = 'https://dev.dashboard.novu.co',
 }
 
-const TUNNEL_URL = 'https://ntfr.dev/api/tunnels';
+const TUNNEL_URL = 'https://novu.sh/api/tunnels';
 
 export type DevCommandOptions = {
   port: string;
   origin: string;
-  region: `${WebRegionEnum}`;
+  region: `${CloudRegionEnum}`;
   studioPort: string;
-  webUrl: string;
+  dashboardUrl: string;
   route: string;
 };
 
@@ -116,7 +116,7 @@ function parseOptions(options: DevCommandOptions) {
   return {
     ...options,
     origin: origin || getDefaultOrigin(port),
-    webUrl: options.webUrl || getDefaultWebUrl(region),
+    dashboardUrl: options.dashboardUrl || getDefaultDashboardUrl(region),
   };
 }
 
@@ -124,15 +124,15 @@ function getDefaultOrigin(port: string) {
   return `http://${SERVER_HOST}:${port}`;
 }
 
-function getDefaultWebUrl(region: string) {
+function getDefaultDashboardUrl(region: string) {
   switch (region) {
-    case WebRegionEnum.EU:
-      return WebUrlEnum.EU;
-    case WebRegionEnum.STAGING:
-      return WebUrlEnum.STAGING;
-    case WebRegionEnum.US:
+    case CloudRegionEnum.EU:
+      return DashboardUrlEnum.EU;
+    case CloudRegionEnum.STAGING:
+      return DashboardUrlEnum.STAGING;
+    case CloudRegionEnum.US:
     default:
-      return WebUrlEnum.US;
+      return DashboardUrlEnum.US;
   }
 }
 
