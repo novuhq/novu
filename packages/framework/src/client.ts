@@ -71,7 +71,7 @@ export class Client {
   private buildOptions(providedOptions?: ClientOptions) {
     const builtConfiguration: { secretKey?: string; strictAuthentication: boolean } = {
       secretKey: undefined,
-      strictAuthentication: true,
+      strictAuthentication: isRuntimeInDevelopment() ? false : true,
     };
 
     builtConfiguration.secretKey =
@@ -79,14 +79,14 @@ export class Client {
 
     if (!isRuntimeInDevelopment() && !builtConfiguration.secretKey) {
       throw new Error(
-        'Missing secret key. Set the NOVU_SECRET_KEY environment variable or pass secretKey to the client options.'
+        'Missing secret key. Set the NOVU_SECRET_KEY environment variable or pass `secretKey` to the client options.'
       );
     }
 
     if (providedOptions?.strictAuthentication !== undefined) {
       builtConfiguration.strictAuthentication = providedOptions.strictAuthentication;
-    } else if (isRuntimeInDevelopment()) {
-      builtConfiguration.strictAuthentication = false;
+    } else if (process.env.NOVU_STRICT_AUTHENTICATION_ENABLED !== undefined) {
+      builtConfiguration.strictAuthentication = process.env.NOVU_STRICT_AUTHENTICATION_ENABLED === 'true';
     }
 
     return builtConfiguration;
