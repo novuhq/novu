@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { initCommand, devCommand, DevCommandOptions } from './commands';
 
 const program = new Command();
@@ -26,13 +26,14 @@ program
   (e.g., novu dev -r /v1/api/novu)
 
   Using Europe region:
-  (e.g., novu dev -r eu)`
+  (e.g., novu dev -cr eu)`
   )
+  .usage('[-p <port>] [-r <route>] [-o <origin>] [-cr <region>] [-cd <dashboard-url>] [-sp <studio-port>]')
   .option('-p, --port <value>', 'The local Bridge endpoint port', '4000')
   .option('-r, --route <value>', 'The Bridge endpoint route', '/api/novu')
   .option('-o, --origin <value>', 'The Bridge endpoint origin')
-  .option('-r, --region <value>', 'The Cloud Dashboard region', 'us')
-  .option('-d, --dashboard-url <value>', 'The Cloud Dashboard URL', 'https://dashboard.novu.co')
+  .addOption(new Option('-cr, --region <value>', 'The Cloud Dashboard region').default('us').choices(['us', 'eu']))
+  .option('-cd, --dashboard-url <value>', 'The Cloud Dashboard URL', 'https://dashboard.novu.co')
   .option('-sp, --studio-port <value>', 'The Local Studio server port', '2022')
   .action((options: DevCommandOptions) => devCommand(options))
   .parse(process.argv);
