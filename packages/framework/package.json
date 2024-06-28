@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "0.24.3-alpha.11",
+  "version": "0.24.3-alpha.13",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -47,8 +47,8 @@
     "h3",
     "express"
   ],
-  "author": "Novu",
-  "license": "MIT",
+  "author": "Novu Team <engineering@novu.co>",
+  "license": "ISC",
   "exports": {
     ".": {
       "require": "./dist/index.js",
