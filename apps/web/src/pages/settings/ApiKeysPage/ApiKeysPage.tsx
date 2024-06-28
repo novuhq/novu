@@ -7,11 +7,11 @@ import { ConfirmRegenerationModal } from '../tabs/components/ConfirmRegeneration
 import { useSettingsEnvRedirect } from '../useSettingsEnvRedirect';
 import { useApiKeysPage } from './useApiKeysPage';
 
-type SecretKeysRendererProps = ReturnType<typeof useApiKeysPage>;
+type ApiKeysRendererProps = ReturnType<typeof useApiKeysPage>;
 
 const INPUT_ICON_SIZE: IconSize = '16';
 
-const ApiKeysRenderer: FC<SecretKeysRendererProps> = ({
+const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
   secretKey,
   environmentIdentifier,
   environmentId,
