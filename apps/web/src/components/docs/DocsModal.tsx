@@ -11,7 +11,7 @@ import { useLoadDocs } from './useLoadDocs';
 
 export const DocsModal = ({ open, toggle, path }) => {
   const [voted, setVoted] = useState<Voting | undefined>(undefined);
-  const { isLoading, data, isError } = useLoadDocs({ path });
+  const { isLoading, data, hasLoadedSuccessfully } = useLoadDocs({ path, isEnabled: open });
   const segment = useSegment();
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export const DocsModal = ({ open, toggle, path }) => {
           </Flex>
         }
       >
-        {isLoading || isError ? null : <VotingWidget onVoteClick={onVoteClick} voted={voted} />}
+        {hasLoadedSuccessfully ? <VotingWidget onVoteClick={onVoteClick} voted={voted} /> : null}
       </Docs>
     </Modal>
   );

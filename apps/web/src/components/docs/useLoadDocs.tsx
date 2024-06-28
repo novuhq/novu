@@ -11,17 +11,23 @@ export type DocsQueryResults = {
 
 type UseLoadDocsProps = {
   path: string;
+  /** Controls whether or not we should execute the query */
+  isEnabled: boolean;
 };
 
-export const useLoadDocs = ({ path }: UseLoadDocsProps) => {
+export const useLoadDocs = ({ path, isEnabled }: UseLoadDocsProps) => {
   const segment = useSegment();
 
-  const queryResults = useQuery<DocsQueryResults>(['docs', path], async () => {
-    const response = await fetch(MDX_URL + path);
-    const json = await response.json();
+  const { data = { code: '', title: '', description: '' }, ...queryResults } = useQuery<DocsQueryResults>(
+    ['docs', path],
+    async () => {
+      const response = await fetch(MDX_URL + path);
+      const json = await response.json();
 
-    return json;
-  });
+      return json;
+    },
+    { enabled: isEnabled }
+  );
 
   useEffect(() => {
     segment.track('Inline docs opened', {
@@ -32,6 +38,8 @@ export const useLoadDocs = ({ path }: UseLoadDocsProps) => {
 
   return {
     ...queryResults,
-    data: queryResults.data ?? { code: '', title: '', description: '' },
+    data,
+    // TODO: we should really be handling this through proper errors in the query, but this will suffice for now
+    hasLoadedSuccessfully: Boolean(!queryResults.isLoading && data.title),
   };
 };

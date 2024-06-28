@@ -1,8 +1,10 @@
 import { Accordion, Alert, Code, Loader, Paper } from '@mantine/core';
-import { colors, IconInfoOutline, IconOutlineWarning, Tabs, Tooltip } from '@novu/design-system';
+import { Tabs, Tooltip } from '@novu/design-system';
+import { IconInfoOutline, IconOutlineWarning } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
-import { Center, Flex, Grid, GridItem, styled, VStack } from '@novu/novui/jsx';
+import { Flex, Grid, GridItem, styled, VStack } from '@novu/novui/jsx';
 import { text, title as RTitle } from '@novu/novui/recipes';
+import { token } from '@novu/novui/tokens';
 import * as mdxBundler from 'mdx-bundler/client';
 import { PropsWithChildren, ReactNode, useEffect, useMemo } from 'react';
 import { DOCS_URL, MINTLIFY_IMAGE_URL } from './docs.const';
@@ -65,13 +67,9 @@ export const Docs = ({ code = '', description = '', title = '', isLoading, child
 
   if (isLoading) {
     return (
-      <Center
-        className={css({
-          marginTop: '[4rem]',
-        })}
-      >
-        <Loader color={colors.error} size={32} />
-      </Center>
+      <Grid placeContent={'center'} h="full">
+        <Loader color={token('colors.mode.cloud.middle')} size={32} />
+      </Grid>
     );
   }
 
