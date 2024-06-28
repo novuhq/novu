@@ -8,6 +8,7 @@ import { AppShell } from './AppShell';
 import { ContentShell } from './ContentShell';
 import { WithLoadingSkeleton } from '@novu/novui';
 import { WorkflowsDetailPage } from '../../../studio/components/workflows/index';
+import { Box } from '@novu/novui/jsx';
 
 export const LocalStudioPageLayout: WithLoadingSkeleton = () => {
   const { pathname } = useLocation();
@@ -47,6 +48,7 @@ function LoadingDisplay() {
     <AppShell>
       <LocalStudioSidebar.LoadingDisplay />
       <ContentShell>
+        <Box bg="surface.page" h="250" />
         <WorkflowsDetailPage.LoadingDisplay />
       </ContentShell>
     </AppShell>
