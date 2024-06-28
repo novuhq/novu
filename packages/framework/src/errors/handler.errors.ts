@@ -1,4 +1,4 @@
-import { ErrorCodeEnum, HttpMethodEnum, HttpStatusEnum } from '../constants';
+import { ErrorCodeEnum, HttpStatusEnum, HttpMethodEnum } from '@novu/shared';
 import { enumToPrettyString } from '../utils';
 import { BadRequestError, NovuError } from './base.errors';
 

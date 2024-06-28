@@ -30,7 +30,7 @@ import type {
   Schema,
   Skip,
   ValidationError,
-} from './types';
+} from '@novu/shared';
 import { EMOJI, log } from './utils';
 import { transformSchema, validateData } from './validators';
 import { FRAMEWORK_VERSION, SDK_VERSION } from './version';

@@ -1,9 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as Sentry from '@sentry/node';
-import { ModuleRef } from '@nestjs/core';
 
 import {
-  EnvironmentRepository,
   IntegrationRepository,
   JobEntity,
   JobRepository,
@@ -20,13 +18,8 @@ import {
   TriggerRecipientSubscriber,
   TriggerTenantContext,
 } from '@novu/shared';
-import { DiscoverOutput, DiscoverWorkflowOutput } from '@novu/framework';
 
-import {
-  TriggerEventBroadcastCommand,
-  TriggerEventCommand,
-  TriggerEventMulticastCommand,
-} from './trigger-event.command';
+import { TriggerEventCommand } from './trigger-event.command';
 import {
   ProcessSubscriber,
   ProcessSubscriberCommand,

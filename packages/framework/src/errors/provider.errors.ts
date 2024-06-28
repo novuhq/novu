@@ -1,4 +1,4 @@
-import { ErrorCodeEnum, ResourceEnum } from '../constants';
+import { ErrorCodeEnum, ResourceEnum } from '@novu/shared';
 import { ResourceExecutionFailed, ResourceNotFoundError } from './resource.errors';
 
 export class ProviderNotFoundError extends ResourceNotFoundError {

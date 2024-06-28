@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { ErrorCodeEnum, HttpHeaderKeysEnum, SIGNATURE_TIMESTAMP_TOLERANCE_MINUTES } from '../constants';
+import { HttpHeaderKeysEnum, ErrorCodeEnum, SIGNATURE_TIMESTAMP_TOLERANCE_MINUTES } from '@novu/shared';
 import { UnauthorizedError } from './base.errors';
 
 export class SignatureMismatchError extends UnauthorizedError {

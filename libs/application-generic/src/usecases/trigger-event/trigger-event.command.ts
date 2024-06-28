@@ -13,8 +13,8 @@ import {
   TriggerRecipientSubscriber,
   TriggerRequestCategoryEnum,
   TriggerTenantContext,
+  DiscoverWorkflowOutput,
 } from '@novu/shared';
-import { DiscoverWorkflowOutput } from '@novu/framework';
 
 import { EnvironmentWithUserCommand } from '../../commands';
 

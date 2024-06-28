@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { ErrorCodeEnum } from '../constants';
+import { ErrorCodeEnum } from '@novu/shared';
 import { BadRequestError } from './base.errors';
 
 export class ExecutionStateCorruptError extends BadRequestError {

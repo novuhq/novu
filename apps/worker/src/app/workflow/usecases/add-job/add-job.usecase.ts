@@ -14,8 +14,8 @@ import {
   IDigestTimedMetadata,
   IWorkflowStepMetadata,
   StepTypeEnum,
+  DigestOutput,
 } from '@novu/shared';
-import { DigestOutput } from '@novu/framework';
 import {
   ComputeJobWaitDurationService,
   ConditionsFilter,

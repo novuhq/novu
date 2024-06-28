@@ -10,7 +10,10 @@ import {
   HttpStatusEnum,
   PostActionEnum,
   SIGNATURE_TIMESTAMP_TOLERANCE,
-} from './constants';
+  Awaitable,
+  DiscoverWorkflowOutput,
+  TriggerEvent,
+} from '@novu/shared';
 import {
   InvalidActionError,
   MethodNotAllowedError,
@@ -23,7 +26,6 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
-import { Awaitable, DiscoverWorkflowOutput, TriggerEvent } from './types';
 import { initApiClient } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

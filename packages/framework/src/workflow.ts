@@ -1,19 +1,25 @@
-import { ChannelStepEnum } from './constants';
 import { StepAlreadyExistsError } from './errors';
-import { channelStepSchemas, delayChannelSchemas, digestChannelSchemas, emptySchema, providerSchemas } from './schemas';
-import {
-  ActionStep,
-  Awaitable,
-  CustomStep,
-  DiscoverStepOutput,
-  DiscoverWorkflowOutput,
-  Execute,
-  StepType,
-  WorkflowOptions,
-} from './types';
-import { FromSchema, Schema } from './types/schema.types';
+
 import { EMOJI, log } from './utils';
 import { transformSchema } from './validators';
+import {
+  Execute,
+  Schema,
+  DiscoverWorkflowOutput,
+  WorkflowOptions,
+  channelStepSchemas,
+  digestChannelSchemas,
+  delayChannelSchemas,
+  StepTypeString,
+  ActionStep,
+  emptySchema,
+  DiscoverStepOutput,
+  ChannelTypeEnum,
+  Awaitable,
+  providerSchemas,
+  CustomStep,
+  FromSchema,
+} from '@novu/shared';
 
 /**
  * Define a new notification workflow.
@@ -105,7 +111,7 @@ export function workflow<
 
 function discoverStepFactory<T, U>(
   targetWorkflow: DiscoverWorkflowOutput,
-  type: StepType,
+  type: StepTypeString,
   outputSchema: Schema,
   resultSchema: Schema
 ): ActionStep<T, U> {
@@ -140,10 +146,10 @@ function discoverStepFactory<T, U>(
     discoverStep(targetWorkflow, stepId, step);
 
     if (
-      Object.values(ChannelStepEnum).includes(type as ChannelStepEnum) &&
+      Object.values(ChannelTypeEnum).includes(type as ChannelTypeEnum) &&
       Object.keys(options.providers || {}).length > 0
     ) {
-      discoverProviders(step, type as ChannelStepEnum, options.providers || {});
+      discoverProviders(step, type as ChannelTypeEnum, options.providers || {});
     }
 
     return undefined as any;
@@ -160,7 +166,7 @@ function discoverStep(targetWorkflow: DiscoverWorkflowOutput, stepId: string, st
 
 function discoverProviders(
   step: DiscoverStepOutput,
-  channelType: ChannelStepEnum,
+  channelType: ChannelTypeEnum,
   providers: Record<string, (payload: unknown) => Awaitable<unknown>>
 ): void {
   const channelSchemas = providerSchemas[channelType];
@@ -182,7 +188,7 @@ function discoverProviders(
   });
 }
 
-function discoverCustomStepFactory(targetWorkflow: DiscoverWorkflowOutput, type: StepType): CustomStep {
+function discoverCustomStepFactory(targetWorkflow: DiscoverWorkflowOutput, type: StepTypeString): CustomStep {
   return async (stepId, resolve, options = {}) => {
     const controlSchema = options?.controlSchema || options?.inputSchema || emptySchema;
     const outputSchema = options?.outputSchema || emptySchema;

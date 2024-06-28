@@ -20,6 +20,7 @@ import {
   IAttachmentOptions,
   IEmailOptions,
   LogCodeEnum,
+  EmailOutput,
 } from '@novu/shared';
 import {
   InstrumentUsecase,
@@ -33,7 +34,6 @@ import {
   ExecutionLogRoute,
   ExecutionLogRouteCommand,
 } from '@novu/application-generic';
-import { EmailOutput } from '@novu/framework';
 
 import { CreateLog } from '../../../shared/logs';
 import { SendMessageCommand } from './send-message.command';

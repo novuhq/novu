@@ -39,13 +39,17 @@
   },
   "dependencies": {
     "class-transformer": "0.5.1",
-    "class-validator": "0.14.0"
+    "class-validator": "0.14.0",
+    "ajv": "^8.12.0"
   },
   "devDependencies": {
     "@types/jest": "29.5.2",
     "@types/json-schema": "^7.0.15",
     "jest": "^27.1.0",
     "rimraf": "^3.0.2",
+    "vitest": "^1.2.1",
+    "zod": "^3.23.0",
+    "json-schema-to-ts": "^3.0.0",
     "typescript": "4.9.5"
   },
   "lint-staged": {

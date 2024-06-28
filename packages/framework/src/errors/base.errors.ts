@@ -1,5 +1,4 @@
-import { HttpStatusEnum } from '../constants';
-import { ErrorCodeEnum } from '../constants/error.constants';
+import { ErrorCodeEnum, HttpStatusEnum } from '@novu/shared';
 
 /**
  * Base error class.

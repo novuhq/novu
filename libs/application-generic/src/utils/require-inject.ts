@@ -1,8 +1,9 @@
 import { PlatformException } from './exceptions';
 import { Logger } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { ChatProviderIdEnum, DigestTypeEnum } from '@novu/shared';
 import {
+  ChatProviderIdEnum,
+  DigestTypeEnum,
   ChatOutput,
   DelayOutput,
   DigestOutput,
@@ -12,7 +13,7 @@ import {
   InAppOutput,
   PushOutput,
   SmsOutput,
-} from '@novu/framework';
+} from '@novu/shared';
 
 export const requireInject = (inject: RequireInject, moduleRef?: ModuleRef) => {
   if (inject === RequireInjectEnum.RESONATE) {

@@ -2,8 +2,8 @@ import { type NextApiRequest, type NextApiResponse } from 'next';
 import { type NextRequest } from 'next/server';
 
 import { NovuRequestHandler, ServeHandlerOptions } from './handler';
-import { Either } from './types';
-import { type SupportedFrameworkName } from './types';
+import { Either } from '@novu/shared';
+import { type SupportedFrameworkName } from '@novu/shared';
 import { getResponse } from './utils';
 
 export const frameworkName: SupportedFrameworkName = 'next';

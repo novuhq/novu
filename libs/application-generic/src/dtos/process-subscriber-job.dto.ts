@@ -5,7 +5,7 @@ import {
   TriggerRequestCategoryEnum,
 } from '@novu/shared';
 import { SubscriberEntity } from '@novu/dal';
-import { DiscoverWorkflowOutput } from '@novu/framework';
+import { DiscoverWorkflowOutput } from '@novu/shared';
 
 import {
   IBulkJobParams,

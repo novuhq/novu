@@ -28,6 +28,8 @@ import {
   ReservedVariablesMap,
   TriggerContextTypeEnum,
   TriggerEventStatusEnum,
+  DiscoverOutput,
+  DiscoverWorkflowOutput,
 } from '@novu/shared';
 import {
   WorkflowOverrideRepository,
@@ -43,7 +45,6 @@ import {
   EnvironmentEntity,
 } from '@novu/dal';
 import { Novu } from '@novu/node';
-import { DiscoverOutput, DiscoverWorkflowOutput } from '@novu/framework';
 
 import {
   ParseEventRequestBroadcastCommand,

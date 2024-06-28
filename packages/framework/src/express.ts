@@ -1,9 +1,9 @@
 import { type VercelRequest, type VercelResponse } from '@vercel/node';
 import { type Request, type Response } from 'express';
 
+import { Either, SupportedFrameworkName } from '@novu/shared';
+
 import { NovuRequestHandler, ServeHandlerOptions } from './handler';
-import { Either } from './types';
-import { type SupportedFrameworkName } from './types';
 
 export const frameworkName: SupportedFrameworkName = 'express';
 

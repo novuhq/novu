@@ -1,4 +1,4 @@
-import { ErrorCodeEnum } from '../constants';
+import { ErrorCodeEnum } from '@novu/shared';
 import { InternalServerError } from './base.errors';
 
 export class PlatformError extends InternalServerError {
