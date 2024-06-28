@@ -16,7 +16,7 @@ const anonymousIdLocalState = config.getValue('anonymousId');
 const anonymousId = anonymousIdLocalState || uuidv4();
 const program = new Command();
 
-program.name('novu').description('A CLI tool to interact with the novu API');
+program.name('novu').description(`A CLI tool to interact with Novu Cloud`);
 
 program
   .command('init')
@@ -27,13 +27,25 @@ program
 
 program
   .command('sync')
-  .option('-a, --api-url <apiUrl>', 'The Novu Cloud API URL', 'https://api.novu.co')
+  .description(
+    `Sync your state with Novu Cloud
+
+  Specifying the Bridge URL and Secret Key:
+  (e.g., novu sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY)
+
+  Sync with Novu Cloud in Europe:
+  (e.g., novu sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY -a https://eu.api.novu.co)`
+  )
+  .usage('[-b <url>] [-s <secret-key>] [-a <url>]')
+  .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
   .requiredOption(
-    '-b, --bridge-url <bridgeUrl>',
+    '-b, --bridge-url <url>',
     'The Novu endpoint URL hosted in the Bridge application, by convention ends in /api/novu'
   )
-  .requiredOption('-s, --secret-key <secretKey>', 'The Novu secret key')
-  .description('Sync your state with Novu Cloud')
+  .requiredOption(
+    '-s, --secret-key <secret-key>',
+    'The Novu Secret Key. Obtainable at https://dashboard.novu.co/api-keys'
+  )
   .action(async (options) => {
     analytics.track({
       identity: {
@@ -47,21 +59,21 @@ program
 
 program
   .command('dev')
-  .description('Start a Novu Dev Studio and a localtunnel')
-  .option('-p, --port <value>', 'Set the local port for the Novu endpoint, defaults to 4000', '4000')
-  .option('-r, --route <value>', 'Set the Novu Endpoint mounted route, defaults to /api/novu', '/api/novu')
-  .option('-o, --origin <value>', 'Set the origin for the Novu endpoint')
-  .option('-sp, --studio-port <value>', 'Set the local port for the Novu Local Studio server, defaults to 2022', '2022')
-  .option(
-    '-so, --studio-remote-origin <value>',
-    'Set the remote origin for Novu Studio, used for staging environment and local development, defaults to https://web.novu.co',
-    'https://web.novu.co'
+  .description(
+    `Start Novu Studio and a local tunnel
+
+  Running the Bridge application on port 4000: 
+  (e.g., novu dev -p 4000)
+
+  Running the Bridge application on a different route: 
+  (e.g., novu dev -r /v1/api/novu)`
   )
-  .option(
-    '--region <value>',
-    'Studio Origin SPA, used for staging environment and local development, defaults to us',
-    'us'
-  )
+  .usage('[-p <port>] [-r <route>] [-o <origin>] [-d <dashboard-url>] [-sp <studio-port>]')
+  .option('-p, --port <port>', 'The local Bridge endpoint port', '4000')
+  .option('-r, --route <route>', 'The Bridge endpoint route', '/api/novu')
+  .option('-o, --origin <origin>', 'The Bridge endpoint origin')
+  .option('-d, --dashboard-url <url>', 'The Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
+  .option('-sp, --studio-port <port>', 'The Local Studio server port', '2022')
   .action((options: DevCommandOptions) => devCommand(options));
 
 program.parse(process.argv);

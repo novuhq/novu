@@ -15,7 +15,9 @@
     "test:watch": "vitest --watch",
     "lint": "eslint src --ext .ts",
     "start:dev": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon init",
-    "start:dev:mode": "cross-env NODE_ENV=dev NOVU_EMBED_PATH=http://127.0.0.1:4701/embed.umd.min.js NOVU_API_ADDRESS=http://127.0.0.1:3000 NOVU_CLIENT_LOGIN=http://127.0.0.1:4200/auth/login CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon dev --studio-remote-origin http://localhost:4200",
+    "start:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon",
+    "start:dev:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon dev --dashboard-url http://localhost:4200",
+    "start:sync:mode": "cross-env NODE_ENV=dev CLI_SEGMENT_WRITE_KEY=GdQ594CEBj4pU6RFldDOjKJwZjxZOsIj TZ=UTC nodemon sync",
     "start:test": "cross-env NODE_ENV=test PORT=1336 TZ=UTC nodemon init",
     "start:debug": "cross-env TZ=UTC nodemon --config nodemon-debug.json",
     "start:prod": "cross-env TZ=UTC node dist/index.js"
