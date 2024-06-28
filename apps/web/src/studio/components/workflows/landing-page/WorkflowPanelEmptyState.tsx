@@ -22,7 +22,7 @@ function WorkflowPanelEmptyStateContent() {
 function WorkflowPanelUnconnectedContent() {
   return (
     <WorkflowPlaceholderPageContent docsButtonLabel="See our troubleshooting guide">
-      Local environment disconnected from endpoint URL.
+      Local environment disconnected from Novu Bridge URL.
       <br />
       Likely due to browser internet loss, but other causes possible.
     </WorkflowPlaceholderPageContent>
