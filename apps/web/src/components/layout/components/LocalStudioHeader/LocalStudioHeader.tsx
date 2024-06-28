@@ -32,7 +32,12 @@ export const LocalStudioHeader: FC = () => {
           <DocsButton />
           {/** TODO: this currently fails with Blocked opening in a new window
            * because the request was made in a sandboxed frame whose 'allow-popups' permission is not set. */}
-          <IconButton Icon={IconHelpOutline} as="a" href={discordInviteUrl} target="_blank" rel="noopener noreferrer" />
+          <IconButton
+            Icon={IconHelpOutline}
+            onClick={() => {
+              window.open(discordInviteUrl, '_blank', 'popup');
+            }}
+          />
         </HStack>
       </HStack>
     </Header>
