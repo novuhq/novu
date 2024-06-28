@@ -3,7 +3,7 @@ import { Center } from '@novu/novui/jsx';
 import { Loader } from '@mantine/core';
 import { colors } from '@novu/design-system';
 import { css } from '@novu/novui/css';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth, useAPIKeys, useEnvironment } from '../hooks';
 import { ROUTES } from '../constants/routes';
 import { assertProtocol } from '../utils/url';
 import { encodeBase64 } from './utils/base64';
@@ -29,6 +29,8 @@ function buildStudioURL(state: StudioState, defaultPath?: string | null) {
 export function LocalStudioAuthenticator() {
   const { currentUser, isLoading, redirectToLogin, redirectToSignUp, currentOrganization } = useAuth();
   const location = useLocation();
+  const { environment } = useEnvironment();
+  const { apiKey } = useAPIKeys();
 
   // TODO: Refactor this to a smaller size function
   useEffect(() => {
@@ -75,6 +77,15 @@ export function LocalStudioAuthenticator() {
       return;
     }
 
+    // Wait for environment and apiKeys to be loaded
+    if (!environment || !apiKey) {
+      return;
+    }
+
+    if (environment.name.toLowerCase() !== 'development') {
+      throw new Error('Local Studio works only with development api keys');
+    }
+
     // Get the local application origin parameter
     const applicationOrigin = parsedSearchParams.get('application_origin');
 
@@ -104,6 +115,7 @@ export function LocalStudioAuthenticator() {
 
     const state: StudioState = {
       local: true,
+      devSecretKey: apiKey,
       testUser: {
         id: currentUser._id,
         emailAddress: currentUser.email || '',
@@ -126,7 +138,7 @@ export function LocalStudioAuthenticator() {
     // Redirect to Local Studio server
     window.location.href = finalRedirectURL.href;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]);
+  }, [currentUser, environment, apiKey]);
 
   return (
     <Center
