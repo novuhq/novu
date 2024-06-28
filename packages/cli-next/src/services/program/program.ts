@@ -66,19 +66,19 @@ export const buildProgram = () => {
 };
 
 function printSyncDeprecationWarning() {
-  console.warn('');
-  console.warn(
+  console.log('');
+  console.log(
     chalk.yellowBright(chalk.bold('############################# DEPRECATION WARNING ##############################'))
   );
-  console.warn(
+  console.log(
     chalk.yellowBright(chalk.bold('#          The `novu-labs` package is deprecated, please install `novu`        #'))
   );
-  console.warn(
+  console.log(
     chalk.yellowBright(chalk.bold('#                       and use use `novu sync` instead                        #'))
   );
 
-  console.warn(
+  console.log(
     chalk.yellowBright(chalk.bold('################################################################################'))
   );
-  console.warn('');
+  console.log('');
 }
