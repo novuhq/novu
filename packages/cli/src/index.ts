@@ -27,7 +27,7 @@ program
 
 program
   .command('sync')
-  .option('-a, --api-url <apiUrl>', 'The Novu Cloud API URL, 'https://api.novu.co')
+  .option('-a, --api-url <apiUrl>', 'The Novu Cloud API URL', 'https://api.novu.co')
   .requiredOption(
     '-b, --bridge-url <bridgeUrl>',
     'The Novu endpoint URL hosted in the Bridge application, by convention ends in /api/novu'
