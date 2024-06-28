@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@novu/ntfr-client": "^0.0.3",
-    "@novu/shared": "^0.24.2",
+    "@novu/shared": "workspace:*",
     "@segment/analytics-node": "^1.1.4",
     "axios": "^1.6.2",
     "chalk": "4.1.2",
