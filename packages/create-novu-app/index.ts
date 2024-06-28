@@ -36,54 +36,29 @@ const onPromptState = (state: { value: InitialReturnValue; aborted: boolean; exi
 
 const program = new Commander.Command(packageJson.name)
   .version(packageJson.version)
+  .description(
+    `Create a new Novu app
+
+  Using PNPM
+  (e.g., create-novu-app --use-pnpm)
+
+  Specifying the secret key:
+  (e.g., create-novu-app -s NOVU_SECRET_KEY)`
+  )
   .arguments('<project-directory>')
-  .usage(`${green('<project-directory>')} [options]`)
+  .usage(`${green('<project-directory>')} [-s <secret-key>] [options]`)
   .action((name) => {
     projectPath = name;
   })
   .option(
-    '-k, --secret-key [secretKey]',
-    `
-
-  Your Novu development environment secret key. Note that your novu app won't
-  work outside of local mode without it.
-`
+    '-s, --secret-key <secret-key>',
+    `Your Novu development environment secret key. Note that your novu app won't work outside of local mode without it.`
   )
-  .option(
-    '--react-email',
-    `
-
-  Initialize with React Email config. (default)
-`
-  )
-  .option(
-    '--use-npm',
-    `
-
-  Explicitly tell the CLI to bootstrap the application using npm
-`
-  )
-  .option(
-    '--use-pnpm',
-    `
-
-  Explicitly tell the CLI to bootstrap the application using pnpm
-`
-  )
-  .option(
-    '--use-yarn',
-    `
-
-  Explicitly tell the CLI to bootstrap the application using Yarn
-`
-  )
-  .option(
-    '--use-bun',
-    `
-
-  Explicitly tell the CLI to bootstrap the application using Bun
-`
-  )
+  .option('--react-email', `Initialize with React Email config. (default)`)
+  .option('--use-npm', `Explicitly tell the CLI to bootstrap the application using npm`)
+  .option('--use-pnpm', `Explicitly tell the CLI to bootstrap the application using pnpm`)
+  .option('--use-yarn', `Explicitly tell the CLI to bootstrap the application using Yarn`)
+  .option('--use-bun', `Explicitly tell the CLI to bootstrap the application using Bun`)
   .allowUnknownOption()
   .parse(process.argv);
 

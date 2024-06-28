@@ -12,10 +12,10 @@ export type SyncInfoModalProps = {
   toggleOpen: () => void;
 };
 
-const novuEndpointPlaceholder = '<YOUR_NOVU_ENDPOINT_URL>';
+const BRIDGE_ENDPOINT_PLACEHOLDER = '<YOUR_BRIDGE_URL>';
 
 export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) => {
-  const { apiKey } = useApiKeysPage();
+  const { secretKey } = useApiKeysPage();
   const bridgeUrl = useBridgeURL();
 
   const tabs = [
@@ -24,7 +24,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
       label: 'GitHub Actions',
       content: (
         <Prism withLineNumbers language="yaml">
-          {getGithubYamlContent({ apiKey, bridgeUrl })}
+          {getGithubYamlContent({ secretKey, bridgeUrl })}
         </Prism>
       ),
     },
@@ -33,7 +33,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
       label: 'CLI',
       content: (
         <Prism withLineNumbers language="bash">
-          {getOtherCodeContent({ apiKey, bridgeUrl })}
+          {getOtherCodeContent({ secretKey, bridgeUrl })}
         </Prism>
       ),
     },
@@ -55,7 +55,7 @@ export const SyncInfoModal: FC<SyncInfoModalProps> = ({ isOpen, toggleOpen }) =>
   );
 };
 
-function getGithubYamlContent({ apiKey, bridgeUrl }: { apiKey: string; bridgeUrl: string }) {
+function getGithubYamlContent({ secretKey, bridgeUrl }: { secretKey: string; bridgeUrl: string }) {
   return `name: Deploy Workflow State to Novu
 
 on:
@@ -71,12 +71,12 @@ jobs:
       - name: Sync State to Novu
         uses: novuhq/actions-novu-sync@v0.0.4
         with:
-          novu-api-key: ${apiKey}
-          bridge-url: ${bridgeUrl || novuEndpointPlaceholder}`;
+          secret-key: ${secretKey}
+          bridge-url: ${bridgeUrl || BRIDGE_ENDPOINT_PLACEHOLDER}`;
 }
 
-function getOtherCodeContent({ apiKey, bridgeUrl }: { apiKey: string; bridgeUrl: string }) {
-  return `npx novu-labs@latest sync \\
-  --echo-url ${bridgeUrl || novuEndpointPlaceholder} \\
-  --api-key ${apiKey}`;
+function getOtherCodeContent({ secretKey, bridgeUrl }: { secretKey: string; bridgeUrl: string }) {
+  return `npx novu@latest sync \\
+  --bridge-url ${bridgeUrl || BRIDGE_ENDPOINT_PLACEHOLDER} \\
+  --secret-key ${secretKey}`;
 }
