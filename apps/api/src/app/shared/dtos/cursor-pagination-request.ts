@@ -13,6 +13,7 @@ export function CursorPaginationRequestDto(defaultLimit = 10, maxLimit = 100): C
       default: defaultLimit,
       maximum: maxLimit,
     })
+    @IsOptional()
     @Type(() => Number)
     @IsInt()
     @Min(1)

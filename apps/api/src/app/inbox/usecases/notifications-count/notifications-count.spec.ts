@@ -44,6 +44,26 @@ describe('NotificationsCount', () => {
       }
     });
 
+    it('it should throw exception when filtering for unread and archived notifications', async () => {
+      const subscriber = { _id: 'subscriber-id' };
+      const command: NotificationsCountCommand = {
+        environmentId: 'env-1',
+        organizationId: 'org-1',
+        subscriberId: 'not-found',
+        read: false,
+        archived: true,
+      };
+
+      subscriberRepository.findBySubscriberId.resolves(subscriber as any);
+
+      try {
+        await notificationsCount.execute(command);
+      } catch (error) {
+        expect(error).to.be.instanceOf(ApiException);
+        expect(error.message).to.equal(`Filtering for unread and archived notifications is not supported.`);
+      }
+    });
+
     it('should return the correct count of notifications', async () => {
       const subscriber = { _id: 'subscriber-id' };
       const count = 42;
