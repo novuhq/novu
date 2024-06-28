@@ -18,9 +18,9 @@ export enum WebRegionEnum {
 }
 
 export enum WebUrlEnum {
-  US = 'https://web.novu.co',
-  EU = 'https://eu.web.novu.co',
-  STAGING = 'https://dev.web.novu.co',
+  US = 'https://dashboard.novu.co',
+  EU = 'https://eu.dashboard.novu.co',
+  STAGING = 'https://dev.dashboard.novu.co',
 }
 
 const TUNNEL_URL = 'https://ntfr.dev/api/tunnels';
