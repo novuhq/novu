@@ -7,9 +7,11 @@ import { openInNewTab } from '../../utils';
 import { Docs } from './Docs';
 import { DOCS_URL } from './docs.const';
 import { Voting, VotingWidget } from './VotingWidget';
+import { useLoadDocs } from './useLoadDocs';
 
 export const DocsModal = ({ open, toggle, path }) => {
   const [voted, setVoted] = useState<Voting | undefined>(undefined);
+  const { isLoading, data, isError } = useLoadDocs({ path });
   const segment = useSegment();
 
   useEffect(() => {
@@ -62,7 +64,8 @@ export const DocsModal = ({ open, toggle, path }) => {
       withCloseButton={false}
     >
       <Docs
-        path={path}
+        isLoading={isLoading}
+        {...data}
         actions={
           <Flex
             className={css({
@@ -93,7 +96,7 @@ export const DocsModal = ({ open, toggle, path }) => {
           </Flex>
         }
       >
-        <VotingWidget onVoteClick={onVoteClick} voted={voted} />
+        {isLoading || isError ? null : <VotingWidget onVoteClick={onVoteClick} voted={voted} />}
       </Docs>
     </Modal>
   );
