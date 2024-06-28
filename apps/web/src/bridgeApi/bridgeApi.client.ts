@@ -24,8 +24,6 @@ export function buildBridgeHTTPClient(baseURL: string) {
     baseURL,
     headers: {
       'Content-Type': 'application/json',
-      // Required for localtunnel.it
-      'Bypass-Tunnel-Reminder': true,
     },
   });
 

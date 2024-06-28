@@ -7,17 +7,17 @@ import { ConfirmRegenerationModal } from '../tabs/components/ConfirmRegeneration
 import { useSettingsEnvRedirect } from '../useSettingsEnvRedirect';
 import { useApiKeysPage } from './useApiKeysPage';
 
-type ApiKeysRendererProps = ReturnType<typeof useApiKeysPage>;
+type SecretKeysRendererProps = ReturnType<typeof useApiKeysPage>;
 
 const INPUT_ICON_SIZE: IconSize = '16';
 
-const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
-  apiKey,
+const ApiKeysRenderer: FC<SecretKeysRendererProps> = ({
+  secretKey,
   environmentIdentifier,
   environmentId,
-  isApiKeyMasked,
-  toggleApiKeyVisibility,
-  clipboardApiKey,
+  isSecretKeyMasked,
+  toggleSecretKeyVisibility,
+  clipboardSecretKey,
   clipboardEnvironmentIdentifier,
   clipboardEnvironmentId,
   regenerationModalProps,
@@ -29,7 +29,7 @@ const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
       <Flex direction={'column'} gap={'200'} maxW="37.5rem">
         <Input
           readOnly
-          type={isApiKeyMasked ? 'password' : 'text'}
+          type={isSecretKeyMasked ? 'password' : 'text'}
           label="Secret Key"
           description="The secret key to interact with the Novu API"
           rightSection={
@@ -43,25 +43,25 @@ const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
                 <IconRefresh size={INPUT_ICON_SIZE} />
               </IconButton>
               <IconButton
-                onClick={toggleApiKeyVisibility}
-                tooltipProps={{ label: isApiKeyMasked ? 'Show API Key' : 'Hide API Key' }}
+                onClick={toggleSecretKeyVisibility}
+                tooltipProps={{ label: isSecretKeyMasked ? 'Show API Key' : 'Hide API Key' }}
                 id={'api-key-toggle-visibility-btn'}
               >
-                {isApiKeyMasked ? (
+                {isSecretKeyMasked ? (
                   <IconOutlineVisibility size={INPUT_ICON_SIZE} />
                 ) : (
                   <IconOutlineVisibilityOff size={INPUT_ICON_SIZE} />
                 )}
               </IconButton>
               <ClipboardIconButton
-                isCopied={clipboardApiKey.copied}
-                handleCopy={() => clipboardApiKey.copy(apiKey)}
+                isCopied={clipboardSecretKey.copied}
+                handleCopy={() => clipboardSecretKey.copy(secretKey)}
                 testId={'api-key-copy'}
                 size={INPUT_ICON_SIZE}
               />
             </Flex>
           }
-          value={apiKey}
+          value={secretKey}
           data-test-id="api-key"
         />
         <Input
