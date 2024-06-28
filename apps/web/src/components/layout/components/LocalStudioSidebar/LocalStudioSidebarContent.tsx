@@ -9,9 +9,8 @@ import { LocalStudioSidebarOrganizationDisplay } from './LocalStudioSidebarOrgan
 import { LocalStudioSidebarToggleButton } from './LocalStudioSidebarToggleButtonProps';
 import { token } from '@novu/novui/tokens';
 import { DocsButton } from '../../../docs/DocsButton';
-import { hstack } from '@novu/novui/patterns';
 import { css, cx } from '@novu/novui/css';
-import { rawButtonBaseStyles } from '../../../nav/NavMenuButton/NavMenuButton.shared';
+import { NavMenuButtonInner, rawButtonBaseStyles } from '../../../nav/NavMenuButton/NavMenuButton.shared';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
 
 type LocalStudioSidebarContentProps = {
@@ -30,20 +29,16 @@ export const LocalStudioSidebarContent: FC<LocalStudioSidebarContentProps> = ({ 
     <NavMenu variant="root">
       <LocalStudioSidebarOrganizationDisplay title={organizationName || 'Your organization '} subtitle="Local studio" />
       <NavMenuSection>
-        {/** TODO: handle click - link to doc page */}
         <DocsButton
           tooltip={'Open a guide'}
           TriggerButton={({ onClick }) => (
-            <button
-              onClick={onClick}
-              className={cx(
-                hstack({ cursor: 'pointer' }),
-                css({ justifyContent: 'flex-start' }),
-                css(rawButtonBaseStyles)
-              )}
-            >
-              <IconAdd />
-              <span>Add a workflow</span>
+            <button onClick={onClick} className={css({ width: 'full' })}>
+              <NavMenuButtonInner
+                icon={<IconAdd />}
+                className={cx(css({ cursor: 'pointer', justifyContent: 'flex-start' }), css(rawButtonBaseStyles))}
+              >
+                Add a workflow
+              </NavMenuButtonInner>
             </button>
           )}
         />

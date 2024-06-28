@@ -1,9 +1,11 @@
-import { FC, PropsWithChildren, useState } from 'react';
 import { css, cx } from '@novu/novui/css';
-import { Flex, HStack } from '@novu/novui/jsx';
-import { INavMenuButtonProps, rawButtonBaseStyles } from './NavMenuButton.shared';
 import { IconKeyboardArrowDown, IconKeyboardArrowUp } from '@novu/novui/icons';
+import { HStack, Stack } from '@novu/novui/jsx';
+import { FC, PropsWithChildren, useState } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useHover } from '../../../hooks/useHover';
+import { truncatedFlexTextCss } from '../../../studio/utils/shared.styles';
+import { INavMenuButtonProps, NavMenuButtonInner, rawButtonBaseStyles } from './NavMenuButton.shared';
 
 type INavMenuToggleButtonProps = { link: string } & Omit<INavMenuButtonProps, 'rightSide'>;
 
@@ -16,7 +18,7 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
   link,
 }) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
-  const [isHovered, setIsHovered] = useState<boolean>(false);
+  const { isHovered, ...hoverProps } = useHover();
 
   const handleClick = () => {
     setIsOpen((prevIsOpen) => !prevIsOpen);
@@ -33,26 +35,22 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
           css({ lineHeight: '125', '& _active, &.active': { background: 'transparent !important' } }),
           className
         )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        {...hoverProps}
       >
         {({ isActive }) => {
           setIsOpen(isActive);
 
           return (
-            <HStack justifyContent={'space-between'} w="inherit">
-              <HStack gap="75">
-                {icon}
-                <span>{label}</span>
-              </HStack>
+            <HStack justifyContent={'space-between'} w="inherit" className={css(truncatedFlexTextCss)}>
+              <NavMenuButtonInner icon={icon}>{label}</NavMenuButtonInner>
               {isOpen ? <IconKeyboardArrowUp /> : isHovered ? <IconKeyboardArrowDown /> : null}
             </HStack>
           );
         }}
       </NavLink>
-      <Flex direction={'column'} pl="150">
+      <Stack pl="100" gap="25">
         {!isOpen ? null : children}
-      </Flex>
+      </Stack>
     </>
   );
 };

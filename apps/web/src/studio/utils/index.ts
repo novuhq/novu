@@ -1,1 +1,1 @@
-export * from './isStudioRoute';
+export * from './routing';
