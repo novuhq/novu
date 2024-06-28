@@ -31,18 +31,24 @@ describe('Novu Client', () => {
 
   describe('client constructor', () => {
     it('should set secretKey to process.env.NOVU_SECRET_KEY by default', () => {
-      const originalsecretKey = process.env.NOVU_SECRET_KEY;
-      const testsecretKey = 'test-env-secret-key';
-      process.env = { ...process.env, NOVU_SECRET_KEY: testsecretKey };
+      const originalSecretKey = process.env.NOVU_SECRET_KEY;
+      const testSecretKey = 'test-env-secret-key';
+      process.env = { ...process.env, NOVU_SECRET_KEY: testSecretKey };
       const newClient = new Client();
       expect(newClient.secretKey).toBe(process.env.NOVU_SECRET_KEY);
-      process.env = { ...process.env, NOVU_SECRET_KEY: originalsecretKey };
+      process.env = { ...process.env, NOVU_SECRET_KEY: originalSecretKey };
     });
 
     it('should set secretKey to provided secretKey', () => {
-      const testsecretKey = 'test-provided-secret-key';
-      const newClient = new Client({ secretKey: testsecretKey });
-      expect(newClient.secretKey).toBe(testsecretKey);
+      const testSecretKey = 'test-provided-secret-key';
+      const newClient = new Client({ secretKey: testSecretKey });
+      expect(newClient.secretKey).toBe(testSecretKey);
+    });
+
+    it('should throw an error when secretKey is not provided', () => {
+      expect(() => new Client({ secretKey: undefined })).toThrow(
+        'Missing secret key. Set the NOVU_SECRET_KEY environment variable or pass `secretKey` to the client options.'
+      );
     });
 
     it('should set strictAuthentication to false when NODE_ENV is development', () => {
@@ -65,6 +71,22 @@ describe('Novu Client', () => {
       const testStrictAuthentication = false;
       const newClient = new Client({ secretKey: 'some-secret-key', strictAuthentication: testStrictAuthentication });
       expect(newClient.strictAuthentication).toBe(testStrictAuthentication);
+    });
+
+    it('should set strictAuthentication to false when NOVU_STRICT_AUTHENTICATION_ENABLED is false', () => {
+      const originalEnv = process.env.NOVU_STRICT_AUTHENTICATION_ENABLED;
+      process.env = { ...process.env, NOVU_STRICT_AUTHENTICATION_ENABLED: 'false' };
+      const newClient = new Client({ secretKey: 'some-secret-key' });
+      expect(newClient.strictAuthentication).toBe(false);
+      process.env = { ...process.env, NOVU_STRICT_AUTHENTICATION_ENABLED: originalEnv };
+    });
+
+    it('should set strictAuthentication to true when NOVU_STRICT_AUTHENTICATION_ENABLED is true', () => {
+      const originalEnv = process.env.NOVU_STRICT_AUTHENTICATION_ENABLED;
+      process.env = { ...process.env, NOVU_STRICT_AUTHENTICATION_ENABLED: 'true' };
+      const newClient = new Client({ secretKey: 'some-secret-key' });
+      expect(newClient.strictAuthentication).toBe(true);
+      process.env = { ...process.env, NOVU_STRICT_AUTHENTICATION_ENABLED: originalEnv };
     });
   });
 

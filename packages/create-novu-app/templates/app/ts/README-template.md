@@ -4,7 +4,7 @@ This is a [Novu](https://novu.co/) bridge application bootstrapped with [`create
 
 ## Getting Started
 
-First, run the development server:
+To run the development server, run:
 
 ```bash
 npm run dev
@@ -16,7 +16,7 @@ pnpm dev
 bun dev
 ```
 
-By default, the [Next.js](https://nextjs.org/) server will start and your workflow definition can be synchronized with Novu Cloud via the Novu Endpoint (`/api/novu`). Your server will by default run on [http://localhost:4000](http://localhost:4000).
+By default, the [Next.js](https://nextjs.org/) server will start and your state can be synchronized with Novu Cloud via the Bridge Endpoint (default is `/api/novu`). Your server will by default run on [http://localhost:4000](http://localhost:4000).
 
 ## Your first workflow
 

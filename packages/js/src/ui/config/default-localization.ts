@@ -1,7 +1,5 @@
 import { Localization } from '../context/LocalizationContext';
 
-export const defaultLocalization: Localization = {
-  inbox: {
-    title: 'Inbox',
-  },
+export const defaultLocalization: Required<Localization> = {
+  'inbox.title': 'Inbox',
 };

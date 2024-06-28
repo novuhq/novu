@@ -1,4 +1,5 @@
 export * from './integrations';
+export * from './useAPIKeys';
 export * from './useAuth';
 export * from './useBlueprint';
 export * from './useBootIntercom';

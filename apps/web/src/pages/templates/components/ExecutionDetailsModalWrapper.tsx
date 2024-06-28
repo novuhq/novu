@@ -1,10 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
 import { LoadingOverlay, useMantineTheme } from '@mantine/core';
-
-import { getActivityList } from '../../../api/activity';
+import { useNotifications } from '../../../hooks/useNovuAPI';
 import { ExecutionDetailsModal } from '../../../components/execution-detail/ExecutionDetailsModal';
 import { colors } from '@novu/design-system';
-import { useEffect } from 'react';
 
 interface Props {
   transactionId: string;
@@ -14,12 +11,7 @@ interface Props {
 
 export const ExecutionDetailsModalWrapper = ({ transactionId, isOpen, onClose }: Props) => {
   const theme = useMantineTheme();
-  const {
-    data: notification,
-    isFetching,
-    isLoading,
-    refetch,
-  } = useQuery<{ data: any[] }>(['activitiesList', transactionId], () => getActivityList(0, { transactionId }), {
+  const { data: notification, isLoading } = useNotifications(transactionId, {
     enabled: !!transactionId && isOpen,
     refetchInterval: 1000,
   });
