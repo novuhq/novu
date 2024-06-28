@@ -30,14 +30,9 @@ export const LocalStudioHeader: FC = () => {
         <HStack gap="100">
           <BridgeMenuItems />
           <DocsButton />
-          {/** TODO: this currently fails with Blocked opening in a new window
-           * because the request was made in a sandboxed frame whose 'allow-popups' permission is not set. */}
-          <IconButton
-            Icon={IconHelpOutline}
-            onClick={() => {
-              window.open(discordInviteUrl, '_blank', 'popup');
-            }}
-          />
+          {/* This doesn't work because of Discord's popup blocker via the response header:
+          Cross-Origin-Opener-Policy: same-origin-allow-popups. We will likely need a Javascript workaround for Discord's popup blocker. */}
+          <IconButton Icon={IconHelpOutline} as="a" href={discordInviteUrl} target="_blank" rel="noopener noreferrer" />
         </HStack>
       </HStack>
     </Header>

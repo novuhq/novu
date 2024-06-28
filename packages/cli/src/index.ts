@@ -36,7 +36,7 @@ program
   Sync with Novu Cloud in Europe:
   (e.g., novu sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY -a https://eu.api.novu.co)`
   )
-  .usage('[-b <url>] [-s <secret-key>] [-a <url>]')
+  .usage('-b <url> -s <secret-key> [-a <url>]')
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
   .requiredOption(
     '-b, --bridge-url <url>',
