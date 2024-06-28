@@ -8,9 +8,11 @@ import { Docs } from './Docs';
 import { DOCS_URL } from './docs.const';
 import { Voting, VotingWidget } from './VotingWidget';
 import { IconButton } from '@novu/novui';
+import { useLoadDocs } from './useLoadDocs';
 
 export const DocsModal = ({ open, toggle, path }) => {
   const [voted, setVoted] = useState<Voting | undefined>(undefined);
+  const { isLoading, data, hasLoadedSuccessfully } = useLoadDocs({ path, isEnabled: open });
   const segment = useSegment();
 
   useEffect(() => {
@@ -63,7 +65,8 @@ export const DocsModal = ({ open, toggle, path }) => {
       withCloseButton={false}
     >
       <Docs
-        path={path}
+        isLoading={isLoading}
+        {...data}
         actions={
           <Flex
             className={css({
@@ -94,7 +97,7 @@ export const DocsModal = ({ open, toggle, path }) => {
           </Flex>
         }
       >
-        <VotingWidget onVoteClick={onVoteClick} voted={voted} />
+        {hasLoadedSuccessfully ? <VotingWidget onVoteClick={onVoteClick} voted={voted} /> : null}
       </Docs>
     </Modal>
   );

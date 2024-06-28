@@ -154,7 +154,7 @@ export const DocsButton = ({
         </div>
       </Tooltip>
       {/* TODO: extract the Modal root out when modal management is improved */}
-      <DocsModal open={docsOpen} toggle={toggle} path={path} />
+      {docsOpen && <DocsModal open={docsOpen} toggle={toggle} path={path} />}
     </>
   );
 };
