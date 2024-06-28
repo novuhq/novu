@@ -1,7 +1,7 @@
 import { type LocalizedString } from '@novu/novui';
 import { Helmet } from 'react-helmet-async';
 
-interface IPageMetaProps {
+export interface IPageMetaProps {
   title?: LocalizedString;
 }
 

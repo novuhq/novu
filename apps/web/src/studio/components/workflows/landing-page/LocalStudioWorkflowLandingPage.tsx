@@ -1,14 +1,6 @@
-import { css } from '@novu/novui/css';
-import { ROUTES } from '../../../../constants/routes';
-import {
-  useBridgeConnectionStatus,
-  useDiscover,
-  useStudioNavigate,
-  useStudioWorkflowsNavigation,
-} from '../../../hooks';
+import { useBridgeConnectionStatus, useDiscover, useStudioWorkflowsNavigation } from '../../../hooks';
 import { WorkflowsDetailPage } from '../node-view/WorkflowsDetailPage';
-import { WorkflowPlaceholderPageContent } from './WorkflowPlaceholderPageContent';
-import { PageContainer } from '../../../layout';
+import { WorkflowPlaceholderPage } from './WorkflowPlaceholderPageContent';
 
 export const LocalStudioWorkflowLandingPage = () => {
   const { data, isLoading } = useDiscover();
@@ -23,13 +15,11 @@ export const LocalStudioWorkflowLandingPage = () => {
 
   if (status === 'disconnected') {
     return (
-      <PageContainer className={css({ alignContent: 'center' })}>
-        <WorkflowPlaceholderPageContent docsButtonLabel="See our troubleshooting guide">
-          Local environment disconnected from endpoint URL.
-          <br />
-          Likely due to browser internet loss, but other causes possible.
-        </WorkflowPlaceholderPageContent>
-      </PageContainer>
+      <WorkflowPlaceholderPage title={'Studio Disconnected'} docsButtonLabel="See our troubleshooting guide">
+        Local environment disconnected from endpoint URL.
+        <br />
+        Likely due to browser internet loss, but other causes possible.
+      </WorkflowPlaceholderPage>
     );
   }
 
@@ -40,12 +30,10 @@ export const LocalStudioWorkflowLandingPage = () => {
   }
 
   return (
-    <PageContainer className={css({ alignContent: 'center' })}>
-      <WorkflowPlaceholderPageContent docsButtonLabel="Learn more in the docs">
-        A workflow holds the entire flow of steps that are sent to the subscriber.
-        <br />
-        Get started by adding your first workflow in your local environment.
-      </WorkflowPlaceholderPageContent>{' '}
-    </PageContainer>
+    <WorkflowPlaceholderPage title={'No Workflows Available'} docsButtonLabel="Learn more in the docs">
+      A workflow holds the entire flow of steps that are sent to the subscriber.
+      <br />
+      Get started by adding your first workflow in your local environment.
+    </WorkflowPlaceholderPage>
   );
 };
