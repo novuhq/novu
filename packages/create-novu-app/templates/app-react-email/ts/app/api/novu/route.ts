@@ -4,7 +4,7 @@ import { myWorkflow } from "../../novu/workflows";
 
 const client = new Client({ strictAuthentication: false });
 
-export const { GET, POST, PUT, OPTIONS } = serve({
+export const { GET, POST, OPTIONS } = serve({
   client,
   workflows: [myWorkflow],
 });
