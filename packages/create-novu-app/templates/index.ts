@@ -37,7 +37,7 @@ export const installTemplate = async ({
   eslint,
   srcDir,
   importAlias,
-  apiKey,
+  secretKey,
 }: InstallTemplateArgs) => {
   console.log(bold(`Using ${packageManager}.`));
 
@@ -171,7 +171,7 @@ export const installTemplate = async ({
 
   /* write .env file */
   const val = Object.entries({
-    NOVU_SECRET_KEY: apiKey,
+    NOVU_SECRET_KEY: secretKey,
   }).reduce((acc, [key, value]) => {
     return `${acc}${key}=${value}${os.EOL}`;
   }, "");
