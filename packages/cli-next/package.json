@@ -1,7 +1,7 @@
 {
   "name": "novu-labs",
   "version": "0.24.3-alpha.1",
-  "description": "Novu Labs CLI. Used to sign-up, sync with Novu Cloud, and run Novu Studio.",
+  "description": "Deprecated: use `novu` instead. Novu Labs CLI. Used to sign-up, sync with Novu Cloud, and run Novu Studio.",
   "main": "index.js",
   "engines": {
     "node": ">=18.17.0"
