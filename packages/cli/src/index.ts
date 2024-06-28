@@ -16,12 +16,23 @@ program
 
 program
   .command('dev')
-  .description('Start Novu Studio and a localtunnel')
-  .option('-p, --port <value>', 'The port for the local Bridge endpoint', '4000')
+  .description(
+    `Start Novu Studio and a localtunnel
+
+  Running the Bridge application on port 4000: 
+  (e.g., novu dev -p 4000)
+
+  Running the Bridge application on a different route: 
+  (e.g., novu dev -r /v1/api/novu)
+
+  Using Europe region:
+  (e.g., novu dev -r eu)`
+  )
+  .option('-p, --port <value>', 'The local Bridge endpoint port', '4000')
   .option('-r, --route <value>', 'The Bridge endpoint route', '/api/novu')
-  .option('-o, --origin <value>', 'The origin for the Bridge endpoint')
-  .option('-r, --region <value>', 'The Novu Cloud region', 'us')
-  .option('-w, --web-url <value>', 'The Novu Cloud Web URL', 'https://web.novu.co')
-  .option('-sp, --studio-port <value>', 'The port for the Novu Studio server', '2022')
+  .option('-o, --origin <value>', 'The Bridge endpoint origin')
+  .option('-r, --region <value>', 'The Cloud Dashboard region', 'us')
+  .option('-d, --dashboard-url <value>', 'The Cloud Dashboard URL', 'https://dashboard.novu.co')
+  .option('-sp, --studio-port <value>', 'The Local Studio server port', '2022')
   .action((options: DevCommandOptions) => devCommand(options))
   .parse(process.argv);
