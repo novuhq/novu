@@ -31,10 +31,10 @@ program
     `Sync your state with Novu Cloud
 
   Specifying the Bridge URL and Secret Key:
-  (e.g., novu sync -b https://acme.org/api/novu -s NOVU_API_KEY)
+  (e.g., novu sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY)
 
   Sync with Novu Cloud in Europe:
-  (e.g., novu sync -b https://acme.org/api/novu -s NOVU_API_KEY -a https://eu.api.novu.co)`
+  (e.g., novu sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY -a https://eu.api.novu.co)`
   )
   .usage('[-b <url>] [-s <secret-key>] [-a <url>]')
   .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
@@ -42,7 +42,10 @@ program
     '-b, --bridge-url <url>',
     'The Novu endpoint URL hosted in the Bridge application, by convention ends in /api/novu'
   )
-  .requiredOption('-s, --secret-key <secret-key>', 'The Novu Secret Key')
+  .requiredOption(
+    '-s, --secret-key <secret-key>',
+    'The Novu Secret Key. Obtainable at https://dashboard.novu.co/api-keys'
+  )
   .action(async (options) => {
     analytics.track({
       identity: {
