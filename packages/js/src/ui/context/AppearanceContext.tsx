@@ -1,4 +1,13 @@
-import { ParentProps, createContext, createEffect, createSignal, onCleanup, onMount, useContext } from 'solid-js';
+import {
+  ParentProps,
+  createContext,
+  createEffect,
+  createSignal,
+  onCleanup,
+  onMount,
+  useContext,
+  createMemo,
+} from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { defaultVariables } from '../config';
 import { parseElements, parseVariables } from '../helpers';
@@ -37,9 +46,10 @@ type AppearanceContextType = {
 
 const AppearanceContext = createContext<AppearanceContextType | undefined>(undefined);
 
-export type Appearance = Pick<AppearanceContextType, 'elements' | 'variables'>;
+export type Theme = Pick<AppearanceContextType, 'elements' | 'variables'>;
+export type Appearance = Theme & { baseTheme?: Theme | Theme[] };
 
-type AppearanceProviderProps = ParentProps & Appearance & { id: string };
+type AppearanceProviderProps = ParentProps & { appearance?: Appearance } & { id: string };
 
 export const AppearanceProvider = (props: AppearanceProviderProps) => {
   const [store, setStore] = createStore<{
@@ -48,6 +58,9 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
   const [styleElement, setStyleElement] = createSignal<HTMLStyleElement | null>(null);
   const [elementRules, setElementRules] = createSignal<string[]>([]);
   const [variableRules, setVariableRules] = createSignal<string[]>([]);
+  const themes = createMemo(() =>
+    Array.isArray(props.appearance?.baseTheme) ? props.appearance?.baseTheme || [] : [props.appearance?.baseTheme || {}]
+  );
 
   //place style element on HEAD. Placing in body is available for HTML 5.2 onward.
   onMount(() => {
@@ -80,7 +93,14 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       return;
     }
 
-    setVariableRules(parseVariables({ ...defaultVariables, ...(props.variables || ({} as Variables)) }, props.id));
+    const baseVariables = {
+      ...defaultVariables,
+      ...themes().reduce<Variables>((acc, obj) => ({ ...acc, ...(obj.variables || {}) }), {}),
+    };
+
+    setVariableRules(
+      parseVariables({ ...baseVariables, ...(props.appearance?.variables || ({} as Variables)) }, props.id)
+    );
   });
 
   //handle elements
@@ -91,7 +111,9 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
       return;
     }
 
-    const elementsStyleData = parseElements(props.elements || {});
+    const baseElements = themes().reduce<Elements>((acc, obj) => ({ ...acc, ...(obj.elements || {}) }), {});
+
+    const elementsStyleData = parseElements({ ...baseElements, ...(props.appearance?.elements || {}) });
     setStore('descriptorToCssInJsClass', (obj) => ({
       ...obj,
       ...elementsStyleData.reduce<Record<string, string>>((acc, item) => {
@@ -116,7 +138,7 @@ export const AppearanceProvider = (props: AppearanceProviderProps) => {
   return (
     <AppearanceContext.Provider
       value={{
-        elements: props.elements || {},
+        elements: props.appearance?.elements || {},
         descriptorToCssInJsClass: store.descriptorToCssInJsClass,
         id: props.id,
       }}
