@@ -14,6 +14,8 @@ function useBridgeAPI() {
   return useMemo(() => buildBridgeHTTPClient(bridgeURL), [bridgeURL]);
 }
 
+const BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS = 3 * 1000;
+
 export const useDiscover = (options?: any) => {
   const api = useBridgeAPI();
 
@@ -25,8 +27,6 @@ export const useDiscover = (options?: any) => {
     options
   );
 };
-
-const BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS = 5 * 1000;
 
 export const useHealthCheck = (options?: any) => {
   const api = useBridgeAPI();

@@ -1,10 +1,7 @@
 import { Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconCable, IconPlayArrow } from '@novu/novui/icons';
-import { useParams } from 'react-router-dom';
-import { ROUTES } from '../../../../constants/routes';
 import { useWorkflow } from '../../../hooks/useBridgeAPI';
-import { useStudioNavigate } from '../../../hooks/useStudioNavigate';
 import { useStudioWorkflowsNavigation } from '../../../hooks/useStudioWorkflowsNavigation';
 import { WorkflowsPageTemplate } from '../layout/WorkflowsPageTemplate';
 import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
