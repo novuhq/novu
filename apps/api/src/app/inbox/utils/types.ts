@@ -28,8 +28,8 @@ export type InboxNotification = {
   read?: boolean;
   archived?: boolean;
   createdAt: string;
-  readAt?: string;
-  archivedAt?: string;
+  readAt?: string | null;
+  archivedAt?: string | null;
   actor?: Subscriber;
   avatar?: Avatar;
   primaryAction?: Action;

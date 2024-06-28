@@ -18,7 +18,7 @@ import {
 
 import { mapToDto } from '../utils/notification-mapper';
 
-describe('Update Notification - /inbox/notifications/:id (PATCH)', async () => {
+describe('Mark Notification As - /inbox/notifications/:id/mark-as-{status} (PATCH)', async () => {
   let session: UserSession;
   let template: NotificationTemplateEntity;
   let subscriber: SubscriberEntity | null;
@@ -28,21 +28,15 @@ describe('Update Notification - /inbox/notifications/:id (PATCH)', async () => {
 
   const updateNotification = async ({
     id,
-    read,
-    archived,
-    primaryActionCompleted,
-    secondaryActionCompleted,
+    status,
   }: {
     id: string;
-    read?: boolean;
-    archived?: boolean;
-    primaryActionCompleted?: boolean;
-    secondaryActionCompleted?: boolean;
+    status: 'read' | 'unread' | 'archived' | 'unarchived';
   }) => {
     return await session.testAgent
-      .patch(`/v1/inbox/notifications/${id}`)
+      .patch(`/v1/inbox/notifications/${id}/mark-as-${status}`)
       .set('Authorization', `Bearer ${session.subscriberToken}`)
-      .send({ read, archived, primaryActionCompleted, secondaryActionCompleted });
+      .send();
   };
 
   const triggerEvent = async (templateToTrigger: NotificationTemplateEntity, times = 1) => {
@@ -116,7 +110,7 @@ describe('Update Notification - /inbox/notifications/:id (PATCH)', async () => {
 
   it('should throw bad request error when the notification id is not mongo id', async function () {
     const id = 'fake';
-    const { body, status } = await updateNotification({ id });
+    const { body, status } = await updateNotification({ id, status: 'read' });
 
     expect(status).to.equal(400);
     expect(body.message[0]).to.equal(`notificationId must be a mongodb id`);
@@ -124,60 +118,14 @@ describe('Update Notification - /inbox/notifications/:id (PATCH)', async () => {
 
   it("should throw not found error when the message doesn't exist", async function () {
     const id = '666c0dfa0b55d0f06f4aaa6c';
-    const { body, status } = await updateNotification({ id });
+    const { body, status } = await updateNotification({ id, status: 'read' });
 
     expect(status).to.equal(404);
     expect(body.message).to.equal(`Notification with id: ${id} is not found.`);
   });
 
-  it('should throw bad request error when the action cannot be performed on the primary button', async function () {
-    const templateNoButtons = await session.createTemplate({
-      noFeedId: true,
-      steps: [
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Test No Buttons',
-        },
-      ],
-    });
-    await triggerEvent(templateNoButtons);
-    const newMessage = (await messageRepository.findOne({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber?._id ?? '',
-      _templateId: templateNoButtons._id,
-    })) as MessageEntity;
-
-    const { body, status } = await updateNotification({ id: newMessage._id, primaryActionCompleted: true });
-
-    expect(status).to.equal(400);
-    expect(body.message).to.equal(`Could not perform action on the primary button.`);
-  });
-
-  it('should throw bad request error when the action cannot be performed on the secondary button', async function () {
-    const templateNoButtons = await session.createTemplate({
-      noFeedId: true,
-      steps: [
-        {
-          type: StepTypeEnum.IN_APP,
-          content: 'Test No Buttons',
-        },
-      ],
-    });
-    await triggerEvent(templateNoButtons);
-    const newMessage = (await messageRepository.findOne({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber?._id ?? '',
-      _templateId: templateNoButtons._id,
-    })) as MessageEntity;
-
-    const { body, status } = await updateNotification({ id: newMessage._id, secondaryActionCompleted: true });
-
-    expect(status).to.equal(400);
-    expect(body.message).to.equal(`Could not perform action on the secondary button.`);
-  });
-
   it('should update the read status', async function () {
-    const { body, status } = await updateNotification({ id: message._id, read: true });
+    const { body, status } = await updateNotification({ id: message._id, status: 'read' });
     const updatedMessage = (await messageRepository.findOne({
       _environmentId: session.environment._id,
       _subscriberId: subscriber?._id ?? '',
@@ -186,12 +134,42 @@ describe('Update Notification - /inbox/notifications/:id (PATCH)', async () => {
 
     expect(status).to.equal(200);
     expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
+    expect(updatedMessage.seen).to.be.true;
+    expect(updatedMessage.lastSeenDate).not.to.be.undefined;
     expect(body.data.read).to.be.true;
+    expect(body.data.readAt).not.to.be.undefined;
     expect(body.data.archived).to.be.false;
+    expect(body.data.archivedAt).to.be.undefined;
+  });
+
+  it('should update the unread status', async function () {
+    const now = new Date();
+    await messageRepository.update(
+      { _id: message._id, _environmentId: message._environmentId },
+      { $set: { seen: true, lastSeenDate: now, read: true, lastReadDate: now, archived: true, archivedAt: now } }
+    );
+
+    const { body, status } = await updateNotification({ id: message._id, status: 'unread' });
+
+    const updatedMessage = (await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber?._id ?? '',
+      _templateId: template._id,
+    })) as MessageEntity;
+
+    expect(status).to.equal(200);
+    expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
+    expect(updatedMessage.seen).to.be.true;
+    expect(updatedMessage.lastSeenDate).not.to.be.undefined;
+    expect(body.data.read).to.be.false;
+    expect(body.data.readAt).to.be.null;
+    expect(body.data.archived).to.be.false;
+    expect(body.data.archivedAt).to.be.null;
   });
 
   it('should update the archived status', async function () {
-    const { body, status } = await updateNotification({ id: message._id, archived: true });
+    const { body, status } = await updateNotification({ id: message._id, status: 'archived' });
+
     const updatedMessage = (await messageRepository.findOne({
       _environmentId: session.environment._id,
       _subscriberId: subscriber?._id ?? '',
@@ -200,55 +178,36 @@ describe('Update Notification - /inbox/notifications/:id (PATCH)', async () => {
 
     expect(status).to.equal(200);
     expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
-    expect(body.data.read).to.be.false;
-    expect(body.data.archived).to.be.true;
-  });
-
-  it('should update the primary action status', async function () {
-    const { body, status } = await updateNotification({ id: message._id, primaryActionCompleted: true });
-    const updatedMessage = (await messageRepository.findOne({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber?._id ?? '',
-      _templateId: template._id,
-    })) as MessageEntity;
-
-    expect(status).to.equal(200);
-    expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
-    expect(body.data.primaryAction.isCompleted).to.be.true;
-    expect(body.data.secondaryAction.isCompleted).to.be.false;
-  });
-
-  it('should update the secondary action status', async function () {
-    const { body, status } = await updateNotification({ id: message._id, secondaryActionCompleted: true });
-    const updatedMessage = (await messageRepository.findOne({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber?._id ?? '',
-      _templateId: template._id,
-    })) as MessageEntity;
-
-    expect(status).to.equal(200);
-    expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
-    expect(body.data.primaryAction.isCompleted).to.be.false;
-    expect(body.data.secondaryAction.isCompleted).to.be.true;
-  });
-
-  it('should update the all props together', async function () {
-    const { body, status } = await updateNotification({
-      id: message._id,
-      read: true,
-      archived: true,
-      primaryActionCompleted: true,
-    });
-    const updatedMessage = (await messageRepository.findOne({
-      _environmentId: session.environment._id,
-      _subscriberId: subscriber?._id ?? '',
-      _templateId: template._id,
-    })) as MessageEntity;
-
-    expect(status).to.equal(200);
-    expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
+    expect(updatedMessage.seen).to.be.true;
+    expect(updatedMessage.lastSeenDate).not.to.be.undefined;
     expect(body.data.read).to.be.true;
+    expect(body.data.readAt).not.to.be.undefined;
     expect(body.data.archived).to.be.true;
-    expect(body.data.primaryAction.isCompleted).to.be.true;
+    expect(body.data.archivedAt).not.to.be.undefined;
+  });
+
+  it('should update the unarchived status', async function () {
+    const now = new Date();
+    await messageRepository.update(
+      { _id: message._id, _environmentId: message._environmentId },
+      { $set: { seen: true, lastSeenDate: now, read: true, lastReadDate: now, archived: true, archivedAt: now } }
+    );
+
+    const { body, status } = await updateNotification({ id: message._id, status: 'unarchived' });
+
+    const updatedMessage = (await messageRepository.findOne({
+      _environmentId: session.environment._id,
+      _subscriberId: subscriber?._id ?? '',
+      _templateId: template._id,
+    })) as MessageEntity;
+
+    expect(status).to.equal(200);
+    expect(body.data).to.deep.equal(removeUndefinedDeep(mapToDto(updatedMessage)));
+    expect(updatedMessage.seen).to.be.true;
+    expect(updatedMessage.lastSeenDate).not.to.be.undefined;
+    expect(body.data.read).to.be.true;
+    expect(body.data.readAt).not.to.be.undefined;
+    expect(body.data.archived).to.be.false;
+    expect(body.data.archivedAt).to.be.null;
   });
 });

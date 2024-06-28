@@ -2,7 +2,7 @@ import { IsBoolean, IsOptional, IsDefined, IsMongoId } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';
 
-export class UpdateNotificationCommand extends EnvironmentWithSubscriber {
+export class MarkNotificationAsCommand extends EnvironmentWithSubscriber {
   @IsDefined()
   @IsMongoId()
   readonly notificationId: string;
@@ -14,12 +14,4 @@ export class UpdateNotificationCommand extends EnvironmentWithSubscriber {
   @IsOptional()
   @IsBoolean()
   readonly archived?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  readonly primaryActionCompleted?: boolean;
-
-  @IsOptional()
-  @IsBoolean()
-  readonly secondaryActionCompleted?: boolean;
 }

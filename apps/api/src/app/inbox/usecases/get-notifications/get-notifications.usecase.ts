@@ -36,6 +36,10 @@ export class GetNotifications {
       throw new ApiException(`Subscriber with id: ${command.subscriberId} is not found.`);
     }
 
+    if (command.read === false && command.archived === true) {
+      throw new ApiException('Filtering for unread and archived notifications is not supported.');
+    }
+
     const { data: feed, hasMore } = await this.messageRepository.paginate(
       {
         environmentId: command.environmentId,
