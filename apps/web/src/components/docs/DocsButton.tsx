@@ -1,14 +1,13 @@
 import { Popover } from '@mantine/core';
 import { ActionButton, Button, IconOutlineMenuBook, QuickGuide, Tooltip } from '@novu/design-system';
 import { useSegment } from '../providers/SegmentProvider';
-import { useEffect, useMemo, useState } from 'react';
+import { ComponentProps, useEffect, useMemo, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { css } from '@novu/novui/css';
 import { Flex, styled } from '@novu/novui/jsx';
 import { text, title } from '@novu/novui/recipes';
 import { PATHS } from './docs.const';
 import { DocsModal } from './DocsModal';
-import { ITooltipProps } from '@novu/design-system/dist/types/tooltip/Tooltip';
 
 const Title = styled('h3', title);
 const Text = styled('p', text);
@@ -51,7 +50,7 @@ export const DocsButton = ({
   tooltip,
 }: {
   TriggerButton?: React.FC<{ onClick: () => void }>;
-  tooltip?: ITooltipProps['label'];
+  tooltip?: ComponentProps<typeof Tooltip>['label'];
 }) => {
   const [opened, setOpened] = useState<boolean>(false);
   const segment = useSegment();
