@@ -1,13 +1,9 @@
 import { ParentProps, createContext, createMemo, useContext } from 'solid-js';
-import { getNestedProperty } from '../helpers';
 import { defaultLocalization } from '../config/default-localization';
-import { deepMerge } from '../helpers/deep-merge';
 import { Path } from '../helpers/types';
 
 export type Localization = {
-  inbox?: {
-    title?: string;
-  };
+  'inbox.title': string;
 };
 
 type LocalizationPath = Path<Localization>;
@@ -21,12 +17,12 @@ const LocalizationContext = createContext<LocalizationContextType | undefined>(u
 type LocalizationProviderProps = ParentProps & { localization?: Localization };
 
 export const LocalizationProvider = (props: LocalizationProviderProps) => {
-  const localization = createMemo(() => deepMerge(defaultLocalization, props.localization || {}));
+  const localization = createMemo(() => ({ ...defaultLocalization, ...(props.localization || {}) }));
 
-  const t = (key: string) => {
-    const value = getNestedProperty(localization(), key);
+  const t = (key: LocalizationPath) => {
+    const value = localization()[key];
 
-    return (value || '') as string;
+    return value;
   };
 
   return (

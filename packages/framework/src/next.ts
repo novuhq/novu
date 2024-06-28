@@ -21,7 +21,7 @@ export const frameworkName: SupportedFrameworkName = 'next';
  *
  * @example Next.js >=13 with the `app` dir must export individual methods
  * ```ts
- * export const { GET, POST, PUT } = serve({ workflows: [yourWorkflow] });
+ * export const { GET, POST, OPTIONS } = serve({ workflows: [yourWorkflow] });
  * ```
  */
 export const serve = (options: ServeHandlerOptions): any => {
@@ -166,7 +166,7 @@ export const serve = (options: ServeHandlerOptions): any => {
    *
    * @example
    * ```ts
-   * export const { GET, POST, PUT } = serve(...);
+   * export const { GET, POST, OPTIONS } = serve(...);
    * ```
    *
    * See {@link https://nextjs.org/docs/app/building-your-application/routing/route-handlers}

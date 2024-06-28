@@ -47,12 +47,16 @@ JSONSchemaFaker.option({
   alwaysFakeOptionals: true,
 });
 
+function isRuntimeInDevelopment() {
+  return process.env.NODE_ENV === 'development';
+}
+
 export class Client {
   private discoveredWorkflows: Array<DiscoverWorkflowOutput> = [];
 
   private templateEngine = new Liquid();
 
-  public apiKey?: string;
+  public secretKey?: string;
 
   public version: string = SDK_VERSION;
 
@@ -60,26 +64,29 @@ export class Client {
 
   constructor(options?: ClientOptions) {
     const builtOpts = this.buildOptions(options);
-    this.apiKey = builtOpts.apiKey;
+    this.secretKey = builtOpts.secretKey;
     this.strictAuthentication = builtOpts.strictAuthentication;
   }
 
   private buildOptions(providedOptions?: ClientOptions) {
-    const builtConfiguration: { apiKey?: string; strictAuthentication: boolean } = {
-      apiKey: undefined,
-      strictAuthentication: true,
+    const builtConfiguration: { secretKey?: string; strictAuthentication: boolean } = {
+      secretKey: undefined,
+      strictAuthentication: isRuntimeInDevelopment() ? false : true,
     };
 
-    if (providedOptions?.apiKey !== undefined) {
-      builtConfiguration.apiKey = providedOptions.apiKey;
-    } else if (process.env.NOVU_API_KEY !== undefined) {
-      builtConfiguration.apiKey = process.env.NOVU_API_KEY;
+    builtConfiguration.secretKey =
+      providedOptions?.secretKey || process.env.NOVU_SECRET_KEY || process.env.NOVU_API_KEY;
+
+    if (!isRuntimeInDevelopment() && !builtConfiguration.secretKey) {
+      throw new Error(
+        'Missing secret key. Set the NOVU_SECRET_KEY environment variable or pass `secretKey` to the client options.'
+      );
     }
 
     if (providedOptions?.strictAuthentication !== undefined) {
       builtConfiguration.strictAuthentication = providedOptions.strictAuthentication;
-    } else if (process.env.NODE_ENV === 'development') {
-      builtConfiguration.strictAuthentication = false;
+    } else if (process.env.NOVU_STRICT_AUTHENTICATION_ENABLED !== undefined) {
+      builtConfiguration.strictAuthentication = process.env.NOVU_STRICT_AUTHENTICATION_ENABLED === 'true';
     }
 
     return builtConfiguration;

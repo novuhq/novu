@@ -8,7 +8,7 @@ describe('validation', () => {
   let client: Client;
 
   beforeEach(() => {
-    client = new Client();
+    client = new Client({ secretKey: 'some-secret-key' });
   });
 
   describe('zod', () => {

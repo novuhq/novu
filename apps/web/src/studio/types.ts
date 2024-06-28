@@ -28,6 +28,7 @@ type BaseStudioState = {
     emailAddress: string;
   };
   organizationName?: string;
+  devSecretKey?: string;
 };
 
 type CloudStudioState = BaseStudioState & {

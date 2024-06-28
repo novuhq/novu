@@ -25,5 +25,5 @@ export interface InstallTemplateArgs {
   reactEmail: boolean;
   srcDir: boolean;
   importAlias: string;
-  apiKey: string;
+  secretKey: string;
 }

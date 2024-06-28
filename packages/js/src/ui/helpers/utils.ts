@@ -25,14 +25,6 @@ function generateUniqueRandomString(set: Set<string>, length: number): string {
   return randomString;
 }
 
-export function getNestedProperty<T>(obj: T, path: string): any {
-  const keys = path.split('.');
-
-  return keys.reduce((accumulator: any, key: string) => {
-    return accumulator && key in accumulator ? accumulator[key] : undefined;
-  }, obj);
-}
-
 export function cssObjectToString(styles: CSSProperties): string {
   return Object.entries(styles)
     .map(([key, value]) => {

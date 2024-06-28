@@ -18,7 +18,7 @@ export enum ErrorCodeEnum {
   EXECUTION_STATE_CONTROL_INVALID_ERROR = 'ExecutionStateControlInvalidError',
   METHOD_NOT_ALLOWED_ERROR = 'MethodNotAllowedError',
   INVALID_ACTION_ERROR = 'InvalidActionError',
-  MISSING_API_KEY_ERROR = 'MissingApiKeyError',
+  MISSING_SECRET_KEY_ERROR = 'MissingSecretKeyError',
   SIGNATURE_MISMATCH_ERROR = 'SignatureMismatchError',
   SIGNATURE_NOT_FOUND_ERROR = 'SignatureNotFoundError',
   SIGNATURE_INVALID_ERROR = 'SignatureInvalidError',
