@@ -43,7 +43,7 @@ export function tryGitInit(root: string): boolean {
     }
 
     execSync('git add -A', { stdio: 'ignore' });
-    execSync('git commit -m "Initial commit from Create Next App"', {
+    execSync('git commit -m "Initial commit from Create Novu App"', {
       stdio: 'ignore',
     });
     return true;
