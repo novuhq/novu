@@ -1,8 +1,10 @@
-import { LocalizedMessage } from '../../../types/LocalizedMessage';
-import { ReactNode } from 'react';
-import { css } from '@novu/novui/css';
-import { CoreProps } from '@novu/novui';
+import { CoreProps, CorePropsWithChildren } from '@novu/novui';
+import { css, cx } from '@novu/novui/css';
 import { IIconProps } from '@novu/novui/icons';
+import { HStack } from '@novu/novui/jsx';
+import { FC, ReactNode } from 'react';
+import { truncatedFlexTextCss } from '../../../studio/utils/shared.styles';
+import { LocalizedMessage } from '../../../types/LocalizedMessage';
 
 export type RightSideTrigger = 'hover';
 
@@ -37,6 +39,10 @@ export const rawButtonBaseStyles = css.raw({
   fontFamily: 'system',
   cursor: 'pointer',
 
+  '& > *': {
+    ...truncatedFlexTextCss,
+  },
+
   // &.active is necessary to work with the react-router-dom className they generate
   '& _active, &.active': {
     position: 'relative',
@@ -58,3 +64,16 @@ export const rawButtonBaseStyles = css.raw({
     boxShadow: 'medium',
   },
 });
+
+type NavMenuButtonInnerProps = {
+  icon: ReactNode;
+} & CorePropsWithChildren;
+
+export const NavMenuButtonInner: FC<NavMenuButtonInnerProps> = ({ icon, children, className }) => {
+  return (
+    <HStack gap="75" className={cx(css(truncatedFlexTextCss), className)}>
+      {icon}
+      <p>{children}</p>
+    </HStack>
+  );
+};

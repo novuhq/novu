@@ -2,6 +2,8 @@ import { Title, type LocalizedMessage } from '@novu/novui';
 import { css, cx } from '@novu/novui/css';
 import { hstack } from '@novu/novui/patterns';
 import { FC, MouseEventHandler } from 'react';
+import { truncatedFlexTextCss } from '../../../utils/shared.styles';
+
 interface IStepNodeProps {
   icon: React.ReactNode;
   title: LocalizedMessage;
@@ -30,6 +32,7 @@ export const StepNode: FC<IStepNodeProps> = ({ icon, title, onClick }) => {
     >
       <span
         className={hstack({
+          ...truncatedFlexTextCss,
           gap: '50',
           p: '150',
           shadow: 'medium',

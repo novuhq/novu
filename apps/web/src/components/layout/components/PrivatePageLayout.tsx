@@ -15,7 +15,7 @@ import { HeaderNav } from './v2/HeaderNav';
 import { FreeTrialBanner } from './FreeTrialBanner';
 import { css } from '@novu/novui/css';
 import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
-import { isStudioRoute } from '../../../studio/utils/isStudioRoute';
+import { isStudioRoute } from '../../../studio/utils/routing';
 
 const AppShell = styled.div`
   display: flex;

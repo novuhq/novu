@@ -22,9 +22,7 @@ export const LocalStudioSidebarOrganizationDisplay: FC<LocalStudioSidebarOrganiz
         className={css({
           w: '125',
           h: '125',
-
-          // TODO: use design system values when available
-          borderRadius: '8px',
+          borderRadius: '100',
         })}
       />
       <Stack gap="25">
