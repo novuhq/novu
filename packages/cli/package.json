@@ -1,7 +1,7 @@
 {
   "name": "novu",
-  "version": "0.24.3-alpha.2",
-  "description": "On-Boarding Cli",
+  "version": "0.24.3-alpha.3",
+  "description": "Novu CLI. Used to sign-up, sync with Novu Cloud, and run Novu Studio.",
   "main": "index.js",
   "scripts": {
     "build:post": "cross-env mkdir dist/constants/dashboard && ncp src/constants/dashboard/index.html dist/constants/dashboard/index.html",
@@ -20,7 +20,15 @@
     "start:debug": "cross-env TZ=UTC nodemon --config nodemon-debug.json",
     "start:prod": "cross-env TZ=UTC node dist/index.js"
   },
-  "author": "",
+  "keywords": [
+    "novu",
+    "cli",
+    "novu-cli",
+    "cloud",
+    "sync",
+    "studio"
+  ],
+  "author": "Novu Team <engineering@novu.co>",
   "license": "ISC",
   "bin": {
     "novu": "./dist/index.js"
