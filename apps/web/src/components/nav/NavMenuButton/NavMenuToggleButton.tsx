@@ -32,7 +32,10 @@ export const NavMenuToggleButton: FC<PropsWithChildren<INavMenuToggleButtonProps
         to={link}
         className={cx(
           css(rawButtonBaseStyles),
-          css({ lineHeight: '125', '& _active, &.active': { background: 'transparent !important' } }),
+          css({
+            lineHeight: '125',
+            '& _active, &.active': { background: 'transparent !important', boxShadow: 'none' },
+          }),
           className
         )}
         {...hoverProps}

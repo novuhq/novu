@@ -43,3 +43,6 @@ type LocalStudioState = BaseStudioState & {
 };
 
 export type StudioState = LocalStudioState | CloudStudioState;
+
+/** Current state of connection to Novu Bridge */
+export type ConnectionStatus = 'connected' | 'disconnected' | 'loading';

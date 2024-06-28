@@ -54,7 +54,7 @@ import { LayoutsPage } from './pages/layouts/LayoutsPage';
 import { StudioPageLayout } from './studio/StudioPageLayout';
 import { LocalStudioAuthenticator } from './studio/LocalStudioAuthenticator';
 import {
-  WorkflowsListPage,
+  LocalStudioWorkflowLandingPage,
   WorkflowsDetailPage,
   WorkflowsStepEditorPage,
   WorkflowsTestPage,
@@ -176,7 +176,7 @@ export const AppRoutes = () => {
           path=""
           element={<Navigate to={novuOnboardedCookie.get() ? ROUTES.STUDIO_FLOWS : ROUTES.STUDIO_ONBOARDING} replace />}
         />
-        <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
+        <Route path={ROUTES.STUDIO_FLOWS} element={<LocalStudioWorkflowLandingPage />} />
         <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
         <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<WorkflowsStepEditorPage />} />
         <Route path={ROUTES.STUDIO_FLOWS_TEST} element={<WorkflowsTestPage />} />
