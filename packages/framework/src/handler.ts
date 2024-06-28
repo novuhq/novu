@@ -71,7 +71,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     this.handler = options.handler;
     this.client = options.client ? options.client : new Client();
     this.client.addWorkflows(options.workflows);
-    this.http = initApiClient(this.client.apiKey as string);
+    this.http = initApiClient(this.client.secretKey as string);
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.strictAuthentication;
   }
@@ -302,7 +302,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SignatureNotFoundError();
     }
 
-    if (!this.client.apiKey) {
+    if (!this.client.secretKey) {
       throw new SigningKeyNotFoundError();
     }
 
@@ -319,7 +319,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SignatureExpiredError();
     }
 
-    const localHash = this.hashHmac(this.client.apiKey as string, `${timestampPayload}.${JSON.stringify(payload)}`);
+    const localHash = this.hashHmac(this.client.secretKey as string, `${timestampPayload}.${JSON.stringify(payload)}`);
 
     const isMatching = localHash === signaturePayload;
 
@@ -328,7 +328,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private hashHmac(apiKey: string, data: string): string {
-    return createHmac('sha256', apiKey).update(data).digest('hex');
+  private hashHmac(secretKey: string, data: string): string {
+    return createHmac('sha256', secretKey).update(data).digest('hex');
   }
 }

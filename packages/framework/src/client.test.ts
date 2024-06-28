@@ -8,10 +8,7 @@ import {
   WorkflowNotFoundError,
 } from './errors';
 import { workflow } from './workflow';
-import { Event, Step } from './types';
-import { delayOutputSchema } from './schemas';
-import { emailChannelSchemas } from './schemas/steps/channels/email.schema';
-import { FromSchema } from './types/schema.types';
+import { Event, Step, EmailOutput, DelayOutput } from '@novu/shared';
 import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
 
 describe('Novu Client', () => {
@@ -25,30 +22,30 @@ describe('Novu Client', () => {
       }));
     });
 
-    client = new Client();
+    client = new Client({ secretKey: 'some-secret-key' });
     client.addWorkflows([newWorkflow]);
   });
 
   describe('client constructor', () => {
-    it('should set apiKey to process.env.NOVU_API_KEY by default', () => {
-      const originalApiKey = process.env.NOVU_API_KEY;
-      const testApiKey = 'test-env-api-key';
-      process.env = { ...process.env, NOVU_API_KEY: testApiKey };
+    it('should set secretKey to process.env.NOVU_SECRET_KEY by default', () => {
+      const originalsecretKey = process.env.NOVU_SECRET_KEY;
+      const testsecretKey = 'test-env-secret-key';
+      process.env = { ...process.env, NOVU_SECRET_KEY: testsecretKey };
       const newClient = new Client();
-      expect(newClient.apiKey).toBe(process.env.NOVU_API_KEY);
-      process.env = { ...process.env, NOVU_API_KEY: originalApiKey };
+      expect(newClient.secretKey).toBe(process.env.NOVU_SECRET_KEY);
+      process.env = { ...process.env, NOVU_SECRET_KEY: originalsecretKey };
     });
 
-    it('should set apiKey to provided apiKey', () => {
-      const testApiKey = 'test-provided-api-key';
-      const newClient = new Client({ apiKey: testApiKey });
-      expect(newClient.apiKey).toBe(testApiKey);
+    it('should set secretKey to provided secretKey', () => {
+      const testsecretKey = 'test-provided-secret-key';
+      const newClient = new Client({ secretKey: testsecretKey });
+      expect(newClient.secretKey).toBe(testsecretKey);
     });
 
     it('should set strictAuthentication to false when NODE_ENV is development', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env = { ...process.env, NODE_ENV: 'development' };
-      const newClient = new Client();
+      const newClient = new Client({ secretKey: 'some-secret-key' });
       expect(newClient.strictAuthentication).toBe(false);
       process.env = { ...process.env, NODE_ENV: originalEnv };
     });
@@ -56,14 +53,14 @@ describe('Novu Client', () => {
     it('should set strictAuthentication to true when NODE_ENV is production', () => {
       const originalEnv = process.env.NODE_ENV;
       process.env = { ...process.env, NODE_ENV: 'production' };
-      const newClient = new Client();
+      const newClient = new Client({ secretKey: 'some-secret-key' });
       expect(newClient.strictAuthentication).toBe(true);
       process.env = { ...process.env, NODE_ENV: originalEnv };
     });
 
     it('should set strictAuthentication to provided strictAuthentication', () => {
       const testStrictAuthentication = false;
-      const newClient = new Client({ strictAuthentication: testStrictAuthentication });
+      const newClient = new Client({ secretKey: 'some-secret-key', strictAuthentication: testStrictAuthentication });
       expect(newClient.strictAuthentication).toBe(testStrictAuthentication);
     });
   });
@@ -350,8 +347,8 @@ describe('Novu Client', () => {
 
   describe('executeWorkflow method', () => {
     it('should execute workflow successfully when action is execute and payload is provided', async () => {
-      const delayConfiguration: FromSchema<typeof delayOutputSchema> = { type: 'regular', unit: 'seconds', amount: 1 };
-      const emailConfiguration: FromSchema<typeof emailChannelSchemas.output> = {
+      const delayConfiguration: DelayOutput = { type: 'regular', unit: 'seconds', amount: 1 };
+      const emailConfiguration: EmailOutput = {
         body: 'Test Body',
         subject: 'Subject',
       };
@@ -766,7 +763,7 @@ describe('Novu Client', () => {
     };
 
     beforeEach(async () => {
-      getCodeClientInstance = new Client();
+      getCodeClientInstance = new Client({ secretKey: 'some-secret-key' });
 
       const newWorkflow = workflow('setup-workflow', workflowExecuteFunc);
 

@@ -19,7 +19,7 @@ The easiest way to get started with Novu workflows is to call `create-novu-app`.
 You can get started by retrieving your Novu API key from the [settings page](https://web.novu.co/settings), then run:
 
 ```bash
-npx create-novu-app@latest --api-key=<NOVU_API_KEY>
+npx create-novu-app@latest --secret-key=<NOVU_SECRET_KEY>
 ```
 
 ## Why use Create Novu App?

@@ -19,8 +19,8 @@ export class InvalidActionError extends BadRequestError {
   }
 }
 
-export class MissingApiKeyError extends BadRequestError {
-  code = ErrorCodeEnum.MISSING_API_KEY_ERROR;
+export class MissingSecretKeyError extends BadRequestError {
+  code = ErrorCodeEnum.MISSING_SECRET_KEY_ERROR;
 
   constructor() {
     super(`API Key is missing. Please add the API Key during Client initialization.`);

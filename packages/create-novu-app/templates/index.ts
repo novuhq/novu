@@ -171,7 +171,7 @@ export const installTemplate = async ({
 
   /* write .env file */
   const val = Object.entries({
-    NOVU_API_KEY: apiKey,
+    NOVU_SECRET_KEY: apiKey,
   }).reduce((acc, [key, value]) => {
     return `${acc}${key}=${value}${os.EOL}`;
   }, "");

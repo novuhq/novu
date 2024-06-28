@@ -30,8 +30,8 @@ const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
         <Input
           readOnly
           type={isApiKeyMasked ? 'password' : 'text'}
-          label="API Key"
-          description="Use this API key to interact with the Novu API"
+          label="Secret Key"
+          description="The secret key to interact with the Novu API"
           rightSection={
             // this is ugly, but we define the width of rightSection explicitly, which messes with larger elements
             <Flex gap="125" position={'absolute'} right="100">
@@ -67,7 +67,7 @@ const ApiKeysRenderer: FC<ApiKeysRendererProps> = ({
         <Input
           readOnly
           label="Application Identifier"
-          description="A public key identifier that can be exposed to the client applications"
+          description="The public key identifier that can be exposed to the client applications"
           rightSection={
             <ClipboardIconButton
               isCopied={clipboardEnvironmentIdentifier.copied}
