@@ -8,7 +8,7 @@ describe('NovuRequestHandler', () => {
   let httpClientMock: any;
 
   beforeEach(() => {
-    client = new Client();
+    client = new Client({ secretKey: 'some-secret-key' });
 
     (client as any).httpClient = httpClientMock;
   });
@@ -50,7 +50,7 @@ describe('NovuRequestHandler', () => {
 
       const expectedBody = renamedWorkflowId;
       const expectedHeaders = {
-        Authorization: 'ApiKey undefined',
+        Authorization: 'ApiKey some-secret-key',
         'Content-Type': 'application/json',
       };
       const expectedMethod = 'POST';

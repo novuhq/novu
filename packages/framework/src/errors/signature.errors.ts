@@ -44,7 +44,7 @@ export class SigningKeyNotFoundError extends UnauthorizedError {
   code = ErrorCodeEnum.SIGNING_KEY_NOT_FOUND_ERROR;
 
   constructor() {
-    super('Signature key not found. Please provide a valid key in the Client constructor `config.apiKey`');
+    super('Signature key not found. Please provide a valid key in the Client constructor `config.secretKey`');
   }
 }
 

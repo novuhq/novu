@@ -47,12 +47,16 @@ JSONSchemaFaker.option({
   alwaysFakeOptionals: true,
 });
 
+function isRuntimeInDevelopment() {
+  return process.env.NODE_ENV === 'development';
+}
+
 export class Client {
   private discoveredWorkflows: Array<DiscoverWorkflowOutput> = [];
 
   private templateEngine = new Liquid();
 
-  public apiKey?: string;
+  public secretKey?: string;
 
   public version: string = SDK_VERSION;
 
@@ -60,25 +64,28 @@ export class Client {
 
   constructor(options?: ClientOptions) {
     const builtOpts = this.buildOptions(options);
-    this.apiKey = builtOpts.apiKey;
+    this.secretKey = builtOpts.secretKey;
     this.strictAuthentication = builtOpts.strictAuthentication;
   }
 
   private buildOptions(providedOptions?: ClientOptions) {
-    const builtConfiguration: { apiKey?: string; strictAuthentication: boolean } = {
-      apiKey: undefined,
+    const builtConfiguration: { secretKey?: string; strictAuthentication: boolean } = {
+      secretKey: undefined,
       strictAuthentication: true,
     };
 
-    if (providedOptions?.apiKey !== undefined) {
-      builtConfiguration.apiKey = providedOptions.apiKey;
-    } else if (process.env.NOVU_API_KEY !== undefined) {
-      builtConfiguration.apiKey = process.env.NOVU_API_KEY;
+    builtConfiguration.secretKey =
+      providedOptions?.secretKey || process.env.NOVU_SECRET_KEY || process.env.NOVU_API_KEY;
+
+    if (!isRuntimeInDevelopment() && !builtConfiguration.secretKey) {
+      throw new Error(
+        'Missing secret key. Set the NOVU_SECRET_KEY environment variable or pass secretKey to the client options.'
+      );
     }
 
     if (providedOptions?.strictAuthentication !== undefined) {
       builtConfiguration.strictAuthentication = providedOptions.strictAuthentication;
-    } else if (process.env.NODE_ENV === 'development') {
+    } else if (isRuntimeInDevelopment()) {
       builtConfiguration.strictAuthentication = false;
     }
 
