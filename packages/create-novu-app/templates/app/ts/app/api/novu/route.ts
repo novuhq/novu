@@ -1,10 +1,4 @@
 import { serve } from "@novu/framework/next";
-import { Client } from "@novu/framework";
 import { myWorkflow } from "../../novu/workflows";
 
-const client = new Client({ strictAuthentication: false });
-
-export const { GET, POST, OPTIONS } = serve({
-  client,
-  workflows: [myWorkflow],
-});
+export const { GET, POST, OPTIONS } = serve({ workflows: [myWorkflow] });
