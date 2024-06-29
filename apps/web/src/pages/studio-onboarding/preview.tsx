@@ -250,7 +250,7 @@ export const StudioOnboardingPreview = () => {
         editEmailLink: {
           title: "Email Link Button Text",
           type: "string",
-          default: "https://web.novu.co",
+          default: "https://dashboard.novu.co",
           format: "uri",
         },
         helloWorld: {
