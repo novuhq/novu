@@ -7,6 +7,10 @@ export const getResponse = (): typeof Response => {
 };
 
 export const getBridgeUrl = async (): Promise<string> => {
+  /*
+   * Production, staging, or local environments with bring your own local tunnel
+   * An escape hatch for unknown use-cases.
+   */
   if (process.env.NOVU_BRIDGE_ORIGIN) {
     return `${process.env.NOVU_BRIDGE_ORIGIN}/api/novu`;
   }
