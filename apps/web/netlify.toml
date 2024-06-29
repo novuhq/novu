@@ -9,11 +9,6 @@
   command = "cd apps/web && pnpm run envsetup && cd ../../ && pnpm run build:web --skip-nx-cache"
 
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
-
-[[redirects]]
   from = "https://dev.web.novu.co/*"
   to = "https://dev.dashboard.novu.co/:splat"
   status = 301
@@ -30,6 +25,11 @@
   to = "https://dashboard.novu.co/:splat"
   status = 301
   force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
 [[headers]]
   for = "/*"
