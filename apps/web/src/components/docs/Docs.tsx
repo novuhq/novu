@@ -40,7 +40,7 @@ export const Docs = ({ code = '', description = '', title = '', isLoading, child
     }
 
     return getMDXComponent(code, {
-      echoTerminal: {
+      echoterminal: {
         EchoTerminal: () => <nv-echo-terminal></nv-echo-terminal>,
       },
     });
