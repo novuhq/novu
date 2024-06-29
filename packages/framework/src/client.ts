@@ -92,7 +92,7 @@ export class Client {
     return builtConfiguration;
   }
 
-  public addWorkflows(workflows: Array<Workflow<any>>) {
+  public addWorkflows(workflows: Array<Workflow>) {
     for (const workflow of workflows) {
       if (this.discoveredWorkflows.some((existing) => existing.workflowId === workflow.definition.workflowId)) {
         throw new WorkflowAlreadyExistsError(workflow.definition.workflowId);

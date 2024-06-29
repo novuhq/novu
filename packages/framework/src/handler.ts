@@ -29,13 +29,13 @@ import { initApiClient } from './utils';
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
   client?: Client;
-  workflows: Array<Workflow<any>>;
+  workflows: Array<Workflow>;
 }
 
 interface INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> extends ServeHandlerOptions {
   frameworkName: string;
   client?: Client;
-  workflows: Array<Workflow<any>>;
+  workflows: Array<Workflow>;
   handler: Handler<Input, Output>;
 }
 
