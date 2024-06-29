@@ -26,6 +26,7 @@ export enum ErrorCodeEnum {
   SIGNING_KEY_NOT_FOUND_ERROR = 'SigningKeyNotFoundError',
   PLATFORM_ERROR = 'PlatformError',
   SIGNATURE_VERSION_INVALID_ERROR = 'SignatureVersionInvalidError',
+  WORKFLOW_PAYLOAD_INVALID_ERROR = 'WorkflowPayloadInvalidError',
 }
 
 testErrorCodeEnumValidity(ErrorCodeEnum);

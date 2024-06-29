@@ -74,3 +74,12 @@ export class ExecutionProviderOutputInvalidError extends BadRequestError {
     this.data = data;
   }
 }
+
+export class WorkflowPayloadInvalidError extends BadRequestError {
+  code = ErrorCodeEnum.WORKFLOW_PAYLOAD_INVALID_ERROR;
+
+  constructor(workflowId: string, data: any) {
+    super(`Workflow with id: \`${workflowId}\` has invalid \`payload\`. Please provide the correct payload.`);
+    this.data = data;
+  }
+}

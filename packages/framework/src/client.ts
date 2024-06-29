@@ -10,6 +10,7 @@ import {
   ExecutionStateCorruptError,
   ExecutionStateOutputInvalidError,
   ExecutionStateResultInvalidError,
+  MissingSecretKeyError,
   ProviderExecutionFailedError,
   ProviderNotFoundError,
   StepNotFoundError,
@@ -30,6 +31,7 @@ import type {
   Schema,
   Skip,
   ValidationError,
+  Workflow,
 } from './types';
 import { EMOJI, log } from './utils';
 import { transformSchema, validateData } from './validators';
@@ -78,9 +80,7 @@ export class Client {
       providedOptions?.secretKey || process.env.NOVU_SECRET_KEY || process.env.NOVU_API_KEY;
 
     if (!isRuntimeInDevelopment() && !builtConfiguration.secretKey) {
-      throw new Error(
-        'Missing secret key. Set the NOVU_SECRET_KEY environment variable or pass `secretKey` to the client options.'
-      );
+      throw new MissingSecretKeyError();
     }
 
     if (providedOptions?.strictAuthentication !== undefined) {
@@ -92,12 +92,12 @@ export class Client {
     return builtConfiguration;
   }
 
-  public addWorkflows(workflows: Array<DiscoverWorkflowOutput>) {
+  public addWorkflows(workflows: Array<Workflow<any>>) {
     for (const workflow of workflows) {
-      if (this.discoveredWorkflows.some((existing) => existing.workflowId === workflow.workflowId)) {
-        throw new WorkflowAlreadyExistsError(workflow.workflowId);
+      if (this.discoveredWorkflows.some((existing) => existing.workflowId === workflow.definition.workflowId)) {
+        throw new WorkflowAlreadyExistsError(workflow.definition.workflowId);
       } else {
-        this.discoveredWorkflows.push(workflow);
+        this.discoveredWorkflows.push(workflow.definition);
       }
     }
   }

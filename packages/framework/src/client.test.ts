@@ -47,7 +47,7 @@ describe('Novu Client', () => {
 
     it('should throw an error when secretKey is not provided', () => {
       expect(() => new Client({ secretKey: undefined })).toThrow(
-        'Missing secret key. Set the NOVU_SECRET_KEY environment variable or pass `secretKey` to the client options.'
+        'Missing secret key. Set the `NOVU_SECRET_KEY` environment variable or pass `secretKey` to the client options.'
       );
     });
 

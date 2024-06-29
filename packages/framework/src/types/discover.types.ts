@@ -2,7 +2,8 @@ import { ActionStepEnum, ChannelStepEnum } from '../constants';
 import { JsonSchema, Schema } from './schema.types';
 import { StepOptions } from './step.types';
 import { Execute, WorkflowOptions } from './workflow.types';
-import { Awaitable } from './util.types';
+import { Awaitable, Prettify } from './util.types';
+import { EventTriggerParams, EventTriggerResult } from './event.types';
 
 export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 
@@ -65,6 +66,13 @@ export type DiscoverWorkflowOutput = {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
+};
+
+export type Workflow<T_Payload> = {
+  trigger: (
+    event: Prettify<Omit<EventTriggerParams<T_Payload>, 'workflowId' | 'bridgeUrl'>>
+  ) => Promise<EventTriggerResult>;
+  definition: DiscoverWorkflowOutput;
 };
 
 export type DiscoverOutput = {
