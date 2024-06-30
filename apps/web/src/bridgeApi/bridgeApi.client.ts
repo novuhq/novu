@@ -80,10 +80,8 @@ export function buildBridgeHTTPClient(baseURL: string) {
      */
     async getStepPreview({ workflowId, stepId, controls, payload }: StepPreviewParams): Promise<any> {
       return post(`${baseURL}?action=preview&workflowId=${workflowId}&stepId=${stepId}`, {
-        // TODO: Rename to controls
-        inputs: controls || {},
-        // TODO: Rename to payload
-        data: payload || {},
+        controls: controls || {},
+        payload: payload || {},
       });
     },
 
