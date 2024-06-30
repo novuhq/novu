@@ -23,7 +23,7 @@ describe('sync command', () => {
 
       const response = await sync(echoUrl, novuApiKey, backendUrl);
 
-      const expectBackendUrl = `${backendUrl}/v1/echo/sync?source=cli`;
+      const expectBackendUrl = `${backendUrl}/v1/bridge/sync?source=cli`;
       expect(syncRestCallSpy).toHaveBeenCalledWith(
         expectBackendUrl,
         expect.objectContaining({ bridgeUrl: echoUrl }),

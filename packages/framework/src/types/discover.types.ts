@@ -9,7 +9,7 @@ export type StepType = `${ChannelStepEnum | ActionStepEnum}`;
 export type DiscoverProviderOutput = {
   type: string;
   code: string;
-  resolve: (inputs: unknown) => Awaitable<unknown>;
+  resolve: ({ controls, outputs }: { controls: unknown; outputs: unknown }) => Awaitable<unknown>;
   outputs: {
     schema: JsonSchema;
     unknownSchema: Schema;
@@ -23,6 +23,10 @@ export type DiscoverStepOutput = {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
+  controls: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
   outputs: {
     schema: JsonSchema;
     unknownSchema: Schema;
@@ -32,7 +36,7 @@ export type DiscoverStepOutput = {
     unknownSchema: Schema;
   };
   code: string;
-  resolve: (inputs: any) => Awaitable<any>;
+  resolve: (controls: any) => Awaitable<any>;
   providers: Array<DiscoverProviderOutput>;
   options: StepOptions;
 };
@@ -43,11 +47,21 @@ export type DiscoverWorkflowOutput = {
   options: WorkflowOptions<unknown, unknown>;
   code: string;
   steps: Array<DiscoverStepOutput>;
+  payload: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+  /** @deprecated */
   data: {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
+  /** @deprecated */
   inputs: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+  controls: {
     schema: JsonSchema;
     unknownSchema: Schema;
   };

@@ -42,7 +42,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
   it('should update echo url', async () => {
     await echoServer.start({ workflows: [] });
 
-    const result = await session.testAgent.post(`/v1/echo/sync`).send({
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
       bridgeUrl: echoServer.serverPath,
     });
 
@@ -63,14 +63,14 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
       async ({ step, payload }) => {
         await step.email(
           'send-email',
-          async (inputs) => {
+          async (controls) => {
             return {
-              subject: 'This is an email subject ' + inputs.name,
+              subject: 'This is an email subject ' + controls.name,
               body: 'Body result ' + payload.name,
             };
           },
           {
-            inputSchema: {
+            controlSchema: {
               type: 'object',
               properties: {
                 name: { type: 'string', default: 'TEST' },
@@ -92,7 +92,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     );
     await echoServer.start({ workflows: [newWorkflow] });
 
-    const result = await session.testAgent.post(`/v1/echo/sync`).send({
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
       bridgeUrl: echoServer.serverPath,
     });
     expect(result.body.data?.length).to.equal(1);
@@ -125,14 +125,14 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
       async ({ step, payload }) => {
         await step.email(
           'send-email',
-          async (inputs) => {
+          async (controls) => {
             return {
               subject: 'This is an email subject ',
               body: 'Body result ',
             };
           },
           {
-            inputSchema: inputPostPayload.schema as any,
+            controlSchema: inputPostPayload.schema as any,
           }
         );
       },
@@ -149,7 +149,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     );
     await echoServer.start({ workflows: [newWorkflow] });
 
-    const result = await session.testAgent.post(`/v1/echo/sync`).send({
+    const result = await session.testAgent.post(`/v1/bridge/sync`).send({
       bridgeUrl: echoServer.serverPath,
     });
     expect(result.body.data?.length).to.equal(1);
@@ -170,7 +170,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     expect(messageTemplates.length).to.equal(1);
     const messageTemplatesToTest = messageTemplates[0];
 
-    expect(messageTemplatesToTest.inputs).to.deep.equal(inputPostPayload);
+    expect(messageTemplatesToTest.controls).to.deep.equal(inputPostPayload);
   });
 
   it('should update a workflow', async () => {
@@ -180,14 +180,14 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
       async ({ step, payload }) => {
         await step.email(
           'send-email',
-          async (inputs) => {
+          async (controls) => {
             return {
-              subject: 'This is an email subject ' + inputs.name,
+              subject: 'This is an email subject ' + controls.name,
               body: 'Body result ' + payload.name,
             };
           },
           {
-            inputSchema: {
+            controlSchema: {
               type: 'object',
               properties: {
                 name: { type: 'string', default: 'TEST' },
@@ -209,7 +209,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     );
     await echoServer.start({ workflows: [newWorkflow] });
 
-    await session.testAgent.post(`/v1/echo/sync`).send({
+    await session.testAgent.post(`/v1/bridge/sync`).send({
       bridgeUrl: echoServer.serverPath,
     });
 
@@ -222,14 +222,14 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
       async ({ step, payload }) => {
         await step.email(
           'send-email-2',
-          async (inputs) => {
+          async (controls) => {
             return {
-              subject: 'This is an email subject ' + inputs.name,
+              subject: 'This is an email subject ' + controls.name,
               body: 'Body result ' + payload.name,
             };
           },
           {
-            inputSchema: {
+            controlSchema: {
               type: 'object',
               properties: {
                 name: { type: 'string', default: 'TEST' },
@@ -257,7 +257,7 @@ describe('Echo Sync - /echo/sync (POST)', async () => {
     );
     await echoServer.start({ workflows: [newWorkflow2] });
 
-    await session.testAgent.post(`/v1/echo/sync`).send({
+    await session.testAgent.post(`/v1/bridge/sync`).send({
       bridgeUrl: echoServer.serverPath,
     });
 

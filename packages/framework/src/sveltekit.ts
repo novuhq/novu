@@ -1,6 +1,7 @@
 import { RequestEvent } from '@sveltejs/kit';
 import { NovuRequestHandler, ServeHandlerOptions } from './handler';
 import { type SupportedFrameworkName } from './types';
+import { getResponse } from './utils';
 
 export const frameworkName: SupportedFrameworkName = 'sveltekit';
 
@@ -27,15 +28,7 @@ export const serve = (
         transformResponse: ({ body, headers, status }) => {
           // Handle Response polyfills
           // eslint-disable-next-line @typescript-eslint/naming-convention
-          let Res: typeof Response;
-
-          if (typeof Response === 'undefined') {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-var-requires
-            Res = require('cross-fetch').Response;
-          } else {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-            Res = Response;
-          }
+          const Res = getResponse();
 
           return new Res(body, { status, headers });
         },

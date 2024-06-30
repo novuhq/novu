@@ -32,6 +32,8 @@ import {
   SELECT_RECIPE,
   CHECKBOX_RECIPE,
   MODAL_RECIPE,
+  CODE_BLOCK_RECIPE,
+  LOADING_OVERLAY_RECIPE,
 } from './recipes';
 
 /**
@@ -100,6 +102,8 @@ export const novuPandaPreset = definePreset({
         select: SELECT_RECIPE,
         checkbox: CHECKBOX_RECIPE,
         modal: MODAL_RECIPE,
+        codeBlock: CODE_BLOCK_RECIPE,
+        loadingOverlay: LOADING_OVERLAY_RECIPE,
       },
     },
   },

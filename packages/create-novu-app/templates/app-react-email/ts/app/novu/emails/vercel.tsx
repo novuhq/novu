@@ -167,6 +167,6 @@ export const VercelInviteUserEmail = ({
 
 export default VercelInviteUserEmail;
 
-export function renderReactEmail(inputs: any) {
-  return render(<VercelInviteUserEmail {...inputs} />);
+export function renderReactEmail(controls: any) {
+  return render(<VercelInviteUserEmail {...controls} />);
 }

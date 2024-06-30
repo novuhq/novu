@@ -29,7 +29,7 @@ export enum ViewEnum {
   EDIT = 'Edit',
   PREVIEW = 'Preview',
   CODE = 'Code',
-  INPUTS = 'Inputs',
+  CONTROLS = 'Controls',
   TEST = 'Test',
 }
 const templateFields = ['content', 'htmlContent', 'subject', 'preheader', 'senderName'];

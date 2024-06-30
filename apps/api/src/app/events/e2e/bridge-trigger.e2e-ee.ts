@@ -61,14 +61,14 @@ contexts.forEach((context: Context) => {
         async ({ step, payload }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'This is an email subject ' + inputs.name,
+                subject: 'This is an email subject ' + controls.name,
                 body: 'Body result ' + payload.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'TEST' },
@@ -79,13 +79,13 @@ contexts.forEach((context: Context) => {
 
           await step.inApp(
             'send-in-app',
-            async (inputs) => {
+            async (controls) => {
               return {
                 body: 'in-app result ' + payload.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'TEST' },
@@ -96,13 +96,13 @@ contexts.forEach((context: Context) => {
 
           await step.sms(
             'send-sms',
-            async (inputs) => {
+            async (controls) => {
               return {
                 body: 'sms result ' + payload.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'TEST' },
@@ -161,14 +161,14 @@ contexts.forEach((context: Context) => {
         async ({ step, payload }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'This is an email subject ' + inputs.name,
+                subject: 'This is an email subject ' + controls.name,
                 body: 'Body result ' + payload.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'TEST' },
@@ -224,21 +224,21 @@ contexts.forEach((context: Context) => {
         async ({ step, payload }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'This is an email subject ' + inputs.name,
+                subject: 'This is an email subject ' + controls.name,
                 body: 'Body result ' + payload.name,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'TEST' },
                   shouldSkipVar: { type: 'boolean', default: true },
                 },
               } as const,
-              skip: (inputs) => inputs.shouldSkipVar,
+              skip: (controls) => controls.shouldSkipVar,
             }
           );
         },
@@ -420,14 +420,14 @@ contexts.forEach((context: Context) => {
         async ({ step }) => {
           const digestResponse = await step.digest(
             'digest',
-            async (inputs) => {
+            async (controls) => {
               return {
-                amount: inputs.amount,
-                unit: inputs.unit,
+                amount: controls.amount,
+                unit: controls.unit,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   amount: {
@@ -492,15 +492,15 @@ contexts.forEach((context: Context) => {
         async ({ step }) => {
           const delayResponse = await step.delay(
             'delay-id',
-            async (inputs) => {
+            async (controls) => {
               return {
                 type: 'regular',
-                amount: inputs.amount,
-                unit: inputs.unit,
+                amount: controls.amount,
+                unit: controls.unit,
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   amount: {
@@ -527,7 +527,7 @@ contexts.forEach((context: Context) => {
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {},
               },
@@ -566,21 +566,21 @@ contexts.forEach((context: Context) => {
       expect(messagesAfter[0].content).to.match(/people waited for \d+ seconds/);
     });
 
-    it(`should trigger the echo workflow with input variables [${context.name}]`, async () => {
-      const workflowId = `input-variables-workflow-${context.name + '-' + uuidv4()}`;
+    it(`should trigger the echo workflow with control variables [${context.name}]`, async () => {
+      const workflowId = `control-variables-workflow-${context.name + '-' + uuidv4()}`;
       const newWorkflow = workflow(
         workflowId,
         async ({ step, payload }) => {
           await step.email(
             'send-email',
-            async (inputs) => {
+            async (controls) => {
               return {
-                subject: 'prefix ' + inputs.name,
+                subject: 'prefix ' + controls.name,
                 body: 'Body result',
               };
             },
             {
-              inputSchema: {
+              controlSchema: {
                 type: 'object',
                 properties: {
                   name: { type: 'string', default: 'Hello {{name}}' },
@@ -631,7 +631,7 @@ async function syncWorkflow(
   workflowIdentifier: string,
   echoServer: EchoServer
 ) {
-  await session.testAgent.post(`/v1/echo/sync`).send({
+  await session.testAgent.post(`/v1/bridge/sync`).send({
     bridgeUrl: echoServer.serverPath + '/echo',
   });
 
@@ -671,7 +671,7 @@ async function discoverAndSyncEcho(
   workflowIdentifier?: string,
   echoServer?: EchoServer
 ) {
-  const discoverResponse = await session.testAgent.post(`/v1/echo/sync`).send({
+  const discoverResponse = await session.testAgent.post(`/v1/bridge/sync`).send({
     bridgeUrl: echoServer?.serverPath + '/echo',
   });
 

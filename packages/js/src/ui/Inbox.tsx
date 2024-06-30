@@ -1,56 +1,37 @@
-import { For, createSignal, onMount } from 'solid-js';
-import { Notification } from '../feeds';
-import { Novu } from '../novu';
 import type { NovuOptions } from '../novu';
-import { Appearance, AppearanceProvider } from './context';
+import { BellContainer } from './components';
+import { Appearance, AppearanceProvider, NovuProvider } from './context';
+import { Localization, LocalizationProvider, useLocalization } from './context/LocalizationContext';
 import { useStyle } from './helpers';
 
 type InboxProps = {
+  id: string;
   name: string;
   options: NovuOptions;
   appearance?: Appearance;
+  localization?: Localization;
 };
 
 export const Inbox = (props: InboxProps) => {
-  const [feeds, setFeeds] = createSignal<Notification[]>([]);
-
-  onMount(() => {
-    const novu = new Novu(props.options);
-
-    // eslint-disable-next-line promise/always-return
-    novu.feeds.fetch().then((data) => {
-      setFeeds(data.data);
-    });
-  });
-
   return (
-    <AppearanceProvider elements={props.appearance?.elements} variables={props.appearance?.variables}>
-      <InternalInbox feeds={feeds()} />
-    </AppearanceProvider>
+    <NovuProvider options={props.options}>
+      <LocalizationProvider localization={props.localization}>
+        <AppearanceProvider id={props.id} appearance={props.appearance}>
+          <InternalInbox />
+        </AppearanceProvider>
+      </LocalizationProvider>
+    </NovuProvider>
   );
 };
 
-type InternalInboxProps = {
-  feeds: Notification[];
-};
-
-const InternalInbox = (props: InternalInboxProps) => {
+const InternalInbox = () => {
   const style = useStyle();
+  const { t } = useLocalization();
 
   return (
     <div class={style('novu', 'root')}>
-      <div class="nt-bg-primary-500 nt-p-3 nt-m-4">
-        <div class="nt-text-2xl nt-font-bold">Inbox</div>
-        <button class={style('nt-bg-red-500', 'button')}>test</button>
-        <For each={props.feeds}>
-          {(feed) => (
-            <div>
-              <h2>{feed.body}</h2>
-              <p>{feed.createdAt}</p>
-            </div>
-          )}
-        </For>
-      </div>
+      <div class="nt-text-2xl nt-font-bold">{t('inbox.title')}</div>
+      <BellContainer />
     </div>
   );
 };

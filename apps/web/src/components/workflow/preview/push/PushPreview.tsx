@@ -4,16 +4,16 @@ import Content from './Content';
 export function PushPreview({
   showLoading = false,
   showOverlay = true,
-  inputVariables,
+  controlVariables: controlVariables,
 }: {
   showLoading?: boolean;
   showOverlay?: boolean;
-  inputVariables?: any;
+  controlVariables?: any;
 }) {
   return (
     <div>
       <MobileSimulator withBackground>
-        <Content inputVariables={inputVariables} showLoading={showLoading} showOverlay={showOverlay} />
+        <Content controlVariables={controlVariables} showLoading={showLoading} showOverlay={showOverlay} />
       </MobileSimulator>
     </div>
   );

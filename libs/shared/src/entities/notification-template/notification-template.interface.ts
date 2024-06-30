@@ -93,6 +93,9 @@ export interface IStepVariant {
   inputs?: {
     schema: JSONSchema7;
   };
+  controls?: {
+    schema: JSONSchema7;
+  };
   bridgeUrl?: string;
 }
 

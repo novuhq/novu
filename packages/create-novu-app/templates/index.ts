@@ -37,8 +37,7 @@ export const installTemplate = async ({
   eslint,
   srcDir,
   importAlias,
-  apiKey,
-  tunnelHost,
+  secretKey,
 }: InstallTemplateArgs) => {
   console.log(bold(`Using ${packageManager}.`));
 
@@ -77,11 +76,6 @@ export const installTemplate = async ({
         }
       }
     },
-  });
-  // move tunnel scripts to the project folder
-  await copy(copySource, `${root}/scripts`, {
-    parents: true,
-    cwd: path.join(__dirname, `tunnelScripts`),
   });
 
   const tsconfigFile = path.join(root, "tsconfig.json");
@@ -176,11 +170,8 @@ export const installTemplate = async ({
   }
 
   /* write .env file */
-  const port = 4000;
   const val = Object.entries({
-    PORT: port,
-    API_KEY: apiKey,
-    TUNNEL_HOST: tunnelHost,
+    NOVU_SECRET_KEY: secretKey,
   }).reduce((acc, [key, value]) => {
     return `${acc}${key}=${value}${os.EOL}`;
   }, "");
@@ -196,9 +187,7 @@ export const installTemplate = async ({
     version: "0.1.0",
     private: true,
     scripts: {
-      tunnel: "tsx scripts/tunnel.mts",
-      "next-dev": `next dev --port=${port}`,
-      dev: 'concurrently -k --restart-tries 5 --restart-after 1000 --names "📡 TUNNEL,🖥️  SERVER" -c "bgBlue.bold,bgMagenta.bold" "npm:tunnel" "npm:next-dev"',
+      dev: `next dev --port=4000`,
       build: "next build",
       start: "next start",
       lint: "next lint",
@@ -253,25 +242,6 @@ export const installTemplate = async ({
       "eslint-config-next": version,
     };
   }
-
-  /* local tunnel */
-  packageJson.devDependencies = {
-    ...packageJson.devDependencies,
-    "@types/localtunnel": "^2.0.4",
-    localtunnel: "^2.0.2",
-  };
-
-  /* dotenv */
-  packageJson.devDependencies = {
-    ...packageJson.devDependencies,
-    dotenv: "^16.4.5",
-  };
-
-  /* concurrently */
-  packageJson.devDependencies = {
-    ...packageJson.devDependencies,
-    concurrently: "^8.2.2",
-  };
 
   const devDeps = Object.keys(packageJson.devDependencies).length;
   if (!devDeps) delete packageJson.devDependencies;

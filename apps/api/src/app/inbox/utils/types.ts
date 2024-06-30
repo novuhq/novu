@@ -36,3 +36,9 @@ export type InboxNotification = {
   channelType: ChannelTypeEnum;
   tags?: string[];
 };
+
+export type NotificationFilter = {
+  tags?: string[];
+  read?: boolean;
+  archived?: boolean;
+};

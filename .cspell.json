@@ -361,6 +361,7 @@
     "npmjs",
     "npmrc",
     "nrwl",
+    "ntfr",
     "ntoa",
     "ntvs",
     "nunito",
@@ -647,7 +648,8 @@
     "liquidjs",
     "tailwindcss",
     "focusable",
-    "textareas"
+    "textareas",
+    "echoterminal"
   ],
   "flagWords": [],
   "patterns": [

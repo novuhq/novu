@@ -2,13 +2,17 @@ import { IsArray, IsBoolean, IsOptional, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 
 import { CursorPaginationRequestDto } from '../../shared/dtos/cursor-pagination-request';
+import { NotificationFilter } from '../utils/types';
 
 const LIMIT = {
   DEFAULT: 10,
   MAX: 100,
 };
 
-export class GetNotificationsRequestDto extends CursorPaginationRequestDto(LIMIT.DEFAULT, LIMIT.MAX) {
+export class GetNotificationsRequestDto
+  extends CursorPaginationRequestDto(LIMIT.DEFAULT, LIMIT.MAX)
+  implements NotificationFilter
+{
   @IsOptional()
   @IsArray()
   @IsString({ each: true })

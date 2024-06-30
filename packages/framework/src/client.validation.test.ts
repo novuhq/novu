@@ -2,13 +2,13 @@ import { expect, it, describe, beforeEach } from 'vitest';
 import { Client } from './client';
 import { z } from 'zod';
 import { workflow } from './workflow';
-import { ExecutionStateInputInvalidError } from './errors';
+import { ExecutionStateControlsInvalidError } from './errors';
 
 describe('validation', () => {
   let client: Client;
 
   beforeEach(() => {
-    client = new Client();
+    client = new Client({ secretKey: 'some-secret-key' });
   });
 
   describe('zod', () => {
@@ -17,15 +17,15 @@ describe('validation', () => {
       baz: z.number(),
     });
 
-    it('should infer types in the step inputs', async () => {
+    it('should infer types in the step controls', async () => {
       workflow('zod-validation', async ({ step }) => {
         await step.email(
           'zod-validation',
-          async (inputs) => {
+          async (controls) => {
             // @ts-expect-error - Type 'number' is not assignable to type 'string'.
-            inputs.foo = 123;
+            controls.foo = 123;
             // @ts-expect-error - Type 'string' is not assignable to type 'number'.
-            inputs.baz = '123';
+            controls.baz = '123';
 
             return {
               subject: 'Test subject',
@@ -33,21 +33,26 @@ describe('validation', () => {
             };
           },
           {
-            inputSchema: zodSchema,
-            skip: (inputs) => {
+            controlSchema: zodSchema,
+            skip: (controls) => {
               // @ts-expect-error - Type 'number' is not assignable to type 'string'.
-              inputs.foo = 123;
+              controls.foo = 123;
               // @ts-expect-error - Type 'string' is not assignable to type 'number'.
-              inputs.baz = '123';
+              controls.baz = '123';
 
               return true;
             },
             providers: {
-              sendgrid: async ({ inputs }) => {
+              sendgrid: async ({ controls, outputs }) => {
                 // @ts-expect-error - Type 'number' is not assignable to type 'string'.
-                inputs.foo = 123;
+                controls.foo = 123;
                 // @ts-expect-error - Type 'string' is not assignable to type 'number'.
-                inputs.baz = '123';
+                controls.baz = '123';
+
+                // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+                outputs.body = 123;
+                // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+                outputs.subject = 123;
 
                 return {
                   ipPoolName: 'test',
@@ -76,23 +81,20 @@ describe('validation', () => {
           });
         },
         {
-          payloadSchema: z.object({
-            foo: z.string(),
-            baz: z.number(),
-          }),
+          payloadSchema: zodSchema,
         }
       );
     });
 
-    it('should infer types in the workflow inputs', async () => {
+    it('should infer types in the workflow controls', async () => {
       workflow(
         'zod-validation',
-        async ({ step, input }) => {
+        async ({ step, controls }) => {
           await step.email('zod-validation', async () => {
             // @ts-expect-error - Type 'number' is not assignable to type 'string'.
-            input.foo = 123;
+            controls.foo = 123;
             // @ts-expect-error - Type 'string' is not assignable to type 'number'.
-            input.baz = '123';
+            controls.baz = '123';
 
             return {
               subject: 'Test subject',
@@ -101,10 +103,7 @@ describe('validation', () => {
           });
         },
         {
-          inputSchema: z.object({
-            foo: z.string(),
-            baz: z.number(),
-          }),
+          controlSchema: zodSchema,
         }
       );
     });
@@ -114,21 +113,21 @@ describe('validation', () => {
         workflow('zod-validation', async ({ step }) => {
           await step.email(
             'zod-validation',
-            async (inputs) => ({
+            async (controls) => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
             {
-              inputSchema: zodSchema,
+              controlSchema: zodSchema,
             }
           );
         }),
       ]);
 
       const discoverResult = client.discover();
-      const stepInputSchema = discoverResult.workflows[0].steps[0].inputs.schema;
+      const stepControlSchema = discoverResult.workflows[0].steps[0].controls.schema;
 
-      expect(stepInputSchema).to.deep.include({
+      expect(stepControlSchema).to.deep.include({
         additionalProperties: false,
         properties: {
           foo: {
@@ -148,12 +147,12 @@ describe('validation', () => {
         workflow('zod-validation', async ({ step }) => {
           await step.email(
             'test-email',
-            async (inputs) => ({
+            async (controls) => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
             {
-              inputSchema: zodSchema,
+              controlSchema: zodSchema,
             }
           );
         }),
@@ -166,17 +165,21 @@ describe('validation', () => {
           inputs: {
             foo: '341',
           },
+          controls: {
+            foo: '341',
+          },
           data: {},
+          payload: {},
           stepId: 'test-email',
           state: [],
           subscriber: {},
         });
       } catch (error) {
-        expect(error).to.be.instanceOf(ExecutionStateInputInvalidError);
-        expect((error as ExecutionStateInputInvalidError).message).to.equal(
-          'Workflow with id: `zod-validation` has an invalid state. Step with id: `test-email` has invalid input. Please provide the correct step input.'
+        expect(error).to.be.instanceOf(ExecutionStateControlsInvalidError);
+        expect((error as ExecutionStateControlsInvalidError).message).to.equal(
+          'Workflow with id: `zod-validation` has an invalid state. Step with id: `test-email` has invalid `controls`. Please provide the correct step controls.'
         );
-        expect((error as ExecutionStateInputInvalidError).data).to.deep.equal([
+        expect((error as ExecutionStateControlsInvalidError).data).to.deep.equal([
           {
             message: 'Required',
             path: '/baz',
@@ -197,15 +200,15 @@ describe('validation', () => {
       additionalProperties: false,
     } as const;
 
-    it('should infer types in the step inputs', async () => {
+    it('should infer types in the step controls', async () => {
       workflow('json-schema-validation', async ({ step }) => {
         await step.email(
           'json-schema-validation',
-          async (inputs) => {
+          async (controls) => {
             // @ts-expect-error - Type 'number' is not assignable to type 'string'.
-            inputs.foo = 123;
+            controls.foo = 123;
             // @ts-expect-error - Type 'string' is not assignable to type 'number'.
-            inputs.baz = '123';
+            controls.baz = '123';
 
             return {
               subject: 'Test subject',
@@ -213,21 +216,26 @@ describe('validation', () => {
             };
           },
           {
-            inputSchema: jsonSchema,
-            skip: (inputs) => {
+            controlSchema: jsonSchema,
+            skip: (controls) => {
               // @ts-expect-error - Type 'number' is not assignable to type 'string'.
-              inputs.foo = 123;
+              controls.foo = 123;
               // @ts-expect-error - Type 'string' is not assignable to type 'number'.
-              inputs.baz = '123';
+              controls.baz = '123';
 
               return true;
             },
             providers: {
-              sendgrid: async ({ inputs }) => {
+              sendgrid: async ({ controls, outputs }) => {
                 // @ts-expect-error - Type 'number' is not assignable to type 'string'.
-                inputs.foo = 123;
+                controls.foo = 123;
                 // @ts-expect-error - Type 'string' is not assignable to type 'number'.
-                inputs.baz = '123';
+                controls.baz = '123';
+
+                // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+                outputs.body = 123;
+                // @ts-expect-error - Type 'number' is not assignable to type 'string'.
+                outputs.subject = 123;
 
                 return {
                   ipPoolName: 'test',
@@ -261,15 +269,15 @@ describe('validation', () => {
       );
     });
 
-    it('should infer types in the workflow inputs', async () => {
+    it('should infer types in the workflow controls', async () => {
       workflow(
         'json-schema-validation',
-        async ({ step, input }) => {
+        async ({ step, controls }) => {
           await step.email('json-schema-validation', async () => {
             // @ts-expect-error - Type 'number' is not assignable to type 'string'.
-            input.foo = 123;
+            controls.foo = 123;
             // @ts-expect-error - Type 'string' is not assignable to type 'number'.
-            input.baz = '123';
+            controls.baz = '123';
 
             return {
               subject: 'Test subject',
@@ -278,7 +286,7 @@ describe('validation', () => {
           });
         },
         {
-          inputSchema: jsonSchema,
+          controlSchema: jsonSchema,
         }
       );
     });
@@ -288,21 +296,21 @@ describe('validation', () => {
         workflow('json-schema-validation', async ({ step }) => {
           await step.email(
             'json-schema-validation',
-            async (inputs) => ({
+            async (controls) => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
             {
-              inputSchema: jsonSchema,
+              controlSchema: jsonSchema,
             }
           );
         }),
       ]);
 
       const discoverResult = client.discover();
-      const stepInputSchema = discoverResult.workflows[0].steps[0].inputs.schema;
+      const stepControlSchema = discoverResult.workflows[0].steps[0].controls.schema;
 
-      expect(stepInputSchema).to.deep.include({
+      expect(stepControlSchema).to.deep.include({
         additionalProperties: false,
         properties: {
           foo: {
@@ -322,12 +330,12 @@ describe('validation', () => {
         workflow('json-schema-validation', async ({ step }) => {
           await step.email(
             'test-email',
-            async (inputs) => ({
+            async (controls) => ({
               subject: 'Test subject',
               body: 'Test body',
             }),
             {
-              inputSchema: jsonSchema,
+              controlSchema: jsonSchema,
             }
           );
         }),
@@ -340,17 +348,21 @@ describe('validation', () => {
           inputs: {
             foo: '341',
           },
+          controls: {
+            foo: '341',
+          },
           data: {},
+          payload: {},
           stepId: 'test-email',
           state: [],
           subscriber: {},
         });
       } catch (error) {
-        expect(error).to.be.instanceOf(ExecutionStateInputInvalidError);
-        expect((error as ExecutionStateInputInvalidError).message).to.equal(
-          'Workflow with id: `json-schema-validation` has an invalid state. Step with id: `test-email` has invalid input. Please provide the correct step input.'
+        expect(error).to.be.instanceOf(ExecutionStateControlsInvalidError);
+        expect((error as ExecutionStateControlsInvalidError).message).to.equal(
+          'Workflow with id: `json-schema-validation` has an invalid state. Step with id: `test-email` has invalid `controls`. Please provide the correct step controls.'
         );
-        expect((error as ExecutionStateInputInvalidError).data).to.deep.equal([
+        expect((error as ExecutionStateControlsInvalidError).data).to.deep.equal([
           {
             message: "must have required property 'baz'",
             path: '',

@@ -14,7 +14,8 @@ import { Sidebar } from '../../nav/Sidebar';
 import { HeaderNav } from './v2/HeaderNav';
 import { FreeTrialBanner } from './FreeTrialBanner';
 import { css } from '@novu/novui/css';
-import { EnvironmentEnum } from '../../../studio/constants';
+import { EnvironmentEnum } from '../../../studio/constants/EnvironmentEnum';
+import { isStudioRoute } from '../../../studio/utils/routing';
 
 const AppShell = styled.div`
   display: flex;
@@ -33,7 +34,7 @@ const ContentShell = styled.div`
 export function PrivatePageLayout() {
   const [isIntercomOpened, setIsIntercomOpened] = useState(false);
   const { environment } = useEnvironment();
-  const { pathname } = useLocation();
+  const location = useLocation();
 
   /**
    * TODO: this is a temporary work-around to let us work the different color palettes while testing locally.
@@ -41,9 +42,8 @@ export function PrivatePageLayout() {
    */
   const isLocalEnv = useMemo(
     () =>
-      [EnvironmentEnum.DEVELOPMENT, EnvironmentEnum.LOCAL].includes(environment?.name as EnvironmentEnum) &&
-      pathname.includes('/studio'),
-    [environment, pathname]
+      [EnvironmentEnum.DEVELOPMENT].includes(environment?.name as EnvironmentEnum) && isStudioRoute(location.pathname),
+    [environment, location]
   );
 
   return (

@@ -13,7 +13,7 @@ describe('Echo Health Check', async () => {
 
   before(async () => {
     const healthCheckWorkflow = workflow('health-check', async ({ step }) => {
-      await step.email('send-email', async (inputs) => {
+      await step.email('send-email', async (controls) => {
         return {
           subject: 'This is an email subject',
           body: 'Body result',
@@ -41,10 +41,16 @@ describe('Echo Health Check', async () => {
     expect(result.data.status).to.equal('ok');
   });
 
-  it('should have a version', async () => {
+  it('should have an sdk version', async () => {
     const result = await axios.get(frameworkClient.serverPath + '/echo?action=health-check');
 
-    expect(result.data.version).to.be.a('string');
+    expect(result.data.sdkVersion).to.be.a('string');
+  });
+
+  it('should have a framework version', async () => {
+    const result = await axios.get(frameworkClient.serverPath + '/echo?action=health-check');
+
+    expect(result.data.frameworkVersion).to.be.a('string');
   });
 
   it('should return the discovered resources', async () => {

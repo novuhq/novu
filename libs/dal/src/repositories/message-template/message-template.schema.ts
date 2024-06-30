@@ -80,6 +80,7 @@ const messageTemplateSchema = new Schema<MessageTemplateDBModel>(
       data: Schema.Types.Mixed,
     },
     inputs: { schema: Schema.Types.Mixed },
+    controls: { schema: Schema.Types.Mixed },
     output: { schema: Schema.Types.Mixed },
     code: Schema.Types.String,
   },

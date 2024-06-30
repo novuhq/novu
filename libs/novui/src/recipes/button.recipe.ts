@@ -112,11 +112,17 @@ export const BUTTON_RECIPE = defineSlotRecipe({
             bg: '[transparent !important]',
           },
           _loading: {},
+
+          // icon button
+          '& svg': {
+            color: 'colorPalette.middle !important',
+          },
         },
         label: {
           ...colorPaletteGradientText,
         },
         section: {
+          color: 'colorPalette.middle !important',
           '& svg': {
             color: 'colorPalette.middle !important',
           },

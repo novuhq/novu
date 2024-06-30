@@ -41,6 +41,8 @@ export class SendTestEmailCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   inputs: any;
+  @IsOptional()
+  controls: any;
 
   @IsOptional()
   @IsString()

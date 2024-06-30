@@ -1,20 +1,36 @@
 import { Subscriber } from './subscriber.types';
+import { ITenantDefine, ITriggerPayload, TriggerRecipientsPayload, TriggerRecipientSubscriber } from '@novu/shared';
 
-export interface IEvent {
+export type Event = {
+  /** @deprecated */
   data: Record<string, unknown>;
+  payload: Record<string, unknown>;
   workflowId: string;
   stepId: string;
+  /** @deprecated */
   inputs: Record<string, unknown>;
-  state: IState[];
+  controls: Record<string, unknown>;
+  state: State[];
   action: 'execute' | 'preview';
   subscriber: Subscriber;
-}
+};
 
-interface IState {
+export type TriggerEvent = {
+  workflowId: string;
+  to: TriggerRecipientsPayload;
+  actor?: TriggerRecipientSubscriber;
+  bridgeUrl?: string;
+  payload: ITriggerPayload;
+  tenant?: ITenantDefine;
+  transactionId?: string;
+  overrides?: Record<string, unknown>;
+};
+
+export type State = {
   stepId: string;
   outputs: any;
   state: { status: string; error?: string };
-}
+};
 
 export type ExecuteOutputMetadata = {
   status: string;

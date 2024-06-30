@@ -51,8 +51,10 @@ import { AccessSecurityPage, BillingPage, TeamPage, UserProfilePage } from './pa
 import { SettingsPageNew as SettingsPage } from './pages/settings/SettingsPageNew';
 import { OrganizationPage } from './pages/settings/organization';
 import { LayoutsPage } from './pages/layouts/LayoutsPage';
+import { StudioPageLayout } from './studio/StudioPageLayout';
+import { LocalStudioAuthenticator } from './studio/LocalStudioAuthenticator';
 import {
-  WorkflowsListPage,
+  LocalStudioWorkflowLandingPage,
   WorkflowsDetailPage,
   WorkflowsStepEditorPage,
   WorkflowsTestPage,
@@ -61,10 +63,13 @@ import { WorkflowsStepEditorPageV2 } from './pages/templates/editor_v2/TemplateS
 import { useSegment } from './components/providers/SegmentProvider';
 import * as mixpanel from 'mixpanel-browser';
 import { useEffect } from 'react';
+import { GetStartedPageV2 } from './studio/components/GetStartedPageV2';
+import { novuOnboardedCookie } from './utils/cookies';
 
 export const AppRoutes = () => {
   const isImprovedOnboardingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_IMPROVED_ONBOARDING_ENABLED);
   const isMixpanelRecordingEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MIXPANEL_RECORDING_ENABLED);
+  const isV2Enabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_V2_ENABLED);
   const segment = useSegment();
   const { inPrivateRoute } = useAuth();
 
@@ -101,7 +106,7 @@ export const AppRoutes = () => {
         <Route path={ROUTES.WORKFLOWS_DIGEST_PLAYGROUND} element={<TemplatesDigestPlaygroundPage />} />
         <Route path={ROUTES.WORKFLOWS_CREATE} element={<TemplateEditorPage />} />
         <Route path={ROUTES.WORKFLOWS_V2_STEP_EDIT} element={<WorkflowsStepEditorPageV2 />} />
-
+        <Route path={ROUTES.WORKFLOWS_V2_TEST} element={<WorkflowsTestPage />} />
         <Route path={ROUTES.WORKFLOWS_EDIT_TEMPLATEID} element={<TemplateEditorPage />}>
           <Route path="" element={<Sidebar />} />
           <Route path="settings" element={<TemplateSettings />} />
@@ -120,7 +125,9 @@ export const AppRoutes = () => {
           <Route path="create" element={<CreateTenantPage />} />
           <Route path=":identifier" element={<UpdateTenantPage />} />
         </Route>
-        {isImprovedOnboardingEnabled ? (
+        {isV2Enabled ? (
+          <Route path={ROUTES.GET_STARTED} element={<GetStartedPageV2 />} />
+        ) : isImprovedOnboardingEnabled ? (
           <Route path={ROUTES.GET_STARTED} element={<GetStartedPage />} />
         ) : (
           <Route path={ROUTES.GET_STARTED} element={<GetStarted />} />
@@ -155,24 +162,28 @@ export const AppRoutes = () => {
         <Route path={ROUTES.TEAM} element={<MembersInvitePage />} />
         <Route path={ROUTES.CHANGES} element={<PromoteChangesPage />} />
         <Route path={ROUTES.SUBSCRIBERS} element={<SubscribersList />} />
-        <Route path={ROUTES.WORKFLOWS_V2_TEST} element={<WorkflowsTestPage />} />
-        <Route path={ROUTES.STUDIO}>
-          <Route path="" element={<Navigate to={ROUTES.STUDIO_FLOWS} replace />} />
-          <Route path={ROUTES.STUDIO_FLOWS} element={<WorkflowsListPage />} />
-          <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
-          <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<WorkflowsStepEditorPage />} />
-          <Route path={ROUTES.STUDIO_FLOWS_TEST} element={<WorkflowsTestPage />} />
-        </Route>
-
         <Route path="/translations/*" element={<TranslationRoutes />} />
         <Route path={ROUTES.LAYOUT} element={<LayoutsPage />} />
         <Route path={ROUTES.API_KEYS} element={<ApiKeysPage />} />
         <Route path={ROUTES.WEBHOOK} element={<WebhookPage />} />
         <Route path={ROUTES.ANY} element={<HomePage />} />
       </Route>
-      <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />
-      <Route path={ROUTES.STUDIO_ONBOARDING_PREVIEW} element={<StudioOnboardingPreview />} />
-      <Route path={ROUTES.STUDIO_ONBOARDING_SUCCESS} element={<StudioOnboardingSuccess />} />
+
+      <Route path={ROUTES.LOCAL_STUDIO_AUTH} element={<LocalStudioAuthenticator />} />
+
+      <Route path={ROUTES.STUDIO} element={<StudioPageLayout />}>
+        <Route
+          path=""
+          element={<Navigate to={novuOnboardedCookie.get() ? ROUTES.STUDIO_FLOWS : ROUTES.STUDIO_ONBOARDING} replace />}
+        />
+        <Route path={ROUTES.STUDIO_FLOWS} element={<LocalStudioWorkflowLandingPage />} />
+        <Route path={ROUTES.STUDIO_FLOWS_VIEW} element={<WorkflowsDetailPage />} />
+        <Route path={ROUTES.STUDIO_FLOWS_STEP_EDITOR} element={<WorkflowsStepEditorPage />} />
+        <Route path={ROUTES.STUDIO_FLOWS_TEST} element={<WorkflowsTestPage />} />
+        <Route path={ROUTES.STUDIO_ONBOARDING} element={<StudioOnboarding />} />
+        <Route path={ROUTES.STUDIO_ONBOARDING_PREVIEW} element={<StudioOnboardingPreview />} />
+        <Route path={ROUTES.STUDIO_ONBOARDING_SUCCESS} element={<StudioOnboardingSuccess />} />
+      </Route>
     </Routes>
   );
 };

@@ -6,14 +6,14 @@ export const myWorkflow = workflow(
   async ({ step }) => {
     await step.email(
       "send-email",
-      async (inputs) => {
+      async (controls) => {
         return {
           subject: "This is an email subject",
-          body: renderReactEmail(inputs),
+          body: renderReactEmail(controls),
         };
       },
       {
-        inputSchema: {
+        controlSchema: {
           type: "object",
 
           properties: {
@@ -49,7 +49,7 @@ export const myWorkflow = workflow(
               default: "São Paulo, Brazil",
             },
           },
-        },
+        } as const,
       },
     );
   },

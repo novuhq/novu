@@ -6,30 +6,27 @@ import { css } from '@novu/novui/css';
 import { useEffect, useMemo, useState } from 'react';
 import { createSearchParams, useNavigate } from 'react-router-dom';
 import { PreviewWeb } from '../../components/workflow/preview/email/PreviewWeb';
-import { useAuth } from '../../hooks/index';
+import { useWorkflowTrigger } from '../../studio/hooks/useBridgeAPI';
 import { Footer } from './components/Footer';
 import { Header } from './components/Header';
-import { testTrigger } from '../../api/notification-templates';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { api } from '../../api/index';
 import { ROUTES } from '../../constants/routes';
-import { Flex, VStack } from '@novu/novui/jsx';
+import { VStack } from '@novu/novui/jsx';
 import { useSegment } from '../../components/providers/SegmentProvider';
-import { getTunnelUrl } from '../../api/bridge/utils';
-import { bridgeApi } from '../../api/bridge/bridge.api';
 import { Wrapper } from './components/Wrapper';
+// TODO: This indicates that all onboarding pages for studio should move under the "Studio" folder
+import { useDiscover, useWorkflowPreview } from '../../studio/hooks/useBridgeAPI';
+import { useStudioState } from '../../studio/StudioStateProvider';
+import { Text, Title } from '@novu/novui';
+import { SetupTimeline } from './components/SetupTimeline';
+import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
 
 export const StudioOnboardingPreview = () => {
-  const { currentUser } = useAuth();
+  const { testUser } = useStudioState();
   const [tab, setTab] = useState<string>('Preview');
-  const [content, setContent] = useState<string>('');
-  const [subject, setSubject] = useState<string>('');
   const segment = useSegment();
   const navigate = useNavigate();
-  const { mutateAsync: triggerTestEvent, isLoading } = useMutation(testTrigger);
-  const { data: bridgeResponse, isLoading: isLoadingList } = useQuery(['bridge-workflows'], async () => {
-    return bridgeApi.discover();
-  });
+  const { data: bridgeResponse, isLoading: isLoadingList } = useDiscover();
+  const { trigger, isLoading } = useWorkflowTrigger();
 
   const template = useMemo(() => {
     if (!bridgeResponse?.workflows?.length) {
@@ -39,10 +36,12 @@ export const StudioOnboardingPreview = () => {
     return bridgeResponse.workflows[0];
   }, [bridgeResponse]);
 
-  const { data: preview, isLoading: previewLoading } = useQuery(
-    ['workflow-preview', template?.workflowId, template?.steps[0]?.stepId],
-    async () => {
-      return bridgeApi.getStepPreview(template?.workflowId, template?.steps[0]?.stepId, {}, {});
+  const { data: preview, isLoading: previewLoading } = useWorkflowPreview(
+    {
+      workflowId: template?.workflowId,
+      stepId: template?.steps[0]?.stepId,
+      payload: {},
+      controls: {},
     },
     {
       enabled: !!(template && template?.workflowId && template?.steps[0]?.stepId),
@@ -58,41 +57,34 @@ export const StudioOnboardingPreview = () => {
 
   const onTrigger = async () => {
     const to = {
-      subscriberId: currentUser?._id,
-      email: currentUser?.email,
+      subscriberId: testUser.id,
+      email: testUser.emailAddress,
     };
 
-    const response = await triggerTestEvent({
-      name: template?.workflowId,
-      to,
-      payload: {
-        __source: 'onboarding-test-workflow',
-      },
-      bridgeUrl: getTunnelUrl(),
-    });
+    const payload = { __source: 'studio-onboarding-test-workflow' };
+    const response = await trigger({ workflowId: template?.workflowId, to, payload });
 
     navigate({
       pathname: ROUTES.STUDIO_ONBOARDING_SUCCESS,
       search: createSearchParams({
-        transactionId: response.transactionId,
+        transactionId: response.data.transactionId,
       }).toString(),
     });
   };
 
   return (
     <Wrapper className={css({ overflow: 'auto' })}>
-      <Header activeStepIndex={2} />
-      <Flex
-        justifyContent="center"
+      <div
         className={css({
           backgroundImage: {
             _dark: '[radial-gradient(#292933 1.5px, transparent 0)]',
             base: '[radial-gradient(#fff 1.5px, transparent 0)]',
           },
           backgroundSize: '[16px 16px]',
-          height: '100%',
+          minHeight: 'calc(100dvh - 4rem)',
         })}
       >
+        <Header activeStepIndex={2} />
         <VStack
           alignContent="center"
           className={css({
@@ -106,6 +98,19 @@ export const StudioOnboardingPreview = () => {
               paddingTop: '100',
             })}
           >
+            <Title variant="page">Preview your workflow</Title>
+
+            <Text
+              variant="main"
+              color="typography.text.secondary"
+              className={css({
+                marginBottom: '150',
+                marginTop: '50',
+              })}
+            >
+              This is a preview of your sample workflow located in the <code>app/novu/workflows</code> directory. You
+              can edit this file in your IDE and see the email changes reflected here.
+            </Text>
             <Tabs
               withIcon={true}
               value={tab}
@@ -140,14 +145,14 @@ export const StudioOnboardingPreview = () => {
                       {`workflow("welcome-onboarding-email", async ({ step, payload }) => {
     await step.email(
       "send-email",
-      async (inputs) => {
+      async (controls) => {
         return {
           subject: "A Successful Test on Novu!",
-          body: renderEmail(inputs, payload),
+          body: renderEmail(controls, payload),
         };
       },
       {
-        inputSchema: {
+        controlSchema: {
           type: "object",
           properties: {
             components: {
@@ -280,7 +285,7 @@ export const StudioOnboardingPreview = () => {
             />
           </div>
         </VStack>
-      </Flex>
+      </div>
       <Footer
         buttonText="Test workflow"
         onClick={() => {
@@ -288,7 +293,7 @@ export const StudioOnboardingPreview = () => {
         }}
         loading={isLoading}
         disabled={isLoading || isLoadingList || !template}
-        tooltip={`We'll send you a notification to ${currentUser?.email}`}
+        tooltip={`Trigger a test of this workflow, delivered to: ${testUser.emailAddress} address`}
       />
     </Wrapper>
   );

@@ -6,3 +6,5 @@ export * from './checkbox.recipe';
 export * from './select.recipe';
 export * from './tabs.recipe';
 export * from './modal.recipe';
+export * from './code-block.recipe';
+export * from './loading-overlay.recipe';

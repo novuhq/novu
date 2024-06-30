@@ -4,67 +4,58 @@ import { Button } from '@novu/novui';
 import { css } from '@novu/novui/css';
 import { IconOutlineCable, IconPlayArrow } from '@novu/novui/icons';
 import { Center } from '@novu/novui/jsx';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
-import { bridgeApi } from '../../../../api/bridge/bridge.api';
-import { testTrigger } from '../../../../api/notification-templates';
+import { useParams } from 'react-router-dom';
+import { useWorkflow, useWorkflowTrigger } from '../../../hooks/useBridgeAPI';
 import { When } from '../../../../components/utils/When';
-import { useAuth } from '../../../../hooks/useAuth';
 import { ExecutionDetailsModalWrapper } from '../../../../pages/templates/components/ExecutionDetailsModalWrapper';
 import { WorkflowsPageTemplate, WorkflowsPanelLayout } from '../layout/index';
-import { ToSubscriber, WorkflowTestInputsPanel } from './WorkflowTestInputsPanel';
+import { ToSubscriber, WorkflowTestControlsPanel } from './WorkflowTestControlsPanel';
 import { WorkflowTestTriggerPanel } from './WorkflowTestTriggerPanel';
-import { getTunnelUrl } from '../../../../api/bridge/utils';
 import { showNotification } from '@mantine/notifications';
-import { ROUTES } from '../../../../constants/routes';
 import { useTemplateFetcher } from '../../../../api/hooks/index';
-import { getApiKeys } from '../../../../api/environment';
+import { useSegment } from '../../../../components/providers/SegmentProvider';
+import { useStudioState } from '../../../StudioStateProvider';
+import { testTrigger } from '../../../../api/notification-templates';
+import { useApiKeys } from '../../../../hooks/useNovuAPI';
 
 export const WorkflowsTestPage = () => {
-  const { currentUser, isLoading: isAuthLoading } = useAuth();
+  const segment = useSegment();
+  const { local, testUser } = useStudioState() || {};
   const { templateId = '' } = useParams<{ templateId: string }>();
   const [payload, setPayload] = useState<Record<string, any>>({});
   const [to, setTo] = useState<ToSubscriber>({
     subscriberId: '',
     email: '',
   });
-  const { pathname } = useLocation();
-  const isLocal = useMemo(() => pathname.startsWith(ROUTES.STUDIO), [pathname]);
 
-  const { data: apiKeys = [] } = useQuery<{ key: string }[]>(['getApiKeys'], getApiKeys);
+  const { data: apiKeys = [] } = useApiKeys();
   const key = useMemo(() => apiKeys[0]?.key, [apiKeys]);
 
   const { template, isLoading: isTemplateLoading } = useTemplateFetcher({
-    templateId: isLocal ? undefined : templateId,
+    templateId: local ? undefined : templateId,
   });
-
-  const { data: workflow, isLoading: isWorkflowLoading } = useQuery(
-    ['workflow', templateId],
-    async () => {
-      return bridgeApi.getWorkflow(templateId);
-    },
-    {
-      enabled: isLocal,
-    }
-  );
+  const { mutateAsync: triggerCloudTestEvent, isLoading: isCloudTestLoading } = useMutation(testTrigger);
+  const { data: workflow, isLoading: isWorkflowLoading } = useWorkflow(templateId, { enabled: local });
+  const { trigger, isLoading: isTestLoading } = useWorkflowTrigger();
 
   const isLoading = useMemo(
-    () => (isLocal ? isWorkflowLoading : isTemplateLoading),
-    [isWorkflowLoading, isTemplateLoading, isLocal]
+    () => (local ? isWorkflowLoading : isTemplateLoading),
+    [isWorkflowLoading, isTemplateLoading, local]
   );
 
   useEffect(() => {
-    if (currentUser) {
+    if (testUser) {
       setTo({
-        subscriberId: currentUser._id as string,
-        email: currentUser.email as string,
+        subscriberId: testUser.id,
+        email: testUser.emailAddress,
       });
     }
-  }, [currentUser]);
+  }, [testUser]);
 
   const stepTypes = useMemo(() => {
-    if (isLocal) {
+    if (local) {
       if (!workflow) {
         return [];
       }
@@ -77,27 +68,41 @@ export const WorkflowsTestPage = () => {
     }
 
     return template.steps.map((step) => step.template.type);
-  }, [workflow, isLocal, template]);
+  }, [workflow, local, template]);
 
-  const { mutateAsync: triggerTestEvent, isLoading: isTestLoading } = useMutation(testTrigger);
   const [transactionId, setTransactionId] = useState<string>('');
   const [executionModalOpened, { close: closeExecutionModal, open: openExecutionModal }] = useDisclosure(false);
-  const name = useMemo(
-    () => (isLocal ? workflow.workflowId : template?.triggers[0].identifier),
-    [isLocal, template?.triggers, workflow?.workflowId]
+  const workflowId = useMemo(
+    () => (local ? workflow?.workflowId : template?.triggers[0].identifier),
+    [local, template?.triggers, workflow?.workflowId]
   );
 
   const handleTestClick = async () => {
+    segment.track('Workflow test ran - [Workflows Test Page]', {
+      env: local ? 'local' : 'cloud',
+    });
+
     try {
-      const response = await triggerTestEvent({
-        name,
-        to,
-        payload: {
-          ...payload,
-          __source: 'studio-test-workflow',
-        },
-        bridgeUrl: isLocal ? getTunnelUrl() : undefined,
-      });
+      payload.__source = 'studio-test-workflow';
+
+      let response;
+      if (local) {
+        const bridgeResponse = await trigger({
+          workflowId: workflowId,
+          to,
+          payload,
+        });
+
+        response = bridgeResponse.data;
+      } else {
+        response = await triggerCloudTestEvent({
+          name: workflowId,
+          to,
+          payload: {
+            ...payload,
+          },
+        });
+      }
 
       setTransactionId(response.transactionId || '');
       openExecutionModal();
@@ -118,7 +123,7 @@ export const WorkflowsTestPage = () => {
     }
   };
 
-  if (isAuthLoading || isLoading) {
+  if (local ? isWorkflowLoading : isTemplateLoading) {
     return (
       <Center
         className={css({
@@ -136,20 +141,25 @@ export const WorkflowsTestPage = () => {
       description="Trigger a test run for this workflow"
       icon={<IconOutlineCable size="32" />}
       actions={
-        <Button loading={isTestLoading} Icon={IconPlayArrow} variant="filled" onClick={handleTestClick}>
-          Run a test
+        <Button loading={isTestLoading} Icon={IconPlayArrow} variant="outline" onClick={handleTestClick}>
+          Test workflow
         </Button>
       }
     >
       <WorkflowsPanelLayout>
-        <WorkflowTestTriggerPanel identifier={name} to={to} payload={payload} apiKey={key} />
-        <When truthy={!isAuthLoading && !isLoading}>
-          <WorkflowTestInputsPanel
+        <WorkflowTestTriggerPanel identifier={workflowId} to={to} payload={payload} apiKey={key} />
+        <When truthy={!isLoading}>
+          <WorkflowTestControlsPanel
             onChange={onChange}
-            payloadSchema={workflow?.data?.schema || (template as any)?.rawData?.data.schema}
+            payloadSchema={
+              workflow?.payload?.schema ||
+              workflow?.data?.schema ||
+              (template as any)?.rawData?.payload.schema ||
+              (template as any)?.rawData?.data.schema
+            }
             to={{
-              subscriberId: currentUser?._id as string,
-              email: currentUser?.email as string,
+              subscriberId: testUser?.id || '',
+              email: testUser?.emailAddress || '',
             }}
             stepTypes={stepTypes}
           />

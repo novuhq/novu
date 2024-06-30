@@ -20,13 +20,13 @@ import { transformSchema } from './validators';
  */
 export function workflow<
   T_PayloadSchema extends Schema,
-  T_InputSchema extends Schema,
+  T_ControlSchema extends Schema,
   T_Payload = FromSchema<T_PayloadSchema>,
-  T_Input = FromSchema<T_InputSchema>
+  T_Control = FromSchema<T_ControlSchema>
 >(
   workflowId: string,
-  execute: Execute<T_Payload, T_Input>,
-  workflowOptions?: WorkflowOptions<T_PayloadSchema, T_InputSchema>
+  execute: Execute<T_Payload, T_Control>,
+  workflowOptions?: WorkflowOptions<T_PayloadSchema, T_ControlSchema>
 ): DiscoverWorkflowOutput {
   const options = workflowOptions ? workflowOptions : {};
 
@@ -36,20 +36,31 @@ export function workflow<
       ...options,
       /*
        * TODO: Transformation added for backwards compatibility, remove this additional transform after we
-       * start using `data.schema` and `inputs.schema` in UI.
+       * start using `data.schema` and `control.schema` in UI.
        */
-      inputSchema: transformSchema(options.inputSchema || emptySchema),
+      inputSchema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
+      controlSchema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
       payloadSchema: transformSchema(options.payloadSchema || emptySchema),
     },
     steps: [],
     code: execute.toString(),
+    /** @deprecated */
     data: {
       schema: transformSchema(options.payloadSchema || emptySchema),
       unknownSchema: options.payloadSchema || emptySchema,
     },
+    payload: {
+      schema: transformSchema(options.payloadSchema || emptySchema),
+      unknownSchema: options.payloadSchema || emptySchema,
+    },
+    /** @deprecated */
     inputs: {
-      schema: transformSchema(options.inputSchema || emptySchema),
-      unknownSchema: options.inputSchema || emptySchema,
+      schema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
+      unknownSchema: options.controlSchema || options.inputSchema || emptySchema,
+    },
+    controls: {
+      schema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
+      unknownSchema: options.controlSchema || options.inputSchema || emptySchema,
     },
     execute: execute as Execute<any, any>,
   };
@@ -58,7 +69,7 @@ export function workflow<
     payload: {} as T_Payload,
     subscriber: {},
     environment: {},
-    input: {} as T_Input,
+    controls: {} as T_Control,
     step: {
       push: discoverStepFactory(newWorkflow, 'push', channelStepSchemas.push.output, channelStepSchemas.push.result),
       // eslint-disable-next-line multiline-comment-style
@@ -99,14 +110,18 @@ function discoverStepFactory<T, U>(
   resultSchema: Schema
 ): ActionStep<T, U> {
   return async (stepId, resolve, options = {}) => {
-    const inputSchema = options?.inputSchema || emptySchema;
+    const controlSchema = options?.controlSchema || options?.inputSchema || emptySchema;
 
-    const step = {
+    const step: DiscoverStepOutput = {
       stepId,
       type,
       inputs: {
-        schema: transformSchema(inputSchema),
-        unknownSchema: inputSchema,
+        schema: transformSchema(controlSchema),
+        unknownSchema: controlSchema,
+      },
+      controls: {
+        schema: transformSchema(controlSchema),
+        unknownSchema: controlSchema,
       },
       outputs: {
         schema: transformSchema(outputSchema),
@@ -169,15 +184,19 @@ function discoverProviders(
 
 function discoverCustomStepFactory(targetWorkflow: DiscoverWorkflowOutput, type: StepType): CustomStep {
   return async (stepId, resolve, options = {}) => {
-    const inputSchema = options?.inputSchema || emptySchema;
+    const controlSchema = options?.controlSchema || options?.inputSchema || emptySchema;
     const outputSchema = options?.outputSchema || emptySchema;
 
     discoverStep(targetWorkflow, stepId, {
       stepId,
       type,
       inputs: {
-        schema: transformSchema(inputSchema),
-        unknownSchema: inputSchema,
+        schema: transformSchema(controlSchema),
+        unknownSchema: controlSchema,
+      },
+      controls: {
+        schema: transformSchema(controlSchema),
+        unknownSchema: controlSchema,
       },
       outputs: {
         schema: transformSchema(outputSchema),

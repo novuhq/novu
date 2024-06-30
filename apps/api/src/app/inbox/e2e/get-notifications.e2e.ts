@@ -75,7 +75,7 @@ describe('Get Notifications - /inbox/notifications (GET)', async () => {
       query += `&offset=${offset}`;
     }
     if (tags) {
-      query += tags.map((tag) => `&tags[]s=${tag}`).join('');
+      query += tags.map((tag) => `&tags[]=${tag}`).join('');
     }
     if (typeof read !== 'undefined') {
       query += `&read=${read}`;
