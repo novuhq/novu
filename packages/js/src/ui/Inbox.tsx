@@ -1,5 +1,5 @@
 import type { NovuOptions } from '../novu';
-import { PopoverWithBell } from './components';
+import { BellContainer, Popover } from './components';
 import { Appearance, AppearanceProvider, NovuProvider } from './context';
 import { Localization, LocalizationProvider, useLocalization } from './context/LocalizationContext';
 import { useStyle } from './helpers';
@@ -31,11 +31,20 @@ const InternalInbox = () => {
   return (
     <div class={style('novu', 'root')}>
       <div class="nt-text-2xl nt-font-bold">{t('inbox.title')}</div>
-      <div class="nt-flex nt-gap-4">
-        <PopoverWithBell />
-        <PopoverWithBell />
-        <PopoverWithBell />
-        <PopoverWithBell />
+      <div class="nt-absolute nt-top-1/2 nt-left-1/2 nt-transform -nt-translate-x-1/2 -nt-translate-y-1/2">
+        <div>
+          <Popover>
+            <Popover.Target>
+              <BellContainer />
+            </Popover.Target>
+            <Popover.Content>
+              <div>
+                <h1>Popup</h1>
+                <p>Some text you might need for something or other.</p>
+              </div>
+            </Popover.Content>
+          </Popover>
+        </div>
       </div>
     </div>
   );
