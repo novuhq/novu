@@ -1,4 +1,6 @@
 import { it, describe, beforeEach, expect, vi, afterEach } from 'vitest';
+import { Novu } from '@novu/api';
+
 import { MissingSecretKeyError, WorkflowPayloadInvalidError } from './errors';
 import { workflow } from './workflow';
 
@@ -67,10 +69,12 @@ describe('workflow function', () => {
   describe('trigger', () => {
     beforeEach(() => {
       process.env.NOVU_SECRET_KEY = 'test';
+      process.env.NOVU_BRIDGE_ORIGIN = 'https://acme.org';
     });
 
     afterEach(() => {
       delete process.env.NOVU_SECRET_KEY;
+      delete process.env.NOVU_BRIDGE_ORIGIN;
     });
 
     const testPayloadSchema = {
@@ -100,7 +104,7 @@ describe('workflow function', () => {
         testWorkflow.trigger({
           // @ts-expect-error - foo is missing from the payload
           payload: {},
-          to: 'test@test.com',
+          to: ['test@test.com'],
         });
     });
 
@@ -117,7 +121,7 @@ describe('workflow function', () => {
       await expect(
         testWorkflow.trigger({
           payload: {},
-          to: 'test@test.com',
+          to: ['test@test.com'],
         })
       ).rejects.toThrow(MissingSecretKeyError);
 
@@ -141,61 +145,41 @@ describe('workflow function', () => {
         testWorkflow.trigger({
           // @ts-expect-error - foo is missing from the payload
           payload: {},
-          to: 'test@test.com',
+          to: ['test@test.com'],
         })
-      ).rejects.toThrowError(
-        `Workflow with id: \`test-workflow\` has invalid \`payload\`. Please provide the correct payload`
-      );
+      ).rejects.toThrow(WorkflowPayloadInvalidError);
     });
 
-    it('should make an API call when provided with a valid payload', async () => {
+    it('should call Novu.trigger with bridgeUrl and name when provided with a valid payload', async () => {
       const testWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.custom('custom', async () => ({
           foo: 'bar',
         }));
       });
 
-      const fetchMock = vi.fn().mockResolvedValueOnce({
-        ok: true,
-        json: () => {
-          return Promise.resolve({
-            transactionId: '123',
-          });
-        },
+      const triggerMock = vi.spyOn(Novu.prototype, 'trigger').mockResolvedValue({
+        transactionId: '123',
+        acknowledged: true,
+        status: 'processed',
       });
-      global.fetch = fetchMock;
 
-      const result = await testWorkflow.trigger({
+      const testEvent = {
         payload: {
           foo: 'bar',
         },
-        to: 'test@test.com',
-      });
+        to: ['test@test.com'],
+      };
 
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringMatching('/events/trigger'),
-        expect.objectContaining({
-          body: JSON.stringify({
-            name: 'test-workflow',
-            to: 'test@test.com',
-            payload: {
-              foo: 'bar',
-            },
-          }),
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `ApiKey ${process.env.NOVU_SECRET_KEY}`,
-          },
-          method: 'POST',
-        })
-      );
+      await testWorkflow.trigger(testEvent);
 
-      expect(result.data).toEqual({
-        transactionId: '123',
+      expect(triggerMock).toHaveBeenCalledWith({
+        ...testEvent,
+        bridgeUrl: `${process.env.NOVU_BRIDGE_ORIGIN}/api/novu`,
+        name: 'test-workflow',
       });
     });
 
-    it('should call the correct API endpoint when the trigger is cancelled', async () => {
+    it('should call Novu.events.cancel when the trigger is cancelled', async () => {
       const testWorkflow = workflow('test-workflow', async ({ step }) => {
         await step.custom('custom', async () => ({
           foo: 'bar',
@@ -204,41 +188,23 @@ describe('workflow function', () => {
 
       const mockCancelResult = true;
       const mockTransactionId = '123';
-      const fetchMock = vi.fn().mockImplementation((input: string, init) => {
-        if (input.endsWith(`/events/trigger/${mockTransactionId}`)) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve(mockCancelResult),
-          });
-        } else if (input.endsWith('/events/trigger')) {
-          return Promise.resolve({
-            ok: true,
-            json: () => Promise.resolve({ transactionId: mockTransactionId }),
-          });
-        }
+      vi.spyOn(Novu.prototype, 'trigger').mockResolvedValue({
+        transactionId: mockTransactionId,
+        acknowledged: true,
+        status: 'processed',
       });
-      global.fetch = fetchMock;
+      const cancelMock = vi.spyOn(Novu.prototype.events, 'cancel').mockResolvedValue({ data: mockCancelResult });
 
       const triggerResult = await testWorkflow.trigger({
         payload: {
           foo: 'bar',
         },
-        to: 'test@test.com',
+        to: ['test@test.com'],
       });
 
-      const test = await triggerResult.cancel();
+      await triggerResult.cancel();
 
-      expect(test).toBe(mockCancelResult);
-      expect(fetchMock).toHaveBeenCalledWith(
-        expect.stringMatching(`/events/trigger/${mockTransactionId}`),
-        expect.objectContaining({
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `ApiKey ${process.env.NOVU_SECRET_KEY}`,
-          },
-          method: 'DELETE',
-        })
-      );
+      expect(cancelMock).toHaveBeenCalledWith(mockTransactionId);
     });
   });
 });
