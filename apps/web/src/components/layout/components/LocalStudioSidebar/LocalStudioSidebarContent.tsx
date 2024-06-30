@@ -10,9 +10,9 @@ import { LocalStudioSidebarToggleButton } from './LocalStudioSidebarToggleButton
 import { token } from '@novu/novui/tokens';
 import { DocsButton } from '../../../docs/DocsButton';
 import { css, cx } from '@novu/novui/css';
-import { NavMenuButtonInner, rawButtonBaseStyles } from '../../../nav/NavMenuButton/NavMenuButton.shared';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
 import { WithLoadingSkeleton } from '@novu/novui';
+import { NavMenuButtonInner, rawButtonBaseStyles } from '../../../nav/NavMenuButton/NavMenuButton.shared';
 
 type LocalStudioSidebarContentProps = {
   workflows: IBridgeWorkflow[];
