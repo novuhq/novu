@@ -1,14 +1,16 @@
-import { colors, IconInfoOutline, IconOutlineWarning, Tabs, Tooltip } from '@novu/design-system';
 import { Accordion, Alert, Code, Loader, Paper } from '@mantine/core';
-import { PropsWithChildren, ReactNode, useEffect, useMemo } from 'react';
-import * as mdxBundler from 'mdx-bundler/client';
-import { Highlight } from './Highlight';
-import { useQuery } from '@tanstack/react-query';
-import { useSegment } from '../providers/SegmentProvider';
-import { Center, Flex, Grid, GridItem, styled, VStack } from '@novu/novui/jsx';
+import { Tabs, Tooltip } from '@novu/design-system';
+import { IconInfoOutline, IconOutlineWarning } from '@novu/novui/icons';
 import { css } from '@novu/novui/css';
+import { Flex, Grid, GridItem, styled, VStack } from '@novu/novui/jsx';
 import { text, title as RTitle } from '@novu/novui/recipes';
-import { DOCS_URL, MDX_URL, MINTLIFY_IMAGE_URL } from './docs.const';
+import { token } from '@novu/novui/tokens';
+import * as mdxBundler from 'mdx-bundler/client';
+import { PropsWithChildren, ReactNode, useEffect, useMemo } from 'react';
+import { DOCS_URL, MINTLIFY_IMAGE_URL } from './docs.const';
+import { Highlight } from './Highlight';
+import { DocsQueryResults } from './useLoadDocs';
+import { useEchoTerminalScript } from '../../hooks/useEchoTerminalScript';
 
 const Text = styled('p', text);
 const LiText = styled('span', text);
@@ -20,38 +22,31 @@ const getMDXComponent = mdxBundler.getMDXComponent;
 
 const DOCS_WRAPPER_ELEMENT_ID = 'embedded-docs';
 
+type DocsProps = PropsWithChildren<
+  DocsQueryResults & {
+    isLoading?: boolean;
+    actions: ReactNode;
+  }
+>;
+
 /*
- *Render the mdx for our mintlify docs inside of the web.
- *Fetching the compiled mdx from another service and then try to map the markdown to react components.
+ * Render the mdx for our mintlify docs inside of the web.
+ * Fetching the compiled mdx from another service and then try to map the markdown to react components.
  */
-export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?: string; actions: ReactNode }>) => {
-  const segment = useSegment();
-
-  const { isLoading, data: { code, title, description } = { code: '', title: '', description: '' } } = useQuery<{
-    code: string;
-    title: string;
-    description: string;
-  }>(['docs', path], async () => {
-    const response = await fetch(MDX_URL + path);
-    const json = await response.json();
-
-    return json;
-  });
-
-  useEffect(() => {
-    segment.track('Inline docs opened', {
-      documentationPage: path,
-      pageURL: window.location.href,
-    });
-  }, [path, segment]);
-
+export const Docs = ({ code = '', description = '', title = '', isLoading, children, actions }: DocsProps) => {
   const Component = useMemo(() => {
     if (code.length === 0) {
       return null;
     }
 
-    return getMDXComponent(code);
+    return getMDXComponent(code, {
+      echoterminal: {
+        EchoTerminal: () => <nv-echo-terminal></nv-echo-terminal>,
+      },
+    });
   }, [code]);
+
+  useEchoTerminalScript();
 
   // Workaround for img tags that is not parsed correctly by mdx-bundler
   useEffect(() => {
@@ -79,13 +74,9 @@ export const Docs = ({ path = '', children, actions }: PropsWithChildren<{ path?
 
   if (isLoading) {
     return (
-      <Center
-        className={css({
-          marginTop: '[4rem]',
-        })}
-      >
-        <Loader color={colors.error} size={32} />
-      </Center>
+      <Grid placeContent={'center'} h="full">
+        <Loader color={token('colors.mode.cloud.middle')} size={32} />
+      </Grid>
     );
   }
 

@@ -16,6 +16,9 @@ import { Wrapper } from './components/Wrapper';
 // TODO: This indicates that all onboarding pages for studio should move under the "Studio" folder
 import { useDiscover, useWorkflowPreview } from '../../studio/hooks/useBridgeAPI';
 import { useStudioState } from '../../studio/StudioStateProvider';
+import { Text, Title } from '@novu/novui';
+import { SetupTimeline } from './components/SetupTimeline';
+import { BridgeStatus } from '../../bridgeApi/bridgeApi.client';
 
 export const StudioOnboardingPreview = () => {
   const { testUser } = useStudioState();
@@ -64,7 +67,7 @@ export const StudioOnboardingPreview = () => {
     navigate({
       pathname: ROUTES.STUDIO_ONBOARDING_SUCCESS,
       search: createSearchParams({
-        transactionId: response.transactionId,
+        transactionId: response.data.transactionId,
       }).toString(),
     });
   };
@@ -95,6 +98,19 @@ export const StudioOnboardingPreview = () => {
               paddingTop: '100',
             })}
           >
+            <Title variant="page">Preview your workflow</Title>
+
+            <Text
+              variant="main"
+              color="typography.text.secondary"
+              className={css({
+                marginBottom: '150',
+                marginTop: '50',
+              })}
+            >
+              This is a preview of your sample workflow located in the <code>app/novu/workflows</code> directory. You
+              can edit this file in your IDE and see the email changes reflected here.
+            </Text>
             <Tabs
               withIcon={true}
               value={tab}
@@ -277,7 +293,7 @@ export const StudioOnboardingPreview = () => {
         }}
         loading={isLoading}
         disabled={isLoading || isLoadingList || !template}
-        tooltip={`We'll send you a notification to ${testUser.emailAddress}`}
+        tooltip={`Trigger a test of this workflow, delivered to: ${testUser.emailAddress} address`}
       />
     </Wrapper>
   );

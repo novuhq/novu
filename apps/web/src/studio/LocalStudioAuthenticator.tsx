@@ -3,13 +3,13 @@ import { Center } from '@novu/novui/jsx';
 import { Loader } from '@mantine/core';
 import { colors } from '@novu/design-system';
 import { css } from '@novu/novui/css';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth, useAPIKeys, useEnvironment } from '../hooks';
 import { ROUTES } from '../constants/routes';
+import { assertProtocol } from '../utils/url';
 import { encodeBase64 } from './utils/base64';
 import { StudioState } from './types';
 import { useLocation } from 'react-router-dom';
-
-const ALLOWED_PROTOCOLS = ['http:', 'https:'];
+import { novuOnboardedCookie } from '../utils/cookies';
 
 function buildBridgeURL(origin: string | null, tunnelPath: string) {
   if (!origin) {
@@ -19,31 +19,20 @@ function buildBridgeURL(origin: string | null, tunnelPath: string) {
   return new URL(tunnelPath, origin).href;
 }
 
-function buildStudioURL(state: StudioState) {
-  const url = new URL(ROUTES.STUDIO, window.location.origin);
+function buildStudioURL(state: StudioState, defaultPath?: string | null) {
+  const url = new URL(defaultPath || ROUTES.STUDIO, window.location.origin);
   url.searchParams.append('state', encodeBase64(state));
 
   return url.href;
 }
 
-function assertProtocol(url: URL | string | null) {
-  if (!url) {
-    return;
-  }
-
-  if (typeof url === 'string') {
-    url = new URL(url);
-  }
-
-  if (!ALLOWED_PROTOCOLS.includes(url.protocol)) {
-    throw new Error(`Novu: "${url.protocol}" protocol from "${url}" is not allowed.`);
-  }
-}
-
 export function LocalStudioAuthenticator() {
-  const { currentUser, isUserLoading, redirectToLogin } = useAuth();
+  const { currentUser, isLoading, redirectToLogin, redirectToSignUp, currentOrganization } = useAuth();
   const location = useLocation();
+  const { environment } = useEnvironment();
+  const { apiKey } = useAPIKeys();
 
+  // TODO: Refactor this to a smaller size function
   useEffect(() => {
     const parsedSearchParams = new URLSearchParams(location.search);
 
@@ -59,6 +48,43 @@ export function LocalStudioAuthenticator() {
 
     // Protect against XSS attacks via the javascript: pseudo protocol
     assertProtocol(parsedRedirectURL);
+
+    // Parse the current URL, we will need it later
+    const currentURL = new URL(window.location.href);
+
+    // If the user is not logged in, redirect to the login or signup page
+    if (!currentUser) {
+      // If user is loading, wait for user to be loaded
+      if (!isLoading) {
+        /*
+         * If the user has logged in before, redirect to the login page.
+         * After authentication, redirect back to the this /local-studio/auth path.
+         */
+        if (novuOnboardedCookie.get()) {
+          return redirectToLogin({ redirectURL: window.location.href });
+        }
+
+        /*
+         * If the user hasn't logged in before, redirect to the login page.
+         * After authentication, redirect back to the this /local-studio/auth path and
+         * remember that studio needs to be in onboarding mode.
+         */
+        // currentURL.searchParams.append('studio_path_hint', ROUTES.STUDIO_ONBOARDING);
+
+        return redirectToSignUp({ redirectURL: currentURL.href });
+      }
+
+      return;
+    }
+
+    // Wait for environment and apiKeys to be loaded
+    if (!environment || !apiKey) {
+      return;
+    }
+
+    if (environment.name.toLowerCase() !== 'development') {
+      throw new Error('Local Studio works only with development api keys');
+    }
 
     // Get the local application origin parameter
     const applicationOrigin = parsedSearchParams.get('application_origin');
@@ -87,22 +113,16 @@ export function LocalStudioAuthenticator() {
     const localBridgeURL = buildBridgeURL(parsedApplicationOrigin.origin, tunnelPath);
     const tunnelBridgeURL = buildBridgeURL(tunnelOrigin, tunnelPath);
 
-    if (!currentUser) {
-      if (!isUserLoading) {
-        return redirectToLogin(window.location.href);
-      }
-
-      return;
-    }
-
     const state: StudioState = {
       local: true,
+      devSecretKey: apiKey,
       testUser: {
         id: currentUser._id,
         emailAddress: currentUser.email || '',
       },
       localBridgeURL,
       tunnelBridgeURL,
+      organizationName: currentOrganization?.name || '',
     };
 
     /*
@@ -110,12 +130,15 @@ export function LocalStudioAuthenticator() {
      * the iframe src URL as a search param.
      */
     const finalRedirectURL = new URL(redirectURL);
-    finalRedirectURL.searchParams.append('local_studio_url', buildStudioURL(state));
+    finalRedirectURL.searchParams.append(
+      'local_studio_url',
+      buildStudioURL(state, currentURL.searchParams.get('studio_path_hint'))
+    );
 
     // Redirect to Local Studio server
     window.location.href = finalRedirectURL.href;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser]);
+  }, [currentUser, environment, apiKey]);
 
   return (
     <Center

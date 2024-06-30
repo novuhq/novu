@@ -9,3 +9,19 @@ export function validateURL(url: string, msg = 'The provided URL is invalid'): a
     throw new Error(msg);
   }
 }
+
+const ALLOWED_PROTOCOLS = ['http:', 'https:'];
+
+export function assertProtocol(url: URL | string | null) {
+  if (!url) {
+    return;
+  }
+
+  if (typeof url === 'string') {
+    url = new URL(url);
+  }
+
+  if (!ALLOWED_PROTOCOLS.includes(url.protocol)) {
+    throw new Error(`Novu: "${url.protocol}" protocol from "${url}" is not allowed.`);
+  }
+}

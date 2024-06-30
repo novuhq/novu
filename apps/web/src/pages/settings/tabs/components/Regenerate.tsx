@@ -1,11 +1,11 @@
 import { Group } from '@mantine/core';
 import { Button } from '@novu/design-system';
 
-import { useRegenerateApiKeyModal } from '../../ApiKeysPage/useRegenerateApiKeyModal';
+import { useRegenerateSecretKeyModal } from '../../ApiKeysPage/useRegenerateApiKeyModal';
 import { ConfirmRegenerationModal } from './ConfirmRegenerationModal';
 
 export const Regenerate = () => {
-  const { isOpen, cancelAction, confirmAction, openModal } = useRegenerateApiKeyModal();
+  const { isOpen, cancelAction, confirmAction, openModal } = useRegenerateSecretKeyModal();
 
   return (
     <>

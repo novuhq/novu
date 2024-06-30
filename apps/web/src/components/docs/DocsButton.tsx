@@ -1,7 +1,7 @@
 import { Popover } from '@mantine/core';
 import { ActionButton, Button, IconOutlineMenuBook, QuickGuide, Tooltip } from '@novu/design-system';
 import { useSegment } from '../providers/SegmentProvider';
-import { useEffect, useMemo, useState } from 'react';
+import { ComponentProps, useEffect, useMemo, useState } from 'react';
 import { matchPath, useLocation } from 'react-router-dom';
 import { css } from '@novu/novui/css';
 import { Flex, styled } from '@novu/novui/jsx';
@@ -47,8 +47,10 @@ const DefaultButton = ({ onClick }: { onClick: () => void }) => (
 
 export const DocsButton = ({
   TriggerButton = DefaultButton,
+  tooltip,
 }: {
   TriggerButton?: React.FC<{ onClick: () => void }>;
+  tooltip?: ComponentProps<typeof Tooltip>['label'];
 }) => {
   const [opened, setOpened] = useState<boolean>(false);
   const segment = useSegment();
@@ -100,7 +102,7 @@ export const DocsButton = ({
 
   return (
     <>
-      <Tooltip disabled={opened} position="bottom" label="Inline documentation">
+      <Tooltip disabled={opened} position="bottom" label={tooltip ?? 'Inline documentation'}>
         <div>
           <Popover
             closeOnClickOutside={false}
@@ -152,7 +154,7 @@ export const DocsButton = ({
         </div>
       </Tooltip>
       {/* TODO: extract the Modal root out when modal management is improved */}
-      <DocsModal open={docsOpen} toggle={toggle} path={path} />
+      {docsOpen && <DocsModal open={docsOpen} toggle={toggle} path={path} />}
     </>
   );
 };

@@ -877,6 +877,9 @@ importers:
       html-webpack-plugin:
         specifier: 5.5.3
         version: 5.5.3(webpack@5.78.0(@swc/core@1.3.107(@swc/helpers@0.5.2))(esbuild@0.18.20))
+      js-cookie:
+        specifier: ^3.0.5
+        version: 3.0.5
       jwt-decode:
         specifier: ^3.1.2
         version: 3.1.2
@@ -1064,6 +1067,9 @@ importers:
       '@testing-library/jest-dom':
         specifier: ^4.2.4
         version: 4.2.4
+      '@types/js-cookie':
+        specifier: ^3.0.6
+        version: 3.0.6
       '@types/mixpanel-browser':
         specifier: ^2.49.0
         version: 2.49.0
@@ -3227,18 +3233,12 @@ importers:
       jwt-decode:
         specifier: ^3.1.2
         version: 3.1.2
-      localtunnel:
-        specifier: ^2.0.2
-        version: 2.0.2
       open:
         specifier: ^8.4.0
         version: 8.4.2
       ora:
         specifier: ^5.4.1
         version: 5.4.1
-      ts-node:
-        specifier: ~10.9.1
-        version: 10.9.1(@swc/core@1.3.107)(@types/node@20.14.2)(typescript@4.9.5)
       uuid:
         specifier: ^9.0.0
         version: 9.0.0
@@ -3264,9 +3264,15 @@ importers:
       nodemon:
         specifier: ^3.0.1
         version: 3.0.1
+      ts-node:
+        specifier: ~10.9.1
+        version: 10.9.1(@swc/core@1.3.107)(@types/node@20.14.2)(typescript@4.9.5)
       typescript:
         specifier: 4.9.5
         version: 4.9.5
+      vitest:
+        specifier: ^1.2.1
+        version: 1.2.1(@edge-runtime/vm@3.0.3)(@types/node@20.14.2)(jsdom@24.0.0)(less@4.1.3)(lightningcss@1.23.0)(sass@1.64.1)(sugarss@4.0.1(postcss@8.4.38))(terser@5.22.0)
 
   packages/cli-next:
     dependencies:
@@ -3464,6 +3470,9 @@ importers:
 
   packages/framework:
     dependencies:
+      '@novu/shared':
+        specifier: workspace:*
+        version: link:../../libs/shared
       ajv:
         specifier: ^8.12.0
         version: 8.12.0
@@ -15167,6 +15176,9 @@ packages:
   '@types/jest@29.5.2':
     resolution: {integrity: sha512-mSoZVJF5YzGVCk+FsDxzDuH7s+SCkzrgKZzf0Z0T2WudhBUPoF6ktoTPC4R0ZoCPCV5xUvuU6ias5NvxcBcMMg==}
 
+  '@types/js-cookie@3.0.6':
+    resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
+
   '@types/jsdom@20.0.1':
     resolution: {integrity: sha512-d0r18sZPmMQr1eG35u12FZfhIXNrnsPU/g5wvRKCUf/tOGilKKwYMYGqh33BNR6ba+2gkHw1EUiHoN3mn7E5IQ==}
 
@@ -18834,15 +18846,6 @@ packages:
 
   debug@4.3.1:
     resolution: {integrity: sha512-doEwdvm4PCeK4K3RQN2ZC2BYUBaxwLARCqZmMjtF8a51J2Rb0xpVloFRnCODwqjpwnAoao4pelN8l3RJdv3gRQ==}
-    engines: {node: '>=6.0'}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-
-  debug@4.3.2:
-    resolution: {integrity: sha512-mOp8wKcvj7XxC78zLgw/ZA+6TSgkoE2C/ienthhRD298T7UNwAg9diBpLRxC0mOezLl4B0xV7M0cCO6P/O0Xhw==}
     engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
@@ -22901,6 +22904,10 @@ packages:
     resolution: {integrity: sha512-+0rgsUXZu4ncpPxRL+lNEptWMOWl9etvPHc/koSRp6MPwpRYAhmk0dUG00J4bxVV3r9uUzfo24wW0knS07SKSw==}
     engines: {node: '>=12'}
 
+  js-cookie@3.0.5:
+    resolution: {integrity: sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw==}
+    engines: {node: '>=14'}
+
   js-sdsl@4.4.0:
     resolution: {integrity: sha512-FfVSdx6pJ41Oa+CF7RDaFmTnCaFhua+SNYQX74riGOpl96x+2jQCqEfQ2bnXu/5DPCqlRuiqyvTJM0Qjz26IVg==}
 
@@ -23505,11 +23512,6 @@ packages:
 
   localforage@1.10.0:
     resolution: {integrity: sha512-14/H1aX7hzBBmmh7sGPd+AOMkkIrHM3Z1PAyGgZigA1H1p5O5ANnMyWzvpAETtG68/dC4pC0ncy3+PPGzXZHPg==}
-
-  localtunnel@2.0.2:
-    resolution: {integrity: sha512-n418Cn5ynvJd7m/N1d9WVJISLJF/ellZnfsLnx8WBWGzxv/ntNcFkJ1o6se5quUhCplfLGBNL5tYHiq5WF3Nug==}
-    engines: {node: '>=8.3.0'}
-    hasBin: true
 
   locate-character@3.0.0:
     resolution: {integrity: sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA==}
@@ -25385,9 +25387,6 @@ packages:
   opentracing@0.14.7:
     resolution: {integrity: sha512-vz9iS7MJ5+Bp1URw8Khvdyw1H/hGvzHWlKQ7eRrQojSCDL1/SrWfrY9QebLw97n2deyRtzHRC3MkQfVNUCo91Q==}
     engines: {node: '>=0.10'}
-
-  openurl@1.1.1:
-    resolution: {integrity: sha512-d/gTkTb1i1GKz5k3XE3XFV/PxQ1k45zDqGP2OA7YhgsaLoqm6qRvARAZOFer1fcXritWlGBRCu/UgeS4HAnXAA==}
 
   optimism@0.10.3:
     resolution: {integrity: sha512-9A5pqGoQk49H6Vhjb9kPgAeeECfUDF6aIICbMDL23kDLStBn1MWk3YvcZ4xWF9CsSf6XEgvRLkXy4xof/56vVw==}
@@ -31801,10 +31800,6 @@ packages:
   yargs@16.2.0:
     resolution: {integrity: sha512-D1mvvtDG0L5ft/jGWkLpG1+m0eQxOfaBvTNELraWj22wSVUMWxZUvYgJYcKh6jGGIkJFhH4IZPQhR4TKpc8mBw==}
     engines: {node: '>=10'}
-
-  yargs@17.1.1:
-    resolution: {integrity: sha512-c2k48R0PwKIqKhPMWjeiF6y2xY/gPMUlro0sgxqXpbOIohWiLNXWslsootttv7E1e73QPAMQSg5FeySbVcpsPQ==}
-    engines: {node: '>=12'}
 
   yargs@17.3.1:
     resolution: {integrity: sha512-WUANQeVgjLbNsEmGk20f+nlHgOqzRFpiGWVaBrYGYIGANIIu3lWjoyi0fNlFmJkvfhCZ6BXINe7/W2O2bV4iaA==}
@@ -41362,7 +41357,7 @@ snapshots:
 
   '@mailchimp/mailchimp_transactional@1.0.50':
     dependencies:
-      axios: 0.21.4(debug@4.3.2)
+      axios: 0.21.4
     transitivePeerDependencies:
       - debug
 
@@ -50912,6 +50907,8 @@ snapshots:
       expect: 29.7.0
       pretty-format: 29.7.0
 
+  '@types/js-cookie@3.0.6': {}
+
   '@types/jsdom@20.0.1':
     dependencies:
       '@types/node': 14.18.42
@@ -51306,7 +51303,7 @@ snapshots:
 
   '@types/testing-library__jest-dom@5.14.5':
     dependencies:
-      '@types/jest': 29.5.2
+      '@types/jest': 29.5.12
 
   '@types/through@0.0.30':
     dependencies:
@@ -53621,15 +53618,15 @@ snapshots:
       '@babel/runtime': 7.23.2
       is-retry-allowed: 2.2.0
 
-  axios@0.21.4(debug@4.3.2):
+  axios@0.21.4:
     dependencies:
-      follow-redirects: 1.15.6(debug@4.3.2)
+      follow-redirects: 1.15.6(debug@4.3.4)
     transitivePeerDependencies:
       - debug
 
   axios@0.26.1:
     dependencies:
-      follow-redirects: 1.15.5
+      follow-redirects: 1.15.6(debug@4.3.4)
     transitivePeerDependencies:
       - debug
 
@@ -53643,7 +53640,7 @@ snapshots:
 
   axios@1.1.3:
     dependencies:
-      follow-redirects: 1.15.6(debug@4.3.2)
+      follow-redirects: 1.15.6(debug@4.3.4)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -53667,7 +53664,7 @@ snapshots:
 
   axios@1.6.8:
     dependencies:
-      follow-redirects: 1.15.6(debug@4.3.2)
+      follow-redirects: 1.15.6(debug@4.3.4)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -56373,10 +56370,6 @@ snapshots:
     optionalDependencies:
       supports-color: 8.1.1
 
-  debug@4.3.2:
-    dependencies:
-      ms: 2.1.2
-
   debug@4.3.3:
     dependencies:
       ms: 2.1.2
@@ -58828,10 +58821,6 @@ snapshots:
 
   follow-redirects@1.15.5: {}
 
-  follow-redirects@1.15.6(debug@4.3.2):
-    optionalDependencies:
-      debug: 4.3.2
-
   follow-redirects@1.15.6(debug@4.3.4):
     optionalDependencies:
       debug: 4.3.4(supports-color@8.1.1)
@@ -60278,7 +60267,7 @@ snapshots:
   http-proxy@1.18.1:
     dependencies:
       eventemitter3: 4.0.7
-      follow-redirects: 1.15.5
+      follow-redirects: 1.15.6(debug@4.3.4)
       requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
@@ -62663,7 +62652,7 @@ snapshots:
       '@babel/core': 7.24.4
       '@babel/generator': 7.24.4
       '@babel/plugin-syntax-jsx': 7.22.5(@babel/core@7.24.4)
-      '@babel/plugin-syntax-typescript': 7.22.5(@babel/core@7.24.4)
+      '@babel/plugin-syntax-typescript': 7.24.7(@babel/core@7.24.4)
       '@babel/types': 7.24.5
       '@jest/expect-utils': 29.7.0
       '@jest/transform': 29.7.0
@@ -63043,6 +63032,8 @@ snapshots:
       nopt: 6.0.0
 
   js-cookie@3.0.1: {}
+
+  js-cookie@3.0.5: {}
 
   js-sdsl@4.4.0: {}
 
@@ -63689,7 +63680,7 @@ snapshots:
     dependencies:
       copy-anything: 2.0.6
       parse-node-version: 1.0.1
-      tslib: 2.5.0
+      tslib: 2.6.2
     optionalDependencies:
       errno: 0.1.8
       graceful-fs: 4.2.11
@@ -63936,15 +63927,6 @@ snapshots:
   localforage@1.10.0:
     dependencies:
       lie: 3.1.1
-
-  localtunnel@2.0.2:
-    dependencies:
-      axios: 0.21.4(debug@4.3.2)
-      debug: 4.3.2
-      openurl: 1.1.1
-      yargs: 17.1.1
-    transitivePeerDependencies:
-      - supports-color
 
   locate-character@3.0.0: {}
 
@@ -66882,8 +66864,6 @@ snapshots:
 
   opentracing@0.14.7: {}
 
-  openurl@1.1.1: {}
-
   optimism@0.10.3:
     dependencies:
       '@wry/context': 0.4.4
@@ -67612,7 +67592,7 @@ snapshots:
   plivo@4.60.1:
     dependencies:
       '@types/node': 14.18.42
-      axios: 0.21.4(debug@4.3.2)
+      axios: 0.21.4
       base-64: 0.1.0
       build-url: 1.3.3
       form-data: 4.0.0
@@ -76231,16 +76211,6 @@ snapshots:
       yargs-parser: 18.1.3
 
   yargs@16.2.0:
-    dependencies:
-      cliui: 7.0.4
-      escalade: 3.1.2
-      get-caller-file: 2.0.5
-      require-directory: 2.1.1
-      string-width: 4.2.3
-      y18n: 5.0.8
-      yargs-parser: 20.2.9
-
-  yargs@17.1.1:
     dependencies:
       cliui: 7.0.4
       escalade: 3.1.2

@@ -14,6 +14,8 @@ function useBridgeAPI() {
   return useMemo(() => buildBridgeHTTPClient(bridgeURL), [bridgeURL]);
 }
 
+const BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS = 3 * 1000;
+
 export const useDiscover = (options?: any) => {
   const api = useBridgeAPI();
 
@@ -25,8 +27,6 @@ export const useDiscover = (options?: any) => {
     options
   );
 };
-
-const BRIDGE_STATUS_REFRESH_INTERVAL_IN_MS = 5 * 1000;
 
 export const useHealthCheck = (options?: any) => {
   const api = useBridgeAPI();
@@ -91,7 +91,7 @@ export const useWorkflowTrigger = () => {
 
   const bridgeUrl = state.local ? state.tunnelBridgeURL : state.storedBridgeURL;
 
-  async function trigger(params: TriggerParams) {
+  async function trigger(params: TriggerParams): Promise<{ data: { transactionId: string } }> {
     return mutateAsync({ ...params, bridgeUrl });
   }
 

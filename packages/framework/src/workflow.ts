@@ -44,10 +44,16 @@ export function workflow<
     },
     steps: [],
     code: execute.toString(),
+    /** @deprecated */
     data: {
       schema: transformSchema(options.payloadSchema || emptySchema),
       unknownSchema: options.payloadSchema || emptySchema,
     },
+    payload: {
+      schema: transformSchema(options.payloadSchema || emptySchema),
+      unknownSchema: options.payloadSchema || emptySchema,
+    },
+    /** @deprecated */
     inputs: {
       schema: transformSchema(options.controlSchema || options.inputSchema || emptySchema),
       unknownSchema: options.controlSchema || options.inputSchema || emptySchema,

@@ -3,8 +3,7 @@ import { cva, cx, type RecipeVariant } from '@novu/novui/css';
 import { hstack } from '@novu/novui/patterns';
 import { SystemStyleObject } from '@novu/novui/types';
 import { type ForwardedRef, forwardRef } from 'react';
-
-export type ConnectionStatus = 'connected' | 'disconnected' | 'loading';
+import { ConnectionStatus } from '../../../../studio/types';
 
 const CONNECTION_STATUS_LABEL_LOOKUP: Record<ConnectionStatus, LocalizedMessage> = {
   connected: 'Connected',

@@ -64,7 +64,7 @@ npm install @novu/node
 ```ts
 import { Novu } from '@novu/node';
 
-const novu = new Novu(process.env.NOVU_API_KEY);
+const novu = new Novu(process.env.NOVU_SECRET_KEY);
 
 await novu.trigger('<TRIGGER_NAME>', {
   to: {
@@ -77,7 +77,7 @@ await novu.trigger('<TRIGGER_NAME>', {
     name: 'Hello World',
     organization: {
       logo: 'https://happycorp.com/logo.png',
-    }
+    },
   },
 });
 ```
@@ -124,14 +124,14 @@ Novu provides a single API to manage providers across multiple channels with a s
 - [ ] Bandwidth
 - [ ] RingCentral
 
-#### 📱 Push 
+#### 📱 Push
 
 - [x] [FCM](https://github.com/novuhq/novu/tree/main/providers/fcm)
 - [x] [Expo](https://github.com/novuhq/novu/tree/main/providers/expo)
 - [ ] [SNS](https://github.com/novuhq/novu/tree/main/providers/sns)
 - [ ] Pushwoosh
 
-#### 👇 Chat 
+#### 👇 Chat
 
 - [x] [Slack](https://github.com/novuhq/novu/tree/main/providers/slack)
 - [x] [Discord](https://github.com/novuhq/novu/tree/main/providers/discord)

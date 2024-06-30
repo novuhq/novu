@@ -12,9 +12,9 @@ import {
   SIGNATURE_TIMESTAMP_TOLERANCE,
 } from './constants';
 import {
-  NovuError,
   InvalidActionError,
   MethodNotAllowedError,
+  NovuError,
   PlatformError,
   SignatureExpiredError,
   SignatureInvalidError,
@@ -22,8 +22,9 @@ import {
   SignatureNotFoundError,
   SigningKeyNotFoundError,
 } from './errors';
-import { Awaitable, DiscoverWorkflowOutput } from './types';
 import { FRAMEWORK_VERSION, SDK_VERSION } from './version';
+import { Awaitable, DiscoverWorkflowOutput, TriggerEvent } from './types';
+import { initApiClient } from './utils';
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export interface ServeHandlerOptions {
@@ -61,13 +62,14 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   public readonly handler: Handler<Input, Output>;
 
   public readonly client: Client;
-
   private readonly hmacEnabled: boolean;
+  private readonly http;
 
   constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
     this.client = options.client ? options.client : new Client();
     this.client.addWorkflows(options.workflows);
+    this.http = initApiClient(this.client.secretKey as string);
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.strictAuthentication;
   }
@@ -181,6 +183,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     source: string
   ): Record<PostActionEnum, () => Promise<IActionResponse>> {
     return {
+      [PostActionEnum.TRIGGER]: this.triggerAction({ workflowId, ...body }),
       [PostActionEnum.EXECUTE]: async () => {
         const result = await this.client.executeWorkflow({
           ...body,
@@ -201,6 +204,25 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
 
         return this.createResponse(HttpStatusEnum.OK, result);
       },
+    };
+  }
+
+  public triggerAction(triggerEvent: TriggerEvent) {
+    return async () => {
+      const requestPayload = {
+        name: triggerEvent.workflowId,
+        to: triggerEvent.to,
+        payload: triggerEvent?.payload || {},
+        transactionId: triggerEvent.transactionId,
+        overrides: triggerEvent.overrides || {},
+        ...(triggerEvent.actor && { actor: triggerEvent.actor }),
+        ...(triggerEvent.tenant && { tenant: triggerEvent.tenant }),
+        ...(triggerEvent.bridgeUrl && { bridgeUrl: triggerEvent.bridgeUrl }),
+      };
+
+      const result = await this.http.post('/events/trigger', requestPayload);
+
+      return this.createResponse(HttpStatusEnum.OK, result);
     };
   }
 
@@ -251,7 +273,10 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   }
 
   private isClientError(error: unknown): error is NovuError {
-    return Object.values(ErrorCodeEnum).includes((error as NovuError).code);
+    const frameworkThrow = Object.values(ErrorCodeEnum).includes((error as NovuError).code);
+    const externalApiThrow = isBadRequest(error);
+
+    return frameworkThrow || externalApiThrow;
   }
 
   private handleError(error: unknown): IActionResponse {
@@ -276,7 +301,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SignatureNotFoundError();
     }
 
-    if (!this.client.apiKey) {
+    if (!this.client.secretKey) {
       throw new SigningKeyNotFoundError();
     }
 
@@ -293,7 +318,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SignatureExpiredError();
     }
 
-    const localHash = this.hashHmac(this.client.apiKey as string, `${timestampPayload}.${JSON.stringify(payload)}`);
+    const localHash = this.hashHmac(this.client.secretKey as string, `${timestampPayload}.${JSON.stringify(payload)}`);
 
     const isMatching = localHash === signaturePayload;
 
@@ -302,7 +327,11 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
-  private hashHmac(apiKey: string, data: string): string {
-    return createHmac('sha256', apiKey).update(data).digest('hex');
+  private hashHmac(secretKey: string, data: string): string {
+    return createHmac('sha256', secretKey).update(data).digest('hex');
   }
+}
+
+function isBadRequest(error: unknown) {
+  return (error as NovuError)?.statusCode >= 400 && (error as NovuError)?.statusCode < 500;
 }

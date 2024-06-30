@@ -44,6 +44,14 @@ export function getTokenClaims(): IJwtClaims | null {
   return token ? jwtDecode<IJwtClaims>(token) : null;
 }
 
+function inIframe() {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
+}
+
 export function useAuth() {
   const ldClient = useLDClient();
   const segment = useSegment();
@@ -57,7 +65,7 @@ export function useAuth() {
   const hasToken = !!getToken();
 
   useEffect(() => {
-    if (!getToken() && inPrivateRoute) {
+    if (!getToken() && inPrivateRoute && !inIframe()) {
       navigate(ROUTES.AUTH_LOGIN, { state: { redirectTo: location } });
     }
   }, [navigate, inPrivateRoute, location]);
@@ -107,9 +115,25 @@ export function useAuth() {
     navigate(ROUTES.AUTH_LOGIN);
   }, [navigate, queryClient, segment]);
 
+  const redirectTo = useCallback(({ url, redirectURL }: { url: string; redirectURL?: string }) => {
+    const finalURL = new URL(url, window.location.origin);
+
+    if (redirectURL) {
+      finalURL.searchParams.append('redirect_url', redirectURL);
+    }
+
+    // Note: Do not use react-router-dom. The version we have doesn't do instant cross origin redirects.
+    window.location.replace(finalURL.href);
+  }, []);
+
   const redirectToLogin = useCallback(
-    (redirectUrl?: string) => navigate(`${ROUTES.AUTH_LOGIN}?redirect_url=${redirectUrl}`),
-    [navigate]
+    ({ redirectURL }: { redirectURL?: string } = {}) => redirectTo({ url: ROUTES.AUTH_LOGIN, redirectURL }),
+    [redirectTo]
+  );
+
+  const redirectToSignUp = useCallback(
+    ({ redirectURL }: { redirectURL?: string } = {}) => redirectTo({ url: ROUTES.AUTH_SIGNUP, redirectURL }),
+    [redirectTo]
   );
 
   const { organizationId, environmentId } = getTokenClaims() || {};
@@ -161,9 +185,7 @@ export function useAuth() {
   return {
     inPublicRoute,
     inPrivateRoute,
-    isUserLoading,
-    isOrganizationLoading,
-    isLoading: inPrivateRoute && (isUserLoading || isOrganizationLoading),
+    isLoading: hasToken && (isUserLoading || isOrganizationLoading),
     currentUser: user,
     organizations,
     currentOrganization,
@@ -172,5 +194,6 @@ export function useAuth() {
     environmentId,
     organizationId,
     redirectToLogin,
+    redirectToSignUp,
   };
 }

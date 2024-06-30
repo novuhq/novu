@@ -5,7 +5,7 @@ export const defaultVariables: Required<Variables> = {
   colorPrimaryForeground: 'white',
   colorSecondary: '#F3F3F3',
   colorSecondaryForeground: '#1A1523',
-  colorBackground: '#FFFFFF',
+  colorBackground: '#FCFCFC',
   colorForeground: '#1A1523',
   colorNeutral: 'black',
   fontSize: 'inherit',

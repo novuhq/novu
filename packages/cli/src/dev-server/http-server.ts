@@ -9,7 +9,7 @@ export const STUDIO_PATH = '/studio';
 import { DevCommandOptions } from '../commands';
 
 export type DevServerOptions = { tunnelOrigin: string } & Partial<
-  Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'studioRemoteOrigin' | 'endpointRoute'>
+  Pick<DevCommandOptions, 'origin' | 'port' | 'studioPort' | 'dashboardUrl' | 'route'>
 >;
 
 export class DevServer {
@@ -19,8 +19,7 @@ export class DevServer {
   constructor(private options: DevServerOptions) {}
 
   public async listen(): Promise<void> {
-    const port = await getPort({ port: Number(this.options.studioPort) });
-
+    const port = await getPort({ host: SERVER_HOST, port: Number(this.options.studioPort) });
     this.server = http.createServer();
     this.server.on('request', async (req, res) => {
       try {
@@ -28,6 +27,12 @@ export class DevServer {
           this.serveWellKnownPath(req, res);
         } else if (req.url.startsWith(STUDIO_PATH)) {
           this.serveStudio(req, res);
+        } else {
+          res
+            .writeHead(301, {
+              Location: STUDIO_PATH,
+            })
+            .end();
         }
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -62,7 +67,6 @@ export class DevServer {
   }
 
   private serveStudio(req: http.IncomingMessage, res: http.ServerResponse) {
-    const { origin, studioRemoteOrigin, tunnelOrigin } = this.options;
     const studioHTML = `
     <html>
       <head>
@@ -70,11 +74,11 @@ export class DevServer {
       </head>
       <body style="padding: 0; margin: 0;">
         <script>
-          const NOVU_CLOUD_STUDIO_ORIGIN = '${studioRemoteOrigin}';
+          const NOVU_CLOUD_STUDIO_ORIGIN = '${this.options.dashboardUrl}';
 
           function injectIframe(src) {
             const iframe = window.document.createElement('iframe');
-            iframe.sandbox = 'allow-forms allow-scripts allow-modals allow-same-origin'
+            iframe.sandbox = 'allow-forms allow-scripts allow-modals allow-same-origin allow-popups'
             iframe.style = 'width: 100%; height: 100vh; border: none;';
             iframe.setAttribute('src', src);
             document.body.appendChild(iframe);
@@ -85,9 +89,9 @@ export class DevServer {
             // Replace the local tunnel with Novu Web Dashboard on build time.
             const url = new URL('/local-studio/auth', NOVU_CLOUD_STUDIO_ORIGIN);
             url.searchParams.set('redirect_url', window.location.href);
-            url.searchParams.set('application_origin', '${origin}');
+            url.searchParams.set('application_origin', '${this.options.origin}');
             url.searchParams.set('tunnel_origin', '${this.options.tunnelOrigin}');
-            url.searchParams.set('tunnel_route', '${this.options.endpointRoute}');
+            url.searchParams.set('tunnel_route', '${this.options.route}');
 
             window.location.href = url.href;
           }

@@ -47,10 +47,16 @@ export type DiscoverWorkflowOutput = {
   options: WorkflowOptions<unknown, unknown>;
   code: string;
   steps: Array<DiscoverStepOutput>;
+  payload: {
+    schema: JsonSchema;
+    unknownSchema: Schema;
+  };
+  /** @deprecated */
   data: {
     schema: JsonSchema;
     unknownSchema: Schema;
   };
+  /** @deprecated */
   inputs: {
     schema: JsonSchema;
     unknownSchema: Schema;

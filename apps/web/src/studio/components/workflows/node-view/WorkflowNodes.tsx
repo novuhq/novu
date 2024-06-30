@@ -13,11 +13,13 @@ import {
   IconType,
 } from '@novu/novui/icons';
 import { BridgeWorkflowStepType } from '../../../types';
+import { WorkflowBackgroundWrapper } from './WorkflowBackgroundWrapper';
 
 export interface WorkflowNodesProps {
   // TODO: add proper types
   steps: any[];
-  onClick: (step: any) => void;
+  onStepClick: (step: any) => void;
+  onTriggerClick: () => void;
 }
 
 export const WORKFLOW_NODE_STEP_ICON_DICTIONARY: Record<BridgeWorkflowStepType, IconType> = {
@@ -33,14 +35,18 @@ export const WORKFLOW_NODE_STEP_ICON_DICTIONARY: Record<BridgeWorkflowStepType, 
 
 const STEP_TYPE_ICON_SIZE: IconSize = '32';
 
-export function WorkflowNodes({ steps, onClick }: WorkflowNodesProps) {
+export function WorkflowNodes({ steps, onStepClick, onTriggerClick }: WorkflowNodesProps) {
   return (
     <>
       <VStack gap="0">
-        <StepNode icon={<IconOutlineBolt size={STEP_TYPE_ICON_SIZE} />} title={'Workflow trigger'} />
-        {steps?.map((step, index) => {
+        <StepNode
+          icon={<IconOutlineBolt size={STEP_TYPE_ICON_SIZE} />}
+          title={'Workflow trigger'}
+          onClick={onTriggerClick}
+        />
+        {steps?.map((step) => {
           const handleStepClick = () => {
-            onClick(step);
+            onStepClick(step);
           };
 
           const Icon = WORKFLOW_NODE_STEP_ICON_DICTIONARY[step.type];
@@ -58,3 +64,15 @@ export function WorkflowNodes({ steps, onClick }: WorkflowNodesProps) {
     </>
   );
 }
+
+WorkflowNodes.LoadingDisplay = () => {
+  return (
+    <WorkflowBackgroundWrapper>
+      <VStack gap="0" p="75">
+        <StepNode.LoadingDisplay />
+        <StepNode.LoadingDisplay />
+        <StepNode.LoadingDisplay />
+      </VStack>
+    </WorkflowBackgroundWrapper>
+  );
+};

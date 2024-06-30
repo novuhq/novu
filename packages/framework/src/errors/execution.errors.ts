@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { ErrorCodeEnum } from '../constants';
+import { ErrorCodeEnum, HttpStatusEnum } from '../constants';
 import { BadRequestError } from './base.errors';
 
 export class ExecutionStateCorruptError extends BadRequestError {
@@ -13,11 +13,11 @@ export class ExecutionStateCorruptError extends BadRequestError {
   }
 }
 
-export class ExecutionEventDataInvalidError extends BadRequestError {
-  code = ErrorCodeEnum.EXECUTION_EVENT_DATA_INVALID_ERROR;
+export class ExecutionEventPayloadInvalidError extends BadRequestError {
+  code = ErrorCodeEnum.EXECUTION_EVENT_PAYLOAD_INVALID_ERROR;
 
   constructor(workflowId: string, data: any) {
-    super(`Workflow with id: \`${workflowId}\` has invalid \`data\`. Please provide the correct event data.`);
+    super(`Workflow with id: \`${workflowId}\` has invalid \`payload\`. Please provide the correct event payload.`);
     this.data = data;
   }
 }
@@ -72,5 +72,28 @@ export class ExecutionProviderOutputInvalidError extends BadRequestError {
       `Workflow with id: \`${workflowId}\` has an invalid state. Step with id: \`${stepId}\` and provider with id: \`${providerId}\` has invalid output. Please provide the correct provider output.`
     );
     this.data = data;
+  }
+}
+
+export class UnknownError extends Error {
+  /**
+   * HTTP status code.
+   */
+  public readonly statusCode: HttpStatusEnum;
+
+  /**
+   * Additional data that can be used to provide more information about the error.
+   */
+  public message: any;
+
+  /**
+   * The error code, which is used to identify the error type.
+   */
+  public readonly code: ErrorCodeEnum;
+
+  constructor(statusCode: HttpStatusEnum, code: ErrorCodeEnum, message: any) {
+    super(message);
+    this.statusCode = statusCode;
+    this.code = code;
   }
 }

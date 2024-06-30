@@ -13,7 +13,7 @@ describe('validators', () => {
         zod: ZodSchema;
         json: JsonSchema;
       };
-      data: Record<string, any>;
+      payload: Record<string, any>;
       result: {
         success: boolean;
         data?: Record<string, any>;
@@ -30,7 +30,7 @@ describe('validators', () => {
           zod: z.object({ name: z.string() }),
           json: { type: 'object', properties: { name: { type: 'string' } } } as const,
         },
-        data: { name: 'John' },
+        payload: { name: 'John' },
         result: {
           success: true,
           data: { name: 'John' },
@@ -42,7 +42,7 @@ describe('validators', () => {
           zod: z.object({ name: z.string() }),
           json: { type: 'object', properties: { name: { type: 'string' } } } as const,
         },
-        data: { name: 'John', age: 30 },
+        payload: { name: 'John', age: 30 },
         result: {
           success: true,
           data: { name: 'John' },
@@ -54,7 +54,7 @@ describe('validators', () => {
           zod: z.object({ name: z.string() }),
           json: { type: 'object', properties: { name: { type: 'string' } } } as const,
         },
-        data: { name: 123 },
+        payload: { name: 123 },
         result: {
           success: false,
           errors: {
@@ -76,7 +76,7 @@ describe('validators', () => {
             },
           } as const,
         },
-        data: { name: 'John', nested: { age: 30 } },
+        payload: { name: 'John', nested: { age: 30 } },
         result: {
           success: true,
           data: { name: 'John', nested: { age: 30 } },
@@ -94,7 +94,7 @@ describe('validators', () => {
             },
           } as const,
         },
-        data: { name: 'John', nested: { age: '30' } },
+        payload: { name: 'John', nested: { age: '30' } },
         result: {
           success: false,
           errors: {
@@ -109,7 +109,7 @@ describe('validators', () => {
       return describe(`using ${schema}`, () => {
         testCases.forEach((testCase) => {
           it(testCase.title, async () => {
-            const result = await validateData(testCase.schemas[schema], testCase.data);
+            const result = await validateData(testCase.schemas[schema], testCase.payload);
             expect(result).toEqual({
               success: testCase.result.success,
               data: testCase.result.data,

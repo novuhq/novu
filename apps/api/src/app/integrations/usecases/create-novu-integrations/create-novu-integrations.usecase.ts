@@ -5,7 +5,7 @@ import { areNovuEmailCredentialsSet, areNovuSmsCredentialsSet } from '@novu/appl
 import { CreateNovuIntegrationsCommand } from './create-novu-integrations.command';
 import { CreateIntegration } from '../create-integration/create-integration.usecase';
 import { CreateIntegrationCommand } from '../create-integration/create-integration.command';
-import { ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, EmailProviderIdEnum, InAppProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
 import { SetIntegrationAsPrimary } from '../set-integration-as-primary/set-integration-as-primary.usecase';
 import { SetIntegrationAsPrimaryCommand } from '../set-integration-as-primary/set-integration-as-primary.command';
 
@@ -89,8 +89,32 @@ export class CreateNovuIntegrations {
     }
   }
 
+  private async createInAppIntegration(command: CreateNovuIntegrationsCommand) {
+    const inAppIntegrationCount = await this.integrationRepository.count({
+      providerId: InAppProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.IN_APP,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+    if (inAppIntegrationCount === 0) {
+      await this.createIntegration.execute(
+        CreateIntegrationCommand.create({
+          providerId: InAppProviderIdEnum.Novu,
+          channel: ChannelTypeEnum.IN_APP,
+          name: 'Novu In-App',
+          active: true,
+          check: false,
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
+      );
+    }
+  }
+
   async execute(command: CreateNovuIntegrationsCommand): Promise<void> {
     await this.createEmailIntegration(command);
     await this.createSmsIntegration(command);
+    await this.createInAppIntegration(command);
   }
 }

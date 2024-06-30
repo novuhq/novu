@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useAuth, useEnvironment } from '../hooks';
+import type { IUserEntity } from '@novu/shared';
+import { useAuth } from '../hooks/useAuth';
+import { useEnvironment } from '../hooks/useEnvironment';
 import type { StudioState } from './types';
 import { decodeBase64 } from './utils/base64';
 
@@ -12,9 +14,18 @@ function computeBridgeURL(state: StudioState) {
   return state.local ? state.localBridgeURL || state.tunnelBridgeURL : state.storedBridgeURL;
 }
 
+function convertToTestUser(currentUser?: IUserEntity) {
+  return {
+    id: currentUser?._id || '',
+    emailAddress: currentUser?.email || '',
+    firstName: currentUser?.firstName || '',
+    lastName: currentUser?.lastName || '',
+  };
+}
+
 export const StudioStateProvider = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
-  const { currentUser } = useAuth();
+  const { currentUser, currentOrganization } = useAuth();
   const { environment } = useEnvironment();
   const [state, setState] = useState<StudioState>(() => {
     const stateParam = new URLSearchParams(location.search).get('state');
@@ -27,10 +38,8 @@ export const StudioStateProvider = ({ children }: { children: React.ReactNode })
     return {
       local: false,
       storedBridgeURL: environment?.echo?.url || '',
-      testUser: {
-        id: currentUser?._id || '',
-        emailAddress: currentUser?.email || '',
-      },
+      testUser: convertToTestUser(currentUser),
+      organizationName: currentOrganization?.name || '',
     };
   });
 
@@ -41,13 +50,11 @@ export const StudioStateProvider = ({ children }: { children: React.ReactNode })
       setState({
         local: false,
         storedBridgeURL: environment?.echo?.url || '',
-        testUser: {
-          id: currentUser?._id || '',
-          emailAddress: currentUser?.email || '',
-        },
+        testUser: convertToTestUser(currentUser),
+        organizationName: currentOrganization?.name || '',
       });
     }
-  }, [environment, state?.local, currentUser]);
+  }, [environment, state?.local, currentUser, currentOrganization]);
 
   useEffect(() => {
     setBridgeURL(computeBridgeURL(state));

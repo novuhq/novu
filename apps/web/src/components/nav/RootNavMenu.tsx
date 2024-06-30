@@ -88,14 +88,16 @@ export const RootNavMenu: React.FC = () => {
           label="Activity Feed"
           testId="side-nav-activities-link"
         />
-        <NavMenuLinkButton
-          label="Change history"
-          icon={<IconAutorenew />}
-          link={ROUTES.CHANGES}
-          testId={'side-nav-changes-link'}
-          rightSide={{ node: <ChangesCountBadge /> }}
-          isVisible={!isEnvReadonly}
-        />
+        <When truthy={!isV2Enabled}>
+          <NavMenuLinkButton
+            label="Change history"
+            icon={<IconAutorenew />}
+            link={ROUTES.CHANGES}
+            testId={'side-nav-changes-link'}
+            rightSide={{ node: <ChangesCountBadge /> }}
+            isVisible={!isEnvReadonly}
+          />
+        </When>
         <NavMenuLinkButton
           label="Subscribers"
           icon={<IconGroup />}
