@@ -8,7 +8,6 @@ import { EnvironmentEnum } from '../../constants/EnvironmentEnum';
 import { isStudioRoute } from '../../utils/routing';
 
 const ENVIRONMENT_ICON_LOOKUP: Record<EnvironmentEnum, React.ReactElement<IIconProps>> = {
-  [EnvironmentEnum.LOCAL]: <IconComputer />,
   [EnvironmentEnum.DEVELOPMENT]: <IconConstruction />,
   [EnvironmentEnum.PRODUCTION]: <IconRocketLaunch />,
 };
