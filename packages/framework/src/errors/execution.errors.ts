@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import { ErrorCodeEnum } from '../constants';
+import { ErrorCodeEnum, HttpStatusEnum } from '../constants';
 import { BadRequestError } from './base.errors';
 
 export class ExecutionStateCorruptError extends BadRequestError {
@@ -81,5 +81,28 @@ export class WorkflowPayloadInvalidError extends BadRequestError {
   constructor(workflowId: string, data: any) {
     super(`Workflow with id: \`${workflowId}\` has invalid \`payload\`. Please provide the correct payload.`);
     this.data = data;
+  }
+}
+
+export class UnknownError extends Error {
+  /**
+   * HTTP status code.
+   */
+  public readonly statusCode: HttpStatusEnum;
+
+  /**
+   * Additional data that can be used to provide more information about the error.
+   */
+  public message: any;
+
+  /**
+   * The error code, which is used to identify the error type.
+   */
+  public readonly code: ErrorCodeEnum;
+
+  constructor(statusCode: HttpStatusEnum, code: ErrorCodeEnum, message: any) {
+    super(message);
+    this.statusCode = statusCode;
+    this.code = code;
   }
 }

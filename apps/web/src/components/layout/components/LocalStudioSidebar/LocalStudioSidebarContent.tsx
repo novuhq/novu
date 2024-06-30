@@ -12,17 +12,21 @@ import { DocsButton } from '../../../docs/DocsButton';
 import { css, cx } from '@novu/novui/css';
 import { NavMenuButtonInner, rawButtonBaseStyles } from '../../../nav/NavMenuButton/NavMenuButton.shared';
 import { useStudioState } from '../../../../studio/StudioStateProvider';
+import { WithLoadingSkeleton } from '@novu/novui';
 
 type LocalStudioSidebarContentProps = {
   workflows: IBridgeWorkflow[];
   isLoading?: boolean;
 };
 
-export const LocalStudioSidebarContent: FC<LocalStudioSidebarContentProps> = ({ workflows, isLoading }) => {
+export const LocalStudioSidebarContent: WithLoadingSkeleton<FC<LocalStudioSidebarContentProps>> = ({
+  workflows,
+  isLoading,
+}) => {
   const { organizationName } = useStudioState();
 
   if (isLoading) {
-    return <SidebarContentLoading />;
+    return <LoadingDisplay />;
   }
 
   return (
@@ -50,7 +54,9 @@ export const LocalStudioSidebarContent: FC<LocalStudioSidebarContentProps> = ({ 
   );
 };
 
-function SidebarContentLoading() {
+LocalStudioSidebarContent.LoadingDisplay = LoadingDisplay;
+
+function LoadingDisplay() {
   return (
     <Stack gap="300" p="75">
       <Flex gap="75">
