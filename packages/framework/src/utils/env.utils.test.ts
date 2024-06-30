@@ -40,11 +40,11 @@ describe('env.utils', () => {
 
     it('should return local bridge URL in development environment', async () => {
       const mockFetch = vi.fn().mockResolvedValue({
-        json: vi.fn().mockResolvedValue({ bridgeUrl: 'http://localhost:40624' }),
+        json: vi.fn().mockResolvedValue({ tunnelOrigin: 'http://localhost:2022' }),
       });
       global.fetch = mockFetch;
       const url = await getBridgeUrl();
-      expect(url).toBe('http://localhost:40624/api/novu');
+      expect(url).toBe('http://localhost:2022/api/novu');
     });
 
     it('should return empty string if no conditions are met', async () => {

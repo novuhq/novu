@@ -23,8 +23,12 @@ export const getBridgeUrl = async (): Promise<string> => {
   }
 
   // Local environments
-  if (process.env.NODE_ENV === 'development') {
-    return `${(await (await fetch('http://localhost:40624/.well-known/novu')).json()).bridgeUrl}/api/novu`;
+  try {
+    if (process.env.NODE_ENV === 'development') {
+      return `${(await (await fetch('http://localhost:2022/.well-known/novu')).json()).tunnelOrigin}/api/novu`;
+    }
+  } catch (error) {
+    console.error(error);
   }
 
   return '';
