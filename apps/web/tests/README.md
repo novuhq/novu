@@ -11,7 +11,7 @@ Jarvis is not fully updated yet to run the E2E suite with Playwright. It will be
 ### Run individually in separate shells
 
 ```bash
-NOVU_ENTERPRISE=true pnpm --filter @novu/api start:test
+NOVU_ENTERPRISE=true pnpm --filter @novu/api-server start:test
 
 NOVU_ENTERPRISE=true pnpm --filter @novu/worker start:test
 

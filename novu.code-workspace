@@ -5,7 +5,7 @@
       "path": "."
     },
     {
-      "name": "🚀 @novu/api",
+      "name": "🚀 @novu/api-server",
       "path": "apps/api"
     },
     {
