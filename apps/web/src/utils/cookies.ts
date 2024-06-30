@@ -11,8 +11,8 @@ export function createCookieHandler(cookieName: string) {
       return Cookies.get(cookieName);
     },
 
-    set(newValue: string, options: Cookies.CookieAttributes = {}): void {
-      Cookies.set(cookieName, newValue, options);
+    set(newValue: string, options: Cookies.CookieAttributes = {}) {
+      return Cookies.set(cookieName, newValue, options);
     },
 
     remove(locationAttributes?: LocationAttributes) {
@@ -35,3 +35,14 @@ export const novuRedirectURLCookie = createCookieHandler('nv_redirect_url');
  * For now we just store 1.
  */
 export const novuOnboardedCookie = createCookieHandler('nv_onboarding_step');
+
+const ONBOARDING_COOKIE_EXPIRY_DAYS = 10 * 365;
+
+// Never expires! Well it does, in 10 years but you will change device or browser by then :)
+export function setNovuOnboardingStepCookie() {
+  return novuOnboardedCookie.set('1', {
+    expires: ONBOARDING_COOKIE_EXPIRY_DAYS,
+    sameSite: 'none',
+    secure: window.location.protocol === 'https',
+  });
+}
